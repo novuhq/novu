@@ -28,6 +28,7 @@ export class ChangeTemplateActiveStatus {
     await this.notificationTemplateRepository.update(
       {
         _id: command.templateId,
+        _environmentId: command.environmentId,
       },
       {
         $set: {

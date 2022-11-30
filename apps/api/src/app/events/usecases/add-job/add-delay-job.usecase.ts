@@ -18,7 +18,7 @@ export class AddDelayJob {
       return undefined;
     }
 
-    await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
+    await this.jobRepository.updateStatus(command.organizationId, data._id, JobStatusEnum.DELAYED);
 
     return await this.calculateDelayAmount(data);
   }

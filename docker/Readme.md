@@ -1,11 +1,13 @@
 
-Docker is the easiest way to get started with self-hosted Novu.
+Docker is the easiest way to get started with self-hosted Novu, 
+however if you want to set up the system on docker for local development look [here](local/Readme.md)
+or if you want to deploy Novu to Kubernetes check [here](kubernetes/Readme.md)
 
 ## Before you begin
 
 You need the following installed in your system:
 
-- [Docker](https://docs.docker.com/engine/install/) and docker-compose
+- [Docker](https://docs.docker.com/engine/install/) and [docker-compose](https://docs.docker.com/compose/install/)
 - [Git](https://git-scm.com/downloads)
 
 ## Quick Start
@@ -16,24 +18,23 @@ Clone the Novu repo and enter the docker directory locally:
 
 ```sh
 # Get the code
-git clone --depth 1 https://github.com/novuhq/novu
+git clone https://github.com/novuhq/novu
 
 # Go to the docker folder
 cd novu/docker
 
-# Copy the example env file to a solid
-cp .env.example .env
+# Copy the example env file
+cp .env.example ./local/deployment/.env
 
-# Start
-docker-compose up
+# Start Novu
+docker-compose -f ./local/deployment/docker-compose.yml up
 ```
 
 Now visit [http://localhost:4200](http://localhost:4200) to start using Novu.
 
+### Securing your setup
 
-## Securing your setup
-
-While we provided you with some example secrets for getting started, you should NEVER deploy your Novu setup using the defaults provided.
+While we provide you with some example secrets for getting started, you should NEVER deploy your Novu setup using the defaults provided.
 
 ### Update Secrets
 
@@ -48,8 +49,7 @@ To keep the setup simple, we made some choices that may not be optimal for produ
 - the database is in the same machine as the servers
 - the storage uses the filesystem backend instead of S3
 
-We strongly recommend that you decouple your database
-before deploying.
+We strongly recommend that you decouple your database before deploying.
 
 ## Next steps
 

@@ -2,6 +2,7 @@ import { CONTEXT_PATH } from './config';
 import 'newrelic';
 import '@sentry/tracing';
 
+import helmet from 'helmet';
 import { INestApplication, ValidationPipe, Logger } from '@nestjs/common';
 import * as passport from 'passport';
 import * as compression from 'compression';
@@ -48,6 +49,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     app.use(Sentry.Handlers.tracingHandler());
   }
 
+  app.use(helmet());
   app.enableCors(corsOptionsDelegate);
 
   app.setGlobalPrefix(CONTEXT_PATH + 'v1');
@@ -64,11 +66,11 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
   app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));
 
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
-
   app.use('/v1/events/trigger', bodyParser.json({ limit: '20mb' }));
   app.use('/v1/events/trigger', bodyParser.urlencoded({ limit: '20mb', extended: true }));
+
+  app.use(bodyParser.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
 
   app.use(compression());
 
@@ -84,8 +86,10 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Notification groups')
     .addTag('Changes')
     .addTag('Environments')
+    .addTag('Execution details')
     .addTag('Feeds')
     .addTag('Messages')
+    .addTag('Execution Details')
     .build();
   const document = SwaggerModule.createDocument(app, options);
 

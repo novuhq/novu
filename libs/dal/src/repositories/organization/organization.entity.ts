@@ -13,4 +13,18 @@ export class OrganizationEntity {
     color: string;
     direction?: 'ltr' | 'rtl';
   };
+
+  partnerConfigurations?: IPartnerConfiguration[];
+}
+
+export interface IPartnerConfiguration {
+  accessToken: string;
+  configurationId: string;
+  projectIds?: string[];
+  teamId?: string;
+  partnerType: PartnerTypeEnum;
+}
+
+export enum PartnerTypeEnum {
+  VERCEL = 'vercel',
 }

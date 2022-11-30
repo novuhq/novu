@@ -34,7 +34,7 @@ The ultimate service for managing multi-channel notifications with a single API.
   </p>
   
 ## ⭐️ Why
-Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, chat and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and it's users.
+Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multichannel communication experience over email, sms, push, chat and more... An ever-growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and its users.
 
 ## ✨ Features
 
@@ -43,7 +43,7 @@ Building a notification system is hard, at first it seems like just sending an e
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
 - 📦 Easy to set up and integrate
-- 🛡 Debug and analyze multi channel messages in a single dashboard
+- 🛡 Debug and analyze multichannel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community driven
 
@@ -95,7 +95,7 @@ Using the Novu API and admin panel you can easily add real-time notification cen
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a simple to use interface.
+Novu provides a single API to manage providers across multiple channels with a simple-to-use interface.
 
 #### 💌 Email
 

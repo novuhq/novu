@@ -1,10 +1,12 @@
-import { Button, colors, Switch, Text } from '../../../../design-system';
 import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { ColorScheme, InputWrapper, useMantineTheme } from '@mantine/core';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
+import { ColorScheme, Input, useMantineTheme } from '@mantine/core';
+import { showNotification } from '@mantine/notifications';
 import { useForm } from 'react-hook-form';
 import { useMutation } from 'react-query';
+
+import { Button, colors, Switch, Text } from '../../../../design-system';
+import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { updateWidgetSettings } from '../../../../api/environment';
 import { useEnvController } from '../../../../store/use-env-controller';
 
@@ -35,6 +37,11 @@ export const Security = () => {
 
     await updateWidgetSettingsMutation(data);
     await refetchEnvironment();
+
+    showNotification({
+      message: 'Security info updated successfully',
+      color: 'green',
+    });
   }
 
   const { handleSubmit } = useForm({
@@ -47,7 +54,7 @@ export const Security = () => {
     <>
       <form noValidate onSubmit={handleSubmit(saveSecurityForm)}>
         <Title>Security</Title>
-        <InputWrapper label="Enable HMAC encryption" description={<DescriptionText />} styles={inputStyles}>
+        <Input.Wrapper label="Enable HMAC encryption" description={<DescriptionText />} styles={inputStyles}>
           <RowDiv>
             <Switch
               label={isHmacEnabled ? 'Enabled' : 'Disabled'}
@@ -56,8 +63,8 @@ export const Security = () => {
               onChange={handlerSwitchChange}
             />
           </RowDiv>
-        </InputWrapper>
-        <Button submit mb={20} mt={10} data-test-id="submit-branding-settings">
+        </Input.Wrapper>
+        <Button submit mb={20} mt={10} data-test-id="submit-hmac-settings">
           Update
         </Button>
       </form>

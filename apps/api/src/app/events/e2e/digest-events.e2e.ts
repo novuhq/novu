@@ -8,11 +8,12 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { ChannelTypeEnum, StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';
 import { WorkflowQueueService } from '../services/workflow.queue.service';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
+import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
 import { RunJob } from '../usecases/run-job/run-job.usecase';
 import { RunJobCommand } from '../usecases/run-job/run-job.command';
 
@@ -32,6 +33,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     let runningJobs = 0;
     do {
       runningJobs = await jobRepository.count({
+        _environmentId: session.environment._id,
         type: {
           $nin: [StepTypeEnum.DIGEST],
         },
@@ -71,7 +73,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     runJob = new RunJob(
       jobRepository,
       session.testServer.getService(SendMessage),
-      session.testServer.getService(QueueNextJob)
+      session.testServer.getService(QueueNextJob),
+      session.testServer.getService(StorageHelperService)
     );
   });
 
@@ -107,6 +110,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -125,7 +129,11 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     );
 
     const jobs = await jobRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
+      status: {
+        $nin: [JobStatusEnum.CANCELED],
+      },
     });
 
     const digestJob = jobs.find((job) => job.step.template.type === StepTypeEnum.DIGEST);
@@ -184,16 +192,21 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
+    await awaitRunningJobs(1);
+
     await triggerEvent({
       customVar: 'digest',
     });
 
+    await awaitRunningJobs(1);
+
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
+      status: JobStatusEnum.DELAYED,
     });
 
-    await awaitRunningJobs(2);
     await runJob.execute(
       RunJobCommand.create({
         jobId: delayedJob._id,
@@ -255,6 +268,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     await awaitRunningJobs(3);
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -268,6 +282,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     );
 
     const jobs = await jobRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
     });
     const digestJob = jobs.find((job) => job?.digest?.digestKey === 'id');
@@ -302,6 +317,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       id,
     });
 
+    await awaitRunningJobs(1);
+
     await triggerEvent({
       customVar: 'Testing of User Name',
       id,
@@ -311,10 +328,10 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'digest',
       id: 'second-batch',
     });
-
     await awaitRunningJobs(2);
 
     const delayedJobs = await jobRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -353,7 +370,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     template = await session.createTemplate({
       steps: [
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{customVar}}' as string,
         },
         {
@@ -366,7 +383,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           },
         },
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{step.events.length}}' as string,
         },
       ],
@@ -379,6 +396,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await awaitRunningJobs(0);
 
     const jobs = await jobRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       status: {
         $ne: JobStatusEnum.COMPLETED,
@@ -393,7 +411,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     template = await session.createTemplate({
       steps: [
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{customVar}}' as string,
         },
         {
@@ -407,7 +425,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           },
         },
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{step.events.length}}' as string,
         },
       ],
@@ -442,6 +460,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     let delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -456,6 +475,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     );
 
     const pendingJobs = await jobRepository.count({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       status: JobStatusEnum.PENDING,
       transactionId: id,
@@ -464,6 +484,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(pendingJobs).to.equal(1);
 
     delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
       transactionId: id,
@@ -505,6 +526,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await awaitRunningJobs(1);
 
     const oldMessage = await messageRepository.findOne({
+      _environmentId: session.environment._id,
       channel: StepTypeEnum.IN_APP,
       _templateId: template._id,
     });
@@ -514,6 +536,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
       transactionId: id,
@@ -531,6 +554,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await awaitRunningJobs(0);
 
     const message = await messageRepository.findOne({
+      _environmentId: session.environment._id,
       channel: StepTypeEnum.IN_APP,
       _templateId: template._id,
     });
@@ -572,14 +596,16 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     await awaitRunningJobs(1);
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
 
     const pendingJobs = await jobRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       status: {
-        $nin: [JobStatusEnum.COMPLETED, JobStatusEnum.DELAYED],
+        $nin: [JobStatusEnum.COMPLETED, JobStatusEnum.DELAYED, JobStatusEnum.CANCELED],
       },
     });
 
@@ -636,6 +662,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await awaitRunningJobs(0);
 
     let messageCount = await messageRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
     });
 
@@ -647,6 +674,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     await awaitRunningJobs(1);
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -663,11 +691,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await awaitRunningJobs(0);
 
     messageCount = await messageRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
     });
 
     expect(messageCount.length).to.equal(2);
     const job = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.IN_APP,
       transactionId: delayedJob.transactionId,
@@ -711,6 +741,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     await awaitRunningJobs(0);
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -727,11 +758,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await awaitRunningJobs(0);
 
     const messageCount = await messageRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
     });
 
     expect(messageCount.length).to.equal(1);
     const job = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.IN_APP,
       transactionId: delayedJob.transactionId,
@@ -772,6 +805,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     let digests = await jobRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -782,6 +816,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await awaitRunningJobs(2);
 
     digests = await jobRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -800,12 +835,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await awaitRunningJobs(0);
 
     const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
     });
 
     expect(messages[0].content).to.include(digests[0].payload.postId);
     expect(messages[1].content).to.include(digests[1].payload.postId);
     const jobCount = await jobRepository.count({
+      _environmentId: session.environment._id,
       _templateId: template._id,
     });
     expect(jobCount).to.equal(6);
@@ -858,6 +895,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await awaitRunningJobs(2);
 
     let digests = await jobRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -866,6 +904,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(digests.length).to.equal(2);
 
     digests = await jobRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -884,6 +923,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await awaitRunningJobs(0);
 
     const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
     });
 
@@ -904,6 +944,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(contents).to.include(`Hello world ${postId2}`);
 
     const jobCount = await jobRepository.count({
+      _environmentId: session.environment._id,
       _templateId: template._id,
     });
 
@@ -933,16 +974,19 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
+    await awaitRunningJobs(1);
+
     await triggerEvent({
       customVar: 'digest',
     });
 
+    await awaitRunningJobs(1);
+
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
-
-    await awaitRunningJobs(2);
 
     await runJob.execute(
       RunJobCommand.create({
@@ -988,16 +1032,21 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
+    await awaitRunningJobs(1);
+
     await triggerEvent({
       customVar: 'digest',
     });
 
+    await awaitRunningJobs(1);
+
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
+      status: JobStatusEnum.DELAYED,
     });
 
-    await awaitRunningJobs(2);
     await runJob.execute(
       RunJobCommand.create({
         jobId: delayedJob._id,

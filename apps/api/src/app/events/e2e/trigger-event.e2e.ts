@@ -150,7 +150,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
-    let jobs: JobEntity[] = await jobRepository.find({});
+    let jobs: JobEntity[] = await jobRepository.find({ _environmentId: session.environment._id });
     let statuses: JobStatusEnum[] = jobs.map((job) => job.status);
 
     expect(statuses.includes(JobStatusEnum.RUNNING)).true;
@@ -158,9 +158,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     await session.awaitRunningJobs(template._id);
 
-    jobs = await jobRepository.find({
-      _templateId: template._id,
-    });
+    jobs = await jobRepository.find({ _environmentId: session.environment._id, _templateId: template._id });
     statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);
 
     expect(statuses.length).to.equal(0);
@@ -200,7 +198,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
             },
             {
               name: 'text2.txt',
-              file: new Buffer('hello world!', 'utf-8'),
+              file: Buffer.from('hello world!', 'utf-8'),
             },
           ],
         },
@@ -488,9 +486,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     await integrationRepository.update(
-      {
-        _id: integration._id,
-      },
+      { _environmentId: session.environment._id, _id: integration._id },
       { active: false }
     );
 
@@ -842,6 +838,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     await session.awaitRunningJobs(template._id);
 
     const messages = await messageRepository.count({
+      _environmentId: session.environment._id,
       _templateId: template._id,
     });
 
@@ -860,7 +857,7 @@ async function createTemplate(session, channelType) {
   });
 }
 
-async function sendTrigger(
+export async function sendTrigger(
   session,
   template,
   newSubscriberIdInAppNotification: string,

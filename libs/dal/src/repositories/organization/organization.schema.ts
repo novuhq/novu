@@ -1,7 +1,7 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
-import { OrganizationEntity } from './organization.entity';
+import { OrganizationEntity, PartnerTypeEnum } from './organization.entity';
 
 const organizationSchema = new Schema(
   {
@@ -14,6 +14,21 @@ const organizationSchema = new Schema(
       logo: Schema.Types.String,
       color: Schema.Types.String,
       direction: Schema.Types.String,
+    },
+    partnerConfigurations: {
+      type: [
+        {
+          accessToken: Schema.Types.String,
+          configurationId: Schema.Types.String,
+          teamId: Schema.Types.String,
+          projectIds: [Schema.Types.String],
+          partnerType: {
+            type: Schema.Types.String,
+            enum: PartnerTypeEnum,
+          },
+        },
+      ],
+      select: false,
     },
   },
   schemaOptions

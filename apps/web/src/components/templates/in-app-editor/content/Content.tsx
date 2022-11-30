@@ -3,7 +3,7 @@ import { MantineTheme, Textarea } from '@mantine/core';
 import { colors } from '../../../../design-system';
 import { IEmailBlock } from '@novu/shared/src';
 import { FieldErrors, FieldValues } from 'react-hook-form';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 
 interface IContentProps {
   readonly: boolean;
@@ -57,7 +57,7 @@ export function Content(props: IContentProps) {
 
 /**
  * Recursively remove a pattern from a string until there are no more matches.
- * Avoids incomplete sanitization e.g. "aabcbc".replace(/abc/g, "") === "abc"
+ * Avoids incomplete sanitization e.g. "abcBanana".replace(/abc/g, "") === "abc"
  * See: https://github.com/novuhq/novu/security/code-scanning/9
  */
 function sanitizeHandlebarsVariables(content: string): string {

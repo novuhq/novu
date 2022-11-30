@@ -32,7 +32,7 @@ The ultimate library for managing multi-channel notifications with a single API.
   </p>
   
 ## ⭐️ Why
-Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multi channel communication experience over email, sms, push, chat and more... An ever growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and it's users.
+Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multichannel communication experience over email, sms, push, chat and more... An ever-growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and its users.
 
 ## ✨ Features
 
@@ -78,7 +78,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a simple to use interface.
+Novu provides a single API to manage providers across multiple channels with a simple-to-use interface.
 
 #### 💌 Email
 
