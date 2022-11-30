@@ -4,9 +4,9 @@ import { AuthContext } from '../../../store/authContext';
 import { When } from '../../utils/When';
 import { Preview } from '../../../pages/templates/editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
-import { Grid, Modal, SegmentedControl, Title, useMantineTheme } from '@mantine/core';
+import { Grid, Group, Modal, SegmentedControl, Title, useMantineTheme } from '@mantine/core';
 import { TestSendEmail } from './TestSendEmail';
-import { colors, shadows } from '../../../design-system';
+import { Button, colors, shadows } from '../../../design-system';
 import { MobileIcon } from '../../../pages/templates/editor/PreviewSegment/MobileIcon';
 import { WebIcon } from '../../../pages/templates/editor/PreviewSegment/WebIcon';
 import { useHotkeys } from '@mantine/hooks';
@@ -166,6 +166,16 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
         overflow="inside"
       >
         <VariableManager hideLabel={true} index={index} contents={['content', 'htmlContent', 'subject']} />
+        <Group position="right">
+          <Button
+            mt={30}
+            onClick={() => {
+              setModalOpen(false);
+            }}
+          >
+            Close
+          </Button>
+        </Group>
       </Modal>
     </>
   );

@@ -45,10 +45,23 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
   return (
     <VariableWrapper data-test-id="template-variable-row">
       <td>
-        <Code>{variableName}</Code>
+        <Code
+          sx={(theme) => ({
+            backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
+          })}
+        >
+          {variableName}
+        </Code>
       </td>
       <td>
-        <Code style={{ color: colors.B60 }}>{variableTypeHumanize}</Code>
+        <Code
+          sx={(theme) => ({
+            backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
+            color: colors.B60,
+          })}
+        >
+          {variableTypeHumanize}
+        </Code>
       </td>
       <td>
         {variableType === 'String' && !isSystemVariable && (
@@ -203,12 +216,6 @@ export const VariableManager = ({ index, contents, hideLabel = false }: Variable
     variables.forEach((vari) => {
       if (!arrayFields.find((field) => field.name === vari.name)) {
         arrayFields.push(vari);
-      }
-    });
-
-    arrayFields.forEach((vari, ind) => {
-      if (!variables.find((field) => field.name === vari.name)) {
-        delete arrayFields[ind];
       }
     });
 
