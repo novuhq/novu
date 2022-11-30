@@ -63,19 +63,19 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v2
         with:
           targets: lint
-          projects: "@novu/web"
+          projects: '@novu/web'
 
       - name: Start Local Stack
         env:
           DEFAULT_REGION: us-east-1
           AWS_DEFAULT_REGION: us-east-1
-          AWS_ACCOUNT_ID: "000000000000"
+          AWS_ACCOUNT_ID: '000000000000'
           AWS_ACCESS_KEY_ID: test
           AWS_SECRET_ACCESS_KEY: test
           AWS_EC2_METADATA_DISABLED: true
-        working-directory: environment/test
+        working-directory: docker/local
         run: |
-          docker-compose up -d
+          docker-compose -f docker-compose.localstack.yml up -d
           sleep 5
           max_retry=30
           counter=0
