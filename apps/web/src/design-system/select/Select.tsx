@@ -2,6 +2,7 @@ import React, { FC, useMemo } from 'react';
 import {
   Box,
   Select as MantineSelect,
+  SelectProps,
   MultiSelect as MantineMultiSelect,
   CloseButton,
   InputBaseProps,
@@ -28,9 +29,9 @@ interface ISelectProps extends SpacingProps {
   placeholder?: string;
   description?: string;
   getCreateLabel?: (query: string) => React.ReactNode;
-  onCreate?: (query: string) => void;
   onDropdownOpen?: () => void;
   onSearchChange?: (query: string) => void;
+  onCreate?: SelectProps['onCreate'];
   searchable?: boolean;
   creatable?: boolean;
   disabled?: boolean;

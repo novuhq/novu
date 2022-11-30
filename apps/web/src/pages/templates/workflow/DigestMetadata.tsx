@@ -1,11 +1,12 @@
-import { Grid, InputWrapper } from '@mantine/core';
-import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { Grid, Input as MantineInput } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
+import styled from '@emotion/styled';
+import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+
 import { When } from '../../../components/utils/When';
 import { Input, Select, Switch, Button } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
-import styled from '@emotion/styled';
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;
@@ -22,7 +23,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
 
   return (
     <>
-      <InputWrapper
+      <MantineInput.Wrapper
         label="Time Interval"
         description="Once triggered, for how long the digest should collect events"
         styles={inputStyles}
@@ -76,7 +77,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             />
           </Grid.Col>
         </Grid>
-      </InputWrapper>
+      </MantineInput.Wrapper>
       <div
         style={{
           marginBottom: '15px',
@@ -104,7 +105,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
       </div>
 
       <When truthy={type === DigestTypeEnum.BACKOFF}>
-        <InputWrapper
+        <MantineInput.Wrapper
           label="Backoff Time Interval"
           description="A digest will only be created if a message was previously sent in this time interval"
           styles={inputStyles}
@@ -160,7 +161,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
               />
             </Grid.Col>
           </Grid>
-        </InputWrapper>
+        </MantineInput.Wrapper>
       </When>
       <When truthy={false}>
         <div
