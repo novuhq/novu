@@ -109,7 +109,7 @@ jobs:
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          docker buildx -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/web/Dockerfile .
+          docker buildx build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/web/Dockerfile .
           docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
