@@ -1,5 +1,5 @@
 import { INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 
 import { Text } from '../../design-system';
 import { getCurlTriggerSnippet } from '../templates/TriggerSnippetTabs';

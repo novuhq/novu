@@ -296,7 +296,7 @@ const StyledText = styled(Text)`
 const SideElementBase = styled.div`
   display: flex;
   justify-content: flex-start;
-  & > :first-child {
+  & > :first-of-type {
     width: auto;
   }
 `;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@mantine/core';
+import { Button, ButtonProps } from '@mantine/core';
 import styled from 'styled-components';
 import { IButtonStyles, ButtonTypeEnum, IMessageAction } from '@novu/shared';
 import { useNovuTheme } from '../../../../hooks';
@@ -30,7 +30,7 @@ export function NotificationButton(props: NotificationButtonProps) {
   );
 }
 
-export const ActionButton = styled(MantineButton)<{ buttonStyle: IButtonStyles }>`
+export const ActionButton = styled<ButtonProps>(Button).attrs((props) => ({ fullWidth: true, ...props }))`
   background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
   color: ${({ buttonStyle }) => buttonStyle.fontColor};
   font-family: ${({ buttonStyle }) => buttonStyle.fontFamily};
@@ -44,20 +44,8 @@ export const ActionButton = styled(MantineButton)<{ buttonStyle: IButtonStyles }
   font-size: 12px;
   border-radius: 7px;
   border: 0;
-`;
 
-export function MantineButton({ buttonStyle, ...props }) {
-  return (
-    <Button
-      styles={{
-        filled: {
-          '&:hover': {
-            backgroundColor: buttonStyle.backGroundColor,
-          },
-        },
-      }}
-      fullWidth
-      {...props}
-    />
-  );
-}
+  &:hover {
+    background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
+  }
+`;

@@ -1,7 +1,7 @@
 import { Grid, Text, useMantineTheme } from '@mantine/core';
 import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import * as capitalize from 'lodash.capitalize';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import { colors, shadows } from '../../../design-system';
 import { CheckCircle, ErrorIcon } from '../../../design-system/icons';
 import { When } from '../../../components/utils/When';

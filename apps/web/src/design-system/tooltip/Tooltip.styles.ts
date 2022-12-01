@@ -5,7 +5,7 @@ export default createStyles((theme: MantineTheme) => {
   const dark = theme.colorScheme === 'dark';
 
   return {
-    body: {
+    tooltip: {
       backgroundColor: dark ? colors.B20 : theme.white,
       color: colors.B60,
       boxShadow: dark ? shadows.dark : shadows.medium,

@@ -3,7 +3,7 @@ import { useQuery } from 'react-query';
 import { useContext, useEffect } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
 import { IGetInviteResponseDto } from '@novu/shared';
-import * as capitalize from 'lodash.capitalize';
+
 import { getInviteTokenData } from '../../api/invitation';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
@@ -12,7 +12,6 @@ import { colors, Text, Button } from '../../design-system';
 import { AuthContext } from '../../store/authContext';
 import { useAcceptInvite } from '../../components/auth/use-accept-invite.hook';
 import { When } from '../../components/utils/When';
-import { LoginForm } from '../../components/auth/LoginForm';
 
 export default function InvitationPage() {
   const navigate = useNavigate();
@@ -32,10 +31,10 @@ export default function InvitationPage() {
   const organizationName = data?.organization.name || '';
 
   const existingUser = tokenParam && data?._userId;
-  const invalidCurrentUser = existingUser && currentUser && currentUser._id !== data._userId;
+  const invalidCurrentUser = existingUser && currentUser && currentUser._id !== data?._userId;
 
   const acceptToken = async () => {
-    if (existingUser && currentUser && currentUser._id === data._userId && isLoggedIn) {
+    if (existingUser && currentUser && currentUser._id === data?._userId && isLoggedIn) {
       const result = await submitToken(tokenParam as string, true);
       if (result) navigate('/templates');
     }

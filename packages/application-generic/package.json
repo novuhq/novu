@@ -60,6 +60,7 @@
     "@novu/termii": "^0.9.0",
     "@novu/testing": "^0.9.1",
     "@novu/twilio": "^0.9.0",
+    "@novu/mailersend": "^0.9.0",
     "@sentry/node": "^7.12.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",

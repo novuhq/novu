@@ -1,8 +1,9 @@
-import { IEmailBlock } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
-import { ActionIcon, MenuItem as DropdownItem, MenuLabel, useMantineTheme } from '@mantine/core';
+import { ActionIcon, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { AlignCenterOutlined, AlignLeftOutlined, AlignRightOutlined } from '@ant-design/icons';
+import { IEmailBlock } from '@novu/shared';
+
 import { DotsHorizontalOutlined, Trash } from '../../../design-system/icons';
 import { Button, colors, Dropdown } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
@@ -56,19 +57,19 @@ export function ContentRow({
   };
 
   const rowStyleMenu = [
-    <MenuLabel style={{ fontSize: '14px' }}>Align Text</MenuLabel>,
+    <Dropdown.Label style={{ fontSize: '14px' }}>Align Text</Dropdown.Label>,
     <TextAlignmentWrapper colorScheme={theme.colorScheme}>
       {textAlignments.map(([dir, icon]) => (
         <Button
           onClick={(e) => changeRowStyles(e, dir)}
           data-test-id={`align-${dir}-btn`}
-          variant={dir === textAlign ? 'filled' : 'outline'}
+          variant={dir === textAlign ? 'gradient' : 'outline'}
         >
           {icon}
         </Button>
       ))}
     </TextAlignmentWrapper>,
-    <DropdownItem
+    <Dropdown.Item
       key="removeBtn"
       disabled={!allowRemove}
       data-test-id="remove-row-btn"
@@ -76,7 +77,7 @@ export function ContentRow({
       icon={<Trash />}
     >
       Remove Row
-    </DropdownItem>,
+    </Dropdown.Item>,
   ];
 
   return (

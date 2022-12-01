@@ -3,13 +3,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { parse } from '@handlebars/parser';
 import { Code, Space, Table } from '@mantine/core';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 import { colors, Input, Switch, Text } from '../../design-system';
 import { FieldArrayProvider } from './FieldArrayProvider';
+import { When } from '../utils/When';
 
 interface VariableManagerProps {
   index: number;
   contents: string[];
+  hideLabel?: boolean;
 }
 
 interface VariableComponentProps {
@@ -17,7 +19,7 @@ interface VariableComponentProps {
   template: string;
 }
 
-interface IMustacheVariable {
+export interface IMustacheVariable {
   type: TemplateVariableTypeEnum;
   name: string;
   defaultValue?: string | boolean;
@@ -43,10 +45,23 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
   return (
     <VariableWrapper data-test-id="template-variable-row">
       <td>
-        <Code>{variableName}</Code>
+        <Code
+          sx={(theme) => ({
+            backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
+          })}
+        >
+          {variableName}
+        </Code>
       </td>
       <td>
-        <Code style={{ color: colors.B60 }}>{variableTypeHumanize}</Code>
+        <Code
+          sx={(theme) => ({
+            backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
+            color: colors.B60,
+          })}
+        >
+          {variableTypeHumanize}
+        </Code>
       </td>
       <td>
         {variableType === 'String' && !isSystemVariable && (
@@ -107,7 +122,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
   );
 };
 
-export const VariableManager = ({ index, contents }: VariableManagerProps) => {
+export const VariableManager = ({ index, contents, hideLabel = false }: VariableManagerProps) => {
   const [ast, setAst] = useState<any>({ body: [] });
   const [textContent, setTextContent] = useState<string>('');
   const { watch, control, getValues } = useFormContext();
@@ -156,7 +171,12 @@ export const VariableManager = ({ index, contents }: VariableManagerProps) => {
     const arrayVariables: IMustacheVariable[] = bod
       .filter((body) => body.type === 'BlockStatement' && ['each', 'with'].includes(body.path.head))
       .map((body) => {
-        const nestedVariablesInBlock = getMustacheVariables(body.program.body);
+        const nestedVariablesInBlock = getMustacheVariables(body.program.body).map((mustVar) => {
+          return {
+            ...mustVar,
+            name: body.params[0].original + '.' + mustVar.name,
+          };
+        });
 
         return [
           {
@@ -198,12 +218,13 @@ export const VariableManager = ({ index, contents }: VariableManagerProps) => {
         arrayFields.push(vari);
       }
     });
-
-    arrayFields.forEach((vari, ind) => {
-      if (!variables.find((field) => field.name === vari.name)) {
-        delete arrayFields[ind];
-      }
-    });
+    if (variables.length) {
+      arrayFields.forEach((vari, ind) => {
+        if (!variables.find((field) => field.name === vari.name)) {
+          delete arrayFields[ind];
+        }
+      });
+    }
 
     variablesArray.replace(arrayFields.filter((field) => !!field));
   }, [ast]);
@@ -212,9 +233,11 @@ export const VariableManager = ({ index, contents }: VariableManagerProps) => {
 
   return (
     <>
-      <Text size="md" weight="bold" mt={20}>
-        Variables
-      </Text>
+      <When truthy={hideLabel === false}>
+        <Text size="md" weight="bold" mt={20}>
+          Variables
+        </Text>
+      </When>
 
       <Table>
         <thead>
