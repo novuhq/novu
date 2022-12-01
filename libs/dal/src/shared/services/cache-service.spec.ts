@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { ICacheService, CachingConfig } from '@novu/dal';
+import { CachingConfig, ICacheService } from './cache.service';
 
 describe('cache-service', function () {
   let cacheService: ICacheService;
@@ -38,9 +38,11 @@ describe('cache-service', function () {
   });
 });
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const CacheService = {
   createClient(): ICacheService {
-    let data = {};
+    const data = {};
+
     return {
       set(key: string, value: string, options?: CachingConfig) {
         data[key] = value;
@@ -50,6 +52,7 @@ export const CacheService = {
       },
       del(key: string) {
         delete data[key];
+
         return;
       },
       delByPattern(pattern?: string) {
@@ -58,6 +61,7 @@ export const CacheService = {
         for (const key in data) {
           if (key.startsWith(preFixSuffixTuple[0]) && key.endsWith(preFixSuffixTuple[1])) delete data[key];
         }
+
         return;
       },
       keys(pattern?: string) {

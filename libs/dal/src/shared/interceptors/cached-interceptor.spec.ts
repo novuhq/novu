@@ -1,7 +1,8 @@
 import { expect } from 'chai';
-import { Cached, ICacheService, InvalidateCache } from '@novu/dal';
-import { CacheService } from './cache-service.spec';
 import { beforeEach } from 'mocha';
+import { CacheService } from '../services/cache-service.spec';
+import { ICacheService } from '../services';
+import { Cached, InvalidateCache } from './';
 
 describe('cached interceptor', function () {
   let repo: Repo;
