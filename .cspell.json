@@ -179,7 +179,8 @@
     "hookform",
     "noconflict",
     "monokai",
-    "sparkpost"
+    "sparkpost",
+    "buildx"
   ],
   "flagWords": [],
   "patterns": [
