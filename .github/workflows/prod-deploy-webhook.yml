@@ -23,7 +23,7 @@ jobs:
     environment: Production
     permissions:
       contents: read
-      packages: write 
+      packages: write
       deployments: write
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -57,7 +57,7 @@ jobs:
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          cd apps/webhook && DOCKER_BUILDKIT=1 npm run build:docker
+          cd apps/webhook && DOCKER_BUILDKIT=1 npm run docker:build
           docker tag novu-webhook ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-webhook ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-webhook ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
@@ -74,7 +74,7 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: novuhq/cloud-infra
-          token: ${{ secrets.GH_PACKAGES }} 
+          token: ${{ secrets.GH_PACKAGES }}
           path: cloud-infra
 
       - name: Configure AWS credentials

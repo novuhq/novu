@@ -176,6 +176,7 @@
     "Intelli",
     "codestream",
     "nosniff",
+    "hookform",
     "noconflict",
     "monokai"
   ],
@@ -218,6 +219,8 @@
   ],
   "ignorePaths": [
     "apps/api/src/.env.test",
+    "apps/ws/src/.env.test",
+    "apps/ws/src/.example.env",
     ".cspell.json",
     "package.json",
     "package-lock.json",
