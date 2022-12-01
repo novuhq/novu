@@ -23,6 +23,7 @@ export function Cached(storeKeyPrefix?: string) {
 
         try {
           const response = await originalMethod.apply(this, args);
+
           await this.cacheService.set(cacheKey, JSON.stringify(response));
 
           return response;
@@ -61,7 +62,7 @@ function appendQueryParams(cacheKey: string, keysConfig: any): string {
   );
 
   for (const [key, value] of Object.entries(filteredContextKeys)) {
-    if (value == null) return;
+    if (value == null) continue;
 
     const elementValue = typeof value === 'object' ? JSON.stringify(value) : value;
 

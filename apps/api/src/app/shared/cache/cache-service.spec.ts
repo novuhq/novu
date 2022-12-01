@@ -20,6 +20,22 @@ describe('cache-service', function () {
 
     expect(dataString).to.be.equal(res);
   });
+
+  it('should delete by pattern', async function () {
+    cacheService.set('feed:123:456', 'random data');
+    cacheService.set('feed:123:457', 'random data');
+    cacheService.set('feed:query:123:457', 'random data');
+
+    cacheService.delByPattern('feed*:123:457');
+
+    const res1 = cacheService.get('feed:123:456');
+    const res2 = cacheService.get('feed:123:457');
+    const res3 = cacheService.get('feed:query:123:457');
+
+    expect(res1).to.be.equal('random data');
+    expect(res2).to.be.equal(undefined);
+    expect(res3).to.be.equal(undefined);
+  });
 });
 
 export const CacheService = {
@@ -37,7 +53,11 @@ export const CacheService = {
         return;
       },
       delByPattern(pattern?: string) {
-        data = {};
+        const preFixSuffixTuple = pattern.split('*');
+
+        for (const key in data) {
+          if (key.startsWith(preFixSuffixTuple[0]) && key.endsWith(preFixSuffixTuple[1])) delete data[key];
+        }
         return;
       },
       keys(pattern?: string) {

@@ -11,14 +11,25 @@ export function isStoreConnected(status: string | undefined) {
 }
 
 /**
+ * The data related to the messages stored by the subscriberId
+ * therefore in order to keep the stored data fresh we need to build the key with subscriberId first.
+ * @param key
+ * @param keyConfig
+ */
+function getIdentifier(key: string, keyConfig: Record<string, undefined>) {
+  return key.startsWith('Message')
+    ? keyConfig._subscriberId ?? (keyConfig.subscriberId && keyConfig._id) ?? keyConfig.id
+    : keyConfig._id ?? keyConfig.id ?? keyConfig._subscriberId ?? keyConfig.subscriberId;
+}
+
+/**
  * Will append the identifier and environmentId, if failed to append one of them will return empty string
  * @param key
  * @param keyConfig
  */
 export function appendCredentials(key: string, keyConfig: Record<string, undefined>) {
   let credentialsResult = '';
-
-  const identifier = keyConfig._id ?? keyConfig.id ?? keyConfig._subscriberId ?? keyConfig.subscriberId;
+  const identifier = getIdentifier(key, keyConfig);
 
   if (identifier) {
     credentialsResult += ':' + identifier;
