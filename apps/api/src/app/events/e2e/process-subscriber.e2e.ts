@@ -185,7 +185,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     await notificationTemplateRepository.update(
       {
         _id: template._id,
-        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
       },
       {
         critical: true,
