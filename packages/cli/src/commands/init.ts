@@ -1,6 +1,7 @@
 import * as open from 'open';
 import { Answers } from 'inquirer';
 import * as ora from 'ora';
+import { v4 as uuidv4 } from 'uuid';
 import { IEnvironment, ICreateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
 import { prompt } from '../client';
 import {
@@ -16,7 +17,7 @@ import {
   SERVER_HOST,
   REDIRECT_ROUTE,
   API_OAUTH_URL,
-  WIDGET_DEMO_ROUTH,
+  WIDGET_DEMO_ROUTE,
   API_TRIGGER_URL,
   CLIENT_LOGIN_URL,
   getServerPort,
@@ -35,6 +36,9 @@ import {
   getEnvironmentApiKeys,
 } from '../api';
 import { ConfigService } from '../services';
+import { analytics } from '../services/analytics.service';
+
+const anonymousId = uuidv4();
 
 export enum ChannelCTATypeEnum {
   REDIRECT = 'redirect',
@@ -51,6 +55,13 @@ export async function initCommand() {
 
     const existingEnvironment = await checkExistingEnvironment(config);
     if (existingEnvironment) {
+      const user = config.getDecodedToken();
+
+      analytics.track({
+        userId: user._id,
+        event: 'Existing Environment',
+      });
+
       const { result } = await prompt(existingSessionQuestions(existingEnvironment));
 
       if (result === 'visitDashboard') {
@@ -58,6 +69,7 @@ export async function initCommand() {
 
         return;
       }
+      await analytics.flush();
       process.exit();
     }
 
@@ -80,6 +92,11 @@ async function handleOnboardingFlow(config: ConfigService) {
 
     const envAnswer = await prompt(environmentQuestions);
     if (envAnswer.env === 'self-hosted-docker') {
+      analytics.track({
+        anonymousId,
+        event: 'Self-hosted Docker',
+      });
+
       await open(GITHUB_DOCKER_URL);
 
       return;
@@ -90,6 +107,11 @@ async function handleOnboardingFlow(config: ConfigService) {
     if (regMethod.value === 'github') {
       const { accept } = await prompt(termAndPrivacyQuestions);
       if (accept === false) {
+        analytics.track({
+          anonymousId,
+          event: 'Rejected: Terms and Privacy',
+        });
+        await analytics.flush();
         process.exit();
       }
 
@@ -104,6 +126,21 @@ async function handleOnboardingFlow(config: ConfigService) {
     const applicationIdentifier = await createEnvironmentHandler(config, answers);
 
     const address = httpServer.getAddress();
+
+    const user = config.getDecodedToken();
+    analytics.identify({
+      userId: user._id,
+      traits: {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
+    });
+
+    analytics.track({
+      userId: user._id,
+      event: 'Created account successfully using Github',
+    });
 
     spinner.succeed(`Created your account successfully. 
     
@@ -211,7 +248,7 @@ function buildTemplate(notificationGroupId: string): ICreateNotificationTemplate
 }
 
 async function getDemoDashboardUrl() {
-  return `http://${SERVER_HOST}:${await getServerPort()}${WIDGET_DEMO_ROUTH}`;
+  return `http://${SERVER_HOST}:${await getServerPort()}${WIDGET_DEMO_ROUTE}`;
 }
 
 function storeDashboardData(
@@ -286,10 +323,20 @@ async function checkExistingEnvironment(config: ConfigService): Promise<IEnviron
 
 async function handleExistingSession(result: string, config: ConfigService) {
   if (result === 'visitDashboard') {
+    analytics.track({
+      userId: config.getDecodedToken()._id,
+      event: 'Opened: Dashboard for existing session',
+    });
+
     const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
 
     await open(dashboardURL);
   } else if (result === 'exit') {
+    analytics.track({
+      userId: config.getDecodedToken()._id,
+      event: 'Exited: Existing session',
+    });
+    await analytics.flush();
     process.exit();
   }
 }

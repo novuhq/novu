@@ -1,10 +1,10 @@
 import * as getPort from 'get-port';
-import exp from 'constants';
-
+import * as dotenv from 'dotenv'; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
+dotenv.config();
 // CLI Server
 export const SERVER_HOST = 'localhost';
 export const REDIRECT_ROUTE = '/cli/callback';
-export const WIDGET_DEMO_ROUTH = '/demo';
+export const WIDGET_DEMO_ROUTE = '/demo';
 export const TRIGGER_ROUTE = '/trigger';
 
 export const EMBED_PATH = process.env.NOVU_EMBED_PATH ?? 'https://embed.novu.co/embed.umd.min.js';
@@ -28,6 +28,9 @@ export const CLIENT_LOGIN_URL = process.env.NOVU_CLIENT_LOGIN || 'https://web.no
 
 // github
 export const GITHUB_DOCKER_URL = 'https://github.com/novuhq/novu/tree/main/docker';
+
+// analytics
+export const SEGMENTS_WRITE_KEY = process.env.SEGMENTS_WRITE_KEY;
 
 let SERVER_PORT;
 
