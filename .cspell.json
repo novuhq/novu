@@ -178,7 +178,9 @@
     "nosniff",
     "hookform",
     "noconflict",
-    "monokai"
+    "monokai",
+    "sparkpost",
+    "buildx"
   ],
   "flagWords": [],
   "patterns": [
