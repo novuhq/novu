@@ -65,7 +65,7 @@ if (process.env.SENTRY_DSN) {
          * Filter exceptions of type HttpException. Ignore those that
          * have status code of less than 500
          */
-        { type: HttpException, filter: (exception: HttpException) => 500 > exception.getStatus() },
+        { type: HttpException, filter: (exception: HttpException) => exception.getStatus() < 500 },
       ],
       user: ['_id', 'firstName', 'lastName', 'email', 'organizationId', 'environmentId', 'roles'],
     }),
