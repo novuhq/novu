@@ -349,9 +349,9 @@ export class SubscribersController {
   })
   async markMessageAsSeen(
     @UserSession() user: IJwtPayload,
-    @Param('messageId') messageId: string | string[],
+    @Param('messageId') messageId: string,
     @Param('subscriberId') subscriberId: string
-  ): Promise<MessageEntity[]> {
+  ): Promise<MessageEntity> {
     const messageIds = this.toArray(messageId);
 
     const command = MarkMessageAsCommand.create({
@@ -362,7 +362,7 @@ export class SubscribersController {
       mark: { [MarkEnum.SEEN]: true },
     });
 
-    return await this.markMessageAsUsecase.execute(command);
+    return (await this.markMessageAsUsecase.execute(command))[0];
   }
 
   @ExternalApiAccessible()
