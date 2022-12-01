@@ -1,4 +1,4 @@
-name: Test @novu/notification-center
+name: Test @novu/dal
 on:
   push:
     paths:
