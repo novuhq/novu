@@ -24,6 +24,7 @@ export enum CredentialsKeyEnum {
   ProjectName = 'projectName',
   ServiceAccount = 'serviceAccount',
   BaseUrl = 'baseUrl',
+  WebhookUrl = 'webhoohUrl',
 }
 
 export enum EmailProviderIdEnum {
@@ -54,6 +55,7 @@ export enum SmsProviderIdEnum {
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
+  MsTeams = 'msteams',
 }
 
 export enum PushProviderIdEnum {

@@ -92,9 +92,7 @@ export class TelnyxSmsProvider implements ISmsProvider {
       case 'delivered':
         return SmsEventStatusEnum.DELIVERED;
       case 'delivery_unconfirmed':
-        return SmsEventStatusEnum.DELIVERY_UNCONFIRMED;
-      case 'received':
-        return SmsEventStatusEnum.RECEIVED;
+        return SmsEventStatusEnum.UNDELIVERED;
     }
   }
 }

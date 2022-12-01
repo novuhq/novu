@@ -14,4 +14,7 @@ export class DigestFilterStepsCommand extends EnvironmentWithUserCommand {
 
   @IsMongoId()
   templateId: string;
+
+  @IsMongoId()
+  notificationId: string;
 }

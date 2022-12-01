@@ -91,10 +91,6 @@ export class TwilioSmsProvider implements ISmsProvider {
         return SmsEventStatusEnum.DELIVERED;
       case 'undelivered':
         return SmsEventStatusEnum.UNDELIVERED;
-      case 'receiving':
-        return SmsEventStatusEnum.RECEIVING;
-      case 'received':
-        return SmsEventStatusEnum.RECEIVED;
     }
   }
 }

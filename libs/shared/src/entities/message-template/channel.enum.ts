@@ -26,3 +26,19 @@ export enum TemplateVariableTypeEnum {
   ARRAY = 'Array',
   BOOLEAN = 'Boolean',
 }
+
+export enum ActorTypeEnum {
+  NONE = 'none',
+  USER = 'user',
+  SYSTEM_ICON = 'system_icon',
+  SYSTEM_CUSTOM = 'system_custom',
+}
+
+export enum SystemAvatarIconEnum {
+  WARNING = 'warning',
+  INFO = 'info',
+  ERROR = 'error',
+  SUCCESS = 'success',
+  UP = 'up',
+  QUESTION = 'question',
+}

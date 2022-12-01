@@ -4,7 +4,7 @@ import { INotificationBellColors, INovuTheme } from '../../store/novu-theme.cont
 import { ICommonTheme } from '../../store/novu-theme-provider.context';
 import { darkButtonStyle, lightButtonStyle } from '@novu/shared';
 
-export const defaultLightTheme: INovuTheme = {
+const defaultLightTheme: INovuTheme = {
   layout: {
     background: colors.white,
     boxShadow: shadows.medium,
@@ -16,11 +16,12 @@ export const defaultLightTheme: INovuTheme = {
     fontColor: colors.B40,
     badgeColor: colors.vertical,
     badgeTextColor: colors.white,
+    markAllAsReadButtonColor: colors.B60,
   },
   popover: { arrowColor: colors.white },
   notificationItem: {
-    seen: { background: colors.B98, fontColor: colors.B60, timeMarkFontColor: colors.B80 },
-    unseen: {
+    read: { background: colors.B98, fontColor: colors.B60, timeMarkFontColor: colors.B80 },
+    unread: {
       background: colors.white,
       fontColor: colors.B40,
       boxShadow: shadows.medium,
@@ -52,7 +53,7 @@ export const defaultLightTheme: INovuTheme = {
   loaderColor: colors.vertical,
 };
 
-export const defaultDarkTheme: INovuTheme = {
+const defaultDarkTheme: INovuTheme = {
   layout: {
     background: colors.B15,
     boxShadow: shadows.dark,
@@ -64,11 +65,12 @@ export const defaultDarkTheme: INovuTheme = {
     fontColor: colors.white,
     badgeColor: colors.vertical,
     badgeTextColor: colors.white,
+    markAllAsReadButtonColor: colors.B60,
   },
   popover: { arrowColor: colors.B15 },
   notificationItem: {
-    seen: { background: colors.B17, fontColor: colors.white, timeMarkFontColor: colors.B40 },
-    unseen: {
+    read: { background: colors.B17, fontColor: colors.white, timeMarkFontColor: colors.B40 },
+    unread: {
       background: colors.B20,
       fontColor: colors.white,
       boxShadow: shadows.dark,
@@ -100,16 +102,30 @@ export const defaultDarkTheme: INovuTheme = {
   loaderColor: colors.vertical,
 };
 
-export const defaultCommonTheme: ICommonTheme = {
+const defaultCommonTheme: ICommonTheme = {
   fontFamily: 'Lato',
 };
 
-export const defaultNotificationBellLightTheme: INotificationBellColors = {
+const defaultNotificationBellLightTheme: INotificationBellColors = {
   unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
   unseenBadgeBackgroundColor: colors.white,
 };
 
-export const defaultNotificationBellDarkTheme: INotificationBellColors = {
+const defaultNotificationBellDarkTheme: INotificationBellColors = {
   unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
   unseenBadgeBackgroundColor: colors.B15,
+};
+
+Object.freeze(defaultLightTheme);
+Object.freeze(defaultDarkTheme);
+Object.freeze(defaultCommonTheme);
+Object.freeze(defaultNotificationBellLightTheme);
+Object.freeze(defaultNotificationBellDarkTheme);
+
+export {
+  defaultLightTheme,
+  defaultDarkTheme,
+  defaultCommonTheme,
+  defaultNotificationBellLightTheme,
+  defaultNotificationBellDarkTheme,
 };
