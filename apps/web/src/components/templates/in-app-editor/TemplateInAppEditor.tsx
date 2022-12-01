@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { showNotification } from '@mantine/notifications';
 import { IFeedEntity } from '@novu/shared';
-
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Checkbox, colors, Input } from '../../../design-system';
@@ -16,6 +15,7 @@ import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
 import { VariableManager } from '../VariableManager';
 import { EnableAvatarSwitch } from './EnableAvatarSwitch';
+import { useVariablesManager } from '../../../hooks/use-variables-manager';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
@@ -35,6 +35,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   });
 
   const [showFeed, setShowFeed] = useState(true);
+  const variablesArray = useVariablesManager(index, variableContents);
 
   useEffect(() => {
     const subscription = watch((values) => {
@@ -182,7 +183,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
         </Stack>
       </Container>
       <Container>
-        <VariableManager index={index} contents={variableContents} />
+        <VariableManager index={index} variablesArray={variablesArray} />
       </Container>
     </>
   );
