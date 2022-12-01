@@ -31,7 +31,7 @@ export class ProcessSubscriber {
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
-    const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
 
     const subscriber: SubscriberEntity = await this.getSubscriber(
       {

@@ -65,7 +65,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     await session.awaitRunningJobs(newTemplate._id);
 
     const message = await messageRepository.find({
-      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
       _templateId: newTemplate._id,
       _subscriberId: subscriber._id,
       channel: ChannelTypeEnum.IN_APP,

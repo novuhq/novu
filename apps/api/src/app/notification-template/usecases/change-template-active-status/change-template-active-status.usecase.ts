@@ -14,7 +14,7 @@ export class ChangeTemplateActiveStatus {
 
   async execute(command: ChangeTemplateActiveStatusCommand): Promise<NotificationTemplateEntity> {
     const foundTemplate = await this.notificationTemplateRepository.findOne({
-      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
       _id: command.templateId,
     });
     if (!foundTemplate) {
@@ -38,7 +38,7 @@ export class ChangeTemplateActiveStatus {
       }
     );
 
-    const item = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    const item = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
     await this.createChange.execute(
       CreateChangeCommand.create({
         organizationId: command.organizationId,
