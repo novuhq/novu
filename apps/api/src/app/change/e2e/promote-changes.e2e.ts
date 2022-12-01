@@ -89,7 +89,7 @@ describe('Promote changes', () => {
     expect(prodVersion._notificationGroupId).to.eq(prodGroup._id);
   });
 
-  it('delete message', async () => {
+  it('delete message template in notification template', async () => {
     const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
@@ -98,7 +98,7 @@ describe('Promote changes', () => {
       steps: [
         {
           template: {
-            name: 'Message Name',
+            name: 'Message Template Name',
             subject: 'Test email subject',
             content: [{ type: 'text', content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,

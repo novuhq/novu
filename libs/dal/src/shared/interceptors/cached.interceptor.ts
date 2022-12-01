@@ -8,7 +8,8 @@ export function Cached(storeKeyPrefix?: string) {
     descriptor.value = async function (...args: any[]) {
       if (!isStoreConnected(this.cacheService?.getStatus())) return await originalMethod.apply(this, args);
 
-      const query = args.reduce((obj, item) => Object.assign(obj, item), {});
+      const query = buildQuery(args);
+
       const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel.modelName, query);
 
       if (!cacheKey) {
@@ -48,6 +49,17 @@ function buildKey(prefix: string, keyConfig: Record<undefined, string>): string 
 
 function getCredentialsKeys() {
   return ['id', 'subscriberId', 'environmentId', 'organizationId'].map((cred) => [cred, `_${cred}`]).flat();
+}
+
+/**
+ * typeof args[0] === 'string' - is true only on cases where the method params are not object
+ * that occurs only in method 'findById'
+ * @param args
+ */
+function buildQuery(args: any[]) {
+  return typeof args[0] === 'string'
+    ? { id: args[0], environmentId: args[1] }
+    : args.reduce((obj, item) => Object.assign(obj, item), {});
 }
 
 function appendQueryParams(cacheKey: string, keysConfig: any): string {

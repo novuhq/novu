@@ -1,7 +1,7 @@
-function validateCredentials(keyToValidate: string) {
-  const splitKeys = keyToValidate?.split(':');
+function validateCredentials(key: string, keyToValidate: string) {
+  const splitKeys = keyToValidate?.split(':').filter((possibleKey) => possibleKey?.length > 0);
 
-  return splitKeys.length === 3;
+  return key.startsWith('User') ? splitKeys.length === 1 : splitKeys.length === 2;
 }
 
 const STORE_CONNECTED = 'ready';
@@ -18,7 +18,7 @@ export function isStoreConnected(status: string | undefined) {
  */
 function getIdentifier(key: string, keyConfig: Record<string, undefined>) {
   return key.startsWith('Message')
-    ? keyConfig._subscriberId ?? (keyConfig.subscriberId && keyConfig._id) ?? keyConfig.id
+    ? keyConfig._subscriberId ?? keyConfig.subscriberId ?? keyConfig._id ?? keyConfig.id
     : keyConfig._id ?? keyConfig.id ?? keyConfig._subscriberId ?? keyConfig.subscriberId;
 }
 
@@ -41,7 +41,7 @@ export function appendCredentials(key: string, keyConfig: Record<string, undefin
     credentialsResult += ':' + environment;
   }
 
-  if (validateCredentials(credentialsResult)) {
+  if (validateCredentials(key, credentialsResult)) {
     return key + credentialsResult;
   } else {
     return '';
