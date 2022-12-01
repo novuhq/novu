@@ -28,7 +28,9 @@ export const useVariablesManager = (index: number, contents: string[]) => {
   useMemo(() => {
     try {
       setAst(parse(textContent));
-    } catch (e) {}
+    } catch (e) {
+      return;
+    }
   }, [textContent]);
 
   function gatherTextContent(template = {}) {
@@ -56,7 +58,7 @@ export const useVariablesManager = (index: number, contents: string[]) => {
         const nestedVariablesInBlock = getMustacheVariables(body.program.body).map((mustVar) => {
           return {
             ...mustVar,
-            name: body.params[0].original + '.' + mustVar.name,
+            name: `${body.params[0].original}.${mustVar.name}`,
           };
         });
 

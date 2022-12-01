@@ -120,7 +120,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
   );
 };
 
-export const VariableManager = ({ variablesArray, index, hideLabel = false }: VariableManagerProps) => {
+export function VariableManager({ variablesArray, index, hideLabel = false }: VariableManagerProps) {
   if (!variablesArray.fields.length) return null;
 
   return (
@@ -152,7 +152,7 @@ export const VariableManager = ({ variablesArray, index, hideLabel = false }: Va
       <Space h="sm" />
     </>
   );
-};
+}
 
 const VariableWrapper = styled.tr`
   margin-bottom: 10px;

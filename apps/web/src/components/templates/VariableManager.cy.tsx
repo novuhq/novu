@@ -6,12 +6,10 @@ import { TemplateFormProvider } from './TemplateFormProvider';
 import { useVariablesManager } from '../../hooks/use-variables-manager';
 
 it('should show available variables - string', function () {
-  const variablesArray = useVariablesManager(0, ['content']);
-
   mount(
     <TestWrapper>
       <TemplateFormProvider>
-        <VariableManager index={0} variablesArray={variablesArray} />
+        <VariableManagerTester />
         <FormTester content={'Hello, {{ name }}'} />
       </TemplateFormProvider>
     </TestWrapper>
@@ -23,12 +21,10 @@ it('should show available variables - string', function () {
 });
 
 it('should show available variables - array', function () {
-  const variablesArray = useVariablesManager(0, ['content']);
-
   mount(
     <TestWrapper>
       <TemplateFormProvider>
-        <VariableManager index={0} variablesArray={variablesArray} />
+        <VariableManagerTester />
         <FormTester content={'Hello, {{#each name}} {{/each}}'} />
       </TemplateFormProvider>
     </TestWrapper>
@@ -40,12 +36,10 @@ it('should show available variables - array', function () {
 });
 
 it('should show available variables including nested - array', function () {
-  const variablesArray = useVariablesManager(0, ['content']);
-
   mount(
     <TestWrapper>
       <TemplateFormProvider>
-        <VariableManager index={0} variablesArray={variablesArray} />
+        <VariableManagerTester />
         <FormTester content={'Hello, {{#each name}} {{nested_variable}} {{/each}}'} />
       </TemplateFormProvider>
     </TestWrapper>
@@ -59,12 +53,10 @@ it('should show available variables including nested - array', function () {
 });
 
 it('should show available variables - boolean', function () {
-  const variablesArray = useVariablesManager(0, ['content']);
-
   mount(
     <TestWrapper>
       <TemplateFormProvider>
-        <VariableManager index={0} variablesArray={variablesArray} />
+        <VariableManagerTester />
         <FormTester content={'Hello, {{#if name}} {{/if}}'} />
       </TemplateFormProvider>
     </TestWrapper>
@@ -76,12 +68,10 @@ it('should show available variables - boolean', function () {
 });
 
 it('should show available variables including nested - boolean', function () {
-  const variablesArray = useVariablesManager(0, ['content']);
-
   mount(
     <TestWrapper>
       <TemplateFormProvider>
-        <VariableManager index={0} variablesArray={variablesArray} />
+        <VariableManagerTester />
         <FormTester content={'Hello, {{#if name}} {{nested_variable}} {{/if}}'} />
       </TemplateFormProvider>
     </TestWrapper>
@@ -95,12 +85,10 @@ it('should show available variables including nested - boolean', function () {
 });
 
 it('should show available variables including deeply nested', function () {
-  const variablesArray = useVariablesManager(0, ['content']);
-
   mount(
     <TestWrapper>
       <TemplateFormProvider>
-        <VariableManager index={0} variablesArray={variablesArray} />
+        <VariableManagerTester />
         <FormTester
           content={
             'Hello, {{#if name}} {{nested_variable}} {{#each nested_name}} {{deeply_nested_variable}} {{/each}} {{/if}}'
@@ -122,12 +110,10 @@ it('should show available variables including deeply nested', function () {
 });
 
 it('should show reserved variables', function () {
-  const variablesArray = useVariablesManager(0, ['content']);
-
   mount(
     <TestWrapper>
       <TemplateFormProvider>
-        <VariableManager index={0} variablesArray={variablesArray} />
+        <VariableManagerTester />
         <FormTester content={'Hello, {{ subscriber }}'} />
       </TemplateFormProvider>
     </TestWrapper>
@@ -143,4 +129,10 @@ function FormTester({ content }: { content: string }) {
   setValue('steps.0.template.content', content);
 
   return <></>;
+}
+
+function VariableManagerTester() {
+  const variablesArray = useVariablesManager(0, ['content']);
+
+  return <VariableManager index={0} variablesArray={variablesArray} />;
 }
