@@ -3,6 +3,8 @@ import {
   ISendMessageSuccessResponse,
   IEmailOptions,
   IEmailProvider,
+  ICheckIntegrationResponse,
+  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import { randomUUID } from 'crypto';
 import SparkPost from 'sparkpost';
@@ -12,9 +14,16 @@ export class SparkPostEmailProvider implements IEmailProvider {
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
   private readonly client: SparkPost;
 
-  constructor(apiKey: string, eu: boolean) {
-    this.client = new SparkPost(apiKey, {
-      endpoint: eu ? 'https://api.eu.sparkpost.com:443' : undefined,
+  constructor(
+    private config: {
+      apiKey: string;
+      eu: boolean;
+      from: string;
+      senderName: string;
+    }
+  ) {
+    this.client = new SparkPost(config.apiKey, {
+      endpoint: config.eu ? 'https://api.eu.sparkpost.com:443' : undefined,
     });
   }
 
@@ -49,7 +58,7 @@ export class SparkPostEmailProvider implements IEmailProvider {
     const sent = await this.client.transmissions.send({
       recipients,
       content: {
-        from,
+        from: from || this.config.from,
         subject,
         text,
         html,
@@ -60,5 +69,31 @@ export class SparkPostEmailProvider implements IEmailProvider {
     return {
       id: sent.results.id,
     };
+  }
+
+  async checkIntegration(
+    options: IEmailOptions
+  ): Promise<ICheckIntegrationResponse> {
+    try {
+      await this.sendMessage({
+        to: 'no-reply@novu.co',
+        from: this.config.from || options.from,
+        subject: options.subject,
+        text: options.text,
+        html: options.html,
+      });
+
+      return {
+        success: true,
+        message: 'Integrated successfully!',
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error?.message,
+        code: CheckIntegrationResponseEnum.FAILED,
+      };
+    }
   }
 }
