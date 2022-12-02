@@ -10,17 +10,16 @@ class PartialNotificationTemplateEntity extends Omit(NotificationTemplateEntity,
   '_organizationId',
 ]) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialNotificationTemplateEntity & Document> &
+type EnforceIdentifierQuery = FilterQuery<PartialNotificationTemplateEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
-type EnforceIdentifierQuery = FilterQuery<PartialNotificationTemplateEntity & Document> & { _environmentId: string } & {
+type EnforceEnvironmentQuery = FilterQuery<PartialNotificationTemplateEntity & Document> & {
+  _environmentId: string;
+} & {
   _id: string;
 };
 
-export class NotificationTemplateRepository extends BaseRepository<
-  EnforceEnvironmentQuery,
-  NotificationTemplateEntity
-> {
+export class NotificationTemplateRepository extends BaseRepository<EnforceIdentifierQuery, NotificationTemplateEntity> {
   private notificationTemplate: SoftDeleteModel;
   constructor(cacheService?: ICacheService) {
     super(NotificationTemplate, NotificationTemplateEntity, cacheService);
@@ -29,7 +28,7 @@ export class NotificationTemplateRepository extends BaseRepository<
 
   @InvalidateCache()
   async update(
-    query: EnforceIdentifierQuery,
+    query: EnforceEnvironmentQuery,
     updateBody: any
   ): Promise<{
     matched: number;
@@ -39,17 +38,17 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   @InvalidateCache()
-  async create(data: EnforceEnvironmentQuery) {
+  async create(data: EnforceIdentifierQuery) {
     return super.create(data);
   }
 
   @Cached()
-  async findOne(query: EnforceIdentifierQuery, select?: ProjectionType<any>) {
+  async findOne(query: EnforceEnvironmentQuery, select?: ProjectionType<any>) {
     return super.findOne(query, select);
   }
 
   async findByTriggerIdentifier(environmentId: string, identifier: string) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: EnforceIdentifierQuery = {
       _environmentId: environmentId,
       'triggers.identifier': identifier,
     };
@@ -61,7 +60,7 @@ export class NotificationTemplateRepository extends BaseRepository<
 
   @Cached()
   async findById(id: string, environmentId: string) {
-    const requestQuery: EnforceIdentifierQuery = {
+    const requestQuery: EnforceEnvironmentQuery = {
       _id: id,
       _environmentId: environmentId,
     };
@@ -74,7 +73,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   async getList(organizationId: string, environmentId: string, skip = 0, limit = 10) {
     const totalItemsCount = await this.count({ _environmentId: environmentId });
 
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: EnforceIdentifierQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
     };
@@ -89,7 +88,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async getActiveList(organizationId: string, environmentId: string, active?: boolean) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: EnforceIdentifierQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
       active: active,
@@ -101,13 +100,13 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   @InvalidateCache()
-  async delete(query: EnforceIdentifierQuery) {
+  async delete(query: EnforceEnvironmentQuery) {
     const item = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
     if (!item) throw new DalException(`Could not find notification template with id ${query._id}`);
     await this.notificationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
   }
 
-  async findDeleted(query: EnforceEnvironmentQuery): Promise<NotificationTemplateEntity> {
+  async findDeleted(query: EnforceIdentifierQuery): Promise<NotificationTemplateEntity> {
     const res = await this.notificationTemplate.findDeleted(query);
 
     return this.mapEntity(res);

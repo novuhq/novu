@@ -10,15 +10,15 @@ import { isStoreConnected } from '../../shared/interceptors/shared-cache.interce
 
 class PartialMessageEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialMessageEntity & Document> &
+type EnforceIdentifierQuery = FilterQuery<PartialMessageEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
-type EnforceIdentifierQuery = FilterQuery<PartialMessageEntity & Document> & { _environmentId: string } & (
+type EnforceEnvironmentQuery = FilterQuery<PartialMessageEntity & Document> & { _environmentId: string } & (
     | { _id: string }
     | { _subscriberId: string }
   );
 
-export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, MessageEntity> {
+export class MessageRepository extends BaseRepository<EnforceIdentifierQuery, MessageEntity> {
   private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
   constructor(cacheService?: ICacheService) {
@@ -28,7 +28,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
 
   @InvalidateCache()
   async update(
-    query: EnforceIdentifierQuery,
+    query: EnforceEnvironmentQuery,
     updateBody: any
   ): Promise<{
     matched: number;
@@ -38,13 +38,13 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
   }
 
   @Cached()
-  async findOne(query: EnforceIdentifierQuery, select?: ProjectionType<any>) {
+  async findOne(query: EnforceEnvironmentQuery, select?: ProjectionType<any>) {
     return super.findOne(query, select);
   }
 
   @Cached()
   async find(
-    query: EnforceIdentifierQuery,
+    query: EnforceEnvironmentQuery,
     select: ProjectionType<any> = '',
     options: { limit?: number; sort?: any; skip?: number } = {}
   ) {
@@ -52,7 +52,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
   }
 
   @InvalidateCache()
-  async create(data: EnforceIdentifierQuery) {
+  async create(data: EnforceEnvironmentQuery) {
     return super.create(data);
   }
 
@@ -62,8 +62,8 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     channel: ChannelTypeEnum,
     query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
-  ): Promise<EnforceIdentifierQuery> {
-    const requestQuery: EnforceIdentifierQuery = {
+  ): Promise<EnforceEnvironmentQuery> {
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
@@ -240,7 +240,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     skip = 0,
     limit = 10
   ) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: EnforceIdentifierQuery = {
       _environmentId: environmentId,
       _subscriberId,
     };
@@ -312,11 +312,11 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
   }
 
   @InvalidateCache()
-  async delete(query: EnforceIdentifierQuery) {
+  async delete(query: EnforceEnvironmentQuery) {
     const message = await this.findOne({
       _id: query._id,
       _environmentId: query._environmentId,
-    } as EnforceIdentifierQuery);
+    } as EnforceEnvironmentQuery);
     if (!message) {
       throw new DalException(`Could not find a message with id ${query._id}`);
     }
@@ -328,7 +328,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
   }
 
   @Cached()
-  async findDeleted(query: EnforceIdentifierQuery): Promise<MessageEntity> {
+  async findDeleted(query: EnforceEnvironmentQuery): Promise<MessageEntity> {
     const res = await this.message.findDeleted(query);
 
     return this.mapEntity(res);

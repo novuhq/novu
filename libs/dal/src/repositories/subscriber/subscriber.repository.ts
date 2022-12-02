@@ -8,14 +8,14 @@ import { isStoreConnected } from '../../shared/interceptors/shared-cache.interce
 
 class PartialSubscriberEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberEntity & Document> &
+type EnforceIdentifierQuery = FilterQuery<PartialSubscriberEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
-type EnforceIdentifierQuery = FilterQuery<PartialSubscriberEntity & Document> & { _environmentId: string } & {
+type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberEntity & Document> & { _environmentId: string } & {
   _id: string;
 };
 
-export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery, SubscriberEntity> {
+export class SubscriberRepository extends BaseRepository<EnforceIdentifierQuery, SubscriberEntity> {
   private subscriber: SoftDeleteModel;
   constructor(cacheService?: ICacheService) {
     super(Subscriber, SubscriberEntity, cacheService);
@@ -24,7 +24,7 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
 
   @InvalidateCache()
   async update(
-    query: EnforceIdentifierQuery,
+    query: EnforceEnvironmentQuery,
     updateBody: any
   ): Promise<{
     matched: number;
@@ -34,12 +34,12 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
   }
 
   @InvalidateCache()
-  async create(data: EnforceEnvironmentQuery) {
+  async create(data: EnforceIdentifierQuery) {
     return super.create(data);
   }
 
   @Cached()
-  async findOne(query: EnforceIdentifierQuery, select?: ProjectionType<any>) {
+  async findOne(query: EnforceEnvironmentQuery, select?: ProjectionType<any>) {
     return super.findOne(query, select);
   }
 
@@ -47,7 +47,7 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     const subscriber = await super.findOne({
       _environmentId: environmentId,
       subscriberId,
-    } as EnforceIdentifierQuery);
+    } as EnforceEnvironmentQuery);
 
     if (!subscriber) return subscriber;
 
@@ -86,11 +86,11 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     });
   }
 
-  async delete(query: EnforceEnvironmentQuery) {
+  async delete(query: EnforceIdentifierQuery) {
     const foundSubscriber = await this.findOne({
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
-    } as EnforceIdentifierQuery);
+    } as EnforceEnvironmentQuery);
 
     if (!foundSubscriber) {
       throw new DalException(`Could not find subscriber ${query.subscriberId} to delete`);
@@ -100,7 +100,7 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
       this.cacheService.delByPattern(`Subscriber*${foundSubscriber._id}:${foundSubscriber._environmentId}`);
     }
 
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: EnforceIdentifierQuery = {
       _environmentId: foundSubscriber._environmentId,
       subscriberId: foundSubscriber.subscriberId,
     };
@@ -108,8 +108,8 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     await this.subscriber.delete(requestQuery);
   }
 
-  async findDeleted(query: EnforceEnvironmentQuery) {
-    const requestQuery: EnforceEnvironmentQuery = {
+  async findDeleted(query: EnforceIdentifierQuery) {
+    const requestQuery: EnforceIdentifierQuery = {
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
     };
