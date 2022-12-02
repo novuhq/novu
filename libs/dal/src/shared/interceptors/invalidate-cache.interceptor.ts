@@ -14,7 +14,7 @@ export function InvalidateCache(storeKeyPrefix?: string) {
         return res;
       }
 
-      const query = key === 'create' ? res : args[0];
+      const query = getQuery(key, res, args);
 
       const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel?.modelName, query);
 
@@ -24,12 +24,12 @@ export function InvalidateCache(storeKeyPrefix?: string) {
 
       try {
         this.cacheService.delByPattern(cacheKey);
-
-        return res;
       } catch (err) {
-        // Logger.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache');
-        return res;
+        // eslint-disable-next-line no-console
+        console.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);
       }
+
+      return res;
     };
   };
 }
@@ -40,4 +40,15 @@ function buildKey(prefix: string, keyConfig: Record<string, undefined>): string 
   key = `${key}*`;
 
   return appendCredentials(key, keyConfig);
+}
+
+/**
+ * on create request the _id is available after collection creation,
+ * therefore we need to build it from the storage response
+ * @param key
+ * @param res
+ * @param args
+ */
+function getQuery(key: string, res, args: any[]) {
+  return key === 'create' ? res : args[0];
 }

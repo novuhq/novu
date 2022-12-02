@@ -20,20 +20,25 @@ export function Cached(storeKeyPrefix?: string) {
         if (value) {
           return JSON.parse(value);
         }
-
-        try {
-          const response = await originalMethod.apply(this, args);
-
-          await this.cacheService.set(cacheKey, JSON.stringify(response));
-
-          return response;
-        } catch (err) {
-          // Logger.error(`An error has occured when inserting "key: ${key}", "value: ${response}"`, 'CacheInterceptor');
-          return await originalMethod.apply(this, args);
-        }
-      } catch (e) {
-        return await originalMethod.apply(this, args);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(`An error has occurred when extracting "key: ${key}`, 'CacheInterceptor', err);
       }
+
+      const response = await originalMethod.apply(this, args);
+
+      try {
+        await this.cacheService.set(cacheKey, JSON.stringify(response));
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `An error has occurred when inserting "key: ${key}", "value: ${response}"`,
+          'CacheInterceptor',
+          err
+        );
+      }
+
+      return response;
     };
   };
 }
