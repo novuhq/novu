@@ -150,38 +150,11 @@ export class MessageRepository extends BaseRepository<EnforceIdentifierQuery, Me
   }
 
   async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId: string) {
-    await this.cleanUselessKeysFromStore(environmentId, messageId);
-
     return this.update({ _environmentId: environmentId, _messageTemplateId: messageId } as MessageEntity, {
       $set: {
         _feedId: feedId,
       },
     });
-  }
-
-  private async cleanUselessKeysFromStore(environmentId: string, messageId: string) {
-    const messages = await this.find(
-      {
-        _environmentId: environmentId,
-        _messageTemplateId: messageId,
-      } as MessageEntity,
-      '_subscriberId'
-    );
-
-    const subscriberIdsToInvalidate = messages.reduce(function (results, member) {
-      results[member._subscriberId] = '';
-
-      return results;
-    }, {});
-
-    if (isStoreConnected(this.cacheService?.getStatus())) {
-      const list = Object.keys(subscriberIdsToInvalidate);
-      list.forEach((subscriberId) => {
-        this.cacheService.delByPattern(`Message*${subscriberId}:${environmentId}`);
-
-        return;
-      });
-    }
   }
 
   async updateMessageStatus(
