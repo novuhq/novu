@@ -35,14 +35,14 @@ import {
   createNotificationTemplates,
   getEnvironmentApiKeys,
 } from '../api';
-import { ConfigService } from '../services';
-import { analytics } from '../services/analytics.service';
-
-const anonymousId = uuidv4();
+import { AnalyticService, ConfigService, AnalyticsEventEnum, ANALYTICS_SOURCE } from '../services';
 
 export enum ChannelCTATypeEnum {
   REDIRECT = 'redirect',
 }
+
+const anonymousId = uuidv4();
+const analytics = new AnalyticService();
 
 export async function initCommand() {
   try {
@@ -58,8 +58,8 @@ export async function initCommand() {
       const user = config.getDecodedToken();
 
       analytics.track({
-        userId: user._id,
-        event: 'Existing Environment',
+        identity: { userId: user._id },
+        event: AnalyticsEventEnum.EXISTING_ENVIRONMENT,
       });
 
       const { result } = await prompt(existingSessionQuestions(existingEnvironment));
@@ -93,11 +93,12 @@ async function handleOnboardingFlow(config: ConfigService) {
     const envAnswer = await prompt(environmentQuestions);
     if (envAnswer.env === 'self-hosted-docker') {
       analytics.track({
-        anonymousId,
-        event: 'Self-hosted Docker',
+        identity: { anonymousId },
+        event: AnalyticsEventEnum.SELF_HOSTED_DOCKER,
       });
 
       await open(GITHUB_DOCKER_URL);
+      await analytics.flush();
 
       return;
     }
@@ -108,8 +109,8 @@ async function handleOnboardingFlow(config: ConfigService) {
       const { accept } = await prompt(termAndPrivacyQuestions);
       if (accept === false) {
         analytics.track({
-          anonymousId,
-          event: 'Rejected: Terms and Privacy',
+          identity: { anonymousId },
+          event: AnalyticsEventEnum.REJECTED_TERMS_AND_PRIVACY,
         });
         await analytics.flush();
         process.exit();
@@ -128,18 +129,16 @@ async function handleOnboardingFlow(config: ConfigService) {
     const address = httpServer.getAddress();
 
     const user = config.getDecodedToken();
-    analytics.identify({
-      userId: user._id,
-      traits: {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-      },
-    });
+    analytics.identify(user);
 
     analytics.track({
-      userId: user._id,
-      event: 'Created account successfully using Github',
+      identity: { userId: user._id },
+      event: AnalyticsEventEnum.ACCOUNT_CREATED,
+      data: {
+        properties: {
+          signUpMethod: 'GitHub',
+        },
+      },
     });
 
     spinner.succeed(`Created your account successfully. 
@@ -258,7 +257,7 @@ function storeDashboardData(
   applicationIdentifier: string
 ) {
   const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
-
+  const analyticsSource = `${ANALYTICS_SOURCE}-(UI)`;
   const tmpPayload: { key: string; value: string }[] = [
     { key: 'embedPath', value: EMBED_PATH },
     { key: 'url', value: API_TRIGGER_URL },
@@ -271,6 +270,9 @@ function storeDashboardData(
     { key: 'environmentId', value: applicationIdentifier },
     { key: 'token', value: config.getToken() },
     { key: 'dashboardURL', value: dashboardURL },
+    { key: 'skipTutorial', value: `${AnalyticsEventEnum.SKIP_TUTORIAL} - ${analyticsSource}` },
+    { key: 'copySnippet', value: `${AnalyticsEventEnum.COPY_SNIPPET} - ${analyticsSource}` },
+    { key: 'triggerButton', value: `${AnalyticsEventEnum.TRIGGER_BUTTON} - ${analyticsSource}` },
   ];
 
   config.setValue('triggerPayload', JSON.stringify(tmpPayload));
@@ -324,8 +326,8 @@ async function checkExistingEnvironment(config: ConfigService): Promise<IEnviron
 async function handleExistingSession(result: string, config: ConfigService) {
   if (result === 'visitDashboard') {
     analytics.track({
-      userId: config.getDecodedToken()._id,
-      event: 'Opened: Dashboard for existing session',
+      identity: { userId: config.getDecodedToken()._id },
+      event: AnalyticsEventEnum.OPENED_DASHBOARD_EXISTING_SESSION,
     });
 
     const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
@@ -333,8 +335,8 @@ async function handleExistingSession(result: string, config: ConfigService) {
     await open(dashboardURL);
   } else if (result === 'exit') {
     analytics.track({
-      userId: config.getDecodedToken()._id,
-      event: 'Exited: Existing session',
+      identity: { userId: config.getDecodedToken()._id },
+      event: AnalyticsEventEnum.EXIT_EXISTING_SESSION,
     });
     await analytics.flush();
     process.exit();

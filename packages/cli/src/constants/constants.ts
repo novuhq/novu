@@ -29,8 +29,9 @@ export const CLIENT_LOGIN_URL = process.env.NOVU_CLIENT_LOGIN || 'https://web.no
 // github
 export const GITHUB_DOCKER_URL = 'https://github.com/novuhq/novu/tree/main/docker';
 
-// analytics
-export const SEGMENTS_WRITE_KEY = process.env.SEGMENTS_WRITE_KEY;
+// segment analytics
+export const ANALYTICS_ENABLED = process.env.ANALYTICS_ENABLED === 'false' ? false : true;
+export const SEGMENTS_WRITE_KEY = 'tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW';
 
 let SERVER_PORT;
 
