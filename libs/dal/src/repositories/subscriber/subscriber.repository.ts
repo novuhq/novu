@@ -4,7 +4,6 @@ import { SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
 import { Cached, DalException, ICacheService, InvalidateCache } from '../../shared';
 import { Document, FilterQuery, ProjectionType } from 'mongoose';
-import { isStoreConnected } from '../../shared/interceptors/shared-cache.interceptor';
 
 class PartialSubscriberEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
 
@@ -89,7 +88,7 @@ export class SubscriberRepository extends BaseRepository<EnforceIdentifierQuery,
       throw new DalException(`Could not find subscriber ${query.subscriberId} to delete`);
     }
 
-    if (isStoreConnected(this.cacheService?.getStatus())) {
+    if (this.cacheService?.cacheEnabled()) {
       this.cacheService.delByPattern(`Subscriber*${foundSubscriber._id}:${foundSubscriber._environmentId}`);
     }
 

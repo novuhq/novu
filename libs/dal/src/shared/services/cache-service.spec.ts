@@ -70,6 +70,9 @@ export const CacheService = {
       getStatus() {
         return 'ready';
       },
+      cacheEnabled() {
+        return true;
+      },
     };
   },
 };

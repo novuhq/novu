@@ -4,12 +4,6 @@ function validateCredentials(keyToValidate: string) {
   return splitKeys.length === 3;
 }
 
-const STORE_CONNECTED = 'ready';
-
-export function isStoreConnected(status: string | undefined) {
-  return status === STORE_CONNECTED;
-}
-
 /**
  * The data related to the messages stored by the subscriberId
  * therefore in order to keep the stored data fresh we need to build the key with subscriberId first.

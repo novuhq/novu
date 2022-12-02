@@ -6,7 +6,6 @@ import { MessageEntity } from './message.entity';
 import { Message } from './message.schema';
 import { FeedRepository } from '../feed';
 import { DalException, ICacheService, Cached, InvalidateCache } from '../../shared';
-import { isStoreConnected } from '../../shared/interceptors/shared-cache.interceptor';
 
 class PartialMessageEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
 
@@ -294,7 +293,7 @@ export class MessageRepository extends BaseRepository<EnforceIdentifierQuery, Me
       throw new DalException(`Could not find a message with id ${query._id}`);
     }
 
-    if (isStoreConnected(this.cacheService?.getStatus())) {
+    if (this.cacheService?.cacheEnabled()) {
       this.cacheService.delByPattern(`Message*${message._subscriberId}:${message._environmentId}`);
     }
     await this.message.delete({ _id: message._id, _environmentId: message._environmentId });

@@ -1,5 +1,7 @@
 import Redis from 'ioredis';
 
+const STORE_CONNECTED = 'ready';
+
 export interface ICacheService {
   set(key: string, value: string, options?: CachingConfig);
   get(key: string);
@@ -7,6 +9,7 @@ export interface ICacheService {
   delByPattern(pattern: string);
   keys(pattern?: string);
   getStatus();
+  cacheEnabled();
 }
 
 export type CachingConfig = {
@@ -45,6 +48,10 @@ export class CacheService implements ICacheService {
 
   public getStatus() {
     return this.client?.status;
+  }
+
+  public cacheEnabled() {
+    return this.client?.status === STORE_CONNECTED;
   }
 
   public async set(key: string, value: string, options?: CachingConfig) {

@@ -1,4 +1,4 @@
-import { appendCredentials, isStoreConnected } from './shared-cache.interceptor';
+import { appendCredentials } from './shared-cache.interceptor';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function InvalidateCache(storeKeyPrefix?: string) {
@@ -6,7 +6,7 @@ export function InvalidateCache(storeKeyPrefix?: string) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      if (!isStoreConnected(this.cacheService?.getStatus())) return await originalMethod.apply(this, args);
+      if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
 
       const res = await originalMethod.apply(this, args);
 
