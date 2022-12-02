@@ -1,0 +1,308 @@
+name: Canary - Deploy Next Branch
+on:
+  ## Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  ## Set up a schedule for the workflow to run
+  schedule:
+    - cron: '0 2 * * *' # run at 0200 UTC
+
+jobs:
+  test_core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: rm -rf build
+
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 7.5.0
+          run_install: true
+
+      - name: Test
+        working-directory: 'packages/core'
+        run: pnpm test
+
+  test_api:
+    uses: ./.github/workflows/reusable-api-e2e.yaml
+
+  test_docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: rm -rf build
+
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 7.5.0
+          run_install: true
+
+      - uses: mansagroup/nrwl-nx-action@v2
+        with:
+          targets: lint
+          projects: '@novu/docs'
+          nxCloud: true
+
+      - run: pnpm build
+
+  test_embed:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      - name: Setup kernel for react native, increase watchers
+        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16.15.1'
+
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 7.5.0
+          run_install: true
+
+      # Runs a single command using the runners shell
+      - name: Build
+        run: pnpm build:embed
+
+  test_notifications_center:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: rm -rf build
+
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 7.5.0
+          run_install: true
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run tests
+        run: |
+          cd packages/notification-center && pnpm test
+
+  test_providers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: rm -rf build
+
+      - name: Cache pnpm modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-
+      - uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 7.5.0
+          run_install: true
+
+      - uses: mansagroup/nrwl-nx-action@v2
+        with:
+          targets: lint
+          all: true
+
+      - run: pnpm build
+
+      - name: Test
+        run: pnpm test:providers
+
+  test_web:
+    uses: ./.github/workflows/reusable-web-e2e.yml
+    secrets:
+      cypress_key: ${{secrets.CYPRESS_WEB_KEY}}
+
+  test_webhook:
+    uses: ./.github/workflows/reusable-webhook-e2e.yml
+
+  test_widget:
+    uses: ./.github/workflows/reusable-widget-e2e.yml
+    secrets:
+      cypress_key: ${{ secrets.CYPRESS_WIDGET_KEY }}
+
+  publish:
+    name: Publish Nightly
+    runs-on: ubuntu-latest
+    ## This job runs only if the previous jobs were successful and the branch is next
+    needs:
+      - test_core
+      - test_api
+      - test_docs
+      - test_embed
+      - test_notifications_center
+      - test_providers
+      - test_web
+      - test_widget
+
+    ## Just another check to make sure we are on the next branch only
+    if: github.ref == 'refs/heads/next'
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: next
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16.17.0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2.0.1
+        with:
+          version: 7.5.0
+          run_install: false
+
+      ##! Will need to make this script
+      - name: Create Canary patch version
+        run: npm run release:canary 
+
+      - name: Update lock files
+        run: pnpm install
+
+      ##! Commit the changes, these files can be filtered down, just adding 'git add .' for now
+      - name: Commit changes
+        run: |
+          git config --local user.email "<>"
+          git config --local user.name "GitHub Actions"
+          git add .
+          git commit -m "chore: Update lock files for canary release"
+
+      - name: Push new version to next branch
+        run: git push origin next --tags
+
+      - name: Publish to npm
+        run: |
+          npm config set //registry.npmjs.org/:_authToken ${{ secrets.NPM_TOKEN }}
+          npm publish --tag canary
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to GitHub Packages
+        run: |
+          npm config set //npm.pkg.github.com/:_authToken ${{ secrets.GITHUB_TOKEN }}
+          npm publish --tag canary
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy_nightly_images:
+    name: Deploy nightly images
+    runs-on: ubuntu-latest
+    needs:
+      - publish
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup kernel for react native, increase watchers
+        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+      - name: deploy web
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: novu/web
+          IMAGE_TAG: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
+          docker buildx build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/web/Dockerfile .
+          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:nightly
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:nightly
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+      
+      - name: deploy api
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: novu/api
+          IMAGE_TAG: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
+          docker buildx build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/api/Dockerfile .
+          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:nightly
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:nightly
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+      
+      - name: deploy webhook
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: novu/webhook
+          IMAGE_TAG: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
+          docker buildx build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/webhook/Dockerfile .
+          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:nightly
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:nightly
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+      
+      - name: deploy ws
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: novu/ws
+          IMAGE_TAG: ${{ github.sha }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
+          docker buildx build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/ws/Dockerfile .
+          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:nightly
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:nightly
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
