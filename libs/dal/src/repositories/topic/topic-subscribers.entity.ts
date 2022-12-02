@@ -1,6 +1,4 @@
-import { Types } from 'mongoose';
-
-import { EnvironmentId, OrganizationId, TopicId, UserId } from './topic.entity';
+import { EnvironmentId, OrganizationId, TopicId, UserId } from './types';
 
 import { SubscriberId } from '../subscriber/subscriber.entity';
 
