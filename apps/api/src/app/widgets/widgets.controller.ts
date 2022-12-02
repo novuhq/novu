@@ -148,8 +148,8 @@ export class WidgetsController {
   @Post('/messages/:messageId/seen')
   async markMessageAsSeen(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Param('messageId') messageId: string | string[]
-  ): Promise<MessageEntity[]> {
+    @Param('messageId') messageId: string
+  ): Promise<MessageEntity> {
     const messageIds = this.toArray(messageId);
 
     const command = MarkMessageAsCommand.create({
@@ -160,7 +160,7 @@ export class WidgetsController {
       mark: { [MarkEnum.SEEN]: true },
     });
 
-    return await this.markMessageAsUsecase.execute(command);
+    return (await this.markMessageAsUsecase.execute(command))[0];
   }
 
   @ApiOperation({
