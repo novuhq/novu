@@ -1,5 +1,4 @@
 import { Text as MantineText, MantineColor, useMantineTheme } from '@mantine/core';
-
 import { colors } from '../../config';
 import { SpacingProps } from '../../shared/spacing.props';
 

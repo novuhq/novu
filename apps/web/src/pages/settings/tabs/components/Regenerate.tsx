@@ -1,10 +1,10 @@
-import { Button, Text } from '../../../../design-system';
 import { useState } from 'react';
 import styled from '@emotion/styled';
 import { useMutation } from 'react-query';
-import { regenerateApiKeys } from '../../../../api/environment';
-import { ConfirmRegenerationModal } from './ConfirmRegenerationModal';
 import { showNotification } from '@mantine/notifications';
+import { regenerateApiKeys } from '../../../../api/environment';
+import { Button, Text } from '../../../../design-system';
+import { ConfirmRegenerationModal } from './ConfirmRegenerationModal';
 
 export const Regenerate = ({ fetchApiKeys }: { fetchApiKeys: () => void }) => {
   const [isModalOpened, setModalIsOpened] = useState(false);

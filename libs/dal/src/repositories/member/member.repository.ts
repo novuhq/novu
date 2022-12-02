@@ -1,8 +1,8 @@
 import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
-import { MemberEntity } from './member.entity';
-import { BaseRepository, Omit } from '../base-repository';
-import { Member } from './member.schema';
 import { Document, FilterQuery } from 'mongoose';
+import { BaseRepository, Omit } from '../base-repository';
+import { MemberEntity } from './member.entity';
+import { Member } from './member.schema';
 
 export interface IAddMemberData {
   _userId?: string;

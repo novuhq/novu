@@ -6,7 +6,6 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-
 import { GetNotificationTemplateCommand } from '../get-notification-template/get-notification-template.command';
 
 @Injectable()

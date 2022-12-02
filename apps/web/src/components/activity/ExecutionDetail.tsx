@@ -1,12 +1,10 @@
 import { Container, Grid, useMantineTheme } from '@mantine/core';
 import { format, parseISO } from 'date-fns';
 import styled from '@emotion/styled';
-
-import { ExecutionDetailShowRaw } from './ExecutionDetailShowRaw';
-import { getColorByStatus, getLogoByType, getLogoByStatus } from './helpers';
-
 import { colors, Text } from '../../design-system';
 import { When } from '../utils/When';
+import { ExecutionDetailShowRaw } from './ExecutionDetailShowRaw';
+import { getColorByStatus, getLogoByType, getLogoByStatus } from './helpers';
 
 const ExecutionDetailStatusWrapper = styled(Container)`
   padding: 2px;

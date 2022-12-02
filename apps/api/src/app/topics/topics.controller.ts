@@ -1,15 +1,13 @@
 import { Body, Controller, Inject, Post, UseGuards } from '@nestjs/common';
 import { ApiExcludeController, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
-
-import { CreateTopicRequestDto, CreateTopicResponseDto } from './dtos/create-topic.dto';
-import { CreateTopicCommand, CreateTopicUseCase } from './use-cases';
-
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
+import { CreateTopicRequestDto, CreateTopicResponseDto } from './dtos/create-topic.dto';
+import { CreateTopicCommand, CreateTopicUseCase } from './use-cases';
 
 @Controller('/topics')
 @ApiTags('Topics')

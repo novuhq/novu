@@ -1,7 +1,7 @@
 import { useQuery } from 'react-query';
+import { LoadingOverlay, useMantineTheme } from '@mantine/core';
 import { getActivityList } from '../../api/activity';
 import { ExecutionDetailsModal } from '../activity/ExecutionDetailsModal';
-import { LoadingOverlay, useMantineTheme } from '@mantine/core';
 import { colors } from '../../design-system';
 
 interface Props {

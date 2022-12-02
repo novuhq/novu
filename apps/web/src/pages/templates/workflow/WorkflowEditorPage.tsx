@@ -7,17 +7,17 @@ import { Button, colors, DragButton, Text, Title } from '../../../design-system'
 import { Close } from '../../../design-system/icons/actions/Close';
 import { channels, getChannel, NodeTypeEnum } from '../shared/channels';
 import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
-import { StepActiveSwitch } from './StepActiveSwitch';
 import { useEnvController } from '../../../store/use-env-controller';
 import { When } from '../../../components/utils/When';
 import { PlusCircle, Trash } from '../../../design-system/icons';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ActivePageEnum } from '../editor/TemplateEditorPage';
-import { DigestMetadata } from './DigestMetadata';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
-import { DelayMetadata } from './DelayMetadata';
 import { FilterModal } from '../filter/FilterModal';
 import { Filters } from '../filter/Filters';
+import { DelayMetadata } from './DelayMetadata';
+import { DigestMetadata } from './DigestMetadata';
+import { StepActiveSwitch } from './StepActiveSwitch';
 import { ShouldStopOnFailSwitch } from './ShouldStopOnFailSwitch';
 
 const capitalize = (text: string) => {

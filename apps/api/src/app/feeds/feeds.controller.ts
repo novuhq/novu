@@ -10,9 +10,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { CreateFeed } from './usecases/create-feed/create-feed.usecase';
 import { CreateFeedCommand } from './usecases/create-feed/create-feed.command';
 import { CreateFeedRequestDto } from './dto/create-feed-request.dto';
@@ -20,9 +22,7 @@ import { GetFeeds } from './usecases/get-feeds/get-feeds.usecase';
 import { GetFeedsCommand } from './usecases/get-feeds/get-feeds.command';
 import { DeleteFeed } from './usecases/delete-feed/delete-feed.usecase';
 import { DeleteFeedCommand } from './usecases/delete-feed/delete-feed.command';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FeedResponseDto } from './dto/feed-response.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/feeds')
 @UseInterceptors(ClassSerializerInterceptor)

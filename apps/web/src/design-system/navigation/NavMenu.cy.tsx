@@ -1,6 +1,6 @@
-import { NavMenu } from './NavMenu';
 import { MemoryRouter as Router } from 'react-router-dom';
 import { TestWrapper } from '../../testing';
+import { NavMenu } from './NavMenu';
 
 describe('NavMenu', () => {
   it('should have active class when clicked menu item', () => {

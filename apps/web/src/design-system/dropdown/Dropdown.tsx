@@ -1,8 +1,7 @@
 import React from 'react';
 import { Menu, MenuProps } from '@mantine/core';
-
-import useStyles from './Dropdown.styles';
 import { shadows } from '../config';
+import useStyles from './Dropdown.styles';
 
 interface IDropdownProps
   extends Pick<MenuProps, 'opened' | 'offset' | 'position' | 'onOpen' | 'onClose' | 'withinPortal'> {

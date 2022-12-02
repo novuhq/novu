@@ -1,6 +1,5 @@
-import { EnvironmentId, OrganizationId, TopicId, UserId } from './types';
-
 import { SubscriberId } from '../subscriber/subscriber.entity';
+import { EnvironmentId, OrganizationId, TopicId, UserId } from './types';
 
 export class TopicSubscribersEntity {
   _environmentId: EnvironmentId;

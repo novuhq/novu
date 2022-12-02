@@ -3,14 +3,6 @@ import { Answers } from 'inquirer';
 import * as ora from 'ora';
 import { IEnvironment, ICreateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
 import { prompt } from '../client';
-import {
-  environmentQuestions,
-  existingSessionQuestions,
-  introQuestions,
-  registerMethodQuestions,
-  showWelcomeScreen,
-  termAndPrivacyQuestions,
-} from './init.consts';
 import { HttpServer } from '../server';
 import {
   SERVER_HOST,
@@ -35,6 +27,14 @@ import {
   getEnvironmentApiKeys,
 } from '../api';
 import { ConfigService } from '../services';
+import {
+  environmentQuestions,
+  existingSessionQuestions,
+  introQuestions,
+  registerMethodQuestions,
+  showWelcomeScreen,
+  termAndPrivacyQuestions,
+} from './init.consts';
 
 export enum ChannelCTATypeEnum {
   REDIRECT = 'redirect',

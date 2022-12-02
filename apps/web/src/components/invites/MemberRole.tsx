@@ -1,6 +1,5 @@
 import { MemberRoleEnum } from '@novu/shared';
 import styled from '@emotion/styled';
-
 import { Dropdown, Tag } from '../../design-system';
 
 export function MemberRole({ member, onChangeMemberRole, isEnableMemberActions }) {

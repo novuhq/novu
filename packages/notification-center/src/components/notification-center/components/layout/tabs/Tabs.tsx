@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs as MantineTabs, TabsValue } from '@mantine/core';
-import useStyles from './Tabs.styles';
 import { useNovuTheme } from '../../../../../hooks';
+import useStyles from './Tabs.styles';
 
 interface ITabsProps {
   children: React.ReactNode;

@@ -1,8 +1,8 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
-import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { JobEntity } from '@novu/dal';
+import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export enum DetailEnum {
   CHAT_WEBHOOK_URL_MISSING = 'Webhook URL for the chat channel is missing',

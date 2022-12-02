@@ -8,7 +8,6 @@ import {
   CheckIntegrationResponseEnum,
   IEmailEventBody,
 } from '@novu/stateless';
-
 import { MailService } from '@sendgrid/mail';
 
 export class SendgridEmailProvider implements IEmailProvider {

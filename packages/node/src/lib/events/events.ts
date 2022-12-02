@@ -1,10 +1,10 @@
 // axios must be imported because it is used with http
 import axios from 'axios';
+import { WithHttp } from '../novu.interface';
 import {
   IBroadcastPayloadOptions,
   ITriggerPayloadOptions,
 } from './events.interface';
-import { WithHttp } from '../novu.interface';
 
 export class Events extends WithHttp {
   async trigger(eventId: string, data: ITriggerPayloadOptions) {

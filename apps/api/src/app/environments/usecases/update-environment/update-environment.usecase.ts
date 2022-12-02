@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
-
 import { UpdateEnvironmentCommand } from './update-environment.command';
 
 @Injectable()

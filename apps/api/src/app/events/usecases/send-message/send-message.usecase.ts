@@ -5,14 +5,6 @@ import {
   IPreferenceChannels,
   StepTypeEnum,
 } from '@novu/shared';
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageEmail } from './send-message-email.usecase';
-import { SendMessageSms } from './send-message-sms.usecase';
-import { SendMessageInApp } from './send-message-in-app.usecase';
-import { SendMessageChat } from './send-message-chat.usecase';
-import { SendMessagePush } from './send-message-push.usecase';
-import { Digest } from './digest/digest.usecase';
-import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import {
   JobEntity,
   SubscriberRepository,
@@ -20,8 +12,8 @@ import {
   JobRepository,
   JobStatusEnum,
 } from '@novu/dal';
+import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { SendMessageDelay } from './send-message-delay.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
@@ -30,6 +22,14 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
+import { SendMessageCommand } from './send-message.command';
+import { SendMessageEmail } from './send-message-email.usecase';
+import { SendMessageSms } from './send-message-sms.usecase';
+import { SendMessageInApp } from './send-message-in-app.usecase';
+import { SendMessageChat } from './send-message-chat.usecase';
+import { SendMessagePush } from './send-message-push.usecase';
+import { Digest } from './digest/digest.usecase';
+import { SendMessageDelay } from './send-message-delay.usecase';
 
 @Injectable()
 export class SendMessage {

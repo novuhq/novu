@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Group, Code, ActionIcon, Text, Grid } from '@mantine/core';
-import * as allIcons from '.';
 import { Input } from '../input/Input';
+import * as allIcons from '.';
 
 export default {
   title: 'Icons/Icons',

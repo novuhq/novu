@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
-import { UpdateMessageActionsCommand } from './update-message-actions.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { UpdateMessageActionsCommand } from './update-message-actions.command';
 
 @Injectable()
 export class UpdateMessageActions {

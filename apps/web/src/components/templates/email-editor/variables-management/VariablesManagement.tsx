@@ -1,11 +1,11 @@
-import { colors, Text, Tooltip } from '../../../../design-system';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { SystemVariablesWithTypes } from '@novu/shared';
+import { UnstyledButton, useMantineTheme } from '@mantine/core';
+import { colors, Text, Tooltip } from '../../../../design-system';
+import { EditGradient } from '../../../../design-system/icons/gradient/EditGradient';
 import { VarItem } from './VarItem';
 import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
-import { UnstyledButton, useMantineTheme } from '@mantine/core';
-import { EditGradient } from '../../../../design-system/icons/gradient/EditGradient';
 
 export const VariablesManagement = ({ index, openVariablesModal }) => {
   const { control } = useFormContext();

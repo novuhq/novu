@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useApi } from '../hooks';
 import { ButtonTypeEnum, IMessage, MessageActionStatusEnum } from '@novu/shared';
-import { NotificationsContext } from './notifications.context';
+import { useApi } from '../hooks';
 import { useFeed } from '../hooks/use-feed.hook';
+import { NotificationsContext } from './notifications.context';
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { api } = useApi();

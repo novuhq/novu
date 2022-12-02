@@ -1,8 +1,8 @@
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { Document, FilterQuery } from 'mongoose';
 import { BaseRepository, Omit } from '../base-repository';
 import { ChangeEntity } from './change.entity';
 import { Change } from './change.schema';
-import { Document, FilterQuery } from 'mongoose';
 
 class PartialIntegrationEntity extends Omit(ChangeEntity, ['_environmentId', '_organizationId']) {}
 

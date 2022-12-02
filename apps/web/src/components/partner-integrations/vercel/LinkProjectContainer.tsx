@@ -9,12 +9,12 @@ import {
   updateVercelIntegration,
 } from '../../../api/vercel-integration';
 import { useVercelParams } from '../../../hooks/use-vercelParams';
-import { LinkMoreProjectRow } from './LinkMoreProjectRow';
-import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '../../../design-system';
 import { useAuthController } from '../../../store/use-auth-controller';
 import VercelSetupLoader from '../../auth/VercelSetupLoader';
 import { errorMessage, successMessage } from '../../../utils/notifications';
+import { ProjectRow } from './ProjectRow';
+import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 
 export type ProjectLinkFormValues = {
   projectLinkState: {

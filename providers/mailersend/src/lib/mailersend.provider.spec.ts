@@ -1,6 +1,6 @@
-import { MailersendEmailProvider } from './mailersend.provider';
 import MailerSend, { Attachment, Recipient } from 'mailersend';
 import { CheckIntegrationResponseEnum } from '@novu/stateless';
+import { MailersendEmailProvider } from './mailersend.provider';
 
 const mockConfig = {
   apiKey: 'SG.1234',

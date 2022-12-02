@@ -1,11 +1,9 @@
 import { Injectable, Module } from '@nestjs/common';
 import { ExecutionDetailsEntity, ExecutionDetailsRepository, MessageEntity } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-
-import { CreateExecutionDetailsCommand, WebhookCommand } from './create-execution-details.command';
-
-import { IWebhookResult } from '../../dtos/webhooks-response.dto';
 import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
+import { IWebhookResult } from '../../dtos/webhooks-response.dto';
+import { CreateExecutionDetailsCommand, WebhookCommand } from './create-execution-details.command';
 
 @Injectable()
 export class CreateExecutionDetails {

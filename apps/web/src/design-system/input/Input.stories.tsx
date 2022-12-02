@@ -1,7 +1,7 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import { Input } from './Input';
 import { Copy } from '../icons';
+import { Input } from './Input';
 
 export default {
   title: 'Inputs/Input',

@@ -1,3 +1,5 @@
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import React from 'react';
 import {
   BellGradient,
   ChatGradient,
@@ -6,9 +8,7 @@ import {
   SmsGradient,
   TimerGradient,
 } from '../../../design-system/icons';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { DigestGradient } from '../../../design-system/icons/general/DigestGradient';
-import React from 'react';
 
 export enum NodeTypeEnum {
   CHANNEL = 'channel',

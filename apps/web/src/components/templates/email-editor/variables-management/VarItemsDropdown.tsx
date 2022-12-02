@@ -2,8 +2,8 @@ import { useState } from 'react';
 import { Collapse, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { ChevronUp } from '../../../../design-system/icons';
 import { ChevronDown } from '../../../../design-system/icons';
-import { VarItem } from './VarItem';
 import { colors } from '../../../../design-system';
+import { VarItem } from './VarItem';
 
 export const VarItemsDropdown = ({ name, type }) => {
   const [open, setOpen] = useState(false);

@@ -1,9 +1,9 @@
 import { IUserEntity, IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '@novu/shared';
 import { useMantineColorScheme } from '@mantine/core';
 import React from 'react';
+import { NotificationBell, NovuProvider, PopoverNotificationCenter, useNotifications } from '@novu/notification-center';
 import { API_ROOT, WS_URL } from '../../config';
 import { useEnvController } from '../../store/use-env-controller';
-import { NotificationBell, NovuProvider, PopoverNotificationCenter, useNotifications } from '@novu/notification-center';
 
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {
   const { environment } = useEnvController();

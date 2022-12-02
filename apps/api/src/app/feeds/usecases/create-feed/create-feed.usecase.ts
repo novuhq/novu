@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { FeedRepository, FeedEntity } from '@novu/dal';
-import { CreateFeedCommand } from './create-feed.command';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { CreateFeedCommand } from './create-feed.command';
 
 @Injectable()
 export class CreateFeed {

@@ -1,7 +1,7 @@
-import { TestWrapper } from '../../../testing';
-import { ProviderCard } from './ProviderCard';
 import { ChannelTypeEnum, CredentialsKeyEnum } from '@novu/shared';
 import { ColorSchemeProvider } from '@mantine/core';
+import { TestWrapper } from '../../../testing';
+import { ProviderCard } from './ProviderCard';
 
 const providerCardTestId = 'integration-provider-card';
 

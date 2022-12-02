@@ -1,11 +1,9 @@
 import { AuthProviderEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
-
+import { BaseRepository, Omit } from '../base-repository';
 import { TopicEntity } from './topic.entity';
 import { Topic } from './topic.schema';
 import { EnvironmentId, OrganizationId, TopicKey } from './types';
-
-import { BaseRepository, Omit } from '../base-repository';
 
 class PartialIntegrationEntity extends Omit(TopicEntity, ['_environmentId', '_organizationId']) {}
 

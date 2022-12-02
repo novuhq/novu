@@ -1,5 +1,4 @@
 import { SNSClient } from '@aws-sdk/client-sns';
-
 import { SNSSmsProvider } from './sns.provider';
 
 test('should trigger sns library correctly', async () => {

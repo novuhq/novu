@@ -8,10 +8,10 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Select, Input } from '../../design-system';
+import { ExecutionDetailsModal } from '../../components/activity/ExecutionDetailsModal';
 import { ActivityStatistics } from './components/ActivityStatistics';
 import { ActivityGraph } from './components/ActivityGraph';
 import { ActivityList } from './components/ActivityList';
-import { ExecutionDetailsModal } from '../../components/activity/ExecutionDetailsModal';
 
 interface IFiltersForm {
   channels?: ChannelTypeEnum[];

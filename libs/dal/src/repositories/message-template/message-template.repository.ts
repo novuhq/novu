@@ -1,7 +1,7 @@
+import { Document, FilterQuery } from 'mongoose';
 import { BaseRepository, Omit } from '../base-repository';
 import { MessageTemplate } from './message-template.schema';
 import { MessageTemplateEntity } from './message-template.entity';
-import { Document, FilterQuery } from 'mongoose';
 
 class PartialIntegrationEntity extends Omit(MessageTemplateEntity, ['_environmentId', '_organizationId']) {}
 

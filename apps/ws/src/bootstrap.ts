@@ -1,9 +1,10 @@
+// Import on config should be top level because of the env variables
+// eslint-disable-next-line import/order
 import './config';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
-import { RedisIoAdapter } from './shared/framework/redis.adapter';
 import { version } from '../package.json';
-
+import { RedisIoAdapter } from './shared/framework/redis.adapter';
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
 

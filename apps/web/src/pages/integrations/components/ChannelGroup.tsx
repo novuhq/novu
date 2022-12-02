@@ -1,8 +1,8 @@
 import React from 'react';
 import { Grid } from '@mantine/core';
-import { ProviderCard } from './ProviderCard';
 import { Title } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { ProviderCard } from './ProviderCard';
 
 export function ChannelGroup({
   title,

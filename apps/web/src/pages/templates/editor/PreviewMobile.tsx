@@ -1,10 +1,10 @@
 import { createStyles, Group } from '@mantine/core';
 import { format } from 'date-fns';
 import Frame from 'react-frame-component';
+import { ErrorBoundary } from 'react-error-boundary';
 import { colors } from '../../../design-system';
 import { PreviewDateIcon } from './PreviewDateIcon';
 import { PreviewUserIcon } from './PreviewUserIcon';
-import { ErrorBoundary } from 'react-error-boundary';
 import { Mobile } from './Mobile';
 
 const useStyles = createStyles((theme) => ({

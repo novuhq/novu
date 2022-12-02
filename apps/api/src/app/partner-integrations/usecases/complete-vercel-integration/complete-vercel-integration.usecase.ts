@@ -2,9 +2,9 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { EnvironmentRepository, EnvironmentEntity, OrganizationRepository } from '@novu/dal';
-import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
 import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
 
 interface ISetEnvironment {
   token: string;

@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { SharedModule } from '../shared/shared.module';
+import { AuthModule } from '../auth/auth.module';
 import { InvitesController } from './invites.controller';
 import { USE_CASES } from './usecases';
-import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [SharedModule, AuthModule],

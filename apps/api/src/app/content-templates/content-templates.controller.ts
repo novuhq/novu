@@ -1,9 +1,9 @@
 import { Body, Controller, Post } from '@nestjs/common';
+import { IEmailBlock, IJwtPayload, MessageTemplateContentType } from '@novu/shared';
+import { ApiExcludeController } from '@nestjs/swagger';
+import { UserSession } from '../shared/framework/user.decorator';
 import { PreviewEmail } from './usecases/parse-preview/preview-email.usecase';
 import { PreviewEmailCommand } from './usecases/parse-preview/preview-email.command';
-import { IEmailBlock, IJwtPayload, MessageTemplateContentType } from '@novu/shared';
-import { UserSession } from '../shared/framework/user.decorator';
-import { ApiExcludeController } from '@nestjs/swagger';
 
 @Controller('/content-templates')
 @ApiExcludeController()

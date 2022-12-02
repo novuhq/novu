@@ -1,6 +1,6 @@
-import { ActivityStatistics } from './ActivityStatistics';
-import { TestWrapper } from '../../../testing';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { TestWrapper } from '../../../testing';
+import { ActivityStatistics } from './ActivityStatistics';
 
 describe('Activity Statistics Component Test', () => {
   const activityStatisticsComponentSelector = '[data-test-id="activity-stats-weekly-sent"]';

@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum, DigestUnitEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { WorkflowQueueService } from '../../services/workflow.queue.service';
-import { AddDelayJob } from './add-delay-job.usecase';
-import { AddDigestJob } from './add-digest-job.usecase';
-import { AddJobCommand } from './add-job.command';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { AddDelayJob } from './add-delay-job.usecase';
+import { AddDigestJob } from './add-digest-job.usecase';
+import { AddJobCommand } from './add-job.command';
 
 @Injectable()
 export class AddJob {

@@ -3,14 +3,12 @@ import { createStyles, CSSObject, Grid, MantineTheme, Text, UnstyledButton, useM
 import { JobStatusEnum } from '@novu/shared';
 import { format } from 'date-fns';
 import styled from '@emotion/styled';
-
-import { ActivityStep } from './ActivityStep';
-import { DigestedStep } from './DigestedStep';
-
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
 import { useNotificationStatus } from '../hooks/useNotificationStatus';
+import { ActivityStep } from './ActivityStep';
+import { DigestedStep } from './DigestedStep';
 
 const JOB_LENGTH_UPPER_THRESHOLD = 3;
 

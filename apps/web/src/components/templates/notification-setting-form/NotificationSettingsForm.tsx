@@ -4,7 +4,6 @@ import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { Controller, useFormContext } from 'react-hook-form';
 import { INotificationTrigger } from '@novu/shared';
-
 import { getNotificationGroups } from '../../../api/notifications';
 import { api } from '../../../api/api.client';
 import { Input, Select, Tooltip } from '../../../design-system';

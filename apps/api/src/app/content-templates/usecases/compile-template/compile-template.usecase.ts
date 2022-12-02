@@ -1,7 +1,7 @@
+import * as fs from 'fs';
 import { Injectable } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
 import { format } from 'date-fns';
-import * as fs from 'fs';
 import { HandlebarHelpersEnum } from '@novu/shared';
 import { CompileTemplateCommand } from './compile-template.command';
 

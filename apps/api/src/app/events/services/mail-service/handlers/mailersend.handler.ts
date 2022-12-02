@@ -1,7 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
 import { MailersendEmailProvider } from '@novu/mailersend';
-
 import { BaseHandler } from './base.handler';
 
 export class MailerSendHandler extends BaseHandler {

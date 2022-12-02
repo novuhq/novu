@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs as MantineTabs } from '@mantine/core';
 import styled from 'styled-components';
-import { NotificationsListTab } from './NotificationsListTab';
-import { UnseenBadge } from './UnseenBadge';
-import { Tabs } from './layout/tabs/Tabs';
 import { useApi, useNotificationCenter, useNotifications, useUnseenCount } from '../../../hooks';
 import { useFeed } from '../../../hooks/use-feed.hook';
 import { IStore } from '../../../shared/interfaces';
+import { NotificationsListTab } from './NotificationsListTab';
+import { UnseenBadge } from './UnseenBadge';
+import { Tabs } from './layout/tabs/Tabs';
 
 export function FeedsTabs() {
   const { tabs, onTabClick } = useNotificationCenter();

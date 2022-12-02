@@ -3,14 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useMantineTheme, Group, Container, Card } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import { IEmailBlock } from '@novu/shared';
-
 import { Upload } from '../../../design-system/icons';
 import { colors, Text } from '../../../design-system';
+import { useIsMounted } from '../../../hooks/use-is-mounted';
 import { ContentRow } from './ContentRow';
 import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
-import { useIsMounted } from '../../../hooks/use-is-mounted';
 
 export function EmailMessageEditor({
   onChange,

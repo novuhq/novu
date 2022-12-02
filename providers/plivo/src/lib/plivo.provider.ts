@@ -4,7 +4,6 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-
 import * as plivo from 'plivo';
 
 export class PlivoSmsProvider implements ISmsProvider {

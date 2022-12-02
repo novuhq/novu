@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EnvironmentId, OrganizationId, TopicEntity, TopicKey, TopicRepository, UserId } from '@novu/dal';
-
-import { CreateTopicCommand } from './create-topic.command';
-
 import { TopicDto } from '../dtos/topic.dto';
+import { CreateTopicCommand } from './create-topic.command';
 
 const mapFromCommandToRepository = (command: CreateTopicCommand) => ({
   _environmentId: command.environmentId as unknown as EnvironmentId,

@@ -4,7 +4,6 @@ import { ColorScheme, Input, useMantineTheme } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { useForm } from 'react-hook-form';
 import { useMutation } from 'react-query';
-
 import { Button, colors, Switch, Text } from '../../../../design-system';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { updateWidgetSettings } from '../../../../api/environment';

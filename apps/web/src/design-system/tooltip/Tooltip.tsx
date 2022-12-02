@@ -1,5 +1,4 @@
 import { Tooltip as MantineTooltip, TooltipProps } from '@mantine/core';
-
 import useStyles from './Tooltip.styles';
 
 /**

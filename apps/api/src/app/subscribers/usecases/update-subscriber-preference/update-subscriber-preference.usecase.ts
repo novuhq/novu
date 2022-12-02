@@ -5,7 +5,6 @@ import {
   NotificationTemplateRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { UpdateSubscriberPreferenceCommand } from './update-subscriber-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ISubscriberPreferenceResponse } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import {
@@ -14,6 +13,7 @@ import {
 } from '../get-subscriber-template-preference';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { UpdateSubscriberPreferenceCommand } from './update-subscriber-preference.command';
 
 @Injectable()
 export class UpdateSubscriberPreference {

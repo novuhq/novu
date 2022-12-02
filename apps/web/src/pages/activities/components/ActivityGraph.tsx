@@ -6,13 +6,11 @@ import { useEffect, useState } from 'react';
 import { useMantineTheme } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
 import { differenceInDays, format, isSameDay, subDays } from 'date-fns';
-
-import { MessageContainer } from './MessageContainer';
-import { ActivityGraphGlobalStyles } from './ActivityGraphGlobalStyles';
-
 import { getActivityGraphStats } from '../../../api/activity';
 import { IActivityGraphStats } from '../interfaces';
 import { getOptions, getChartData } from '../services';
+import { MessageContainer } from './MessageContainer';
+import { ActivityGraphGlobalStyles } from './ActivityGraphGlobalStyles';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 

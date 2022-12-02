@@ -3,8 +3,8 @@ import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/
 import { MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { ResendInviteCommand } from './resend-invite.command';
 import { capitalize, createGuid } from '../../../shared/services/helper/helper.service';
+import { ResendInviteCommand } from './resend-invite.command';
 
 @Injectable({
   scope: Scope.REQUEST,

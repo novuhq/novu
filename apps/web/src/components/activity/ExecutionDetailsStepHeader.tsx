@@ -2,11 +2,10 @@ import { Container, Grid } from '@mantine/core';
 import { format, parseISO } from 'date-fns';
 import styled from '@emotion/styled';
 import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
-
-import { ExecutionDetailsWebhookFeedback } from './ExecutionDetailsWebhookFeedback';
-import { getLogoByType } from './helpers';
 import { colors, Text } from '../../design-system';
 import { CheckCircle, ErrorIcon } from '../../design-system/icons';
+import { ExecutionDetailsWebhookFeedback } from './ExecutionDetailsWebhookFeedback';
+import { getLogoByType } from './helpers';
 
 const StepName = styled(Text)`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};

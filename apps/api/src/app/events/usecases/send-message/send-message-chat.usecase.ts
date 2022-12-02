@@ -1,8 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { SendMessageType } from './send-message-type.usecase';
-import { ChatFactory } from '../../services/chat-service/chat.factory';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { SendMessageCommand } from './send-message.command';
 import * as Sentry from '@sentry/node';
 import {
   NotificationRepository,
@@ -22,6 +18,8 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
+import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { ChatFactory } from '../../services/chat-service/chat.factory';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
@@ -34,6 +32,8 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageCommand } from './send-message.command';
+import { SendMessageType } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessageChat extends SendMessageType {

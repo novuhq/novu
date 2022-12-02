@@ -3,11 +3,10 @@ import { JsonInput } from '@mantine/core';
 import { useMutation } from 'react-query';
 import * as Sentry from '@sentry/react';
 import { INotificationTrigger, IUserEntity } from '@novu/shared';
-
+import { useContext, useState } from 'react';
 import { Button, Title, Modal } from '../../design-system';
 import { inputStyles } from '../../design-system/config/inputs.styles';
 import { testTrigger } from '../../api/templates';
-import { useContext, useState } from 'react';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { AuthContext } from '../../store/authContext';
 

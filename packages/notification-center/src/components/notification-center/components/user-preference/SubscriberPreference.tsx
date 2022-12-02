@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Accordion, Divider, ScrollArea } from '@mantine/core';
 import styled from 'styled-components';
 import { useNovuTheme, useSubscriberPreference } from '../../../../hooks';
+import image from '../../../../images/no-settings.png';
 import { accordionStyles, Text, TextBlock } from './styles';
 import { ChannelPreference } from './ChannelPreference';
 import { getChannel } from './channels';
-import image from '../../../../images/no-settings.png';
 
 export function SubscriberPreference() {
   const { theme, common } = useNovuTheme();

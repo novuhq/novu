@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDefined, IsString } from 'class-validator';
-
 import { TopicDto } from './topic.dto';
 
 export class CreateTopicResponseDto implements Pick<TopicDto, '_id'> {}

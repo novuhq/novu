@@ -1,16 +1,16 @@
 import { useContext, useState } from 'react';
-import { EmailContentCard } from './EmailContentCard';
+import { Grid, Group, Modal, SegmentedControl, Title, useMantineTheme } from '@mantine/core';
+import { useHotkeys } from '@mantine/hooks';
 import { AuthContext } from '../../../store/authContext';
 import { When } from '../../utils/When';
 import { Preview } from '../../../pages/templates/editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
-import { Grid, Group, Modal, SegmentedControl, Title, useMantineTheme } from '@mantine/core';
-import { TestSendEmail } from './TestSendEmail';
 import { Button, colors, shadows } from '../../../design-system';
 import { MobileIcon } from '../../../pages/templates/editor/PreviewSegment/MobileIcon';
 import { WebIcon } from '../../../pages/templates/editor/PreviewSegment/WebIcon';
-import { useHotkeys } from '@mantine/hooks';
 import { VariableManager } from '../VariableManager';
+import { TestSendEmail } from './TestSendEmail';
+import { EmailContentCard } from './EmailContentCard';
 import { VariablesManagement } from './variables-management/VariablesManagement';
 
 export enum ViewEnum {

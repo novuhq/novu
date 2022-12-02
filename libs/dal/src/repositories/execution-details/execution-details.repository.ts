@@ -1,8 +1,8 @@
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { Document, FilterQuery } from 'mongoose';
+import { BaseRepository, Omit } from '../base-repository';
 import { ExecutionDetailsEntity } from './execution-details.entity';
 import { ExecutionDetails } from './execution-details.schema';
-import { BaseRepository, Omit } from '../base-repository';
-import { Document, FilterQuery } from 'mongoose';
 
 class PartialIntegrationEntity extends Omit(ExecutionDetailsEntity, ['_environmentId', '_organizationId']) {}
 

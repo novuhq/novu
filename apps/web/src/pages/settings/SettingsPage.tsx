@@ -1,12 +1,11 @@
 import { useContext } from 'react';
 import { Container } from '@mantine/core';
-
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
-import { BrandingForm, ApiKeysCard, InAppCenterCard } from './tabs';
 import { AuthContext } from '../../store/authContext';
+import { BrandingForm, ApiKeysCard, InAppCenterCard } from './tabs';
 
 const BRANDING = 'Branding';
 const IN_APP_CENTER = 'In App Center';

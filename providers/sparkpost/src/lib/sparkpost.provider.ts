@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -6,7 +7,6 @@ import {
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
-import { randomUUID } from 'crypto';
 import SparkPost from 'sparkpost';
 
 export class SparkPostEmailProvider implements IEmailProvider {

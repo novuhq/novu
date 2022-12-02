@@ -1,8 +1,8 @@
 import { AuthProviderEnum } from '@novu/shared';
+import { Document, FilterQuery } from 'mongoose';
 import { BaseRepository } from '../base-repository';
 import { UserEntity } from './user.entity';
 import { User } from './user.schema';
-import { Document, FilterQuery } from 'mongoose';
 
 export class UserRepository extends BaseRepository<FilterQuery<UserEntity & Document>, UserEntity> {
   constructor() {

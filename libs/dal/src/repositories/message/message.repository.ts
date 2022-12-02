@@ -2,10 +2,10 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { Document, FilterQuery, Types } from 'mongoose';
 import { BaseRepository, Omit } from '../base-repository';
-import { MessageEntity } from './message.entity';
-import { Message } from './message.schema';
 import { FeedRepository } from '../feed';
 import { DalException } from '../../shared';
+import { MessageEntity } from './message.entity';
+import { Message } from './message.schema';
 
 class PartialIntegrationEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
 

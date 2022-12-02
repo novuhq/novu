@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter as Router } from 'react-router-dom';
 import { CredentialsKeyEnum, ChannelTypeEnum } from '@novu/shared';
-import { ConnectIntegrationForm } from './ConnectIntegrationForm';
 import { TestWrapper } from '../../../testing';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { ConnectIntegrationForm } from './ConnectIntegrationForm';
 
 const exampleProvider: IIntegratedProvider = {
   providerId: 'emailjs',

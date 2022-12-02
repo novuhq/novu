@@ -6,7 +6,6 @@ import axios from 'axios';
 import { showNotification } from '@mantine/notifications';
 import { useMantineTheme, Group, Input, LoadingOverlay, Flex } from '@mantine/core';
 import { IOrganizationEntity } from '@novu/shared';
-
 import { Button, colors, Select, ColorInput } from '../../../design-system';
 import { getSignedUrl } from '../../../api/storage';
 import { updateBrandingSettings } from '../../../api/organization';

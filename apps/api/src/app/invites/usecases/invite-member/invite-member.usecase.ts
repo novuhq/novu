@@ -3,11 +3,11 @@ import { OrganizationRepository, UserRepository, MemberRepository, IAddMemberDat
 import { MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { InviteMemberCommand } from './invite-member.command';
 import { capitalize, createGuid } from '../../../shared/services/helper/helper.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
+import { InviteMemberCommand } from './invite-member.command';
 
 @Injectable({
   scope: Scope.REQUEST,

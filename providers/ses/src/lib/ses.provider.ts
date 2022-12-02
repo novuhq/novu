@@ -7,8 +7,8 @@ import {
   CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
-import { SESConfig } from './ses.config';
 import nodemailer from 'nodemailer';
+import { SESConfig } from './ses.config';
 
 export class SESEmailProvider implements IEmailProvider {
   id = 'ses';

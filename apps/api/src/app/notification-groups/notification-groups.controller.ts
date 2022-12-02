@@ -1,16 +1,16 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
-import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
+import { ApiCreatedResponse, ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
+import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
 import { CreateNotificationGroupCommand } from './usecases/create-notification-group/create-notification-group.command';
 import { CreateNotificationGroupRequestDto } from './dtos/create-notification-group-request.dto';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { GetNotificationGroups } from './usecases/get-notification-groups/get-notification-groups.usecase';
 import { GetNotificationGroupsCommand } from './usecases/get-notification-groups/get-notification-groups.command';
-import { ApiCreatedResponse, ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationGroupResponseDto } from './dtos/notification-group-response.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)

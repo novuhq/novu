@@ -1,8 +1,8 @@
-import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
-import { BaseRepository } from '../base-repository';
-import { Organization } from './organization.schema';
-import { MemberRepository } from '../member';
 import { Document, FilterQuery } from 'mongoose';
+import { BaseRepository } from '../base-repository';
+import { MemberRepository } from '../member';
+import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
+import { Organization } from './organization.schema';
 
 export class OrganizationRepository extends BaseRepository<
   FilterQuery<OrganizationEntity & Document>,

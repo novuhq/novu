@@ -1,9 +1,9 @@
 import { RefObject } from 'react';
 import { MantineTheme, Textarea } from '@mantine/core';
-import { colors } from '../../../../design-system';
 import { IEmailBlock } from '@novu/shared/src';
 import { FieldErrors, FieldValues } from 'react-hook-form';
 import styled from '@emotion/styled';
+import { colors } from '../../../../design-system';
 
 interface IContentProps {
   readonly: boolean;

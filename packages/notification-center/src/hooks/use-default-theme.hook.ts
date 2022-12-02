@@ -1,3 +1,4 @@
+import merge from 'lodash.merge';
 import {
   defaultCommonTheme,
   defaultDarkTheme,
@@ -7,7 +8,6 @@ import {
 } from '../shared/config/themeDefaultValues';
 import { ICommonTheme, INovuThemeProvider } from '../store/novu-theme-provider.context';
 import { INotificationBellColors, INovuTheme } from '../store/novu-theme.context';
-import merge from 'lodash.merge';
 import { ColorScheme } from '../index';
 
 export interface IDefaultThemeProps {

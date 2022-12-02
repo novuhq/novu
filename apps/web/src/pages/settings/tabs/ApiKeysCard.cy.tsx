@@ -1,7 +1,7 @@
-import { ApiKeysCard } from '.';
-import { TestWrapper } from '../../../testing';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { IEnvironment } from '@novu/shared';
+import { TestWrapper } from '../../../testing';
+import { ApiKeysCard } from '.';
 
 const myEnvironments: IEnvironment = {
   _id: '633a68831c6bf8ce582c923e',

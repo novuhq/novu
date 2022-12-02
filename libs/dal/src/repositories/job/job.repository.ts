@@ -1,8 +1,8 @@
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { Document, FilterQuery } from 'mongoose';
 import { BaseRepository, Omit } from '../base-repository';
 import { JobEntity, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Document, FilterQuery } from 'mongoose';
 
 class PartialIntegrationEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
 

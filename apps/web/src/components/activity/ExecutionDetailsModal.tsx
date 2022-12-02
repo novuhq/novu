@@ -2,14 +2,12 @@ import { useEffect, useState } from 'react';
 import { Center, LoadingOverlay, Modal, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { useQuery } from 'react-query';
 import { JobStatusEnum } from '@novu/shared';
-
-import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
-import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
-
 import { getNotification } from '../../api/activity';
 import { colors, shadows, Text, Title } from '../../design-system';
 import { When } from '../utils/When';
 import { useNotificationStatus } from '../../pages/activities/hooks/useNotificationStatus';
+import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
+import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
 
 export function ExecutionDetailsModal({
   notificationId,

@@ -3,7 +3,6 @@ import { useQuery } from 'react-query';
 import { useContext, useEffect } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
 import { IGetInviteResponseDto } from '@novu/shared';
-
 import { getInviteTokenData } from '../../api/invitation';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';

@@ -2,7 +2,6 @@ import { ActionIcon, Input as MantineInput } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useQuery } from 'react-query';
 import styled from '@emotion/styled';
-
 import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { getApiKeys } from '../../../api/environment';

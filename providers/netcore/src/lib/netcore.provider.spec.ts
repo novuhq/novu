@@ -1,8 +1,8 @@
 const createGeneratethemailsendrequest = jest.fn();
 
 // eslint-disable-next-line import/first
-import { NetCoreProvider } from './netcore.provider';
 import * as lib from 'pepipost/lib';
+import { NetCoreProvider } from './netcore.provider';
 
 jest.mock('pepipost/lib', () => {
   const actual = jest.requireActual('pepipost/lib');

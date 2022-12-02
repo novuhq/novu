@@ -1,10 +1,10 @@
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { useActiveIntegrations } from '../../api/hooks';
+import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
 import { TemplateSMSEditor } from './TemplateSMSEditor';
 import { useTemplateController } from './use-template-controller.hook';
-import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
 

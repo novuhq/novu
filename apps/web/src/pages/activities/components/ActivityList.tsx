@@ -1,8 +1,7 @@
 import React from 'react';
 import { LoadingOverlay, Pagination, useMantineColorScheme } from '@mantine/core';
-
-import { ActivityItem } from './ActivityItem';
 import { colors } from '../../../design-system';
+import { ActivityItem } from './ActivityItem';
 
 export type Data = Record<string, any>;
 

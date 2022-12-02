@@ -2,10 +2,9 @@ import { useEffect, useState } from 'react';
 import { MantineProvider, Global, ColorSchemeProvider, ColorScheme, createStyles } from '@mantine/core';
 import { NotificationsProvider } from '@mantine/notifications';
 import { useColorScheme } from '@mantine/hooks';
-
+import { useLocalThemePreference } from '../hooks/use-localThemePreference';
 import { mantineConfig } from './config/theme.config';
 import { colors, shadows } from './config';
-import { useLocalThemePreference } from '../hooks/use-localThemePreference';
 
 const useNotificationStyles = createStyles((theme) => ({
   root: {

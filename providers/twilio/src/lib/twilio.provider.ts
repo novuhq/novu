@@ -6,7 +6,6 @@ import {
   ISmsProvider,
   SmsEventStatusEnum,
 } from '@novu/stateless';
-
 import { Twilio } from 'twilio';
 
 export class TwilioSmsProvider implements ISmsProvider {

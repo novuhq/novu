@@ -11,7 +11,6 @@ import {
   MemberRepository,
 } from '@novu/dal';
 import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum } from '@novu/shared';
-
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
 import { SwitchEnvironmentCommand } from '../usecases/switch-environment/switch-environment.command';

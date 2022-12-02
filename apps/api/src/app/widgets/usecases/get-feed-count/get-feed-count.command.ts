@@ -1,5 +1,5 @@
-import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { IsArray, IsOptional } from 'class-validator';
+import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class GetFeedCountCommand extends EnvironmentWithSubscriber {
   @IsOptional()

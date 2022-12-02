@@ -2,7 +2,6 @@ import { IsDefined, IsEmail, IsNotEmpty } from 'class-validator';
 import * as sinon from 'sinon';
 import * as Sentry from '@sentry/node';
 import { BadRequestException } from '@nestjs/common';
-
 import { BaseCommand } from './base.command';
 
 export class TestCommand extends BaseCommand {

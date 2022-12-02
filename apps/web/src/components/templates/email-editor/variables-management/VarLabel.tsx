@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { colors } from '../../../../design-system';
 import { Collapse, UnstyledButton, useMantineTheme } from '@mantine/core';
+import { colors } from '../../../../design-system';
 import { ChevronUp } from '../../../../design-system/icons';
 import { ChevronDown } from '../../../../design-system/icons';
 

@@ -1,16 +1,7 @@
 import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
-import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
-import { UserSession } from '../shared/framework/user.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ISubscribersDefine, TriggerRecipientsTypeSingle } from '@novu/node';
-import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
-import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
-import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
-import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
-import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
 import {
   ApiCreatedResponse,
   ApiExcludeEndpoint,
@@ -19,6 +10,15 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { UserSession } from '../shared/framework/user.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
+import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
+import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
+import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
+import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
+import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
 import { SendTestEmail } from './usecases/send-message/test-send-email.usecase';
 import { TestSendMessageCommand } from './usecases/send-message/send-message.command';
 import { TestSendEmailRequestDto } from './dtos/test-email-request.dto';

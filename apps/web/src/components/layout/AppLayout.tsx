@@ -1,12 +1,12 @@
 import { AppShell } from '@mantine/core';
 import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
+import { IntercomProvider } from 'react-use-intercom';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
+import { colors } from '../../design-system';
+import { INTERCOM_APP_ID } from '../../config';
 import { HeaderNav } from './components/HeaderNav';
 import { SideNav } from './components/SideNav';
-import { colors } from '../../design-system';
-import { IntercomProvider } from 'react-use-intercom';
-import { INTERCOM_APP_ID } from '../../config';
 
 export function AppLayout() {
   return (

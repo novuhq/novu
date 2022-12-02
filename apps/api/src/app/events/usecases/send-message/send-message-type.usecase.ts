@@ -1,10 +1,10 @@
 import { MessageEntity, MessageRepository, NotificationEntity } from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
-import { SendMessageCommand } from './send-message.command';
-import * as Sentry from '@sentry/node';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { SendMessageCommand } from './send-message.command';
 
 export abstract class SendMessageType {
   protected constructor(

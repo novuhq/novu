@@ -1,7 +1,7 @@
 import { TriggerTypeEnum } from '@novu/shared';
+import { QueryClient, QueryClientProvider } from 'react-query';
 import { TestWrapper } from '../../testing';
 import { TestWorkflowModal } from './TestWorkflowModal';
-import { QueryClient, QueryClientProvider } from 'react-query';
 
 const queryClient = new QueryClient();
 

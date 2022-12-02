@@ -6,9 +6,7 @@ import {
   SmsEventStatusEnum,
   ISMSEventBody,
 } from '@novu/stateless';
-
 import Telnyx from 'telnyx';
-
 import { ITelnyxCLient } from './telnyx.interface';
 
 export class TelnyxSmsProvider implements ISmsProvider {

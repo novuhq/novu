@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
@@ -6,7 +7,6 @@ import {
 } from '@novu/stateless';
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getMessaging, Messaging } from 'firebase-admin/messaging';
-import crypto from 'crypto';
 
 export class FcmPushProvider implements IPushProvider {
   id = 'fcm';

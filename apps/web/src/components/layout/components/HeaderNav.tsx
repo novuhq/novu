@@ -3,7 +3,6 @@ import { useContext, useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
-
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';

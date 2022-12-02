@@ -1,7 +1,6 @@
 import { Grid, Input as MantineInput } from '@mantine/core';
 import { DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
-
 import { Input, Select } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';

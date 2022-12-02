@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react-hooks';
-import { IUseNotifications, useNotifications } from './use-notifications.hook';
 import React from 'react';
 import { IMessage, ChannelCTATypeEnum, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { IUseNotifications, useNotifications } from './use-notifications.hook';
 
 let realUseContext;
 let useContextMock;

@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { MessageRepository, JobRepository, JobStatusEnum } from '@novu/dal';
+import { StepTypeEnum, DigestTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { CreateLog } from '../../../../logs/usecases/create-log/create-log.usecase';
 import { SendMessageCommand } from '../send-message.command';
 import { SendMessageType } from '../send-message-type.usecase';
-import { StepTypeEnum, DigestTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
-import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
 import { CreateExecutionDetails } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
+import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
 
 @Injectable()
 export class Digest extends SendMessageType {

@@ -1,10 +1,9 @@
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
+import { AddressInfo } from 'net';
 import axios from 'axios';
 import * as open from 'open';
-import { AddressInfo } from 'net';
-
 import {
   SERVER_HOST,
   REDIRECT_ROUTE,

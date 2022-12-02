@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationEntity } from '@novu/dal';
-import { GetActiveIntegrationsCommand } from './get-active-integration.command';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations/get-decrypted-integrations.usecase';
 import { GetDecryptedIntegrationsCommand } from '../get-decrypted-integrations/get-decrypted-integrations.command';
+import { GetActiveIntegrationsCommand } from './get-active-integration.command';
 
 @Injectable()
 export class GetActiveIntegrations {

@@ -3,13 +3,10 @@ import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@no
 import { ChannelTypeEnum } from '@novu/shared';
 import { IEmailProvider, IEventBody, ISmsProvider } from '@novu/stateless';
 import { MailFactory, SmsFactory, ISmsHandler, IMailHandler } from '@novu/application-generic';
-
-import { WebhookCommand } from './webhook.command';
-
 import { CreateExecutionDetails } from '../execution-details/create-execution-details.usecase';
-
 import { IWebhookResult } from '../../dtos/webhooks-response.dto';
 import { WebhookTypes } from '../../interfaces/webhook.interface';
+import { WebhookCommand } from './webhook.command';
 
 @Injectable()
 export class Webhook {

@@ -1,7 +1,7 @@
 import { ModalProps, Modal as MantineModal } from '@mantine/core';
 import React, { ReactNode } from 'react';
-import useStyles from './Modal.styles';
 import { colors, shadows } from '../config';
+import useStyles from './Modal.styles';
 
 interface IModalProps extends JSX.ElementChildrenAttribute {
   opened: boolean;

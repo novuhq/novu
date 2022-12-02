@@ -1,7 +1,7 @@
 import React from 'react';
-import { NotificationButton } from './NotificationItemButton';
 import { IMessageAction, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import styled from 'styled-components';
+import { NotificationButton } from './NotificationItemButton';
 
 export interface IActionContainerProps {
   action?: IMessageAction;

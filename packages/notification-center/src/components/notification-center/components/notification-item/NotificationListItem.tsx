@@ -2,11 +2,6 @@ import React from 'react';
 import { Avatar as MAvatar } from '@mantine/core';
 import styled, { css } from 'styled-components';
 import { formatDistanceToNow } from 'date-fns';
-import { useNovuTheme, useNotificationCenter, useDefaultBellColors, useTranslations } from '../../../../hooks';
-import { ActionContainer } from './ActionContainer';
-import { INovuTheme } from '../../../../store/novu-theme.context';
-import { When } from '../../../../shared/utils/When';
-import { ColorScheme } from '../../../../shared/config/colors';
 import {
   IMessage,
   ButtonTypeEnum,
@@ -16,6 +11,10 @@ import {
   SystemAvatarIconEnum,
   IActor,
 } from '@novu/shared';
+import { INovuTheme } from '../../../../store/novu-theme.context';
+import { When } from '../../../../shared/utils/When';
+import { ColorScheme } from '../../../../shared/config/colors';
+import { useNovuTheme, useNotificationCenter, useDefaultBellColors, useTranslations } from '../../../../hooks';
 import {
   DotsHorizontal,
   ErrorIcon,
@@ -28,6 +27,7 @@ import {
   GradientDot,
 } from '../../../../shared/icons';
 import { colors } from '../../../../shared/config/colors';
+import { ActionContainer } from './ActionContainer';
 
 const avatarSystemIcons = [
   {

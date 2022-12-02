@@ -1,7 +1,6 @@
 import { UserEntity } from '@novu/dal';
 import { OrganizationEntity } from '@novu/dal';
 import Analytics from 'analytics-node';
-
 // Due to problematic analytics-node types, we need to use require
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const AnalyticsClass = require('analytics-node');

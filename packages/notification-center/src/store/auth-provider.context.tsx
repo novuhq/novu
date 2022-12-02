@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AuthContext } from './auth.context';
 import { ISubscriberJwt } from '@novu/shared';
 import { useApi } from '../hooks';
+import { AuthContext } from './auth.context';
 
 function isBrowser() {
   return typeof window !== 'undefined';

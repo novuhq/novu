@@ -1,8 +1,7 @@
 import { Accordion, createStyles } from '@mantine/core';
-
+import { colors } from '../../design-system';
 import { ExecutionDetailsStepContent } from './ExecutionDetailsStepContent';
 import { ExecutionDetailsStepHeader } from './ExecutionDetailsStepHeader';
-import { colors } from '../../design-system';
 
 const useStyles = createStyles((theme) => ({
   control: {

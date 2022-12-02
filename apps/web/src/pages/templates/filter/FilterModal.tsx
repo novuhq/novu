@@ -1,7 +1,7 @@
 import { Divider, Grid, Group, Modal, useMantineTheme } from '@mantine/core';
-import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
 import { Controller, useFieldArray } from 'react-hook-form';
 import styled from '@emotion/styled';
+import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
 import { Trash } from '../../../design-system/icons';
 
 export function FilterModal({

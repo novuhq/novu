@@ -1,7 +1,7 @@
 import React from 'react';
-import { INovuPopoverTheme, INovuTheme, ThemeContext } from './novu-theme.context';
 import { ColorScheme } from '../index';
 import { useDefaultTheme } from '../hooks';
+import { INovuPopoverTheme, INovuTheme, ThemeContext } from './novu-theme.context';
 
 export interface INovuThemePopoverProvider {
   light?: INovuPopoverTheme;

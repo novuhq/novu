@@ -1,6 +1,6 @@
+import { format } from 'date-fns';
 import { TestWrapper } from '../../../testing';
 import { PreviewMobile } from './PreviewMobile';
-import { format } from 'date-fns';
 
 describe('Preview mobile', () => {
   it('should render without content', () => {

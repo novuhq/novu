@@ -1,6 +1,6 @@
 import React from 'react';
-import { Header } from './Header';
 import { useNotificationCenter } from '../../../../../hooks';
+import { Header } from './Header';
 
 export function HeaderContainer({ defaultHeader = <Header /> }) {
   const { header } = useNotificationCenter();

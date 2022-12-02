@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { USE_CASES } from './usecases';
-import { FeedsController } from './feeds.controller';
 import { SharedModule } from '../shared/shared.module';
 import { ChangeModule } from '../change/change.module';
 import { MessageTemplateModule } from '../message-template/message-template.module';
 import { AuthModule } from '../auth/auth.module';
+import { FeedsController } from './feeds.controller';
+import { USE_CASES } from './usecases';
 
 @Module({
   imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule],

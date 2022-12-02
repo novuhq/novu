@@ -1,8 +1,8 @@
 import { Injectable, Scope } from '@nestjs/common';
 import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
-import { AddMemberCommand } from './add-member.command';
 import { ApiException } from '../../../../shared/exceptions/api.exception';
+import { AddMemberCommand } from './add-member.command';
 
 @Injectable({
   scope: Scope.REQUEST,

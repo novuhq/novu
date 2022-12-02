@@ -1,11 +1,11 @@
+// eslint-disable-next-line no-restricted-imports
+import { ICredentialsDto } from '@novu/shared/src';
 import {
   decryptCredentials,
   decryptProviderSecret,
   encryptCredentials,
   encryptProviderSecret,
 } from './encrypt-provider';
-// eslint-disable-next-line no-restricted-imports
-import { ICredentialsDto } from '@novu/shared/src';
 
 describe('Encrypt provider secrets', function () {
   const novuSubMask = 'nvsk.';

@@ -6,7 +6,6 @@ import {
   ISmsProvider,
   SmsEventStatusEnum,
 } from '@novu/stateless';
-
 import axios, { Axios } from 'axios';
 
 export class ClickatellSmsProvider implements ISmsProvider {

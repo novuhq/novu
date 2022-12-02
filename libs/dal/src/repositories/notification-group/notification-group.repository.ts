@@ -1,7 +1,7 @@
+import { Document, FilterQuery } from 'mongoose';
 import { BaseRepository, Omit } from '../base-repository';
 import { NotificationGroupEntity } from './notification-group.entity';
 import { NotificationGroup } from './notification-group.schema';
-import { Document, FilterQuery } from 'mongoose';
 
 class PartialIntegrationEntity extends Omit(NotificationGroupEntity, ['_environmentId', '_organizationId']) {}
 

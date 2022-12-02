@@ -1,6 +1,6 @@
 import React from 'react';
-import { Footer } from './Footer';
 import { useNotificationCenter } from '../../../../../hooks';
+import { Footer } from './Footer';
 
 export function FooterContainer() {
   const { footer } = useNotificationCenter();

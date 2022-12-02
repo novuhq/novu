@@ -2,7 +2,6 @@ import { FunctionComponent } from 'react';
 import { Grid, Input, useMantineColorScheme, InputWrapperProps } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext, Controller } from 'react-hook-form';
-
 import { useEnvController } from '../../../store/use-env-controller';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Checkbox, colors, Switch } from '../../../design-system';

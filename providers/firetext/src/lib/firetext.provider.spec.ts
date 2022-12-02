@@ -1,5 +1,5 @@
-import { FiretextSmsProvider } from './firetext.provider';
 import fetchMock from 'fetch-mock';
+import { FiretextSmsProvider } from './firetext.provider';
 
 describe('FiretextSmsProvider', () => {
   const date = new Date('2022-01-01T00:00:00.000Z');

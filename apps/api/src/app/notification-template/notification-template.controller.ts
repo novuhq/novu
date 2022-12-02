@@ -12,8 +12,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { Roles } from '../auth/framework/roles.decorator';
+import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
@@ -29,12 +33,8 @@ import { DeleteNotificationTemplate } from './usecases/delete-notification-templ
 import { UpdateNotificationTemplateCommand } from './usecases/update-notification-template/update-notification-template.command';
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationTemplateResponse } from './dto/notification-template-response.dto';
 import { NotificationTemplatesResponseDto } from './dto/notification-templates.response.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { NotificationTemplatesRequestDto } from './dto/notification-templates-request.dto';
 
 @Controller('/notification-templates')

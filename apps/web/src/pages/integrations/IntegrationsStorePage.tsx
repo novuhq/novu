@@ -6,9 +6,9 @@ import * as cloneDeep from 'lodash.clonedeep';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
+import { useIntegrations } from '../../api/hooks';
 import { ChannelGroup } from './components/ChannelGroup';
 import { ConnectIntegrationForm } from './components/ConnectIntegrationForm';
-import { useIntegrations } from '../../api/hooks';
 
 export function IntegrationsStore() {
   const { integrations, loading: isLoading, refetch } = useIntegrations();

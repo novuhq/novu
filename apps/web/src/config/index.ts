@@ -1,5 +1,5 @@
-import { isBrowser } from '../utils/utils';
 import { getContextPath, NovuComponentEnum } from '@novu/shared';
+import { isBrowser } from '../utils/utils';
 
 declare global {
   interface Window {

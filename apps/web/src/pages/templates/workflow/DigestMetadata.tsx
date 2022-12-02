@@ -2,7 +2,6 @@ import { Grid, Input as MantineInput } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
-
 import { When } from '../../../components/utils/When';
 import { Input, Select, Switch, Button } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';

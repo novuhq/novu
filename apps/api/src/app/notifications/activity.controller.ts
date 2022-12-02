@@ -1,19 +1,19 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
-import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
-import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
+import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
+import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
 import { GetActivityStats } from './usecases/get-activity-stats/get-activity-stats.usecase';
 import { GetActivityStatsCommand } from './usecases/get-activity-stats/get-activity-stats.command';
 import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
 import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
-import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
 import { ActivitiesResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
 import { ActivitiesRequestDto } from './dtos/activities-request.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/activity')
 @ApiTags('Activity')

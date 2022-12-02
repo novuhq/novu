@@ -19,8 +19,6 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -30,6 +28,8 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageType } from './send-message-type.usecase';
+import { SendMessageCommand } from './send-message.command';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageType {

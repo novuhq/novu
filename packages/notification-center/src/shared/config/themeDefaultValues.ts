@@ -1,8 +1,8 @@
-import { colors } from './colors';
-import { shadows } from './shadows';
+import { darkButtonStyle, lightButtonStyle } from '@novu/shared';
 import { INotificationBellColors, INovuTheme } from '../../store/novu-theme.context';
 import { ICommonTheme } from '../../store/novu-theme-provider.context';
-import { darkButtonStyle, lightButtonStyle } from '@novu/shared';
+import { colors } from './colors';
+import { shadows } from './shadows';
 
 const defaultLightTheme: INovuTheme = {
   layout: {

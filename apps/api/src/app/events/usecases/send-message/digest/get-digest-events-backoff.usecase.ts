@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JobStatusEnum } from '@novu/dal';
-import { SendMessageCommand } from '../send-message.command';
 import { StepTypeEnum } from '@novu/shared';
+import { SendMessageCommand } from '../send-message.command';
 import { GetDigestEvents } from './get-digest-events.usecase';
 
 @Injectable()

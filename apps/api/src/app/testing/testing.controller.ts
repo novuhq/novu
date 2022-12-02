@@ -1,12 +1,12 @@
 import { Body, Controller, NotFoundException, Post } from '@nestjs/common';
 import { DalService } from '@novu/dal';
 import { IUserEntity } from '@novu/shared';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { ISeedDataResponseDto, SeedDataBodyDto } from './dtos/seed-data.dto';
 import { SeedData } from './usecases/seed-data/seed-data.usecase';
 import { SeedDataCommand } from './usecases/seed-data/seed-data.command';
 import { CreateSession } from './usecases/create-session/create-session.usecase';
 import { CreateSessionCommand } from './usecases/create-session/create-session.command';
-import { ApiExcludeController } from '@nestjs/swagger';
 
 @Controller('/testing')
 @ApiExcludeController()

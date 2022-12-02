@@ -1,10 +1,10 @@
-import { BaseRepository, Omit } from '../base-repository';
 import { SoftDeleteModel } from 'mongoose-delete';
-import { FeedEntity } from './feed.entity';
-import { Feed } from './feed.schema';
 import { Document, FilterQuery } from 'mongoose';
+import { BaseRepository, Omit } from '../base-repository';
 import { DalException } from '../../shared';
 import { MessageTemplateRepository } from '../message-template';
+import { Feed } from './feed.schema';
+import { FeedEntity } from './feed.entity';
 
 class PartialIntegrationEntity extends Omit(FeedEntity, ['_environmentId', '_organizationId']) {}
 

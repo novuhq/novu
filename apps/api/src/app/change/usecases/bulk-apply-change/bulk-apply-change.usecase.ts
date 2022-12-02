@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeEntity, ChangeRepository } from '@novu/dal';
 import { ApplyChangeCommand } from '../apply-change/apply-change.command';
-import { BulkApplyChangeCommand } from './bulk-apply-change.command';
 import { ApplyChange } from '../apply-change/apply-change.usecase';
+import { BulkApplyChangeCommand } from './bulk-apply-change.command';
 
 @Injectable()
 export class BulkApplyChange {

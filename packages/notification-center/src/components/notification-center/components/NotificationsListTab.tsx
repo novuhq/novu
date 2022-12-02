@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
 import { useNotifications, useApi, useNotificationCenter, useUnseenCount } from '../../../hooks';
 import image from '../../../images/no-new-notifications.png';
-import { NotificationsList } from './NotificationsList';
 import { ITab } from '../../../shared/interfaces';
+import { NotificationsList } from './NotificationsList';
 
 export function NotificationsListTab({ tab }: { tab?: ITab }) {
   const { api } = useApi();

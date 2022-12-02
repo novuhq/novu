@@ -1,4 +1,3 @@
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { IsOptional } from 'class-validator';
 import {
   ChannelTypeEnum,
@@ -8,6 +7,7 @@ import {
   InAppProviderIdEnum,
   ChatProviderIdEnum,
 } from '@novu/shared';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class GetDecryptedIntegrationsCommand extends EnvironmentCommand {
   @IsOptional()

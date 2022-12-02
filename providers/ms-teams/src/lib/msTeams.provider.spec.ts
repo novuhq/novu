@@ -1,6 +1,6 @@
-import { MsTeamsProvider } from './msTeams.provider';
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+import { MsTeamsProvider } from './msTeams.provider';
 
 test('should trigger msTeams webhook correctly', async () => {
   const fakePost = jest.fn(() => {

@@ -3,8 +3,8 @@ import { expect } from 'chai';
 import axios from 'axios';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { getPreference } from './get-preferences.e2e';
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
+import { getPreference } from './get-preferences.e2e';
 
 const axiosInstance = axios.create();
 

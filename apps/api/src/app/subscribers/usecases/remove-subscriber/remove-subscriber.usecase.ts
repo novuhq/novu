@@ -1,11 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberRepository, DalException } from '@novu/dal';
-
-import { RemoveSubscriberCommand } from './remove-subscriber.command';
-
 import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
-
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { RemoveSubscriberCommand } from './remove-subscriber.command';
 
 @Injectable()
 export class RemoveSubscriber {

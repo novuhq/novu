@@ -3,8 +3,8 @@ import { INovuThemeProvider } from '@novu/notification-center';
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import * as WebFont from 'webfontloader';
-import { API_URL, WS_URL } from '../../config';
 import { createGlobalStyle } from 'styled-components';
+import { API_URL, WS_URL } from '../../config';
 
 interface INotificationCenterWidgetProps {
   onUrlChange: (url: string) => void;

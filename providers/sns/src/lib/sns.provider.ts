@@ -5,7 +5,6 @@ import {
   ISmsProvider,
 } from '@novu/stateless';
 import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
-
 import { SNSConfig } from './sns.config';
 
 export class SNSSmsProvider implements ISmsProvider {

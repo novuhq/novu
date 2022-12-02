@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-
 import { GetSubscriberCommand } from './get-subscriber.command';
 
 @Injectable()

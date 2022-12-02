@@ -1,6 +1,5 @@
 import { Prism } from '@mantine/prism';
 import { INotificationTrigger } from '@novu/shared';
-
 import { API_ROOT } from '../../config';
 import { colors, Tabs } from '../../design-system';
 

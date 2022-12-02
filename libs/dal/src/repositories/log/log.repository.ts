@@ -1,7 +1,7 @@
+import { Document, FilterQuery } from 'mongoose';
 import { BaseRepository, Omit } from '../base-repository';
 import { LogEntity } from './log.entity';
 import { Log } from './log.schema';
-import { Document, FilterQuery } from 'mongoose';
 
 class PartialIntegrationEntity extends Omit(LogEntity, ['_environmentId', '_organizationId']) {}
 

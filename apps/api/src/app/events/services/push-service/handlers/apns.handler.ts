@@ -1,7 +1,7 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { APNSPushProvider } from '@novu/apns';
-import { BasePushHandler } from './base.handler';
 import { ICredentials } from '@novu/dal';
+import { BasePushHandler } from './base.handler';
 
 export class APNSHandler extends BasePushHandler {
   constructor() {

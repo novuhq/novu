@@ -1,13 +1,13 @@
 import styled from 'styled-components';
-import { Loader } from '../Loader';
-import { HeaderContainer as Header } from './header/HeaderContainer';
-import { FooterContainer as Footer } from './footer/FooterContainer';
 import React from 'react';
+import { Loader } from '../Loader';
 import { useNovuContext, useNovuTheme, useScreens } from '../../../../hooks';
-import { UserPreferenceHeader } from './header/UserPreferenceHeader';
 import { SubscriberPreference } from '../user-preference/SubscriberPreference';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { ScreensEnum } from '../../../../shared/enums/screens.enum';
+import { FooterContainer as Footer } from './footer/FooterContainer';
+import { HeaderContainer as Header } from './header/HeaderContainer';
+import { UserPreferenceHeader } from './header/UserPreferenceHeader';
 
 export function Layout({ children }: { children: JSX.Element }) {
   const { initialized } = useNovuContext();

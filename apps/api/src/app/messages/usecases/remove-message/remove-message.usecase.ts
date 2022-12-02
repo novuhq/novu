@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberRepository, DalException, MessageRepository } from '@novu/dal';
-import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { RemoveMessageCommand } from './remove-message.command';
 
 @Injectable()
 export class RemoveMessage {

@@ -2,10 +2,10 @@ import { IConfigCredentials } from '@novu/shared';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
 import { Button, colors, shadows } from '../../../design-system';
-import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { When } from '../../../components/utils/When';
+import { CardStatusBar } from './CardStatusBar';
 
 export function ProviderCard({
   provider,

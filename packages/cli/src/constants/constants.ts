@@ -1,5 +1,5 @@
-import * as getPort from 'get-port';
 import exp from 'constants';
+import * as getPort from 'get-port';
 
 // CLI Server
 export const SERVER_HOST = 'localhost';

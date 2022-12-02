@@ -3,8 +3,8 @@ import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
 import { MailFactory, SmsFactory, ISmsHandler, IMailHandler } from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
-import { GetWebhookSupportStatusCommand } from './get-webhook-support-status.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetWebhookSupportStatusCommand } from './get-webhook-support-status.command';
 
 @Injectable()
 export class GetWebhookSupportStatus {

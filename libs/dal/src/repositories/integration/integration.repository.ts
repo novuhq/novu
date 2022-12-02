@@ -1,9 +1,9 @@
 import { Document, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { BaseRepository, Omit } from '../base-repository';
+import { DalException } from '../../shared';
 import { IntegrationEntity } from './integration.entity';
 import { Integration } from './integration.schema';
-import { DalException } from '../../shared';
 
 class PartialIntegrationEntity extends Omit(IntegrationEntity, ['_environmentId', '_organizationId']) {}
 

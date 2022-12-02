@@ -16,7 +16,6 @@ import {
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
-import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
@@ -33,6 +32,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { TriggerEventCommand } from './trigger-event.command';
 
 @Injectable()
 export class TriggerEvent {

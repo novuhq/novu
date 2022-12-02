@@ -10,8 +10,8 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
-import { TestSendMessageCommand } from './send-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { TestSendMessageCommand } from './send-message.command';
 
 @Injectable()
 export class SendTestEmail {

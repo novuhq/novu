@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ReactFlowProvider } from 'react-flow-renderer';
+import { useDisclosure } from '@mantine/hooks';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
 import { IForm, useTemplateController } from '../../../components/templates/use-template-controller.hook';
@@ -9,7 +11,6 @@ import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
 import { TemplateEditor } from '../../../components/templates/TemplateEditor';
 import { TemplateSettings } from '../../../components/templates/TemplateSettings';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
-import { ReactFlowProvider } from 'react-flow-renderer';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
 import { usePrompt } from '../../../hooks/use-prompt';
 import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
@@ -17,7 +18,6 @@ import { When } from '../../../components/utils/When';
 import { UserPreference } from '../../user-preference/UserPreference';
 import { TestWorkflowModal } from '../../../components/templates/TestWorkflowModal';
 import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
-import { useDisclosure } from '@mantine/hooks';
 import { ExecutionDetailsModalWrapper } from '../../../components/templates/ExecutionDetailsModalWrapper';
 
 export enum ActivePageEnum {

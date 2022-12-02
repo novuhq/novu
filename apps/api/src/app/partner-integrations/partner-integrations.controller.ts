@@ -10,6 +10,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CompleteAndUpdateVercelIntegrationRequestDto } from './dtos/complete-and-update-vercel-integration-request.dto';
@@ -25,7 +26,6 @@ import { SetVercelConfigurationCommand } from './usecases/set-vercel-configurati
 import { SetVercelConfiguration } from './usecases/set-vercel-configuration/set-vercel-configuration.usecase';
 import { UpdateVercelConfigurationCommand } from './usecases/update-vercel-configuration/update-vercel-configuration.command';
 import { UpdateVercelConfiguration } from './usecases/update-vercel-configuration/update-vercel-configuration.usecase';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 
 @Controller('/partner-integrations')
 @UseInterceptors(ClassSerializerInterceptor)

@@ -1,6 +1,6 @@
-import { Novu } from '../novu';
 import axios from 'axios';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Novu } from '../novu';
 
 const mockConfig = {
   apiKey: '1234',

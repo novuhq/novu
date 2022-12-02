@@ -6,12 +6,11 @@ import * as Sentry from '@sentry/react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { showNotification } from '@mantine/notifications';
 import { IFeedEntity } from '@novu/shared';
-
-import { FeedChip } from './FeedChip';
 import { colors, shadows, Text, Tooltip, Button } from '../../../design-system';
 import { Copy, Trash } from '../../../design-system/icons';
 import { deleteFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
+import { FeedChip } from './FeedChip';
 
 interface IFeedItemPopoverProps {
   showFeed: boolean;

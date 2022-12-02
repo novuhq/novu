@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ExecutionDetailsEntity } from '@novu/dal';
 import * as mongoose from 'mongoose';
-
 import { CreateExecutionDetailsCommand } from '../usecases/create-execution-details/create-execution-details.command';
 
 export class CreateExecutionDetailsResponseDto {

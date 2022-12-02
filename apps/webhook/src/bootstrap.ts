@@ -1,8 +1,9 @@
+// Import on config should be top level because of the env variables
+// eslint-disable-next-line import/order
 import './config';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
 import { version } from '../package.json';
-
 import { AppModule } from './app.module';
 
 if (process.env.SENTRY_DSN) {

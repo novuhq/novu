@@ -1,8 +1,7 @@
 import React from 'react';
 import { Button as MantineButton } from '@mantine/core';
-
-import useStyles from './Button.styles';
 import { SpacingProps } from '../shared/spacing.props';
+import useStyles from './Button.styles';
 
 export type Size = 'md' | 'lg' | undefined;
 

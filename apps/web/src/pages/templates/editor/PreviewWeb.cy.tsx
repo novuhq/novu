@@ -1,6 +1,6 @@
+import { format } from 'date-fns';
 import { TestWrapper } from '../../../testing';
 import { PreviewWeb } from './PreviewWeb';
-import { format } from 'date-fns';
 
 describe('Preview web', () => {
   it('should render without content', () => {

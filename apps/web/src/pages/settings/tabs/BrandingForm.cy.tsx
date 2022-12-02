@@ -1,7 +1,7 @@
-import { BrandingForm } from './BrandingForm';
-import { TestWrapper } from '../../../testing';
 import { IOrganizationEntity } from '@novu/shared';
 import { QueryClient, QueryClientProvider } from 'react-query';
+import { TestWrapper } from '../../../testing';
+import { BrandingForm } from './BrandingForm';
 
 const defaultProps: {
   isLoading: boolean;

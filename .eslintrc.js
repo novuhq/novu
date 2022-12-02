@@ -92,6 +92,13 @@ module.exports = {
         leadingUnderscore: 'allow',
       },
     ],
+    'import/order': [
+      'error',
+      {
+        'newlines-between': 'never',
+        warnOnUnassignedImports: true,
+      },
+    ],
     'prettier/prettier': [
       'error',
       {

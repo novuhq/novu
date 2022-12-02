@@ -1,7 +1,7 @@
+import { Document, FilterQuery } from 'mongoose';
 import { BaseRepository, Omit } from '../base-repository';
 import { SubscriberPreferenceEntity } from './subscriber-preference.entity';
 import { SubscriberPreference } from './subscriber-preference.schema';
-import { Document, FilterQuery } from 'mongoose';
 
 class PartialIntegrationEntity extends Omit(SubscriberPreferenceEntity, ['_environmentId', '_organizationId']) {}
 

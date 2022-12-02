@@ -2,8 +2,8 @@ import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { updateSubscriberPreference } from './update-subscriber-preference.e2e';
 import { ChannelTypeEnum } from '@novu/stateless';
+import { updateSubscriberPreference } from './update-subscriber-preference.e2e';
 
 describe('GET /widget/preferences', function () {
   let template: NotificationTemplateEntity;

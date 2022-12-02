@@ -4,7 +4,6 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-
 import Vonage from '@vonage/server-sdk';
 
 export class NexmoSmsProvider implements ISmsProvider {

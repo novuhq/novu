@@ -1,6 +1,5 @@
 import { Popover, createStyles } from '@mantine/core';
 import { IMessageAction, IMessageButton, MessageActionStatusEnum } from '@novu/shared';
-
 import { colors } from '../../../design-system';
 import { ButtonsTemplates } from './ButtonsTemplates';
 

@@ -3,15 +3,14 @@ import { UnstyledButton, Popover, ActionIcon, createStyles, MantineTheme, Menu }
 import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
-
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
-import { useStyles } from './TemplateButton.styles';
 import { colors, shadows } from '../config';
 import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
 import { useEnvController } from '../../store/use-env-controller';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
+import { useStyles } from './TemplateButton.styles';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);

@@ -2,7 +2,6 @@ import { IEmailBlock } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { showNotification } from '@mantine/notifications';
 import { TextInput as MantineInput, Popover, Button as MantineButton, createStyles } from '@mantine/core';
-
 import { colors, shadows } from '../../../design-system';
 import { TextAlignment, Wifi } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/use-env-controller';

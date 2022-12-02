@@ -1,12 +1,11 @@
 import { Prism } from '@mantine/prism';
 import styled from '@emotion/styled';
 import { Input } from '@mantine/core';
-
 import { colors, Text } from '../../../design-system';
 import { WIDGET_EMBED_PATH } from '../../../config';
 import { useEnvController } from '../../../store/use-env-controller';
-import { Security } from './components/Security';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
+import { Security } from './components/Security';
 
 export const InAppCenterCard = () => {
   const { environment } = useEnvController();

@@ -2,10 +2,10 @@ import React from 'react';
 import { useQuery } from 'react-query';
 import styled, { ThemeProvider } from 'styled-components';
 import { IOrganizationEntity } from '@novu/shared';
-import { Layout } from './layout/Layout';
-import { Main } from './Main';
 import { useAuth, useApi, useNovuTheme } from '../../../hooks';
 import { ScreenProvider } from '../../../store/screens-provider.context';
+import { Layout } from './layout/Layout';
+import { Main } from './Main';
 
 export function AppContent() {
   const { api } = useApi();

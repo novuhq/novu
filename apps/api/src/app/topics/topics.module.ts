@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-
-import { USE_CASES } from './use-cases';
-import { TopicsController } from './topics.controller';
-
 import { SharedModule } from '../shared/shared.module';
 import { AuthModule } from '../auth/auth.module';
+import { USE_CASES } from './use-cases';
+import { TopicsController } from './topics.controller';
 
 @Module({
   imports: [SharedModule, AuthModule],

@@ -11,11 +11,11 @@ import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons/actions/Close';
-import { IntegrationInput } from './IntegrationInput';
 import { API_ROOT } from '../../../config';
 import { useEnvController } from '../../../store/use-env-controller';
 import { useAuthController } from '../../../store/use-auth-controller';
 import { Check, Copy } from '../../../design-system/icons';
+import { IntegrationInput } from './IntegrationInput';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',

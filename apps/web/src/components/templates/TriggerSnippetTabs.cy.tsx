@@ -1,7 +1,7 @@
 import { mount } from 'cypress/react';
+import { TriggerTypeEnum } from '@novu/shared';
 import { TestWrapper } from '../../testing';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';
-import { TriggerTypeEnum } from '@novu/shared';
 
 it('should not display comma when no variables present', function () {
   mount(

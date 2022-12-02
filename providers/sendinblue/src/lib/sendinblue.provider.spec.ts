@@ -1,5 +1,5 @@
-import { SendinblueEmailProvider } from './sendinblue.provider';
 import { EmailEventStatusEnum } from '@novu/stateless';
+import { SendinblueEmailProvider } from './sendinblue.provider';
 
 const mockConfig = {
   apiKey:

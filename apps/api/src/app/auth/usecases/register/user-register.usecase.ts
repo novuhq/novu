@@ -2,13 +2,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationEntity, UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from '../../services/auth.service';
-import { UserRegisterCommand } from './user-register.command';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { UserRegisterCommand } from './user-register.command';
 // eslint-disable-next-line max-len
 
 @Injectable()

@@ -3,11 +3,11 @@ import { LoadingOverlay, Switch } from '@mantine/core';
 import styled from 'styled-components';
 import chroma from 'chroma-js';
 import { useNovuTheme } from '../../../../hooks';
-import { getChannel } from './channels';
-import { switchStyles, Text } from './styles';
 import { getLinearGradientColorStopValues } from '../../../../shared/utils/getLinearGradientColorStopValues';
 import { Check } from '../../../../shared/icons/Check';
 import { colors } from '../../../../shared/config/colors';
+import { switchStyles, Text } from './styles';
+import { getChannel } from './channels';
 
 interface IChannelPreferenceProps {
   type: string;

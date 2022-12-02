@@ -1,9 +1,7 @@
 import * as mongoose from 'mongoose';
 import { Schema } from 'mongoose';
-
-import { TopicEntity } from './topic.entity';
-
 import { schemaOptions } from '../schema-default.options';
+import { TopicEntity } from './topic.entity';
 
 const topicSchema = new Schema(
   {
