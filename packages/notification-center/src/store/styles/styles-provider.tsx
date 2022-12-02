@@ -19,7 +19,7 @@ export const useStyles = (path: StylesPaths | StylesPaths[]): CSSInterpolation[]
   const getStyleByPath = (pathInStyles: StylesPaths): CSSInterpolation => {
     const stylePart: CSSFunctionOrObject = get(stylesContext.styles, pathInStyles);
 
-    return typeof stylePart === 'function' ? stylePart(theme, common, colorScheme) : stylePart;
+    return typeof stylePart === 'function' ? stylePart({ theme, common, colorScheme }) : stylePart;
   };
 
   if (Array.isArray(path)) {

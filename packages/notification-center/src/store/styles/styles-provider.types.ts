@@ -46,7 +46,7 @@ export type StylesPaths =
   | 'preferences.item.content.success';
 
 export interface NotificationCenterProviderStyles {
-  bellButton: ObjectWithRoot<{
+  bellButton?: ObjectWithRoot<{
     dot?: CSSFunctionOrObject;
   }>;
   unseenBadge?: CSSFunctionOrObject;
