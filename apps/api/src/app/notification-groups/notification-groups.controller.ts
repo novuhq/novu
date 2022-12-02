@@ -1,7 +1,6 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
-import { ApiCreatedResponse, ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Roles } from '../auth/framework/roles.decorator';
+import { IJwtPayload } from '@novu/shared';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
