@@ -1,4 +1,6 @@
-import styled from 'styled-components';
+import React from 'react';
+import styled from '@emotion/styled';
+
 import { IThemeUserPreferences } from '../../../../store/novu-theme.context';
 
 export const accordionStyles = (baseTheme: IThemeUserPreferences, font: string) => {
@@ -71,8 +73,7 @@ export const switchStyles = (baseTheme: IThemeUserPreferences) => {
   };
 };
 
-export const Text = styled.div<{ color: string; size: 'sm' | 'md' | 'lg' }>`
-  color: ${({ color }) => color};
+export const Text = styled.div<{ size: 'sm' | 'md' | 'lg' }>`
   font-size: ${({ size }) => (size === 'sm' ? '12px' : '14px')};
   font-style: normal;
   align-items: center;

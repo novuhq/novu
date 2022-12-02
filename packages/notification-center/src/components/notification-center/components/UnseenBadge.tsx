@@ -1,9 +1,13 @@
 import React from 'react';
 import { Badge } from '@mantine/core';
+import { cx, css } from '@emotion/css';
+
 import { useNovuTheme } from '../../../hooks';
+import { useStyles } from '../../../store/styles';
 
 export function UnseenBadge({ unseenCount }: { unseenCount: number }) {
   const { theme, common } = useNovuTheme();
+  const [unseenBadgeStyles] = useStyles('unseenBadge.root');
 
   return (
     <>
@@ -25,6 +29,7 @@ export function UnseenBadge({ unseenCount }: { unseenCount: number }) {
             fontSize: '12px',
           }}
           radius={10}
+          className={cx('nc-unseen-badge', css(unseenBadgeStyles))}
         >
           {unseenCount}
         </Badge>

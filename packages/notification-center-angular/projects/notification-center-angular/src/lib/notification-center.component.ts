@@ -6,75 +6,63 @@ customElements.define('notification-center-component', NotificationCenterWebComp
 @Component({
   selector: 'notification-center',
   template: `<notification-center-component
-    [sessionLoaded]="sessionLoaded"
-    [stores]="stores"
     [backendUrl]="backendUrl"
     [socketUrl]="socketUrl"
     [subscriberId]="subscriberId"
     [applicationIdentifier]="applicationIdentifier"
     [subscriberHash]="subscriberHash"
+    [stores]="stores"
+    [tabs]="tabs"
+    [showUserPreferences]="showUserPreferences"
+    [popover]="popover"
+    [theme]="theme"
+    [styles]="styles"
+    [colorScheme]="colorScheme"
     [i18n]="i18n"
-    [urlChanged]="urlChanged"
+    [sessionLoaded]="sessionLoaded"
     [notificationClicked]="notificationClicked"
     [unseenCountChanged]="unseenCountChanged"
     [actionClicked]="actionClicked"
     [tabClicked]="tabClicked"
-    [colorScheme]="colorScheme"
-    [theme]="theme"
-    [tabs]="tabs"
-    [showUserPreferences]="showUserPreferences"
-    [offset]="offset"
-    [position]="position"
-    [unseenBadgeColor]="unseenBadgeColor"
-    [unseenBadgeBackgroundColor]="unseenBadgeBackgroundColor"
   ></notification-center-component>`,
   inputs: [
-    // NovuProvider props
-    'sessionLoaded',
-    'stores',
     'backendUrl',
     'socketUrl',
     'subscriberId',
     'applicationIdentifier',
     'subscriberHash',
+    'stores',
+    'tabs',
+    'showUserPreferences',
+    'popover',
+    'theme',
+    'styles',
+    'colorScheme',
     'i18n',
-    // PopoverNotificationCenter props
-    'urlChanged',
+    'sessionLoaded',
     'notificationClicked',
     'unseenCountChanged',
     'actionClicked',
     'tabClicked',
-    'colorScheme',
-    'theme',
-    'tabs',
-    'showUserPreferences',
-    'offset',
-    'position',
-    // NotificationBell props
-    'unseenBadgeColor',
-    'unseenBadgeBackgroundColor',
   ],
 })
 export class NotificationCenterComponent {
-  @Input() sessionLoaded: NotificationCenterComponentProps['sessionLoaded'];
-  @Input() stores: NotificationCenterComponentProps['stores'];
   @Input() backendUrl: NotificationCenterComponentProps['backendUrl'];
   @Input() socketUrl: NotificationCenterComponentProps['socketUrl'];
   @Input() subscriberId: NotificationCenterComponentProps['subscriberId'];
   @Input() applicationIdentifier: NotificationCenterComponentProps['applicationIdentifier'] = '';
   @Input() subscriberHash: NotificationCenterComponentProps['subscriberHash'];
+  @Input() stores: NotificationCenterComponentProps['stores'];
+  @Input() tabs: NotificationCenterComponentProps['tabs'];
+  @Input() showUserPreferences: NotificationCenterComponentProps['showUserPreferences'];
+  @Input() popover: NotificationCenterComponentProps['popover'];
+  @Input() theme: NotificationCenterComponentProps['theme'];
+  @Input() styles: NotificationCenterComponentProps['styles'];
+  @Input() colorScheme?: NotificationCenterComponentProps['colorScheme'];
   @Input() i18n: NotificationCenterComponentProps['i18n'];
-  @Input() urlChanged: NotificationCenterComponentProps['urlChanged'];
+  @Input() sessionLoaded: NotificationCenterComponentProps['sessionLoaded'];
   @Input() notificationClicked?: NotificationCenterComponentProps['notificationClicked'];
   @Input() unseenCountChanged: NotificationCenterComponentProps['unseenCountChanged'];
   @Input() actionClicked: NotificationCenterComponentProps['actionClicked'];
   @Input() tabClicked: NotificationCenterComponentProps['tabClicked'];
-  @Input() colorScheme?: NotificationCenterComponentProps['colorScheme'];
-  @Input() theme: NotificationCenterComponentProps['theme'];
-  @Input() tabs: NotificationCenterComponentProps['tabs'];
-  @Input() showUserPreferences: NotificationCenterComponentProps['showUserPreferences'];
-  @Input() offset: NotificationCenterComponentProps['offset'];
-  @Input() position: NotificationCenterComponentProps['position'];
-  @Input() unseenBadgeColor: NotificationCenterComponentProps['unseenBadgeColor'];
-  @Input() unseenBadgeBackgroundColor: NotificationCenterComponentProps['unseenBadgeBackgroundColor'];
 }

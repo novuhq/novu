@@ -34,6 +34,7 @@
     "acorn": "^8.7.1",
     "babel-loader": "^8.2.4",
     "jest-transform-stub": "^2.0.0",
+    "lodash.clonedeep": "^4.5.0",
     "rimraf": "^3.0.2",
     "rollup": "^2.60.0",
     "rollup-plugin-dts": "^4.0.1",
@@ -53,6 +54,9 @@
   ],
   "types": "dist/index.d.ts",
   "dependencies": {
+    "@emotion/css": "^11.10.5",
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
     "@novu/client": "^0.9.0",
@@ -61,12 +65,12 @@
     "axios": "^0.26.1",
     "chroma-js": "^2.4.2",
     "date-fns": "^2.29.1",
+    "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2",
     "react-infinite-scroll-component": "^6.0.0",
     "react-query": "^3.34.19",
     "rollup-plugin-node-externals": "^4.0.0",
     "socket.io-client": "2.3.1",
-    "styled-components": "^5.3.5",
     "tslib": "^2.3.1",
     "webfontloader": "^1.6.28"
   }
