@@ -44,17 +44,10 @@ export class SubscriberRepository extends BaseRepository<EnforceIdentifierQuery,
   }
 
   async findBySubscriberId(environmentId: string, subscriberId: string): Promise<SubscriberEntity> {
-    const subscriber = await super.findOne({
+    return await super.findOne({
       _environmentId: environmentId,
       subscriberId,
     } as EnforceEnvironmentQuery);
-
-    if (!subscriber) return subscriber;
-
-    return await this.findOne({
-      _environmentId: environmentId,
-      _id: subscriber._id,
-    });
   }
 
   async searchSubscribers(environmentId: string, search: string, emails: string[] = []) {
