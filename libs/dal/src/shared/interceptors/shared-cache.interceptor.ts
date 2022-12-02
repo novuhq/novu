@@ -17,9 +17,10 @@ export function isStoreConnected(status: string | undefined) {
  * @param keyConfig
  */
 function getIdentifier(key: string, keyConfig: Record<string, undefined>) {
-  return key.startsWith('Message')
-    ? keyConfig._subscriberId ?? (keyConfig.subscriberId && keyConfig._id) ?? keyConfig.id
-    : keyConfig._id ?? keyConfig.id ?? keyConfig._subscriberId ?? keyConfig.subscriberId;
+  const subscriberPreferred = keyConfig._subscriberId ?? keyConfig.subscriberId ?? keyConfig._id ?? keyConfig.id;
+  const idPreferred = keyConfig._id ?? keyConfig.id ?? keyConfig._subscriberId ?? keyConfig.subscriberId;
+
+  return key.startsWith('Message') ? subscriberPreferred : idPreferred;
 }
 
 /**
