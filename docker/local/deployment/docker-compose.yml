@@ -1,0 +1,98 @@
+version: "3"
+services:
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    logging:
+      driver: "none"
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    logging:
+      driver: "none"
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - mongodb:/data/db
+    ports:
+      - 27017:27017
+    restart: unless-stopped
+  api:
+    image: "ghcr.io/novuhq/novu/api:0.9.0"
+    depends_on:
+      - mongodb
+      - redis
+    container_name: api
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      API_ROOT_URL: ${API_ROOT_URL}
+      DISABLE_USER_REGISTRATION: ${DISABLE_USER_REGISTRATION}
+      PORT: ${API_PORT}
+      FRONT_BASE_URL: ${FRONT_BASE_URL}
+      MONGO_URL: ${MONGO_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB_INDEX: 2
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      S3_REGION: ${S3_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      JWT_SECRET: ${JWT_SECRET}
+      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY}
+      SENTRY_DSN: ${SENTRY_DSN}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+    ports:
+      - "3000:3000"
+  ws:
+    image: "ghcr.io/novuhq/novu/ws:0.9.0"
+    depends_on:
+      - mongodb
+      - redis
+    container_name: ws
+    environment:
+      PORT: ${WS_PORT}
+      NODE_ENV: ${NODE_ENV}
+      MONGO_URL: ${MONGO_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      - "3002:3002"
+  web:
+    image: "ghcr.io/novuhq/novu/web:0.9.0"
+    depends_on:
+      - api
+    container_name: web
+    environment:
+      REACT_APP_API_URL: ${API_ROOT_URL}
+      REACT_APP_ENVIRONMENT: ${NODE_ENV}
+      REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
+      REACT_APP_DOCKER_HOSTED_ENV: 'true'
+    ports:
+      - 4200:4200
+  widget:
+    image: "ghcr.io/novuhq/novu/widget:0.9.0"
+    depends_on:
+      - api
+      - web
+    container_name: widget
+    environment:
+      REACT_APP_API_URL: ${API_ROOT_URL}
+      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+      REACT_APP_ENVIRONMENT: ${NODE_ENV}
+    ports:
+      - 4500:4500
+  embed:
+    depends_on:
+      - widget
+    image: "ghcr.io/novuhq/novu/embed:0.9.0"
+    container_name: embed
+    environment:
+      WIDGET_URL: ${WIDGET_URL}
+    ports:
+      - 4701:4701
+volumes:
+  mongodb: ~

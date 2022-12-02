@@ -32,6 +32,7 @@ import { TemplateEditorProvider } from './components/templates/TemplateEditorPro
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
 import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
+import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -80,6 +81,22 @@ function App() {
                   <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
                   <Route path="/auth/invitation/:token" element={<InvitationPage />} />
                   <Route path="/auth/application" element={<CreateOrganizationPage />} />
+                  <Route
+                    path="/partner-integrations/vercel/link-projects"
+                    element={
+                      <RequiredAuth>
+                        <LinkVercelProjectPage type="create" />
+                      </RequiredAuth>
+                    }
+                  />
+                  <Route
+                    path="/partner-integrations/vercel/link-projects/edit"
+                    element={
+                      <RequiredAuth>
+                        <LinkVercelProjectPage type="edit" />
+                      </RequiredAuth>
+                    }
+                  />
                   <Route element={<AppLayout />}>
                     <Route
                       path="/*"

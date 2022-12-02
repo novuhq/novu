@@ -8,6 +8,7 @@ export class CancelDelayed {
 
   public async execute(command: CancelDelayedCommand): Promise<boolean> {
     const job = await this.jobRepository.findOne({
+      _environmentId: command.environmentId,
       transactionId: command.transactionId,
       status: JobStatusEnum.DELAYED,
     });
@@ -18,6 +19,7 @@ export class CancelDelayed {
 
     await this.jobRepository.update(
       {
+        _environmentId: command.environmentId,
         _id: job._id,
       },
       {

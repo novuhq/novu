@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs16-slim as dev_base
+FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as dev_base
 
 RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@7.5.0
@@ -14,16 +14,11 @@ COPY ./meta .
 COPY ./deps .
 COPY ./pkg .
 
-RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store\
- pnpm install --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
+RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store\
+ pnpm install --reporter=silent --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
  --frozen-lockfile\
  --unsafe-perm\
- | grep -v "cross-device link not permitted\|Falling back to copying packages from store"
- # ↑ Unfortunately using Docker's 'cache' mount type causes Docker to place the pnpm content-addressable store
- # on a different virtual drive, which prohibits pnpm from symlinking its content to its virtual store
- # (in node_modules/.pnpm), and that causes pnpm to fall back on copying the files.
- # And that's fine!, except pnpm emits many warnings of this, so here we filter those out.
-
+ --reporter=silent
 
 RUN NODE_ENV=production pnpm build:webhook
 
@@ -41,7 +36,7 @@ FROM dev AS assets
 
 WORKDIR /usr/src/app
 
-# Remove all dependencies so later we can only install prod dependencies without devDepen
+# Remove all dependencies so later we can only install prod dependencies without devDependencies
 RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
 # ------- PRODUCTION BUILD ----------
@@ -52,16 +47,20 @@ ENV CI=true
 
 WORKDIR /usr/src/app
 
+RUN chown -R 1000:root .
+
 COPY ./meta .
 
 # Get the build artifacts that only include dist folders
 COPY --from=assets /usr/src/app .
 
-RUN --mount=type=cache,id=pnpm-store,target=/root/.pnpm-store\
- pnpm install --filter "{${PACKAGE_PATH}}..."\
-     --frozen-lockfile\
-     --unsafe-perm\
- | grep -v "cross-device link not permitted\|Falling back to copying packages from store"
+RUN --mount=type=cache,id=pnpm-store-webhook,target=/root/.pnpm-store\
+ pnpm install --reporter=silent --filter "{${PACKAGE_PATH}}..."\
+ --frozen-lockfile\
+ --unsafe-perm\
+ --reporter=silent
+
+RUN chown -R 1000:root .
 
 WORKDIR /usr/src/app/apps/webhook
 CMD [ "pm2-runtime", "dist/src/main.js" ]

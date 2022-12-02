@@ -29,9 +29,12 @@ export const TriggerCard = ({
             minHeight: '115px',
             backgroundColor: 'transparent',
             borderColor: theme.colorScheme === 'dark' ? darkBorderColor : lightBorderColor,
-            [`&:hover`]: {
-              borderColor: theme.colorScheme === 'dark' ? colors.white : colors.B40,
-            },
+            ...(exist && {
+              cursor: 'pointer',
+              [`&:hover`]: {
+                borderColor: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+              },
+            }),
           };
         }}
       >
@@ -54,15 +57,13 @@ const StyledCardContent = ({ children }: { children: React.ReactNode }) => {
     <Group
       align="center"
       spacing={7}
-      direction="column"
-      styles={{
-        root: {
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          marginRight: '-50%',
-          transform: 'translate(-50%, -50%)',
-        },
+      style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        marginRight: '-50%',
+        transform: 'translate(-50%, -50%)',
+        flexDirection: 'column',
       }}
     >
       {children}

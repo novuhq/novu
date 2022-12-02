@@ -12,6 +12,7 @@ export class WorkflowQueueService {
       db: Number(process.env.REDIS_DB_INDEX),
       port: Number(process.env.REDIS_PORT),
       host: process.env.REDIS_HOST,
+      password: process.env.REDIS_PASSWORD,
       connectTimeout: 50000,
       keepAlive: 30000,
       family: 4,
@@ -52,11 +53,11 @@ export class WorkflowQueueService {
       }
     );
     this.worker.on('completed', async (job) => {
-      await this.jobRepository.updateStatus(job.data._id, JobStatusEnum.COMPLETED);
+      await this.jobRepository.updateStatus(job.data._organizationId, job.data._id, JobStatusEnum.COMPLETED);
     });
     this.worker.on('failed', async (job, e) => {
-      await this.jobRepository.updateStatus(job.data._id, JobStatusEnum.FAILED);
-      await this.jobRepository.setError(job.data._id, e);
+      await this.jobRepository.updateStatus(job.data._organizationId, job.data._id, JobStatusEnum.FAILED);
+      await this.jobRepository.setError(job.data._organizationId, job.data._id, e);
     });
     this.queueScheduler = new QueueScheduler('standard', this.bullConfig);
   }

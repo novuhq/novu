@@ -1,7 +1,7 @@
 import _get from 'lodash.get';
 import { EventEmitter } from 'events';
 
-import { getHandlebarsVariables } from '../content/content.engine';
+import { IContentEngine } from '../content/content.engine';
 
 import { EmailHandler } from '../handler/email.handler';
 import { SmsHandler } from '../handler/sms.handler';
@@ -22,6 +22,7 @@ export class TriggerEngine {
     private templateStore: TemplateStore,
     private providerStore: ProviderStore,
     private themeStore: ThemeStore,
+    private contentEngine: IContentEngine,
     private config: INovuConfig,
     private eventEmitter: EventEmitter
   ) {}
@@ -118,14 +119,20 @@ export class TriggerEngine {
     const mergedResults: string[] = [];
 
     if (message.template && typeof message.template === 'string') {
-      mergedResults.push(...getHandlebarsVariables(message.template));
+      mergedResults.push(
+        ...this.contentEngine.extractMessageVariables(message.template)
+      );
     }
 
     if (message.subject) {
       if (typeof message.subject === 'string') {
-        mergedResults.push(...getHandlebarsVariables(message.subject));
+        mergedResults.push(
+          ...this.contentEngine.extractMessageVariables(message.subject)
+        );
       } else if (typeof message.subject === 'function') {
-        mergedResults.push(...getHandlebarsVariables(message.subject(data)));
+        mergedResults.push(
+          ...this.contentEngine.extractMessageVariables(message.subject(data))
+        );
       } else {
         throw new Error(
           "Subject must be either of 'string' or 'function' type"

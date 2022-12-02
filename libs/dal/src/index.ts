@@ -15,5 +15,7 @@ export * from './repositories/integration';
 export * from './repositories/change';
 export * from './repositories/job';
 export * from './repositories/feed';
+export * from './repositories/execution-details';
 export * from './repositories/subscriber-preference';
+export * from './repositories/topic';
 export * from './shared/exceptions';

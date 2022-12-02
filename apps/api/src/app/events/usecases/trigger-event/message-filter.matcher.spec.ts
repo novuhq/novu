@@ -136,7 +136,7 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should get larger payload var then then filter value', function () {
+  it('should get larger payload var then filter value', function () {
     const matchedMessage = matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
@@ -156,7 +156,7 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should get smaller payload var then then filter value', function () {
+  it('should get smaller payload var then filter value', function () {
     const matchedMessage = matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
@@ -176,7 +176,7 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should get larger or equal payload var then then filter value', function () {
+  it('should get larger or equal payload var then filter value', function () {
     let matchedMessage = matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
@@ -214,7 +214,7 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should get smaller or equal payload var then then filter value', function () {
+  it('should get smaller or equal payload var then filter value', function () {
     let matchedMessage = matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {

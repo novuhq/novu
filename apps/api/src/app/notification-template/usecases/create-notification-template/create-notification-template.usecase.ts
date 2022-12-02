@@ -67,7 +67,9 @@ export class CreateNotificationTemplate {
           subject: message.template.subject,
           title: message.template.title,
           feedId: message.template.feedId,
+          preheader: message.template.preheader,
           parentChangeId,
+          actor: message.template.actor,
         })
       );
 
@@ -78,6 +80,8 @@ export class CreateNotificationTemplate {
         filters: message.filters,
         _parentId: parentStepId,
         metadata: message.metadata,
+        active: message.active,
+        shouldStopOnFail: message.shouldStopOnFail,
       });
       parentStepId = stepId;
     }

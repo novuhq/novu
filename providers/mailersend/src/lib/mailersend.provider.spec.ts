@@ -129,7 +129,7 @@ test('should check provider integration when bad credentials', async () => {
 
 test('should check provider integration when failed', async () => {
   const provider = new MailersendEmailProvider(mockConfig);
-  const serverMessage = 'Server is under maintanance';
+  const serverMessage = 'Server is under maintenance';
 
   const spy = jest
     .spyOn(MailerSend.prototype, 'request')

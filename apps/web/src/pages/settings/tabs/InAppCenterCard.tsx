@@ -1,11 +1,11 @@
-import React from 'react';
 import { Prism } from '@mantine/prism';
+import styled from '@emotion/styled';
+import { Input } from '@mantine/core';
+
 import { colors, Text } from '../../../design-system';
-import { WIDGET_EMEBED_PATH } from '../../../config';
+import { WIDGET_EMBED_PATH } from '../../../config';
 import { useEnvController } from '../../../store/use-env-controller';
 import { Security } from './components/Security';
-import styled from '@emotion/styled';
-import { InputWrapper } from '@mantine/core';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 
 export const InAppCenterCard = () => {
@@ -15,7 +15,7 @@ export const InAppCenterCard = () => {
     n[i] = {}; var m = ['init', 'on']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
     var elt = o.createElement(f); elt.type = "text/javascript"; elt.async = true; elt.src = t;
     var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
-  })(window, document, '${WIDGET_EMEBED_PATH}', 'novu', 'script');
+  })(window, document, '${WIDGET_EMBED_PATH}', 'novu', 'script');
 
   novu.init('${environment?.identifier}', '#notification-bell', {
     subscriberId: "<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>",
@@ -27,25 +27,27 @@ export const InAppCenterCard = () => {
 
   return (
     <>
-      <InputWrapper label={'In-App Widget Embed Code'} description={<DescriptionText />} styles={inputStyles}>
+      <Input.Wrapper label={'In-App Widget Embed Code'} description={<DescriptionText />} styles={inputStyles}>
         <PrismContainer>
           <Prism
             styles={(theme) => ({
+              scrollArea: {
+                border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
+                borderRadius: '7px',
+              },
               code: {
                 fontWeight: 400,
                 color: `${colors.B60} !important`,
                 backgroundColor: 'transparent !important',
-                border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
-                borderRadius: '7px',
               },
             })}
-            language="jsx"
+            language="javascript"
             data-test-id="embed-code-snippet"
           >
             {embedCode}
           </Prism>
         </PrismContainer>
-      </InputWrapper>
+      </Input.Wrapper>
       <Security />
     </>
   );
@@ -62,7 +64,7 @@ function DescriptionText() {
 }
 
 export const PrismContainer = styled.div`
-  padding: 25px 0 32px 0;
+  margin: 25px 0 32px 0;
   @media screen and (max-width: 1400px) {
     width: 600px;
   }
