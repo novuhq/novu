@@ -1,7 +1,7 @@
 import type { INovuProviderProps } from '../novu-provider';
 import type { IPopoverNotificationCenterProps } from '../popover-notification-center';
 import type { ColorScheme } from '../../shared/config/colors';
-import { NotificationCenterProviderStyles } from '../../store/styles';
+import { NotificationCenterStyles } from '../../store/styles';
 
 type SelectedProviderProps = Pick<
   INovuProviderProps,
@@ -45,6 +45,6 @@ type BellProps = { unseenBadgeColor?: string; unseenBadgeBackgroundColor?: strin
 
 export type NotificationCenterComponentProps = NovuProviderProps &
   PopoverProps &
-  BellProps & { styles?: NotificationCenterProviderStyles };
+  BellProps & { styles?: NotificationCenterStyles };
 
 export type PopoverWrapperProps = PopoverProps & BellProps;

@@ -45,7 +45,7 @@ export type StylesPaths =
   | 'preferences.item.content.channelLabel'
   | 'preferences.item.content.success';
 
-export interface NotificationCenterProviderStyles {
+export interface NotificationCenterStyles {
   bellButton?: ObjectWithRoot<{
     dot?: CSSFunctionOrObject;
   }>;

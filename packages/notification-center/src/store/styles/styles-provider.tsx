@@ -2,11 +2,11 @@ import React, { FunctionComponent, createContext, useMemo, useContext } from 're
 import { CSSInterpolation } from '@emotion/css';
 import get from 'lodash.get';
 
-import { NotificationCenterProviderStyles, StylesPaths } from './styles-provider.types';
+import { NotificationCenterStyles, StylesPaths } from './styles-provider.types';
 import { CSSFunctionOrObject } from '../../components/types';
 import { useNovuTheme } from '../../hooks';
 
-const StylesContext = createContext<{ styles: NotificationCenterProviderStyles } | undefined>(undefined);
+const StylesContext = createContext<{ styles: NotificationCenterStyles } | undefined>(undefined);
 
 export const useStyles = (path: StylesPaths | StylesPaths[]): CSSInterpolation[] => {
   const stylesContext = useContext(StylesContext);
@@ -29,10 +29,7 @@ export const useStyles = (path: StylesPaths | StylesPaths[]): CSSInterpolation[]
   return [getStyleByPath(path)];
 };
 
-export const StylesProvider: FunctionComponent<{ styles?: NotificationCenterProviderStyles }> = ({
-  styles,
-  children,
-}) => {
+export const StylesProvider: FunctionComponent<{ styles?: NotificationCenterStyles }> = ({ styles, children }) => {
   const contextValue = useMemo(() => ({ styles }), [styles]);
 
   return <StylesContext.Provider value={contextValue}>{children}</StylesContext.Provider>;
