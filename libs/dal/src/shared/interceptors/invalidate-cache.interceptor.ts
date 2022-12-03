@@ -1,4 +1,4 @@
-import { appendCredentials } from './shared-cache.interceptor';
+import { buildKey, CacheInterceptorTypeEnum, getInvalidateQuery } from './shared-cache';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function InvalidateCache(storeKeyPrefix?: string) {
@@ -14,9 +14,13 @@ export function InvalidateCache(storeKeyPrefix?: string) {
         return res;
       }
 
-      const query = getQuery(key, res, args);
+      const query = getInvalidateQuery(key, res, args);
 
-      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel?.modelName, query);
+      const cacheKey = buildKey(
+        storeKeyPrefix ?? this.MongooseModel?.modelName,
+        query,
+        CacheInterceptorTypeEnum.INVALIDATE
+      );
 
       if (!cacheKey) {
         return res;
@@ -32,23 +36,4 @@ export function InvalidateCache(storeKeyPrefix?: string) {
       return res;
     };
   };
-}
-
-function buildKey(prefix: string, keyConfig: Record<string, undefined>): string {
-  let key = prefix;
-
-  key = `${key}*`;
-
-  return appendCredentials(key, keyConfig);
-}
-
-/**
- * on create request the _id is available after collection creation,
- * therefore we need to build it from the storage response
- * @param key
- * @param res
- * @param args
- */
-function getQuery(key: string, res, args: any[]) {
-  return key === 'create' ? res : args[0];
 }

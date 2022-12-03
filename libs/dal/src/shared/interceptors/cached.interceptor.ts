@@ -1,4 +1,4 @@
-import { appendCredentials } from './shared-cache.interceptor';
+import { buildCachedQuery, buildKey, CacheInterceptorTypeEnum } from './shared-cache';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function Cached(storeKeyPrefix?: string) {
@@ -8,8 +8,9 @@ export function Cached(storeKeyPrefix?: string) {
     descriptor.value = async function (...args: any[]) {
       if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
 
-      const query = args.reduce((obj, item) => Object.assign(obj, item), {});
-      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel.modelName, query);
+      const query = buildCachedQuery(args);
+
+      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel.modelName, query, CacheInterceptorTypeEnum.CACHED);
 
       if (!cacheKey) {
         return await originalMethod.apply(this, args);
@@ -41,42 +42,4 @@ export function Cached(storeKeyPrefix?: string) {
       return response;
     };
   };
-}
-
-function buildKey(prefix: string, keyConfig: Record<undefined, string>): string {
-  let cacheKey = prefix;
-
-  cacheKey = appendQueryParams(cacheKey, keyConfig);
-
-  return appendCredentials(cacheKey, keyConfig);
-}
-
-function getCredentialsKeys() {
-  return ['id', 'subscriberId', 'environmentId', 'organizationId'].map((cred) => [cred, `_${cred}`]).flat();
-}
-
-function appendQueryParams(cacheKey: string, keysConfig: any): string {
-  let result = cacheKey;
-
-  const keysToExclude = [...getCredentialsKeys()];
-
-  const filteredContextKeys = Object.fromEntries(
-    Object.entries(keysConfig).filter(([key, value]) => {
-      return !keysToExclude.some((element) => element === key);
-    })
-  );
-
-  for (const [key, value] of Object.entries(filteredContextKeys)) {
-    if (value == null) continue;
-
-    const elementValue = typeof value === 'object' ? JSON.stringify(value) : value;
-
-    const elementKey = `${key}=${elementValue}`;
-
-    if (elementKey) {
-      result += ':' + elementKey;
-    }
-  }
-
-  return result;
 }
