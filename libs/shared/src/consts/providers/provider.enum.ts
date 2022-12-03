@@ -20,6 +20,7 @@ export enum CredentialsKeyEnum {
   ProjectName = 'projectName',
   ServiceAccount = 'serviceAccount',
   BaseUrl = 'baseUrl',
+  WebhookUrl = 'webhookUrl',
 }
 
 export enum EmailProviderIdEnum {
@@ -27,12 +28,16 @@ export enum EmailProviderIdEnum {
   Mailgun = 'mailgun',
   Mailjet = 'mailjet',
   Mandrill = 'mandrill',
-  CustomSmtp = 'nodemailer',
+  CustomSMTP = 'nodemailer',
   Postmark = 'postmark',
   SendGrid = 'sendgrid',
   Sendinblue = 'sendinblue',
   SES = 'ses',
   NetCore = 'netcore',
+  Infobip = 'infobip',
+  MailerSend = 'mailersend',
+  Clickatell = 'clickatell',
+  Outlook365 = 'outlook365',
 }
 
 export enum SmsProviderIdEnum {
@@ -44,11 +49,15 @@ export enum SmsProviderIdEnum {
   Twilio = 'twilio',
   Gupshup = 'gupshup',
   Firetext = 'firetext',
+  Infobip = 'infobip',
+  BurstSms = 'burst-sms',
+  Clickatell = 'clickatell',
 }
 
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
+  MsTeams = 'msteams',
 }
 
 export enum PushProviderIdEnum {

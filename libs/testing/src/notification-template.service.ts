@@ -102,11 +102,9 @@ export class NotificationTemplateService {
       ],
       ...override,
       steps: templateSteps,
-    };
+    } as NotificationTemplateEntity;
 
-    const notificationTemplate = await this.notificationTemplateRepository.create(
-      data as Partial<NotificationTemplateEntity>
-    );
+    const notificationTemplate = await this.notificationTemplateRepository.create(data);
 
     return await this.notificationTemplateRepository.findById(
       notificationTemplate._id,

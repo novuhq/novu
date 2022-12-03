@@ -1,25 +1,25 @@
-import { ActionIcon, Divider, MenuItem as DropdownItem } from '@mantine/core';
+import { ActionIcon, Divider } from '@mantine/core';
 import { DoubleArrowRight, PlusCircleOutlined, TextAlignment } from '../../../design-system/icons';
 import { colors, Dropdown } from '../../../design-system';
 
 export function ControlBar({ top, onBlockAdd }: { top: number; onBlockAdd: (type: 'button' | 'text') => void }) {
   const actionsMenu = [
-    <DropdownItem
+    <Dropdown.Item
       key="control-bar-add"
       data-test-id="add-btn-block"
       icon={<DoubleArrowRight />}
       onClick={() => onBlockAdd('button')}
     >
       Add Button
-    </DropdownItem>,
-    <DropdownItem
+    </Dropdown.Item>,
+    <Dropdown.Item
       key="add-text-button"
       data-test-id="add-text-block"
       icon={<TextAlignment />}
       onClick={() => onBlockAdd('text')}
     >
       Add Text
-    </DropdownItem>,
+    </Dropdown.Item>,
   ];
 
   return (

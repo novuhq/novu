@@ -30,18 +30,29 @@ jobs:
       with:
         mongodb-version: 4.2.8
 
-    - name: Cache pnpm modules
-      uses: actions/cache@v2
-      with:
-        path: ~/.pnpm-store
-        key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-
-
-    - uses: pnpm/action-setup@v2.0.1
+    - uses: pnpm/action-setup@v2
+      name: Install pnpm
+      id: pnpm-install
       with:
         version: 7.5.0
-        run_install: true
+        run_install: false
+
+    - name: Get pnpm store directory
+      id: pnpm-cache
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+    - uses: actions/cache@v3
+      name: Setup pnpm cache
+      with:
+        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Install dependencies
+      run: pnpm install
 
     - uses: mansagroup/nrwl-nx-action@v2
       with:
@@ -52,13 +63,13 @@ jobs:
       env:
         AWS_DEFAULT_REGION: us-east-1
         DEFAULT_REGION: us-east-1
-        AWS_ACCOUNT_ID: "000000000000"
+        AWS_ACCOUNT_ID: '000000000000'
         AWS_ACCESS_KEY_ID: test
         AWS_SECRET_ACCESS_KEY: test
         AWS_EC2_METADATA_DISABLED: true
-      working-directory: environment/test
+      working-directory: docker/local
       run: |
-        docker-compose up -d
+        docker-compose -f docker-compose.localstack.yml up -d
         sleep 10
         max_retry=30
         counter=0
@@ -70,7 +81,7 @@ jobs:
           echo "Trying again. Try #$counter"
           ((counter++))
         done
-        docker-compose logs --tail="all"
+        docker-compose -f docker-compose.localstack.yml logs --tail="all"
         aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
 
       # Runs a single command using the runners shell

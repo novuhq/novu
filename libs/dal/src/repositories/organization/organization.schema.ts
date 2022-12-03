@@ -21,6 +21,7 @@ const organizationSchema = new Schema(
           accessToken: Schema.Types.String,
           configurationId: Schema.Types.String,
           teamId: Schema.Types.String,
+          projectIds: [Schema.Types.String],
           partnerType: {
             type: Schema.Types.String,
             enum: PartnerTypeEnum,

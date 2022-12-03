@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { JobEntity, JobStatusEnum, JobRepository, NotificationStepEntity } from '@novu/dal';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { JobEntity, JobStatusEnum, JobRepository, NotificationStepEntity, NotificationRepository } from '@novu/dal';
+import { StepTypeEnum } from '@novu/shared';
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterSteps } from './digest-filter-steps.usecase';
 
 @Injectable()
 export class DigestFilterStepsRegular {
-  constructor(private jobRepository: JobRepository) {}
+  constructor(private jobRepository: JobRepository, private notificationRepository: NotificationRepository) {}
 
   public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
     const steps = [DigestFilterSteps.createTriggerStep(command)];
@@ -16,11 +16,25 @@ export class DigestFilterStepsRegular {
         delayedDigests = await this.getDigest(command, step);
       }
 
-      if (this.shouldContinue(delayedDigests)) {
+      if (delayedDigests) {
         continue;
       }
 
       steps.push(step);
+    }
+
+    if (delayedDigests) {
+      await this.notificationRepository.update(
+        {
+          _environmentId: command.environmentId,
+          _id: command.notificationId,
+        },
+        {
+          $set: {
+            _digestedNotificationId: delayedDigests._notificationId,
+          },
+        }
+      );
     }
 
     return steps;
@@ -40,19 +54,5 @@ export class DigestFilterStepsRegular {
     }
 
     return await this.jobRepository.findOne(where);
-  }
-
-  private shouldContinue(delayedDigests): boolean {
-    if (!delayedDigests) {
-      return false;
-    }
-    if (!delayedDigests.digest.updateMode) {
-      return true;
-    }
-    if (delayedDigests.type !== ChannelTypeEnum.IN_APP) {
-      return true;
-    }
-
-    return false;
   }
 }

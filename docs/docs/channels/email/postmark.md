@@ -4,7 +4,7 @@ Is it possible to use [Postmark](https://postmarkapp.com/) as a provider to send
 
 ## Getting Started
 
-The first step to use the Postmark channel is to create a Postmark account and add the personal API key to the Postmark integration on the Novu platform.  
+The first step to use the Postmark channel is to create a Postmark account and add the personal API key to the Postmark integration on the Novu platform.
 
 ## Find the API Key
 
@@ -13,10 +13,8 @@ The first step to use the Postmark channel is to create a Postmark account and a
 
 ## Authenticate the sender identity
 
-
 Due to the latest regulatory changes regarding SPAM rules and email fraud it is needed to authenticate the sender's identity before sending emails on a large scale.
 Most of the providers, including Postmark, require an authentication to unlock the possibility of sending emails.
-
 
 Postmark allows the authentication of the sender identity using one of the following methods:
 

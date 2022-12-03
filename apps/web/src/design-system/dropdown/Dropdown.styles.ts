@@ -11,7 +11,7 @@ export default createStyles((theme: MantineTheme) => {
       backgroundColor: dark ? colors.B20 : colors.white,
       border: 'none',
     },
-    body: {
+    dropdown: {
       minWidth: 220,
       backgroundColor: dark ? colors.B20 : colors.white,
       color: dark ? theme.white : colors.B40,

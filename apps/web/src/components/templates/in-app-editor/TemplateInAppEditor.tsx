@@ -1,31 +1,28 @@
 import { useInputState } from '@mantine/hooks';
-import { ActionIcon, Container, Group } from '@mantine/core';
-import { IFeedEntity } from '@novu/shared';
+import { ActionIcon, Container, Stack, Divider } from '@mantine/core';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { showNotification } from '@mantine/notifications';
+import { IFeedEntity } from '@novu/shared';
+
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
-import { Checkbox, Input } from '../../../design-system';
+import { Checkbox, colors, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { createFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
 import { FeedItems } from './FeedItems';
 import { VariableManager } from '../VariableManager';
+import { EnableAvatarSwitch } from './EnableAvatarSwitch';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const [newFeed, setNewFeed] = useInputState('');
   const [variableContents, setVariableContents] = useState<string[]>([]);
-  const {
-    formState: { errors },
-    setValue,
-    getValues,
-    watch,
-  } = useFormContext();
+  const { setValue, getValues, watch } = useFormContext();
   const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
     IFeedEntity,
@@ -98,8 +95,8 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
 
   return (
     <>
-      <Container sx={{ maxWidth: '450px', paddingLeft: '0px', margin: '0 auto 15px auto' }}>
-        <Group grow direction="column">
+      <Container sx={{ maxWidth: '450px', margin: '0 auto 15px auto' }}>
+        <Stack spacing={25}>
           <Controller
             name={`steps.${index}.template.cta.data.url` as any}
             control={control}
@@ -123,6 +120,8 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             readonly={readonly}
             contentPlaceholder="Write your notification content here..."
           />
+          <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} />
+          <Divider sx={{ borderTopColor: colors.B40 }} />
           <Controller
             name={`steps.${index}.template.feedId` as any}
             control={control}
@@ -155,6 +154,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                         },
                       }}
                       label="Use Feeds"
+                      labelPosition="left"
                     />
                     <Input
                       data-test-id={`create-feed-input`}
@@ -179,7 +179,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
               );
             }}
           />
-        </Group>
+        </Stack>
       </Container>
       <Container>
         <VariableManager index={index} contents={variableContents} />

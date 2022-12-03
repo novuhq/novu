@@ -23,7 +23,7 @@ jobs:
       fail-fast: false
       matrix:
         # run 3 copies of the current job in parallel
-        containers: [1, 2, 3]
+        containers: [1, 2, 3, 4, 5, 6, 7]
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -63,19 +63,19 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v2
         with:
           targets: lint
-          projects: "@novu/web"
+          projects: '@novu/web'
 
       - name: Start Local Stack
         env:
           DEFAULT_REGION: us-east-1
           AWS_DEFAULT_REGION: us-east-1
-          AWS_ACCOUNT_ID: "000000000000"
+          AWS_ACCOUNT_ID: '000000000000'
           AWS_ACCESS_KEY_ID: test
           AWS_SECRET_ACCESS_KEY: test
           AWS_EC2_METADATA_DISABLED: true
-        working-directory: environment/test
+        working-directory: docker/local
         run: |
-          docker-compose up -d
+          docker-compose -f docker-compose.localstack.yml up -d
           sleep 5
           max_retry=30
           counter=0
@@ -93,12 +93,15 @@ jobs:
       # Runs a single command using the runners shell
       - name: Build
         run: CI='' pnpm build:web
-        
+
       - name: Build API
         run: CI='' pnpm build:api
 
       - name: Start Client
-        run: pnpm start:web &
+        working-directory: apps/web
+        env:
+          REACT_APP_API_URL: http://localhost:1336
+        run: pnpm pnpm start:static:build &
 
       - name: Start API in TEST
         run: cd apps/api && pnpm start:test &
@@ -108,6 +111,9 @@ jobs:
 
       - name: Wait on API
         run: wait-on --timeout=120000 http://localhost:1336/v1/health-check
+
+      - name: Wait on WEB
+        run: wait-on --timeout=120000 http://localhost:4200
 
       - name: Cypress run e2e
         uses: cypress-io/github-action@v4
@@ -120,20 +126,6 @@ jobs:
           browser: chrome
           record: true
           parallel: true
-          install: false
-          config-file: cypress.config.ts
-
-      - name: Cypress run component tests
-        uses: cypress-io/github-action@v4
-        env:
-          NODE_ENV: test
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
-        with:
-          working-directory: apps/web
-          browser: chrome
-          component: true
-          record: true
           install: false
           config-file: cypress.config.ts
 
@@ -175,7 +167,6 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-
-
       - uses: pnpm/action-setup@v2.0.1
         with:
           version: 7.5.0

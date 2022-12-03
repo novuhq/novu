@@ -88,6 +88,7 @@ export class UpdateNotificationTemplate {
     }
 
     const parentChangeId: string = await this.changeRepository.getChangeId(
+      command.environmentId,
       ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
       existingTemplate._id
     );
@@ -133,6 +134,8 @@ export class UpdateNotificationTemplate {
               feedId: message.template.feedId ? message.template.feedId : null,
               subject: message.template.subject,
               title: message.template.title,
+              preheader: message.template.preheader,
+              actor: message.template.actor,
               parentChangeId,
             })
           );
@@ -144,6 +147,7 @@ export class UpdateNotificationTemplate {
             _parentId: parentStepId,
             active: message.active,
             metadata: message.metadata,
+            shouldStopOnFail: message.shouldStopOnFail,
           });
         } else {
           const template = await this.createMessageTemplate.execute(
@@ -160,6 +164,7 @@ export class UpdateNotificationTemplate {
               feedId: message.template.feedId,
               subject: message.template.subject,
               title: message.template.title,
+              preheader: message.template.preheader,
               parentChangeId,
             })
           );
@@ -172,6 +177,7 @@ export class UpdateNotificationTemplate {
             _parentId: parentStepId,
             active: message.active,
             metadata: message.metadata,
+            shouldStopOnFail: message.shouldStopOnFail,
           });
         }
         parentStepId = stepId;
