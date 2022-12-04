@@ -1,29 +1,31 @@
-import React from 'react';
 import { Tooltip as MantineTooltip, TooltipProps } from '@mantine/core';
-import useStyles from './Tooltip.styles';
 
-interface ITooltipProps extends JSX.ElementChildrenAttribute {
-  label: React.ReactNode;
-  opened?: boolean;
-  position?: 'top' | 'left' | 'bottom' | 'right';
-  disabled?: boolean;
-}
+import useStyles from './Tooltip.styles';
 
 /**
  * Tooltip component
  *
  */
-export function Tooltip({ children, label, opened = undefined, ...props }: ITooltipProps) {
+export function Tooltip({
+  children,
+  label,
+  opened = undefined,
+  ...props
+}: Pick<TooltipProps, 'label' | 'opened' | 'position' | 'disabled' | 'children' | 'sx' | 'withinPortal'>) {
   const { classes } = useStyles();
-  const defaultDesign = {
-    withArrow: true,
-    arrowSize: 3.5,
-    radius: 'md',
-    wrapLines: true,
-  } as TooltipProps;
 
   return (
-    <MantineTooltip opened={opened} classNames={classes} {...defaultDesign} label={label} {...props}>
+    <MantineTooltip
+      transition="fade"
+      transitionDuration={300}
+      opened={opened}
+      classNames={classes}
+      withArrow
+      arrowSize={3.5}
+      radius="md"
+      label={label}
+      {...props}
+    >
       {children}
     </MantineTooltip>
   );

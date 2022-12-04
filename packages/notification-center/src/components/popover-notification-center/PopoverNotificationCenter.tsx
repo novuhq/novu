@@ -25,9 +25,7 @@ interface IPopoverNotificationCenterProps {
   showUserPreferences?: boolean;
   onTabClick?: (tab: ITab) => void;
   offset?: number;
-  position?:
-    | PopoverProps['position']
-    | `${NonNullable<PopoverProps['position']>}-${NonNullable<Exclude<PopoverProps['placement'], 'center'>>}`;
+  position?: PopoverProps['position'];
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {

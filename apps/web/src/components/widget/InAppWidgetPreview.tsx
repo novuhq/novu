@@ -79,7 +79,8 @@ export function InAppWidgetPreview({
           <Container
             fluid
             sx={{
-              padding: '15px 15px 0',
+              position: 'relative',
+              padding: '15px 25px 0px',
               borderRadius: '7px',
               backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
               boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
@@ -140,7 +141,7 @@ export function InAppWidgetPreview({
           mt={10}
           fluid
           sx={{
-            padding: '15px 15px 16px',
+            padding: '15px 25px 16px',
             borderRadius: '7px',
             backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.BGLight,
             opacity: '0.5',
@@ -155,7 +156,7 @@ export function InAppWidgetPreview({
           mt={10}
           fluid
           sx={{
-            padding: '15px 15px 16px',
+            padding: '15px 25px 16px',
             borderRadius: '7px',
             backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.BGLight,
             opacity: '0.5',

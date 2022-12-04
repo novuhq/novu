@@ -33,6 +33,7 @@ export interface IMessageTemplate {
   };
   _feedId?: string;
   active?: boolean;
+  preheader?: string;
   actor?: {
     type: ActorTypeEnum;
     data: string | null;
@@ -41,3 +42,24 @@ export interface IMessageTemplate {
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const TemplateSystemVariables = ['subscriber', 'step', 'branding'];
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const SystemVariablesWithTypes = {
+  subscriber: {
+    firstName: 'string',
+    lastName: 'string',
+    email: 'string',
+    phone: 'string',
+    avatar: 'string',
+    subscriberId: 'string',
+  },
+  step: {
+    digest: 'boolean',
+    events: 'array',
+    total_count: 'number',
+  },
+  branding: {
+    logo: 'string',
+    color: 'string',
+  },
+};

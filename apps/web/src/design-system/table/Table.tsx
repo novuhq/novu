@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { TableProps, Table as MantineTable, LoadingOverlay, Pagination } from '@mantine/core';
 import { useTable, Column, ColumnWithStrictAccessor, usePagination } from 'react-table';
+
 import useStyles from './Table.styles';
 import { colors } from '../config';
 
@@ -148,14 +149,14 @@ export function Table({
       {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
         <Pagination
           styles={{
-            active: {
-              backgroundImage: colors.horizontal,
-              border: 'none',
-            },
             item: {
               marginTop: '15px',
               marginBottom: '15px',
               backgroundColor: 'transparent',
+              '&[data-active]': {
+                backgroundImage: colors.horizontal,
+                border: 'none',
+              },
             },
           }}
           total={getPageCount()}

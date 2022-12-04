@@ -18,11 +18,11 @@ export function SubscriberPreference() {
 
   return (
     <>
-      {!loading && preferences?.length === 0 && (
+      {!loading && preferences?.length === 0 ? (
         <div
           style={{
             textAlign: 'center',
-            minHeight: 350,
+            minHeight: 400,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -30,51 +30,50 @@ export function SubscriberPreference() {
         >
           <img src={image as any} alt="logo" style={{ maxWidth: 300 }} />
         </div>
-      )}
+      ) : (
+        <ScrollArea style={{ height: 400 }}>
+          <div style={{ padding: '15px' }}>
+            <Accordion chevronPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
+              {preferences?.map((item, index) => {
+                const channelsKeys = Object.keys(item?.preference?.channels);
+                const channelsPreference = item?.preference?.channels;
 
-      <ScrollArea style={{ height: 400 }}>
-        <div style={{ padding: '15px' }}>
-          <Accordion iconPosition="right" styles={accordionStyles(baseTheme, common.fontFamily)}>
-            {preferences?.map((item, index) => {
-              const channelsKeys = Object.keys(item?.preference?.channels);
-              const channelsPreference = item?.preference?.channels;
+                const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
+                  setLoadingUpdate(true);
+                  await updatePreference(item, type, checked, index);
+                  setLoadingUpdate(false);
+                };
 
-              const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
-                setLoadingUpdate(true);
-                await updatePreference(item, type, checked, index);
-                setLoadingUpdate(false);
-              };
-
-              return (
-                <Accordion.Item
-                  key={index}
-                  data-test-id="workflow-list-item"
-                  label={
-                    <WorkflowHeader
-                      theme={baseTheme}
-                      label={item.template?.name}
-                      channels={getEnabledChannels(channelsPreference)}
-                    />
-                  }
-                >
-                  <ChannelsWrapper>
-                    <Divider style={{ borderTopColor: baseTheme?.accordion?.dividerColor }} />
-                    {channelsKeys.map((key) => (
-                      <ChannelPreference
-                        key={key}
-                        type={key}
-                        active={channelsPreference[key]}
-                        disabled={loadingUpdate}
-                        handleUpdateChannelPreference={handleUpdateChannelPreference}
+                return (
+                  <Accordion.Item value={item.template._id} key={index} data-test-id="workflow-list-item">
+                    <Accordion.Control>
+                      <WorkflowHeader
+                        theme={baseTheme}
+                        label={item.template?.name}
+                        channels={getEnabledChannels(channelsPreference)}
                       />
-                    ))}
-                  </ChannelsWrapper>
-                </Accordion.Item>
-              );
-            })}
-          </Accordion>
-        </div>
-      </ScrollArea>
+                    </Accordion.Control>
+                    <Accordion.Panel>
+                      <ChannelsWrapper>
+                        <Divider style={{ borderTopColor: baseTheme?.accordion?.dividerColor }} />
+                        {channelsKeys.map((key) => (
+                          <ChannelPreference
+                            key={key}
+                            type={key}
+                            active={channelsPreference[key]}
+                            disabled={loadingUpdate}
+                            handleUpdateChannelPreference={handleUpdateChannelPreference}
+                          />
+                        ))}
+                      </ChannelsWrapper>
+                    </Accordion.Panel>
+                  </Accordion.Item>
+                );
+              })}
+            </Accordion>
+          </div>
+        </ScrollArea>
+      )}
     </>
   );
 }

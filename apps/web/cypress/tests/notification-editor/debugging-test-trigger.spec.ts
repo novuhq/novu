@@ -1,4 +1,4 @@
-import { addAndEditChannel, clickWorkflow, fillBasicNotificationDetails } from '.';
+import { addAndEditChannel, clickWorkflow, fillBasicNotificationDetails, goBack } from '.';
 
 describe('Debugging - test trigger', function () {
   beforeEach(function () {
@@ -42,6 +42,8 @@ describe('Debugging - test trigger', function () {
       parseSpecialCharSequences: false,
     });
 
+    goBack();
+
     cy.getByTestId('test-workflow-btn').click();
     cy.getByTestId('save-changes-modal').get('button').contains('Save').click();
 
@@ -52,11 +54,11 @@ describe('Debugging - test trigger', function () {
       cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
       cy.getByTestId('test-trigger-modal')
         .getByTestId('test-trigger-to-param')
-        .should('have.value', `{ \n    "subscriberId": "${userId}",\n    "email": "${userEmail}"\n}`);
+        .should('have.value', `{\n  "subscriberId": "${userId}",\n  "email": "${userEmail}"\n}`);
 
       cy.getByTestId('test-trigger-modal')
         .getByTestId('test-trigger-payload-param')
-        .should('have.value', '{\n    "newVar": "REPLACE_WITH_DATA" \n}');
+        .should('have.value', '{\n  "newVar": "REPLACE_WITH_DATA"\n}');
       cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-btn').click();
       cy.location('pathname').should('equal', `/templates/edit/${createdTemplateId}`);
     });

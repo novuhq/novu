@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IPreferenceChannels,
@@ -54,7 +53,7 @@ export class SendMessage {
     const preferred = await this.filterPreferredChannels(command.job);
 
     if (!shouldRun || !preferred) {
-      await this.jobRepository.updateStatus(command.jobId, JobStatusEnum.CANCELED);
+      await this.jobRepository.updateStatus(command.organizationId, command.jobId, JobStatusEnum.CANCELED);
 
       return;
     }
@@ -147,7 +146,7 @@ export class SendMessage {
 
     const result = this.isActionStep(job) || this.stepPreferred(preference, job);
 
-    if (!result) {
+    if (!result && !template.critical) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -161,7 +160,7 @@ export class SendMessage {
       );
     }
 
-    return result;
+    return result || template.critical;
   }
 
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {

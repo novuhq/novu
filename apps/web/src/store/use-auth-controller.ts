@@ -38,7 +38,12 @@ export function useAuthController() {
 
     return initialToken;
   });
-  const [jwtPayload, setJwtPayload] = useState<IJwtPayload>();
+  const [jwtPayload, setJwtPayload] = useState<IJwtPayload | undefined>(() => {
+    const initialToken = getToken();
+    if (initialToken) {
+      return jwtDecode<IJwtPayload>(initialToken);
+    }
+  });
   const [organization, setOrganization] = useState<IOrganizationEntity>();
   const isLoggedIn = !!token;
 
@@ -62,19 +67,6 @@ export function useAuthController() {
   }, [jwtPayload, organizations]);
 
   useEffect(() => {
-    if (token) {
-      queryClient.removeQueries({
-        predicate: (query) =>
-          query.queryKey !== '/v1/users/me' &&
-          query.queryKey !== '/v1/environments' &&
-          query.queryKey !== '/v1/organizations',
-      });
-      const payload = jwtDecode<IJwtPayload>(token);
-      setJwtPayload(payload);
-    }
-  }, [token]);
-
-  useEffect(() => {
     if (user && organization) {
       Sentry.setUser({
         email: user.email,
@@ -88,13 +80,28 @@ export function useAuthController() {
     }
   }, [user, organization]);
 
-  const setTokenCallback = useCallback((newToken: string | null) => {
-    /**
-     * applyToken needs to be called first to avoid a race condition
-     */
-    applyToken(newToken);
-    setToken(newToken);
-  }, []);
+  const setTokenCallback = useCallback(
+    (newToken: string | null) => {
+      /**
+       * applyToken needs to be called first to avoid a race condition
+       */
+      applyToken(newToken);
+      setToken(newToken);
+
+      if (newToken) {
+        queryClient.refetchQueries({
+          predicate: (query) =>
+            // !query.isFetching &&
+            query.queryKey !== '/v1/users/me' &&
+            query.queryKey !== '/v1/environments' &&
+            query.queryKey !== '/v1/organizations',
+        });
+        const payload = jwtDecode<IJwtPayload>(newToken);
+        setJwtPayload(payload);
+      }
+    },
+    [queryClient, setToken, setJwtPayload]
+  );
 
   const logout = () => {
     setTokenCallback(null);
