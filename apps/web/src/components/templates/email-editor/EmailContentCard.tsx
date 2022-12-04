@@ -7,7 +7,7 @@ import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
-import { useIntegrations } from '../../../api/hooks';
+import { useActiveIntegrations } from '../../../api/hooks';
 import { EmailInboxContent } from './EmailInboxContent';
 
 const EDITOR = 'Editor';
@@ -26,7 +26,7 @@ export function EmailContentCard({
   const { control, setValue, watch } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`steps.${index}.template.contentType`);
   const [activeTab, setActiveTab] = useState<string | null>(EDITOR);
-  const { integrations = [] } = useIntegrations();
+  const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
 
   useEffect(() => {
