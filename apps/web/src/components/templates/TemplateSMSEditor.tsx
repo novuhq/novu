@@ -1,6 +1,7 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { Textarea } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
+import { useVariablesManager } from '../../hooks/use-variables-manager';
 import { LackIntegrationError } from './LackIntegrationError';
 import { IForm } from './use-template-controller.hook';
 import { VariableManager } from './VariableManager';
@@ -19,6 +20,7 @@ export function TemplateSMSEditor({
   const {
     formState: { errors },
   } = useFormContext();
+  const variablesArray = useVariablesManager(index, ['content']);
 
   return (
     <>
@@ -39,7 +41,7 @@ export function TemplateSMSEditor({
           />
         )}
       />
-      <VariableManager index={index} contents={['content']} />
+      <VariableManager index={index} variablesArray={variablesArray} />
     </>
   );
 }

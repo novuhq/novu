@@ -15,7 +15,8 @@ export class ContentTemplatesController {
     @UserSession() user: IJwtPayload,
     @Body('content') content: string | IEmailBlock[],
     @Body('contentType') contentType: MessageTemplateContentType,
-    @Body('payload') payload: any
+    @Body('payload') payload: any,
+    @Body('subject') subject: string
   ) {
     return this.previewEmailUsecase.execute(
       PreviewEmailCommand.create({
@@ -25,6 +26,7 @@ export class ContentTemplatesController {
         content,
         contentType,
         payload,
+        subject,
       })
     );
   }

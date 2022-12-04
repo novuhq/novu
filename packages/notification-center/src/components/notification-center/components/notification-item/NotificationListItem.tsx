@@ -123,13 +123,6 @@ export function NotificationListItem({
           ctaAction={notification?.cta?.action}
           handleActionButtonClick={handleActionButtonClick}
         />
-
-        <ActionWrapper
-          templateIdentifier={notification.templateIdentifier}
-          actionStatus={notification?.cta?.action?.status}
-          ctaAction={notification?.cta?.action}
-          handleActionButtonClick={handleActionButtonClick}
-        />
       </NotificationItemContainer>
       <SettingsActionWrapper style={{ display: 'none' }}>
         <DotsHorizontal />

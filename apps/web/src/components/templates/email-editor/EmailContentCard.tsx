@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Tabs } from '../../../design-system';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
-import { useIntegrations } from '../../../api/hooks';
+import { useActiveIntegrations } from '../../../api/hooks';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailInboxContent } from './EmailInboxContent';
@@ -25,7 +25,7 @@ export function EmailContentCard({
   const { control, setValue, watch } = useFormContext(); // retrieve all hook methods
   const contentType = watch(`steps.${index}.template.contentType`);
   const [activeTab, setActiveTab] = useState<string | null>(EDITOR);
-  const { integrations = [] } = useIntegrations();
+  const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
 
   useEffect(() => {

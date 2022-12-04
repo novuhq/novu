@@ -12,6 +12,7 @@ import { createFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';
 import { VariableManager } from '../VariableManager';
+import { useVariablesManager } from '../../../hooks/use-variables-manager';
 import { FeedItems } from './FeedItems';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { EnableAvatarSwitch } from './EnableAvatarSwitch';
@@ -34,6 +35,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   });
 
   const [showFeed, setShowFeed] = useState(true);
+  const variablesArray = useVariablesManager(index, variableContents);
 
   useEffect(() => {
     const subscription = watch((values) => {
@@ -181,7 +183,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
         </Stack>
       </Container>
       <Container>
-        <VariableManager index={index} contents={variableContents} />
+        <VariableManager index={index} variablesArray={variablesArray} />
       </Container>
     </>
   );
