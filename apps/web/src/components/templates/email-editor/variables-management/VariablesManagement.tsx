@@ -6,6 +6,7 @@ import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
 import { UnstyledButton, useMantineTheme } from '@mantine/core';
 import { EditGradient } from '../../../../design-system/icons/gradient/EditGradient';
+import { useProcessVariables } from '../../../../hooks/use-process-variables';
 
 export const VariablesManagement = ({ index, openVariablesModal }) => {
   const { control } = useFormContext();
@@ -14,6 +15,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
     name: `steps.${index}.template.variables`,
     control,
   });
+  const processedVariables = useProcessVariables(variableArray, false);
 
   return (
     <div
@@ -69,8 +71,12 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
         }}
       >
         <VarLabel label="Step Variables">
-          {variableArray.map((item) => {
-            return <VarItem name={item.name} type={item.type.toLowerCase()} />;
+          {Object.keys(processedVariables).map((name) => {
+            if (typeof processedVariables[name] === 'object') {
+              return <VarItemsDropdown name={name} type={processedVariables[name]} />;
+            }
+
+            return <VarItem name={name} type={typeof processedVariables[name]} />;
           })}
         </VarLabel>
       </div>
