@@ -384,7 +384,6 @@ export class SendMessageEmail extends SendMessageType {
          * to display the mail with `[Message clipped]` footer.
          */
         block.content = await this.renderContent(block.content, subject, organization, subscriber, command, preheader);
-        block.content = block.content.trim();
         block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command, preheader);
       }
 
@@ -402,7 +401,7 @@ export class SendMessageEmail extends SendMessageType {
     command: SendMessageCommand,
     preheader?: string
   ) {
-    return await this.compileTemplate.execute(
+    const renderedContent = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
         customTemplate: content as string,
@@ -424,5 +423,7 @@ export class SendMessageEmail extends SendMessageType {
         },
       })
     );
+
+    return renderedContent.trim();
   }
 }
