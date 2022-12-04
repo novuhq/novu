@@ -19,6 +19,8 @@ export class PreviewEmail {
       this.getContent(isEditorMode, command.content, payload),
     ]);
 
+    const subject = await this.renderContent(command.subject, payload);
+
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: isEditorMode ? 'basic' : 'custom',
@@ -34,7 +36,7 @@ export class PreviewEmail {
       })
     );
 
-    return { html };
+    return { html, subject };
   }
 
   private async getContent(

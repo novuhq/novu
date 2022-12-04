@@ -39,6 +39,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
 
   const { integrations = [] } = useIntegrations();
   const [integration, setIntegration]: any = useState(null);
+  const [parsedSubject, setParsedSubject] = useState(subject);
   const [content, setContent] = useState<string>('<html><head></head><body><div></div></body></html>');
   const { isLoading, mutateAsync } = useMutation(previewEmail);
   const processedVariables = useProcessVariables(variables);
@@ -53,8 +54,12 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     content: string | IEmailBlock[];
     payload: any;
   }) => {
-    mutateAsync(args).then((result: { html: string }) => {
+    mutateAsync({
+      ...args,
+      subject,
+    }).then((result: { html: string; subject: string }) => {
       setContent(result.html);
+      setParsedSubject(result.subject);
 
       return result;
     });
@@ -85,12 +90,12 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
       <Grid>
         <Grid.Col span={9}>
           <When truthy={view === 'web'}>
-            <PreviewWeb subject={subject} content={content} integration={integration} />
+            <PreviewWeb subject={parsedSubject} content={content} integration={integration} />
           </When>
           <When truthy={view === 'mobile'}>
             <Grid>
               <Grid.Col span={12}>
-                <PreviewMobile subject={subject} content={content} integration={integration} />
+                <PreviewMobile subject={parsedSubject} content={content} integration={integration} />
               </Grid.Col>
             </Grid>
           </When>
