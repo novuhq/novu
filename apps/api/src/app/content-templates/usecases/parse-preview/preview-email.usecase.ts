@@ -19,6 +19,8 @@ export class PreviewEmail {
       this.getContent(isEditorMode, command.content, payload),
     ]);
 
+    const subject = await this.renderContent(command.subject, payload);
+
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: isEditorMode ? 'basic' : 'custom',
@@ -34,7 +36,7 @@ export class PreviewEmail {
       })
     );
 
-    return { html };
+    return { html, subject };
   }
 
   private async getContent(
@@ -46,7 +48,6 @@ export class PreviewEmail {
       content = [...content] as IEmailBlock[];
       for (const block of content) {
         block.content = await this.renderContent(block.content, payload);
-        block.content = block.content.trim();
         block.url = await this.renderContent(block.url || '', payload);
       }
 
@@ -57,7 +58,7 @@ export class PreviewEmail {
   }
 
   private async renderContent(content: string, payload: any) {
-    return await this.compileTemplate.execute(
+    const renderedContent = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
         customTemplate: content,
@@ -66,5 +67,7 @@ export class PreviewEmail {
         },
       })
     );
+
+    return renderedContent.trim();
   }
 }

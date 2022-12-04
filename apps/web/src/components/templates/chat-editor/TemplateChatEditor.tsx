@@ -5,6 +5,7 @@ import { IForm } from '../use-template-controller.hook';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { Textarea } from '../../../design-system';
 import { VariableManager } from '../VariableManager';
+import { useVariablesManager } from '../../../hooks/use-variables-manager';
 
 export function TemplateChatEditor({
   control,
@@ -20,6 +21,7 @@ export function TemplateChatEditor({
   const {
     formState: { errors },
   } = useFormContext();
+  const variablesArray = useVariablesManager(index, ['content']);
 
   return (
     <>
@@ -40,7 +42,7 @@ export function TemplateChatEditor({
           />
         )}
       />
-      <VariableManager index={index} contents={['content']} />
+      <VariableManager index={index} variablesArray={variablesArray} />
     </>
   );
 }
