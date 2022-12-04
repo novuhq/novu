@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { CheckIntegrationEMail } from './check-integration-email.usecase';
 import { CheckIntegrationCommand } from './check-integration.command';
 

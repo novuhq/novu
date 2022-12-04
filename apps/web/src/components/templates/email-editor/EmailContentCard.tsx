@@ -5,9 +5,9 @@ import { Tabs } from '../../../design-system';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/use-env-controller';
 import { useActiveIntegrations } from '../../../api/hooks';
+import { EmailInboxContent } from './EmailInboxContent';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { EmailMessageEditor } from './EmailMessageEditor';
-import { EmailInboxContent } from './EmailInboxContent';
 
 const EDITOR = 'Editor';
 const CUSTOM_CODE = 'Custom Code';
