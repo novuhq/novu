@@ -28,7 +28,7 @@ export enum EmailProviderIdEnum {
   Mailgun = 'mailgun',
   Mailjet = 'mailjet',
   Mandrill = 'mandrill',
-  Nodemailer = 'nodemailer',
+  CustomSMTP = 'nodemailer',
   Postmark = 'postmark',
   SendGrid = 'sendgrid',
   Sendinblue = 'sendinblue',
