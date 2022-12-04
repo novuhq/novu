@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useMutation } from 'react-query';
 import { previewEmail } from '../../../api/content-templates';
-import { useIntegrations } from '../../../api/hooks';
+import { useActiveIntegrations } from '../../../api/hooks';
 import { When } from '../../../components/utils/When';
 import { Button, colors } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
@@ -37,7 +37,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     control,
   });
 
-  const { integrations = [] } = useIntegrations();
+  const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
   const [content, setContent] = useState<string>('<html><head></head><body><div></div></body></html>');
   const { isLoading, mutateAsync } = useMutation(previewEmail);
