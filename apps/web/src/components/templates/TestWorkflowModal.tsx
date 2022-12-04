@@ -2,45 +2,27 @@ import { useMemo, useEffect } from 'react';
 import { JsonInput } from '@mantine/core';
 import { useMutation } from 'react-query';
 import * as Sentry from '@sentry/react';
-import { INotificationTrigger, IUserEntity } from '@novu/shared';
-
+import { INotificationTrigger, IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, Title, Modal } from '../../design-system';
 import { inputStyles } from '../../design-system/config/inputs.styles';
 import { testTrigger } from '../../api/templates';
 import { useContext, useState } from 'react';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { AuthContext } from '../../store/authContext';
+import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
 
-const makeToValue = (subscriberVariables: { name: string; value?: any }[], currentUser?: IUserEntity) => {
-  let to = `{\n`;
+const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
+  const subsVars = getSubscriberValue(
+    subscriberVariables,
+    (variable) =>
+      (currentUser && currentUser[variable.name === 'subscriberId' ? 'id' : variable.name]) || '<REPLACE_WITH_DATA>'
+  );
 
-  to +=
-    subscriberVariables
-      ?.map((variable) => {
-        return `  "${variable.name}": "${
-          (currentUser && currentUser[variable.name === 'subscriberId' ? 'id' : variable.name]) ?? 'REPLACE_WITH_DATA'
-        }"`;
-      })
-      .join(',\n') ?? '';
-
-  to += `\n}`;
-
-  return to;
+  return JSON.stringify(subsVars, null, 2);
 };
 
-const makePayloadValue = (trigger?: INotificationTrigger) => {
-  let payload = `{\n`;
-
-  payload +=
-    trigger?.variables
-      .map((variable) => {
-        return `  "${variable.name}": "REPLACE_WITH_DATA"`;
-      })
-      .join(',\n') ?? '';
-
-  payload += `\n}`;
-
-  return payload;
+const makePayloadValue = (variables: INotificationTriggerVariable[]) => {
+  return JSON.stringify(getPayloadValue(variables), null, 2);
 };
 
 export function TestWorkflowModal({
@@ -63,10 +45,11 @@ export function TestWorkflowModal({
     () => [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])],
     [trigger]
   );
+  const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
 
   const overridesTrigger = `{\n\n}`;
   const [toValue, setToValue] = useState(() => makeToValue(subscriberVariables, currentUser));
-  const [payloadValue, setPayloadValue] = useState(() => makePayloadValue(trigger));
+  const [payloadValue, setPayloadValue] = useState(() => makePayloadValue(variables));
   const [overridesValue, setOverridesValue] = useState(overridesTrigger);
 
   useEffect(() => {

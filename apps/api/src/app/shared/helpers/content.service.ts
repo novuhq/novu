@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { StepTypeEnum, INotificationTemplateStep } from '@novu/shared';
+import Handlebars from 'handlebars';
 
 export class ContentService {
   replaceVariables(content: string, variables: { [key: string]: string }) {
@@ -17,19 +18,9 @@ export class ContentService {
   extractVariables(content: string): string[] {
     if (!content) return [];
 
-    const regExp = /{{([a-zA-Z_][a-zA-Z0-9_-]*?)}}/gm;
-    const matchedItems = content.match(regExp);
+    const ast: hbs.AST.Program = Handlebars.parseWithoutProcessing(content);
 
-    const result = [];
-    if (!matchedItems || !Array.isArray(matchedItems)) {
-      return result;
-    }
-
-    for (const item of matchedItems) {
-      result.push(item.replace('{{', '').replace('}}', ''));
-    }
-
-    return result;
+    return this.getHandlebarVariables(ast.body);
   }
 
   extractMessageVariables(messages: INotificationTemplateStep[]): string[] {
@@ -37,7 +28,6 @@ export class ContentService {
 
     for (const text of this.messagesTextIterator(messages)) {
       const extractedVariables = this.extractVariables(text);
-
       variables.push(...extractedVariables);
     }
 
@@ -106,5 +96,38 @@ export class ContentService {
     });
 
     return newMessageVariables;
+  }
+
+  private getHandlebarVariables(input: hbs.AST.Statement[]): string[] {
+    const moustacheVariables = input
+      .filter(({ type }: hbs.AST.Statement) => type === 'MustacheStatement')
+      .map((statement: hbs.AST.Statement) => {
+        const moustacheStatement: hbs.AST.MustacheStatement = statement as hbs.AST.MustacheStatement;
+        const paramsExpressionList = moustacheStatement.params as hbs.AST.PathExpression[];
+        const pathExpression = moustacheStatement.path as hbs.AST.PathExpression;
+
+        return paramsExpressionList[0]?.original || pathExpression.original;
+      });
+
+    const blockVariables = input
+      .filter(({ type }: hbs.AST.Statement) => type === 'BlockStatement')
+      .map((statement: hbs.AST.Statement) => {
+        const blockStatement: hbs.AST.BlockStatement = statement as hbs.AST.BlockStatement;
+        const paramsExpressionList = blockStatement.params as hbs.AST.PathExpression[];
+        const pathExpression = blockStatement.path as hbs.AST.PathExpression;
+        let blockName = paramsExpressionList[0]?.original || pathExpression.original;
+        const nested = this.getHandlebarVariables(blockStatement.program.body);
+        if (['each', 'with'].includes(pathExpression.original)) {
+          nested.forEach((name, ind) => {
+            nested[ind] = `${blockName}.${name}`;
+          });
+          blockName = `${blockName}[]`;
+        }
+
+        return [blockName, ...nested];
+      })
+      .flat();
+
+    return moustacheVariables.concat(blockVariables);
   }
 }
