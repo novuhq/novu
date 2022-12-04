@@ -55,14 +55,14 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
         </Tooltip>
       </div>
       <VarLabel label="System Variables">
-        {Object.keys(SystemVariablesWithTypes).map((name) => {
+        {Object.keys(SystemVariablesWithTypes).map((name, ind) => {
           const type = SystemVariablesWithTypes[name];
 
           if (typeof type === 'object') {
-            return <VarItemsDropdown name={name} type={type} />;
+            return <VarItemsDropdown name={name} key={ind} type={type} />;
           }
 
-          return <VarItem name={name} type={type} />;
+          return <VarItem name={name} key={ind} type={type} />;
         })}
       </VarLabel>
       <div
@@ -71,12 +71,12 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
         }}
       >
         <VarLabel label="Step Variables">
-          {Object.keys(processedVariables).map((name) => {
+          {Object.keys(processedVariables).map((name, ind) => {
             if (typeof processedVariables[name] === 'object') {
-              return <VarItemsDropdown name={name} type={processedVariables[name]} />;
+              return <VarItemsDropdown key={ind} name={name} type={processedVariables[name]} />;
             }
 
-            return <VarItem name={name} type={typeof processedVariables[name]} />;
+            return <VarItem key={ind} name={name} type={typeof processedVariables[name]} />;
           })}
         </VarLabel>
       </div>
