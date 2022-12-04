@@ -31,7 +31,10 @@ export interface INotificationTrigger {
   subscriberVariables?: INotificationTriggerVariable[];
 }
 
-export type INotificationTriggerVariable = { name: string; value?: any };
+export interface INotificationTriggerVariable {
+  name: string;
+  value?: any;
+}
 
 export interface INotificationTemplateStep {
   _id?: string;
