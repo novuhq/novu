@@ -6,7 +6,8 @@ export function Cached(storeKeyPrefix?: string) {
     const originalMethod = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
+      const skip = args[2]?.skip;
+      if (!this.cacheService?.cacheEnabled() || skip) return await originalMethod.apply(this, args);
 
       const query = buildCachedQuery(args);
 

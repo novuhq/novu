@@ -4,6 +4,7 @@ import { BaseRepository, Omit } from '../base-repository';
 import { NotificationTemplate } from './notification-template.schema';
 import { NotificationTemplateEntity } from './notification-template.entity';
 import { Cached, DalException, ICacheService, InvalidateCache } from '../../shared';
+import { ICacheConfig } from '../../shared/interceptors/shared-cache';
 
 class PartialNotificationTemplateEntity extends Omit(NotificationTemplateEntity, [
   '_environmentId',
@@ -43,7 +44,7 @@ export class NotificationTemplateRepository extends BaseRepository<EnforceIdenti
   }
 
   @Cached()
-  async findOne(query: EnforceEnvironmentQuery, select?: ProjectionType<any>) {
+  async findOne(query: EnforceEnvironmentQuery, select?: ProjectionType<any>, cacheConfig?: ICacheConfig) {
     return super.findOne(query, select);
   }
 
@@ -59,7 +60,7 @@ export class NotificationTemplateRepository extends BaseRepository<EnforceIdenti
   }
 
   @Cached()
-  async findById(id: string, environmentId: string) {
+  async findById(id: string, environmentId: string, cacheConfig?: ICacheConfig) {
     const requestQuery: EnforceEnvironmentQuery = {
       _id: id,
       _environmentId: environmentId,

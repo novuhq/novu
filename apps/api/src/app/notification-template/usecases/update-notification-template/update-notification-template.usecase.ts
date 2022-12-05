@@ -203,11 +203,15 @@ export class UpdateNotificationTemplate {
       }
     );
 
-    const item = await this.notificationTemplateRepository.findOne({
-      _id: command.templateId,
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-    });
+    const item = await this.notificationTemplateRepository.findOne(
+      {
+        _id: command.templateId,
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+      },
+      '',
+      { skip: true }
+    );
 
     await this.createChange.execute(
       CreateChangeCommand.create({
