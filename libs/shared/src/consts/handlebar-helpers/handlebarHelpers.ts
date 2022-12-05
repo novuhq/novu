@@ -10,9 +10,9 @@ export enum HandlebarHelpersEnum {
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const HandlebarHelpers = {
   [HandlebarHelpersEnum.EQUALS]: { description: 'assert equal' },
-  [HandlebarHelpersEnum.TITLECASE]: { description: 'transform to titlecase' },
-  [HandlebarHelpersEnum.UPPERCASE]: { description: 'transform to uppercase' },
+  [HandlebarHelpersEnum.TITLECASE]: { description: 'transform to TitleCase' },
+  [HandlebarHelpersEnum.UPPERCASE]: { description: 'transform to UPPERCASE' },
   [HandlebarHelpersEnum.LOWERCASE]: { description: 'transform to lowercase' },
-  [HandlebarHelpersEnum.PLURALIZE]: { description: 'check if needed and pluralize' },
+  [HandlebarHelpersEnum.PLURALIZE]: { description: 'pluralize if needed' },
   [HandlebarHelpersEnum.DATEFORMAT]: { description: 'format date' },
 };
