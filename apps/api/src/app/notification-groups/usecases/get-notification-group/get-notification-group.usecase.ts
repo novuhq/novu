@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationGroupRepository, NotificationGroupEntity } from '@novu/dal';
 import { GetNotificationGroupCommand } from './get-notification-group.command';
 
@@ -7,6 +7,9 @@ export class GetNotificationGroup {
   constructor(private notificationGroupRepository: NotificationGroupRepository) {}
 
   async execute(command: GetNotificationGroupCommand): Promise<NotificationGroupEntity> {
-    return await this.notificationGroupRepository.findById(command.id);
+    const result = await this.notificationGroupRepository.findById(command.id);
+    if (result === null) throw new NotFoundException();
+
+    return result;
   }
 }

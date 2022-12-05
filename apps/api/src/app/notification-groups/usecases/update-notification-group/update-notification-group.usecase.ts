@@ -22,8 +22,6 @@ export class UpdateNotificationGroup {
       }
     );
 
-    const item = this.notificationGroupRepository.findById(command.id);
-
-    return item;
+    return this.notificationGroupRepository.findById(command.id);
   }
 }

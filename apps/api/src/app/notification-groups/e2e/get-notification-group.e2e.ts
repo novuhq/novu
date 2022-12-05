@@ -24,4 +24,18 @@ describe('Get Notification Group - /notification-groups/:id (GET)', async () => 
     expect(group._id).to.equal(postNotificationGroup1.body.data.id);
     expect(group._environmentId).to.equal(session.environment._id);
   });
+
+  it('should get 404 when notification group is not present with id', async function () {
+    const postNotificationGroup1 = await session.testAgent.post(`/v1/notification-groups`).send({
+      name: 'Test name 1',
+    });
+
+    const id = postNotificationGroup1.body.data.id;
+
+    await session.testAgent.delete(`/v1/notification-groups/${id}`);
+
+    const { body } = await session.testAgent.get(`/v1/notification-groups/${id}`);
+
+    expect(body.statusCode).to.equal(404);
+  });
 });

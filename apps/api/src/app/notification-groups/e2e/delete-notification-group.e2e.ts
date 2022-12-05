@@ -31,6 +31,6 @@ describe('Delete Notification Group - /notification-groups/:id (DELETE)', async 
 
     const { body: getResultAfterDelete } = await session.testAgent.get(`/v1/notification-groups/${id}`);
 
-    expect(getResultAfterDelete.data).to.equal(null);
+    expect(getResultAfterDelete.statusCode).to.eq(404);
   });
 });
