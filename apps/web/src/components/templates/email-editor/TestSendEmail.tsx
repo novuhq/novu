@@ -1,22 +1,19 @@
-import React, { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import { MemberStatusEnum } from '@novu/shared';
+import { JsonInput, MultiSelect, Group, ActionIcon } from '@mantine/core';
+import { Button, Text, colors, Tooltip } from '../../../design-system';
+import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery } from 'react-query';
 import { useFormContext, useWatch } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { useClipboard } from '@mantine/hooks';
-import { JsonInput, MultiSelect, Group, ActionIcon } from '@mantine/core';
-import * as set from 'lodash.set';
-import * as get from 'lodash.get';
-import { TemplateVariableTypeEnum, MemberStatusEnum } from '@novu/shared';
-
-import { Button, Text, colors, Tooltip } from '../../../design-system';
 import { testSendEmailMessage } from '../../../api/templates';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { AuthContext } from '../../../store/authContext';
 import { ArrowDown, Check, Copy, Invite } from '../../../design-system/icons';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import useStyles from '../../../design-system/select/Select.styles';
-import { IMustacheVariable } from '../VariableManager';
 import { getOrganizationMembers } from '../../../api/organization';
+import { useProcessVariables } from '../../../hooks/use-process-variables';
 
 export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
   const { currentUser } = useContext(AuthContext);
@@ -46,8 +43,12 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
     );
   }, [organizationMembers, setMembersEmails]);
 
-  const processedVariables = processVariables(template.variables);
-  const [payloadValue, setPayloadValue] = useState(processedVariables);
+  const processedVariables = useProcessVariables(template.variables);
+  const [payloadValue, setPayloadValue] = useState('{}');
+
+  useEffect(() => {
+    setPayloadValue(processedVariables);
+  }, [processedVariables, setPayloadValue]);
 
   const onTestEmail = async () => {
     const payload = JSON.parse(payloadValue);
@@ -64,17 +65,10 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
     }
   };
 
-  const onSendToCreate = (query: string): undefined => {
-    setMembersEmails((current) => [...current, query]);
-    setSendTo((current) => [...current, query]);
-
-    return;
-  };
-
   return (
     <div style={{ maxWidth: '800px', margin: 'auto', padding: '20px 25px' }}>
       <Text my={30} color={colors.B60}>
-        Fill in the required variables and send send a test to your desired address.
+        Fill in the required variables and send a test to your desired address.
       </Text>
 
       <Wrapper>
@@ -95,7 +89,11 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
           creatable
           searchable
           getCreateLabel={(newEmail) => <div>+ Send to {newEmail}</div>}
-          onCreate={onSendToCreate}
+          onCreate={(query) => {
+            setMembersEmails((current) => [...current, query]);
+
+            return query;
+          }}
         />
       </Wrapper>
 
@@ -139,39 +137,6 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
     </div>
   );
 }
-
-const processVariables = (variables: IMustacheVariable[]) => {
-  const varsObj: Record<string, any> = {};
-
-  variables
-    .filter((variable) => variable.type !== TemplateVariableTypeEnum.ARRAY)
-    .forEach((variable) => {
-      set(varsObj, variable.name, getVariableValue(variable));
-    });
-
-  variables
-    .filter((variable) => variable.type === TemplateVariableTypeEnum.ARRAY)
-    .forEach((variable) => {
-      set(varsObj, variable.name, [get(varsObj, variable.name, [])]);
-    });
-
-  return JSON.stringify(varsObj, null, 2);
-};
-
-const getVariableValue = (variable: IMustacheVariable) => {
-  if (variable.type === TemplateVariableTypeEnum.BOOLEAN) {
-    return variable.defaultValue;
-  }
-  if (variable.type === TemplateVariableTypeEnum.STRING) {
-    return variable.defaultValue ? variable.defaultValue : variable.name;
-  }
-
-  if (variable.type === TemplateVariableTypeEnum.ARRAY) {
-    return [];
-  }
-
-  return '';
-};
 
 const Wrapper = styled.div`
   .mantine-MultiSelect-values {

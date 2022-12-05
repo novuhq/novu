@@ -165,7 +165,22 @@
     "prebuild",
     "rimraf",
     "istanbuljs",
-    "infobip"
+    "infobip",
+    "clickatell",
+    "eslintcache",
+    "dbnavigator",
+    "Fdfdf",
+    "tfstate",
+    "mpeltonen",
+    "replstate",
+    "Intelli",
+    "codestream",
+    "nosniff",
+    "hookform",
+    "noconflict",
+    "monokai",
+    "sparkpost",
+    "buildx"
   ],
   "flagWords": [],
   "patterns": [
@@ -206,6 +221,8 @@
   ],
   "ignorePaths": [
     "apps/api/src/.env.test",
+    "apps/ws/src/.env.test",
+    "apps/ws/src/.example.env",
     ".cspell.json",
     "package.json",
     "package-lock.json",

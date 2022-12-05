@@ -289,6 +289,15 @@ export const burstSmsConfig: IConfigCredentials[] = [
   },
 ];
 
+export const clickatellConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const snsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,

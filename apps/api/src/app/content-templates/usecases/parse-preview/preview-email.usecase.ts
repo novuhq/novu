@@ -9,11 +9,17 @@ export class PreviewEmail {
   constructor(private compileTemplate: CompileTemplate, private organizationRepository: OrganizationRepository) {}
 
   public async execute(command: PreviewEmailCommand) {
+    let payload = {};
+    try {
+      payload = JSON.parse(command.payload);
+    } catch (e) {}
     const isEditorMode = command.contentType === 'editor';
     const [organization, content]: [OrganizationEntity, string | IEmailBlock[]] = await Promise.all([
       this.organizationRepository.findById(command.organizationId),
-      this.getContent(isEditorMode, command.content),
+      this.getContent(isEditorMode, command.content, payload),
     ]);
+
+    const subject = await this.renderContent(command.subject, payload);
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -25,20 +31,24 @@ export class PreviewEmail {
             logo: organization.branding?.logo,
             color: organization.branding?.color || '#f47373',
           },
+          ...payload,
         },
       })
     );
 
-    return { html };
+    return { html, subject };
   }
 
-  private async getContent(isEditorMode, content: string | IEmailBlock[]): Promise<string | IEmailBlock[]> {
+  private async getContent(
+    isEditorMode,
+    content: string | IEmailBlock[],
+    payload: any = {}
+  ): Promise<string | IEmailBlock[]> {
     if (isEditorMode && Array.isArray(content)) {
       content = [...content] as IEmailBlock[];
       for (const block of content) {
-        block.content = await this.renderContent(block.content);
-        block.content = block.content.trim();
-        block.url = await this.renderContent(block.url || '');
+        block.content = await this.renderContent(block.content, payload);
+        block.url = await this.renderContent(block.url || '', payload);
       }
 
       return content;
@@ -47,13 +57,17 @@ export class PreviewEmail {
     return content;
   }
 
-  private async renderContent(content: string) {
-    return await this.compileTemplate.execute(
+  private async renderContent(content: string, payload: any) {
+    const renderedContent = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
-        customTemplate: (content as string).replace(new RegExp('{{', 'g'), '\\{{'),
-        data: {},
+        customTemplate: content,
+        data: {
+          ...payload,
+        },
       })
     );
+
+    return renderedContent.trim();
   }
 }
