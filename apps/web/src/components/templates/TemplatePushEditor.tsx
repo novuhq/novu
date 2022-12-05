@@ -4,6 +4,7 @@ import { IForm } from './use-template-controller.hook';
 import { Textarea } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
 import { VariableManager } from './VariableManager';
+import { useVariablesManager } from '../../hooks/use-variables-manager';
 
 export function TemplatePushEditor({
   control,
@@ -19,6 +20,7 @@ export function TemplatePushEditor({
   const {
     formState: { errors },
   } = useFormContext();
+  const variablesArray = useVariablesManager(index, ['content', 'title']);
 
   return (
     <>
@@ -55,7 +57,7 @@ export function TemplatePushEditor({
           />
         )}
       />
-      <VariableManager index={index} contents={['content', 'title']} />
+      <VariableManager index={index} variablesArray={variablesArray} />
     </>
   );
 }
