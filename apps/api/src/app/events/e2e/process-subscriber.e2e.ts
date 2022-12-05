@@ -4,6 +4,7 @@ import {
   MessageRepository,
   SubscriberRepository,
   NotificationTemplateRepository,
+  CacheService,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
@@ -20,9 +21,10 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
-  const subscriberRepository = new SubscriberRepository();
-  const messageRepository = new MessageRepository();
-  const notificationTemplateRepository = new NotificationTemplateRepository();
+  const cacheService = new CacheService({ cacheHost: 'localhost', cachePort: '6379' });
+  const subscriberRepository = new SubscriberRepository(cacheService);
+  const messageRepository = new MessageRepository(cacheService);
+  const notificationTemplateRepository = new NotificationTemplateRepository(cacheService);
 
   beforeEach(async () => {
     session = new UserSession();

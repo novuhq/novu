@@ -9,6 +9,7 @@ import {
   JobEntity,
   JobStatusEnum,
   IntegrationRepository,
+  CacheService,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 
@@ -20,13 +21,14 @@ import { ISubscribersDefine } from '@novu/node';
 const axiosInstance = axios.create();
 
 describe('Trigger event - /v1/events/trigger (POST)', function () {
+  const cacheService = new CacheService({ cacheHost: 'localhost', cachePort: '6379' });
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const notificationRepository = new NotificationRepository();
-  const messageRepository = new MessageRepository();
-  const subscriberRepository = new SubscriberRepository();
+  const messageRepository = new MessageRepository(cacheService);
+  const subscriberRepository = new SubscriberRepository(cacheService);
   const integrationRepository = new IntegrationRepository();
   const logRepository = new LogRepository();
   const jobRepository = new JobRepository();
