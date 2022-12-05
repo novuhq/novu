@@ -89,25 +89,23 @@ export class HeadlessService {
     this.api = new ApiService(backendUrl);
     this.applyToken(token);
 
-    this.queryClient =
-      options.queryClient ??
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            refetchOnWindowFocus: false,
-            retry: options?.config?.retry ?? 3,
-            ...(options?.config?.retryDelay
-              ? { retryDelay: options?.config?.retryDelay }
-              : {}),
-          },
-          mutations: {
-            retry: options?.config?.retry ?? 3,
-            ...(options?.config?.retryDelay
-              ? { retryDelay: options?.config?.retryDelay }
-              : {}),
-          },
+    this.queryClient = new QueryClient({
+      defaultOptions: {
+        queries: {
+          refetchOnWindowFocus: false,
+          retry: options?.config?.retry ?? 3,
+          ...(options?.config?.retryDelay
+            ? { retryDelay: options?.config?.retryDelay }
+            : {}),
         },
-      });
+        mutations: {
+          retry: options?.config?.retry ?? 3,
+          ...(options?.config?.retryDelay
+            ? { retryDelay: options?.config?.retryDelay }
+            : {}),
+        },
+      },
+    });
     this.queryService = new QueryService(this.queryClient);
   }
 

@@ -1,5 +1,4 @@
 import {
-  QueryClient,
   QueryObserverResult,
   MutationObserverResult,
 } from '@tanstack/query-core';
@@ -11,7 +10,6 @@ export interface IHeadlessServiceOptions {
   applicationIdentifier: string;
   subscriberId?: string;
   subscriberHash?: string;
-  queryClient?: QueryClient;
   config?: {
     retry?: number;
     retryDelay?: number;
