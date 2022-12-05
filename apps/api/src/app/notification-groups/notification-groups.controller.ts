@@ -5,7 +5,7 @@ import {
   Delete,
   Get,
   Post,
-  Put,
+  Patch,
   UseGuards,
   UseInterceptors,
   Param,
@@ -64,7 +64,7 @@ export class NotificationGroupsController {
     );
   }
 
-  @Put('/:id')
+  @Patch('/:id')
   @ExternalApiAccessible()
   @ApiCreatedResponse({
     type: NotificationGroupResponseDto,

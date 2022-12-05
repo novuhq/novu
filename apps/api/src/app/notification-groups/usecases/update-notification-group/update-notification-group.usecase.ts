@@ -7,13 +7,10 @@ export class UpdateNotificationGroup {
   constructor(private notificationGroupRepository: NotificationGroupRepository) {}
 
   async execute(command: UpdateNotificationGroupCommand): Promise<NotificationGroupEntity> {
-    const group = await this.notificationGroupRepository.findOne({
-      _organizationId: command.organizationId,
-    });
-
     await this.notificationGroupRepository.update(
       {
         _id: command.id,
+        _organizationId: command.organizationId,
       },
       {
         $set: {

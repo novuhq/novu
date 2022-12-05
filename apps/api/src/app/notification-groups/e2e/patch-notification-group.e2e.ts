@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 
-describe('Put Notification Group - /notification-groups/:id (PUT)', async () => {
+describe('Patch Notification Group - /notification-groups/:id (PATCH)', async () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -22,7 +22,7 @@ describe('Put Notification Group - /notification-groups/:id (PUT)', async () => 
     expect(getNotificationGroupResult.data._id).to.equal(postNotificationGroup.body.data.id);
     expect(getNotificationGroupResult.data._environmentId).to.equal(session.environment._id);
 
-    const { body: putNotificationGroup } = await session.testAgent.put(`/v1/notification-groups/${id}`).send({
+    const { body: putNotificationGroup } = await session.testAgent.patch(`/v1/notification-groups/${id}`).send({
       name: 'Updated name',
     });
 
