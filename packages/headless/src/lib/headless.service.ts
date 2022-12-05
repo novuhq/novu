@@ -6,12 +6,7 @@ import {
 } from '@tanstack/query-core';
 import io from 'socket.io-client';
 import { ApiService, IUserPreferenceSettings, IStoreQuery } from '@novu/client';
-import {
-  IOrganizationEntity,
-  IMessage,
-  ButtonTypeEnum,
-  MessageActionStatusEnum,
-} from '@novu/shared';
+import { IOrganizationEntity, IMessage } from '@novu/shared';
 
 import { QueryService } from './query.service';
 import type { ISession } from '../utils/types';
@@ -22,6 +17,13 @@ import {
   UNSEEN_COUNT_QUERY_KEY,
   USER_PREFERENCES_QUERY_KEY,
 } from '../utils';
+import {
+  FetchResult,
+  IHeadlessServiceOptions,
+  IUpdateActionVariables,
+  IUpdateUserPreferencesVariables,
+  UpdateResult,
+} from './types';
 
 export const NOTIFICATION_CENTER_TOKEN_KEY = 'nc_token';
 const isBrowser = typeof window !== 'undefined';
@@ -35,32 +37,6 @@ const getToken = (): string | null => {
 
   return null;
 };
-
-export interface IHeadlessServiceOptions {
-  backendUrl?: string;
-  socketUrl?: string;
-  applicationIdentifier: string;
-  subscriberId?: string;
-  subscriberHash?: string;
-  queryClient?: QueryClient;
-  config?: {
-    retry?: number;
-    retryDelay?: number;
-  };
-}
-
-interface IUpdateUserPreferencesVariables {
-  templateId: string;
-  channelType: string;
-  checked: boolean;
-}
-
-interface IUpdateActionVariables {
-  messageId: string;
-  actionButtonType: ButtonTypeEnum;
-  status: MessageActionStatusEnum;
-  payload?: Record<string, unknown>;
-}
 
 export class HeadlessService {
   private api: ApiService;
@@ -175,12 +151,41 @@ export class HeadlessService {
     }
   }
 
+  private callFetchListener = <T>(
+    result: QueryObserverResult<T>,
+    listener: (result: FetchResult<T>) => void
+  ) =>
+    listener({
+      data: result.data,
+      error: result.error,
+      status: result.status,
+      isLoading: result.isLoading,
+      isFetching: result.isFetching,
+      isError: result.isError,
+    });
+
+  private callUpdateListener = <
+    TData = unknown,
+    TError = unknown,
+    TVariables = unknown
+  >(
+    result: MutationObserverResult<TData, TError, TVariables>,
+    listener: (result: UpdateResult<TData, TError, TVariables>) => void
+  ) =>
+    listener({
+      data: result.data,
+      error: result.error,
+      status: result.status,
+      isLoading: result.isLoading,
+      isError: result.isError,
+    });
+
   public initializeSession({
     listener,
     onSuccess,
     onError,
   }: {
-    listener: (result: QueryObserverResult<ISession>) => void;
+    listener: (result: FetchResult<ISession>) => void;
     onSuccess?: (session: ISession) => void;
     onError?: (error: unknown) => void;
   }) {
@@ -198,7 +203,7 @@ export class HeadlessService {
         },
         onError,
       },
-      listener,
+      listener: (result) => this.callFetchListener(result, listener),
     });
 
     return unsubscribe;
@@ -209,7 +214,7 @@ export class HeadlessService {
     onSuccess,
     onError,
   }: {
-    listener: (result: QueryObserverResult<IOrganizationEntity>) => void;
+    listener: (result: FetchResult<IOrganizationEntity>) => void;
     onSuccess?: (session: IOrganizationEntity) => void;
     onError?: (error: unknown) => void;
   }) {
@@ -221,7 +226,7 @@ export class HeadlessService {
         onSuccess,
         onError,
       },
-      listener,
+      listener: (result) => this.callFetchListener(result, listener),
     });
 
     return unsubscribe;
@@ -232,7 +237,7 @@ export class HeadlessService {
     onSuccess,
     onError,
   }: {
-    listener: (result: QueryObserverResult<{ count: number }>) => void;
+    listener: (result: FetchResult<{ count: number }>) => void;
     onSuccess?: (data: { count: number }) => void;
     onError?: (error: unknown) => void;
   }) {
@@ -244,7 +249,7 @@ export class HeadlessService {
         onSuccess,
         onError,
       },
-      listener,
+      listener: (result) => this.callFetchListener(result, listener),
     });
 
     return unsubscribe;
@@ -293,7 +298,7 @@ export class HeadlessService {
     page?: number;
     storeId?: string;
     query?: IStoreQuery;
-    listener: (result: QueryObserverResult<IMessage[]>) => void;
+    listener: (result: FetchResult<IMessage[]>) => void;
     onSuccess?: (messages: IMessage[]) => void;
     onError?: (error: unknown) => void;
   }) {
@@ -306,7 +311,7 @@ export class HeadlessService {
         onSuccess,
         onError,
       },
-      listener,
+      listener: (result) => this.callFetchListener(result, listener),
     });
 
     return unsubscribe;
@@ -317,7 +322,7 @@ export class HeadlessService {
     onSuccess,
     onError,
   }: {
-    listener: (result: QueryObserverResult<IUserPreferenceSettings[]>) => void;
+    listener: (result: FetchResult<IUserPreferenceSettings[]>) => void;
     onSuccess?: (messages: IUserPreferenceSettings[]) => void;
     onError?: (error: unknown) => void;
   }) {
@@ -329,7 +334,7 @@ export class HeadlessService {
         onSuccess,
         onError,
       },
-      listener,
+      listener: (result) => this.callFetchListener(result, listener),
     });
 
     return unsubscribe;
@@ -347,7 +352,7 @@ export class HeadlessService {
     channelType: IUpdateUserPreferencesVariables['channelType'];
     checked: IUpdateUserPreferencesVariables['checked'];
     listener: (
-      result: MutationObserverResult<
+      result: UpdateResult<
         IUserPreferenceSettings,
         unknown,
         IUpdateUserPreferencesVariables
@@ -358,7 +363,11 @@ export class HeadlessService {
   }) {
     this.assertSessionInitialized();
 
-    const { result, unsubscribe } = this.queryService.subscribeMutation({
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      IUserPreferenceSettings,
+      unknown,
+      IUpdateUserPreferencesVariables
+    >({
       options: {
         mutationFn: (variables) =>
           this.api.updateSubscriberPreference(
@@ -380,7 +389,7 @@ export class HeadlessService {
           );
         },
       },
-      listener,
+      listener: (res) => this.callUpdateListener(res, listener),
     });
 
     result
@@ -406,18 +415,18 @@ export class HeadlessService {
   }: {
     messageId: string | string[];
     listener: (
-      result: MutationObserverResult<
-        IMessage,
-        unknown,
-        { messageId: string | string[] }
-      >
+      result: UpdateResult<IMessage, unknown, { messageId: string | string[] }>
     ) => void;
     onSuccess?: (message: IMessage) => void;
     onError?: (error: unknown) => void;
   }) {
     this.assertSessionInitialized();
 
-    const { result, unsubscribe } = this.queryService.subscribeMutation({
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      IMessage,
+      unknown,
+      { messageId: string | string[] }
+    >({
       options: {
         mutationFn: (variables) =>
           this.api.markMessageAs(variables.messageId, {
@@ -438,7 +447,7 @@ export class HeadlessService {
           );
         },
       },
-      listener,
+      listener: (res) => this.callUpdateListener(res, listener),
     });
 
     result
@@ -470,14 +479,18 @@ export class HeadlessService {
     status: IUpdateActionVariables['status'];
     payload?: IUpdateActionVariables['payload'];
     listener: (
-      result: MutationObserverResult<IMessage, unknown, IUpdateActionVariables>
+      result: UpdateResult<IMessage, unknown, IUpdateActionVariables>
     ) => void;
     onSuccess?: (data: IMessage) => void;
     onError?: (error: unknown) => void;
   }) {
     this.assertSessionInitialized();
 
-    const { result, unsubscribe } = this.queryService.subscribeMutation({
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      IMessage,
+      unknown,
+      IUpdateActionVariables
+    >({
       options: {
         mutationFn: (variables) =>
           this.api.updateAction(
@@ -500,7 +513,7 @@ export class HeadlessService {
           );
         },
       },
-      listener,
+      listener: (res) => this.callUpdateListener(res, listener),
     });
 
     result
