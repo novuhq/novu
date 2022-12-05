@@ -17,6 +17,7 @@ if (process.env.SENTRY_DSN) {
 
 export async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const redisIoAdapter = new RedisIoAdapter(app);
 
   app.setGlobalPrefix(CONTEXT_PATH);
 
@@ -27,7 +28,7 @@ export async function bootstrap() {
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   });
 
-  app.useWebSocketAdapter(new RedisIoAdapter(app));
+  app.useWebSocketAdapter(redisIoAdapter);
 
   await app.listen(process.env.PORT);
 }
