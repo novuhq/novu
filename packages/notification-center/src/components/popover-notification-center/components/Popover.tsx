@@ -1,55 +1,66 @@
-import React, { useState, useMemo } from 'react';
-import { Popover as MantinePopover, PopoverProps } from '@mantine/core';
+import React, { useState } from 'react';
+import { Popover as MantinePopover, PopoverProps, createStyles, MantineTheme } from '@mantine/core';
 import styled from 'styled-components';
 import { INovuTheme } from '../../../store/novu-theme.context';
+import { useNotifications } from '../../../hooks';
+import { useFeed } from '../../../hooks/use-feed.hook';
 
-type PositionType = [PopoverProps['position'], PopoverProps['placement']];
 interface INovuPopoverProps {
   bell: (props: any) => JSX.Element;
   children: JSX.Element;
   theme: INovuTheme;
   offset?: number;
-  position?: PopoverProps['position'] | `${PopoverProps['position']}-${PopoverProps['placement']}`;
+  position?: PopoverProps['position'];
 }
 
-export function Popover({ children, bell, theme, offset, position = 'bottom' }: INovuPopoverProps) {
+export function Popover({ children, bell, theme, offset, position = 'bottom-end' }: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
+  const { classes } = usePopoverStyles(theme.popover?.arrowColor);
+  const { activeTabStoreId } = useFeed();
+  const { markAsSeen, onWidgetClose } = useNotifications({ storeId: activeTabStoreId });
 
   function handlerBellClick() {
+    if (isVisible) {
+      markAsSeen(null, true);
+      onWidgetClose();
+    }
     setIsVisible(!isVisible);
   }
 
-  const [modPosition, modPlacement] = useMemo<PositionType>(() => {
-    if (position.includes('-')) {
-      return position.split('-') as PositionType;
-    }
-
-    return [position, 'end'] as PositionType;
-  }, [position]);
+  function handlerOnClose() {
+    setIsVisible(false);
+    markAsSeen(null, true);
+    onWidgetClose();
+  }
 
   return (
     <MantinePopover
       opened={isVisible}
-      onClose={() => setIsVisible(false)}
-      target={<BellContainer onClick={handlerBellClick}> {bell({})}</BellContainer>}
-      position={modPosition}
-      placement={modPlacement}
+      onClose={handlerOnClose}
+      position={position}
       withArrow
-      styles={{
-        inner: { margin: 0, padding: 0 },
-        body: { border: 0 },
-        popover: { background: `transparent` },
-        arrow: {
-          background: `${theme.popover?.arrowColor}`,
-          backgroundColor: `${theme.popover?.arrowColor}`,
-          borderColor: `${theme.popover?.arrowColor}`,
-        },
-      }}
-      gutter={offset}
+      classNames={classes}
+      offset={offset}
     >
-      {children}
+      <MantinePopover.Target>
+        <BellContainer onClick={handlerBellClick}> {bell({})}</BellContainer>
+      </MantinePopover.Target>
+      <MantinePopover.Dropdown> {children}</MantinePopover.Dropdown>
     </MantinePopover>
   );
 }
 
 const BellContainer = styled.span``;
+
+const usePopoverStyles = createStyles((theme: MantineTheme, arrowColor: string) => ({
+  dropdown: {
+    padding: '0px',
+    backgroundColor: 'transparent',
+    border: 'none',
+  },
+  arrow: {
+    background: arrowColor,
+    backgroundColor: arrowColor,
+    borderColor: arrowColor,
+  },
+}));

@@ -4,6 +4,7 @@ import { IForm } from './use-template-controller.hook';
 import { Textarea } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
 import { VariableManager } from './VariableManager';
+import { useVariablesManager } from '../../hooks/use-variables-manager';
 
 export function TemplateSMSEditor({
   control,
@@ -19,6 +20,7 @@ export function TemplateSMSEditor({
   const {
     formState: { errors },
   } = useFormContext();
+  const variablesArray = useVariablesManager(index, ['content']);
 
   return (
     <>
@@ -39,7 +41,7 @@ export function TemplateSMSEditor({
           />
         )}
       />
-      <VariableManager index={index} contents={['content']} />
+      <VariableManager index={index} variablesArray={variablesArray} />
     </>
   );
 }

@@ -91,6 +91,6 @@ export const channels: IChannelDefinition[] = [
   },
 ];
 
-export const getChannel = (channelKey: string) => {
+export const getChannel = (channelKey: string): IChannelDefinition | undefined => {
   return channels.find((channel) => channel.tabKey === channelKey);
 };

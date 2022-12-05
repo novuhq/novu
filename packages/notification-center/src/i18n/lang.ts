@@ -7,6 +7,7 @@ import { BE } from './languages/be';
 import { BG } from './languages/bg';
 import { BH } from './languages/bh';
 import { BN } from './languages/bn';
+import { BS } from './languages/bs';
 import { CA } from './languages/ca';
 import { CS } from './languages/cs';
 import { DA } from './languages/da';
@@ -53,6 +54,7 @@ import { RU } from './languages/ru';
 import { SA } from './languages/sa';
 import { SD } from './languages/sd';
 import { SI } from './languages/si';
+import { SM } from './languages/sm';
 import { SQ } from './languages/sq';
 import { SV } from './languages/sv';
 import { TA } from './languages/ta';
@@ -66,6 +68,7 @@ import { UZ } from './languages/uz';
 import { VI } from './languages/vi';
 import { ZH } from './languages/zh';
 import { ZU } from './languages/zu';
+import { BA } from './languages/ba';
 
 export interface ITranslationContent {
   readonly notifications: string;
@@ -89,6 +92,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   bg: BG,
   bh: BH,
   bn: BN,
+  bs: BS,
   ca: CA,
   cs: CS,
   da: DA,
@@ -135,6 +139,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   sa: SA,
   sd: SD,
   si: SI,
+  sm: SM,
   sq: SQ,
   sv: SV,
   ta: TA,
@@ -148,6 +153,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   vi: VI,
   zh: ZH,
   zu: ZU,
+  ba: BA,
 };
 
 /**
@@ -171,6 +177,7 @@ export type I18NLanguage =
   | 'bg'
   | 'bh'
   | 'bn'
+  | 'bs'
   | 'ca'
   | 'cs'
   | 'da'
@@ -217,10 +224,16 @@ export type I18NLanguage =
   | 'sa'
   | 'sd'
   | 'si'
+  | 'sm'
   | 'sq'
   | 'sv'
   | 'ta'
   | 'te'
+  | 'vi'
+  | 'zu'
+  | 'nl'
+  | 'uz'
+  | 'lo'
   | 'th'
   | 'tl'
   | 'tr'
@@ -229,4 +242,5 @@ export type I18NLanguage =
   | 'uz'
   | 'vi'
   | 'zh'
-  | 'zu';
+  | 'zu'
+  | 'ba';

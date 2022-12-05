@@ -4,9 +4,9 @@ import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
-import { INovuThemePopoverProvider } from '../../store';
 import { useDefaultTheme, useUnseenCount } from '../../hooks';
-import { ColorScheme, ListItem, ITab } from '../../index';
+import { ColorScheme, INovuThemePopoverProvider } from '../../index';
+import { ITab, ListItem } from '../../shared/interfaces';
 
 interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -15,6 +15,7 @@ interface IPopoverNotificationCenterProps {
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
+  emptyState?: () => JSX.Element;
   listItem?: ListItem;
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
@@ -24,9 +25,7 @@ interface IPopoverNotificationCenterProps {
   showUserPreferences?: boolean;
   onTabClick?: (tab: ITab) => void;
   offset?: number;
-  position?:
-    | PopoverProps['position']
-    | `${NonNullable<PopoverProps['position']>}-${NonNullable<Exclude<PopoverProps['placement'], 'center'>>}`;
+  position?: PopoverProps['position'];
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -58,6 +57,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         footer={props.footer}
         colorScheme={props.colorScheme}
         theme={props.theme}
+        emptyState={props.emptyState}
         onActionClick={props.onActionClick}
         actionsResultBlock={props.actionsResultBlock}
         listItem={props.listItem}

@@ -31,7 +31,7 @@ export class GenerateUniqueApiKey {
    * Extracting the generation functionality so it can be stubbed for functional testing
    *
    * @requires hat
-   * @todo Dependency is no longer accessible to source code due of removal from Github. Consider look for an alternative.
+   * @todo Dependency is no longer accessible to source code due of removal from GitHub. Consider look for an alternative.
    */
   private generateApiKey(): string {
     return hat();

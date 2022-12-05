@@ -39,7 +39,7 @@ function SideColumn() {
         target="_blank"
         rel="noopener"
       >
-        Star us on Github
+        Star us on GitHub
       </a>
       <div className="footer__copyright-mobile">© {new Date().getFullYear()} Novu</div>
     </div>

@@ -18,6 +18,7 @@ import { UserPreference } from '../../user-preference/UserPreference';
 import { TestWorkflowModal } from '../../../components/templates/TestWorkflowModal';
 import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
 import { useDisclosure } from '@mantine/hooks';
+import { ExecutionDetailsModalWrapper } from '../../../components/templates/ExecutionDetailsModalWrapper';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -35,6 +36,7 @@ export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
   const { readonly, environment } = useEnvController();
+  const [transactionId, setTransactionId] = useState<string>('');
   const [activeStep, setActiveStep] = useState<number>(-1);
   const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.SETTINGS);
   const { loading: isIntegrationsLoading } = useActiveIntegrations();
@@ -66,6 +68,7 @@ export default function TemplateEditorPage() {
     }
   );
   const [saveChangesModalOpened, { close: closeSaveChangesModal, open: openSaveChangesModal }] = useDisclosure(false);
+  const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
 
   const onConfirmSaveChanges = async (data: IForm) => {
     await onSubmit(data);
@@ -149,14 +152,16 @@ export default function TemplateEditorPage() {
             <TemplateTriggerModal
               trigger={trigger}
               onDismiss={onTriggerModalDismiss}
-              isVisible={!testWorkflowModalOpened && isEmbedModalVisible}
+              isVisible={!saveChangesModalOpened && !testWorkflowModalOpened && isEmbedModalVisible}
             />
           )}
           {trigger && !isDirty && (
             <TestWorkflowModal
               trigger={trigger}
+              setTransactionId={setTransactionId}
               onDismiss={closeTestWorkflowModal}
               isVisible={testWorkflowModalOpened}
+              openExecutionModal={openExecutionModal}
             />
           )}
         </form>
@@ -166,6 +171,11 @@ export default function TemplateEditorPage() {
         isVisible={saveChangesModalOpened}
         onDismiss={closeSaveChangesModal}
         loading={isLoading || isUpdateLoading}
+      />
+      <ExecutionDetailsModalWrapper
+        transactionId={transactionId}
+        isOpen={executionModalOpened}
+        onClose={closeExecutionModal}
       />
       <UnsavedChangesModal
         isOpen={showModal}

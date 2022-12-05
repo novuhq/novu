@@ -13,7 +13,7 @@ export default createStyles<string, { disabled: boolean }>((theme, _params, getR
       backgroundColor: 'transparent',
       border: `1px solid ${theme.colors.gray[7]}`,
       '&:checked': {
-        backgroundImage: theme.colors.gradient[8],
+        backgroundImage: colors.horizontal,
         color: dark ? 'white' : colors.B40,
         border: 'transparent',
         [`& + .${label}`]: {
@@ -35,7 +35,8 @@ export default createStyles<string, { disabled: boolean }>((theme, _params, getR
       ref: label,
       color: dark ? 'white' : colors.B40,
       fontSize: '14px',
-      paddingLeft: '10px',
+      padding: '0',
+      margin: '0 10px',
       opacity: _params.disabled ? 0.4 : 1,
     },
   } as any;

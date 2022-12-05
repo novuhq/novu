@@ -17,7 +17,10 @@ export class DeleteFeed {
         _organizationId: command.organizationId,
         _id: command.feedId,
       });
-      const items = await this.feedRepository.findDeleted({ _id: command.feedId });
+      const items = await this.feedRepository.findDeleted({
+        _environmentId: command.environmentId,
+        _id: command.feedId,
+      });
       const item = items[0];
       await this.createChange.execute(
         CreateChangeCommand.create({
