@@ -144,5 +144,5 @@ export function buildQueryKeyPart(
 }
 
 export interface ICacheConfig {
-  skip: boolean;
+  skipCache: boolean;
 }

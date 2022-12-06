@@ -206,7 +206,7 @@ export class UpdateNotificationTemplate {
     const notificationTemplateWithStepTemplate = await this.notificationTemplateRepository.findById(
       command.templateId,
       command.environmentId,
-      { skip: true }
+      { skipCache: true }
     );
 
     const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);
