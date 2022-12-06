@@ -18,4 +18,4 @@ export * from './repositories/feed';
 export * from './repositories/execution-details';
 export * from './repositories/subscriber-preference';
 export * from './repositories/topic';
-export * from './shared/exceptions';
+export * from './shared';
