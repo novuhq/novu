@@ -3,6 +3,7 @@ import { beforeEach } from 'mocha';
 import { CacheService } from '../services/cache-service.spec';
 import { ICacheService } from '../services';
 import { Cached, InvalidateCache } from './';
+import { UserEntity } from '../../repositories/user';
 
 describe('cached interceptor', function () {
   let repo: Repo;
