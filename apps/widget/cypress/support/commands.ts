@@ -71,7 +71,7 @@ Cypress.Commands.add('initializeSession', function (settings = {} as IInitialize
       cy.log(`Widget initialized: ${session.subscriberId}`);
     })
     .then((session: any) => {
-      let encryptedHmacHash: string | undefined = undefined;
+      let encryptedHmacHash: string | undefined;
 
       if (settings.hmacEncryption) {
         cy.task('enableEnvironmentHmac', {
