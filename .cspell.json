@@ -180,7 +180,12 @@
     "noconflict",
     "monokai",
     "sparkpost",
-    "buildx"
+    "ntvs",
+    "njsproj",
+    "buildx",
+    "dotenv",
+    "VITE",
+    "webcomponent"
   ],
   "flagWords": [],
   "patterns": [
@@ -230,11 +235,15 @@
     "tsconfig.json",
     "node_modules/**",
     "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
     "novu.code-workspace",
     "packages/notification-center/src/i18n/languages/**",
     "apps/widget/public/iframeResizer.contentWindow.js",
     ".eslintrc.js",
     ".vscode/settings.json",
-    "docs/src/usage-examples.md"
+    "docs/src/usage-examples.md",
+    ".gitignore",
+    "angular.json",
+    "ng-package.json"
   ]
 }
