@@ -5,7 +5,7 @@ import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 
 const URL = '/v1/topics';
 
-describe('Topic creation - /topics (POST)', async () => {
+describe.only('Topic creation - /topics (POST)', async () => {
   let session: UserSession;
 
   before(async () => {
@@ -62,7 +62,8 @@ describe('Topic creation - /topics (POST)', async () => {
     });
 
     expect(conflictResponse.statusCode).to.eql(409);
-    expect(conflictResponse.message).to.eql(
+    expect(conflictResponse.body.error).to.eql('Conflict');
+    expect(conflictResponse.body.message).to.eql(
       `There is already a topic with the key ${topicKey} for user ${session.user._id}`
     );
   });

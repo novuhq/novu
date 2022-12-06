@@ -10,7 +10,7 @@ const createNewTopic = async (session: UserSession, topicKey: string) => {
   });
 };
 
-describe.only('Filter topics - /topics (GET)', async () => {
+describe('Filter topics - /topics (GET)', async () => {
   let session: UserSession;
 
   before(async () => {
