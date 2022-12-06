@@ -39,7 +39,7 @@ export class ChangeTemplateActiveStatus {
     );
 
     const item = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId, {
-      skip: true,
+      skipCache: true,
     });
 
     await this.createChange.execute(
