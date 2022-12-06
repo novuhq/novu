@@ -40,4 +40,9 @@ export class UserEntity {
   createdAt: string;
 
   showOnBoarding?: boolean;
+
+  failedLogin?: {
+    times: number;
+    lastFailedAttempt: string;
+  };
 }
