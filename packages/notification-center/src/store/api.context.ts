@@ -1,5 +1,5 @@
 import React from 'react';
-import { ApiService } from '@novu/client';
+import type { ApiService } from '@novu/client';
 
 export interface IApiContext {
   api: ApiService;
