@@ -62,20 +62,22 @@ export enum CacheInterceptorTypeEnum {
 
 export function buildKey(
   prefix: string,
+  methodName: string,
   keyConfig: Record<string, unknown>,
   interceptorType: CacheInterceptorTypeEnum
 ): string {
   let cacheKey = prefix;
 
-  cacheKey = cacheKey + buildQueryKeyPart(interceptorType, keyConfig);
+  cacheKey = cacheKey + buildQueryKeyPart(methodName, interceptorType, keyConfig);
 
   const credentials = buildCredentialsKeyPart(cacheKey, keyConfig);
 
   return validateCredentials(prefix, credentials) ? cacheKey + credentials : '';
 }
 
-export function getQueryParams(keysConfig: unknown): string {
-  let result = '';
+export function getQueryParams(methodName: string, keysConfig: unknown): string {
+  let result =
+    methodName === 'find' ? ':find' : methodName === 'findOne' || methodName === 'findById' ? ':findOne' : '';
 
   const keysToExclude = [...getCredentialsKeys()];
 
@@ -131,10 +133,14 @@ export function getInvalidateQuery(
   return methodName === 'create' ? res : args[0];
 }
 
-export function buildQueryKeyPart(interceptorType: CacheInterceptorTypeEnum, keyConfig: Record<string, unknown>) {
+export function buildQueryKeyPart(
+  methodName: string,
+  interceptorType: CacheInterceptorTypeEnum,
+  keyConfig: Record<string, unknown>
+) {
   const WILD_CARD = '*';
 
-  return interceptorType === CacheInterceptorTypeEnum.INVALIDATE ? WILD_CARD : getQueryParams(keyConfig);
+  return interceptorType === CacheInterceptorTypeEnum.INVALIDATE ? WILD_CARD : getQueryParams(methodName, keyConfig);
 }
 
 export interface ICacheConfig {

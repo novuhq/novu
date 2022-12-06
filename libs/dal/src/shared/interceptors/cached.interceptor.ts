@@ -4,6 +4,7 @@ import { buildCachedQuery, buildKey, CacheInterceptorTypeEnum } from './shared-c
 export function Cached(storeKeyPrefix?: string) {
   return (target: any, key: string, descriptor: any) => {
     const originalMethod = descriptor.value;
+    const methodName = key;
 
     descriptor.value = async function (...args: any[]) {
       const skip = args[2]?.skip;
@@ -11,7 +12,12 @@ export function Cached(storeKeyPrefix?: string) {
 
       const query = buildCachedQuery(args);
 
-      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel.modelName, query, CacheInterceptorTypeEnum.CACHED);
+      const cacheKey = buildKey(
+        storeKeyPrefix ?? this.MongooseModel.modelName,
+        methodName,
+        query,
+        CacheInterceptorTypeEnum.CACHED
+      );
 
       if (!cacheKey) {
         return await originalMethod.apply(this, args);

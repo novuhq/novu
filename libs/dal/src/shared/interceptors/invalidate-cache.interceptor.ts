@@ -4,6 +4,7 @@ import { buildKey, CacheInterceptorTypeEnum, getInvalidateQuery } from './shared
 export function InvalidateCache(storeKeyPrefix?: string) {
   return (target: any, key: string, descriptor: any) => {
     const originalMethod = descriptor.value;
+    const methodName = key;
 
     descriptor.value = async function (...args: any[]) {
       if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
@@ -18,6 +19,7 @@ export function InvalidateCache(storeKeyPrefix?: string) {
 
       const cacheKey = buildKey(
         storeKeyPrefix ?? this.MongooseModel?.modelName,
+        methodName,
         query,
         CacheInterceptorTypeEnum.INVALIDATE
       );
