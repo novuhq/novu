@@ -17,8 +17,13 @@ export type CachingConfig = {
 };
 
 export class CacheService implements ICacheService {
-  private readonly client: Redis;
   private readonly DEFAULT_TTL_SECONDS = 60;
+  private readonly DEFAULT_CACHE_CONNECT_TIMEOUT = 50000;
+  private readonly DEFAULT_CACHE_KEEP_ALIVE = 30000;
+  private readonly DEFAULT_CACHE_FAMILY = 4;
+  private readonly DEFAULT_CACHE_KEY_PREFIX = '';
+
+  private readonly client: Redis;
   private readonly cacheTtl: number;
 
   constructor(
@@ -36,10 +41,12 @@ export class CacheService implements ICacheService {
     if (this.config.cachePort && this.config.cacheHost) {
       this.client = new Redis(Number(this.config.cachePort), this.config.cacheHost, {
         password: this.config.cachePassword,
-        connectTimeout: this.config.cacheConnectTimeout ? Number(this.config.cacheConnectTimeout) : 50000,
-        keepAlive: this.config.cacheKeepAlive ? Number(this.config.cacheKeepAlive) : 30000,
-        family: this.config.cacheFamily ? Number(this.config.cacheFamily) : 4,
-        keyPrefix: this.config.cacheKeyPrefix ?? '',
+        connectTimeout: this.config.cacheConnectTimeout
+          ? Number(this.config.cacheConnectTimeout)
+          : this.DEFAULT_CACHE_CONNECT_TIMEOUT,
+        keepAlive: this.config.cacheKeepAlive ? Number(this.config.cacheKeepAlive) : this.DEFAULT_CACHE_KEEP_ALIVE,
+        family: this.config.cacheFamily ? Number(this.config.cacheFamily) : this.DEFAULT_CACHE_FAMILY,
+        keyPrefix: this.config.cacheKeyPrefix ?? this.DEFAULT_CACHE_KEY_PREFIX,
       });
 
       this.cacheTtl = this.config.cacheTtl ? Number(this.config.cacheTtl) : this.DEFAULT_TTL_SECONDS;
