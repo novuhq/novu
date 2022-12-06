@@ -9,7 +9,6 @@ import {
   JobEntity,
   JobStatusEnum,
   IntegrationRepository,
-  CacheService,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 
@@ -17,11 +16,12 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, StepTypeEnum, IEmailBlock, TemplateVariableTypeEnum } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
+import { testCacheService } from '../../../../e2e/setup';
 
 const axiosInstance = axios.create();
 
 describe('Trigger event - /v1/events/trigger (POST)', function () {
-  const cacheService = new CacheService({ cacheHost: 'localhost', cachePort: '6379' });
+  const cacheService = testCacheService().cacheService;
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;

@@ -13,7 +13,10 @@ import { CreateTemplatePayload } from './create-notification-template.interface'
 
 export class NotificationTemplateService {
   constructor(private userId: string, private organizationId: string | undefined, private environmentId: string) {}
-  private cacheService = new CacheService({ cacheHost: 'localhost', cachePort: '6379' });
+  private cacheService = new CacheService({
+    cachePort: process.env.REDIS_CACHE_PORT,
+    cacheHost: process.env.REDIS_CACHE_HOST,
+  });
 
   private notificationTemplateRepository = new NotificationTemplateRepository(this.cacheService);
   private notificationGroupRepository = new NotificationGroupRepository();
