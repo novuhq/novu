@@ -5,6 +5,8 @@ import dts from 'rollup-plugin-dts';
 import { terser } from 'rollup-plugin-terser';
 import image from '@rollup/plugin-image';
 import nodeExternals from 'rollup-plugin-node-externals';
+import replace from '@rollup/plugin-replace';
+import gzipPlugin from 'rollup-plugin-gzip';
 
 const packageJson = require('./package.json');
 
@@ -29,6 +31,29 @@ export default [
       commonjs(),
       typescript({ tsconfig: './tsconfig.json' }),
       terser(),
+      image(),
+    ],
+  },
+  {
+    input: 'src/web-component.ts',
+    external: ['react@17.0.2', 'react-dom@17.0.2'],
+    output: [
+      {
+        file: packageJson.browser,
+        format: 'umd',
+        name: 'NotificationCenterWebComponent',
+        sourcemap: true,
+      },
+    ],
+    plugins: [
+      replace({
+        'process.env.NODE_ENV': JSON.stringify('production'),
+      }),
+      resolve({ preferBuiltins: false, browser: true }),
+      typescript({ tsconfig: './tsconfig.json' }),
+      commonjs(),
+      terser(),
+      gzipPlugin(),
       image(),
     ],
   },
