@@ -116,7 +116,7 @@ describe('cached interceptor', function () {
     const cacheStoreKeys = messageRepo.cacheService.keys();
 
     expect(messageRepo.callCount).to.be.equal(1);
-    expect(cacheStoreKeys[0]).to.be.contains('123:456');
+    expect(cacheStoreKeys[0]).to.be.contains('i=123:e=456');
   });
 
   it('should build key from method query param {id}', async function () {
@@ -131,7 +131,7 @@ describe('cached interceptor', function () {
     const cacheStoreKeys = messageRepo.cacheService.keys();
 
     expect(messageRepo.callCount).to.be.equal(1);
-    expect(cacheStoreKeys[0]).to.be.contains('123:456');
+    expect(cacheStoreKeys[0]).to.be.contains('i=123:e=456');
   });
 
   it('should build key from method query and options', async function () {
@@ -150,7 +150,7 @@ describe('cached interceptor', function () {
     const cacheStoreKeys = messageRepo.cacheService.keys();
 
     expect(messageRepo.callCount).to.be.equal(1);
-    expect(cacheStoreKeys[0]).to.be.contains(':limit=10:skip=2:123:456');
+    expect(cacheStoreKeys[0]).to.be.contains(':limit=10:skip=2:i=123:e=456');
   });
 });
 
