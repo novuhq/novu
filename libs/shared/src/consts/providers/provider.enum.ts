@@ -28,12 +28,16 @@ export enum EmailProviderIdEnum {
   Mailgun = 'mailgun',
   Mailjet = 'mailjet',
   Mandrill = 'mandrill',
-  Nodemailer = 'nodemailer',
+  CustomSMTP = 'nodemailer',
   Postmark = 'postmark',
   SendGrid = 'sendgrid',
   Sendinblue = 'sendinblue',
   SES = 'ses',
   NetCore = 'netcore',
+  Infobip = 'infobip',
+  MailerSend = 'mailersend',
+  Clickatell = 'clickatell',
+  Outlook365 = 'outlook365',
 }
 
 export enum SmsProviderIdEnum {
@@ -45,6 +49,9 @@ export enum SmsProviderIdEnum {
   Twilio = 'twilio',
   Gupshup = 'gupshup',
   Firetext = 'firetext',
+  Infobip = 'infobip',
+  BurstSms = 'burst-sms',
+  Clickatell = 'clickatell',
 }
 
 export enum ChatProviderIdEnum {

@@ -222,6 +222,7 @@ export function useTemplateController(templateId: string) {
       template: {
         type: channelType,
         content: [],
+        contentType: 'editor',
         variables: [],
         ...(channelType === StepTypeEnum.IN_APP && {
           actor: {

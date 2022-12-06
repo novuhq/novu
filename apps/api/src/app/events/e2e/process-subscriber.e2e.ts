@@ -1,4 +1,11 @@
-import { NotificationTemplateEntity, SubscriberEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import {
+  NotificationTemplateEntity,
+  SubscriberEntity,
+  MessageRepository,
+  SubscriberRepository,
+  NotificationTemplateRepository,
+  CacheService,
+} from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import axios from 'axios';
@@ -14,8 +21,10 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
-  const subscriberRepository = new SubscriberRepository();
-  const messageRepository = new MessageRepository();
+  const cacheService = new CacheService({ cacheHost: 'localhost', cachePort: '6379' });
+  const subscriberRepository = new SubscriberRepository(cacheService);
+  const messageRepository = new MessageRepository(cacheService);
+  const notificationTemplateRepository = new NotificationTemplateRepository(cacheService);
 
   beforeEach(async () => {
     session = new UserSession();
@@ -139,6 +148,63 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     });
 
     expect(message.length).to.equal(3);
+  });
+
+  it('should ignore subscriber preference and send all triggers for system critical template', async function () {
+    const payload: ISubscribersDefine = {
+      subscriberId: session.subscriberId,
+      firstName: 'New Test Name',
+      lastName: 'New Last of name',
+      email: 'newtest@email.novu',
+    };
+
+    await triggerEvent(session, template, payload);
+
+    await session.awaitRunningJobs(template._id);
+
+    const widgetSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      session.subscriberId
+    );
+
+    let message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: widgetSubscriber._id,
+    });
+
+    expect(message.length).to.equal(2);
+
+    const updateData = {
+      channel: {
+        type: ChannelTypeEnum.IN_APP,
+        enabled: false,
+      },
+    };
+
+    await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
+
+    await notificationTemplateRepository.update(
+      {
+        _id: template._id,
+        _environmentId: session.environment._id,
+      },
+      {
+        critical: true,
+      }
+    );
+
+    await triggerEvent(session, template, payload);
+
+    await session.awaitRunningJobs(template._id);
+
+    message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: widgetSubscriber._id,
+    });
+
+    expect(message.length).to.equal(4);
   });
 });
 

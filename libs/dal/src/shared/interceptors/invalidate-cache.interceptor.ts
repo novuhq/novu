@@ -1,12 +1,13 @@
-import { appendCredentials, isStoreConnected } from './shared-cache.interceptor';
+import { buildKey, CacheInterceptorTypeEnum, getInvalidateQuery } from './shared-cache';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function InvalidateCache(storeKeyPrefix?: string) {
   return (target: any, key: string, descriptor: any) => {
     const originalMethod = descriptor.value;
+    const methodName = key;
 
     descriptor.value = async function (...args: any[]) {
-      if (!isStoreConnected(this.cacheService?.getStatus())) return await originalMethod.apply(this, args);
+      if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
 
       const res = await originalMethod.apply(this, args);
 
@@ -14,9 +15,14 @@ export function InvalidateCache(storeKeyPrefix?: string) {
         return res;
       }
 
-      const query = key === 'create' ? res : args[0];
+      const query = getInvalidateQuery(key, res, args);
 
-      const cacheKey = buildKey(storeKeyPrefix ?? this.MongooseModel?.modelName, query);
+      const cacheKey = buildKey(
+        storeKeyPrefix ?? this.MongooseModel?.modelName,
+        methodName,
+        query,
+        CacheInterceptorTypeEnum.INVALIDATE
+      );
 
       if (!cacheKey) {
         return res;
@@ -24,20 +30,12 @@ export function InvalidateCache(storeKeyPrefix?: string) {
 
       try {
         this.cacheService.delByPattern(cacheKey);
-
-        return res;
       } catch (err) {
-        // Logger.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache');
-        return res;
+        // eslint-disable-next-line no-console
+        console.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);
       }
+
+      return res;
     };
   };
-}
-
-function buildKey(prefix: string, keyConfig: Record<string, undefined>): string {
-  let key = prefix;
-
-  key = `${key}*`;
-
-  return appendCredentials(key, keyConfig);
 }

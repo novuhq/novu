@@ -18,6 +18,14 @@ export class BaseRepository<T_Query, T_Response> {
     return new Types.ObjectId().toString();
   }
 
+  public static convertObjectIdToString(value: Types.ObjectId): string {
+    return value.toString();
+  }
+
+  public static convertStringToObjectId(value: string): Types.ObjectId {
+    return new Types.ObjectId(value);
+  }
+
   async count(query: T_Query): Promise<number> {
     return await this.MongooseModel.countDocuments(query);
   }

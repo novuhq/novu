@@ -38,7 +38,10 @@ export class ChangeTemplateActiveStatus {
       }
     );
 
-    const item = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
+    const item = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId, {
+      skip: true,
+    });
+
     await this.createChange.execute(
       CreateChangeCommand.create({
         organizationId: command.organizationId,

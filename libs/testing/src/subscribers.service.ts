@@ -1,9 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { SubscriberRepository } from '@novu/dal';
+import { SubscriberRepository, CacheService } from '@novu/dal';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class SubscribersService {
-  private subscriberRepository = new SubscriberRepository();
+  private cacheService = new CacheService({ cacheHost: 'localhost', cachePort: '6379' });
+  private subscriberRepository = new SubscriberRepository(this.cacheService);
 
   constructor(private _organizationId: string, private _environmentId: string) {}
 

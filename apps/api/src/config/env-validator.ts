@@ -54,8 +54,8 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NEW_RELIC_LICENSE_KEY: str({
     default: '',
   }),
-  CACHE_HOST: recommended({ default: '' }),
-  CACHE_PORT: recommended({ default: '' }),
+  REDIS_CACHE_HOST: recommended({ default: '' }),
+  REDIS_CACHE_PORT: recommended({ default: '' }),
 };
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {

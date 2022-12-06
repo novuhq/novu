@@ -10,7 +10,7 @@ import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
 
 export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
   const { integrations } = useActiveIntegrations();
-  const { trigger, control, errors, watch } = useTemplateController(templateId);
+  const { control, errors, watch } = useTemplateController(templateId);
   const steps = watch('steps');
 
   return (
@@ -36,7 +36,6 @@ export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
             return message.template.type === StepTypeEnum.EMAIL && activeStep === index ? (
               <EmailMessagesCards
                 key={message._id}
-                variables={trigger?.variables || []}
                 index={index}
                 isIntegrationActive={
                   !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)

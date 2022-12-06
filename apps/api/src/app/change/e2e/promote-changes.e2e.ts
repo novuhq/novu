@@ -5,6 +5,7 @@ import {
   MessageTemplateRepository,
   NotificationGroupRepository,
   NotificationTemplateRepository,
+  CacheService,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum, ChannelCTATypeEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -16,8 +17,9 @@ import {
 
 describe('Promote changes', () => {
   let session: UserSession;
+  const cacheService = new CacheService({ cacheHost: 'localhost', cachePort: '6379' });
   const changeRepository: ChangeRepository = new ChangeRepository();
-  const notificationTemplateRepository = new NotificationTemplateRepository();
+  const notificationTemplateRepository = new NotificationTemplateRepository(cacheService);
   const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
   const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();

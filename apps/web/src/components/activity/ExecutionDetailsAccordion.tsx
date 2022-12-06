@@ -2,13 +2,9 @@ import { Accordion, createStyles } from '@mantine/core';
 
 import { ExecutionDetailsStepContent } from './ExecutionDetailsStepContent';
 import { ExecutionDetailsStepHeader } from './ExecutionDetailsStepHeader';
-
 import { colors } from '../../design-system';
 
 const useStyles = createStyles((theme) => ({
-  chevron: {
-    backgroundColor: `${theme.colorScheme === 'dark' ? colors.white : colors.B40}`,
-  },
   control: {
     paddingBottom: '15px',
     paddingLeft: '25px',
@@ -24,11 +20,13 @@ const useStyles = createStyles((theme) => ({
     borderRadius: '7px',
     color: `${colors.B80}`,
     padding: '0',
+
+    ['&[data-active]']: {
+      border: `1px solid ${theme.colorScheme === 'dark' ? colors.B60 : colors.B70}`,
+    },
   },
-  itemOpened: {
-    border: `1px solid ${theme.colorScheme === 'dark' ? colors.B60 : colors.B70}`,
-  },
-  icon: {
+  chevron: {
+    color: `${theme.colorScheme === 'dark' ? colors.white : colors.B40}`,
     backgroundColor: `${theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight}`,
     borderRadius: '50px',
     height: '30px',
@@ -44,15 +42,20 @@ export const ExecutionDetailsAccordion = ({ identifier, steps, subscriberVariabl
   }
 
   return (
-    <Accordion key="execution-details-accordion" iconPosition="right" classNames={classes}>
+    <Accordion key="execution-details-accordion" chevronPosition="right" classNames={classes}>
       {steps.map((step) => (
-        <Accordion.Item key={`execution-details-step-${step.id}`} label={<ExecutionDetailsStepHeader step={step} />}>
-          <ExecutionDetailsStepContent
-            key={`execution-details-step-content-${step.id}`}
-            identifier={identifier}
-            step={step}
-            subscriberVariables={subscriberVariables}
-          />
+        <Accordion.Item key={`execution-details-step-${step.id}`} value={step.id}>
+          <Accordion.Control>
+            <ExecutionDetailsStepHeader step={step} />
+          </Accordion.Control>
+          <Accordion.Panel>
+            <ExecutionDetailsStepContent
+              key={`execution-details-step-content-${step.id}`}
+              identifier={identifier}
+              step={step}
+              subscriberVariables={subscriberVariables}
+            />
+          </Accordion.Panel>
         </Accordion.Item>
       ))}
     </Accordion>

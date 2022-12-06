@@ -91,10 +91,12 @@ export class SendMessageEmail extends SendMessageType {
     }
     const overrides = command.overrides[integration?.providerId] || {};
     let subject = '';
+    let preheader = emailChannel.template.preheader;
     let content: string | IEmailBlock[] = '';
 
     const payload = {
       subject: emailChannel.template.subject,
+      preheader,
       branding: {
         logo: organization.branding?.logo,
         color: organization.branding?.color || '#f47373',
@@ -115,10 +117,23 @@ export class SendMessageEmail extends SendMessageType {
         emailChannel.template.subject,
         organization,
         subscriber,
-        command
+        command,
+        preheader
       );
 
-      content = await this.getContent(isEditorMode, emailChannel, command, subscriber, subject, organization);
+      content = await this.getContent(
+        isEditorMode,
+        emailChannel,
+        command,
+        subscriber,
+        subject,
+        organization,
+        preheader
+      );
+
+      if (preheader) {
+        preheader = await this.renderContent(preheader, subject, organization, subscriber, command, preheader);
+      }
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -176,6 +191,7 @@ export class SendMessageEmail extends SendMessageType {
         customTemplate: emailChannel.template.contentType === 'customHtml' ? (content as string) : undefined,
         data: {
           subject,
+          preheader,
           branding: {
             logo: organization.branding?.logo,
             color: organization.branding?.color || '#f47373',
@@ -353,11 +369,12 @@ export class SendMessageEmail extends SendMessageType {
 
   private async getContent(
     isEditorMode,
-    emailChannel,
+    emailChannel: NotificationStepEntity,
     command: SendMessageCommand,
     subscriber: SubscriberEntity,
     subject,
-    organization: OrganizationEntity
+    organization: OrganizationEntity,
+    preheader
   ): Promise<string | IEmailBlock[]> {
     if (isEditorMode) {
       const content: IEmailBlock[] = [...emailChannel.template.content] as IEmailBlock[];
@@ -366,9 +383,8 @@ export class SendMessageEmail extends SendMessageType {
          * We need to trim the content in order to avoid mail provider like GMail
          * to display the mail with `[Message clipped]` footer.
          */
-        block.content = await this.renderContent(block.content, subject, organization, subscriber, command);
-        block.content = block.content.trim();
-        block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command);
+        block.content = await this.renderContent(block.content, subject, organization, subscriber, command, preheader);
+        block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command, preheader);
       }
 
       return content;
@@ -382,14 +398,16 @@ export class SendMessageEmail extends SendMessageType {
     subject,
     organization: OrganizationEntity,
     subscriber,
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    preheader?: string
   ) {
-    return await this.compileTemplate.execute(
+    const renderedContent = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
         customTemplate: content as string,
         data: {
           subject,
+          preheader,
           branding: {
             logo: organization.branding?.logo,
             color: organization.branding?.color || '#f47373',
@@ -405,5 +423,7 @@ export class SendMessageEmail extends SendMessageType {
         },
       })
     );
+
+    return renderedContent.trim();
   }
 }

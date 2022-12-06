@@ -18,6 +18,7 @@ import {
   JobRepository,
   FeedRepository,
   SubscriberPreferenceRepository,
+  TopicRepository,
 } from '@novu/dal';
 import { AnalyticsService } from './services/analytics/analytics.service';
 import { QueueService } from './services/queue';
@@ -47,6 +48,7 @@ const DAL_MODELS = [
   JobRepository,
   FeedRepository,
   SubscriberPreferenceRepository,
+  TopicRepository,
 ];
 
 function getStorageServiceClass() {
@@ -67,7 +69,7 @@ export const ANALYTICS_SERVICE = 'AnalyticsService';
 const cacheService = {
   provide: CacheService,
   useFactory: async () => {
-    return new CacheService({ cachePort: process.env.CACHE_PORT, cacheHost: process.env.CACHE_HOST });
+    return new CacheService({ cachePort: process.env.REDIS_CACHE_PORT, cacheHost: process.env.REDIS_CACHE_HOST });
   },
 };
 
