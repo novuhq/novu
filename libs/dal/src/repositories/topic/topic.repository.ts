@@ -3,7 +3,7 @@ import { FilterQuery } from 'mongoose';
 
 import { TopicEntity } from './topic.entity';
 import { Topic } from './topic.schema';
-import { EnvironmentId, OrganizationId, TopicKey } from './types';
+import { EnvironmentId, OrganizationId, TopicKey, UserId } from './types';
 
 import { BaseRepository, Omit } from '../base-repository';
 
@@ -42,6 +42,7 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
 
   async findTopicByKey(
     key: TopicKey,
+    userId: UserId,
     organizationId: OrganizationId,
     environmentId: EnvironmentId
   ): Promise<TopicEntity> {
@@ -49,6 +50,7 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
       key,
       _organizationId: organizationId,
       _environmentId: environmentId,
+      _userId: userId,
     });
   }
 }
