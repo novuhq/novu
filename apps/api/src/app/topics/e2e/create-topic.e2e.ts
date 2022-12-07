@@ -1,11 +1,9 @@
 import { UserSession } from '@novu/testing';
-import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 
 const URL = '/v1/topics';
 
-describe.only('Topic creation - /topics (POST)', async () => {
+describe('Topic creation - /topics (POST)', async () => {
   let session: UserSession;
 
   before(async () => {
