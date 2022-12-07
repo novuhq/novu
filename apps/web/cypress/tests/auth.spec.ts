@@ -131,7 +131,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('submit-btn').click();
 
       // setting current time in future, to simulate expired token
-      var todaysDate = new Date();
+      const todaysDate = new Date();
       todaysDate.setDate(todaysDate.getDate() + 30); // iat - exp = 30 days
       cy.clock(todaysDate);
 

@@ -122,7 +122,7 @@ class Novu {
     }
 
     function hideWidget() {
-      var elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
+      const elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
 
       if (elem) {
         elem.style.display = 'none';
@@ -134,7 +134,7 @@ class Novu {
         _scope.widgetVisible = !_scope.widgetVisible;
         positionIframe();
 
-        var elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
+        const elem = document.querySelector('.wrapper-novu-widget') as HTMLBodyElement;
 
         if (elem) {
           elem.style.display = 'inline-block';

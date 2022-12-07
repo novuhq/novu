@@ -3,14 +3,21 @@
   "version": "0.9.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "API client to be used in end user environments",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "files": [
+    "dist/"
+  ],
   "license": "MIT",
   "keywords": [],
   "scripts": {
     "start": "npm run start:dev",
     "start:dev": "npm run watch:build",
-    "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
+    "prebuild": "rimraf dist",
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
+    "build:cjs": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
     "lint": "pnpm test:lint",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
@@ -48,12 +55,10 @@
     "jest": "^27.0.6",
     "ts-jest": "^27.0.5",
     "typedoc": "^0.19.0",
-    "typescript": "4.1.3"
+    "typescript": "4.1.3",
+    "rimraf": "^3.0.2"
   },
   "prettier": {
     "singleQuote": true
-  },
-  "files": [
-    "dist"
-  ]
+  }
 }

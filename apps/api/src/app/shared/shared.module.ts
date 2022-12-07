@@ -19,6 +19,7 @@ import {
   FeedRepository,
   SubscriberPreferenceRepository,
   TopicRepository,
+  TopicSubscribersRepository,
 } from '@novu/dal';
 import { AnalyticsService } from './services/analytics/analytics.service';
 import { QueueService } from './services/queue';
@@ -49,6 +50,7 @@ const DAL_MODELS = [
   FeedRepository,
   SubscriberPreferenceRepository,
   TopicRepository,
+  TopicSubscribersRepository,
 ];
 
 function getStorageServiceClass() {

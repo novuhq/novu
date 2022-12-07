@@ -25,6 +25,12 @@ const topicSubscribersSchema = new Schema(
       index: true,
       required: true,
     },
+    _topicId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Topic',
+      index: true,
+      required: true,
+    },
     subscribers: [{ type: Schema.Types.ObjectId, ref: 'Subscriber', required: true }],
   },
   schemaOptions

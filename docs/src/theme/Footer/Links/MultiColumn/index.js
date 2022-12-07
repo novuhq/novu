@@ -37,7 +37,7 @@ function SideColumn() {
         className="footer__button"
         href="https://github.com/novuhq/novu"
         target="_blank"
-        rel="noopener"
+        rel="noopener noreferrer"
       >
         Star us on GitHub
       </a>
