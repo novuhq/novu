@@ -2,7 +2,9 @@ import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { MemberEntity } from './member.entity';
 import { BaseRepository, Omit } from '../base-repository';
 import { Member } from './member.schema';
-import { Document, FilterQuery } from 'mongoose';
+import { Document, FilterQuery, ProjectionType } from 'mongoose';
+import { Cached, ICacheService, InvalidateCache } from '../../shared';
+import { ICacheConfig } from '../../shared/interceptors/shared-cache';
 
 export interface IAddMemberData {
   _userId?: string;
@@ -11,19 +13,52 @@ export interface IAddMemberData {
   memberStatus: MemberStatusEnum;
 }
 
-class PartialIntegrationEntity extends Omit(MemberEntity, ['_organizationId']) {}
+class PartialMemberEntity extends Omit(MemberEntity, ['_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> & { _organizationId: string };
+type EnforceEnvironmentQuery = FilterQuery<PartialMemberEntity & Document> & { _organizationId: string };
+
+type EnforceIdentifierQuery = FilterQuery<PartialMemberEntity> & {
+  _organizationId: string;
+} & {
+  _id: string;
+};
 
 export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, MemberEntity> {
-  constructor() {
-    super(Member, MemberEntity);
+  constructor(cacheService?: ICacheService) {
+    super(Member, MemberEntity, cacheService);
   }
 
-  async removeMemberById(organizationId: string, memberId: string) {
+  @Cached()
+  async findOne(query: EnforceIdentifierQuery, select?: ProjectionType<any>, cacheConfig?: ICacheConfig) {
+    return super.findOne(query, select);
+  }
+
+  @InvalidateCache()
+  async update(
+    query: EnforceIdentifierQuery,
+    updateBody: any
+  ): Promise<{
+    matched: number;
+    modified: number;
+  }> {
+    return super.update(query, updateBody);
+  }
+
+  @InvalidateCache()
+  async create(data: EnforceEnvironmentQuery) {
+    return super.create(data);
+  }
+
+  @InvalidateCache()
+  async delete(query: EnforceIdentifierQuery) {
+    return super.delete(query);
+  }
+
+  @InvalidateCache()
+  async removeMemberById(query: EnforceIdentifierQuery) {
     return Member.remove({
-      _id: memberId,
-      _organizationId: organizationId,
+      _id: query._id,
+      _organizationId: query._organizationId,
     });
   }
 
@@ -112,6 +147,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
   async convertInvitedUserToMember(
     organizationId: string,
     token: string,
+    memberId: string,
     data: {
       memberStatus: MemberStatusEnum;
       _userId: string;
@@ -120,6 +156,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
   ) {
     await this.update(
       {
+        _id: memberId,
         _organizationId: organizationId,
         'invite.token': token,
       },
@@ -136,14 +173,14 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
       'invite.token': token,
     } as unknown as EnforceEnvironmentQuery;
 
-    return await this.findOne(requestQuery);
+    return await this.findOne(requestQuery as any);
   }
 
   async findInviteeByEmail(organizationId: string, email: string): Promise<MemberEntity> {
     const foundMember = await this.findOne({
       _organizationId: organizationId,
       'invite.email': email,
-    });
+    } as any);
 
     if (!foundMember) return null;
 
@@ -165,7 +202,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
       {
         _organizationId: organizationId,
         _userId: userId,
-      },
+      } as any,
       '_id'
     ));
   }
@@ -174,7 +211,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
     const member = await this.findOne({
       _organizationId: organizationId,
       _userId: userId,
-    });
+    } as any);
 
     if (!member) return null;
 

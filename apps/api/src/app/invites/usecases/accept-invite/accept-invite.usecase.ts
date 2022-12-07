@@ -32,7 +32,7 @@ export class AcceptInvite {
 
     const inviter = await this.userRepository.findById(member.invite._inviterId);
 
-    await this.memberRepository.convertInvitedUserToMember(this.organizationId, command.token, {
+    await this.memberRepository.convertInvitedUserToMember(this.organizationId, command.token, member._id, {
       memberStatus: MemberStatusEnum.ACTIVE,
       _userId: command.userId,
       answerDate: new Date(),
