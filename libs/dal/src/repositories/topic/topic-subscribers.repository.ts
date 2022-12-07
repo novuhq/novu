@@ -31,7 +31,21 @@ export class TopicSubscribersRepository extends BaseRepository<EnforceEnvironmen
         $addToSet: { subscribers },
       }
     );
+  }
 
-    return undefined;
+  async removeSubscribers(entity: TopicSubscribersEntity): Promise<void> {
+    const { _environmentId, _organizationId, _topicId, _userId, subscribers } = entity;
+
+    await this.update(
+      {
+        _environmentId,
+        _organizationId,
+        _topicId,
+        _userId,
+      },
+      {
+        $pullAll: { subscribers },
+      }
+    );
   }
 }
