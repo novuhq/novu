@@ -99,6 +99,7 @@ export function FilterModal({
                 <Controller
                   control={control}
                   name={`steps.${stepIndex}.filters.0.children.${index}.on`}
+                  key={`steps.${stepIndex}.filters.0.children.${index}.on`}
                   render={({ field }) => {
                     return (
                       <Select
@@ -117,6 +118,7 @@ export function FilterModal({
                 <Controller
                   control={control}
                   name={`steps.${stepIndex}.filters.0.children.${index}.field`}
+                  key={`steps.${stepIndex}.filters.0.children.${index}.field`}
                   render={({ field, fieldState }) => {
                     return <Input {...field} error={fieldState.error?.message} placeholder="Label" />;
                   }}
@@ -126,6 +128,7 @@ export function FilterModal({
                 <Controller
                   control={control}
                   name={`steps.${stepIndex}.filters.0.children.${index}.operator`}
+                  key={`steps.${stepIndex}.filters.0.children.${index}.operator`}
                   render={({ field }) => {
                     return (
                       <Select
@@ -150,6 +153,7 @@ export function FilterModal({
                 <Controller
                   control={control}
                   name={`steps.${stepIndex}.filters.0.children.${index}.value`}
+                  key={`steps.${stepIndex}.filters.0.children.${index}.value`}
                   render={({ field, fieldState }) => {
                     return <Input {...field} error={fieldState.error?.message} placeholder="Value" />;
                   }}
