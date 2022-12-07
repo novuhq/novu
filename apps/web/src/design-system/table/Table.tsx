@@ -109,10 +109,12 @@ export function Table({
 
       <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
         <thead>
-          {headerGroups.map((headerGroup) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
+          {headerGroups.map((headerGroup, i) => (
+            <tr key={i} {...headerGroup.getHeaderGroupProps()}>
               {headerGroup.headers.map((column) => (
-                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+                <th key={column.Header} {...column.getHeaderProps()}>
+                  {column.render('Header')}
+                </th>
               ))}
             </tr>
           ))}
@@ -123,13 +125,15 @@ export function Table({
 
             return (
               <tr
+                key={row.id}
                 onClick={() => (onRowClick ? onRowClick(row) : null)}
                 {...row.getRowProps()}
                 className={classes.tableRow}
               >
-                {row.cells.map((cell) => {
+                {row.cells.map((cell, i) => {
                   return (
                     <td
+                      key={`${cell.name}-key`}
                       {...cell.getCellProps({
                         style: {
                           maxWidth: cell.column.maxWidth,
