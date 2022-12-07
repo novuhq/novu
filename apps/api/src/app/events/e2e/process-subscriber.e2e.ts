@@ -141,6 +141,9 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await session.awaitRunningJobs(template._id);
 
+    // fix potential race condition where trigger invalidate messages and the find query below
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
     message = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
