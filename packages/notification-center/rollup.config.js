@@ -39,7 +39,7 @@ export default [
     external: ['react@17.0.2', 'react-dom@17.0.2'],
     output: [
       {
-        file: packageJson.browser,
+        file: 'dist/umd/index.js',
         format: 'umd',
         name: 'NotificationCenterWebComponent',
         sourcemap: true,

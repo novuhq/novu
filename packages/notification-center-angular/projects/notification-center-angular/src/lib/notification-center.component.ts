@@ -1,11 +1,11 @@
 import { Component, Input } from '@angular/core';
 import { NotificationCenterWebComponent, NotificationCenterComponentProps } from '@novu/notification-center';
 
-customElements.define('notification-center-component', NotificationCenterWebComponent);
+customElements.define('notification-center-web-component', NotificationCenterWebComponent);
 
 @Component({
-  selector: 'notification-center',
-  template: `<notification-center-component
+  selector: 'notification-center-component',
+  template: `<notification-center-web-component
     [sessionLoaded]="sessionLoaded"
     [stores]="stores"
     [backendUrl]="backendUrl"
@@ -27,7 +27,7 @@ customElements.define('notification-center-component', NotificationCenterWebComp
     [position]="position"
     [unseenBadgeColor]="unseenBadgeColor"
     [unseenBadgeBackgroundColor]="unseenBadgeBackgroundColor"
-  ></notification-center-component>`,
+  ></notification-center-web-component>`,
   inputs: [
     // NovuProvider props
     'sessionLoaded',
