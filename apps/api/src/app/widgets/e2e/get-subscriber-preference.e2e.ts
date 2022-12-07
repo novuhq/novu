@@ -2,7 +2,7 @@ import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { updateSubscriberPreference } from './update-subscriber-preference.e2e';
+import { sleepAfterUpdate, updateSubscriberPreference } from './update-subscriber-preference.e2e';
 import { ChannelTypeEnum } from '@novu/stateless';
 
 describe('GET /widget/preferences', function () {
@@ -54,6 +54,7 @@ describe('GET /widget/preferences', function () {
     };
 
     await updateSubscriberPreference(updateDataEmailFalse, session.subscriberToken, templateDefaultSettings._id);
+    await sleepAfterUpdate(50);
 
     const response = await getSubscriberPreference(session.subscriberToken);
 

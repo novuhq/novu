@@ -3,4 +3,6 @@ import { NotificationTemplateEntity } from '@novu/dal';
 
 export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubscriber {
   template: NotificationTemplateEntity;
+
+  skipCache?: true;
 }

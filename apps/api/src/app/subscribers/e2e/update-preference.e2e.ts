@@ -27,6 +27,8 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
 
     await updatePreference(createData, session, template._id);
 
+    await sleepAfterUpdate(50);
+
     const updateDataEmailFalse = {
       channel: {
         type: ChannelTypeEnum.EMAIL,
@@ -35,6 +37,8 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     };
 
     await updatePreference(updateDataEmailFalse, session, template._id);
+
+    await sleepAfterUpdate(50);
 
     const response = (await getPreference(session)).data.data[0];
 
@@ -53,4 +57,14 @@ async function updatePreference(data: UpdateSubscriberPreferenceRequestDto, sess
       },
     }
   );
+}
+
+/**
+ * why this sleep needed?
+ * if no preference exist update request will cache null then create new preference while invalidate old cache.
+ * there is possible race condition with the next fetch with null value before it was invalidated.
+ * @param ms
+ */
+async function sleepAfterUpdate(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

@@ -27,6 +27,7 @@ describe('PATCH /widgets/preferences/:templateId', function () {
     };
 
     await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
+    await sleepAfterUpdate(50);
 
     const response = await getSubscriberPreference(session.subscriberToken);
 
@@ -43,6 +44,8 @@ describe('PATCH /widgets/preferences/:templateId', function () {
     };
 
     await updateSubscriberPreference(createData, session.subscriberToken, template._id);
+
+    await sleepAfterUpdate(50);
 
     const updateDataEmailFalse = {
       channel: {
@@ -71,6 +74,8 @@ describe('PATCH /widgets/preferences/:templateId', function () {
       };
 
       await updateSubscriberPreference(createData, session.subscriberToken, template._id);
+
+      await sleepAfterUpdate(50);
 
       const updateDataEmailFalse = {
         channel: {},
@@ -120,4 +125,14 @@ export async function updateSubscriberPreference(
       Authorization: `Bearer ${subscriberToken}`,
     },
   });
+}
+
+/**
+ * why this sleep needed?
+ * if no preference exist update request will cache null then create new preference while invalidate old cache.
+ * there is possible race condition with the next fetch with null value before it was invalidated.
+ * @param ms
+ */
+export async function sleepAfterUpdate(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

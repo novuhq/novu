@@ -27,11 +27,15 @@ export class GetSubscriberTemplatePreference {
     const activeChannels = await this.queryActiveChannels(command);
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
-    const subscriberPreference = await this.subscriberPreferenceRepository.findOne({
-      _environmentId: command.environmentId,
-      _subscriberId: subscriber !== null ? subscriber._id : command.subscriberId,
-      _templateId: command.template._id,
-    });
+    const subscriberPreference = await this.subscriberPreferenceRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _subscriberId: subscriber !== null ? subscriber._id : command.subscriberId,
+        _templateId: command.template._id,
+      },
+      '',
+      { skipCache: command.skipCache }
+    );
 
     const responseTemplate = mapResponseTemplate(command.template);
     const subscriberPreferenceEnabled = subscriberPreference?.enabled ?? true;
