@@ -8,8 +8,7 @@ export class RedisIoAdapter extends IoAdapter {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   createIOServer(port: number, options?: ServerOptions): any {
     const server = super.createIOServer(port, options);
-    const keyPrefix = `socket.io# ${getRedisPrefix() ?? ''}`;
-
+    const keyPrefix = getRedisPrefix() ? `socket.io#${getRedisPrefix()}` : 'socket.io';
     const pubClient = new Redis({
       host: process.env.REDIS_HOST,
       port: Number(process.env.REDIS_PORT),
