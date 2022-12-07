@@ -17,7 +17,7 @@ import { testCacheService } from '../../../../e2e/setup';
 
 describe('Promote changes', () => {
   let session: UserSession;
-  const cacheService = testCacheService().cacheService;
+  const cacheService = testCacheService;
   const changeRepository: ChangeRepository = new ChangeRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository(cacheService);
   const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
