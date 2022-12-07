@@ -57,7 +57,7 @@ export function ContentRow({
   };
 
   const rowStyleMenu = [
-    <Dropdown.Label key="alignBtn" style={{ fontSize: '14px' }}>
+    <Dropdown.Label key="alignBtn" sx={{ fontSize: '14px' }}>
       Align Text
     </Dropdown.Label>,
     <TextAlignmentWrapper key="button-wrapper" colorScheme={theme.colorScheme}>
