@@ -33,9 +33,6 @@ const topicSchema = new Schema(
       type: Schema.Types.String,
       required: true,
     },
-    customData: {
-      type: Schema.Types.Mixed,
-    },
   },
   schemaOptions
 );
