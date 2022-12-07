@@ -30,9 +30,9 @@ export function ContentRow({
   const parentRef = useRef<HTMLDivElement>(null);
 
   const textAlignments = [
-    ['left', <AlignLeftOutlined />],
-    ['center', <AlignCenterOutlined />],
-    ['right', <AlignRightOutlined />],
+    ['left', <AlignLeftOutlined key="left-align-icon" />],
+    ['center', <AlignCenterOutlined key="center-align-icon" />],
+    ['right', <AlignRightOutlined key="right-align-icon" />],
   ];
 
   function onHover() {
@@ -57,10 +57,13 @@ export function ContentRow({
   };
 
   const rowStyleMenu = [
-    <Dropdown.Label style={{ fontSize: '14px' }}>Align Text</Dropdown.Label>,
-    <TextAlignmentWrapper colorScheme={theme.colorScheme}>
-      {textAlignments.map(([dir, icon]) => (
+    <Dropdown.Label key="alignBtn" style={{ fontSize: '14px' }}>
+      Align Text
+    </Dropdown.Label>,
+    <TextAlignmentWrapper key="button-wrapper" colorScheme={theme.colorScheme}>
+      {textAlignments.map(([dir, icon], i) => (
         <Button
+          key={`align-${dir}-btn-${dir === textAlign ? 'on' : 'off'}`}
           onClick={(e) => changeRowStyles(e, dir)}
           data-test-id={`align-${dir}-btn`}
           variant={dir === textAlign ? 'gradient' : 'outline'}
@@ -70,7 +73,7 @@ export function ContentRow({
       ))}
     </TextAlignmentWrapper>,
     <Dropdown.Item
-      key="removeBtn"
+      key="remove-row-btn"
       disabled={!allowRemove}
       data-test-id="remove-row-btn"
       onClick={onRemove}
