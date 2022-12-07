@@ -11,6 +11,7 @@ export function validateCredentials(keyPrefix: string, credentials: string) {
  * @param keyConfig
  */
 export function getIdentifier(key: string, keyConfig: Record<string, unknown>): [string, string] {
+  const entitiesSubscriberPreferred = ['Message', 'SubscriberPreference'];
   const subscriberPreferredKeys = ['_subscriberId', 'subscriberId', '_id', 'id'];
   const idPreferredKeys = ['_id', 'id', '_subscriberId', 'subscriberId'];
 
@@ -20,7 +21,7 @@ export function getIdentifier(key: string, keyConfig: Record<string, unknown>): 
   const idPrefKey = idPreferredKeys.find((prefKey) => keyConfig[prefKey]);
   const idPreferred = [idPrefKey, keyConfig[idPrefKey] as string] as [string, string];
 
-  return key.startsWith('Message') ? subscriberPreferred : idPreferred;
+  return entitiesSubscriberPreferred.some((entity) => key.startsWith(entity)) ? subscriberPreferred : idPreferred;
 }
 
 export function getEnvironment(keyConfig: Record<string, unknown>): [string, string] {
