@@ -35,7 +35,7 @@ export default defineConfig({
       fileName: (format) => `index.${format}.js`,
     },
     rollupOptions: {
-      external: ['vue'],
+      external: ['vue', 'react', 'react-dom'],
       output: {
         exports: 'named',
         globals: {
