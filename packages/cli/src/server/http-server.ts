@@ -8,7 +8,7 @@ import { AddressInfo } from 'net';
 import {
   SERVER_HOST,
   REDIRECT_ROUTE,
-  WIDGET_DEMO_ROUTH,
+  WIDGET_DEMO_ROUTE,
   setAvailablePort,
   getServerPort,
   TRIGGER_ROUTE,
@@ -34,7 +34,7 @@ export class HttpServer {
         if (req.url.startsWith(REDIRECT_ROUTE)) {
           this.handleRedirectRequest(req, res);
         }
-        if (req.url.startsWith(WIDGET_DEMO_ROUTH)) {
+        if (req.url.startsWith(WIDGET_DEMO_ROUTE)) {
           await this.handleWidgetDemo(res);
         }
       } catch (e) {
