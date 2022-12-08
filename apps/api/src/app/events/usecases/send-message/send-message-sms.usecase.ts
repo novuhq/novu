@@ -201,6 +201,7 @@ export class SendMessageSms extends SendMessageType {
       );
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
+        message._subscriberId,
         message._id,
         'warning',
         null,
@@ -311,7 +312,7 @@ export class SendMessageSms extends SendMessageType {
       }
 
       await this.messageRepository.update(
-        { _environmentId: command.environmentId, _id: message._id },
+        { _environmentId: command.environmentId, _id: message._id, _subscriberId: message._subscriberId },
         {
           $set: {
             identifier: result.id,

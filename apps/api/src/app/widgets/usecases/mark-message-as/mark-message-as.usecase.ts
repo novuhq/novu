@@ -22,6 +22,7 @@ export class MarkMessageAs {
 
     const messages = await this.messageRepository.find({
       _environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
       _id: {
         $in: command.messageIds,
       },

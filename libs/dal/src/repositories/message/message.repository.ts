@@ -1,23 +1,58 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { SoftDeleteModel } from 'mongoose-delete';
-import { Document, FilterQuery, Types } from 'mongoose';
+import { Document, FilterQuery, ProjectionType, Types } from 'mongoose';
 import { BaseRepository, Omit } from '../base-repository';
 import { MessageEntity } from './message.entity';
 import { Message } from './message.schema';
 import { FeedRepository } from '../feed';
-import { DalException } from '../../shared';
+import { DalException, ICacheService, Cached, InvalidateCache } from '../../shared';
 
-class PartialIntegrationEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
+class PartialMessageEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceIdentifierQuery = FilterQuery<PartialMessageEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
-export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, MessageEntity> {
+type EnforceEnvironmentQuery = FilterQuery<PartialMessageEntity & Document> & { _environmentId: string } & (
+    | { _id: string }
+    | { _subscriberId: string }
+  );
+
+export class MessageRepository extends BaseRepository<EnforceIdentifierQuery, MessageEntity> {
   private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
-  constructor() {
-    super(Message, MessageEntity);
+  constructor(cacheService?: ICacheService) {
+    super(Message, MessageEntity, cacheService);
     this.message = Message;
+  }
+
+  @InvalidateCache()
+  async update(
+    query: EnforceEnvironmentQuery,
+    updateBody: any
+  ): Promise<{
+    matched: number;
+    modified: number;
+  }> {
+    return super.update(query, updateBody);
+  }
+
+  @Cached()
+  async findOne(query: EnforceEnvironmentQuery, select?: ProjectionType<any>) {
+    return super.findOne(query, select);
+  }
+
+  @Cached()
+  async find(
+    query: EnforceEnvironmentQuery,
+    select: ProjectionType<any> = '',
+    options: { limit?: number; sort?: any; skip?: number } = {}
+  ) {
+    return super.find(query, select, options);
+  }
+
+  @InvalidateCache()
+  async create(data: EnforceEnvironmentQuery) {
+    return super.create(data);
   }
 
   private async getFilterQueryForMessage(
@@ -114,27 +149,16 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
   }
 
   async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId: string) {
-    return this.update(
-      { _environmentId: environmentId, _messageTemplateId: messageId },
-      {
-        $set: {
-          _feedId: feedId,
-        },
-      }
-    );
-  }
-
-  async getBulkMessagesByNotificationIds(environmentId: string, notificationIds: string[]) {
-    return this.find({
-      _environmentId: environmentId,
-      _notificationId: {
-        $in: notificationIds,
+    return this.update({ _environmentId: environmentId, _messageTemplateId: messageId } as MessageEntity, {
+      $set: {
+        _feedId: feedId,
       },
     });
   }
 
   async updateMessageStatus(
     environmentId: string,
+    _subscriberId: string,
     id: string,
     status: 'error' | 'sent' | 'warning',
     // eslint-disable-next-line
@@ -144,6 +168,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
   ) {
     return await this.update(
       {
+        _subscriberId,
         _environmentId: environmentId,
         _id: id,
       },
@@ -182,12 +207,14 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
 
   async getFeed(
     environmentId: string,
-    query: { channels?: ChannelTypeEnum[]; templates?: string[]; emails?: string[]; subscriberId?: string } = {},
+    _subscriberId: string,
+    query: { channels?: ChannelTypeEnum[]; templates?: string[]; emails?: string[] } = {},
     skip = 0,
     limit = 10
   ) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: EnforceIdentifierQuery = {
       _environmentId: environmentId,
+      _subscriberId,
     };
 
     if (query?.channels) {
@@ -206,10 +233,6 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
       requestQuery.email = {
         $in: query.emails,
       };
-    }
-
-    if (query?.subscriberId) {
-      requestQuery._subscriberId = query?.subscriberId;
     }
 
     const totalCount = await this.count(requestQuery);
@@ -260,14 +283,23 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     );
   }
 
+  @InvalidateCache()
   async delete(query: EnforceEnvironmentQuery) {
-    const message = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
+    const message = await this.findOne({
+      _id: query._id,
+      _environmentId: query._environmentId,
+    } as EnforceEnvironmentQuery);
     if (!message) {
       throw new DalException(`Could not find a message with id ${query._id}`);
+    }
+
+    if (this.cacheService?.cacheEnabled()) {
+      this.cacheService.delByPattern(`Message*${message._subscriberId}:${message._environmentId}`);
     }
     await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
   }
 
+  @Cached()
   async findDeleted(query: EnforceEnvironmentQuery): Promise<MessageEntity> {
     const res = await this.message.findDeleted(query);
 
