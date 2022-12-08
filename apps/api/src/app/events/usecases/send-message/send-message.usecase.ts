@@ -120,7 +120,7 @@ export class SendMessage {
       return filter?.children?.find((item) => item?.on === 'subscriber');
     });
 
-    let subscriber = undefined;
+    let subscriber;
 
     if (fetchSubscriber) {
       /// TODO: refactor command.subscriberId to command._subscriberId
@@ -134,7 +134,7 @@ export class SendMessage {
   }
 
   private async filterPreferredChannels(job: JobEntity): Promise<boolean> {
-    const template = await this.notificationTemplateRepository.findById(job._templateId, job._organizationId);
+    const template = await this.notificationTemplateRepository.findById(job._templateId, job._environmentId);
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: job._organizationId,
       subscriberId: job._subscriberId,

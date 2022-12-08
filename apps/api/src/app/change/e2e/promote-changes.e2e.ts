@@ -13,11 +13,13 @@ import {
   CreateNotificationTemplateRequestDto,
   UpdateNotificationTemplateRequestDto,
 } from '../../notification-template/dto';
+import { testCacheService } from '../../../../e2e/setup';
 
 describe('Promote changes', () => {
   let session: UserSession;
+  const cacheService = testCacheService;
   const changeRepository: ChangeRepository = new ChangeRepository();
-  const notificationTemplateRepository = new NotificationTemplateRepository();
+  const notificationTemplateRepository = new NotificationTemplateRepository(cacheService);
   const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
   const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
@@ -84,7 +86,7 @@ describe('Promote changes', () => {
     const prodVersion = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
-    });
+    } as any);
 
     expect(prodVersion._notificationGroupId).to.eq(prodGroup._id);
   });
@@ -144,7 +146,7 @@ describe('Promote changes', () => {
     const prodVersion = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
-    });
+    } as any);
 
     expect(prodVersion.steps.length).to.eq(0);
   });
@@ -178,7 +180,7 @@ describe('Promote changes', () => {
       _organizationId: session.organization._id,
       _notificationId: prodEnv._id,
       _parentId: notificationTemplateId,
-    });
+    } as any);
 
     expect(prodVersion.active).to.eq(true);
   });

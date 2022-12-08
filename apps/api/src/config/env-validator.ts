@@ -8,6 +8,16 @@ const str32 = makeValidator((variable) => {
 
   return variable;
 });
+
+const recommended = makeValidator((variable?: string) => {
+  if (variable == null || variable === '') {
+    // eslint-disable-next-line no-console
+    console.warn(`The env var is optional, but recommended.`);
+  }
+
+  return '';
+});
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NODE_ENV: str({
@@ -44,6 +54,8 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NEW_RELIC_LICENSE_KEY: str({
     default: '',
   }),
+  REDIS_CACHE_HOST: recommended({ default: '' }),
+  REDIS_CACHE_PORT: recommended({ default: '' }),
 };
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {

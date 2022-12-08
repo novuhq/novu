@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { colors, ColorScheme } from '../../shared/config/colors';
 import { Bell as BellIcon, GradientDot } from '../../shared/icons';
 import { useDefaultBellColors, useUnseenCount } from '../../hooks';
-import { ISvgStopColor } from '../../store/novu-theme.context';
+import type { ISvgStopColor } from '../../store/novu-theme.context';
 
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 

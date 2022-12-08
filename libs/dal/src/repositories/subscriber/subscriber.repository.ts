@@ -2,26 +2,51 @@ import { SoftDeleteModel } from 'mongoose-delete';
 import { BaseRepository, Omit } from '../base-repository';
 import { SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
-import { DalException } from '../../shared';
-import { Document, FilterQuery } from 'mongoose';
+import { Cached, DalException, ICacheService, InvalidateCache } from '../../shared';
+import { Document, FilterQuery, ProjectionType } from 'mongoose';
 
-class PartialIntegrationEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
+class PartialSubscriberEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceIdentifierQuery = FilterQuery<PartialSubscriberEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
-export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery, SubscriberEntity> {
+type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberEntity & Document> & { _environmentId: string } & {
+  _id: string;
+};
+
+export class SubscriberRepository extends BaseRepository<EnforceIdentifierQuery, SubscriberEntity> {
   private subscriber: SoftDeleteModel;
-  constructor() {
-    super(Subscriber, SubscriberEntity);
+  constructor(cacheService?: ICacheService) {
+    super(Subscriber, SubscriberEntity, cacheService);
     this.subscriber = Subscriber;
   }
 
+  @InvalidateCache()
+  async update(
+    query: EnforceEnvironmentQuery,
+    updateBody: any
+  ): Promise<{
+    matched: number;
+    modified: number;
+  }> {
+    return super.update(query, updateBody);
+  }
+
+  @InvalidateCache()
+  async create(data: EnforceIdentifierQuery) {
+    return super.create(data);
+  }
+
+  @Cached()
+  async findOne(query: EnforceEnvironmentQuery, select?: ProjectionType<any>) {
+    return super.findOne(query, select);
+  }
+
   async findBySubscriberId(environmentId: string, subscriberId: string): Promise<SubscriberEntity> {
-    return await this.findOne({
+    return await super.findOne({
       _environmentId: environmentId,
       subscriberId,
-    });
+    } as EnforceEnvironmentQuery);
   }
 
   async searchSubscribers(environmentId: string, search: string, emails: string[] = []) {
@@ -53,16 +78,21 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     });
   }
 
-  async delete(query: EnforceEnvironmentQuery) {
+  async delete(query: EnforceIdentifierQuery) {
     const foundSubscriber = await this.findOne({
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
-    });
+    } as EnforceEnvironmentQuery);
+
     if (!foundSubscriber) {
       throw new DalException(`Could not find subscriber ${query.subscriberId} to delete`);
     }
 
-    const requestQuery: EnforceEnvironmentQuery = {
+    if (this.cacheService?.cacheEnabled()) {
+      this.cacheService.delByPattern(`Subscriber*${foundSubscriber._id}:${foundSubscriber._environmentId}`);
+    }
+
+    const requestQuery: EnforceIdentifierQuery = {
       _environmentId: foundSubscriber._environmentId,
       subscriberId: foundSubscriber.subscriberId,
     };
@@ -70,8 +100,8 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     await this.subscriber.delete(requestQuery);
   }
 
-  async findDeleted(query: EnforceEnvironmentQuery) {
-    const requestQuery: EnforceEnvironmentQuery = {
+  async findDeleted(query: EnforceIdentifierQuery) {
+    const requestQuery: EnforceIdentifierQuery = {
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
     };

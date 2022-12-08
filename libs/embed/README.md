@@ -119,7 +119,7 @@ For a library, `core-js` plays very nicely, since you can import just the polyfi
 import "core-js/fn/array/find"
 import "core-js/fn/string/includes"
 import "core-js/fn/promise"
-...
+//...
 ```
 
 #### What is `npm install` doing on first run?

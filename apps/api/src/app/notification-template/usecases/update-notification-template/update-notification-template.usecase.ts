@@ -1,10 +1,10 @@
 // eslint-ignore max-len
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  ChangeRepository,
+  NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
-  NotificationStepEntity,
-  ChangeRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
@@ -32,7 +32,7 @@ export class UpdateNotificationTemplate {
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
     const existingTemplate = await this.notificationTemplateRepository.findById(
       command.templateId,
-      command.organizationId
+      command.environmentId
     );
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.templateId} not found`);
 
@@ -196,18 +196,20 @@ export class UpdateNotificationTemplate {
     await this.notificationTemplateRepository.update(
       {
         _id: command.templateId,
-        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
       },
       {
         $set: updatePayload,
       }
     );
 
-    const item = await this.notificationTemplateRepository.findOne({
-      _id: command.templateId,
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-    });
+    const notificationTemplateWithStepTemplate = await this.notificationTemplateRepository.findById(
+      command.templateId,
+      command.environmentId,
+      { skipCache: true }
+    );
+
+    const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);
 
     await this.createChange.execute(
       CreateChangeCommand.create({
@@ -215,7 +217,7 @@ export class UpdateNotificationTemplate {
         environmentId: command.environmentId,
         userId: command.userId,
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-        item,
+        item: notificationTemplate,
         changeId: parentChangeId,
       })
     );
@@ -227,6 +229,18 @@ export class UpdateNotificationTemplate {
       critical: command.critical,
     });
 
-    return await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    return notificationTemplateWithStepTemplate;
+  }
+
+  private cleanNotificationTemplate(notificationTemplateWithStepTemplate) {
+    const notificationTemplate = Object.assign({}, notificationTemplateWithStepTemplate);
+
+    notificationTemplate.steps = notificationTemplateWithStepTemplate.steps.map((step) => {
+      const { template, ...rest } = step;
+
+      return rest;
+    });
+
+    return notificationTemplate;
   }
 }
