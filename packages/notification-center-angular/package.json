@@ -15,6 +15,9 @@
   "fesm2020": "dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
   "fesm2015": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
   "typings": "dist/notification-center-angular/index.d.ts",
+  "files": [
+    "dist/notification-center-angular"
+  ],
   "exports": {
     "./package.json": {
       "default": "./package.json"

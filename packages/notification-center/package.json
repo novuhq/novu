@@ -6,7 +6,8 @@
   "scripts": {
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
-    "build": "rollup -c",
+    "build": "rollup -c && npm run build:types",
+    "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
     "build:watch": "rollup -c -w",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
@@ -37,7 +38,6 @@
     "jest-transform-stub": "^2.0.0",
     "rimraf": "^3.0.2",
     "rollup": "^2.60.0",
-    "rollup-plugin-dts": "^4.0.1",
     "rollup-plugin-gzip": "^3.1.0",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-terser": "^7.0.2",
@@ -51,9 +51,11 @@
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "files": [
-    "dist"
+    "dist/cjs",
+    "dist/esm",
+    "dist/types"
   ],
-  "types": "dist/index.d.ts",
+  "types": "dist/types/index.d.ts",
   "dependencies": {
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",

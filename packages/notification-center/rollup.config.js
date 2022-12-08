@@ -1,7 +1,6 @@
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import typescript from '@rollup/plugin-typescript';
-import dts from 'rollup-plugin-dts';
 import { terser } from 'rollup-plugin-terser';
 import image from '@rollup/plugin-image';
 import nodeExternals from 'rollup-plugin-node-externals';
@@ -47,6 +46,7 @@ export default [
     ],
     plugins: [
       replace({
+        preventAssignment: true,
         'process.env.NODE_ENV': JSON.stringify('production'),
       }),
       resolve({ preferBuiltins: false, browser: true }),
@@ -56,10 +56,5 @@ export default [
       gzipPlugin(),
       image(),
     ],
-  },
-  {
-    input: 'dist/esm/types/index.d.ts',
-    output: [{ file: 'dist/index.d.ts', format: 'esm' }],
-    plugins: [dts()],
   },
 ];
