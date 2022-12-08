@@ -55,7 +55,7 @@ export class UpdateSubscriberPreference {
         channels: command.channel?.type ? channelObj : null,
       });
 
-      const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+      const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
 
       const getSubscriberPreferenceCommand = GetSubscriberTemplatePreferenceCommand.create({
         organizationId: command.organizationId,
@@ -93,7 +93,7 @@ export class UpdateSubscriberPreference {
       }
     );
 
-    const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
 
     const getSubscriberPreferenceCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: command.organizationId,

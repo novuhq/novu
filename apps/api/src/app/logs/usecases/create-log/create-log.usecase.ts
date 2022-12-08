@@ -11,8 +11,9 @@ export class CreateLog {
     if (command.raw) {
       try {
         rawData = JSON.stringify(command.raw);
-        // eslint-disable-next-line no-empty
-      } catch (e) {}
+      } catch (error) {
+        console.error('Parsing raw data when creating a log failed', error);
+      }
     }
 
     //

@@ -1,9 +1,13 @@
 import { faker } from '@faker-js/faker';
-import { SubscriberRepository } from '@novu/dal';
+import { SubscriberRepository, CacheService } from '@novu/dal';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class SubscribersService {
-  private subscriberRepository = new SubscriberRepository();
+  private cacheService = new CacheService({
+    cachePort: process.env.REDIS_CACHE_PORT,
+    cacheHost: process.env.REDIS_CACHE_HOST,
+  });
+  private subscriberRepository = new SubscriberRepository(this.cacheService);
 
   constructor(private _organizationId: string, private _environmentId: string) {}
 

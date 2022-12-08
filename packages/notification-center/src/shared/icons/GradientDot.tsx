@@ -1,5 +1,5 @@
 import React from 'react';
-import { INotificationBellColors, ISvgStopColor } from '../../store/novu-theme.context';
+import type { INotificationBellColors, ISvgStopColor } from '../../store/novu-theme.context';
 
 interface IGradientDotProps {
   props?: React.ComponentPropsWithoutRef<'svg'>;

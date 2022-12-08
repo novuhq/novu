@@ -164,13 +164,23 @@ export function SideNav({}: Props) {
           <OrganizationSelect />
         </Navbar.Section>
         <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
-          <a target="_blank" href="https://discord.novu.co" data-test-id="side-nav-bottom-link-support">
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://discord.novu.co"
+            data-test-id="side-nav-bottom-link-support"
+          >
             Support
           </a>
           <p>
             <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
           </p>
-          <a target="_blank" href="https://docs.novu.co" data-test-id="side-nav-bottom-link-documentation">
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://docs.novu.co"
+            data-test-id="side-nav-bottom-link-documentation"
+          >
             Documentation
           </a>
         </BottomNav>

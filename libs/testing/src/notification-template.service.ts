@@ -7,16 +7,19 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   FeedRepository,
+  CacheService,
 } from '@novu/dal';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 
 export class NotificationTemplateService {
   constructor(private userId: string, private organizationId: string | undefined, private environmentId: string) {}
+  private cacheService = new CacheService({
+    cachePort: process.env.REDIS_CACHE_PORT,
+    cacheHost: process.env.REDIS_CACHE_HOST,
+  });
 
-  private notificationTemplateRepository = new NotificationTemplateRepository();
-
+  private notificationTemplateRepository = new NotificationTemplateRepository(this.cacheService);
   private notificationGroupRepository = new NotificationGroupRepository();
-
   private messageTemplateRepository = new MessageTemplateRepository();
   private feedRepository = new FeedRepository();
 
@@ -108,7 +111,7 @@ export class NotificationTemplateService {
 
     return await this.notificationTemplateRepository.findById(
       notificationTemplate._id,
-      notificationTemplate._organizationId
+      notificationTemplate._environmentId
     );
   }
 }
