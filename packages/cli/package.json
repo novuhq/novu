@@ -22,6 +22,7 @@
     "novu": "./dist/index.js"
   },
   "devDependencies": {
+    "@types/analytics-node": "^3.1.9",
     "@types/configstore": "^5.0.1",
     "@types/inquirer": "^8.2.0",
     "@types/mocha": "9.1.1",
@@ -30,18 +31,21 @@
   },
   "dependencies": {
     "@novu/shared": "^0.9.0",
+    "analytics-node": "^6.2.0",
     "axios": "^0.25.0",
     "chalk": "4.1.2",
     "commander": "^9.0.0",
     "configstore": "^5.0.0",
     "cp-cli": "^2.0.0",
+    "dotenv": "^8.2.0",
     "get-port": "^5.1.1",
     "gradient-string": "^2.0.0",
     "inquirer": "^8.2.0",
     "jwt-decode": "^3.1.2",
     "open": "^8.4.0",
     "ora": "^5.4.1",
-    "ts-node": "^10.5.0"
+    "ts-node": "^10.5.0",
+    "uuid": "^9.0.0"
   },
   "gitHead": "565e5dcbe446aadf9fe53d13100b8cb56c0b1128"
 }
