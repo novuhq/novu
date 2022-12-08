@@ -55,9 +55,7 @@ export class Login {
     const lastFailedAttempt = user?.failedLogin?.lastFailedAttempt;
     if (!lastFailedAttempt) return false;
 
-    const now = Date.now();
-    const formattedLastAttempt = parseISO(lastFailedAttempt);
-    const diff = differenceInMinutes(now, formattedLastAttempt);
+    const diff = this.getTimeDiffForAttempt(lastFailedAttempt);
 
     return user?.failedLogin?.times >= this.MAX_LOGIN_ATTEMPTS && diff <= this.BLOCKED_PERIOD_IN_MINUTES;
   }
@@ -68,9 +66,8 @@ export class Login {
     const lastFailedAttempt = user?.failedLogin?.lastFailedAttempt;
 
     if (lastFailedAttempt) {
-      const formattedLastAttempt = parseISO(lastFailedAttempt);
-      const diff = differenceInMinutes(formattedLastAttempt, now);
-      times = diff <= this.BLOCKED_PERIOD_IN_MINUTES ? times + 1 : times;
+      const diff = this.getTimeDiffForAttempt(lastFailedAttempt);
+      times = diff <= this.BLOCKED_PERIOD_IN_MINUTES ? times + 1 : 1;
     }
 
     await this.userRepository.update(
@@ -99,5 +96,13 @@ export class Login {
         },
       }
     );
+  }
+
+  private getTimeDiffForAttempt(lastFailedAttempt: string) {
+    const now = Date.now();
+    const formattedLastAttempt = parseISO(lastFailedAttempt);
+    const diff = differenceInMinutes(now, formattedLastAttempt);
+
+    return diff;
   }
 }
