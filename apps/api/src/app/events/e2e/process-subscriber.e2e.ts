@@ -21,7 +21,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
-  const cacheService = testCacheService().cacheService;
+  const cacheService = testCacheService;
   const subscriberRepository = new SubscriberRepository(cacheService);
   const messageRepository = new MessageRepository(cacheService);
   const notificationTemplateRepository = new NotificationTemplateRepository(cacheService);
