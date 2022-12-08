@@ -76,18 +76,18 @@ test('should correctly use sender email and name from the config', async () => {
   await provider.sendMessage(mockNovuMessageWithoutFrom);
   expect(sendTransacEmailMock).toBeCalledTimes(1);
   expect(sendTransacEmailMock.mock.calls[0][0]).toBeInstanceOf(SendSmtpEmail);
-  const smptEmail = sendTransacEmailMock.mock.calls[0][0] as SendSmtpEmail;
-  expect(smptEmail.sender.email).toBe(mockConfig.from);
+  const smtpEmail = sendTransacEmailMock.mock.calls[0][0] as SendSmtpEmail;
+  expect(smtpEmail.sender.email).toBe(mockConfig.from);
 
   // sendinblue sender.name should be set from config
-  expect(smptEmail.sender.name).toBe(mockConfig.senderName);
+  expect(smtpEmail.sender.name).toBe(mockConfig.senderName);
 
-  // Use the message.from instead of config.from if avaliable
+  // Use the message.from instead of config.from if available
   await provider.sendMessage(mockNovuMessage);
   expect(sendTransacEmailMock).toBeCalledTimes(2);
-  const smptEmailWithFrom = sendTransacEmailMock.mock
+  const smtpEmailWithFrom = sendTransacEmailMock.mock
     .calls[1][0] as SendSmtpEmail;
-  expect(smptEmailWithFrom.sender.email).toBe(mockNovuMessage.from);
+  expect(smtpEmailWithFrom.sender.email).toBe(mockNovuMessage.from);
 });
 
 describe('getMessageId', () => {
