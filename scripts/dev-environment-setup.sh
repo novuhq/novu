@@ -3,11 +3,11 @@
 exec </dev/tty
 
 APPLE_CHIP='Apple'
-INTEL_CHIP='Intel'
+#INTEL_CHIP='Intel'
 NEGATIVE_RESPONSE="No"
 POSITIVE_RESPONSE="Yes"
 
-ZSHRC="$HOME/.zshrc"
+#ZSHRC="$HOME/.zshrc"
 ZPROFILE="$HOME/.zprofile"
 
 error_message () {
@@ -57,7 +57,7 @@ get_cpu () {
 
 refresh_shell() {
     # Refresh shell to apply changes in current session
-    source $ZPROFILE
+    source "$ZPROFILE"
     exec $SHELL
 }
 
@@ -67,18 +67,18 @@ get_user_groups() {
 }
 
 set_user_dir_ownership() {
-    USER_GROUP=$(get_user_groups)
-    sudo chown -R $USER:${USER_GROUP[0]} $1
+    USER_GROUP="$(get_user_groups)"
+    sudo chown -R "$USER":"${USER_GROUP[0]}" "$1"
 }
 
 set_user_ownership() {
-    USER_GROUP=$(get_user_groups)
-    sudo chown $USER:${USER_GROUP[0]} $1
+    USER_GROUP="$(get_user_groups)"
+    sudo chown "$USER":"${USER_GROUP[0]}" "$1"
 }
 
 set_user_permissions() {
-    sudo chmod 644 $1
-    set_user_ownership $1
+    sudo chmod 644 "$1"
+    set_user_ownership "$1"
 }
 
 install_apple_chip_dependencies () {
@@ -183,11 +183,11 @@ install_homebrew () {
 
         if [[ -z $CMD ]]; then
 	    # Add the Brew paths to the shell profile
-            echo "$ENTRY" | sudo tee -a $ZPROFILE
+            echo "$ENTRY" | sudo tee -a "$ZPROFILE"
 
             # As executing `tee` as sudo changes ownership and permissions we roll them back appropriately 
-	    set_user_permissions $ZPROFILE
-	    source $ZPROFILE
+	    set_user_permissions "$ZPROFILE"
+	    source "$ZPROFILE"
         fi
 
         AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "brew --version")
@@ -214,14 +214,14 @@ install_homebrew_recipes () {
         brew upgrade
     else
         skip_message "Homebrew tap"
-        echo $SKIP
+        echo "$SKIP"
     fi
 }
 
 make_zsh_default_shell () {
     if [[ ! "$SHELL" == "/bin/zsh" ]]; then
         echo "Let's make ZSH the default shell"
-        chsh -s $(which zsh)
+        chsh -s "$(which zsh)"
         echo "✅ ZSH made as default shell"
     fi
 }
@@ -242,7 +242,7 @@ install_ohmyzsh () {
             if [[ ! -d $OHMYZSH_DIR ]]; then
                 error_message "Oh My Zsh!"
             else
-    	        set_user_dir_ownership $OHMYZSH_DIR
+    	        set_user_dir_ownership "$OHMYZSH_DIR"
                 success_message "Oh My Zsh!"
             fi
          else
@@ -283,7 +283,7 @@ install_node () {
          fi
     else
         skip_message "Node.js $NODE_JS_VERSION"
-        echo $SKIP
+        echo "$SKIP"
     fi
 }
 
@@ -302,7 +302,7 @@ install_nvm () {
 	/bin/bash -c "$(curl -fsSL $URL)"
 
 	# Loads NVM
-	source $NVM_DIR/nvm.sh
+	source "$NVM_DIR/nvm.sh"
 	#source $ZSHRC
 	
         AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "nvm --version")
@@ -355,7 +355,7 @@ install_docker () {
         fi 
     else
         skip_message "Docker"
-        echo $SKIP
+        echo "$SKIP"
     fi
 }
 
@@ -366,7 +366,7 @@ install_aws_cli () {
     if [[ -z "$TEST_AWS_CMD" ]] || [[ "$TEST_AWS_CMD" == "zsh: command not found: aws" ]]; then
         installing_dependency "AWS CLI"
         curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "$FILE_DESTINATION"
-        sudo installer -pkg $FILE_DESTINATION -target /
+        sudo installer -pkg "$FILE_DESTINATION" -target /
     	
         AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "aws --version")
     	if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == "zsh: command not found: aws" ]]; then
@@ -379,7 +379,7 @@ install_aws_cli () {
     fi 
 
     if [[ -f $FILE_DESTINATION ]]; then
-        rm $FILE_DESTINATION
+        rm "$FILE_DESTINATION"
     fi
 }
 
@@ -400,7 +400,6 @@ install_databases () {
         echo "Run the services in the background"
 
         TEST_REDIS_CMD=$(execute_command_without_error_print "redis-cli --version")
-	echo $TEST_REDIS_CMD
         if [[ -z "$TEST_REDIS_CMD" ]] || [[ "$TEST_REDIS_CMD" == "zsh: command not found: redis-cli" ]]; then
             error_message "Redis"
         else
@@ -419,7 +418,7 @@ install_databases () {
         fi
     else
         skip_message "Databases"
-        echo $SKIP
+        echo "$SKIP"
     fi
 }
 
@@ -465,9 +464,9 @@ clone_monorepo () {
             DESTINATION_FOLDER="$HOME/Dev"
             NOVU_FOLDER="$DESTINATION_FOLDER/novu"
 
-            [[ ! -d $DESTINATION_FOLDER ]] && mkdir $DESTINATION_FOLDER
-            if [[ ! -d $NOVU_FOLDER ]]; then
-                git clone $REPOSITORY $NOVU_FOLDER
+            [[ ! -d "$DESTINATION_FOLDER" ]] && mkdir "$DESTINATION_FOLDER"
+            if [[ ! -d "$NOVU_FOLDER" ]]; then
+                git clone "$REPOSITORY $NOVU_FOLDER"
 	        success_message "Novu monorepo"
             else
                 already_installed_message "Novu monorepo"
@@ -475,7 +474,7 @@ clone_monorepo () {
         fi
     else
         skip_message "Novu monorepo"
-        echo $SKIP
+        echo "$SKIP"
     fi
 }
 

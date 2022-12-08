@@ -1,7 +1,5 @@
 import { UserSession } from '@novu/testing';
-import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 
 const URL = '/v1/topics';
 
@@ -40,5 +38,31 @@ describe('Topic creation - /topics (POST)', async () => {
     const { body } = response;
     expect(body.data._id).to.exist;
     expect(body.data._id).to.be.string;
+  });
+
+  it('should throw an error when trying to create a topic with a key already used', async () => {
+    const topicKey = 'topic-key-unique';
+    const topicName = 'topic-name';
+    const response = await session.testAgent.post(URL).send({
+      key: topicKey,
+      name: topicName,
+    });
+
+    expect(response.statusCode).to.eql(201);
+
+    const { body } = response;
+    expect(body.data._id).to.exist;
+    expect(body.data._id).to.be.string;
+
+    const conflictResponse = await session.testAgent.post(URL).send({
+      key: topicKey,
+      name: topicName,
+    });
+
+    expect(conflictResponse.statusCode).to.eql(409);
+    expect(conflictResponse.body.error).to.eql('Conflict');
+    expect(conflictResponse.body.message).to.eql(
+      `There is already a topic with the key ${topicKey} for user ${session.user._id}`
+    );
   });
 });

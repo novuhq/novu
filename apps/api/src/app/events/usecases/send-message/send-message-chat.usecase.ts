@@ -234,6 +234,7 @@ export class SendMessageChat extends SendMessageType {
       );
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
+        message._subscriberId,
         message._id,
         'warning',
         null,

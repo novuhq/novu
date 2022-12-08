@@ -1,27 +1,23 @@
 import { IoAdapter } from '@nestjs/platform-socket.io';
-import * as redisIoAdapter from 'socket.io-redis';
+import { ServerOptions } from 'socket.io';
+import Redis from 'ioredis';
+import { createAdapter } from '@socket.io/redis-adapter';
 import { getRedisPrefix } from '@novu/shared';
 
 export class RedisIoAdapter extends IoAdapter {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  createIOServer(port: number, options?: any): any {
+  createIOServer(port: number, options?: ServerOptions): any {
     const server = super.createIOServer(port, options);
-    const redisAdapter = redisIoAdapter({
+    const keyPrefix = getRedisPrefix() ? `socket.io#${getRedisPrefix()}` : 'socket.io';
+    const pubClient = new Redis({
       host: process.env.REDIS_HOST,
-      port: process.env.REDIS_PORT,
+      port: Number(process.env.REDIS_PORT),
       password: process.env.REDIS_PASSWORD,
-      prefix: () => {
-        // if custom prefix is empty ensure that the default prefix is set
-        let prefix = 'socket.io';
-        if (getRedisPrefix()) {
-          prefix += '#' + getRedisPrefix();
-        }
-
-        return prefix;
-      },
+      keyPrefix,
     });
+    const subClient = pubClient.duplicate();
 
-    server.adapter(redisAdapter);
+    server.adapter(createAdapter(pubClient, subClient));
 
     return server;
   }

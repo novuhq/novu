@@ -38,8 +38,18 @@ export const VarItemsDropdown = ({ name, type }) => {
             paddingLeft: 12,
           }}
         >
-          {Object.keys(type).map((key, ind) => {
-            return <VarItem key={ind} name={key} type={type[key]} />;
+          {Object.keys(type).map((key, index) => {
+            let varType = type[key];
+
+            if (!['boolean', 'string', 'number', 'object'].includes(varType)) {
+              varType = typeof varType;
+            }
+
+            if (varType === 'object') {
+              return <VarItemsDropdown key={index} name={key} type={type[key]} />;
+            }
+
+            return <VarItem key={index} name={key} type={varType} />;
           })}
         </div>
       </Collapse>

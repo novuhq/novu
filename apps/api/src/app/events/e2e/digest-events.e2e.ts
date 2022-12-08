@@ -529,6 +529,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _environmentId: session.environment._id,
       channel: StepTypeEnum.IN_APP,
       _templateId: template._id,
+      _subscriberId: subscriber._id,
     });
 
     await triggerEvent({
@@ -557,7 +558,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _environmentId: session.environment._id,
       channel: StepTypeEnum.IN_APP,
       _templateId: template._id,
-    });
+    } as any);
 
     expect(oldMessage.content).to.equal('Hello world 0');
     expect(message.content).to.equal('Hello world 2');
@@ -664,7 +665,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     let messageCount = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
-    });
+    } as any);
 
     expect(messageCount.length).to.equal(2);
 
@@ -693,6 +694,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     messageCount = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
+      _subscriberId: subscriber._id,
     });
 
     expect(messageCount.length).to.equal(2);
@@ -760,6 +762,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const messageCount = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
+      _subscriberId: subscriber._id,
     });
 
     expect(messageCount.length).to.equal(1);
@@ -837,6 +840,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
+      _subscriberId: subscriber._id,
     });
 
     expect(messages[0].content).to.include(digests[0].payload.postId);
@@ -925,6 +929,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
+      _subscriberId: subscriber._id,
     });
 
     expect(messages.length).to.equal(4);
