@@ -94,15 +94,15 @@ export class HeadlessService {
         queries: {
           refetchOnWindowFocus: false,
           retry: options?.config?.retry ?? 3,
-          ...(options?.config?.retryDelay
-            ? { retryDelay: options?.config?.retryDelay }
-            : {}),
+          ...(options?.config?.retryDelay && {
+            retryDelay: options?.config?.retryDelay,
+          }),
         },
         mutations: {
           retry: options?.config?.retry ?? 3,
-          ...(options?.config?.retryDelay
-            ? { retryDelay: options?.config?.retryDelay }
-            : {}),
+          ...(options?.config?.retryDelay && {
+            retryDelay: options?.config?.retryDelay,
+          }),
         },
       },
     });
@@ -142,9 +142,9 @@ export class HeadlessService {
         },
       });
 
-      this.socket.on('connect_error', (e) => {
+      this.socket.on('connect_error', (error: Error) => {
         // eslint-disable-next-line no-console
-        console.error(e);
+        console.error(error.message);
       });
     }
   }
@@ -264,7 +264,7 @@ export class HeadlessService {
       this.socket.on(
         'unseen_count_changed',
         (data?: { unseenCount: number }) => {
-          if (!isNaN(data?.unseenCount)) {
+          if (Number.isInteger(data?.unseenCount)) {
             this.queryClient.removeQueries(NOTIFICATIONS_QUERY_KEY, {
               exact: false,
             });

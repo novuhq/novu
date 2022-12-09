@@ -10,5 +10,3 @@ node_modules
 
 # OSX
 .DS_Store
-
-jest.config.ts

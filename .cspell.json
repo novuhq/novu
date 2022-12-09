@@ -187,7 +187,8 @@
     "VITE",
     "webcomponent",
     "Craco",
-    "topicsubscribers"
+    "topicsubscribers",
+    "tanstack"
   ],
   "flagWords": [],
   "patterns": [

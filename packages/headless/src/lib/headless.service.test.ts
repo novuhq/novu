@@ -169,7 +169,7 @@ describe('headless.service', () => {
       );
     });
 
-    test('when there is a token should call disposeAuthorizationToken', () => {
+    test('when there is a token should call setAuthorizationToken', () => {
       const mockToken = 'mock-token';
       jest.spyOn(Storage.prototype, 'setItem');
       Storage.prototype.getItem = jest
@@ -544,10 +544,10 @@ describe('headless.service', () => {
       (headlessService as any).socket = mockedSocket;
 
       // then
-      const unsunscribe = headlessService.listenUnseenCountChange({
+      const unsubscribe = headlessService.listenUnseenCountChange({
         listener,
       });
-      unsunscribe();
+      unsubscribe();
 
       expect(mockedSocket.off).toHaveBeenCalledWith('unseen_count_changed');
     });
