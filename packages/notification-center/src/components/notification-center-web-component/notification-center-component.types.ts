@@ -43,8 +43,7 @@ type PopoverProps = SelectedPopoverProps & {
 
 type BellProps = { unseenBadgeColor?: string; unseenBadgeBackgroundColor?: string };
 
-export type NotificationCenterComponentProps = NovuProviderProps &
-  PopoverProps &
-  BellProps & { styles?: NotificationCenterStyles };
-
 export type PopoverWrapperProps = PopoverProps & BellProps;
+
+export type NotificationCenterComponentProps = NovuProviderProps &
+  PopoverWrapperProps & { styles?: NotificationCenterStyles };

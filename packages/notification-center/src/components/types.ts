@@ -13,5 +13,5 @@ export type CSSFunctionInterpolation = (args: {
 export type CSSFunctionOrObject = CSSFunctionInterpolation | CSSInterpolation;
 
 export type ObjectWithRoot<T = {}> = T & {
-  root: CSSFunctionOrObject;
+  root?: CSSFunctionOrObject;
 };
