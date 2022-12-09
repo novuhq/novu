@@ -4,7 +4,7 @@ import { BaseRepository, Omit } from '../base-repository';
 import { NotificationTemplate } from './notification-template.schema';
 import { NotificationTemplateEntity } from './notification-template.entity';
 import { Cached, DalException, ICacheService, InvalidateCache } from '../../shared';
-import { ICacheConfig } from '../../shared/interceptors/shared-cache';
+import { ICacheConfig } from '../../shared';
 
 class PartialNotificationTemplateEntity extends Omit(NotificationTemplateEntity, [
   '_environmentId',
@@ -23,7 +23,7 @@ type EnforceEnvironmentQuery = FilterQuery<PartialNotificationTemplateEntity & D
 export class NotificationTemplateRepository extends BaseRepository<EnforceIdentifierQuery, NotificationTemplateEntity> {
   private notificationTemplate: SoftDeleteModel;
   constructor(cacheService?: ICacheService) {
-    super(NotificationTemplate, NotificationTemplateEntity, cacheService);
+    super(NotificationTemplate, NotificationTemplateEntity);
     this.notificationTemplate = NotificationTemplate;
   }
 

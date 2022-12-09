@@ -101,6 +101,37 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     expect(unreadFeed.data.count).to.equal(2);
   });
 
+  it('should return unseen count after mark as request', async function () {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+
+    await session.awaitRunningJobs(template._id);
+
+    const messages = await messageRepository.findBySubscriberChannel(
+      session.environment._id,
+      subscriberProfile._id,
+      ChannelTypeEnum.IN_APP
+    );
+    const messageId = messages[0]._id;
+
+    let seenCount = (await getFeedCount({ seen: false })).data.count;
+    expect(seenCount).to.equal(3);
+
+    await axios.post(
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      { messageId, mark: { seen: true } },
+      {
+        headers: {
+          Authorization: `Bearer ${subscriberToken}`,
+        },
+      }
+    );
+
+    seenCount = (await getFeedCount({ seen: false })).data.count;
+    expect(seenCount).to.equal(2);
+  });
+
   async function getFeedCount(query = {}) {
     const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/count`, {
       params: {

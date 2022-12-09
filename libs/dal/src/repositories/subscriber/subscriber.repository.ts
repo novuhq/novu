@@ -17,7 +17,7 @@ type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberEntity & Document> &
 export class SubscriberRepository extends BaseRepository<EnforceIdentifierQuery, SubscriberEntity> {
   private subscriber: SoftDeleteModel;
   constructor(cacheService?: ICacheService) {
-    super(Subscriber, SubscriberEntity, cacheService);
+    super(Subscriber, SubscriberEntity);
     this.subscriber = Subscriber;
   }
 

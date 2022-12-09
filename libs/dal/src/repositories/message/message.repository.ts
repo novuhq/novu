@@ -21,7 +21,7 @@ export class MessageRepository extends BaseRepository<EnforceIdentifierQuery, Me
   private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
   constructor(cacheService?: ICacheService) {
-    super(Message, MessageEntity, cacheService);
+    super(Message, MessageEntity);
     this.message = Message;
   }
 

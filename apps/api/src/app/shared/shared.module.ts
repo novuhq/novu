@@ -71,19 +71,9 @@ export const ANALYTICS_SERVICE = 'AnalyticsService';
 const cacheService = {
   provide: CacheService,
   useFactory: async () => {
-    return new CacheService({ cachePort: process.env.REDIS_CACHE_PORT, cacheHost: process.env.REDIS_CACHE_HOST });
+    return new CacheService({ cacheHost: process.env.REDIS_CACHE_HOST, cachePort: process.env.REDIS_CACHE_PORT });
   },
 };
-
-const dalProviders = DAL_MODELS.map((repository) => {
-  return {
-    provide: repository,
-    useFactory: async (service: CacheService) => {
-      return new repository(service);
-    },
-    inject: [CacheService],
-  };
-});
 
 const PROVIDERS = [
   {
@@ -101,7 +91,7 @@ const PROVIDERS = [
     },
   },
   cacheService,
-  ...dalProviders,
+  ...DAL_MODELS,
   {
     provide: StorageService,
     useClass: getStorageServiceClass(),
