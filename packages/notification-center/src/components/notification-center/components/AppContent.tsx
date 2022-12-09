@@ -1,7 +1,9 @@
 import React from 'react';
 import { useQuery } from 'react-query';
-import styled, { ThemeProvider } from 'styled-components';
+import { MantineProvider } from '@mantine/core';
+import styled from '@emotion/styled';
 import { IOrganizationEntity } from '@novu/shared';
+
 import { Layout } from './layout/Layout';
 import { Main } from './Main';
 import { useAuth, useApi, useNovuTheme } from '../../../hooks';
@@ -19,47 +21,42 @@ export function AppContent() {
     }
   );
 
+  const primaryColor = organization?.branding?.color ?? theme.loaderColor;
   const themeConfig = {
-    colors: {
-      main: theme.loaderColor || organization?.branding?.color,
-      secondaryFontColor: theme.layout?.wrapper.secondaryFontColor,
-    },
+    primaryColor: 'brand',
     fontFamily: common.fontFamily || organization?.branding?.fontFamily,
-    layout: {
-      direction: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
+    dir: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
+    colors: {
+      brand: [primaryColor, '', '', '', '', '', '', '', '', ''],
     },
   };
 
   return (
-    <ThemeProvider theme={themeConfig}>
+    <MantineProvider withNormalizeCSS theme={themeConfig}>
       <ScreenProvider>
-        <Wrap
-          fontFamily={themeConfig.fontFamily}
-          layoutDirection={themeConfig.layout.direction}
-          brandColor={themeConfig.colors.main}
-        >
+        <Wrap>
           <Layout>
             <Main />
           </Layout>
         </Wrap>
       </ScreenProvider>
-    </ThemeProvider>
+    </MantineProvider>
   );
 }
 
-const Wrap = styled.div<{ fontFamily: string; layoutDirection: 'ltr' | 'rtl'; brandColor: string }>`
+const Wrap = styled.div`
   margin: 0;
-  font-family: ${({ fontFamily }) => fontFamily}, Helvetica, sans-serif;
+  font-family: ${({ theme }) => theme.fontFamily}, Helvetica, sans-serif;
   color: #333737;
-  direction: ${({ layoutDirection }) => layoutDirection};
+  direction: ${({ theme }) => theme.dir};
   width: 420px;
   z-index: 999;
 
   ::-moz-selection {
-    background: ${({ brandColor }) => brandColor};
+    background: ${({ theme }) => theme.colors.brand[0]};
   }
 
   *::selection {
-    background: ${({ brandColor }) => brandColor};
+    background: ${({ theme }) => theme.colors.brand[0]};
   }
 `;

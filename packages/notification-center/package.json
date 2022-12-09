@@ -30,6 +30,7 @@
     "@storybook/testing-library": "0.0.9",
     "@testing-library/react-hooks": "^8.0.1",
     "@types/jest": "^26.0.23",
+    "@types/node": "^18.11.12",
     "@types/react": "^17.0.34",
     "acorn": "^8.7.1",
     "babel-loader": "^8.2.4",
@@ -53,6 +54,9 @@
   ],
   "types": "dist/index.d.ts",
   "dependencies": {
+    "@emotion/css": "^11.10.5",
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
     "@novu/client": "^0.9.0",
@@ -66,7 +70,6 @@
     "react-query": "^3.34.19",
     "rollup-plugin-node-externals": "^4.0.0",
     "socket.io-client": "4.5.4",
-    "styled-components": "^5.3.5",
     "tslib": "^2.3.1",
     "webfontloader": "^1.6.28"
   }
