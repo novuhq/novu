@@ -11,7 +11,6 @@ const useStyles = createStyles((theme) => ({
     background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
     marginLeft: '30px',
     marginRight: '30px',
-    marginTop: '10px',
     borderRadius: '7px',
   },
   bar: {

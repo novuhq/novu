@@ -9,4 +9,10 @@ export class PreviewEmailCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   contentType: MessageTemplateContentType;
+
+  @IsDefined()
+  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  @IsString()
+  subject: string;
 }

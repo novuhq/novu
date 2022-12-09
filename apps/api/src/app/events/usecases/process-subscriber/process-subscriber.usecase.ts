@@ -31,7 +31,7 @@ export class ProcessSubscriber {
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
-    const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
 
     const subscriber: SubscriberEntity = await this.getSubscriber(
       {
@@ -121,10 +121,10 @@ export class ProcessSubscriber {
     command: Pick<ProcessSubscriberCommand, 'environmentId' | 'organizationId'>,
     subscriberPayload
   ): Promise<SubscriberEntity> {
-    const subscriber = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      subscriberId: subscriberPayload.subscriberId,
-    });
+    const subscriber = await this.subscriberRepository.findBySubscriberId(
+      command.environmentId,
+      subscriberPayload.subscriberId
+    );
 
     if (subscriber && !this.subscriberNeedUpdate(subscriber, subscriberPayload)) {
       return subscriber;

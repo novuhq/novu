@@ -11,6 +11,7 @@ import axios from 'axios';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ISubscribersDefine } from '@novu/node';
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
+import { testCacheService } from '../../../../e2e/setup';
 
 const axiosInstance = axios.create();
 
@@ -20,9 +21,10 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
-  const subscriberRepository = new SubscriberRepository();
-  const messageRepository = new MessageRepository();
-  const notificationTemplateRepository = new NotificationTemplateRepository();
+  const cacheService = testCacheService;
+  const subscriberRepository = new SubscriberRepository(cacheService);
+  const messageRepository = new MessageRepository(cacheService);
+  const notificationTemplateRepository = new NotificationTemplateRepository(cacheService);
 
   beforeEach(async () => {
     session = new UserSession();
@@ -72,7 +74,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     await session.awaitRunningJobs(newTemplate._id);
 
     const message = await messageRepository.find({
-      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
       _templateId: newTemplate._id,
       _subscriberId: subscriber._id,
       channel: ChannelTypeEnum.IN_APP,
@@ -185,7 +187,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     await notificationTemplateRepository.update(
       {
         _id: template._id,
-        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
       },
       {
         critical: true,

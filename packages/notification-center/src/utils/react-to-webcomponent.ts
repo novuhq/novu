@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /**
  * The code was taken from the following repository: https://github.com/bitovi/react-to-webcomponent
- * and improved to support rendering React throught Web Components in the AngularJS app
+ * and improved to support rendering React through Web Components in the AngularJS app
  */
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -63,8 +63,8 @@ const moveUpdateToNextTick = (fn: () => void) => {
 };
 
 const define = {
-  // Creates a getter/setter that re-renders everytime a property is set.
-  expando: function (receiver: object, key: string, value: unknown) {
+  // Creates a getter/setter that re-renders every time a property is set.
+  expand: function (receiver: object, key: string, value: unknown) {
     Object.defineProperty(receiver, key, {
       enumerable: true,
       get: function () {
@@ -100,7 +100,7 @@ export default function (
   options: R2WCOptions = {}
 ): CustomElementConstructor {
   const propTypes = {}; // { [camelCasedProp]: String | Number | Boolean | Function | Object | Array }
-  const propAttrMap = {}; // @TODO: add option to specify for asymetric mapping (eg "className" from "class")
+  const propAttrMap = {}; // @TODO: add option to specify for asymmetric mapping (eg "className" from "class")
   const attrPropMap = {}; // cached inverse of propAttrMap
   if (!options.props) {
     options.props = ReactComponent.propTypes ? Object.keys(ReactComponent.propTypes) : [];
@@ -151,7 +151,7 @@ export default function (
       if (typeof key === 'symbol' || renderAddedProperties[key] || key in target) {
         return Reflect.set(target, key, value, receiver);
       } else {
-        define.expando(receiver, key, value);
+        define.expand(receiver, key, value);
       }
 
       return true;

@@ -11,13 +11,16 @@ describe('Preview email - /v1/content-templates/preview/email (POST)', function 
   it('should generate preview html email', async function () {
     const {
       body: {
-        data: { html },
+        data: { html, subject },
       },
     } = await session.testAgent.post(`/v1/content-templates/preview/email`).send({
       contentType: 'editor',
       content: [{ type: 'text', content: 'test {{test}} test' }],
+      payload: JSON.stringify({ test: 'test' }),
+      subject: 'test {{test}} test',
     });
 
-    expect(html.includes('test {{test}} test')).true;
+    expect(html.includes('test test test')).true;
+    expect(subject.includes('test test test')).true;
   });
 });

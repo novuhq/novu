@@ -165,7 +165,27 @@
     "prebuild",
     "rimraf",
     "istanbuljs",
-    "infobip"
+    "infobip",
+    "clickatell",
+    "eslintcache",
+    "dbnavigator",
+    "Fdfdf",
+    "tfstate",
+    "mpeltonen",
+    "replstate",
+    "Intelli",
+    "codestream",
+    "nosniff",
+    "hookform",
+    "noconflict",
+    "monokai",
+    "sparkpost",
+    "ntvs",
+    "njsproj",
+    "buildx",
+    "dotenv",
+    "VITE",
+    "webcomponent"
   ],
   "flagWords": [],
   "patterns": [
@@ -206,6 +226,8 @@
   ],
   "ignorePaths": [
     "apps/api/src/.env.test",
+    "apps/ws/src/.env.test",
+    "apps/ws/src/.example.env",
     ".cspell.json",
     "package.json",
     "package-lock.json",
@@ -213,11 +235,15 @@
     "tsconfig.json",
     "node_modules/**",
     "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
     "novu.code-workspace",
     "packages/notification-center/src/i18n/languages/**",
     "apps/widget/public/iframeResizer.contentWindow.js",
     ".eslintrc.js",
     ".vscode/settings.json",
-    "docs/src/usage-examples.md"
+    "docs/src/usage-examples.md",
+    ".gitignore",
+    "angular.json",
+    "ng-package.json"
   ]
 }
