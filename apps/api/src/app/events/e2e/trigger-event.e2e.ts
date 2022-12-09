@@ -16,17 +16,19 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, StepTypeEnum, IEmailBlock, TemplateVariableTypeEnum } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
+import { testCacheService } from '../../../../e2e/setup';
 
 const axiosInstance = axios.create();
 
 describe('Trigger event - /v1/events/trigger (POST)', function () {
+  const cacheService = testCacheService;
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const notificationRepository = new NotificationRepository();
-  const messageRepository = new MessageRepository();
-  const subscriberRepository = new SubscriberRepository();
+  const messageRepository = new MessageRepository(cacheService);
+  const subscriberRepository = new SubscriberRepository(cacheService);
   const integrationRepository = new IntegrationRepository();
   const logRepository = new LogRepository();
   const jobRepository = new JobRepository();
@@ -738,7 +740,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       channel: channelType,
-    });
+    } as any);
+
     expect(messages.length).to.equal(4);
     const isUnique = (value, index, self) => self.indexOf(value) === index;
     const subscriberIds = messages.map((message) => message._subscriberId).filter(isUnique);

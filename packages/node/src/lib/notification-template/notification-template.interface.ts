@@ -1,7 +1,4 @@
-import {
-  INotificationTemplateStep,
-  IPreferenceChannels,
-} from 'libs/shared/dist';
+import { INotificationTemplateStep, IPreferenceChannels } from '@novu/shared';
 
 export interface INotificationTemplates {
   create(data: INotificationTemplatePayload);

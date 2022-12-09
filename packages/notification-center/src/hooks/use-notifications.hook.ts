@@ -2,8 +2,8 @@ import { useContext } from 'react';
 import { NotificationsContext } from '../store/notifications.context';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { INotificationsContext } from '../shared/interfaces';
-import { IMessage } from '@novu/shared';
-import { IStoreQuery } from '@novu/client';
+import type { IMessage } from '@novu/shared';
+import type { IStoreQuery } from '@novu/client';
 
 interface IUseNotificationsProps {
   storeId?: string;

@@ -6,8 +6,7 @@ import {
   ISubscriberJwt,
   MessageActionStatusEnum,
 } from '@novu/shared';
-
-import { IStoreQuery } from '@novu/client';
+import type { IStoreQuery } from '@novu/client';
 
 export {
   IMessage,

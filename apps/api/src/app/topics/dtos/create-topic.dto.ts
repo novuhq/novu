@@ -3,6 +3,8 @@ import { IsDefined, IsString } from 'class-validator';
 
 import { TopicDto } from './topic.dto';
 
+import { TopicKey, TopicName } from '../types';
+
 export class CreateTopicResponseDto implements Pick<TopicDto, '_id'> {}
 
 export class CreateTopicRequestDto {
@@ -12,12 +14,12 @@ export class CreateTopicRequestDto {
   })
   @IsString()
   @IsDefined()
-  key: string;
+  key: TopicKey;
 
   @ApiProperty({
     description: 'User defined custom name and provided by the user that will name the Topic created.',
   })
   @IsString()
   @IsDefined()
-  name: string;
+  name: TopicName;
 }

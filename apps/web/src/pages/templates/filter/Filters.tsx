@@ -16,8 +16,10 @@ export const Filters = ({ step }: { step: StepEntity | null }) => {
           return null;
         }
 
-        return group.children.map((filter) => {
-          return <Filter filter={filter} />;
+        return group.children.map((filter, i) => {
+          const filterKey = filter.field ? `${filter.on}-${filter.field}-field-filter-${i}` : `filter-${i}`;
+
+          return <Filter key={filterKey} filter={filter} />;
         });
       })}
     </>
