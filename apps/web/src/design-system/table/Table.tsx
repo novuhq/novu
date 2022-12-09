@@ -109,31 +109,43 @@ export function Table({
 
       <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
         <thead>
-          {headerGroups.map((headerGroup, i) => (
-            <tr key={i} {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column) => (
-                <th key={column.Header} {...column.getHeaderProps()}>
-                  {column.render('Header')}
-                </th>
-              ))}
-            </tr>
-          ))}
+          {headerGroups.map((headerGroup, i) => {
+            const { key: rowKey, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
+
+            return (
+              <tr key={rowKey} {...restHeaderGroupProps}>
+                {headerGroup.headers.map((column) => {
+                  const { key: headerKey, ...restHeaderProps } = column.getHeaderProps();
+
+                  return (
+                    <th key={headerKey} {...restHeaderProps}>
+                      {column.render('Header')}
+                    </th>
+                  );
+                })}
+              </tr>
+            );
+          })}
         </thead>
         <tbody {...getTableBodyProps()}>
           {(pagination ? page : rows).map((row) => {
             prepareRow(row);
 
+            const { key: rowKey, ...restRowProps } = row.getRowProps();
+
             return (
               <tr
-                key={row.id}
+                key={rowKey}
                 onClick={() => (onRowClick ? onRowClick(row) : null)}
-                {...row.getRowProps()}
+                {...restRowProps}
                 className={classes.tableRow}
               >
                 {row.cells.map((cell, i) => {
+                  const { key: cellKey } = cell.getCellProps();
+
                   return (
                     <td
-                      key={`${cell.name}-key`}
+                      key={cellKey}
                       {...cell.getCellProps({
                         style: {
                           maxWidth: cell.column.maxWidth,
