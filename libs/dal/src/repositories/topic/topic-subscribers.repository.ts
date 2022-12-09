@@ -16,4 +16,22 @@ export class TopicSubscribersRepository extends BaseRepository<EnforceEnvironmen
   constructor() {
     super(TopicSubscribers, TopicSubscribersEntity);
   }
+
+  async addSubscribers(entity: TopicSubscribersEntity): Promise<void> {
+    const { _environmentId, _organizationId, _topicId, _userId, subscribers } = entity;
+
+    await this.update(
+      {
+        _environmentId,
+        _organizationId,
+        _topicId,
+        _userId,
+      },
+      {
+        $addToSet: { subscribers },
+      }
+    );
+
+    return undefined;
+  }
 }
