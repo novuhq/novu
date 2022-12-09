@@ -65,7 +65,7 @@
     "react-infinite-scroll-component": "^6.0.0",
     "react-query": "^3.34.19",
     "rollup-plugin-node-externals": "^4.0.0",
-    "socket.io-client": "2.3.1",
+    "socket.io-client": "4.5.4",
     "styled-components": "^5.3.5",
     "tslib": "^2.3.1",
     "webfontloader": "^1.6.28"
