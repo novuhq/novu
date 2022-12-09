@@ -16,6 +16,7 @@ import {
   FilterTopicsRequestDto,
   FilterTopicsResponseDto,
   GetTopicResponseDto,
+  RemoveSubscribersRequestDto,
 } from './dtos';
 import {
   AddSubscribersCommand,
@@ -26,6 +27,8 @@ import {
   FilterTopicsUseCase,
   GetTopicCommand,
   GetTopicUseCase,
+  RemoveSubscribersCommand,
+  RemoveSubscribersUseCase,
 } from './use-cases';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
@@ -43,6 +46,7 @@ export class TopicsController {
     private createTopicUseCase: CreateTopicUseCase,
     private filterTopicsUseCase: FilterTopicsUseCase,
     private getTopicUseCase: GetTopicUseCase,
+    private removeSubscribersUseCase: RemoveSubscribersUseCase,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -81,6 +85,26 @@ export class TopicsController {
   ): Promise<void> {
     await this.addSubscribersUseCase.execute(
       AddSubscribersCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscribers: body.subscribers,
+        topicId,
+        userId: user._id,
+      })
+    );
+  }
+
+  @ExternalApiAccessible()
+  @ApiNoContentResponse()
+  @Post(':topicId/subscribers/removal')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeSubscribers(
+    @UserSession() user: IJwtPayload,
+    @Param('topicId') topicId: string,
+    @Body() body: RemoveSubscribersRequestDto
+  ): Promise<void> {
+    await this.removeSubscribersUseCase.execute(
+      RemoveSubscribersCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscribers: body.subscribers,
