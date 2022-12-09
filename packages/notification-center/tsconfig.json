@@ -8,6 +8,7 @@
     "typeRoots": ["./node_modules/@types"],
     "jsx": "react",
     "module": "ESNext",
+    "lib": ["ESNext", "dom"],
     "declarationDir": "types",
     "sourceMap": true,
     "outDir": "dist",

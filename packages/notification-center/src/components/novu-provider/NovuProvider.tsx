@@ -13,6 +13,7 @@ import { SocketInitializationProvider } from '../../store/socket-initialization-
 import { ApiContext } from '../../store/api.context';
 import { INovuProviderContext, IStore } from '../../shared/interfaces';
 import { FeedProvider } from '../../store/feed-provider';
+import { NotificationCenterStyles, StylesProvider } from '../../store/styles';
 
 export interface INovuProviderProps {
   stores?: IStore[];
@@ -24,6 +25,7 @@ export interface INovuProviderProps {
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash?: string;
   i18n?: I18NLanguage | ITranslationEntry;
+  styles?: NotificationCenterStyles;
 }
 
 export function NovuProvider(props: INovuProviderProps) {
@@ -54,7 +56,9 @@ export function NovuProvider(props: INovuProviderProps) {
               <NotificationsProvider>
                 <SocketInitializationProvider>
                   <NovuI18NProvider i18n={props.i18n}>
-                    <UnseenProvider>{props.children}</UnseenProvider>
+                    <UnseenProvider>
+                      <StylesProvider styles={props.styles}>{props.children}</StylesProvider>
+                    </UnseenProvider>
                   </NovuI18NProvider>
                 </SocketInitializationProvider>
               </NotificationsProvider>
