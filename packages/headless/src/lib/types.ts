@@ -42,3 +42,5 @@ export type UpdateResult<
   MutationObserverResult<TData, TError, TVariables>,
   'data' | 'error' | 'status' | 'isLoading' | 'isError'
 >;
+
+export type IMessageId = string | string[];

@@ -17,8 +17,8 @@ import { ScreensEnum } from '../../../../../shared/enums/screens.enum';
 import { Cogs } from '../../../../../shared/icons';
 import { UnseenBadge } from '../../UnseenBadge';
 import { useFeed } from '../../../../../hooks/use-feed.hook';
-import { useStyles } from 'packages/notification-center/src/store/styles';
-import { INovuTheme } from 'packages/notification-center/src/store/novu-theme.context';
+import { useStyles } from '../../../../../store/styles';
+import { INovuTheme } from '../../../../../store/novu-theme.context';
 
 export function Header() {
   const [allRead, setAllRead] = useState<boolean>(true);

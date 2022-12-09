@@ -13,5 +13,6 @@
     "sourceMap": true,
     "outDir": "dist",
     "emitDeclarationOnly": true
-  }
+  },
+  "exclude": ["src/**/*.test.*", "src/*.test.*"]
 }

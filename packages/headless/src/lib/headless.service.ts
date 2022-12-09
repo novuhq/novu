@@ -20,6 +20,7 @@ import {
 import {
   FetchResult,
   IHeadlessServiceOptions,
+  IMessageId,
   IUpdateActionVariables,
   IUpdateUserPreferencesVariables,
   UpdateResult,
@@ -411,9 +412,9 @@ export class HeadlessService {
     onSuccess,
     onError,
   }: {
-    messageId: string | string[];
+    messageId: IMessageId;
     listener: (
-      result: UpdateResult<IMessage, unknown, { messageId: string | string[] }>
+      result: UpdateResult<IMessage, unknown, { messageId: IMessageId }>
     ) => void;
     onSuccess?: (message: IMessage) => void;
     onError?: (error: unknown) => void;
@@ -423,7 +424,7 @@ export class HeadlessService {
     const { result, unsubscribe } = this.queryService.subscribeMutation<
       IMessage,
       unknown,
-      { messageId: string | string[] }
+      { messageId: IMessageId }
     >({
       options: {
         mutationFn: (variables) =>
