@@ -63,7 +63,7 @@ export function ContentRow({
     <TextAlignmentWrapper key="button-wrapper" colorScheme={theme.colorScheme}>
       {textAlignments.map(([dir, icon], i) => (
         <Button
-          key={`align-${dir}-btn-${dir === textAlign ? 'on' : 'off'}`}
+          key={`align-${dir}-btn`}
           onClick={(e) => changeRowStyles(e, dir)}
           data-test-id={`align-${dir}-btn`}
           variant={dir === textAlign ? 'gradient' : 'outline'}
