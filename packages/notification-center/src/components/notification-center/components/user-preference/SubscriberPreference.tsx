@@ -57,72 +57,65 @@ export function SubscriberPreference() {
     control: css(accordionControlStyles),
     chevron: css(accordionChevronStyles),
   };
+  const showNoSettings = !loading && preferences?.length === 0;
 
-  return (
-    <>
-      {!loading && preferences?.length === 0 ? (
-        <div
-          style={{
-            textAlign: 'center',
-            minHeight: 400,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <img src={image as any} alt="logo" style={{ maxWidth: 300 }} />
-        </div>
-      ) : (
-        <ScrollArea style={{ height: 400 }}>
-          <div className={cx('nc-preferences-root', rootClassName, css(rootStyles))}>
-            <Accordion chevronPosition="right" styles={styles} classNames={accordionClassNames}>
-              {preferences?.map((item, index) => {
-                const channelsKeys = Object.keys(item?.preference?.channels);
-                const channelsPreference = item?.preference?.channels;
+  return showNoSettings ? (
+    <div
+      style={{
+        textAlign: 'center',
+        minHeight: 400,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <img src={image as any} alt="logo" style={{ maxWidth: 300 }} />
+    </div>
+  ) : (
+    <ScrollArea style={{ height: 400 }}>
+      <div className={cx('nc-preferences-root', rootClassName, css(rootStyles))}>
+        <Accordion chevronPosition="right" styles={styles} classNames={accordionClassNames}>
+          {preferences?.map((item, index) => {
+            const channelsKeys = Object.keys(item?.preference?.channels);
+            const channelsPreference = item?.preference?.channels;
 
-                const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
-                  setLoadingUpdate(true);
-                  await updatePreference(item, type, checked, index);
-                  setLoadingUpdate(false);
-                };
+            const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
+              setLoadingUpdate(true);
+              await updatePreference(item, type, checked, index);
+              setLoadingUpdate(false);
+            };
 
-                return (
-                  <Accordion.Item value={item.template._id} key={index} data-test-id="workflow-list-item">
-                    <Accordion.Control>
-                      <WorkflowHeader
-                        theme={baseTheme}
-                        label={item.template?.name}
-                        channels={getEnabledChannels(channelsPreference)}
+            return (
+              <Accordion.Item value={item.template._id} key={index} data-test-id="workflow-list-item">
+                <Accordion.Control>
+                  <WorkflowHeader
+                    theme={baseTheme}
+                    label={item.template?.name}
+                    channels={getEnabledChannels(channelsPreference)}
+                  />
+                </Accordion.Control>
+                <Accordion.Panel>
+                  <ChannelsWrapper>
+                    <Divider
+                      className={cx('nc-preferences-item-divider', dividerClassName(baseTheme), css(itemDividerStyles))}
+                    />
+                    {channelsKeys.map((key) => (
+                      <ChannelPreference
+                        key={key}
+                        type={key}
+                        active={channelsPreference[key]}
+                        disabled={loadingUpdate}
+                        handleUpdateChannelPreference={handleUpdateChannelPreference}
                       />
-                    </Accordion.Control>
-                    <Accordion.Panel>
-                      <ChannelsWrapper>
-                        <Divider
-                          className={cx(
-                            'nc-preferences-item-divider',
-                            dividerClassName(baseTheme),
-                            css(itemDividerStyles)
-                          )}
-                        />
-                        {channelsKeys.map((key) => (
-                          <ChannelPreference
-                            key={key}
-                            type={key}
-                            active={channelsPreference[key]}
-                            disabled={loadingUpdate}
-                            handleUpdateChannelPreference={handleUpdateChannelPreference}
-                          />
-                        ))}
-                      </ChannelsWrapper>
-                    </Accordion.Panel>
-                  </Accordion.Item>
-                );
-              })}
-            </Accordion>
-          </div>
-        </ScrollArea>
-      )}
-    </>
+                    ))}
+                  </ChannelsWrapper>
+                </Accordion.Panel>
+              </Accordion.Item>
+            );
+          })}
+        </Accordion>
+      </div>
+    </ScrollArea>
   );
 }
 

@@ -69,6 +69,8 @@ export function Header() {
             css(headerMarkAsReadStyles)
           )}
           onClick={markAllAsRead}
+          role="button"
+          tabIndex={0}
         >
           {t('markAllAsRead')}
         </div>

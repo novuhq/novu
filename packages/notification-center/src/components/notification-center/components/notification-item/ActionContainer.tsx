@@ -25,26 +25,24 @@ export function ActionContainer({ action, onActionClick }: IActionContainerProps
   }
 
   return (
-    <>
-      <TemplateContainerWrap>
-        <TemplateContainer className={cx('nc-notifications-list-item-buttons', css(buttonsContainerStyles))}>
-          {status === MessageActionStatusEnum.DONE
-            ? null
-            : buttons?.map((button, buttonIndex) => (
-                <NotificationButton
-                  key={button.type}
-                  className={cx(
-                    'nc-notifications-list-item-button',
-                    css(button.type === ButtonTypeEnum.PRIMARY ? primaryButtonStyles : secondaryButtonStyles)
-                  )}
-                  onActionClick={(buttonType) => handleOnClick(buttonType)}
-                  messageAction={action}
-                  buttonIndex={buttonIndex}
-                />
-              ))}
-        </TemplateContainer>
-      </TemplateContainerWrap>
-    </>
+    <TemplateContainerWrap>
+      <TemplateContainer className={cx('nc-notifications-list-item-buttons', css(buttonsContainerStyles))}>
+        {status === MessageActionStatusEnum.DONE
+          ? null
+          : buttons?.map((button, buttonIndex) => (
+              <NotificationButton
+                key={button.type}
+                className={cx(
+                  'nc-notifications-list-item-button',
+                  css(button.type === ButtonTypeEnum.PRIMARY ? primaryButtonStyles : secondaryButtonStyles)
+                )}
+                onActionClick={(buttonType) => handleOnClick(buttonType)}
+                messageAction={action}
+                buttonIndex={buttonIndex}
+              />
+            ))}
+      </TemplateContainer>
+    </TemplateContainerWrap>
   );
 }
 

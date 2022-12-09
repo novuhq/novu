@@ -120,6 +120,8 @@ export function NotificationListItem({
       )}
       onClick={() => handleNotificationClick()}
       data-test-id="notification-list-item"
+      role="button"
+      tabIndex={0}
     >
       <NotificationItemContainer className={cx('nc-notifications-list-item-layout', css(listItemLayoutStyles))}>
         <NotificationContentContainer>
