@@ -6,7 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "echo \"no tests\""
   },
   "private": true,
   "module": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
