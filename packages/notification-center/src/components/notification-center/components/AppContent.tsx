@@ -1,7 +1,7 @@
 import React from 'react';
 import { useQuery } from 'react-query';
-import { MantineProvider } from '@mantine/core';
-import styled from '@emotion/styled';
+import { MantineProvider, MantineThemeOverride } from '@mantine/core';
+import { css } from '@emotion/css';
 import { IOrganizationEntity } from '@novu/shared';
 
 import { Layout } from './layout/Layout';
@@ -22,41 +22,39 @@ export function AppContent() {
   );
 
   const primaryColor = organization?.branding?.color ?? theme.loaderColor;
-  const themeConfig = {
-    primaryColor: 'brand',
-    fontFamily: common.fontFamily || organization?.branding?.fontFamily,
-    dir: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
-    colors: {
-      brand: [primaryColor, '', '', '', '', '', '', '', '', ''],
-    },
+  const fontFamily = common.fontFamily || organization?.branding?.fontFamily;
+  const dir = (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl';
+  const themeConfig: MantineThemeOverride = {
+    fontFamily,
+    dir,
   };
 
   return (
     <MantineProvider withNormalizeCSS theme={themeConfig}>
       <ScreenProvider>
-        <Wrap>
+        <div className={wrapperClassName(primaryColor, fontFamily, dir)}>
           <Layout>
             <Main />
           </Layout>
-        </Wrap>
+        </div>
       </ScreenProvider>
     </MantineProvider>
   );
 }
 
-const Wrap = styled.div`
+const wrapperClassName = (primaryColor: string, fontFamily: string, dir: string) => css`
   margin: 0;
-  font-family: ${({ theme }) => theme.fontFamily}, Helvetica, sans-serif;
+  font-family: ${fontFamily}, Helvetica, sans-serif;
   color: #333737;
-  direction: ${({ theme }) => theme.dir};
+  direction: ${dir};
   width: 420px;
   z-index: 999;
 
   ::-moz-selection {
-    background: ${({ theme }) => theme.colors.brand[0]};
+    background: ${primaryColor};
   }
 
   *::selection {
-    background: ${({ theme }) => theme.colors.brand[0]};
+    background: ${primaryColor};
   }
 `;
