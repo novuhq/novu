@@ -1,14 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { SubscriberRepository, DalException, MessageRepository } from '@novu/dal';
+import { DalException, MessageRepository, CacheService } from '@novu/dal';
 import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { invalidateCache } from '../../../shared/services/cache';
 
 @Injectable()
 export class RemoveMessage {
-  constructor(private messageRepository: MessageRepository) {}
+  constructor(private cacheService: CacheService, private messageRepository: MessageRepository) {}
 
   async execute(command: RemoveMessageCommand) {
     try {
+      const message = await this.messageRepository.findSubscriberById({
+        _environmentId: command.environmentId,
+        _id: command.messageId,
+      });
+
+      invalidateCache({
+        service: this.cacheService,
+        storeKeyPrefix: ['message-count'],
+        credentials: {
+          subscriberId: message.subscriber.subscriberId,
+          environmentId: command.environmentId,
+        },
+      });
+
       await this.messageRepository.delete({
         _environmentId: command.environmentId,
         _id: command.messageId,
