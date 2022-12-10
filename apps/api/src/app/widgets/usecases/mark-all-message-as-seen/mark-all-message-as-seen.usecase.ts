@@ -19,7 +19,7 @@ export class MarkAllMessageAsSeen {
   async execute(command: MarkAllMessageAsSeenCommand): Promise<number> {
     invalidateCache({
       service: this.cacheService,
-      storeKeyPrefix: 'message-count',
+      storeKeyPrefix: ['message-count', 'feed'],
       credentials: {
         subscriberId: command.subscriberId,
         environmentId: command.environmentId,

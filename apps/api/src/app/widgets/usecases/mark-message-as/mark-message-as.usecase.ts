@@ -35,7 +35,7 @@ export class MarkMessageAs {
 
       invalidateCache({
         service: this.cacheService,
-        storeKeyPrefix: 'message-count',
+        storeKeyPrefix: ['message-count', 'feed'],
         credentials: {
           subscriberId: command.subscriberId,
           environmentId: command.environmentId,

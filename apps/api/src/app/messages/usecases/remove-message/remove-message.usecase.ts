@@ -17,7 +17,7 @@ export class RemoveMessage {
 
       invalidateCache({
         service: this.cacheService,
-        storeKeyPrefix: ['message-count'],
+        storeKeyPrefix: ['message-count', 'feed'],
         credentials: {
           subscriberId: message.subscriber.subscriberId,
           environmentId: command.environmentId,

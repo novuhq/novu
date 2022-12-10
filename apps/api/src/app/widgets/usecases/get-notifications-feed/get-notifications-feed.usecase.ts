@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { MessageRepository, SubscriberRepository } from '@novu/dal';
+import { Cached, CacheService, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
@@ -10,11 +10,13 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 @Injectable()
 export class GetNotificationsFeed {
   constructor(
+    private cacheService: CacheService,
     private messageRepository: MessageRepository,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository
   ) {}
 
+  @Cached('feed')
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
     const LIMIT = 10;
 

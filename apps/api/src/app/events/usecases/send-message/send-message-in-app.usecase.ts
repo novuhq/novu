@@ -190,7 +190,7 @@ export class SendMessageInApp extends SendMessageType {
 
     invalidateCache({
       service: this.cacheService,
-      storeKeyPrefix: 'message-count',
+      storeKeyPrefix: ['message-count', 'feed'],
       credentials: {
         subscriberId: subscriber.subscriberId,
         environmentId: command.environmentId,
