@@ -22,7 +22,7 @@ export class RemoveMember {
       throw new ApiException('Cannot remove self from members');
     }
 
-    await this.memberRepository.removeMemberById(command.organizationId, memberToRemove._id);
+    await this.memberRepository.removeMemberById({ _organizationId: command.organizationId, _id: memberToRemove._id });
     const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
     const isMemberAssociatedWithEnvironment = environments.some((i) =>
       i.apiKeys.some((key) => key._userId === memberToRemove._userId)
