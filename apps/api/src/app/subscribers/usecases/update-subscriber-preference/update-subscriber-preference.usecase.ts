@@ -19,8 +19,8 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 export class UpdateSubscriberPreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
-    private getSubscriberTemplatePreference: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private getSubscriberTemplatePreference: GetSubscriberTemplatePreference,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository
   ) {}
@@ -42,6 +42,8 @@ export class UpdateSubscriberPreference {
       enabled: command.channel?.enabled,
     });
 
+    const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
+
     if (!userPreference) {
       const channelObj = {} as Record<'email' | 'sms' | 'in_app' | 'chat' | 'push', boolean>;
       channelObj[command.channel?.type] = command.channel?.enabled;
@@ -55,16 +57,15 @@ export class UpdateSubscriberPreference {
         channels: command.channel?.type ? channelObj : null,
       });
 
-      const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
-
-      const getSubscriberPreferenceCommand = GetSubscriberTemplatePreferenceCommand.create({
-        organizationId: command.organizationId,
-        subscriberId: command.subscriberId,
-        environmentId: command.environmentId,
-        template,
-      });
-
-      return await this.getSubscriberTemplatePreference.execute(getSubscriberPreferenceCommand);
+      return await this.getSubscriberTemplatePreference.execute(
+        GetSubscriberTemplatePreferenceCommand.create({
+          organizationId: command.organizationId,
+          subscriberId: command.subscriberId,
+          environmentId: command.environmentId,
+          template,
+          skipCache: true,
+        })
+      );
     }
 
     const updatePayload: Partial<SubscriberPreferenceEntity> = {};
@@ -93,15 +94,14 @@ export class UpdateSubscriberPreference {
       }
     );
 
-    const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
-
-    const getSubscriberPreferenceCommand = GetSubscriberTemplatePreferenceCommand.create({
-      organizationId: command.organizationId,
-      subscriberId: command.subscriberId,
-      environmentId: command.environmentId,
-      template,
-    });
-
-    return await this.getSubscriberTemplatePreference.execute(getSubscriberPreferenceCommand);
+    return await this.getSubscriberTemplatePreference.execute(
+      GetSubscriberTemplatePreferenceCommand.create({
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        environmentId: command.environmentId,
+        template,
+        skipCache: true,
+      })
+    );
   }
 }

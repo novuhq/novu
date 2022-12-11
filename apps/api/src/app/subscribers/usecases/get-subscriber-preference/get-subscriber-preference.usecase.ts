@@ -40,14 +40,14 @@ export class GetSubscriberPreference {
   }
 
   async getTemplatePreference(template: NotificationTemplateEntity, command: GetSubscriberPreferenceCommand) {
-    const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
-      organizationId: command.organizationId,
-      subscriberId: command.subscriberId,
-      environmentId: command.environmentId,
-      template,
-    });
-
-    return await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
+    return await this.getSubscriberTemplatePreferenceUsecase.execute(
+      GetSubscriberTemplatePreferenceCommand.create({
+        organizationId: command.organizationId,
+        subscriberId: command.subscriberId,
+        environmentId: command.environmentId,
+        template,
+      })
+    );
   }
 }
 

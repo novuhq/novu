@@ -83,6 +83,32 @@ describe('shared cache', function () {
       expect(res[1]).to.be.equal(undefined);
     });
 
+    it('should retrieve identifier _subscriber from SubscriberPreference query', async function () {
+      const keyPrefix = 'SubscriberPreference';
+      let query: Record<string, unknown>;
+      let res: [string, string];
+
+      query = { _id: '123', _subscriberId: '456' };
+      res = getIdentifier(keyPrefix, query);
+      expect(res[1]).to.be.equal('456');
+
+      query = { _id: '123', subscriberId: '456' };
+      res = getIdentifier(keyPrefix, query);
+      expect(res[1]).to.be.equal('456');
+
+      query = { id: '123', _subscriberId: '456' };
+      res = getIdentifier(keyPrefix, query);
+      expect(res[1]).to.be.equal('456');
+
+      query = { id: '123', subscriberId: '456' };
+      res = getIdentifier(keyPrefix, query);
+      expect(res[1]).to.be.equal('456');
+
+      query = { dummyKey: '123' };
+      res = getIdentifier(keyPrefix, query);
+      expect(res[1]).to.be.equal(undefined);
+    });
+
     it('should retrieve identifier _id from not Message query', async function () {
       const keyPrefix = 'Subscriber';
       let query: Record<string, unknown>;
