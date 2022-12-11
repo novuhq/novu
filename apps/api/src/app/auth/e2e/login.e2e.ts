@@ -1,5 +1,6 @@
 import { UserSession } from '@novu/testing';
 import * as jwt from 'jsonwebtoken';
+import { subMinutes } from 'date-fns';
 import { expect } from 'chai';
 import { IJwtPayload } from '@novu/shared';
 import { UserRepository } from '@novu/dal';
@@ -113,43 +114,35 @@ describe('User login - /auth/login (POST)', async () => {
   });
 
   it('should reset the account blocked error after 5 minutes and allow for more 5 failed attempts', async () => {
+    const MAX_LOGIN_ATTEMPTS = 5;
+    const BLOCKED_PERIOD_IN_MINUTES = 5;
+
+    const lastFailedAttempt = subMinutes(new Date(), BLOCKED_PERIOD_IN_MINUTES);
+
+    const failedLogin = {
+      lastFailedAttempt: lastFailedAttempt.toISOString(),
+      times: MAX_LOGIN_ATTEMPTS,
+    };
+
     await userRepository.update(
-      { _id: session.user._id },
+      {
+        _id: session.user._id,
+      },
       {
         $set: {
-          'failedLogin.times': 0,
+          failedLogin,
         },
       }
     );
 
-    const MAX_LOGIN_ATTEMPTS = 5;
-    const BLOCKED_PERIOD_IN_MILLISECONDS = 5 * 60 * 1000;
-
     for (let i = 0; i < MAX_LOGIN_ATTEMPTS; i++) {
-      await session.testAgent.post('/v1/auth/login').send({
-        email: userCredentials.email,
-        password: 'wrong-password',
-      });
-    }
-
-    const { body } = await session.testAgent.post('/v1/auth/login').send({
-      email: userCredentials.email,
-      password: userCredentials.password,
-    });
-
-    expect(body.statusCode).to.equal(401);
-    expect(body.message).to.contain('Account blocked');
-
-    await new Promise((resolve) => setTimeout(resolve, BLOCKED_PERIOD_IN_MILLISECONDS));
-
-    for (let i = 0; i < MAX_LOGIN_ATTEMPTS; i++) {
-      const { body: response } = await session.testAgent.post('/v1/auth/login').send({
-        email: userCredentials.email,
+      const { body } = await session.testAgent.post('/v1/auth/login').send({
+        email: session.user.email,
         password: 'wrong-password',
       });
 
-      expect(response.statusCode).to.equal(400);
-      expect(response.message).to.contain('Wrong credentials provided');
+      expect(body.message).to.contain('Wrong credentials provided');
+      expect(body.statusCode).to.equal(400);
     }
   });
 });

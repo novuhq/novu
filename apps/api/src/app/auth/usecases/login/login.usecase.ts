@@ -57,17 +57,17 @@ export class Login {
 
     const diff = this.getTimeDiffForAttempt(lastFailedAttempt);
 
-    return user?.failedLogin?.times >= this.MAX_LOGIN_ATTEMPTS && diff <= this.BLOCKED_PERIOD_IN_MINUTES;
+    return user?.failedLogin?.times >= this.MAX_LOGIN_ATTEMPTS && diff < this.BLOCKED_PERIOD_IN_MINUTES;
   }
 
   private async updateFailedAttempts(user: UserEntity) {
-    const now = Date.now();
+    const now = new Date();
     let times = user?.failedLogin?.times ?? 1;
     const lastFailedAttempt = user?.failedLogin?.lastFailedAttempt;
 
     if (lastFailedAttempt) {
       const diff = this.getTimeDiffForAttempt(lastFailedAttempt);
-      times = diff <= this.BLOCKED_PERIOD_IN_MINUTES ? times + 1 : 1;
+      times = diff < this.BLOCKED_PERIOD_IN_MINUTES ? times + 1 : 1;
     }
 
     await this.userRepository.update(
@@ -99,7 +99,7 @@ export class Login {
   }
 
   private getTimeDiffForAttempt(lastFailedAttempt: string) {
-    const now = Date.now();
+    const now = new Date();
     const formattedLastAttempt = parseISO(lastFailedAttempt);
     const diff = differenceInMinutes(now, formattedLastAttempt);
 
