@@ -45,6 +45,10 @@
       "path": "packages/client"
     },
     {
+      "name": "📦 @novu/headless",
+      "path": "packages/headless"
+    },
+    {
       "name": "📦 @novu/shared",
       "path": "libs/shared"
     },

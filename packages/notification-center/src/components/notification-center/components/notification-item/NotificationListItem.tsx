@@ -1,12 +1,8 @@
 import React from 'react';
 import { Avatar as MAvatar } from '@mantine/core';
-import styled, { css } from 'styled-components';
+import { css, cx } from '@emotion/css';
+import styled from '@emotion/styled';
 import { formatDistanceToNow } from 'date-fns';
-import { useNovuTheme, useNotificationCenter, useDefaultBellColors, useTranslations } from '../../../../hooks';
-import { ActionContainer } from './ActionContainer';
-import { INovuTheme } from '../../../../store/novu-theme.context';
-import { When } from '../../../../shared/utils/When';
-import { ColorScheme } from '../../../../shared/config/colors';
 import {
   IMessage,
   ButtonTypeEnum,
@@ -16,6 +12,12 @@ import {
   SystemAvatarIconEnum,
   IActor,
 } from '@novu/shared';
+
+import { useNovuTheme, useNotificationCenter, useDefaultBellColors, useTranslations } from '../../../../hooks';
+import { ActionContainer } from './ActionContainer';
+import { INovuTheme } from '../../../../store/novu-theme.context';
+import { When } from '../../../../shared/utils/When';
+import { ColorScheme } from '../../../../shared/config/colors';
 import {
   DotsHorizontal,
   ErrorIcon,
@@ -28,6 +30,7 @@ import {
   GradientDot,
 } from '../../../../shared/icons';
 import { colors } from '../../../../shared/config/colors';
+import { useStyles } from '../../../../store/styles';
 
 const avatarSystemIcons = [
   {
@@ -78,6 +81,22 @@ export function NotificationListItem({
   const { theme: novuTheme, colorScheme } = useNovuTheme();
   const { onActionClick, listItem } = useNotificationCenter();
   const { dateFnsLocale } = useTranslations();
+  const unread = readSupportAdded(notification) ? !notification.read : !notification.seen;
+  const [
+    listItemReadStyles,
+    listItemUnreadStyles,
+    listItemLayoutStyles,
+    listItemContentLayoutStyles,
+    listItemTitleStyles,
+    listItemTimestampStyles,
+  ] = useStyles([
+    'notifications.listItem.read',
+    'notifications.listItem.unread',
+    'notifications.listItem.layout',
+    'notifications.listItem.contentLayout',
+    'notifications.listItem.title',
+    'notifications.listItem.timestamp',
+  ]);
 
   function handleNotificationClick() {
     onClick(notification);
@@ -92,29 +111,44 @@ export function NotificationListItem({
   }
 
   return (
-    <ItemWrapper
-      novuTheme={novuTheme}
-      data-test-id="notification-list-item"
-      unread={readSupportAdded(notification) ? !notification.read : !notification.seen}
+    <div
+      className={cx(
+        'nc-notifications-list-item',
+        listItemClassName,
+        unread ? unreadNotificationStyles(novuTheme) : readNotificationStyles(novuTheme),
+        unread ? css(listItemUnreadStyles) : css(listItemReadStyles)
+      )}
       onClick={() => handleNotificationClick()}
+      data-test-id="notification-list-item"
+      role="button"
+      tabIndex={0}
     >
-      <NotificationItemContainer>
+      <NotificationItemContainer className={cx('nc-notifications-list-item-layout', css(listItemLayoutStyles))}>
         <NotificationContentContainer>
           {notification.actor && notification.actor.type !== ActorTypeEnum.NONE && (
             <AvatarContainer>
               <RenderAvatar actor={notification.actor} />
             </AvatarContainer>
           )}
-          <NotificationTextContainer>
+          <NotificationTextContainer
+            className={cx('nc-notifications-list-item-content-layout', css(listItemContentLayoutStyles))}
+          >
             <TextContent
+              className={cx('nc-notifications-list-item-title', css(listItemTitleStyles))}
               data-test-id="notification-content"
               dangerouslySetInnerHTML={{
                 __html: notification.content as string,
               }}
             />
-            <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
+            <div
+              className={cx(
+                'nc-notifications-list-item-timestamp',
+                timeMarkClassName(novuTheme, unread),
+                css(listItemTimestampStyles)
+              )}
+            >
               {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: dateFnsLocale() })}
-            </TimeMark>
+            </div>
           </NotificationTextContainer>
         </NotificationContentContainer>
         <ActionWrapper
@@ -124,13 +158,13 @@ export function NotificationListItem({
           handleActionButtonClick={handleActionButtonClick}
         />
       </NotificationItemContainer>
-      <SettingsActionWrapper style={{ display: 'none' }}>
+      <SettingsActionWrapper style={{ display: 'none' }} novuTheme={novuTheme}>
         <DotsHorizontal />
       </SettingsActionWrapper>
       <When truthy={readSupportAdded(notification)}>
         {!notification.seen && <GradientDotWrapper colorScheme={colorScheme} />}
       </When>
-    </ItemWrapper>
+    </div>
   );
 }
 
@@ -177,8 +211,16 @@ function GradientDotWrapper({ colorScheme }: { colorScheme: ColorScheme }) {
       unseenBadgeBackgroundColor: 'transparent',
     },
   });
+  const [bellDotStyles] = useStyles('bellButton.dot');
 
-  return <StyledGradientDot colors={bellColors} />;
+  return (
+    <GradientDot
+      width="10px"
+      height="10px"
+      colors={bellColors}
+      className={cx('nc-bell-button-dot', css(bellDotStyles))}
+    />
+  );
 }
 
 function RenderAvatar({ actor }: { actor: IActor }) {
@@ -217,14 +259,14 @@ const TextContent = styled.div`
   line-height: 16px;
 `;
 
-const SettingsActionWrapper = styled.div`
-  color: ${({ theme }) => theme.colors.secondaryFontColor};
+const SettingsActionWrapper = styled.div<{ novuTheme: INovuTheme }>`
+  color: ${({ novuTheme }) => novuTheme.layout?.wrapper.secondaryFontColor};
 `;
 
-const unreadNotificationStyles = css<{ novuTheme: INovuTheme }>`
-  background: ${({ novuTheme }) => novuTheme?.notificationItem?.unread?.background};
-  box-shadow: ${({ novuTheme }) => novuTheme?.notificationItem?.unread?.boxShadow};
-  color: ${({ novuTheme }) => novuTheme?.notificationItem?.unread?.fontColor};
+const unreadNotificationStyles = (novuTheme: INovuTheme) => css`
+  background: ${novuTheme?.notificationItem?.unread?.background};
+  box-shadow: ${novuTheme?.notificationItem?.unread?.boxShadow};
+  color: ${novuTheme?.notificationItem?.unread?.fontColor};
   font-weight: 700;
 
   &:before {
@@ -236,17 +278,18 @@ const unreadNotificationStyles = css<{ novuTheme: INovuTheme }>`
     bottom: 0;
     width: 5px;
     border-radius: 7px 0 0 7px;
-    background: ${({ novuTheme }) => novuTheme?.notificationItem?.unread?.notificationItemBeforeBrandColor};
+    background: ${novuTheme?.notificationItem?.unread?.notificationItemBeforeBrandColor};
   }
 `;
-const readNotificationStyles = css<{ novuTheme: INovuTheme }>`
-  color: ${({ novuTheme }) => novuTheme?.notificationItem?.read?.fontColor};
-  background: ${({ novuTheme }) => novuTheme?.notificationItem?.read?.background};
+
+const readNotificationStyles = (novuTheme: INovuTheme) => css`
+  color: ${novuTheme?.notificationItem?.read?.fontColor};
+  background: ${novuTheme?.notificationItem?.read?.background};
   font-weight: 400;
   font-size: 14px;
 `;
 
-const ItemWrapper = styled.div<{ unseen?: boolean; unread?: boolean; novuTheme: INovuTheme }>`
+const listItemClassName = css`
   padding: 15px;
   position: relative;
   display: flex;
@@ -259,27 +302,17 @@ const ItemWrapper = styled.div<{ unseen?: boolean; unread?: boolean; novuTheme: 
   &:hover {
     cursor: pointer;
   }
-
-  ${({ unread }) => {
-    return unread ? unreadNotificationStyles : readNotificationStyles;
-  }}
 `;
 
-const TimeMark = styled.div<{ novuTheme: INovuTheme; unread?: boolean }>`
+const timeMarkClassName = (novuTheme: INovuTheme, unread?: boolean) => css`
   min-width: 55px;
   font-size: 12px;
   font-weight: 400;
   opacity: 0.5;
   line-height: 14.4px;
-  color: ${({ unread, novuTheme }) =>
-    unread
-      ? novuTheme?.notificationItem?.unread?.timeMarkFontColor
-      : novuTheme?.notificationItem?.read?.timeMarkFontColor};
-`;
-
-const StyledGradientDot = styled(GradientDot)`
-  height: 10px;
-  width: 10px;
+  color: ${unread
+    ? novuTheme?.notificationItem?.unread?.timeMarkFontColor
+    : novuTheme?.notificationItem?.read?.timeMarkFontColor};
 `;
 
 const NotificationContentContainer = styled.div`

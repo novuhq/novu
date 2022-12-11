@@ -1,21 +1,34 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiExcludeController, ApiOkResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiExcludeController,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
 
 import {
+  AddSubscribersRequestDto,
   CreateTopicRequestDto,
   CreateTopicResponseDto,
   FilterTopicsRequestDto,
   FilterTopicsResponseDto,
   GetTopicResponseDto,
+  RemoveSubscribersRequestDto,
 } from './dtos';
 import {
+  AddSubscribersCommand,
+  AddSubscribersUseCase,
   CreateTopicCommand,
   CreateTopicUseCase,
   FilterTopicsCommand,
   FilterTopicsUseCase,
   GetTopicCommand,
   GetTopicUseCase,
+  RemoveSubscribersCommand,
+  RemoveSubscribersUseCase,
 } from './use-cases';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
@@ -24,19 +37,21 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
 
-@Controller('/topics')
+@Controller('topics')
 @ApiTags('Topics')
 @UseGuards(JwtAuthGuard)
 export class TopicsController {
   constructor(
+    private addSubscribersUseCase: AddSubscribersUseCase,
     private createTopicUseCase: CreateTopicUseCase,
     private filterTopicsUseCase: FilterTopicsUseCase,
     private getTopicUseCase: GetTopicUseCase,
+    private removeSubscribersUseCase: RemoveSubscribersUseCase,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   @ExternalApiAccessible()
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: CreateTopicResponseDto,
   })
   @Post('')
@@ -57,6 +72,46 @@ export class TopicsController {
     return {
       _id: topic._id,
     };
+  }
+
+  @ExternalApiAccessible()
+  @ApiNoContentResponse()
+  @Post(':topicId/subscribers')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async addSubscribers(
+    @UserSession() user: IJwtPayload,
+    @Param('topicId') topicId: string,
+    @Body() body: AddSubscribersRequestDto
+  ): Promise<void> {
+    await this.addSubscribersUseCase.execute(
+      AddSubscribersCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscribers: body.subscribers,
+        topicId,
+        userId: user._id,
+      })
+    );
+  }
+
+  @ExternalApiAccessible()
+  @ApiNoContentResponse()
+  @Post(':topicId/subscribers/removal')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeSubscribers(
+    @UserSession() user: IJwtPayload,
+    @Param('topicId') topicId: string,
+    @Body() body: RemoveSubscribersRequestDto
+  ): Promise<void> {
+    await this.removeSubscribersUseCase.execute(
+      RemoveSubscribersCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscribers: body.subscribers,
+        topicId,
+        userId: user._id,
+      })
+    );
   }
 
   @ExternalApiAccessible()

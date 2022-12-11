@@ -4,6 +4,9 @@ import type { INotificationBellColors, ISvgStopColor } from '../../store/novu-th
 interface IGradientDotProps {
   props?: React.ComponentPropsWithoutRef<'svg'>;
   colors: INotificationBellColors;
+  className?: string;
+  width?: string;
+  height?: string;
 }
 
 /* eslint-disable */

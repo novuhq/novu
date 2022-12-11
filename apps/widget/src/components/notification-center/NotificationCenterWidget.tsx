@@ -1,10 +1,11 @@
+import { useEffect, useState } from 'react';
+import * as WebFont from 'webfontloader';
+import { css, Global } from '@emotion/react';
 import { NotificationCenter, NovuProvider, ITranslationEntry, ITab, IStore } from '@novu/notification-center';
 import { INovuThemeProvider } from '@novu/notification-center';
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
-import * as WebFont from 'webfontloader';
+
 import { API_URL, WS_URL } from '../../config';
-import { createGlobalStyle } from 'styled-components';
 
 interface INotificationCenterWidgetProps {
   onUrlChange: (url: string) => void;
@@ -87,7 +88,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
   return (
     <>
-      <GlobalStyle fontFamily={fontFamily} />
+      <Global styles={globalStyle(fontFamily)} />
       {frameInitialized && (
         <NovuProvider
           backendUrl={backendUrl}
@@ -114,10 +115,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   );
 }
 
-const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
+const globalStyle = (fontFamily: string) => css`
   body {
     margin: 0;
-    font-family: ${({ fontFamily }) => fontFamily}, Helvetica, sans-serif;
+    font-family: ${fontFamily}, Helvetica, sans-serif;
     color: #333737;
   }
 `;

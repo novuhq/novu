@@ -1,107 +1,59 @@
 import React, { FunctionComponent } from 'react';
 import { IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '@novu/shared';
 
-import { INovuProviderProps, NovuProvider } from './novu-provider';
-import { IPopoverNotificationCenterProps, PopoverNotificationCenter } from './popover-notification-center';
-import { NotificationBell } from './notification-bell';
-import { useNotifications } from '../hooks';
-import { reactToWebComponent } from '../utils';
-import { ColorScheme } from '../shared/config/colors';
-
-type SelectedProviderProps = Pick<
-  INovuProviderProps,
-  | 'onLoad'
-  | 'stores'
-  | 'backendUrl'
-  | 'socketUrl'
-  | 'subscriberId'
-  | 'applicationIdentifier'
-  | 'subscriberHash'
-  | 'i18n'
->;
-type NovuProviderProps = SelectedProviderProps & {
-  // Angular/Vue props
-  sessionLoaded?: INovuProviderProps['onLoad'];
-};
-
-// Angular/Vue props
-interface PopoverAdditionalProps {
-  urlChanged?: IPopoverNotificationCenterProps['onUrlChange'];
-  notificationClicked?: IPopoverNotificationCenterProps['onNotificationClick'];
-  unseenCountChanged?: IPopoverNotificationCenterProps['onUnseenCountChanged'];
-  actionClicked?: IPopoverNotificationCenterProps['onActionClick'];
-  tabClicked?: IPopoverNotificationCenterProps['onTabClick'];
-}
-
-type SelectedPopoverProps = Pick<
-  IPopoverNotificationCenterProps,
-  | 'onUrlChange'
-  | 'onUnseenCountChanged'
-  | 'onActionClick'
-  | 'onTabClick'
-  | 'theme'
-  | 'tabs'
-  | 'showUserPreferences'
-  | 'offset'
-  | 'position'
->;
-type PopoverProps = SelectedPopoverProps & {
-  onNotificationClick?: IPopoverNotificationCenterProps['onNotificationClick'];
-  colorScheme?: ColorScheme;
-} & PopoverAdditionalProps;
-
-type BellProps = { unseenBadgeColor?: string; unseenBadgeBackgroundColor?: string };
-
-export type NotificationCenterComponentProps = NovuProviderProps & PopoverProps & BellProps;
-
-type PopoverWrapperProps = PopoverProps & BellProps;
+import { NovuProvider } from '../novu-provider';
+import { PopoverNotificationCenter } from '../popover-notification-center';
+import { NotificationBell } from '../notification-bell';
+import { useNotifications } from '../../hooks';
+import { reactToWebComponent } from '../../utils';
+import type { NotificationCenterComponentProps, PopoverWrapperProps } from './notification-center-component.types';
 
 /*
  * This array represents the public API of the web component.
  * All the props defined in the NotificationCenterComponentProps should be added here.
  */
 export const NOTIFICATION_CENTER_PROPS = [
-  // NovuProvider props
-  'onLoad',
-  'sessionLoaded',
-  'stores',
   'backendUrl',
   'socketUrl',
   'subscriberId',
   'applicationIdentifier',
   'subscriberHash',
-  'i18n',
-  // PopoverNotificationCenter props
-  'onUrlChange',
-  'onNotificationClick',
-  'onUnseenCountChanged',
-  'onActionClick',
-  'onTabClick',
-  'colorScheme',
-  'theme',
+  'stores',
   'tabs',
   'showUserPreferences',
-  'offset',
-  'position',
-  // NotificationBell props
-  'unseenBadgeColor',
-  'unseenBadgeBackgroundColor',
+  'popover',
+  'theme',
+  'styles',
+  'colorScheme',
+  'i18n',
+  'onLoad',
+  'sessionLoaded',
+  'onNotificationClick',
+  'notificationClicked',
+  'onUnseenCountChanged',
+  'unseenCountChanged',
+  'onActionClick',
+  'actionClicked',
+  'onTabClick',
+  'tabClicked',
 ];
 
 export const NotificationCenterComponent: FunctionComponent<NotificationCenterComponentProps> = ({
-  // NovuProvider props
-  sessionLoaded,
-  onLoad = sessionLoaded,
-  stores,
   backendUrl,
   socketUrl,
   subscriberId,
   applicationIdentifier,
   subscriberHash,
+  stores,
+  tabs,
+  showUserPreferences,
+  popover,
+  theme,
+  styles,
+  colorScheme = 'dark',
   i18n,
-  // PopoverNotificationCenter props
-  urlChanged,
-  onUrlChange = urlChanged,
+  sessionLoaded,
+  onLoad = sessionLoaded,
   notificationClicked,
   onNotificationClick = notificationClicked,
   unseenCountChanged,
@@ -110,15 +62,6 @@ export const NotificationCenterComponent: FunctionComponent<NotificationCenterCo
   onActionClick = actionClicked,
   tabClicked,
   onTabClick = tabClicked,
-  colorScheme = 'dark',
-  theme,
-  tabs,
-  showUserPreferences,
-  offset,
-  position,
-  // NotificationBell props
-  unseenBadgeColor,
-  unseenBadgeBackgroundColor,
 }) => {
   return (
     <NovuProvider
@@ -129,10 +72,10 @@ export const NotificationCenterComponent: FunctionComponent<NotificationCenterCo
       subscriberId={subscriberId}
       applicationIdentifier={applicationIdentifier}
       subscriberHash={subscriberHash}
+      styles={styles}
       i18n={i18n}
     >
       <PopoverWrapper
-        onUrlChange={onUrlChange}
         onNotificationClick={onNotificationClick}
         onUnseenCountChanged={onUnseenCountChanged}
         onActionClick={onActionClick}
@@ -141,17 +84,13 @@ export const NotificationCenterComponent: FunctionComponent<NotificationCenterCo
         theme={theme}
         tabs={tabs}
         showUserPreferences={showUserPreferences}
-        offset={offset}
-        position={position}
-        unseenBadgeColor={unseenBadgeColor}
-        unseenBadgeBackgroundColor={unseenBadgeBackgroundColor}
+        popover={popover}
       />
     </NovuProvider>
   );
 };
 
 function PopoverWrapper({
-  onUrlChange,
   onNotificationClick,
   onUnseenCountChanged,
   onActionClick,
@@ -160,8 +99,7 @@ function PopoverWrapper({
   theme,
   tabs,
   showUserPreferences,
-  offset,
-  position,
+  popover,
   unseenBadgeColor,
   unseenBadgeBackgroundColor,
 }: PopoverWrapperProps) {
@@ -181,7 +119,6 @@ function PopoverWrapper({
 
   return (
     <PopoverNotificationCenter
-      onUrlChange={onUrlChange}
       onNotificationClick={handlerOnNotificationClick}
       onUnseenCountChanged={onUnseenCountChanged}
       onActionClick={handlerOnActionClick}
@@ -190,8 +127,8 @@ function PopoverWrapper({
       theme={theme}
       tabs={tabs}
       showUserPreferences={showUserPreferences}
-      offset={offset}
-      position={position}
+      offset={popover?.offset}
+      position={popover?.position}
     >
       {({ unseenCount }) => (
         <NotificationBell
