@@ -8,7 +8,6 @@ import {
   MessageEntity,
   IEmailBlock,
   NotificationEntity,
-  CacheService,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -34,7 +33,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { invalidateCache } from '../../../shared/services/cache';
+import { CacheService, invalidateCache } from '../../../shared/services/cache';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {

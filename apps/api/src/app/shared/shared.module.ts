@@ -29,7 +29,7 @@ import {
   S3StorageService,
   StorageService,
 } from './services/storage/storage.service';
-import { CacheService } from '@novu/dal';
+import { CacheService } from './services/cache';
 
 const DAL_MODELS = [
   UserRepository,

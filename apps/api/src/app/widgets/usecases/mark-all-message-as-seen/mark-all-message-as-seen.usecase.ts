@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CacheService, MessageRepository } from '@novu/dal';
+import { MessageRepository } from '@novu/dal';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
-import { invalidateCache } from '../../../shared/services/cache';
+import { CacheService, invalidateCache } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkAllMessageAsSeenCommand } from './mark-all-message-as-seen.command';

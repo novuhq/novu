@@ -1,4 +1,5 @@
-import { buildKey, CacheInterceptorTypeEnum, ICacheService } from '@novu/dal';
+import { ICacheService } from './cache.service';
+import { buildKey, CacheInterceptorTypeEnum } from '../../interceptors';
 
 export function invalidateCache({
   service,

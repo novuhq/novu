@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { Cached, CacheService, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { GetFeedCountCommand } from './get-feed-count.command';
+import { CacheService } from '../../../shared/services/cache';
+import { Cached } from '../../../shared/interceptors';
 
 @Injectable()
 export class GetFeedCount {

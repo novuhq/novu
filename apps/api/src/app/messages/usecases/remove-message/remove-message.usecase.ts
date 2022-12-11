@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { DalException, MessageRepository, CacheService } from '@novu/dal';
+import { DalException, MessageRepository } from '@novu/dal';
 import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { invalidateCache } from '../../../shared/services/cache';
+import { CacheService, invalidateCache } from '../../../shared/services/cache';
 
 @Injectable()
 export class RemoveMessage {

@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, CacheService } from '@novu/dal';
+import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
-import { invalidateCache } from '../../../shared/services/cache';
+import { CacheService, invalidateCache } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
