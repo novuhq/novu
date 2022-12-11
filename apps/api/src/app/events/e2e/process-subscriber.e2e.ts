@@ -103,7 +103,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     expect(createdSubscriber.email).to.equal(payload.email);
   });
 
-  it('should send only email trigger second time based on the subscriber preference', async function () {
+  it.skip('should send only email trigger second time based on the subscriber preference', async function () {
     const payload: ISubscribersDefine = {
       subscriberId: session.subscriberId,
       firstName: 'New Test Name',
