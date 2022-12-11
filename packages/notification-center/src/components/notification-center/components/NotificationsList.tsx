@@ -1,9 +1,12 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
+import { cx, css } from '@emotion/css';
 import { IMessage, ButtonTypeEnum } from '@novu/shared';
 import InfiniteScroll from 'react-infinite-scroll-component';
+
 import { NotificationListItem } from './notification-item/NotificationListItem';
 import { Loader } from './Loader';
+import { useStyles } from '../../../store/styles';
 
 export function NotificationsList({
   notifications,
@@ -17,9 +20,13 @@ export function NotificationsList({
   onNotificationClicked: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
   const totalCount = notifications?.length;
+  const [notificationsListStyles] = useStyles('notifications.root');
 
   return (
-    <ListWrapper data-test-id="notifications-scroll-area">
+    <ListWrapper
+      className={cx('nc-notifications-list', css(notificationsListStyles))}
+      data-test-id="notifications-scroll-area"
+    >
       <InfiniteScroll
         dataLength={totalCount}
         next={onFetch}
