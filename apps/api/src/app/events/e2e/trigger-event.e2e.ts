@@ -21,7 +21,7 @@ import { testCacheService } from '../../../../e2e/setup';
 const axiosInstance = axios.create();
 
 describe('Trigger event - /v1/events/trigger (POST)', function () {
-  const cacheService = testCacheService;
+  const cacheService = testCacheService().cacheService;
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
