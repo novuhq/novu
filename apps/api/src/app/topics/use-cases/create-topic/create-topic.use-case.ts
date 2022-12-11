@@ -3,11 +3,16 @@ import { ConflictException, Injectable } from '@nestjs/common';
 
 import { CreateTopicCommand } from './create-topic.command';
 
+import { CreateTopicSubscribersCommand, CreateTopicSubscribersUseCase } from '../create-topic-subscribers';
+
 import { TopicDto } from '../../dtos/topic.dto';
 
 @Injectable()
 export class CreateTopicUseCase {
-  constructor(private topicRepository: TopicRepository) {}
+  constructor(
+    private createTopicSubscribersUseCase: CreateTopicSubscribersUseCase,
+    private topicRepository: TopicRepository
+  ) {}
 
   async execute(command: CreateTopicCommand) {
     const entity = this.mapToEntity(command);
@@ -23,9 +28,21 @@ export class CreateTopicUseCase {
       throw new ConflictException(`There is already a topic with the key ${entity.key} for user ${entity._userId}`);
     }
 
-    const topic = await this.topicRepository.createTopic(entity);
+    const topicDb = await this.topicRepository.createTopic(entity);
+    const topic = this.mapFromEntity(topicDb);
 
-    return this.mapFromEntity(topic);
+    const createTopicSubscribersCommand = CreateTopicSubscribersCommand.create({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      topicId: topic._id,
+      userId: command.userId,
+    });
+    const topicSubscribers = await this.createTopicSubscribersUseCase.execute(createTopicSubscribersCommand);
+
+    return {
+      ...topic,
+      subscribers: topicSubscribers.subscribers,
+    };
   }
 
   private mapToEntity(domainEntity: CreateTopicCommand): Omit<TopicEntity, '_id'> {
