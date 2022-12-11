@@ -3,6 +3,7 @@ import { beforeEach } from 'mocha';
 import { CacheService } from '../services/cache-service.spec';
 import { ICacheService } from '../services';
 import { Cached, InvalidateCache } from './';
+import { UserEntity } from '../../repositories/user';
 
 describe('cached interceptor', function () {
   let repo: Repo;
@@ -105,6 +106,52 @@ describe('cached interceptor', function () {
     expect(messageRepo.callCount).to.be.equal(4);
     expect(extractedDataBySubscriberId.data).to.be.equal('updated data');
   });
+
+  it('should build key from method params (id)', async function () {
+    const messageRepo = new MessageRepo();
+
+    // cache created data
+    await messageRepo.findById('123', '456');
+
+    const cacheStoreKeys = messageRepo.cacheService.keys();
+
+    expect(messageRepo.callCount).to.be.equal(1);
+    expect(cacheStoreKeys[0]).to.be.contains('i=123:e=456');
+  });
+
+  it('should build key from method query param {id}', async function () {
+    const messageRepo = new MessageRepo();
+
+    // cache created data
+    await messageRepo.find({
+      _id: '123',
+      _environmentId: '456',
+    });
+
+    const cacheStoreKeys = messageRepo.cacheService.keys();
+
+    expect(messageRepo.callCount).to.be.equal(1);
+    expect(cacheStoreKeys[0]).to.be.contains('i=123:e=456');
+  });
+
+  it('should build key from method query and options', async function () {
+    const messageRepo = new MessageRepo();
+
+    // cache created data
+    await messageRepo.find(
+      {
+        _id: '123',
+        _environmentId: '456',
+      },
+      '',
+      { limit: 10, skip: 2 }
+    );
+
+    const cacheStoreKeys = messageRepo.cacheService.keys();
+
+    expect(messageRepo.callCount).to.be.equal(1);
+    expect(cacheStoreKeys[0]).to.be.contains(':limit=10:skip=2:i=123:e=456');
+  });
 });
 
 class MessageRepo {
@@ -117,6 +164,14 @@ class MessageRepo {
   get callCount() {
     return this.count;
   }
+
+  @Cached('Message')
+  async findById(id: string, environmentId?: string): Promise<UserEntity | null> {
+    this.count++;
+
+    return this.store[id] ?? null;
+  }
+
   @Cached('Message')
   async find(query: any, select: any = '', options: { limit?: number; sort?: any; skip?: number } = {}): Promise<any> {
     this.count++;
