@@ -1,16 +1,6 @@
+import { IJwtPayload, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { ISubscribersDefine, TriggerRecipientsSubscriber, TriggerRecipientsSubscriberMany } from '@novu/node';
 import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
-import { IJwtPayload } from '@novu/shared';
-import { v4 as uuidv4 } from 'uuid';
-import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
-import { UserSession } from '../shared/framework/user.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ISubscribersDefine, TriggerRecipientsTypeSingle } from '@novu/node';
-import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
-import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
-import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
-import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
-import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
 import {
   ApiCreatedResponse,
   ApiExcludeEndpoint,
@@ -19,9 +9,25 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { v4 as uuidv4 } from 'uuid';
+
+import {
+  TestSendEmailRequestDto,
+  TriggerEventRequestDto,
+  TriggerEventResponseDto,
+  TriggerEventToAllRequestDto,
+} from './dtos';
+import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
+import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
+import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
+import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
+import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 import { SendTestEmail } from './usecases/send-message/test-send-email.usecase';
 import { TestSendMessageCommand } from './usecases/send-message/send-message.command';
-import { TestSendEmailRequestDto } from './dtos/test-email-request.dto';
+
+import { UserSession } from '../shared/framework/user.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { JwtAuthGuard } from '../auth/framework/auth.guard';
 
 @Controller('events')
 @ApiTags('Events')
@@ -60,8 +66,11 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
-    const mappedSubscribers = this.mapSubscribers(body);
+    const subscribers = this.aggregateSubscribers(body);
+    // TODO: map topics
+    const mappedSubscribers = this.mapSubscribers(subscribers);
     const mappedActor = this.mapActor(body.actor);
+
     const transactionId = body.transactionId || uuidv4();
 
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
@@ -171,26 +180,33 @@ export class EventsController {
     );
   }
 
-  private mapSubscribers(body: TriggerEventRequestDto): ISubscribersDefine[] {
-    const subscribers = Array.isArray(body.to) ? body.to : [body.to];
+  private aggregateSubscribers(body: TriggerEventRequestDto): TriggerRecipientsSubscriberMany {
+    const to = Array.isArray(body.to) ? body.to : [body.to];
 
-    return subscribers.map((subscriber) => {
-      if (typeof subscriber === 'string') {
-        return {
-          subscriberId: subscriber,
-        };
+    return to.filter((element) => {
+      if (typeof element === 'string' || !element?.type) {
+        return true;
       } else {
-        return subscriber;
+        return element.type === TriggerRecipientsTypeEnum.SUBSCRIBER;
       }
     });
   }
 
-  private mapActor(actor: TriggerRecipientsTypeSingle): ISubscribersDefine {
+  private mapSubscribers(subscribers: TriggerRecipientsSubscriberMany): ISubscribersDefine[] {
+    return subscribers.map(this.mapSubscriber);
+  }
+
+  private mapActor(actor: TriggerRecipientsSubscriber): ISubscribersDefine {
     if (!actor) return;
-    if (typeof actor === 'string') {
-      return { subscriberId: actor };
+
+    return this.mapSubscriber(actor);
+  }
+
+  private mapSubscriber(subscriber: TriggerRecipientsSubscriber): ISubscribersDefine {
+    if (typeof subscriber === 'string') {
+      return { subscriberId: subscriber };
     }
 
-    return actor;
+    return subscriber;
   }
 }

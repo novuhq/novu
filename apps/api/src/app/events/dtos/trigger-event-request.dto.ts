@@ -1,6 +1,6 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientsType, TriggerRecipientsTypeSingle } from '@novu/node';
+import { TriggerRecipientsSubscriber, TriggerRecipientsSubscribers } from '@novu/node';
 
 export class SubscriberPayloadDto {
   @ApiProperty()
@@ -70,7 +70,7 @@ export class TriggerEventRequestDto {
     ],
   })
   @IsDefined()
-  to: TriggerRecipientsType;
+  to: TriggerRecipientsSubscribers;
 
   @ApiProperty({
     description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',
@@ -89,5 +89,5 @@ export class TriggerEventRequestDto {
     ],
   })
   @IsOptional()
-  actor?: TriggerRecipientsTypeSingle;
+  actor?: TriggerRecipientsSubscriber;
 }
