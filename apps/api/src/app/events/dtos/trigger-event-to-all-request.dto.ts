@@ -1,6 +1,7 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientsTypeSingle } from '@novu/node';
+import { TriggerRecipientsSubscriber } from '@novu/node';
+
 import { SubscriberPayloadDto } from './trigger-event-request.dto';
 
 export class TriggerEventToAllRequestDto {
@@ -54,5 +55,5 @@ export class TriggerEventToAllRequestDto {
     ],
   })
   @IsOptional()
-  actor?: TriggerRecipientsTypeSingle;
+  actor?: TriggerRecipientsSubscriber;
 }
