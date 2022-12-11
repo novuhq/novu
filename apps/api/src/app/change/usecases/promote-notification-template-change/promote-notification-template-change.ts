@@ -26,7 +26,7 @@ export class PromoteNotificationTemplateChange {
     const item = await this.notificationTemplateRepository.findOne({
       _environmentId: command.environmentId,
       _parentId: command.item._id,
-    } as any);
+    });
 
     const newItem = command.item as NotificationTemplateEntity;
 

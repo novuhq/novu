@@ -157,7 +157,7 @@ export class SendMessageInApp extends SendMessageType {
 
     if (oldMessage) {
       await this.messageRepository.update(
-        { _environmentId: command.environmentId, _id: oldMessage._id, _subscriberId: subscriber._id },
+        { _environmentId: command.environmentId, _id: oldMessage._id },
         {
           $set: {
             seen: false,

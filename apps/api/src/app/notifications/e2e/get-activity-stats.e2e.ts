@@ -42,7 +42,7 @@ describe('Get activity stats - /notifications/stats (GET)', async () => {
     const existing = await messageRepository.find(
       {
         _environmentId: session.environment._id,
-      } as any,
+      },
       null,
       { limit: 2 }
     );
