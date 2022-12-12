@@ -11,6 +11,10 @@ const userSchema = new Schema(
     profilePicture: Schema.Types.String,
     resetToken: Schema.Types.String,
     resetTokenDate: Schema.Types.Date,
+    resetTokenCount: {
+      reqInMinute: Schema.Types.Number,
+      reqInDay: Schema.Types.Number,
+    },
     showOnBoarding: Schema.Types.Boolean,
     tokens: [
       {
