@@ -99,7 +99,7 @@ const buildCommand = (
   });
 };
 
-describe('Map trigger recipients Use Case', () => {
+describe('MapTriggerRecipientsUseCase', () => {
   let session: UserSession;
   let subscribersService: SubscribersService;
   let topicRepository: TopicRepository;
