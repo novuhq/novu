@@ -68,10 +68,9 @@ export function PasswordResetRequestForm({ onSent }: Props) {
           </Link>
         </Center>
       </form>
-      {isError && (
+      {isError && error?.message && (
         <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
-          {' '}
-          {error?.message}
+          {error.message}
         </Text>
       )}
     </>
