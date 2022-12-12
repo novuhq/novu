@@ -1,0 +1,37 @@
+name: Deploy DEV Notification Center Web Component
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - next
+    paths:
+      - 'packages/notification-center/**'
+
+jobs:
+  build_test:
+    uses: ./.github/workflows/reusable-notification-center.yml
+
+  deploy_web_component:
+    needs: build_test
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    environment: Development
+
+    steps:
+      - name: Deploy Notification Center Web Component to DEV
+        uses: scopsy/actions-netlify@develop
+        with:
+          publish-dir: packages/notification-center/dist/umd
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: dev
+          production-deploy: true
+          alias: dev
+          github-deployment-environment: development
+          github-deployment-description: Notification Center Web Component Deployment
+          netlify-config-path: packages/notification-center/netlify.toml
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: 468165e2-bd64-4f33-9fd9-4b93ef8a0be0
+        timeout-minutes: 1
