@@ -40,16 +40,14 @@ export class FcmPushProvider implements IPushProvider {
   ): Promise<ISendMessageSuccessResponse> {
     delete (options.overrides as any)?.deviceTokens;
 
-    const dataPayload = options.overrides.data;
-
-    delete (options.overrides as any)?.data;
+    const { data: dataPayload, ...nonDataOverrides } = options.overrides;
 
     const fcmPayload: MulticastMessage = {
       tokens: options.target,
       notification: {
         title: options.title,
         body: options.content,
-        ...options.overrides,
+        ...nonDataOverrides,
       },
     };
 
