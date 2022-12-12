@@ -186,6 +186,7 @@
     "dotenv",
     "VITE",
     "webcomponent",
+    "oidc",
     "Craco",
     "topicsubscribers",
     "tanstack"
