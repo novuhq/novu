@@ -54,14 +54,24 @@ describe('User login - /auth/login (POST)', async () => {
     expect(jwtContent.email).to.equal('testytest22@gmail.com');
   });
 
+  it('should throw error on trying to login non-existing user', async () => {
+    const { body } = await session.testAgent.post('/v1/auth/login').send({
+      email: 'nonExistingUser@email.com',
+      password: '123123213123',
+    });
+
+    expect(body.statusCode).to.equal(401);
+    expect(body.message).to.contain('Incorrect email or password provided.');
+  });
+
   it('should fail on bad password', async () => {
     const { body } = await session.testAgent.post('/v1/auth/login').send({
       email: userCredentials.email,
       password: '123123213123',
     });
 
-    expect(body.statusCode).to.equal(400);
-    expect(body.message).to.contain('Wrong credentials provided');
+    expect(body.statusCode).to.equal(401);
+    expect(body.message).to.contain('Incorrect email or password provided.');
   });
 
   it('should allow user to log in and reset the failed attempts counter after less than 5 failed attempts within 5 minutes', async () => {
@@ -90,8 +100,8 @@ describe('User login - /auth/login (POST)', async () => {
       password: 'wrong-password',
     });
 
-    expect(wrongCredsBody.statusCode).to.equal(400);
-    expect(wrongCredsBody.message).to.contain('Wrong credentials provided');
+    expect(wrongCredsBody.statusCode).to.equal(401);
+    expect(wrongCredsBody.message).to.contain('Incorrect email or password provided.');
   });
 
   it('should block the user account after 5 unsuccessful attempts within 5 minutes', async () => {
@@ -141,8 +151,8 @@ describe('User login - /auth/login (POST)', async () => {
         password: 'wrong-password',
       });
 
-      expect(body.message).to.contain('Wrong credentials provided');
-      expect(body.statusCode).to.equal(400);
+      expect(body.message).to.contain('Incorrect email or password provided.');
+      expect(body.statusCode).to.equal(401);
     }
 
     const { body } = await session.testAgent.post('/v1/auth/login').send({
