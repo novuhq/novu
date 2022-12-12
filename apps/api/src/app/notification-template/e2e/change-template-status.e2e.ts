@@ -21,14 +21,14 @@ describe('Change template status by id - /notification-templates/:templateId/sta
       active: false,
       draft: true,
     });
-    const beforeChange = await notificationTemplateRepository.findById(template._id, template._environmentId);
+    const beforeChange = await notificationTemplateRepository.findById(template._id, template._organizationId);
 
     expect(beforeChange.active).to.equal(false);
     expect(beforeChange.draft).to.equal(true);
     const { body } = await session.testAgent.put(`/v1/notification-templates/${template._id}/status`).send({
       active: true,
     });
-    const found = await notificationTemplateRepository.findById(template._id, template._environmentId);
+    const found = await notificationTemplateRepository.findById(template._id, template._organizationId);
 
     expect(found.active).to.equal(true);
     expect(found.draft).to.equal(false);
