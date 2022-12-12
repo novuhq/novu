@@ -102,7 +102,7 @@ export class CreateNotificationTemplate {
       _notificationGroupId: command.notificationGroupId,
     });
 
-    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);
+    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
 
     await this.createChange.execute(
       CreateChangeCommand.create({

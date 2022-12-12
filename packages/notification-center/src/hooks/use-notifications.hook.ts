@@ -94,7 +94,7 @@ export interface IUseNotifications {
     actionButtonType: ButtonTypeEnum,
     status: MessageActionStatusEnum,
     payload?: Record<string, unknown>
-  ) => void;
+  ) => Promise<void>;
   refetch: (query?: IStoreQuery) => void;
   markAsSeen: (messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[]) => void;
   onWidgetClose: () => void;

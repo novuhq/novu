@@ -39,8 +39,7 @@ describe('Get a topic - /topics/:topicId (GET)', async () => {
     expect(topic._organizationId).to.eql(session.organization._id);
     expect(topic.key).to.eql(topicKey);
     expect(topic.name).to.eql(topicName);
-    expect(topic.createdAt).to.exist;
-    expect(topic.updatedAt).to.exist;
+    expect(topic.subscribers).to.eql([]);
   });
 
   it('should throw a not found error when the topic id does not exist in the database for the user requesting it', async () => {

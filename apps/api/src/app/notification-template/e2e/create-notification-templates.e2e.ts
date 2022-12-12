@@ -101,7 +101,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     const prodVersionNotification = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: template._id,
-    } as any);
+    });
 
     expect(prodVersionNotification.tags[0]).to.equal(template.tags[0]);
     expect(prodVersionNotification.steps.length).to.equal(template.steps.length);

@@ -23,7 +23,8 @@ dist
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
-
+.idea/sonarlint
+.idea/GitLink.xml
 # Generated files
 .idea/**/contentModel.xml
 

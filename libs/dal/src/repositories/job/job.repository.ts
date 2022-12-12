@@ -4,9 +4,9 @@ import { Job } from './job.schema';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { Document, FilterQuery } from 'mongoose';
 
-class PartialIntegrationEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
+class PartialJobEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialJobEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEntity> {
