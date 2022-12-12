@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
-import { CacheService, invalidateCache } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
@@ -22,6 +22,15 @@ export class MarkMessageAs {
 
     await this.messageRepository.changeStatus(command.environmentId, subscriber._id, command.messageIds, command.mark);
 
+    invalidateCache({
+      service: this.cacheService,
+      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
+      credentials: {
+        subscriberId: command.subscriberId,
+        environmentId: command.environmentId,
+      },
+    });
+
     const messages = await this.messageRepository.find({
       _environmentId: command.environmentId,
       _id: {
@@ -31,15 +40,6 @@ export class MarkMessageAs {
 
     if (command.mark.seen != null) {
       await this.updateServices(command, subscriber, messages, MarkEnum.SEEN);
-
-      invalidateCache({
-        service: this.cacheService,
-        storeKeyPrefix: ['message-count', 'feed'],
-        credentials: {
-          subscriberId: command.subscriberId,
-          environmentId: command.environmentId,
-        },
-      });
     }
 
     if (command.mark.read != null) {

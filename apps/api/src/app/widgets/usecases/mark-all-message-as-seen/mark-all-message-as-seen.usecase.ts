@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
-import { CacheService, invalidateCache } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkAllMessageAsSeenCommand } from './mark-all-message-as-seen.command';
@@ -19,7 +19,7 @@ export class MarkAllMessageAsSeen {
   async execute(command: MarkAllMessageAsSeenCommand): Promise<number> {
     invalidateCache({
       service: this.cacheService,
-      storeKeyPrefix: ['message-count', 'feed'],
+      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
       credentials: {
         subscriberId: command.subscriberId,
         environmentId: command.environmentId,

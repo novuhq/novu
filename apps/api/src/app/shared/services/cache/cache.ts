@@ -7,7 +7,7 @@ export function invalidateCache({
   credentials,
 }: {
   service: ICacheService;
-  storeKeyPrefix: string | string[];
+  storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[];
   credentials: { subscriberId: string; environmentId: string };
 }) {
   if (typeof storeKeyPrefix === 'string' || storeKeyPrefix instanceof String) {
@@ -30,4 +30,9 @@ function invalidateCase(storeKeyPrefix: string, credentials: { subscriberId: str
     // eslint-disable-next-line no-console
     console.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);
   }
+}
+
+export enum CacheKeyPrefixEnum {
+  MESSAGE_COUNT = 'message-count',
+  FEED = 'feed',
 }

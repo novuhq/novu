@@ -33,7 +33,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { CacheService, invalidateCache } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
@@ -189,7 +189,7 @@ export class SendMessageInApp extends SendMessageType {
 
     invalidateCache({
       service: this.cacheService,
-      storeKeyPrefix: ['message-count', 'feed'],
+      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
       credentials: {
         subscriberId: subscriber.subscriberId,
         environmentId: command.environmentId,
