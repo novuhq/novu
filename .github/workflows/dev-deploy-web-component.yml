@@ -6,7 +6,7 @@ on:
     branches: ['nv-1338-nc-web-component-umd-bundle-deployment']
 
 jobs:
-  build_test:
+  build:
     uses: ./.github/workflows/reusable-notification-center.yml
 
     - uses: actions/upload-artifact@master
@@ -15,7 +15,7 @@ jobs:
         path: packages/notification-center/dist/umd
 
   deploy_web_component:
-    needs: build_test
+    needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 80
     if: "!contains(github.event.head_commit.message, 'ci skip')"
