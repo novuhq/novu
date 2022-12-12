@@ -23,8 +23,6 @@ const useStyles = createStyles((theme) => ({
     fontWeight: 'normal',
   },
   date: {
-    height: '20px',
-    marginTop: '20px',
     color: theme.colorScheme === 'dark' ? colors.B60 : colors.B70,
     fontWeight: 'normal',
   },
@@ -82,31 +80,31 @@ export const PreviewMobile = ({
                 sx={{
                   height: '40px',
                 }}
-                spacing={15}
+                spacing={13}
               >
                 <PreviewUserIcon />
                 <div>
                   <div data-test-id="preview-subject" className={classes.subject}>
                     {subject}
                   </div>
-                  <div data-test-id="preview-from" className={classes.from}>
-                    {integration?.credentials?.from || 'No active email integration'}
-                  </div>
+                  <Group spacing={13} position="apart">
+                    <div data-test-id="preview-from" className={classes.from}>
+                      {integration?.credentials?.from || 'No active email integration'}
+                    </div>
+                    <div className={classes.date}>
+                      <PreviewDateIcon />
+                      <span
+                        style={{
+                          marginLeft: '4px',
+                        }}
+                        data-test-id="preview-date"
+                      >
+                        {format(new Date(), 'EEE, MMM d, HH:mm')}
+                      </span>
+                    </div>
+                  </Group>
                 </div>
               </Group>
-            </div>
-            <div>
-              <div className={classes.date}>
-                <PreviewDateIcon />
-                <span
-                  style={{
-                    marginLeft: '6px',
-                  }}
-                  data-test-id="preview-date"
-                >
-                  {format(new Date(), 'EEE, MMM d, HH:mm')}
-                </span>
-              </div>
             </div>
           </Group>
         </div>
