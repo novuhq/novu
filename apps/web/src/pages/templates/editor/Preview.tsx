@@ -1,4 +1,4 @@
-import { Grid, JsonInput, Loader, useMantineTheme } from '@mantine/core';
+import { Center, Grid, JsonInput, Loader, useMantineTheme } from '@mantine/core';
 import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
@@ -56,7 +56,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
   }) => {
     mutateAsync({
       ...args,
-      subject,
+      subject: subject ? subject : '',
     }).then((result: { html: string; subject: string }) => {
       setContent(result.html);
       setParsedSubject(result.subject);
@@ -82,7 +82,11 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
   }, [integrations, setIntegration]);
 
   if (isLoading) {
-    return <Loader />;
+    return (
+      <Center>
+        <Loader color={colors.B70} mb={20} size={32} />
+      </Center>
+    );
   }
 
   return (
