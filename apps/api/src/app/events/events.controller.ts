@@ -66,20 +66,22 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
+    const transactionId = body.transactionId || uuidv4();
+
+    const { _id: userId, environmentId, organizationId } = user;
+
+    await this.triggerEvent.validateTransactionIdProperty(transactionId, organizationId, environmentId);
+
     const subscribers = this.aggregateSubscribers(body);
     // TODO: map topics
     const mappedSubscribers = this.mapSubscribers(subscribers);
     const mappedActor = this.mapActor(body.actor);
 
-    const transactionId = body.transactionId || uuidv4();
-
-    await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
-
     const result = await this.triggerEvent.execute(
       TriggerEventCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
+        userId,
+        environmentId,
+        organizationId,
         identifier: body.name,
         payload: body.payload,
         overrides: body.overrides || {},
