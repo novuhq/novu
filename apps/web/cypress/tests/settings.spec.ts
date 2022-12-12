@@ -21,7 +21,7 @@ describe('Settings Screen', function () {
     cy.getByTestId('api-key-container').should('have.value', this.session.environment.apiKeys[0].key);
   });
 
-  it.skip('should update logo', function () {
+  it('should update logo', function () {
     cy.fixture('test-logo.png', {}).then((contents) => {
       cy.getByTestId('upload-image-button')
         .find('input')
