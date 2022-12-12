@@ -66,33 +66,41 @@ export class MapTriggerRecipients {
     userId: UserId,
     recipients: TriggerRecipients
   ): Promise<ISubscribersDefine[]> {
-    const topics = this.findTopics(recipients);
+    /*
+     * TODO: We should manage the env variables from the config and not process.env
+     * https://github.com/motdotla/dotenv/issues/51
+     */
+    if (process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED === 'true') {
+      const topics = this.findTopics(recipients);
 
-    const topicSubscribers: ISubscribersDefine[] = [];
+      const topicSubscribers: ISubscribersDefine[] = [];
 
-    for (const topic of topics) {
-      try {
-        const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
-          environmentId,
-          topicId: topic?.topicId || '',
-          organizationId,
-          userId,
-        });
-        const { subscribers } = await this.getTopicSubscribers.execute(getTopicSubscribersCommand);
+      for (const topic of topics) {
+        try {
+          const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
+            environmentId,
+            topicId: topic?.topicId || '',
+            organizationId,
+            userId,
+          });
+          const { subscribers } = await this.getTopicSubscribers.execute(getTopicSubscribersCommand);
 
-        subscribers?.forEach((subscriber: SubscriberId) => topicSubscribers.push({ subscriberId: subscriber }));
-      } catch (error) {
-        this.logTopicSubscribersError({
-          environmentId,
-          organizationId,
-          topicId: topic?.topicId || '',
-          transactionId,
-          userId,
-        });
+          subscribers?.forEach((subscriber: SubscriberId) => topicSubscribers.push({ subscriberId: subscriber }));
+        } catch (error) {
+          this.logTopicSubscribersError({
+            environmentId,
+            organizationId,
+            topicId: topic?.topicId || '',
+            transactionId,
+            userId,
+          });
+        }
       }
+
+      return topicSubscribers;
     }
 
-    return topicSubscribers;
+    return [];
   }
 
   public mapSubscriber(subscriber: TriggerRecipientSubscriber): ISubscribersDefine {

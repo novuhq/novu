@@ -1,5 +1,5 @@
-import { IJwtPayload, TriggerRecipientsTypeEnum } from '@novu/shared';
-import { ISubscribersDefine, TriggerRecipientsSubscriber, TriggerRecipientsSubscriberMany } from '@novu/node';
+import { IJwtPayload } from '@novu/shared';
+import { ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/node';
 import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -24,6 +24,7 @@ import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigge
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 import { SendTestEmail } from './usecases/send-message/test-send-email.usecase';
 import { TestSendMessageCommand } from './usecases/send-message/send-message.command';
+import { MapTriggerRecipients, MapTriggerRecipientsCommand } from './usecases/map-trigger-recipients';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -34,6 +35,7 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 export class EventsController {
   constructor(
     private triggerEvent: TriggerEvent,
+    private mapTriggerRecipients: MapTriggerRecipients,
     private cancelDelayedUsecase: CancelDelayed,
     private triggerEventToAll: TriggerEventToAll,
     private sendTestEmail: SendTestEmail
@@ -72,10 +74,15 @@ export class EventsController {
 
     await this.triggerEvent.validateTransactionIdProperty(transactionId, organizationId, environmentId);
 
-    const subscribers = this.aggregateSubscribers(body);
-    // TODO: map topics
-    const mappedSubscribers = this.mapSubscribers(subscribers);
     const mappedActor = this.mapActor(body.actor);
+    const mapTriggerRecipientsCommand = MapTriggerRecipientsCommand.create({
+      environmentId,
+      organizationId,
+      recipients: body.to,
+      transactionId,
+      userId,
+    });
+    const mappedTo = await this.mapTriggerRecipients.execute(mapTriggerRecipientsCommand);
 
     const result = await this.triggerEvent.execute(
       TriggerEventCommand.create({
@@ -85,7 +92,7 @@ export class EventsController {
         identifier: body.name,
         payload: body.payload,
         overrides: body.overrides || {},
-        to: mappedSubscribers,
+        to: mappedTo,
         actor: mappedActor,
         transactionId,
       })
@@ -182,33 +189,9 @@ export class EventsController {
     );
   }
 
-  private aggregateSubscribers(body: TriggerEventRequestDto): TriggerRecipientsSubscriberMany {
-    const to = Array.isArray(body.to) ? body.to : [body.to];
-
-    return to.filter((element) => {
-      if (typeof element === 'string' || !element?.type) {
-        return true;
-      } else {
-        return element.type === TriggerRecipientsTypeEnum.SUBSCRIBER;
-      }
-    });
-  }
-
-  private mapSubscribers(subscribers: TriggerRecipientsSubscriberMany): ISubscribersDefine[] {
-    return subscribers.map(this.mapSubscriber);
-  }
-
-  private mapActor(actor: TriggerRecipientsSubscriber): ISubscribersDefine {
+  private mapActor(actor: TriggerRecipientSubscriber): ISubscribersDefine {
     if (!actor) return;
 
-    return this.mapSubscriber(actor);
-  }
-
-  private mapSubscriber(subscriber: TriggerRecipientsSubscriber): ISubscribersDefine {
-    if (typeof subscriber === 'string') {
-      return { subscriberId: subscriber };
-    }
-
-    return subscriber;
+    return this.mapTriggerRecipients.mapSubscriber(actor);
   }
 }
