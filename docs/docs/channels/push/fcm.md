@@ -25,6 +25,15 @@ novu.trigger('event-name', {
   payload: {
     abc: 'def',
   },
+  overrides: {
+    fcm: {
+      data: {},
+      /*
+         the data object can hold an optional payload of key:value pairs
+         as specified by the FCM docs here:
+         https://firebase.google.com/docs/cloud-messaging/concept-options#notification-messages-with-optional-data-payload
+      */
+    },
 });
 ```
 
