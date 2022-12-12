@@ -51,6 +51,7 @@ export interface IPushOptions {
     channelId?: string;
     categoryId?: string;
     mutableContent?: boolean;
+    data?: { [key: string]: string };
   };
 }
 
