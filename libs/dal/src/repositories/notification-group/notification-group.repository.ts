@@ -3,9 +3,9 @@ import { NotificationGroupEntity } from './notification-group.entity';
 import { NotificationGroup } from './notification-group.schema';
 import { Document, FilterQuery } from 'mongoose';
 
-class PartialIntegrationEntity extends Omit(NotificationGroupEntity, ['_environmentId', '_organizationId']) {}
+class PartialNotificationGroupEntity extends Omit(NotificationGroupEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialNotificationGroupEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 export class NotificationGroupRepository extends BaseRepository<EnforceEnvironmentQuery, NotificationGroupEntity> {

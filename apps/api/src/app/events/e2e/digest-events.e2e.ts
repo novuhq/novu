@@ -558,7 +558,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _environmentId: session.environment._id,
       channel: StepTypeEnum.IN_APP,
       _templateId: template._id,
-    } as any);
+    });
 
     expect(oldMessage.content).to.equal('Hello world 0');
     expect(message.content).to.equal('Hello world 2');
@@ -665,7 +665,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     let messageCount = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
-    } as any);
+    });
 
     expect(messageCount.length).to.equal(2);
 

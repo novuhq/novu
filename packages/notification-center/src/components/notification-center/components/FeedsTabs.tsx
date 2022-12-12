@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs as MantineTabs } from '@mantine/core';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
+
 import { NotificationsListTab } from './NotificationsListTab';
 import { UnseenBadge } from './UnseenBadge';
 import { Tabs } from './layout/tabs/Tabs';

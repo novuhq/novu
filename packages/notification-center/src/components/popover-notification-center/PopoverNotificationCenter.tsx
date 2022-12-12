@@ -1,6 +1,7 @@
 import React from 'react';
 import { PopoverProps } from '@mantine/core';
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
+
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';

@@ -6,9 +6,9 @@ import { Document, FilterQuery } from 'mongoose';
 import { DalException } from '../../shared';
 import { MessageTemplateRepository } from '../message-template';
 
-class PartialIntegrationEntity extends Omit(FeedEntity, ['_environmentId', '_organizationId']) {}
+class PartialFeedEntity extends Omit(FeedEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialFeedEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 export class FeedRepository extends BaseRepository<EnforceEnvironmentQuery, FeedEntity> {

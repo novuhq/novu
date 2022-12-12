@@ -2,51 +2,26 @@ import { SoftDeleteModel } from 'mongoose-delete';
 import { BaseRepository, Omit } from '../base-repository';
 import { SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
-import { Cached, DalException, ICacheService, InvalidateCache } from '../../shared';
-import { Document, FilterQuery, ProjectionType } from 'mongoose';
+import { DalException } from '../../shared';
+import { Document, FilterQuery } from 'mongoose';
 
 class PartialSubscriberEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceIdentifierQuery = FilterQuery<PartialSubscriberEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
-type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberEntity & Document> & { _environmentId: string } & {
-  _id: string;
-};
-
-export class SubscriberRepository extends BaseRepository<EnforceIdentifierQuery, SubscriberEntity> {
+export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery, SubscriberEntity> {
   private subscriber: SoftDeleteModel;
-  constructor(cacheService?: ICacheService) {
+  constructor() {
     super(Subscriber, SubscriberEntity);
     this.subscriber = Subscriber;
   }
 
-  @InvalidateCache()
-  async update(
-    query: EnforceEnvironmentQuery,
-    updateBody: any
-  ): Promise<{
-    matched: number;
-    modified: number;
-  }> {
-    return super.update(query, updateBody);
-  }
-
-  @InvalidateCache()
-  async create(data: EnforceIdentifierQuery) {
-    return super.create(data);
-  }
-
-  @Cached()
-  async findOne(query: EnforceEnvironmentQuery, select?: ProjectionType<any>) {
-    return super.findOne(query, select);
-  }
-
   async findBySubscriberId(environmentId: string, subscriberId: string): Promise<SubscriberEntity> {
-    return await super.findOne({
+    return await this.findOne({
       _environmentId: environmentId,
       subscriberId,
-    } as EnforceEnvironmentQuery);
+    });
   }
 
   async searchSubscribers(environmentId: string, search: string, emails: string[] = []) {
@@ -78,21 +53,17 @@ export class SubscriberRepository extends BaseRepository<EnforceIdentifierQuery,
     });
   }
 
-  async delete(query: EnforceIdentifierQuery) {
+  async delete(query: EnforceEnvironmentQuery) {
     const foundSubscriber = await this.findOne({
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
-    } as EnforceEnvironmentQuery);
+    });
 
     if (!foundSubscriber) {
       throw new DalException(`Could not find subscriber ${query.subscriberId} to delete`);
     }
 
-    if (this.cacheService?.cacheEnabled()) {
-      this.cacheService.delByPattern(`Subscriber*${foundSubscriber._id}:${foundSubscriber._environmentId}`);
-    }
-
-    const requestQuery: EnforceIdentifierQuery = {
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: foundSubscriber._environmentId,
       subscriberId: foundSubscriber.subscriberId,
     };
@@ -100,8 +71,8 @@ export class SubscriberRepository extends BaseRepository<EnforceIdentifierQuery,
     await this.subscriber.delete(requestQuery);
   }
 
-  async findDeleted(query: EnforceIdentifierQuery) {
-    const requestQuery: EnforceIdentifierQuery = {
+  async findDeleted(query: EnforceEnvironmentQuery) {
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
     };

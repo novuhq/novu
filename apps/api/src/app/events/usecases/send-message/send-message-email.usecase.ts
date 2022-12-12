@@ -331,7 +331,7 @@ export class SendMessageEmail extends SendMessageType {
       }
 
       await this.messageRepository.update(
-        { _environmentId: command.environmentId, _id: message._id, _subscriberId: command.subscriberId },
+        { _environmentId: command.environmentId, _id: message._id },
         {
           $set: {
             identifier: result.id,

@@ -37,7 +37,6 @@ export abstract class SendMessageType {
 
     await this.messageRepository.updateMessageStatus(
       command.environmentId,
-      message._subscriberId,
       message._id,
       status,
       null,

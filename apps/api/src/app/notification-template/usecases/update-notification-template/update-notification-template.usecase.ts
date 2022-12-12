@@ -32,7 +32,7 @@ export class UpdateNotificationTemplate {
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
     const existingTemplate = await this.notificationTemplateRepository.findById(
       command.templateId,
-      command.environmentId
+      command.organizationId
     );
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.templateId} not found`);
 
@@ -205,8 +205,7 @@ export class UpdateNotificationTemplate {
 
     const notificationTemplateWithStepTemplate = await this.notificationTemplateRepository.findById(
       command.templateId,
-      command.environmentId,
-      { skipCache: true }
+      command.organizationId
     );
 
     const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);

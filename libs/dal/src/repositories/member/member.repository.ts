@@ -11,9 +11,9 @@ export interface IAddMemberData {
   memberStatus: MemberStatusEnum;
 }
 
-class PartialIntegrationEntity extends Omit(MemberEntity, ['_organizationId']) {}
+class PartialMemberEntity extends Omit(MemberEntity, ['_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> & { _organizationId: string };
+type EnforceEnvironmentQuery = FilterQuery<PartialMemberEntity & Document> & { _organizationId: string };
 
 export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, MemberEntity> {
   constructor() {
