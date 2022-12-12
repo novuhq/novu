@@ -30,3 +30,8 @@ jobs:
           targets: build,test
           projects: '@novu/notification-center'
           nxCloud: true
+
+      - uses: actions/upload-artifact@master
+        with:
+          name: notification-center-web-component
+          path: packages/notification-center/dist/umd

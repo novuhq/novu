@@ -9,11 +9,6 @@ jobs:
   build:
     uses: ./.github/workflows/reusable-notification-center.yml
 
-    - uses: actions/upload-artifact@master
-      with:
-        name: notification-center-web-component
-        path: packages/notification-center/dist/umd
-
   deploy_web_component:
     needs: build
     runs-on: ubuntu-latest
