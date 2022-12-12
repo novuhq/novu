@@ -1,10 +1,16 @@
 import { buildCachedQuery, buildKey, CacheInterceptorTypeEnum } from './shared-cache';
+import { Inject } from '@nestjs/common';
+import { CacheService } from '../services/cache';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function Cached(storeKeyPrefix?: string) {
+  const injectCache = Inject(CacheService);
+
   return (target: any, key: string, descriptor: any) => {
     const originalMethod = descriptor.value;
     const methodName = key;
+
+    injectCache(target, 'cacheService');
 
     descriptor.value = async function (...args: any[]) {
       const skip = args[2]?.skipCache;

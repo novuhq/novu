@@ -26,18 +26,7 @@ export class CacheService implements ICacheService {
   private readonly client: Redis;
   private readonly cacheTtl: number;
 
-  constructor(
-    private config: {
-      cachePort: string;
-      cacheHost: string;
-      cachePassword?: string;
-      cacheConnectTimeout?: string;
-      cacheKeepAlive?: string;
-      cacheFamily?: string;
-      cacheKeyPrefix?: string;
-      cacheTtl?: string;
-    }
-  ) {
+  constructor(private config: ICacheServiceConfig) {
     if (this.config.cachePort && this.config.cacheHost) {
       this.client = new Redis(Number(this.config.cachePort), this.config.cacheHost, {
         password: this.config.cachePassword,
@@ -103,4 +92,15 @@ export class CacheService implements ICacheService {
 
     return this.client.expire(key, seconds);
   }
+}
+
+export interface ICacheServiceConfig {
+  cacheHost: string;
+  cachePort: string;
+  cacheTtl?: string;
+  cachePassword?: string;
+  cacheConnectTimeout?: string;
+  cacheKeepAlive?: string;
+  cacheFamily?: string;
+  cacheKeyPrefix?: string;
 }

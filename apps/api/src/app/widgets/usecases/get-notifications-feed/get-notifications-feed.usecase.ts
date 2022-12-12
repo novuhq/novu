@@ -6,13 +6,11 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CacheService } from '../../../shared/services/cache';
 import { Cached } from '../../../shared/interceptors';
 
 @Injectable()
 export class GetNotificationsFeed {
   constructor(
-    private cacheService: CacheService,
     private messageRepository: MessageRepository,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository

@@ -71,7 +71,10 @@ export const ANALYTICS_SERVICE = 'AnalyticsService';
 const cacheService = {
   provide: CacheService,
   useFactory: async () => {
-    return new CacheService({ cacheHost: process.env.REDIS_CACHE_HOST, cachePort: process.env.REDIS_CACHE_PORT });
+    return new CacheService({
+      cacheHost: process.env.REDIS_CACHE_HOST,
+      cachePort: process.env.REDIS_CACHE_PORT,
+    });
   },
 };
 

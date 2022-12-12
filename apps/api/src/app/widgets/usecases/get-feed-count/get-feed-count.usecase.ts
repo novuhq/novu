@@ -2,16 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { GetFeedCountCommand } from './get-feed-count.command';
-import { CacheService } from '../../../shared/services/cache';
 import { Cached } from '../../../shared/interceptors';
 
 @Injectable()
 export class GetFeedCount {
-  constructor(
-    private cacheService: CacheService,
-    private messageRepository: MessageRepository,
-    private subscriberRepository: SubscriberRepository
-  ) {}
+  constructor(private messageRepository: MessageRepository, private subscriberRepository: SubscriberRepository) {}
 
   @Cached('message-count')
   async execute(command: GetFeedCountCommand): Promise<{ count: number }> {
