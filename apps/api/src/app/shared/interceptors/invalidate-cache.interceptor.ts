@@ -1,10 +1,15 @@
-import { buildKey, CacheInterceptorTypeEnum, getInvalidateQuery } from './shared-cache';
+import { getInvalidateQuery } from './shared-cache';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../services/cache';
+import { Inject } from '@nestjs/common';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function InvalidateCache(storeKeyPrefix?: string) {
+export function InvalidateCache(storeKeyPrefix?: CacheKeyPrefixEnum | CacheKeyPrefixEnum[]) {
+  const injectCache = Inject(CacheService);
+
   return (target: any, key: string, descriptor: any) => {
     const originalMethod = descriptor.value;
     const methodName = key;
+    injectCache(target, 'cacheService');
 
     descriptor.value = async function (...args: any[]) {
       if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
@@ -15,25 +20,14 @@ export function InvalidateCache(storeKeyPrefix?: string) {
         return res;
       }
 
-      const query = getInvalidateQuery(key, res, args);
+      const query = getInvalidateQuery(methodName, res, args);
 
-      const cacheKey = buildKey(
-        storeKeyPrefix ?? this.MongooseModel?.modelName,
-        methodName,
-        query,
-        CacheInterceptorTypeEnum.INVALIDATE
-      );
-
-      if (!cacheKey) {
-        return res;
-      }
-
-      try {
-        this.cacheService.delByPattern(cacheKey);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);
-      }
+      invalidateCache({
+        service: this.cacheService,
+        storeKeyPrefix:
+          typeof storeKeyPrefix === 'string' || storeKeyPrefix instanceof String ? storeKeyPrefix : [...storeKeyPrefix],
+        credentials: query,
+      });
 
       return res;
     };

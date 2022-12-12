@@ -8,7 +8,7 @@ export function invalidateCache({
 }: {
   service: ICacheService;
   storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[];
-  credentials: { subscriberId: string; environmentId: string };
+  credentials: Record<string, unknown>;
 }) {
   if (typeof storeKeyPrefix === 'string' || storeKeyPrefix instanceof String) {
     invalidateCase(storeKeyPrefix as string, credentials, service);
@@ -17,7 +17,7 @@ export function invalidateCache({
   }
 }
 
-function invalidateCase(storeKeyPrefix: string, credentials: { subscriberId: string; environmentId: string }, service) {
+function invalidateCase(storeKeyPrefix: string, credentials: Record<string, unknown>, service) {
   const cacheKey = buildKey(storeKeyPrefix, '', credentials, CacheInterceptorTypeEnum.INVALIDATE);
 
   if (!cacheKey) {

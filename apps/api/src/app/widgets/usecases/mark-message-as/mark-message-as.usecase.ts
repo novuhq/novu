@@ -6,6 +6,7 @@ import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shar
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class MarkMessageAs {
@@ -17,19 +18,11 @@ export class MarkMessageAs {
     private subscriberRepository: SubscriberRepository
   ) {}
 
+  @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED])
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     await this.messageRepository.changeStatus(command.environmentId, subscriber._id, command.messageIds, command.mark);
-
-    invalidateCache({
-      service: this.cacheService,
-      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
-      credentials: {
-        subscriberId: command.subscriberId,
-        environmentId: command.environmentId,
-      },
-    });
 
     const messages = await this.messageRepository.find({
       _environmentId: command.environmentId,

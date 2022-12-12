@@ -1,31 +1,23 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
-import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkAllMessageAsSeenCommand } from './mark-all-message-as-seen.command';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class MarkAllMessageAsSeen {
   constructor(
     private messageRepository: MessageRepository,
     private queueService: QueueService,
-    private cacheService: CacheService,
 
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
+  @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED])
   async execute(command: MarkAllMessageAsSeenCommand): Promise<number> {
-    invalidateCache({
-      service: this.cacheService,
-      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
-      credentials: {
-        subscriberId: command.subscriberId,
-        environmentId: command.environmentId,
-      },
-    });
-
     const response = await this.messageRepository.markAllUnseenAsSeen(command._subscriberId, command.environmentId);
 
     this.queueService.wsSocketQueue.add({

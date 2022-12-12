@@ -9,7 +9,6 @@ export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
   return (target: any, key: string, descriptor: any) => {
     const originalMethod = descriptor.value;
     const methodName = key;
-
     injectCache(target, 'cacheService');
 
     descriptor.value = async function (...args: any[]) {

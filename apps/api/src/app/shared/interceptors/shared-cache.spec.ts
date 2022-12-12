@@ -60,53 +60,53 @@ describe('shared cache', function () {
     it('should retrieve identifier _subscriber from Message query', async function () {
       const keyPrefix = 'Message';
       let query: Record<string, unknown>;
-      let res: [string, string];
+      let res: { key: string; value: string };
 
       query = { _id: '123', _subscriberId: '456' };
       res = getIdentifier(keyPrefix, query);
-      expect(res[1]).to.be.equal('456');
+      expect(res.value).to.be.equal('456');
 
       query = { _id: '123', subscriberId: '456' };
       res = getIdentifier(keyPrefix, query);
-      expect(res[1]).to.be.equal('456');
+      expect(res.value).to.be.equal('456');
 
       query = { id: '123', _subscriberId: '456' };
       res = getIdentifier(keyPrefix, query);
-      expect(res[1]).to.be.equal('456');
+      expect(res.value).to.be.equal('456');
 
       query = { id: '123', subscriberId: '456' };
       res = getIdentifier(keyPrefix, query);
-      expect(res[1]).to.be.equal('456');
+      expect(res.value).to.be.equal('456');
 
       query = { dummyKey: '123' };
       res = getIdentifier(keyPrefix, query);
-      expect(res[1]).to.be.equal(undefined);
+      expect(res.value).to.be.equal(undefined);
     });
 
     it('should retrieve identifier _id from not Message query', async function () {
       const keyPrefix = 'Subscriber';
       let query: Record<string, unknown>;
-      let res: [string, string];
+      let res: { key: string; value: string };
 
       query = { _id: '123', _subscriberId: '456' };
       res = getIdentifier(keyPrefix, query);
-      expect(res[1]).to.be.equal('123');
+      expect(res.value).to.be.equal('123');
 
       query = { _id: '123', subscriberId: '456' };
       res = getIdentifier(keyPrefix, query);
-      expect(res[1]).to.be.equal('123');
+      expect(res.value).to.be.equal('123');
 
       query = { id: '123', _subscriberId: '456' };
       res = getIdentifier(keyPrefix, query);
-      expect(res[1]).to.be.equal('123');
+      expect(res.value).to.be.equal('123');
 
       query = { id: '123', subscriberId: '456' };
       res = getIdentifier(keyPrefix, query);
-      expect(res[1]).to.be.equal('123');
+      expect(res.value).to.be.equal('123');
 
       query = { dummyKey: '123' };
       res = getIdentifier(keyPrefix, query);
-      expect(res[1]).to.be.equal(undefined);
+      expect(res.value).to.be.equal(undefined);
     });
   });
 
@@ -136,28 +136,28 @@ describe('shared cache', function () {
 
   describe('getEnvironment', function () {
     it('should return environment from query', async function () {
-      let res: [string, string];
+      let res: { key: string; value: string };
       let query: Record<string, unknown>;
 
       query = { id: '123', subscriberId: '456', _environmentId: '789' };
       res = getEnvironment(query);
-      expect(res[0]).to.be.equal('_environmentId');
-      expect(res[1]).to.be.equal('789');
+      expect(res.key).to.be.equal('_environmentId');
+      expect(res.value).to.be.equal('789');
 
       query = { id: '123', subscriberId: '456', environmentId: '789' };
       res = getEnvironment(query);
-      expect(res[0]).to.be.equal('environmentId');
-      expect(res[1]).to.be.equal('789');
+      expect(res.key).to.be.equal('environmentId');
+      expect(res.value).to.be.equal('789');
 
       query = { id: '123', subscriberId: '456', environmentId: '789', _environmentId: '777' };
       res = getEnvironment(query);
-      expect(res[0]).to.be.equal('_environmentId');
-      expect(res[1]).to.be.equal('777');
+      expect(res.key).to.be.equal('_environmentId');
+      expect(res.value).to.be.equal('777');
 
       query = { id: '123', subscriberId: '456' };
       res = getEnvironment(query);
-      expect(res[0]).to.be.equal(undefined);
-      expect(res[1]).to.be.equal(undefined);
+      expect(res.key).to.be.equal(undefined);
+      expect(res.value).to.be.equal(undefined);
     });
   });
 
