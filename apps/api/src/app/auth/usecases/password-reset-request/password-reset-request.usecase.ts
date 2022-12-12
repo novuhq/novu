@@ -1,21 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Novu } from '@novu/node';
-import { UserRepository } from '@novu/dal';
+import { UserRepository, UserEntity, IUserResetTokenCount } from '@novu/dal';
 import { v4 as uuidv4 } from 'uuid';
+import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
 
 @Injectable()
 export class PasswordResetRequest {
+  private MAX_ATTEMPTS_IN_A_MINUTE = 5;
+  private MAX_ATTEMPTS_IN_A_DAY = 15;
+  private RATE_LIMIT_IN_SECONDS = 60;
+  private RATE_LIMIT_IN_HOURS = 24;
   constructor(private userRepository: UserRepository) {}
 
   async execute(command: PasswordResetRequestCommand): Promise<{ success: boolean }> {
     const email = normalizeEmail(command.email);
     const foundUser = await this.userRepository.findByEmail(email);
     if (foundUser) {
+      const { error, isBlocked } = this.isRequestBlocked(foundUser);
+      if (isBlocked) {
+        throw new UnauthorizedException(error);
+      }
       const token = uuidv4();
 
-      await this.userRepository.updatePasswordResetToken(foundUser._id, token);
+      const resetTokenCount = this.getUpdatedRequestCount(foundUser);
+      await this.userRepository.updatePasswordResetToken(foundUser._id, token, resetTokenCount);
 
       if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
         const novu = new Novu(process.env.NOVU_API_KEY);
@@ -35,5 +45,60 @@ export class PasswordResetRequest {
     return {
       success: true,
     };
+  }
+
+  private isRequestBlocked(user: UserEntity) {
+    const lastResetAttempt = user.resetTokenDate;
+
+    if (!lastResetAttempt) {
+      return {
+        isBlocked: false,
+        error: '',
+      };
+    }
+    const formattedDate = parseISO(lastResetAttempt);
+    const diffSeconds = differenceInSeconds(new Date(), formattedDate);
+    const diffHours = differenceInHours(new Date(), formattedDate);
+
+    const withinDailyLimit = diffHours < this.RATE_LIMIT_IN_HOURS;
+    const exceededDailyAttempt = user?.resetTokenCount?.reqInDay >= this.MAX_ATTEMPTS_IN_A_DAY;
+    if (withinDailyLimit && exceededDailyAttempt) {
+      return {
+        isBlocked: true,
+        error: `Too many requests, Try again after ${this.RATE_LIMIT_IN_HOURS} hours.`,
+      };
+    }
+
+    const withinMinuteLimit = diffSeconds < this.RATE_LIMIT_IN_SECONDS;
+    const exceededMinuteAttempt = user?.resetTokenCount?.reqInMinute >= this.MAX_ATTEMPTS_IN_A_MINUTE;
+    if (withinMinuteLimit && exceededMinuteAttempt) {
+      return {
+        isBlocked: true,
+        error: `Too many requests, Try again after a minute.`,
+      };
+    }
+
+    return {
+      isBlocked: false,
+      error: '',
+    };
+  }
+
+  private getUpdatedRequestCount(user: UserEntity): IUserResetTokenCount {
+    const now = new Date().toISOString();
+    const lastResetAttempt = user.resetTokenDate ?? now;
+    const formattedDate = parseISO(lastResetAttempt);
+    const diffSeconds = differenceInSeconds(new Date(), formattedDate);
+    const diffHours = differenceInHours(new Date(), formattedDate);
+
+    const resetTokenCount: IUserResetTokenCount = {
+      reqInMinute: user.resetTokenCount?.reqInMinute ?? 0,
+      reqInDay: user.resetTokenCount?.reqInDay ?? 0,
+    };
+
+    resetTokenCount.reqInMinute = diffSeconds < this.RATE_LIMIT_IN_SECONDS ? resetTokenCount.reqInMinute + 1 : 1;
+    resetTokenCount.reqInDay = diffHours < this.RATE_LIMIT_IN_HOURS ? resetTokenCount.reqInDay + 1 : 1;
+
+    return resetTokenCount;
   }
 }

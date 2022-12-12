@@ -1,6 +1,7 @@
 import * as bcrypt from 'bcrypt';
-import { Inject, Injectable } from '@nestjs/common';
-import { UserRepository } from '@novu/dal';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { differenceInMinutes, parseISO } from 'date-fns';
+import { UserRepository, UserEntity } from '@novu/dal';
 import { LoginCommand } from './login.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
@@ -11,6 +12,8 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class Login {
+  private BLOCKED_PERIOD_IN_MINUTES = 5;
+  private MAX_LOGIN_ATTEMPTS = 5;
   constructor(
     private userRepository: UserRepository,
     private authService: AuthService,
@@ -20,16 +23,99 @@ export class Login {
   async execute(command: LoginCommand) {
     const email = normalizeEmail(command.email);
     const user = await this.userRepository.findByEmail(email);
+    // TODO: update it to throw relevant exceptions like NotFoundException in this case
     if (!user) throw new ApiException('User not found');
+
+    if (this.isAccountBlocked(user)) {
+      const blockedMinutesLeft = this.getBlockedMinutesLeft(user.failedLogin.lastFailedAttempt);
+      throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
+    }
+
     if (!user.password) throw new ApiException('OAuth user login attempt');
 
     const isMatching = await bcrypt.compare(command.password, user.password);
-    if (!isMatching) throw new ApiException('Wrong credentials provided');
+    if (!isMatching) {
+      const failedAttempts = await this.updateFailedAttempts(user);
+      const remainingAttempts = this.MAX_LOGIN_ATTEMPTS - failedAttempts;
+
+      if (remainingAttempts === 0) {
+        const blockedMinutesLeft = this.getBlockedMinutesLeft(user.failedLogin.lastFailedAttempt);
+        throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
+      }
+      throw new ApiException(`Wrong credentials provided. ${remainingAttempts} Attempts left`);
+    }
 
     this.analyticsService.upsertUser(user, user._id);
+
+    if (user?.failedLogin?.times > 0) {
+      await this.resetFailedAttempts(user);
+    }
 
     return {
       token: await this.authService.generateUserToken(user),
     };
+  }
+
+  private isAccountBlocked(user: UserEntity) {
+    const lastFailedAttempt = user?.failedLogin?.lastFailedAttempt;
+    if (!lastFailedAttempt) return false;
+
+    const diff = this.getTimeDiffForAttempt(lastFailedAttempt);
+
+    return user?.failedLogin?.times >= this.MAX_LOGIN_ATTEMPTS && diff < this.BLOCKED_PERIOD_IN_MINUTES;
+  }
+
+  private async updateFailedAttempts(user: UserEntity) {
+    const now = new Date();
+    let times = user?.failedLogin?.times ?? 1;
+    const lastFailedAttempt = user?.failedLogin?.lastFailedAttempt;
+
+    if (lastFailedAttempt) {
+      const diff = this.getTimeDiffForAttempt(lastFailedAttempt);
+      times = diff < this.BLOCKED_PERIOD_IN_MINUTES ? times + 1 : 1;
+    }
+
+    await this.userRepository.update(
+      {
+        _id: user._id,
+      },
+      {
+        $set: {
+          failedLogin: {
+            times,
+            lastFailedAttempt: now,
+          },
+        },
+      }
+    );
+
+    return times;
+  }
+
+  private async resetFailedAttempts(user: UserEntity) {
+    await this.userRepository.update(
+      {
+        _id: user._id,
+      },
+      {
+        $set: {
+          'failedLogin.times': 0,
+        },
+      }
+    );
+  }
+
+  private getTimeDiffForAttempt(lastFailedAttempt: string) {
+    const now = new Date();
+    const formattedLastAttempt = parseISO(lastFailedAttempt);
+    const diff = differenceInMinutes(now, formattedLastAttempt);
+
+    return diff;
+  }
+
+  private getBlockedMinutesLeft(lastFailedAttempt: string) {
+    const diff = this.getTimeDiffForAttempt(lastFailedAttempt);
+
+    return this.BLOCKED_PERIOD_IN_MINUTES - diff;
   }
 }
