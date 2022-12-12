@@ -27,6 +27,10 @@ const userSchema = new Schema(
       },
     ],
     password: Schema.Types.String,
+    failedLogin: {
+      times: Schema.Types.Number,
+      lastFailedAttempt: Schema.Types.Date,
+    },
   },
   schemaOptions
 );
