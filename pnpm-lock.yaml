@@ -1419,7 +1419,7 @@ importers:
       rimraf: 3.0.2
       sinon: 9.2.4
       standard-version: 9.3.2
-      ts-jest: 27.1.4_4xhzrl3rpmfnzk4dio663nrbja
+      ts-jest: 27.1.4_vqlr6pm7mnv5rngd46vdqt4eby
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
@@ -1747,6 +1747,8 @@ importers:
       karma-jasmine: ~5.1.0
       karma-jasmine-html-reporter: ~2.0.0
       ng-packagr: ^15.0.0
+      react: ^17.0.1
+      react-dom: ^17.0.1
       tslib: ^2.3.0
       typescript: ~4.8.2
       zone.js: ~0.12.0
@@ -1757,6 +1759,8 @@ importers:
       '@angular/platform-browser': 15.0.0_7psesmusmj4excifnjgc7jfosa
       '@angular/platform-browser-dynamic': 15.0.0_pulbxwlpifslvvthxw6am5bday
       '@novu/notification-center': link:../notification-center
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
       tslib: 2.4.0
       zone.js: 0.12.0
     devDependencies:
@@ -6368,8 +6372,8 @@ packages:
       '@babel/core': ^7.0.0
     dependencies:
       '@babel/core': 7.12.3
-      '@babel/helper-annotate-as-pure': 7.16.7
-      regexpu-core: 5.0.1
+      '@babel/helper-annotate-as-pure': 7.18.6
+      regexpu-core: 5.2.1
 
   /@babel/helper-create-regexp-features-plugin/7.17.0_@babel+core@7.17.8:
     resolution: {integrity: sha512-awO2So99wG6KnlE+TPs6rn83gCz5WlEePJDTnLEqbchMVrBeAujURVphRdigsk094VhvZehFoNOihSlcBjwsXA==}
@@ -6378,8 +6382,8 @@ packages:
       '@babel/core': ^7.0.0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-annotate-as-pure': 7.16.7
-      regexpu-core: 5.0.1
+      '@babel/helper-annotate-as-pure': 7.18.6
+      regexpu-core: 5.2.1
 
   /@babel/helper-create-regexp-features-plugin/7.17.0_@babel+core@7.18.5:
     resolution: {integrity: sha512-awO2So99wG6KnlE+TPs6rn83gCz5WlEePJDTnLEqbchMVrBeAujURVphRdigsk094VhvZehFoNOihSlcBjwsXA==}
@@ -6388,8 +6392,8 @@ packages:
       '@babel/core': ^7.0.0
     dependencies:
       '@babel/core': 7.18.5
-      '@babel/helper-annotate-as-pure': 7.16.7
-      regexpu-core: 5.0.1
+      '@babel/helper-annotate-as-pure': 7.18.6
+      regexpu-core: 5.2.1
     dev: false
 
   /@babel/helper-create-regexp-features-plugin/7.17.0_@babel+core@7.18.9:
@@ -6399,8 +6403,8 @@ packages:
       '@babel/core': ^7.0.0
     dependencies:
       '@babel/core': 7.18.9
-      '@babel/helper-annotate-as-pure': 7.16.7
-      regexpu-core: 5.0.1
+      '@babel/helper-annotate-as-pure': 7.18.6
+      regexpu-core: 5.2.1
 
   /@babel/helper-create-regexp-features-plugin/7.17.0_@babel+core@7.20.2:
     resolution: {integrity: sha512-awO2So99wG6KnlE+TPs6rn83gCz5WlEePJDTnLEqbchMVrBeAujURVphRdigsk094VhvZehFoNOihSlcBjwsXA==}
@@ -6421,7 +6425,7 @@ packages:
     dependencies:
       '@babel/core': 7.12.3
       '@babel/helper-annotate-as-pure': 7.18.6
-      regexpu-core: 5.0.1
+      regexpu-core: 5.2.1
 
   /@babel/helper-create-regexp-features-plugin/7.17.12_@babel+core@7.17.8:
     resolution: {integrity: sha512-b2aZrV4zvutr9AIa6/gA3wsZKRwTKYoDxYiFKcESS3Ug2GTXzwBEvMuuFLhCQpEnRXs1zng4ISAXSUxxKBIcxw==}
@@ -6431,7 +6435,7 @@ packages:
     dependencies:
       '@babel/core': 7.17.8
       '@babel/helper-annotate-as-pure': 7.18.6
-      regexpu-core: 5.0.1
+      regexpu-core: 5.2.1
 
   /@babel/helper-create-regexp-features-plugin/7.17.12_@babel+core@7.18.5:
     resolution: {integrity: sha512-b2aZrV4zvutr9AIa6/gA3wsZKRwTKYoDxYiFKcESS3Ug2GTXzwBEvMuuFLhCQpEnRXs1zng4ISAXSUxxKBIcxw==}
@@ -6441,7 +6445,7 @@ packages:
     dependencies:
       '@babel/core': 7.18.5
       '@babel/helper-annotate-as-pure': 7.18.6
-      regexpu-core: 5.0.1
+      regexpu-core: 5.2.1
     dev: false
 
   /@babel/helper-create-regexp-features-plugin/7.17.12_@babel+core@7.18.9:
@@ -6452,7 +6456,7 @@ packages:
     dependencies:
       '@babel/core': 7.18.9
       '@babel/helper-annotate-as-pure': 7.18.6
-      regexpu-core: 5.0.1
+      regexpu-core: 5.2.1
 
   /@babel/helper-create-regexp-features-plugin/7.17.12_@babel+core@7.20.2:
     resolution: {integrity: sha512-b2aZrV4zvutr9AIa6/gA3wsZKRwTKYoDxYiFKcESS3Ug2GTXzwBEvMuuFLhCQpEnRXs1zng4ISAXSUxxKBIcxw==}
@@ -8872,7 +8876,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/helper-plugin-utils': 7.19.0
 
   /@babel/plugin-syntax-bigint/7.8.3_@babel+core@7.18.9:
     resolution: {integrity: sha512-wnTnFlG+YxQm3vDxpGE57Pj0srRU4sHE/mDkt1qv2YJJSeUAec2ma4WLUnUPeKjyrfntVwe/N6dCXpU+zL3Npg==}
@@ -9192,7 +9196,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/helper-plugin-utils': 7.19.0
 
   /@babel/plugin-syntax-import-meta/7.10.4_@babel+core@7.18.9:
     resolution: {integrity: sha512-Yqfm+XDx0+Prh3VSeEQCPU81yC+JWZ2pDPFSS4ZdpfZhp4MkFMaDC1UqseovEKwSUpnIL7+vK+Clp7bfh0iD7g==}
@@ -39131,7 +39135,7 @@ packages:
       memfs: 3.4.1
       minimatch: 3.1.2
       schema-utils: 2.7.0
-      semver: 7.3.8
+      semver: 7.3.5
       tapable: 1.1.3
       typescript: 4.7.2
       webpack: 5.74.0
@@ -39163,7 +39167,7 @@ packages:
       memfs: 3.4.1
       minimatch: 3.1.2
       schema-utils: 2.7.0
-      semver: 7.3.8
+      semver: 7.3.5
       tapable: 1.1.3
       typescript: 4.5.4
       webpack: 4.46.0
@@ -39194,7 +39198,7 @@ packages:
       memfs: 3.4.1
       minimatch: 3.1.2
       schema-utils: 2.7.0
-      semver: 7.3.8
+      semver: 7.3.5
       tapable: 1.1.3
       typescript: 4.5.4
       webpack: 5.74.0
@@ -39224,7 +39228,7 @@ packages:
       memfs: 3.4.1
       minimatch: 3.1.2
       schema-utils: 2.7.0
-      semver: 7.3.8
+      semver: 7.3.5
       tapable: 1.1.3
       typescript: 4.6.3
       webpack: 4.46.0
@@ -52686,7 +52690,7 @@ packages:
       gzip-size: 6.0.0
       immer: 9.0.12
       is-root: 2.1.0
-      loader-utils: 3.2.1
+      loader-utils: 3.2.0
       open: 8.4.0
       pkg-up: 3.1.0
       prompts: 2.4.2
@@ -53781,12 +53785,6 @@ packages:
       parse-entities: 2.0.0
       prismjs: 1.27.0
 
-  /regenerate-unicode-properties/10.0.1:
-    resolution: {integrity: sha512-vn5DU6yg6h8hP/2OkQo3K7uVILvY4iu0oI4t3HFa81UPkhGJwkRwM10JEc3upjdhHjs/k8GJY1sRBhk5sr69Bw==}
-    engines: {node: '>=4'}
-    dependencies:
-      regenerate: 1.4.2
-
   /regenerate-unicode-properties/10.1.0:
     resolution: {integrity: sha512-d1VudCLoIGitcU/hEg2QqvyGZQmdC0Lf8BqdOMXGFSvJP4bNV1+XqbPQeHHLD51Jh4QJJ225dlIFvY4Ly6MXmQ==}
     engines: {node: '>=4'}
@@ -53855,17 +53853,6 @@ packages:
     resolution: {integrity: sha512-pq2bWo9mVD43nbts2wGv17XLiNLya+GklZ8kaDLV2Z08gDCsGpnKn9BFMepvWuHCbyVvY7J5o5+BVvoQbmlJLg==}
     engines: {node: '>=8'}
 
-  /regexpu-core/5.0.1:
-    resolution: {integrity: sha512-CriEZlrKK9VJw/xQGJpQM5rY88BtuL8DM+AEwvcThHilbxiTAy8vq4iJnd2tqq8wLmjbGZzP7ZcKFjbGkmEFrw==}
-    engines: {node: '>=4'}
-    dependencies:
-      regenerate: 1.4.2
-      regenerate-unicode-properties: 10.0.1
-      regjsgen: 0.6.0
-      regjsparser: 0.8.4
-      unicode-match-property-ecmascript: 2.0.0
-      unicode-match-property-value-ecmascript: 2.0.0
-
   /regexpu-core/5.2.1:
     resolution: {integrity: sha512-HrnlNtpvqP1Xkb28tMhBUO2EbyUHdQlsnlAhzWcwHy8WJR53UWr7/MAvqrsQKMbV4qdpv03oTMG8iIhfsPFktQ==}
     engines: {node: '>=4'}
@@ -53903,17 +53890,8 @@ packages:
     dependencies:
       rc: 1.2.8
 
-  /regjsgen/0.6.0:
-    resolution: {integrity: sha512-ozE883Uigtqj3bx7OhL1KNbCzGyW2NQZPl6Hs09WTvCuZD5sTI4JY58bkbQWa/Y9hxIsvJ3M8Nbf7j54IqeZbA==}
-
   /regjsgen/0.7.1:
     resolution: {integrity: sha512-RAt+8H2ZEzHeYWxZ3H2z6tF18zyyOnlcdaafLrm21Bguj7uZy6ULibiAFdXEtKQY4Sy7wDTwDiOazasMLc4KPA==}
-
-  /regjsparser/0.8.4:
-    resolution: {integrity: sha512-J3LABycON/VNEu3abOviqGHuB/LOtOQj8SKmfP9anY5GfAVw/SPjwzSjxGjbZXIxbGfqTHtJw58C2Li/WkStmA==}
-    hasBin: true
-    dependencies:
-      jsesc: 0.5.0
 
   /regjsparser/0.9.1:
     resolution: {integrity: sha512-dQUtn90WanSNl+7mQKcXAgZxvUe7Z0SqXlgzv0za4LwiUhyzBC58yQO3liFoUgu8GiJVInAhJjkj1N0EtQ5nkQ==}
@@ -58330,6 +58308,40 @@ packages:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.4.7_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.8
+      typescript: 4.6.2
+      yargs-parser: 20.2.9
+    dev: true
+
+  /ts-jest/27.1.4_vqlr6pm7mnv5rngd46vdqt4eby:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.0
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
       jest-util: 27.5.1
       json5: 2.2.1
       lodash.memoize: 4.1.2

@@ -38,6 +38,8 @@
     "@angular/core": "^15.0.0",
     "@angular/platform-browser": "^15.0.0",
     "@angular/platform-browser-dynamic": "^15.0.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"
   },
