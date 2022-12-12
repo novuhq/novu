@@ -13,6 +13,7 @@ import {
   LogCodeEnum,
   LogStatusEnum,
   OrganizationId,
+  SubscriberId,
   TopicId,
   TriggerRecipientsTypeEnum,
   UserId,
@@ -30,6 +31,11 @@ interface ILogTopicSubscribersPayload {
   transactionId: string;
   userId: UserId;
 }
+
+const isNotTopic = (recipient: TriggerRecipientSubscriber): recipient is TriggerRecipientSubscriber =>
+  typeof recipient === 'string' || recipient?.type !== TriggerRecipientsTypeEnum.TOPIC;
+
+const isTopic = (recipient: ITopic): recipient is ITopic => recipient?.type === TriggerRecipientsTypeEnum.TOPIC;
 
 @Injectable()
 export class MapTriggerRecipients {
@@ -72,10 +78,9 @@ export class MapTriggerRecipients {
           organizationId,
           userId,
         });
-        const response = await this.getTopicSubscribers.execute(getTopicSubscribersCommand);
-        const { subscribers } = response;
+        const { subscribers } = await this.getTopicSubscribers.execute(getTopicSubscribersCommand);
 
-        subscribers.forEach((subscriber) => topicSubscribers.push({ subscriberId: subscriber }));
+        subscribers?.forEach((subscriber: SubscriberId) => topicSubscribers.push({ subscriberId: subscriber }));
       } catch (error) {
         this.logTopicSubscribersError({
           environmentId,
@@ -99,15 +104,10 @@ export class MapTriggerRecipients {
   }
 
   private findSubscribers(recipients: TriggerRecipients): ISubscribersDefine[] {
-    const isNotTopic = (recipient: TriggerRecipientSubscriber): recipient is TriggerRecipientSubscriber =>
-      typeof recipient === 'string' || recipient?.type !== TriggerRecipientsTypeEnum.TOPIC;
-
     return recipients.filter(isNotTopic).map(this.mapSubscriber);
   }
 
   private findTopics(recipients: TriggerRecipients): TriggerRecipientTopics {
-    const isTopic = (recipient: ITopic): recipient is ITopic => recipient?.type === TriggerRecipientsTypeEnum.TOPIC;
-
     return recipients.filter(isTopic);
   }
 
