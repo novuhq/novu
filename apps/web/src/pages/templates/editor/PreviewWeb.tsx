@@ -27,10 +27,9 @@ const useStyles = createStyles((theme) => ({
     background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
   },
   header: {
-    width: '90%',
-    maxWidth: '643px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
+    width: '100%',
+    paddingLeft: 10,
+    paddingRight: 10,
     marginTop: '40px',
   },
   subject: {
@@ -49,10 +48,9 @@ const useStyles = createStyles((theme) => ({
   },
   content: {
     borderRadius: '7px 7px 0 0',
-    width: '90%',
-    maxWidth: '643px',
-    marginLeft: 'auto',
-    marginRight: 'auto',
+    width: '100%',
+    paddingLeft: 10,
+    paddingRight: 10,
     height: '50vh',
     background: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
     marginTop: '20px',
