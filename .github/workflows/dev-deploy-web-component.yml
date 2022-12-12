@@ -17,7 +17,10 @@ jobs:
     environment: Development
 
     steps:
-      - uses: actions/download-artifact@master
+      - uses: actions/checkout@v2
+
+      - name: Download the artifact
+        uses: actions/download-artifact@master
         with:
           name: notification-center-web-component
           path: packages/notification-center/dist/umd
