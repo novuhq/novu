@@ -3,7 +3,6 @@ import {
   MessageRepository,
   NotificationStepEntity,
   NotificationRepository,
-  SubscriberEntity,
   SubscriberRepository,
   NotificationEntity,
   MessageEntity,
@@ -16,14 +15,12 @@ import {
   PushProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  StepTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { PushFactory } from '../../services/push-service/push.factory';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import {
@@ -35,13 +32,14 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessagePush extends SendMessageType {
+export class SendMessagePush extends SendMessageBase {
   private pushFactory = new PushFactory();
 
   constructor(
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
@@ -49,23 +47,21 @@ export class SendMessagePush extends SendMessageType {
     private compileTemplate: CompileTemplate,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
   }
 
   public async execute(command: SendMessageCommand) {
+    await this.initialize(command);
+
     Sentry.addBreadcrumb({
       message: 'Sending Push',
     });
 
     const pushChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
 
     const data = {
-      subscriber,
+      subscriber: this.subscriber,
       step: {
         digest: !!command.events.length,
         events: command.events,
@@ -136,7 +132,7 @@ export class SendMessagePush extends SendMessageType {
     }
 
     const overrides = command.overrides[integration.providerId] || {};
-    const pushChannels = subscriber.channels.filter((chan) =>
+    const pushChannels = this.subscriber.channels.filter((chan) =>
       Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
     );
 

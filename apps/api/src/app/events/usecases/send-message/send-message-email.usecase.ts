@@ -20,7 +20,6 @@ import { CompileTemplate } from '../../../content-templates/usecases/compile-tem
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -30,13 +29,14 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessageEmail extends SendMessageType {
+export class SendMessageEmail extends SendMessageBase {
   private mailFactory = new MailFactory();
 
   constructor(
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
@@ -45,18 +45,16 @@ export class SendMessageEmail extends SendMessageType {
     private organizationRepository: OrganizationRepository,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
   }
 
   public async execute(command: SendMessageCommand) {
+    await this.initialize(command);
+
     const emailChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
     const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
-    const email = command.payload.email || subscriber.email;
+    const email = command.payload.email || this.subscriber.email;
 
     Sentry.addBreadcrumb({
       message: 'Sending Email',
@@ -107,7 +105,7 @@ export class SendMessageEmail extends SendMessageType {
         events: command.events,
         total_count: command.events.length,
       },
-      subscriber,
+      subscriber: this.subscriber,
       ...command.payload,
     };
 
@@ -116,7 +114,7 @@ export class SendMessageEmail extends SendMessageType {
         emailChannel.template.subject,
         emailChannel.template.subject,
         organization,
-        subscriber,
+        this.subscriber,
         command,
         preheader
       );
@@ -125,14 +123,14 @@ export class SendMessageEmail extends SendMessageType {
         isEditorMode,
         emailChannel,
         command,
-        subscriber,
+        this.subscriber,
         subject,
         organization,
         preheader
       );
 
       if (preheader) {
-        preheader = await this.renderContent(preheader, subject, organization, subscriber, command, preheader);
+        preheader = await this.renderContent(preheader, subject, organization, this.subscriber, command, preheader);
       }
     } catch (e) {
       await this.createExecutionDetails.execute(

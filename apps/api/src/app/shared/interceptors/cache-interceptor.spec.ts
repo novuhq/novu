@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { beforeEach } from 'mocha';
 import { Cached, InvalidateCache } from './';
-import { ICacheService } from '../services/cache';
+import { CacheKeyPrefixEnum, ICacheService } from '../services/cache';
 import { CacheService } from '../services/cache/cache-service.spec';
 
 describe('cached interceptor', function () {
@@ -117,7 +117,7 @@ class MessageRepo {
   get callCount() {
     return this.count;
   }
-  @Cached('Message')
+  @Cached(CacheKeyPrefixEnum.FEED)
   async find(query: any, select: any = '', options: { limit?: number; sort?: any; skip?: number } = {}): Promise<any> {
     this.count++;
 
@@ -126,7 +126,7 @@ class MessageRepo {
     return this.store[findKey] ?? null;
   }
 
-  @InvalidateCache('Message')
+  @InvalidateCache(CacheKeyPrefixEnum.FEED)
   async create(data: any): Promise<any> {
     this.count++;
 
@@ -137,7 +137,7 @@ class MessageRepo {
     return newEntity ?? null;
   }
 
-  @InvalidateCache('Message')
+  @InvalidateCache(CacheKeyPrefixEnum.FEED)
   async update(query: any, updateBody: any): Promise<any> {
     this.count++;
     const createKey = `${query._subscriberId}:${query._environmentId}`;
@@ -160,14 +160,14 @@ class Repo {
   get callCount() {
     return this.count;
   }
-  @Cached('feed')
+  @Cached(CacheKeyPrefixEnum.FEED)
   async find(query: any, select: any = '', options: { limit?: number; sort?: any; skip?: number } = {}): Promise<any> {
     this.count++;
 
     return this.store;
   }
 
-  @InvalidateCache('feed')
+  @InvalidateCache(CacheKeyPrefixEnum.FEED)
   async update(query: any, updateBody: any): Promise<any> {
     this.store = updateBody;
     this.count++;

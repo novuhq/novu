@@ -35,4 +35,5 @@ function invalidateCase(storeKeyPrefix: string, credentials: Record<string, unkn
 export enum CacheKeyPrefixEnum {
   MESSAGE_COUNT = 'message-count',
   FEED = 'feed',
+  SUBSCRIBER = 'subscriber',
 }

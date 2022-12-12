@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { SendMessageType } from './send-message-type.usecase';
 import { ChatFactory } from '../../services/chat-service/chat.factory';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { SendMessageCommand } from './send-message.command';
@@ -7,7 +6,6 @@ import * as Sentry from '@sentry/node';
 import {
   NotificationRepository,
   NotificationStepEntity,
-  SubscriberEntity,
   SubscriberRepository,
   MessageRepository,
   MessageEntity,
@@ -34,13 +32,14 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessageChat extends SendMessageType {
+export class SendMessageChat extends SendMessageBase {
   private chatFactory = new ChatFactory();
 
   constructor(
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
@@ -48,22 +47,21 @@ export class SendMessageChat extends SendMessageType {
     private compileTemplate: CompileTemplate,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
   }
 
   public async execute(command: SendMessageCommand) {
+    await this.initialize(command);
+
     Sentry.addBreadcrumb({
       message: 'Sending Chat',
     });
     const chatChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
+
     let content = '';
     const data = {
-      subscriber,
+      subscriber: this.subscriber,
       step: {
         digest: !!command.events.length,
         events: command.events,
@@ -96,7 +94,7 @@ export class SendMessageChat extends SendMessageType {
       return;
     }
 
-    const chatChannels = subscriber.channels.filter((chan) =>
+    const chatChannels = this.subscriber.channels.filter((chan) =>
       Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
     );
 
