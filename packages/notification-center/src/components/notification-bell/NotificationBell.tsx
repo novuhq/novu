@@ -1,10 +1,13 @@
 import React from 'react';
 import { ActionIcon } from '@mantine/core';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
+import { cx, css } from '@emotion/css';
+
 import { colors, ColorScheme } from '../../shared/config/colors';
 import { Bell as BellIcon, GradientDot } from '../../shared/icons';
 import { useDefaultBellColors, useUnseenCount } from '../../hooks';
-import { ISvgStopColor } from '../../store/novu-theme.context';
+import type { ISvgStopColor } from '../../store/novu-theme.context';
+import { useStyles } from '../../store/styles';
 
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
@@ -24,11 +27,18 @@ export function NotificationBell(props: INotificationBellProps) {
     },
     colorScheme: props?.colorScheme,
   });
+  const [bellButtonStyles, bellDotStyles] = useStyles(['bellButton.root', 'bellButton.dot']);
 
   return (
-    <ActionIcon variant="transparent" data-test-id="notification-bell">
+    <ActionIcon
+      variant="transparent"
+      className={cx('nc-bell-button', css(bellButtonStyles))}
+      data-test-id="notification-bell"
+    >
       <BellIcon {...headerIconsSettings} />
-      {unseenCount > 0 ? <StyledGradientDot bellColors={bellColors} /> : null}
+      {unseenCount > 0 ? (
+        <StyledGradientDot bellColors={bellColors} className={cx('nc-bell-button-dot', css(bellDotStyles))} />
+      ) : null}
     </ActionIcon>
   );
 }

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { Document, Model, Types, ProjectionType } from 'mongoose';
+
 export class BaseRepository<T_Query, T_Response> {
   public _model: Model<any & Document>;
 
@@ -10,6 +11,14 @@ export class BaseRepository<T_Query, T_Response> {
 
   public static createObjectId() {
     return new Types.ObjectId().toString();
+  }
+
+  public static convertObjectIdToString(value: Types.ObjectId): string {
+    return value.toString();
+  }
+
+  public static convertStringToObjectId(value: string): Types.ObjectId {
+    return new Types.ObjectId(value);
   }
 
   async count(query: T_Query): Promise<number> {

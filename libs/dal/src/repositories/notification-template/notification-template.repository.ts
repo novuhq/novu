@@ -5,9 +5,12 @@ import { NotificationTemplate } from './notification-template.schema';
 import { NotificationTemplateEntity } from './notification-template.entity';
 import { DalException } from '../../shared';
 
-class PartialIntegrationEntity extends Omit(NotificationTemplateEntity, ['_environmentId', '_organizationId']) {}
+class PartialNotificationTemplateEntity extends Omit(NotificationTemplateEntity, [
+  '_environmentId',
+  '_organizationId',
+]) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialNotificationTemplateEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 export class NotificationTemplateRepository extends BaseRepository<

@@ -418,7 +418,7 @@ install_databases () {
         fi
     else
         skip_message "Databases"
-        echo $SKIP
+        echo "$SKIP"
     fi
 }
 

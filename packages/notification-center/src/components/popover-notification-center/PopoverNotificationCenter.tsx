@@ -1,6 +1,7 @@
 import React from 'react';
 import { PopoverProps } from '@mantine/core';
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
+
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
@@ -8,7 +9,7 @@ import { useDefaultTheme, useUnseenCount } from '../../hooks';
 import { ColorScheme, INovuThemePopoverProvider } from '../../index';
 import { ITab, ListItem } from '../../shared/interfaces';
 
-interface IPopoverNotificationCenterProps {
+export interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;

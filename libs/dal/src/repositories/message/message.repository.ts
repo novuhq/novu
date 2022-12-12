@@ -7,9 +7,9 @@ import { Message } from './message.schema';
 import { FeedRepository } from '../feed';
 import { DalException } from '../../shared';
 
-class PartialIntegrationEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
+class PartialMessageEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialMessageEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, MessageEntity> {
@@ -124,15 +124,6 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     );
   }
 
-  async getBulkMessagesByNotificationIds(environmentId: string, notificationIds: string[]) {
-    return this.find({
-      _environmentId: environmentId,
-      _notificationId: {
-        $in: notificationIds,
-      },
-    });
-  }
-
   async updateMessageStatus(
     environmentId: string,
     id: string,
@@ -182,7 +173,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
 
   async getFeed(
     environmentId: string,
-    query: { channels?: ChannelTypeEnum[]; templates?: string[]; emails?: string[]; subscriberId?: string } = {},
+    query: { channels?: ChannelTypeEnum[]; templates?: string[]; emails?: string[]; _subscriberId?: string } = {},
     skip = 0,
     limit = 10
   ) {
@@ -208,8 +199,8 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
       };
     }
 
-    if (query?.subscriberId) {
-      requestQuery._subscriberId = query?.subscriberId;
+    if (query?._subscriberId) {
+      requestQuery._subscriberId = query?._subscriberId;
     }
 
     const totalCount = await this.count(requestQuery);
@@ -261,10 +252,15 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
   }
 
   async delete(query: EnforceEnvironmentQuery) {
-    const message = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
+    const message = await this.findOne({
+      _id: query._id,
+      _environmentId: query._environmentId,
+    });
+
     if (!message) {
       throw new DalException(`Could not find a message with id ${query._id}`);
     }
+
     await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
   }
 

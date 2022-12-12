@@ -5,9 +5,9 @@ import { Subscriber } from './subscriber.schema';
 import { DalException } from '../../shared';
 import { Document, FilterQuery } from 'mongoose';
 
-class PartialIntegrationEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
+class PartialSubscriberEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery, SubscriberEntity> {
@@ -58,6 +58,7 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
     });
+
     if (!foundSubscriber) {
       throw new DalException(`Could not find subscriber ${query.subscriberId} to delete`);
     }

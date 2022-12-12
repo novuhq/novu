@@ -1,6 +1,6 @@
 import { useApi } from './use-api.hook';
 import { useEffect, useState } from 'react';
-import { IUserPreferenceSettings } from '@novu/client';
+import type { IUserPreferenceSettings } from '@novu/client';
 import { useAuth } from './use-auth.hook';
 
 export function useSubscriberPreference() {

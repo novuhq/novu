@@ -739,6 +739,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       _environmentId: session.environment._id,
       channel: channelType,
     });
+
     expect(messages.length).to.equal(4);
     const isUnique = (value, index, self) => self.indexOf(value) === index;
     const subscriberIds = messages.map((message) => message._subscriberId).filter(isUnique);
