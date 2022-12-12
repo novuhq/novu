@@ -60,17 +60,18 @@ export class PasswordResetRequest {
     const diffSeconds = differenceInSeconds(new Date(), formattedDate);
     const diffHours = differenceInHours(new Date(), formattedDate);
 
-    if (diffHours < this.RATE_LIMIT_IN_HOURS && user?.resetTokenCount?.reqInDay >= this.MAX_ATTEMPTS_IN_A_DAY) {
+    const withinDailyLimit = diffHours < this.RATE_LIMIT_IN_HOURS;
+    const exceededDailyAttempt = user?.resetTokenCount?.reqInDay >= this.MAX_ATTEMPTS_IN_A_DAY;
+    if (withinDailyLimit && exceededDailyAttempt) {
       return {
         isBlocked: true,
         error: `Too many requests, Try again after ${this.RATE_LIMIT_IN_HOURS} hours.`,
       };
     }
 
-    if (
-      diffSeconds < this.RATE_LIMIT_IN_SECONDS &&
-      user?.resetTokenCount?.reqInMinute >= this.MAX_ATTEMPTS_IN_A_MINUTE
-    ) {
+    const withinMinuteLimit = diffSeconds < this.RATE_LIMIT_IN_SECONDS;
+    const exceededMinuteAttempt = user?.resetTokenCount?.reqInMinute >= this.MAX_ATTEMPTS_IN_A_MINUTE;
+    if (withinMinuteLimit && exceededMinuteAttempt) {
       return {
         isBlocked: true,
         error: `Too many requests, Try again after a minute.`,
