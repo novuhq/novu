@@ -27,17 +27,22 @@ export class Login {
     if (!user) throw new ApiException('User not found');
 
     if (this.isAccountBlocked(user)) {
-      throw new UnauthorizedException(
-        `Account blocked, Please try again after ${this.BLOCKED_PERIOD_IN_MINUTES} minutes`
-      );
+      const blockedMinutesLeft = this.getBlockedMinutesLeft(user.failedLogin.lastFailedAttempt);
+      throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
     }
 
     if (!user.password) throw new ApiException('OAuth user login attempt');
 
     const isMatching = await bcrypt.compare(command.password, user.password);
     if (!isMatching) {
-      await this.updateFailedAttempts(user);
-      throw new ApiException('Wrong credentials provided');
+      const failedAttempts = await this.updateFailedAttempts(user);
+      const remainingAttempts = this.MAX_LOGIN_ATTEMPTS - failedAttempts;
+
+      if (remainingAttempts === 0) {
+        const blockedMinutesLeft = this.getBlockedMinutesLeft(user.failedLogin.lastFailedAttempt);
+        throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
+      }
+      throw new ApiException(`Wrong credentials provided. ${remainingAttempts} Attempts left`);
     }
 
     this.analyticsService.upsertUser(user, user._id);
@@ -83,6 +88,8 @@ export class Login {
         },
       }
     );
+
+    return times;
   }
 
   private async resetFailedAttempts(user: UserEntity) {
@@ -104,5 +111,11 @@ export class Login {
     const diff = differenceInMinutes(now, formattedLastAttempt);
 
     return diff;
+  }
+
+  private getBlockedMinutesLeft(lastFailedAttempt: string) {
+    const diff = this.getTimeDiffForAttempt(lastFailedAttempt);
+
+    return this.BLOCKED_PERIOD_IN_MINUTES - diff;
   }
 }

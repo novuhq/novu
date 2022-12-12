@@ -135,7 +135,7 @@ describe('User login - /auth/login (POST)', async () => {
       }
     );
 
-    for (let i = 0; i < MAX_LOGIN_ATTEMPTS; i++) {
+    for (let i = 0; i < MAX_LOGIN_ATTEMPTS - 1; i++) {
       const { body } = await session.testAgent.post('/v1/auth/login').send({
         email: session.user.email,
         password: 'wrong-password',
@@ -144,5 +144,13 @@ describe('User login - /auth/login (POST)', async () => {
       expect(body.message).to.contain('Wrong credentials provided');
       expect(body.statusCode).to.equal(400);
     }
+
+    const { body } = await session.testAgent.post('/v1/auth/login').send({
+      email: userCredentials.email,
+      password: userCredentials.password,
+    });
+
+    expect(body.statusCode).to.equal(401);
+    expect(body.message).to.contain('Account blocked');
   });
 });
