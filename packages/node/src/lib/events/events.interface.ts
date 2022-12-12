@@ -4,44 +4,26 @@ import { IAttachmentOptions } from '../novu.interface';
 import { ITopic } from '../topics/topic.interface';
 import { ISubscribersDefine } from '../subscribers/subscriber.interface';
 
-/**
- * RETRO COMPATIBLE TYPES
- * TODO
- */
-export type TriggerRecipientsSubscriber = string | ISubscribersDefine;
-export type TriggerRecipientsSubscriberMany = TriggerRecipientsSubscriber[];
-export type TriggerRecipientsSubscribers =
-  | TriggerRecipientsSubscriber
-  | TriggerRecipientsSubscriberMany;
-export type TriggerRecipientsTopics = ITopic | ITopic[];
-
-export type TriggerRecipientsType =
-  | TriggerRecipientsSubscribers
-  | TriggerRecipientsTopics;
-
-export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
-  to: TriggerRecipientsSubscribers;
-  actor?: TriggerRecipientsSubscriber;
-}
-////////
-
-/**
- * NEW INTEGRATION TYPES
- * TODO
- */
 export type TriggerRecipientSubscriber = string | ISubscribersDefine;
 export type TriggerRecipientTopics = ITopic[];
+
 export type TriggerRecipient = TriggerRecipientSubscriber | ITopic;
+
 export type TriggerRecipients = TriggerRecipient[];
-// string | ISubscribersDefine | string[] | ISubscribersDefine[] | ITopic[]
+
+// string | ISubscribersDefine | (string | ISubscribersDefine | ITopic)[]
 export type TriggerRecipientsPayload =
   | TriggerRecipientSubscriber
   | TriggerRecipients;
-//////////////////
 
 export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
+}
+
+export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
+  to: TriggerRecipientsPayload;
+  actor?: TriggerRecipientSubscriber;
 }
 
 export interface ITriggerPayload {
