@@ -89,13 +89,13 @@ describe('User Sign-up and Login', function () {
       cy.location('pathname').should('equal', '/templates');
     });
 
-    it('should show bad password error when authenticating with bad credentials', function () {
+    it('should show incorrect email or password error when authenticating with bad credentials', function () {
       cy.visit('/auth/login');
 
       cy.getByTestId('email').type('test-user-1@example.com');
       cy.getByTestId('password').type('123456');
       cy.getByTestId('submit-btn').click();
-      cy.get('.mantine-PasswordInput-error').contains('Invalid password');
+      cy.getByTestId('error-alert-banner').contains('Incorrect email or password provided');
     });
 
     it('should show invalid email error when authenticating with invalid email', function () {
@@ -107,13 +107,13 @@ describe('User Sign-up and Login', function () {
       cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
     });
 
-    it('should show invalid email error when authenticating with invalid email', function () {
+    it('should show incorrect email or password error when authenticating with non-existing email', function () {
       cy.visit('/auth/login');
 
       cy.getByTestId('email').type('test-user-1@example.de');
       cy.getByTestId('password').type('123456');
       cy.getByTestId('submit-btn').click();
-      cy.get('.mantine-TextInput-error').contains('Account does not exist');
+      cy.getByTestId('error-alert-banner').contains('Incorrect email or password provided');
     });
   });
 
