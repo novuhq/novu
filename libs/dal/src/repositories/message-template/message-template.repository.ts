@@ -3,9 +3,9 @@ import { MessageTemplate } from './message-template.schema';
 import { MessageTemplateEntity } from './message-template.entity';
 import { Document, FilterQuery } from 'mongoose';
 
-class PartialIntegrationEntity extends Omit(MessageTemplateEntity, ['_environmentId', '_organizationId']) {}
+class PartialMessageTemplateEntity extends Omit(MessageTemplateEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialMessageTemplateEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 export class MessageTemplateRepository extends BaseRepository<EnforceEnvironmentQuery, MessageTemplateEntity> {

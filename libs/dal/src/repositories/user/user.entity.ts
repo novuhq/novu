@@ -9,12 +9,19 @@ export interface IUserToken {
   valid: boolean;
 }
 
+export interface IUserResetTokenCount {
+  reqInMinute: number;
+  reqInDay: number;
+}
+
 export class UserEntity {
   _id: string;
 
   resetToken?: string;
 
   resetTokenDate?: string;
+
+  resetTokenCount?: IUserResetTokenCount;
 
   firstName: string;
 
@@ -33,4 +40,9 @@ export class UserEntity {
   createdAt: string;
 
   showOnBoarding?: boolean;
+
+  failedLogin?: {
+    times: number;
+    lastFailedAttempt: string;
+  };
 }

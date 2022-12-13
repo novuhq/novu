@@ -3,6 +3,7 @@ import { FilterQuery } from 'mongoose';
 
 import { TopicEntity } from './topic.entity';
 import { Topic } from './topic.schema';
+import { TopicSubscribers } from './topic-subscribers.schema';
 import { EnvironmentId, OrganizationId, TopicKey, UserId } from './types';
 
 import { BaseRepository, Omit } from '../base-repository';
@@ -30,14 +31,41 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
   }
 
   async findTopic(entity: Omit<TopicEntity, 'key' | 'name'>): Promise<TopicEntity> {
+    const TOPIC_SUBSCRIBERS_COLLECTION = 'topicsubscribers';
+
     const { _environmentId, _id, _organizationId, _userId } = entity;
 
-    return await this.findOne({
-      _environmentId,
-      _id,
-      _organizationId,
-      _userId,
-    });
+    const [result] = await this.aggregate([
+      {
+        $match: { _organizationId, _environmentId, _id, _userId },
+      },
+      {
+        $lookup: {
+          from: TOPIC_SUBSCRIBERS_COLLECTION,
+          localField: '_id',
+          foreignField: '_topicId',
+          as: 'topicSubscribers',
+        },
+      },
+      {
+        $project: {
+          _environmentId: 1,
+          _organizationId: 1,
+          _userId: 1,
+          key: 1,
+          name: 1,
+          // The lookup returns a matrix so we return the first array element in the projection
+          subscribers: { $arrayElemAt: ['$topicSubscribers.subscribers', 0] },
+        },
+      },
+      { $limit: 1 },
+    ]);
+
+    if (!result) {
+      return undefined;
+    }
+
+    return this.mapEntity(result);
   }
 
   async findTopicByKey(

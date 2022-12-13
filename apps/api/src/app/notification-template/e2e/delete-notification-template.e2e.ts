@@ -62,7 +62,7 @@ describe('Delete notification template by id - /notification-templates/:template
     const isCreated = await notificationTemplateRepository.findOne({
       _environmentId: prodEvn._id,
       _parentId: notificationTemplateId,
-    } as any);
+    });
 
     expect(isCreated).to.exist;
 
@@ -81,7 +81,7 @@ describe('Delete notification template by id - /notification-templates/:template
     const isDeleted = await notificationTemplateRepository.findOne({
       _environmentId: prodEvn._id,
       _parentId: notificationTemplateId,
-    } as any);
+    });
 
     expect(!isDeleted).to.equal(true);
   });

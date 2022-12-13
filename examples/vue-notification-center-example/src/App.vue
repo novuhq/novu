@@ -13,7 +13,9 @@ import NotificationCenterWrapper from './components/NotificationCenterWrapper.vu
     </div>
   </header>
 
-  <NotificationCenterWrapper />
+  <div class="notification-center-wrapper">
+    <NotificationCenterWrapper />
+  </div>
 
   <main>
     <TheWelcome />
@@ -28,6 +30,16 @@ header {
 .logo {
   display: block;
   margin: 0 auto 2rem;
+}
+
+.notification-center-wrapper {
+  position: relative;
+}
+
+.notification-center-wrapper > *:first-child {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 @media (min-width: 1024px) {

@@ -12,6 +12,7 @@ import {
 } from '../../../integrations/usecases/get-decrypted-integrations';
 import { TestSendMessageCommand } from './send-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { SendMessageEmail } from './send-message-email.usecase';
 
 @Injectable()
 export class SendTestEmail {
@@ -58,10 +59,12 @@ export class SendTestEmail {
       throw new ApiException(`Message content could not be generated`);
     }
 
+    const customTemplate = SendMessageEmail.addPreheader(content as string, command.contentType);
+
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: isEditorMode ? 'basic' : 'custom',
-        customTemplate: command.contentType === 'customHtml' ? (content as string) : undefined,
+        customTemplate: customTemplate,
         data: {
           subject,
           preheader: command.preheader,

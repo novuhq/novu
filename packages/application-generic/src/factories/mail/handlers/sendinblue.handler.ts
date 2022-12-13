@@ -8,7 +8,11 @@ export class SendinblueHandler extends BaseHandler {
     super('sendinblue', ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials, from?: string) {
-    const config: { apiKey: string } = { apiKey: credentials.apiKey };
+    const config: { apiKey: string; senderName: string; from: string } = {
+      apiKey: credentials.apiKey,
+      senderName: credentials.senderName,
+      from: from,
+    };
 
     this.provider = new SendinblueEmailProvider(config);
   }

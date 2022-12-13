@@ -4,9 +4,9 @@ import { ChangeEntity } from './change.entity';
 import { Change } from './change.schema';
 import { Document, FilterQuery } from 'mongoose';
 
-class PartialIntegrationEntity extends Omit(ChangeEntity, ['_environmentId', '_organizationId']) {}
+class PartialChangeEntity extends Omit(ChangeEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialChangeEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, ChangeEntity> {

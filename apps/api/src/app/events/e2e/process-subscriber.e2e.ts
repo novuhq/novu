@@ -11,7 +11,6 @@ import axios from 'axios';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ISubscribersDefine } from '@novu/node';
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
-import { testCacheService } from '../../../../e2e/setup';
 
 const axiosInstance = axios.create();
 
@@ -21,10 +20,9 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
-  const cacheService = testCacheService;
-  const subscriberRepository = new SubscriberRepository(cacheService);
-  const messageRepository = new MessageRepository(cacheService);
-  const notificationTemplateRepository = new NotificationTemplateRepository(cacheService);
+  const subscriberRepository = new SubscriberRepository();
+  const messageRepository = new MessageRepository();
+  const notificationTemplateRepository = new NotificationTemplateRepository();
 
   beforeEach(async () => {
     session = new UserSession();

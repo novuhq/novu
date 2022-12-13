@@ -1,27 +1,47 @@
 import React from 'react';
 import { ActionIcon } from '@mantine/core';
-import styled from 'styled-components';
+import { css, cx } from '@emotion/css';
+
 import { ArrowLeft } from '../../../../../shared/icons';
 import { useNovuTheme, useScreens, useTranslations } from '../../../../../hooks';
 import { ScreensEnum } from '../../../../../shared/enums/screens.enum';
+import { useStyles } from '../../../../../store/styles';
 
 export function UserPreferenceHeader() {
   const { theme } = useNovuTheme();
   const { setScreen } = useScreens();
   const { t } = useTranslations();
+  const [headerStyles, headerTitleStyles, backButtonStyles] = useStyles([
+    'header.root',
+    'header.title',
+    'header.backButton',
+  ]);
 
   return (
-    <HeaderWrapper>
-      <ActionIcon data-test-id="go-back-btn" variant="transparent" onClick={() => setScreen(ScreensEnum.NOTIFICATIONS)}>
-        <ArrowLeft style={{ marginLeft: '15px', color: theme.header.fontColor }} />
+    <div className={cx('nc-header', headerClassName, css(headerStyles))}>
+      <ActionIcon
+        className={cx(
+          'nc-header-back-button',
+          css`
+            color: ${theme.header.fontColor};
+          `,
+          css(backButtonStyles)
+        )}
+        data-test-id="go-back-btn"
+        variant="transparent"
+        onClick={() => setScreen(ScreensEnum.NOTIFICATIONS)}
+      >
+        <ArrowLeft style={{ marginLeft: '15px' }} />
       </ActionIcon>
-      <Title fontColor={theme.header.fontColor}>{t('settings')}</Title>
-    </HeaderWrapper>
+      <div className={cx('nc-header-title', titleClassName(theme.header.fontColor), css(headerTitleStyles))}>
+        {t('settings')}
+      </div>
+    </div>
   );
 }
 
-const Title = styled.div<{ fontColor: string }>`
-  color: ${({ fontColor }) => fontColor};
+const titleClassName = (fontColor: string) => css`
+  color: ${fontColor};
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
@@ -29,7 +49,7 @@ const Title = styled.div<{ fontColor: string }>`
   text-align: left;
 `;
 
-const HeaderWrapper = styled.div`
+const headerClassName = css`
   display: flex;
   flex-direction: row;
   align-items: center;

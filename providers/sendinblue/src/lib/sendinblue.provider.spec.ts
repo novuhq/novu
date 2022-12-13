@@ -1,9 +1,12 @@
 import { SendinblueEmailProvider } from './sendinblue.provider';
 import { EmailEventStatusEnum } from '@novu/stateless';
+import { TransactionalEmailsApi, SendSmtpEmail } from '@sendinblue/client';
 
 const mockConfig = {
   apiKey:
     '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',
+  from: 'test@novu.co',
+  senderName: 'test',
 };
 
 const mockNovuMessage = {
@@ -56,6 +59,35 @@ test('should trigger sendinblue library correctly', async () => {
       },
     ],
   });
+});
+
+test('should correctly use sender email and name from the config', async () => {
+  const emailsApi = new TransactionalEmailsApi('/test');
+  const sendTransacEmailMock = jest.fn(
+    async (_sendSmtpEmail, _options?) => ({})
+  );
+  emailsApi.sendTransacEmail = sendTransacEmailMock as any;
+  const provider = new SendinblueEmailProvider(mockConfig);
+  // eslint-disable-next-line @typescript-eslint/dot-notation
+  provider['transactionalEmailsApi'] = emailsApi;
+  const { from, ...mockNovuMessageWithoutFrom } = mockNovuMessage;
+
+  // use config.from if message.from is not provided
+  await provider.sendMessage(mockNovuMessageWithoutFrom);
+  expect(sendTransacEmailMock).toBeCalledTimes(1);
+  expect(sendTransacEmailMock.mock.calls[0][0]).toBeInstanceOf(SendSmtpEmail);
+  const smtpEmail = sendTransacEmailMock.mock.calls[0][0] as SendSmtpEmail;
+  expect(smtpEmail.sender.email).toBe(mockConfig.from);
+
+  // sendinblue sender.name should be set from config
+  expect(smtpEmail.sender.name).toBe(mockConfig.senderName);
+
+  // Use the message.from instead of config.from if available
+  await provider.sendMessage(mockNovuMessage);
+  expect(sendTransacEmailMock).toBeCalledTimes(2);
+  const smtpEmailWithFrom = sendTransacEmailMock.mock
+    .calls[1][0] as SendSmtpEmail;
+  expect(smtpEmailWithFrom.sender.email).toBe(mockNovuMessage.from);
 });
 
 describe('getMessageId', () => {
