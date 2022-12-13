@@ -431,6 +431,7 @@ export class SendMessageEmail extends SendMessageType {
 
   public static addPreheader(content: string, contentType: 'editor' | 'customHtml'): string | undefined {
     if (contentType === 'customHtml') {
+      // "&nbsp;&zwnj;&nbsp;&zwnj;" is needed to spacing away the rest of the email from the preheader area in email clients
       return content.replace(
         /<body[^>]*>/g,
         `$&{{#if preheader}}
