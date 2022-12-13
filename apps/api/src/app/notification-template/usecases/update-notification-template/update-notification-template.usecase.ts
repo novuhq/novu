@@ -17,10 +17,12 @@ import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
 
 @Injectable()
 export class UpdateNotificationTemplate {
   constructor(
+    private cacheService: CacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
     private updateMessageTemplate: UpdateMessageTemplate,
@@ -32,7 +34,7 @@ export class UpdateNotificationTemplate {
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
     const existingTemplate = await this.notificationTemplateRepository.findById(
       command.templateId,
-      command.organizationId
+      command.environmentId
     );
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.templateId} not found`);
 
@@ -193,6 +195,15 @@ export class UpdateNotificationTemplate {
       throw new BadRequestException('No properties found for update');
     }
 
+    invalidateCache({
+      service: this.cacheService,
+      storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
+      credentials: {
+        _id: command.templateId,
+        environmentId: command.environmentId,
+      },
+    });
+
     await this.notificationTemplateRepository.update(
       {
         _id: command.templateId,
@@ -205,7 +216,7 @@ export class UpdateNotificationTemplate {
 
     const notificationTemplateWithStepTemplate = await this.notificationTemplateRepository.findById(
       command.templateId,
-      command.organizationId
+      command.environmentId
     );
 
     const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);

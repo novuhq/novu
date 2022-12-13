@@ -3,6 +3,7 @@ import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } f
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum } from '@novu/shared';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../shared/services/cache';
 
 describe('Unseen Count - GET /widget/notifications/unseen', function () {
   const messageRepository = new MessageRepository();
@@ -13,6 +14,10 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
   let subscriberProfile: {
     _id: string;
   } = null;
+  const cacheService = new CacheService({
+    cacheHost: process.env.REDIS_CACHE_HOST,
+    cachePort: process.env.REDIS_CACHE_PORT,
+  });
 
   beforeEach(async () => {
     session = new UserSession();
@@ -81,6 +86,7 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
       subscriberProfile._id,
       ChannelTypeEnum.IN_APP
     );
+
     const messageId = messages[0]._id;
     expect(messages[0].read).to.equal(false);
 
@@ -117,6 +123,15 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
 
     let seenCount = (await getFeedCount({ seen: false })).data.count;
     expect(seenCount).to.equal(3);
+
+    invalidateCache({
+      service: cacheService,
+      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT],
+      credentials: {
+        subscriberId: subscriberId,
+        environmentId: session.environment._id,
+      },
+    });
 
     await axios.post(
       `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
