@@ -81,7 +81,7 @@ describe('Creation functionality', function () {
       });
   });
 
-  it('should manage varaibles', function () {
+  it('should manage variables', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
