@@ -71,19 +71,24 @@ export class CacheService implements ICacheService {
   }
 
   public delByPattern(pattern: string) {
-    const client = this.client;
-    const stream = client.scanStream({
-      match: pattern,
-    });
+    return new Promise((resolve, reject) => {
+      const client = this.client;
+      const stream = client.scanStream({
+        match: pattern,
+      });
 
-    stream.on('data', function (keys) {
-      if (keys.length) {
-        const pipeline = client.pipeline();
-        keys.forEach(function (key) {
-          pipeline.del(key);
-        });
-        pipeline.exec();
-      }
+      stream.on('data', function (keys) {
+        if (keys.length) {
+          const pipeline = client.pipeline();
+          keys.forEach(function (key) {
+            pipeline.del(key);
+          });
+          pipeline.exec().then(resolve).catch(reject);
+        }
+      });
+      stream.on('end', () => {
+        resolve(undefined);
+      });
     });
   }
 

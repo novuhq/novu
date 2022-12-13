@@ -1,7 +1,7 @@
 import { ICacheService } from './cache.service';
 import { buildKey, CacheInterceptorTypeEnum } from '../../interceptors';
 
-export function invalidateCache({
+export async function invalidateCache({
   service,
   storeKeyPrefix,
   credentials,
@@ -11,13 +11,17 @@ export function invalidateCache({
   credentials: Record<string, unknown>;
 }) {
   if (storeKeyPrefix instanceof Array) {
-    storeKeyPrefix.forEach((prefix) => invalidateCase(prefix, credentials, service));
+    await Promise.all(
+      storeKeyPrefix.map(async (prefix) => {
+        await invalidateCase(prefix, credentials, service);
+      })
+    );
   } else {
     invalidateCase(storeKeyPrefix, credentials, service);
   }
 }
 
-function invalidateCase(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>, service) {
+async function invalidateCase(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>, service) {
   const cacheKey = buildKey(storeKeyPrefix, credentials, CacheInterceptorTypeEnum.INVALIDATE);
 
   if (!cacheKey) {
@@ -25,7 +29,7 @@ function invalidateCase(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<
   }
 
   try {
-    service.delByPattern(cacheKey);
+    await service.delByPattern(cacheKey);
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);

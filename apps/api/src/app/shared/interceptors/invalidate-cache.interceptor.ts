@@ -24,7 +24,7 @@ export function InvalidateCache(storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPre
 
       const query = getInvalidateQuery(methodName, res, args);
 
-      invalidateCache({
+      await invalidateCache({
         service: this.cacheService,
         storeKeyPrefix: getStoreKeyPrefix(storeKeyPrefix),
         credentials: query,
