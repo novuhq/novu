@@ -23,8 +23,19 @@ export class Login {
   async execute(command: LoginCommand) {
     const email = normalizeEmail(command.email);
     const user = await this.userRepository.findByEmail(email);
-    // TODO: update it to throw relevant exceptions like NotFoundException in this case
-    if (!user) throw new ApiException('User not found');
+
+    if (!user) {
+      /**
+       * maxWaitTime and minWaitTime(millisecond) are used to mimic the delay for server response times
+       * received for existing users flow
+       */
+      const maxWaitTime = 110;
+      const minWaitTime = 90;
+      const randomWaitTime = Math.floor(Math.random() * (maxWaitTime - minWaitTime) + minWaitTime);
+      await new Promise((resolve) => setTimeout(resolve, randomWaitTime)); // will wait randomly for the chosen time to sync response time
+
+      throw new UnauthorizedException('Incorrect email or password provided.');
+    }
 
     if (this.isAccountBlocked(user)) {
       const blockedMinutesLeft = this.getBlockedMinutesLeft(user.failedLogin.lastFailedAttempt);
@@ -42,7 +53,12 @@ export class Login {
         const blockedMinutesLeft = this.getBlockedMinutesLeft(user.failedLogin.lastFailedAttempt);
         throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
       }
-      throw new ApiException(`Wrong credentials provided. ${remainingAttempts} Attempts left`);
+
+      if (remainingAttempts < 3) {
+        throw new UnauthorizedException(`Incorrect email or password provided. ${remainingAttempts} Attempts left`);
+      }
+
+      throw new UnauthorizedException(`Incorrect email or password provided.`);
     }
 
     this.analyticsService.upsertUser(user, user._id);
