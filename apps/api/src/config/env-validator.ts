@@ -47,7 +47,7 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   FF_IS_TOPIC_NOTIFICATION_ENABLED: str({
     choices: ['false', 'true'],
-    default: 'false'
+    default: 'false',
   }),
 };
 
