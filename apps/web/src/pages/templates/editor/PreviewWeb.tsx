@@ -1,10 +1,11 @@
-import { createStyles, Group } from '@mantine/core';
+import { Center, createStyles, Group, Loader } from '@mantine/core';
 import { format } from 'date-fns';
 import { colors } from '../../../design-system';
 import { PreviewDateIcon } from './PreviewDateIcon';
 import { PreviewUserIcon } from './PreviewUserIcon';
 import Frame from 'react-frame-component';
 import { ErrorBoundary } from 'react-error-boundary';
+import { When } from '../../../components/utils/When';
 
 const useStyles = createStyles((theme) => ({
   browser: {
@@ -48,9 +49,8 @@ const useStyles = createStyles((theme) => ({
   },
   content: {
     borderRadius: '7px 7px 0 0',
-    width: '100%',
-    paddingLeft: 10,
-    paddingRight: 10,
+    marginLeft: 10,
+    marginRight: 10,
     height: '50vh',
     background: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
     marginTop: '20px',
@@ -76,10 +76,12 @@ export const PreviewWeb = ({
   integration,
   subject,
   content,
+  loading = false,
 }: {
   integration: any;
   subject: string;
   content: string;
+  loading?: boolean;
 }) => {
   const { classes } = useStyles();
 
@@ -137,21 +139,30 @@ export const PreviewWeb = ({
               </div>
             </div>
           </Group>
+          <When truthy={loading}>
+            <div>
+              <Center>
+                <Loader color={colors.B70} mb={20} mt={20} size={32} />
+              </Center>
+            </div>
+          </When>
         </div>
-        <div className={classes.content}>
-          <ErrorBoundary
-            FallbackComponent={() => (
-              <div data-test-id="preview-content" className={classes.fallbackFrame}>
-                Oops! We've recognized some glitch in this HTML. Please give it another look!
-              </div>
-            )}
-            resetKeys={[content]}
-          >
-            <Frame className={classes.frame} data-test-id="preview-content" initialContent={content}>
-              <></>
-            </Frame>
-          </ErrorBoundary>
-        </div>
+        <When truthy={!loading}>
+          <div className={classes.content}>
+            <ErrorBoundary
+              FallbackComponent={() => (
+                <div data-test-id="preview-content" className={classes.fallbackFrame}>
+                  Oops! We've recognized some glitch in this HTML. Please give it another look!
+                </div>
+              )}
+              resetKeys={[content]}
+            >
+              <Frame className={classes.frame} data-test-id="preview-content" initialContent={content}>
+                <></>
+              </Frame>
+            </ErrorBoundary>
+          </div>
+        </When>
       </div>
       <div className={classes.bottom}></div>
     </>
