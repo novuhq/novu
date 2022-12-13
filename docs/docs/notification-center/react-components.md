@@ -1,3 +1,7 @@
+---
+sidebar_position: 3
+---
+
 # React Component
 
 Novu provides the `@novu/notification-center` a React library that helps to add a fully functioning notification center to your web application in minutes. Let's do a quick recap on how we can easily use it in your application:
@@ -13,13 +17,13 @@ import {
   NotificationBell,
   IMessage,
 } from '@novu/notification-center';
-import { useNavigate } from 'react-router-dom';
 
 function Header() {
-  const navigate = useNavigate();
-
   function onNotificationClick(notification: IMessage) {
-    navigate(notification.cta.data.url);
+    // your logic to handle the notification click
+    if (message?.cta?.data?.url) {
+      window.location.href = message.cta.data.url;
+    }
   }
 
   return (
@@ -439,7 +443,7 @@ Then pass the created HMAC to your client side application forward it to the com
 
 ## Customizing the notification center theme
 
-The notification center component can be customized by passing a `theme` prop to the `PopoverNotificationCenter` component.
+The notification center component can be customized by passing a `theme` prop to the `PopoverNotificationCenter` component. We discourage you to do the styling this way, instead, it's recommended to use the `styles` property, check the details [here](./custom-styling).
 
 ```tsx
 const theme: INovuTheme = {
