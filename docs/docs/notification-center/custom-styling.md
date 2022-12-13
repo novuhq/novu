@@ -102,20 +102,20 @@ const styles = {
       '.some_class': { color: 'red' },
     },
     title: ({
-      colorScheme,
-    }: {
-      theme: INovuTheme;
-      common: ICommonTheme;
-      colorScheme: ColorScheme;
+      theme, // INovuTheme;
+      common, // ICommonTheme;
+      colorScheme, // ColorScheme;
     }) => ({ color: colorScheme === 'light' ? 'black' : 'white' }),
   },
   ...
 };
 ```
 
+To learn more about the `INovuTheme` and `ICommonTheme` interfaces, check the [theming](./react-components/#customizing-the-notification-center-theme) page.
+
 ## Example usage
 
-Web component
+### Web component
 
 ```html
 <!-- HTML -->
@@ -131,7 +131,7 @@ Web component
 </script>
 ```
 
-React component
+### React component
 
 ```tsx
 <NovuProvider
@@ -143,7 +143,7 @@ React component
 >...
 ```
 
-Vue component
+### Vue component
 
 ```html
 <script lang="ts">
@@ -170,7 +170,7 @@ Vue component
 </template>
 ```
 
-Angular component
+### Angular component
 
 ```html
 <notification-center-component [styles]="styles" ...></notification-center-component>

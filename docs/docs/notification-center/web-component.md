@@ -40,7 +40,7 @@ After that, you can use the web component in your HTML:
 
 **Please note:** that the properties are named with a `kebab-case` in the HTML, but depending on the technology you use it might be a `camelCase`, for ex. Vue/Angular props are bound with variables using that convention.
 
-## Bundled module (available soon)
+## Bundled version (preview)
 
 Sometimes you might not be able to use the ESM module, for example in the WordPress environment. In that case, you can use the bundled version of the Notification Center Web Component that is available on the CDN.
 
@@ -49,7 +49,7 @@ Sometimes you might not be able to use the ESM module, for example in the WordPr
 <html lang="en">
   <head>
     ...
-    <script src="https://cdn.novu.com/notification-center/v0.9.2/index.js"></script>
+    <script src="https://novu-web-component.netlify.app/index.js"></script>
   </head>
   <body>
     <notification-center-component
