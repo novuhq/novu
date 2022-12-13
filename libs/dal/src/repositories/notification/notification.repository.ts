@@ -4,9 +4,9 @@ import { BaseRepository, Omit } from '../base-repository';
 import { NotificationEntity } from './notification.entity';
 import { Notification } from './notification.schema';
 
-class PartialIntegrationEntity extends Omit(NotificationEntity, ['_environmentId', '_organizationId']) {}
+class PartialNotificationEntity extends Omit(NotificationEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialNotificationEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 export class NotificationRepository extends BaseRepository<EnforceEnvironmentQuery, NotificationEntity> {

@@ -76,7 +76,7 @@ export class GetChanges {
     const item = await this.notificationTemplateRepository.findOne({
       _environmentId: environmentId,
       'steps._templateId': entityId,
-    } as any);
+    });
 
     if (!item) {
       Logger.error(`Could not find notification template for message template id ${entityId}`);

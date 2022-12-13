@@ -75,7 +75,7 @@ export class Webhook {
       identifier: messageIdentifier,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-    } as any);
+    });
 
     if (!message) {
       Logger.error(`Message with ${messageIdentifier} as identifier was not found`);

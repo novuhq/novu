@@ -1,8 +1,9 @@
-name: Test @novu/dal
+name: Test @novu/notification-center-vue
 on:
+  workflow_dispatch:
   push:
     paths:
-      - "libs/dal/**"
+      - 'packages/notification-center-vue/**'
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -10,8 +11,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
-          node-version: "14"
-      - run: rm -rf build
+          node-version: '16.15.1'
 
       - name: Cache pnpm modules
         uses: actions/cache@v2
@@ -26,9 +26,8 @@ jobs:
           version: 7.5.0
           run_install: true
 
-      - name: Build
-        run: pnpm build
-
-      - name: Run tests
-        run: |
-          cd libs/dal && pnpm test
+      - uses: mansagroup/nrwl-nx-action@v3
+        with:
+          targets: build,test
+          projects: '@novu/notification-center-vue'
+          nxCloud: true
