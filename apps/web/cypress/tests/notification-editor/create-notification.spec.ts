@@ -81,6 +81,94 @@ describe('Creation functionality', function () {
       });
   });
 
+  it('should manage varaibles', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/templates/create');
+    });
+    cy.getByTestId('title').type('Test Notification Title');
+    cy.getByTestId('description').type('This is a test description for a test title');
+    cy.get('body').click();
+
+    addAndEditChannel('email');
+
+    cy.getByTestId('email-editor').getByTestId('editor-row').click();
+    cy.getByTestId('control-add').click();
+    cy.getByTestId('add-btn-block').click();
+    cy.getByTestId('button-block-wrapper').should('be.visible');
+    cy.getByTestId('button-block-wrapper').find('button').click();
+    cy.getByTestId('button-text-input').clear().type('Example Text Of {{ctaName}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('button-block-wrapper').find('button').contains('Example Text Of {{ctaName}}');
+    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+      parseSpecialCharSequences: false,
+    });
+
+    cy.getByTestId('email-editor').getByTestId('editor-row').eq(1).click();
+    cy.getByTestId('control-add').click();
+    cy.getByTestId('add-text-block').click();
+    cy.getByTestId('editable-text-content').eq(1).clear().type('This another text will be {{customVariable}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('editable-text-content').eq(1).click();
+
+    cy.getByTestId('settings-row-btn').eq(1).invoke('show').click();
+    cy.getByTestId('remove-row-btn').click();
+    cy.getByTestId('button-block-wrapper').should('not.exist');
+
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('emailPreheader').type('this is email preheader');
+
+    cy.getByTestId('var-label').first().contains('System Variables');
+    cy.getByTestId('var-label').last().contains('Step Variables');
+    cy.getByTestId('var-items-step').contains('step').contains('object');
+    cy.getByTestId('var-items-branding').contains('branding');
+    cy.getByTestId('var-items-subscriber').contains('subscriber');
+    cy.getByTestId('var-item-firstName-string').contains('firstName').contains('string');
+    cy.getByTestId('var-item-customVariable-string').contains('customVariable').contains('string');
+    cy.getByTestId('var-items-subscriber').click();
+    cy.getByTestId('var-item-phone-string').contains('string');
+
+    cy.getByTestId('editor-mode-switch').find('label').eq(1).click();
+    cy.getByTestId('preview-subject').contains('this is email subject');
+    cy.getByTestId('preview-content')
+      .invoke('attr', 'srcdoc')
+      .then((value) => {
+        expect(value).to.contain('This text is written from a test');
+      });
+
+    cy.getByTestId('preview-mode-switch').find('label').last().click();
+    cy.getByTestId('preview-subject').contains('this is email subject');
+    cy.getByTestId('preview-content')
+      .invoke('attr', 'srcdoc')
+      .then((value) => {
+        expect(value).to.contain('This text is written from a test');
+      });
+
+    cy.getByTestId('preview-json-param').clear().type(`{
+  "firstName": "Novu",
+  "customVariable": "notCustomVariable"
+}`);
+    cy.getByTestId('apply-variables').click();
+
+    cy.getByTestId('preview-content')
+      .invoke('attr', 'srcdoc')
+      .then((value) => {
+        expect(value).to.contain('This text is written from a test Novu');
+        expect(value).to.contain('This another text will be notCustomVariable');
+      });
+
+    cy.getByTestId('editor-mode-switch').find('label').last().click();
+
+    cy.getByTestId('test-email-json-param').clear().type(`{
+  "firstName": "Novu",
+  "customVariable": "notCustomVariable"
+}`);
+
+    cy.getByTestId('test-send-email-btn').click();
+    cy.get('.mantine-Notification-root').contains('Test sent successfully!');
+  });
+
   it('should create email notification', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
