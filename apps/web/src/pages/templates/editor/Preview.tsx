@@ -112,7 +112,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
             }}
           >
             <JsonInput
-              data-test-id="test-email-json-param"
+              data-test-id="preview-json-param"
               formatOnBlur
               autosize
               styles={inputStyles}
@@ -133,6 +133,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
                 });
               }}
               variant="outline"
+              data-test-id="apply-variables"
             >
               Apply Variables
             </Button>
