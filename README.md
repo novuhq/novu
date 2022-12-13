@@ -34,6 +34,8 @@ The ultimate service for managing multi-channel notifications with a single API.
   </p>
 
 ## ⭐️ Why Novu?
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnovuhq%2Fnovu.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnovuhq%2Fnovu?ref=badge_shield)
+
 
 Building a notification system is complicated. At first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between the system and its users.
 
@@ -213,6 +215,9 @@ We are more than happy to help you. If you are getting any errors or facing prob
 ## 🛡️ License
 
 Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fnovuhq%2Fnovu.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fnovuhq%2Fnovu?ref=badge_large)
 
 ## 💪 Thanks To All Contributors
 
