@@ -6,6 +6,7 @@ export const VarItem = ({ name, type, children = null }: { name: string; type: s
 
   return (
     <div
+      data-test-id={`var-item-${name}-${type}`}
       style={{
         marginBottom: 10,
         padding: 10,
