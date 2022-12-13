@@ -4,16 +4,25 @@ import { UserRepository } from '@novu/dal';
 import { v4 as uuidv4 } from 'uuid';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
 
 @Injectable()
 export class PasswordResetRequest {
-  constructor(private userRepository: UserRepository) {}
+  constructor(private cacheService: CacheService, private userRepository: UserRepository) {}
 
   async execute(command: PasswordResetRequestCommand): Promise<{ success: boolean }> {
     const email = normalizeEmail(command.email);
     const foundUser = await this.userRepository.findByEmail(email);
     if (foundUser) {
       const token = uuidv4();
+
+      invalidateCache({
+        service: this.cacheService,
+        storeKeyPrefix: [CacheKeyPrefixEnum.USER],
+        credentials: {
+          _id: foundUser._id,
+        },
+      });
 
       await this.userRepository.updatePasswordResetToken(foundUser._id, token);
 
