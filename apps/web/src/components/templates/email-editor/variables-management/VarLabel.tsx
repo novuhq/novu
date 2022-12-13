@@ -11,6 +11,7 @@ export const VarLabel = ({ label, children }) => {
   return (
     <>
       <UnstyledButton
+        data-test-id="var-label"
         onClick={() => {
           setOpen(!open);
         }}

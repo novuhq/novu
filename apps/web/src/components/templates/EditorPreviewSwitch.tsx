@@ -7,6 +7,7 @@ export const EditorPreviewSwitch = ({ view, setView }) => {
 
   return (
     <SegmentedControl
+      data-test-id="editor-mode-switch"
       styles={{
         root: {
           background: 'transparent',

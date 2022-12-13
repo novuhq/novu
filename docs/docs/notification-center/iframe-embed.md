@@ -1,3 +1,7 @@
+---
+sidebar_position: 6
+---
+
 # iFrame Embed
 
 If you are using a (currently) unsupported client framework, you can use our embedded script. This will generate the notification center inside an iframe.
