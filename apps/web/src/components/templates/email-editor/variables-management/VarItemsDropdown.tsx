@@ -12,6 +12,7 @@ export const VarItemsDropdown = ({ name, type }) => {
   return (
     <>
       <UnstyledButton
+        data-test-id={`var-items-${name}`}
         onClick={() => {
           setOpen(!open);
         }}

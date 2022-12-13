@@ -94,6 +94,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 
             return query;
           }}
+          data-test-id="test-email-emails"
         />
       </Wrapper>
 
