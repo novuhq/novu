@@ -56,7 +56,21 @@ export class MapTriggerRecipients {
       mappedRecipients
     );
 
-    return [...simpleSubscribers, ...topicSubscribers];
+    return this.deduplicateSubscribers([...simpleSubscribers, ...topicSubscribers]);
+  }
+
+  /**
+   * Time complexity: O(n)
+   */
+  private deduplicateSubscribers(subscribers: ISubscribersDefine[]): ISubscribersDefine[] {
+    const uniqueSubscribers = new Set();
+
+    return subscribers.filter((el) => {
+      const isDuplicate = uniqueSubscribers.has(el.subscriberId);
+      uniqueSubscribers.add(el.subscriberId);
+
+      return !isDuplicate;
+    });
   }
 
   private async getSubscribersFromAllTopics(

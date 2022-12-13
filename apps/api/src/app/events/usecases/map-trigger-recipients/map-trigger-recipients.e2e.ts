@@ -159,12 +159,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       const firstTopicName = 'topic-key-mixed-recipients-1-name';
       const secondTopicKey = 'topic-key-mixed-recipients-2';
       const secondTopicName = 'topic-key-mixed-recipients-2-name';
-
       const transactionId = uuid();
-
-      const environmentId = session.environment._id;
-      const organizationId = session.organization._id;
-      const userId = session.user._id;
 
       const firstTopic = await createTopicEntity(
         session,
@@ -220,6 +215,38 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       expect(result).to.be.eql([{ subscriberId: singleSubscriberId }, { ...singleSubscribersDefine }]);
     });
+
+    it('should map properly multiple duplicated recipients of different types and deduplicate them', async () => {
+      const transactionId = uuid();
+      const firstSubscriberId = SubscriberRepository.createObjectId();
+      const secondSubscriberId = SubscriberRepository.createObjectId();
+
+      const firstRecipient: ISubscribersDefine = {
+        subscriberId: firstSubscriberId,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'test@email.novu',
+      };
+
+      const secondRecipient: ISubscribersDefine = {
+        subscriberId: secondSubscriberId,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'test@email.novu',
+      };
+
+      const command = buildCommand(session, transactionId, [
+        firstSubscriberId,
+        secondSubscriberId,
+        firstRecipient,
+        secondRecipient,
+        secondSubscriberId,
+        firstSubscriberId,
+      ]);
+      const result = await useCase.execute(command);
+
+      expect(result).to.be.eql([{ subscriberId: firstSubscriberId }, { subscriberId: secondSubscriberId }]);
+    });
   });
 
   describe('When feature enabled', () => {
@@ -264,10 +291,6 @@ describe('MapTriggerRecipientsUseCase', () => {
       const topicName = 'topic-key-single-recipient-name';
       const transactionId = uuid();
 
-      const environmentId = session.environment._id;
-      const organizationId = session.organization._id;
-      const userId = session.user._id;
-
       const topic = await createTopicEntity(session, topicRepository, topicSubscribersRepository, topicKey, topicName);
       const topicId = TopicRepository.convertObjectIdToString(topic._id);
       const firstSubscriber = await subscribersService.createSubscriber();
@@ -294,10 +317,6 @@ describe('MapTriggerRecipientsUseCase', () => {
       const topicName = 'topic-key-single-recipient-name';
       const transactionId = uuid();
 
-      const environmentId = session.environment._id;
-      const organizationId = session.organization._id;
-      const userId = session.user._id;
-
       const recipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
         topicId: TopicRepository.createObjectId(),
@@ -315,12 +334,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       const firstTopicName = 'topic-key-mixed-recipients-1-name';
       const secondTopicKey = 'topic-key-mixed-recipients-2';
       const secondTopicName = 'topic-key-mixed-recipients-2-name';
-
       const transactionId = uuid();
-
-      const environmentId = session.environment._id;
-      const organizationId = session.organization._id;
-      const userId = session.user._id;
 
       const firstTopic = await createTopicEntity(
         session,
@@ -378,6 +392,233 @@ describe('MapTriggerRecipientsUseCase', () => {
         { subscriberId: singleSubscriberId },
         { ...singleSubscribersDefine },
         { subscriberId: firstSubscriber._id },
+        { subscriberId: secondSubscriber._id },
+        { subscriberId: thirdSubscriber._id },
+      ]);
+    });
+
+    it('should map properly multiple duplicated recipients of different types and deduplicate them', async () => {
+      const transactionId = uuid();
+      const firstSubscriberId = SubscriberRepository.createObjectId();
+      const secondSubscriberId = SubscriberRepository.createObjectId();
+
+      const firstRecipient: ISubscribersDefine = {
+        subscriberId: firstSubscriberId,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'test@email.novu',
+      };
+
+      const secondRecipient: ISubscribersDefine = {
+        subscriberId: secondSubscriberId,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'test@email.novu',
+      };
+
+      const command = buildCommand(session, transactionId, [
+        firstSubscriberId,
+        secondSubscriberId,
+        firstRecipient,
+        secondRecipient,
+        secondSubscriberId,
+        firstSubscriberId,
+      ]);
+      const result = await useCase.execute(command);
+
+      expect(result).to.be.eql([{ subscriberId: firstSubscriberId }, { subscriberId: secondSubscriberId }]);
+    });
+
+    it('should map properly multiple duplicated recipients of different types and deduplicate them but with different order', async () => {
+      const transactionId = uuid();
+      const firstSubscriberId = SubscriberRepository.createObjectId();
+      const secondSubscriberId = SubscriberRepository.createObjectId();
+
+      const firstRecipient: ISubscribersDefine = {
+        subscriberId: firstSubscriberId,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'test@email.novu',
+      };
+
+      const secondRecipient: ISubscribersDefine = {
+        subscriberId: secondSubscriberId,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'test@email.novu',
+      };
+
+      const command = buildCommand(session, transactionId, [
+        firstRecipient,
+        secondRecipient,
+        firstSubscriberId,
+        secondSubscriberId,
+        secondSubscriberId,
+        firstSubscriberId,
+        secondRecipient,
+        firstRecipient,
+      ]);
+      const result = await useCase.execute(command);
+
+      expect(result).to.be.eql([{ ...firstRecipient }, { ...secondRecipient }]);
+    });
+
+    it('should map properly multiple topics and deduplicate them', async () => {
+      const firstTopicKey = 'topic-key-mixed-topics-1';
+      const firstTopicName = 'topic-key-mixed-topics-1-name';
+      const secondTopicKey = 'topic-key-mixed-topics-2';
+      const secondTopicName = 'topic-key-mixed-topics-2-name';
+      const thirdTopicKey = 'topic-key-mixed-topics-3';
+      const thirdTopicName = 'topic-key-mixed-topics-3-name';
+      const transactionId = uuid();
+
+      const firstSubscriber = await subscribersService.createSubscriber();
+      const secondSubscriber = await subscribersService.createSubscriber();
+      const thirdSubscriber = await subscribersService.createSubscriber();
+      const fourthSubscriber = await subscribersService.createSubscriber();
+
+      const firstTopic = await createTopicEntity(
+        session,
+        topicRepository,
+        topicSubscribersRepository,
+        firstTopicKey,
+        firstTopicName
+      );
+      const firstTopicId = TopicRepository.convertObjectIdToString(firstTopic._id);
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, [
+        firstSubscriber._id,
+        secondSubscriber._id,
+      ]);
+
+      const secondTopic = await createTopicEntity(
+        session,
+        topicRepository,
+        topicSubscribersRepository,
+        secondTopicKey,
+        secondTopicName
+      );
+      const secondTopicId = TopicRepository.convertObjectIdToString(secondTopic._id);
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, [
+        thirdSubscriber._id,
+      ]);
+
+      const thirdTopic = await createTopicEntity(
+        session,
+        topicRepository,
+        topicSubscribersRepository,
+        thirdTopicKey,
+        thirdTopicName
+      );
+      const thirdTopicId = TopicRepository.convertObjectIdToString(thirdTopic._id);
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, thirdTopicId, [
+        firstSubscriber._id,
+        fourthSubscriber._id,
+      ]);
+
+      const firstTopicRecipient: ITopic = {
+        type: TriggerRecipientsTypeEnum.TOPIC,
+        topicId: TopicRepository.convertObjectIdToString(firstTopic._id),
+      };
+      const secondTopicRecipient: ITopic = {
+        type: TriggerRecipientsTypeEnum.TOPIC,
+        topicId: TopicRepository.convertObjectIdToString(secondTopic._id),
+      };
+      const thirdTopicRecipient: ITopic = {
+        type: TriggerRecipientsTypeEnum.TOPIC,
+        topicId: TopicRepository.convertObjectIdToString(thirdTopic._id),
+      };
+
+      const command = buildCommand(session, transactionId, [
+        thirdTopicRecipient,
+        firstTopicRecipient,
+        secondTopicRecipient,
+        thirdTopicRecipient,
+        secondTopicRecipient,
+        firstTopicRecipient,
+      ]);
+      const result = await useCase.execute(command);
+
+      expect(result).to.be.eql([
+        { subscriberId: firstSubscriber._id },
+        { subscriberId: fourthSubscriber._id },
+        { subscriberId: secondSubscriber._id },
+        { subscriberId: thirdSubscriber._id },
+      ]);
+    });
+
+    it('should map properly multiple duplicated recipients of different types and topics and deduplicate them', async () => {
+      const firstTopicKey = 'topic-key-mixed-recipients-deduplication-1';
+      const firstTopicName = 'topic-key-mixed-recipients-deduplication-1-name';
+      const secondTopicKey = 'topic-key-mixed-recipients-deduplication-2';
+      const secondTopicName = 'topic-key-mixed-recipients-deduplication-2-name';
+      const transactionId = uuid();
+
+      const firstSubscriber = await subscribersService.createSubscriber();
+      const secondSubscriber = await subscribersService.createSubscriber();
+      const thirdSubscriber = await subscribersService.createSubscriber();
+
+      const firstRecipient: ISubscribersDefine = {
+        subscriberId: firstSubscriber._id,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'test@email.novu',
+      };
+
+      const secondRecipient: ISubscribersDefine = {
+        subscriberId: secondSubscriber._id,
+        firstName: 'Test Name',
+        lastName: 'Last of name',
+        email: 'test@email.novu',
+      };
+
+      const firstTopic = await createTopicEntity(
+        session,
+        topicRepository,
+        topicSubscribersRepository,
+        firstTopicKey,
+        firstTopicName
+      );
+      const firstTopicId = TopicRepository.convertObjectIdToString(firstTopic._id);
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, [
+        firstSubscriber._id,
+        secondSubscriber._id,
+      ]);
+
+      const secondTopic = await createTopicEntity(
+        session,
+        topicRepository,
+        topicSubscribersRepository,
+        secondTopicKey,
+        secondTopicName
+      );
+      const secondTopicId = TopicRepository.convertObjectIdToString(secondTopic._id);
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, [
+        thirdSubscriber._id,
+      ]);
+
+      const firstTopicRecipient: ITopic = {
+        type: TriggerRecipientsTypeEnum.TOPIC,
+        topicId: TopicRepository.convertObjectIdToString(firstTopic._id),
+      };
+      const secondTopicRecipient: ITopic = {
+        type: TriggerRecipientsTypeEnum.TOPIC,
+        topicId: TopicRepository.convertObjectIdToString(secondTopic._id),
+      };
+
+      const command = buildCommand(session, transactionId, [
+        secondTopicRecipient,
+        firstRecipient,
+        firstSubscriber._id,
+        secondSubscriber._id,
+        firstTopicRecipient,
+        secondRecipient,
+        thirdSubscriber._id,
+      ]);
+      const result = await useCase.execute(command);
+
+      // We process first recipients that are not topics so they will take precedence when deduplicating
+      expect(result).to.be.eql([
+        { ...firstRecipient },
         { subscriberId: secondSubscriber._id },
         { subscriberId: thirdSubscriber._id },
       ]);
