@@ -10,15 +10,15 @@ export function invalidateCache({
   storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[];
   credentials: Record<string, unknown>;
 }) {
-  if (typeof storeKeyPrefix === 'string' || storeKeyPrefix instanceof String) {
-    invalidateCase(storeKeyPrefix as string, credentials, service);
-  } else {
+  if (storeKeyPrefix instanceof Array) {
     storeKeyPrefix.forEach((prefix) => invalidateCase(prefix, credentials, service));
+  } else {
+    invalidateCase(storeKeyPrefix, credentials, service);
   }
 }
 
-function invalidateCase(storeKeyPrefix: string, credentials: Record<string, unknown>, service) {
-  const cacheKey = buildKey(storeKeyPrefix, '', credentials, CacheInterceptorTypeEnum.INVALIDATE);
+function invalidateCase(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>, service) {
+  const cacheKey = buildKey(storeKeyPrefix, credentials, CacheInterceptorTypeEnum.INVALIDATE);
 
   if (!cacheKey) {
     return;
@@ -37,4 +37,5 @@ export enum CacheKeyPrefixEnum {
   FEED = 'feed',
   SUBSCRIBER = 'subscriber',
   NOTIFICATION_TEMPLATE = 'notification_template',
+  USER = 'user',
 }
