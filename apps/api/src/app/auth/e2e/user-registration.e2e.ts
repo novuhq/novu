@@ -33,7 +33,7 @@ describe('User registration - /auth/register (POST)', async () => {
       email: 'Testy.test@gmail.com',
       firstName: 'Test',
       lastName: 'User',
-      password: '123456789',
+      password: '123@Qwerty',
     });
 
     expect(body.statusCode).to.equal(400);
@@ -47,7 +47,7 @@ describe('User registration - /auth/register (POST)', async () => {
       email: 'Testy.test@gmail.com',
       firstName: 'Test',
       lastName: 'User',
-      password: '123456789',
+      password: '123@Qwerty',
     });
 
     expect(body.data.token).to.be.ok;
@@ -64,7 +64,7 @@ describe('User registration - /auth/register (POST)', async () => {
       email: 'Testy.test-org@gmail.com',
       firstName: 'Test',
       lastName: 'User',
-      password: '123456789',
+      password: '123@Qwerty',
       organizationName: 'Sample org',
     });
 
@@ -96,7 +96,7 @@ describe('User registration - /auth/register (POST)', async () => {
       email: 'Testy.test@gmail.com',
       firstName: 'Test',
       lastName: 'User',
-      password: '123456789',
+      password: '123@Qwerty',
     });
 
     expect(body.message).to.contain('User already exists');
