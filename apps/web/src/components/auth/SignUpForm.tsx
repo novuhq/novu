@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from 'react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { Divider, Button as MantineButton, Center, Group } from '@mantine/core';
+import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
 import { AuthContext } from '../../store/authContext';
