@@ -3,7 +3,10 @@ name: Deploy DEV Notification Center Web Component
 on:
   workflow_dispatch:
   push:
-    branches: ['nv-1338-nc-web-component-umd-bundle-deployment']
+    branches:
+      - next
+    paths:
+      - 'packages/notification-center/**'
 
 jobs:
   build:
