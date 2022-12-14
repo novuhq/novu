@@ -31,12 +31,15 @@ export class SESEmailProvider implements IEmailProvider {
     });
 
     return await transporter.sendMail({
+      to,
       html,
       text,
-      to,
-      from,
       subject,
       attachments,
+      from: {
+        address: from,
+        name: this.config.senderName,
+      },
     });
   }
 

@@ -1,9 +1,9 @@
-name: Test @novu/notification-center
+name: Test @novu/notification-center-angular
 on:
   workflow_dispatch:
   push:
     paths:
-      - 'packages/notification-center/**'
+      - 'packages/notification-center-angular/**'
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -29,5 +29,5 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: build,test
-          projects: '@novu/notification-center'
+          projects: '@novu/notification-center-angular'
           nxCloud: true

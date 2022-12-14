@@ -1,4 +1,4 @@
-import { Grid, JsonInput, Loader, useMantineTheme } from '@mantine/core';
+import { Grid, JsonInput, useMantineTheme } from '@mantine/core';
 import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
@@ -56,7 +56,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
   }) => {
     mutateAsync({
       ...args,
-      subject,
+      subject: subject ? subject : '',
     }).then((result: { html: string; subject: string }) => {
       setContent(result.html);
       setParsedSubject(result.subject);
@@ -69,9 +69,9 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     parseContent({
       contentType,
       content: contentType === 'editor' ? editorContent : htmlContent,
-      payload: processedVariables,
+      payload: payloadValue,
     });
-  }, [contentType, htmlContent, editorContent, processedVariables]);
+  }, [contentType, htmlContent, editorContent, payloadValue]);
   const theme = useMantineTheme();
 
   useEffect(() => {
@@ -81,21 +81,22 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     setIntegration(integrations.find((item) => item.channel === 'email') || null);
   }, [integrations, setIntegration]);
 
-  if (isLoading) {
-    return <Loader />;
-  }
-
   return (
     <>
       <Grid>
         <Grid.Col span={9}>
           <When truthy={view === 'web'}>
-            <PreviewWeb subject={parsedSubject} content={content} integration={integration} />
+            <PreviewWeb loading={isLoading} subject={parsedSubject} content={content} integration={integration} />
           </When>
           <When truthy={view === 'mobile'}>
             <Grid>
               <Grid.Col span={12}>
-                <PreviewMobile subject={parsedSubject} content={content} integration={integration} />
+                <PreviewMobile
+                  loading={isLoading}
+                  subject={parsedSubject}
+                  content={content}
+                  integration={integration}
+                />
               </Grid.Col>
             </Grid>
           </When>
@@ -111,7 +112,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
             }}
           >
             <JsonInput
-              data-test-id="test-email-json-param"
+              data-test-id="preview-json-param"
               formatOnBlur
               autosize
               styles={inputStyles}
@@ -132,6 +133,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
                 });
               }}
               variant="outline"
+              data-test-id="apply-variables"
             >
               Apply Variables
             </Button>

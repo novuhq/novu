@@ -68,7 +68,6 @@
     "@commitlint/cli": "17.0.1",
     "@commitlint/config-angular": "^13.2.0",
     "@commitlint/config-conventional": "17.0.0",
-    "@hewmen/serverless-plugin-typescript": "^1.1.17",
     "@nrwl/cli": "13.8.5",
     "@nrwl/eslint-plugin-nx": "13.8.5",
     "@nrwl/jest": "13.8.5",
