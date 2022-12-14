@@ -2,7 +2,6 @@
   "name": "@novu/notification-center-vue",
   "sideEffects": false,
   "version": "0.9.2",
-  "private": true,
   "description": "Vue specific wrapper for notification-center",
   "repository": {
     "type": "git",

@@ -8,7 +8,6 @@
     "watch": "ng build --watch --configuration development",
     "test": "echo \"no tests\""
   },
-  "private": true,
   "module": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
   "es2020": "dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
   "esm2020": "dist/notification-center-angular/esm2020/novu-notification-center-angular.mjs",
