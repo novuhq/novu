@@ -27,6 +27,7 @@ export function Table({
   ...props
 }: ITableProps) {
   const { pageSize, total, onPageChange, current } = pagination;
+
   const columns = React.useMemo(
     () =>
       userColumns?.map((col) => {
