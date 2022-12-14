@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "0.9.0",
+  "version": "0.10.0-alpha.0",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
@@ -33,8 +33,8 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.24",
-    "typescript": "4.3.5",
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "typescript": "4.3.5"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
