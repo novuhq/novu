@@ -4,3 +4,4 @@ export * from './message-template';
 export * from './notification-templates';
 export * from './organization';
 export * from './shared';
+export * from './topic';

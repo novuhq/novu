@@ -53,7 +53,7 @@ export class TriggerEventRequestDto {
   overrides?: Record<string, Record<string, unknown>>;
 
   @ApiProperty({
-    description: 'The recipients list of people who will receive the notification',
+    description: 'The recipients list of people who will receive the notification.',
     oneOf: [
       {
         $ref: getSchemaPath(SubscriberPayloadDto),

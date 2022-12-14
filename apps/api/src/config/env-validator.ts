@@ -45,6 +45,10 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NEW_RELIC_LICENSE_KEY: str({
     default: '',
   }),
+  FF_IS_TOPIC_NOTIFICATION_ENABLED: str({
+    choices: ['false', 'true'],
+    default: 'false',
+  }),
 };
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {

@@ -24,6 +24,10 @@ export class CreateLogCommand extends EnvironmentWithUserCommand {
   subscriberId?: string;
 
   @IsOptional()
+  @IsMongoId()
+  topicId?: string;
+
+  @IsOptional()
   @IsEnum(LogStatusEnum)
   status: LogStatusEnum;
 
