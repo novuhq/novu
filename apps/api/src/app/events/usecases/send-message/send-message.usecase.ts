@@ -134,7 +134,7 @@ export class SendMessage {
   }
 
   private async filterPreferredChannels(job: JobEntity): Promise<boolean> {
-    const template = await this.notificationTemplateRepository.findById(job._templateId, job._environmentId);
+    const template = await this.notificationTemplateRepository.findById(job._templateId, job._organizationId);
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: job._organizationId,
       subscriberId: job._subscriberId,

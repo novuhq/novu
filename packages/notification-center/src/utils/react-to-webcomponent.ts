@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+/* eslint-disable @typescript-eslint/ban-ts-comment, multiline-comment-style */
 /**
  * The code was taken from the following repository: https://github.com/bitovi/react-to-webcomponent
  * and improved to support rendering React through Web Components in the AngularJS app
@@ -184,6 +184,7 @@ export default function (
     moveUpdateToNextTick(() => this[renderSymbol]());
   };
   targetPrototype.disconnectedCallback = function () {
+    // @ts-ignore
     if (typeof ReactDOM.createRoot === 'function') {
       this[rootSymbol].unmount();
     } else {
@@ -206,8 +207,10 @@ export default function (
       const element = React.createElement(ReactComponent, data, children);
 
       // Use react to render element in container
+      // @ts-ignore
       if (typeof ReactDOM.createRoot === 'function') {
         if (!this[rootSymbol]) {
+          // @ts-ignore
           this[rootSymbol] = ReactDOM.createRoot(container);
         }
 

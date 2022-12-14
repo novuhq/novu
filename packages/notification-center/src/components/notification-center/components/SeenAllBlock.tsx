@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 
 export function SeenAllBlock() {
   return <Wrapper>Yay! You have seen it all</Wrapper>;

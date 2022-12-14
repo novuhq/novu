@@ -11,7 +11,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "vite build && vue-tsc --emitDeclarationOnly",
-    "test": "vue-tsc --noEmit"
+    "test": "jest --passWithNoTests"
   },
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
@@ -47,7 +47,6 @@
   },
   "jest": {
     "preset": "ts-jest",
-    "setupTestFrameworkScriptFile": "<rootDir>/jest.setup.js",
     "testPathIgnorePatterns": [
       "node_modules",
       "dist"

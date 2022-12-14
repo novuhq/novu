@@ -1,6 +1,6 @@
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
-export type SubscriberId = string;
+import { SubscriberId } from './types';
 
 export class SubscriberEntity {
   _id?: SubscriberId;

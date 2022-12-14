@@ -4,9 +4,9 @@ import { ExecutionDetails } from './execution-details.schema';
 import { BaseRepository, Omit } from '../base-repository';
 import { Document, FilterQuery } from 'mongoose';
 
-class PartialIntegrationEntity extends Omit(ExecutionDetailsEntity, ['_environmentId', '_organizationId']) {}
+class PartialExecutionDetailsEntity extends Omit(ExecutionDetailsEntity, ['_environmentId', '_organizationId']) {}
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
+type EnforceEnvironmentQuery = FilterQuery<PartialExecutionDetailsEntity & Document> &
   ({ _environmentId: string } | { _organizationId: string });
 
 /**

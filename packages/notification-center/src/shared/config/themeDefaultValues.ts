@@ -1,8 +1,9 @@
+import { darkButtonStyle, lightButtonStyle } from '@novu/shared';
+
 import { colors } from './colors';
 import { shadows } from './shadows';
 import { INotificationBellColors, INovuTheme } from '../../store/novu-theme.context';
 import { ICommonTheme } from '../../store/novu-theme-provider.context';
-import { darkButtonStyle, lightButtonStyle } from '@novu/shared';
 
 const defaultLightTheme: INovuTheme = {
   layout: {
@@ -115,12 +116,6 @@ const defaultNotificationBellDarkTheme: INotificationBellColors = {
   unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
   unseenBadgeBackgroundColor: colors.B15,
 };
-
-Object.freeze(defaultLightTheme);
-Object.freeze(defaultDarkTheme);
-Object.freeze(defaultCommonTheme);
-Object.freeze(defaultNotificationBellLightTheme);
-Object.freeze(defaultNotificationBellDarkTheme);
 
 export {
   defaultLightTheme,

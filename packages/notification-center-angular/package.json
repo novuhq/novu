@@ -6,7 +6,7 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "echo \"no tests\""
   },
   "private": true,
   "module": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
@@ -15,6 +15,9 @@
   "fesm2020": "dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
   "fesm2015": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
   "typings": "dist/notification-center-angular/index.d.ts",
+  "files": [
+    "dist/notification-center-angular"
+  ],
   "exports": {
     "./package.json": {
       "default": "./package.json"
@@ -35,6 +38,8 @@
     "@angular/core": "^15.0.0",
     "@angular/platform-browser": "^15.0.0",
     "@angular/platform-browser-dynamic": "^15.0.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"
   },

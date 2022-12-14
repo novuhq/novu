@@ -16,19 +16,17 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, StepTypeEnum, IEmailBlock, TemplateVariableTypeEnum } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
-import { testCacheService } from '../../../../e2e/setup';
 
 const axiosInstance = axios.create();
 
 describe('Trigger event - /v1/events/trigger (POST)', function () {
-  const cacheService = testCacheService;
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const notificationRepository = new NotificationRepository();
-  const messageRepository = new MessageRepository(cacheService);
-  const subscriberRepository = new SubscriberRepository(cacheService);
+  const messageRepository = new MessageRepository();
+  const subscriberRepository = new SubscriberRepository();
   const integrationRepository = new IntegrationRepository();
   const logRepository = new LogRepository();
   const jobRepository = new JobRepository();
@@ -665,6 +663,29 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(block.content).to.equal('Hello John Doe, Welcome to Umbrella Corp');
   });
 
+  it('should handle empty workflow scenario', async function () {
+    template = await session.createTemplate({
+      steps: [],
+    });
+
+    const response = await session.testAgent
+      .post(`/v1/events/trigger`)
+      .send({
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {
+          myUser: {
+            lastName: 'Test',
+          },
+        },
+      })
+      .expect(201);
+
+    const { status, acknowledged } = response.body.data;
+    expect(status).to.equal('no_workflow_steps_defined');
+    expect(acknowledged).to.equal(true);
+  });
+
   it('should trigger with given required variables', async function () {
     template = await session.createTemplate({
       steps: [
@@ -740,7 +761,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       channel: channelType,
-    } as any);
+    });
 
     expect(messages.length).to.equal(4);
     const isUnique = (value, index, self) => self.indexOf(value) === index;
