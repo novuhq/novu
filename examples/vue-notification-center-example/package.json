@@ -9,7 +9,7 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@novu/notification-center-vue": "0.9.2",
+    "@novu/notification-center-vue": "0.10.0-alpha.0",
     "vue": "^3.2.41"
   },
   "devDependencies": {
