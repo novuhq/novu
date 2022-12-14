@@ -9,10 +9,10 @@
     "jsx": "react",
     "module": "ESNext",
     "lib": ["ESNext", "dom"],
-    "declarationDir": "types",
+    "declaration": false,
+    "declarationMap": false,
     "sourceMap": true,
-    "outDir": "dist",
-    "emitDeclarationOnly": true
+    "outDir": "dist"
   },
   "exclude": ["src/**/*.test.*", "src/*.test.*"]
 }

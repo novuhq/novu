@@ -11,6 +11,10 @@ const userSchema = new Schema(
     profilePicture: Schema.Types.String,
     resetToken: Schema.Types.String,
     resetTokenDate: Schema.Types.Date,
+    resetTokenCount: {
+      reqInMinute: Schema.Types.Number,
+      reqInDay: Schema.Types.Number,
+    },
     showOnBoarding: Schema.Types.Boolean,
     tokens: [
       {
@@ -23,6 +27,10 @@ const userSchema = new Schema(
       },
     ],
     password: Schema.Types.String,
+    failedLogin: {
+      times: Schema.Types.Number,
+      lastFailedAttempt: Schema.Types.Date,
+    },
   },
   schemaOptions
 );

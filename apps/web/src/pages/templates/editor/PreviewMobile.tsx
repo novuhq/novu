@@ -1,4 +1,4 @@
-import { createStyles, Group } from '@mantine/core';
+import { Center, createStyles, Group, Loader } from '@mantine/core';
 import { format } from 'date-fns';
 import Frame from 'react-frame-component';
 import { colors } from '../../../design-system';
@@ -6,6 +6,7 @@ import { PreviewDateIcon } from './PreviewDateIcon';
 import { PreviewUserIcon } from './PreviewUserIcon';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Mobile } from './Mobile';
+import { When } from '../../../components/utils/When';
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -23,8 +24,6 @@ const useStyles = createStyles((theme) => ({
     fontWeight: 'normal',
   },
   date: {
-    height: '20px',
-    marginTop: '20px',
     color: theme.colorScheme === 'dark' ? colors.B60 : colors.B70,
     fontWeight: 'normal',
   },
@@ -59,10 +58,12 @@ export const PreviewMobile = ({
   integration,
   subject,
   content,
+  loading = false,
 }: {
   integration: any;
   subject: string;
   content: string;
+  loading?: boolean;
 }) => {
   const { classes } = useStyles();
 
@@ -82,47 +83,56 @@ export const PreviewMobile = ({
                 sx={{
                   height: '40px',
                 }}
-                spacing={15}
+                spacing={13}
               >
                 <PreviewUserIcon />
                 <div>
                   <div data-test-id="preview-subject" className={classes.subject}>
                     {subject}
                   </div>
-                  <div data-test-id="preview-from" className={classes.from}>
-                    {integration?.credentials?.from || 'No active email integration'}
-                  </div>
+                  <Group spacing={13} position="apart">
+                    <div data-test-id="preview-from" className={classes.from}>
+                      {integration?.credentials?.from || 'No active email integration'}
+                    </div>
+                    <div className={classes.date}>
+                      <PreviewDateIcon />
+                      <span
+                        style={{
+                          marginLeft: '4px',
+                        }}
+                        data-test-id="preview-date"
+                      >
+                        {format(new Date(), 'EEE, MMM d, HH:mm')}
+                      </span>
+                    </div>
+                  </Group>
                 </div>
               </Group>
-            </div>
-            <div>
-              <div className={classes.date}>
-                <PreviewDateIcon />
-                <span
-                  style={{
-                    marginLeft: '6px',
-                  }}
-                  data-test-id="preview-date"
-                >
-                  {format(new Date(), 'EEE, MMM d, HH:mm')}
-                </span>
-              </div>
             </div>
           </Group>
         </div>
         <div className={classes.line}></div>
-        <ErrorBoundary
-          FallbackComponent={() => (
-            <div data-test-id="preview-content" className={classes.fallbackFrame}>
-              Oops! We've recognized some glitch in this HTML. Please give it another look!
-            </div>
-          )}
-          resetKeys={[content]}
-        >
-          <Frame data-test-id="preview-content" className={classes.frame} initialContent={content}>
-            <></>
-          </Frame>
-        </ErrorBoundary>
+        <When truthy={loading}>
+          <div>
+            <Center>
+              <Loader color={colors.B70} mb={20} mt={20} size={32} />
+            </Center>
+          </div>
+        </When>
+        <When truthy={!loading}>
+          <ErrorBoundary
+            FallbackComponent={() => (
+              <div data-test-id="preview-content" className={classes.fallbackFrame}>
+                Oops! We've recognized some glitch in this HTML. Please give it another look!
+              </div>
+            )}
+            resetKeys={[content]}
+          >
+            <Frame data-test-id="preview-content" className={classes.frame} initialContent={content}>
+              <></>
+            </Frame>
+          </ErrorBoundary>
+        </When>
       </Mobile>
       <div className={classes.bottom}></div>
     </>

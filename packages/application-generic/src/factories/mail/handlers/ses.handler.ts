@@ -13,6 +13,7 @@ export class SESHandler extends BaseHandler {
       region: credentials.region,
       accessKeyId: credentials.apiKey,
       secretAccessKey: credentials.secretKey,
+      senderName: credentials.senderName ?? 'no-reply',
       from,
     };
 
