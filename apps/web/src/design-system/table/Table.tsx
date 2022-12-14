@@ -27,7 +27,6 @@ export function Table({
   ...props
 }: ITableProps) {
   const { pageSize, total, onPageChange, current } = pagination;
-
   const columns = React.useMemo(
     () =>
       userColumns?.map((col) => {
@@ -102,7 +101,7 @@ export function Table({
   const defaultDesign = { verticalSpacing: 'sm', horizontalSpacing: 'sm', highlightOnHover: true } as TableProps;
 
   return (
-    <div style={{ position: 'relative', minHeight: 500 }}>
+    <div style={{ position: 'relative', minHeight: 500, display: 'flex', flexDirection: 'column' }}>
       <LoadingOverlay
         visible={loading}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
@@ -151,23 +150,25 @@ export function Table({
         </tbody>
       </MantineTable>
       {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
-        <Pagination
-          styles={{
-            active: {
-              backgroundImage: colors.horizontal,
-              border: 'none',
-            },
-            item: {
-              marginTop: '15px',
-              marginBottom: '15px',
-              backgroundColor: 'transparent',
-            },
-          }}
-          total={getPageCount()}
-          page={pageIndex + 1}
-          onChange={handlePageChange}
-          position="center"
-        />
+        <div style={{ marginTop: 'auto' }}>
+          <Pagination
+            styles={{
+              active: {
+                backgroundImage: colors.horizontal,
+                border: 'none',
+              },
+              item: {
+                marginTop: '15px',
+                marginBottom: '15px',
+                backgroundColor: 'transparent',
+              },
+            }}
+            total={getPageCount()}
+            page={pageIndex + 1}
+            onChange={handlePageChange}
+            position="center"
+          />
+        </div>
       )}
     </div>
   );
