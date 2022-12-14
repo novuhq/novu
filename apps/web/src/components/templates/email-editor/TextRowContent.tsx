@@ -42,6 +42,7 @@ export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; on
       <div
         ref={ref}
         data-test-id="editable-text-content"
+        role="textbox"
         dangerouslySetInnerHTML={{
           __html: text,
         }}
@@ -55,7 +56,6 @@ export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; on
           textAlign: block.styles?.textAlign || 'left',
         }}
       />
-
       <PlaceHolder color={colors.B60} show={visiblePlaceholder}>
         Type the email content here...
       </PlaceHolder>
