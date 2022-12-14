@@ -70,16 +70,10 @@ export function LoginForm({ email, token }: Props) {
   }, [error]);
 
   const emailServerError = useMemo<string>(() => {
-    if (serverErrorString === 'User not found') return 'Account does not exist';
     if (serverErrorString === 'email must be an email') return 'Please provide a valid email';
 
     return '';
   }, [serverErrorString]);
-
-  const passwordServerError = useMemo<string>(
-    () => (serverErrorString === 'Wrong credentials provided' ? 'Invalid password' : ''),
-    [serverErrorString]
-  );
 
   return (
     <>
@@ -114,7 +108,7 @@ export function LoginForm({ email, token }: Props) {
           mt={5}
         />
         <PasswordInput
-          error={errors.password?.message || passwordServerError}
+          error={errors.password?.message}
           mt={20}
           {...register('password', {
             required: 'Please input a password',
@@ -143,7 +137,7 @@ export function LoginForm({ email, token }: Props) {
           </Link>
         </Center>
       </form>
-      {isError && !passwordServerError && !emailServerError && (
+      {isError && !emailServerError && (
         <Text data-test-id="error-alert-banner" mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
           {error?.message}

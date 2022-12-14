@@ -70,7 +70,7 @@ if (process.env.SENTRY_DSN) {
          */
         { type: HttpException, filter: (exception: HttpException) => exception.getStatus() < 500 },
       ],
-      user: ['_id', 'firstName', 'lastName', 'email', 'organizationId', 'environmentId', 'roles'],
+      user: ['_id', 'firstName', 'organizationId', 'environmentId', 'roles', 'domain'],
     }),
   });
 }

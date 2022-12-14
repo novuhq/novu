@@ -74,6 +74,13 @@ export class TriggerEvent {
       return this.logTemplateNotActive(command, template);
     }
 
+    if (!template.steps?.length) {
+      return {
+        acknowledged: true,
+        status: 'no_workflow_steps_defined',
+      };
+    }
+
     // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
     if (command.payload && Array.isArray(command.payload.attachments)) {
       this.modifyAttachments(command);
