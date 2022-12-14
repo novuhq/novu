@@ -46,6 +46,7 @@ export class PasswordReset {
         $unset: {
           resetToken: 1,
           resetTokenDate: 1,
+          resetTokenCount: '',
         },
       }
     );
