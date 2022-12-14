@@ -89,7 +89,12 @@ export function Table({
   const handlePageChange = (pageNumber) => {
     gotoPage(pageNumber - 1);
   };
+
   const getPageCount = () => {
+    if (total <= pageSize) {
+      return 0;
+    }
+
     return Math.ceil(total / pageSize);
   };
 
