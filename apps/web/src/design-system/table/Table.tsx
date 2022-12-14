@@ -27,6 +27,7 @@ export function Table({
   ...props
 }: ITableProps) {
   const { pageSize, total, onPageChange, current } = pagination;
+
   const columns = React.useMemo(
     () =>
       userColumns?.map((col) => {
@@ -90,10 +91,6 @@ export function Table({
   };
 
   const getPageCount = () => {
-    if (total <= pageSize) {
-      return 0;
-    }
-
     return Math.ceil(total / pageSize);
   };
 
