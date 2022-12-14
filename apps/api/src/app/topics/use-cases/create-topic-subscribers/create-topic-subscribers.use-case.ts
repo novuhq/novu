@@ -1,5 +1,5 @@
 import { TopicSubscribersEntity, TopicSubscribersRepository } from '@novu/dal';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { CreateTopicSubscribersCommand } from './create-topic-subscribers.command';
 

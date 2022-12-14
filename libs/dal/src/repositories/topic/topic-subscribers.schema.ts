@@ -31,7 +31,7 @@ const topicSubscribersSchema = new Schema(
       index: true,
       required: true,
     },
-    subscribers: [{ type: Schema.Types.ObjectId, ref: 'Subscriber', required: true }],
+    subscribers: [{ type: Schema.Types.String, field: 'subscriberId', ref: 'Subscriber', required: true }],
   },
   schemaOptions
 );

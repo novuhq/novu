@@ -1,4 +1,4 @@
-import { EnvironmentId, OrganizationId, SubscriberId, TopicId, TopicKey, TopicName, UserId } from '../../types';
+import { EnvironmentId, ExternalSubscriberId, OrganizationId, TopicId, TopicKey, TopicName, UserId } from '../../types';
 
 export class TopicDto {
   _id: TopicId;
@@ -7,5 +7,5 @@ export class TopicDto {
   _userId: UserId;
   key: TopicKey;
   name: TopicName;
-  subscribers?: SubscriberId[];
+  subscribers?: ExternalSubscriberId[];
 }

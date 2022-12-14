@@ -1,4 +1,4 @@
-import { EnvironmentId, OrganizationId, SubscriberId, TopicId, TopicKey, UserId } from './types';
+import { EnvironmentId, ExternalSubscriberId, OrganizationId, TopicId, TopicKey, UserId } from './types';
 
 export class TopicEntity {
   _id: TopicId;
@@ -7,5 +7,5 @@ export class TopicEntity {
   _userId: UserId;
   key: TopicKey;
   name: string;
-  subscribers?: SubscriberId[];
+  subscribers?: ExternalSubscriberId[];
 }
