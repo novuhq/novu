@@ -1,0 +1,14 @@
+name: Pre-Commit Hook
+
+on:
+  pull_request:
+    paths:
+      - 'apps/**'
+      - 'libs/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: ../../scripts/check-test.sh
