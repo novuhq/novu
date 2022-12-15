@@ -1,9 +1,9 @@
 import { CacheKeyPrefixEnum } from '../services/cache';
 
-export function validateCredentials(keyPrefix: string, credentials: string) {
+export function validateCredentials(keyPrefix: CacheKeyPrefixEnum, credentials: string) {
   const splitCredentials = credentials?.split(':').filter((possibleKey) => possibleKey?.length > 0);
 
-  return keyPrefix.startsWith('User') ? splitCredentials.length === 1 : splitCredentials.length === 2;
+  return keyPrefix === CacheKeyPrefixEnum.USER ? splitCredentials.length === 1 : splitCredentials.length === 2;
 }
 
 /**
@@ -64,23 +64,21 @@ export enum CacheInterceptorTypeEnum {
 }
 
 export function buildKey(
-  prefix: string,
-  methodName: string,
+  prefix: CacheKeyPrefixEnum,
   keyConfig: Record<string, unknown>,
   interceptorType: CacheInterceptorTypeEnum
 ): string {
-  let cacheKey = prefix;
+  let cacheKey = prefix as string;
 
-  cacheKey = cacheKey + buildQueryKeyPart(methodName, interceptorType, keyConfig);
+  cacheKey = cacheKey + buildQueryKeyPart(prefix, interceptorType, keyConfig);
 
   const credentials = buildCredentialsKeyPart(cacheKey, keyConfig);
 
   return validateCredentials(prefix, credentials) ? cacheKey + credentials : '';
 }
 
-export function getQueryParams(methodName: string, keysConfig: unknown): string {
-  let result =
-    methodName === 'find' ? ':find' : methodName === 'findOne' || methodName === 'findById' ? ':findOne' : '';
+export function getQueryParams(keysConfig: unknown): string {
+  let result = '';
 
   const keysToExclude = [...getCredentialsKeys()];
 
@@ -137,13 +135,13 @@ export function getInvalidateQuery(
 }
 
 export function buildQueryKeyPart(
-  methodName: string,
+  prefix: CacheKeyPrefixEnum,
   interceptorType: CacheInterceptorTypeEnum,
   keyConfig: Record<string, unknown>
 ) {
   const WILD_CARD = '*';
 
-  return interceptorType === CacheInterceptorTypeEnum.INVALIDATE ? WILD_CARD : getQueryParams(methodName, keyConfig);
+  return interceptorType === CacheInterceptorTypeEnum.INVALIDATE ? WILD_CARD : getQueryParams(keyConfig);
 }
 
 export interface ICacheConfig {

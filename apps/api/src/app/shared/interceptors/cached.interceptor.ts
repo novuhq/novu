@@ -17,12 +17,7 @@ export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
 
       const query = buildCachedQuery(args);
 
-      const cacheKey = buildKey(
-        storeKeyPrefix ?? this.MongooseModel.modelName,
-        methodName,
-        query,
-        CacheInterceptorTypeEnum.CACHED
-      );
+      const cacheKey = buildKey(storeKeyPrefix, query, CacheInterceptorTypeEnum.CACHED);
 
       if (!cacheKey) {
         return await originalMethod.apply(this, args);
@@ -35,7 +30,7 @@ export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
         }
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.error(`An error has occurred when extracting "key: ${key}`, 'CacheInterceptor', err);
+        console.error(`An error has occurred when extracting "key: ${methodName}`, 'CacheInterceptor', err);
       }
 
       const response = await originalMethod.apply(this, args);
@@ -45,7 +40,7 @@ export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(
-          `An error has occurred when inserting "key: ${key}", "value: ${response}"`,
+          `An error has occurred when inserting "key: ${methodName}", "value: ${response}"`,
           'CacheInterceptor',
           err
         );

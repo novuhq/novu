@@ -39,7 +39,7 @@ describe('shared cache', function () {
       expect(res).to.be.equal(false);
     });
     it('should validate the credentials for not Message entity', function () {
-      const keyPrefix = 'User';
+      const keyPrefix = CacheKeyPrefixEnum.USER;
       let credentials: string;
       let res: boolean;
 
@@ -203,43 +203,43 @@ describe('shared cache', function () {
   describe('buildKey', function () {
     it('should build cache key from prefix with config', async function () {
       const interceptorType = CacheInterceptorTypeEnum.CACHED;
-      let prefixKey: string;
+      let prefixKey: CacheKeyPrefixEnum;
       let keyConfig: Record<string, unknown>;
       let res: string;
 
       prefixKey = CacheKeyPrefixEnum.FEED;
       keyConfig = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10 };
-      res = buildKey(prefixKey, 'find', keyConfig, interceptorType);
-      expect(res).to.be.equal('feed:find:limit=10:s=333:e=456');
+      res = buildKey(prefixKey, keyConfig, interceptorType);
+      expect(res).to.be.equal('feed:limit=10:s=333:e=456');
 
       prefixKey = CacheKeyPrefixEnum.SUBSCRIBER;
       keyConfig = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10 };
-      res = buildKey(prefixKey, 'find', keyConfig, interceptorType);
-      expect(res).to.be.equal('subscriber:find:limit=10:i=123:e=456');
+      res = buildKey(prefixKey, keyConfig, interceptorType);
+      expect(res).to.be.equal('subscriber:limit=10:i=123:e=456');
 
       keyConfig = { _environmentId: '456', limit: 10 };
-      res = buildKey(prefixKey, 'find', keyConfig, interceptorType);
+      res = buildKey(prefixKey, keyConfig, interceptorType);
       expect(res).to.be.equal('');
     });
 
     it('should build invalidate key from prefix with config', async function () {
       const interceptorType = CacheInterceptorTypeEnum.INVALIDATE;
-      let prefixKey: string;
+      let prefixKey: CacheKeyPrefixEnum;
       let keyConfig: Record<string, unknown>;
       let res: string;
 
       prefixKey = CacheKeyPrefixEnum.FEED;
       keyConfig = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10 };
-      res = buildKey(prefixKey, 'update', keyConfig, interceptorType);
+      res = buildKey(prefixKey, keyConfig, interceptorType);
       expect(res).to.be.equal('feed*:s=333:e=456');
 
       prefixKey = CacheKeyPrefixEnum.SUBSCRIBER;
       keyConfig = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10 };
-      res = buildKey(prefixKey, 'update', keyConfig, interceptorType);
+      res = buildKey(prefixKey, keyConfig, interceptorType);
       expect(res).to.be.equal('subscriber*:i=123:e=456');
 
       keyConfig = { _id: '123', subscriberId: '333', limit: 10 };
-      res = buildKey(prefixKey, 'update', keyConfig, interceptorType);
+      res = buildKey(prefixKey, keyConfig, interceptorType);
       expect(res).to.be.equal('');
     });
   });
@@ -247,13 +247,13 @@ describe('shared cache', function () {
   describe('getQueryParams', function () {
     it('should get query param from object', async function () {
       const query = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10, seen: true };
-      const res = getQueryParams('create', query);
+      const res = getQueryParams(query);
       expect(res).to.be.equal(':limit=10:seen=true');
     });
 
     it('should filter credentials from query param from object', async function () {
       const query = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10, seen: true };
-      const res = getQueryParams('create', query);
+      const res = getQueryParams(query);
       expect(res).to.not.contains('id');
       expect(res).to.not.contains('environmentId');
       expect(res).to.not.contains('subscriberId');
@@ -263,7 +263,7 @@ describe('shared cache', function () {
 
     it('should exclude undefined params from query object', async function () {
       const query = { _id: '123', subscriberId: '333', _environmentId: '456', limit: null, seen: undefined };
-      const res = getQueryParams('create', query);
+      const res = getQueryParams(query);
       expect(res).to.not.contains('id');
       expect(res).to.not.contains('environmentId');
       expect(res).to.not.contains('subscriberId');
@@ -279,7 +279,7 @@ describe('shared cache', function () {
         limit: 10,
         options: { limit: 10, filter: true },
       };
-      const res = getQueryParams('create', query);
+      const res = getQueryParams(query);
       expect(res).to.contains('options');
       expect(res).to.be.equal(':limit=10:options={"limit":10,"filter":true}');
     });
@@ -292,7 +292,7 @@ describe('shared cache', function () {
         limit: 10,
         options: { limit: 10, filter: true },
       };
-      const res = getQueryParams('find', query);
+      const res = getQueryParams(query);
       expect(res).to.contains(':limit=10');
       expect(res).to.contains(':options={"limit":10,"filter":true}');
     });
@@ -304,8 +304,8 @@ describe('shared cache', function () {
         _environmentId: '456',
         limit: 10,
       };
-      const res = getQueryParams('find', query);
-      expect(res).to.be.equal(':find:limit=10');
+      const res = getQueryParams(query);
+      expect(res).to.be.equal(':limit=10');
     });
 
     it('should return key with findOne prefix', async function () {
@@ -315,11 +315,11 @@ describe('shared cache', function () {
         _environmentId: '456',
         limit: 10,
       };
-      const findOneRes = getQueryParams('findOne', query);
-      expect(findOneRes).to.be.equal(':findOne:limit=10');
+      const findOneRes = getQueryParams(query);
+      expect(findOneRes).to.be.equal(':limit=10');
 
-      const findByIdRes = getQueryParams('findById', query);
-      expect(findByIdRes).to.be.equal(':findOne:limit=10');
+      const findByIdRes = getQueryParams(query);
+      expect(findByIdRes).to.be.equal(':limit=10');
     });
 
     it('should return key without method name prefix', async function () {
@@ -329,10 +329,10 @@ describe('shared cache', function () {
         _environmentId: '456',
         limit: 10,
       };
-      const findOneRes = getQueryParams('create', query);
+      const findOneRes = getQueryParams(query);
       expect(findOneRes).to.be.equal(':limit=10');
 
-      const findByIdRes = getQueryParams('update', query);
+      const findByIdRes = getQueryParams(query);
       expect(findByIdRes).to.be.equal(':limit=10');
     });
   });
@@ -439,14 +439,14 @@ describe('shared cache', function () {
   describe('buildQueryKeyPart', function () {
     it('should build query key part for cached interceptor', async function () {
       const query = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10, seen: true };
-      const res = buildQueryKeyPart('find', CacheInterceptorTypeEnum.CACHED, query);
+      const res = buildQueryKeyPart(CacheKeyPrefixEnum.MESSAGE_COUNT, CacheInterceptorTypeEnum.CACHED, query);
 
-      expect(res).to.be.equal(':find:limit=10:seen=true');
+      expect(res).to.be.equal(':limit=10:seen=true');
     });
 
     it('should build query key part for invalidate interceptor', async function () {
       const query = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10, seen: true };
-      const res = buildQueryKeyPart('update', CacheInterceptorTypeEnum.INVALIDATE, query);
+      const res = buildQueryKeyPart(CacheKeyPrefixEnum.MESSAGE_COUNT, CacheInterceptorTypeEnum.INVALIDATE, query);
 
       expect(res).to.be.equal('*');
     });
