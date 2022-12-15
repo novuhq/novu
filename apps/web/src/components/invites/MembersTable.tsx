@@ -23,9 +23,9 @@ export function MembersTable({
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
   function isEnableMemberActions(currentMember): boolean {
-    const currentUserRoles = members?.find((memberEntity) => memberEntity._userId == currentUser?._id)?.roles || [];
+    const currentUserRoles = members?.find((memberEntity) => memberEntity._userId === currentUser?._id)?.roles || [];
 
-    const isNotMyself = currentUser?._id != currentMember._userId;
+    const isNotMyself = currentUser?._id !== currentMember._userId;
     const isAllowedToRemove = currentUserRoles.includes(MemberRoleEnum.ADMIN);
 
     return isNotMyself && isAllowedToRemove;

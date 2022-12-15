@@ -2,7 +2,7 @@ import { makeValidator, port, str, url, ValidatorSpec } from 'envalid';
 import * as envalid from 'envalid';
 
 const str32 = makeValidator((variable) => {
-  if (!(typeof variable === 'string') || variable.length != 32) {
+  if (!(typeof variable === 'string') || variable.length !== 32) {
     throw new Error('Expected to be string 32 char long');
   }
 

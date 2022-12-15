@@ -12,9 +12,9 @@ export function ActivityStatistics() {
     weeklySent: number;
   }>('activityStats', getActivityStats);
   const isDark = useMantineTheme().colorScheme === 'dark';
-  const weekCount = typeof activityStats?.weeklySent == 'number' ? formatNumber(activityStats.weeklySent, 0) : null;
-  const monthCount = typeof activityStats?.monthlySent == 'number' ? formatNumber(activityStats.monthlySent, 0) : null;
-  const yearCount = typeof activityStats?.yearlySent == 'number' ? formatNumber(activityStats.yearlySent, 0) : null;
+  const weekCount = typeof activityStats?.weeklySent === 'number' ? formatNumber(activityStats.weeklySent, 0) : null;
+  const monthCount = typeof activityStats?.monthlySent === 'number' ? formatNumber(activityStats.monthlySent, 0) : null;
+  const yearCount = typeof activityStats?.yearlySent === 'number' ? formatNumber(activityStats.yearlySent, 0) : null;
 
   return (
     <>

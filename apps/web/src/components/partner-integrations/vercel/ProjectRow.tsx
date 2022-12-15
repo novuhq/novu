@@ -32,7 +32,7 @@ export function ProjectRow(props: ProjectRowProps) {
 
   const eligibleOrganizationOptions = organizationsData.filter((organization) =>
     formValues.every(
-      (state) => formValues[index].organizationId == organization._id || state.organizationId !== organization._id
+      (state) => formValues[index].organizationId === organization._id || state.organizationId !== organization._id
     )
   );
 

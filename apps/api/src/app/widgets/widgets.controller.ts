@@ -322,7 +322,7 @@ export function initializeSeenParam(seen: string): boolean | null {
   let isSeen: boolean = null;
 
   if (seen) {
-    isSeen = seen == 'true';
+    isSeen = seen === 'true';
   }
 
   return isSeen;
