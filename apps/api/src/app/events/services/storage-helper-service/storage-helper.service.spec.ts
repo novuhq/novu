@@ -14,8 +14,8 @@ import { IAttachmentOptionsExtended } from '@novu/stateless';
 describe('Storage-Helper service', function () {
   // mocking the S3 Storage service with sinon
   describe('S3', function () {
-    let S3StorageHelperService = new StorageHelperService(new S3StorageService());
-    let attachments: IAttachmentOptionsExtended[] = [
+    const S3StorageHelperService = new StorageHelperService(new S3StorageService());
+    const attachments: IAttachmentOptionsExtended[] = [
       {
         name: 'test.png',
         file: Buffer.from('test'),
@@ -23,7 +23,7 @@ describe('Storage-Helper service', function () {
         mime: 'image/png',
       },
     ];
-    let resultAttachments = attachments.map((attachment) => {
+    const resultAttachments = attachments.map((attachment) => {
       attachment.file = null;
       return attachment;
     });
@@ -58,7 +58,7 @@ describe('Storage-Helper service', function () {
     });
 
     it('should handle error for file which is not found', async function () {
-      let attachments2: IAttachmentOptionsExtended[] = [
+      const attachments2: IAttachmentOptionsExtended[] = [
         {
           name: 'new-image.png',
           storagePath: 'attachments/new-image.png',
@@ -77,8 +77,8 @@ describe('Storage-Helper service', function () {
     afterEach(() => {
       sinon.restore();
     });
-    let GCSStorageHelperService = new StorageHelperService(new GCSStorageService());
-    let gcAttachments: IAttachmentOptionsExtended[] = [
+    const GCSStorageHelperService = new StorageHelperService(new GCSStorageService());
+    const gcAttachments: IAttachmentOptionsExtended[] = [
       {
         name: 'test.png',
         storagePath: 'attachments/test.png',
@@ -109,7 +109,7 @@ describe('Storage-Helper service', function () {
     });
 
     it('should handle error for file which is not found', async function () {
-      let gcAttachments2: IAttachmentOptionsExtended[] = [
+      const gcAttachments2: IAttachmentOptionsExtended[] = [
         {
           name: 'new-image.png',
           storagePath: 'attachments/new-image.png',
@@ -128,8 +128,8 @@ describe('Storage-Helper service', function () {
     afterEach(() => {
       sinon.restore();
     });
-    let AzureStorageHelperService = new StorageHelperService(new AzureBlobStorageService());
-    let azureAttachments: IAttachmentOptionsExtended[] = [
+    const AzureStorageHelperService = new StorageHelperService(new AzureBlobStorageService());
+    const azureAttachments: IAttachmentOptionsExtended[] = [
       {
         name: 'test.png',
         storagePath: 'attachments/test.png',
@@ -159,7 +159,7 @@ describe('Storage-Helper service', function () {
     });
 
     it('should handle error for file which is not found', async function () {
-      let azureAttachments2: IAttachmentOptionsExtended[] = [
+      const azureAttachments2: IAttachmentOptionsExtended[] = [
         {
           name: 'new-image.png',
           storagePath: 'attachments/new-image.png',
