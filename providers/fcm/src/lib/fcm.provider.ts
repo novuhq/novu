@@ -37,25 +37,26 @@ export class FcmPushProvider implements IPushProvider {
   async sendMessage(
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
-    delete (options.overrides as any)?.deviceTokens;
+    delete (options.overrides as { deviceTokens?: string[] })?.deviceTokens;
 
     let res;
 
     if (options.overrides?.type === 'data') {
-      delete (options.overrides as any)?.type;
+      delete (options.overrides as { type?: string })?.type;
       res = await this.messaging.sendMulticast({
         tokens: options.target,
-        data: options.payload as any,
+        data: options.payload as { [key: string]: string },
       });
     } else {
-      delete (options.overrides as any)?.type;
+      const { data, ...overrides } = options.overrides;
       res = await this.messaging.sendMulticast({
         tokens: options.target,
         notification: {
           title: options.title,
           body: options.content,
-          ...options.overrides,
+          ...overrides,
         },
+        data,
       });
     }
 

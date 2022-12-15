@@ -27,7 +27,12 @@ novu.trigger('event-name', {
   },
   overrides: {
     fcm: {
-      type: 'notification', // 'data' => will turn this into a FCM data notification
+      type: 'notification',
+      // type: 'data' => will turn this into a FCM data notification, where the payload is sent as a data notification
+      data: {
+        key: 'value',
+        // If type is "notification", you can use the "data" override to send notification messages with optional data payload
+      },
     },
   },
 });

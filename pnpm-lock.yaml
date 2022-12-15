@@ -34,6 +34,7 @@ importers:
       cspell: ^4.2.8
       cypress-intellij-reporter: ^0.0.6
       cz-conventional-changelog: 3.3.0
+      deep-extend: ^0.6.0
       detect-port: ^1.3.0
       eslint: 7.32.0
       eslint-config-airbnb-typescript: 16.1.4
@@ -109,6 +110,7 @@ importers:
       cspell: 4.2.8
       cypress-intellij-reporter: 0.0.6
       cz-conventional-changelog: 3.3.0
+      deep-extend: 0.6.0
       detect-port: 1.3.0
       eslint: 7.32.0
       eslint-config-airbnb-typescript: 16.1.4_6c4a7v6xrf2vbd7knfatibtbb4
@@ -26459,7 +26461,7 @@ packages:
     resolution: {integrity: sha512-9K4zoImiZc3HlIp6AVUDE4CWYx22a+lhSZMYNpbjW04+YF0KWj4pJXnEMjdnFTiQibFFmElcsasJXDbdI/EPhA==}
     dependencies:
       '@types/eslint': 8.4.5
-      '@types/estree': 0.0.51
+      '@types/estree': 1.0.0
 
   /@types/eslint/7.29.0:
     resolution: {integrity: sha512-VNcvioYDH8/FxaeTKkM4/TiTwt6pBV9E3OfGmvaw8tPl0rrHCJ4Ll15HRT+pMiFAf/MLQvAzC+6RzUMEL9Ceng==}
@@ -43050,7 +43052,7 @@ packages:
       chalk: 4.1.2
       ci-info: 3.3.0
       deepmerge: 4.2.2
-      glob: 7.2.0
+      glob: 7.2.3
       graceful-fs: 4.2.9
       jest-circus: 27.5.1
       jest-environment-jsdom: 27.5.1
@@ -43067,7 +43069,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 9.1.1_typescript@4.6.2
+      ts-node: 9.1.1_typescript@4.3.5
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -54453,6 +54455,7 @@ packages:
       resolve: 1.22.1
       rollup: 2.70.1
       rollup-pluginutils: 2.8.2
+    dev: false
 
   /rollup-plugin-gzip/3.1.0_rollup@2.70.1:
     resolution: {integrity: sha512-PFS9s6/w6dCra6/Z8PGD+ug3aaaqKLDCbr5y1Ek71Wd4rQSmMnOqCIIMgwbYxZ9A/gjP3pCN6rA4pAG47jxF0w==}
@@ -57652,7 +57655,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.14
+      '@jridgewell/trace-mapping': 0.3.17
       jest-worker: 27.5.1
       schema-utils: 3.1.1
       serialize-javascript: 6.0.0
@@ -62052,7 +62055,6 @@ packages:
   /yargs-parser/21.1.1:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
     engines: {node: '>=12'}
-    dev: true
 
   /yargs-unparser/2.0.0:
     resolution: {integrity: sha512-7pRTIA9Qc1caZ0bZ6RYRGbHJthJWuakf+WmHK0rVeLkNrrGhfoabBNdue6kdINI6r4if7ocq9aD/n7xwKOdzOA==}
@@ -62132,7 +62134,7 @@ packages:
       require-directory: 2.1.1
       string-width: 4.2.3
       y18n: 5.0.8
-      yargs-parser: 21.0.1
+      yargs-parser: 21.1.1
 
   /yargs/17.6.2:
     resolution: {integrity: sha512-1/9UrdHjDZc0eOU0HxOHoS78C69UD3JRMvzlJ7S79S2nTaWRA/whGCTV8o9e/N/1Va9YIV7Q4sOxD8VV4pCWOw==}
