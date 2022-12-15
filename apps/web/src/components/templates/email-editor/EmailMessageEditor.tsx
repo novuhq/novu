@@ -120,7 +120,7 @@ export function EmailMessageEditor({
   return (
     <Card withBorder sx={styledCard}>
       <Container pl={0} pr={0}>
-        <div onClick={() => !branding?.logo && navigate(getBrandSettingsUrl())}>
+        <div onClick={() => !branding?.logo && navigate(getBrandSettingsUrl())} role="link">
           <Dropzone
             styles={{
               root: {
