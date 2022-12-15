@@ -15,7 +15,8 @@ export const UserSession = createParamDecorator((data, ctx) => {
      * This helps with sentry and other tools that need to know who the user is based on `id` property.
      */
     req.user.id = req.user._id;
-    req.user.username = ((req.user.firstName || '') + ' ' + (req.user.lastName || '')).trim();
+    req.user.username = (req.user.firstName || '').trim();
+    req.user.domain = req.user.email?.split('@')[1];
 
     return req.user;
   }

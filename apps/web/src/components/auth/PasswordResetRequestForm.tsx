@@ -11,7 +11,7 @@ type Props = {
 };
 
 export function PasswordResetRequestForm({ onSent }: Props) {
-  const { isLoading, mutateAsync } = useMutation<
+  const { isLoading, mutateAsync, isError, error } = useMutation<
     { success: boolean },
     { error: string; message: string; statusCode: number },
     {
@@ -68,6 +68,11 @@ export function PasswordResetRequestForm({ onSent }: Props) {
           </Link>
         </Center>
       </form>
+      {isError && error?.message && (
+        <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
+          {error.message}
+        </Text>
+      )}
     </>
   );
 }

@@ -1,7 +1,5 @@
 import { TemplateVariableTypeEnum, TemplateSystemVariables } from '@novu/shared';
-import { useEffect, useMemo, useState } from 'react';
-import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
-import { parse } from '@handlebars/parser';
+import { Controller, useFormContext } from 'react-hook-form';
 import { Code, Space, Table } from '@mantine/core';
 import styled from '@emotion/styled';
 import { colors, Input, Switch, Text } from '../../design-system';
@@ -10,7 +8,7 @@ import { When } from '../utils/When';
 
 interface VariableManagerProps {
   index: number;
-  contents: string[];
+  variablesArray: Record<string, any>;
   hideLabel?: boolean;
 }
 
@@ -45,10 +43,23 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
   return (
     <VariableWrapper data-test-id="template-variable-row">
       <td>
-        <Code>{variableName}</Code>
+        <Code
+          sx={(theme) => ({
+            backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
+          })}
+        >
+          {variableName}
+        </Code>
       </td>
       <td>
-        <Code style={{ color: colors.B60 }}>{variableTypeHumanize}</Code>
+        <Code
+          sx={(theme) => ({
+            backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
+            color: colors.B60,
+          })}
+        >
+          {variableTypeHumanize}
+        </Code>
       </td>
       <td>
         {variableType === 'String' && !isSystemVariable && (
@@ -109,112 +120,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
   );
 };
 
-export const VariableManager = ({ index, contents, hideLabel = false }: VariableManagerProps) => {
-  const [ast, setAst] = useState<any>({ body: [] });
-  const [textContent, setTextContent] = useState<string>('');
-  const { watch, control, getValues } = useFormContext();
-
-  const variablesArray = useFieldArray({ control, name: `steps.${index}.template.variables` });
-  const variableArray = watch(`steps.${index}.template.variables`, []);
-
-  useEffect(() => {
-    const subscription = watch((values) => {
-      gatherTextContent(values.steps[index].template);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [watch, contents]);
-
-  useEffect(() => {
-    const template = getValues(`steps.${index}.template`);
-    gatherTextContent(template);
-  }, [contents]);
-
-  useMemo(() => {
-    try {
-      setAst(parse(textContent));
-    } catch (e) {}
-  }, [textContent]);
-
-  function gatherTextContent(template = {}) {
-    setTextContent(
-      contents
-        .map((con) => con.split('.').reduce((a, b) => a[b], template))
-        .map((con) => (Array.isArray(con) ? con.map((innerCon) => innerCon.content).join(' ') : con))
-        .join(' ')
-    );
-  }
-
-  function getMustacheVariables(bod: any[]): IMustacheVariable[] {
-    const stringVariables: IMustacheVariable[] = bod
-      .filter((body) => body.type === 'MustacheStatement')
-      .map((body) => ({
-        type: TemplateVariableTypeEnum.STRING,
-        name: body.path.original as string,
-        defaultValue: '',
-        required: false,
-      }));
-
-    const arrayVariables: IMustacheVariable[] = bod
-      .filter((body) => body.type === 'BlockStatement' && ['each', 'with'].includes(body.path.head))
-      .map((body) => {
-        const nestedVariablesInBlock = getMustacheVariables(body.program.body).map((mustVar) => {
-          return {
-            ...mustVar,
-            name: body.params[0].original + '.' + mustVar.name,
-          };
-        });
-
-        return [
-          {
-            type: TemplateVariableTypeEnum.ARRAY,
-            name: body.params[0].original as string,
-            required: false,
-          },
-          ...nestedVariablesInBlock,
-        ];
-      })
-      .flat();
-
-    const boolVariables: IMustacheVariable[] = bod
-      .filter((body) => body.type === 'BlockStatement' && ['if'].includes(body.path.head))
-      .map((body) => {
-        const nestedVariablesInBlock = getMustacheVariables(body.program.body);
-
-        return [
-          {
-            type: TemplateVariableTypeEnum.BOOLEAN,
-            name: body.params[0].original as string,
-            defaultValue: true,
-            required: false,
-          },
-          ...nestedVariablesInBlock,
-        ];
-      })
-      .flat();
-
-    return stringVariables.concat(arrayVariables).concat(boolVariables);
-  }
-
-  useMemo(() => {
-    const variables = getMustacheVariables(ast.body);
-    const arrayFields = [...(variableArray || [])];
-
-    variables.forEach((vari) => {
-      if (!arrayFields.find((field) => field.name === vari.name)) {
-        arrayFields.push(vari);
-      }
-    });
-
-    arrayFields.forEach((vari, ind) => {
-      if (!variables.find((field) => field.name === vari.name)) {
-        delete arrayFields[ind];
-      }
-    });
-
-    variablesArray.replace(arrayFields.filter((field) => !!field));
-  }, [ast]);
-
+export function VariableManager({ variablesArray, index, hideLabel = false }: VariableManagerProps) {
   if (!variablesArray.fields.length) return null;
 
   return (
@@ -246,7 +152,7 @@ export const VariableManager = ({ index, contents, hideLabel = false }: Variable
       <Space h="sm" />
     </>
   );
-};
+}
 
 const VariableWrapper = styled.tr`
   margin-bottom: 10px;

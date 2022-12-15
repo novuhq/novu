@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Collapse, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { ChevronUp } from '../../../../design-system/icons';
-import { ChevronDown } from '../../../../design-system/icons/arrows/ChevronDown';
+import { ChevronDown } from '../../../../design-system/icons';
 import { VarItem } from './VarItem';
 import { colors } from '../../../../design-system';
 
@@ -12,6 +12,7 @@ export const VarItemsDropdown = ({ name, type }) => {
   return (
     <>
       <UnstyledButton
+        data-test-id={`var-items-${name}`}
         onClick={() => {
           setOpen(!open);
         }}
@@ -38,8 +39,18 @@ export const VarItemsDropdown = ({ name, type }) => {
             paddingLeft: 12,
           }}
         >
-          {Object.keys(type).map((key) => {
-            return <VarItem name={key} type={type[key]} />;
+          {Object.keys(type).map((key, index) => {
+            let varType = type[key];
+
+            if (!['boolean', 'string', 'number', 'object'].includes(varType)) {
+              varType = typeof varType;
+            }
+
+            if (varType === 'object') {
+              return <VarItemsDropdown key={index} name={key} type={type[key]} />;
+            }
+
+            return <VarItem key={index} name={key} type={varType} />;
           })}
         </div>
       </Collapse>

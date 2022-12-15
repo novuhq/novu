@@ -25,6 +25,12 @@ const topicSubscribersSchema = new Schema(
       index: true,
       required: true,
     },
+    _topicId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Topic',
+      index: true,
+      required: true,
+    },
     subscribers: [{ type: Schema.Types.ObjectId, ref: 'Subscriber', required: true }],
   },
   schemaOptions
@@ -32,4 +38,5 @@ const topicSubscribersSchema = new Schema(
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const TopicSubscribers =
-  mongoose.models.Topic || mongoose.model<TopicSubscribersEntity>('TopicSubscribers', topicSubscribersSchema);
+  mongoose.models.TopicSubscribers ||
+  mongoose.model<TopicSubscribersEntity>('TopicSubscribers', topicSubscribersSchema);

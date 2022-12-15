@@ -241,7 +241,7 @@ const WorkflowEditorPage = ({
 
                     <Text mr={10} mt={10} size="md" color={colors.B60}>
                       Configure the digest parameters. Read more about the digest engine{' '}
-                      <a target={'_blank'} href={'https://docs.novu.co/platform/digest'}>
+                      <a target={'_blank'} rel="noopener noreferrer" href={'https://docs.novu.co/platform/digest'}>
                         here
                       </a>
                       .

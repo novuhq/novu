@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { colors } from '../../../../design-system';
 import { Collapse, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { ChevronUp } from '../../../../design-system/icons';
-import { ChevronDown } from '../../../../design-system/icons/arrows/ChevronDown';
+import { ChevronDown } from '../../../../design-system/icons';
 
 export const VarLabel = ({ label, children }) => {
   const [open, setOpen] = useState(true);
@@ -11,6 +11,7 @@ export const VarLabel = ({ label, children }) => {
   return (
     <>
       <UnstyledButton
+        data-test-id="var-label"
         onClick={() => {
           setOpen(!open);
         }}
@@ -27,7 +28,7 @@ export const VarLabel = ({ label, children }) => {
             fontWeight: 'bold',
           }}
         >
-          {label}:
+          {label}
           <span
             style={{
               float: 'right',

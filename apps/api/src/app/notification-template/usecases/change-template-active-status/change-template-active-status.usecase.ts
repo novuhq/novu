@@ -14,9 +14,10 @@ export class ChangeTemplateActiveStatus {
 
   async execute(command: ChangeTemplateActiveStatusCommand): Promise<NotificationTemplateEntity> {
     const foundTemplate = await this.notificationTemplateRepository.findOne({
-      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
       _id: command.templateId,
     });
+
     if (!foundTemplate) {
       throw new NotFoundException(`Template with id ${command.templateId} not found`);
     }
@@ -39,6 +40,7 @@ export class ChangeTemplateActiveStatus {
     );
 
     const item = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+
     await this.createChange.execute(
       CreateChangeCommand.create({
         organizationId: command.organizationId,

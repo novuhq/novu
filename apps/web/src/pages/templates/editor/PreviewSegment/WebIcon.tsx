@@ -7,29 +7,11 @@ export const WebIcon = () => (
       height="12"
       rx="2"
       stroke="#525266"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
-    <rect
-      x="8.5"
-      y="15"
-      width="1"
-      height="4"
-      rx="0.5"
-      stroke="#525266"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <rect
-      x="5.5"
-      y="19"
-      width="7"
-      height="1"
-      rx="0.5"
-      stroke="#525266"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
+    <rect x="8.5" y="15" width="1" height="4" rx="0.5" stroke="#525266" strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="5.5" y="19" width="7" height="1" rx="0.5" stroke="#525266" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );

@@ -37,12 +37,18 @@ const getVariableValue = (variable: IMustacheVariable) => {
   return '';
 };
 
-export const useProcessVariables = (variables) => {
+export const useProcessVariables = (variables, asString = true) => {
   const [processedVariables, setProcessedVariables] = useState(JSON.stringify({}, null, 2));
 
   useEffect(() => {
-    setProcessedVariables(processVariables(variables));
-  }, [variables, setProcessedVariables]);
+    let processed = processVariables(variables);
+
+    if (!asString) {
+      processed = JSON.parse(processed);
+    }
+
+    setProcessedVariables(processed);
+  }, [variables, setProcessedVariables, asString]);
 
   return processedVariables;
 };

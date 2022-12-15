@@ -12,4 +12,7 @@ export class PreviewEmailCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  @IsString()
+  subject: string;
 }

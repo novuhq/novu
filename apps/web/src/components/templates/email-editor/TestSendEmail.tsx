@@ -68,7 +68,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
   return (
     <div style={{ maxWidth: '800px', margin: 'auto', padding: '20px 25px' }}>
       <Text my={30} color={colors.B60}>
-        Fill in the required variables and send send a test to your desired address.
+        Fill in the required variables and send a test to your desired address.
       </Text>
 
       <Wrapper>
@@ -94,6 +94,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 
             return query;
           }}
+          data-test-id="test-email-emails"
         />
       </Wrapper>
 
@@ -141,7 +142,8 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 const Wrapper = styled.div`
   .mantine-MultiSelect-values {
     min-height: 48px;
-    padding: 0;
+    padding: 5px 0;
+    row-gap: 5px;
   }
 
   .mantine-MultiSelect-input {

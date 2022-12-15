@@ -13,6 +13,12 @@
   <link href="https://fonts.googleapis.com/css?family=Nunito:wght@300;400;700" rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+  <script>
+    !function(){var analytics=window.analytics=window.analytics||[];if(!analytics.initialize)if(analytics.invoked)window.console&&console.error&&console.error("Segment snippet included twice.");else{analytics.invoked=!0;analytics.methods=["trackSubmit","trackClick","trackLink","trackForm","identify","reset","group","track","ready","alias","debug","once","off","on","addSourceMiddleware","addIntegrationMiddleware","setAnonymousId","addDestinationMiddleware"];analytics.factory=function(e){return function(){var t=Array.prototype.slice.call(arguments);t.unshift(e);analytics.push(t);return analytics}};for(var e=0;e<analytics.methods.length;e++){var key=analytics.methods[e];analytics[key]=analytics.factory(key)}analytics.load=function(key,e){var t=document.createElement("script");t.type="text/javascript";t.async=!0;t.src="https://cdn.segment.com/analytics.js/v1/" + key + "/analytics.min.js";var n=document.getElementsByTagName("script")[0];n.parentNode.insertBefore(t,n);analytics._loadOptions=e};analytics._writeKey="tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW";;analytics.SNIPPET_VERSION="4.15.3";
+    analytics.load("tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW");
+    analytics.page();
+    }}();
+  </script>
 
   <script>
     (function(c){var k={init:function(a){var b={color:c(this).css("background-color"),reach:20,speed:1E3,pause:0,glow:!0,repeat:!0,onHover:!1};c(this).css({"-moz-outline-radius":c(this).css("border-top-left-radius"),"-webkit-outline-radius":c(this).css("border-top-left-radius"),"outline-radius":c(this).css("border-top-left-radius")});a&&c.extend(b,a);b.color=c("<div style='background:"+b.color+"'></div>").css("background-color");!0!==b.repeat&&!isNaN(b.repeat)&&0<b.repeat&&(b.repeat-=1);return this.each(function(){b.onHover?
@@ -203,7 +209,7 @@
                         </p>
                       </div>
 
-                      <a href="REPLACE_WITH_dashboardURL" target="_blank" class="inline-block  focus-visible:ring ring-indigo-300  text-sm md:text-base font-semibold text-center rounded-lg outline-none transition duration-100 px-8 py-3">Skip Tutorial</a>
+                      <a href="REPLACE_WITH_dashboardURL" id="skip-tutorial-link" target="_blank" class="inline-block  focus-visible:ring ring-indigo-300  text-sm md:text-base font-semibold text-center rounded-lg outline-none transition duration-100 px-8 py-3">Skip Tutorial</a>
                     </div>
                   </div>
                 </div>
@@ -340,6 +346,11 @@
 </div>
 <script>
 
+analytics.identify('REPLACE_WITH_subscriberId')
+$('#skip-tutorial-link').click(function(){
+  analytics.track('REPLACE_WITH_skipTutorial')
+
+})
 function copyToClipboard(id) {
   const r = document.createRange();
   let element = document.getElementById(id)
@@ -357,6 +368,7 @@ function copyToClipboard(id) {
   setTimeout( function() {
     document.getElementById("custom-copy-tooltip").style.display = "none";
   }, 5000);
+  analytics.track('REPLACE_WITH_copySnippet')
 }
 
 function triggerNotification() {
@@ -371,6 +383,7 @@ function triggerNotification() {
     });
     $('#trigger-button').prop('disabled', false);
     pulsateBell();
+    analytics.track('REPLACE_WITH_triggerButton')
   });
 }
 

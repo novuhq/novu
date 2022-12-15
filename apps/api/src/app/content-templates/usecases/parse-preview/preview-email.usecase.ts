@@ -12,12 +12,17 @@ export class PreviewEmail {
     let payload = {};
     try {
       payload = JSON.parse(command.payload);
-    } catch (e) {}
+    } catch (e) {
+      console.log('JSON parse failed');
+    }
+
     const isEditorMode = command.contentType === 'editor';
     const [organization, content]: [OrganizationEntity, string | IEmailBlock[]] = await Promise.all([
       this.organizationRepository.findById(command.organizationId),
       this.getContent(isEditorMode, command.content, payload),
     ]);
+
+    const subject = await this.renderContent(command.subject, payload);
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -34,19 +39,18 @@ export class PreviewEmail {
       })
     );
 
-    return { html };
+    return { html, subject };
   }
 
   private async getContent(
     isEditorMode,
     content: string | IEmailBlock[],
-    payload: any = {}
+    payload: Record<string, unknown> = {}
   ): Promise<string | IEmailBlock[]> {
     if (isEditorMode && Array.isArray(content)) {
       content = [...content] as IEmailBlock[];
       for (const block of content) {
         block.content = await this.renderContent(block.content, payload);
-        block.content = block.content.trim();
         block.url = await this.renderContent(block.url || '', payload);
       }
 
@@ -56,8 +60,8 @@ export class PreviewEmail {
     return content;
   }
 
-  private async renderContent(content: string, payload: any) {
-    return await this.compileTemplate.execute(
+  private async renderContent(content: string, payload: Record<string, unknown>) {
+    const renderedContent = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
         customTemplate: content,
@@ -66,5 +70,7 @@ export class PreviewEmail {
         },
       })
     );
+
+    return renderedContent.trim();
   }
 }

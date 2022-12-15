@@ -1,10 +1,10 @@
-import { Grid, JsonInput, Loader, useMantineTheme } from '@mantine/core';
+import { Grid, JsonInput, useMantineTheme } from '@mantine/core';
 import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useMutation } from 'react-query';
 import { previewEmail } from '../../../api/content-templates';
-import { useIntegrations } from '../../../api/hooks';
+import { useActiveIntegrations } from '../../../api/hooks';
 import { When } from '../../../components/utils/When';
 import { Button, colors } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
@@ -37,8 +37,9 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     control,
   });
 
-  const { integrations = [] } = useIntegrations();
+  const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
+  const [parsedSubject, setParsedSubject] = useState(subject);
   const [content, setContent] = useState<string>('<html><head></head><body><div></div></body></html>');
   const { isLoading, mutateAsync } = useMutation(previewEmail);
   const processedVariables = useProcessVariables(variables);
@@ -53,8 +54,12 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     content: string | IEmailBlock[];
     payload: any;
   }) => {
-    mutateAsync(args).then((result: { html: string }) => {
+    mutateAsync({
+      ...args,
+      subject: subject ? subject : '',
+    }).then((result: { html: string; subject: string }) => {
       setContent(result.html);
+      setParsedSubject(result.subject);
 
       return result;
     });
@@ -76,21 +81,22 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     setIntegration(integrations.find((item) => item.channel === 'email') || null);
   }, [integrations, setIntegration]);
 
-  if (isLoading) {
-    return <Loader />;
-  }
-
   return (
     <>
       <Grid>
         <Grid.Col span={9}>
           <When truthy={view === 'web'}>
-            <PreviewWeb subject={subject} content={content} integration={integration} />
+            <PreviewWeb loading={isLoading} subject={parsedSubject} content={content} integration={integration} />
           </When>
           <When truthy={view === 'mobile'}>
             <Grid>
               <Grid.Col span={12}>
-                <PreviewMobile subject={subject} content={content} integration={integration} />
+                <PreviewMobile
+                  loading={isLoading}
+                  subject={parsedSubject}
+                  content={content}
+                  integration={integration}
+                />
               </Grid.Col>
             </Grid>
           </When>
@@ -106,7 +112,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
             }}
           >
             <JsonInput
-              data-test-id="test-email-json-param"
+              data-test-id="preview-json-param"
               formatOnBlur
               autosize
               styles={inputStyles}
@@ -127,6 +133,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
                 });
               }}
               variant="outline"
+              data-test-id="apply-variables"
             >
               Apply Variables
             </Button>

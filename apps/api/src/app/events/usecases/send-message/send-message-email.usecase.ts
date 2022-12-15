@@ -91,11 +91,12 @@ export class SendMessageEmail extends SendMessageType {
     }
     const overrides = command.overrides[integration?.providerId] || {};
     let subject = '';
+    let preheader = emailChannel.template.preheader;
     let content: string | IEmailBlock[] = '';
 
     const payload = {
       subject: emailChannel.template.subject,
-      preheader: emailChannel.template.preheader,
+      preheader,
       branding: {
         logo: organization.branding?.logo,
         color: organization.branding?.color || '#f47373',
@@ -117,10 +118,22 @@ export class SendMessageEmail extends SendMessageType {
         organization,
         subscriber,
         command,
-        emailChannel.template.preheader
+        preheader
       );
 
-      content = await this.getContent(isEditorMode, emailChannel, command, subscriber, subject, organization);
+      content = await this.getContent(
+        isEditorMode,
+        emailChannel,
+        command,
+        subscriber,
+        subject,
+        organization,
+        preheader
+      );
+
+      if (preheader) {
+        preheader = await this.renderContent(preheader, subject, organization, subscriber, command, preheader);
+      }
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -172,13 +185,15 @@ export class SendMessageEmail extends SendMessageType {
       })
     );
 
+    const customTemplate = SendMessageEmail.addPreheader(content as string, emailChannel.template.contentType);
+
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: isEditorMode ? 'basic' : 'custom',
-        customTemplate: emailChannel.template.contentType === 'customHtml' ? (content as string) : undefined,
+        customTemplate: customTemplate,
         data: {
           subject,
-          preheader: emailChannel.template.preheader,
+          preheader,
           branding: {
             logo: organization.branding?.logo,
             color: organization.branding?.color || '#f47373',
@@ -360,7 +375,8 @@ export class SendMessageEmail extends SendMessageType {
     command: SendMessageCommand,
     subscriber: SubscriberEntity,
     subject,
-    organization: OrganizationEntity
+    organization: OrganizationEntity,
+    preheader
   ): Promise<string | IEmailBlock[]> {
     if (isEditorMode) {
       const content: IEmailBlock[] = [...emailChannel.template.content] as IEmailBlock[];
@@ -369,23 +385,8 @@ export class SendMessageEmail extends SendMessageType {
          * We need to trim the content in order to avoid mail provider like GMail
          * to display the mail with `[Message clipped]` footer.
          */
-        block.content = await this.renderContent(
-          block.content,
-          subject,
-          organization,
-          subscriber,
-          command,
-          emailChannel.template.preheader
-        );
-        block.content = block.content.trim();
-        block.url = await this.renderContent(
-          block.url || '',
-          subject,
-          organization,
-          subscriber,
-          command,
-          emailChannel.template.preheader
-        );
+        block.content = await this.renderContent(block.content, subject, organization, subscriber, command, preheader);
+        block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command, preheader);
       }
 
       return content;
@@ -402,7 +403,7 @@ export class SendMessageEmail extends SendMessageType {
     command: SendMessageCommand,
     preheader?: string
   ) {
-    return await this.compileTemplate.execute(
+    const renderedContent = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
         customTemplate: content as string,
@@ -424,5 +425,24 @@ export class SendMessageEmail extends SendMessageType {
         },
       })
     );
+
+    return renderedContent.trim();
+  }
+
+  public static addPreheader(content: string, contentType: 'editor' | 'customHtml'): string | undefined {
+    if (contentType === 'customHtml') {
+      // "&nbsp;&zwnj;&nbsp;&zwnj;" is needed to spacing away the rest of the email from the preheader area in email clients
+      return content.replace(
+        /<body[^>]*>/g,
+        `$&{{#if preheader}}
+          <div style="display: none; max-height: 0px; overflow: hidden;">
+            {{preheader}}
+            &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+          </div>
+        {{/if}}`
+      );
+    }
+
+    return undefined;
   }
 }

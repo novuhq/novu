@@ -195,7 +195,7 @@ describe('Update notification template by id - /notification-templates/:template
 
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
-    let template: INotificationTemplate = body.data;
+    const template: INotificationTemplate = body.data;
 
     const updateData: UpdateNotificationTemplateRequestDto = {
       name: testTemplate.name,
@@ -233,8 +233,7 @@ describe('Update notification template by id - /notification-templates/:template
       .put(`/v1/notification-templates/${template._id}`)
       .send(updateData);
 
-    template = updated.data;
-    const steps = template.steps;
+    const steps = updated.data.steps;
 
     expect(steps[0]._parentId).to.equal(null);
     expect(steps[0].template.preheader).to.equal('');

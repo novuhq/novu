@@ -1,13 +1,12 @@
-import { Button, colors, Tooltip, Text } from '../../../../design-system';
+import { colors, Text, Tooltip } from '../../../../design-system';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { SystemVariablesWithTypes } from '@novu/shared';
 import { VarItem } from './VarItem';
 import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
 import { UnstyledButton, useMantineTheme } from '@mantine/core';
-import { Edit } from '../../../../design-system/icons';
-import { GlobeGradient } from '../../../../design-system/icons/gradient/GlobeGradient';
 import { EditGradient } from '../../../../design-system/icons/gradient/EditGradient';
+import { useProcessVariables } from '../../../../hooks/use-process-variables';
 
 export const VariablesManagement = ({ index, openVariablesModal }) => {
   const { control } = useFormContext();
@@ -16,6 +15,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
     name: `steps.${index}.template.variables`,
     control,
   });
+  const processedVariables = useProcessVariables(variableArray, false);
 
   return (
     <div
@@ -33,13 +33,13 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
           marginBottom: '20px',
         }}
       >
-        <UnstyledButton
-          onClick={() => {
-            openVariablesModal();
-          }}
-          type="button"
-        >
-          <Tooltip label="Add defaults or mark as required">
+        <Tooltip label="Add defaults or mark as required">
+          <UnstyledButton
+            onClick={() => {
+              openVariablesModal();
+            }}
+            type="button"
+          >
             <Text gradient>
               Edit Variables
               <EditGradient
@@ -51,18 +51,18 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
                 }}
               />
             </Text>
-          </Tooltip>
-        </UnstyledButton>
+          </UnstyledButton>
+        </Tooltip>
       </div>
-      <VarLabel label="System Vars">
-        {Object.keys(SystemVariablesWithTypes).map((name) => {
+      <VarLabel label="System Variables">
+        {Object.keys(SystemVariablesWithTypes).map((name, ind) => {
           const type = SystemVariablesWithTypes[name];
 
           if (typeof type === 'object') {
-            return <VarItemsDropdown name={name} type={type} />;
+            return <VarItemsDropdown name={name} key={ind} type={type} />;
           }
 
-          return <VarItem name={name} type={type} />;
+          return <VarItem name={name} key={ind} type={type} />;
         })}
       </VarLabel>
       <div
@@ -70,9 +70,13 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
           marginTop: '20px',
         }}
       >
-        <VarLabel label="Step Vars">
-          {variableArray.map((item) => {
-            return <VarItem name={item.name} type={item.type.toLowerCase()} />;
+        <VarLabel label="Step Variables">
+          {Object.keys(processedVariables).map((name, ind) => {
+            if (typeof processedVariables[name] === 'object') {
+              return <VarItemsDropdown key={ind} name={name} type={processedVariables[name]} />;
+            }
+
+            return <VarItem key={ind} name={name} type={typeof processedVariables[name]} />;
           })}
         </VarLabel>
       </div>

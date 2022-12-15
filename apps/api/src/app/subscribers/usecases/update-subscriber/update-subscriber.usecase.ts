@@ -41,7 +41,7 @@ export class UpdateSubscriber {
     await this.subscriberRepository.update(
       {
         _environmentId: command.environmentId,
-        _id: foundSubscriber,
+        _id: foundSubscriber._id,
       },
       { $set: updatePayload }
     );
