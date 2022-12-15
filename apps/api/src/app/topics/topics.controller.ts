@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiCreatedResponse,
   ApiExcludeController,
@@ -18,6 +30,8 @@ import {
   FilterTopicsResponseDto,
   GetTopicResponseDto,
   RemoveSubscribersRequestDto,
+  RenameTopicRequestDto,
+  RenameTopicResponseDto,
 } from './dtos';
 import {
   AddSubscribersCommand,
@@ -30,6 +44,8 @@ import {
   GetTopicUseCase,
   RemoveSubscribersCommand,
   RemoveSubscribersUseCase,
+  RenameTopicCommand,
+  RenameTopicUseCase,
 } from './use-cases';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
@@ -48,6 +64,7 @@ export class TopicsController {
     private filterTopicsUseCase: FilterTopicsUseCase,
     private getTopicUseCase: GetTopicUseCase,
     private removeSubscribersUseCase: RemoveSubscribersUseCase,
+    private renameTopicUseCase: RenameTopicUseCase,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -166,6 +183,27 @@ export class TopicsController {
         environmentId: user.environmentId,
         id: topicId,
         organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @ExternalApiAccessible()
+  @ApiOkResponse({
+    type: RenameTopicResponseDto,
+  })
+  @Patch(':topicId')
+  async renameTopic(
+    @UserSession() user: IJwtPayload,
+    @Param('topicId') topicId: string,
+    @Body() body: RenameTopicRequestDto
+  ): Promise<RenameTopicResponseDto> {
+    return await this.renameTopicUseCase.execute(
+      RenameTopicCommand.create({
+        environmentId: user.environmentId,
+        id: topicId,
+        name: body.name,
+        organizationId: user.organizationId,
+        userId: user._id,
       })
     );
   }
