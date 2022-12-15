@@ -13,11 +13,12 @@ import {
   getQueryParams,
   validateCredentials,
 } from './shared-cache';
+import { CacheKeyPrefixEnum } from '../services/cache';
 
 describe('shared cache', function () {
   describe('validateCredentials', function () {
     it('should validate the credentials for Message entity', function () {
-      const keyPrefix = 'Message';
+      const keyPrefix = CacheKeyPrefixEnum.FEED;
       let credentials: string;
       let res: boolean;
 
@@ -58,7 +59,7 @@ describe('shared cache', function () {
 
   describe('getIdentifier', function () {
     it('should retrieve identifier _subscriber from Message query', async function () {
-      const keyPrefix = 'Message';
+      const keyPrefix = CacheKeyPrefixEnum.FEED;
       let query: Record<string, unknown>;
       let res: { key: string; value: string };
 
@@ -112,7 +113,7 @@ describe('shared cache', function () {
 
   describe('buildCredentialsKeyPart', function () {
     it('should build key part for Message entity', async function () {
-      const keyPrefix = 'Message';
+      const keyPrefix = CacheKeyPrefixEnum.FEED;
       let query: Record<string, unknown>;
       let res: string;
 
@@ -156,8 +157,8 @@ describe('shared cache', function () {
 
       query = { id: '123', subscriberId: '456' };
       res = getEnvironment(query);
-      expect(res.key).to.be.equal(undefined);
-      expect(res.value).to.be.equal(undefined);
+      expect(res?.key).to.be.equal(undefined);
+      expect(res?.value).to.be.equal(undefined);
     });
   });
 
@@ -206,17 +207,16 @@ describe('shared cache', function () {
       let keyConfig: Record<string, unknown>;
       let res: string;
 
-      prefixKey = 'Message';
+      prefixKey = CacheKeyPrefixEnum.FEED;
       keyConfig = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10 };
       res = buildKey(prefixKey, 'find', keyConfig, interceptorType);
-      expect(res).to.be.equal('Message:find:limit=10:s=333:e=456');
+      expect(res).to.be.equal('feed:find:limit=10:s=333:e=456');
 
-      prefixKey = 'Subscriber';
+      prefixKey = CacheKeyPrefixEnum.SUBSCRIBER;
       keyConfig = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10 };
       res = buildKey(prefixKey, 'find', keyConfig, interceptorType);
-      expect(res).to.be.equal('Subscriber:find:limit=10:i=123:e=456');
+      expect(res).to.be.equal('subscriber:find:limit=10:i=123:e=456');
 
-      prefixKey = 'Subscriber';
       keyConfig = { _environmentId: '456', limit: 10 };
       res = buildKey(prefixKey, 'find', keyConfig, interceptorType);
       expect(res).to.be.equal('');
@@ -228,17 +228,16 @@ describe('shared cache', function () {
       let keyConfig: Record<string, unknown>;
       let res: string;
 
-      prefixKey = 'Message';
+      prefixKey = CacheKeyPrefixEnum.FEED;
       keyConfig = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10 };
       res = buildKey(prefixKey, 'update', keyConfig, interceptorType);
-      expect(res).to.be.equal('Message*:s=333:e=456');
+      expect(res).to.be.equal('feed*:s=333:e=456');
 
-      prefixKey = 'Subscriber';
+      prefixKey = CacheKeyPrefixEnum.SUBSCRIBER;
       keyConfig = { _id: '123', subscriberId: '333', _environmentId: '456', limit: 10 };
       res = buildKey(prefixKey, 'update', keyConfig, interceptorType);
-      expect(res).to.be.equal('Subscriber*:i=123:e=456');
+      expect(res).to.be.equal('subscriber*:i=123:e=456');
 
-      prefixKey = 'Subscriber';
       keyConfig = { _id: '123', subscriberId: '333', limit: 10 };
       res = buildKey(prefixKey, 'update', keyConfig, interceptorType);
       expect(res).to.be.equal('');
@@ -413,7 +412,7 @@ describe('shared cache', function () {
         { limit: '10', filter: true },
       ];
 
-      const credentials = getInvalidateQuery('create', createResponse, queryArgs);
+      const credentials = getInvalidateQuery('Create', createResponse, queryArgs);
 
       expect(credentials._id).to.be.equal('createResponse_123');
       expect(credentials.subscriberId).to.be.equal('createResponse_333');

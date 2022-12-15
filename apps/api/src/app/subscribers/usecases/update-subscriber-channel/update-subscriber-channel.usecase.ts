@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { IChannelSettings, SubscriberRepository, IntegrationRepository } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
+import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class UpdateSubscriberChannel {
@@ -10,6 +12,7 @@ export class UpdateSubscriberChannel {
     private integrationRepository: IntegrationRepository
   ) {}
 
+  @InvalidateCache(CacheKeyPrefixEnum.SUBSCRIBER)
   async execute(command: UpdateSubscriberChannelCommand) {
     const foundSubscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,

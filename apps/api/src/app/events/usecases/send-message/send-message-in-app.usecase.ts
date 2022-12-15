@@ -25,7 +25,6 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
@@ -34,9 +33,10 @@ import {
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessageInApp extends SendMessageType {
+export class SendMessageInApp extends SendMessageBase {
   constructor(
     private cacheService: CacheService,
     private notificationRepository: NotificationRepository,
@@ -44,21 +44,19 @@ export class SendMessageInApp extends SendMessageType {
     private queueService: QueueService,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
   }
 
   public async execute(command: SendMessageCommand) {
+    await this.initialize(command);
+
     Sentry.addBreadcrumb({
       message: 'Sending In App',
     });
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
     const inAppChannel: NotificationStepEntity = command.step;
     let content = '';
 
@@ -69,7 +67,12 @@ export class SendMessageInApp extends SendMessageType {
     }
 
     try {
-      content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
+      content = await this.compileInAppTemplate(
+        inAppChannel.template.content,
+        command.payload,
+        this.subscriber,
+        command
+      );
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -80,7 +83,7 @@ export class SendMessageInApp extends SendMessageType {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
-            subscriber,
+            subscriber: this.subscriber,
             step: {
               digest: !!command.events.length,
               events: command.events,
@@ -98,7 +101,7 @@ export class SendMessageInApp extends SendMessageType {
       inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
         inAppChannel.template.cta?.data?.url,
         command.payload,
-        subscriber,
+        this.subscriber,
         command
       );
     }
@@ -107,7 +110,12 @@ export class SendMessageInApp extends SendMessageType {
       const ctaButtons: IMessageButton[] = [];
 
       for (const action of inAppChannel.template.cta.action.buttons) {
-        const buttonContent = await this.compileInAppTemplate(action.content, command.payload, subscriber, command);
+        const buttonContent = await this.compileInAppTemplate(
+          action.content,
+          command.payload,
+          this.subscriber,
+          command
+        );
         ctaButtons.push({ type: action.type, content: buttonContent });
       }
 
@@ -133,6 +141,15 @@ export class SendMessageInApp extends SendMessageType {
     });
 
     let message: MessageEntity;
+
+    invalidateCache({
+      service: this.cacheService,
+      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
+      credentials: {
+        subscriberId: this.subscriber.subscriberId,
+        environmentId: command.environmentId,
+      },
+    });
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
@@ -186,15 +203,6 @@ export class SendMessageInApp extends SendMessageType {
       ChannelTypeEnum.IN_APP,
       { read: false }
     );
-
-    invalidateCache({
-      service: this.cacheService,
-      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
-      credentials: {
-        subscriberId: subscriber.subscriberId,
-        environmentId: command.environmentId,
-      },
-    });
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
