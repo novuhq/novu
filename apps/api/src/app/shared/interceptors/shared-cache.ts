@@ -133,7 +133,7 @@ export function getInvalidateQuery(
   res: Record<string, unknown>,
   args: Record<string, unknown>[]
 ): Record<string, unknown> {
-  return methodName.startsWith('Create') || methodName.includes('Subscriber') ? res : args[0];
+  return methodName.startsWith('Create') ? res : args[0];
 }
 
 export function buildQueryKeyPart(
