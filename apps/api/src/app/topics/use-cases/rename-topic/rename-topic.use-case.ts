@@ -5,6 +5,7 @@ import { RenameTopicCommand } from './rename-topic.command';
 
 import { GetTopicUseCase, GetTopicCommand } from '../get-topic';
 import { TopicDto } from '../../dtos/topic.dto';
+import { ExternalSubscriberId } from '../../types';
 
 @Injectable()
 export class RenameTopicUseCase {
@@ -13,29 +14,26 @@ export class RenameTopicUseCase {
   async execute(command: RenameTopicCommand): Promise<TopicDto> {
     await this.getTopicUseCase.execute(command);
 
-    const entity = this.mapToEntity(command);
-    const renamedTopic = await this.topicRepository.renameTopic(entity);
+    const query = this.mapToQuery(command);
+    const renamedTopic = await this.topicRepository.renameTopic(query._id, query._environmentId, query.name);
 
-    return this.mapFromEntity(renamedTopic);
+    return this.mapFromEntityToDto(renamedTopic);
   }
 
-  private mapToEntity(domainEntity: RenameTopicCommand): Omit<TopicEntity, 'key'> {
+  private mapToQuery(domainEntity: RenameTopicCommand): Pick<TopicEntity, '_id' | '_environmentId' | 'name'> {
     return {
       _environmentId: TopicRepository.convertStringToObjectId(domainEntity.environmentId),
       _id: TopicRepository.convertStringToObjectId(domainEntity.id),
-      _organizationId: TopicRepository.convertStringToObjectId(domainEntity.organizationId),
-      _userId: TopicRepository.convertStringToObjectId(domainEntity.userId),
       name: domainEntity.name,
     };
   }
 
-  private mapFromEntity(topic: TopicEntity): TopicDto {
+  private mapFromEntityToDto(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {
     return {
       ...topic,
       _id: TopicRepository.convertObjectIdToString(topic._id),
       _organizationId: TopicRepository.convertObjectIdToString(topic._organizationId),
       _environmentId: TopicRepository.convertObjectIdToString(topic._environmentId),
-      _userId: TopicRepository.convertObjectIdToString(topic._userId),
     };
   }
 }

@@ -192,6 +192,7 @@ export class TopicsController {
     type: RenameTopicResponseDto,
   })
   @Patch(':topicId')
+  @ApiOperation({ description: 'Rename a topic' })
   async renameTopic(
     @UserSession() user: IJwtPayload,
     @Param('topicId') topicId: string,
@@ -203,7 +204,6 @@ export class TopicsController {
         id: topicId,
         name: body.name,
         organizationId: user.organizationId,
-        userId: user._id,
       })
     );
   }

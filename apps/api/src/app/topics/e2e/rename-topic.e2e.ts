@@ -1,14 +1,34 @@
-import { UserSession } from '@novu/testing';
-import { TopicId } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { SubscriberEntity } from '@novu/dal';
+import { ExternalSubscriberId, TopicId } from '@novu/shared';
 import { expect } from 'chai';
 
 const BASE_PATH = '/v1/topics';
+
+const addSubscribersToTopic = async (
+  session: UserSession,
+  topicId: TopicId,
+  subscribers: ExternalSubscriberId[]
+): Promise<void> => {
+  const url = `${BASE_PATH}/${topicId}/subscribers`;
+
+  const result = await session.testAgent
+    .post(url)
+    .send({
+      subscribers,
+    })
+    .set('Accept', 'application/json');
+
+  expect(result.status).to.eql(204);
+};
 
 describe('Rename a topic - /topics/:topicId (PATCH)', async () => {
   const renamedTopicName = 'topic-renamed';
   const topicKey = 'topic-key';
   const topicName = 'topic-name';
   let _id: TopicId;
+  let firstSubscriber: SubscriberEntity;
+  let secondSubscriber: SubscriberEntity;
   let session: UserSession;
 
   before(async () => {
@@ -26,6 +46,12 @@ describe('Rename a topic - /topics/:topicId (PATCH)', async () => {
     _id = body.data._id;
     expect(_id).to.exist;
     expect(_id).to.be.string;
+
+    const subscribersService = new SubscribersService(session.organization._id, session.environment._id);
+    firstSubscriber = await subscribersService.createSubscriber();
+    secondSubscriber = await subscribersService.createSubscriber();
+    const subscribers = [firstSubscriber.subscriberId, secondSubscriber.subscriberId];
+    await addSubscribersToTopic(session, _id, subscribers);
   });
 
   it('should throw a bad request error when not providing the name field', async () => {
@@ -46,12 +72,11 @@ describe('Rename a topic - /topics/:topicId (PATCH)', async () => {
     const topic = patchResponse.body.data;
 
     expect(topic._id).to.eql(_id);
-    expect(topic._userId).to.eql(session.user._id);
     expect(topic._environmentId).to.eql(session.environment._id);
     expect(topic._organizationId).to.eql(session.organization._id);
     expect(topic.key).to.eql(topicKey);
     expect(topic.name).to.eql(renamedTopicName);
-    expect(topic.subscribers).to.eql(undefined);
+    expect(topic.subscribers).to.have.members([firstSubscriber.subscriberId, secondSubscriber.subscriberId]);
   });
 
   it('should throw a not found error when the topic id provided does not exist in the database', async () => {
@@ -59,7 +84,9 @@ describe('Rename a topic - /topics/:topicId (PATCH)', async () => {
     const { body } = await session.testAgent.patch(`${BASE_PATH}/${nonExistingId}`).send({ name: renamedTopicName });
 
     expect(body.statusCode).to.equal(404);
-    expect(body.message).to.eql(`Topic not found for id ${nonExistingId} for the user ${session.user._id}`);
+    expect(body.message).to.eql(
+      `Topic not found for id ${nonExistingId} for the organization ${session.organization._id} in the environment ${session.environment._id}`
+    );
     expect(body.error).to.eql('Not Found');
   });
 });
