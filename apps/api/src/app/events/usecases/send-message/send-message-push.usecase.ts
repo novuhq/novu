@@ -36,6 +36,7 @@ import { SendMessageBase } from './send-message.base';
 
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
+  channelType = ChannelTypeEnum.PUSH;
   private pushFactory = new PushFactory();
 
   constructor(
@@ -45,9 +46,15 @@ export class SendMessagePush extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {
@@ -104,18 +111,15 @@ export class SendMessagePush extends SendMessageBase {
       return;
     }
 
-    const integration = (
-      await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.PUSH,
-          findOne: true,
-          active: true,
-        })
-      )
-    )[0];
-
+    const integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.PUSH,
+        findOne: true,
+        active: true,
+      })
+    );
     if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

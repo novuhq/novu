@@ -17,7 +17,7 @@ export async function invalidateCache({
       })
     );
   } else {
-    invalidateCase(storeKeyPrefix, credentials, service);
+    await invalidateCase(storeKeyPrefix, credentials, service);
   }
 }
 
@@ -42,4 +42,5 @@ export enum CacheKeyPrefixEnum {
   SUBSCRIBER = 'subscriber',
   NOTIFICATION_TEMPLATE = 'notification_template',
   USER = 'user',
+  INTEGRATION = 'integration',
 }

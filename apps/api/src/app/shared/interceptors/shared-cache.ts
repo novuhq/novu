@@ -1,9 +1,12 @@
 import { CacheKeyPrefixEnum } from '../services/cache';
 
 export function validateCredentials(keyPrefix: CacheKeyPrefixEnum, credentials: string) {
+  const entitiesEnvironmentLevel = [CacheKeyPrefixEnum.USER, CacheKeyPrefixEnum.INTEGRATION];
   const splitCredentials = credentials?.split(':').filter((possibleKey) => possibleKey?.length > 0);
 
-  return keyPrefix === CacheKeyPrefixEnum.USER ? splitCredentials.length === 1 : splitCredentials.length === 2;
+  return entitiesEnvironmentLevel.some((cacheKey) => cacheKey === keyPrefix)
+    ? splitCredentials.length === 1
+    : splitCredentials.length === 2;
 }
 
 /**
