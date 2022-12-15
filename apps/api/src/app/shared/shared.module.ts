@@ -29,6 +29,7 @@ import {
   S3StorageService,
   StorageService,
 } from './services/storage/storage.service';
+import { CacheService } from './services/cache';
 
 const DAL_MODELS = [
   UserRepository,
@@ -67,6 +68,16 @@ const dalService = new DalService();
 
 export const ANALYTICS_SERVICE = 'AnalyticsService';
 
+const cacheService = {
+  provide: CacheService,
+  useFactory: async () => {
+    return new CacheService({
+      cacheHost: process.env.REDIS_CACHE_HOST,
+      cachePort: process.env.REDIS_CACHE_PORT,
+    });
+  },
+};
+
 const PROVIDERS = [
   {
     provide: QueueService,
@@ -82,6 +93,7 @@ const PROVIDERS = [
       return dalService;
     },
   },
+  cacheService,
   ...DAL_MODELS,
   {
     provide: StorageService,

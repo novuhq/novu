@@ -33,10 +33,12 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageType {
   constructor(
+    private cacheService: CacheService,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     private queueService: QueueService,
@@ -184,6 +186,15 @@ export class SendMessageInApp extends SendMessageType {
       ChannelTypeEnum.IN_APP,
       { read: false }
     );
+
+    invalidateCache({
+      service: this.cacheService,
+      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
+      credentials: {
+        subscriberId: subscriber.subscriberId,
+        environmentId: command.environmentId,
+      },
+    });
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
