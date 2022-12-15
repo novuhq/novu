@@ -37,6 +37,8 @@ import { SendMessageBase } from './send-message.base';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
+  channelType = ChannelTypeEnum.IN_APP;
+
   constructor(
     private cacheService: CacheService,
     private notificationRepository: NotificationRepository,

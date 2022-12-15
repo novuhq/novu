@@ -7,11 +7,13 @@ import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/
 import { encryptCredentials } from '../../../shared/services/encryption';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
 @Injectable()
 export class CreateIntegration {
   @Inject()
   private checkIntegration: CheckIntegration;
   constructor(
+    private cacheService: CacheService,
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations
   ) {}
@@ -31,6 +33,14 @@ export class CreateIntegration {
           })
         );
       }
+
+      invalidateCache({
+        service: this.cacheService,
+        storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
+        credentials: {
+          environmentId: command.environmentId,
+        },
+      });
 
       response = await this.integrationRepository.create({
         _environmentId: command.environmentId,

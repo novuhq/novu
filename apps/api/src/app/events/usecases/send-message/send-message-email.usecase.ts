@@ -20,10 +20,7 @@ import { CompileTemplate } from '../../../content-templates/usecases/compile-tem
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../../../integrations/usecases/get-decrypted-integrations';
+import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
@@ -33,6 +30,7 @@ import { SendMessageBase } from './send-message.base';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
+  channelType = ChannelTypeEnum.EMAIL;
   private mailFactory = new MailFactory();
 
   constructor(
@@ -43,9 +41,15 @@ export class SendMessageEmail extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {
@@ -61,19 +65,7 @@ export class SendMessageEmail extends SendMessageBase {
     });
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
 
-    const integration = (
-      await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.EMAIL,
-          findOne: true,
-          active: true,
-        })
-      )
-    )[0];
-
-    if (!integration) {
+    if (!this.integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -87,7 +79,7 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
-    const overrides = command.overrides[integration?.providerId] || {};
+    const overrides = command.overrides[this.integration?.providerId] || {};
     let subject = '';
     let preheader = emailChannel.template.preheader;
     let content: string | IEmailBlock[] = '';
@@ -163,7 +155,7 @@ export class SendMessageEmail extends SendMessageBase {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
-      providerId: integration?.providerId,
+      providerId: this.integration?.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
@@ -221,17 +213,17 @@ export class SendMessageEmail extends SendMessageBase {
       to: email,
       subject,
       html,
-      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
+      from: command.payload.$sender_email || this.integration?.credentials.from || 'no-reply@novu.co',
       attachments,
       id: message._id,
     };
 
-    if (email && integration) {
-      await this.sendMessage(integration, mailData, message, command, notification);
+    if (email && this.integration) {
+      await this.sendMessage(this.integration, mailData, message, command, notification);
 
       return;
     }
-    await this.sendErrors(email, integration, message, command, notification);
+    await this.sendErrors(email, this.integration, message, command, notification);
   }
 
   private async sendErrors(
