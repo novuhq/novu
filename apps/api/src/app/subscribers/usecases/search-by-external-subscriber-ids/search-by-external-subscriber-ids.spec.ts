@@ -31,7 +31,7 @@ describe('SearchByExternalSubscriberIdsUseCase', () => {
     secondSubscriber = await subscribersService.createSubscriber();
   });
 
-  it('should seach and find the subscribers by the external subscriber ids', async () => {
+  it('should search and find the subscribers by the external subscriber ids', async () => {
     const externalSubscriberIds = [firstSubscriber.subscriberId, secondSubscriber.subscriberId];
     const command = SearchByExternalSubscriberIdsCommand.create({
       environmentId: session.environment._id,
