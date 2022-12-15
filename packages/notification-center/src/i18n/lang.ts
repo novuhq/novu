@@ -173,6 +173,7 @@ export type I18NLanguage =
   | 'ar'
   | 'as'
   | 'az'
+  | 'ba'
   | 'be'
   | 'bg'
   | 'bh'
@@ -229,11 +230,6 @@ export type I18NLanguage =
   | 'sv'
   | 'ta'
   | 'te'
-  | 'vi'
-  | 'zu'
-  | 'nl'
-  | 'uz'
-  | 'lo'
   | 'th'
   | 'tl'
   | 'tr'
@@ -242,5 +238,4 @@ export type I18NLanguage =
   | 'uz'
   | 'vi'
   | 'zh'
-  | 'zu'
-  | 'ba';
+  | 'zu';

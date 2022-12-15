@@ -69,9 +69,9 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     parseContent({
       contentType,
       content: contentType === 'editor' ? editorContent : htmlContent,
-      payload: payloadValue,
+      payload: processedVariables,
     });
-  }, [contentType, htmlContent, editorContent, payloadValue]);
+  }, [contentType, htmlContent, editorContent, processedVariables]);
   const theme = useMantineTheme();
 
   useEffect(() => {

@@ -158,8 +158,6 @@ describe('headless.service', () => {
     });
 
     test('when there is no token should call disposeAuthorizationToken', () => {
-      new HeadlessService(options);
-
       expect(localStorage.getItem).toHaveBeenCalledWith(
         NOTIFICATION_CENTER_TOKEN_KEY
       );
@@ -175,8 +173,6 @@ describe('headless.service', () => {
       Storage.prototype.getItem = jest
         .fn()
         .mockImplementationOnce(() => mockToken);
-
-      new HeadlessService(options);
 
       expect(localStorage.getItem).toHaveBeenCalledWith(
         NOTIFICATION_CENTER_TOKEN_KEY
