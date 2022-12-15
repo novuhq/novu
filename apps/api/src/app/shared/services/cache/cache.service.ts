@@ -89,6 +89,9 @@ export class CacheService implements ICacheService {
       stream.on('end', () => {
         resolve(undefined);
       });
+      stream.on('error', (err) => {
+        reject(undefined);
+      });
     });
   }
 
