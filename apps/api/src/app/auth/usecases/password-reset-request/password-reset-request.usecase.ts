@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
-import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class PasswordResetRequest {
@@ -13,7 +13,7 @@ export class PasswordResetRequest {
   private MAX_ATTEMPTS_IN_A_DAY = 15;
   private RATE_LIMIT_IN_SECONDS = 60;
   private RATE_LIMIT_IN_HOURS = 24;
-  constructor(private cacheService: CacheService, private userRepository: UserRepository) {}
+  constructor(private invalidateCache: InvalidateCacheService, private userRepository: UserRepository) {}
 
   async execute(command: PasswordResetRequestCommand): Promise<{ success: boolean }> {
     const email = normalizeEmail(command.email);
@@ -25,8 +25,7 @@ export class PasswordResetRequest {
       }
       const token = uuidv4();
 
-      invalidateCache({
-        service: this.cacheService,
+      this.invalidateCache.execute({
         storeKeyPrefix: [CacheKeyPrefixEnum.USER],
         credentials: {
           _id: foundUser._id,

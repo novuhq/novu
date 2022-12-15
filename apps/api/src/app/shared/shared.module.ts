@@ -29,7 +29,7 @@ import {
   S3StorageService,
   StorageService,
 } from './services/storage/storage.service';
-import { CacheService } from './services/cache';
+import { CacheService, InvalidateCacheService } from './services/cache';
 
 const DAL_MODELS = [
   UserRepository,
@@ -94,6 +94,7 @@ const PROVIDERS = [
     },
   },
   cacheService,
+  InvalidateCacheService,
   ...DAL_MODELS,
   {
     provide: StorageService,

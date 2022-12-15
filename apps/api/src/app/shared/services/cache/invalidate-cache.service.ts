@@ -1,23 +1,29 @@
-import { ICacheService } from './cache.service';
+import { CacheService } from './cache.service';
 import { buildKey, CacheInterceptorTypeEnum } from '../../interceptors';
+import { Injectable } from '@nestjs/common';
 
-export async function invalidateCache({
-  service,
-  storeKeyPrefix,
-  credentials,
-}: {
-  service: ICacheService;
-  storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[];
-  credentials: Record<string, unknown>;
-}) {
-  if (storeKeyPrefix instanceof Array) {
-    await Promise.all(
-      storeKeyPrefix.map(async (prefix) => {
-        await invalidateCase(prefix, credentials, service);
-      })
-    );
-  } else {
-    await invalidateCase(storeKeyPrefix, credentials, service);
+@Injectable()
+export class InvalidateCacheService {
+  constructor(private cacheService: CacheService) {}
+
+  async execute({
+    storeKeyPrefix,
+    credentials,
+  }: {
+    storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[];
+    credentials: Record<string, unknown>;
+  }) {
+    if (!this.cacheService?.cacheEnabled()) return;
+
+    if (storeKeyPrefix instanceof Array) {
+      await Promise.all(
+        storeKeyPrefix.map(async (prefix) => {
+          await invalidateCase(prefix, credentials, this.cacheService);
+        })
+      );
+    } else {
+      await invalidateCase(storeKeyPrefix, credentials, this.cacheService);
+    }
   }
 }
 

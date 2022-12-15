@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { DalException, MessageRepository } from '@novu/dal';
 import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class RemoveMessage {
-  constructor(private cacheService: CacheService, private messageRepository: MessageRepository) {}
+  constructor(private invalidateCache: InvalidateCacheService, private messageRepository: MessageRepository) {}
 
   async execute(command: RemoveMessageCommand) {
     try {
@@ -15,8 +15,7 @@ export class RemoveMessage {
         _id: command.messageId,
       });
 
-      invalidateCache({
-        service: this.cacheService,
+      this.invalidateCache.execute({
         storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
         credentials: {
           subscriberId: message.subscriber.subscriberId,

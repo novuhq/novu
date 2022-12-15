@@ -11,7 +11,7 @@ import axios from 'axios';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ISubscribersDefine } from '@novu/node';
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
-import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../shared/services/cache';
+import { CacheKeyPrefixEnum, CacheService, InvalidateCacheService } from '../../shared/services/cache';
 
 const axiosInstance = axios.create();
 
@@ -21,10 +21,12 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
-  const cacheService = new CacheService({
-    cacheHost: process.env.REDIS_CACHE_HOST,
-    cachePort: process.env.REDIS_CACHE_PORT,
-  });
+  const invalidateCache = new InvalidateCacheService(
+    new CacheService({
+      cacheHost: process.env.REDIS_CACHE_HOST,
+      cachePort: process.env.REDIS_CACHE_PORT,
+    })
+  );
 
   const subscriberRepository = new SubscriberRepository();
   const messageRepository = new MessageRepository();
@@ -188,8 +190,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
 
-    invalidateCache({
-      service: cacheService,
+    invalidateCache.execute({
       storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
       credentials: {
         _id: template._id,
