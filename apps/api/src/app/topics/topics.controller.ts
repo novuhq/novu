@@ -65,7 +65,6 @@ export class TopicsController {
         key: body.key,
         name: body.name,
         organizationId: user.organizationId,
-        userId: user._id,
       })
     );
 
@@ -89,7 +88,6 @@ export class TopicsController {
         organizationId: user.organizationId,
         subscribers: body.subscribers,
         topicId,
-        userId: user._id,
       })
     );
   }
@@ -107,9 +105,8 @@ export class TopicsController {
       RemoveSubscribersCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        subscribers: body.subscribers,
         topicId,
-        userId: user._id,
+        subscribers: body.subscribers,
       })
     );
   }
@@ -148,7 +145,6 @@ export class TopicsController {
         organizationId: user.organizationId,
         page: query?.page,
         pageSize: query?.pageSize,
-        userId: user._id,
       })
     );
   }
@@ -164,7 +160,6 @@ export class TopicsController {
         environmentId: user.environmentId,
         id: topicId,
         organizationId: user.organizationId,
-        userId: user._id,
       })
     );
   }

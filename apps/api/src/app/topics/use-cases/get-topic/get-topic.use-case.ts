@@ -4,6 +4,7 @@ import { TopicEntity, TopicRepository } from '@novu/dal';
 import { GetTopicCommand } from './get-topic.command';
 
 import { TopicDto } from '../../dtos/topic.dto';
+import { ExternalSubscriberId } from '../../types';
 
 @Injectable()
 export class GetTopicUseCase {
@@ -14,28 +15,28 @@ export class GetTopicUseCase {
     const topic = await this.topicRepository.findTopic(entity);
 
     if (!topic) {
-      throw new NotFoundException(`Topic not found for id ${command.id} for the user ${command.userId}`);
+      throw new NotFoundException(
+        `Topic not found for id ${command.id} for the organization ${command.organizationId} in the environment ${command.environmentId}`
+      );
     }
 
     return this.mapFromEntity(topic);
   }
 
-  private mapToEntity(domainEntity: GetTopicCommand): Omit<TopicEntity, 'key' | 'name'> {
+  private mapToEntity(domainEntity: GetTopicCommand): Omit<TopicEntity, 'key' | 'name' | 'subscribers'> {
     return {
       _environmentId: TopicRepository.convertStringToObjectId(domainEntity.environmentId),
       _id: TopicRepository.convertStringToObjectId(domainEntity.id),
       _organizationId: TopicRepository.convertStringToObjectId(domainEntity.organizationId),
-      _userId: TopicRepository.convertStringToObjectId(domainEntity.userId),
     };
   }
 
-  private mapFromEntity(topic: TopicEntity): TopicDto {
+  private mapFromEntity(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {
     return {
       ...topic,
       _id: TopicRepository.convertObjectIdToString(topic._id),
       _organizationId: TopicRepository.convertObjectIdToString(topic._organizationId),
       _environmentId: TopicRepository.convertObjectIdToString(topic._environmentId),
-      _userId: TopicRepository.convertObjectIdToString(topic._userId),
     };
   }
 }

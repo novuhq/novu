@@ -60,7 +60,6 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
@@ -82,7 +81,6 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
@@ -107,7 +105,6 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
@@ -128,12 +125,11 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
     expect(getResponseTopic.name).to.eql(topicName);
-    expect(getResponseTopic.subscribers).to.eql([
+    expect(getResponseTopic.subscribers).to.have.members([
       subscriber.subscriberId,
       secondSubscriber.subscriberId,
       thirdSubscriber.subscriberId,

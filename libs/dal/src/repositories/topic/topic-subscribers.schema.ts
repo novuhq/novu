@@ -19,9 +19,9 @@ const topicSubscribersSchema = new Schema(
       index: true,
       required: true,
     },
-    _userId: {
+    _subscriberId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'Subscriber',
       index: true,
       required: true,
     },
@@ -31,7 +31,7 @@ const topicSubscribersSchema = new Schema(
       index: true,
       required: true,
     },
-    subscribers: [{ type: Schema.Types.String, field: 'subscriberId', ref: 'Subscriber', required: true }],
+    externalSubscriberId: Schema.Types.String,
   },
   schemaOptions
 );

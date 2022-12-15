@@ -1,6 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { SubscribersService, UserSession } from '@novu/testing';
 import {
+  SubscriberEntity,
   SubscriberRepository,
   TopicEntity,
   TopicRepository,
@@ -27,25 +28,14 @@ const createTopicEntity = async (
 ): Promise<TopicEntity> => {
   const environmentId = session.environment._id;
   const organizationId = session.organization._id;
-  const userId = session.user._id;
 
   const topicEntity = {
     _environmentId: TopicRepository.convertStringToObjectId(environmentId),
     key: topicKey,
     name: topicName,
     _organizationId: TopicRepository.convertStringToObjectId(organizationId),
-    _userId: TopicRepository.convertStringToObjectId(userId),
   };
   const topic = await topicRepository.create(topicEntity);
-
-  const topicSubscribersEntity = {
-    _environmentId: TopicRepository.convertStringToObjectId(environmentId),
-    _topicId: topic._id,
-    _organizationId: TopicRepository.convertStringToObjectId(organizationId),
-    _userId: TopicRepository.convertStringToObjectId(userId),
-  };
-
-  const topicSubscribers = await topicSubscribersRepository.create(topicSubscribersEntity);
 
   expect(topic).to.exist;
   expect(topic.key).to.be.eql(topicKey);
@@ -59,30 +49,29 @@ const addSubscribersToTopic = async (
   topicRepository: TopicRepository,
   topicSubscribersRepository: TopicSubscribersRepository,
   topicId: TopicId,
-  subscribers: SubscriberId[]
+  subscribers: SubscriberEntity[]
 ): Promise<void> => {
   const _environmentId = TopicSubscribersRepository.convertStringToObjectId(session.environment._id);
   const _organizationId = TopicSubscribersRepository.convertStringToObjectId(session.organization._id);
   const _topicId = TopicSubscribersRepository.convertStringToObjectId(topicId);
-  const _userId = TopicSubscribersRepository.convertStringToObjectId(session.user._id);
 
-  const entity: TopicSubscribersEntity = {
+  const entities: TopicSubscribersEntity[] = subscribers.map((subscriber) => ({
     _environmentId,
     _organizationId,
+    _subscriberId: TopicSubscribersRepository.convertStringToObjectId(subscriber._id),
     _topicId,
-    _userId,
-    subscribers,
-  };
-  await topicSubscribersRepository.addSubscribers(entity);
+    externalSubscriberId: subscriber.subscriberId,
+  }));
+  await topicSubscribersRepository.addSubscribers(entities);
 
   const result = await topicRepository.findTopic({
     _environmentId,
     _organizationId,
     _id: _topicId,
-    _userId,
   });
 
-  expect(result.subscribers).to.be.eql(subscribers);
+  expect(result.subscribers.length).to.be.eql(subscribers.length);
+  expect(result.subscribers).to.have.members(subscribers.map((subscriber) => subscriber.subscriberId));
 };
 
 const buildCommand = (
@@ -172,8 +161,8 @@ describe('MapTriggerRecipientsUseCase', () => {
       const firstSubscriber = await subscribersService.createSubscriber();
       const secondSubscriber = await subscribersService.createSubscriber();
       await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, [
-        firstSubscriber._id,
-        secondSubscriber._id,
+        firstSubscriber,
+        secondSubscriber,
       ]);
 
       const secondTopic = await createTopicEntity(
@@ -186,7 +175,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       const secondTopicId = TopicRepository.convertObjectIdToString(secondTopic._id);
       const thirdSubscriber = await subscribersService.createSubscriber();
       await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, [
-        thirdSubscriber._id,
+        thirdSubscriber,
       ]);
 
       const firstTopicRecipient: ITopic = {
@@ -296,8 +285,8 @@ describe('MapTriggerRecipientsUseCase', () => {
       const firstSubscriber = await subscribersService.createSubscriber();
       const secondSubscriber = await subscribersService.createSubscriber();
       await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, topicId, [
-        firstSubscriber._id,
-        secondSubscriber._id,
+        firstSubscriber,
+        secondSubscriber,
       ]);
 
       const recipient: ITopic = {
@@ -309,7 +298,10 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([{ subscriberId: firstSubscriber._id }, { subscriberId: secondSubscriber._id }]);
+      expect(result).to.include.deep.members([
+        { subscriberId: firstSubscriber.subscriberId },
+        { subscriberId: secondSubscriber.subscriberId },
+      ]);
     });
 
     it('should return an empty array if providing a topic that does not exist', async () => {
@@ -347,8 +339,8 @@ describe('MapTriggerRecipientsUseCase', () => {
       const firstSubscriber = await subscribersService.createSubscriber();
       const secondSubscriber = await subscribersService.createSubscriber();
       await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, [
-        firstSubscriber._id,
-        secondSubscriber._id,
+        firstSubscriber,
+        secondSubscriber,
       ]);
 
       const secondTopic = await createTopicEntity(
@@ -361,7 +353,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       const secondTopicId = TopicRepository.convertObjectIdToString(secondTopic._id);
       const thirdSubscriber = await subscribersService.createSubscriber();
       await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, [
-        thirdSubscriber._id,
+        thirdSubscriber,
       ]);
 
       const firstTopicRecipient: ITopic = {
@@ -388,12 +380,12 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([
+      expect(result).to.include.deep.members([
         { subscriberId: singleSubscriberId },
         { ...singleSubscribersDefine },
-        { subscriberId: firstSubscriber._id },
-        { subscriberId: secondSubscriber._id },
-        { subscriberId: thirdSubscriber._id },
+        { subscriberId: firstSubscriber.subscriberId },
+        { subscriberId: secondSubscriber.subscriberId },
+        { subscriberId: thirdSubscriber.subscriberId },
       ]);
     });
 
@@ -486,8 +478,8 @@ describe('MapTriggerRecipientsUseCase', () => {
       );
       const firstTopicId = TopicRepository.convertObjectIdToString(firstTopic._id);
       await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, [
-        firstSubscriber._id,
-        secondSubscriber._id,
+        firstSubscriber,
+        secondSubscriber,
       ]);
 
       const secondTopic = await createTopicEntity(
@@ -499,7 +491,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       );
       const secondTopicId = TopicRepository.convertObjectIdToString(secondTopic._id);
       await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, [
-        thirdSubscriber._id,
+        thirdSubscriber,
       ]);
 
       const thirdTopic = await createTopicEntity(
@@ -511,8 +503,8 @@ describe('MapTriggerRecipientsUseCase', () => {
       );
       const thirdTopicId = TopicRepository.convertObjectIdToString(thirdTopic._id);
       await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, thirdTopicId, [
-        firstSubscriber._id,
-        fourthSubscriber._id,
+        firstSubscriber,
+        fourthSubscriber,
       ]);
 
       const firstTopicRecipient: ITopic = {
@@ -538,11 +530,11 @@ describe('MapTriggerRecipientsUseCase', () => {
       ]);
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([
-        { subscriberId: firstSubscriber._id },
-        { subscriberId: fourthSubscriber._id },
-        { subscriberId: secondSubscriber._id },
-        { subscriberId: thirdSubscriber._id },
+      expect(result).to.include.deep.members([
+        { subscriberId: firstSubscriber.subscriberId },
+        { subscriberId: fourthSubscriber.subscriberId },
+        { subscriberId: secondSubscriber.subscriberId },
+        { subscriberId: thirdSubscriber.subscriberId },
       ]);
     });
 
@@ -580,8 +572,8 @@ describe('MapTriggerRecipientsUseCase', () => {
       );
       const firstTopicId = TopicRepository.convertObjectIdToString(firstTopic._id);
       await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, [
-        firstSubscriber._id,
-        secondSubscriber._id,
+        firstSubscriber,
+        secondSubscriber,
       ]);
 
       const secondTopic = await createTopicEntity(
@@ -593,7 +585,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       );
       const secondTopicId = TopicRepository.convertObjectIdToString(secondTopic._id);
       await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, [
-        thirdSubscriber._id,
+        thirdSubscriber,
       ]);
 
       const firstTopicRecipient: ITopic = {
@@ -617,10 +609,10 @@ describe('MapTriggerRecipientsUseCase', () => {
       const result = await useCase.execute(command);
 
       // We process first recipients that are not topics so they will take precedence when deduplicating
-      expect(result).to.be.eql([
+      expect(result).to.include.deep.members([
         { ...firstRecipient },
-        { subscriberId: secondSubscriber._id },
-        { subscriberId: thirdSubscriber._id },
+        { subscriberId: secondSubscriber.subscriberId },
+        { subscriberId: thirdSubscriber.subscriberId },
       ]);
     });
   });

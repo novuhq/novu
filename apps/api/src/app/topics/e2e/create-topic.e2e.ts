@@ -62,7 +62,7 @@ describe('Topic creation - /topics (POST)', async () => {
     expect(conflictResponse.statusCode).to.eql(409);
     expect(conflictResponse.body.error).to.eql('Conflict');
     expect(conflictResponse.body.message).to.eql(
-      `There is already a topic with the key ${topicKey} for user ${session.user._id}`
+      `Topic exists with key ${topicKey} in the environment ${session.environment._id} of the organization ${session.organization._id}`
     );
   });
 });

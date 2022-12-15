@@ -1,9 +1,10 @@
-import { EnvironmentId, ExternalSubscriberId, OrganizationId, TopicId, UserId } from './types';
+import { EnvironmentId, ExternalSubscriberId, OrganizationId, SubscriberId, TopicId, TopicSubscriberId } from './types';
 
 export class TopicSubscribersEntity {
+  _id?: TopicSubscriberId;
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;
-  _userId: UserId;
+  _subscriberId: SubscriberId;
   _topicId: TopicId;
-  subscribers: ExternalSubscriberId[];
+  externalSubscriberId: ExternalSubscriberId;
 }

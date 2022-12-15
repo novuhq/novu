@@ -66,12 +66,11 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
     expect(getResponseTopic.name).to.eql(topicName);
-    expect(getResponseTopic.subscribers).to.eql([secondSubscriber.subscriberId, thirdSubscriber.subscriberId]);
+    expect(getResponseTopic.subscribers).to.have.members([secondSubscriber.subscriberId, thirdSubscriber.subscriberId]);
   });
 
   it('should not remove subscriber from topic if it does not exist', async () => {
@@ -88,12 +87,11 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
     expect(getResponseTopic.name).to.eql(topicName);
-    expect(getResponseTopic.subscribers).to.eql([secondSubscriber.subscriberId, thirdSubscriber.subscriberId]);
+    expect(getResponseTopic.subscribers).to.have.members([secondSubscriber.subscriberId, thirdSubscriber.subscriberId]);
   });
 
   it('should keep the same when trying to remove a subscriber already removed from the topic', async () => {
@@ -110,12 +108,11 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
     expect(getResponseTopic.name).to.eql(topicName);
-    expect(getResponseTopic.subscribers).to.eql([secondSubscriber.subscriberId, thirdSubscriber.subscriberId]);
+    expect(getResponseTopic.subscribers).to.have.members([secondSubscriber.subscriberId, thirdSubscriber.subscriberId]);
   });
 
   it('should remove multiple subscribers from the topic', async () => {
@@ -132,7 +129,6 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);

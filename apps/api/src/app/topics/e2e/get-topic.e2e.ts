@@ -34,7 +34,6 @@ describe('Get a topic - /topics/:topicId (GET)', async () => {
     const topic = getResponse.body.data;
 
     expect(topic._id).to.eql(_id);
-    expect(topic._userId).to.eql(session.user._id);
     expect(topic._environmentId).to.eql(session.environment._id);
     expect(topic._organizationId).to.eql(session.organization._id);
     expect(topic.key).to.eql(topicKey);
@@ -47,7 +46,9 @@ describe('Get a topic - /topics/:topicId (GET)', async () => {
     const { body } = await session.testAgent.get(`${BASE_PATH}/${nonExistingId}`);
 
     expect(body.statusCode).to.equal(404);
-    expect(body.message).to.eql(`Topic not found for id ${nonExistingId} for the user ${session.user._id}`);
+    expect(body.message).to.eql(
+      `Topic not found for id ${nonExistingId} for the organization ${session.organization._id} in the environment ${session.environment._id}`
+    );
     expect(body.error).to.eql('Not Found');
   });
 });
