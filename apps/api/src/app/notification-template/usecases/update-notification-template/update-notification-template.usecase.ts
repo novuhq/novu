@@ -17,7 +17,8 @@ import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
-import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, CacheService } from '../../../shared/services/cache';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -31,6 +32,7 @@ export class UpdateNotificationTemplate {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
+  @InvalidateCache(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
     const existingTemplate = await this.notificationTemplateRepository.findById(
       command.templateId,
@@ -194,15 +196,6 @@ export class UpdateNotificationTemplate {
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
-
-    invalidateCache({
-      service: this.cacheService,
-      storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
-      credentials: {
-        _id: command.templateId,
-        environmentId: command.environmentId,
-      },
-    });
 
     await this.notificationTemplateRepository.update(
       {

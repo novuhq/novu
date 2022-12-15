@@ -24,7 +24,7 @@ describe('Create Change', function () {
   });
 
   it('should create a change', async function () {
-    let _id = '6256ade0099f90172d1cc435';
+    const _id = '6256ade0099f90172d1cc435';
 
     const result = await useCase.execute(
       CreateChangeCommand.create({
@@ -47,7 +47,7 @@ describe('Create Change', function () {
   });
 
   it('should find diff for item', async function () {
-    let _id = '6256ade0099f90172d1cc436';
+    const _id = '6256ade0099f90172d1cc436';
 
     await useCase.execute(
       CreateChangeCommand.create({
