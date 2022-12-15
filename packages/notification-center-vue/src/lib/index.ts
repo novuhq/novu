@@ -1,1 +1,1 @@
-export { default as NotificationCenterComponent } from './notification-center-component';
+export * from './notification-center-component';

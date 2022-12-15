@@ -3,10 +3,9 @@ import { CSSInterpolation } from '@emotion/css';
 
 import { NotificationCenterStyles, StylesPaths } from './styles-provider.types';
 import { useNovuTheme } from '../../hooks';
+import { getStyleByPath } from '../../utils/styles';
 
 const StylesContext = createContext<{ styles: NotificationCenterStyles } | undefined>(undefined);
-
-const get = (obj: object, path: string) => path.split('.').reduce((acc, level) => acc && acc[level], obj);
 
 export const useStyles = (path: StylesPaths | StylesPaths[]): CSSInterpolation[] => {
   const stylesContext = useContext(StylesContext);
@@ -16,17 +15,27 @@ export const useStyles = (path: StylesPaths | StylesPaths[]): CSSInterpolation[]
     throw new Error('useStyles must be used within a StylesProvider');
   }
 
-  const getStyleByPath = (pathInStyles: StylesPaths): CSSInterpolation => {
-    const stylePart = get(stylesContext.styles, pathInStyles);
-
-    return typeof stylePart === 'function' ? stylePart({ theme, common, colorScheme }) : stylePart;
-  };
-
   if (Array.isArray(path)) {
-    return path.map((el) => getStyleByPath(el));
+    return path.map((el) =>
+      getStyleByPath({
+        styles: stylesContext.styles,
+        path: el,
+        theme,
+        common,
+        colorScheme,
+      })
+    );
   }
 
-  return [getStyleByPath(path)];
+  return [
+    getStyleByPath({
+      styles: stylesContext.styles,
+      path,
+      theme,
+      common,
+      colorScheme,
+    }),
+  ];
 };
 
 export const StylesProvider: FunctionComponent<{ styles?: NotificationCenterStyles }> = ({ styles, children }) => {
