@@ -114,7 +114,7 @@ export function ButtonRowContent({
             onChange={handleUrlChange}
             onKeyDown={handleKeyDown}
             value={url || ''}
-            placeholder="www.yoururl..."
+            placeholder="https://www.yoururl..."
           />
         </Popover.Dropdown>
       </Popover>
