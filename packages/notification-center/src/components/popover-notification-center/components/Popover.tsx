@@ -16,7 +16,7 @@ interface INovuPopoverProps {
   position?: PopoverProps['position'];
 }
 
-export function Popover({ children, bell, theme, offset, position = 'bottom-end' }: INovuPopoverProps) {
+export function Popover({ children, bell, theme, offset = 0, position = 'bottom-end' }: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const { cx, classes } = usePopoverStyles(theme.popover?.arrowColor);
   const { activeTabStoreId } = useFeed();
