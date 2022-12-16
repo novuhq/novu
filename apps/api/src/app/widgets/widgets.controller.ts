@@ -313,17 +313,3 @@ export class WidgetsController {
     return paramArray;
   }
 }
-
-/*
- * ValidationPipe convert boolean undefined params default (false)
- * Therefore we need to get string and convert it to boolean
- */
-export function initializeSeenParam(seen: string): boolean | null {
-  let isSeen: boolean = null;
-
-  if (seen) {
-    isSeen = seen === 'true';
-  }
-
-  return isSeen;
-}
