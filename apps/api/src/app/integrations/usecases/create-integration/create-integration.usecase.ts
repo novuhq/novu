@@ -7,17 +7,26 @@ import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/
 import { encryptCredentials } from '../../../shared/services/encryption';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 @Injectable()
 export class CreateIntegration {
   @Inject()
   private checkIntegration: CheckIntegration;
   constructor(
     private integrationRepository: IntegrationRepository,
-    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations
+    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
     let response: IntegrationEntity;
+
+    this.analyticsService.track('Create Integration - [Integrations]', command.userId, {
+      providerId: command.providerId,
+      channel: command.channel,
+      _organization: command.organizationId,
+    });
 
     try {
       if (command.check) {
