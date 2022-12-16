@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Center } from '@mantine/core';
 import { api } from '../../api/api.client';
 import { Button, colors, Input, Text } from '../../design-system';
+import { useVercelParams } from '../../hooks/use-vercelParams';
 
 type Props = {
   onSent: () => void;
@@ -18,6 +19,11 @@ export function PasswordResetRequestForm({ onSent }: Props) {
       email: string;
     }
   >((data) => api.post(`/v1/auth/reset/request`, data));
+
+  const { isFromVercel, code, next, configurationId } = useVercelParams();
+
+  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : '/auth/login';
 
   const onForgotPassword = async (data) => {
     const itemData = {
@@ -63,7 +69,7 @@ export function PasswordResetRequestForm({ onSent }: Props) {
           <Text mr={10} size="md" color={colors.B60}>
             Know your password?
           </Text>
-          <Link to="/auth/login">
+          <Link to={loginLink}>
             <Text gradient>Sign In</Text>
           </Link>
         </Center>

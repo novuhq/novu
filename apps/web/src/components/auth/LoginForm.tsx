@@ -32,6 +32,7 @@ export function LoginForm({ email, token }: Props) {
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
   const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
+  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : `/auth/reset/request`;
   const githubLink = isFromVercel
     ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
@@ -124,13 +125,13 @@ export function LoginForm({ email, token }: Props) {
           placeholder="Type your password..."
           data-test-id="password"
         />
-        {!isFromVercel && (
-          <Link to="/auth/reset/request">
-            <Text my={30} gradient align="center">
-              Forgot Your Password?
-            </Text>
-          </Link>
-        )}
+
+        <Link to={resetPasswordLink}>
+          <Text my={30} gradient align="center">
+            Forgot Your Password?
+          </Text>
+        </Link>
+
         <Button mt={60} inherit loading={isLoading} submit data-test-id="submit-btn">
           Sign In
         </Button>
