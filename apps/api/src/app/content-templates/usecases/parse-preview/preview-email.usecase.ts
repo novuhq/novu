@@ -12,7 +12,10 @@ export class PreviewEmail {
     let payload = {};
     try {
       payload = JSON.parse(command.payload);
-    } catch (e) {}
+    } catch (e) {
+      console.log('JSON parse failed');
+    }
+
     const isEditorMode = command.contentType === 'editor';
     const [organization, content]: [OrganizationEntity, string | IEmailBlock[]] = await Promise.all([
       this.organizationRepository.findById(command.organizationId),
@@ -42,7 +45,7 @@ export class PreviewEmail {
   private async getContent(
     isEditorMode,
     content: string | IEmailBlock[],
-    payload: any = {}
+    payload: Record<string, unknown> = {}
   ): Promise<string | IEmailBlock[]> {
     if (isEditorMode && Array.isArray(content)) {
       content = [...content] as IEmailBlock[];
@@ -57,7 +60,7 @@ export class PreviewEmail {
     return content;
   }
 
-  private async renderContent(content: string, payload: any) {
+  private async renderContent(content: string, payload: Record<string, unknown>) {
     const renderedContent = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
