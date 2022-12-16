@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { Document, InsertManyResult, Model, Types, ProjectionType } from 'mongoose';
+import { Document, Model, Types, ProjectionType } from 'mongoose';
 
 export class BaseRepository<T_Query, T_Response> {
   public _model: Model<any & Document>;
@@ -84,16 +84,6 @@ export class BaseRepository<T_Query, T_Response> {
     const saved = await newEntity.save();
 
     return this.mapEntity(saved);
-  }
-
-  async createMany(data: T_Query[]): Promise<InsertManyResult<Document>> {
-    const saved = await this.MongooseModel.collection.insertMany(data);
-
-    return {
-      acknowledged: saved.acknowledged,
-      insertedCount: saved.insertedCount,
-      insertedIds: saved.insertedIds,
-    };
   }
 
   async update(

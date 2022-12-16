@@ -4,6 +4,7 @@ import {
   ApiExcludeController,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
@@ -55,6 +56,7 @@ export class TopicsController {
     type: CreateTopicResponseDto,
   })
   @Post('')
+  @ApiOperation({ description: 'Create a topic' })
   async createTopic(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateTopicRequestDto
@@ -77,6 +79,7 @@ export class TopicsController {
   @ApiNoContentResponse()
   @Post(':topicId/subscribers')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ description: 'Add subscribers to a topic' })
   async addSubscribers(
     @UserSession() user: IJwtPayload,
     @Param('topicId') topicId: string,
@@ -96,6 +99,7 @@ export class TopicsController {
   @ApiNoContentResponse()
   @Post(':topicId/subscribers/removal')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ description: 'Remove subscribers from a topic' })
   async removeSubscribers(
     @UserSession() user: IJwtPayload,
     @Param('topicId') topicId: string,
@@ -134,6 +138,7 @@ export class TopicsController {
     type: FilterTopicsResponseDto,
   })
   @Get('')
+  @ApiOperation({ description: 'Filter topic resources' })
   async filterTopics(
     @UserSession() user: IJwtPayload,
     @Query() query?: FilterTopicsRequestDto
@@ -154,6 +159,7 @@ export class TopicsController {
     type: GetTopicResponseDto,
   })
   @Get(':topicId')
+  @ApiOperation({ description: 'Get a topic by its ID' })
   async getTopic(@UserSession() user: IJwtPayload, @Param('topicId') topicId: string): Promise<GetTopicResponseDto> {
     return await this.getTopicUseCase.execute(
       GetTopicCommand.create({
