@@ -20,7 +20,7 @@ export class TopicPayloadDto {
   @ApiProperty()
   id: TopicId;
   @ApiProperty()
-  type: TriggerRecipientsTypeEnum;
+  type: TriggerRecipientsTypeEnum.TOPIC;
 }
 
 @ApiExtraModels(SubscriberPayloadDto)
