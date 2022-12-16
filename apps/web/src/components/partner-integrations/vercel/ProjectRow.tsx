@@ -71,7 +71,7 @@ export function ProjectRow(props: ProjectRowProps) {
 
   eligibleProjectOptions.push({
     id: 'infinite-scroll-helper',
-    name: isFetchingNextPage ? 'Loading more...' : hasNextPage ? 'Load Newer' : 'Nothing more to load',
+    name: isFetchingNextPage ? 'Fetching projects...' : hasNextPage ? 'Load newer' : 'All projects fetched',
     disabled: true,
     infiniteHelperRef,
   });
@@ -80,7 +80,7 @@ export function ProjectRow(props: ProjectRowProps) {
     if (entry?.isIntersecting && !isFetchingNextPage && hasNextPage) {
       fetchNextPage();
     }
-  }, [entry]);
+  }, [entry, isFetchingNextPage, hasNextPage]);
 
   return (
     <Group position="center" grow>
