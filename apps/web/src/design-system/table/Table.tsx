@@ -98,7 +98,7 @@ export function Table({
   const defaultDesign = { verticalSpacing: 'sm', horizontalSpacing: 'sm', highlightOnHover: true } as TableProps;
 
   return (
-    <div style={{ position: 'relative', minHeight: 500 }}>
+    <div style={{ position: 'relative', minHeight: 500, display: 'flex', flexDirection: 'column' }}>
       <LoadingOverlay
         visible={loading}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
@@ -163,23 +163,25 @@ export function Table({
         </tbody>
       </MantineTable>
       {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
-        <Pagination
-          styles={{
-            item: {
-              marginTop: '15px',
-              marginBottom: '15px',
-              backgroundColor: 'transparent',
-              '&[data-active]': {
-                backgroundImage: colors.horizontal,
-                border: 'none',
+        <div style={{ marginTop: 'auto' }}>
+          <Pagination
+            styles={{
+              item: {
+                marginTop: '15px',
+                marginBottom: '15px',
+                backgroundColor: 'transparent',
+                '&[data-active]': {
+                  backgroundImage: colors.horizontal,
+                  border: 'none',
+                },
               },
-            },
-          }}
-          total={getPageCount()}
-          page={pageIndex + 1}
-          onChange={handlePageChange}
-          position="center"
-        />
+            }}
+            total={getPageCount()}
+            page={pageIndex + 1}
+            onChange={handlePageChange}
+            position="center"
+          />
+        </div>
       )}
     </div>
   );
