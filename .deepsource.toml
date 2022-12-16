@@ -1,5 +1,13 @@
 version = 1
 
+test_patterns = [
+  "apps/api/src/**/**/*.spec.ts",
+  "apps/api/e2e/**/*.e2e.ts",
+  "apps/api/src/**/*.e2e.ts",
+  "apps/web/cypress/**/*.spec.ts",
+  "apps/widget/cypress/**/*.spec.ts"
+]
+
 [[analyzers]]
 name = "shell"
 enabled = true
@@ -9,11 +17,8 @@ name = "javascript"
 enabled = true
 
   [analyzers.meta]
-  plugins = [
-    "react",
-    "vue",
-    "ember",
-    "meteor",
-    "angularjs",
-    "angular"
-  ]
+  plugins = ["react"]
+
+[[transformers]]
+name = "prettier"
+enabled = true
