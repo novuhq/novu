@@ -1,10 +1,10 @@
-import { AuthProviderEnum, ExternalSubscriberId } from '@novu/shared';
+import { AuthProviderEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 
 import { TopicEntity } from './topic.entity';
 import { Topic } from './topic.schema';
 import { TopicSubscribers } from './topic-subscribers.schema';
-import { EnvironmentId, OrganizationId, TopicKey } from './types';
+import { EnvironmentId, ExternalSubscriberId, OrganizationId, TopicId, TopicKey, TopicName } from './types';
 
 import { BaseRepository, Omit } from '../base-repository';
 
@@ -105,5 +105,37 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
       _organizationId: organizationId,
       _environmentId: environmentId,
     });
+  }
+
+  async renameTopic(
+    _id: TopicId,
+    _environmentId: EnvironmentId,
+    name: TopicName
+  ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }> {
+    await this.update(
+      {
+        _id,
+        _environmentId,
+      },
+      {
+        name,
+      }
+    );
+
+    const [updatedTopic] = await this.aggregate([
+      {
+        $match: {
+          _id,
+          _environmentId,
+        },
+      },
+      lookup,
+      topicWithSubscribersProjection,
+      {
+        $limit: 1,
+      },
+    ]);
+
+    return updatedTopic;
   }
 }
