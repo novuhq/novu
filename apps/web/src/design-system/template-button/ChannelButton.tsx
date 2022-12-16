@@ -30,7 +30,7 @@ interface ITemplateButtonProps {
   changeTab?: (string) => void;
   errors?: boolean | string;
   showDots?: boolean;
-  id?: string | undefined;
+  id?: string;
   onDelete?: (id: string) => void;
   dragging?: boolean;
   setActivePage?: (string) => void;
