@@ -15,6 +15,7 @@ import {
   OrganizationId,
   SubscriberId,
   TopicId,
+  TopicSubscribersDto,
   TriggerRecipientsTypeEnum,
   UserId,
 } from '@novu/shared';
@@ -87,31 +88,32 @@ export class MapTriggerRecipients {
     if (process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED === 'true') {
       const topics = this.findTopics(recipients);
 
-      const topicSubscribers: ISubscribersDefine[] = [];
+      const subscribers: ISubscribersDefine[] = [];
 
       for (const topic of topics) {
         try {
           const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
             environmentId,
-            topicId: topic?.topicId || '',
+            topicId: topic.topicId,
             organizationId,
-            userId,
           });
-          const { subscribers } = await this.getTopicSubscribers.execute(getTopicSubscribersCommand);
+          const topicSubscribers = await this.getTopicSubscribers.execute(getTopicSubscribersCommand);
 
-          subscribers?.forEach((subscriber: SubscriberId) => topicSubscribers.push({ subscriberId: subscriber }));
+          topicSubscribers.forEach((subscriber: TopicSubscribersDto) =>
+            subscribers.push({ subscriberId: subscriber.externalSubscriberId })
+          );
         } catch (error) {
           this.logTopicSubscribersError({
             environmentId,
             organizationId,
-            topicId: topic?.topicId || '',
+            topicId: topic.topicId,
             transactionId,
             userId,
           });
         }
       }
 
-      return topicSubscribers;
+      return subscribers;
     }
 
     return [];

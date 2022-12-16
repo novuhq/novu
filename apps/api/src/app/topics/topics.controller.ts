@@ -4,6 +4,7 @@ import {
   ApiExcludeController,
   ApiNoContentResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
@@ -55,6 +56,7 @@ export class TopicsController {
     type: CreateTopicResponseDto,
   })
   @Post('')
+  @ApiOperation({ description: 'Create a topic' })
   async createTopic(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateTopicRequestDto
@@ -65,7 +67,6 @@ export class TopicsController {
         key: body.key,
         name: body.name,
         organizationId: user.organizationId,
-        userId: user._id,
       })
     );
 
@@ -78,6 +79,7 @@ export class TopicsController {
   @ApiNoContentResponse()
   @Post(':topicId/subscribers')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ description: 'Add subscribers to a topic' })
   async addSubscribers(
     @UserSession() user: IJwtPayload,
     @Param('topicId') topicId: string,
@@ -89,7 +91,6 @@ export class TopicsController {
         organizationId: user.organizationId,
         subscribers: body.subscribers,
         topicId,
-        userId: user._id,
       })
     );
   }
@@ -98,6 +99,7 @@ export class TopicsController {
   @ApiNoContentResponse()
   @Post(':topicId/subscribers/removal')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ description: 'Remove subscribers from a topic' })
   async removeSubscribers(
     @UserSession() user: IJwtPayload,
     @Param('topicId') topicId: string,
@@ -107,9 +109,8 @@ export class TopicsController {
       RemoveSubscribersCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        subscribers: body.subscribers,
         topicId,
-        userId: user._id,
+        subscribers: body.subscribers,
       })
     );
   }
@@ -137,6 +138,7 @@ export class TopicsController {
     type: FilterTopicsResponseDto,
   })
   @Get('')
+  @ApiOperation({ description: 'Filter topic resources' })
   async filterTopics(
     @UserSession() user: IJwtPayload,
     @Query() query?: FilterTopicsRequestDto
@@ -148,7 +150,6 @@ export class TopicsController {
         organizationId: user.organizationId,
         page: query?.page,
         pageSize: query?.pageSize,
-        userId: user._id,
       })
     );
   }
@@ -158,13 +159,13 @@ export class TopicsController {
     type: GetTopicResponseDto,
   })
   @Get(':topicId')
+  @ApiOperation({ description: 'Get a topic by its ID' })
   async getTopic(@UserSession() user: IJwtPayload, @Param('topicId') topicId: string): Promise<GetTopicResponseDto> {
     return await this.getTopicUseCase.execute(
       GetTopicCommand.create({
         environmentId: user.environmentId,
         id: topicId,
         organizationId: user.organizationId,
-        userId: user._id,
       })
     );
   }

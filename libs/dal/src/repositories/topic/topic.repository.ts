@@ -1,17 +1,39 @@
-import { AuthProviderEnum } from '@novu/shared';
+import { AuthProviderEnum, ExternalSubscriberId } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 
 import { TopicEntity } from './topic.entity';
 import { Topic } from './topic.schema';
 import { TopicSubscribers } from './topic-subscribers.schema';
-import { EnvironmentId, OrganizationId, TopicKey, UserId } from './types';
+import { EnvironmentId, OrganizationId, TopicKey } from './types';
 
 import { BaseRepository, Omit } from '../base-repository';
+
+const TOPIC_SUBSCRIBERS_COLLECTION = 'topicsubscribers';
 
 class PartialIntegrationEntity extends Omit(TopicEntity, ['_environmentId', '_organizationId']) {}
 
 type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity> &
   ({ _environmentId: EnvironmentId } | { _organizationId: OrganizationId });
+
+const topicWithSubscribersProjection = {
+  $project: {
+    _id: 1,
+    _environmentId: 1,
+    _organizationId: 1,
+    key: 1,
+    name: 1,
+    subscribers: '$topicSubscribers.externalSubscriberId',
+  },
+};
+
+const lookup = {
+  $lookup: {
+    from: TOPIC_SUBSCRIBERS_COLLECTION,
+    localField: '_id',
+    foreignField: '_topicId',
+    as: 'topicSubscribers',
+  },
+};
 
 export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, TopicEntity> {
   constructor() {
@@ -19,45 +41,50 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
   }
 
   async createTopic(entity: Omit<TopicEntity, '_id'>): Promise<TopicEntity> {
-    const { key, name, _environmentId, _organizationId, _userId } = entity;
+    const { key, name, _environmentId, _organizationId } = entity;
 
     return await this.create({
       _environmentId,
       key,
       name,
       _organizationId,
-      _userId,
     });
   }
 
-  async findTopic(entity: Omit<TopicEntity, 'key' | 'name'>): Promise<TopicEntity> {
-    const TOPIC_SUBSCRIBERS_COLLECTION = 'topicsubscribers';
+  async filterTopics(
+    query: EnforceEnvironmentQuery,
+    pagination: { limit: number; skip: number }
+  ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }[]> {
+    const data = await this.aggregate([
+      {
+        $match: {
+          ...query,
+        },
+      },
+      lookup,
+      topicWithSubscribersProjection,
+      {
+        $limit: pagination.limit,
+      },
+      {
+        $skip: pagination.skip,
+      },
+    ]);
 
-    const { _environmentId, _id, _organizationId, _userId } = entity;
+    return data;
+  }
+
+  async findTopic(
+    entity: Omit<TopicEntity, 'key' | 'name' | 'subscribers'>
+  ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }> {
+    const { _environmentId, _id, _organizationId } = entity;
 
     const [result] = await this.aggregate([
       {
-        $match: { _organizationId, _environmentId, _id, _userId },
+        $match: { _organizationId, _environmentId, _id },
       },
-      {
-        $lookup: {
-          from: TOPIC_SUBSCRIBERS_COLLECTION,
-          localField: '_id',
-          foreignField: '_topicId',
-          as: 'topicSubscribers',
-        },
-      },
-      {
-        $project: {
-          _environmentId: 1,
-          _organizationId: 1,
-          _userId: 1,
-          key: 1,
-          name: 1,
-          // The lookup returns a matrix so we return the first array element in the projection
-          subscribers: { $arrayElemAt: ['$topicSubscribers.subscribers', 0] },
-        },
-      },
+      lookup,
+      topicWithSubscribersProjection,
       { $limit: 1 },
     ]);
 
@@ -65,12 +92,11 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
       return undefined;
     }
 
-    return this.mapEntity(result);
+    return result;
   }
 
   async findTopicByKey(
     key: TopicKey,
-    userId: UserId,
     organizationId: OrganizationId,
     environmentId: EnvironmentId
   ): Promise<TopicEntity> {
@@ -78,7 +104,6 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
       key,
       _organizationId: organizationId,
       _environmentId: environmentId,
-      _userId: userId,
     });
   }
 }

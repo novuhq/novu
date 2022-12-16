@@ -1,27 +1,68 @@
 import { TopicSubscribersEntity, TopicSubscribersRepository } from '@novu/dal';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { SubscriberDto } from '@novu/shared';
+import { Injectable } from '@nestjs/common';
+import { ExternalSubscriberId, TopicId } from '../../types';
 
 import { AddSubscribersCommand } from './add-subscribers.command';
 
+import { SearchByExternalSubscriberIds, SearchByExternalSubscriberIdsCommand } from '../../../subscribers/usecases';
+
 @Injectable()
 export class AddSubscribersUseCase {
-  constructor(private topicSubscribersRepository: TopicSubscribersRepository) {}
+  constructor(
+    private searchByExternalSubscriberIds: SearchByExternalSubscriberIds,
+    private topicSubscribersRepository: TopicSubscribersRepository
+  ) {}
 
   async execute(command: AddSubscribersCommand) {
-    const entity = this.mapToEntity(command);
+    const filteredSubscribers = await this.filterExistingSubscribers(command);
 
-    await this.topicSubscribersRepository.addSubscribers(entity);
+    if (filteredSubscribers.length > 0) {
+      const topicSubscribers = this.mapSubscribersToTopic(command.topicId, filteredSubscribers);
+      await this.topicSubscribersRepository.addSubscribers(topicSubscribers);
+    }
 
     return undefined;
   }
 
-  private mapToEntity(domainEntity: AddSubscribersCommand): TopicSubscribersEntity {
-    return {
-      _environmentId: TopicSubscribersRepository.convertStringToObjectId(domainEntity.environmentId),
-      _organizationId: TopicSubscribersRepository.convertStringToObjectId(domainEntity.organizationId),
-      _topicId: TopicSubscribersRepository.convertStringToObjectId(domainEntity.topicId),
-      _userId: TopicSubscribersRepository.convertStringToObjectId(domainEntity.userId),
-      subscribers: domainEntity.subscribers,
-    };
+  private async filterExistingSubscribers(command: AddSubscribersCommand): Promise<SubscriberDto[]> {
+    const { environmentId, organizationId, subscribers } = command;
+    const searchByExternalSubscriberIdsCommand = SearchByExternalSubscriberIdsCommand.create({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      externalSubscriberIds: subscribers,
+    });
+    const existingSubscribers = await this.searchByExternalSubscriberIds.execute(searchByExternalSubscriberIdsCommand);
+
+    return this.getIntersection(subscribers, existingSubscribers);
+  }
+
+  /**
+   * Time complexity: 0(n)
+   */
+  private getIntersection(
+    externalSubscriberIds: ExternalSubscriberId[],
+    existingSubscribers: SubscriberDto[]
+  ): SubscriberDto[] {
+    const setExternalSubscribers = new Set<ExternalSubscriberId>(externalSubscriberIds);
+    const filteredExternalSubscribers = new Set<SubscriberDto>();
+
+    for (const existingSubscriber of existingSubscribers) {
+      if (setExternalSubscribers.has(existingSubscriber.subscriberId)) {
+        filteredExternalSubscribers.add(existingSubscriber);
+      }
+    }
+
+    return Array.from(filteredExternalSubscribers);
+  }
+
+  private mapSubscribersToTopic(topicId: TopicId, subscribers: SubscriberDto[]): TopicSubscribersEntity[] {
+    return subscribers.map((subscriber: SubscriberDto) => ({
+      _environmentId: TopicSubscribersRepository.convertStringToObjectId(subscriber._environmentId),
+      _organizationId: TopicSubscribersRepository.convertStringToObjectId(subscriber._organizationId),
+      _subscriberId: TopicSubscribersRepository.convertStringToObjectId(subscriber._id),
+      _topicId: TopicSubscribersRepository.convertStringToObjectId(topicId),
+      externalSubscriberId: subscriber.subscriberId,
+    }));
   }
 }

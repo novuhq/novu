@@ -1,8 +1,8 @@
 import { IsDefined, IsString } from 'class-validator';
 
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class GetTopicSubscribersCommand extends EnvironmentWithUserCommand {
+export class GetTopicSubscribersCommand extends EnvironmentCommand {
   @IsString()
   @IsDefined()
   topicId: string;

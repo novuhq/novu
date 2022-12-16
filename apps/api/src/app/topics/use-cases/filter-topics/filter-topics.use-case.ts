@@ -1,28 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { EnvironmentId, OrganizationId, TopicEntity, TopicRepository, UserId } from '@novu/dal';
+import { EnvironmentId, OrganizationId, TopicEntity, TopicRepository } from '@novu/dal';
 
 import { FilterTopicsCommand } from './filter-topics.command';
 
 import { TopicDto } from '../../dtos/topic.dto';
+import { ExternalSubscriberId } from '../../types';
 
-const DEFAULT_TOPIC_LIMIT = 100;
-
-const mapFromCommandToEntity = (
-  command: FilterTopicsCommand
-): Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId' | '_userId'> => ({
-  _environmentId: command.environmentId as unknown as EnvironmentId,
-  _organizationId: command.organizationId as unknown as OrganizationId,
-  _userId: command.userId as unknown as UserId,
-  ...(command.key && { key: command.key }),
-});
-
-const mapFromEntityToDto = (topic: TopicEntity): TopicDto => ({
-  ...topic,
-  _id: topic._id as unknown as string,
-  _organizationId: topic._organizationId as unknown as string,
-  _environmentId: topic._environmentId as unknown as string,
-  _userId: topic._userId as unknown as string,
-});
+const DEFAULT_TOPIC_LIMIT = 10;
 
 @Injectable()
 export class FilterTopicsUseCase {
@@ -35,20 +19,40 @@ export class FilterTopicsUseCase {
       throw new BadRequestException(`Page size can not be larger then ${DEFAULT_TOPIC_LIMIT}`);
     }
 
-    const query = mapFromCommandToEntity(command);
+    const query = this.mapFromCommandToEntity(command);
 
     const totalCount = await this.topicRepository.count(query);
 
-    const data = await this.topicRepository.find(query, '', {
+    const pagination = {
       limit: pageSize,
       skip: page * pageSize,
-    });
+    };
+    const filteredTopics = await this.topicRepository.filterTopics(query, pagination);
 
     return {
       page,
       totalCount,
       pageSize,
-      data: data.map(mapFromEntityToDto),
+      data: filteredTopics.map(this.mapFromEntityToDto),
+    };
+  }
+
+  private mapFromCommandToEntity(
+    command: FilterTopicsCommand
+  ): Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'> {
+    return {
+      _environmentId: TopicRepository.convertStringToObjectId(command.environmentId),
+      _organizationId: TopicRepository.convertStringToObjectId(command.organizationId),
+      ...(command.key && { key: command.key }),
+    };
+  }
+
+  private mapFromEntityToDto(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {
+    return {
+      ...topic,
+      _id: TopicRepository.convertObjectIdToString(topic._id),
+      _organizationId: TopicRepository.convertObjectIdToString(topic._organizationId),
+      _environmentId: TopicRepository.convertObjectIdToString(topic._environmentId),
     };
   }
 }
