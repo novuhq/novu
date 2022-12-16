@@ -6,9 +6,12 @@ import { NotificationCenterComponent } from './lib';
 
 export { NotificationCenterComponent } from './lib';
 
+const ONE_DAY = 24 * 60 * 60 * 1000;
+
 export default {
   install(app: App) {
     app.use(FloatingVue, {
+      disposeTimeout: ONE_DAY,
       themes: {
         dark: {
           $extend: 'dropdown',

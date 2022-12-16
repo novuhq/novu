@@ -1,144 +1,15 @@
-<script lang="ts">
-import { css } from '@emotion/css';
-import {
-  getStyleByPath,
-  getDefaultTheme,
-  getDefaultBellColors,
-  NotificationCenterContentWebComponent,
-} from '@novu/notification-center';
-import BellButton from './BellButton.vue';
-
-customElements.define('notification-center-content-component', NotificationCenterContentWebComponent);
-
-export default {
-  components: {
-    BellButton,
-  },
-  data() {
-    const { popoverArrowClass, popoverDropdownClass, bellButtonClass, gradientDotClass, bellColors } =
-      this.calculateStyles({ theme: this.theme, styles: this.styles, colorScheme: this.colorScheme });
-
-    return {
-      popoverArrowClass,
-      popoverDropdownClass,
-      bellButtonClass,
-      gradientDotClass,
-      bellColors,
-      unseenCount: undefined as number | undefined,
-      hasSlot: !!this.$slots.default,
-    };
-  },
-  watch: {
-    theme: {
-      handler(val) {
-        const { popoverArrowClass, popoverDropdownClass, bellButtonClass, gradientDotClass, bellColors } =
-          this.calculateStyles({ theme: val, styles: this.styles, colorScheme: this.colorScheme });
-        this.popoverArrowClass = popoverArrowClass;
-        this.popoverDropdownClass = popoverDropdownClass;
-        this.bellButtonClass = bellButtonClass;
-        this.gradientDotClass = gradientDotClass;
-        this.bellColors = bellColors;
-      },
-      deep: true,
-    },
-    styles: {
-      handler(val) {
-        const { popoverArrowClass, popoverDropdownClass, bellButtonClass, gradientDotClass, bellColors } =
-          this.calculateStyles({ theme: this.theme, styles: val, colorScheme: this.colorScheme });
-        this.popoverArrowClass = popoverArrowClass;
-        this.popoverDropdownClass = popoverDropdownClass;
-        this.bellButtonClass = bellButtonClass;
-        this.gradientDotClass = gradientDotClass;
-        this.bellColors = bellColors;
-      },
-      deep: true,
-    },
-    colorScheme: {
-      handler(val) {
-        const { popoverArrowClass, popoverDropdownClass, bellButtonClass, gradientDotClass, bellColors } =
-          this.calculateStyles({ theme: this.theme, styles: this.styles, colorScheme: val });
-        this.popoverArrowClass = popoverArrowClass;
-        this.popoverDropdownClass = popoverDropdownClass;
-        this.bellButtonClass = bellButtonClass;
-        this.gradientDotClass = gradientDotClass;
-        this.bellColors = bellColors;
-      },
-    },
-  },
-  mounted() {
-    const arrowsContainer = (this.$refs.popover as any).$refs.popper.$_arrowNode as HTMLDivElement;
-    arrowsContainer.childNodes.forEach((node) => {
-      (node as HTMLDivElement).classList.add(this.popoverArrowClass);
-    });
-
-    // listen to the unseen count changed event propagated from the web component
-    document.addEventListener('novu:unseen_count_changed', (event) => {
-      this.unseenCount = (event as CustomEvent).detail as number;
-    });
-  },
-  methods: {
-    calculateStyles: ({
-      styles,
-      theme: propsTheme,
-      colorScheme,
-    }: Pick<NotificationCenterComponentProps, 'theme' | 'styles' | 'colorScheme'>) => {
-      const { theme, common } = getDefaultTheme({ colorScheme, theme: propsTheme });
-      const { bellColors } = getDefaultBellColors({
-        colorScheme,
-        bellColors: {},
-      });
-
-      return {
-        popoverArrowClass: css(
-          getStyleByPath({
-            styles,
-            path: 'popover.arrow',
-            theme,
-            common,
-            colorScheme,
-          })
-        ),
-        popoverDropdownClass: css(
-          getStyleByPath({
-            styles,
-            path: 'popover.dropdown',
-            theme,
-            common,
-            colorScheme,
-          })
-        ),
-        bellButtonClass: css(
-          getStyleByPath({
-            styles,
-            path: 'bellButton.root',
-            theme,
-            common,
-            colorScheme,
-          })
-        ),
-        gradientDotClass: css(
-          getStyleByPath({
-            styles,
-            path: 'bellButton.dot',
-            theme,
-            common,
-            colorScheme,
-          })
-        ),
-        bellColors,
-      };
-    },
-  },
-};
-</script>
-
 <script setup lang="ts">
+import { ref, watch, useSlots, computed, onMounted } from 'vue';
+import { NotificationCenterContentWebComponent } from '@novu/notification-center';
 import type { NotificationCenterContentComponentProps } from '@novu/notification-center';
+import BellButton from './BellButton.vue';
+import { calculateStyles } from './utils';
 
 export type FloatingPlacement = 'end' | 'start';
 export type FloatingSide = 'top' | 'right' | 'bottom' | 'left' | 'auto';
 export type FloatingPosition = FloatingSide | `${FloatingSide}-${FloatingPlacement}`;
-export interface NotificationCenterComponentProps {
+
+export interface INotificationCenterComponentProps {
   backendUrl?: NotificationCenterContentComponentProps['backendUrl'];
   socketUrl?: NotificationCenterContentComponentProps['socketUrl'];
   subscriberId?: NotificationCenterContentComponentProps['subscriberId'];
@@ -162,46 +33,73 @@ export interface NotificationCenterComponentProps {
   tabClicked?: NotificationCenterContentComponentProps['tabClicked'];
 }
 
-withDefaults(defineProps<NotificationCenterComponentProps>(), { colorScheme: 'dark' });
+customElements.define('notification-center-content-component', NotificationCenterContentWebComponent);
+
+const props = withDefaults(defineProps<INotificationCenterComponentProps>(), {
+  colorScheme: 'dark',
+});
+const slots = useSlots();
+const popper = ref();
+const unseenCount = ref<number | undefined>(undefined);
+const hasSlot = ref(!!slots.default);
+
+const computedStyles = computed(() => {
+  const { popoverArrowClass, popoverDropdownClass, bellButtonClass, gradientDotClass, bellColors } = calculateStyles({
+    theme: props.theme,
+    styles: props.styles,
+    colorScheme: props.colorScheme,
+  });
+
+  return {
+    popoverArrowClass,
+    popoverDropdownClass,
+    bellButtonClass,
+    gradientDotClass,
+    bellColors,
+  };
+});
+
+const updateArrowStyles = (arrowClass: string) => {
+  // add the popover arrow class to the arrow element, there is no better way to do this
+  const arrowClasses = ['v-popper__arrow-outer', 'v-popper__arrow-inner'];
+  const arrowsContainer = popper.value.$refs.popper.$_arrowNode as HTMLDivElement;
+  arrowsContainer.childNodes.forEach((node, idx) => {
+    (node as HTMLDivElement).className = '';
+    (node as HTMLDivElement).classList.add(arrowClasses[idx], arrowClass);
+  });
+};
+
+onMounted(() => {
+  updateArrowStyles(computedStyles.value.popoverArrowClass);
+
+  // listen to the unseen count changed event propagated from the web component
+  document.addEventListener('novu:unseen_count_changed', (event) => {
+    unseenCount.value = (event as CustomEvent).detail as number;
+  });
+});
+
+watch(computedStyles, (newComputedStyles) => {
+  updateArrowStyles(newComputedStyles.popoverArrowClass);
+});
 </script>
-
-<style>
-.v-popper--theme-light .v-popper__inner,
-.v-popper--theme-dark .v-popper__inner {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-.v-popper--theme-light .v-popper__arrow-outer,
-.v-popper--theme-light .v-popper__arrow-inner {
-  border-color: #fff;
-}
-
-.v-popper--theme-dark .v-popper__arrow-outer,
-.v-popper--theme-dark .v-popper__arrow-inner {
-  border-color: #1e1e26;
-}
-</style>
 
 <template>
   <VDropdown
     :theme="colorScheme"
-    :popperClass="popoverDropdownClass"
+    :popperClass="computedStyles.popoverDropdownClass"
     :placement="popover?.position"
     :distance="popover?.offset"
-    ref="popover"
+    ref="popper"
   >
     <!-- Popover target - usually button -->
     <slot v-if="hasSlot" v-bind="unseenCount" :unseen-count="unseenCount" />
     <BellButton
       v-else
-      :bellButtonClass="bellButtonClass"
-      :gradientDotClass="gradientDotClass"
+      :bellButtonClass="computedStyles.bellButtonClass"
+      :gradientDotClass="computedStyles.gradientDotClass"
       :unseenCount="unseenCount"
-      :colors="bellColors"
+      :colors="computedStyles.bellColors"
     />
-
     <!-- Popover content -->
     <template #popper>
       <notification-center-content-component
@@ -226,3 +124,20 @@ withDefaults(defineProps<NotificationCenterComponentProps>(), { colorScheme: 'da
     </template>
   </VDropdown>
 </template>
+
+<style>
+.v-popper--theme-light .v-popper__inner,
+.v-popper--theme-dark .v-popper__inner {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+.v-popper--theme-light .v-popper__arrow-outer,
+.v-popper--theme-light .v-popper__arrow-inner {
+  border-color: #fff;
+}
+.v-popper--theme-dark .v-popper__arrow-outer,
+.v-popper--theme-dark .v-popper__arrow-inner {
+  border-color: #1e1e26;
+}
+</style>
