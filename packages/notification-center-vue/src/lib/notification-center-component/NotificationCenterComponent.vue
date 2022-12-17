@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, watch, useSlots, computed, onMounted } from 'vue';
-import { NotificationCenterContentWebComponent } from '@novu/notification-center';
 import type { NotificationCenterContentComponentProps } from '@novu/notification-center';
 import BellButton from './BellButton.vue';
 import { calculateStyles } from './utils';
@@ -32,8 +31,6 @@ export interface INotificationCenterComponentProps {
   actionClicked?: NotificationCenterContentComponentProps['actionClicked'];
   tabClicked?: NotificationCenterContentComponentProps['tabClicked'];
 }
-
-customElements.define('notification-center-content-component', NotificationCenterContentWebComponent);
 
 const props = withDefaults(defineProps<INotificationCenterComponentProps>(), {
   colorScheme: 'dark',
