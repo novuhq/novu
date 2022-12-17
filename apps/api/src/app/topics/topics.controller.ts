@@ -20,7 +20,7 @@ import {
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { IJwtPayload } from '@novu/shared';
+import { ExternalSubscriberId, IJwtPayload } from '@novu/shared';
 
 import {
   AddSubscribersRequestDto,
@@ -95,14 +95,19 @@ export class TopicsController {
   @ExternalApiAccessible()
   @ApiNoContentResponse()
   @Post(':topicId/subscribers')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ description: 'Add subscribers to a topic' })
   async addSubscribers(
     @UserSession() user: IJwtPayload,
     @Param('topicId') topicId: string,
     @Body() body: AddSubscribersRequestDto
-  ): Promise<void> {
-    await this.addSubscribersUseCase.execute(
+  ): Promise<{
+    succeeded: ExternalSubscriberId[];
+    failed?: {
+      notFound?: ExternalSubscriberId[];
+    };
+  }> {
+    const { existingExternalSubscribers, nonExistingExternalSubscribers } = await this.addSubscribersUseCase.execute(
       AddSubscribersCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -110,6 +115,15 @@ export class TopicsController {
         topicId,
       })
     );
+
+    return {
+      succeeded: existingExternalSubscribers,
+      ...(nonExistingExternalSubscribers.length > 0 && {
+        failed: {
+          notFound: nonExistingExternalSubscribers,
+        },
+      }),
+    };
   }
 
   @ExternalApiAccessible()

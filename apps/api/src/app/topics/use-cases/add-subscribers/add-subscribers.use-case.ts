@@ -7,6 +7,12 @@ import { AddSubscribersCommand } from './add-subscribers.command';
 
 import { SearchByExternalSubscriberIds, SearchByExternalSubscriberIdsCommand } from '../../../subscribers/usecases';
 
+interface ISubscriberGroups {
+  existingExternalSubscribers: ExternalSubscriberId[];
+  nonExistingExternalSubscribers: ExternalSubscriberId[];
+  subscribersAvailableToAdd: SubscriberDto[];
+}
+
 @Injectable()
 export class AddSubscribersUseCase {
   constructor(
@@ -14,46 +20,56 @@ export class AddSubscribersUseCase {
     private topicSubscribersRepository: TopicSubscribersRepository
   ) {}
 
-  async execute(command: AddSubscribersCommand) {
-    const filteredSubscribers = await this.filterExistingSubscribers(command);
+  async execute(command: AddSubscribersCommand): Promise<Omit<ISubscriberGroups, 'subscribersAvailableToAdd'>> {
+    const { existingExternalSubscribers, nonExistingExternalSubscribers, subscribersAvailableToAdd } =
+      await this.filterExistingSubscribers(command);
 
-    if (filteredSubscribers.length > 0) {
-      const topicSubscribers = this.mapSubscribersToTopic(command.topicId, filteredSubscribers);
+    if (subscribersAvailableToAdd.length > 0) {
+      const topicSubscribers = this.mapSubscribersToTopic(command.topicId, subscribersAvailableToAdd);
       await this.topicSubscribersRepository.addSubscribers(topicSubscribers);
     }
 
-    return undefined;
+    return {
+      existingExternalSubscribers,
+      nonExistingExternalSubscribers,
+    };
   }
 
-  private async filterExistingSubscribers(command: AddSubscribersCommand): Promise<SubscriberDto[]> {
+  private async filterExistingSubscribers(command: AddSubscribersCommand): Promise<ISubscriberGroups> {
     const { environmentId, organizationId, subscribers } = command;
+
     const searchByExternalSubscriberIdsCommand = SearchByExternalSubscriberIdsCommand.create({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       externalSubscriberIds: subscribers,
     });
-    const existingSubscribers = await this.searchByExternalSubscriberIds.execute(searchByExternalSubscriberIdsCommand);
+    const foundSubscribers = await this.searchByExternalSubscriberIds.execute(searchByExternalSubscriberIdsCommand);
 
-    return this.getIntersection(subscribers, existingSubscribers);
+    return this.groupSubscribersIfBelonging(subscribers, foundSubscribers);
   }
 
   /**
    * Time complexity: 0(n)
    */
-  private getIntersection(
-    externalSubscriberIds: ExternalSubscriberId[],
-    existingSubscribers: SubscriberDto[]
-  ): SubscriberDto[] {
-    const setExternalSubscribers = new Set<ExternalSubscriberId>(externalSubscriberIds);
-    const filteredExternalSubscribers = new Set<SubscriberDto>();
+  private groupSubscribersIfBelonging(
+    subscribers: ExternalSubscriberId[],
+    foundSubscribers: SubscriberDto[]
+  ): ISubscriberGroups {
+    const subscribersList = new Set<ExternalSubscriberId>(subscribers);
+    const subscribersAvailableToAdd = new Set<SubscriberDto>();
+    const existingExternalSubscribersList = new Set<ExternalSubscriberId>();
 
-    for (const existingSubscriber of existingSubscribers) {
-      if (setExternalSubscribers.has(existingSubscriber.subscriberId)) {
-        filteredExternalSubscribers.add(existingSubscriber);
-      }
+    for (const foundSubscriber of foundSubscribers) {
+      existingExternalSubscribersList.add(foundSubscriber.subscriberId);
+      subscribersList.delete(foundSubscriber.subscriberId);
+      subscribersAvailableToAdd.add(foundSubscriber);
     }
 
-    return Array.from(filteredExternalSubscribers);
+    return {
+      existingExternalSubscribers: Array.from(existingExternalSubscribersList),
+      nonExistingExternalSubscribers: Array.from(subscribersList),
+      subscribersAvailableToAdd: Array.from(subscribersAvailableToAdd),
+    };
   }
 
   private mapSubscribersToTopic(topicId: TopicId, subscribers: SubscriberDto[]): TopicSubscribersEntity[] {
