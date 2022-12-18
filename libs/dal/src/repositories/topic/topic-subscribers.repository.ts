@@ -3,7 +3,7 @@ import { FilterQuery } from 'mongoose';
 
 import { TopicSubscribersEntity } from './topic-subscribers.entity';
 import { TopicSubscribers } from './topic-subscribers.schema';
-import { EnvironmentId, OrganizationId, TopicId } from './types';
+import { EnvironmentId, OrganizationId, TopicId, TopicKey } from './types';
 
 import { BaseRepository } from '../base-repository';
 
@@ -36,13 +36,13 @@ export class TopicSubscribersRepository extends BaseRepository<EnforceEnvironmen
   async removeSubscribers(
     _environmentId: EnvironmentId,
     _organizationId: OrganizationId,
-    _topicId: TopicId,
+    topicKey: TopicKey,
     externalSubscriberIds: ExternalSubscriberId[]
   ): Promise<void> {
     await this.delete({
       _environmentId,
       _organizationId,
-      _topicId,
+      key: topicKey,
       externalSubscriberId: {
         $in: externalSubscriberIds,
       },

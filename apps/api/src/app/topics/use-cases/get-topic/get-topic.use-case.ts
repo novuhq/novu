@@ -11,24 +11,18 @@ export class GetTopicUseCase {
   constructor(private topicRepository: TopicRepository) {}
 
   async execute(command: GetTopicCommand) {
-    const entity = this.mapToEntity(command);
-    const topic = await this.topicRepository.findTopic(entity);
+    const topic = await this.topicRepository.findTopic(
+      command.topicKey,
+      TopicRepository.convertStringToObjectId(command.environmentId)
+    );
 
     if (!topic) {
       throw new NotFoundException(
-        `Topic not found for id ${command.id} for the organization ${command.organizationId} in the environment ${command.environmentId}`
+        `Topic not found for id ${command.topicKey} for the organization ${command.organizationId} in the environment ${command.environmentId}`
       );
     }
 
     return this.mapFromEntity(topic);
-  }
-
-  private mapToEntity(domainEntity: GetTopicCommand): Omit<TopicEntity, 'key' | 'name' | 'subscribers'> {
-    return {
-      _environmentId: TopicRepository.convertStringToObjectId(domainEntity.environmentId),
-      _id: TopicRepository.convertStringToObjectId(domainEntity.id),
-      _organizationId: TopicRepository.convertStringToObjectId(domainEntity.organizationId),
-    };
   }
 
   private mapFromEntity(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {

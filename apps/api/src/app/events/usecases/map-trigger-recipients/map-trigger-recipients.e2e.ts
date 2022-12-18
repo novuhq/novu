@@ -9,7 +9,7 @@ import {
   TopicSubscribersRepository,
 } from '@novu/dal';
 import { ISubscribersDefine, ITopic, TriggerRecipientsPayload } from '@novu/node';
-import { SubscriberId, TopicId, TopicKey, TopicName, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { TopicId, TopicKey, TopicName, TriggerRecipientsTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
 
@@ -49,6 +49,7 @@ const addSubscribersToTopic = async (
   topicRepository: TopicRepository,
   topicSubscribersRepository: TopicSubscribersRepository,
   topicId: TopicId,
+  topicKey: TopicKey,
   subscribers: SubscriberEntity[]
 ): Promise<void> => {
   const _environmentId = TopicSubscribersRepository.convertStringToObjectId(session.environment._id);
@@ -60,15 +61,12 @@ const addSubscribersToTopic = async (
     _organizationId,
     _subscriberId: TopicSubscribersRepository.convertStringToObjectId(subscriber._id),
     _topicId,
+    topicKey,
     externalSubscriberId: subscriber.subscriberId,
   }));
   await topicSubscribersRepository.addSubscribers(entities);
 
-  const result = await topicRepository.findTopic({
-    _environmentId,
-    _organizationId,
-    _id: _topicId,
-  });
+  const result = await topicRepository.findTopic(topicKey, _environmentId);
 
   expect(result.subscribers.length).to.be.eql(subscribers.length);
   expect(result.subscribers).to.have.members(subscribers.map((subscriber) => subscriber.subscriberId));
@@ -160,7 +158,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       const firstTopicId = TopicRepository.convertObjectIdToString(firstTopic._id);
       const firstSubscriber = await subscribersService.createSubscriber();
       const secondSubscriber = await subscribersService.createSubscriber();
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, [
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
         firstSubscriber,
         secondSubscriber,
       ]);
@@ -174,17 +172,17 @@ describe('MapTriggerRecipientsUseCase', () => {
       );
       const secondTopicId = TopicRepository.convertObjectIdToString(secondTopic._id);
       const thirdSubscriber = await subscribersService.createSubscriber();
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, [
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
         thirdSubscriber,
       ]);
 
       const firstTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.convertObjectIdToString(firstTopic._id),
+        topicKey: TopicRepository.convertObjectIdToString(firstTopic._id),
       };
       const secondTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.convertObjectIdToString(secondTopic._id),
+        topicKey: TopicRepository.convertObjectIdToString(secondTopic._id),
       };
 
       const singleSubscriberId = SubscriberRepository.createObjectId();
@@ -284,14 +282,14 @@ describe('MapTriggerRecipientsUseCase', () => {
       const topicId = TopicRepository.convertObjectIdToString(topic._id);
       const firstSubscriber = await subscribersService.createSubscriber();
       const secondSubscriber = await subscribersService.createSubscriber();
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, topicId, [
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, topicId, topicKey, [
         firstSubscriber,
         secondSubscriber,
       ]);
 
       const recipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.convertObjectIdToString(topic._id),
+        topicKey: TopicRepository.convertObjectIdToString(topic._id),
       };
 
       const command = buildCommand(session, transactionId, [recipient]);
@@ -311,7 +309,7 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const recipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.createObjectId(),
+        topicKey: TopicRepository.createObjectId(),
       };
 
       const command = buildCommand(session, transactionId, [recipient]);
@@ -338,7 +336,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       const firstTopicId = TopicRepository.convertObjectIdToString(firstTopic._id);
       const firstSubscriber = await subscribersService.createSubscriber();
       const secondSubscriber = await subscribersService.createSubscriber();
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, [
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
         firstSubscriber,
         secondSubscriber,
       ]);
@@ -352,17 +350,17 @@ describe('MapTriggerRecipientsUseCase', () => {
       );
       const secondTopicId = TopicRepository.convertObjectIdToString(secondTopic._id);
       const thirdSubscriber = await subscribersService.createSubscriber();
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, [
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
         thirdSubscriber,
       ]);
 
       const firstTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.convertObjectIdToString(firstTopic._id),
+        topicKey: TopicRepository.convertObjectIdToString(firstTopic._id),
       };
       const secondTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.convertObjectIdToString(secondTopic._id),
+        topicKey: TopicRepository.convertObjectIdToString(secondTopic._id),
       };
 
       const singleSubscriberId = SubscriberRepository.createObjectId();
@@ -477,7 +475,7 @@ describe('MapTriggerRecipientsUseCase', () => {
         firstTopicName
       );
       const firstTopicId = TopicRepository.convertObjectIdToString(firstTopic._id);
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, [
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
         firstSubscriber,
         secondSubscriber,
       ]);
@@ -490,7 +488,7 @@ describe('MapTriggerRecipientsUseCase', () => {
         secondTopicName
       );
       const secondTopicId = TopicRepository.convertObjectIdToString(secondTopic._id);
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, [
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
         thirdSubscriber,
       ]);
 
@@ -502,22 +500,22 @@ describe('MapTriggerRecipientsUseCase', () => {
         thirdTopicName
       );
       const thirdTopicId = TopicRepository.convertObjectIdToString(thirdTopic._id);
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, thirdTopicId, [
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, thirdTopicId, thirdTopicKey, [
         firstSubscriber,
         fourthSubscriber,
       ]);
 
       const firstTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.convertObjectIdToString(firstTopic._id),
+        topicKey: TopicRepository.convertObjectIdToString(firstTopic._id),
       };
       const secondTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.convertObjectIdToString(secondTopic._id),
+        topicKey: TopicRepository.convertObjectIdToString(secondTopic._id),
       };
       const thirdTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.convertObjectIdToString(thirdTopic._id),
+        topicKey: TopicRepository.convertObjectIdToString(thirdTopic._id),
       };
 
       const command = buildCommand(session, transactionId, [
@@ -571,7 +569,7 @@ describe('MapTriggerRecipientsUseCase', () => {
         firstTopicName
       );
       const firstTopicId = TopicRepository.convertObjectIdToString(firstTopic._id);
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, [
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
         firstSubscriber,
         secondSubscriber,
       ]);
@@ -584,17 +582,17 @@ describe('MapTriggerRecipientsUseCase', () => {
         secondTopicName
       );
       const secondTopicId = TopicRepository.convertObjectIdToString(secondTopic._id);
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, [
+      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
         thirdSubscriber,
       ]);
 
       const firstTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.convertObjectIdToString(firstTopic._id),
+        topicKey: TopicRepository.convertObjectIdToString(firstTopic._id),
       };
       const secondTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicId: TopicRepository.convertObjectIdToString(secondTopic._id),
+        topicKey: TopicRepository.convertObjectIdToString(secondTopic._id),
       };
 
       const command = buildCommand(session, transactionId, [

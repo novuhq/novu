@@ -5,31 +5,10 @@ import { expect } from 'chai';
 
 const BASE_PATH = '/v1/topics';
 
-const addSubscribersToTopic = async (
-  session: UserSession,
-  topicId: TopicId,
-  subscribers: ExternalSubscriberId[]
-): Promise<void> => {
-  const url = `${BASE_PATH}/${topicId}/subscribers`;
-
-  const result = await session.testAgent
-    .post(url)
-    .send({
-      subscribers,
-    })
-    .set('Accept', 'application/json');
-
-  expect(result.status).to.eql(200);
-  expect(result.body.data).to.eql({
-    succeeded: subscribers,
-  });
-};
-
-describe('Rename a topic - /topics/:topicId (PATCH)', async () => {
+describe('Rename a topic - /topics/:topicKey (PATCH)', async () => {
   const renamedTopicName = 'topic-renamed';
   const topicKey = 'topic-key';
   const topicName = 'topic-name';
-  let _id: TopicId;
   let firstSubscriber: SubscriberEntity;
   let secondSubscriber: SubscriberEntity;
   let session: UserSession;
@@ -46,7 +25,7 @@ describe('Rename a topic - /topics/:topicId (PATCH)', async () => {
     expect(response.statusCode).to.eql(201);
 
     const { body } = response;
-    _id = body.data._id;
+    const _id = body.data._id;
     expect(_id).to.exist;
     expect(_id).to.be.string;
 
@@ -58,7 +37,7 @@ describe('Rename a topic - /topics/:topicId (PATCH)', async () => {
   });
 
   it('should throw a bad request error when not providing the name field', async () => {
-    const url = `${BASE_PATH}/${_id}`;
+    const url = `${BASE_PATH}/${topicKey}`;
     const { body } = await session.testAgent.patch(url);
 
     expect(body.statusCode).to.equal(400);
@@ -67,7 +46,7 @@ describe('Rename a topic - /topics/:topicId (PATCH)', async () => {
   });
 
   it('should rename the topic and return it if exists in the database', async () => {
-    const url = `${BASE_PATH}/${_id}`;
+    const url = `${BASE_PATH}/${topicKey}`;
     const patchResponse = await session.testAgent.patch(url).send({ name: renamedTopicName });
 
     expect(patchResponse.statusCode).to.eql(200);
@@ -93,3 +72,23 @@ describe('Rename a topic - /topics/:topicId (PATCH)', async () => {
     expect(body.error).to.eql('Not Found');
   });
 });
+
+const addSubscribersToTopic = async (
+  session: UserSession,
+  topicId: TopicId,
+  subscribers: ExternalSubscriberId[]
+): Promise<void> => {
+  const url = `${BASE_PATH}/${topicId}/subscribers`;
+
+  const result = await session.testAgent
+    .post(url)
+    .send({
+      subscribers,
+    })
+    .set('Accept', 'application/json');
+
+  expect(result.status).to.eql(200);
+  expect(result.body.data).to.eql({
+    succeeded: subscribers,
+  });
+};

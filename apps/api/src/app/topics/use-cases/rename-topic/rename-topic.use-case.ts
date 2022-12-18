@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TopicEntity, TopicRepository } from '@novu/dal';
 
 import { RenameTopicCommand } from './rename-topic.command';
 
-import { GetTopicUseCase, GetTopicCommand } from '../get-topic';
+import { GetTopicUseCase } from '../get-topic';
 import { TopicDto } from '../../dtos/topic.dto';
 import { ExternalSubscriberId } from '../../types';
 
@@ -12,18 +12,21 @@ export class RenameTopicUseCase {
   constructor(private getTopicUseCase: GetTopicUseCase, private topicRepository: TopicRepository) {}
 
   async execute(command: RenameTopicCommand): Promise<TopicDto> {
-    await this.getTopicUseCase.execute(command);
+    const topic = await this.getTopicUseCase.execute(command);
 
     const query = this.mapToQuery(command);
-    const renamedTopic = await this.topicRepository.renameTopic(query._id, query._environmentId, query.name);
+    const renamedTopic = await this.topicRepository.renameTopic(
+      TopicRepository.convertStringToObjectId(topic._id),
+      query._environmentId,
+      query.name
+    );
 
     return this.mapFromEntityToDto(renamedTopic);
   }
 
-  private mapToQuery(domainEntity: RenameTopicCommand): Pick<TopicEntity, '_id' | '_environmentId' | 'name'> {
+  private mapToQuery(domainEntity: RenameTopicCommand): Pick<TopicEntity, '_environmentId' | 'name'> {
     return {
       _environmentId: TopicRepository.convertStringToObjectId(domainEntity.environmentId),
-      _id: TopicRepository.convertStringToObjectId(domainEntity.id),
       name: domainEntity.name,
     };
   }

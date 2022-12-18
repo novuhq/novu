@@ -2,9 +2,7 @@ import { SubscriberEntity } from '@novu/dal';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-import { CreateTopicResponseDto } from '../dtos';
-
-describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (POST)', async () => {
+describe('Remove subscribers to topic - /topics/:topicKey/subscribers/removal (POST)', async () => {
   const topicKey = 'topic-key-remove-subscribers';
   const topicName = 'topic-name';
   const URL = '/v1/topics';
@@ -35,7 +33,7 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
     topicId = response.body.data._id;
     expect(topicId).to.exist;
 
-    getTopicUrl = `${URL}/${topicId}`;
+    getTopicUrl = `${URL}/${topicKey}`;
     const addSubscribersUrl = `${getTopicUrl}/subscribers`;
     removeSubscribersUrl = `${addSubscribersUrl}/removal`;
 

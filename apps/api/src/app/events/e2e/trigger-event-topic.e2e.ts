@@ -64,7 +64,7 @@ describe('Trigger event for a topic - /v1/events/trigger (POST)', () => {
     const topicName = 'topic-name-trigger-event';
     topicDto = await createTopic(session, topicKey, topicName);
     await addSubscribersToTopic(session, topicDto, subscribers);
-    to = [{ type: TriggerRecipientsTypeEnum.TOPIC, topicId: topicDto._id }];
+    to = [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicDto._id }];
   });
 
   afterEach(() => {
@@ -274,8 +274,8 @@ describe('Trigger event for multiple topics and multiple subscribers - /v1/event
       sixthSubscriber,
     ];
     to = [
-      { type: TriggerRecipientsTypeEnum.TOPIC, topicId: firstTopicDto._id },
-      { type: TriggerRecipientsTypeEnum.TOPIC, topicId: secondTopicDto._id },
+      { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: firstTopicDto._id },
+      { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: secondTopicDto._id },
       fifthSubscriber.subscriberId,
       {
         subscriberId: sixthSubscriber.subscriberId,

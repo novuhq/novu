@@ -1,11 +1,8 @@
 import { SubscriberEntity } from '@novu/dal';
-import { ExternalSubscriberId } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-import { CreateTopicResponseDto } from '../dtos';
-
-describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async () => {
+describe('Add subscribers to topic - /topics/:topicKey/subscribers (POST)', async () => {
   const topicKey = 'topic-key-add-subscribers';
   const topicName = 'topic-name';
   const URL = '/v1/topics';
@@ -16,7 +13,7 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
   let secondSubscriber: SubscriberEntity;
   let thirdSubscriber: SubscriberEntity;
   let topicId: string;
-  let getTopicUrl: string;
+  let topicUrl: string;
   let addSubscribersUrl: string;
 
   before(async () => {
@@ -36,8 +33,8 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
     expect(response.statusCode).to.eql(201);
     topicId = response.body.data._id;
     expect(topicId).to.exist;
-    getTopicUrl = `${URL}/${topicId}`;
-    addSubscribersUrl = `${getTopicUrl}/subscribers`;
+    topicUrl = `${URL}/${topicKey}`;
+    addSubscribersUrl = `${topicUrl}/subscribers`;
   });
 
   it('should throw validation error for missing request payload information', async () => {
@@ -57,7 +54,7 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
       succeeded: [subscriber.subscriberId],
     });
 
-    const getResponse = await session.testAgent.get(getTopicUrl);
+    const getResponse = await session.testAgent.get(topicUrl);
     expect(getResponse.statusCode).to.eql(200);
 
     const getResponseTopic = getResponse.body.data;
@@ -83,7 +80,7 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
       },
     });
 
-    const getResponse = await session.testAgent.get(getTopicUrl);
+    const getResponse = await session.testAgent.get(topicUrl);
     expect(getResponse.statusCode).to.eql(200);
 
     const getResponseTopic = getResponse.body.data;
@@ -97,7 +94,7 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
   });
 
   it('should not duplicate subscribers if adding a subscriber already added to topic', async () => {
-    const preconditionResponse = await session.testAgent.get(getTopicUrl);
+    const preconditionResponse = await session.testAgent.get(topicUrl);
     expect(preconditionResponse.statusCode).to.eql(200);
     expect(preconditionResponse.body.data.subscribers).to.eql([subscriber.subscriberId]);
 
@@ -110,7 +107,7 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
       succeeded: [subscriber.subscriberId],
     });
 
-    const getResponse = await session.testAgent.get(getTopicUrl);
+    const getResponse = await session.testAgent.get(topicUrl);
     expect(getResponse.statusCode).to.eql(200);
 
     const getResponseTopic = getResponse.body.data;
@@ -133,7 +130,7 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
       succeeded: subscribers,
     });
 
-    const getResponse = await session.testAgent.get(getTopicUrl);
+    const getResponse = await session.testAgent.get(topicUrl);
     expect(getResponse.statusCode).to.eql(200);
 
     const getResponseTopic = getResponse.body.data;

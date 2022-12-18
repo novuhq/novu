@@ -1,12 +1,12 @@
-import { TopicId, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { TopicKey, TriggerRecipientsTypeEnum } from '@novu/shared';
 
 export interface ITopic {
   type: TriggerRecipientsTypeEnum.TOPIC;
-  topicId: TopicId;
+  topicKey: TopicKey;
 }
 
 export interface ITopics {
-  addSubscribers(topicId: string, data: ITopicSubscribersPayload);
+  addSubscribers(topicKey: string, data: ITopicSubscribersPayload);
   create(data: ITopicPayload);
   get(topicKey: string);
   list(data: ITopicPaginationPayload);

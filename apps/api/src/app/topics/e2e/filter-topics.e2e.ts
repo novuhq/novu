@@ -1,46 +1,9 @@
 import { SubscribersService, UserSession } from '@novu/testing';
-import { SubscriberEntity, TopicSubscribersEntity, TopicSubscribersRepository } from '@novu/dal';
-import { ExternalSubscriberId, TopicId } from '@novu/shared';
+import { SubscriberEntity, TopicSubscribersRepository } from '@novu/dal';
+import { ExternalSubscriberId, TopicKey } from '@novu/shared';
 import { expect } from 'chai';
 
 const BASE_PATH = '/v1/topics';
-
-const createNewTopic = async (session: UserSession, topicKey: string): Promise<string> => {
-  const result = await session.testAgent
-    .post(BASE_PATH)
-    .send({
-      key: topicKey,
-      name: `${topicKey}-name`,
-    })
-    .set('Accept', 'application/json')
-    .expect('Content-Type', /json/);
-
-  expect(result.status).to.eql(201);
-
-  const { _id } = result.body.data;
-
-  return _id;
-};
-
-const addSubscribersToTopic = async (
-  session: UserSession,
-  topicId: TopicId,
-  subscribers: ExternalSubscriberId[]
-): Promise<void> => {
-  const url = `${BASE_PATH}/${topicId}/subscribers`;
-
-  const result = await session.testAgent
-    .post(url)
-    .send({
-      subscribers,
-    })
-    .set('Accept', 'application/json');
-
-  expect(result.status).to.eql(200);
-  expect(result.body.data).to.eql({
-    succeeded: subscribers,
-  });
-};
 
 describe('Filter topics - /topics (GET)', async () => {
   let firstSubscriber: SubscriberEntity;
@@ -55,18 +18,18 @@ describe('Filter topics - /topics (GET)', async () => {
     await createNewTopic(session, 'topic-key-3');
 
     const secondTopicKey = 'topic-key-2';
-    const secondTopicId = await createNewTopic(session, secondTopicKey);
+    await createNewTopic(session, secondTopicKey);
     const subscribersService = new SubscribersService(session.organization._id, session.environment._id);
     firstSubscriber = await subscribersService.createSubscriber();
     secondSubscriber = await subscribersService.createSubscriber();
     const subscribers = [firstSubscriber.subscriberId, secondSubscriber.subscriberId];
-    await addSubscribersToTopic(session, secondTopicId, subscribers);
+    await addSubscribersToTopic(session, secondTopicKey, subscribers);
 
     const topicSubscribersRepository = new TopicSubscribersRepository();
     const result = await topicSubscribersRepository.find({
       _environmentId: TopicSubscribersRepository.convertStringToObjectId(session.environment._id),
       _organizationId: TopicSubscribersRepository.convertStringToObjectId(session.organization._id),
-      _topicId: secondTopicId,
+      topicKey: secondTopicKey,
     });
 
     expect(result.length).to.eql(subscribers.length);
@@ -177,3 +140,40 @@ describe('Filter topics - /topics (GET)', async () => {
     expect(pageSize).to.eql(10);
   });
 });
+
+const createNewTopic = async (session: UserSession, topicKey: string): Promise<string> => {
+  const result = await session.testAgent
+    .post(BASE_PATH)
+    .send({
+      key: topicKey,
+      name: `${topicKey}-name`,
+    })
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/);
+
+  expect(result.status).to.eql(201);
+
+  const { _id } = result.body.data;
+
+  return _id;
+};
+
+const addSubscribersToTopic = async (
+  session: UserSession,
+  topicKey: TopicKey,
+  subscribers: ExternalSubscriberId[]
+): Promise<void> => {
+  const url = `${BASE_PATH}/${topicKey}/subscribers`;
+
+  const result = await session.testAgent
+    .post(url)
+    .send({
+      subscribers,
+    })
+    .set('Accept', 'application/json');
+
+  expect(result.status).to.eql(200);
+  expect(result.body.data).to.eql({
+    succeeded: subscribers,
+  });
+};

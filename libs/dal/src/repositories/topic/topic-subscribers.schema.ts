@@ -31,6 +31,11 @@ const topicSubscribersSchema = new Schema(
       index: true,
       required: true,
     },
+    topicKey: {
+      type: Schema.Types.String,
+      index: true,
+      required: true,
+    },
     externalSubscriberId: Schema.Types.String,
   },
   schemaOptions

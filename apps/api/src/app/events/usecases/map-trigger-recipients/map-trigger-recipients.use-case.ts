@@ -2,18 +2,15 @@ import { Injectable } from '@nestjs/common';
 import {
   ISubscribersDefine,
   ITopic,
-  TriggerRecipient,
   TriggerRecipientSubscriber,
   TriggerRecipientTopics,
   TriggerRecipients,
-  TriggerRecipientsPayload,
 } from '@novu/node';
 import {
   EnvironmentId,
   LogCodeEnum,
   LogStatusEnum,
   OrganizationId,
-  SubscriberId,
   TopicId,
   TopicSubscribersDto,
   TriggerRecipientsTypeEnum,
@@ -28,7 +25,7 @@ import { GetTopicSubscribersCommand, GetTopicSubscribersUseCase } from '../../..
 interface ILogTopicSubscribersPayload {
   environmentId: EnvironmentId;
   organizationId: OrganizationId;
-  topicId: TopicId;
+  topicKey: TopicId;
   transactionId: string;
   userId: UserId;
 }
@@ -94,7 +91,7 @@ export class MapTriggerRecipients {
         try {
           const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
             environmentId,
-            topicId: topic.topicId,
+            topicKey: topic.topicKey,
             organizationId,
           });
           const topicSubscribers = await this.getTopicSubscribers.execute(getTopicSubscribersCommand);
@@ -106,7 +103,7 @@ export class MapTriggerRecipients {
           this.logTopicSubscribersError({
             environmentId,
             organizationId,
-            topicId: topic.topicId,
+            topicKey: topic.topicKey,
             transactionId,
             userId,
           });
@@ -138,7 +135,7 @@ export class MapTriggerRecipients {
   private logTopicSubscribersError({
     environmentId,
     organizationId,
-    topicId,
+    topicKey,
     transactionId,
     userId,
   }: ILogTopicSubscribersPayload) {
@@ -153,7 +150,7 @@ export class MapTriggerRecipients {
           userId,
           code: LogCodeEnum.TOPIC_SUBSCRIBERS_ERROR,
           raw: {
-            topicId,
+            topicKey,
           },
         })
       )

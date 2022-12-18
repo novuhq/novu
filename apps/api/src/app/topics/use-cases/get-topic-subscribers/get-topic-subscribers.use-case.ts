@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { TopicSubscribersEntity, TopicSubscribersRepository } from '@novu/dal';
+import { TopicSubscribersEntity, TopicSubscribersRepository, TopicRepository } from '@novu/dal';
 
 import { GetTopicSubscribersCommand } from './get-topic-subscribers.command';
 
@@ -7,33 +7,34 @@ import { TopicSubscribersDto } from '../../dtos/topic-subscribers.dto';
 
 @Injectable()
 export class GetTopicSubscribersUseCase {
-  constructor(private topicSubscribersRepository: TopicSubscribersRepository) {}
+  constructor(
+    private topicSubscribersRepository: TopicSubscribersRepository,
+    private topicRepository: TopicRepository
+  ) {}
 
   async execute(command: GetTopicSubscribersCommand) {
-    const domainEntity = this.mapToEntity(command);
+    const topic = await this.topicRepository.findTopicByKey(
+      command.topicKey,
+      TopicRepository.convertStringToObjectId(command.organizationId),
+      TopicRepository.convertStringToObjectId(command.environmentId)
+    );
+    if (!topic) {
+      throw new NotFoundException(`Topic with key ${command.topicKey} not found in current environment`);
+    }
+
     const topicSubscribers = await this.topicSubscribersRepository.findSubscribersByTopicId(
-      domainEntity._environmentId,
-      domainEntity._organizationId,
-      domainEntity._topicId
+      TopicRepository.convertStringToObjectId(command.environmentId),
+      TopicRepository.convertStringToObjectId(command.organizationId),
+      topic._id
     );
 
     if (!topicSubscribers) {
       throw new NotFoundException(
-        `Topic id ${command.topicId} for the organization ${command.organizationId} in the environment ${command.environmentId} has no entity with subscribers`
+        `Topic id ${command.topicKey} for the organization ${command.organizationId} in the environment ${command.environmentId} has no entity with subscribers`
       );
     }
 
     return topicSubscribers.map(this.mapFromEntity);
-  }
-
-  private mapToEntity(
-    command: GetTopicSubscribersCommand
-  ): Omit<TopicSubscribersEntity, '_subscriberId' | 'externalSubscriberId'> {
-    return {
-      _environmentId: TopicSubscribersRepository.convertStringToObjectId(command.environmentId),
-      _topicId: TopicSubscribersRepository.convertStringToObjectId(command.topicId),
-      _organizationId: TopicSubscribersRepository.convertStringToObjectId(command.organizationId),
-    };
   }
 
   private mapFromEntity(topicSubscribers: TopicSubscribersEntity): TopicSubscribersDto {

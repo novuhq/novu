@@ -75,13 +75,12 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
   }
 
   async findTopic(
-    entity: Omit<TopicEntity, 'key' | 'name' | 'subscribers'>
+    topicKey: TopicKey,
+    environmentId: EnvironmentId
   ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }> {
-    const { _environmentId, _id, _organizationId } = entity;
-
     const [result] = await this.aggregate([
       {
-        $match: { _organizationId, _environmentId, _id },
+        $match: { _environmentId: environmentId, key: topicKey },
       },
       lookup,
       topicWithSubscribersProjection,

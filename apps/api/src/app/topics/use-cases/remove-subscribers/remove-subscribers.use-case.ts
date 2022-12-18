@@ -13,7 +13,7 @@ export class RemoveSubscribersUseCase {
     await this.topicSubscribersRepository.removeSubscribers(
       TopicSubscribersRepository.convertStringToObjectId(command.environmentId),
       TopicSubscribersRepository.convertStringToObjectId(command.organizationId),
-      TopicSubscribersRepository.convertStringToObjectId(command.topicId),
+      command.topicKey,
       command.subscribers
     );
 

@@ -13,14 +13,13 @@ import {
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
-  ApiExcludeController,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { ExternalSubscriberId, IJwtPayload } from '@novu/shared';
+import { ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
 
 import {
   AddSubscribersRequestDto,
@@ -89,17 +88,18 @@ export class TopicsController {
 
     return {
       _id: topic._id,
+      key: topic.key,
     };
   }
 
   @ExternalApiAccessible()
   @ApiNoContentResponse()
-  @Post(':topicId/subscribers')
+  @Post(':topicKey/subscribers')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ description: 'Add subscribers to a topic' })
+  @ApiOperation({ description: 'Add subscribers to a topic by key' })
   async addSubscribers(
     @UserSession() user: IJwtPayload,
-    @Param('topicId') topicId: string,
+    @Param('topicKey') topicKey: TopicKey,
     @Body() body: AddSubscribersRequestDto
   ): Promise<{
     succeeded: ExternalSubscriberId[];
@@ -112,7 +112,7 @@ export class TopicsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         subscribers: body.subscribers,
-        topicId,
+        topicKey,
       })
     );
 
@@ -128,19 +128,19 @@ export class TopicsController {
 
   @ExternalApiAccessible()
   @ApiNoContentResponse()
-  @Post(':topicId/subscribers/removal')
+  @Post(':topicKey/subscribers/removal')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ description: 'Remove subscribers from a topic' })
   async removeSubscribers(
     @UserSession() user: IJwtPayload,
-    @Param('topicId') topicId: string,
+    @Param('topicKey') topicKey: TopicKey,
     @Body() body: RemoveSubscribersRequestDto
   ): Promise<void> {
     await this.removeSubscribersUseCase.execute(
       RemoveSubscribersCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        topicId,
+        topicKey,
         subscribers: body.subscribers,
       })
     );
@@ -189,13 +189,13 @@ export class TopicsController {
   @ApiOkResponse({
     type: GetTopicResponseDto,
   })
-  @Get(':topicId')
-  @ApiOperation({ description: 'Get a topic by its ID' })
-  async getTopic(@UserSession() user: IJwtPayload, @Param('topicId') topicId: string): Promise<GetTopicResponseDto> {
+  @Get('/:topicKey')
+  @ApiOperation({ description: 'Get a topic by its topic key' })
+  async getTopic(@UserSession() user: IJwtPayload, @Param('topicKey') topicKey: string): Promise<GetTopicResponseDto> {
     return await this.getTopicUseCase.execute(
       GetTopicCommand.create({
         environmentId: user.environmentId,
-        id: topicId,
+        topicKey,
         organizationId: user.organizationId,
       })
     );
@@ -205,17 +205,17 @@ export class TopicsController {
   @ApiOkResponse({
     type: RenameTopicResponseDto,
   })
-  @Patch(':topicId')
+  @Patch(':topicKey')
   @ApiOperation({ description: 'Rename a topic' })
   async renameTopic(
     @UserSession() user: IJwtPayload,
-    @Param('topicId') topicId: string,
+    @Param('topicKey') topicKey: TopicKey,
     @Body() body: RenameTopicRequestDto
   ): Promise<RenameTopicResponseDto> {
     return await this.renameTopicUseCase.execute(
       RenameTopicCommand.create({
         environmentId: user.environmentId,
-        id: topicId,
+        topicKey: topicKey,
         name: body.name,
         organizationId: user.organizationId,
       })
