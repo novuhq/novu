@@ -18,9 +18,13 @@ export class ContentService {
   extractVariables(content: string): string[] {
     if (!content) return [];
 
-    const ast: hbs.AST.Program = Handlebars.parseWithoutProcessing(content);
+    try {
+      const ast: hbs.AST.Program = Handlebars.parse(content);
 
-    return this.getHandlebarVariables(ast.body);
+      return this.getHandlebarVariables(ast.body);
+    } catch (e) {
+      return [];
+    }
   }
 
   extractMessageVariables(messages: INotificationTemplateStep[]): string[] {
