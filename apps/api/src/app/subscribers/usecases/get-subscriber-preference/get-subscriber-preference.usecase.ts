@@ -4,6 +4,7 @@ import {
   NotificationTemplateRepository,
   SubscriberPreferenceRepository,
   NotificationTemplateEntity,
+  MemberRepository,
 } from '@novu/dal';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import { IPreferenceChannels } from '@novu/shared';
@@ -17,6 +18,7 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 @Injectable()
 export class GetSubscriberPreference {
   constructor(
+    private memberRepository: MemberRepository,
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
@@ -25,13 +27,14 @@ export class GetSubscriberPreference {
   ) {}
 
   async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
+    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
     const templateList = await this.notificationTemplateRepository.getActiveList(
       command.organizationId,
       command.environmentId,
       true
     );
 
-    this.analyticsService.track('Fetch User Preferences - [Notification Center]', command.organizationId, {
+    this.analyticsService.track('Fetch User Preferences - [Notification Center]', admin?._userId, {
       _organization: command.organizationId,
       templatesSize: templateList.length,
     });
