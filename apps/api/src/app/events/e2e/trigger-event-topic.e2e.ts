@@ -1,8 +1,6 @@
 import {
   IntegrationRepository,
   JobRepository,
-  JobEntity,
-  JobStatusEnum,
   LogRepository,
   MessageRepository,
   NotificationRepository,
@@ -15,7 +13,6 @@ import {
   ChannelTypeEnum,
   StepTypeEnum,
   IEmailBlock,
-  TemplateVariableTypeEnum,
   TopicDto,
   TopicKey,
   TopicName,
@@ -132,6 +129,8 @@ describe('Trigger event for a topic - /v1/events/trigger (POST)', () => {
 
     await session.awaitRunningJobs(template._id);
 
+    expect(subscribers.length).to.be.greaterThan(0);
+
     for (const subscriber of subscribers) {
       const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
 
@@ -195,6 +194,8 @@ describe('Trigger event for a topic - /v1/events/trigger (POST)', () => {
     );
 
     await session.awaitRunningJobs(template._id);
+
+    expect(subscribers.length).to.be.greaterThan(0);
 
     for (const subscriber of subscribers) {
       const message = await messageRepository._model.findOne({
@@ -304,6 +305,7 @@ describe('Trigger event for multiple topics and multiple subscribers - /v1/event
     });
 
     expect(logs.length).to.be.eql(13);
+    expect(subscribers.length).to.be.greaterThan(0);
     for (const subscriber of subscribers) {
       expect(logs.find((log) => log.text === 'Request processed' && log._subscriberId === subscriber._id)).to.exist;
       expect(logs.find((log) => log.text === 'Request processed' && log._subscriberId === subscriber._id)).to.exist;
@@ -344,6 +346,7 @@ describe('Trigger event for multiple topics and multiple subscribers - /v1/event
     );
 
     await session.awaitRunningJobs(template._id);
+    expect(subscribers.length).to.be.greaterThan(0);
 
     for (const subscriber of subscribers) {
       const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
@@ -408,6 +411,8 @@ describe('Trigger event for multiple topics and multiple subscribers - /v1/event
     );
 
     await session.awaitRunningJobs(template._id);
+
+    expect(subscribers.length).to.be.greaterThan(0);
 
     for (const subscriber of subscribers) {
       const message = await messageRepository._model.findOne({
