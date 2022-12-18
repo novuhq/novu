@@ -33,7 +33,7 @@ describe('Rename a topic - /topics/:topicKey (PATCH)', async () => {
     firstSubscriber = await subscribersService.createSubscriber();
     secondSubscriber = await subscribersService.createSubscriber();
     const subscribers = [firstSubscriber.subscriberId, secondSubscriber.subscriberId];
-    await addSubscribersToTopic(session, _id, subscribers);
+    await addSubscribersToTopic(session, topicKey, subscribers);
   });
 
   it('should throw a bad request error when not providing the name field', async () => {
@@ -53,7 +53,6 @@ describe('Rename a topic - /topics/:topicKey (PATCH)', async () => {
 
     const topic = patchResponse.body.data;
 
-    expect(topic._id).to.eql(_id);
     expect(topic._environmentId).to.eql(session.environment._id);
     expect(topic._organizationId).to.eql(session.organization._id);
     expect(topic.key).to.eql(topicKey);
