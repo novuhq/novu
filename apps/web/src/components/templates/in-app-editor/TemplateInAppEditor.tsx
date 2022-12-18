@@ -2,9 +2,10 @@ import { useInputState } from '@mantine/hooks';
 import { ActionIcon, Container, Stack, Divider } from '@mantine/core';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { IFeedEntity } from '@novu/shared';
+
 import { IForm } from '../use-template-controller.hook';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Checkbox, colors, Input } from '../../../design-system';
@@ -23,14 +24,14 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   const [newFeed, setNewFeed] = useInputState('');
   const [variableContents, setVariableContents] = useState<string[]>([]);
   const { setValue, getValues, watch } = useFormContext();
-  const { data: feeds } = useQuery(QueryKeys.getFeeds, getFeeds);
+  const { data: feeds } = useQuery([QueryKeys.getFeeds], getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
     IFeedEntity,
     { error: string; message: string; statusCode: number },
     { name: string }
   >(createFeed, {
     onSuccess: (data) => {
-      queryClient.setQueryData(QueryKeys.getFeeds, [...feeds, data]);
+      queryClient.setQueryData([QueryKeys.getFeeds], [...feeds, data]);
     },
   });
 

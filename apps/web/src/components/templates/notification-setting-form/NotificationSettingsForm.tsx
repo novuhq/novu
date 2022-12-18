@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { ActionIcon, Grid } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Controller, useFormContext } from 'react-hook-form';
 import { INotificationTrigger } from '@novu/shared';
 
@@ -28,7 +28,7 @@ export const NotificationSettingsForm = ({
     getValues,
   } = useFormContext();
 
-  const { data: groups, isLoading: loadingGroups } = useQuery('notificationGroups', getNotificationGroups);
+  const { data: groups, isLoading: loadingGroups } = useQuery(['notificationGroups'], getNotificationGroups);
   const { isLoading: loadingCreateGroup, mutateAsync: createNotificationGroup } = useMutation<
     { name: string; _id: string },
     { error: string; message: string; statusCode: number },
@@ -37,7 +37,7 @@ export const NotificationSettingsForm = ({
     }
   >((data) => api.post(`/v1/notification-groups`, data), {
     onSuccess: (data) => {
-      queryClient.setQueryData('notificationGroups', [...groups, data]);
+      queryClient.setQueryData(['notificationGroups'], [...groups, data]);
     },
   });
 

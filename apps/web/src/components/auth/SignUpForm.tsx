@@ -1,10 +1,11 @@
 import { useContext, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
+
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
@@ -133,7 +134,6 @@ export function SignUpForm({ token, email }: Props) {
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>
       )}
-
       <form noValidate name="login-form" onSubmit={handleSubmit(onSubmit)}>
         <Input
           error={errors.fullName?.message}
@@ -209,7 +209,6 @@ export function SignUpForm({ token, email }: Props) {
           </Link>
         </Center>
       </form>
-
       {isError && !emailServerError && !accountCreationError && (
         <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
