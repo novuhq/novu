@@ -44,7 +44,7 @@ export const ExecutionDetailsWebhookFeedback = ({ executionDetails }) => {
   const getWebhookIcons = () => {
     const icons: JSX.Element[] = [];
 
-    executionDetails.map((detail) => {
+    executionDetails.forEach((detail) => {
       const webhookStatus = detail?.webhookStatus;
 
       if (webhookStatus) {

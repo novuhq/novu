@@ -100,7 +100,7 @@ export class ContentService {
   ): { [key: string]: any } {
     const newMessageVariables: { [key: string]: any } = { ...messageVariables };
 
-    Object.keys(subscriberPayload).map(function (key) {
+    Object.keys(subscriberPayload).forEach(function (key) {
       const newKey = subscriberString === '' ? key : `${subscriberString}.${key}`;
       newMessageVariables[newKey] = subscriberPayload[key];
     });
