@@ -34,8 +34,8 @@ describe('Workflow Editor - Steps Actions', function () {
   it('should show add step in sidebar after delete', function () {
     const template = this.session.templates[0];
 
-    cy.visit('/templates/edit/' + template._id);
     cy.waitLoadEnv(() => {
+      cy.visit('/templates/edit/' + template._id);
       clickWorkflow();
     });
 
