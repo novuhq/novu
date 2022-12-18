@@ -64,7 +64,7 @@ describe('Trigger event for a topic - /v1/events/trigger (POST)', () => {
     const topicName = 'topic-name-trigger-event';
     topicDto = await createTopic(session, topicKey, topicName);
     await addSubscribersToTopic(session, topicDto, subscribers);
-    to = [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicDto._id }];
+    to = [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicDto.key }];
   });
 
   afterEach(() => {
@@ -455,7 +455,7 @@ const addSubscribersToTopic = async (session: UserSession, topicDto: TopicDto, s
   );
 
   const response = await axiosInstance.post(
-    `${session.serverUrl}${TOPIC_PATH}/${topicDto._id}/subscribers`,
+    `${session.serverUrl}${TOPIC_PATH}/${topicDto.key}/subscribers`,
     {
       subscribers: subscriberIds,
     },
