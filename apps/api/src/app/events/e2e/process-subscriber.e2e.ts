@@ -22,8 +22,8 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriberService: SubscribersService;
 
   const cacheService = new CacheService({
-    cacheHost: process.env.REDIS_CACHE_HOST,
-    cachePort: process.env.REDIS_CACHE_PORT,
+    host: process.env.REDIS_CACHE_HOST,
+    port: process.env.REDIS_CACHE_PORT,
   });
 
   const subscriberRepository = new SubscriberRepository();
@@ -188,7 +188,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
 
-    invalidateCache({
+    await invalidateCache({
       service: cacheService,
       storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
       credentials: {

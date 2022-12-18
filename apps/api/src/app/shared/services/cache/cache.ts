@@ -10,12 +10,12 @@ export async function invalidateCache({
   storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[];
   credentials: Record<string, unknown>;
 }) {
-  if (storeKeyPrefix instanceof Array) {
-    await Promise.all(
-      storeKeyPrefix.map(async (prefix) => {
-        await invalidateCase(prefix, credentials, service);
-      })
-    );
+  if (Array.isArray(storeKeyPrefix)) {
+    const invalidatePromises = storeKeyPrefix.map((prefix) => {
+      return invalidateCase(prefix, credentials, service);
+    });
+
+    await Promise.all(invalidatePromises);
   } else {
     await invalidateCase(storeKeyPrefix, credentials, service);
   }

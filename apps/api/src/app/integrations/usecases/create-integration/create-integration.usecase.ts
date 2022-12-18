@@ -34,7 +34,7 @@ export class CreateIntegration {
         );
       }
 
-      invalidateCache({
+      await invalidateCache({
         service: this.cacheService,
         storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
         credentials: {
