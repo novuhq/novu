@@ -36,8 +36,9 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.waitLoadEnv(() => {
       cy.visit('/templates/edit/' + template._id);
-      clickWorkflow();
     });
+
+    clickWorkflow();
 
     cy.get('.react-flow__node').should('have.length', 4);
     cy.getByTestId('step-actions-dropdown').first().click().getByTestId('delete-step-action').click();
