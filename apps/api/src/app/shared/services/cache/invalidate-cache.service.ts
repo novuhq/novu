@@ -17,28 +17,28 @@ export class InvalidateCacheService {
 
     if (Array.isArray(storeKeyPrefix)) {
       const invalidatePromises = storeKeyPrefix.map((prefix) => {
-        return invalidateCase(prefix, credentials, this.cacheService);
+        return this.invalidateCase(prefix, credentials);
       });
 
       await Promise.all(invalidatePromises);
     } else {
-      await invalidateCase(storeKeyPrefix, credentials, this.cacheService);
+      await this.invalidateCase(storeKeyPrefix, credentials);
     }
   }
-}
 
-async function invalidateCase(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>, service) {
-  const cacheKey = buildKey(storeKeyPrefix, credentials, CacheInterceptorTypeEnum.INVALIDATE);
+  async invalidateCase(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>) {
+    const cacheKey = buildKey(storeKeyPrefix, credentials, CacheInterceptorTypeEnum.INVALIDATE);
 
-  if (!cacheKey) {
-    return;
-  }
+    if (!cacheKey) {
+      return;
+    }
 
-  try {
-    await service.delByPattern(cacheKey);
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);
+    try {
+      await this.cacheService.delByPattern(cacheKey);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);
+    }
   }
 }
 
