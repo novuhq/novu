@@ -18,28 +18,26 @@ export type CachingConfig = {
 
 export class CacheService implements ICacheService {
   private readonly DEFAULT_TTL_SECONDS = 60 * 60;
-  private readonly DEFAULT_CACHE_CONNECT_TIMEOUT = 50000;
-  private readonly DEFAULT_CACHE_KEEP_ALIVE = 30000;
-  private readonly DEFAULT_CACHE_FAMILY = 4;
-  private readonly DEFAULT_CACHE_KEY_PREFIX = '';
+  private readonly DEFAULT_CONNECT_TIMEOUT = 50000;
+  private readonly DEFAULT_KEEP_ALIVE = 30000;
+  private readonly DEFAULT_FAMILY = 4;
+  private readonly DEFAULT_KEY_PREFIX = '';
   private readonly TTL_VARIANT_PERCENTAGE = 0.1;
 
   private readonly client: Redis;
   private readonly cacheTtl: number;
 
   constructor(private config: ICacheServiceConfig) {
-    if (this.config.cachePort && this.config.cacheHost) {
-      this.client = new Redis(Number(this.config.cachePort), this.config.cacheHost, {
-        password: this.config.cachePassword,
-        connectTimeout: this.config.cacheConnectTimeout
-          ? Number(this.config.cacheConnectTimeout)
-          : this.DEFAULT_CACHE_CONNECT_TIMEOUT,
-        keepAlive: this.config.cacheKeepAlive ? Number(this.config.cacheKeepAlive) : this.DEFAULT_CACHE_KEEP_ALIVE,
-        family: this.config.cacheFamily ? Number(this.config.cacheFamily) : this.DEFAULT_CACHE_FAMILY,
-        keyPrefix: this.config.cacheKeyPrefix ?? this.DEFAULT_CACHE_KEY_PREFIX,
+    if (this.config.port && this.config.host) {
+      this.client = new Redis(Number(this.config.port), this.config.host, {
+        password: this.config.password ?? null,
+        connectTimeout: this.config.connectTimeout ? Number(this.config.connectTimeout) : this.DEFAULT_CONNECT_TIMEOUT,
+        keepAlive: this.config.keepAlive ? Number(this.config.keepAlive) : this.DEFAULT_KEEP_ALIVE,
+        family: this.config.family ? Number(this.config.family) : this.DEFAULT_FAMILY,
+        keyPrefix: this.config.keyPrefix ?? this.DEFAULT_KEY_PREFIX,
       });
 
-      this.cacheTtl = this.config.cacheTtl ? Number(this.config.cacheTtl) : this.DEFAULT_TTL_SECONDS;
+      this.cacheTtl = this.config.ttl ? Number(this.config.ttl) : this.DEFAULT_TTL_SECONDS;
     }
   }
 
@@ -91,7 +89,7 @@ export class CacheService implements ICacheService {
         resolve(undefined);
       });
       stream.on('error', (err) => {
-        reject(undefined);
+        reject(err);
       });
     });
   }
@@ -111,12 +109,12 @@ export class CacheService implements ICacheService {
 }
 
 export interface ICacheServiceConfig {
-  cacheHost: string;
-  cachePort: string;
-  cacheTtl?: string;
-  cachePassword?: string;
-  cacheConnectTimeout?: string;
-  cacheKeepAlive?: string;
-  cacheFamily?: string;
-  cacheKeyPrefix?: string;
+  host: string;
+  port: string;
+  ttl?: string;
+  password?: string;
+  connectTimeout?: string;
+  keepAlive?: string;
+  family?: string;
+  keyPrefix?: string;
 }

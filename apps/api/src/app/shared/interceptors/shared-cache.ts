@@ -80,7 +80,7 @@ export function buildKey(
   return validateCredentials(prefix, credentials) ? cacheKey + credentials : '';
 }
 
-export function getQueryParams(keysConfig: unknown): string {
+export function getQueryParams(keysConfig: Record<string, unknown>): string {
   let result = '';
 
   const keysToExclude = [...getCredentialsKeys()];

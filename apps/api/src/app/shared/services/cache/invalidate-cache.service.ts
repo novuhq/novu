@@ -15,30 +15,30 @@ export class InvalidateCacheService {
   }) {
     if (!this.cacheService?.cacheEnabled()) return;
 
-    if (storeKeyPrefix instanceof Array) {
-      await Promise.all(
-        storeKeyPrefix.map(async (prefix) => {
-          await invalidateCase(prefix, credentials, this.cacheService);
-        })
-      );
+    if (Array.isArray(storeKeyPrefix)) {
+      const invalidatePromises = storeKeyPrefix.map((prefix) => {
+        return this.invalidateCase(prefix, credentials);
+      });
+
+      await Promise.all(invalidatePromises);
     } else {
-      await invalidateCase(storeKeyPrefix, credentials, this.cacheService);
+      await this.invalidateCase(storeKeyPrefix, credentials);
     }
   }
-}
 
-async function invalidateCase(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>, service) {
-  const cacheKey = buildKey(storeKeyPrefix, credentials, CacheInterceptorTypeEnum.INVALIDATE);
+  async invalidateCase(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>) {
+    const cacheKey = buildKey(storeKeyPrefix, credentials, CacheInterceptorTypeEnum.INVALIDATE);
 
-  if (!cacheKey) {
-    return;
-  }
+    if (!cacheKey) {
+      return;
+    }
 
-  try {
-    await service.delByPattern(cacheKey);
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);
+    try {
+      await this.cacheService.delByPattern(cacheKey);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);
+    }
   }
 }
 

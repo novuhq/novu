@@ -12,8 +12,7 @@ export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
     injectCache(target, 'cacheService');
 
     descriptor.value = async function (...args: any[]) {
-      const skip = args[2]?.skipCache;
-      if (!this.cacheService?.cacheEnabled() || skip) return await originalMethod.apply(this, args);
+      if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
 
       const query = buildCachedQuery(args);
 
