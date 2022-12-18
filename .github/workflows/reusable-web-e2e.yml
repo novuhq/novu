@@ -177,7 +177,7 @@ jobs:
         run: CI='' pnpm build:web
 
       - name: Cypress run component tests
-        uses: cypress-io/github-action@v4
+        uses: cypress-io/github-action@v5
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
