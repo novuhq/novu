@@ -3,11 +3,10 @@ describe('Environment Switch Control', function () {
 
   beforeEach(function () {
     cy.initializeSession().as('session');
+    cy.visit('/');
   });
 
   it('should display switch when page is loaded', function () {
-    cy.visit('/templates');
-
     cy.getByTestId('environment-switch').find('label').contains(modes[0]);
     cy.getByTestId('environment-switch').find('label').contains(modes[1]);
   });
