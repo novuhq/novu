@@ -466,7 +466,10 @@ const addSubscribersToTopic = async (session: UserSession, topicDto: TopicDto, s
     }
   );
 
-  expect(response.status).to.be.eq(204);
+  expect(response.status).to.be.eq(200);
+  expect(response.data.data).to.be.eql({
+    succeeded: subscriberIds,
+  });
 };
 
 const buildTriggerRequestPayload = (

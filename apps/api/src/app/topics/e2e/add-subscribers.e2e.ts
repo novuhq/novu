@@ -1,4 +1,5 @@
 import { SubscriberEntity } from '@novu/dal';
+import { ExternalSubscriberId } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
@@ -51,8 +52,10 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
 
     const response = await session.testAgent.post(addSubscribersUrl).send({ subscribers });
 
-    expect(response.statusCode).to.eql(204);
-    expect(response.body).to.be.empty;
+    expect(response.statusCode).to.eql(200);
+    expect(response.body.data).to.eql({
+      succeeded: [subscriber.subscriberId],
+    });
 
     const getResponse = await session.testAgent.get(getTopicUrl);
     expect(getResponse.statusCode).to.eql(200);
@@ -72,8 +75,13 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
 
     const response = await session.testAgent.post(addSubscribersUrl).send({ subscribers });
 
-    expect(response.statusCode).to.eql(204);
-    expect(response.body).to.be.empty;
+    expect(response.statusCode).to.eql(200);
+    expect(response.body.data).to.eql({
+      succeeded: [],
+      failed: {
+        notFound: subscribers,
+      },
+    });
 
     const getResponse = await session.testAgent.get(getTopicUrl);
     expect(getResponse.statusCode).to.eql(200);
@@ -97,7 +105,10 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
 
     const response = await session.testAgent.post(addSubscribersUrl).send({ subscribers });
 
-    expect(response.statusCode).to.eql(204);
+    expect(response.statusCode).to.eql(200);
+    expect(response.body.data).to.eql({
+      succeeded: [subscriber.subscriberId],
+    });
 
     const getResponse = await session.testAgent.get(getTopicUrl);
     expect(getResponse.statusCode).to.eql(200);
@@ -117,7 +128,10 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
 
     const response = await session.testAgent.post(addSubscribersUrl).send({ subscribers });
 
-    expect(response.statusCode).to.eql(204);
+    expect(response.statusCode).to.eql(200);
+    expect(response.body.data).to.eql({
+      succeeded: subscribers,
+    });
 
     const getResponse = await session.testAgent.get(getTopicUrl);
     expect(getResponse.statusCode).to.eql(200);

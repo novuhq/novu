@@ -36,7 +36,10 @@ const addSubscribersToTopic = async (
     })
     .set('Accept', 'application/json');
 
-  expect(result.status).to.eql(204);
+  expect(result.status).to.eql(200);
+  expect(result.body.data).to.eql({
+    succeeded: subscribers,
+  });
 };
 
 describe('Filter topics - /topics (GET)', async () => {
