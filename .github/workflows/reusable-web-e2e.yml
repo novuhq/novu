@@ -177,19 +177,13 @@ jobs:
         run: CI='' pnpm build:web
 
       - name: Cypress run component tests
-        uses: cypress-io/github-action@v5
+        working-directory: apps/web
+        run: npm run cypress:run:components
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
-        with:
-          working-directory: apps/web
-          browser: chrome
-          component: true
-          record: true
-          install: false
-          config-file: cypress.config.ts
-
+        
       - uses: actions/upload-artifact@v1
         if: failure()
         with:
