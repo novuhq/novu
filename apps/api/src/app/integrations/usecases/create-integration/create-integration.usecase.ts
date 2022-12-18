@@ -9,11 +9,13 @@ import { CheckIntegrationCommand } from '../check-integration/check-integration.
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
 @Injectable()
 export class CreateIntegration {
   @Inject()
   private checkIntegration: CheckIntegration;
   constructor(
+    private cacheService: CacheService,
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
@@ -40,6 +42,14 @@ export class CreateIntegration {
           })
         );
       }
+
+      await invalidateCache({
+        service: this.cacheService,
+        storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
+        credentials: {
+          environmentId: command.environmentId,
+        },
+      });
 
       response = await this.integrationRepository.create({
         _environmentId: command.environmentId,

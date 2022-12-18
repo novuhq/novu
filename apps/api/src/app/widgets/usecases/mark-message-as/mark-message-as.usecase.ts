@@ -2,13 +2,16 @@ import { Inject, Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class MarkMessageAs {
   constructor(
+    private cacheService: CacheService,
     private messageRepository: MessageRepository,
     private queueService: QueueService,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
@@ -16,6 +19,7 @@ export class MarkMessageAs {
     private memberRepository: MemberRepository
   ) {}
 
+  @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED])
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
