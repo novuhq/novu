@@ -86,7 +86,7 @@ module.exports = (on, config) => {
 
       let templates;
       if (!settings?.noEnvironment) {
-        let templatePartial = settings?.partialTemplate || {};
+        const templatePartial = settings?.partialTemplate || {};
 
         templates = await Promise.all([
           notificationTemplateService.createTemplate({ ...templatePartial }),

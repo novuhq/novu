@@ -1,7 +1,9 @@
-import { Schema } from 'mongoose';
+import { Types } from 'mongoose';
 
-export type EnvironmentId = Schema.Types.ObjectId;
-export type OrganizationId = Schema.Types.ObjectId;
-export type TopicId = Schema.Types.ObjectId;
+export { SubscriberId } from '../subscriber/types';
+
+export type EnvironmentId = Types.ObjectId;
+export type OrganizationId = Types.ObjectId;
+export type TopicId = Types.ObjectId;
 export type TopicKey = string;
-export type UserId = Schema.Types.ObjectId;
+export type UserId = Types.ObjectId;

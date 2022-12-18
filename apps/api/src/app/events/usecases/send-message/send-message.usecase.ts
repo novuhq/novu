@@ -120,7 +120,7 @@ export class SendMessage {
       return filter?.children?.find((item) => item?.on === 'subscriber');
     });
 
-    let subscriber = undefined;
+    let subscriber;
 
     if (fetchSubscriber) {
       /// TODO: refactor command.subscriberId to command._subscriberId

@@ -8,6 +8,7 @@ const str32 = makeValidator((variable) => {
 
   return variable;
 });
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NODE_ENV: str({

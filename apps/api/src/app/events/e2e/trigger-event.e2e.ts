@@ -663,6 +663,29 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(block.content).to.equal('Hello John Doe, Welcome to Umbrella Corp');
   });
 
+  it('should handle empty workflow scenario', async function () {
+    template = await session.createTemplate({
+      steps: [],
+    });
+
+    const response = await session.testAgent
+      .post(`/v1/events/trigger`)
+      .send({
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {
+          myUser: {
+            lastName: 'Test',
+          },
+        },
+      })
+      .expect(201);
+
+    const { status, acknowledged } = response.body.data;
+    expect(status).to.equal('no_workflow_steps_defined');
+    expect(acknowledged).to.equal(true);
+  });
+
   it('should trigger with given required variables', async function () {
     template = await session.createTemplate({
       steps: [
@@ -739,6 +762,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       _environmentId: session.environment._id,
       channel: channelType,
     });
+
     expect(messages.length).to.equal(4);
     const isUnique = (value, index, self) => self.indexOf(value) === index;
     const subscriberIds = messages.map((message) => message._subscriberId).filter(isUnique);

@@ -144,7 +144,7 @@ describe('Promote changes', () => {
     const prodVersion = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
-    });
+    } as any);
 
     expect(prodVersion.steps.length).to.eq(0);
   });

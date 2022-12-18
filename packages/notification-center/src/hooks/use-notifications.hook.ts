@@ -2,8 +2,8 @@ import { useContext } from 'react';
 import { NotificationsContext } from '../store/notifications.context';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { INotificationsContext } from '../shared/interfaces';
-import { IMessage } from '@novu/shared';
-import { IStoreQuery } from '@novu/client';
+import type { IMessage } from '@novu/shared';
+import type { IStoreQuery } from '@novu/client';
 
 interface IUseNotificationsProps {
   storeId?: string;
@@ -94,7 +94,7 @@ export interface IUseNotifications {
     actionButtonType: ButtonTypeEnum,
     status: MessageActionStatusEnum,
     payload?: Record<string, unknown>
-  ) => void;
+  ) => Promise<void>;
   refetch: (query?: IStoreQuery) => void;
   markAsSeen: (messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[]) => void;
   onWidgetClose: () => void;

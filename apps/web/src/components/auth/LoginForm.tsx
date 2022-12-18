@@ -32,6 +32,7 @@ export function LoginForm({ email, token }: Props) {
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
   const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
+  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : `/auth/reset/request`;
   const githubLink = isFromVercel
     ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
@@ -70,16 +71,10 @@ export function LoginForm({ email, token }: Props) {
   }, [error]);
 
   const emailServerError = useMemo<string>(() => {
-    if (serverErrorString === 'User not found') return 'Account does not exist';
     if (serverErrorString === 'email must be an email') return 'Please provide a valid email';
 
     return '';
   }, [serverErrorString]);
-
-  const passwordServerError = useMemo<string>(
-    () => (serverErrorString === 'Wrong credentials provided' ? 'Invalid password' : ''),
-    [serverErrorString]
-  );
 
   return (
     <>
@@ -114,7 +109,7 @@ export function LoginForm({ email, token }: Props) {
           mt={5}
         />
         <PasswordInput
-          error={errors.password?.message || passwordServerError}
+          error={errors.password?.message}
           mt={20}
           {...register('password', {
             required: 'Please input a password',
@@ -124,13 +119,13 @@ export function LoginForm({ email, token }: Props) {
           placeholder="Type your password..."
           data-test-id="password"
         />
-        {!isFromVercel && (
-          <Link to="/auth/reset/request">
-            <Text my={30} gradient align="center">
-              Forgot Your Password?
-            </Text>
-          </Link>
-        )}
+
+        <Link to={resetPasswordLink}>
+          <Text my={30} gradient align="center">
+            Forgot Your Password?
+          </Text>
+        </Link>
+
         <Button mt={60} inherit loading={isLoading} submit data-test-id="submit-btn">
           Sign In
         </Button>
@@ -143,7 +138,7 @@ export function LoginForm({ email, token }: Props) {
           </Link>
         </Center>
       </form>
-      {isError && !passwordServerError && !emailServerError && (
+      {isError && !emailServerError && (
         <Text data-test-id="error-alert-banner" mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
           {error?.message}

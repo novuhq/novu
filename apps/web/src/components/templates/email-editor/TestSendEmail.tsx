@@ -94,6 +94,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 
             return query;
           }}
+          data-test-id="test-email-emails"
         />
       </Wrapper>
 
@@ -141,7 +142,8 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 const Wrapper = styled.div`
   .mantine-MultiSelect-values {
     min-height: 48px;
-    padding: 0;
+    padding: 5px 0;
+    row-gap: 5px;
   }
 
   .mantine-MultiSelect-input {

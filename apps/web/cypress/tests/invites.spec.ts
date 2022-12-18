@@ -45,7 +45,7 @@ describe('Invites module', function () {
 
       cy.getByTestId('header-profile-avatar').click();
       cy.getByTestId('organization-switch').focus();
-      cy.get('.mantine-Select-item').contains(capitalize(this.organization.name)).click();
+      cy.get('.mantine-Select-item').contains(capitalize(this.organization.name)).click({ force: true });
     });
   });
 

@@ -29,6 +29,7 @@ jobs:
       contents: read
       packages: write
       deployments: write
+      id-token: write
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
@@ -53,6 +54,11 @@ jobs:
       - name: Install root dependencies
         run: pnpm --filter novuhq install
 
+      - name: Setup Depot
+        uses: depot/setup-action@v1
+        with:
+          oidc: true
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
@@ -61,9 +67,10 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DEPOT_PROJECT_ID: 6sj0jfv0n7
         run: |
-          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          cd apps/api && DOCKER_BUILDKIT=1 npm run docker:build
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
+          cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api - -t novu-api --load
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
 
@@ -131,4 +138,3 @@ jobs:
           service: ${{ env.api_ecs_service }}
           cluster: ${{ env.api_ecs_cluster }}
           wait-for-service-stability: true
-

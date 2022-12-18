@@ -45,6 +45,10 @@
       "path": "packages/client"
     },
     {
+      "name": "📦 @novu/headless",
+      "path": "packages/headless"
+    },
+    {
       "name": "📦 @novu/shared",
       "path": "libs/shared"
     },
@@ -63,6 +67,14 @@
     {
       "name": "📦 @novu/notification-center",
       "path": "packages/notification-center"
+    },
+    {
+      "name": "📦 @novu/notification-center-vue",
+      "path": "packages/notification-center-vue"
+    },
+    {
+      "name": "📦 @novu/notification-center-angular",
+      "path": "packages/notification-center-angular"
     },
     {
       "name": "📦 @novu/react-native",
@@ -171,10 +183,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "cSpell.words": [
-      "Chainable",
-      "usecases"
-    ]
+    "cSpell.words": ["Chainable", "usecases"]
   },
   "extensions": {
     "recommendations": [

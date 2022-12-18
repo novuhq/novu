@@ -23,6 +23,8 @@ export class SendinblueEmailProvider implements IEmailProvider {
   constructor(
     private config: {
       apiKey: string;
+      from: string;
+      senderName: string;
     }
   ) {
     this.transactionalEmailsApi = new TransactionalEmailsApi();
@@ -36,7 +38,10 @@ export class SendinblueEmailProvider implements IEmailProvider {
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
     const email = new SendSmtpEmail();
-    email.sender = { email: options.from || options.from };
+    email.sender = {
+      email: options.from || this.config.from,
+      name: this.config.senderName,
+    };
     email.to = getFormattedTo(options.to);
     email.subject = options.subject;
     email.htmlContent = options.html;
