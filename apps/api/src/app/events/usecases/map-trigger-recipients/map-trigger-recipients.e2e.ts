@@ -19,73 +19,6 @@ import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
 import { SharedModule } from '../../../shared/shared.module';
 import { EventsModule } from '../../events.module';
 
-const createTopicEntity = async (
-  session: UserSession,
-  topicRepository: TopicRepository,
-  topicSubscribersRepository: TopicSubscribersRepository,
-  topicKey: TopicKey,
-  topicName: TopicName
-): Promise<TopicEntity> => {
-  const environmentId = session.environment._id;
-  const organizationId = session.organization._id;
-
-  const topicEntity = {
-    _environmentId: TopicRepository.convertStringToObjectId(environmentId),
-    key: topicKey,
-    name: topicName,
-    _organizationId: TopicRepository.convertStringToObjectId(organizationId),
-  };
-  const topic = await topicRepository.create(topicEntity);
-
-  expect(topic).to.exist;
-  expect(topic.key).to.be.eql(topicKey);
-  expect(topic.name).to.be.eql(topicName);
-
-  return topic;
-};
-
-const addSubscribersToTopic = async (
-  session: UserSession,
-  topicRepository: TopicRepository,
-  topicSubscribersRepository: TopicSubscribersRepository,
-  topicId: TopicId,
-  topicKey: TopicKey,
-  subscribers: SubscriberEntity[]
-): Promise<void> => {
-  const _environmentId = TopicSubscribersRepository.convertStringToObjectId(session.environment._id);
-  const _organizationId = TopicSubscribersRepository.convertStringToObjectId(session.organization._id);
-  const _topicId = TopicSubscribersRepository.convertStringToObjectId(topicId);
-
-  const entities: TopicSubscribersEntity[] = subscribers.map((subscriber) => ({
-    _environmentId,
-    _organizationId,
-    _subscriberId: TopicSubscribersRepository.convertStringToObjectId(subscriber._id),
-    _topicId,
-    topicKey,
-    externalSubscriberId: subscriber.subscriberId,
-  }));
-  await topicSubscribersRepository.addSubscribers(entities);
-
-  const result = await topicRepository.findTopic(topicKey, _environmentId);
-
-  expect(result.subscribers.length).to.be.eql(subscribers.length);
-  expect(result.subscribers).to.have.members(subscribers.map((subscriber) => subscriber.subscriberId));
-};
-
-const buildCommand = (
-  session: UserSession,
-  transactionId: string,
-  recipients: TriggerRecipientsPayload
-): MapTriggerRecipientsCommand => {
-  return MapTriggerRecipientsCommand.create({
-    organizationId: session.organization._id,
-    environmentId: session.environment._id,
-    recipients,
-    transactionId,
-    userId: session.user._id,
-  });
-};
-
 describe('MapTriggerRecipientsUseCase', () => {
   let session: UserSession;
   let subscribersService: SubscribersService;
@@ -93,7 +26,7 @@ describe('MapTriggerRecipientsUseCase', () => {
   let topicSubscribersRepository: TopicSubscribersRepository;
   let useCase: MapTriggerRecipients;
 
-  before(async () => {
+  beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [SharedModule, EventsModule],
       providers: [],
@@ -289,7 +222,7 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const recipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: TopicRepository.convertObjectIdToString(topic._id),
+        topicKey: topic.key,
       };
 
       const command = buildCommand(session, transactionId, [recipient]);
@@ -356,11 +289,11 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const firstTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: TopicRepository.convertObjectIdToString(firstTopic._id),
+        topicKey: firstTopic.key,
       };
       const secondTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: TopicRepository.convertObjectIdToString(secondTopic._id),
+        topicKey: secondTopic.key,
       };
 
       const singleSubscriberId = SubscriberRepository.createObjectId();
@@ -507,15 +440,15 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const firstTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: TopicRepository.convertObjectIdToString(firstTopic._id),
+        topicKey: firstTopic.key,
       };
       const secondTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: TopicRepository.convertObjectIdToString(secondTopic._id),
+        topicKey: secondTopic.key,
       };
       const thirdTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: TopicRepository.convertObjectIdToString(thirdTopic._id),
+        topicKey: thirdTopic.key,
       };
 
       const command = buildCommand(session, transactionId, [
@@ -588,11 +521,11 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const firstTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: TopicRepository.convertObjectIdToString(firstTopic._id),
+        topicKey: firstTopic.key,
       };
       const secondTopicRecipient: ITopic = {
         type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: TopicRepository.convertObjectIdToString(secondTopic._id),
+        topicKey: secondTopic.key,
       };
 
       const command = buildCommand(session, transactionId, [
@@ -615,3 +548,70 @@ describe('MapTriggerRecipientsUseCase', () => {
     });
   });
 });
+
+const createTopicEntity = async (
+  session: UserSession,
+  topicRepository: TopicRepository,
+  topicSubscribersRepository: TopicSubscribersRepository,
+  topicKey: TopicKey,
+  topicName: TopicName
+): Promise<TopicEntity> => {
+  const environmentId = session.environment._id;
+  const organizationId = session.organization._id;
+
+  const topicEntity = {
+    _environmentId: TopicRepository.convertStringToObjectId(environmentId),
+    key: topicKey,
+    name: topicName,
+    _organizationId: TopicRepository.convertStringToObjectId(organizationId),
+  };
+  const topic = await topicRepository.create(topicEntity);
+
+  expect(topic).to.exist;
+  expect(topic.key).to.be.eql(topicKey);
+  expect(topic.name).to.be.eql(topicName);
+
+  return topic;
+};
+
+const addSubscribersToTopic = async (
+  session: UserSession,
+  topicRepository: TopicRepository,
+  topicSubscribersRepository: TopicSubscribersRepository,
+  topicId: TopicId,
+  topicKey: TopicKey,
+  subscribers: SubscriberEntity[]
+): Promise<void> => {
+  const _environmentId = TopicSubscribersRepository.convertStringToObjectId(session.environment._id);
+  const _organizationId = TopicSubscribersRepository.convertStringToObjectId(session.organization._id);
+  const _topicId = TopicSubscribersRepository.convertStringToObjectId(topicId);
+
+  const entities: TopicSubscribersEntity[] = subscribers.map((subscriber) => ({
+    _environmentId,
+    _organizationId,
+    _subscriberId: TopicSubscribersRepository.convertStringToObjectId(subscriber._id),
+    _topicId,
+    topicKey,
+    externalSubscriberId: subscriber.subscriberId,
+  }));
+  await topicSubscribersRepository.addSubscribers(entities);
+
+  const result = await topicRepository.findTopic(topicKey, _environmentId);
+
+  expect(result.subscribers.length).to.be.eql(subscribers.length);
+  expect(result.subscribers).to.have.members(subscribers.map((subscriber) => subscriber.subscriberId));
+};
+
+const buildCommand = (
+  session: UserSession,
+  transactionId: string,
+  recipients: TriggerRecipientsPayload
+): MapTriggerRecipientsCommand => {
+  return MapTriggerRecipientsCommand.create({
+    organizationId: session.organization._id,
+    environmentId: session.environment._id,
+    recipients,
+    transactionId,
+    userId: session.user._id,
+  });
+};
