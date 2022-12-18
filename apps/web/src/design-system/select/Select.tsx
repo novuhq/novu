@@ -20,7 +20,7 @@ import { Text } from '../index';
 import { SpacingProps } from '../shared/spacing.props';
 
 interface ISelectProps extends SpacingProps {
-  data: (string | { value: string; label?: string })[];
+  data: (string | { value: string; label?: string } | SelectItem)[];
   value?: string[] | string | null;
   onChange?: (value: string[] | string | null) => void;
   label?: React.ReactNode;

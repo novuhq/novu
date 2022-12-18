@@ -15,12 +15,12 @@ export class InvalidateCacheService {
   }) {
     if (!this.cacheService?.cacheEnabled()) return;
 
-    if (storeKeyPrefix instanceof Array) {
-      await Promise.all(
-        storeKeyPrefix.map(async (prefix) => {
-          await invalidateCase(prefix, credentials, this.cacheService);
-        })
-      );
+    if (Array.isArray(storeKeyPrefix)) {
+      const invalidatePromises = storeKeyPrefix.map((prefix) => {
+        return invalidateCase(prefix, credentials, this.cacheService);
+      });
+
+      await Promise.all(invalidatePromises);
     } else {
       await invalidateCase(storeKeyPrefix, credentials, this.cacheService);
     }

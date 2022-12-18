@@ -16,8 +16,8 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
   } = null;
   const invalidateCache = new InvalidateCacheService(
     new CacheService({
-      cacheHost: process.env.REDIS_CACHE_HOST,
-      cachePort: process.env.REDIS_CACHE_PORT,
+      host: process.env.REDIS_CACHE_HOST,
+      port: process.env.REDIS_CACHE_PORT,
     })
   );
 
