@@ -17,10 +17,13 @@ import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { CacheKeyPrefixEnum, CacheService } from '../../../shared/services/cache';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class UpdateNotificationTemplate {
   constructor(
+    private cacheService: CacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
     private updateMessageTemplate: UpdateMessageTemplate,
@@ -29,10 +32,11 @@ export class UpdateNotificationTemplate {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
+  @InvalidateCache(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
     const existingTemplate = await this.notificationTemplateRepository.findById(
       command.templateId,
-      command.organizationId
+      command.environmentId
     );
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.templateId} not found`);
 
@@ -205,7 +209,7 @@ export class UpdateNotificationTemplate {
 
     const notificationTemplateWithStepTemplate = await this.notificationTemplateRepository.findById(
       command.templateId,
-      command.organizationId
+      command.environmentId
     );
 
     const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);

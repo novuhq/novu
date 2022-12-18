@@ -20,62 +20,52 @@ import { CompileTemplate } from '../../../content-templates/usecases/compile-tem
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../../../integrations/usecases/get-decrypted-integrations';
+import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessageEmail extends SendMessageType {
+export class SendMessageEmail extends SendMessageBase {
+  channelType = ChannelTypeEnum.EMAIL;
   private mailFactory = new MailFactory();
 
   constructor(
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {
+    await this.initialize(command);
+
     const emailChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
     const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
-    const email = command.payload.email || subscriber.email;
+    const email = command.payload.email || this.subscriber.email;
 
     Sentry.addBreadcrumb({
       message: 'Sending Email',
     });
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
 
-    const integration = (
-      await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.EMAIL,
-          findOne: true,
-          active: true,
-        })
-      )
-    )[0];
-
-    if (!integration) {
+    if (!this.integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -89,7 +79,7 @@ export class SendMessageEmail extends SendMessageType {
 
       return;
     }
-    const overrides = command.overrides[integration?.providerId] || {};
+    const overrides = command.overrides[this.integration?.providerId] || {};
     let subject = '';
     let preheader = emailChannel.template.preheader;
     let content: string | IEmailBlock[] = '';
@@ -107,7 +97,7 @@ export class SendMessageEmail extends SendMessageType {
         events: command.events,
         total_count: command.events.length,
       },
-      subscriber,
+      subscriber: this.subscriber,
       ...command.payload,
     };
 
@@ -116,7 +106,7 @@ export class SendMessageEmail extends SendMessageType {
         emailChannel.template.subject,
         emailChannel.template.subject,
         organization,
-        subscriber,
+        this.subscriber,
         command,
         preheader
       );
@@ -125,14 +115,14 @@ export class SendMessageEmail extends SendMessageType {
         isEditorMode,
         emailChannel,
         command,
-        subscriber,
+        this.subscriber,
         subject,
         organization,
         preheader
       );
 
       if (preheader) {
-        preheader = await this.renderContent(preheader, subject, organization, subscriber, command, preheader);
+        preheader = await this.renderContent(preheader, subject, organization, this.subscriber, command, preheader);
       }
     } catch (e) {
       await this.createExecutionDetails.execute(
@@ -165,7 +155,7 @@ export class SendMessageEmail extends SendMessageType {
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
-      providerId: integration?.providerId,
+      providerId: this.integration?.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
@@ -223,17 +213,17 @@ export class SendMessageEmail extends SendMessageType {
       to: email,
       subject,
       html,
-      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
+      from: command.payload.$sender_email || this.integration?.credentials.from || 'no-reply@novu.co',
       attachments,
       id: message._id,
     };
 
-    if (email && integration) {
-      await this.sendMessage(integration, mailData, message, command, notification);
+    if (email && this.integration) {
+      await this.sendMessage(this.integration, mailData, message, command, notification);
 
       return;
     }
-    await this.sendErrors(email, integration, message, command, notification);
+    await this.sendErrors(email, this.integration, message, command, notification);
   }
 
   private async sendErrors(
