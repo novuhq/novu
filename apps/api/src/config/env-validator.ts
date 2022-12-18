@@ -47,7 +47,7 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   FF_IS_TOPIC_NOTIFICATION_ENABLED: bool({
     desc: 'This is the environment variables used to enable the feature to send notifications to a topic',
-    default: false,
+    default: true,
     choices: [false, true],
   }),
 };
