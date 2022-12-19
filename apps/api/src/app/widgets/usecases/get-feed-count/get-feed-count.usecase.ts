@@ -16,7 +16,7 @@ export class GetFeedCount {
 
     if (!subscriber) {
       throw new ApiException(
-        `Subscriber ${command.subscriberId} is not exist in the in environment ${command.environmentId}, ` +
+        `Subscriber ${command.subscriberId} is not exist in environment ${command.environmentId}, ` +
           `please provide a valid subscriber identifier`
       );
     }
