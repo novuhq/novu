@@ -126,7 +126,7 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     let seenCount = (await getFeedCount({ seen: false })).data.count;
     expect(seenCount).to.equal(3);
 
-    await invalidateCache.execute({
+    await invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT],
       credentials: {
         subscriberId: subscriberId,

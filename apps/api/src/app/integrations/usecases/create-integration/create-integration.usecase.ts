@@ -43,7 +43,7 @@ export class CreateIntegration {
         );
       }
 
-      await this.invalidateCache.execute({
+      await this.invalidateCache.clearCache({
         storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
         credentials: {
           environmentId: command.environmentId,

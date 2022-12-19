@@ -27,7 +27,7 @@ export class PasswordReset {
 
     const passwordHash = await bcrypt.hash(command.password, 10);
 
-    this.invalidateCache.execute({
+    this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.USER],
       credentials: {
         _id: user._id,

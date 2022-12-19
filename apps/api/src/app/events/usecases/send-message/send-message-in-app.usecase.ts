@@ -144,7 +144,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     let message: MessageEntity;
 
-    this.invalidateCache.execute({
+    this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
       credentials: {
         subscriberId: this.subscriber.subscriberId,

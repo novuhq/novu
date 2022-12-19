@@ -190,7 +190,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
 
-    await invalidateCache.execute({
+    await invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
       credentials: {
         _id: template._id,

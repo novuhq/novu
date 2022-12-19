@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
 export class InvalidateCacheService {
   constructor(private cacheService: CacheService) {}
 
-  async execute({
+  public async clearCache({
     storeKeyPrefix,
     credentials,
   }: {
@@ -17,16 +17,16 @@ export class InvalidateCacheService {
 
     if (Array.isArray(storeKeyPrefix)) {
       const invalidatePromises = storeKeyPrefix.map((prefix) => {
-        return this.invalidateCase(prefix, credentials);
+        return this.clearByPattern(prefix, credentials);
       });
 
       await Promise.all(invalidatePromises);
     } else {
-      await this.invalidateCase(storeKeyPrefix, credentials);
+      await this.clearByPattern(storeKeyPrefix, credentials);
     }
   }
 
-  async invalidateCase(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>) {
+  private async clearByPattern(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>) {
     const cacheKey = buildKey(storeKeyPrefix, credentials, CacheInterceptorTypeEnum.INVALIDATE);
 
     if (!cacheKey) {

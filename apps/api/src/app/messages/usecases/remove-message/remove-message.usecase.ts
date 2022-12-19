@@ -15,7 +15,7 @@ export class RemoveMessage {
         _id: command.messageId,
       });
 
-      this.invalidateCache.execute({
+      this.invalidateCache.clearCache({
         storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
         credentials: {
           subscriberId: message.subscriber.subscriberId,

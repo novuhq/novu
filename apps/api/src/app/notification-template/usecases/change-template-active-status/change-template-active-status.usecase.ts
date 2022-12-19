@@ -28,7 +28,7 @@ export class ChangeTemplateActiveStatus {
       throw new BadRequestException('You must provide a different status from the current status');
     }
 
-    this.invalidateCache.execute({
+    this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
       credentials: {
         _id: command.templateId,

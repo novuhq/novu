@@ -25,7 +25,7 @@ export class PasswordResetRequest {
       }
       const token = uuidv4();
 
-      this.invalidateCache.execute({
+      this.invalidateCache.clearCache({
         storeKeyPrefix: [CacheKeyPrefixEnum.USER],
         credentials: {
           _id: foundUser._id,

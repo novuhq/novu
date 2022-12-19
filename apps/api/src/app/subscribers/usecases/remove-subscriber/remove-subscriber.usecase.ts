@@ -22,7 +22,7 @@ export class RemoveSubscriber {
         subscriberId,
       });
 
-      this.invalidateCache.execute({
+      this.invalidateCache.clearCache({
         storeKeyPrefix: [CacheKeyPrefixEnum.SUBSCRIBER],
         credentials: {
           _id: subscriber._id,

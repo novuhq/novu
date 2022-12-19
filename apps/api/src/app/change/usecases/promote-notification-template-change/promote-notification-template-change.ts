@@ -124,7 +124,7 @@ export class PromoteNotificationTemplateChange {
       return;
     }
 
-    this.invalidateCache.execute({
+    this.invalidateCache.clearCache({
       storeKeyPrefix: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
       credentials: {
         _id: item._id,

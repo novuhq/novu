@@ -21,7 +21,7 @@ export class UpdateIntegration {
     const existingIntegration = await this.integrationRepository.findById(command.integrationId);
     if (!existingIntegration) throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
 
-    this.invalidateCache.execute({
+    this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
       credentials: {
         environmentId: command.environmentId,

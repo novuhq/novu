@@ -8,7 +8,7 @@ export class UpdateOnBoardingUsecase {
   constructor(private invalidateCache: InvalidateCacheService, private readonly userRepository: UserRepository) {}
 
   async execute(command: UpdateOnBoardingCommand) {
-    this.invalidateCache.execute({
+    this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.USER],
       credentials: {
         _id: command.userId,

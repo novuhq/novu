@@ -12,7 +12,7 @@ export class RemoveIntegration {
 
   async execute(command: RemoveIntegrationCommand) {
     try {
-      this.invalidateCache.execute({
+      this.invalidateCache.clearCache({
         storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
         credentials: {
           environmentId: command.environmentId,
