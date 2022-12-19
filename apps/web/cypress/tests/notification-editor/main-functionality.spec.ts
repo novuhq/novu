@@ -312,6 +312,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.visit('/templates');
 
     cy.getByTestId('environment-switch').find(`input[value="Production"]`).click({ force: true });
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('create-template-btn').should('be.disabled');
   });
@@ -320,6 +321,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.visit('/templates/create');
 
     cy.getByTestId('environment-switch').find(`input[value="Production"]`).click({ force: true });
+    cy.waitForNetworkIdle(500);
 
     cy.location('pathname').should('equal', `/templates`);
   });
