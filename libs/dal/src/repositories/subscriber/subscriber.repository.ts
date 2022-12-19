@@ -1,9 +1,12 @@
 import { SoftDeleteModel } from 'mongoose-delete';
-import { BaseRepository, Omit } from '../base-repository';
+import { Document, FilterQuery } from 'mongoose';
+
 import { SubscriberEntity } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
+import { IExternalSubscribersEntity } from './types';
+
+import { BaseRepository, Omit } from '../base-repository';
 import { DalException } from '../../shared';
-import { Document, FilterQuery } from 'mongoose';
 
 class PartialSubscriberEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
 
@@ -21,6 +24,20 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     return await this.findOne({
       _environmentId: environmentId,
       subscriberId,
+    });
+  }
+
+  async searchByExternalSubscriberIds(
+    externalSubscribersEntity: IExternalSubscribersEntity
+  ): Promise<SubscriberEntity[]> {
+    const { _environmentId, _organizationId, externalSubscriberIds } = externalSubscribersEntity;
+
+    return this.find({
+      _environmentId,
+      _organizationId,
+      subscriberId: {
+        $in: externalSubscriberIds,
+      },
     });
   }
 

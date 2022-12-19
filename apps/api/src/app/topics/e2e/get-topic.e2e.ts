@@ -3,7 +3,7 @@ import { expect } from 'chai';
 
 const BASE_PATH = '/v1/topics';
 
-describe('Get a topic - /topics/:topicId (GET)', async () => {
+describe('Get a topic - /topics/:topicKey (GET)', async () => {
   let session: UserSession;
 
   before(async () => {
@@ -26,7 +26,7 @@ describe('Get a topic - /topics/:topicId (GET)', async () => {
     expect(_id).to.exist;
     expect(_id).to.be.string;
 
-    const url = `${BASE_PATH}/${_id}`;
+    const url = `${BASE_PATH}/${topicKey}`;
     const getResponse = await session.testAgent.get(url);
 
     expect(getResponse.statusCode).to.eql(200);
@@ -34,7 +34,6 @@ describe('Get a topic - /topics/:topicId (GET)', async () => {
     const topic = getResponse.body.data;
 
     expect(topic._id).to.eql(_id);
-    expect(topic._userId).to.eql(session.user._id);
     expect(topic._environmentId).to.eql(session.environment._id);
     expect(topic._organizationId).to.eql(session.organization._id);
     expect(topic.key).to.eql(topicKey);
@@ -42,12 +41,14 @@ describe('Get a topic - /topics/:topicId (GET)', async () => {
     expect(topic.subscribers).to.eql([]);
   });
 
-  it('should throw a not found error when the topic id does not exist in the database for the user requesting it', async () => {
-    const nonExistingId = 'ab12345678901234567890ab';
-    const { body } = await session.testAgent.get(`${BASE_PATH}/${nonExistingId}`);
+  it('should throw a not found error when the topic key does not exist in the database for the user requesting it', async () => {
+    const nonExistingTopicKey = 'ab12345678901234567890ab';
+    const { body } = await session.testAgent.get(`${BASE_PATH}/${nonExistingTopicKey}`);
 
     expect(body.statusCode).to.equal(404);
-    expect(body.message).to.eql(`Topic not found for id ${nonExistingId} for the user ${session.user._id}`);
+    expect(body.message).to.eql(
+      `Topic not found for id ${nonExistingTopicKey} for the organization ${session.organization._id} in the environment ${session.environment._id}`
+    );
     expect(body.error).to.eql('Not Found');
   });
 });

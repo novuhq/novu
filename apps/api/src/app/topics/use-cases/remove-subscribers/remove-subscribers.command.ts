@@ -1,15 +1,15 @@
 import { IsArray, IsDefined, IsString } from 'class-validator';
 
-import { TopicId, SubscriberId } from '../../types';
+import { ExternalSubscriberId, TopicKey } from '../../types';
 
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class RemoveSubscribersCommand extends EnvironmentWithUserCommand {
+export class RemoveSubscribersCommand extends EnvironmentCommand {
   @IsString()
   @IsDefined()
-  topicId: TopicId;
+  topicKey: TopicKey;
 
   @IsArray()
   @IsDefined()
-  subscribers: SubscriberId[];
+  subscribers: ExternalSubscriberId[];
 }
