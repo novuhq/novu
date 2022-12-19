@@ -165,7 +165,7 @@ export class SendMessageInApp extends SendMessageBase {
         cta: inAppChannel.template.cta,
         _feedId: inAppChannel.template._feedId,
         transactionId: command.transactionId,
-        content,
+        content: this.storeContent() ? content : null,
         payload: messagePayload,
         templateIdentifier: command.identifier,
         _jobId: command.jobId,

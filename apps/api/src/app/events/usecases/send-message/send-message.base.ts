@@ -45,6 +45,10 @@ export abstract class SendMessageBase extends SendMessageType {
     }
   }
 
+  protected storeContent(): boolean {
+    return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
+  }
+
   @Cached(CacheKeyPrefixEnum.SUBSCRIBER)
   private async getSubscriber({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.subscriberRepository.findOne({

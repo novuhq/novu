@@ -133,7 +133,7 @@ export class SendMessageSms extends SendMessageBase {
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
       phone,
-      content,
+      content: this.storeContent() ? content : null,
       providerId: this.integration?.providerId,
       payload: messagePayload,
       overrides,
