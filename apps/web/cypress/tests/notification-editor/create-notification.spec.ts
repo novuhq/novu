@@ -297,9 +297,8 @@ describe('Creation functionality', function () {
 
   it('should create and edit group id', function () {
     const template = this.session.templates[0];
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/edit/' + template._id);
-    });
+    cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('groupSelector').click();
     cy.getByTestId('groupSelector').clear();
@@ -312,7 +311,7 @@ describe('Creation functionality', function () {
     cy.visit('/templates');
     cy.getByTestId('template-edit-link');
     cy.visit('/templates/edit/' + template._id);
-
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
   });
 });

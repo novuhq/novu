@@ -47,11 +47,11 @@ export const getLogoByStatus = (
 export const getLogoByType = (
   type: StepTypeEnum
 ): React.FunctionComponent<React.ComponentPropsWithoutRef<'svg'>> | null => {
-  if (type == StepTypeEnum.DELAY) {
+  if (type === StepTypeEnum.DELAY) {
     return Timer;
   }
 
-  if (type == StepTypeEnum.DIGEST) {
+  if (type === StepTypeEnum.DIGEST) {
     return Digest;
   }
 

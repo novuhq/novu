@@ -40,11 +40,11 @@ describe('Workflow Editor - Main Functionality', function () {
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
-    cy.waitLoadEnv(() => {
-      cy.getByTestId('title').should('have.value', template.name);
+    cy.waitForNetworkIdle(500);
 
-      addAndEditChannel('inApp');
-    });
+    cy.getByTestId('title').should('have.value', template.name);
+
+    addAndEditChannel('inApp');
 
     cy.getByTestId('in-app-editor-content-input')
       .getByTestId('in-app-editor-content-input')
@@ -65,6 +65,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('submit-btn').click();
 
     cy.visit('/templates');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('template-edit-link');
     cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new', {
@@ -72,10 +73,9 @@ describe('Workflow Editor - Main Functionality', function () {
     });
 
     cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
 
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-    });
+    clickWorkflow();
 
     editChannel('inApp', true);
 
@@ -87,23 +87,23 @@ describe('Workflow Editor - Main Functionality', function () {
 
   it('should update notification active status', function () {
     const template = this.session.templates[0];
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/edit/' + template._id);
-    });
+    cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('active-toggle-switch').get('label').contains('Enabled');
     cy.getByTestId('active-toggle-switch').click({ force: true });
     cy.getByTestId('active-toggle-switch').get('label').contains('Disabled');
 
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/edit/' + template._id);
-    });
+    cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('active-toggle-switch').get('label').contains('Disabled');
   });
 
   it('should toggle active states of channels', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
-    });
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
+
     fillBasicNotificationDetails('Test toggle active states of channels');
     // Enable email from button click
     clickWorkflow();
@@ -126,18 +126,17 @@ describe('Workflow Editor - Main Functionality', function () {
 
   it('should show trigger snippet block when editing', function () {
     const template = this.session.templates[0];
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/edit/' + template._id);
-    });
+    cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('triggerCodeSelector').click();
     cy.getByTestId('trigger-code-snippet').contains('test-event');
   });
 
   it('should validate form inputs', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
-    });
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('description').type('this is a notification template description');
     cy.getByTestId('submit-btn').click();
     cy.getByTestId('title').should('have.class', 'mantine-TextInput-invalid');
@@ -151,9 +150,9 @@ describe('Workflow Editor - Main Functionality', function () {
   });
 
   it('should show error on node if message field is missing ', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
-    });
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
+
     fillBasicNotificationDetails();
     clickWorkflow();
     dragAndDrop('email');
@@ -168,9 +167,9 @@ describe('Workflow Editor - Main Functionality', function () {
   });
 
   it('should fill required settings before workflow btn is clickable', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
-    });
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('description').type('this is a notification template description');
     clickWorkflow();
     cy.getByTestId('title').should('have.class', 'mantine-TextInput-invalid');
@@ -190,9 +189,9 @@ describe('Workflow Editor - Main Functionality', function () {
         res.send({ body: res.body });
       });
     });
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
-    });
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
+
     fillBasicNotificationDetails('Test allow uploading a logo from email editor');
     addAndEditChannel('email');
 
@@ -203,9 +202,9 @@ describe('Workflow Editor - Main Functionality', function () {
   });
 
   it('should show the brand logo on main page', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
-    });
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
+
     fillBasicNotificationDetails('Test show the brand logo on main page');
     addAndEditChannel('email');
 
@@ -213,9 +212,9 @@ describe('Workflow Editor - Main Functionality', function () {
   });
 
   it('should support RTL text content', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
-    });
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
+
     fillBasicNotificationDetails('Test support RTL text content');
     clickWorkflow();
     dragAndDrop('email');
@@ -228,9 +227,9 @@ describe('Workflow Editor - Main Functionality', function () {
   });
 
   it('should create an SMS channel message', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
-    });
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
+
     fillBasicNotificationDetails('Test SMS Notification Title');
     addAndEditChannel('sms');
 
@@ -255,11 +254,10 @@ describe('Workflow Editor - Main Functionality', function () {
 
   it('should save HTML template email', function () {
     cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
 
-    cy.waitLoadEnv(() => {
-      fillBasicNotificationDetails('Custom Code HTML Notification Title');
-      addAndEditChannel('email');
-    });
+    fillBasicNotificationDetails('Custom Code HTML Notification Title');
+    addAndEditChannel('email');
 
     cy.getByTestId('emailSubject').type('this is email subject');
 
@@ -275,12 +273,11 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.wait('@notification-templates', { timeout: 60000 });
     cy.get('tbody').contains('Custom Code HTM').click();
+    cy.waitForNetworkIdle(500);
 
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-      editChannel('email');
-      cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
-    });
+    clickWorkflow();
+    editChannel('email');
+    cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
   });
 
   it('should redirect to dev env for edit template', function () {
