@@ -11,6 +11,7 @@ export * from './hooks/use-subscriber-preference.hook';
 export * from './store/novu-theme-provider.context';
 export * from './i18n/lang';
 export type { INovuPopoverTheme } from './store/novu-theme.context';
+export type { INotificationCenterStyles } from './store/styles';
 
 export { SubscriberPreference } from './components/notification-center/components/user-preference/SubscriberPreference';
 
