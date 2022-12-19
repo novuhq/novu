@@ -85,6 +85,7 @@ function createNotification() {
   const dataTransfer = new DataTransfer();
 
   cy.visit('/templates/create');
+  cy.waitForNetworkIdle(500);
 
   cy.getByTestId('title').type('Test Notification Title');
   cy.getByTestId('description').type('This is a test description for a test title');
@@ -92,19 +93,17 @@ function createNotification() {
 
   cy.getByTestId('workflowButton').click({ force: true });
 
-  cy.waitLoadEnv(() => {
-    cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer, force: true });
+  cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer, force: true });
 
-    cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer, force: true });
+  cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer, force: true });
 
-    cy.getByTestId('node-emailSelector').parent().click({ force: true });
-    cy.getByTestId('edit-template-channel').click({ force: true });
+  cy.getByTestId('node-emailSelector').parent().click({ force: true });
+  cy.getByTestId('edit-template-channel').click({ force: true });
 
-    cy.getByTestId('emailSubject').type('this is email subject');
+  cy.getByTestId('emailSubject').type('this is email subject');
 
-    cy.getByTestId('submit-btn').click();
-    cy.getByTestId('trigger-snippet-btn').click();
-  });
+  cy.getByTestId('submit-btn').click();
+  cy.getByTestId('trigger-snippet-btn').click();
 }
 
 function promoteNotification() {
