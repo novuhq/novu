@@ -14,7 +14,7 @@ import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { applyToken } from '../../store/use-auth-controller';
 import { useAcceptInvite } from './use-accept-invite.hook';
 import { useVercelParams } from '../../hooks/use-vercelParams';
-import { PasswordStrengthBar } from './PasswordStrengthBar';
+import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 
 type Props = {
   token?: string;
@@ -168,29 +168,31 @@ export function SignUpForm({ token, email }: Props) {
           data-test-id="email"
           mt={20}
         />
-        <PasswordInput
-          error={errors.password?.message}
-          mt={20}
-          {...register('password', {
-            required: 'Password, not your birthdate',
-            minLength: { value: passwordConstraints.minLength, message: 'Minimum 8 characters' },
-            maxLength: {
-              value: passwordConstraints.maxLength,
-              message: 'Maximum 64 characters',
-            },
-            pattern: {
-              value: passwordConstraints.pattern,
-              message:
-                // eslint-disable-next-line max-len
-                'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character',
-            },
-          })}
-          required
-          label="Password"
-          placeholder="Type your password..."
-          data-test-id="password"
-        />
-        <PasswordStrengthBar control={control} />
+
+        <PasswordRequirementPopover control={control}>
+          <PasswordInput
+            error={errors.password?.message}
+            mt={20}
+            {...register('password', {
+              required: 'Password, not your birthdate',
+              minLength: { value: passwordConstraints.minLength, message: 'Minimum 8 characters' },
+              maxLength: {
+                value: passwordConstraints.maxLength,
+                message: 'Maximum 64 characters',
+              },
+              pattern: {
+                value: passwordConstraints.pattern,
+                message:
+                  // eslint-disable-next-line max-len
+                  'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-',
+              },
+            })}
+            required
+            label="Password"
+            placeholder="Type your password..."
+            data-test-id="password"
+          />
+        </PasswordRequirementPopover>
         <Checkbox
           onChange={(prev) => setAccepted(prev.target.checked)}
           required
