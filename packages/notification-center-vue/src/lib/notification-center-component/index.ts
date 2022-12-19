@@ -1,1 +1,1 @@
-export { default } from './NotificationCenterComponent.vue';
+export { default as NotificationCenterComponent } from './NotificationCenterComponent.vue';

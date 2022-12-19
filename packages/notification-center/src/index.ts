@@ -10,11 +10,14 @@ export * from './hooks/use-subscriber-preference.hook';
 
 export * from './store/novu-theme-provider.context';
 export * from './i18n/lang';
-export { INovuPopoverTheme } from './store/novu-theme.context';
+export type { INovuPopoverTheme } from './store/novu-theme.context';
 
 export { SubscriberPreference } from './components/notification-center/components/user-preference/SubscriberPreference';
 
-export { ColorScheme } from './shared/config/colors';
+export { colors } from './shared/config/colors';
+export type { ColorScheme } from './shared/config/colors';
+export { getDefaultTheme, getDefaultBellColors } from './utils/defaultTheme';
+export { getStyleByPath } from './utils/styles';
 
 export * from './shared/enums';
 export * from './shared/interfaces';
