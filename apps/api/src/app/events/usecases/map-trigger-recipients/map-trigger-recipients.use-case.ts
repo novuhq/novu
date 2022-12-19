@@ -11,7 +11,7 @@ import {
   LogCodeEnum,
   LogStatusEnum,
   OrganizationId,
-  TopicId,
+  TopicKey,
   TopicSubscribersDto,
   TriggerRecipientsTypeEnum,
   UserId,
@@ -25,7 +25,7 @@ import { GetTopicSubscribersCommand, GetTopicSubscribersUseCase } from '../../..
 interface ILogTopicSubscribersPayload {
   environmentId: EnvironmentId;
   organizationId: OrganizationId;
-  topicKey: TopicId;
+  topicKey: TopicKey;
   transactionId: string;
   userId: UserId;
 }

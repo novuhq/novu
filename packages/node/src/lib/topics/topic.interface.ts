@@ -10,8 +10,8 @@ export interface ITopics {
   create(data: ITopicPayload);
   get(topicKey: string);
   list(data: ITopicPaginationPayload);
-  rename(topicId: string, newName: string);
-  removeSubscribers(topicId: string, data: ITopicSubscribersPayload);
+  rename(topicKey: string, newName: string);
+  removeSubscribers(topicKey: string, data: ITopicSubscribersPayload);
 }
 
 export interface ITopicPayload {

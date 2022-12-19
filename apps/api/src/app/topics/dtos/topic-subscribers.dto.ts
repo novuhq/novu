@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { EnvironmentId, ExternalSubscriberId, OrganizationId, SubscriberId, TopicId } from '../types';
+import { EnvironmentId, ExternalSubscriberId, OrganizationId, SubscriberId, TopicId, TopicKey } from '../types';
 
 export class TopicSubscribersDto {
   @ApiProperty()
@@ -14,6 +14,9 @@ export class TopicSubscribersDto {
 
   @ApiProperty()
   _topicId: TopicId;
+
+  @ApiProperty()
+  topicKey: TopicKey;
 
   @ApiProperty()
   externalSubscriberId: ExternalSubscriberId;

@@ -62,10 +62,10 @@ describe('Novu Node.js package - Topics class', () => {
     };
     mockedAxios.patch.mockResolvedValue(mockedResponse);
 
-    const result = await novu.topics.rename(topicId, name);
+    const result = await novu.topics.rename(key, name);
 
     expect(mockedAxios.patch).toHaveBeenCalled();
-    expect(mockedAxios.patch).toHaveBeenCalledWith(`/topics/${topicId}`, {
+    expect(mockedAxios.patch).toHaveBeenCalledWith(`/topics/${key}`, {
       name,
     });
     expect(result).toBe(mockedResponse);

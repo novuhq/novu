@@ -1,13 +1,13 @@
 import { SubscribersService, UserSession } from '@novu/testing';
 import { SubscriberEntity } from '@novu/dal';
-import { ExternalSubscriberId, TopicId } from '@novu/shared';
+import { ExternalSubscriberId, TopicId, TopicKey } from '@novu/shared';
 import { expect } from 'chai';
 
 const BASE_PATH = '/v1/topics';
 
 describe('Rename a topic - /topics/:topicKey (PATCH)', async () => {
   const renamedTopicName = 'topic-renamed';
-  const topicKey = 'topic-key';
+  const topicKey: TopicKey = 'topic-key';
   const topicName = 'topic-name';
   let firstSubscriber: SubscriberEntity;
   let secondSubscriber: SubscriberEntity;
@@ -74,10 +74,10 @@ describe('Rename a topic - /topics/:topicKey (PATCH)', async () => {
 
 const addSubscribersToTopic = async (
   session: UserSession,
-  topicId: TopicId,
+  topicKey: TopicKey,
   subscribers: ExternalSubscriberId[]
 ): Promise<void> => {
-  const url = `${BASE_PATH}/${topicId}/subscribers`;
+  const url = `${BASE_PATH}/${topicKey}/subscribers`;
 
   const result = await session.testAgent
     .post(url)

@@ -23,5 +23,6 @@ export class TopicSubscribersDto {
   _environmentId: EnvironmentId;
   _subscriberId: SubscriberId;
   _topicId: TopicId;
+  topicKey: TopicKey;
   externalSubscriberId: ExternalSubscriberId;
 }

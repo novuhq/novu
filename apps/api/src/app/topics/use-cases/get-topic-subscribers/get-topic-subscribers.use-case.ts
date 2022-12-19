@@ -40,6 +40,7 @@ export class GetTopicSubscribersUseCase {
   private mapFromEntity(topicSubscribers: TopicSubscribersEntity): TopicSubscribersDto {
     return {
       ...topicSubscribers,
+      topicKey: topicSubscribers.topicKey,
       _topicId: TopicSubscribersRepository.convertObjectIdToString(topicSubscribers._topicId),
       _organizationId: TopicSubscribersRepository.convertObjectIdToString(topicSubscribers._organizationId),
       _environmentId: TopicSubscribersRepository.convertObjectIdToString(topicSubscribers._environmentId),
