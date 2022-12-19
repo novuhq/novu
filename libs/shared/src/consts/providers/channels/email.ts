@@ -11,7 +11,7 @@ import {
   sendinblueConfig,
   sesConfig,
   outlook365Config,
-  infobipConfig,
+  infobipEmailConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum } from '../../../entities/message-template';
@@ -118,7 +118,7 @@ export const emailProviders: IProviderConfig[] = [
     id: EmailProviderIdEnum.Infobip,
     displayName: 'Infobip',
     channel: ChannelTypeEnum.EMAIL,
-    credentials: infobipConfig,
+    credentials: infobipEmailConfig,
     docReference: 'https://www.infobip.com/docs',
     logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
   },

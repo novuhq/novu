@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { SendMessageType } from './send-message-type.usecase';
 import { ChatFactory } from '../../services/chat-service/chat.factory';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { SendMessageCommand } from './send-message.command';
@@ -7,7 +6,6 @@ import * as Sentry from '@sentry/node';
 import {
   NotificationRepository,
   NotificationStepEntity,
-  SubscriberEntity,
   SubscriberRepository,
   MessageRepository,
   MessageEntity,
@@ -25,45 +23,49 @@ import {
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
-import {
-  GetDecryptedIntegrationsCommand,
-  GetDecryptedIntegrations,
-} from '../../../integrations/usecases/get-decrypted-integrations';
+import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessageChat extends SendMessageType {
+export class SendMessageChat extends SendMessageBase {
+  channelType = ChannelTypeEnum.CHAT;
   private chatFactory = new ChatFactory();
 
   constructor(
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {
+    await this.initialize(command);
+
     Sentry.addBreadcrumb({
       message: 'Sending Chat',
     });
     const chatChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
+
     let content = '';
     const data = {
-      subscriber,
+      subscriber: this.subscriber,
       step: {
         digest: !!command.events.length,
         events: command.events,
@@ -96,7 +98,7 @@ export class SendMessageChat extends SendMessageType {
       return;
     }
 
-    const chatChannels = subscriber.channels.filter((chan) =>
+    const chatChannels = this.subscriber.channels.filter((chan) =>
       Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
     );
 
@@ -157,20 +159,7 @@ export class SendMessageChat extends SendMessageType {
       _jobId: command.jobId,
     });
 
-    const integration = (
-      await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          providerId: subscriberChannel.providerId,
-          channelType: ChannelTypeEnum.CHAT,
-          findOne: true,
-          active: true,
-        })
-      )
-    )[0];
-
-    if (!integration) {
+    if (!this.integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -198,13 +187,13 @@ export class SendMessageChat extends SendMessageType {
       })
     );
 
-    if (chatWebhookUrl && integration) {
-      await this.sendMessage(chatWebhookUrl, integration, content, message, command, notification);
+    if (chatWebhookUrl && this.integration) {
+      await this.sendMessage(chatWebhookUrl, this.integration, content, message, command, notification);
 
       return;
     }
 
-    await this.sendErrors(chatWebhookUrl, integration, message, command, notification);
+    await this.sendErrors(chatWebhookUrl, this.integration, message, command, notification);
   }
 
   private async sendErrors(
