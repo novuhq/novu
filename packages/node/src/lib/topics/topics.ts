@@ -8,8 +8,8 @@ import {
 } from './topic.interface';
 
 export class Topics extends WithHttp implements ITopics {
-  async addSubscribers(topicId: string, data: ITopicSubscribersPayload) {
-    return await this.http.post(`/topics/${topicId}/subscribers`, {
+  async addSubscribers(topicKey: string, data: ITopicSubscribersPayload) {
+    return await this.http.post(`/topics/${topicKey}/subscribers`, {
       ...data,
     });
   }
@@ -37,8 +37,8 @@ export class Topics extends WithHttp implements ITopics {
     });
   }
 
-  async rename(topicId: string, newName: string) {
-    return await this.http.patch(`/topics/${topicId}`, {
+  async rename(topicKey: string, newName: string) {
+    return await this.http.patch(`/topics/${topicKey}`, {
       name: newName,
     });
   }
