@@ -19,12 +19,6 @@ const topicSchema = new Schema(
       index: true,
       required: true,
     },
-    _userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      index: true,
-      required: true,
-    },
     key: {
       type: Schema.Types.String,
       required: true,

@@ -9,7 +9,7 @@ import {
   telnyxConfig,
   twilioConfig,
   firetextConfig,
-  infobipConfig,
+  infobipSMSConfig,
   burstSmsConfig,
   clickatellConfig,
 } from '../credentials';
@@ -85,7 +85,7 @@ export const smsProviders: IProviderConfig[] = [
     id: SmsProviderIdEnum.Infobip,
     displayName: 'Infobip',
     channel: ChannelTypeEnum.SMS,
-    credentials: infobipConfig,
+    credentials: infobipSMSConfig,
     docReference: 'https://www.infobip.com/docs',
     logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
   },

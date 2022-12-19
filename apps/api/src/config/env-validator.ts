@@ -1,4 +1,4 @@
-import { makeValidator, port, str, url, ValidatorSpec } from 'envalid';
+import { bool, makeValidator, port, str, url, ValidatorSpec } from 'envalid';
 import * as envalid from 'envalid';
 
 const str32 = makeValidator((variable) => {
@@ -43,6 +43,17 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: '',
   }),
   NEW_RELIC_LICENSE_KEY: str({
+    default: '',
+  }),
+  FF_IS_TOPIC_NOTIFICATION_ENABLED: bool({
+    desc: 'This is the environment variables used to enable the feature to send notifications to a topic',
+    default: true,
+    choices: [false, true],
+  }),
+  REDIS_CACHE_HOST: str({
+    default: '',
+  }),
+  REDIS_CACHE_PORT: str({
     default: '',
   }),
 };

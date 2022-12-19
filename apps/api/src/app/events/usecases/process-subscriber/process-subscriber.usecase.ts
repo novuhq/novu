@@ -17,6 +17,8 @@ import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { ISubscribersDefine } from '@novu/node';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
+import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { Cached } from '../../../shared/interceptors';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -31,7 +33,10 @@ export class ProcessSubscriber {
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
-    const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    const template = await this.getNotificationTemplate({
+      _id: command.templateId,
+      environmentId: command.environmentId,
+    });
 
     const subscriber: SubscriberEntity = await this.getSubscriber(
       {
@@ -115,6 +120,11 @@ export class ProcessSubscriber {
     }
 
     return jobs;
+  }
+
+  @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
+  private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
+    return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
   private async getSubscriber(

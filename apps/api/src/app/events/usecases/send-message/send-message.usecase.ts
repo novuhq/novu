@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -30,6 +30,10 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { Cached } from '../../../shared/interceptors';
+import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 
 @Injectable()
 export class SendMessage {
@@ -45,7 +49,8 @@ export class SendMessage {
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
-    private sendMessageDelay: SendMessageDelay
+    private sendMessageDelay: SendMessageDelay,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   public async execute(command: SendMessageCommand) {
@@ -71,6 +76,19 @@ export class SendMessage {
         })
       );
     }
+
+    this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
+      _template: command.job._templateId,
+      _organization: command.organizationId,
+      _subscriber: command.job?._subscriberId,
+      provider: command.job?.providerId,
+      delay: command.job?.delay,
+      jobType: command.job?.type,
+      digestType: command.job.digest?.type,
+      digestEventsCount: command.job.digest?.events?.length,
+      digestUnit: command.job.digest?.unit,
+      digestAmount: command.job.digest?.amount,
+    });
 
     switch (command.step.template.type) {
       case StepTypeEnum.SMS:
@@ -134,7 +152,11 @@ export class SendMessage {
   }
 
   private async filterPreferredChannels(job: JobEntity): Promise<boolean> {
-    const template = await this.notificationTemplateRepository.findById(job._templateId, job._organizationId);
+    const template = await this.getNotificationTemplate({
+      _id: job._templateId,
+      environmentId: job._environmentId,
+    });
+
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: job._organizationId,
       subscriberId: job._subscriberId,
@@ -161,6 +183,11 @@ export class SendMessage {
     }
 
     return result || template.critical;
+  }
+
+  @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
+  private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
+    return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {

@@ -5,12 +5,14 @@ import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/
 import { encryptCredentials } from '../../../shared/services/encryption';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
+import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
 
 @Injectable()
 export class UpdateIntegration {
   @Inject()
   private checkIntegration: CheckIntegration;
   constructor(
+    private cacheService: CacheService,
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations
   ) {}
@@ -18,6 +20,14 @@ export class UpdateIntegration {
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
     const existingIntegration = await this.integrationRepository.findById(command.integrationId);
     if (!existingIntegration) throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
+
+    invalidateCache({
+      service: this.cacheService,
+      storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
+      credentials: {
+        environmentId: command.environmentId,
+      },
+    });
 
     if (command.check) {
       await this.checkIntegration.execute(
