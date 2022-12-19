@@ -97,7 +97,7 @@ function createNotification() {
 
   cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer });
 
-  cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer, force: true });
+  cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer });
 
   cy.getByTestId('node-emailSelector').parent().click({ force: true });
   cy.getByTestId('edit-template-channel').click({ force: true });
