@@ -64,7 +64,12 @@ export function PasswordResetForm({ token }: Props) {
     handleSubmit,
     control,
     formState: { errors },
-  } = useForm({});
+  } = useForm({
+    defaultValues: {
+      password: '',
+      passwordRepeat: '',
+    },
+  });
 
   return (
     <>
