@@ -6,6 +6,7 @@ import {
   NotificationRepository,
 } from '@novu/dal';
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { TriggerRecipients } from '@novu/node';
 import {
   StepTypeEnum,
   LogCodeEnum,
@@ -16,6 +17,7 @@ import {
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
+
 import { TriggerEventCommand } from './trigger-event.command';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
