@@ -439,7 +439,7 @@ importers:
       customize-cra: ^1.0.0
       cypress: ^12.1.0
       cypress-localstorage-commands: ^1.7.0
-      cypress-network-idle: ^1.10.0
+      cypress-network-idle: ^1.11.2
       cypress-wait-until: ^1.7.2
       date-fns: ^2.29.2
       eslint-plugin-cypress: ^2.12.1
@@ -583,7 +583,7 @@ importers:
       '@types/testing-library__jest-dom': 5.14.5
       cypress: 12.1.0
       cypress-localstorage-commands: 1.7.0_cypress@12.1.0
-      cypress-network-idle: 1.10.0
+      cypress-network-idle: 1.11.2
       cypress-wait-until: 1.7.2
       eslint-plugin-cypress: 2.12.1_eslint@8.20.0
       http-server: 0.12.3
@@ -902,7 +902,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.6.1
       supertest: 6.2.2
-      ts-jest: 27.1.4_grawetaag42d3ott7xsn2rdj54
+      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
       ts-loader: 8.3.0_vhanpkig4omek67hjhmtrlsh2y
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.14.1
@@ -32499,6 +32499,7 @@ packages:
     resolution: {integrity: sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==}
     engines: {node: '>=0.1.90'}
     requiresBuild: true
+    dev: true
 
   /columnify/1.6.0:
     resolution: {integrity: sha512-lomjuFZKfM6MSAnV9aCZC9sc0qGbmZdfygNv+nCpqVkSKdCxCklLtd16O0EILGkImHw9ZpHkAnHaB+8Zxq5W6Q==}
@@ -34466,6 +34467,10 @@ packages:
 
   /cypress-network-idle/1.10.0:
     resolution: {integrity: sha512-TNtf9zquBCPMI79wMUCuVdA5jZEWJ1VN4VQ4nHngYOIKUtPKF+0LbcIxWxalyzGbPY6sTLyq4hprOxx+7mnAqA==}
+    dev: true
+
+  /cypress-network-idle/1.11.2:
+    resolution: {integrity: sha512-0xOA1OMiecfJuZ9uyOv0UaU/57nLXrthRKCzNQNuNZcwgdrMt6f9/MwmTye4WbQbA2YaoeVmQbuIWUzZaoelfA==}
     dev: true
 
   /cypress-wait-until/1.7.2:
@@ -52764,7 +52769,7 @@ packages:
       gzip-size: 6.0.0
       immer: 9.0.12
       is-root: 2.1.0
-      loader-utils: 3.2.1
+      loader-utils: 3.2.0
       open: 8.4.0
       pkg-up: 3.1.0
       prompts: 2.4.2
