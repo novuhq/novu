@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, IsDefined } from 'class-validator';
 
-import { SubscriberId } from '../types';
+import { ExternalSubscriberId } from '../types';
 
 export class AddSubscribersRequestDto {
   @ApiProperty({
@@ -9,5 +9,5 @@ export class AddSubscribersRequestDto {
   })
   @IsArray()
   @IsDefined()
-  subscribers: SubscriberId[];
+  subscribers: ExternalSubscriberId[];
 }

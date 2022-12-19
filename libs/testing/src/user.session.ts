@@ -5,7 +5,7 @@ import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 
-import { TriggerRecipientsType } from '@novu/node';
+import { TriggerRecipientsPayload } from '@novu/node';
 import { StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
@@ -290,7 +290,7 @@ export class UserSession {
     return feed;
   }
 
-  async triggerEvent(triggerName: string, to: TriggerRecipientsType, payload = {}) {
+  async triggerEvent(triggerName: string, to: TriggerRecipientsPayload, payload = {}) {
     await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
       to: to,

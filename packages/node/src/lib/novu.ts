@@ -8,6 +8,7 @@ import { NotificationGroups } from './notification-groups/notification-groups';
 import { NotificationTemplates } from './notification-template/notification-template';
 import { Environments } from './environments/environments';
 import { Feeds } from './feeds/feeds';
+import { Topics } from './topics/topics';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
@@ -19,6 +20,7 @@ export class Novu extends EventEmitter {
   readonly notificationGroups: NotificationGroups;
   readonly notificationTemplates: NotificationTemplates;
   readonly feeds: Feeds;
+  readonly topics: Topics;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -40,6 +42,7 @@ export class Novu extends EventEmitter {
     this.notificationGroups = new NotificationGroups(this.http);
     this.notificationTemplates = new NotificationTemplates(this.http);
     this.feeds = new Feeds(this.http);
+    this.topics = new Topics(this.http);
   }
 
   public trigger: typeof Events.prototype.trigger;
