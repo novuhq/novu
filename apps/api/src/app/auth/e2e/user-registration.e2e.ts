@@ -91,14 +91,17 @@ describe('User registration - /auth/register (POST)', async () => {
     expect(jwtContent.roles[0]).to.equal(MemberRoleEnum.ADMIN);
   });
 
-  it('should throw error when registering same user twice', async () => {
+  it("should throw error when the password doesn't meets the requirements", async () => {
     const { body } = await session.testAgent.post('/v1/auth/register').send({
-      email: 'Testy.test@gmail.com',
+      email: 'Testy.test12345@gmail.com',
       firstName: 'Test',
       lastName: 'User',
-      password: '123@Qwerty',
+      password: 'password',
     });
 
-    expect(body.message).to.contain('User already exists');
+    expect(body.message[0]).to.contain(
+      // eslint-disable-next-line max-len
+      'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-'
+    );
   });
 });

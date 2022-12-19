@@ -11,7 +11,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('example@example.com');
       cy.getByTestId('password').type('usEr_password_123!');
-      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');
@@ -24,7 +24,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('test-user-1@example.com');
       cy.getByTestId('password').type('usEr_password_123!');
-      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
       cy.get('.mantine-TextInput-error').contains('An account with this email already exists');
     });
@@ -34,7 +34,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('test-user-1@example.c');
       cy.getByTestId('password').type('usEr_password_123!');
-      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
       cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
     });
