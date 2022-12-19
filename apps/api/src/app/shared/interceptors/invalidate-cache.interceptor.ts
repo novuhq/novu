@@ -1,20 +1,20 @@
 import { getInvalidateQuery } from './shared-cache';
-import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../services/cache';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../services/cache';
 import { Inject } from '@nestjs/common';
 
 const USE_CASE_METHOD = 'execute';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function InvalidateCache(storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[]) {
-  const injectCache = Inject(CacheService);
+  const injectCache = Inject(InvalidateCacheService);
 
   return (target: any, key: string, descriptor: any) => {
     const originalMethod = descriptor.value;
     const methodName = key === USE_CASE_METHOD ? target.constructor.name : key;
-    injectCache(target, 'cacheService');
+    injectCache(target, 'invalidateCache');
 
     descriptor.value = async function (...args: any[]) {
-      if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
+      const invalidateCache: InvalidateCacheService = this.invalidateCache;
 
       const res = await originalMethod.apply(this, args);
 
@@ -24,8 +24,7 @@ export function InvalidateCache(storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPre
 
       const query = getInvalidateQuery(methodName, res, args);
 
-      await invalidateCache({
-        service: this.cacheService,
+      await invalidateCache.clearCache({
         storeKeyPrefix: getStoreKeyPrefix(storeKeyPrefix),
         credentials: query,
       });

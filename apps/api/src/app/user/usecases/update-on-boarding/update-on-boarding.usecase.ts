@@ -1,15 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
 import { UpdateOnBoardingCommand } from './update-on-boarding.command';
-import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class UpdateOnBoardingUsecase {
-  constructor(private cacheService: CacheService, private readonly userRepository: UserRepository) {}
+  constructor(private invalidateCache: InvalidateCacheService, private readonly userRepository: UserRepository) {}
 
   async execute(command: UpdateOnBoardingCommand) {
-    invalidateCache({
-      service: this.cacheService,
+    this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.USER],
       credentials: {
         _id: command.userId,
