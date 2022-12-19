@@ -146,7 +146,3 @@ export function buildQueryKeyPart(
 
   return interceptorType === CacheInterceptorTypeEnum.INVALIDATE ? WILD_CARD : getQueryParams(keyConfig);
 }
-
-export interface ICacheConfig {
-  skipCache: boolean;
-}
