@@ -6,8 +6,8 @@ import image from '@rollup/plugin-image';
 import nodeExternals from 'rollup-plugin-node-externals';
 import replace from '@rollup/plugin-replace';
 import gzipPlugin from 'rollup-plugin-gzip';
-
-const packageJson = require('./package.json');
+import nodePolyfills from 'rollup-plugin-polyfill-node';
+import packageJson from './package.json' assert { type: 'json' };
 
 export default [
   {
@@ -35,7 +35,6 @@ export default [
   },
   {
     input: 'src/web-component.ts',
-    external: ['react@17.0.2', 'react-dom@17.0.2'],
     output: [
       {
         file: 'dist/umd/index.js',
@@ -52,6 +51,7 @@ export default [
       resolve({ preferBuiltins: false, browser: true }),
       typescript({ tsconfig: './tsconfig.json' }),
       commonjs(),
+      nodePolyfills(),
       terser(),
       gzipPlugin(),
       image(),
