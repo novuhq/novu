@@ -72,7 +72,7 @@ jobs:
         id: cache-cypress-binary
         uses: actions/cache@v3
         with:
-          path: cypress/cache
+          path: /home/runner/.cache/Cypress
           key: cypress-binary-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Install dependencies
@@ -208,7 +208,7 @@ jobs:
         id: cache-cypress-binary
         uses: actions/cache@v3
         with:
-          path: cypress/cache
+          path: /home/runner/.cache/Cypress
           key: cypress-binary-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Install dependencies
