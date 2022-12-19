@@ -14,6 +14,8 @@ export function InvalidateCache(storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPre
     injectCache(target, 'invalidateCache');
 
     descriptor.value = async function (...args: any[]) {
+      const invalidateCache: InvalidateCacheService = this.invalidateCache;
+
       const res = await originalMethod.apply(this, args);
 
       if (!res) {
@@ -22,7 +24,7 @@ export function InvalidateCache(storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPre
 
       const query = getInvalidateQuery(methodName, res, args);
 
-      await this.invalidateCache.execute({
+      await invalidateCache.clearCache({
         storeKeyPrefix: getStoreKeyPrefix(storeKeyPrefix),
         credentials: query,
       });
