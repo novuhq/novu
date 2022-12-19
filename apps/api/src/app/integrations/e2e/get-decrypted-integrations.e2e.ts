@@ -25,7 +25,7 @@ describe('Get Decrypted Integrations - /integrations (GET)', function () {
 
     const result = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
 
-    const activeEmailIntegration = result.find((integration) => integration.channel === ChannelTypeEnum.EMAIL);
+    const activeEmailIntegration = result.find((integration) => integration.channel == ChannelTypeEnum.EMAIL);
 
     expect(activeEmailIntegration.providerId).to.equal('mailgun');
     expect(activeEmailIntegration.credentials.apiKey).to.equal('123');
