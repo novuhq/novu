@@ -22,9 +22,9 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.getByTestId('submit-btn').click();
 
     cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
 
     clickWorkflow();
-    cy.waitForNetworkIdle(500);
 
     cy.get('.react-flow__node').should('have.length', 3);
   });
@@ -60,10 +60,9 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.getByTestId('submit-btn').click();
 
     cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
 
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-    });
+    clickWorkflow();
 
     cy.get('.react-flow__node').should('have.length', 5);
     cy.get('.react-flow__node')
