@@ -214,7 +214,8 @@ export class WidgetsController {
   async markAllUnseenAsSeen(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<number> {
     const command = MarkAllMessageAsSeenCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      _subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
     });
 

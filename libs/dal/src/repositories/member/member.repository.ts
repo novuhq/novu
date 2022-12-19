@@ -64,7 +64,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
     ];
   }
 
-  async getOrganizationAdminAccount(organizationId: string) {
+  async getOrganizationAdminAccount(organizationId: string): Promise<MemberEntity> {
     const requestQuery: EnforceEnvironmentQuery = {
       _organizationId: organizationId,
       roles: MemberRoleEnum.ADMIN,

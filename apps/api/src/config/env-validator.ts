@@ -49,6 +49,11 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     desc: 'This is the environment variables used to enable the feature to send notifications to a topic',
     default: true,
     choices: [false, true],
+  REDIS_CACHE_HOST: str({
+    default: '',
+  }),
+  REDIS_CACHE_PORT: str({
+    default: '',
   }),
 };
 

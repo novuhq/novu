@@ -1,5 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { MessageEntity, MessageRepository, MessageTemplateEntity, SubscriberRepository } from '@novu/dal';
+import {
+  MessageEntity,
+  MessageRepository,
+  MessageTemplateEntity,
+  SubscriberRepository,
+  MemberRepository,
+} from '@novu/dal';
 import { UpdateMessageActionsCommand } from './update-message-actions.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
@@ -10,7 +16,8 @@ export class UpdateMessageActions {
   constructor(
     private messageRepository: MessageRepository,
     private subscriberRepository: SubscriberRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private memberRepository: MemberRepository
   ) {}
 
   async execute(command: UpdateMessageActionsCommand): Promise<MessageEntity> {
@@ -59,7 +66,8 @@ export class UpdateMessageActions {
       );
     }
 
-    this.analyticsService.track('Notification Action Clicked - [Notification Center]', command.organizationId, {
+    const organizationAdmin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
+    this.analyticsService.track('Notification Action Clicked - [Notification Center]', organizationAdmin?._userId, {
       _subscriber: subscriber._id,
       _organization: command.organizationId,
       _environment: command.environmentId,
