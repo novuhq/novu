@@ -85,6 +85,7 @@ function switchEnvironment(environment: 'Production' | 'Development') {
 
 function createNotification() {
   const dataTransfer = new DataTransfer();
+
   cy.visit('/templates/create');
   cy.waitForNetworkIdle(500);
 
