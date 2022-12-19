@@ -101,10 +101,9 @@ export class CacheService implements ICacheService {
   }
 
   private ttlVariant(num) {
-    const randomNum = Math.random();
-    const variant = this.TTL_VARIANT_PERCENTAGE * randomNum;
+    const variant = this.TTL_VARIANT_PERCENTAGE * num * Math.random();
 
-    return num + num * variant;
+    return num - (this.TTL_VARIANT_PERCENTAGE * num) / 2 + variant;
   }
 }
 
