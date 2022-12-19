@@ -86,6 +86,8 @@ watch(computedStyles, (newComputedStyles) => {
     :popperClass="computedStyles.popoverDropdownClass"
     :placement="popover?.position"
     :distance="popover?.offset"
+    :triggers="['click', 'touch']"
+    eager-mount
     ref="popper"
   >
     <!-- Popover target - usually button -->

@@ -34,11 +34,8 @@ export class UpdateNotificationTemplate {
 
   @InvalidateCache(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
-    const existingTemplate = await this.notificationTemplateRepository.findById(
-      command.templateId,
-      command.environmentId
-    );
-    if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.templateId} not found`);
+    const existingTemplate = await this.notificationTemplateRepository.findById(command.id, command.environmentId);
+    if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
     const updatePayload: Partial<NotificationTemplateEntity> = {};
     if (command.name) {
@@ -55,7 +52,7 @@ export class UpdateNotificationTemplate {
         command.identifier
       );
 
-      if (isExistingIdentifier && isExistingIdentifier._id !== command.templateId) {
+      if (isExistingIdentifier && isExistingIdentifier._id !== command.id) {
         throw new BadRequestException(`Notification template with identifier ${command.identifier} already exists`);
       } else {
         updatePayload['triggers.0.identifier'] = command.identifier;
@@ -199,7 +196,7 @@ export class UpdateNotificationTemplate {
 
     await this.notificationTemplateRepository.update(
       {
-        _id: command.templateId,
+        _id: command.id,
         _environmentId: command.environmentId,
       },
       {
@@ -208,7 +205,7 @@ export class UpdateNotificationTemplate {
     );
 
     const notificationTemplateWithStepTemplate = await this.notificationTemplateRepository.findById(
-      command.templateId,
+      command.id,
       command.environmentId
     );
 
