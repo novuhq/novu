@@ -184,6 +184,7 @@ jobs:
           CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
           NODE_OPTIONS: --max_old_space_size=4096
         with:
+          browser: chrome
           working-directory: apps/web
           install: false
           component: true
