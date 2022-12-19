@@ -68,6 +68,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Cache Cypress Binary
+        id: cache-cypress-binary
+        uses: actions/cache@v3
+        with:
+          path: cypress/cache
+          key: cypress-binary-${{ hashFiles('**/pnpm-lock.yaml') }}
+
       - name: Install dependencies
         run: pnpm install
 
@@ -142,7 +149,7 @@ jobs:
           browser: chrome
           record: true
           parallel: true
-          install: true
+          install: false
           config-file: cypress.config.ts
 
       - uses: actions/upload-artifact@v1
@@ -197,6 +204,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
+      - name: Cache Cypress Binary
+        id: cache-cypress-binary
+        uses: actions/cache@v3
+        with:
+          path: cypress/cache
+          key: cypress-binary-${{ hashFiles('**/pnpm-lock.yaml') }}
+
       - name: Install dependencies
         run: pnpm install
 
@@ -214,7 +228,7 @@ jobs:
         with:
           browser: chrome
           working-directory: apps/web
-          install: true
+          install: false
           component: true
 
       - uses: actions/upload-artifact@v1
