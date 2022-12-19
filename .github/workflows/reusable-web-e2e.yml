@@ -53,7 +53,7 @@ jobs:
         with:
           version: 7.5.0
           run_install: false
-          
+
       - name: Get pnpm store directory
         id: pnpm-cache
         shell: bash
@@ -142,7 +142,7 @@ jobs:
           browser: chrome
           record: true
           parallel: true
-          install: false
+          install: true
           config-file: cypress.config.ts
 
       - uses: actions/upload-artifact@v1
@@ -214,7 +214,7 @@ jobs:
         with:
           browser: chrome
           working-directory: apps/web
-          install: false
+          install: true
           component: true
 
       - uses: actions/upload-artifact@v1
