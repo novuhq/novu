@@ -392,8 +392,8 @@ importers:
       '@babel/preset-react': ^7.13.13
       '@babel/preset-typescript': ^7.13.0
       '@babel/runtime': ^7.14.6
-      '@cypress/react': ^6.0.0
-      '@cypress/webpack-dev-server': ^2.0.0
+      '@cypress/react': ^7.0.2
+      '@cypress/webpack-dev-server': ^3.1.2
       '@editorjs/editorjs': ^2.19.3
       '@editorjs/paragraph': ^2.8.0
       '@emotion/babel-plugin': ^11.7.2
@@ -437,7 +437,7 @@ importers:
       babel-plugin-import: ^1.13.3
       chart.js: ^3.7.1
       customize-cra: ^1.0.0
-      cypress: ^10.2.0
+      cypress: ^12.1.0
       cypress-localstorage-commands: ^1.7.0
       cypress-network-idle: ^1.10.0
       cypress-wait-until: ^1.7.2
@@ -491,8 +491,8 @@ importers:
       '@ant-design/icons': 4.7.0_sfoxds7t5ydpegc3knd667wn6m
       '@babel/plugin-proposal-optional-chaining': 7.16.7_@babel+core@7.20.2
       '@babel/plugin-transform-runtime': 7.17.0_@babel+core@7.20.2
-      '@cypress/react': 6.0.0_bnhr3pe5227n6elfry3ytbtbtm
-      '@cypress/webpack-dev-server': 2.0.0_webpack@5.74.0
+      '@cypress/react': 7.0.2_ruijhr2oz5fcnnlwuxcoqw7tii
+      '@cypress/webpack-dev-server': 3.1.2_webpack@5.74.0
       '@editorjs/editorjs': 2.23.2
       '@editorjs/paragraph': 2.8.0
       '@emotion/babel-plugin': 11.7.2_@babel+core@7.20.2
@@ -581,8 +581,8 @@ importers:
       '@storybook/react': 6.4.21_cviayul4nqmvsyh6span2iqa5y
       '@testing-library/jest-dom': 4.2.4
       '@types/testing-library__jest-dom': 5.14.5
-      cypress: 10.2.0
-      cypress-localstorage-commands: 1.7.0_cypress@10.2.0
+      cypress: 12.1.0
+      cypress-localstorage-commands: 1.7.0_cypress@12.1.0
       cypress-network-idle: 1.10.0
       cypress-wait-until: 1.7.2
       eslint-plugin-cypress: 2.12.1_eslint@8.20.0
@@ -15325,8 +15325,8 @@ packages:
     resolution: {integrity: sha512-JZButFdZ1+/xAfpguQHoabIXkcqRRKpMrWKBkpEZZyxfY9C1DpADFB8PEqGSTeFr135SaTRfKqGKx5xSCLI7ZQ==}
     engines: {node: '>=10'}
 
-  /@cypress/react/6.0.0_bnhr3pe5227n6elfry3ytbtbtm:
-    resolution: {integrity: sha512-XHAtsu3LA3YWVwdFbr3d3ZgvORVZgIvAwwk9BEWJK7Wcveu/+F9lO5DeKgUa66H21tZXKonF+NsErojKZPvR+g==}
+  /@cypress/react/7.0.2_ruijhr2oz5fcnnlwuxcoqw7tii:
+    resolution: {integrity: sha512-TTV7XNMDOO9mZUFWiGbd44Od/jqMVX/QbHYKQmK1XT3nIVFs0EvKJuHJmwN7wxLOR/+6twtyX6vTD8z8XBTliQ==}
     peerDependencies:
       '@types/react': ^16.9.16 || ^17.0.0
       cypress: '*'
@@ -15337,12 +15337,9 @@ packages:
         optional: true
     dependencies:
       '@types/react': 17.0.43
-      cypress: 10.2.0
-      debug: 4.3.4
+      cypress: 12.1.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-    transitivePeerDependencies:
-      - supports-color
     dev: false
 
   /@cypress/request/2.88.10:
@@ -15368,8 +15365,8 @@ packages:
       tunnel-agent: 0.6.0
       uuid: 8.3.2
 
-  /@cypress/webpack-dev-server/2.0.0_webpack@5.74.0:
-    resolution: {integrity: sha512-N3NOwe+tX+jEgl0+ljxGfbIbeXi/h46JvA2nTGUCGFUfyOGElfBtBPjS5KeCix2k7wM2f4L4StkzlpDkIRBlcg==}
+  /@cypress/webpack-dev-server/3.1.2_webpack@5.74.0:
+    resolution: {integrity: sha512-0EccZXtzA0vIoVBbzWcUrYzDXBwP9EknYEwWPeqO4ss6Pnxgy0aHi/dAL+l0nlsPzoAzylOjYxxUX4TU/t56MA==}
     dependencies:
       find-up: 6.3.0
       fs-extra: 9.1.0
@@ -15377,8 +15374,8 @@ packages:
       html-webpack-plugin-5: /html-webpack-plugin/5.5.0_webpack@5.74.0
       local-pkg: 0.4.1
       speed-measure-webpack-plugin: 1.4.2_webpack@5.74.0
-      tslib: 2.4.0
-      webpack-dev-server: 4.9.2_webpack@5.74.0
+      tslib: 2.4.1
+      webpack-dev-server: 4.11.1_webpack@5.74.0
       webpack-merge: 5.8.0
     transitivePeerDependencies:
       - bufferutil
@@ -23947,7 +23944,7 @@ packages:
       core-js: 3.21.1
       global: 4.4.0
       lodash: 4.17.21
-      qs: 6.10.3
+      qs: 6.11.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       regenerator-runtime: 0.13.10
@@ -24346,7 +24343,7 @@ packages:
       util-deprecate: 1.0.2
       watchpack: 2.4.0
       webpack: 4.46.0
-      ws: 8.7.0
+      ws: 8.11.0
     transitivePeerDependencies:
       - '@types/react'
       - bluebird
@@ -24421,7 +24418,7 @@ packages:
       util-deprecate: 1.0.2
       watchpack: 2.4.0
       webpack: 4.46.0
-      ws: 8.7.0
+      ws: 8.11.0
     transitivePeerDependencies:
       - '@types/react'
       - bluebird
@@ -24469,13 +24466,13 @@ packages:
       better-opn: 2.1.1
       boxen: 5.1.2
       chalk: 4.1.2
-      cli-table3: 0.6.1
+      cli-table3: 0.6.2
       commander: 6.2.1
       compression: 1.7.4
       core-js: 3.21.1
       cpy: 8.1.2
       detect-port: 1.3.0
-      express: 4.17.3
+      express: 4.18.1
       file-system-cache: 1.0.5
       fs-extra: 9.1.0
       globby: 11.1.0
@@ -24495,7 +24492,7 @@ packages:
       util-deprecate: 1.0.2
       watchpack: 2.3.1
       webpack: 4.46.0
-      ws: 8.5.0
+      ws: 8.11.0
     transitivePeerDependencies:
       - '@types/react'
       - bluebird
@@ -24988,7 +24985,7 @@ packages:
       chalk: 4.1.2
       core-js: 3.21.1
       css-loader: 3.6.0_webpack@4.46.0
-      express: 4.17.3
+      express: 4.18.1
       file-loader: 6.2.0_webpack@4.46.0
       file-system-cache: 1.0.5
       find-up: 5.0.0
@@ -25150,7 +25147,7 @@ packages:
       core-js: 3.21.1
       global: 4.4.0
       lodash: 4.17.21
-      qs: 6.10.3
+      qs: 6.11.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       regenerator-runtime: 0.13.10
@@ -25380,7 +25377,7 @@ packages:
       history: 5.0.0
       lodash: 4.17.21
       memoizerific: 1.11.3
-      qs: 6.10.3
+      qs: 6.11.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-router: 6.2.2_react@17.0.2
@@ -25400,7 +25397,7 @@ packages:
       history: 5.0.0
       lodash: 4.17.21
       memoizerific: 1.11.3
-      qs: 6.10.3
+      qs: 6.11.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-router: 6.2.2_react@17.0.2
@@ -27289,7 +27286,7 @@ packages:
       functional-red-black-tree: 1.0.1
       ignore: 5.2.0
       regexpp: 3.2.0
-      semver: 7.3.7
+      semver: 7.3.8
       tsutils: 3.21.0_typescript@4.7.2
       typescript: 4.7.2
     transitivePeerDependencies:
@@ -27316,7 +27313,7 @@ packages:
       functional-red-black-tree: 1.0.1
       ignore: 5.2.0
       regexpp: 3.2.0
-      semver: 7.3.7
+      semver: 7.3.8
       tsutils: 3.21.0_typescript@4.5.4
       typescript: 4.5.4
     transitivePeerDependencies:
@@ -27652,7 +27649,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.3.7
+      semver: 7.3.8
       tsutils: 3.21.0_typescript@4.5.4
       typescript: 4.5.4
     transitivePeerDependencies:
@@ -27693,7 +27690,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.3.7
+      semver: 7.3.8
       tsutils: 3.21.0_typescript@4.5.4
       typescript: 4.5.4
     transitivePeerDependencies:
@@ -27713,7 +27710,7 @@ packages:
       debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.3.7
+      semver: 7.3.8
       tsutils: 3.21.0_typescript@4.7.2
       typescript: 4.7.2
     transitivePeerDependencies:
@@ -32249,6 +32246,7 @@ packages:
       string-width: 4.2.3
     optionalDependencies:
       colors: 1.4.0
+    dev: true
 
   /cli-table3/0.6.2:
     resolution: {integrity: sha512-QyavHCaIC80cMivimWu4aWHilIpiDpfm3hGmqAmXVL1UsnbLuBSMd21hTX6VY4ZSDSM73ESLeF8TOYId3rBTbw==}
@@ -32494,6 +32492,7 @@ packages:
   /colors/1.4.0:
     resolution: {integrity: sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==}
     engines: {node: '>=0.1.90'}
+    dev: true
 
   /columnify/1.6.0:
     resolution: {integrity: sha512-lomjuFZKfM6MSAnV9aCZC9sc0qGbmZdfygNv+nCpqVkSKdCxCklLtd16O0EILGkImHw9ZpHkAnHaB+8Zxq5W6Q==}
@@ -34450,13 +34449,13 @@ packages:
       mocha: 10.2.0
     dev: true
 
-  /cypress-localstorage-commands/1.7.0_cypress@10.2.0:
+  /cypress-localstorage-commands/1.7.0_cypress@12.1.0:
     resolution: {integrity: sha512-4v4FrDRPimMStWmiGikyN7OmO2rH0MLI7DMk76dBpb9/sJqCDwa7fAHTUDx6avUEDmO7TFQFgaT3OQTr1HqasQ==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       cypress: '>=2.1.0'
     dependencies:
-      cypress: 10.2.0
+      cypress: 12.1.0
     dev: true
 
   /cypress-network-idle/1.10.0:
@@ -34517,9 +34516,9 @@ packages:
       yauzl: 2.10.0
     dev: true
 
-  /cypress/10.2.0:
-    resolution: {integrity: sha512-+i9lY5ENlfi2mJwsggzR+XASOIgMd7S/Gd3/13NCpv596n3YSplMAueBTIxNLcxDpTcIksp+9pM3UaDrJDpFqA==}
-    engines: {node: '>=12.0.0'}
+  /cypress/12.1.0:
+    resolution: {integrity: sha512-7fz8N84uhN1+ePNDsfQvoWEl4P3/VGKKmAg+bJQFY4onhA37Ys+6oBkGbNdwGeC7n2QqibNVPhk8x3YuQLwzfw==}
+    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
     hasBin: true
     requiresBuild: true
     dependencies:
@@ -34542,7 +34541,7 @@ packages:
       dayjs: 1.11.0
       debug: 4.3.4_supports-color@8.1.1
       enquirer: 2.3.6
-      eventemitter2: 6.4.5
+      eventemitter2: 6.4.7
       execa: 4.1.0
       executable: 4.1.1
       extract-zip: 2.0.1_supports-color@8.1.1
@@ -34560,7 +34559,7 @@ packages:
       pretty-bytes: 5.6.0
       proxy-from-env: 1.0.0
       request-progress: 3.0.0
-      semver: 7.3.7
+      semver: 7.3.8
       supports-color: 8.1.1
       tmp: 0.2.1
       untildify: 4.0.0
@@ -37893,6 +37892,10 @@ packages:
 
   /eventemitter2/6.4.5:
     resolution: {integrity: sha512-bXE7Dyc1i6oQElDG0jMRZJrRAn9QR2xyyFGmBdZleNmyQX0FqGYmhZIrIrpPfm/w//LTo4tVQGOGQcGCb5q9uw==}
+    dev: true
+
+  /eventemitter2/6.4.7:
+    resolution: {integrity: sha512-tYUSVOGeQPKt/eC1ABfhHy5Xd96N3oIijJvN3O9+TsC28T5V9yX9oEfEK5faP0EFSNVOG97qtAS68GBrQB2hDg==}
 
   /eventemitter3/3.1.2:
     resolution: {integrity: sha512-tvtQIeLVHjDkJYnzf2dgVMxfuSGJeM/7UCG17TT4EumTfNtF+0nebF/4zWOIkCreAbtNqhGEboB6BWrwqNaw4Q==}
@@ -45481,11 +45484,11 @@ packages:
   /loader-utils/3.2.0:
     resolution: {integrity: sha512-HVl9ZqccQihZ7JM85dco1MvO9G+ONvxoGa9rkhzFsneGLKSUg1gJf9bWzhRhcvm2qChhWpebQhP44qxjKIUCaQ==}
     engines: {node: '>= 12.13.0'}
+    dev: false
 
   /loader-utils/3.2.1:
     resolution: {integrity: sha512-ZvFw1KWS3GVyYBYb7qkmRM/WwL2TQQBxgCK62rlvm4WpVQ23Nb4tYjApUlfjrEGvOs7KHEsmyUn75OHZrJMWPw==}
     engines: {node: '>= 12.13.0'}
-    dev: true
 
   /local-pkg/0.4.1:
     resolution: {integrity: sha512-lL87ytIGP2FU5PWwNDo0w3WhIo2gopIAxPg9RxDYF7m4rr5ahuZxP22xnJHIvaLTe4Z9P6uKKY2UHiwyB4pcrw==}
@@ -50148,7 +50151,7 @@ packages:
       loader-utils: 2.0.2
       postcss: 7.0.39
       schema-utils: 3.1.1
-      semver: 7.3.7
+      semver: 7.3.8
       webpack: 4.46.0
 
   /postcss-loader/6.2.1_m6qh27jiicejwnzfgs742cokpe:
@@ -50161,7 +50164,7 @@ packages:
       cosmiconfig: 7.0.1
       klona: 2.0.5
       postcss: 8.4.14
-      semver: 7.3.7
+      semver: 7.3.8
       webpack: 5.74.0
 
   /postcss-loader/6.2.1_xvg4ntyrrwt57qzvggqcbeozu4:
@@ -52754,7 +52757,7 @@ packages:
       gzip-size: 6.0.0
       immer: 9.0.12
       is-root: 2.1.0
-      loader-utils: 3.2.0
+      loader-utils: 3.2.1
       open: 8.4.0
       pkg-up: 3.1.0
       prompts: 2.4.2
@@ -52790,7 +52793,7 @@ packages:
       gzip-size: 6.0.0
       immer: 9.0.12
       is-root: 2.1.0
-      loader-utils: 3.2.0
+      loader-utils: 3.2.1
       open: 8.4.0
       pkg-up: 3.1.0
       prompts: 2.4.2
@@ -60451,7 +60454,7 @@ packages:
       spdy: 4.0.2
       webpack: 5.74.0
       webpack-dev-middleware: 5.3.3_webpack@5.74.0
-      ws: 8.8.0
+      ws: 8.11.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -60499,7 +60502,7 @@ packages:
       spdy: 4.0.2
       webpack: 5.75.0
       webpack-dev-middleware: 5.3.3_webpack@5.75.0
-      ws: 8.8.0
+      ws: 8.11.0
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -61814,22 +61817,9 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
-    dev: true
 
   /ws/8.2.3:
     resolution: {integrity: sha512-wBuoj1BDpC6ZQ1B7DWQBYVLphPWkm8i9Y0/3YdHjHKHiohOJ1ws+3OccDWtH+PoC9DZD5WOTrJvNbWvjS6JWaA==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: ^5.0.2
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
-  /ws/8.5.0:
-    resolution: {integrity: sha512-BWX0SWVgLPzYwF8lTzEy1egjhS4S4OEAHfsO8o65WOVsrnSRGaSiUaa9e0ggGlkMTtBlmOpEXiie9RUcBO86qg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -61863,6 +61853,7 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+    dev: false
 
   /xdg-basedir/3.0.0:
     resolution: {integrity: sha512-1Dly4xqlulvPD3fZUQJLY+FUIeqN3N2MM3uqe4rCJftAvOjFa3jFGfctOgluGx4ahPbUCsZkmJILiP0Vi4T6lQ==}
