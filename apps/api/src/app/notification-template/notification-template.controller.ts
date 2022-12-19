@@ -92,7 +92,7 @@ export class NotificationTemplateController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        templateId,
+        id: templateId,
         name: body.name,
         tags: body.tags,
         description: body.description,
