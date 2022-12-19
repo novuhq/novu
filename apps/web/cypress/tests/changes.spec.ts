@@ -93,9 +93,9 @@ function createNotification() {
   cy.getByTestId('description').type('This is a test description for a test title');
   cy.get('body').click();
 
-  cy.getByTestId('workflowButton').click({ force: true });
+  cy.getByTestId('workflowButton').click();
 
-  cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer, force: true });
+  cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer });
 
   cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer, force: true });
 
