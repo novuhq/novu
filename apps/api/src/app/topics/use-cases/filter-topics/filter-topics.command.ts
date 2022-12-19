@@ -2,9 +2,9 @@ import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 import { TopicKey } from '../../types';
 
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class FilterTopicsCommand extends EnvironmentWithUserCommand {
+export class FilterTopicsCommand extends EnvironmentCommand {
   @IsString()
   @IsOptional()
   key?: TopicKey;

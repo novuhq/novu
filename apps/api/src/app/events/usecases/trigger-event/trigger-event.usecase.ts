@@ -16,9 +16,9 @@ import {
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
+
 import { TriggerEventCommand } from './trigger-event.command';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
+import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
@@ -78,6 +78,13 @@ export class TriggerEvent {
       return {
         acknowledged: true,
         status: 'no_workflow_steps_defined',
+      };
+    }
+
+    if (!template.steps?.some((step) => step.active)) {
+      return {
+        acknowledged: true,
+        status: 'no_workflow_active_steps_defined',
       };
     }
 
