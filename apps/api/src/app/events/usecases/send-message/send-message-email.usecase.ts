@@ -209,6 +209,21 @@ export class SendMessageEmail extends SendMessageType {
       })
     );
 
+    if (!html) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.MESSAGE_CONTENT_SYNTAX_ERROR,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          messageId: message._id,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(payload),
+        })
+      );
+    }
+
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
       (attachment) =>
         <IAttachmentOptions>{

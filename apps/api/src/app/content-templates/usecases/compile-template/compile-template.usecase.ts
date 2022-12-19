@@ -42,7 +42,7 @@ const cache = new Map();
 
 @Injectable()
 export class CompileTemplate {
-  async execute(command: CompileTemplateCommand): Promise<string> {
+  async execute(command: CompileTemplateCommand): Promise<string | null> {
     let templateContent = cache.get(command.templateId);
     if (!templateContent) {
       templateContent = await this.loadTemplateContent('basic.handlebars');
@@ -54,8 +54,14 @@ export class CompileTemplate {
     }
 
     const template = Handlebars.compile(templateContent);
+    let html = null;
+    try {
+      html = template(command.data);
 
-    return template(command.data);
+      return html;
+    } catch (error) {
+      return html;
+    }
   }
 
   private async loadTemplateContent(name: string) {
