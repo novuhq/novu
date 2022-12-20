@@ -172,3 +172,5 @@ jobs:
         with:
           environment: development
           sourcemaps: apps/api/dist
+          ignore_empty: true
+          ignore_missing: true
