@@ -55,8 +55,8 @@ describe('User Sign-up and Login', function () {
       cy.task('passwordResetToken', this.session.user._id).then((token) => {
         cy.visit('/auth/reset/' + token);
       });
-      cy.getByTestId('password').type('123e3e3e3!');
-      cy.getByTestId('password-repeat').type('123e3e3e3!');
+      cy.getByTestId('password').type('A123e3e3e3!');
+      cy.getByTestId('password-repeat').focus().type('A123e3e3e3!');
 
       cy.getByTestId('submit-btn').click();
     });
