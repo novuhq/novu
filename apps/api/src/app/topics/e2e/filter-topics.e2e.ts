@@ -3,6 +3,8 @@ import { SubscriberEntity, TopicSubscribersRepository } from '@novu/dal';
 import { ExternalSubscriberId, TopicKey } from '@novu/shared';
 import { expect } from 'chai';
 
+import { CreateTopicResponseDto } from '../dtos';
+
 const BASE_PATH = '/v1/topics';
 
 describe('Filter topics - /topics (GET)', async () => {
@@ -141,7 +143,7 @@ describe('Filter topics - /topics (GET)', async () => {
   });
 });
 
-const createNewTopic = async (session: UserSession, topicKey: string): Promise<string> => {
+const createNewTopic = async (session: UserSession, topicKey: string): Promise<CreateTopicResponseDto> => {
   const result = await session.testAgent
     .post(BASE_PATH)
     .send({
@@ -153,9 +155,12 @@ const createNewTopic = async (session: UserSession, topicKey: string): Promise<s
 
   expect(result.status).to.eql(201);
 
-  const { _id } = result.body.data;
+  const { _id, key } = result.body.data;
 
-  return _id;
+  return {
+    _id,
+    key,
+  };
 };
 
 const addSubscribersToTopic = async (

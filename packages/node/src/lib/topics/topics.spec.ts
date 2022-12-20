@@ -55,6 +55,7 @@ describe('Novu Node.js package - Topics class', () => {
 
     const data = {
       _id: 'topic-id',
+      key,
     };
 
     const mockedResponse = {
@@ -170,7 +171,10 @@ describe('Novu Node.js package - Topics class', () => {
     const topicId = 'topic-id';
     const subscribers = ['subscriber-id-1', 'subscriber-id-2'];
 
-    mockedAxios.post.mockResolvedValue({});
+    const mockedResponse = {
+      succeeded: subscribers,
+    };
+    mockedAxios.post.mockResolvedValue(mockedResponse);
 
     const result = await novu.topics.addSubscribers(topicId, { subscribers });
 
@@ -179,7 +183,7 @@ describe('Novu Node.js package - Topics class', () => {
       `/topics/${topicId}/subscribers`,
       { subscribers }
     );
-    expect(result).toStrictEqual({});
+    expect(result).toStrictEqual(mockedResponse);
   });
 
   test('should remove subscribers', async () => {

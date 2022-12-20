@@ -1,4 +1,5 @@
 import { SubscriberEntity } from '@novu/dal';
+import { TopicId } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
@@ -12,7 +13,7 @@ describe('Remove subscribers to topic - /topics/:topicKey/subscribers/removal (P
   let subscriber: SubscriberEntity;
   let secondSubscriber: SubscriberEntity;
   let thirdSubscriber: SubscriberEntity;
-  let topicId: string;
+  let topicId: TopicId;
   let getTopicUrl: string;
   let removeSubscribersUrl: string;
 
@@ -32,6 +33,7 @@ describe('Remove subscribers to topic - /topics/:topicKey/subscribers/removal (P
     expect(response.statusCode).to.eql(201);
     topicId = response.body.data._id;
     expect(topicId).to.exist;
+    expect(response.body.data.key).to.eql(topicKey);
 
     getTopicUrl = `${URL}/${topicKey}`;
     const addSubscribersUrl = `${getTopicUrl}/subscribers`;
