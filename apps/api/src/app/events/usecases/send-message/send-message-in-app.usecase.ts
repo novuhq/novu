@@ -154,7 +154,7 @@ export class SendMessageInApp extends SendMessageBase {
         cta: inAppChannel.template.cta,
         _feedId: inAppChannel.template._feedId,
         transactionId: command.transactionId,
-        content,
+        content: this.storeContent() ? content : null,
         payload: messagePayload,
         templateIdentifier: command.identifier,
         _jobId: command.jobId,
@@ -221,10 +221,12 @@ export class SendMessageInApp extends SendMessageBase {
         subscriberId: command.subscriberId,
         code: LogCodeEnum.IN_APP_MESSAGE_CREATED,
         templateId: notification._templateId,
-        raw: {
-          payload: command.payload,
-          triggerIdentifier: command.identifier,
-        },
+        raw: this.storeContent()
+          ? {
+              payload: command.payload,
+              triggerIdentifier: command.identifier,
+            }
+          : null,
       })
     );
 

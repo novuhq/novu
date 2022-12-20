@@ -161,7 +161,7 @@ export class SendMessageEmail extends SendMessageBase {
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
-      content,
+      content: this.storeContent() ? content : null,
       subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
@@ -182,7 +182,7 @@ export class SendMessageEmail extends SendMessageBase {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(payload),
+        raw: this.storeContent() ? JSON.stringify(payload) : null,
       })
     );
 

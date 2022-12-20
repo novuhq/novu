@@ -255,7 +255,7 @@ export class SendMessagePush extends SendMessageBase {
       channel: ChannelTypeEnum.PUSH,
       transactionId: command.transactionId,
       deviceTokens: target,
-      content,
+      content: this.storeContent() ? content : null,
       title,
       payload: payload as never,
       overrides: overrides as never,
@@ -272,7 +272,7 @@ export class SendMessagePush extends SendMessageBase {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(content),
+        raw: this.storeContent() ? JSON.stringify(content) : null,
       })
     );
 

@@ -145,7 +145,7 @@ export class SendMessageSms extends SendMessageBase {
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
       phone,
-      content,
+      content: this.storeContent() ? content : null,
       providerId: integration?.providerId,
       payload: messagePayload,
       overrides,
@@ -162,7 +162,7 @@ export class SendMessageSms extends SendMessageBase {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(messagePayload),
+        raw: this.storeContent() ? JSON.stringify(messagePayload) : null,
       })
     );
 

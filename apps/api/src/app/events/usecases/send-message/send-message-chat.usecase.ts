@@ -168,7 +168,7 @@ export class SendMessageChat extends SendMessageBase {
       channel: ChannelTypeEnum.CHAT,
       transactionId: command.transactionId,
       chatWebhookUrl: chatWebhookUrl,
-      content,
+      content: this.storeContent() ? content : null,
       providerId: subscriberChannel.providerId,
       _jobId: command.jobId,
     });
@@ -197,7 +197,7 @@ export class SendMessageChat extends SendMessageBase {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(content),
+        raw: this.storeContent() ? JSON.stringify(content) : null,
       })
     );
 

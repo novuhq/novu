@@ -38,4 +38,7 @@ export abstract class SendMessageBase extends SendMessageType {
       )
     )[0];
   }
+  protected storeContent(): boolean {
+    return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
+  }
 }
