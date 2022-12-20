@@ -182,7 +182,7 @@ export class SendMessageEmail extends SendMessageBase {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(payload),
+        raw: this.storeContent() ? JSON.stringify(payload) : null,
       })
     );
 

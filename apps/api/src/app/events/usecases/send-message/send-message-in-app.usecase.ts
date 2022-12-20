@@ -221,10 +221,12 @@ export class SendMessageInApp extends SendMessageBase {
         subscriberId: command.subscriberId,
         code: LogCodeEnum.IN_APP_MESSAGE_CREATED,
         templateId: notification._templateId,
-        raw: {
-          payload: command.payload,
-          triggerIdentifier: command.identifier,
-        },
+        raw: this.storeContent()
+          ? {
+              payload: command.payload,
+              triggerIdentifier: command.identifier,
+            }
+          : null,
       })
     );
 

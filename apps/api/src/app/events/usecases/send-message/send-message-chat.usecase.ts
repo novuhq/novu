@@ -197,7 +197,7 @@ export class SendMessageChat extends SendMessageBase {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(content),
+        raw: this.storeContent() ? JSON.stringify(content) : null,
       })
     );
 
