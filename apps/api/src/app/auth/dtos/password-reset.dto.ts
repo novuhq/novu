@@ -1,10 +1,6 @@
-import { IsDefined, IsEmail, IsOptional, MinLength, Matches, MaxLength } from 'class-validator';
+import { IsDefined, MinLength, Matches, MaxLength } from 'class-validator';
 import { passwordConstraints } from '@novu/shared';
-export class UserRegistrationBodyDto {
-  @IsDefined()
-  @IsEmail()
-  email: string;
-
+export class PasswordResetBodyDto {
   @IsDefined()
   @MinLength(passwordConstraints.minLength)
   @MaxLength(passwordConstraints.maxLength)
@@ -16,11 +12,5 @@ export class UserRegistrationBodyDto {
   password: string;
 
   @IsDefined()
-  firstName: string;
-
-  @IsDefined()
-  lastName: string;
-
-  @IsOptional()
-  organizationName: string;
+  token: string;
 }
