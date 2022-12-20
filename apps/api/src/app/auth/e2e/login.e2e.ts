@@ -10,7 +10,7 @@ describe('User login - /auth/login (POST)', async () => {
   const userRepository = new UserRepository();
   const userCredentials = {
     email: 'Testy.test22@gmail.com',
-    password: '123456789',
+    password: '123Qwerty@',
   };
 
   before(async () => {
