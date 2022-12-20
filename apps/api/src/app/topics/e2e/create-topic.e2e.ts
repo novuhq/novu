@@ -38,6 +38,7 @@ describe('Topic creation - /topics (POST)', async () => {
     const { body } = response;
     expect(body.data._id).to.exist;
     expect(body.data._id).to.be.string;
+    expect(body.data.key).to.eql(topicKey);
   });
 
   it('should throw an error when trying to create a topic with a key already used', async () => {
@@ -53,6 +54,7 @@ describe('Topic creation - /topics (POST)', async () => {
     const { body } = response;
     expect(body.data._id).to.exist;
     expect(body.data._id).to.be.string;
+    expect(body.data.key).to.eql(topicKey);
 
     const conflictResponse = await session.testAgent.post(URL).send({
       key: topicKey,
