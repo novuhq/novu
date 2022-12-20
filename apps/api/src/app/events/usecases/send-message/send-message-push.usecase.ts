@@ -58,7 +58,7 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   public async execute(command: SendMessageCommand) {
-    await this.initialize(command);
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
 
     Sentry.addBreadcrumb({
       message: 'Sending Push',
@@ -68,7 +68,7 @@ export class SendMessagePush extends SendMessageBase {
     const notification = await this.notificationRepository.findById(command.notificationId);
 
     const data = {
-      subscriber: this.subscriber,
+      subscriber: subscriber,
       step: {
         digest: !!command.events.length,
         events: command.events,
@@ -136,7 +136,7 @@ export class SendMessagePush extends SendMessageBase {
     }
 
     const overrides = command.overrides[integration.providerId] || {};
-    const pushChannels = this.subscriber.channels.filter((chan) =>
+    const pushChannels = subscriber.channels.filter((chan) =>
       Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
     );
 
@@ -255,7 +255,7 @@ export class SendMessagePush extends SendMessageBase {
       channel: ChannelTypeEnum.PUSH,
       transactionId: command.transactionId,
       deviceTokens: target,
-      content,
+      content: this.storeContent() ? content : null,
       title,
       payload: payload as never,
       overrides: overrides as never,
@@ -272,7 +272,7 @@ export class SendMessagePush extends SendMessageBase {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(content),
+        raw: this.storeContent() ? JSON.stringify(content) : null,
       })
     );
 

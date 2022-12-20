@@ -23,7 +23,10 @@ import {
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
-import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
@@ -55,7 +58,7 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   public async execute(command: SendMessageCommand) {
-    await this.initialize(command);
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
 
     Sentry.addBreadcrumb({
       message: 'Sending Chat',
@@ -65,7 +68,7 @@ export class SendMessageChat extends SendMessageBase {
 
     let content = '';
     const data = {
-      subscriber: this.subscriber,
+      subscriber: subscriber,
       step: {
         digest: !!command.events.length,
         events: command.events,
@@ -98,7 +101,7 @@ export class SendMessageChat extends SendMessageBase {
       return;
     }
 
-    const chatChannels = this.subscriber.channels.filter((chan) =>
+    const chatChannels = subscriber.channels.filter((chan) =>
       Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
     );
 
@@ -129,6 +132,17 @@ export class SendMessageChat extends SendMessageBase {
     chatChannel,
     content: string
   ) {
+    const integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        providerId: subscriberChannel.providerId,
+        channelType: ChannelTypeEnum.CHAT,
+        findOne: true,
+        active: true,
+      })
+    );
+
     const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
 
     if (!chatWebhookUrl) {
@@ -154,12 +168,12 @@ export class SendMessageChat extends SendMessageBase {
       channel: ChannelTypeEnum.CHAT,
       transactionId: command.transactionId,
       chatWebhookUrl: chatWebhookUrl,
-      content,
+      content: this.storeContent() ? content : null,
       providerId: subscriberChannel.providerId,
       _jobId: command.jobId,
     });
 
-    if (!this.integration) {
+    if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -183,17 +197,17 @@ export class SendMessageChat extends SendMessageBase {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(content),
+        raw: this.storeContent() ? JSON.stringify(content) : null,
       })
     );
 
-    if (chatWebhookUrl && this.integration) {
-      await this.sendMessage(chatWebhookUrl, this.integration, content, message, command, notification);
+    if (chatWebhookUrl && integration) {
+      await this.sendMessage(chatWebhookUrl, integration, content, message, command, notification);
 
       return;
     }
 
-    await this.sendErrors(chatWebhookUrl, this.integration, message, command, notification);
+    await this.sendErrors(chatWebhookUrl, integration, message, command, notification);
   }
 
   private async sendErrors(

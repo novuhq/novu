@@ -20,7 +20,10 @@ import { CompileTemplate } from '../../../content-templates/usecases/compile-tem
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
-import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
@@ -53,19 +56,27 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   public async execute(command: SendMessageCommand) {
-    await this.initialize(command);
-
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.EMAIL,
+        findOne: true,
+        active: true,
+      })
+    );
     const emailChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
     const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
-    const email = command.payload.email || this.subscriber.email;
+    const email = command.payload.email || subscriber.email;
 
     Sentry.addBreadcrumb({
       message: 'Sending Email',
     });
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
 
-    if (!this.integration) {
+    if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -79,7 +90,7 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
-    const overrides = command.overrides[this.integration?.providerId] || {};
+    const overrides = command.overrides[integration?.providerId] || {};
     let subject = '';
     let preheader = emailChannel.template.preheader;
     let content: string | IEmailBlock[] = '';
@@ -97,7 +108,7 @@ export class SendMessageEmail extends SendMessageBase {
         events: command.events,
         total_count: command.events.length,
       },
-      subscriber: this.subscriber,
+      subscriber: subscriber,
       ...command.payload,
     };
 
@@ -106,7 +117,7 @@ export class SendMessageEmail extends SendMessageBase {
         emailChannel.template.subject,
         emailChannel.template.subject,
         organization,
-        this.subscriber,
+        subscriber,
         command,
         preheader
       );
@@ -115,14 +126,14 @@ export class SendMessageEmail extends SendMessageBase {
         isEditorMode,
         emailChannel,
         command,
-        this.subscriber,
+        subscriber,
         subject,
         organization,
         preheader
       );
 
       if (preheader) {
-        preheader = await this.renderContent(preheader, subject, organization, this.subscriber, command, preheader);
+        preheader = await this.renderContent(preheader, subject, organization, subscriber, command, preheader);
       }
     } catch (e) {
       await this.createExecutionDetails.execute(
@@ -150,12 +161,12 @@ export class SendMessageEmail extends SendMessageBase {
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
-      content,
+      content: this.storeContent() ? content : null,
       subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
       email,
-      providerId: this.integration?.providerId,
+      providerId: integration?.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
@@ -171,7 +182,7 @@ export class SendMessageEmail extends SendMessageBase {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(payload),
+        raw: this.storeContent() ? JSON.stringify(payload) : null,
       })
     );
 
@@ -213,17 +224,17 @@ export class SendMessageEmail extends SendMessageBase {
       to: email,
       subject,
       html,
-      from: command.payload.$sender_email || this.integration?.credentials.from || 'no-reply@novu.co',
+      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
       attachments,
       id: message._id,
     };
 
-    if (email && this.integration) {
-      await this.sendMessage(this.integration, mailData, message, command, notification);
+    if (email && integration) {
+      await this.sendMessage(integration, mailData, message, command, notification);
 
       return;
     }
-    await this.sendErrors(email, this.integration, message, command, notification);
+    await this.sendErrors(email, integration, message, command, notification);
   }
 
   private async sendErrors(

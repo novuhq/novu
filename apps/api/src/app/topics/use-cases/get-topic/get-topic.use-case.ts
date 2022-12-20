@@ -18,7 +18,7 @@ export class GetTopicUseCase {
 
     if (!topic) {
       throw new NotFoundException(
-        `Topic not found for id ${command.topicKey} for the organization ${command.organizationId} in the environment ${command.environmentId}`
+        `Topic not found for id ${command.topicKey} in the environment ${command.environmentId}`
       );
     }
 
