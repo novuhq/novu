@@ -310,22 +310,19 @@ describe('Workflow Editor - Main Functionality', function () {
 
   it('New template button should be disabled in the Production', function () {
     cy.visit('/templates');
+    cy.waitForNetworkIdle(500);
 
-    cy.getByTestId('environment-switch')
-      .find(`input[value="Production"] ~ label`)
-      .click({ force: true })
-      .waitForNetworkIdle(500);
+    cy.getByTestId('environment-switch').find(`input[value="Production"] ~ label`).click();
 
     cy.getByTestId('create-template-btn').should('be.disabled');
   });
 
   it('Should not allow to go to New Template page in Production', function () {
     cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
 
-    cy.getByTestId('environment-switch')
-      .find(`input[value="Production"] ~ label`)
-      .click({ force: true })
-      .waitForNetworkIdle(500);
+    cy.getByTestId('environment-switch').find('.mantine-SegmentedControl-controlActive');
+    cy.getByTestId('environment-switch').find(`input[value="Production"] ~ label`).click();
 
     cy.location('pathname').should('equal', `/templates`);
   });
