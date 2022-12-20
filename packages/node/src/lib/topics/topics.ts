@@ -1,5 +1,6 @@
 import { AxiosInstance } from 'axios';
-import { WithHttp } from '../novu.interface';
+import { TopicKey, TopicName } from '@novu/shared';
+
 import {
   ITopicPayload,
   ITopicPaginationPayload,
@@ -7,15 +8,17 @@ import {
   ITopicSubscribersPayload,
 } from './topic.interface';
 
+import { WithHttp } from '../novu.interface';
+
 export class Topics extends WithHttp implements ITopics {
-  async addSubscribers(topicKey: string, data: ITopicSubscribersPayload) {
+  async addSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload) {
     return await this.http.post(`/topics/${topicKey}/subscribers`, {
       ...data,
     });
   }
 
-  async removeSubscribers(topicId: string, data: ITopicSubscribersPayload) {
-    return await this.http.post(`/topics/${topicId}/subscribers/removal`, {
+  async removeSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload) {
+    return await this.http.post(`/topics/${topicKey}/subscribers/removal`, {
       ...data,
     });
   }
@@ -29,7 +32,7 @@ export class Topics extends WithHttp implements ITopics {
     });
   }
 
-  async get(topicKey: string) {
+  async get(topicKey: TopicKey) {
     return await this.http.get(`/topics`, {
       params: {
         key: topicKey,
@@ -37,7 +40,7 @@ export class Topics extends WithHttp implements ITopics {
     });
   }
 
-  async rename(topicKey: string, newName: string) {
+  async rename(topicKey: TopicKey, newName: TopicName) {
     return await this.http.patch(`/topics/${topicKey}`, {
       name: newName,
     });

@@ -191,7 +191,10 @@ export class TopicsController {
   })
   @Get('/:topicKey')
   @ApiOperation({ description: 'Get a topic by its topic key' })
-  async getTopic(@UserSession() user: IJwtPayload, @Param('topicKey') topicKey: string): Promise<GetTopicResponseDto> {
+  async getTopic(
+    @UserSession() user: IJwtPayload,
+    @Param('topicKey') topicKey: TopicKey
+  ): Promise<GetTopicResponseDto> {
     return await this.getTopicUseCase.execute(
       GetTopicCommand.create({
         environmentId: user.environmentId,

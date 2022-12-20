@@ -11,12 +11,12 @@ import { ICommonTheme, INovuThemeProvider } from '../store/novu-theme-provider.c
 import { INotificationBellColors, INovuTheme } from '../store/novu-theme.context';
 import { ColorScheme } from '../index';
 
-export interface IDefaultThemeProps {
-  colorScheme: ColorScheme;
-  theme: INovuThemeProvider;
+interface IDefaultThemeProps {
+  colorScheme?: ColorScheme;
+  theme?: INovuThemeProvider;
 }
 
-export function useDefaultTheme(props: IDefaultThemeProps): {
+export function getDefaultTheme(props: IDefaultThemeProps): {
   theme: INovuTheme;
   common: ICommonTheme;
 } {
@@ -33,12 +33,12 @@ export function useDefaultTheme(props: IDefaultThemeProps): {
   };
 }
 
-export interface IDefaultBellColors {
+interface IDefaultBellColors {
   colorScheme?: ColorScheme;
   bellColors: INotificationBellColors;
 }
 
-export function useDefaultBellColors(props: IDefaultBellColors): { bellColors: INotificationBellColors } {
+export function getDefaultBellColors(props: IDefaultBellColors): { bellColors: INotificationBellColors } {
   const colorScheme = props?.colorScheme ? props?.colorScheme : 'light';
 
   const bellColors =

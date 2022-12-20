@@ -10,7 +10,7 @@ import {
   ChannelTypeEnum,
   StepTypeEnum,
   IEmailBlock,
-  TopicDto,
+  TopicId,
   TopicKey,
   TopicName,
   TriggerRecipientsTypeEnum,
@@ -35,7 +35,7 @@ describe('Topic Trigger Event', () => {
     let secondSubscriber: SubscriberEntity;
     let subscribers: SubscriberEntity[];
     let subscriberService: SubscribersService;
-    let topicDto: TopicDto;
+    let createdTopicDto: { _id: TopicId; key: TopicKey };
     let to: TriggerRecipients;
     let triggerEndpointUrl: string;
     const notificationRepository = new NotificationRepository();
@@ -57,9 +57,9 @@ describe('Topic Trigger Event', () => {
 
       const topicKey = 'topic-key-trigger-event';
       const topicName = 'topic-name-trigger-event';
-      topicDto = await createTopic(session, topicKey, topicName);
-      await addSubscribersToTopic(session, topicDto, subscribers);
-      to = [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicDto.key }];
+      createdTopicDto = await createTopic(session, topicKey, topicName);
+      await addSubscribersToTopic(session, createdTopicDto, subscribers);
+      to = [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: createdTopicDto.key }];
     });
 
     afterEach(() => {
@@ -219,8 +219,8 @@ describe('Topic Trigger Event', () => {
     let sixthSubscriber: SubscriberEntity;
     let subscribers: SubscriberEntity[];
     let subscriberService: SubscribersService;
-    let firstTopicDto: TopicDto;
-    let secondTopicDto: TopicDto;
+    let firstTopicDto: { _id: TopicId; key: TopicKey };
+    let secondTopicDto: { _id: TopicId; key: TopicKey };
     let triggerEndpointUrl: string;
     let to: TriggerRecipients;
     const notificationRepository = new NotificationRepository();
@@ -423,7 +423,11 @@ describe('Topic Trigger Event', () => {
   });
 });
 
-const createTopic = async (session: UserSession, key: TopicKey, name: TopicName): Promise<TopicDto> => {
+const createTopic = async (
+  session: UserSession,
+  key: TopicKey,
+  name: TopicName
+): Promise<{ _id: TopicId; key: TopicKey }> => {
   const response = await axiosInstance.post(
     `${session.serverUrl}${TOPIC_PATH}`,
     {
@@ -440,17 +444,22 @@ const createTopic = async (session: UserSession, key: TopicKey, name: TopicName)
   expect(response.status).to.eql(201);
   const body = response.data;
   expect(body.data._id).to.exist;
+  expect(body.data.key).to.eql(key);
 
   return body.data;
 };
 
-const addSubscribersToTopic = async (session: UserSession, topicDto: TopicDto, subscribers: SubscriberEntity[]) => {
+const addSubscribersToTopic = async (
+  session: UserSession,
+  createdTopicDto: { _id: TopicId; key: TopicKey },
+  subscribers: SubscriberEntity[]
+) => {
   const subscriberIds: ExternalSubscriberId[] = subscribers.map(
     (subscriber: SubscriberEntity) => subscriber.subscriberId
   );
 
   const response = await axiosInstance.post(
-    `${session.serverUrl}${TOPIC_PATH}/${topicDto.key}/subscribers`,
+    `${session.serverUrl}${TOPIC_PATH}/${createdTopicDto.key}/subscribers`,
     {
       subscribers: subscriberIds,
     },

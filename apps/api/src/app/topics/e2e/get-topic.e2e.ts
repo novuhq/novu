@@ -22,9 +22,10 @@ describe('Get a topic - /topics/:topicKey (GET)', async () => {
     expect(response.statusCode).to.eql(201);
 
     const { body } = response;
-    const { _id } = body.data;
+    const { _id, key } = body.data;
     expect(_id).to.exist;
     expect(_id).to.be.string;
+    expect(key).to.eq(topicKey);
 
     const url = `${BASE_PATH}/${topicKey}`;
     const getResponse = await session.testAgent.get(url);
@@ -47,7 +48,7 @@ describe('Get a topic - /topics/:topicKey (GET)', async () => {
 
     expect(body.statusCode).to.equal(404);
     expect(body.message).to.eql(
-      `Topic not found for id ${nonExistingTopicKey} for the organization ${session.organization._id} in the environment ${session.environment._id}`
+      `Topic not found for id ${nonExistingTopicKey} in the environment ${session.environment._id}`
     );
     expect(body.error).to.eql('Not Found');
   });

@@ -16,16 +16,37 @@ import {
 import { isSameDay } from 'date-fns';
 import { CreateNotificationTemplateRequestDto } from '../dto';
 
+import axios from 'axios';
+
 describe('Create Notification template - /notification-templates (POST)', async () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
+  const axiosInstance = axios.create();
 
   before(async () => {
     session = new UserSession();
     await session.initialize();
+  });
+
+  it('should be able to create a notification with the API Key', async function () {
+    const templateBody: Partial<CreateNotificationTemplateRequestDto> = {
+      name: 'test api template',
+      description: 'This is a test description',
+      tags: ['test-tag-api'],
+      notificationGroupId: session.notificationGroups[0]._id,
+      steps: [],
+    };
+
+    const response = await axiosInstance.post(`${session.serverUrl}/v1/notification-templates`, templateBody, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    });
+
+    expect(response.data.data.name).to.equal(templateBody.name);
   });
 
   it('should create email template', async function () {

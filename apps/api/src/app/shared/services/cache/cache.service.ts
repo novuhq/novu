@@ -22,6 +22,7 @@ export class CacheService implements ICacheService {
   private readonly DEFAULT_KEEP_ALIVE = 30000;
   private readonly DEFAULT_FAMILY = 4;
   private readonly DEFAULT_KEY_PREFIX = '';
+  private readonly TTL_VARIANT_PERCENTAGE = 0.1;
 
   private readonly client: Redis;
   private readonly cacheTtl: number;
@@ -96,7 +97,13 @@ export class CacheService implements ICacheService {
   private updateTtl(key: string, options?: CachingConfig) {
     const seconds = options?.ttl || this.cacheTtl;
 
-    return this.client.expire(key, seconds);
+    return this.client.expire(key, this.ttlVariant(seconds));
+  }
+
+  private ttlVariant(num) {
+    const variant = this.TTL_VARIANT_PERCENTAGE * num * Math.random();
+
+    return Math.floor(num - (this.TTL_VARIANT_PERCENTAGE * num) / 2 + variant);
   }
 }
 

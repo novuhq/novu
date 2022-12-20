@@ -1,2 +1,2 @@
-export * from './cache';
+export * from './invalidate-cache.service';
 export * from './cache.service';

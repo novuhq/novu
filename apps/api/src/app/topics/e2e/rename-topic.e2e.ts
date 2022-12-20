@@ -25,9 +25,10 @@ describe('Rename a topic - /topics/:topicKey (PATCH)', async () => {
     expect(response.statusCode).to.eql(201);
 
     const { body } = response;
-    const _id = body.data._id;
+    const { _id, key } = body.data;
     expect(_id).to.exist;
     expect(_id).to.be.string;
+    expect(key).to.eql(topicKey);
 
     const subscribersService = new SubscribersService(session.organization._id, session.environment._id);
     firstSubscriber = await subscribersService.createSubscriber();
@@ -66,7 +67,7 @@ describe('Rename a topic - /topics/:topicKey (PATCH)', async () => {
 
     expect(body.statusCode).to.equal(404);
     expect(body.message).to.eql(
-      `Topic not found for id ${nonExistingId} for the organization ${session.organization._id} in the environment ${session.environment._id}`
+      `Topic not found for id ${nonExistingId} in the environment ${session.environment._id}`
     );
     expect(body.error).to.eql('Not Found');
   });
