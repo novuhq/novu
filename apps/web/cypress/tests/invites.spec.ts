@@ -66,7 +66,7 @@ describe('Invites module', function () {
 function doRegister(token: string) {
   cy.visit('/auth/invitation/' + token);
   cy.getByTestId('fullName').type('Invited to org user');
-  cy.getByTestId('password').type('123@Qwerty');
+  cy.getByTestId('password').type('asd#Faf4fd');
   cy.getByTestId('accept-cb').click({ force: true });
   cy.getByTestId('submitButton').click();
 
