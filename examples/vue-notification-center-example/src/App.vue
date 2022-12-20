@@ -33,13 +33,8 @@ header {
 }
 
 .notification-center-wrapper {
-  position: relative;
-}
-
-.notification-center-wrapper > *:first-child {
-  position: absolute;
-  top: 0;
-  left: 0;
+  display: inline-flex;
+  height: min-content;
 }
 
 @media (min-width: 1024px) {

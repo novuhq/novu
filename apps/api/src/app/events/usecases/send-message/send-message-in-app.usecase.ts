@@ -32,7 +32,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 
 @Injectable()
@@ -40,7 +40,7 @@ export class SendMessageInApp extends SendMessageBase {
   channelType = ChannelTypeEnum.IN_APP;
 
   constructor(
-    private cacheService: CacheService,
+    private invalidateCache: InvalidateCacheService,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     private queueService: QueueService,
@@ -144,8 +144,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     let message: MessageEntity;
 
-    invalidateCache({
-      service: this.cacheService,
+    this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
       credentials: {
         subscriberId: this.subscriber.subscriberId,

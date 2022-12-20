@@ -5,12 +5,12 @@ import { isBefore, subDays } from 'date-fns';
 import { PasswordResetCommand } from './password-reset.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AuthService } from '../../services/auth.service';
-import { CacheKeyPrefixEnum, CacheService, invalidateCache } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class PasswordReset {
   constructor(
-    private cacheService: CacheService,
+    private invalidateCache: InvalidateCacheService,
     private userRepository: UserRepository,
     private authService: AuthService
   ) {}
@@ -27,8 +27,7 @@ export class PasswordReset {
 
     const passwordHash = await bcrypt.hash(command.password, 10);
 
-    invalidateCache({
-      service: this.cacheService,
+    this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.USER],
       credentials: {
         _id: user._id,

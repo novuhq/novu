@@ -1,10 +1,5 @@
 <script lang="ts">
-import { NotificationCenterComponent } from '@novu/notification-center-vue';
-
 export default {
-  components: {
-    NotificationCenterComponent,
-  },
   data() {
     return {
       applicationIdentifier: import.meta.env.VITE_NOVU_APP_IDENTIFIER,
@@ -24,7 +19,10 @@ export default {
     :subscriberId="subscriberId"
     :applicationIdentifier="applicationIdentifier"
     :sessionLoaded="sessionLoaded"
-  />
+    v-slot="slot"
+  >
+    <button>Notifications: {{ slot.unseenCount }}</button>
+  </NotificationCenterComponent>
 </template>
 
 <style scoped></style>
