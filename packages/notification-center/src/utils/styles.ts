@@ -2,7 +2,7 @@ import { CSSInterpolation } from '@emotion/css';
 
 import type { ColorScheme, ICommonTheme } from '../index';
 import type { INovuTheme } from '../store/novu-theme.context';
-import type { NotificationCenterStyles, StylesPaths } from '../store/styles';
+import type { INotificationCenterStyles, StylesPaths } from '../store/styles';
 
 const get = (obj: object, path: string) => path.split('.').reduce((acc, level) => acc && acc[level], obj);
 
@@ -13,7 +13,7 @@ export const getStyleByPath = ({
   common,
   colorScheme,
 }: {
-  styles?: NotificationCenterStyles;
+  styles?: INotificationCenterStyles;
   path: StylesPaths;
   theme: INovuTheme;
   common: ICommonTheme;
