@@ -11,9 +11,8 @@ import {
   UseInterceptors,
   Query,
 } from '@nestjs/common';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { Roles } from '../auth/framework/roles.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
@@ -107,7 +106,6 @@ export class NotificationTemplateController {
 
   @Delete('/:templateId')
   @UseGuards(RootEnvironmentGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: Boolean,
   })
@@ -150,7 +148,6 @@ export class NotificationTemplateController {
 
   @Post('')
   @UseGuards(RootEnvironmentGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiCreatedResponse({
     type: NotificationTemplateResponse,
   })
@@ -182,7 +179,6 @@ export class NotificationTemplateController {
 
   @Put('/:templateId/status')
   @UseGuards(RootEnvironmentGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
     type: NotificationTemplateResponse,
   })
