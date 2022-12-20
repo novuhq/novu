@@ -51,8 +51,33 @@ jobs:
           version: 7.5.0
           run_install: false
 
-      - name: Install root dependencies
-        run: pnpm --filter novuhq install
+
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        id: pnpm-install
+        with:
+          version: 7.5.0
+          run_install: false
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: build api
+        run: pnpm build:api
 
       - name: Setup Depot
         uses: depot/setup-action@v1
@@ -138,3 +163,15 @@ jobs:
           service: ${{ env.api_ecs_service }}
           cluster: ${{ env.api_ecs_cluster }}
           wait-for-service-stability: true
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: novu-r9
+          SENTRY_PROJECT: api
+        with:
+          environment: dev
+          sourcemaps: apps/api/dist
+          ignore_empty: true
+          ignore_missing: true

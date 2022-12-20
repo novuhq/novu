@@ -191,7 +191,9 @@
     "topicsubscribers",
     "tanstack",
     "zwnj",
-    "websockets"
+    "websockets",
+    "sourcemaps",
+    "getsentry"
   ],
   "flagWords": [],
   "patterns": [
