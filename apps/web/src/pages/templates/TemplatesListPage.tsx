@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
+
 import { useTemplates } from '../../api/hooks/use-templates';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
@@ -24,6 +25,10 @@ function NotificationList() {
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
   }
+
+  const handleRedirectToCreateTemplate = () => {
+    navigate('/templates/create');
+  };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
     {
@@ -103,11 +108,14 @@ function NotificationList() {
       <PageHeader
         title="Notification Template"
         actions={
-          <Link to="/templates/create" data-test-id="create-template-btn">
-            <Button disabled={readonly} icon={<PlusCircle />}>
-              New
-            </Button>
-          </Link>
+          <Button
+            disabled={readonly}
+            onClick={handleRedirectToCreateTemplate}
+            icon={<PlusCircle />}
+            data-test-id="create-template-btn"
+          >
+            New
+          </Button>
         }
       />
       <TemplateListTableWrapper>

@@ -3,8 +3,9 @@ import { Box, Group, CloseButton, ThemeIcon } from '@mantine/core';
 import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useWatch, Control, Controller } from 'react-hook-form';
 import { useIntersection } from '@mantine/hooks';
-import { FetchNextPageOptions, InfiniteQueryObserverResult } from 'react-query';
+import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query';
 import { IOrganizationEntity } from '@novu/shared';
+
 import { Text, Select } from '../../../design-system';
 import { ProjectLinkFormValues } from './LinkProjectContainer';
 

@@ -1,6 +1,7 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
 import { ActivityStatistics } from './ActivityStatistics';
 import { TestWrapper } from '../../../testing';
-import { QueryClient, QueryClientProvider } from 'react-query';
 
 describe('Activity Statistics Component Test', () => {
   const activityStatisticsComponentSelector = '[data-test-id="activity-stats-weekly-sent"]';
