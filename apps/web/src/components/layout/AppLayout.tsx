@@ -19,7 +19,7 @@ export function AppLayout() {
           styles={(theme) => ({
             root: { minHeight: '100vh', position: 'relative', zIndex: 1 },
             body: {
-              height: 'calc(100vh - 65px)',
+              minHeight: 'calc(100vh - 65px)',
               '@media (max-width: 768px)': {
                 flexDirection: 'column',
                 height: 'auto',
@@ -27,7 +27,6 @@ export function AppLayout() {
             },
             main: {
               backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
-              overflow: 'auto',
               minHeight: 'auto',
               padding: '30px',
             },

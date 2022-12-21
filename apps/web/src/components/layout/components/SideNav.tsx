@@ -123,7 +123,7 @@ export function SideNav({}: Props) {
         },
       }}
     >
-      <Navbar.Section grow>
+      <Navbar.Section>
         <Popover
           classNames={classes}
           withArrow
@@ -203,11 +203,6 @@ const StyledLink = styled.a`
   &:hover {
     cursor: pointer;
   }
-`;
-
-const BottomNavWrapper = styled.div`
-  margin-top: auto;
-  padding-top: 30px;
 `;
 
 const BottomNav = styled.div<{ dark: boolean }>`
