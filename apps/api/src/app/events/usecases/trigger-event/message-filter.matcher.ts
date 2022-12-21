@@ -24,7 +24,7 @@ export async function matchMessageWithFilters(
       }
 
       if (!children || (Array.isArray(children) && children.length === 1)) {
-        return await processFilterWebhook(children[0] as unknown as IFilterVariables, variables);
+        return await processFilter(variables, children[0]);
       }
 
       return await handleGroupFilters(filter, variables);
@@ -70,7 +70,7 @@ async function handleAndFilters(filter, variables: IFilterVariables) {
     return false;
   }
 
-  const foundAsyncFilterMatches = await filterAsync(asyncFilters, (i) => processFilterWebhook(variables, i));
+  const foundAsyncFilterMatches = await filterAsync(asyncFilters, (i) => processFilter(variables, i));
 
   return foundAsyncFilterMatches.length === asyncFilters.length;
 }
@@ -83,7 +83,7 @@ async function handleOrFilters(filter, variables: IFilterVariables) {
     return true;
   }
 
-  return await findAsync(asyncFilters, (i) => processFilterWebhook(variables, i));
+  return await findAsync(asyncFilters, (i) => processFilter(variables, i));
 }
 
 function processFilterEquality(variables: IFilterVariables, i) {
@@ -136,10 +136,14 @@ async function getWebhookResponse(i, variables: IFilterVariables): Promise<Recor
   }
 }
 
-async function processFilterWebhook(variables: IFilterVariables, i) {
-  const res = await getWebhookResponse(i, variables);
+async function processFilter(variables: IFilterVariables, i) {
+  if (i.on === 'webhook') {
+    const res = await getWebhookResponse(i, variables);
 
-  return processFilterEquality({ payload: undefined, webhook: res }, i);
+    return processFilterEquality({ payload: undefined, webhook: res }, i);
+  }
+
+  return processFilterEquality(variables, i);
 }
 
 function parseValue(originValue, parsingValue) {
