@@ -15,6 +15,7 @@
     "start:docker": "pnpm build && pnpm start:static:build",
     "start:dev": "pnpm start",
     "cypress:run": "cross-env NODE_ENV=test cypress run",
+    "cypress:install": "cypress install",
     "cypress:open": "cross-env NODE_ENV=test cypress open",
     "cypress:run:components": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component",
     "start:api": "cd ../../ && pnpm start:api:test",
