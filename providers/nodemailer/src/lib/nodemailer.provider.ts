@@ -37,10 +37,13 @@ export class NodemailerProvider implements IEmailProvider {
       host: this.config.host,
       port: this.config.port,
       secure: this.config.secure,
-      auth: {
-        user: this.config.user,
-        pass: this.config.password,
-      },
+      auth:
+        this.config.user && this.config.password
+          ? {
+              user: this.config.user,
+              pass: this.config.password,
+            }
+          : undefined,
       dkim,
     });
   }
