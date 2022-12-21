@@ -4,8 +4,8 @@ import { NotificationStepEntity } from '@novu/dal';
 import { matchMessageWithFilters } from './message-filter.matcher';
 
 describe('Message filter matcher', function () {
-  it('should filter correct message by the filter value', function () {
-    const matchedMessage = matchMessageWithFilters(
+  it('should filter correct message by the filter value', async function () {
+    const matchedMessage = await matchMessageWithFilters(
       messageWrapper('Correct Match', 'OR', [
         {
           operator: 'EQUAL',
@@ -24,8 +24,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should match a message for AND filter group', function () {
-    const matchedMessage = matchMessageWithFilters(
+  it('should match a message for AND filter group', async function () {
+    const matchedMessage = await matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'EQUAL',
@@ -51,8 +51,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should not match AND group for single bad item', function () {
-    const matchedMessage = matchMessageWithFilters(
+  it('should not match AND group for single bad item', async function () {
+    const matchedMessage = await matchMessageWithFilters(
       messageWrapper('Title', 'AND', [
         {
           operator: 'EQUAL',
@@ -78,8 +78,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(false);
   });
 
-  it('should match a NOT_EQUAL for EQUAL var', function () {
-    const matchedMessage = matchMessageWithFilters(
+  it('should match a NOT_EQUAL for EQUAL var', async function () {
+    const matchedMessage = await matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'EQUAL',
@@ -105,8 +105,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should match a EQUAL for a boolean var', function () {
-    const matchedMessage = matchMessageWithFilters(
+  it('should match a EQUAL for a boolean var', async function () {
+    const matchedMessage = await matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'EQUAL',
@@ -125,8 +125,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should fall thru for no filters item', function () {
-    const matchedMessage = matchMessageWithFilters(messageWrapper('Correct Match 2', 'OR', []), {
+  it('should fall thru for no filters item', async function () {
+    const matchedMessage = await matchMessageWithFilters(messageWrapper('Correct Match 2', 'OR', []), {
       payload: {
         varField: 'firstVar',
         secondField: 'secondVarBad',
@@ -136,8 +136,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should get larger payload var then filter value', function () {
-    const matchedMessage = matchMessageWithFilters(
+  it('should get larger payload var then filter value', async function () {
+    const matchedMessage = await matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'LARGER',
@@ -156,8 +156,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should get smaller payload var then filter value', function () {
-    const matchedMessage = matchMessageWithFilters(
+  it('should get smaller payload var then filter value', async function () {
+    const matchedMessage = await matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'SMALLER',
@@ -176,8 +176,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should get larger or equal payload var then filter value', function () {
-    let matchedMessage = matchMessageWithFilters(
+  it('should get larger or equal payload var then filter value', async function () {
+    let matchedMessage = await matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'LARGER_EQUAL',
@@ -195,7 +195,7 @@ describe('Message filter matcher', function () {
 
     expect(matchedMessage).to.equal(true);
 
-    matchedMessage = matchMessageWithFilters(
+    matchedMessage = await matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'LARGER_EQUAL',
@@ -214,8 +214,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should get smaller or equal payload var then filter value', function () {
-    let matchedMessage = matchMessageWithFilters(
+  it('should get smaller or equal payload var then filter value', async function () {
+    let matchedMessage = await matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'SMALLER_EQUAL',
@@ -233,7 +233,7 @@ describe('Message filter matcher', function () {
 
     expect(matchedMessage).to.equal(true);
 
-    matchedMessage = matchMessageWithFilters(
+    matchedMessage = await matchMessageWithFilters(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'SMALLER_EQUAL',
@@ -252,8 +252,8 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it('should handle now filters', function () {
-    let matchedMessage = matchMessageWithFilters(
+  it('should handle now filters', async function () {
+    let matchedMessage = await matchMessageWithFilters(
       {
         _templateId: '123',
         template: {
@@ -275,7 +275,7 @@ describe('Message filter matcher', function () {
     );
     expect(matchedMessage).to.equal(true);
 
-    matchedMessage = matchMessageWithFilters(
+    matchedMessage = await matchMessageWithFilters(
       {
         _templateId: '123',
         template: {
@@ -296,7 +296,7 @@ describe('Message filter matcher', function () {
       }
     );
     expect(matchedMessage).to.equal(true);
-    matchedMessage = matchMessageWithFilters(
+    matchedMessage = await matchMessageWithFilters(
       {
         _templateId: '123',
         template: {
@@ -324,7 +324,7 @@ describe('Message filter matcher', function () {
       }
     );
     expect(matchedMessage).to.equal(true);
-    matchedMessage = matchMessageWithFilters(
+    matchedMessage = await matchMessageWithFilters(
       {
         _templateId: '123',
         template: {
