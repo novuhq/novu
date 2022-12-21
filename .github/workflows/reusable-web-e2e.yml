@@ -144,7 +144,7 @@ jobs:
           browser: chrome
           record: true
           parallel: true
-          install: false
+          install: ${{steps.cache-cypress-binary.outputs.cache-hit != 'true'}}
           config-file: cypress.config.ts
 
       - uses: actions/upload-artifact@v1
@@ -223,7 +223,7 @@ jobs:
         with:
           browser: chrome
           working-directory: apps/web
-          install: false
+          install: ${{steps.cache-cypress-binary.outputs.cache-hit != 'true'}}
           component: true
 
       - uses: actions/upload-artifact@v1
