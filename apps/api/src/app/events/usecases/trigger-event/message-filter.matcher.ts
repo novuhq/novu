@@ -24,7 +24,7 @@ export async function matchMessageWithFilters(
       }
 
       if (!children || (Array.isArray(children) && children.length === 1)) {
-        return await processFilter(filter.children[0], variables);
+        return await processFilterWebhook(children[0] as unknown as IFilterVariables, variables);
       }
 
       return await handleGroupFilters(filter, variables);
@@ -48,16 +48,42 @@ async function handleGroupFilters(filter, variables: IFilterVariables) {
   return false;
 }
 
-async function handleAndFilters(filter, variables: IFilterVariables) {
-  // todo priority here - first sync operation then async
-  const foundFilterMatches = await filterAsync(filter.children, (i) => processFilter(i, variables));
+function splitToSyncAsync(filter) {
+  const asyncOnFilters = ['webhook'];
 
-  return foundFilterMatches.length === filter.children.length;
+  const asyncFilters = filter.children.filter((childFilter) =>
+    asyncOnFilters.some((asyncOnFilter) => asyncOnFilter === childFilter.on)
+  );
+
+  const syncFilters = filter.children.filter((childFilter) =>
+    asyncOnFilters.some((asyncOnFilter) => asyncOnFilter !== childFilter.on)
+  );
+
+  return { asyncFilters, syncFilters };
+}
+
+async function handleAndFilters(filter, variables: IFilterVariables) {
+  const { asyncFilters, syncFilters } = splitToSyncAsync(filter);
+
+  const foundSyncFilterMatches = syncFilters.filter((i) => processFilterEquality(variables, i));
+  if (syncFilters.length !== foundSyncFilterMatches.length) {
+    return false;
+  }
+
+  const foundAsyncFilterMatches = await filterAsync(asyncFilters, (i) => processFilterWebhook(variables, i));
+
+  return foundAsyncFilterMatches.length === asyncFilters.length;
 }
 
 async function handleOrFilters(filter, variables: IFilterVariables) {
-  // todo priority here - first sync operation then async
-  return await findAsync(filter.children, (i) => processFilter(i, variables));
+  const { asyncFilters, syncFilters } = splitToSyncAsync(filter);
+
+  const syncRes = syncFilters.find((i) => processFilterEquality(variables, i));
+  if (syncRes) {
+    return true;
+  }
+
+  return await findAsync(asyncFilters, (i) => processFilterWebhook(variables, i));
 }
 
 function processFilterEquality(variables: IFilterVariables, i) {
@@ -110,14 +136,10 @@ async function getWebhookResponse(i, variables: IFilterVariables): Promise<Recor
   }
 }
 
-async function processFilter(i, variables: IFilterVariables) {
-  if (i.on === 'webhook') {
-    const res = await getWebhookResponse(i, variables);
+async function processFilterWebhook(variables: IFilterVariables, i) {
+  const res = await getWebhookResponse(i, variables);
 
-    return processFilterEquality({ payload: undefined, webhook: res }, i);
-  }
-
-  return processFilterEquality(variables, i);
+  return processFilterEquality({ payload: undefined, webhook: res }, i);
 }
 
 function parseValue(originValue, parsingValue) {
