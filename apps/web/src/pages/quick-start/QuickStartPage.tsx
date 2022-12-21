@@ -1,12 +1,13 @@
 import { Center } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { IUserEntity } from '@novu/shared';
+
+import { colors, Text, Title } from '../../design-system';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { colors, Text, Title } from '../../design-system';
-import React from 'react';
-import { useMutation, useQueryClient } from 'react-query';
 import { updateUserOnBoarding } from '../../api/user';
-import { IUserEntity } from '@novu/shared';
 import { OnboardingSteps } from './components/OnboardingSteps';
 
 function QuickStart() {
@@ -25,7 +26,7 @@ function QuickStart() {
 
   async function onDismissOnboarding() {
     await disableOnboarding();
-    await queryClient.refetchQueries('/v1/users/me');
+    await queryClient.refetchQueries(['/v1/users/me']);
     navigate('/templates');
   }
 
@@ -48,7 +49,12 @@ function QuickStart() {
         </div>
         <Center>
           <Text my={40} color={colors.B60}>
-            <div onClick={onDismissOnboarding} style={{ cursor: 'pointer' }} data-test-id="dismiss-onboarding-btn">
+            <div
+              onClick={onDismissOnboarding}
+              style={{ cursor: 'pointer' }}
+              data-test-id="dismiss-onboarding-btn"
+              role="link"
+            >
               Don't show onboarding guide
             </div>
           </Text>

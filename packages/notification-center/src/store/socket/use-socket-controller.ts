@@ -15,7 +15,7 @@ export function useSocketController() {
       socket = io(socketUrl, {
         reconnectionDelayMax: 10000,
         transports: ['websocket'],
-        query: {
+        auth: {
           token: `${token}`,
         },
       });

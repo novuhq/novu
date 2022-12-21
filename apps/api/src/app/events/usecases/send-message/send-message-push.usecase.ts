@@ -3,7 +3,6 @@ import {
   MessageRepository,
   NotificationStepEntity,
   NotificationRepository,
-  SubscriberEntity,
   SubscriberRepository,
   NotificationEntity,
   MessageEntity,
@@ -16,14 +15,12 @@ import {
   PushProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  StepTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { PushFactory } from '../../services/push-service/push.factory';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import {
@@ -35,37 +32,43 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessagePush extends SendMessageType {
+export class SendMessagePush extends SendMessageBase {
+  channelType = ChannelTypeEnum.PUSH;
   private pushFactory = new PushFactory();
 
   constructor(
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+
     Sentry.addBreadcrumb({
       message: 'Sending Push',
     });
 
     const pushChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
 
     const data = {
-      subscriber,
+      subscriber: subscriber,
       step: {
         digest: !!command.events.length,
         events: command.events,
@@ -108,18 +111,15 @@ export class SendMessagePush extends SendMessageType {
       return;
     }
 
-    const integration = (
-      await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.PUSH,
-          findOne: true,
-          active: true,
-        })
-      )
-    )[0];
-
+    const integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.PUSH,
+        findOne: true,
+        active: true,
+      })
+    );
     if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -255,7 +255,7 @@ export class SendMessagePush extends SendMessageType {
       channel: ChannelTypeEnum.PUSH,
       transactionId: command.transactionId,
       deviceTokens: target,
-      content,
+      content: this.storeContent() ? content : null,
       title,
       payload: payload as never,
       overrides: overrides as never,
@@ -272,7 +272,7 @@ export class SendMessagePush extends SendMessageType {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(content),
+        raw: this.storeContent() ? JSON.stringify(content) : null,
       })
     );
 

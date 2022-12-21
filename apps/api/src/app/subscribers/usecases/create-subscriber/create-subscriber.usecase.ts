@@ -2,11 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
 import { CreateSubscriberCommand } from './create-subscriber.command';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
+import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class CreateSubscriber {
   constructor(private subscriberRepository: SubscriberRepository, private updateSubscriber: UpdateSubscriber) {}
 
+  @InvalidateCache(CacheKeyPrefixEnum.SUBSCRIBER)
   async execute(command: CreateSubscriberCommand) {
     let subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 

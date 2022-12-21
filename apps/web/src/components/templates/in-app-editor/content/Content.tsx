@@ -26,6 +26,7 @@ export function Content(props: IContentProps) {
           ref={props.ref}
           data-test-id="in-app-editor-content-input"
           contentEditable={!props.readonly}
+          role="textbox"
           dangerouslySetInnerHTML={{
             __html: props.content as string,
           }}

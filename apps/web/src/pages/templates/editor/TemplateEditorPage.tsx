@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
 import { IForm, useTemplateController } from '../../../components/templates/use-template-controller.hook';
@@ -35,6 +35,7 @@ export enum ActivePageEnum {
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { readonly, environment } = useEnvController();
   const [transactionId, setTransactionId] = useState<string>('');
   const [activeStep, setActiveStep] = useState<number>(-1);
@@ -56,6 +57,7 @@ export default function TemplateEditorPage() {
     trigger,
     onTriggerModalDismiss,
   } = useTemplateController(templateId);
+  const isCreateTemplatePage = location.pathname === '/templates/create';
 
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
 
@@ -90,11 +92,15 @@ export default function TemplateEditorPage() {
         if (template._parentId) {
           navigate(`/templates/edit/${template._parentId}`);
         } else {
-          navigate('/templates/');
+          navigate('/templates');
         }
       }
     }
   }, [environment, template]);
+
+  if (environment && environment?.name === 'Production' && isCreateTemplatePage) {
+    navigate('/templates');
+  }
 
   if (isLoading) return null;
 
@@ -144,7 +150,6 @@ export default function TemplateEditorPage() {
               templateId={templateId}
             />
           </When>
-
           {!loadingEditTemplate && !isIntegrationsLoading ? (
             <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
           ) : null}

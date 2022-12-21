@@ -28,6 +28,7 @@ export default defineConfig({
   projectId: '293ci7',
 
   component: {
+    experimentalSingleTabRunMode: true,
     specPattern: 'src/**/*.cy.{js,jsx,ts,tsx}',
     devServer: {
       framework: 'create-react-app',

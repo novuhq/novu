@@ -11,10 +11,12 @@ import {
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ApplyChangeCommand } from '../apply-change/apply-change.command';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {
   constructor(
+    private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
@@ -121,6 +123,14 @@ export class PromoteNotificationTemplateChange {
 
       return;
     }
+
+    this.invalidateCache.clearCache({
+      storeKeyPrefix: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
+      credentials: {
+        _id: item._id,
+        environmentId: command.environmentId,
+      },
+    });
 
     return await this.notificationTemplateRepository.update(
       {

@@ -32,7 +32,7 @@ describe('Use of Novu node package - Feeds class', () => {
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/feeds', {
-      name: 'test',
+      name: 'test-feeds',
     });
   });
 

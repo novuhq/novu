@@ -4,6 +4,7 @@ import {
   SubscriberPreferenceRepository,
   NotificationTemplateRepository,
   SubscriberRepository,
+  MemberRepository,
 } from '@novu/dal';
 import { UpdateSubscriberPreferenceCommand } from './update-subscriber-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -22,7 +23,8 @@ export class UpdateSubscriberPreference {
     private getSubscriberTemplatePreference: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private memberRepository: MemberRepository
   ) {}
 
   async execute(command: UpdateSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse> {
@@ -34,7 +36,8 @@ export class UpdateSubscriberPreference {
       _templateId: command.templateId,
     });
 
-    this.analyticsService.track('Update User Preference - [Notification Center]', command.organizationId, {
+    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
+    this.analyticsService.track('Update User Preference - [Notification Center]', admin._userId, {
       _organization: command.organizationId,
       _subscriber: subscriber._id,
       _template: command.templateId,
@@ -55,7 +58,7 @@ export class UpdateSubscriberPreference {
         channels: command.channel?.type ? channelObj : null,
       });
 
-      const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+      const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
 
       const getSubscriberPreferenceCommand = GetSubscriberTemplatePreferenceCommand.create({
         organizationId: command.organizationId,
@@ -93,7 +96,7 @@ export class UpdateSubscriberPreference {
       }
     );
 
-    const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
 
     const getSubscriberPreferenceCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: command.organizationId,

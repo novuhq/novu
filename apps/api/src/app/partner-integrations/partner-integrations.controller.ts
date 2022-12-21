@@ -8,6 +8,8 @@ import {
   Body,
   Get,
   Put,
+  Inject,
+  Query,
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
@@ -26,6 +28,8 @@ import { SetVercelConfiguration } from './usecases/set-vercel-configuration/set-
 import { UpdateVercelConfigurationCommand } from './usecases/update-vercel-configuration/update-vercel-configuration.command';
 import { UpdateVercelConfiguration } from './usecases/update-vercel-configuration/update-vercel-configuration.usecase';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ANALYTICS_SERVICE } from '../shared/shared.module';
+import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 
 @Controller('/partner-integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -58,13 +62,18 @@ export class PartnerIntegrationsController {
   }
 
   @Get('/vercel/projects/:configurationId')
-  async getVercelProjects(@UserSession() user: IJwtPayload, @Param('configurationId') configurationId: string) {
+  async getVercelProjects(
+    @UserSession() user: IJwtPayload,
+    @Param('configurationId') configurationId: string,
+    @Query('nextPage') nextPage?: string
+  ) {
     return await this.getVercelProjectsUsecase.execute(
       GetVercelProjectsCommand.create({
         configurationId: configurationId,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
+        ...(nextPage && { nextPage }),
       })
     );
   }

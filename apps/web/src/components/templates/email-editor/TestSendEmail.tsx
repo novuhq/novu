@@ -1,11 +1,12 @@
 import { useContext, useEffect, useState } from 'react';
-import { MemberStatusEnum } from '@novu/shared';
 import { JsonInput, MultiSelect, Group, ActionIcon } from '@mantine/core';
-import { Button, Text, colors, Tooltip } from '../../../design-system';
 import { useClipboard } from '@mantine/hooks';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useFormContext, useWatch } from 'react-hook-form';
 import styled from '@emotion/styled';
+import { MemberStatusEnum } from '@novu/shared';
+
+import { Button, Text, colors, Tooltip } from '../../../design-system';
 import { testSendEmailMessage } from '../../../api/templates';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { AuthContext } from '../../../store/authContext';
@@ -27,7 +28,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
     name: `steps.${index}.template`,
     control,
   });
-  const { data: organizationMembers } = useQuery<any[]>('getOrganizationMembers', getOrganizationMembers);
+  const { data: organizationMembers } = useQuery<any[]>(['getOrganizationMembers'], getOrganizationMembers);
 
   const [sendTo, setSendTo] = useState<string[]>(currentUser?.email ? [currentUser?.email] : []);
   const [membersEmails, setMembersEmails] = useState<string[]>([currentUser?.email || '']);

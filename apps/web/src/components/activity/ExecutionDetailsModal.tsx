@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Center, LoadingOverlay, Modal, UnstyledButton, useMantineTheme } from '@mantine/core';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { JobStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
 import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
-
 import { getNotification } from '../../api/activity';
 import { colors, shadows, Text, Title } from '../../design-system';
 import { When } from '../utils/When';
@@ -24,10 +23,14 @@ export function ExecutionDetailsModal({
 }) {
   const theme = useMantineTheme();
   const [shouldRefetch, setShouldRefetch] = useState(true);
-  const { data: response, isLoading } = useQuery(['activity', notificationId], () => getNotification(notificationId), {
-    enabled: !!notificationId,
-    refetchInterval: shouldRefetch ? 1000 : false,
-  });
+  const { data: response, isInitialLoading } = useQuery(
+    ['activity', notificationId],
+    () => getNotification(notificationId),
+    {
+      enabled: !!notificationId,
+      refetchInterval: shouldRefetch ? 1000 : false,
+    }
+  );
 
   const status = useNotificationStatus(response?.data);
 
@@ -71,7 +74,7 @@ export function ExecutionDetailsModal({
       overflow="inside"
     >
       <LoadingOverlay
-        visible={isLoading}
+        visible={isInitialLoading}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
         loaderProps={{
           color: colors.error,

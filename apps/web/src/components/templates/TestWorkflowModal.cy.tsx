@@ -1,7 +1,8 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TriggerTypeEnum } from '@novu/shared';
+
 import { TestWrapper } from '../../testing';
 import { TestWorkflowModal } from './TestWorkflowModal';
-import { QueryClient, QueryClientProvider } from 'react-query';
 
 const queryClient = new QueryClient();
 
