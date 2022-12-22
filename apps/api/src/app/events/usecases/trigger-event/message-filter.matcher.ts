@@ -121,20 +121,17 @@ async function getWebhookResponse(i, variables: IFilterVariables): Promise<Recor
   if (!i.webhookUrl) return undefined;
 
   try {
-    const res = await got
-      .post(i.webhookUrl, {
-        json: variables,
-        retry: { limit: 3, methods: ['POST'] },
-        hooks: {
-          beforeRetry: [
-            (options, error, retryCount) => {
-              // eslint-disable-next-line no-console
-              console.log(`[Retry-${retryCount}] error - `, error.response.body);
-            },
-          ],
-        },
-      })
-      .json();
+    const res = await got(i.webhookUrl, {
+      retry: { limit: 3 },
+      hooks: {
+        beforeRetry: [
+          (options, error, retryCount) => {
+            // eslint-disable-next-line no-console
+            console.log(`[Retry-${retryCount}] error - `, error.response.body);
+          },
+        ],
+      },
+    }).json();
 
     return res ? (res as Record<string, unknown>) : undefined;
   } catch (err) {
