@@ -35,7 +35,7 @@ export class QueueService {
       };
     }
 
-    throw new Error(`Unexpected type ${type}`);
+    throw new Error(`Unexpected type ${type || ''}`);
   }
 
   async cleanAllQueues() {

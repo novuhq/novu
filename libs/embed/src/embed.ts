@@ -169,7 +169,9 @@ class Novu {
 
   ensureAllowed = () => {
     if (!this.domainAllowed) {
-      throw new DomainVerificationError(`${window.location.host} is not permitted to use client ID ${this.clientId}`);
+      throw new DomainVerificationError(
+        `${window.location.host} is not permitted to use client ID ${this.clientId || ''}`
+      );
     }
   };
 
