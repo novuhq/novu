@@ -114,6 +114,7 @@ export class SendMessage {
     const data = await this.getFilterData(command);
 
     const configuration = {
+      job: command.job,
       command,
       subscriberRepository: this.subscriberRepository,
       createExecutionDetails: this.createExecutionDetails,

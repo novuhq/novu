@@ -1,10 +1,21 @@
-import { NotificationStepEntity, SubscriberEntity, EnvironmentRepository, SubscriberRepository } from '@novu/dal';
+import {
+  NotificationStepEntity,
+  SubscriberEntity,
+  EnvironmentRepository,
+  SubscriberRepository,
+  JobEntity,
+} from '@novu/dal';
 import { ITriggerPayload } from '@novu/node';
 import * as _ from 'lodash';
 import got from 'got';
 import { createHmac } from 'crypto';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 
 export interface IFilterVariables {
   payload: ITriggerPayload;
@@ -13,6 +24,7 @@ export interface IFilterVariables {
 }
 
 export interface IMessageFilterConfiguration {
+  job: JobEntity;
   command: SendMessageCommand;
   subscriberRepository: SubscriberRepository;
   createExecutionDetails: CreateExecutionDetails;
@@ -140,14 +152,27 @@ async function getWebhookResponse(
     const res = await got.post(i.webhookUrl, {
       json: payload,
       retry: {
-        limit: 3,
+        limit: 2,
         methods: ['POST'],
       },
       hooks: {
         beforeRetry: [
           (options, error, retryCount) => {
-            // eslint-disable-next-line no-console
-            console.log(`[Retry-${retryCount}] error - `, error.response.body);
+            configuration.createExecutionDetails.execute(
+              CreateExecutionDetailsCommand.create({
+                ...CreateExecutionDetailsCommand.getDetailsFromJob(configuration.job),
+                detail: DetailEnum.WEBHOOK_FILTER_FAILED_RETRY,
+                source: ExecutionDetailsSourceEnum.WEBHOOK,
+                status: ExecutionDetailsStatusEnum.PENDING,
+                isTest: false,
+                isRetry: false,
+                raw: JSON.stringify({
+                  retryCount,
+                  webhookUrl: i.webhookUrl,
+                  error: JSON.parse(error.response.body as string),
+                }),
+              })
+            );
           },
         ],
       },
@@ -157,8 +182,20 @@ async function getWebhookResponse(
   } catch (err) {
     // eslint-disable-next-line no-console
     if (err.response && err.response.body) {
-      // eslint-disable-next-line no-console
-      console.log('exception while performing webhook request - ', err.response.body);
+      await configuration.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(configuration.job),
+          detail: DetailEnum.WEBHOOK_FILTER_FAILED,
+          source: ExecutionDetailsSourceEnum.WEBHOOK,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            webhookUrl: i.webhookUrl,
+            error: JSON.parse(err.response.body),
+          }),
+        })
+      );
     }
 
     return undefined;
