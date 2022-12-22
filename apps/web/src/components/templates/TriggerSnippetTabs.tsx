@@ -69,7 +69,7 @@ export const getCurlTriggerSnippet = (
      --header 'Content-Type: application/json' \\
      --data-raw '${JSON.stringify(
        {
-         name: identifier?.replace(/'/g, "'"),
+         name: identifier,
          to: { ...getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>') },
          payload: { ...getPayloadValue(variables) },
        },
