@@ -49,7 +49,7 @@ describe('ContentService', function () {
     it('should not find any variables', function () {
       const contentService = new ContentService();
       const extractVariables = contentService.extractVariables(
-        'This is a text without variables {{ asdasdas }} {{ aasdasda sda{ {na}}'
+        'This is a text without variables {{ invalid }} {{ not valid{ {var}}'
       );
       expect(extractVariables.length).to.equal(0);
       expect(Array.isArray(extractVariables)).to.equal(true);
@@ -69,7 +69,7 @@ describe('ContentService', function () {
       expect(variablesNames).to.include('organization_name');
     });
 
-    it('should extract helpers', function () {
+    it('should correctly extract variables related to registered handlebar helpers', function () {
       const contentService = new ContentService();
       const extractVariables = contentService.extractVariables(' {{titlecase word}}');
 
@@ -77,7 +77,7 @@ describe('ContentService', function () {
       expect(extractVariables[0].name).to.include('word');
     });
 
-    it('should not show data', function () {
+    it('should not show @data variables ', function () {
       const contentService = new ContentService();
       const extractVariables = contentService.extractVariables(
         ' {{#each array}} {{@index}} {{#if @first}} First {{/if}} {{name}} {{/each}}'
