@@ -2,6 +2,8 @@ import { BuilderFieldOperator, StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { NotificationStepEntity } from '@novu/dal';
 import { matchMessageWithFilters } from './message-filter.matcher';
+import got from 'got';
+import * as sinon from 'sinon';
 
 describe('Message filter matcher', function () {
   it('should filter correct message by the filter value', async function () {
@@ -353,6 +355,161 @@ describe('Message filter matcher', function () {
     );
     expect(matchedMessage).to.equal(true);
   });
+
+  it('should handle webhook filter', async function () {
+    const gotGetStub = sinon.stub(got, 'post').resolves(
+      Promise.resolve({
+        body: '{"varField":true}',
+      })
+    );
+
+    let matchedMessage = await matchMessageWithFilters(
+      messageWrapper('Correct Match', undefined, [
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'varField',
+          on: 'webhook',
+          webhookUrl: 'www.user.com/webhook',
+        },
+      ]),
+      {
+        payload: undefined,
+      }
+    );
+
+    expect(matchedMessage).to.equal(true);
+
+    gotGetStub.restore();
+  });
+
+  it('should skip async filter if child under OR returned true', async function () {
+    const gotGetStub = sinon.stub(got, 'post').resolves(
+      Promise.resolve({
+        body: '{"varField":true}',
+      })
+    );
+
+    let matchedMessage = await matchMessageWithFilters(
+      messageWrapper('Correct Match', 'OR', [
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'payloadVarField',
+          on: 'payload',
+        },
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'varField',
+          on: 'webhook',
+          webhookUrl: 'www.user.com/webhook',
+        },
+      ]),
+      {
+        payload: { payloadVarField: true },
+      }
+    );
+
+    let requestsCount = gotGetStub.callCount;
+
+    expect(requestsCount).to.equal(0);
+    expect(matchedMessage).to.equal(true);
+
+    //Reorder children order to make sure it is not random
+
+    matchedMessage = await matchMessageWithFilters(
+      messageWrapper('Correct Match', 'OR', [
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'varField',
+          on: 'webhook',
+          webhookUrl: 'www.user.com/webhook',
+        },
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'payloadVarField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: { payloadVarField: true },
+      }
+    );
+
+    requestsCount = gotGetStub.callCount;
+
+    expect(requestsCount).to.equal(0);
+    expect(matchedMessage).to.equal(true);
+
+    gotGetStub.restore();
+  });
+
+  it('should skip async filter if child under AND returned false', async function () {
+    const gotGetStub = sinon.stub(got, 'post').resolves(
+      Promise.resolve({
+        body: '{"varField":true}',
+      })
+    );
+
+    let matchedMessage = await matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'payloadVarField',
+          on: 'payload',
+        },
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'varField',
+          on: 'webhook',
+          webhookUrl: 'www.user.com/webhook',
+        },
+      ]),
+      {
+        payload: { payloadVarField: false },
+      }
+    );
+
+    let requestsCount = gotGetStub.callCount;
+
+    expect(requestsCount).to.equal(0);
+    expect(matchedMessage).to.equal(false);
+
+    //Reorder children order to make sure it is not random
+
+    matchedMessage = await matchMessageWithFilters(
+      messageWrapper('Correct Match', 'AND', [
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'varField',
+          on: 'webhook',
+          webhookUrl: 'www.user.com/webhook',
+        },
+        {
+          operator: 'EQUAL',
+          value: 'true',
+          field: 'payloadVarField',
+          on: 'payload',
+        },
+      ]),
+      {
+        payload: { payloadVarField: false },
+      }
+    );
+
+    requestsCount = gotGetStub.callCount;
+
+    expect(requestsCount).to.equal(0);
+    expect(matchedMessage).to.equal(false);
+
+    gotGetStub.restore();
+  });
 });
 
 function messageWrapper(
@@ -362,7 +519,8 @@ function messageWrapper(
     field: string;
     value: string;
     operator: BuilderFieldOperator;
-    on: 'payload';
+    on: 'payload' | 'webhook';
+    webhookUrl?: string;
   }[],
   channel = StepTypeEnum.EMAIL
 ): NotificationStepEntity {
