@@ -165,7 +165,42 @@ async function getWebhookResponse(
   }
 }
 
-async function processFilter(variables: IFilterVariables, i) {
+async function buildPayload(variables: IFilterVariables, configuration: IMessageFilterConfiguration) {
+  const payload: Partial<{
+    subscriber: SubscriberEntity;
+    payload: Record<string, unknown>;
+    hmac: string;
+    identifier: string;
+  }> = {};
+
+  if (variables.subscriber) {
+    payload.subscriber = variables.subscriber;
+  } else {
+    payload.subscriber = await configuration.subscriberRepository.findOne({
+      _id: configuration.command.subscriberId,
+      _environmentId: configuration.command.environmentId,
+    });
+  }
+
+  if (variables.payload) {
+    payload.payload = variables.payload;
+  }
+
+  const environment = await configuration.environmentRepository.findOne({
+    _id: configuration.command.environmentId,
+    _organizationId: configuration.command.organizationId,
+  });
+
+  payload.hmac = createHmac('sha256', environment.apiKeys[0].key)
+    .update(configuration.command.environmentId)
+    .digest('hex');
+
+  payload.identifier = configuration.command.identifier;
+
+  return payload;
+}
+
+async function processFilter(variables: IFilterVariables, i, configuration: IMessageFilterConfiguration) {
   if (i.on === 'webhook') {
     const res = await getWebhookResponse(i, variables, configuration);
 
