@@ -1,8 +1,7 @@
-import { TemplateVariableTypeEnum } from '@novu/shared';
+import { TemplateVariableTypeEnum, IMustacheVariable } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import * as set from 'lodash.set';
 import * as get from 'lodash.get';
-import { IMustacheVariable } from '../components/templates/VariableManager';
 
 const processVariables = (variables: IMustacheVariable[]) => {
   const varsObj: Record<string, any> = {};

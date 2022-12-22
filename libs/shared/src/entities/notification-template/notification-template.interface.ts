@@ -1,5 +1,5 @@
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues } from '../../types/builder/builder.types';
-import { IMessageTemplate } from '../message-template';
+import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues } from '../../types';
+import { IMessageTemplate, TemplateVariableTypeEnum } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
 
 export interface INotificationTemplate {
@@ -34,6 +34,7 @@ export interface INotificationTrigger {
 export interface INotificationTriggerVariable {
   name: string;
   value?: any;
+  type?: TemplateVariableTypeEnum;
 }
 
 export interface INotificationTemplateStep {

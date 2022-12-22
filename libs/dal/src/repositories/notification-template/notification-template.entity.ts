@@ -6,6 +6,7 @@ import {
   DigestTypeEnum,
   IPreferenceChannels,
   DelayTypeEnum,
+  TemplateVariableTypeEnum,
 } from '@novu/shared';
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
@@ -61,6 +62,7 @@ export class NotificationTriggerEntity {
 
   variables: {
     name: string;
+    type?: TemplateVariableTypeEnum;
   }[];
 
   subscriberVariables?: {

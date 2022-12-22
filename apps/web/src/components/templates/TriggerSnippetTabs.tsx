@@ -1,5 +1,5 @@
 import { Prism } from '@mantine/prism';
-import { INotificationTrigger, INotificationTriggerVariable } from '@novu/shared';
+import { INotificationTrigger, INotificationTriggerVariable, TemplateVariableTypeEnum } from '@novu/shared';
 
 import { API_ROOT } from '../../config';
 import { colors, Tabs } from '../../design-system';
@@ -39,7 +39,7 @@ export const getNodeTriggerSnippet = (
 
 const novu = new Novu('<API_KEY>');
 
-novu.trigger('${identifier?.replace(/'/g, "\\'")}', ${JSON.stringify(
+novu.trigger('${identifier}', ${JSON.stringify(
     {
       to: { ...getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>') },
       payload: { ...getPayloadValue(variables) },
@@ -48,6 +48,7 @@ novu.trigger('${identifier?.replace(/'/g, "\\'")}', ${JSON.stringify(
     2
   )
     .replace(/"([^"]+)":/g, '$1:')
+    .replace(/"/g, "'")
     .replaceAll('\n', '\n  ')});
 `;
 
@@ -68,7 +69,7 @@ export const getCurlTriggerSnippet = (
      --header 'Content-Type: application/json' \\
      --data-raw '${JSON.stringify(
        {
-         name: identifier?.replace(/'/g, "\\'"),
+         name: identifier?.replace(/'/g, "'"),
          to: { ...getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>') },
          payload: { ...getPayloadValue(variables) },
        },
@@ -87,14 +88,14 @@ export const getCurlTriggerSnippet = (
 export const getPayloadValue = (variables: INotificationTriggerVariable[]) => {
   const varsObj: Record<string, any> = {};
   variables
-    .filter((variable) => !variable.name.endsWith('[]'))
+    .filter((variable) => variable?.type !== TemplateVariableTypeEnum.ARRAY)
     .forEach((variable) => {
       set(varsObj, variable.name, variable.value || '<REPLACE_WITH_DATA>');
     });
   variables
-    .filter((variable) => variable.name.endsWith('[]'))
+    .filter((variable) => variable?.type === TemplateVariableTypeEnum.ARRAY)
     .forEach((variable) => {
-      set(varsObj, variable.name.slice(0, -2), [get(varsObj, variable.name.slice(0, -2), [])]);
+      set(varsObj, variable.name, [get(varsObj, variable.name, '<REPLACE_WITH_DATA>')]);
     });
 
   return varsObj;

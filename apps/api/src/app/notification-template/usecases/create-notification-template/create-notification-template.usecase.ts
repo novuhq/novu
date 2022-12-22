@@ -39,7 +39,8 @@ export class CreateNotificationTemplate {
       identifier: `${triggerIdentifier}${!templateCheckIdentifier ? '' : '-' + shortid.generate()}`,
       variables: variables.map((i) => {
         return {
-          name: i,
+          name: i.name,
+          type: i.type,
         };
       }),
       subscriberVariables: subscriberVariables.map((i) => {
