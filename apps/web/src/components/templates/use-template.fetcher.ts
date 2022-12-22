@@ -1,13 +1,14 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { INotificationTemplate } from '@novu/shared';
+
 import { getTemplateById } from '../../api/templates';
 
 export function useTemplateFetcher(templateId) {
   const {
-    isLoading: loading,
+    isInitialLoading,
     data: template,
     refetch,
-  } = useQuery<INotificationTemplate>(`notificationById:${templateId}`, () => getTemplateById(templateId), {
+  } = useQuery<INotificationTemplate>([`notificationById:${templateId}`], () => getTemplateById(templateId), {
     enabled: !!templateId,
     refetchOnMount: false,
     refetchInterval: false,
@@ -15,7 +16,7 @@ export function useTemplateFetcher(templateId) {
 
   return {
     template,
-    loading,
+    loading: isInitialLoading,
     refetch,
   };
 }

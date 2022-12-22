@@ -190,7 +190,10 @@
     "Craco",
     "topicsubscribers",
     "tanstack",
-    "zwnj"
+    "zwnj",
+    "websockets",
+    "sourcemaps",
+    "getsentry"
   ],
   "flagWords": [],
   "patterns": [

@@ -1,10 +1,11 @@
 import { useContext, useMemo } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation } from 'react-query';
+import { Link, useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
+
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';

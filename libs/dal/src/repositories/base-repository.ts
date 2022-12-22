@@ -44,9 +44,7 @@ export class BaseRepository<T_Query, T_Response> {
   }
 
   async delete(query: T_Query) {
-    const data = await this.MongooseModel.remove(query);
-
-    return data;
+    return await this.MongooseModel.remove(query);
   }
 
   async find(
@@ -88,14 +86,6 @@ export class BaseRepository<T_Query, T_Response> {
     return this.mapEntity(saved);
   }
 
-  async createMany(data: T_Query[]) {
-    await new Promise((resolve) => {
-      this.MongooseModel.collection.insertMany(data, (err, response) => {
-        resolve(response);
-      });
-    });
-  }
-
   async update(
     query: T_Query,
     updateBody: any
@@ -111,6 +101,12 @@ export class BaseRepository<T_Query, T_Response> {
       matched: saved.matchedCount,
       modified: saved.modifiedCount,
     };
+  }
+
+  async upsertMany(data: T_Query[]) {
+    const promises = data.map((entry) => this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true }));
+
+    return await Promise.all(promises);
   }
 
   async bulkWrite(bulkOperations: any) {

@@ -19,4 +19,6 @@ const path = `${__dirname}/${process.env.E2E_RUNNER ? '..' : 'src'}/${selectedEn
 const { error } = dotenv.config({ path });
 if (error && !process.env.LAMBDA_TASK_ROOT) throw error;
 
-export const CONTEXT_PATH = getContextPath(NovuComponentEnum.API);
+const CONTEXT_PATH = getContextPath(NovuComponentEnum.API);
+
+export { CONTEXT_PATH };

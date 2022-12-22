@@ -43,13 +43,12 @@ export class InitializeSession {
 
     const subscriber = await this.createSubscriber.execute(commandos);
 
-    this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
+    const organizationAdmin = await this.membersRepository.getOrganizationAdminAccount(environment._organizationId);
+    this.analyticsService.track('Initialize Widget Session - [Notification Center]', organizationAdmin._userId, {
       _organization: environment._organizationId,
       environmentName: environment.name,
       _subscriber: subscriber._id,
     });
-
-    const organizationAdmin = await this.membersRepository.getOrganizationAdminAccount(environment._organizationId);
 
     return {
       token: await this.authService.getSubscriberWidgetToken(subscriber, organizationAdmin?._userId),

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ChannelTypeEnum } from '@novu/shared';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
+import { ChannelTypeEnum } from '@novu/shared';
+
 import { useTemplates } from '../../api/hooks/use-templates';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';

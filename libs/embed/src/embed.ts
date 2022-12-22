@@ -6,7 +6,7 @@ import iFrameResize from 'iframe-resizer';
 import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
 import { IFRAME_URL } from './shared/resources';
-import { IStore, ITab } from '@novu/notification-center';
+import type { IStore, ITab, INotificationCenterStyles } from '@novu/notification-center';
 
 const WEASL_WRAPPER_ID = 'novu-container';
 const IFRAME_ID = 'novu-iframe-element';
@@ -19,6 +19,8 @@ class Novu {
   private socketUrl?: string = '';
 
   private theme?: Record<string, unknown>;
+
+  private styles?: INotificationCenterStyles;
 
   private i18n?: Record<string, unknown>;
 
@@ -70,6 +72,7 @@ class Novu {
       this.backendUrl = selectorOrOptions.backendUrl;
       this.socketUrl = selectorOrOptions.socketUrl;
       this.theme = selectorOrOptions.theme;
+      this.styles = selectorOrOptions.styles;
       this.i18n = selectorOrOptions.i18n;
       this.tabs = selectorOrOptions.tabs;
       this.stores = selectorOrOptions.stores;
@@ -217,6 +220,7 @@ class Novu {
                 backendUrl: this.backendUrl,
                 socketUrl: this.socketUrl,
                 theme: this.theme,
+                styles: this.styles,
                 i18n: this.i18n,
                 topHost: window.location.host,
                 data: options,
@@ -379,6 +383,7 @@ interface IOptions {
   backendUrl?: string;
   socketUrl?: string;
   theme?: Record<string, unknown>;
+  styles?: INotificationCenterStyles;
   i18n?: Record<string, unknown>;
   position?: {
     top?: number | string;

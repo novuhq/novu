@@ -1,4 +1,4 @@
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import { INotificationTemplate } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { showNotification } from '@mantine/notifications';

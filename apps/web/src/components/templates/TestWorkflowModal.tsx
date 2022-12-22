@@ -1,6 +1,6 @@
 import { useMemo, useEffect } from 'react';
 import { JsonInput } from '@mantine/core';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import { INotificationTrigger, IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, Title, Modal } from '../../design-system';

@@ -4,7 +4,6 @@ import {
   MessageRepository,
   NotificationStepEntity,
   NotificationRepository,
-  SubscriberEntity,
   SubscriberRepository,
   NotificationEntity,
   MessageEntity,
@@ -22,7 +21,6 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import {
@@ -34,38 +32,53 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessageSms extends SendMessageType {
+export class SendMessageSms extends SendMessageBase {
+  channelType = ChannelTypeEnum.SMS;
   private smsFactory = new SmsFactory();
 
   constructor(
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private integrationRepository: IntegrationRepository,
     private compileTemplate: CompileTemplate,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.SMS,
+        findOne: true,
+        active: true,
+      })
+    );
+
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
     });
 
     const smsChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
 
     const payload = {
-      subscriber,
+      subscriber: subscriber,
       step: {
         digest: !!command.events.length,
         events: command.events,
@@ -102,18 +115,6 @@ export class SendMessageSms extends SendMessageType {
 
     const phone = command.payload.phone || subscriber.phone;
 
-    const integration = (
-      await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.SMS,
-          findOne: true,
-          active: true,
-        })
-      )
-    )[0];
-
     if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -144,7 +145,7 @@ export class SendMessageSms extends SendMessageType {
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
       phone,
-      content,
+      content: this.storeContent() ? content : null,
       providerId: integration?.providerId,
       payload: messagePayload,
       overrides,
@@ -161,7 +162,7 @@ export class SendMessageSms extends SendMessageType {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(messagePayload),
+        raw: this.storeContent() ? JSON.stringify(messagePayload) : null,
       })
     );
 

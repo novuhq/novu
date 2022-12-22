@@ -1,9 +1,9 @@
-import { AuthProviderEnum } from '@novu/shared';
+import { AuthProviderEnum, ExternalSubscriberId } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 
 import { TopicSubscribersEntity } from './topic-subscribers.entity';
 import { TopicSubscribers } from './topic-subscribers.schema';
-import { EnvironmentId, OrganizationId } from './types';
+import { EnvironmentId, OrganizationId, TopicId, TopicKey } from './types';
 
 import { BaseRepository } from '../base-repository';
 
@@ -17,35 +17,35 @@ export class TopicSubscribersRepository extends BaseRepository<EnforceEnvironmen
     super(TopicSubscribers, TopicSubscribersEntity);
   }
 
-  async addSubscribers(entity: TopicSubscribersEntity): Promise<void> {
-    const { _environmentId, _organizationId, _topicId, _userId, subscribers } = entity;
-
-    await this.update(
-      {
-        _environmentId,
-        _organizationId,
-        _topicId,
-        _userId,
-      },
-      {
-        $addToSet: { subscribers },
-      }
-    );
+  async addSubscribers(subscribers: TopicSubscribersEntity[]): Promise<void> {
+    await this.upsertMany(subscribers);
   }
 
-  async removeSubscribers(entity: TopicSubscribersEntity): Promise<void> {
-    const { _environmentId, _organizationId, _topicId, _userId, subscribers } = entity;
+  async findSubscribersByTopicId(
+    _environmentId: EnvironmentId,
+    _organizationId: OrganizationId,
+    _topicId: TopicId
+  ): Promise<TopicSubscribersEntity[]> {
+    return this.find({
+      _environmentId,
+      _organizationId,
+      _topicId,
+    });
+  }
 
-    await this.update(
-      {
-        _environmentId,
-        _organizationId,
-        _topicId,
-        _userId,
+  async removeSubscribers(
+    _environmentId: EnvironmentId,
+    _organizationId: OrganizationId,
+    topicKey: TopicKey,
+    externalSubscriberIds: ExternalSubscriberId[]
+  ): Promise<void> {
+    await this.delete({
+      _environmentId,
+      _organizationId,
+      key: topicKey,
+      externalSubscriberId: {
+        $in: externalSubscriberIds,
       },
-      {
-        $pullAll: { subscribers },
-      }
-    );
+    });
   }
 }

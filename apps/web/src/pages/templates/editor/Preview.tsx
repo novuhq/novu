@@ -1,8 +1,9 @@
 import { Grid, JsonInput, useMantineTheme } from '@mantine/core';
-import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
+import type { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
+
 import { previewEmail } from '../../../api/content-templates';
 import { useActiveIntegrations } from '../../../api/hooks';
 import { When } from '../../../components/utils/When';
