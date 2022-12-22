@@ -75,7 +75,8 @@ test('should trigger nodemailer without auth with rejectUnauthorized as false', 
     user: undefined,
     password: undefined,
   };
-  new NodemailerProvider(config);
+  const provider = new NodemailerProvider(config);
+  await provider.sendMessage(mockNovuMessage);
 
   expect(nodemailer.createTransport).toHaveBeenCalled();
   expect(nodemailer.createTransport).toHaveBeenCalledWith({
