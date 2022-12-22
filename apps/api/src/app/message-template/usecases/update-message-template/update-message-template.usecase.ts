@@ -23,6 +23,9 @@ export class UpdateMessageTemplate {
     if (!existingTemplate) throw new NotFoundException(`Message template with id ${command.templateId} not found`);
 
     const updatePayload: Partial<MessageTemplateEntity> = {};
+
+    const unsetPayload: Partial<Record<keyof MessageTemplateEntity, string>> = {};
+
     if (command.name) {
       updatePayload.name = command.name;
     }
@@ -45,6 +48,8 @@ export class UpdateMessageTemplate {
         ...(existingTemplate.cta && { cta: existingTemplate.cta }),
         ...command.cta,
       };
+    } else if (existingTemplate.cta) {
+      unsetPayload.cta = '';
     }
 
     if (command.feedId) {
@@ -81,6 +86,7 @@ export class UpdateMessageTemplate {
       },
       {
         $set: updatePayload,
+        $unset: unsetPayload,
       }
     );
 
