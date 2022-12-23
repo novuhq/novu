@@ -11,6 +11,7 @@ interface NodeData {
   parentId: string;
   showDropZone: boolean;
   childId: string;
+  readonly: boolean;
 }
 export default memo(({ data }: { data: NodeData }) => {
   const { parentId, childId } = data;
@@ -20,6 +21,10 @@ export default memo(({ data }: { data: NodeData }) => {
   };
 
   const dataTestId = parentId && childId ? `addNodeButton_${parentId}_${childId}` : 'addNodeButton';
+
+  if (data.readonly) {
+    return null;
+  }
 
   return (
     <Container data-test-id={dataTestId} style={{ pointerEvents: 'none' }}>
@@ -74,7 +79,7 @@ export default memo(({ data }: { data: NodeData }) => {
           }
           onClick={() => addNewNode(StepTypeEnum.DIGEST)}
         >
-          Digest
+          Digest banda
         </Dropdown.Item>
         <Dropdown.Item data-test-id={`add-delay-node`} icon={<Timer />} onClick={() => addNewNode(StepTypeEnum.DELAY)}>
           Delay
