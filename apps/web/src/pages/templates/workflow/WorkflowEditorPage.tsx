@@ -296,6 +296,7 @@ const WorkflowEditorPage = ({
                     onClick={() => {
                       onDelete(selectedNodeId);
                     }}
+                    disabled={readonly}
                   >
                     <Trash
                       style={{
