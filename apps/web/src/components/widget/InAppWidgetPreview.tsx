@@ -115,6 +115,7 @@ export function InAppWidgetPreview({
                       index={index}
                       opened={avatarContainerOpened}
                       setOpened={setAvatarContainerOpened}
+                      readonly={readonly}
                     />
                   )}
 
