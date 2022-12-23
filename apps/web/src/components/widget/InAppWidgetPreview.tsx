@@ -132,6 +132,7 @@ export function InAppWidgetPreview({
                   onButtonAddClickHandle={onButtonAddClickHandle}
                   onRemoveTemplate={onRemoveTemplate}
                   isButtonsTemplateSelected={isButtonsTemplateSelected}
+                  readonly={readonly}
                 />
               </div>
             </Group>
