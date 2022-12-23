@@ -186,7 +186,7 @@ const WorkflowEditorPage = ({
                         )
                       }
                     >
-                      Edit Template
+                      {readonly ? 'View' : 'Edit'} Template
                     </EditTemplateButton>
                     <Divider my={30} />
                     {steps.map((i, index) => {
@@ -216,6 +216,7 @@ const WorkflowEditorPage = ({
                         setFilterOpen(true);
                       }}
                       dark={colorScheme === 'dark'}
+                      disabled={readonly}
                     >
                       <PlusCircle
                         style={{
