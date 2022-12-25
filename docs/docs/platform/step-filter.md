@@ -120,9 +120,7 @@ if (hmacHash === hmac) {
 ```
 
 > environmentId - can be accessed in the webhook subscriber parameter in the request body.
-
-[](ignored)
-
+>
 > novu_api_key - can be found in the settings section of the Novu client.
 
 The webhook should return a one-level object containing any information that you want to use
