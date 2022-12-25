@@ -1,7 +1,7 @@
 name: Add Triage Label
 
 on:
-  issue:
+  issues:
     types: [opened]
 
 concurrency:
