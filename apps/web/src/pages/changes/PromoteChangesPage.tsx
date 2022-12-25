@@ -30,7 +30,7 @@ export function PromoteChangesPage() {
       successMessage('All changes were promoted');
     },
     onError: (err: any) => {
-      errorMessage(err?.message || 'Un-expected error occurred');
+      errorMessage(err?.message || 'Something went wrong! Failed to promote changes');
     },
   });
 
