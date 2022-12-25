@@ -125,13 +125,27 @@ export function FilterModal({
                   }}
                 />
               </Grid.Col>
-              {filterFieldOn === 'webhook'
-                ? getWebhookUrlGrid(control, stepIndex, index)
-                : getEqualityGrid(filterFieldOn, control, stepIndex, index, remove)}
+              {filterFieldOn === 'webhook' ? (
+                <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} />
+              ) : (
+                <EqualityForm
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
+              )}
             </Grid>
             <When truthy={filterFieldOn === 'webhook'}>
               <Grid columns={10} key={item.id} align="center" gutter="xs">
-                {getEqualityGrid(filterFieldOn, control, stepIndex, index, remove)}
+                <EqualityForm
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
               </Grid>
             </When>
 
@@ -169,7 +183,7 @@ const DeleteStepButton = styled(Button)`
   margin-top: 0px;
 `;
 
-function getWebhookUrlGrid(control, stepIndex: number, index: number) {
+function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: number; index: number }) {
   return (
     <>
       <Grid.Col span={6}>
@@ -185,13 +199,19 @@ function getWebhookUrlGrid(control, stepIndex: number, index: number) {
   );
 }
 
-function getEqualityGrid(
-  fieldOn: string,
+function EqualityForm({
+  fieldOn,
   control,
-  stepIndex: number,
-  index: number,
-  remove: (index?: number | number[]) => void
-) {
+  stepIndex,
+  index,
+  remove,
+}: {
+  fieldOn: string;
+  control;
+  stepIndex: number;
+  index: number;
+  remove: (index?: number | number[]) => void;
+}) {
   const spaSize = fieldOn === 'webhook' ? 3 : 2;
 
   return (
