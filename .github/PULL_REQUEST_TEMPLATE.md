@@ -1,9 +1,3 @@
-<!--
-Thank you for sending the PR! 
-Please fill the applicable details below
-Happy contributing!
--->
-
 ### What change does this PR introduce? 
 
 <!-- Explain here the changes your PR introduces and text to help us understand the context of this change. --> 
