@@ -79,7 +79,7 @@ export default memo(({ data }: { data: NodeData }) => {
           }
           onClick={() => addNewNode(StepTypeEnum.DIGEST)}
         >
-          Digest banda
+          Digest
         </Dropdown.Item>
         <Dropdown.Item data-test-id={`add-delay-node`} icon={<Timer />} onClick={() => addNewNode(StepTypeEnum.DELAY)}>
           Delay
