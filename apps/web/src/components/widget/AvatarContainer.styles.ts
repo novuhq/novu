@@ -21,7 +21,7 @@ export const useStyles = createStyles((theme) => {
   };
 });
 
-export const AvatarWrapper = styled.div<{ dark: boolean }>`
+export const AvatarWrapper = styled.div<{ dark: boolean; readonly: boolean }>`
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -29,9 +29,15 @@ export const AvatarWrapper = styled.div<{ dark: boolean }>`
   display: flex;
   justify-content: center;
   align-items: center;
-  cursor: pointer;
+  cursor: 'pointer';
   overflow: hidden;
   user-select: none;
+
+  ${({ readonly }) => {
+    if (readonly) {
+      return `pointer-events: none`;
+    }
+  }}
 `;
 
 export const IconWrapper = styled.div<{ containerBgColor: string; iconColor: string; size: number }>`
