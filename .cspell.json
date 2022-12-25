@@ -3,6 +3,7 @@
   "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/master/cspell.schema.json",
   "language": "en",
   "words": [
+    "hmac",
     "dtos",
     "bitauth",
     "bitjson",

@@ -51,7 +51,7 @@ improving the efficiency and effectiveness of your communication.
 4. Add a rule to the filter (2). This will specify the criteria that must be met for the
    notification to be delivered. You can use the 'payload', 'subscriber', or 'webhook' field
    as the basis for your rule. For example, you might specify that the 'payload' field must
-   contain a certain keyword or that the 'sbscriber' must be in a specific group.
+   contain a certain keyword or that the 'subscriber' must be in a specific group.
 
 > If only one rule is provided, a logical condition of AND or OR is not mandatory.
 
@@ -119,7 +119,7 @@ if (hmacHash === hmac) {
 }
 ```
 
-> enviromentId - can be accessed in the webhook subscriber parameter in the request body.
+> environmentId - can be accessed in the webhook subscriber parameter in the request body.
 
 [](ignored)
 
