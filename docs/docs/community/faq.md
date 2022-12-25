@@ -35,3 +35,10 @@ In Novu, [handlebar variables](https://handlebarsjs.com/guide/) (variables enclo
   ```
 
 For an in-depth explanation with examples, check out [Templates](https://docs.novu.co/platform/templates#messages).
+
+## Is it possible to send notifications to multiple providers (e.g. Slack and Discord) in the same Novu channel?
+
+the current implementation of novu only enforces the use of a single provider per channel for email and SMS notifications. However, it is possible to configure multiple providers for push and chat notifications.
+
+
+
