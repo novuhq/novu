@@ -10,7 +10,7 @@ import { usePromotedChanges, useUnPromotedChanges } from '../../api/hooks/use-en
 import { ChangesTable } from '../../components/changes/ChangesTableLayout';
 import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
-import { successMessage } from '../../utils/notifications';
+import { errorMessage, successMessage } from '../../utils/notifications';
 
 const PENDING = 'Pending';
 const HISTORY = 'History';
@@ -28,6 +28,9 @@ export function PromoteChangesPage() {
       queryClient.refetchQueries([QueryKeys.currentPromotedChanges]);
       queryClient.refetchQueries([QueryKeys.changesCount]);
       successMessage('All changes were promoted');
+    },
+    onError: (err: any) => {
+      errorMessage(err?.message || 'Something went wrong! Failed to promote changes');
     },
   });
 
