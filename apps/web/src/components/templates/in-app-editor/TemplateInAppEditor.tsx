@@ -122,7 +122,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
             readonly={readonly}
             contentPlaceholder="Write your notification content here..."
           />
-          <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} />
+          <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} readonly={readonly} />
           <Divider sx={{ borderTopColor: colors.B40 }} />
           <Controller
             name={`steps.${index}.template.feedId` as any}
