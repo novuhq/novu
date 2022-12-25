@@ -203,6 +203,8 @@ async function getWebhookResponse(
 }
 
 async function buildPayload(variables: IFilterVariables, configuration: IMessageFilterConfiguration) {
+  if (process.env.NODE_ENV === 'test' && !configuration) return variables;
+
   const payload: Partial<{
     subscriber: SubscriberEntity;
     payload: Record<string, unknown>;
