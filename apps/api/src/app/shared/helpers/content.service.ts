@@ -34,7 +34,6 @@ export class ContentService {
       variables.push(...extractedVariables);
     }
 
-    // return Array.from(new Set(variables));
     return [...new Map(variables.map((item) => [item.name, item])).values()];
   }
 

@@ -82,7 +82,7 @@ describe('ContentService', function () {
       const extractVariables = contentService.extractVariables(
         ' {{#each array}} {{@index}} {{#if @first}} First {{/if}} {{name}} {{/each}}'
       );
-      // org.array
+
       expect(extractVariables.length).to.equal(2);
       expect(extractVariables[0].name).to.include('array');
       expect(extractVariables[0].type).to.eq('Array');

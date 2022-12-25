@@ -46,6 +46,10 @@ export function getTemplateVariables(bod: any[]): IMustacheVariable[] {
         };
       });
 
+      if (['with'].includes(body.path.original)) {
+        return [...nestedVariablesInBlock];
+      }
+
       return [
         {
           type: TemplateVariableTypeEnum.ARRAY,
