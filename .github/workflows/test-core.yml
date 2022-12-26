@@ -2,7 +2,7 @@ name: Test @novu/node
 on:
   push:
     paths:
-      - "packages/core/**"
+      - "packages/node/**"
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -27,5 +27,5 @@ jobs:
           run_install: true
 
       - name: Test
-        working-directory: "packages/core"
+        working-directory: "packages/node"
         run: pnpm test
