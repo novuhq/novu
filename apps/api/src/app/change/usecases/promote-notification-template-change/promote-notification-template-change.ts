@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { ApplyChange } from '../apply-change/apply-change.usecase';
 import { ChangeRepository } from '@novu/dal';
@@ -11,10 +11,12 @@ import {
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ApplyChangeCommand } from '../apply-change/apply-change.command';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {
   constructor(
+    private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
@@ -92,6 +94,12 @@ export class PromoteNotificationTemplateChange {
       });
     }
 
+    if (!notificationGroup) {
+      throw new NotFoundException(
+        `Notification Group: ${newItem.name} with the ${newItem._notificationGroupId} Id not found`
+      );
+    }
+
     if (!item) {
       return this.notificationTemplateRepository.create({
         name: newItem.name,
@@ -121,6 +129,14 @@ export class PromoteNotificationTemplateChange {
 
       return;
     }
+
+    this.invalidateCache.clearCache({
+      storeKeyPrefix: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
+      credentials: {
+        _id: item._id,
+        environmentId: command.environmentId,
+      },
+    });
 
     return await this.notificationTemplateRepository.update(
       {

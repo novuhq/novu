@@ -95,6 +95,18 @@ When using the IFrame embed to attach the notification center rather than the Re
 
 See [Use your own backend and socket URL](https://docs.novu.co/notification-center/react-components#use-your-own-backend-and-socket-url).
 
+### Caching
+
+We are introducing the first stage of caching in our system to improve performance and efficiency. Caching is turned off by default, but can easily be activated by setting the following environment variables:
+
+- REDIS_CACHE_HOST
+- REDIS_CACHE_PORT
+
+Currently, we are caching data in the most heavily loaded areas of the system:
+the widget requests such as feed and unseen count, as well as common DAL requests during the execution of trigger event flow.
+These are the most heavily used areas of our system, and we hope that by implementing caching in these areas,
+we can improve performance in the near future.
+
 ## Next steps
 
 - Got a question? [Ask here](https://github.com/novuhq/novu/discussions).

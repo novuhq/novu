@@ -26,15 +26,12 @@ describe('Debugging - test trigger', function () {
     cy.intercept('POST', '*/notification-templates').as('createTemplate');
     const { id: userId, email: userEmail } = this.session.user;
 
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/create');
-    });
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
 
     fillBasicNotificationDetails('Test workflow');
 
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-    });
+    clickWorkflow();
 
     addAndEditChannel('email');
 
@@ -58,7 +55,7 @@ describe('Debugging - test trigger', function () {
 
       cy.getByTestId('test-trigger-modal')
         .getByTestId('test-trigger-payload-param')
-        .should('have.value', '{\n  "newVar": "REPLACE_WITH_DATA"\n}');
+        .should('have.value', '{\n  "newVar": "<REPLACE_WITH_DATA>"\n}');
       cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-btn').click();
       cy.location('pathname').should('equal', `/templates/edit/${createdTemplateId}`);
     });
@@ -66,9 +63,8 @@ describe('Debugging - test trigger', function () {
 
   it('should not test trigger on error ', function () {
     const template = this.session.templates[0];
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/edit/' + template._id);
-    });
+    cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('test-workflow-btn').click();
 
     cy.getByTestId('test-trigger-modal').should('be.visible');

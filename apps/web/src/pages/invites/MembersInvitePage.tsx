@@ -1,11 +1,12 @@
 import { Form } from 'antd';
 import { useContext, useEffect, useState } from 'react';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 import { showNotification } from '@mantine/notifications';
 import { Container, Group } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum } from '@novu/shared';
+
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -32,7 +33,7 @@ export function MembersInvitePage() {
     data: members,
     isLoading: loadingMembers,
     refetch,
-  } = useQuery<any[]>('getOrganizationMembers', getOrganizationMembers);
+  } = useQuery<any[]>(['getOrganizationMembers'], getOrganizationMembers);
 
   const { isLoading: loadingSendInvite, mutateAsync: sendInvite } = useMutation<
     string,

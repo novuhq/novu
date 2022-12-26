@@ -17,10 +17,13 @@ import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { CacheKeyPrefixEnum, CacheService } from '../../../shared/services/cache';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class UpdateNotificationTemplate {
   constructor(
+    private cacheService: CacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
     private updateMessageTemplate: UpdateMessageTemplate,
@@ -29,12 +32,10 @@ export class UpdateNotificationTemplate {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
+  @InvalidateCache(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
-    const existingTemplate = await this.notificationTemplateRepository.findById(
-      command.templateId,
-      command.organizationId
-    );
-    if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.templateId} not found`);
+    const existingTemplate = await this.notificationTemplateRepository.findById(command.id, command.environmentId);
+    if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
     const updatePayload: Partial<NotificationTemplateEntity> = {};
     if (command.name) {
@@ -51,7 +52,7 @@ export class UpdateNotificationTemplate {
         command.identifier
       );
 
-      if (isExistingIdentifier && isExistingIdentifier._id !== command.templateId) {
+      if (isExistingIdentifier && isExistingIdentifier._id !== command.id) {
         throw new BadRequestException(`Notification template with identifier ${command.identifier} already exists`);
       } else {
         updatePayload['triggers.0.identifier'] = command.identifier;
@@ -101,7 +102,8 @@ export class UpdateNotificationTemplate {
 
       updatePayload['triggers.0.variables'] = variables.map((i) => {
         return {
-          name: i,
+          name: i.name,
+          type: i.type,
         };
       });
 
@@ -195,7 +197,7 @@ export class UpdateNotificationTemplate {
 
     await this.notificationTemplateRepository.update(
       {
-        _id: command.templateId,
+        _id: command.id,
         _environmentId: command.environmentId,
       },
       {
@@ -204,8 +206,8 @@ export class UpdateNotificationTemplate {
     );
 
     const notificationTemplateWithStepTemplate = await this.notificationTemplateRepository.findById(
-      command.templateId,
-      command.organizationId
+      command.id,
+      command.environmentId
     );
 
     const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);

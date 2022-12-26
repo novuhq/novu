@@ -1,10 +1,9 @@
 import { SubscriberEntity } from '@novu/dal';
+import { TopicId } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-import { CreateTopicResponseDto } from '../dtos';
-
-describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (POST)', async () => {
+describe('Remove subscribers to topic - /topics/:topicKey/subscribers/removal (POST)', async () => {
   const topicKey = 'topic-key-remove-subscribers';
   const topicName = 'topic-name';
   const URL = '/v1/topics';
@@ -14,7 +13,7 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
   let subscriber: SubscriberEntity;
   let secondSubscriber: SubscriberEntity;
   let thirdSubscriber: SubscriberEntity;
-  let topicId: string;
+  let topicId: TopicId;
   let getTopicUrl: string;
   let removeSubscribersUrl: string;
 
@@ -34,15 +33,16 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
     expect(response.statusCode).to.eql(201);
     topicId = response.body.data._id;
     expect(topicId).to.exist;
+    expect(response.body.data.key).to.eql(topicKey);
 
-    getTopicUrl = `${URL}/${topicId}`;
+    getTopicUrl = `${URL}/${topicKey}`;
     const addSubscribersUrl = `${getTopicUrl}/subscribers`;
     removeSubscribersUrl = `${addSubscribersUrl}/removal`;
 
     // We prefill the data to work with
     await session.testAgent
       .post(addSubscribersUrl)
-      .send({ subscribers: [subscriber._id, secondSubscriber._id, thirdSubscriber._id] });
+      .send({ subscribers: [subscriber.subscriberId, secondSubscriber.subscriberId, thirdSubscriber.subscriberId] });
   });
 
   it('should throw validation error for missing request payload information', async () => {
@@ -53,7 +53,7 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
   });
 
   it('should remove subscriber from the topic', async () => {
-    const subscribers = [subscriber._id];
+    const subscribers = [subscriber.subscriberId];
 
     const response = await session.testAgent.post(removeSubscribersUrl).send({ subscribers });
 
@@ -66,16 +66,36 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
     expect(getResponseTopic.name).to.eql(topicName);
-    expect(getResponseTopic.subscribers).to.eql([secondSubscriber._id, thirdSubscriber._id]);
+    expect(getResponseTopic.subscribers).to.have.members([secondSubscriber.subscriberId, thirdSubscriber.subscriberId]);
+  });
+
+  it('should not remove subscriber from topic if it does not exist', async () => {
+    const subscribers = ['this-is-a-made-up-subscriber-id'];
+
+    const response = await session.testAgent.post(removeSubscribersUrl).send({ subscribers });
+
+    expect(response.statusCode).to.eql(204);
+    expect(response.body).to.be.empty;
+
+    const getResponse = await session.testAgent.get(getTopicUrl);
+    expect(getResponse.statusCode).to.eql(200);
+
+    const getResponseTopic = getResponse.body.data;
+
+    expect(getResponseTopic._id).to.eql(topicId);
+    expect(getResponseTopic._environmentId).to.eql(session.environment._id);
+    expect(getResponseTopic._organizationId).to.eql(session.organization._id);
+    expect(getResponseTopic.key).to.eql(topicKey);
+    expect(getResponseTopic.name).to.eql(topicName);
+    expect(getResponseTopic.subscribers).to.have.members([secondSubscriber.subscriberId, thirdSubscriber.subscriberId]);
   });
 
   it('should keep the same when trying to remove a subscriber already removed from the topic', async () => {
-    const subscribers = [subscriber._id];
+    const subscribers = [subscriber.subscriberId];
 
     const response = await session.testAgent.post(removeSubscribersUrl).send({ subscribers });
 
@@ -88,16 +108,15 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
     expect(getResponseTopic.name).to.eql(topicName);
-    expect(getResponseTopic.subscribers).to.eql([secondSubscriber._id, thirdSubscriber._id]);
+    expect(getResponseTopic.subscribers).to.have.members([secondSubscriber.subscriberId, thirdSubscriber.subscriberId]);
   });
 
   it('should remove multiple subscribers from the topic', async () => {
-    const subscribers = [secondSubscriber._id, thirdSubscriber._id];
+    const subscribers = [secondSubscriber.subscriberId, thirdSubscriber.subscriberId];
 
     const response = await session.testAgent.post(removeSubscribersUrl).send({ subscribers });
 
@@ -110,7 +129,6 @@ describe('Remove subscribers to topic - /topics/:topicId/subscribers/removal (PO
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);

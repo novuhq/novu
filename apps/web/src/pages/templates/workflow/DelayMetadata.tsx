@@ -68,6 +68,7 @@ export const DelayMetadata = ({ control, index }) => {
                       type="number"
                       data-test-id="time-amount"
                       placeholder="0"
+                      disabled={readonly}
                     />
                   );
                 }}

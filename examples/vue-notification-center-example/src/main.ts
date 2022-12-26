@@ -1,6 +1,9 @@
-import { createApp } from 'vue'
-import App from './App.vue'
+import { createApp } from 'vue';
+import NotificationCenterPlugin from '@novu/notification-center-vue';
+import '@novu/notification-center-vue/dist/style.css';
 
-import './assets/main.css'
+import App from './App.vue';
 
-createApp(App).mount('#app')
+import './assets/main.css';
+
+createApp(App).use(NotificationCenterPlugin).mount('#app');

@@ -14,6 +14,8 @@ jest.mock('nodemailer', () => {
   };
 });
 
+import nodemailer from 'nodemailer';
+
 const mockConfig = {
   host: 'test.test.email',
   port: 587,
@@ -48,6 +50,44 @@ test('should trigger nodemailer correctly', async () => {
         filename: 'test.txt',
       },
     ],
+  });
+
+  expect(nodemailer.createTransport).toHaveBeenCalled();
+  expect(nodemailer.createTransport).toHaveBeenCalledWith({
+    host: mockConfig.host,
+    port: mockConfig.port,
+    secure: mockConfig.secure,
+    auth: {
+      user: mockConfig.user,
+      pass: mockConfig.password,
+    },
+    dkim: undefined,
+    tls: undefined,
+  });
+});
+
+test('should trigger nodemailer without auth with rejectUnauthorized as false', async () => {
+  const config = {
+    host: 'test.test.email',
+    port: 587,
+    secure: false,
+    from: 'test@test.com',
+    user: undefined,
+    password: undefined,
+  };
+  const provider = new NodemailerProvider(config);
+  await provider.sendMessage(mockNovuMessage);
+
+  expect(nodemailer.createTransport).toHaveBeenCalled();
+  expect(nodemailer.createTransport).toHaveBeenCalledWith({
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    auth: undefined,
+    dkim: undefined,
+    tls: {
+      rejectUnauthorized: false,
+    },
   });
 });
 

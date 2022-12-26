@@ -13,7 +13,13 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 
 import { expect } from 'chai';
-import { ChannelTypeEnum, StepTypeEnum, IEmailBlock, TemplateVariableTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  StepTypeEnum,
+  IEmailBlock,
+  TemplateVariableTypeEnum,
+  EmailProviderIdEnum,
+} from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
 
@@ -528,6 +534,73 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     expect(message).to.be.null;
+  });
+
+  it('should trigger message with active integration', async function () {
+    const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
+    const channelType = ChannelTypeEnum.EMAIL;
+
+    template = await createTemplate(session, channelType);
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test email {{nested.subject}}',
+          type: StepTypeEnum.EMAIL,
+          content: [],
+        },
+      ],
+    });
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification, {
+      nested: {
+        subject: 'a subject nested',
+      },
+    });
+
+    await session.awaitRunningJobs(template._id);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
+    );
+
+    let messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
+    });
+
+    expect(messages.length).to.be.equal(1);
+    expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.SendGrid);
+
+    const payload = {
+      providerId: 'mailgun',
+      channel: 'email',
+      credentials: { apiKey: '123', secretKey: 'abc' },
+      active: true,
+      check: false,
+    };
+
+    await session.testAgent.post('/v1/integrations').send(payload);
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification, {
+      nested: {
+        subject: 'a subject nested',
+      },
+    });
+
+    await session.awaitRunningJobs(template._id);
+
+    messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
+    });
+
+    expect(messages.length).to.be.equal(2);
+    expect(messages[1].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
   });
 
   it('should fail to trigger with missing variables', async function () {
