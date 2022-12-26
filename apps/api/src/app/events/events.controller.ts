@@ -1,14 +1,7 @@
 import { IJwtPayload } from '@novu/shared';
 import { ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/node';
-import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
-import {
-  ApiCreatedResponse,
-  ApiExcludeEndpoint,
-  ApiOkResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
+import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
@@ -30,7 +23,10 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 
-@Controller('events')
+@Controller({
+  path: 'events',
+  scope: Scope.REQUEST,
+})
 @ApiTags('Events')
 export class EventsController {
   constructor(
