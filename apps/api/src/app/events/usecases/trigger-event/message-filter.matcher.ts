@@ -1,24 +1,35 @@
 import { NotificationStepEntity, SubscriberEntity } from '@novu/dal';
 import { ITriggerPayload } from '@novu/node';
 import * as _ from 'lodash';
+import axios from 'axios';
 
 export interface IFilterVariables {
   payload: ITriggerPayload;
   subscriber?: SubscriberEntity;
+  webhook?: Record<string, unknown>;
 }
 
-export function matchMessageWithFilters(step: NotificationStepEntity, variables: IFilterVariables): boolean {
+export async function matchMessageWithFilters(
+  step: NotificationStepEntity,
+  variables: IFilterVariables
+): Promise<boolean> {
   if (!step?.filters || !Array.isArray(step?.filters)) {
     return true;
   }
   if (step.filters?.length) {
-    const foundFilter = step.filters.find((filter) => {
+    const foundFilter = await findAsync(step.filters, async (filter) => {
       const children = filter.children;
-      if (!children || (Array.isArray(children) && children.length === 0)) {
+      const noRules = !children || (Array.isArray(children) && children.length === 0);
+      if (noRules) {
         return true;
       }
 
-      return handleGroupFilters(filter, variables);
+      const singleRule = !children || (Array.isArray(children) && children.length === 1);
+      if (singleRule) {
+        return await processFilter(variables, children[0]);
+      }
+
+      return await handleGroupFilters(filter, variables);
     });
 
     return foundFilter !== undefined;
@@ -27,29 +38,57 @@ export function matchMessageWithFilters(step: NotificationStepEntity, variables:
   return true;
 }
 
-function handleGroupFilters(filter, variables: IFilterVariables) {
+async function handleGroupFilters(filter, variables: IFilterVariables) {
   if (filter.value === 'OR') {
-    return handleOrFilters(filter, variables);
+    return await handleOrFilters(filter, variables);
   }
 
   if (filter.value === 'AND') {
-    return handleAndFilters(filter, variables);
+    return await handleAndFilters(filter, variables);
   }
 
   return false;
 }
 
-function handleAndFilters(filter, variables: IFilterVariables) {
-  const foundFilterMatches = filter.children.filter((i) => processFilterEquality(i, variables));
+function splitToSyncAsync(filter) {
+  const asyncOnFilters = ['webhook'];
 
-  return foundFilterMatches.length === filter.children.length;
+  const asyncFilters = filter.children.filter((childFilter) =>
+    asyncOnFilters.some((asyncOnFilter) => asyncOnFilter === childFilter.on)
+  );
+
+  const syncFilters = filter.children.filter((childFilter) =>
+    asyncOnFilters.some((asyncOnFilter) => asyncOnFilter !== childFilter.on)
+  );
+
+  return { asyncFilters, syncFilters };
 }
 
-function handleOrFilters(filter, variables: IFilterVariables) {
-  return filter.children.find((i) => processFilterEquality(i, variables));
+async function handleAndFilters(filter, variables: IFilterVariables) {
+  const { asyncFilters, syncFilters } = splitToSyncAsync(filter);
+
+  const foundSyncFilterMatches = syncFilters.filter((i) => processFilterEquality(variables, i));
+  if (syncFilters.length !== foundSyncFilterMatches.length) {
+    return false;
+  }
+
+  const foundAsyncFilterMatches = await filterAsync(asyncFilters, (i) => processFilter(variables, i));
+
+  return foundAsyncFilterMatches.length === asyncFilters.length;
 }
 
-function processFilterEquality(i, variables: IFilterVariables) {
+async function handleOrFilters(filter, variables: IFilterVariables) {
+  const { asyncFilters, syncFilters } = splitToSyncAsync(filter);
+
+  const syncRes = syncFilters.find((i) => processFilterEquality(variables, i));
+  if (syncRes) {
+    return true;
+  }
+
+  return await findAsync(asyncFilters, (i) => processFilter(variables, i));
+}
+
+function processFilterEquality(variables: IFilterVariables, i) {
   const payloadVariable = _.get(variables, [i.on, i.field]);
   const value = parseValue(payloadVariable, i.value);
   if (i.operator === 'EQUAL') {
@@ -80,6 +119,35 @@ function processFilterEquality(i, variables: IFilterVariables) {
   return false;
 }
 
+async function getWebhookResponse(i, variables: IFilterVariables): Promise<Record<string, unknown>> {
+  try {
+    return await axios
+      .post(i.webhookUrl, variables)
+      .then((response) => {
+        return response.data as Record<string, unknown>;
+      })
+      .catch((error) => {
+        // eslint-disable-next-line promise/no-return-wrap
+        return Promise.reject(error?.response?.data || error?.response || error);
+      });
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.log(e);
+
+    return undefined;
+  }
+}
+
+async function processFilter(variables: IFilterVariables, i) {
+  if (i.on === 'webhook') {
+    const res = await getWebhookResponse(i, variables);
+
+    return processFilterEquality({ payload: undefined, webhook: res }, i);
+  }
+
+  return processFilterEquality(variables, i);
+}
+
 function parseValue(originValue, parsingValue) {
   switch (typeof originValue) {
     case 'number':
@@ -93,4 +161,22 @@ function parseValue(originValue, parsingValue) {
     default:
       return parsingValue;
   }
+}
+
+async function findAsync<T>(array: T[], predicate: (t: T) => Promise<boolean>): Promise<T | undefined> {
+  for (const t of array) {
+    if (await predicate(t)) {
+      return t;
+    }
+  }
+
+  return undefined;
+}
+
+async function filterAsync<T>(arr: T[], callback: (item: T) => Promise<boolean>): Promise<T[]> {
+  const fail = Symbol();
+
+  return (await Promise.all(arr.map(async (item) => ((await callback(item)) ? item : fail)))).filter(
+    (i) => i !== fail
+  ) as T[];
 }
