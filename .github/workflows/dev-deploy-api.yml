@@ -164,6 +164,12 @@ jobs:
           cluster: ${{ env.api_ecs_cluster }}
           wait-for-service-stability: true
 
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@main
+        with:
+          path: apps/api
+
       - name: Create Sentry release
         uses: getsentry/action-release@v1
         env:
@@ -171,7 +177,9 @@ jobs:
           SENTRY_ORG: novu-r9
           SENTRY_PROJECT: api
         with:
+          version: ${{ steps.package-version.outputs.current-version}}
           environment: dev
+          version_prefix: v
           sourcemaps: apps/api/dist
           ignore_empty: true
           ignore_missing: true
