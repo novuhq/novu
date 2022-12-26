@@ -47,6 +47,10 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
     setToDelete(true);
   };
 
+  const onCancel = () => {
+    navigate('/templates');
+  };
+
   return (
     <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
       <Grid grow style={{ minHeight: 500 }}>
@@ -66,20 +70,24 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
               <>
                 <NotificationSettingsForm editMode={editMode} trigger={trigger} />
                 {editMode && (
-                  <DeleteNotificationButton
-                    mt={10}
-                    variant="outline"
-                    disabled={readonly}
-                    data-test-id="delete-notification-button"
-                    onClick={onDelete}
-                  >
-                    <Trash
-                      style={{
-                        marginRight: '5px',
-                      }}
-                    />
-                    Delete Template
-                  </DeleteNotificationButton>
+                  <TemplateEditorFooterGrid>
+                    <Button variant="outline" onClick={onCancel} mr={10} data-test-id="template-editing-cancel-btn">
+                      Cancel
+                    </Button>
+                    <DeleteNotificationButton
+                      variant="outline"
+                      disabled={readonly}
+                      data-test-id="delete-notification-button"
+                      onClick={onDelete}
+                    >
+                      <Trash
+                        style={{
+                          marginRight: '5px',
+                        }}
+                      />
+                      Delete Template
+                    </DeleteNotificationButton>
+                  </TemplateEditorFooterGrid>
                 )}
                 <DeleteConfirmModal
                   target="notification template"
@@ -108,13 +116,18 @@ const SideBarWrapper = styled.div<{ dark: boolean }>`
 `;
 
 const DeleteNotificationButton = styled(Button)`
-  position: absolute;
-  right: 20px;
-  bottom: 20px;
   background: rgba(229, 69, 69, 0.15);
   color: ${colors.error};
   box-shadow: none;
   :hover {
     background: rgba(229, 69, 69, 0.15);
   }
+`;
+
+const TemplateEditorFooterGrid = styled.div`
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  align-items: flex-start;
 `;
