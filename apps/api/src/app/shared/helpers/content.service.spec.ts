@@ -78,6 +78,14 @@ describe('ContentService', function () {
       expect(extractVariables[0].name).to.include('word');
     });
 
+    it('should not extract variables reserved for the system', function () {
+      const contentService = new ContentService();
+      const extractVariables = contentService.extractVariables(' {{subscriber.firstName}} {{lastName}}');
+
+      expect(extractVariables.length).to.equal(1);
+      expect(extractVariables[0].name).to.include('lastName');
+    });
+
     it('should not show @data variables ', function () {
       const contentService = new ContentService();
       const extractVariables = contentService.extractVariables(
