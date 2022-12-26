@@ -173,6 +173,12 @@ jobs:
           url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
           method: 'POST'
 
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@main
+        with:
+          path: apps/api
+
       - name: Create Sentry release
         uses: getsentry/action-release@v1
         env:
@@ -180,6 +186,8 @@ jobs:
           SENTRY_ORG: novu-r9
           SENTRY_PROJECT: api
         with:
+          version: ${{ steps.package-version.outputs.current-version}}
+          version_prefix: v
           environment: prod
           sourcemaps: apps/api/dist
           ignore_empty: true
