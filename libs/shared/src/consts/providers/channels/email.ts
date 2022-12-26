@@ -1,4 +1,5 @@
 import {
+  mailerSendConfig,
   mailgunConfig,
   mailjetConfig,
   mailJsConfig,
@@ -9,6 +10,8 @@ import {
   sendgridConfig,
   sendinblueConfig,
   sesConfig,
+  outlook365Config,
+  infobipEmailConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { ChannelTypeEnum } from '../../../entities/message-template';
@@ -46,14 +49,6 @@ export const emailProviders: IProviderConfig[] = [
     credentials: mandrillConfig,
     docReference: 'https://mandrillapp.com/docs/?_ga=1.34114145.1141874178.1422518109',
     logoFileName: { light: 'mandrill.svg', dark: 'mandrill.svg' },
-  },
-  {
-    id: EmailProviderIdEnum.Nodemailer,
-    displayName: 'Nodemailer',
-    channel: ChannelTypeEnum.EMAIL,
-    credentials: nodemailerConfig,
-    docReference: 'https://nodemailer.com/about/',
-    logoFileName: { light: 'nodemailer.svg', dark: 'nodemailer.svg' },
   },
   {
     id: EmailProviderIdEnum.Postmark,
@@ -94,5 +89,37 @@ export const emailProviders: IProviderConfig[] = [
     credentials: netCoreConfig,
     docReference: 'https://netcorecloud.com/email/email-api/',
     logoFileName: { light: 'netcore.png', dark: 'netcore.png' },
+  },
+  {
+    id: EmailProviderIdEnum.CustomSMTP,
+    displayName: 'Custom SMTP',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: nodemailerConfig,
+    docReference: 'https://nodemailer.com/about/',
+    logoFileName: { light: 'custom_smtp.svg', dark: 'custom_smtp.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.MailerSend,
+    displayName: 'MailerSend',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: mailerSendConfig,
+    docReference: 'https://developers.mailersend.com/',
+    logoFileName: { light: 'mailersend.svg', dark: 'mailersend.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.Outlook365,
+    displayName: 'Microsoft Outlook365',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: outlook365Config,
+    docReference: 'https://docs.microsoft.com/en-us/outlook/rest/node-tutorial',
+    logoFileName: { light: 'outlook365.png', dark: 'outlook365.png' },
+  },
+  {
+    id: EmailProviderIdEnum.Infobip,
+    displayName: 'Infobip',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: infobipEmailConfig,
+    docReference: 'https://www.infobip.com/docs',
+    logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
   },
 ];

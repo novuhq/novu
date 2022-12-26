@@ -1,31 +1,10 @@
 name: Test @novu/notification-center
 on:
+  workflow_dispatch:
   push:
     paths:
-      - "packages/notification-center/**"
+      - 'packages/notification-center/**'
+
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "14"
-      - run: rm -rf build
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-
-
-      - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 7.5.0
-          run_install: true
-
-      - name: Build
-        run: pnpm build
-
+  build_test:
+    uses: ./.github/workflows/reusable-notification-center.yml

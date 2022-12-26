@@ -79,7 +79,7 @@ export class GetChanges {
     });
 
     if (!item) {
-      Logger.error(`Could not find notification template for template id ${entityId}`);
+      Logger.error(`Could not find notification template for message template id ${entityId}`);
 
       return {};
     }

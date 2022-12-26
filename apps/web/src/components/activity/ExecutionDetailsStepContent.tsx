@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { Container, Grid, useMantineColorScheme } from '@mantine/core';
-import styled from 'styled-components';
+import { Container, Grid } from '@mantine/core';
+import styled from '@emotion/styled';
 
 import { ExecutionDetail } from './ExecutionDetail';
 import { ExecutionDetailRawSnippet } from './ExecutionDetailShowRaw';
 import { ExecutionDetailTrigger } from './ExecutionDetailTrigger';
-
 import { colors, Text } from '../../design-system';
 import { When } from '../utils/When';
 
@@ -21,14 +20,13 @@ const TimelineTitle = styled(Text)`
   padding-bottom: 20px;
 `;
 
-const GridColContainer = styled(Container)<{ theme: string }>`
+const GridColContainer = styled(Container)`
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : colors.B98)};
   border-radius: 7px;
   padding: 20px;
 `;
 
 export const ExecutionDetailsStepContent = ({ identifier, step, subscriberVariables }) => {
-  const theme = useMantineColorScheme();
   const [detailId, setDetailId] = useState<string>('');
   const [executionDetailsRawSnippet, setExecutionDetailsRawSnippet] = useState<string>('');
   const { executionDetails } = step || {};
@@ -47,7 +45,7 @@ export const ExecutionDetailsStepContent = ({ identifier, step, subscriberVariab
     <ExecutionDetailsStepContentWrapper key={`execution-detals-step-content-wrapper-${step.id}`}>
       <Grid gutter={20}>
         <Grid.Col span={6}>
-          <GridColContainer theme={theme}>
+          <GridColContainer>
             <TimelineTitle>Step Timeline</TimelineTitle>
             {executionDetails.map((executionDetail) => (
               <ExecutionDetail
@@ -61,7 +59,7 @@ export const ExecutionDetailsStepContent = ({ identifier, step, subscriberVariab
           </GridColContainer>
         </Grid.Col>
         <Grid.Col span={6}>
-          <GridColContainer theme={theme}>
+          <GridColContainer>
             <When truthy={detailId.length === 0}>
               <ExecutionDetailTrigger identifier={identifier} step={step} subscriberVariables={subscriberVariables} />
             </When>

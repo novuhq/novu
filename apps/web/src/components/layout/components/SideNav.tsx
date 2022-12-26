@@ -1,14 +1,40 @@
-import { Navbar, Popover, useMantineColorScheme } from '@mantine/core';
+import { useContext, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  Navbar,
+  Popover,
+  CloseButton,
+  useMantineColorScheme,
+  createStyles,
+  createPolymorphicComponent,
+  CloseButtonProps,
+} from '@mantine/core';
+import styled from '@emotion/styled';
+
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
-import { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
-import styled from '@emotion/styled';
 import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
+
+const usePopoverStyles = createStyles(({ colorScheme }) => ({
+  dropdown: {
+    padding: '12px 20px 14px 15px',
+    backgroundColor: colorScheme === 'dark' ? colors.B20 : colors.white,
+    position: 'absolute',
+    color: colorScheme === 'dark' ? colors.white : colors.B40,
+    border: 'none',
+    marginTop: '1px',
+  },
+  arrow: {
+    backgroundColor: colorScheme === 'dark' ? colors.B20 : colors.white,
+    height: '7px',
+    border: 'none',
+    margin: '0px',
+  },
+}));
 
 type Props = {};
 
@@ -21,6 +47,7 @@ export function SideNav({}: Props) {
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
   const { addItem } = useContext(SpotlightContext);
+  const { classes } = usePopoverStyles();
 
   useEffect(() => {
     setOpened(readonly);
@@ -86,6 +113,7 @@ export function SideNav({}: Props) {
     <Navbar
       p={30}
       sx={{
+        position: 'static',
         backgroundColor: 'transparent',
         borderRight: 'none',
         paddingRight: 0,
@@ -97,36 +125,18 @@ export function SideNav({}: Props) {
     >
       <Navbar.Section grow>
         <Popover
-          styles={{
-            inner: {
-              padding: '12px 20px 14px 15px',
-            },
-            arrow: {
-              backgroundColor: dark ? colors.B20 : colors.white,
-              height: '7px',
-              border: 'none',
-              margin: '0px',
-            },
-            body: {
-              backgroundColor: dark ? colors.B20 : colors.white,
-              position: 'relative',
-              color: dark ? colors.white : colors.B40,
-              border: 'none',
-              marginTop: '1px',
-            },
-          }}
+          classNames={classes}
           withArrow
           opened={opened}
           onClose={() => setOpened(false)}
-          withCloseButton={true}
           withinPortal={false}
           transition="rotate-left"
           transitionDuration={250}
-          placement="center"
           position="right"
           radius="md"
           shadow={dark ? shadows.dark : shadows.medium}
-          target={
+        >
+          <Popover.Target>
             <SegmentedControl
               loading={isLoading}
               data={['Development', 'Production']}
@@ -137,11 +147,15 @@ export function SideNav({}: Props) {
               }}
               data-test-id="environment-switch"
             />
-          }
-        >
-          {'To make changes you’ll need to visit '}
-          <StyledLink onClick={handlePopoverForChanges}>development changes</StyledLink>{' '}
-          {' and promote the changes from there'}
+          </Popover.Target>
+          <Popover.Dropdown>
+            <div style={{ maxWidth: '220px', paddingRight: '10px' }}>
+              <CloseButtonStyled onClick={() => setOpened(false)} aria-label="Close popover" />
+              {'To make changes you’ll need to visit '}
+              <StyledLink onClick={handlePopoverForChanges}>development changes</StyledLink>{' '}
+              {' and promote the changes from there'}
+            </div>
+          </Popover.Dropdown>
         </Popover>
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
@@ -150,13 +164,23 @@ export function SideNav({}: Props) {
           <OrganizationSelect />
         </Navbar.Section>
         <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
-          <a target="_blank" href="https://discord.novu.co" data-test-id="side-nav-bottom-link-support">
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://discord.novu.co"
+            data-test-id="side-nav-bottom-link-support"
+          >
             Support
           </a>
           <p>
             <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
           </p>
-          <a target="_blank" href="https://docs.novu.co" data-test-id="side-nav-bottom-link-documentation">
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://docs.novu.co"
+            data-test-id="side-nav-bottom-link-documentation"
+          >
             Documentation
           </a>
         </BottomNav>
@@ -164,6 +188,13 @@ export function SideNav({}: Props) {
     </Navbar>
   );
 }
+
+const CloseButtonStyled = createPolymorphicComponent<'button', CloseButtonProps>(styled(CloseButton)`
+  position: absolute;
+  top: 7px;
+  z-index: 2;
+  right: 10px;
+`);
 
 const StyledLink = styled.a`
   font-weight: bold;

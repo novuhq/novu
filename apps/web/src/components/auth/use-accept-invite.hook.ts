@@ -1,5 +1,6 @@
 import { useContext } from 'react';
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
 import { api } from '../../api/api.client';
 import { AuthContext } from '../../store/authContext';
 
@@ -21,7 +22,7 @@ export function useAcceptInvite() {
     setToken(responseInvite);
     if (refetch) {
       await queryClient.refetchQueries({
-        predicate: (query) => query.queryKey === '/v1/organizations',
+        predicate: (query) => query.queryKey.includes('/v1/organizations'),
       });
     }
 

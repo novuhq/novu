@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Tab } from '@mantine/core';
-import styled from 'styled-components';
+import { Tabs as MantineTabs } from '@mantine/core';
+import styled from '@emotion/styled';
+
 import { NotificationsListTab } from './NotificationsListTab';
 import { UnseenBadge } from './UnseenBadge';
 import { Tabs } from './layout/tabs/Tabs';
@@ -13,33 +14,38 @@ export function FeedsTabs() {
   const { activeTabStoreId, setActiveTabStoreId } = useFeed();
   const { markAsSeen, refetch, onTabChange } = useNotifications({ storeId: activeTabStoreId });
 
-  async function handleOnTabChange(tabIndex: number) {
+  async function handleOnTabChange(storeId: string) {
     markAsSeen(null, true);
     refetch();
     onTabChange();
-    setActiveTabStoreId(tabs[tabIndex].storeId);
+    setActiveTabStoreId(storeId);
   }
 
   return (
     <>
       {tabs?.length ? (
-        <Tabs onTabChange={handleOnTabChange}>
-          {tabs.map((tab, index) => (
-            <Tab
-              key={index}
-              data-test-id={`tab-${tab.storeId}`}
-              label={
+        <Tabs value={tabs[0].storeId} onTabChange={handleOnTabChange}>
+          <MantineTabs.List>
+            {tabs.map((tab, index) => (
+              <MantineTabs.Tab
+                onClick={() => {
+                  onTabClick(tab);
+                }}
+                key={index}
+                data-test-id={`tab-${tab.storeId}`}
+                value={tab.storeId}
+              >
                 <TabLabelWrapper>
                   {tab.name}
                   <UnseenBadgeContainer storeId={tab.storeId} />
                 </TabLabelWrapper>
-              }
-              onClick={() => {
-                onTabClick(tab);
-              }}
-            >
+              </MantineTabs.Tab>
+            ))}
+          </MantineTabs.List>
+          {tabs.map((tab, index) => (
+            <MantineTabs.Panel value={tab.storeId} key={index}>
               <NotificationsListTab tab={tab} />
-            </Tab>
+            </MantineTabs.Panel>
           ))}
         </Tabs>
       ) : (

@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { ApplyChange } from '../apply-change/apply-change.usecase';
 import { ChangeRepository } from '@novu/dal';
@@ -11,10 +11,12 @@ import {
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ApplyChangeCommand } from '../apply-change/apply-change.command';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {
   constructor(
+    private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
@@ -70,6 +72,7 @@ export class PromoteNotificationTemplateChange {
 
     if (!notificationGroup) {
       const changes = await this.changeRepository.getEntityChanges(
+        command.organizationId,
         ChangeEntityTypeEnum.NOTIFICATION_GROUP,
         newItem._notificationGroupId
       );
@@ -91,6 +94,12 @@ export class PromoteNotificationTemplateChange {
       });
     }
 
+    if (!notificationGroup) {
+      throw new NotFoundException(
+        `Notification Group: ${newItem.name} with the ${newItem._notificationGroupId} Id not found`
+      );
+    }
+
     if (!item) {
       return this.notificationTemplateRepository.create({
         name: newItem.name,
@@ -110,17 +119,28 @@ export class PromoteNotificationTemplateChange {
       });
     }
 
-    const count = await this.notificationTemplateRepository.count({ _id: command.item._id });
+    const count = await this.notificationTemplateRepository.count({
+      _organizationId: command.organizationId,
+      _id: command.item._id,
+    });
+
     if (count === 0) {
-      await this.notificationTemplateRepository.delete({
-        _id: item._id,
-      });
+      await this.notificationTemplateRepository.delete({ _environmentId: command.environmentId, _id: item._id });
 
       return;
     }
 
+    this.invalidateCache.clearCache({
+      storeKeyPrefix: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
+      credentials: {
+        _id: item._id,
+        environmentId: command.environmentId,
+      },
+    });
+
     return await this.notificationTemplateRepository.update(
       {
+        _environmentId: command.environmentId,
         _id: item._id,
       },
       {

@@ -1,7 +1,8 @@
 import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { MemberEntity } from './member.entity';
-import { BaseRepository } from '../base-repository';
+import { BaseRepository, Omit } from '../base-repository';
 import { Member } from './member.schema';
+import { Document, FilterQuery } from 'mongoose';
 
 export interface IAddMemberData {
   _userId?: string;
@@ -10,7 +11,11 @@ export interface IAddMemberData {
   memberStatus: MemberStatusEnum;
 }
 
-export class MemberRepository extends BaseRepository<MemberEntity> {
+class PartialMemberEntity extends Omit(MemberEntity, ['_organizationId']) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialMemberEntity & Document> & { _organizationId: string };
+
+export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, MemberEntity> {
   constructor() {
     super(Member, MemberEntity);
   }
@@ -35,9 +40,14 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
   }
 
   async getOrganizationMembers(organizationId: string) {
-    const members = await Member.find({
+    const requestQuery: EnforceEnvironmentQuery = {
       _organizationId: organizationId,
-    }).populate('_userId', 'firstName lastName email _id profilePicture createdAt');
+    };
+
+    const members = await Member.find(requestQuery).populate(
+      '_userId',
+      'firstName lastName email _id profilePicture createdAt'
+    );
     if (!members) return [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -54,19 +64,23 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
     ];
   }
 
-  async getOrganizationAdminAccount(organizationId: string) {
-    const member = await Member.findOne({
+  async getOrganizationAdminAccount(organizationId: string): Promise<MemberEntity> {
+    const requestQuery: EnforceEnvironmentQuery = {
       _organizationId: organizationId,
       roles: MemberRoleEnum.ADMIN,
-    });
+    };
+
+    const member = await Member.findOne(requestQuery);
 
     return member;
   }
 
   async getOrganizationAdmins(organizationId: string) {
-    const members = await Member.find({
+    const requestQuery: EnforceEnvironmentQuery = {
       _organizationId: organizationId,
-    }).populate('_userId', 'firstName lastName email _id');
+    };
+
+    const members = await Member.find(requestQuery).populate('_userId', 'firstName lastName email _id');
     if (!members) return [];
 
     const membersEntity = this.mapEntities(members);
@@ -86,13 +100,17 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
   }
 
   async findUserActiveMembers(userId: string): Promise<MemberEntity[]> {
-    return await this.find({
+    // exception casting - due to the login logic in generateUserToken
+    const requestQuery = {
       _userId: userId,
       memberStatus: MemberStatusEnum.ACTIVE,
-    });
+    } as unknown as EnforceEnvironmentQuery;
+
+    return await this.find(requestQuery);
   }
 
   async convertInvitedUserToMember(
+    organizationId: string,
     token: string,
     data: {
       memberStatus: MemberStatusEnum;
@@ -102,6 +120,7 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
   ) {
     await this.update(
       {
+        _organizationId: organizationId,
         'invite.token': token,
       },
       {
@@ -113,9 +132,11 @@ export class MemberRepository extends BaseRepository<MemberEntity> {
   }
 
   async findByInviteToken(token: string) {
-    return await this.findOne({
+    const requestQuery = {
       'invite.token': token,
-    });
+    } as unknown as EnforceEnvironmentQuery;
+
+    return await this.findOne(requestQuery);
   }
 
   async findInviteeByEmail(organizationId: string, email: string): Promise<MemberEntity> {

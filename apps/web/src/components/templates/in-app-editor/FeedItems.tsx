@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
-import { Popover, useMantineTheme, Grid, ColorScheme } from '@mantine/core';
+import { useState } from 'react';
+import { Popover, useMantineTheme, Grid, ColorScheme, createStyles } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import styled from '@emotion/styled';
 import * as Sentry from '@sentry/react';
-import { IFeedEntity } from '@novu/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
+import { IFeedEntity } from '@novu/shared';
+
 import { FeedChip } from './FeedChip';
 import { colors, shadows, Text, Tooltip, Button } from '../../../design-system';
 import { Copy, Trash } from '../../../design-system/icons';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { deleteFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
 
@@ -20,14 +21,14 @@ interface IFeedItemPopoverProps {
 }
 
 export function FeedItems(props: IFeedItemPopoverProps) {
-  const { data: feeds } = useQuery<IFeedEntity[]>(QueryKeys.getFeeds, getFeeds);
+  const { data: feeds } = useQuery<IFeedEntity[]>([QueryKeys.getFeeds], getFeeds);
 
   return (
     <FeedsBlock>
       <Grid gutter={'xs'} grow>
         {(feeds || []).map((item, feedIndex) => {
           return (
-            <Grid.Col span={4} key={item._id}>
+            <Grid.Col span={4} key={item._id} sx={{ position: 'relative' }}>
               <FeedPopover
                 field={props.field}
                 item={item}
@@ -44,56 +45,51 @@ export function FeedItems(props: IFeedItemPopoverProps) {
   );
 }
 
+const usePopoverStyles = createStyles(({ colorScheme }) => ({
+  dropdown: {
+    width: '170px',
+    height: '95px',
+    margin: 0,
+    padding: 0,
+    backgroundColor: colorScheme === 'dark' ? colors.B20 : colors.white,
+    color: colorScheme === 'dark' ? colors.white : colors.B40,
+    border: 'none',
+    marginTop: '1px',
+  },
+  arrow: {
+    backgroundColor: colorScheme === 'dark' ? colors.B20 : colors.white,
+    height: '-22px',
+    border: 'none',
+    margin: '0px',
+    top: '-3px',
+  },
+}));
+
 function FeedPopover(props: IFeedPopoverProps) {
   const [opened, setOpened] = useState(false);
-  const { colorScheme } = useMantineTheme();
+  const { classes } = usePopoverStyles();
 
   return (
-    <Popover
-      opened={opened}
-      onClose={() => setOpened(false)}
-      target={
-        <FeedChip
-          item={props.item}
-          feedIndex={props.feedIndex}
-          setOpened={setOpened}
-          index={props.index}
-          showFeed={props.showFeed}
-          field={props.field}
-          setValue={props.setValue}
-          onEditClick={() => {
-            setOpened((prevCheck) => !prevCheck);
-          }}
-        />
-      }
-      width={260}
-      position={'bottom'}
-      placement={'center'}
-      withArrow
-      styles={{
-        root: {
-          width: '100%',
-        },
-        inner: { margin: 0, padding: 0, height: '95px' },
-        target: { height: '45px' },
-        arrow: {
-          backgroundColor: colorScheme === 'dark' ? colors.B20 : colors.white,
-          height: '-22px',
-          border: 'none',
-          margin: '0px',
-          top: '-3px',
-        },
-        body: {
-          backgroundColor: colorScheme === 'dark' ? colors.B20 : colors.white,
-          color: colorScheme === 'dark' ? colors.white : colors.B40,
-          border: 'none',
-          marginTop: '1px',
-          width: '100%',
-        },
-        popover: { width: '170px', height: '95px' },
-      }}
-    >
-      <PopoverActionBlock setOpened={setOpened} showFeed={props.showFeed} feedItem={props.item} />
+    <Popover opened={opened} onClose={() => setOpened(false)} position="bottom" withArrow classNames={classes}>
+      <Popover.Target>
+        <span>
+          <FeedChip
+            item={props.item}
+            feedIndex={props.feedIndex}
+            setOpened={setOpened}
+            index={props.index}
+            showFeed={props.showFeed}
+            field={props.field}
+            setValue={props.setValue}
+            onEditClick={() => {
+              setOpened((prevCheck) => !prevCheck);
+            }}
+          />
+        </span>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <PopoverActionBlock setOpened={setOpened} showFeed={props.showFeed} feedItem={props.item} />
+      </Popover.Dropdown>
     </Popover>
   );
 }

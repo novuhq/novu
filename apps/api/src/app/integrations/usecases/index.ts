@@ -1,3 +1,4 @@
+import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhook-support-status.usecase';
 import { CreateIntegration } from './create-integration/create-integration.usecase';
 import { GetIntegrations } from './get-integrations/get-integrations.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
@@ -9,6 +10,7 @@ import { CheckIntegration } from './check-integration/check-integration.usecase'
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
 
 export const USE_CASES = [
+  GetWebhookSupportStatus,
   CreateIntegration,
   GetIntegrations,
   GetActiveIntegrations,

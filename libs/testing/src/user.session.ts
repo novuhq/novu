@@ -5,7 +5,7 @@ import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 
-import { TriggerRecipientsType } from '@novu/node';
+import { TriggerRecipientsPayload } from '@novu/node';
 import { StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
@@ -77,7 +77,7 @@ export class UserSession {
       email: `${card.firstName}_${card.lastName}_${faker.datatype.uuid()}@gmail.com`.toLowerCase(),
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
       tokens: [],
-      password: '123qwe!@#',
+      password: '123Qwe!@#',
       showOnBoarding: true,
     };
 
@@ -290,7 +290,7 @@ export class UserSession {
     return feed;
   }
 
-  async triggerEvent(triggerName: string, to: TriggerRecipientsType, payload = {}) {
+  async triggerEvent(triggerName: string, to: TriggerRecipientsPayload, payload = {}) {
     await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
       to: to,
@@ -302,6 +302,7 @@ export class UserSession {
     let runningJobs = 0;
     do {
       runningJobs = await this.jobRepository.count({
+        _organizationId: this.organization._id,
         type: {
           $nin: [StepTypeEnum.DIGEST],
         },

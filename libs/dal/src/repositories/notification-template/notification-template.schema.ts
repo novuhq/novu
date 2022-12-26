@@ -49,6 +49,10 @@ const notificationTemplateSchema = new Schema(
           type: Schema.Types.Boolean,
           default: true,
         },
+        shouldStopOnFail: {
+          type: Schema.Types.Boolean,
+          default: false,
+        },
         filters: [
           {
             isNegated: Schema.Types.Boolean,

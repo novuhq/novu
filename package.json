@@ -8,7 +8,7 @@
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
     "publish": "lerna publish from-package",
-    "setup:project": "npx pnpm@7.5.0 i && node scripts/setup-env-files.js && pnpm build",
+    "setup:project": "npx --yes pnpm@7.5.0 i && node scripts/setup-env-files.js && pnpm build",
     "install:docs": "pnpm install --filter @novu/docs",
     "clean": "lerna clean --yes && npm run prebuild",
     "commit": "cz",
@@ -39,7 +39,7 @@
     "start:docker:embed": "cd libs/embed && npm run start:docker",
     "start:docker:widget": "cross-env nx run-many --target=start:docker --projects=@novu/widget",
     "docker:build": "pnpm -r --if-present --parallel docker:build",
-    "build": "nx run-many --target=build --all",
+    "build": "nx run-many --target=build --exclude=angular-notification-center-example,vue-notification-center-example --all",
     "prebuild": "nx run-many --target=prebuild --all",
     "build:api": "nx build @novu/api",
     "build:ws": "nx build @novu/ws",
@@ -59,7 +59,8 @@
     "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
     "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env",
     "pnpm-context": "node scripts/pnpm-context.mjs",
-    "jarvis": "node scripts/jarvis.js"
+    "jarvis": "node scripts/jarvis.js",
+    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
@@ -67,7 +68,6 @@
     "@commitlint/cli": "17.0.1",
     "@commitlint/config-angular": "^13.2.0",
     "@commitlint/config-conventional": "17.0.0",
-    "@hewmen/serverless-plugin-typescript": "^1.1.17",
     "@nrwl/cli": "13.8.5",
     "@nrwl/eslint-plugin-nx": "13.8.5",
     "@nrwl/jest": "13.8.5",
@@ -94,6 +94,7 @@
     "cz-conventional-changelog": "3.3.0",
     "detect-port": "^1.3.0",
     "eslint": "7.32.0",
+    "@cspell/eslint-plugin": "^6.14.3",
     "eslint-config-airbnb-typescript": "16.1.4",
     "eslint-config-prettier": "^7.2.0",
     "eslint-import-resolver-webpack": "^0.13.2",
@@ -105,6 +106,7 @@
     "eslint-plugin-promise": "^4.3.1",
     "eslint-plugin-react": "7.29.4",
     "eslint-plugin-react-hooks": "^4.4.0",
+    "eslint-plugin-spellcheck": "0.0.19",
     "execa": "^6.1.0",
     "globby": "^12.0.2",
     "gradient-string": "^2.0.0",
@@ -136,7 +138,8 @@
       "apps/*",
       "libs/*",
       "packages/*",
-      "providers/*"
+      "providers/*",
+      "examples/*"
     ]
   },
   "husky": {

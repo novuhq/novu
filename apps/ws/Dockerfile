@@ -1,4 +1,4 @@
-FROM node:16-buster-slim
+FROM node:16-alpine3.16
 
 WORKDIR /usr/src/app
 
@@ -16,18 +16,13 @@ COPY packages/client ./packages/client
 COPY packages/stateless ./packages/stateless
 COPY packages/node ./packages/node
 
-COPY tsconfig.json .
-COPY tsconfig.base.json .
+COPY ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
 
-COPY nx.json .
-COPY pnpm-workspace.yaml .
-COPY pnpm-lock.yaml .
-COPY .npmrc .
-
-RUN pnpm install
+RUN pnpm install --reporter=silent
 RUN pnpm build:ws
 
 WORKDIR /usr/src/app/apps/ws
+
 RUN cp src/.example.env dist/src/.env
 RUN cp src/.env.test dist/src/.env.test
 RUN cp src/.env.development dist/src/.env.development

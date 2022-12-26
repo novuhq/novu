@@ -2,6 +2,7 @@ import { CONTEXT_PATH } from './config';
 import 'newrelic';
 import '@sentry/tracing';
 
+import helmet from 'helmet';
 import { INestApplication, ValidationPipe, Logger } from '@nestjs/common';
 import * as passport from 'passport';
 import * as compression from 'compression';
@@ -48,6 +49,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     app.use(Sentry.Handlers.tracingHandler());
   }
 
+  app.use(helmet());
   app.enableCors(corsOptionsDelegate);
 
   app.setGlobalPrefix(CONTEXT_PATH + 'v1');

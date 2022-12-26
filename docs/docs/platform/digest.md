@@ -1,5 +1,5 @@
 ---
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 # Digest Engine
@@ -45,7 +45,7 @@ In regular strategy, a digest will always be created for the specified window ti
 
 ### Back-off Strategy
 
-In the back-off strategy, before creating a digest, Novu will check if a message was sent to the user in the back-off period. If a message was sent, a digest will be created. Otherwise a message will be sent directly to the user and the digest creation will be skipped.
+In the back-off strategy, before creating a digest, Novu will check if a message was sent to the user in the back-off period. If a message was sent, a digest will be created. Otherwise, a message will be sent directly to the user and the digest creation will be skipped.
 
 ## Writing digest templates
 

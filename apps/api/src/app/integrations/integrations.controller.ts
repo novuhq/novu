@@ -28,6 +28,8 @@ import { GetActiveIntegrations } from './usecases/get-active-integration/get-act
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
+import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -37,6 +39,7 @@ export class IntegrationsController {
   constructor(
     private getIntegrationsUsecase: GetIntegrations,
     private getActiveIntegrationsUsecase: GetActiveIntegrations,
+    private getWebhookSupportStatusUsecase: GetWebhookSupportStatus,
     private createIntegrationUsecase: CreateIntegration,
     private updateIntegrationUsecase: UpdateIntegration,
     private removeIntegrationUsecase: RemoveIntegration
@@ -70,6 +73,25 @@ export class IntegrationsController {
     );
   }
 
+  @Get('/webhook/provider/:providerId/status')
+  @ApiOperation({
+    summary: 'Get webhook support status for provider',
+  })
+  @ExternalApiAccessible()
+  async getWebhookSupportStatus(
+    @UserSession() user: IJwtPayload,
+    @Param('providerId') providerId: string
+  ): Promise<boolean> {
+    return await this.getWebhookSupportStatusUsecase.execute(
+      GetWebhookSupportStatusCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        providerId: providerId,
+        userId: user._id,
+      })
+    );
+  }
+
   @Post('/')
   @ApiCreatedResponse({
     type: IntegrationResponseDto,
@@ -84,6 +106,7 @@ export class IntegrationsController {
   ): Promise<IntegrationResponseDto> {
     return await this.createIntegrationUsecase.execute(
       CreateIntegrationCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         providerId: body.providerId,

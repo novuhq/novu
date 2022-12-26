@@ -1,14 +1,18 @@
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
-
+import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { ExecutionDetailsEntity } from './execution-details.entity';
 import { ExecutionDetails } from './execution-details.schema';
+import { BaseRepository, Omit } from '../base-repository';
+import { Document, FilterQuery } from 'mongoose';
 
-import { BaseRepository } from '../base-repository';
+class PartialExecutionDetailsEntity extends Omit(ExecutionDetailsEntity, ['_environmentId', '_organizationId']) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialExecutionDetailsEntity & Document> &
+  ({ _environmentId: string } | { _organizationId: string });
 
 /**
  * Execution details is meant to be read only almost exclusively as a log history of the Jobs executions.
  */
-export class ExecutionDetailsRepository extends BaseRepository<ExecutionDetailsEntity> {
+export class ExecutionDetailsRepository extends BaseRepository<EnforceEnvironmentQuery, ExecutionDetailsEntity> {
   constructor() {
     super(ExecutionDetails, ExecutionDetailsEntity);
   }
@@ -17,9 +21,10 @@ export class ExecutionDetailsRepository extends BaseRepository<ExecutionDetailsE
    * As we have a status of potentially read confirmation for notifications that might have that kind
    * of confirmation there is potentially use of this method
    */
-  public async updateStatus(executionDetailsId: string, status: ExecutionDetailsStatusEnum) {
+  public async updateStatus(environmentId: string, executionDetailsId: string, status: ExecutionDetailsStatusEnum) {
     await this.update(
       {
+        _environmentId: environmentId,
         _id: executionDetailsId,
       },
       {

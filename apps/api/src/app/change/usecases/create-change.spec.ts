@@ -10,7 +10,6 @@ import { expect } from 'chai';
 describe('Create Change', function () {
   let useCase: CreateChange;
   let session: UserSession;
-  let _id = '6256ade0099f90172d1cc435';
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -25,6 +24,8 @@ describe('Create Change', function () {
   });
 
   it('should create a change', async function () {
+    const _id = '6256ade0099f90172d1cc435';
+
     const result = await useCase.execute(
       CreateChangeCommand.create({
         changeId: _id,
@@ -46,7 +47,9 @@ describe('Create Change', function () {
   });
 
   it('should find diff for item', async function () {
-    const oldChange = await useCase.execute(
+    const _id = '6256ade0099f90172d1cc436';
+
+    await useCase.execute(
       CreateChangeCommand.create({
         changeId: _id,
         organizationId: session.organization._id,

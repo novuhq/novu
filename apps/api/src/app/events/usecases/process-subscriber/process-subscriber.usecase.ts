@@ -11,12 +11,13 @@ import {
 } from '@novu/dal';
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
+import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { ISubscribersDefine } from '@novu/node';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
+import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { Cached } from '../../../shared/interceptors';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -31,11 +32,31 @@ export class ProcessSubscriber {
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
-    const template = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    const template = await this.getNotificationTemplate({
+      _id: command.templateId,
+      environmentId: command.environmentId,
+    });
 
-    const subscriber: SubscriberEntity = await this.getSubscriber(command);
+    const subscriber: SubscriberEntity = await this.getSubscriber(
+      {
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      },
+      command.to
+    );
+
     if (subscriber === null) {
       return [];
+    }
+    let actorSubscriber: SubscriberEntity;
+    if (command.actor) {
+      actorSubscriber = await this.getSubscriber(
+        {
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        },
+        command.actor
+      );
     }
 
     const notification = await this.createNotification(command, template._id, subscriber);
@@ -72,8 +93,8 @@ export class ProcessSubscriber {
 
     for (const step of steps) {
       const integration = await this.integrationRepository.findOne({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
         channel: step.template.type,
         active: true,
       });
@@ -93,18 +114,26 @@ export class ProcessSubscriber {
         digest: step.metadata,
         type: step.template.type,
         providerId: integration?.providerId,
+        ...(actorSubscriber && { _actorId: actorSubscriber._id }),
       });
     }
 
     return jobs;
   }
 
-  private async getSubscriber(command: ProcessSubscriberCommand): Promise<SubscriberEntity> {
-    const subscriberPayload = command.to;
-    const subscriber = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      subscriberId: subscriberPayload.subscriberId,
-    });
+  @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
+  private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
+    return await this.notificationTemplateRepository.findById(_id, environmentId);
+  }
+
+  private async getSubscriber(
+    command: Pick<ProcessSubscriberCommand, 'environmentId' | 'organizationId'>,
+    subscriberPayload
+  ): Promise<SubscriberEntity> {
+    const subscriber = await this.subscriberRepository.findBySubscriberId(
+      command.environmentId,
+      subscriberPayload.subscriberId
+    );
 
     if (subscriber && !this.subscriberNeedUpdate(subscriber, subscriberPayload)) {
       return subscriber;
@@ -113,7 +142,10 @@ export class ProcessSubscriber {
     return await this.createOrUpdateSubscriber(command, subscriberPayload);
   }
 
-  private async createOrUpdateSubscriber(command: ProcessSubscriberCommand, subscriberPayload) {
+  private async createOrUpdateSubscriber(
+    command: Pick<ProcessSubscriberCommand, 'environmentId' | 'organizationId'>,
+    subscriberPayload
+  ) {
     return await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
         environmentId: command.environmentId,

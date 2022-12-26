@@ -6,13 +6,13 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { GetActivityStats } from './usecases/get-activity-stats/get-activity-stats.usecase';
 import { GetActivityStatsCommand } from './usecases/get-activity-stats/get-activity-stats.command';
-import { GetActivityGraphStats } from './usecases/get-acticity-graph-states/get-acticity-graph-states.usecase';
-import { GetActivityGraphStatsCommand } from './usecases/get-acticity-graph-states/get-acticity-graph-states.command';
+import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
+import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
 import { ActivitiesResponseDto } from './dtos/activities-response.dto';
-import { ActivityGraphqStatesResponse } from './dtos/activity-graph-states-response.dto';
-import { ActivitesRequestDto } from './dtos/activites-request.dto';
+import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
+import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/activity')
@@ -36,7 +36,7 @@ export class ActivityController {
   @ExternalApiAccessible()
   getActivityFeed(
     @UserSession() user: IJwtPayload,
-    @Query() query: ActivitesRequestDto
+    @Query() query: ActivitiesRequestDto
   ): Promise<ActivitiesResponseDto> {
     let channelsQuery: ChannelTypeEnum[];
 
@@ -92,7 +92,7 @@ export class ActivityController {
   @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
   @ApiOkResponse({
-    type: [ActivityGraphqStatesResponse],
+    type: [ActivityGraphStatesResponse],
   })
   @ApiOperation({
     deprecated: true,
@@ -106,7 +106,7 @@ export class ActivityController {
   getActivityGraphStats(
     @UserSession() user: IJwtPayload,
     @Query('days') days = 32
-  ): Promise<ActivityGraphqStatesResponse[]> {
+  ): Promise<ActivityGraphStatesResponse[]> {
     return this.getActivityGraphStatsUsecase.execute(
       GetActivityGraphStatsCommand.create({
         days: days ? Number(days) : 32,

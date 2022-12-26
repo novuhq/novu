@@ -1,9 +1,10 @@
 import { useForm } from 'react-hook-form';
 import { useContext, useEffect, useState } from 'react';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
+
 import { Button, Input } from '../../design-system';
 import { api } from '../../api/api.client';
 import { AuthContext } from '../../store/authContext';

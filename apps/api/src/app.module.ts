@@ -3,6 +3,7 @@ import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
+
 import { SharedModule } from './app/shared/shared.module';
 import { UserModule } from './app/user/user.module';
 import { AuthModule } from './app/auth/auth.module';
@@ -26,7 +27,8 @@ import { ChangeModule } from './app/change/change.module';
 import { SubscribersModule } from './app/subscribers/subscribers.module';
 import { FeedsModule } from './app/feeds/feeds.module';
 import { MessagesModule } from './app/messages/messages.module';
-import { PartnerIntegratiosnModule } from './app/partner-integrations/partner-integrations.module';
+import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
+import { TopicsModule } from './app/topics/topics.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   OrganizationModule,
@@ -50,7 +52,8 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   SubscribersModule,
   FeedsModule,
   MessagesModule,
-  PartnerIntegratiosnModule,
+  PartnerIntegrationsModule,
+  TopicsModule,
 ];
 
 const providers = [];
@@ -65,9 +68,9 @@ if (process.env.SENTRY_DSN) {
          * Filter exceptions of type HttpException. Ignore those that
          * have status code of less than 500
          */
-        { type: HttpException, filter: (exception: HttpException) => 500 > exception.getStatus() },
+        { type: HttpException, filter: (exception: HttpException) => exception.getStatus() < 500 },
       ],
-      user: ['_id', 'firstName', 'lastName', 'email', 'organizationId', 'environmentId', 'roles'],
+      user: ['_id', 'firstName', 'organizationId', 'environmentId', 'roles', 'domain'],
     }),
   });
 }

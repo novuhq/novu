@@ -1,10 +1,12 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { EnvironmentRepository, EnvironmentEntity, OrganizationRepository } from '@novu/dal';
 import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
 import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 interface ISetEnvironment {
   token: string;
@@ -26,7 +28,8 @@ export class CompleteVercelIntegration {
     private httpService: HttpService,
     private environmentRepository: EnvironmentRepository,
     private getVercelProjectsUsecase: GetVercelProjects,
-    private organizationRepository: OrganizationRepository
+    private organizationRepository: OrganizationRepository,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CompleteVercelIntegrationCommand): Promise<{ success: boolean }> {
@@ -37,7 +40,7 @@ export class CompleteVercelIntegration {
 
       const mappedProjectData = this.mapProjectKeys(envKeys, command.data);
 
-      const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration({
+      const configurationDetails = await this.getVercelProjectsUsecase.getVercelConfiguration(command.environmentId, {
         configurationId: command.configurationId,
         userId: command.userId,
       });
@@ -53,6 +56,10 @@ export class CompleteVercelIntegration {
           token: configurationDetails.accessToken,
         });
       }
+
+      this.analyticsService.track('Create Vercel Integration - [Partner Integrations]', command.userId, {
+        _organization: command.organizationId,
+      });
 
       return {
         success: true,

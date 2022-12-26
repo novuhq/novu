@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs16-slim
+FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine
 
 WORKDIR /usr/src/app
 
@@ -11,6 +11,7 @@ COPY libs/testing ./libs/testing
 COPY libs/dal ./libs/dal
 COPY libs/shared ./libs/shared
 COPY packages/client ./packages/client
+COPY packages/node ./packages/node
 COPY libs/embed ./libs/embed
 COPY packages/notification-center ./packages/notification-center
 
@@ -21,7 +22,7 @@ COPY nx.json .
 COPY pnpm-workspace.yaml .
 COPY pnpm-lock.yaml .
 
-RUN pnpm install
+RUN pnpm install --reporter=silent
 RUN pnpm build
 
 CMD [ "pnpm", "start:docker:embed" ]

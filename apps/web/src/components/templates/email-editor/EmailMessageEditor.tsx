@@ -1,7 +1,9 @@
-import { IEmailBlock } from '@novu/shared';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useMantineTheme, Group, Container, Card } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
-import React, { useEffect, useState } from 'react';
+import { IEmailBlock } from '@novu/shared';
+
 import { Upload } from '../../../design-system/icons';
 import { colors, Text } from '../../../design-system';
 import { ContentRow } from './ContentRow';
@@ -9,7 +11,6 @@ import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
 import { useIsMounted } from '../../../hooks/use-is-mounted';
-import { useNavigate } from 'react-router-dom';
 
 export function EmailMessageEditor({
   onChange,
@@ -119,7 +120,7 @@ export function EmailMessageEditor({
   return (
     <Card withBorder sx={styledCard}>
       <Container pl={0} pr={0}>
-        <div onClick={() => !branding?.logo && navigate(getBrandSettingsUrl())}>
+        <div onClick={() => !branding?.logo && navigate(getBrandSettingsUrl())} role="link">
           <Dropzone
             styles={{
               root: {
@@ -135,29 +136,21 @@ export function EmailMessageEditor({
             onDrop={(file) => {}}
             data-test-id="upload-image-button"
           >
-            {(status) => (
-              <Group position="center" style={{ height: '100%' }}>
-                {!branding?.logo ? (
-                  <Group
-                    style={{ height: '100%' }}
-                    spacing={5}
-                    position="center"
-                    direction="column"
-                    data-test-id="logo-upload-button"
-                  >
-                    <Upload style={{ width: 30, height: 30, color: colors.B60 }} />
-                    <Text color={colors.B60}>Upload Brand Logo</Text>
-                  </Group>
-                ) : (
-                  <img
-                    data-test-id="brand-logo"
-                    src={branding?.logo}
-                    alt=""
-                    style={{ width: 'inherit', maxHeight: '80%' }}
-                  />
-                )}
-              </Group>
-            )}
+            <Group position="center" style={{ height: '100%' }}>
+              {!branding?.logo ? (
+                <Group style={{ height: '100%', flexDirection: 'column' }} spacing={5} position="center">
+                  <Upload style={{ width: 30, height: 30, color: colors.B60 }} />
+                  <Text color={colors.B60}>Upload Brand Logo</Text>
+                </Group>
+              ) : (
+                <img
+                  data-test-id="brand-logo"
+                  src={branding?.logo}
+                  alt=""
+                  style={{ width: 'inherit', maxHeight: '80%' }}
+                />
+              )}
+            </Group>
           </Dropzone>
         </div>
       </Container>

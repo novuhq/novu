@@ -1,14 +1,14 @@
 import { forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
-  UserEntity,
-  UserRepository,
-  MemberEntity,
-  OrganizationRepository,
   EnvironmentRepository,
+  MemberEntity,
+  MemberRepository,
+  OrganizationRepository,
   SubscriberEntity,
   SubscriberRepository,
-  MemberRepository,
+  UserEntity,
+  UserRepository,
 } from '@novu/dal';
 import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum } from '@novu/shared';
 
@@ -18,9 +18,10 @@ import { SwitchEnvironmentCommand } from '../usecases/switch-environment/switch-
 import { SwitchEnvironment } from '../usecases/switch-environment/switch-environment.usecase';
 import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
-import { QueueService } from '../../shared/services/queue';
 import { AnalyticsService } from '../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
+import { CacheKeyPrefixEnum } from '../../shared/services/cache';
+import { Cached } from '../../shared/interceptors';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +30,6 @@ export class AuthService {
     private subscriberRepository: SubscriberRepository,
     private createUserUsecase: CreateUser,
     private jwtService: JwtService,
-    private queueService: QueueService,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
@@ -83,7 +83,7 @@ export class AuthService {
   }
 
   async refreshToken(userId: string) {
-    const user = await this.userRepository.findById(userId);
+    const user = await this.getUser({ _id: userId });
 
     return this.getSignedToken(user);
   }
@@ -97,7 +97,7 @@ export class AuthService {
     if (!environment) throw new UnauthorizedException('API Key not found');
 
     const key = environment.apiKeys.find((i) => i.key === apiKey);
-    const user = await this.userRepository.findById(key._userId);
+    const user = await this.getUser({ _id: key._userId });
 
     return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
   }
@@ -216,7 +216,7 @@ export class AuthService {
   }
 
   async validateUser(payload: IJwtPayload): Promise<UserEntity> {
-    const user = await this.userRepository.findById(payload._id);
+    const user = await this.getUser({ _id: payload._id });
     if (payload.organizationId) {
       const isMember = await this.isAuthenticatedForOrganization(payload._id, payload.organizationId);
       if (!isMember) throw new UnauthorizedException(`No authorized for organization ${payload.organizationId}`);
@@ -226,12 +226,10 @@ export class AuthService {
   }
 
   async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity> {
-    const subscriber = await this.subscriberRepository.findOne({
-      _environmentId: payload.environmentId,
+    return await this.getSubscriber({
+      environmentId: payload.environmentId,
       _id: payload._id,
     });
-
-    return subscriber;
   }
 
   async decodeJwt<T>(token: string) {
@@ -248,5 +246,18 @@ export class AuthService {
     });
 
     return !!environment._parentId;
+  }
+
+  @Cached(CacheKeyPrefixEnum.SUBSCRIBER)
+  private async getSubscriber({ _id, environmentId }: { _id: string; environmentId: string }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId: environmentId,
+      _id: _id,
+    });
+  }
+
+  @Cached(CacheKeyPrefixEnum.USER)
+  private async getUser({ _id }: { _id: string }) {
+    return await this.userRepository.findById(_id);
   }
 }

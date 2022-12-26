@@ -1,8 +1,9 @@
-import React, { memo } from 'react';
-import { colors, Dropdown, Text } from '../../../design-system';
-import { ActionIcon, MenuItem as DropdownItem, useMantineTheme } from '@mantine/core';
+import { memo } from 'react';
+import { ActionIcon, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
+
 import { Digest, Mail, Mobile, PlusCircleOutlined, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
+import { colors, Dropdown, Text } from '../../../design-system';
 import { StepTypeEnum } from '@novu/shared';
 
 interface NodeData {
@@ -10,6 +11,7 @@ interface NodeData {
   parentId: string;
   showDropZone: boolean;
   childId: string;
+  readonly: boolean;
 }
 export default memo(({ data }: { data: NodeData }) => {
   const { parentId, childId } = data;
@@ -20,50 +22,54 @@ export default memo(({ data }: { data: NodeData }) => {
 
   const dataTestId = parentId && childId ? `addNodeButton_${parentId}_${childId}` : 'addNodeButton';
 
+  if (data.readonly) {
+    return null;
+  }
+
   return (
     <Container data-test-id={dataTestId} style={{ pointerEvents: 'none' }}>
       <Dropdown
-        placement="center"
+        withinPortal
         control={
           <ActionIcon
             data-test-id="button-add"
-            styles={() => ({
-              root: {
-                '&:active': {
-                  color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
-                },
+            sx={{
+              '&:active': {
+                color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
               },
-              transparent: {
-                zIndex: 9999,
-                pointerEvents: 'all',
-                color: theme.colorScheme === 'dark' ? (data.showDropZone ? colors.white : colors.B60) : colors.B60,
-                '&:hover': {
-                  color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
-                },
+              zIndex: 9999,
+              pointerEvents: 'all',
+              color: theme.colorScheme === 'dark' ? (data.showDropZone ? colors.white : colors.B60) : colors.B60,
+              '&:hover': {
+                color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
               },
-            })}
+            }}
             variant="transparent"
           >
             <PlusCircleOutlined />
           </ActionIcon>
         }
       >
-        <DropdownItem data-test-id={`add-in-app-node`} icon={<InApp />} onClick={() => addNewNode(StepTypeEnum.IN_APP)}>
+        <Dropdown.Item
+          data-test-id={`add-in-app-node`}
+          icon={<InApp />}
+          onClick={() => addNewNode(StepTypeEnum.IN_APP)}
+        >
           In-App
-        </DropdownItem>
-        <DropdownItem data-test-id={`add-email-node`} icon={<Mail />} onClick={() => addNewNode(StepTypeEnum.EMAIL)}>
+        </Dropdown.Item>
+        <Dropdown.Item data-test-id={`add-email-node`} icon={<Mail />} onClick={() => addNewNode(StepTypeEnum.EMAIL)}>
           Email
-        </DropdownItem>
-        <DropdownItem data-test-id={`add-sms-node`} icon={<Sms />} onClick={() => addNewNode(StepTypeEnum.SMS)}>
+        </Dropdown.Item>
+        <Dropdown.Item data-test-id={`add-sms-node`} icon={<Sms />} onClick={() => addNewNode(StepTypeEnum.SMS)}>
           SMS
-        </DropdownItem>
-        <DropdownItem data-test-id={`add-chat-node`} icon={<Chat />} onClick={() => addNewNode(StepTypeEnum.CHAT)}>
+        </Dropdown.Item>
+        <Dropdown.Item data-test-id={`add-chat-node`} icon={<Chat />} onClick={() => addNewNode(StepTypeEnum.CHAT)}>
           Chat
-        </DropdownItem>
-        <DropdownItem data-test-id={`add-push-node`} icon={<Mobile />} onClick={() => addNewNode(StepTypeEnum.PUSH)}>
+        </Dropdown.Item>
+        <Dropdown.Item data-test-id={`add-push-node`} icon={<Mobile />} onClick={() => addNewNode(StepTypeEnum.PUSH)}>
           Push
-        </DropdownItem>
-        <DropdownItem
+        </Dropdown.Item>
+        <Dropdown.Item
           data-test-id={`add-digest-node`}
           icon={
             /* Hack to manage the size of the SVG, which can't be changed with height and width attributes */
@@ -74,10 +80,10 @@ export default memo(({ data }: { data: NodeData }) => {
           onClick={() => addNewNode(StepTypeEnum.DIGEST)}
         >
           Digest
-        </DropdownItem>
-        <DropdownItem data-test-id={`add-delay-node`} icon={<Timer />} onClick={() => addNewNode(StepTypeEnum.DELAY)}>
+        </Dropdown.Item>
+        <Dropdown.Item data-test-id={`add-delay-node`} icon={<Timer />} onClick={() => addNewNode(StepTypeEnum.DELAY)}>
           Delay
-        </DropdownItem>
+        </Dropdown.Item>
       </Dropdown>
       <Dropzone data-test-id="dropzone-area" dark={theme.colorScheme === 'dark'} visible={data.showDropZone}>
         <Text weight="bold" size="lg">

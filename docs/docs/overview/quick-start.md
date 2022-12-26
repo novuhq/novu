@@ -15,7 +15,7 @@ After creating your cloud or self-hosted account, the next steps to sending your
 - Connect your providers
 - Create a notification template
 - Send a trigger
-- Integrate the Notification Center within your app _(optional)_
+- Integrate the [Notification Center](../notification-center/getting-started.md) within your app _(optional)_
 
 ## Connect providers
 
@@ -47,7 +47,7 @@ You can specify custom variables using the [{{handlebars}}](https://handlebarsjs
 
 #### SMS
 
-Inside SMS you can specify custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax.
+Inside SMS, you can specify custom variables using [{{handlebars}}](https://handlebarsjs.com/guide/) syntax.
 
 #### In-app
 

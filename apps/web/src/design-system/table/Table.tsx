@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { TableProps, Table as MantineTable, LoadingOverlay, Pagination } from '@mantine/core';
 import { useTable, Column, ColumnWithStrictAccessor, usePagination } from 'react-table';
+
 import useStyles from './Table.styles';
 import { colors } from '../config';
 
@@ -97,7 +98,7 @@ export function Table({
   const defaultDesign = { verticalSpacing: 'sm', horizontalSpacing: 'sm', highlightOnHover: true } as TableProps;
 
   return (
-    <div style={{ position: 'relative', minHeight: 500 }}>
+    <div style={{ position: 'relative', minHeight: 500, display: 'flex', flexDirection: 'column' }}>
       <LoadingOverlay
         visible={loading}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
@@ -108,27 +109,43 @@ export function Table({
 
       <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
         <thead>
-          {headerGroups.map((headerGroup) => (
-            <tr {...headerGroup.getHeaderGroupProps()}>
-              {headerGroup.headers.map((column) => (
-                <th {...column.getHeaderProps()}>{column.render('Header')}</th>
-              ))}
-            </tr>
-          ))}
+          {headerGroups.map((headerGroup, i) => {
+            const { key: rowKey, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
+
+            return (
+              <tr key={rowKey} {...restHeaderGroupProps}>
+                {headerGroup.headers.map((column) => {
+                  const { key: headerKey, ...restHeaderProps } = column.getHeaderProps();
+
+                  return (
+                    <th key={headerKey} {...restHeaderProps}>
+                      {column.render('Header')}
+                    </th>
+                  );
+                })}
+              </tr>
+            );
+          })}
         </thead>
         <tbody {...getTableBodyProps()}>
           {(pagination ? page : rows).map((row) => {
             prepareRow(row);
 
+            const { key: rowKey, ...restRowProps } = row.getRowProps();
+
             return (
               <tr
+                key={rowKey}
                 onClick={() => (onRowClick ? onRowClick(row) : null)}
-                {...row.getRowProps()}
+                {...restRowProps}
                 className={classes.tableRow}
               >
-                {row.cells.map((cell) => {
+                {row.cells.map((cell, i) => {
+                  const { key: cellKey } = cell.getCellProps();
+
                   return (
                     <td
+                      key={cellKey}
                       {...cell.getCellProps({
                         style: {
                           maxWidth: cell.column.maxWidth,
@@ -146,23 +163,25 @@ export function Table({
         </tbody>
       </MantineTable>
       {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
-        <Pagination
-          styles={{
-            active: {
-              backgroundImage: colors.horizontal,
-              border: 'none',
-            },
-            item: {
-              marginTop: '15px',
-              marginBottom: '15px',
-              backgroundColor: 'transparent',
-            },
-          }}
-          total={getPageCount()}
-          page={pageIndex + 1}
-          onChange={handlePageChange}
-          position="center"
-        />
+        <div style={{ marginTop: 'auto' }}>
+          <Pagination
+            styles={{
+              item: {
+                marginTop: '15px',
+                marginBottom: '15px',
+                backgroundColor: 'transparent',
+                '&[data-active]': {
+                  backgroundImage: colors.horizontal,
+                  border: 'none',
+                },
+              },
+            }}
+            total={getPageCount()}
+            page={pageIndex + 1}
+            onChange={handlePageChange}
+            position="center"
+          />
+        </div>
       )}
     </div>
   );

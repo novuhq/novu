@@ -1,6 +1,7 @@
-import { Grid, InputWrapper } from '@mantine/core';
+import { Grid, Input as MantineInput } from '@mantine/core';
 import { DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
+
 import { Input, Select } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
@@ -42,7 +43,7 @@ export const DelayMetadata = ({ control, index }) => {
         />
       </div>
       <When truthy={type === DelayTypeEnum.REGULAR}>
-        <InputWrapper
+        <MantineInput.Wrapper
           label="Time Interval"
           description="Once triggered, for how long should delay before next step execution."
           styles={inputStyles}
@@ -67,6 +68,7 @@ export const DelayMetadata = ({ control, index }) => {
                       type="number"
                       data-test-id="time-amount"
                       placeholder="0"
+                      disabled={readonly}
                     />
                   );
                 }}
@@ -96,7 +98,7 @@ export const DelayMetadata = ({ control, index }) => {
               />
             </Grid.Col>
           </Grid>
-        </InputWrapper>
+        </MantineInput.Wrapper>
       </When>
 
       <When truthy={type === DelayTypeEnum.SCHEDULED}>

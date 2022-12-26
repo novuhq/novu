@@ -18,6 +18,8 @@ import {
   JobRepository,
   FeedRepository,
   SubscriberPreferenceRepository,
+  TopicRepository,
+  TopicSubscribersRepository,
 } from '@novu/dal';
 import { AnalyticsService } from './services/analytics/analytics.service';
 import { QueueService } from './services/queue';
@@ -27,6 +29,7 @@ import {
   S3StorageService,
   StorageService,
 } from './services/storage/storage.service';
+import { CacheService, InvalidateCacheService } from './services/cache';
 
 const DAL_MODELS = [
   UserRepository,
@@ -46,6 +49,8 @@ const DAL_MODELS = [
   JobRepository,
   FeedRepository,
   SubscriberPreferenceRepository,
+  TopicRepository,
+  TopicSubscribersRepository,
 ];
 
 function getStorageServiceClass() {
@@ -63,6 +68,22 @@ const dalService = new DalService();
 
 export const ANALYTICS_SERVICE = 'AnalyticsService';
 
+const cacheService = {
+  provide: CacheService,
+  useFactory: async () => {
+    return new CacheService({
+      host: process.env.REDIS_CACHE_HOST,
+      port: process.env.REDIS_CACHE_PORT,
+      ttl: process.env.REDIS_CACHE_TTL,
+      password: process.env.REDIS_CACHE_PASSWORD,
+      connectTimeout: process.env.REDIS_CACHE_CONNECTION_TIMEOUT,
+      keepAlive: process.env.REDIS_CACHE_KEEP_ALIVE,
+      family: process.env.REDIS_CACHE_FAMILY,
+      keyPrefix: process.env.REDIS_CACHE_KEY_PREFIX,
+    });
+  },
+};
+
 const PROVIDERS = [
   {
     provide: QueueService,
@@ -78,6 +99,8 @@ const PROVIDERS = [
       return dalService;
     },
   },
+  cacheService,
+  InvalidateCacheService,
   ...DAL_MODELS,
   {
     provide: StorageService,

@@ -46,7 +46,7 @@ export function ProviderCard({
         </RibbonWrapper>
       </When>
 
-      <StyledGroup position="apart" direction="column">
+      <StyledGroup position="apart">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
           {provider.connected && !provider.betaVersion ? <Settings data-test-id="provider-card-settings-svg" /> : null}
@@ -54,7 +54,7 @@ export function ProviderCard({
 
         <CardFooter>
           {!provider.connected ? (
-            <StyledButton fullWidth variant={'outline'} theme={colorScheme} disabled={provider.comingSoon}>
+            <StyledButton fullWidth variant={'outline'} disabled={provider.comingSoon}>
               Connect
             </StyledButton>
           ) : (
@@ -66,9 +66,9 @@ export function ProviderCard({
   );
 }
 
-const StyledButton = styled(Button)<{ theme: string }>`
+const StyledButton = styled(Button)`
   background-image: ${({ theme }) =>
-    theme === 'dark'
+    theme.colorScheme === 'dark'
       ? `linear-gradient(0deg, ${colors.B17} 0%, ${colors.B17} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`
       : `linear-gradient(0deg, ${colors.B98} 0%, ${colors.B98} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`};
 `;
@@ -76,6 +76,7 @@ const StyledButton = styled(Button)<{ theme: string }>`
 const StyledGroup = styled(Group)`
   height: 100%;
   justify-content: space-between;
+  flex-direction: column;
 `;
 
 const RibbonWrapper = styled.div`

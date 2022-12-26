@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import io from 'socket.io-client';
+import { io } from 'socket.io-client';
 import { useAuth, useNovuContext } from '../../hooks';
 import { ISocket } from '../../shared/interfaces';
 
@@ -15,7 +15,7 @@ export function useSocketController() {
       socket = io(socketUrl, {
         reconnectionDelayMax: 10000,
         transports: ['websocket'],
-        query: {
+        auth: {
           token: `${token}`,
         },
       });

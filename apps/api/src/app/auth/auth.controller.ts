@@ -37,6 +37,7 @@ import { PasswordResetCommand } from './usecases/password-reset/password-reset.c
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
 import { ApiException } from '../shared/exceptions/api.exception';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { PasswordResetBodyDto } from './dtos/password-reset.dto';
 
 @Controller('/auth')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -61,7 +62,7 @@ export class AuthController {
   githubAuth() {
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
       throw new ApiException(
-        'Github auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
+        'GitHub auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
       );
     }
 
@@ -147,7 +148,7 @@ export class AuthController {
   }
 
   @Post('/reset')
-  async passwordReset(@Body() body: { password: string; token: string }) {
+  async passwordReset(@Body() body: PasswordResetBodyDto) {
     return await this.passwordResetUsecase.execute(
       PasswordResetCommand.create({
         password: body.password,

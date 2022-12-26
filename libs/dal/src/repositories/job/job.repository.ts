@@ -1,9 +1,15 @@
-import { BaseRepository } from '../base-repository';
+import { BaseRepository, Omit } from '../base-repository';
 import { JobEntity, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { Document, FilterQuery } from 'mongoose';
 
-export class JobRepository extends BaseRepository<JobEntity> {
+class PartialJobEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialJobEntity & Document> &
+  ({ _environmentId: string } | { _organizationId: string });
+
+export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEntity> {
   constructor() {
     super(Job, JobEntity);
   }
@@ -22,9 +28,10 @@ export class JobRepository extends BaseRepository<JobEntity> {
     return stored;
   }
 
-  public async updateStatus(jobId: string, status: JobStatusEnum) {
+  public async updateStatus(organizationId: string, jobId: string, status: JobStatusEnum) {
     await this.update(
       {
+        _organizationId: organizationId,
         _id: jobId,
       },
       {
@@ -35,9 +42,10 @@ export class JobRepository extends BaseRepository<JobEntity> {
     );
   }
 
-  public async setError(jobId: string, error: Error) {
+  public async setError(organizationId: string, jobId: string, error: Error) {
     await this.update(
       {
+        _organizationId: organizationId,
         _id: jobId,
       },
       {
@@ -48,8 +56,9 @@ export class JobRepository extends BaseRepository<JobEntity> {
     );
   }
 
-  public async findInAppsForDigest(transactionId: string, subscriberId: string) {
+  public async findInAppsForDigest(organizationId: string, transactionId: string, subscriberId: string) {
     return await this.find({
+      _organizationId: organizationId,
       type: ChannelTypeEnum.IN_APP,
       _subscriberId: subscriberId,
       transactionId,

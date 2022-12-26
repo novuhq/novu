@@ -25,7 +25,12 @@ export function AppLayout() {
                 height: 'auto',
               },
             },
-            main: { backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight, overflow: 'auto' },
+            main: {
+              backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
+              overflow: 'auto',
+              minHeight: 'auto',
+              padding: '30px',
+            },
           })}
         >
           <Sentry.ErrorBoundary

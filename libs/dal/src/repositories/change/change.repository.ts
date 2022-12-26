@@ -1,16 +1,27 @@
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { BaseRepository } from '../base-repository';
+import { BaseRepository, Omit } from '../base-repository';
 import { ChangeEntity } from './change.entity';
 import { Change } from './change.schema';
+import { Document, FilterQuery } from 'mongoose';
 
-export class ChangeRepository extends BaseRepository<ChangeEntity> {
+class PartialChangeEntity extends Omit(ChangeEntity, ['_environmentId', '_organizationId']) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialChangeEntity & Document> &
+  ({ _environmentId: string } | { _organizationId: string });
+
+export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, ChangeEntity> {
   constructor() {
     super(Change, ChangeEntity);
   }
 
-  public async getEntityChanges(entityType: ChangeEntityTypeEnum, entityId: string): Promise<ChangeEntity[]> {
+  public async getEntityChanges(
+    organizationId: string,
+    entityType: ChangeEntityTypeEnum,
+    entityId: string
+  ): Promise<ChangeEntity[]> {
     return await this.find(
       {
+        _organizationId: organizationId,
         _entityId: entityId,
         type: entityType,
       },
@@ -21,8 +32,9 @@ export class ChangeRepository extends BaseRepository<ChangeEntity> {
     );
   }
 
-  public async getChangeId(entityType: ChangeEntityTypeEnum, entityId: string): Promise<string> {
+  public async getChangeId(environmentId: string, entityType: ChangeEntityTypeEnum, entityId: string): Promise<string> {
     const change = await this.findOne({
+      _environmentId: environmentId,
       _entityId: entityId,
       type: entityType,
       enabled: false,

@@ -95,6 +95,10 @@ const jobSchema = new Schema(
     providerId: {
       type: Schema.Types.String,
     },
+    _actorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Subscriber',
+    },
   },
   schemaOptions
 );

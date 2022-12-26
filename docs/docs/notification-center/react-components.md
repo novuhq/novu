@@ -1,6 +1,10 @@
+---
+sidebar_position: 3
+---
+
 # React Component
 
-Novu provides the `@novu/notification-center` a react library that helps to add a fully functioning notification center to your web application in minutes. Let's do a quick recap on how we can easily use it in your application:
+Novu provides the `@novu/notification-center` a React library that helps to add a fully functioning notification center to your web application in minutes. Let's do a quick recap on how we can easily use it in your application:
 
 ```bash
 npm install @novu/notification-center
@@ -13,13 +17,13 @@ import {
   NotificationBell,
   IMessage,
 } from '@novu/notification-center';
-import { useNavigate } from 'react-router-dom';
 
 function Header() {
-  const navigate = useNavigate();
-
   function onNotificationClick(notification: IMessage) {
-    navigate(notification.cta.data.url);
+    // your logic to handle the notification click
+    if (message?.cta?.data?.url) {
+      window.location.href = message.cta.data.url;
+    }
   }
 
   return (
@@ -98,7 +102,7 @@ Use `position` prop to position the popover relative to the Bell icon
 
 ## Custom UI
 
-If you prefer to build a custom UI, it's possible to use the `useNotification` hook available in our react library.
+If you prefer to build a custom UI, it's possible to use the `useNotification` hook available in our React library.
 Let's see an example on how you can do that:
 
 ```tsx
@@ -175,6 +179,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>ar</code> (Arabic)</li>
           <li><code>as</code> (Assamese)</li>
           <li><code>az</code> (Azerbaijani)</li>
+          <li><code>ba</code> (Bashkir)</li>
           <li><code>be</code> (Belarusian)</li>
           <li><code>bg</code> (Bulgarian)</li>
           <li><code>bh</code> (Bihari)</li>
@@ -229,6 +234,7 @@ The `i18n` prop can accept 2 different types of values
           <li><code>sm</code> (Samoan)</li>
           <li><code>sq</code> (Albanian)</li>
           <li><code>sv</code> (Swedish)</li>
+          <li><code>sq</code> (Albanian)</li>
           <li><code>ta</code> (Tamil)</li>
           <li><code>te</code> (Telugu)</li>
           <li><code>th</code> (Thai)</li>
@@ -437,7 +443,7 @@ Then pass the created HMAC to your client side application forward it to the com
 
 ## Customizing the notification center theme
 
-The notification center component can be customized by passing a `theme` prop to the `PopoverNotificationCenter` component.
+The notification center component can be customized by passing a `theme` prop to the `PopoverNotificationCenter` component. We discourage you to do the styling this way, instead, it's recommended to use the `styles` property, check the details [here](./custom-styling).
 
 ```tsx
 const theme: INovuTheme = {

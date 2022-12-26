@@ -11,6 +11,7 @@ import axios from 'axios';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ISubscribersDefine } from '@novu/node';
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
+import { CacheKeyPrefixEnum, CacheService, InvalidateCacheService } from '../../shared/services/cache';
 
 const axiosInstance = axios.create();
 
@@ -19,6 +20,13 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+
+  const invalidateCache = new InvalidateCacheService(
+    new CacheService({
+      host: process.env.REDIS_CACHE_HOST,
+      port: process.env.REDIS_CACHE_PORT,
+    })
+  );
 
   const subscriberRepository = new SubscriberRepository();
   const messageRepository = new MessageRepository();
@@ -71,7 +79,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await session.awaitRunningJobs(newTemplate._id);
 
-    const message = await messageRepository._model.find({
+    const message = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: newTemplate._id,
       _subscriberId: subscriber._id,
@@ -148,7 +156,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     expect(message.length).to.equal(3);
   });
 
-  it('should ignore subscruber preference and send all triggers for System critical template', async function () {
+  it('should ignore subscriber preference and send all triggers for system critical template', async function () {
     const payload: ISubscribersDefine = {
       subscriberId: session.subscriberId,
       firstName: 'New Test Name',
@@ -182,10 +190,18 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
 
+    await invalidateCache.clearCache({
+      storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
+      credentials: {
+        _id: template._id,
+        environmentId: session.environment._id,
+      },
+    });
+
     await notificationTemplateRepository.update(
       {
         _id: template._id,
-        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
       },
       {
         critical: true,

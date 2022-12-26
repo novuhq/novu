@@ -1,8 +1,22 @@
 import { ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { MantineTheme } from '@mantine/core';
-
 import { colors } from '../../design-system';
-import { Chat, Check, CheckCircle, Digest, ErrorIcon, InApp, Mail, Sms, Timer } from '../../design-system/icons';
+import {
+  Chat,
+  Check,
+  CheckCircle,
+  Clicked,
+  Digest,
+  ErrorIcon,
+  InApp,
+  Mail,
+  Read,
+  Received,
+  Seen,
+  Sent,
+  Sms,
+  Timer,
+} from '../../design-system/icons';
 
 export const getColorByStatus = (theme: MantineTheme, status: ExecutionDetailsStatusEnum): string => {
   if (status === ExecutionDetailsStatusEnum.FAILED) {
@@ -33,11 +47,11 @@ export const getLogoByStatus = (
 export const getLogoByType = (
   type: StepTypeEnum
 ): React.FunctionComponent<React.ComponentPropsWithoutRef<'svg'>> | null => {
-  if (type == StepTypeEnum.DELAY) {
+  if (type === StepTypeEnum.DELAY) {
     return Timer;
   }
 
-  if (type == StepTypeEnum.DIGEST) {
+  if (type === StepTypeEnum.DIGEST) {
     return Digest;
   }
 
@@ -58,4 +72,12 @@ export const getLogoByType = (
   }
 
   return null;
+};
+
+export const mappedWebhookStatuses = {
+  sent: { label: 'Sent', icon: Sent, status: ['processed'] },
+  received: { label: 'Received', icon: Received, status: ['delivered'] },
+  read: { label: 'Read', icon: Read, status: [] },
+  seen: { label: 'Seen', icon: Seen, status: ['open'] },
+  clicked: { label: 'Clicked', icon: Clicked, status: ['click'] },
 };

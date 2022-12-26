@@ -10,8 +10,8 @@ describe('User Sign-up and Login', function () {
       cy.visit('/auth/signup');
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('example@example.com');
-      cy.getByTestId('password').type('usEr_password_123');
-      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('password').type('usEr_password_123!');
+      cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');
@@ -23,8 +23,8 @@ describe('User Sign-up and Login', function () {
       cy.visit('/auth/signup');
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('test-user-1@example.com');
-      cy.getByTestId('password').type('usEr_password_123');
-      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('password').type('usEr_password_123!');
+      cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
       cy.get('.mantine-TextInput-error').contains('An account with this email already exists');
     });
@@ -33,8 +33,8 @@ describe('User Sign-up and Login', function () {
       cy.visit('/auth/signup');
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('test-user-1@example.c');
-      cy.getByTestId('password').type('usEr_password_123');
-      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('password').type('usEr_password_123!');
+      cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
       cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
     });
@@ -55,8 +55,8 @@ describe('User Sign-up and Login', function () {
       cy.task('passwordResetToken', this.session.user._id).then((token) => {
         cy.visit('/auth/reset/' + token);
       });
-      cy.getByTestId('password').type('123e3e3e3');
-      cy.getByTestId('password-repeat').type('123e3e3e3');
+      cy.getByTestId('password').type('A123e3e3e3!');
+      cy.getByTestId('password-repeat').focus().type('A123e3e3e3!');
 
       cy.getByTestId('submit-btn').click();
     });
@@ -89,13 +89,13 @@ describe('User Sign-up and Login', function () {
       cy.location('pathname').should('equal', '/templates');
     });
 
-    it('should show bad password error when authenticating with bad credentials', function () {
+    it('should show incorrect email or password error when authenticating with bad credentials', function () {
       cy.visit('/auth/login');
 
       cy.getByTestId('email').type('test-user-1@example.com');
       cy.getByTestId('password').type('123456');
       cy.getByTestId('submit-btn').click();
-      cy.get('.mantine-PasswordInput-error').contains('Invalid password');
+      cy.getByTestId('error-alert-banner').contains('Incorrect email or password provided');
     });
 
     it('should show invalid email error when authenticating with invalid email', function () {
@@ -107,13 +107,13 @@ describe('User Sign-up and Login', function () {
       cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
     });
 
-    it('should show invalid email error when authenticating with invalid email', function () {
+    it('should show incorrect email or password error when authenticating with non-existing email', function () {
       cy.visit('/auth/login');
 
       cy.getByTestId('email').type('test-user-1@example.de');
       cy.getByTestId('password').type('123456');
       cy.getByTestId('submit-btn').click();
-      cy.get('.mantine-TextInput-error').contains('Account does not exist');
+      cy.getByTestId('error-alert-banner').contains('Incorrect email or password provided');
     });
   });
 
@@ -131,13 +131,13 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('submit-btn').click();
 
       // setting current time in future, to simulate expired token
-      var todaysDate = new Date();
+      const todaysDate = new Date();
       todaysDate.setDate(todaysDate.getDate() + 30); // iat - exp = 30 days
       cy.clock(todaysDate);
 
       cy.visit('/templates');
 
-      // checkig if token is removed from local storage
+      // checking if token is removed from local storage
       cy.getLocalStorage('auth_token').should('be.null');
       // checking if user is redirected to login page
       cy.location('pathname').should('equal', '/auth/login');

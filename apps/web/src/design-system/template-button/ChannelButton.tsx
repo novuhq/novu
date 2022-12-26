@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { UnstyledButton, Popover, ActionIcon, MenuItem, createStyles, MantineTheme, Menu } from '@mantine/core';
+import { UnstyledButton, Popover, ActionIcon, createStyles, MantineTheme, Menu } from '@mantine/core';
 import styled from '@emotion/styled';
+import { useFormContext } from 'react-hook-form';
+import { ChannelTypeEnum } from '@novu/shared';
+
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
 import { useStyles } from './TemplateButton.styles';
 import { colors, shadows } from '../config';
 import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
-import { useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../store/use-env-controller';
-import { ChannelTypeEnum } from '@novu/shared';
-import { useClickOutside } from '@mantine/hooks';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
 
 const capitalize = (text: string) => {
@@ -30,7 +30,7 @@ interface ITemplateButtonProps {
   changeTab?: (string) => void;
   errors?: boolean | string;
   showDots?: boolean;
-  id?: string | undefined;
+  id?: string;
   onDelete?: (id: string) => void;
   dragging?: boolean;
   setActivePage?: (string) => void;
@@ -47,7 +47,7 @@ const useMenuStyles = createStyles((theme: MantineTheme) => {
       backgroundColor: dark ? colors.B20 : colors.white,
       borderColor: dark ? colors.B30 : colors.B85,
     },
-    body: {
+    dropdown: {
       minWidth: 220,
       backgroundColor: dark ? colors.B20 : colors.white,
       color: dark ? theme.white : colors.B40,
@@ -65,8 +65,25 @@ const useMenuStyles = createStyles((theme: MantineTheme) => {
   };
 });
 
+const usePopoverStyles = createStyles(() => ({
+  dropdown: {
+    padding: '12px 15px 14px',
+    backgroundColor: colors.error,
+    color: colors.white,
+    border: 'none',
+  },
+  arrow: {
+    backgroundColor: colors.error,
+    width: '7px',
+    height: '7px',
+    margin: '0px',
+  },
+}));
+
+const MENU_CLICK_OUTSIDE_EVENTS = ['click', 'mousedown', 'touchstart'];
+
 export function ChannelButton({
-  active,
+  active = false,
   action = false,
   switchButton,
   checked = false,
@@ -91,7 +108,7 @@ export function ChannelButton({
   const [disabled, setDisabled] = useState(initDisabled);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
-  const menuRef = useClickOutside(() => setShowDotMenu(false), ['click', 'mousedown', 'touchstart']);
+  const { classes: popoverClasses } = usePopoverStyles();
 
   const { watch } = useFormContext();
 
@@ -107,10 +124,10 @@ export function ChannelButton({
   }, [watch]);
 
   useEffect(() => {
-    if (dragging && showDotMenu) {
+    if (showDotMenu && (dragging || !active)) {
       setShowDotMenu(false);
     }
-  }, [dragging, showDotMenu]);
+  }, [dragging, showDotMenu, active]);
 
   return (
     <Button
@@ -140,12 +157,16 @@ export function ChannelButton({
           )}
           <When truthy={showDots && !readonlyEnv}>
             <Menu
-              ref={menuRef}
+              withinPortal
+              position="bottom-start"
               shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.light}
               classNames={menuClasses}
               withArrow={true}
               opened={showDotMenu}
-              control={
+              onClose={() => setShowDotMenu(false)}
+              clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
+            >
+              <Menu.Target>
                 <ActionIcon
                   variant="transparent"
                   data-test-id="step-actions-dropdown"
@@ -162,45 +183,47 @@ export function ChannelButton({
                     }}
                   />
                 </ActionIcon>
-              }
-            >
-              <When truthy={getChannel(tabKey)?.type === NodeTypeEnum.CHANNEL}>
-                <MenuItem
-                  key="edit"
+              </Menu.Target>
+              <Menu.Dropdown>
+                <When truthy={getChannel(tabKey)?.type === NodeTypeEnum.CHANNEL}>
+                  <Menu.Item
+                    key="edit"
+                    style={{
+                      pointerEvents: 'all',
+                    }}
+                    icon={
+                      <Edit
+                        style={{
+                          width: '20px',
+                          height: '20px',
+                        }}
+                      />
+                    }
+                    data-test-id="edit-step-action"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDotMenu(false);
+                      setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
+                    }}
+                  >
+                    Edit Template
+                  </Menu.Item>
+                </When>
+                <Menu.Item
+                  key="delete"
                   style={{
                     pointerEvents: 'all',
                   }}
-                  icon={
-                    <Edit
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                      }}
-                    />
-                  }
-                  data-test-id="edit-step-action"
+                  icon={<Trash />}
+                  data-test-id="delete-step-action"
                   onClick={() => {
                     setShowDotMenu(false);
-                    setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
+                    onDelete(id || '');
                   }}
                 >
-                  Edit Template
-                </MenuItem>
-              </When>
-              <MenuItem
-                key="delete"
-                style={{
-                  pointerEvents: 'all',
-                }}
-                icon={<Trash />}
-                data-test-id="delete-step-action"
-                onClick={() => {
-                  setShowDotMenu(false);
-                  onDelete(id || '');
-                }}
-              >
-                Delete {getChannel(tabKey)?.type === NodeTypeEnum.CHANNEL ? 'Step' : 'Action'}
-              </MenuItem>
+                  Delete {getChannel(tabKey)?.type === NodeTypeEnum.CHANNEL ? 'Step' : 'Action'}
+                </Menu.Item>
+              </Menu.Dropdown>
             </Menu>
           </When>
         </ActionWrapper>
@@ -208,41 +231,20 @@ export function ChannelButton({
 
       {errors && (
         <Popover
-          styles={{
-            root: {
-              position: 'absolute',
-              right: 0,
-              top: 'calc(50% - 1px)',
-            },
-            inner: {
-              padding: '12px 15px 14px',
-            },
-            arrow: {
-              backgroundColor: colors.error,
-              height: '7px',
-              border: 'none',
-              margin: '0px',
-            },
-            body: {
-              backgroundColor: colors.error,
-              position: 'relative',
-              color: colors.white,
-              border: 'none',
-              marginTop: '1px',
-            },
-          }}
+          withinPortal
+          classNames={popoverClasses}
           withArrow
           opened={popoverOpened}
           transition="rotate-left"
           transitionDuration={250}
-          gutter={theme.spacing.xs}
-          mb={20}
-          placement="center"
+          offset={theme.spacing.xs}
           position="right"
           zIndex={4}
-          target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
         >
-          {errors.toString() || 'Something is missing here'}
+          <Popover.Target>
+            <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
+          </Popover.Target>
+          <Popover.Dropdown>{errors.toString() || 'Something is missing here'}</Popover.Dropdown>
         </Popover>
       )}
     </Button>

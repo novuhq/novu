@@ -25,6 +25,24 @@ export class SESEmailProvider implements IEmailProvider {
     });
   }
 
+  private async sendMail({ html, text, to, from, subject, attachments }) {
+    const transporter = nodemailer.createTransport({
+      SES: { ses: this.ses, aws: { SendRawEmailCommand } },
+    });
+
+    return await transporter.sendMail({
+      to,
+      html,
+      text,
+      subject,
+      attachments,
+      from: {
+        address: from,
+        name: this.config.senderName,
+      },
+    });
+  }
+
   async sendMessage({
     html,
     text,
@@ -33,11 +51,7 @@ export class SESEmailProvider implements IEmailProvider {
     subject,
     attachments,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
-    const transporter = nodemailer.createTransport({
-      SES: { ses: this.ses, aws: { SendRawEmailCommand } },
-    });
-
-    const info = await transporter.sendMail({
+    const info = await this.sendMail({
       from: from || this.config.from,
       to: to,
       subject: subject,
@@ -56,13 +70,28 @@ export class SESEmailProvider implements IEmailProvider {
     };
   }
 
-  async checkIntegration(
-    options: IEmailOptions
-  ): Promise<ICheckIntegrationResponse> {
-    return {
-      success: true,
-      message: 'Integrated successfully!',
-      code: CheckIntegrationResponseEnum.SUCCESS,
-    };
+  async checkIntegration(): Promise<ICheckIntegrationResponse> {
+    try {
+      await this.sendMail({
+        html: '',
+        text: 'This is a Test mail to test your Amazon SES integration',
+        to: 'no-reply@novu.co',
+        from: this.config.from,
+        subject: 'Test SES integration',
+        attachments: {},
+      });
+
+      return {
+        success: true,
+        message: 'Integrated Successfully',
+        code: CheckIntegrationResponseEnum.SUCCESS,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error?.message,
+        code: CheckIntegrationResponseEnum.FAILED,
+      };
+    }
   }
 }

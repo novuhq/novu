@@ -8,6 +8,7 @@ import {
   Body,
   Get,
   Put,
+  Inject,
   Query,
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
@@ -26,10 +27,15 @@ import { SetVercelConfigurationCommand } from './usecases/set-vercel-configurati
 import { SetVercelConfiguration } from './usecases/set-vercel-configuration/set-vercel-configuration.usecase';
 import { UpdateVercelConfigurationCommand } from './usecases/update-vercel-configuration/update-vercel-configuration.command';
 import { UpdateVercelConfiguration } from './usecases/update-vercel-configuration/update-vercel-configuration.usecase';
+import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ANALYTICS_SERVICE } from '../shared/shared.module';
+import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 
 @Controller('/partner-integrations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
+@ApiTags('Partner Integrations')
+@ApiExcludeController()
 export class PartnerIntegrationsController {
   constructor(
     private setVercelConfigurationUsecase: SetVercelConfiguration,

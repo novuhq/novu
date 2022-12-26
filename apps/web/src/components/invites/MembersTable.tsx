@@ -1,13 +1,14 @@
-import { Avatar, Divider, Container, LoadingOverlay, Group, MenuItem as DropdownItem, Text } from '@mantine/core';
-import { colors, Dropdown, Tag } from '../../design-system';
-import { DotsHorizontal, Mail, Trash } from '../../design-system/icons';
-import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
-import styled from 'styled-components';
+import { Avatar, Divider, Container, LoadingOverlay, Stack, Text } from '@mantine/core';
+import styled from '@emotion/styled';
 import * as capitalize from 'lodash.capitalize';
+import { useClipboard } from '@mantine/hooks';
+import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+
+import { DotsHorizontal, Mail, Trash } from '../../design-system/icons';
+import { colors, Dropdown, Tag } from '../../design-system';
 import useStyles from '../../design-system/config/text.styles';
 import { MemberRole } from './MemberRole';
 import { When } from '../utils/When';
-import { useClipboard } from '@mantine/hooks';
 
 export function MembersTable({
   members,
@@ -22,9 +23,9 @@ export function MembersTable({
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
   function isEnableMemberActions(currentMember): boolean {
-    const currentUserRoles = members?.find((memberEntity) => memberEntity._userId == currentUser?._id)?.roles || [];
+    const currentUserRoles = members?.find((memberEntity) => memberEntity._userId === currentUser?._id)?.roles || [];
 
-    const isNotMyself = currentUser?._id != currentMember._userId;
+    const isNotMyself = currentUser?._id !== currentMember._userId;
     const isAllowedToRemove = currentUserRoles.includes(MemberRoleEnum.ADMIN);
 
     return isNotMyself && isAllowedToRemove;
@@ -49,13 +50,13 @@ export function MembersTable({
         }}
       />
 
-      {members?.map((member) => {
+      {members?.map((member, index: number) => {
         return (
           <MemberRowWrapper key={member._id} data-test-id={'member-row-' + member._id}>
             <Avatar style={{ marginRight: 10, width: 40, height: 40 }} src={member.user?.profilePicture} radius="xl">
               {capitalize((member.user?.firstName || '')[0])} {capitalize((member.user?.lastName || '')[0])}
             </Avatar>
-            <Group direction="column" spacing={5}>
+            <Stack spacing={5}>
               <Text className={classes.heading}>
                 {member.user
                   ? `${capitalize((member.user?.firstName || '') as string)} ${capitalize(
@@ -64,11 +65,12 @@ export function MembersTable({
                   : member.invite.email}
               </Text>
               {member.user?.email ? <Text className={classes.subHeading}>{member.user?.email}</Text> : null}
-            </Group>
+            </Stack>
             <ActionsSider>
               <div style={{ marginLeft: 10 }}>
                 {member.memberStatus === MemberStatusEnum.INVITED ? <Tag mr={10}>Invite Pending</Tag> : null}
                 <MemberRole
+                  key={index}
                   onChangeMemberRole={onChangeMemberRole}
                   member={member}
                   isEnableMemberActions={isEnableMemberActions}
@@ -84,39 +86,39 @@ export function MembersTable({
                     </div>
                   }
                 >
-                  <DropdownItem
+                  <Dropdown.Item
                     key="removeBtn"
                     data-test-id="remove-row-btn"
                     onClick={() => onRemoveMember(member)}
                     icon={<Trash />}
                   >
                     Remove Member
-                  </DropdownItem>
+                  </Dropdown.Item>
                   <When truthy={memberInvited(member)}>
-                    <DropdownItem
+                    <Dropdown.Item
                       key="copyInviteBtn"
                       data-test-id="copy-invite-btn"
                       onClick={() => onCopyInviteLinkClick(member.invite.token)}
                       icon={<Mail />}
                     >
                       Copy Invite Link
-                    </DropdownItem>
+                    </Dropdown.Item>
 
                     <When truthy={!selfHosted}>
-                      <DropdownItem
+                      <Dropdown.Item
                         key="resendInviteBtn"
                         data-test-id="resend-invite-btn"
                         onClick={() => onResendInviteMember(member)}
                         icon={<Mail />}
                       >
                         Resend Invite
-                      </DropdownItem>
+                      </Dropdown.Item>
                     </When>
                   </When>
                 </Dropdown>
               </div>
             </When>
-            <Divider className={classes.seperator} />
+            <Divider className={classes.separator} />
           </MemberRowWrapper>
         );
       })}

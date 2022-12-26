@@ -1,20 +1,23 @@
 import React from 'react';
 import { PopoverProps } from '@mantine/core';
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
+
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
-import { useDefaultTheme, useUnseenCount } from '../../hooks';
+import { useUnseenCount } from '../../hooks';
 import { ColorScheme, INovuThemePopoverProvider } from '../../index';
 import { ITab, ListItem } from '../../shared/interfaces';
+import { getDefaultTheme } from '../../utils/defaultTheme';
 
-interface IPopoverNotificationCenterProps {
+export interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
+  emptyState?: () => JSX.Element;
   listItem?: ListItem;
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
@@ -24,13 +27,11 @@ interface IPopoverNotificationCenterProps {
   showUserPreferences?: boolean;
   onTabClick?: (tab: ITab) => void;
   offset?: number;
-  position?:
-    | PopoverProps['position']
-    | `${NonNullable<PopoverProps['position']>}-${NonNullable<Exclude<PopoverProps['placement'], 'center'>>}`;
+  position?: PopoverProps['position'];
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
-  const { theme } = useDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
+  const { theme } = getDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
   const { setUnseenCount, unseenCount } = useUnseenCount();
 
   function handlerOnUnseenCount(count: number) {
@@ -58,6 +59,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         footer={props.footer}
         colorScheme={props.colorScheme}
         theme={props.theme}
+        emptyState={props.emptyState}
         onActionClick={props.onActionClick}
         actionsResultBlock={props.actionsResultBlock}
         listItem={props.listItem}

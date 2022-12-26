@@ -1,22 +1,31 @@
 import { useContext, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
+import { passwordConstraints } from '@novu/shared';
+
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
-import { Github } from '../../design-system/icons';
+import { GitHub } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { applyToken } from '../../store/use-auth-controller';
 import { useAcceptInvite } from './use-accept-invite.hook';
 import { useVercelParams } from '../../hooks/use-vercelParams';
+import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 
 type Props = {
   token?: string;
   email?: string;
+};
+
+export type SignUpFormInputType = {
+  email: string;
+  password: string;
+  fullName: string;
 };
 
 export function SignUpForm({ token, email }: Props) {
@@ -25,8 +34,8 @@ export function SignUpForm({ token, email }: Props) {
   const { setToken } = useContext(AuthContext);
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
   const { isFromVercel, code, next, configurationId } = useVercelParams();
-  const vercelQueryParamss = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParamss}` : '/auth/login';
+  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : '/auth/login';
   const githubLink = isFromVercel
     ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
@@ -77,7 +86,7 @@ export function SignUpForm({ token, email }: Props) {
       setToken((response as any).token);
     }
 
-    navigate(isFromVercel ? `/auth/application?${vercelQueryParamss}` : '/auth/application');
+    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : '/auth/application');
 
     return true;
   };
@@ -85,8 +94,9 @@ export function SignUpForm({ token, email }: Props) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
-  } = useForm({
+  } = useForm<SignUpFormInputType>({
     defaultValues: {
       email,
       fullName: '',
@@ -118,22 +128,21 @@ export function SignUpForm({ token, email }: Props) {
     <>
       {!IS_DOCKER_HOSTED && !token && (
         <>
-          <GithubButton
+          <GitHubButton
             my={30}
             component="a"
             href={githubLink}
             variant="white"
             fullWidth
             radius="md"
-            leftIcon={<Github />}
+            leftIcon={<GitHub />}
             sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
           >
-            Sign Up with Github
-          </GithubButton>
+            Sign Up with GitHub
+          </GitHubButton>
           <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
         </>
       )}
-
       <form noValidate name="login-form" onSubmit={handleSubmit(onSubmit)}>
         <Input
           error={errors.fullName?.message}
@@ -159,22 +168,31 @@ export function SignUpForm({ token, email }: Props) {
           data-test-id="email"
           mt={20}
         />
-        <PasswordInput
-          error={errors.password?.message}
-          mt={20}
-          {...register('password', {
-            required: 'Password, not your birthdate',
-            minLength: { value: 8, message: 'Minimum 8 characters' },
-            pattern: {
-              value: /^(?=.*\d)(?=.*[a-z])(?!.*\s).{8,}$/,
-              message: 'The password must contain numbers and letters',
-            },
-          })}
-          required
-          label="Password"
-          placeholder="Type your password..."
-          data-test-id="password"
-        />
+
+        <PasswordRequirementPopover control={control}>
+          <PasswordInput
+            error={errors.password?.message}
+            mt={20}
+            {...register('password', {
+              required: 'Password, not your birthdate',
+              minLength: { value: passwordConstraints.minLength, message: 'Minimum 8 characters' },
+              maxLength: {
+                value: passwordConstraints.maxLength,
+                message: 'Maximum 64 characters',
+              },
+              pattern: {
+                value: passwordConstraints.pattern,
+                message:
+                  // eslint-disable-next-line max-len
+                  'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-',
+              },
+            })}
+            required
+            label="Password"
+            placeholder="Type your password..."
+            data-test-id="password"
+          />
+        </PasswordRequirementPopover>
         <Checkbox
           onChange={(prev) => setAccepted(prev.target.checked)}
           required
@@ -209,7 +227,6 @@ export function SignUpForm({ token, email }: Props) {
           </Link>
         </Center>
       </form>
-
       {isError && !emailServerError && !accountCreationError && (
         <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
           {' '}
@@ -222,7 +239,7 @@ export function SignUpForm({ token, email }: Props) {
 
 function Accept() {
   return (
-    <div>
+    <>
       <span>I accept the </span>
       <a style={{ textDecoration: 'underline' }} href="https://novu.co/terms" target="_blank" rel="noopener noreferrer">
         Terms and Conditions
@@ -236,11 +253,11 @@ function Accept() {
       >
         Privacy Policy
       </a>
-    </div>
+    </>
   );
 }
 
-const GithubButton = styled(MantineButton)<{
+const GitHubButton = styled(MantineButton)<{
   component: 'a';
   my: number;
   href: string;

@@ -1,10 +1,28 @@
 import { IEmailBlock } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { showNotification } from '@mantine/notifications';
-import { TextInput as MantineInput, Popover, Button as MantineButton } from '@mantine/core';
+import { TextInput as MantineInput, Popover, Button as MantineButton, createStyles } from '@mantine/core';
+
 import { colors, shadows } from '../../../design-system';
 import { TextAlignment, Wifi } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/use-env-controller';
+
+const usePopoverStyles = createStyles((theme) => ({
+  dropdown: {
+    padding: '5px',
+    minWidth: 220,
+    backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
+    color: theme.colorScheme === 'dark' ? theme.white : colors.B40,
+    border: 'none',
+    boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
+  },
+  arrow: {
+    width: '7px',
+    height: '7px',
+    backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
+    border: 'none',
+  },
+}));
 
 export function ButtonRowContent({
   block,
@@ -21,6 +39,7 @@ export function ButtonRowContent({
   const [url, setUrl] = useState<string>();
   const [text, setText] = useState<string>();
   const [dropDownVisible, setDropDownVisible] = useState<boolean>(false);
+  const { classes } = usePopoverStyles();
 
   function handleTextChange(e) {
     setText(e.target.value);
@@ -57,31 +76,15 @@ export function ButtonRowContent({
   return (
     <div style={{ textAlign: block?.styles?.textAlign || 'left' }} data-test-id="button-block-wrapper">
       <Popover
-        styles={(theme) => ({
-          inner: {
-            padding: '5px',
-          },
-          arrow: {
-            width: '7px',
-            height: '7px',
-            backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
-            border: 'none',
-          },
-          body: {
-            minWidth: 220,
-            backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
-            color: theme.colorScheme === 'dark' ? theme.white : colors.B40,
-            border: 'none',
-            boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
-          },
-        })}
+        classNames={classes}
         opened={dropDownVisible && !readonly}
         withArrow
         onClose={() => {
           setDropDownVisible(false);
           showSaveSuccess();
         }}
-        target={
+      >
+        <Popover.Target>
           <MantineButton
             sx={{
               backgroundColor: brandingColor || 'red',
@@ -94,25 +97,26 @@ export function ButtonRowContent({
           >
             {block.content}
           </MantineButton>
-        }
-      >
-        <MantineInput
-          data-test-id="button-text-input"
-          icon={<TextAlignment />}
-          variant="unstyled"
-          onChange={handleTextChange}
-          onKeyDown={handleKeyDown}
-          value={text}
-          placeholder="Button Text"
-        />
-        <MantineInput
-          icon={<Wifi width={20} height={20} />}
-          variant="unstyled"
-          onChange={handleUrlChange}
-          onKeyDown={handleKeyDown}
-          value={url || ''}
-          placeholder="Button Link"
-        />
+        </Popover.Target>
+        <Popover.Dropdown>
+          <MantineInput
+            data-test-id="button-text-input"
+            icon={<TextAlignment />}
+            variant="unstyled"
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            value={text}
+            placeholder="Button Text"
+          />
+          <MantineInput
+            icon={<Wifi width={20} height={20} />}
+            variant="unstyled"
+            onChange={handleUrlChange}
+            onKeyDown={handleKeyDown}
+            value={url || ''}
+            placeholder="https://www.yoururl..."
+          />
+        </Popover.Dropdown>
       </Popover>
     </div>
   );

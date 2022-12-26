@@ -1,13 +1,76 @@
 import React from 'react';
-import styled, { css } from 'styled-components';
+import { Avatar as MAvatar } from '@mantine/core';
+import { css, cx } from '@emotion/css';
+import styled from '@emotion/styled';
 import { formatDistanceToNow } from 'date-fns';
-import { IMessage, ButtonTypeEnum, IMessageAction, MessageActionStatusEnum } from '@novu/shared';
-import { DotsHorizontal, GradientDot } from '../../../../shared/icons';
-import { useNovuTheme, useNotificationCenter, useDefaultBellColors, useTranslations } from '../../../../hooks';
+import {
+  IMessage,
+  ButtonTypeEnum,
+  IMessageAction,
+  MessageActionStatusEnum,
+  ActorTypeEnum,
+  SystemAvatarIconEnum,
+  IActor,
+} from '@novu/shared';
+
+import { useNovuTheme, useNotificationCenter, useTranslations } from '../../../../hooks';
+import { getDefaultBellColors } from '../../../../utils/defaultTheme';
 import { ActionContainer } from './ActionContainer';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { When } from '../../../../shared/utils/When';
 import { ColorScheme } from '../../../../shared/config/colors';
+import {
+  DotsHorizontal,
+  ErrorIcon,
+  Info,
+  Success,
+  Warning,
+  Avatar,
+  Up,
+  Question,
+  GradientDot,
+} from '../../../../shared/icons';
+import { colors } from '../../../../shared/config/colors';
+import { useStyles } from '../../../../store/styles';
+
+const avatarSystemIcons = [
+  {
+    icon: <Warning />,
+    type: SystemAvatarIconEnum.WARNING,
+    iconColor: '#FFF000',
+    containerBgColor: '#FFF00026',
+  },
+  {
+    icon: <Info />,
+    type: SystemAvatarIconEnum.INFO,
+    iconColor: '#0000FF',
+    containerBgColor: '#0000FF26',
+  },
+  {
+    icon: <Up />,
+    type: SystemAvatarIconEnum.UP,
+    iconColor: colors.B70,
+    containerBgColor: `${colors.B70}26`,
+  },
+  {
+    icon: <Question />,
+    type: SystemAvatarIconEnum.QUESTION,
+    iconColor: colors.B70,
+    containerBgColor: `${colors.B70}26`,
+  },
+  {
+    icon: <Success />,
+    type: SystemAvatarIconEnum.SUCCESS,
+    iconColor: colors.success,
+    containerBgColor: `${colors.success}26`,
+  },
+  {
+    icon: <ErrorIcon />,
+    type: SystemAvatarIconEnum.ERROR,
+    iconColor: colors.error,
+    containerBgColor: `${colors.error}26`,
+  },
+];
 
 export function NotificationListItem({
   notification,
@@ -19,6 +82,22 @@ export function NotificationListItem({
   const { theme: novuTheme, colorScheme } = useNovuTheme();
   const { onActionClick, listItem } = useNotificationCenter();
   const { dateFnsLocale } = useTranslations();
+  const unread = readSupportAdded(notification) ? !notification.read : !notification.seen;
+  const [
+    listItemReadStyles,
+    listItemUnreadStyles,
+    listItemLayoutStyles,
+    listItemContentLayoutStyles,
+    listItemTitleStyles,
+    listItemTimestampStyles,
+  ] = useStyles([
+    'notifications.listItem.read',
+    'notifications.listItem.unread',
+    'notifications.listItem.layout',
+    'notifications.listItem.contentLayout',
+    'notifications.listItem.title',
+    'notifications.listItem.timestamp',
+  ]);
 
   function handleNotificationClick() {
     onClick(notification);
@@ -33,22 +112,46 @@ export function NotificationListItem({
   }
 
   return (
-    <ItemWrapper
-      novuTheme={novuTheme}
-      data-test-id="notification-list-item"
-      unread={readSupportAdded(notification) ? !notification.read : !notification.seen}
+    <div
+      className={cx(
+        'nc-notifications-list-item',
+        listItemClassName,
+        unread ? unreadNotificationStyles(novuTheme) : readNotificationStyles(novuTheme),
+        unread ? css(listItemUnreadStyles) : css(listItemReadStyles)
+      )}
       onClick={() => handleNotificationClick()}
+      data-test-id="notification-list-item"
+      role="button"
+      tabIndex={0}
     >
-      <NotificationItemContainer>
-        <TextContent
-          data-test-id="notification-content"
-          dangerouslySetInnerHTML={{
-            __html: notification.content as string,
-          }}
-        />
-        <TimeMark novuTheme={novuTheme} unseen={!notification.seen}>
-          {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: dateFnsLocale() })}
-        </TimeMark>
+      <NotificationItemContainer className={cx('nc-notifications-list-item-layout', css(listItemLayoutStyles))}>
+        <NotificationContentContainer>
+          {notification.actor && notification.actor.type !== ActorTypeEnum.NONE && (
+            <AvatarContainer>
+              <RenderAvatar actor={notification.actor} />
+            </AvatarContainer>
+          )}
+          <NotificationTextContainer
+            className={cx('nc-notifications-list-item-content-layout', css(listItemContentLayoutStyles))}
+          >
+            <TextContent
+              className={cx('nc-notifications-list-item-title', css(listItemTitleStyles))}
+              data-test-id="notification-content"
+              dangerouslySetInnerHTML={{
+                __html: notification.content as string,
+              }}
+            />
+            <div
+              className={cx(
+                'nc-notifications-list-item-timestamp',
+                timeMarkClassName(novuTheme, unread),
+                css(listItemTimestampStyles)
+              )}
+            >
+              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: dateFnsLocale() })}
+            </div>
+          </NotificationTextContainer>
+        </NotificationContentContainer>
         <ActionWrapper
           templateIdentifier={notification.templateIdentifier}
           actionStatus={notification?.cta?.action?.status}
@@ -56,13 +159,13 @@ export function NotificationListItem({
           handleActionButtonClick={handleActionButtonClick}
         />
       </NotificationItemContainer>
-      <SettingsActionWrapper style={{ display: 'none' }}>
+      <SettingsActionWrapper style={{ display: 'none' }} novuTheme={novuTheme}>
         <DotsHorizontal />
       </SettingsActionWrapper>
       <When truthy={readSupportAdded(notification)}>
         {!notification.seen && <GradientDotWrapper colorScheme={colorScheme} />}
       </When>
-    </ItemWrapper>
+    </div>
   );
 }
 
@@ -103,14 +206,46 @@ function ActionContainerOrNone({
 }
 
 function GradientDotWrapper({ colorScheme }: { colorScheme: ColorScheme }) {
-  const { bellColors } = useDefaultBellColors({
+  const { bellColors } = getDefaultBellColors({
     colorScheme: colorScheme,
     bellColors: {
       unseenBadgeBackgroundColor: 'transparent',
     },
   });
+  const [bellDotStyles] = useStyles('bellButton.dot');
 
-  return <StyledGradientDot colors={bellColors} />;
+  return (
+    <GradientDot
+      width="10px"
+      height="10px"
+      colors={bellColors}
+      className={cx('nc-bell-button-dot', css(bellDotStyles))}
+    />
+  );
+}
+
+function RenderAvatar({ actor }: { actor: IActor }) {
+  if ([ActorTypeEnum.USER, ActorTypeEnum.SYSTEM_CUSTOM].includes(actor.type) && actor.data) {
+    return (
+      <MAvatar src={actor.data} radius="xl">
+        <Avatar />
+      </MAvatar>
+    );
+  }
+
+  if (actor.type === ActorTypeEnum.SYSTEM_ICON) {
+    const selectedIcon = avatarSystemIcons.filter((data) => data.type === actor.data);
+
+    return selectedIcon.length > 0 ? (
+      <SystemIconWrapper iconColor={selectedIcon[0].iconColor} containerBgColor={selectedIcon[0].containerBgColor}>
+        {selectedIcon[0].icon}
+      </SystemIconWrapper>
+    ) : (
+      <Avatar />
+    );
+  }
+
+  return <Avatar />;
 }
 
 const NotificationItemContainer = styled.div`
@@ -125,14 +260,14 @@ const TextContent = styled.div`
   line-height: 16px;
 `;
 
-const SettingsActionWrapper = styled.div`
-  color: ${({ theme }) => theme.colors.secondaryFontColor};
+const SettingsActionWrapper = styled.div<{ novuTheme: INovuTheme }>`
+  color: ${({ novuTheme }) => novuTheme.layout?.wrapper.secondaryFontColor};
 `;
 
-const unreadNotificationStyles = css<{ novuTheme: INovuTheme }>`
-  background: ${({ novuTheme }) => novuTheme?.notificationItem?.unread?.background};
-  box-shadow: ${({ novuTheme }) => novuTheme?.notificationItem?.unread?.boxShadow};
-  color: ${({ novuTheme }) => novuTheme?.notificationItem?.unread?.fontColor};
+const unreadNotificationStyles = (novuTheme: INovuTheme) => css`
+  background: ${novuTheme?.notificationItem?.unread?.background};
+  box-shadow: ${novuTheme?.notificationItem?.unread?.boxShadow};
+  color: ${novuTheme?.notificationItem?.unread?.fontColor};
   font-weight: 700;
 
   &:before {
@@ -144,17 +279,18 @@ const unreadNotificationStyles = css<{ novuTheme: INovuTheme }>`
     bottom: 0;
     width: 5px;
     border-radius: 7px 0 0 7px;
-    background: ${({ novuTheme }) => novuTheme?.notificationItem?.unread?.notificationItemBeforeBrandColor};
+    background: ${novuTheme?.notificationItem?.unread?.notificationItemBeforeBrandColor};
   }
 `;
-const readNotificationStyles = css<{ novuTheme: INovuTheme }>`
-  color: ${({ novuTheme }) => novuTheme?.notificationItem?.read?.fontColor};
-  background: ${({ novuTheme }) => novuTheme?.notificationItem?.read?.background};
+
+const readNotificationStyles = (novuTheme: INovuTheme) => css`
+  color: ${novuTheme?.notificationItem?.read?.fontColor};
+  background: ${novuTheme?.notificationItem?.read?.background};
   font-weight: 400;
   font-size: 14px;
 `;
 
-const ItemWrapper = styled.div<{ unseen?: boolean; unread?: boolean; novuTheme: INovuTheme }>`
+const listItemClassName = css`
   padding: 15px;
   position: relative;
   display: flex;
@@ -167,25 +303,56 @@ const ItemWrapper = styled.div<{ unseen?: boolean; unread?: boolean; novuTheme: 
   &:hover {
     cursor: pointer;
   }
-
-  ${({ unread }) => {
-    return unread ? unreadNotificationStyles : readNotificationStyles;
-  }}
 `;
 
-const TimeMark = styled.div<{ novuTheme: INovuTheme; unread?: boolean }>`
+const timeMarkClassName = (novuTheme: INovuTheme, unread?: boolean) => css`
   min-width: 55px;
   font-size: 12px;
   font-weight: 400;
   opacity: 0.5;
   line-height: 14.4px;
-  color: ${({ unread, novuTheme }) =>
-    unread
-      ? novuTheme?.notificationItem?.unread?.timeMarkFontColor
-      : novuTheme?.notificationItem?.read?.timeMarkFontColor};
+  color: ${unread
+    ? novuTheme?.notificationItem?.unread?.timeMarkFontColor
+    : novuTheme?.notificationItem?.read?.timeMarkFontColor};
 `;
 
-const StyledGradientDot = styled(GradientDot)`
-  height: 10px;
-  width: 10px;
+const NotificationContentContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const AvatarContainer = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 40px;
+  border: 1px solid ${colors.B40};
+  overflow: hidden;
+`;
+
+const NotificationTextContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+`;
+
+const SystemIconWrapper = styled.div<{ containerBgColor: string; iconColor: string }>`
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  background-color: ${({ containerBgColor }) => containerBgColor};
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  color: ${({ iconColor }) => iconColor};
+
+  & > svg {
+    width: 20px;
+    height: 20px;
+  }
 `;

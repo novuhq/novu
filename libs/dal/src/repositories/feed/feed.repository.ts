@@ -1,4 +1,4 @@
-import { BaseRepository } from '../base-repository';
+import { BaseRepository, Omit } from '../base-repository';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { FeedEntity } from './feed.entity';
 import { Feed } from './feed.schema';
@@ -6,7 +6,12 @@ import { Document, FilterQuery } from 'mongoose';
 import { DalException } from '../../shared';
 import { MessageTemplateRepository } from '../message-template';
 
-export class FeedRepository extends BaseRepository<FeedEntity> {
+class PartialFeedEntity extends Omit(FeedEntity, ['_environmentId', '_organizationId']) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialFeedEntity & Document> &
+  ({ _environmentId: string } | { _organizationId: string });
+
+export class FeedRepository extends BaseRepository<EnforceEnvironmentQuery, FeedEntity> {
   private feed: SoftDeleteModel;
   private messageTemplateRepository = new MessageTemplateRepository();
   constructor() {
@@ -14,18 +19,21 @@ export class FeedRepository extends BaseRepository<FeedEntity> {
     this.feed = Feed;
   }
 
-  async delete(query: FilterQuery<FeedEntity & Document>) {
-    const feed = await this.findOne({ _id: query._id });
+  async delete(query: EnforceEnvironmentQuery) {
+    const feed = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
     if (!feed) throw new DalException(`Could not find feed with id ${query._id}`);
     const relatedMessages = await this.messageTemplateRepository.getMessageTemplatesByFeed(
       feed._environmentId,
       feed._id
     );
     if (relatedMessages.length) throw new DalException(`Can not delete feed that has existing message`);
-    await this.feed.delete({ _id: feed._id, _environmentId: feed._environmentId });
+
+    const requestQuery: EnforceEnvironmentQuery = { _id: feed._id, _environmentId: feed._environmentId };
+
+    await this.feed.delete(requestQuery);
   }
 
-  async findDeleted(query: FilterQuery<FeedEntity & Document>): Promise<FeedEntity> {
+  async findDeleted(query: EnforceEnvironmentQuery): Promise<FeedEntity> {
     const res = await this.feed.findDeleted(query);
 
     return this.mapEntity(res);

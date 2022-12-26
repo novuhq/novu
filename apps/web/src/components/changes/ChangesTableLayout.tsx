@@ -2,11 +2,11 @@ import * as capitalize from 'lodash.capitalize';
 import { format } from 'date-fns';
 import { useMantineColorScheme } from '@mantine/core';
 import { ColumnWithStrictAccessor } from 'react-table';
-
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { showNotification } from '@mantine/notifications';
+
 import { Data, Table } from '../../design-system/table/Table';
 import { Button, colors, Text } from '../../design-system';
 import { promoteChange } from '../../api/changes';
@@ -19,6 +19,7 @@ export const ChangesTable = ({
   page,
   pageSize,
   totalCount,
+  dataTestId,
 }: {
   changes: Data[];
   loading: boolean;
@@ -26,6 +27,7 @@ export const ChangesTable = ({
   page: Number;
   pageSize: Number;
   totalCount: Number;
+  dataTestId?: string;
 }) => {
   const queryClient = useQueryClient();
   const { colorScheme } = useMantineColorScheme();
@@ -114,7 +116,7 @@ export const ChangesTable = ({
 
   return (
     <Table
-      data-test-id="changes-table"
+      data-test-id={dataTestId}
       loading={loading}
       data={changes || []}
       columns={columns}

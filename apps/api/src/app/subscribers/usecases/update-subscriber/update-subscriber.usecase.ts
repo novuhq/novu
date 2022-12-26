@@ -2,11 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class UpdateSubscriber {
   constructor(private subscriberRepository: SubscriberRepository) {}
 
+  @InvalidateCache(CacheKeyPrefixEnum.SUBSCRIBER)
   async execute(command: UpdateSubscriberCommand) {
     const foundSubscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
@@ -40,7 +43,8 @@ export class UpdateSubscriber {
 
     await this.subscriberRepository.update(
       {
-        _id: foundSubscriber,
+        _environmentId: command.environmentId,
+        _id: foundSubscriber._id,
       },
       { $set: updatePayload }
     );

@@ -21,6 +21,7 @@ export class AnalyticsService {
         userId: userId,
         groupId: organizationId,
         traits: {
+          _organization: organizationId,
           id: organizationId,
           name: organization.name,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

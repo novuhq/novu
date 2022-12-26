@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { IChannelSettings, SubscriberRepository, IntegrationRepository } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
+import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class UpdateSubscriberChannel {
@@ -10,6 +12,7 @@ export class UpdateSubscriberChannel {
     private integrationRepository: IntegrationRepository
   ) {}
 
+  @InvalidateCache(CacheKeyPrefixEnum.SUBSCRIBER)
   async execute(command: UpdateSubscriberChannelCommand) {
     const foundSubscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
@@ -38,7 +41,12 @@ export class UpdateSubscriberChannel {
     );
 
     if (existingChannel) {
-      await this.updateExistingSubscriberChannel(existingChannel, updatePayload, foundSubscriber);
+      await this.updateExistingSubscriberChannel(
+        command.environmentId,
+        existingChannel,
+        updatePayload,
+        foundSubscriber
+      );
     } else {
       await this.addChannelToSubscriber(updatePayload, foundIntegration, command, foundSubscriber);
     }
@@ -56,7 +64,7 @@ export class UpdateSubscriberChannel {
     updatePayload.providerId = command.providerId;
 
     await this.subscriberRepository.update(
-      { _id: foundSubscriber },
+      { _environmentId: command.environmentId, _id: foundSubscriber },
       {
         $push: {
           channels: updatePayload,
@@ -66,6 +74,7 @@ export class UpdateSubscriberChannel {
   }
 
   private async updateExistingSubscriberChannel(
+    environmentId: string,
     existingChannel,
     updatePayload: Partial<IChannelSettings>,
     foundSubscriber
@@ -73,7 +82,11 @@ export class UpdateSubscriberChannel {
     const mergedChannel = Object.assign(existingChannel, updatePayload);
 
     await this.subscriberRepository.update(
-      { _id: foundSubscriber, 'channels._integrationId': existingChannel._integrationId },
+      {
+        _environmentId: environmentId,
+        _id: foundSubscriber,
+        'channels._integrationId': existingChannel._integrationId,
+      },
       { $set: { 'channels.$': mergedChannel } }
     );
   }

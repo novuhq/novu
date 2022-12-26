@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createStyles, CSSObject, Grid, MantineTheme, Text, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { JobStatusEnum } from '@novu/shared';
 import { format } from 'date-fns';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
 
 import { ActivityStep } from './ActivityStep';
 import { DigestedStep } from './DigestedStep';
@@ -121,6 +121,11 @@ export const ActivityItem = ({ item, onClick }) => {
               <div data-test-id="subscriber-id">
                 <small>
                   <b>Subscriber id:</b> {item?.subscriber?.id ? item.subscriber.id : 'Deleted Subscriber'}
+                </small>
+              </div>
+              <div data-test-id="transaction-id">
+                <small>
+                  <b>Transaction id:</b> {item.transactionId}
                 </small>
               </div>
             </div>

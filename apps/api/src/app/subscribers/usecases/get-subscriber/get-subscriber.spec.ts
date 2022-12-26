@@ -1,10 +1,13 @@
 import { Test } from '@nestjs/testing';
 import { SubscribersService, UserSession } from '@novu/testing';
-import { GetSubscriber } from './get-subscriber.usecase';
-import { SharedModule } from '../../../shared/shared.module';
-import { GetSubscriberCommand } from './get-subscriber.command';
-import { SubscribersModule } from '../../subscribers.module';
+import { NotFoundException } from '@nestjs/common';
 import { expect } from 'chai';
+
+import { GetSubscriber } from './get-subscriber.usecase';
+import { GetSubscriberCommand } from './get-subscriber.command';
+
+import { SubscribersModule } from '../../subscribers.module';
+import { SharedModule } from '../../../shared/shared.module';
 
 describe('Get Subscriber', function () {
   let useCase: GetSubscriber;
@@ -33,5 +36,23 @@ describe('Get Subscriber', function () {
       })
     );
     expect(res.subscriberId).to.equal(subscriber.subscriberId);
+  });
+
+  it('should get a not found exception if subscriber does not exist', async () => {
+    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+
+    try {
+      await useCase.execute(
+        GetSubscriberCommand.create({
+          subscriberId: 'invalid-subscriber-id',
+          environmentId: session.environment._id,
+          organizationId: session.organization._id,
+        })
+      );
+      throw new Error('Should not reach here');
+    } catch (e) {
+      expect(e).to.be.instanceOf(NotFoundException);
+      expect(e.message).to.eql('Subscriber not found for id invalid-subscriber-id');
+    }
   });
 });

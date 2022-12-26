@@ -11,43 +11,24 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
   return {
     tabsList: {
       gap: '30px',
+      borderBottom: 'none',
     },
 
-    tabControl: {
+    panel: {
+      paddingTop: '15px',
+    },
+
+    tab: {
+      display: 'block',
+      cursor: 'pointer',
       marginBottom: withIcon ? '30px' : '0',
       padding: '0px',
       height: '30px',
-    },
-
-    tabActive: {
-      width: 'auto',
-      [`& .${tabLabel}`]: {
-        color: dark ? colors.white : colors.B40,
-
-        '&::after': {
-          content: '""',
-          display: 'block',
-
-          height: '2px',
-          marginTop: '10px',
-          background: theme.colors.gradient[8],
-          borderRadius: '10px',
-        },
-      },
-
-      [`& .${tabIcon}`]: {
-        color: 'red',
-        background: theme.colors.gradient[8],
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-      },
-    },
-
-    tabInner: {
-      display: 'block',
-      cursor: 'pointer',
+      borderBottom: 'none',
 
       '&:hover': {
+        background: 'none',
+
         [`& .${tabIcon}`]: {
           color: dark ? colors.white : colors.B40,
         },
@@ -56,11 +37,35 @@ export default createStyles((theme: MantineTheme, withIcon: boolean, getRef) => 
           color: dark ? colors.white : colors.B40,
         },
       },
+      ['&[data-active]']: {
+        width: 'auto',
+
+        [`& .${tabLabel}`]: {
+          color: dark ? colors.white : colors.B40,
+
+          '&::after': {
+            content: '""',
+            display: 'block',
+
+            height: '2px',
+            marginTop: '10px',
+            background: colors.horizontal,
+            borderRadius: '10px',
+          },
+        },
+
+        [`& .${tabIcon}`]: {
+          color: 'red',
+          background: colors.horizontal,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+        },
+      },
     },
 
     tabLabel: {
       ref: tabLabel,
-
+      height: '100%',
       fontSize: '14px',
       fontWeight: 700,
       color: colors.B60,

@@ -1,10 +1,11 @@
-import { ActionIcon, InputWrapper } from '@mantine/core';
+import { ActionIcon, Input as MantineInput } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import { useQuery, useMutation } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
+import styled from '@emotion/styled';
+
 import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { getApiKeys } from '../../../api/environment';
-import styled from 'styled-components';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../store/use-env-controller';
 import { Regenerate } from './components/Regenerate';
@@ -12,7 +13,7 @@ import { Regenerate } from './components/Regenerate';
 export const ApiKeysCard = () => {
   const clipboardApiKey = useClipboard({ timeout: 1000 });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
-  const { data: apiKeys, refetch: refetchApiKeys } = useQuery<{ key: string }[]>('getApiKeys', getApiKeys);
+  const { data: apiKeys, refetch: refetchApiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
 
   const { environment } = useEnvController();
 
@@ -22,13 +23,21 @@ export const ApiKeysCard = () => {
   return (
     <>
       <ParamContainer>
-        <InputWrapper label="API Key" description="Use this API key to interact with the Novu API" styles={inputStyles}>
+        <MantineInput.Wrapper
+          label="API Key"
+          description="Use this API key to interact with the Novu API"
+          styles={inputStyles}
+        >
           <Input
             readOnly
             type={'password'}
             rightSection={
-              <Tooltip data-test-id={'api-key-tooltip'} label={clipboardApiKey.copied ? 'Copied!' : 'Copy Key'}>
-                <ActionIcon variant="transparent" onClick={() => clipboardApiKey.copy(apiKey)}>
+              <Tooltip label={clipboardApiKey.copied ? 'Copied!' : 'Copy Key'}>
+                <ActionIcon
+                  data-test-id={'api-key-copy'}
+                  variant="transparent"
+                  onClick={() => clipboardApiKey.copy(apiKey)}
+                >
                   {clipboardApiKey.copied ? <Check /> : <Copy />}
                 </ActionIcon>
               </Tooltip>
@@ -36,10 +45,10 @@ export const ApiKeysCard = () => {
             value={apiKey}
             data-test-id="api-key-container"
           />
-        </InputWrapper>
+        </MantineInput.Wrapper>
       </ParamContainer>
       <ParamContainer>
-        <InputWrapper
+        <MantineInput.Wrapper
           label="Application Identifier"
           description="A public key identifier that can be exposed to the client applications"
           styles={inputStyles}
@@ -47,12 +56,10 @@ export const ApiKeysCard = () => {
           <Input
             readOnly
             rightSection={
-              <Tooltip
-                data-test-id={'application-identifier-tooltip'}
-                label={clipboardEnvironmentIdentifier.copied ? 'Copied!' : 'Copy Key'}
-              >
+              <Tooltip label={clipboardEnvironmentIdentifier.copied ? 'Copied!' : 'Copy Key'}>
                 <ActionIcon
                   variant="transparent"
+                  data-test-id={'application-identifier-copy'}
                   onClick={() => clipboardEnvironmentIdentifier.copy(environmentIdentifier)}
                 >
                   {clipboardEnvironmentIdentifier.copied ? <Check /> : <Copy />}
@@ -62,7 +69,7 @@ export const ApiKeysCard = () => {
             value={environmentIdentifier}
             data-test-id="api-identifier"
           />
-        </InputWrapper>
+        </MantineInput.Wrapper>
       </ParamContainer>
       <Regenerate fetchApiKeys={refetchApiKeys} />
     </>

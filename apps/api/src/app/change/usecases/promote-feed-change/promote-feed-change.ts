@@ -7,7 +7,7 @@ export class PromoteFeedChange {
   constructor(private feedRepository: FeedRepository) {}
 
   async execute(command: PromoteTypeChangeCommand) {
-    let item: FeedEntity | undefined = undefined;
+    let item: FeedEntity | undefined;
     if (command.item.name) {
       item = await this.feedRepository.findOne({
         _environmentId: command.environmentId,
@@ -25,8 +25,6 @@ export class PromoteFeedChange {
       });
     }
 
-    return await this.feedRepository.delete({
-      _id: item._id,
-    });
+    return await this.feedRepository.delete({ _environmentId: command.environmentId, _id: item._id });
   }
 }

@@ -1,10 +1,11 @@
-import { NotificationCenter, NovuProvider, ITranslationEntry, ITab, IStore } from '@novu/notification-center';
-import { INovuThemeProvider } from '@novu/notification-center';
-import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import * as WebFont from 'webfontloader';
+import { css, Global } from '@emotion/react';
+import { NotificationCenter, NovuProvider, ITranslationEntry, ITab, IStore } from '@novu/notification-center';
+import type { INovuThemeProvider, INotificationCenterStyles } from '@novu/notification-center';
+import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
+
 import { API_URL, WS_URL } from '../../config';
-import { createGlobalStyle } from 'styled-components';
 
 interface INotificationCenterWidgetProps {
   onUrlChange: (url: string) => void;
@@ -24,6 +25,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [i18n, setI18n] = useState<ITranslationEntry>();
   const [tabs, setTabs] = useState<ITab[]>();
   const [stores, setStores] = useState<IStore[]>();
+  const [styles, setStyles] = useState<INotificationCenterStyles>();
 
   useEffect(() => {
     WebFont.load({
@@ -63,6 +65,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           setStores(data.value.stores);
         }
 
+        if (data.value.styles) {
+          setStyles(data.value.styles);
+        }
+
         setFrameInitialized(true);
       }
     };
@@ -87,7 +93,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
   return (
     <>
-      <GlobalStyle fontFamily={fontFamily} />
+      <Global styles={globalStyle(fontFamily)} />
       {frameInitialized && (
         <NovuProvider
           backendUrl={backendUrl}
@@ -98,6 +104,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           subscriberHash={userDataPayload.subscriberHash}
           i18n={i18n}
           stores={stores}
+          styles={styles}
         >
           <NotificationCenter
             colorScheme="light"
@@ -114,10 +121,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   );
 }
 
-const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
+const globalStyle = (fontFamily: string) => css`
   body {
     margin: 0;
-    font-family: ${({ fontFamily }) => fontFamily}, Helvetica, sans-serif;
+    font-family: ${fontFamily}, Helvetica, sans-serif;
     color: #333737;
   }
 `;

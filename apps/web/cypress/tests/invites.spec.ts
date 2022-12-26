@@ -45,7 +45,7 @@ describe('Invites module', function () {
 
       cy.getByTestId('header-profile-avatar').click();
       cy.getByTestId('organization-switch').focus();
-      cy.get('.mantine-Select-item').contains(capitalize(this.organization.name)).click();
+      cy.get('.mantine-Select-item').contains(capitalize(this.organization.name)).click({ force: true });
     });
   });
 
@@ -56,7 +56,7 @@ describe('Invites module', function () {
     cy.visit(invitationPath);
     cy.getByTestId('success-screen-reset').click();
 
-    // checkig if token is removed from local storage
+    // checking if token is removed from local storage
     cy.getLocalStorage('auth_token').should('be.null');
     // checking if user is redirected to the given invitation page
     cy.location('pathname').should('equal', invitationPath);
@@ -67,7 +67,7 @@ function doRegister(token: string) {
   cy.visit('/auth/invitation/' + token);
   cy.getByTestId('fullName').type('Invited to org user');
   cy.getByTestId('password').type('asd#Faf4fd');
-  cy.getByTestId('accept-cb').click();
+  cy.getByTestId('accept-cb').click({ force: true });
   cy.getByTestId('submitButton').click();
 
   cy.url().should('include', '/templates');

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { ApiService } from '@novu/client';
 import { IOrganizationEntity } from '@novu/shared';
-import { ColorScheme } from '../../index';
+
 import { useApi, useAuth } from '../../hooks';
 import { I18NLanguage, ITranslationEntry } from '../../i18n/lang';
 import { AuthProvider } from '../../store/auth-provider.context';
@@ -13,18 +13,19 @@ import { SocketInitializationProvider } from '../../store/socket-initialization-
 import { ApiContext } from '../../store/api.context';
 import { INovuProviderContext, IStore } from '../../shared/interfaces';
 import { FeedProvider } from '../../store/feed-provider';
+import { INotificationCenterStyles, StylesProvider } from '../../store/styles';
 
-interface INovuProviderProps {
+export interface INovuProviderProps {
   stores?: IStore[];
   children: React.ReactNode;
   backendUrl?: string;
   subscriberId?: string;
   applicationIdentifier: string;
-  colorScheme?: ColorScheme;
   socketUrl?: string;
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash?: string;
   i18n?: I18NLanguage | ITranslationEntry;
+  styles?: INotificationCenterStyles;
 }
 
 export function NovuProvider(props: INovuProviderProps) {
@@ -55,7 +56,9 @@ export function NovuProvider(props: INovuProviderProps) {
               <NotificationsProvider>
                 <SocketInitializationProvider>
                   <NovuI18NProvider i18n={props.i18n}>
-                    <UnseenProvider>{props.children}</UnseenProvider>
+                    <UnseenProvider>
+                      <StylesProvider styles={props.styles}>{props.children}</StylesProvider>
+                    </UnseenProvider>
                   </NovuI18NProvider>
                 </SocketInitializationProvider>
               </NotificationsProvider>

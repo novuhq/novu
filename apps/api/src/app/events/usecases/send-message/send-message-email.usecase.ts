@@ -12,13 +12,7 @@ import {
   OrganizationEntity,
   IntegrationEntity,
 } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  LogCodeEnum,
-  StepTypeEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
@@ -26,7 +20,6 @@ import { CompileTemplate } from '../../../content-templates/usecases/compile-tem
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -36,31 +29,45 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessageEmail extends SendMessageType {
+export class SendMessageEmail extends SendMessageBase {
+  channelType = ChannelTypeEnum.EMAIL;
   private mailFactory = new MailFactory();
 
   constructor(
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.EMAIL,
+        findOne: true,
+        active: true,
+      })
+    );
     const emailChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
     const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
     const email = command.payload.email || subscriber.email;
 
@@ -68,18 +75,6 @@ export class SendMessageEmail extends SendMessageType {
       message: 'Sending Email',
     });
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
-
-    const integration = (
-      await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.EMAIL,
-          findOne: true,
-          active: true,
-        })
-      )
-    )[0];
 
     if (!integration) {
       await this.createExecutionDetails.execute(
@@ -97,10 +92,12 @@ export class SendMessageEmail extends SendMessageType {
     }
     const overrides = command.overrides[integration?.providerId] || {};
     let subject = '';
+    let preheader = emailChannel.template.preheader;
     let content: string | IEmailBlock[] = '';
 
     const payload = {
       subject: emailChannel.template.subject,
+      preheader,
       branding: {
         logo: organization.branding?.logo,
         color: organization.branding?.color || '#f47373',
@@ -111,7 +108,7 @@ export class SendMessageEmail extends SendMessageType {
         events: command.events,
         total_count: command.events.length,
       },
-      subscriber,
+      subscriber: subscriber,
       ...command.payload,
     };
 
@@ -121,10 +118,23 @@ export class SendMessageEmail extends SendMessageType {
         emailChannel.template.subject,
         organization,
         subscriber,
-        command
+        command,
+        preheader
       );
 
-      content = await this.getContent(isEditorMode, emailChannel, command, subscriber, subject, organization);
+      content = await this.getContent(
+        isEditorMode,
+        emailChannel,
+        command,
+        subscriber,
+        subject,
+        organization,
+        preheader
+      );
+
+      if (preheader) {
+        preheader = await this.renderContent(preheader, subject, organization, subscriber, command, preheader);
+      }
     } catch (e) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -151,7 +161,7 @@ export class SendMessageEmail extends SendMessageType {
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
-      content,
+      content: this.storeContent() ? content : null,
       subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
@@ -172,16 +182,19 @@ export class SendMessageEmail extends SendMessageType {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(payload),
+        raw: this.storeContent() ? JSON.stringify(payload) : null,
       })
     );
+
+    const customTemplate = SendMessageEmail.addPreheader(content as string, emailChannel.template.contentType);
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: isEditorMode ? 'basic' : 'custom',
-        customTemplate: emailChannel.template.contentType === 'customHtml' ? (content as string) : undefined,
+        customTemplate: customTemplate,
         data: {
           subject,
+          preheader,
           branding: {
             logo: organization.branding?.logo,
             color: organization.branding?.color || '#f47373',
@@ -321,9 +334,7 @@ export class SendMessageEmail extends SendMessageType {
       }
 
       await this.messageRepository.update(
-        {
-          _id: message._id,
-        },
+        { _environmentId: command.environmentId, _id: message._id },
         {
           $set: {
             identifier: result.id,
@@ -361,11 +372,12 @@ export class SendMessageEmail extends SendMessageType {
 
   private async getContent(
     isEditorMode,
-    emailChannel,
+    emailChannel: NotificationStepEntity,
     command: SendMessageCommand,
     subscriber: SubscriberEntity,
     subject,
-    organization: OrganizationEntity
+    organization: OrganizationEntity,
+    preheader
   ): Promise<string | IEmailBlock[]> {
     if (isEditorMode) {
       const content: IEmailBlock[] = [...emailChannel.template.content] as IEmailBlock[];
@@ -374,9 +386,8 @@ export class SendMessageEmail extends SendMessageType {
          * We need to trim the content in order to avoid mail provider like GMail
          * to display the mail with `[Message clipped]` footer.
          */
-        block.content = await this.renderContent(block.content, subject, organization, subscriber, command);
-        block.content = block.content.trim();
-        block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command);
+        block.content = await this.renderContent(block.content, subject, organization, subscriber, command, preheader);
+        block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command, preheader);
       }
 
       return content;
@@ -390,14 +401,16 @@ export class SendMessageEmail extends SendMessageType {
     subject,
     organization: OrganizationEntity,
     subscriber,
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    preheader?: string
   ) {
-    return await this.compileTemplate.execute(
+    const renderedContent = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
         customTemplate: content as string,
         data: {
           subject,
+          preheader,
           branding: {
             logo: organization.branding?.logo,
             color: organization.branding?.color || '#f47373',
@@ -413,5 +426,24 @@ export class SendMessageEmail extends SendMessageType {
         },
       })
     );
+
+    return renderedContent.trim();
+  }
+
+  public static addPreheader(content: string, contentType: 'editor' | 'customHtml'): string | undefined {
+    if (contentType === 'customHtml') {
+      // "&nbsp;&zwnj;&nbsp;&zwnj;" is needed to spacing away the rest of the email from the preheader area in email clients
+      return content.replace(
+        /<body[^>]*>/g,
+        `$&{{#if preheader}}
+          <div style="display: none; max-height: 0px; overflow: hidden;">
+            {{preheader}}
+            &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
+          </div>
+        {{/if}}`
+      );
+    }
+
+    return undefined;
   }
 }

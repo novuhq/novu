@@ -1,8 +1,9 @@
 import { Group } from '@mantine/core';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
+import { format, parseISO } from 'date-fns';
 
-import { colors, Container, Text } from '../../design-system';
-import { Clicked, Read, Received, Seen, Sent } from '../../design-system/icons';
+import { colors, Container, Text, Tooltip } from '../../design-system';
+import { mappedWebhookStatuses } from './helpers';
 
 const WebhookFeedbackWrapper = styled(Container)`
   align-items: center;
@@ -10,7 +11,7 @@ const WebhookFeedbackWrapper = styled(Container)`
   flex-flow: column;
   justify-content: center;
   margin: 0;
-  padding: 15px 0 0;
+  padding: 15px 10px;
 `;
 
 const WebhookFeedbackTitle = styled(Text)`
@@ -20,30 +21,50 @@ const WebhookFeedbackTitle = styled(Text)`
   padding-top: 5px;
 `;
 
-const WebhookFeedback = ({ icon, text }) => {
+const WebhookTimeStamp = ({ timeStamp }) => {
+  const formattedDate = format(parseISO(timeStamp), 'hh:mm aaa, dd/MM/yyyy');
+
+  return <span>{formattedDate}</span>;
+};
+
+const WebhookFeedback = ({ icon, text, timeStamp }) => {
   const Icon = icon;
 
   return (
-    <WebhookFeedbackWrapper>
-      <Icon height="15px" width="15px" />
-      <WebhookFeedbackTitle>{text}</WebhookFeedbackTitle>
-    </WebhookFeedbackWrapper>
+    <Tooltip label={<WebhookTimeStamp timeStamp={timeStamp} />}>
+      <WebhookFeedbackWrapper>
+        <Icon height="15px" width="15px" />
+        <WebhookFeedbackTitle>{text}</WebhookFeedbackTitle>
+      </WebhookFeedbackWrapper>
+    </Tooltip>
   );
 };
 
-// TODO: Render based on API response. So far we do placeholders.
-export const ExecutionDetailsWebhookFeedback = ({ show }) => {
-  if (!show) {
-    return null;
-  }
+export const ExecutionDetailsWebhookFeedback = ({ executionDetails }) => {
+  const getWebhookIcons = () => {
+    const icons: JSX.Element[] = [];
+
+    executionDetails.forEach((detail) => {
+      const webhookStatus = detail?.webhookStatus;
+
+      if (webhookStatus) {
+        Object.keys(mappedWebhookStatuses).forEach((key) => {
+          const status = mappedWebhookStatuses[key].status;
+          const icon = mappedWebhookStatuses[key].icon;
+          const label = mappedWebhookStatuses[key].label;
+          if (status.includes(webhookStatus.toLowerCase())) {
+            icons.push(<WebhookFeedback icon={icon} text={label} timeStamp={detail?.updatedAt} />);
+          }
+        });
+      }
+    });
+
+    return icons;
+  };
 
   return (
     <Group position="right" spacing="xs">
-      <WebhookFeedback icon={Sent} text="Sent" />
-      <WebhookFeedback icon={Received} text="Received" />
-      <WebhookFeedback icon={Read} text="Read" />
-      <WebhookFeedback icon={Seen} text="Seen" />
-      <WebhookFeedback icon={Clicked} text="Clicked" />
+      {getWebhookIcons()}
     </Group>
   );
 };

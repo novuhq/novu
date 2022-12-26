@@ -14,9 +14,7 @@ export class NotificationTemplateService {
   constructor(private userId: string, private organizationId: string | undefined, private environmentId: string) {}
 
   private notificationTemplateRepository = new NotificationTemplateRepository();
-
   private notificationGroupRepository = new NotificationGroupRepository();
-
   private messageTemplateRepository = new MessageTemplateRepository();
   private feedRepository = new FeedRepository();
 
@@ -102,15 +100,13 @@ export class NotificationTemplateService {
       ],
       ...override,
       steps: templateSteps,
-    };
+    } as NotificationTemplateEntity;
 
-    const notificationTemplate = await this.notificationTemplateRepository.create(
-      data as Partial<NotificationTemplateEntity>
-    );
+    const notificationTemplate = await this.notificationTemplateRepository.create(data);
 
     return await this.notificationTemplateRepository.findById(
       notificationTemplate._id,
-      notificationTemplate._organizationId
+      notificationTemplate._environmentId
     );
   }
 }

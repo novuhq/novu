@@ -1,7 +1,10 @@
 import React from 'react';
-import { NotificationButton } from './NorificationItemButton';
 import { IMessageAction, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
-import styled from 'styled-components';
+import styled from '@emotion/styled';
+import { cx, css } from '@emotion/css';
+
+import { NotificationButton } from './NotificationItemButton';
+import { useStyles } from '../../../../store/styles';
 
 export interface IActionContainerProps {
   action?: IMessageAction;
@@ -11,28 +14,35 @@ export interface IActionContainerProps {
 export function ActionContainer({ action, onActionClick }: IActionContainerProps) {
   const status = action?.status;
   const buttons = action?.buttons;
+  const [buttonsContainerStyles, primaryButtonStyles, secondaryButtonStyles] = useStyles([
+    'notifications.listItem.buttons.root',
+    'notifications.listItem.buttons.primary',
+    'notifications.listItem.buttons.secondary',
+  ]);
 
   function handleOnClick(buttonType: ButtonTypeEnum) {
     onActionClick(buttonType);
   }
 
   return (
-    <>
-      <TemplateContainerWrap>
-        <TemplateContainer>
-          {status === MessageActionStatusEnum.DONE
-            ? null
-            : buttons?.map((button, buttonIndex) => (
-                <NotificationButton
-                  onActionClick={(buttonType) => handleOnClick(buttonType)}
-                  messageAction={action}
-                  buttonIndex={buttonIndex}
-                  key={button.type}
-                />
-              ))}
-        </TemplateContainer>
-      </TemplateContainerWrap>
-    </>
+    <TemplateContainerWrap>
+      <TemplateContainer className={cx('nc-notifications-list-item-buttons', css(buttonsContainerStyles))}>
+        {status === MessageActionStatusEnum.DONE
+          ? null
+          : buttons?.map((button, buttonIndex) => (
+              <NotificationButton
+                key={button.type}
+                className={cx(
+                  'nc-notifications-list-item-button',
+                  css(button.type === ButtonTypeEnum.PRIMARY ? primaryButtonStyles : secondaryButtonStyles)
+                )}
+                onActionClick={(buttonType) => handleOnClick(buttonType)}
+                messageAction={action}
+                buttonIndex={buttonIndex}
+              />
+            ))}
+      </TemplateContainer>
+    </TemplateContainerWrap>
   );
 }
 

@@ -78,6 +78,7 @@ export class DigestFilterStepsBackoff {
     if (haveDigests) {
       await this.notificationRepository.update(
         {
+          _environmentId: command.environmentId,
           _id: command.notificationId,
         },
         {

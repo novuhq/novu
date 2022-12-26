@@ -1,14 +1,15 @@
 import { useEffect } from 'react';
 import { ActionIcon, Grid } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Controller, useFormContext } from 'react-hook-form';
 import { INotificationTrigger } from '@novu/shared';
+
 import { getNotificationGroups } from '../../../api/notifications';
 import { api } from '../../../api/api.client';
 import { Input, Select, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/use-env-controller';
-import { Controller, useFormContext } from 'react-hook-form';
 
 export const NotificationSettingsForm = ({
   editMode,
@@ -27,7 +28,7 @@ export const NotificationSettingsForm = ({
     getValues,
   } = useFormContext();
 
-  const { data: groups, isLoading: loadingGroups } = useQuery('notificationGroups', getNotificationGroups);
+  const { data: groups, isLoading: loadingGroups } = useQuery(['notificationGroups'], getNotificationGroups);
   const { isLoading: loadingCreateGroup, mutateAsync: createNotificationGroup } = useMutation<
     { name: string; _id: string },
     { error: string; message: string; statusCode: number },
@@ -36,7 +37,7 @@ export const NotificationSettingsForm = ({
     }
   >((data) => api.post(`/v1/notification-groups`, data), {
     onSuccess: (data) => {
-      queryClient.setQueryData('notificationGroups', [...groups, data]);
+      queryClient.setQueryData(['notificationGroups'], [...groups, data]);
     },
   });
 
@@ -53,16 +54,20 @@ export const NotificationSettingsForm = ({
     }, 500);
   }
 
-  async function addGroupItem(newGroup) {
+  function addGroupItem(newGroup: string): undefined {
     if (newGroup) {
-      const response = await createNotificationGroup({
+      createNotificationGroup({
         name: newGroup,
-      });
+      }).then((response) => {
+        setTimeout(() => {
+          setValue('notificationGroup', response._id);
+        }, 0);
 
-      setTimeout(() => {
-        setValue('notificationGroup', response._id);
-      }, 0);
+        return;
+      });
     }
+
+    return;
   }
 
   return (
@@ -119,6 +124,7 @@ export const NotificationSettingsForm = ({
                   error={fieldState.error?.message}
                   label="Notification Identifier"
                   description="This will be used to identify the notification template using the API."
+                  disabled={readonly}
                   rightSection={
                     <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? 'Copied!' : 'Copy Key'}>
                       <ActionIcon variant="transparent" onClick={() => idClipboard.copy(field.value)}>

@@ -1,8 +1,9 @@
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Center } from '@mantine/core';
+
 import { api } from '../../api/api.client';
 import { Button, colors, Input, Text } from '../../design-system';
 import { useVercelParams } from '../../hooks/use-vercelParams';
@@ -12,7 +13,7 @@ type Props = {
 };
 
 export function PasswordResetRequestForm({ onSent }: Props) {
-  const { isLoading, mutateAsync } = useMutation<
+  const { isLoading, mutateAsync, isError, error } = useMutation<
     { success: boolean },
     { error: string; message: string; statusCode: number },
     {
@@ -74,6 +75,11 @@ export function PasswordResetRequestForm({ onSent }: Props) {
           </Link>
         </Center>
       </form>
+      {isError && error?.message && (
+        <Text mt={20} size="lg" weight="bold" align="center" color={colors.error}>
+          {error.message}
+        </Text>
+      )}
     </>
   );
 }

@@ -16,9 +16,9 @@ import {
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
+
 import { TriggerEventCommand } from './trigger-event.command';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
+import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
@@ -74,6 +74,20 @@ export class TriggerEvent {
       return this.logTemplateNotActive(command, template);
     }
 
+    if (!template.steps?.length) {
+      return {
+        acknowledged: true,
+        status: 'no_workflow_steps_defined',
+      };
+    }
+
+    if (!template.steps?.some((step) => step.active)) {
+      return {
+        acknowledged: true,
+        status: 'no_workflow_active_steps_defined',
+      };
+    }
+
     // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
     if (command.payload && Array.isArray(command.payload.attachments)) {
       this.modifyAttachments(command);
@@ -105,6 +119,7 @@ export class TriggerEvent {
             organizationId: command.organizationId,
             userId: command.organizationId,
             templateId: template._id,
+            actor: command.actor,
           })
         )
       );
@@ -116,11 +131,6 @@ export class TriggerEvent {
       _template: template._id,
       _organization: command.organizationId,
       channels: steps.map((step) => step.template?.type),
-      smsChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.SMS)?.length,
-      emailChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.EMAIL)?.length,
-      inAppChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.IN_APP)?.length,
-      chatChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.CHAT)?.length,
-      pushChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.PUSH)?.length,
     });
 
     for (const job of jobs) {
@@ -168,6 +178,7 @@ export class TriggerEvent {
 
     await this.notificationRepository.update(
       {
+        _organizationId: firstJob._organizationId,
         _id: firstJob._notificationId,
       },
       {

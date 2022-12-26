@@ -6,8 +6,7 @@ import {
   ISubscriberJwt,
   MessageActionStatusEnum,
 } from '@novu/shared';
-
-import { IStoreQuery } from '@novu/client';
+import type { IStoreQuery } from '@novu/client';
 
 export {
   IMessage,
@@ -16,6 +15,8 @@ export {
   ISubscriberJwt,
   IPreferenceChannels,
   IMessageCTA,
+  IActor,
+  ActorTypeEnum,
   IMessageButton,
 } from '@novu/shared';
 
@@ -84,10 +85,10 @@ export interface INovuProviderContext {
 
 export interface INotificationsContext {
   notifications?: Record<string, IMessage[]>;
-  fetchNextPage?: (storeId?: string, query?: IStoreQuery) => void;
+  fetchNextPage?: (storeId?: string) => void;
   hasNextPage?: Record<string, boolean>;
   fetching?: boolean;
-  markAsRead?: (messageId: string, storeId?: string) => Promise<IMessage>;
+  markAsRead?: (messageId: string, storeId?: string) => void;
   markAllAsRead?: (storeId?: string) => Promise<number>;
   updateAction?: (
     messageId: string,

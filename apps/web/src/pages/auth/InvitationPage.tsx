@@ -1,9 +1,9 @@
 import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useContext, useEffect } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
 import { IGetInviteResponseDto } from '@novu/shared';
-import * as capitalize from 'lodash.capitalize';
+
 import { getInviteTokenData } from '../../api/invitation';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
@@ -12,7 +12,6 @@ import { colors, Text, Button } from '../../design-system';
 import { AuthContext } from '../../store/authContext';
 import { useAcceptInvite } from '../../components/auth/use-accept-invite.hook';
 import { When } from '../../components/utils/When';
-import { LoginForm } from '../../components/auth/LoginForm';
 
 export default function InvitationPage() {
   const navigate = useNavigate();
@@ -21,8 +20,8 @@ export default function InvitationPage() {
   const isLoggedIn = !!token;
   const { token: tokenParam } = useParams<{ token: string }>();
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
-  const { data, isLoading } = useQuery<IGetInviteResponseDto, IGetInviteResponseDto>(
-    'getInviteTokenData',
+  const { data, isInitialLoading } = useQuery<IGetInviteResponseDto, IGetInviteResponseDto>(
+    ['getInviteTokenData'],
     () => getInviteTokenData(tokenParam || ''),
     {
       enabled: !!tokenParam,
@@ -32,10 +31,10 @@ export default function InvitationPage() {
   const organizationName = data?.organization.name || '';
 
   const existingUser = tokenParam && data?._userId;
-  const invalidCurrentUser = existingUser && currentUser && currentUser._id !== data._userId;
+  const invalidCurrentUser = existingUser && currentUser && currentUser._id !== data?._userId;
 
   const acceptToken = async () => {
-    if (existingUser && currentUser && currentUser._id === data._userId && isLoggedIn) {
+    if (existingUser && currentUser && currentUser._id === data?._userId && isLoggedIn) {
       const result = await submitToken(tokenParam as string, true);
       if (result) navigate('/templates');
     }
@@ -114,13 +113,13 @@ export default function InvitationPage() {
           }
         >
           <LoadingOverlay
-            visible={isLoading}
+            visible={isInitialLoading}
             overlayColor={colors.B30}
             loaderProps={{
               color: colors.error,
             }}
           />
-          {!isLoading && <SignUpForm email={data?.email} token={tokenParam} />}
+          {!isInitialLoading && <SignUpForm email={data?.email} token={tokenParam} />}
         </AuthContainer>
       )}
     </AuthLayout>

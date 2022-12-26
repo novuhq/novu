@@ -5,10 +5,15 @@ import { isBefore, subDays } from 'date-fns';
 import { PasswordResetCommand } from './password-reset.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AuthService } from '../../services/auth.service';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class PasswordReset {
-  constructor(private userRepository: UserRepository, private authService: AuthService) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private userRepository: UserRepository,
+    private authService: AuthService
+  ) {}
 
   async execute(command: PasswordResetCommand): Promise<{ token: string }> {
     const user = await this.userRepository.findUserByToken(command.token);
@@ -22,6 +27,13 @@ export class PasswordReset {
 
     const passwordHash = await bcrypt.hash(command.password, 10);
 
+    this.invalidateCache.clearCache({
+      storeKeyPrefix: [CacheKeyPrefixEnum.USER],
+      credentials: {
+        _id: user._id,
+      },
+    });
+
     await this.userRepository.update(
       {
         _id: user._id,
@@ -33,6 +45,7 @@ export class PasswordReset {
         $unset: {
           resetToken: 1,
           resetTokenDate: 1,
+          resetTokenCount: '',
         },
       }
     );

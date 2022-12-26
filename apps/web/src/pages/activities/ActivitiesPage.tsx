@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { ChannelTypeEnum } from '@novu/shared';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
+import { ChannelTypeEnum } from '@novu/shared';
+
 import { useTemplates } from '../../api/hooks/use-templates';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -100,6 +101,21 @@ export function ActivitiesPage() {
               )}
               control={control}
               name="templates"
+            />
+          </div>
+          <div style={{ minWidth: '250px' }}>
+            <Controller
+              render={({ field, fieldState }) => (
+                <Input
+                  {...field}
+                  error={fieldState.error?.message}
+                  label="Transaction ID"
+                  placeholder="Search by transaction id"
+                  value={field.value || ''}
+                />
+              )}
+              control={control}
+              name="transactionId"
             />
           </div>
           <div style={{ minWidth: '250px' }}>
