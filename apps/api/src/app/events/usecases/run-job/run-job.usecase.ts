@@ -16,8 +16,7 @@ export class RunJob {
     private jobRepository: JobRepository,
     private sendMessage: SendMessage,
     private queueNextJob: QueueNextJob,
-    private storageHelperService: StorageHelperService,
-    private userRepository: UserRepository
+    private storageHelperService: StorageHelperService
   ) {}
 
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
