@@ -115,6 +115,7 @@ export function InAppWidgetPreview({
                       index={index}
                       opened={avatarContainerOpened}
                       setOpened={setAvatarContainerOpened}
+                      readonly={readonly}
                     />
                   )}
 
@@ -131,6 +132,7 @@ export function InAppWidgetPreview({
                   onButtonAddClickHandle={onButtonAddClickHandle}
                   onRemoveTemplate={onRemoveTemplate}
                   isButtonsTemplateSelected={isButtonsTemplateSelected}
+                  readonly={readonly}
                 />
               </div>
             </Group>

@@ -43,22 +43,10 @@ body:
       label: "👎 Actual Behavior with Screenshots"
       description: "What did actually happen? Add screenshots, if applicable."
       placeholder: "It actually ..."
-  - type: dropdown
-    id: operating-system
-    attributes:
-      label: "💻 Operating system"
-      description: "What OS is your app running on?"
-      options:
-        - Linux
-        - MacOS
-        - Windows
-        - Something else
-    validations:
-      required: true
   - type: input
     id: node-version
     validations:
-      required: true
+      required: false
     attributes:
       label: "🤖 Node Version"
       description: >
