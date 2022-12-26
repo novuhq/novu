@@ -78,14 +78,6 @@ describe('ContentService', function () {
       expect(extractVariables[0].name).to.include('word');
     });
 
-    it('should not extract variables reserved for the system', function () {
-      const contentService = new ContentService();
-      const extractVariables = contentService.extractVariables(' {{subscriber.firstName}} {{lastName}}');
-
-      expect(extractVariables.length).to.equal(1);
-      expect(extractVariables[0].name).to.include('lastName');
-    });
-
     it('should not show @data variables ', function () {
       const contentService = new ContentService();
       const extractVariables = contentService.extractVariables(
@@ -235,6 +227,28 @@ describe('ContentService', function () {
 
       expect(variables.length).to.equal(1);
       expect(variables[0].name).to.include('customVariables');
+    });
+
+    it('should not extract variables reserved for the system', function () {
+      const contentService = new ContentService();
+      const messages = [
+        {
+          template: {
+            type: StepTypeEnum.EMAIL,
+            subject: 'Test {{subscriber.firstName}}',
+            content: [
+              {
+                content: 'Test of {{subscriber.firstName}} {{lastName}}',
+                type: 'text',
+              },
+            ],
+          },
+        },
+      ] as INotificationTemplateStep[];
+      const extractVariables = contentService.extractMessageVariables(messages);
+
+      expect(extractVariables.length).to.equal(1);
+      expect(extractVariables[0].name).to.include('lastName');
     });
   });
 });
