@@ -62,7 +62,7 @@ export class NotificationTriggerEntity {
 
   variables: {
     name: string;
-    type?: TemplateVariableTypeEnum;
+    type: TemplateVariableTypeEnum;
   }[];
 
   subscriberVariables?: {

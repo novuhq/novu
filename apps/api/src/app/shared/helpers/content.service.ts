@@ -1,5 +1,6 @@
 import { StepTypeEnum, INotificationTemplateStep, getTemplateVariables, IMustacheVariable } from '@novu/shared';
 import Handlebars from 'handlebars';
+import { ApiException } from '../exceptions/api.exception';
 
 export class ContentService {
   replaceVariables(content: string, variables: { [key: string]: string }) {
@@ -22,7 +23,7 @@ export class ContentService {
 
       return getTemplateVariables(ast.body);
     } catch (e) {
-      return [];
+      throw new ApiException('Failed to extract variables');
     }
   }
 

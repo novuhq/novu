@@ -48,11 +48,12 @@ describe('ContentService', function () {
   describe('extractVariables', function () {
     it('should not find any variables', function () {
       const contentService = new ContentService();
-      const extractVariables = contentService.extractVariables(
-        'This is a text without variables {{ invalid }} {{ not valid{ {var}}'
-      );
-      expect(extractVariables.length).to.equal(0);
-      expect(Array.isArray(extractVariables)).to.equal(true);
+      try {
+        contentService.extractVariables('This is a text without variables {{ invalid }} {{ not valid{ {var}}');
+        expect(true).to.equal(false);
+      } catch (e) {
+        expect(e.response.message).to.equal('Failed to extract variables');
+      }
     });
 
     it('should extract all valid variables', function () {
