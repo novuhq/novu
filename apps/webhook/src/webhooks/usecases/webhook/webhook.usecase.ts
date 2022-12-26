@@ -123,7 +123,7 @@ export class Webhook {
     if (!handler) {
       throw new NotFoundException(`Handler for integration of ${providerId} was not found`);
     }
-    handler.buildProvider({});
+    handler.buildProvider(integration.credentials);
 
     this.provider = handler.getProvider();
   }
