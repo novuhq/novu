@@ -2,11 +2,11 @@ import * as capitalize from 'lodash.capitalize';
 import { format } from 'date-fns';
 import { useMantineColorScheme } from '@mantine/core';
 import { ColumnWithStrictAccessor } from 'react-table';
-
-import { useMutation, useQueryClient } from 'react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { showNotification } from '@mantine/notifications';
+
 import { Data, Table } from '../../design-system/table/Table';
 import { Button, colors, Text } from '../../design-system';
 import { promoteChange } from '../../api/changes';

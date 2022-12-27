@@ -39,7 +39,8 @@ export class CreateNotificationTemplate {
       identifier: `${triggerIdentifier}${!templateCheckIdentifier ? '' : '-' + shortid.generate()}`,
       variables: variables.map((i) => {
         return {
-          name: i,
+          name: i.name,
+          type: i.type,
         };
       }),
       subscriberVariables: subscriberVariables.map((i) => {
@@ -102,7 +103,7 @@ export class CreateNotificationTemplate {
       _notificationGroupId: command.notificationGroupId,
     });
 
-    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
+    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);
 
     await this.createChange.execute(
       CreateChangeCommand.create({

@@ -192,7 +192,7 @@
         "start:dev"
       ],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/packages/core",
+      "cwd": "${workspaceFolder}/packages/node",
       "skipFiles": [
         "<node_internals>/**"
       ],

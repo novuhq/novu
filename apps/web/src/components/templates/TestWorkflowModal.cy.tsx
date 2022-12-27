@@ -1,7 +1,8 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TriggerTypeEnum } from '@novu/shared';
+
 import { TestWrapper } from '../../testing';
 import { TestWorkflowModal } from './TestWorkflowModal';
-import { QueryClient, QueryClientProvider } from 'react-query';
 
 const queryClient = new QueryClient();
 
@@ -21,8 +22,8 @@ describe('TestWorkflowModal Component', function () {
       </QueryClientProvider>
     );
 
-    cy.getByTestId('test-trigger-to-param').contains(`"subscriberId": "REPLACE_WITH_DATA"`);
-    cy.getByTestId('test-trigger-payload-param').contains(`{ }`);
+    cy.getByTestId('test-trigger-to-param').contains(`"subscriberId": "<REPLACE_WITH_DATA>"`);
+    cy.getByTestId('test-trigger-payload-param').contains(`{}`);
     cy.getByTestId('test-trigger-overrides-param').contains(`{ }`);
   });
 
@@ -46,10 +47,10 @@ describe('TestWorkflowModal Component', function () {
       </QueryClientProvider>
     );
 
-    cy.getByTestId('test-trigger-to-param').contains(`"subscriberId": "REPLACE_WITH_DATA",`);
-    cy.getByTestId('test-trigger-to-param').contains(`"email": "REPLACE_WITH_DATA"`);
-    cy.getByTestId('test-trigger-payload-param').contains(`"firstVariable": "REPLACE_WITH_DATA",`);
-    cy.getByTestId('test-trigger-payload-param').contains(`"secondVariable": "REPLACE_WITH_DATA"`);
+    cy.getByTestId('test-trigger-to-param').contains(`"subscriberId": "<REPLACE_WITH_DATA>",`);
+    cy.getByTestId('test-trigger-to-param').contains(`"email": "<REPLACE_WITH_DATA>"`);
+    cy.getByTestId('test-trigger-payload-param').contains(`"firstVariable": "<REPLACE_WITH_DATA>",`);
+    cy.getByTestId('test-trigger-payload-param').contains(`"secondVariable": "<REPLACE_WITH_DATA>"`);
     cy.getByTestId('test-trigger-overrides-param').contains(`{ }`);
   });
 });

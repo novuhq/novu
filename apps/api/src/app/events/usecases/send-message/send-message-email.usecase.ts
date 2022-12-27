@@ -20,7 +20,6 @@ import { CompileTemplate } from '../../../content-templates/usecases/compile-tem
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -30,31 +29,44 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessageEmail extends SendMessageType {
-  private mailFactory = new MailFactory();
+export class SendMessageEmail extends SendMessageBase {
+  channelType = ChannelTypeEnum.EMAIL;
 
   constructor(
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.EMAIL,
+        findOne: true,
+        active: true,
+      })
+    );
     const emailChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
     const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
     const email = command.payload.email || subscriber.email;
 
@@ -62,18 +74,6 @@ export class SendMessageEmail extends SendMessageType {
       message: 'Sending Email',
     });
     const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
-
-    const integration = (
-      await this.getDecryptedIntegrationsUsecase.execute(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.EMAIL,
-          findOne: true,
-          active: true,
-        })
-      )
-    )[0];
 
     if (!integration) {
       await this.createExecutionDetails.execute(
@@ -107,7 +107,7 @@ export class SendMessageEmail extends SendMessageType {
         events: command.events,
         total_count: command.events.length,
       },
-      subscriber,
+      subscriber: subscriber,
       ...command.payload,
     };
 
@@ -160,7 +160,7 @@ export class SendMessageEmail extends SendMessageType {
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
-      content,
+      content: this.storeContent() ? content : null,
       subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
@@ -181,7 +181,7 @@ export class SendMessageEmail extends SendMessageType {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(payload),
+        raw: this.storeContent() ? JSON.stringify(payload) : null,
       })
     );
 
@@ -337,7 +337,8 @@ export class SendMessageEmail extends SendMessageType {
     command: SendMessageCommand,
     notification: NotificationEntity
   ) {
-    const mailHandler = this.mailFactory.getHandler(integration, mailData.from);
+    const mailFactory = new MailFactory();
+    const mailHandler = mailFactory.getHandler(integration, mailData.from);
 
     try {
       const result = await mailHandler.send(mailData);

@@ -214,7 +214,8 @@ export class WidgetsController {
   async markAllUnseenAsSeen(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<number> {
     const command = MarkAllMessageAsSeenCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      _subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
     });
 
@@ -312,18 +313,4 @@ export class WidgetsController {
 
     return paramArray;
   }
-}
-
-/*
- * ValidationPipe convert boolean undefined params default (false)
- * Therefore we need to get string and convert it to boolean
- */
-export function initializeSeenParam(seen: string): boolean | null {
-  let isSeen: boolean = null;
-
-  if (seen) {
-    isSeen = seen == 'true';
-  }
-
-  return isSeen;
 }

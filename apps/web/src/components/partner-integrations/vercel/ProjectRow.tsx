@@ -3,8 +3,9 @@ import { Box, Group, CloseButton, ThemeIcon } from '@mantine/core';
 import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useWatch, Control, Controller } from 'react-hook-form';
 import { useIntersection } from '@mantine/hooks';
-import { FetchNextPageOptions, InfiniteQueryObserverResult } from 'react-query';
+import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query';
 import { IOrganizationEntity } from '@novu/shared';
+
 import { Text, Select } from '../../../design-system';
 import { ProjectLinkFormValues } from './LinkProjectContainer';
 
@@ -58,7 +59,7 @@ export function ProjectRow(props: ProjectRowProps) {
 
   const eligibleOrganizationOptions = organizationsData.filter((organization) =>
     formValues.every(
-      (state) => formValues[index].organizationId == organization._id || state.organizationId !== organization._id
+      (state) => formValues[index].organizationId === organization._id || state.organizationId !== organization._id
     )
   );
 

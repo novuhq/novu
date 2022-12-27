@@ -1,5 +1,5 @@
 import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useContext, useEffect } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
 import { IGetInviteResponseDto } from '@novu/shared';
@@ -20,8 +20,8 @@ export default function InvitationPage() {
   const isLoggedIn = !!token;
   const { token: tokenParam } = useParams<{ token: string }>();
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
-  const { data, isLoading } = useQuery<IGetInviteResponseDto, IGetInviteResponseDto>(
-    'getInviteTokenData',
+  const { data, isInitialLoading } = useQuery<IGetInviteResponseDto, IGetInviteResponseDto>(
+    ['getInviteTokenData'],
     () => getInviteTokenData(tokenParam || ''),
     {
       enabled: !!tokenParam,
@@ -113,13 +113,13 @@ export default function InvitationPage() {
           }
         >
           <LoadingOverlay
-            visible={isLoading}
+            visible={isInitialLoading}
             overlayColor={colors.B30}
             loaderProps={{
               color: colors.error,
             }}
           />
-          {!isLoading && <SignUpForm email={data?.email} token={tokenParam} />}
+          {!isInitialLoading && <SignUpForm email={data?.email} token={tokenParam} />}
         </AuthContainer>
       )}
     </AuthLayout>

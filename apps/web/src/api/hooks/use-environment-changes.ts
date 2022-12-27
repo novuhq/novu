@@ -1,4 +1,5 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
+
 import { useEnvController } from '../../store/use-env-controller';
 import { getPromotedChanges, getUnpromotedChanges } from '../changes';
 import { QueryKeys } from '../query.keys';
