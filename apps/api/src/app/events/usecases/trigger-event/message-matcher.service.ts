@@ -152,8 +152,16 @@ export class MessageMatcher {
 
     const payload = await this.buildPayload(variables, configuration);
 
+    const hmac = await this.buildHmac(configuration);
+
+    const config = {
+      headers: {
+        'nv-hmac-256': hmac,
+      },
+    };
+
     try {
-      return await axios.post(child.webhookUrl, payload).then((response) => {
+      return await axios.post(child.webhookUrl, payload, config).then((response) => {
         return response.data as Record<string, unknown>;
       });
     } catch (err) {
@@ -172,7 +180,6 @@ export class MessageMatcher {
     const payload: Partial<{
       subscriber: SubscriberEntity;
       payload: Record<string, unknown>;
-      hmac: string;
       identifier: string;
       channel: string;
       providerId: string;
@@ -191,15 +198,6 @@ export class MessageMatcher {
       payload.payload = variables.payload;
     }
 
-    const environment = await this.environmentRepository.findOne({
-      _id: configuration.command.environmentId,
-      _organizationId: configuration.command.organizationId,
-    });
-
-    payload.hmac = createHmac('sha256', environment.apiKeys[0].key)
-      .update(configuration.command.environmentId)
-      .digest('hex');
-
     payload.identifier = configuration.command.identifier;
     payload.channel = configuration.command.job.type;
 
@@ -208,6 +206,17 @@ export class MessageMatcher {
     }
 
     return payload;
+  }
+
+  private async buildHmac(configuration: IMessageFilterConfiguration): Promise<string> {
+    if (process.env.NODE_ENV === 'test' && !configuration) return '';
+
+    const environment = await this.environmentRepository.findOne({
+      _id: configuration.command.environmentId,
+      _organizationId: configuration.command.organizationId,
+    });
+
+    return createHmac('sha256', environment.apiKeys[0].key).update(configuration.command.environmentId).digest('hex');
   }
 
   private async processFilter(variables: IFilterVariables, child, configuration: IMessageFilterConfiguration) {
