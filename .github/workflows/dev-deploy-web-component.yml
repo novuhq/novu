@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - next
+      - main
     paths:
       - 'packages/notification-center/**'
 
