@@ -11,19 +11,18 @@ improving the efficiency and effectiveness of your communication.
 
 ## On Filter
 
-- Filter notifications based on the 'payload' field: You can specify a list of keywords or
-  values that the 'payload' field must match in order for the notification to be delivered.
-  This is useful if you only want to receive notifications that contain certain information.
+- On payload: You can specify a list of keywords or values that the 'payload' field must
+  match in order for the notification to be delivered. his is useful if you only want to
+  receive notifications that contain certain information.
 
-- Filter notifications based on the 'subscriber' data: You can specify which subscribers
-  or subscriber should receive the notification. This allows you to send notifications
-  to specific individuals or groups rather than all subscribers.
+- On subscriber: You can filter which subscribers receive notifications based on subscriber
+  information. This means that you can send notifications to specific individuals or groups
+  rather than all subscribers..
 
-- Filter notifications based on the 'webhook' field: You can use this feature to provide
-  information about subscribers from a specific webhook and use that information to filter
-  the notification flow. For example, if your webhook returns a field indicating whether
-  a subscriber is currently online, you can use this field to send notifications only to
-  online subscribers.
+- On webhook: You can use this feature to provide information about subscribers from a specific
+  webhook and use that information to filter the notification flow. For example, if your webhook
+  returns a field indicating whether a subscriber is currently online, you can use this field
+  to send notifications only to online subscribers.
 
 ### Steps to set filter
 
@@ -99,11 +98,21 @@ to receive object the following parameters:
 
 - subscriber - subscriberEntity: This is an object containing information about the subscriber that
   the notification is being sent to.
-- payload - 'triggerPayload': This is an object containing the payload of the trigger that initiated
+- payload - This is an object containing the payload of the trigger that initiated
   the notification.
 - identifier - notification template identifier is a unique identifier for the notification
   template being used.
-- hmac : This is a security measure that ensures that the request is coming from Novu.
+- providerId - provider identifier is a unique identifier for the communication provider you used
+  on this notification.
+- channel - The channel identifier specifies the type of notification channel that was used to send
+  the notification.
+
+### Securing your webhooks
+
+To secure your webhooks, Novu uses the `nv-hmac-256` header as a security measure. This header
+contains an HMAC hash that is calculated based on your API key and environment ID, ensuring
+that the request is coming from Novu. This helps protect against unauthorized access and
+tampering with your webhooks.
 
 To verify the authenticity of the request, you can use the following code:
 
