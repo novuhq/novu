@@ -111,7 +111,7 @@ export class SendMessage {
   private async filter(command: SendMessageCommand) {
     const data = await this.getFilterData(command);
 
-    const shouldRun = matchMessageWithFilters(command.step, data);
+    const shouldRun = await matchMessageWithFilters(command.step, data);
 
     if (!shouldRun) {
       await this.createExecutionDetails.execute(
