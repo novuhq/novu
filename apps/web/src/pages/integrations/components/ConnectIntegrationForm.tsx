@@ -211,7 +211,7 @@ export function ConnectIntegrationForm({
 
         <InlineDiv>
           <span>Read our guide on where to get the credentials </span>
-          <a href={provider?.docReference} target="_blank" rel="noreferrer">
+          <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
             here.
           </a>
         </InlineDiv>
