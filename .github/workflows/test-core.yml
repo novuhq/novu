@@ -11,7 +11,6 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: "14"
-      - run: rm -rf build
 
       - name: Cache pnpm modules
         uses: actions/cache@v2
@@ -26,6 +25,9 @@ jobs:
           version: 7.5.0
           run_install: true
 
+      - name: Build
+        run: pnpm run build
+        
       - name: Test
         working-directory: "packages/node"
         run: pnpm test
