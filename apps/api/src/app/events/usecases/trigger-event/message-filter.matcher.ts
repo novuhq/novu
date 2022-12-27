@@ -137,16 +137,16 @@ function processFilterEquality(variables: IFilterVariables, i) {
 }
 
 async function getWebhookResponse(
-  i,
+  child,
   variables: IFilterVariables,
   configuration: IMessageFilterConfiguration
 ): Promise<Record<string, unknown>> {
-  if (!i.webhookUrl) return undefined;
+  if (!child.webhookUrl) return undefined;
 
   const payload = await buildPayload(variables, configuration);
 
   try {
-    return await axios.post(i.webhookUrl, payload).then((response) => {
+    return await axios.post(child.webhookUrl, payload).then((response) => {
       return response.data as Record<string, unknown>;
     });
   } catch (err) {
@@ -200,14 +200,14 @@ async function buildPayload(variables: IFilterVariables, configuration: IMessage
   return payload;
 }
 
-async function processFilter(variables: IFilterVariables, i, configuration: IMessageFilterConfiguration) {
-  if (i.on === 'webhook') {
-    const res = await getWebhookResponse(i, variables, configuration);
+async function processFilter(variables: IFilterVariables, child, configuration: IMessageFilterConfiguration) {
+  if (child.on === 'webhook') {
+    const res = await getWebhookResponse(child, variables, configuration);
 
-    return processFilterEquality({ payload: undefined, webhook: res }, i);
+    return processFilterEquality({ payload: undefined, webhook: res }, child);
   }
 
-  return processFilterEquality(variables, i);
+  return processFilterEquality(variables, child);
 }
 
 function parseValue(originValue, parsingValue) {
