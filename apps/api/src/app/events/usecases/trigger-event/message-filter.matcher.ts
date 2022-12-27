@@ -1,7 +1,7 @@
 import { NotificationStepEntity, SubscriberEntity } from '@novu/dal';
 import { ITriggerPayload } from '@novu/node';
 import * as _ from 'lodash';
-import axios from 'axios';
+import got from 'got';
 
 export interface IFilterVariables {
   payload: ITriggerPayload;
@@ -120,19 +120,28 @@ function processFilterEquality(variables: IFilterVariables, i) {
 }
 
 async function getWebhookResponse(i, variables: IFilterVariables): Promise<Record<string, unknown>> {
+  if (!i.webhookUrl) return undefined;
+
   try {
-    return await axios
-      .post(i.webhookUrl, variables)
-      .then((response) => {
-        return response.data as Record<string, unknown>;
-      })
-      .catch((error) => {
-        // eslint-disable-next-line promise/no-return-wrap
-        return Promise.reject(error?.response?.data || error?.response || error);
-      });
-  } catch (e) {
+    const res = await got(i.webhookUrl, {
+      retry: { limit: 3 },
+      hooks: {
+        beforeRetry: [
+          (options, error, retryCount) => {
+            // eslint-disable-next-line no-console
+            console.log(`[Retry-${retryCount}] error - `, error.response.body);
+          },
+        ],
+      },
+    }).json();
+
+    return res ? (res as Record<string, unknown>) : undefined;
+  } catch (err) {
     // eslint-disable-next-line no-console
-    console.log(e);
+    if (err.response && err.response.body) {
+      // eslint-disable-next-line no-console
+      console.log('exception while performing webhook request - ', err.response.body);
+    }
 
     return undefined;
   }
