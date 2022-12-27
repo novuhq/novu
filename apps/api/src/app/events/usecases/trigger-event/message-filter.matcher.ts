@@ -168,6 +168,7 @@ async function buildPayload(variables: IFilterVariables, configuration: IMessage
     hmac: string;
     identifier: string;
     channel: string;
+    providerId: string;
   }> = {};
 
   if (variables.subscriber) {
@@ -194,6 +195,7 @@ async function buildPayload(variables: IFilterVariables, configuration: IMessage
 
   payload.identifier = configuration.command.identifier;
   payload.channel = configuration.command.job.type;
+  payload.providerId = configuration.command.job.providerId;
 
   return payload;
 }
