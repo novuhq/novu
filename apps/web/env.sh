@@ -4,7 +4,7 @@
 rm -rf ./env-config.js
 touch ./env-config.js
 
-# Add assignment 
+# Add assignment
 echo "window._env_ = {" >> ./env-config.js
 
 # Read each line in .env file
@@ -21,7 +21,7 @@ do
   value=$(printf '%s\n' "${!varname}")
   # Otherwise use value from .env file
   [[ -z $value ]] && value=${varvalue}
-  
+
   # Append configuration property to JS file
   echo "  $varname: \"$value\"," >> ./env-config.js
 done < .env
