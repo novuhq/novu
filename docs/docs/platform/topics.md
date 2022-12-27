@@ -39,8 +39,8 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-const topicKey = 'unique-topic-identifier';
-const topicName = 'new-topic-name';
+const topicKey = 'posts:comment:12345';
+const topicName = 'Post Comments';
 
 const result = await novu.topics.rename(topicKey, topicName);
 ```
@@ -58,7 +58,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-const topicKey = 'unique-topic-identifier';
+const topicKey = 'posts:comment:12345';
 
 const response = await novu.topics.addSubscribers(topicKey, {
   subscribers: ['subscriber-id-1', 'subscriber-id-2', ...],
@@ -85,7 +85,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-const topicKey = 'unique-topic-identifier';
+const topicKey = 'posts:comment:12345';
 
 const response = await novu.topics.removeSubscribers(topicKey, {
   subscribers: ['subscriber-id-1', 'subscriber-id-2', ...],
@@ -101,10 +101,10 @@ Thanks to the topics feature, now it is possible to trigger a notification to al
 To trigger a notification to all the subscribers of a topic, Novu's API allows it by doing this:
 
 ```typescript
-const topicKey = '<TOPIC-KEY-DEFINED-BY-THE-USER>';
+const topicKey = 'posts:comment:12345';
 
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
-  to: [topicKey],
+  to: [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicKey }],
   payload: {},
 });
 ```
@@ -113,8 +113,13 @@ As it is shown, the same call used to send a notification to a single subscriber
 The topics feature also added the functionality of sending a notification to multiple topics at the same time, a topic and multiple single subscribers or any combination a user might come with. For that, the `to` field of the notification trigger can take an array that accepts all those possible destination of the notification:
 
 ```typescript
+const topicKey = '<TOPIC-KEY-DEFINED-BY-THE-USER>';
+
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
-  to: ['topic-key-1', 'topic-key-2', 'subscriber-id-1', 'subscriber-id-2', 'topic-key-3', ...],
+  to: [
+    { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicKey },
+    { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: 'Another Topic Key' },
+  ],
   payload: {},
 });
 ```
