@@ -36,7 +36,7 @@ export const useVariablesManager = (index: number, contents: string[]) => {
   function gatherTextContent(template = {}) {
     setTextContent(
       contents
-        .map((con) => con.split('.').reduce((a, b) => a[b], template))
+        .map((con) => con.split('.').reduce((a, b) => a && a[b], template))
         .map((con) => (Array.isArray(con) ? con.map((innerCon) => innerCon.content).join(' ') : con))
         .join(' ')
     );
