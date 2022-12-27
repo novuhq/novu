@@ -44,11 +44,13 @@ export class MessageMatcher {
     if (step.filters?.length) {
       const foundFilter = await findAsync(step.filters, async (filter) => {
         const children = filter.children;
-        if (!children || (Array.isArray(children) && children.length === 0)) {
+        const noRules = !children || (Array.isArray(children) && children.length === 0);
+        if (noRules) {
           return true;
         }
 
-        if (!children || (Array.isArray(children) && children.length === 1)) {
+        const singleRule = !children || (Array.isArray(children) && children.length === 1);
+        if (singleRule) {
           return await this.processFilter(variables, children[0], configuration);
         }
 
