@@ -34,7 +34,6 @@ import { SendMessageBase } from './send-message.base';
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
   channelType = ChannelTypeEnum.EMAIL;
-  private mailFactory = new MailFactory();
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
@@ -311,7 +310,8 @@ export class SendMessageEmail extends SendMessageBase {
     command: SendMessageCommand,
     notification: NotificationEntity
   ) {
-    const mailHandler = this.mailFactory.getHandler(integration, mailData.from);
+    const mailFactory = new MailFactory();
+    const mailHandler = mailFactory.getHandler(integration, mailData.from);
 
     try {
       const result = await mailHandler.send(mailData);

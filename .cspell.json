@@ -193,7 +193,10 @@
     "zwnj",
     "websockets",
     "sourcemaps",
-    "getsentry"
+    "getsentry",
+    "martinbeentjes",
+    "varvalue",
+    "varname"
   ],
   "flagWords": [],
   "patterns": [

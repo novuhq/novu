@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
@@ -33,8 +33,8 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.24",
-    "typescript": "4.3.5",
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "typescript": "4.3.5"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -46,5 +46,6 @@
     "*.{html,md,yml}": [
       "prettier --ignore-path .eslintignore --single-quote --write"
     ]
-  }
+  },
+  "gitHead": "fbbb8b9ad119058862ea8fdc14809eaca5bb9c98"
 }

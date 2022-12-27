@@ -37,7 +37,6 @@ import { SendMessageBase } from './send-message.base';
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
   channelType = ChannelTypeEnum.CHAT;
-  private chatFactory = new ChatFactory();
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
@@ -293,7 +292,8 @@ export class SendMessageChat extends SendMessageBase {
     notification: NotificationEntity
   ) {
     try {
-      const chatHandler = this.chatFactory.getHandler(integration);
+      const chatFactory = new ChatFactory();
+      const chatHandler = chatFactory.getHandler(integration);
 
       const result = await chatHandler.send({
         webhookUrl: chatWebhookUrl,
