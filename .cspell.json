@@ -194,7 +194,9 @@
     "websockets",
     "sourcemaps",
     "getsentry",
-    "martinbeentjes"
+    "martinbeentjes",
+    "varvalue",
+    "varname",
   ],
   "flagWords": [],
   "patterns": [
