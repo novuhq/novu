@@ -53,6 +53,7 @@ export class AddJob {
     );
 
     await this.workflowQueueService.addToQueue(job._id, job, delay);
+
     if (delay) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

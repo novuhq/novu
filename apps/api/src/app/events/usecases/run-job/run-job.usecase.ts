@@ -8,6 +8,7 @@ import { QueueNextJob } from '../queue-next-job/queue-next-job.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { RunJobCommand } from './run-job.command';
+import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
 
 @Injectable()
 export class RunJob {
@@ -51,7 +52,7 @@ export class RunJob {
 
       await this.storageHelperService.deleteAttachments(job.payload?.attachments);
     } catch (error) {
-      if (job.step.shouldStopOnFail) {
+      if (job.step.shouldStopOnFail || jobBackoffNeeded(error)) {
         shouldQueueNextJob = false;
       }
       throw new ApiException(error);
@@ -81,4 +82,8 @@ export class RunJob {
 
     return count > 0;
   }
+}
+
+function jobBackoffNeeded(error) {
+  return error.message.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
 }

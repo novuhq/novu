@@ -7,15 +7,11 @@ import {
 } from '@novu/dal';
 import { ITriggerPayload } from '@novu/node';
 import * as _ from 'lodash';
-import got from 'got';
 import { createHmac } from 'crypto';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
-import {
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
+import axios from 'axios';
 
 export interface IFilterVariables {
   payload: ITriggerPayload;
@@ -146,59 +142,20 @@ async function getWebhookResponse(
   configuration: IMessageFilterConfiguration
 ): Promise<Record<string, unknown>> {
   if (!i.webhookUrl) return undefined;
+
   const payload = await buildPayload(variables, configuration);
 
   try {
-    const res = await got.post(i.webhookUrl, {
-      json: payload,
-      retry: {
-        limit: 2,
-        methods: ['POST'],
-      },
-      hooks: {
-        beforeRetry: [
-          (options, error, retryCount) => {
-            configuration.createExecutionDetails.execute(
-              CreateExecutionDetailsCommand.create({
-                ...CreateExecutionDetailsCommand.getDetailsFromJob(configuration.job),
-                detail: DetailEnum.WEBHOOK_FILTER_FAILED_RETRY,
-                source: ExecutionDetailsSourceEnum.WEBHOOK,
-                status: ExecutionDetailsStatusEnum.PENDING,
-                isTest: false,
-                isRetry: false,
-                raw: JSON.stringify({
-                  retryCount,
-                  webhookUrl: i.webhookUrl,
-                  error: JSON.parse(error.response.body as string),
-                }),
-              })
-            );
-          },
-        ],
-      },
+    return await axios.post(i.webhookUrl, payload).then((response) => {
+      return response.data as Record<string, unknown>;
     });
-
-    return res ? (JSON.parse(res.body) as Record<string, unknown>) : undefined;
   } catch (err) {
-    // eslint-disable-next-line no-console
-    if (err.response && err.response.body) {
-      await configuration.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(configuration.job),
-          detail: DetailEnum.WEBHOOK_FILTER_FAILED,
-          source: ExecutionDetailsSourceEnum.WEBHOOK,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            webhookUrl: i.webhookUrl,
-            error: JSON.parse(err.response.body),
-          }),
-        })
-      );
-    }
-
-    return undefined;
+    throw new Error(
+      JSON.stringify({
+        message: err.message,
+        data: EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER,
+      })
+    );
   }
 }
 
@@ -210,6 +167,7 @@ async function buildPayload(variables: IFilterVariables, configuration: IMessage
     payload: Record<string, unknown>;
     hmac: string;
     identifier: string;
+    channel: string;
   }> = {};
 
   if (variables.subscriber) {
@@ -235,6 +193,7 @@ async function buildPayload(variables: IFilterVariables, configuration: IMessage
     .digest('hex');
 
   payload.identifier = configuration.command.identifier;
+  payload.channel = configuration.command.job.type;
 
   return payload;
 }
