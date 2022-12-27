@@ -59,7 +59,7 @@ test('should trigger postmark correctly', async () => {
     Attachments: [
       {
         Name: 'test.txt',
-        Content: 'test',
+        Content: Buffer.from('test').toString('base64'),
         ContentID: null,
         ContentType: 'text/plain',
       },
