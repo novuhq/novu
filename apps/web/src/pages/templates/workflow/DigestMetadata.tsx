@@ -48,6 +48,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                     type="number"
                     data-test-id="time-amount"
                     placeholder="0"
+                    disabled={readonly}
                   />
                 );
               }}
@@ -131,6 +132,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                       data-test-id="backoff-amount"
                       placeholder="0"
                       required
+                      disabled={readonly}
                     />
                   );
                 }}
@@ -205,6 +207,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                 error={fieldState.error?.message}
                 type="text"
                 data-test-id="batch-key"
+                disabled={readonly}
               />
             );
           }}

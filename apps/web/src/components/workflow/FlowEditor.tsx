@@ -90,7 +90,7 @@ export function FlowEditor({
 
   useEffect(() => {
     initializeWorkflowTree();
-  }, [steps, dragging, errors]);
+  }, [steps, dragging, errors, readonly]);
 
   const addNewNode = useCallback(
     (parentNodeId: string, channelType: string, childId?: string) => {
@@ -227,7 +227,7 @@ export function FlowEditor({
       targetHandle: 'b',
       target: newId,
       type: 'special',
-      data: { addNewNode: addNewNode, parentId: parentId, childId: newId },
+      data: { addNewNode: addNewNode, parentId: parentId, childId: newId, readonly: readonly },
     };
   }
 
@@ -240,6 +240,7 @@ export function FlowEditor({
         addNewNode,
         parentId,
         showDropZone: dragging,
+        readonly,
       },
       className: 'nodrag',
       connectable: false,

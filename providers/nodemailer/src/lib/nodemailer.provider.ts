@@ -33,15 +33,24 @@ export class NodemailerProvider implements IEmailProvider {
       dkim = undefined;
     }
 
+    const authEnabled = this.config.user && this.config.password;
+
     this.transports = nodemailer.createTransport({
       host: this.config.host,
       port: this.config.port,
       secure: this.config.secure,
-      auth: {
-        user: this.config.user,
-        pass: this.config.password,
-      },
+      auth: authEnabled
+        ? {
+            user: this.config.user,
+            pass: this.config.password,
+          }
+        : undefined,
       dkim,
+      tls: authEnabled
+        ? undefined
+        : {
+            rejectUnauthorized: false,
+          },
     });
   }
 
