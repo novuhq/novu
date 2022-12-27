@@ -19,6 +19,7 @@ import {
   NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
+  EnvironmentRepository,
 } from '@novu/dal';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { SendMessageDelay } from './send-message-delay.usecase';
@@ -50,6 +51,7 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
+    private environmentRepository: EnvironmentRepository,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -111,7 +113,14 @@ export class SendMessage {
   private async filter(command: SendMessageCommand) {
     const data = await this.getFilterData(command);
 
-    const shouldRun = await matchMessageWithFilters(command.step, data);
+    const configuration = {
+      command,
+      subscriberRepository: this.subscriberRepository,
+      createExecutionDetails: this.createExecutionDetails,
+      environmentRepository: this.environmentRepository,
+    };
+
+    const shouldRun = await matchMessageWithFilters(command.step, data, configuration);
 
     if (!shouldRun) {
       await this.createExecutionDetails.execute(

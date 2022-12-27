@@ -1,7 +1,10 @@
-import { NotificationStepEntity, SubscriberEntity } from '@novu/dal';
+import { NotificationStepEntity, SubscriberEntity, EnvironmentRepository, SubscriberRepository } from '@novu/dal';
 import { ITriggerPayload } from '@novu/node';
 import * as _ from 'lodash';
 import got from 'got';
+import { createHmac } from 'crypto';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { SendMessageCommand } from '../send-message/send-message.command';
 
 export interface IFilterVariables {
   payload: ITriggerPayload;
@@ -9,9 +12,17 @@ export interface IFilterVariables {
   webhook?: Record<string, unknown>;
 }
 
+export interface IMessageFilterConfiguration {
+  command: SendMessageCommand;
+  subscriberRepository: SubscriberRepository;
+  createExecutionDetails: CreateExecutionDetails;
+  environmentRepository: EnvironmentRepository;
+}
+
 export async function matchMessageWithFilters(
   step: NotificationStepEntity,
-  variables: IFilterVariables
+  variables: IFilterVariables,
+  configuration?: IMessageFilterConfiguration
 ): Promise<boolean> {
   if (!step?.filters || !Array.isArray(step?.filters)) {
     return true;
@@ -26,10 +37,10 @@ export async function matchMessageWithFilters(
 
       const singleRule = !children || (Array.isArray(children) && children.length === 1);
       if (singleRule) {
-        return await processFilter(variables, children[0]);
+        return await processFilter(variables, children[0], configuration);
       }
 
-      return await handleGroupFilters(filter, variables);
+      return await handleGroupFilters(filter, variables, configuration);
     });
 
     return foundFilter !== undefined;
@@ -38,13 +49,13 @@ export async function matchMessageWithFilters(
   return true;
 }
 
-async function handleGroupFilters(filter, variables: IFilterVariables) {
+async function handleGroupFilters(filter, variables: IFilterVariables, configuration: IMessageFilterConfiguration) {
   if (filter.value === 'OR') {
-    return await handleOrFilters(filter, variables);
+    return await handleOrFilters(filter, variables, configuration);
   }
 
   if (filter.value === 'AND') {
-    return await handleAndFilters(filter, variables);
+    return await handleAndFilters(filter, variables, configuration);
   }
 
   return false;
@@ -64,7 +75,7 @@ function splitToSyncAsync(filter) {
   return { asyncFilters, syncFilters };
 }
 
-async function handleAndFilters(filter, variables: IFilterVariables) {
+async function handleAndFilters(filter, variables: IFilterVariables, configuration: IMessageFilterConfiguration) {
   const { asyncFilters, syncFilters } = splitToSyncAsync(filter);
 
   const foundSyncFilterMatches = syncFilters.filter((i) => processFilterEquality(variables, i));
@@ -72,12 +83,12 @@ async function handleAndFilters(filter, variables: IFilterVariables) {
     return false;
   }
 
-  const foundAsyncFilterMatches = await filterAsync(asyncFilters, (i) => processFilter(variables, i));
+  const foundAsyncFilterMatches = await filterAsync(asyncFilters, (i) => processFilter(variables, i, configuration));
 
   return foundAsyncFilterMatches.length === asyncFilters.length;
 }
 
-async function handleOrFilters(filter, variables: IFilterVariables) {
+async function handleOrFilters(filter, variables: IFilterVariables, configuration: IMessageFilterConfiguration) {
   const { asyncFilters, syncFilters } = splitToSyncAsync(filter);
 
   const syncRes = syncFilters.find((i) => processFilterEquality(variables, i));
@@ -85,7 +96,7 @@ async function handleOrFilters(filter, variables: IFilterVariables) {
     return true;
   }
 
-  return await findAsync(asyncFilters, (i) => processFilter(variables, i));
+  return await findAsync(asyncFilters, (i) => processFilter(variables, i, configuration));
 }
 
 function processFilterEquality(variables: IFilterVariables, i) {
@@ -119,12 +130,21 @@ function processFilterEquality(variables: IFilterVariables, i) {
   return false;
 }
 
-async function getWebhookResponse(i, variables: IFilterVariables): Promise<Record<string, unknown>> {
+async function getWebhookResponse(
+  i,
+  variables: IFilterVariables,
+  configuration: IMessageFilterConfiguration
+): Promise<Record<string, unknown>> {
   if (!i.webhookUrl) return undefined;
+  const payload = await buildPayload(variables, configuration);
 
   try {
-    const res = await got(i.webhookUrl, {
-      retry: { limit: 3 },
+    const res = await got.post(i.webhookUrl, {
+      json: payload,
+      retry: {
+        limit: 3,
+        methods: ['POST'],
+      },
       hooks: {
         beforeRetry: [
           (options, error, retryCount) => {
@@ -133,9 +153,9 @@ async function getWebhookResponse(i, variables: IFilterVariables): Promise<Recor
           },
         ],
       },
-    }).json();
+    });
 
-    return res ? (res as Record<string, unknown>) : undefined;
+    return res ? (JSON.parse(res.body) as Record<string, unknown>) : undefined;
   } catch (err) {
     // eslint-disable-next-line no-console
     if (err.response && err.response.body) {
@@ -147,9 +167,44 @@ async function getWebhookResponse(i, variables: IFilterVariables): Promise<Recor
   }
 }
 
-async function processFilter(variables: IFilterVariables, i) {
+async function buildPayload(variables: IFilterVariables, configuration: IMessageFilterConfiguration) {
+  const payload: Partial<{
+    subscriber: SubscriberEntity;
+    payload: Record<string, unknown>;
+    hmac: string;
+    identifier: string;
+  }> = {};
+
+  if (variables.subscriber) {
+    payload.subscriber = variables.subscriber;
+  } else {
+    payload.subscriber = await configuration.subscriberRepository.findOne({
+      _id: configuration.command.subscriberId,
+      _environmentId: configuration.command.environmentId,
+    });
+  }
+
+  if (variables.payload) {
+    payload.payload = variables.payload;
+  }
+
+  const environment = await configuration.environmentRepository.findOne({
+    _id: configuration.command.environmentId,
+    _organizationId: configuration.command.organizationId,
+  });
+
+  payload.hmac = createHmac('sha256', environment.apiKeys[0].key)
+    .update(configuration.command.environmentId)
+    .digest('hex');
+
+  payload.identifier = configuration.command.identifier;
+
+  return payload;
+}
+
+async function processFilter(variables: IFilterVariables, i, configuration: IMessageFilterConfiguration) {
   if (i.on === 'webhook') {
-    const res = await getWebhookResponse(i, variables);
+    const res = await getWebhookResponse(i, variables, configuration);
 
     return processFilterEquality({ payload: undefined, webhook: res }, i);
   }
