@@ -27,7 +27,7 @@ jobs:
 
       - name: Build
         run: pnpm run build
-        
+
       - name: Test
         working-directory: "packages/node"
         run: pnpm test
