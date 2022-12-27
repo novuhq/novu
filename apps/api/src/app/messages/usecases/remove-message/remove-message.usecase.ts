@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
 import { RemoveMessageCommand } from './remove-message.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
@@ -12,6 +12,9 @@ export class RemoveMessage {
       _environmentId: command.environmentId,
       _id: command.messageId,
     });
+    if (!message) {
+      throw new NotFoundException(`Message with id ${command.messageId} not found`);
+    }
 
     this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
