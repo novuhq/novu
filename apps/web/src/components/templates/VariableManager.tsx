@@ -17,13 +17,6 @@ interface VariableComponentProps {
   template: string;
 }
 
-export interface IMustacheVariable {
-  type: TemplateVariableTypeEnum;
-  name: string;
-  defaultValue?: string | boolean;
-  required?: boolean;
-}
-
 export const VariableComponent = ({ index, template }: VariableComponentProps) => {
   const { control, watch } = useFormContext();
 
@@ -62,7 +55,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
         </Code>
       </td>
       <td>
-        {variableType === 'String' && !isSystemVariable && (
+        {variableType === TemplateVariableTypeEnum.STRING && !isSystemVariable && (
           <Controller
             name={`${template}.variables.${index}.defaultValue`}
             control={control}
@@ -79,7 +72,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
             }}
           />
         )}
-        {variableType === 'Boolean' && !isSystemVariable && (
+        {variableType === TemplateVariableTypeEnum.BOOLEAN && !isSystemVariable && (
           <Controller
             name={`${template}.variables.${index}.defaultValue`}
             control={control}

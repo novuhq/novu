@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { JobEntity, JobRepository, JobStatusEnum, UserRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
+import * as Sentry from '@sentry/node';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { QueueNextJobCommand } from '../queue-next-job/queue-next-job.command';
@@ -20,6 +21,12 @@ export class RunJob {
   ) {}
 
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
+    Sentry.setUser({
+      id: command.userId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
+
     const job = await this.jobRepository.findById(command.jobId);
     const canceled = await this.delayedEventIsCanceled(job);
     if (canceled) {

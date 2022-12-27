@@ -58,7 +58,8 @@ export class GetWebhookSupportStatus {
     if (!handler) {
       throw new NotFoundException(`Handler for integration of ${integration.providerId} was not found`);
     }
-    handler.buildProvider({});
+
+    handler.buildProvider(integration.credentials);
 
     this.provider = handler.getProvider();
   }
