@@ -1,6 +1,6 @@
 {
   "name": "vue-notification-center-example",
-  "private": false,
+  "private": true,
   "version": "0.10.0",
   "scripts": {
     "dev": "vite",
