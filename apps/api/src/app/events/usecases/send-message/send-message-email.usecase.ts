@@ -186,30 +186,40 @@ export class SendMessageEmail extends SendMessageType {
     );
 
     const customTemplate = SendMessageEmail.addPreheader(content as string, emailChannel.template.contentType);
-
-    const html = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: isEditorMode ? 'basic' : 'custom',
-        customTemplate: customTemplate,
-        data: {
-          subject,
-          preheader,
-          branding: {
-            logo: organization.branding?.logo,
-            color: organization.branding?.color || '#f47373',
+    let html;
+    try {
+      html = await this.compileTemplate.execute(
+        CompileTemplateCommand.create({
+          templateId: isEditorMode ? 'basic' : 'custom',
+          customTemplate: customTemplate,
+          data: {
+            subject,
+            preheader,
+            branding: {
+              logo: organization.branding?.logo,
+              color: organization.branding?.color || '#f47373',
+            },
+            blocks: isEditorMode ? content : [],
+            step: {
+              digest: !!command.events.length,
+              events: command.events,
+              total_count: command.events.length,
+            },
+            ...command.payload,
           },
-          blocks: isEditorMode ? content : [],
-          step: {
-            digest: !!command.events.length,
-            events: command.events,
-            total_count: command.events.length,
-          },
-          ...command.payload,
-        },
-      })
-    );
+        })
+      );
+    } catch (error) {
+      await this.sendErrorStatus(
+        message,
+        'error',
+        'mail_unexpected_error',
+        'syntax error in email editor',
+        command,
+        notification,
+        LogCodeEnum.SYNTAX_ERROR_IN_EMAIL_EDITOR
+      );
 
-    if (!html) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -219,9 +229,11 @@ export class SendMessageEmail extends SendMessageType {
           messageId: message._id,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(payload),
+          raw: JSON.stringify(error.message),
         })
       );
+
+      return;
     }
 
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(

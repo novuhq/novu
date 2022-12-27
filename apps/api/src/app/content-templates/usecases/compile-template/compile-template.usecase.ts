@@ -54,14 +54,8 @@ export class CompileTemplate {
     }
 
     const template = Handlebars.compile(templateContent);
-    let html = null;
-    try {
-      html = template(command.data);
 
-      return html;
-    } catch (error) {
-      return html;
-    }
+    return template(command.data);
   }
 
   private async loadTemplateContent(name: string) {
