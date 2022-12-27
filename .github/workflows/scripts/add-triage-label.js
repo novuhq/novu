@@ -23,6 +23,7 @@ async function start() {
 
   if (isCommunityUser) {
     await addLabel('triage', owner, repo, number);
+    await addLabel('linear', owner, repo, number);
   }
 }
 

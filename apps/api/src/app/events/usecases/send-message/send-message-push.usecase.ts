@@ -37,7 +37,6 @@ import { SendMessageBase } from './send-message.base';
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
   channelType = ChannelTypeEnum.PUSH;
-  private pushFactory = new PushFactory();
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
@@ -277,7 +276,8 @@ export class SendMessagePush extends SendMessageBase {
     );
 
     try {
-      const pushHandler = this.pushFactory.getHandler(integration);
+      const pushFactory = new PushFactory();
+      const pushHandler = pushFactory.getHandler(integration);
       const result = await pushHandler.send({
         target: (overrides as { deviceTokens?: string[] }).deviceTokens || target,
         title,
