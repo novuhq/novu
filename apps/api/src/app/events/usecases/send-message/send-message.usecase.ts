@@ -12,7 +12,6 @@ import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
-import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import {
   JobEntity,
   SubscriberRepository,
@@ -35,6 +34,7 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { MessageMatcher } from '../trigger-event/message-matcher.service';
 
 @Injectable()
 export class SendMessage {
@@ -52,6 +52,7 @@ export class SendMessage {
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
     private environmentRepository: EnvironmentRepository,
+    private matchMessage: MessageMatcher,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -116,12 +117,9 @@ export class SendMessage {
     const configuration = {
       job: command.job,
       command,
-      subscriberRepository: this.subscriberRepository,
-      createExecutionDetails: this.createExecutionDetails,
-      environmentRepository: this.environmentRepository,
     };
 
-    const shouldRun = await matchMessageWithFilters(command.step, data, configuration);
+    const shouldRun = await this.matchMessage.filter(command.step, data, configuration);
 
     if (!shouldRun) {
       await this.createExecutionDetails.execute(
