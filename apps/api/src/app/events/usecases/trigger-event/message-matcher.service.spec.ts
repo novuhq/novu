@@ -5,7 +5,7 @@ import * as sinon from 'sinon';
 import { MessageMatcher } from './message-matcher.service';
 import axios from 'axios';
 
-describe.only('Message filter matcher', function () {
+describe('Message filter matcher', function () {
   let messageMatcher = new MessageMatcher(undefined, undefined, undefined);
 
   it('should filter correct message by the filter value', async function () {
@@ -358,7 +358,7 @@ describe.only('Message filter matcher', function () {
     expect(matchedMessage).to.equal(true);
   });
 
-  it.only('should handle webhook filter', async function () {
+  it('should handle webhook filter', async function () {
     const gotGetStub = sinon.stub(axios, 'post').resolves(
       Promise.resolve({
         data: { varField: true },
