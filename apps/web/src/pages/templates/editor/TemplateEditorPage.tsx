@@ -19,6 +19,7 @@ import { TestWorkflowModal } from '../../../components/templates/TestWorkflowMod
 import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
 import { useDisclosure } from '@mantine/hooks';
 import { ExecutionDetailsModalWrapper } from '../../../components/templates/ExecutionDetailsModalWrapper';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -57,7 +58,7 @@ export default function TemplateEditorPage() {
     trigger,
     onTriggerModalDismiss,
   } = useTemplateController(templateId);
-  const isCreateTemplatePage = location.pathname === '/templates/create';
+  const isCreateTemplatePage = location.pathname === ROUTES.TEMPLATES_CREATE;
 
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
 
@@ -92,14 +93,14 @@ export default function TemplateEditorPage() {
         if (template._parentId) {
           navigate(`/templates/edit/${template._parentId}`);
         } else {
-          navigate('/templates');
+          navigate(ROUTES.TEMPLATES);
         }
       }
     }
   }, [environment, template]);
 
   if (environment && environment?.name === 'Production' && isCreateTemplatePage) {
-    navigate('/templates');
+    navigate(ROUTES.TEMPLATES);
   }
 
   if (isLoading) return null;

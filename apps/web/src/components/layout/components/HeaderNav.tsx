@@ -12,13 +12,14 @@ import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget'
 import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
 import { SpotlightContext } from '../../../store/spotlightContext';
+import { ROUTES } from '../../../constants/routes.enum';
 
 type Props = {};
 const menuItem = [
   {
     title: 'Invite Members',
     icon: <Mail />,
-    path: '/team',
+    path: ROUTES.TEAM,
   },
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };

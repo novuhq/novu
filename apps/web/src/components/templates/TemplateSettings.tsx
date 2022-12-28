@@ -11,6 +11,7 @@ import { useState } from 'react';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { useNavigate } from 'react-router-dom';
 import { useEnvController } from '../../store/use-env-controller';
+import { ROUTES } from '../../constants/routes.enum';
 
 export const TemplateSettings = ({ activePage, setActivePage, showErrors, templateId }) => {
   const { colorScheme } = useMantineColorScheme();
@@ -29,8 +30,7 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
     try {
       await deleteTemplate();
       setIsDeleting(false);
-      setToDelete(false);
-      navigate('/templates');
+      navigate(ROUTES.TEMPLATES);
     } catch (e: any) {
       setIsDeleting(false);
       setIsError(e?.message || 'Unknown error');

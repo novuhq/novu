@@ -11,6 +11,7 @@ import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
 import { useIsMounted } from '../../../hooks/use-is-mounted';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function EmailMessageEditor({
   onChange,
@@ -114,7 +115,7 @@ export function EmailMessageEditor({
   }
 
   function getBrandSettingsUrl(): string {
-    return '/settings';
+    return ROUTES.SETTINGS;
   }
 
   return (

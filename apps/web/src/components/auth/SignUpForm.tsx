@@ -16,6 +16,7 @@ import { applyToken } from '../../store/use-auth-controller';
 import { useAcceptInvite } from './use-accept-invite.hook';
 import { useVercelParams } from '../../hooks/use-vercelParams';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
+import { ROUTES } from '../../constants/routes.enum';
 
 type Props = {
   token?: string;
@@ -35,7 +36,7 @@ export function SignUpForm({ token, email }: Props) {
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : '/auth/login';
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : ROUTES.AUTH_LOGIN;
   const githubLink = isFromVercel
     ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
@@ -79,14 +80,14 @@ export function SignUpForm({ token, email }: Props) {
       const result = await submitToken(token);
       if (!result) return;
 
-      navigate('/templates');
+      navigate(ROUTES.TEMPLATES);
 
       return true;
     } else {
       setToken((response as any).token);
     }
 
-    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : '/auth/application');
+    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : ROUTES.AUTH_APPLICATION);
 
     return true;
   };

@@ -10,6 +10,7 @@ import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Text } from '../../design-system';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
+import { ROUTES } from '../../constants/routes.enum';
 
 type Props = {
   token: string;
@@ -50,7 +51,7 @@ export function PasswordResetForm({ token }: Props) {
         message: 'Password was changed successfully',
         color: 'green',
       });
-      navigate('/templates');
+      navigate(ROUTES.TEMPLATES);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);

@@ -12,6 +12,7 @@ import { colors, Text, Button } from '../../design-system';
 import { AuthContext } from '../../store/authContext';
 import { useAcceptInvite } from '../../components/auth/use-accept-invite.hook';
 import { When } from '../../components/utils/When';
+import { ROUTES } from '../../constants/routes.enum';
 
 export default function InvitationPage() {
   const navigate = useNavigate();
@@ -36,7 +37,7 @@ export default function InvitationPage() {
   const acceptToken = async () => {
     if (existingUser && currentUser && currentUser._id === data?._userId && isLoggedIn) {
       const result = await submitToken(tokenParam as string, true);
-      if (result) navigate('/templates');
+      if (result) navigate(ROUTES.TEMPLATES);
     }
   };
 

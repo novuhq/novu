@@ -14,6 +14,7 @@ import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { useEnvController } from '../../store/use-env-controller';
+import { ROUTES } from '../../constants/routes.enum';
 
 function NotificationList() {
   const { readonly } = useEnvController();
@@ -27,7 +28,7 @@ function NotificationList() {
   }
 
   const handleRedirectToCreateTemplate = () => {
-    navigate('/templates/create');
+    navigate(ROUTES.TEMPLATES_CREATE);
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [

@@ -12,6 +12,7 @@ import { PasswordInput, Button, colors, Input, Text } from '../../design-system'
 import { GitHub } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { useVercelParams } from '../../hooks/use-vercelParams';
+import { ROUTES } from '../../constants/routes.enum';
 
 type Props = {
   token?: string;
@@ -32,8 +33,8 @@ export function LoginForm({ email, token }: Props) {
 
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
-  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : `/auth/reset/request`;
+  const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : ROUTES.AUTH_SIGNUP;
+  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : ROUTES.AUTH_RESET_REQUEST;
   const githubLink = isFromVercel
     ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
@@ -59,7 +60,7 @@ export function LoginForm({ email, token }: Props) {
       const response = await mutateAsync(itemData);
       setToken((response as any).token);
       if (isFromVercel) return;
-      if (!token) navigate('/templates');
+      if (!token) navigate(ROUTES.TEMPLATES);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);

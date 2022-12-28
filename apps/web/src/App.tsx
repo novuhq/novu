@@ -33,6 +33,7 @@ import { TemplateFormProvider } from './components/templates/TemplateFormProvide
 import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
+import { ROUTES } from './constants/routes.enum';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -75,14 +76,14 @@ function App() {
             <ThemeHandlerComponent>
               <SpotLightProvider>
                 <Routes>
-                  <Route path="/auth/signup" element={<SignUpPage />} />
-                  <Route path="/auth/login" element={<LoginPage />} />
-                  <Route path="/auth/reset/request" element={<PasswordResetPage />} />
-                  <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
-                  <Route path="/auth/invitation/:token" element={<InvitationPage />} />
-                  <Route path="/auth/application" element={<CreateOrganizationPage />} />
+                  <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
+                  <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
+                  <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
+                  <Route path={ROUTES.AUTH_RESET__TOKEN} element={<PasswordResetPage />} />
+                  <Route path={ROUTES.AUTH_INVITATION__TOKEN} element={<InvitationPage />} />
+                  <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} />
                   <Route
-                    path="/partner-integrations/vercel/link-projects"
+                    path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
                     element={
                       <RequiredAuth>
                         <LinkVercelProjectPage type="create" />
@@ -90,7 +91,7 @@ function App() {
                     }
                   />
                   <Route
-                    path="/partner-integrations/vercel/link-projects/edit"
+                    path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
                     element={
                       <RequiredAuth>
                         <LinkVercelProjectPage type="edit" />
@@ -99,7 +100,7 @@ function App() {
                   />
                   <Route element={<AppLayout />}>
                     <Route
-                      path="/*"
+                      path={ROUTES.ANY}
                       element={
                         <RequiredAuth>
                           <SpotLight>
@@ -109,7 +110,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/templates/create"
+                      path={ROUTES.TEMPLATES_CREATE}
                       element={
                         <RequiredAuth>
                           <TemplateFormProvider>
@@ -123,7 +124,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/templates/edit/:templateId"
+                      path={ROUTES.TEMPLATES_EDIT__TEMPLATEID}
                       element={
                         <RequiredAuth>
                           <TemplateFormProvider>
@@ -137,7 +138,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/templates"
+                      path={ROUTES.TEMPLATES}
                       element={
                         <RequiredAuth>
                           <SpotLight>
@@ -147,7 +148,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/quickstart"
+                      path={ROUTES.QUICKSTART}
                       element={
                         <RequiredAuth>
                           <SpotLight>
@@ -157,7 +158,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/activities"
+                      path={ROUTES.ACTIVITIES}
                       element={
                         <RequiredAuth>
                           <SpotLight>
@@ -167,7 +168,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/settings"
+                      path={ROUTES.SETTINGS}
                       element={
                         <RequiredAuth>
                           <SpotLight>
@@ -177,7 +178,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/integrations"
+                      path={ROUTES.INTEGRATIONS}
                       element={
                         <RequiredAuth>
                           <SpotLight>
@@ -187,7 +188,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/team"
+                      path={ROUTES.TEAM}
                       element={
                         <RequiredAuth>
                           <SpotLight>
@@ -197,7 +198,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/changes"
+                      path={ROUTES.CHANGES}
                       element={
                         <RequiredAuth>
                           <SpotLight>
@@ -207,7 +208,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/subscribers"
+                      path={ROUTES.SUBSCRIBERS}
                       element={
                         <RequiredAuth>
                           <SpotLight>
@@ -255,12 +256,12 @@ function RequiredAuth({ children }: any) {
   }
 
   if (!getToken()) {
-    return <Navigate to="/auth/login" replace />;
+    return <Navigate to={ROUTES.AUTH_LOGIN} replace />;
   } else if (
     !jwtHasKey('organizationId') ||
-    (!jwtHasKey('environmentId') && location.pathname !== '/auth/application')
+    (!jwtHasKey('environmentId') && location.pathname !== ROUTES.AUTH_APPLICATION)
   ) {
-    return <Navigate to="/auth/application" replace />;
+    return <Navigate to={ROUTES.AUTH_APPLICATION} replace />;
   } else {
     return children;
   }

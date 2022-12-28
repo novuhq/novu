@@ -9,6 +9,7 @@ import PageMeta from '../../components/layout/components/PageMeta';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { updateUserOnBoarding } from '../../api/user';
 import { OnboardingSteps } from './components/OnboardingSteps';
+import { ROUTES } from '../../constants/routes.enum';
 
 function QuickStart() {
   const queryClient = useQueryClient();
@@ -27,7 +28,7 @@ function QuickStart() {
   async function onDismissOnboarding() {
     await disableOnboarding();
     await queryClient.refetchQueries(['/v1/users/me']);
-    navigate('/templates');
+    navigate(ROUTES.TEMPLATES);
   }
 
   return (

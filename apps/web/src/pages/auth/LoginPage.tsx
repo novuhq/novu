@@ -9,6 +9,7 @@ import AuthContainer from '../../components/layout/components/AuthContainer';
 import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
 import VercelSetupLoader from '../../components/auth/VercelSetupLoader';
 import { useVercelParams } from '../../hooks/use-vercelParams';
+import { ROUTES } from '../../constants/routes.enum';
 
 export default function LoginPage() {
   const { setToken, token } = useContext(AuthContext);
@@ -31,7 +32,9 @@ export default function LoginPage() {
       const user = jwtDecode<IJwtPayload>(token);
 
       if (!user.organizationId || !user.environmentId) {
-        const authApplicationLink = isFromVercel ? `/auth/application?code=${code}&next=${next}` : '/auth/application';
+        const authApplicationLink = isFromVercel
+          ? `/auth/application?code=${code}&next=${next}`
+          : ROUTES.AUTH_APPLICATION;
         navigate(authApplicationLink);
       } else {
         if (isFromVercel) {
@@ -40,7 +43,7 @@ export default function LoginPage() {
           return;
         }
 
-        navigate(source === 'cli' ? '/quickstart' : '/');
+        navigate(source === 'cli' ? ROUTES.QUICKSTART : ROUTES.HOME);
       }
     }
   }, [token]);
