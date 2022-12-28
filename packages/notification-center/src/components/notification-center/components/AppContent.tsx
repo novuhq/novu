@@ -1,25 +1,16 @@
 import React from 'react';
-import { useQuery } from 'react-query';
 import { MantineProvider, MantineThemeOverride } from '@mantine/core';
 import { css } from '@emotion/css';
-import { IOrganizationEntity } from '@novu/shared';
 
 import { Layout } from './layout/Layout';
 import { Main } from './Main';
-import { useAuth, useApi, useNovuTheme } from '../../../hooks';
+import { useNovuTheme } from '../../../hooks';
 import { ScreenProvider } from '../../../store/screens-provider.context';
+import { useFetchOrganization } from '../../../hooks/use-fetch-organization.hook';
 
 export function AppContent() {
-  const { api } = useApi();
-  const { isLoggedIn } = useAuth();
   const { theme, common } = useNovuTheme();
-  const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
-    'organization',
-    () => api.getOrganization(),
-    {
-      enabled: isLoggedIn && api.isAuthenticated,
-    }
-  );
+  const { data: organization } = useFetchOrganization();
 
   const primaryColor = organization?.branding?.color ?? theme.loaderColor;
   const fontFamily = common.fontFamily || organization?.branding?.fontFamily;

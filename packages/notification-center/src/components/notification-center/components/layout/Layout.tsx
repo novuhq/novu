@@ -13,7 +13,7 @@ import { ScreensEnum } from '../../../../shared/enums/screens.enum';
 import { useStyles } from '../../../../store/styles';
 
 export function Layout({ children }: { children: JSX.Element }) {
-  const { initialized } = useNovuContext();
+  const { isSessionInitialized } = useNovuContext();
   const { theme } = useNovuTheme();
   const { screen } = useScreens();
   const [layoutStyles] = useStyles(['layout.root']);
@@ -31,7 +31,7 @@ export function Layout({ children }: { children: JSX.Element }) {
       {screen === ScreensEnum.NOTIFICATIONS && (
         <>
           <Header />
-          <ContentWrapper>{initialized ? children : <Loader />}</ContentWrapper>
+          <ContentWrapper>{isSessionInitialized ? children : <Loader />}</ContentWrapper>
         </>
       )}
 

@@ -1,18 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { PopoverProps } from '@mantine/core';
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
-import { useUnseenCount } from '../../hooks';
+import { useNotifications } from '../../hooks';
 import { ColorScheme, INovuThemePopoverProvider } from '../../index';
 import { ITab, ListItem } from '../../shared/interfaces';
 import { getDefaultTheme } from '../../utils/defaultTheme';
 
 export interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
-  onNotificationClick: (notification: IMessage) => void;
+  onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
@@ -30,19 +30,19 @@ export interface IPopoverNotificationCenterProps {
   position?: PopoverProps['position'];
 }
 
-export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
+export function PopoverNotificationCenter({
+  children,
+  onUnseenCountChanged,
+  ...props
+}: IPopoverNotificationCenterProps) {
   const { theme } = getDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
-  const { setUnseenCount, unseenCount } = useUnseenCount();
+  const { unseenCount } = useNotifications();
 
-  function handlerOnUnseenCount(count: number) {
-    if (isNaN(count)) return;
-
-    setUnseenCount(count);
-
-    if (props.onUnseenCountChanged) {
-      props.onUnseenCountChanged(count);
+  useEffect(() => {
+    if (onUnseenCountChanged) {
+      onUnseenCountChanged(unseenCount);
     }
-  }
+  }, [unseenCount, (window as any).parentIFrame]);
 
   return (
     <Popover
@@ -53,7 +53,6 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
     >
       <NotificationCenter
         onNotificationClick={props.onNotificationClick}
-        onUnseenCountChanged={handlerOnUnseenCount}
         onUrlChange={props.onUrlChange}
         header={props.header}
         footer={props.footer}

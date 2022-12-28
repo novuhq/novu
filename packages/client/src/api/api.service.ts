@@ -4,6 +4,7 @@ import {
   ButtonTypeEnum,
   MessageActionStatusEnum,
   IParamObject,
+  IPaginatedResponse,
 } from '@novu/shared';
 import {
   ITabCountQuery,
@@ -87,11 +88,15 @@ export class ApiService {
   async getNotificationsList(
     page: number,
     query: IStoreQuery = {}
-  ): Promise<IMessage[]> {
-    return await this.httpClient.get(`/widgets/notifications/feed`, {
-      page,
-      ...query,
-    });
+  ): Promise<IPaginatedResponse<IMessage>> {
+    return await this.httpClient.get(
+      `/widgets/notifications/feed`,
+      {
+        page,
+        ...query,
+      },
+      true
+    );
   }
 
   async initializeSession(

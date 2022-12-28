@@ -3,32 +3,21 @@ import { ActionIcon } from '@mantine/core';
 import styled from '@emotion/styled';
 import { css, cx } from '@emotion/css';
 
-import {
-  useNotificationCenter,
-  useNotifications,
-  useNovuTheme,
-  useScreens,
-  useTranslations,
-  useUnseenCount,
-} from '../../../../../hooks';
+import { useNotifications, useNovuTheme, useScreens, useTranslations } from '../../../../../hooks';
 import { INotificationCenterContext } from '../../../../../shared/interfaces';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
 import { ScreensEnum } from '../../../../../shared/enums/screens.enum';
 import { Cogs } from '../../../../../shared/icons';
 import { UnseenBadge } from '../../UnseenBadge';
-import { useFeed } from '../../../../../hooks/use-feed.hook';
 import { useStyles } from '../../../../../store/styles';
 import { INovuTheme } from '../../../../../store/novu-theme.context';
 
 export function Header() {
   const [allRead, setAllRead] = useState<boolean>(true);
-  const { onUnseenCountChanged } = useNotificationCenter();
-  const { unseenCount } = useUnseenCount();
+  const { markAllNotificationsAsRead, notifications, unseenCount } = useNotifications();
   const { theme } = useNovuTheme();
   const { setScreen } = useScreens();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
-  const { activeTabStoreId } = useFeed();
-  const { markAllAsRead, notifications } = useNotifications({ storeId: activeTabStoreId });
   const { t } = useTranslations();
   const [headerStyles, headerTitleStyles, headerMarkAsReadStyles, headerCogStyles] = useStyles([
     'header.root',
@@ -36,12 +25,6 @@ export function Header() {
     'header.markAsRead',
     'header.cog',
   ]);
-
-  useEffect(() => {
-    if (onUnseenCountChanged) {
-      onUnseenCountChanged(unseenCount);
-    }
-  }, [unseenCount, (window as any).parentIFrame]);
 
   useEffect(() => {
     if (notifications) {
@@ -68,7 +51,7 @@ export function Header() {
             markAsReadClassName(!allRead, theme.header?.markAllAsReadButtonColor),
             css(headerMarkAsReadStyles)
           )}
-          onClick={markAllAsRead}
+          onClick={markAllNotificationsAsRead}
           role="button"
           tabIndex={0}
         >

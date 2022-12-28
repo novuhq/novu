@@ -2,11 +2,7 @@ export type { IStoreQuery } from '@novu/client';
 export type { IUserPreferenceSettings } from '@novu/client';
 
 export * from './components';
-export * from './hooks/use-unseen-count.hook';
-export * from './hooks/use-socket.hook';
-export * from './hooks/use-notifications.hook';
-export * from './hooks/use-screens.hook';
-export * from './hooks/use-subscriber-preference.hook';
+export * from './hooks';
 
 export * from './store/novu-theme-provider.context';
 export * from './i18n/lang';

@@ -4,6 +4,13 @@ export interface IParamObject {
   [key: string]: string | string[] | number | boolean;
 }
 
+export interface IPaginatedResponse<T> {
+  data: T[];
+  totalCount: number;
+  pageSize: number;
+  page: number;
+}
+
 export class HttpClient {
   private axiosClient: AxiosInstance;
 
@@ -21,12 +28,12 @@ export class HttpClient {
     delete this.axiosClient.defaults.headers.common.Authorization;
   }
 
-  async get(url: string, params?: IParamObject) {
+  async get(url: string, params?: IParamObject, allBody = false) {
     return await this.axiosClient
       .get(url, {
         params,
       })
-      .then((response) => response.data.data);
+      .then((response) => (allBody ? response.data : response.data.data));
   }
 
   async post(url: string, body = {}) {

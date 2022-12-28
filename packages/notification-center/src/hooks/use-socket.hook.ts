@@ -1,9 +1,7 @@
-import { useContext } from 'react';
-import { SocketContext } from '../store/socket/socket.store';
-import { ISocketContext } from '../shared/interfaces';
+import { useNovuContext } from './use-novu-context.hook';
 
 export function useSocket() {
-  const { socket } = useContext<ISocketContext>(SocketContext);
+  const { socket } = useNovuContext();
 
   return {
     socket,

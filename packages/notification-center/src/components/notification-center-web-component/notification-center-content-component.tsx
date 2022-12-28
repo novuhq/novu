@@ -1,7 +1,6 @@
 import React, { FunctionComponent } from 'react';
 
 import { NovuProvider } from '../novu-provider';
-import { useUnseenCount } from '../../hooks';
 import { reactToWebComponent } from '../../utils';
 import type { NotificationCenterComponentProps, PopoverWrapperProps } from './notification-center-component.types';
 import { NotificationCenter } from '../notification-center/NotificationCenter';
@@ -101,22 +100,10 @@ function NotificationCenterWrapper({
   tabs,
   showUserPreferences,
 }: NotificationCenterWrapperProps) {
-  const { setUnseenCount } = useUnseenCount();
-
-  function handlerOnUnseenCount(count: number) {
-    if (isNaN(count)) return;
-
-    setUnseenCount(count);
-
-    if (onUnseenCountChanged) {
-      onUnseenCountChanged(count);
-    }
-  }
-
   return (
     <NotificationCenter
       onNotificationClick={onNotificationClick}
-      onUnseenCountChanged={handlerOnUnseenCount}
+      onUnseenCountChanged={onUnseenCountChanged}
       colorScheme={colorScheme}
       theme={theme}
       onActionClick={onActionClick}
