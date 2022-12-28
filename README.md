@@ -151,7 +151,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
-- [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
+- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Pushwoosh
 
 #### 👇 Chat
