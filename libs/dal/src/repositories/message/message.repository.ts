@@ -270,7 +270,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     return this.mapEntity(res);
   }
 
-  async findSubscriberById(query: { _id: string; _environmentId: string }): Promise<MessageEntity> {
+  async findMessageById(query: { _id: string; _environmentId: string }): Promise<MessageEntity | null> {
     const res = await Message.findOne({ _id: query._id, _environmentId: query._environmentId }).populate('subscriber');
 
     return this.mapEntity(res);

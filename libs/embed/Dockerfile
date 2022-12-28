@@ -11,6 +11,7 @@ COPY libs/testing ./libs/testing
 COPY libs/dal ./libs/dal
 COPY libs/shared ./libs/shared
 COPY packages/client ./packages/client
+COPY packages/node ./packages/node
 COPY libs/embed ./libs/embed
 COPY packages/notification-center ./packages/notification-center
 

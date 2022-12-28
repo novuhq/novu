@@ -34,7 +34,7 @@ export function AddNodeEdge({
     targetPosition,
   });
 
-  const { childId, parentId, addNewNode } = data;
+  const { childId, parentId, addNewNode, readonly } = data;
 
   return (
     <>
@@ -57,6 +57,7 @@ export function AddNodeEdge({
               addNewNode: addNewNode,
               showDropZone: false,
               childId: childId,
+              readonly: readonly,
             }}
           />
         </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Dropzone } from '@mantine/dropzone';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { showNotification } from '@mantine/notifications';
 import { useMantineTheme, Group, Input, LoadingOverlay, Flex } from '@mantine/core';

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ExecutionDetailsRepository } from '@novu/dal';
+import { ExecutionDetailsRepository, ExecutionDetailsEntity } from '@novu/dal';
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
   CreateExecutionDetailsResponseDto,
@@ -13,7 +13,10 @@ export class CreateExecutionDetails {
 
   async execute(command: CreateExecutionDetailsCommand): Promise<CreateExecutionDetailsResponseDto> {
     // TODO: Which checks to do? If the notification and job belong to the environment and organization provided?
-    const entity = mapExecutionDetailsCommandToEntity(command);
+    let entity = mapExecutionDetailsCommandToEntity(command);
+
+    entity = this.cleanFromNulls(entity);
+
     const { _id, createdAt } = await this.executionDetailsRepository.create(entity);
 
     if (command.status === ExecutionDetailsStatusEnum.FAILED) {
@@ -28,5 +31,15 @@ export class CreateExecutionDetails {
       id: _id,
       createdAt,
     };
+  }
+
+  private cleanFromNulls(entity: ExecutionDetailsEntity): ExecutionDetailsEntity {
+    const cleanEntity = Object.assign({}, entity);
+
+    if (cleanEntity.raw === null) {
+      delete cleanEntity.raw;
+    }
+
+    return cleanEntity;
   }
 }

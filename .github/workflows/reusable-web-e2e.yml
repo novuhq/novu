@@ -78,11 +78,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 7.5.0
-          run_install: true
-
       - uses: mansagroup/nrwl-nx-action@v2
         with:
           targets: lint
@@ -137,6 +132,12 @@ jobs:
 
       - name: Wait on WEB
         run: wait-on --timeout=120000 http://localhost:4200
+
+      # run cypress install only when cache was not hit
+      - name: Cypress install
+        if: steps.cache-cypress-binary.outputs.cache-hit != 'true'
+        working-directory: apps/web
+        run: pnpm cypress install
 
       - name: Cypress run e2e
         uses: cypress-io/github-action@v4
@@ -217,6 +218,12 @@ jobs:
       # Runs a single command using the runners shell
       - name: Build
         run: CI='' pnpm build:web
+
+      # run cypress install only when cache was not hit
+      - name: Cypress install
+        if: steps.cache-cypress-binary.outputs.cache-hit != 'true'
+        working-directory: apps/web
+        run: pnpm cypress install
 
       - name: Run Component tests 🧪
         uses: cypress-io/github-action@v5

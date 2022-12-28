@@ -3,7 +3,7 @@ import { Popover, useMantineTheme, Grid, ColorScheme, createStyles } from '@mant
 import { useClipboard } from '@mantine/hooks';
 import styled from '@emotion/styled';
 import * as Sentry from '@sentry/react';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { IFeedEntity } from '@novu/shared';
 
@@ -21,7 +21,7 @@ interface IFeedItemPopoverProps {
 }
 
 export function FeedItems(props: IFeedItemPopoverProps) {
-  const { data: feeds } = useQuery<IFeedEntity[]>(QueryKeys.getFeeds, getFeeds);
+  const { data: feeds } = useQuery<IFeedEntity[]>([QueryKeys.getFeeds], getFeeds);
 
   return (
     <FeedsBlock>

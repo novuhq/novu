@@ -151,7 +151,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
-- [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
+- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Pushwoosh
 
 #### 👇 Chat
@@ -169,32 +169,6 @@ Novu provides a single API to manage providers across multiple channels with a s
 #### Other (Coming Soon...)
 
 - [ ] PagerDuty
-
-## 🤵 Meet Jarvis
-
-Meet Jarvis, a shell client sporting a dashing text gradient for all your Novu needs. Jarvis makes the following functions as simple as a few `yes` or `no` questions:
-
-- Reinstall Novu
-- Run Novu
-  - Full Project
-  - Web and API
-  - API only
-  - Docs
-- Test Novu
-  - Web tests
-  - API tests
-
-To run Jarvis at the root of Novu, you can use one of the following commands
-
-```
-npm run start
-```
-
-```
-npm run jarvis
-```
-
-Want to look through Jarvis' source code? Check out: [Jarvis.js](https://github.com/novuhq/novu/blob/main/scripts/jarvis.js)
 
 ## 💻 Need Help?
 

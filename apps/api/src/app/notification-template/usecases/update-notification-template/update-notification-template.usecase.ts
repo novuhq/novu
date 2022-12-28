@@ -102,7 +102,8 @@ export class UpdateNotificationTemplate {
 
       updatePayload['triggers.0.variables'] = variables.map((i) => {
         return {
-          name: i,
+          name: i.name,
+          type: i.type,
         };
       });
 

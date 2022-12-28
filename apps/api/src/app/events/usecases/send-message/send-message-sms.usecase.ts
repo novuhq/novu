@@ -23,7 +23,10 @@ import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { SendMessageCommand } from './send-message.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
-import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
@@ -34,7 +37,6 @@ import { SendMessageBase } from './send-message.base';
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
   channelType = ChannelTypeEnum.SMS;
-  private smsFactory = new SmsFactory();
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
@@ -56,7 +58,16 @@ export class SendMessageSms extends SendMessageBase {
   }
 
   public async execute(command: SendMessageCommand) {
-    await this.initialize(command);
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.SMS,
+        findOne: true,
+        active: true,
+      })
+    );
 
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
@@ -66,7 +77,7 @@ export class SendMessageSms extends SendMessageBase {
     const notification = await this.notificationRepository.findById(command.notificationId);
 
     const payload = {
-      subscriber: this.subscriber,
+      subscriber: subscriber,
       step: {
         digest: !!command.events.length,
         events: command.events,
@@ -101,9 +112,9 @@ export class SendMessageSms extends SendMessageBase {
       return;
     }
 
-    const phone = command.payload.phone || this.subscriber.phone;
+    const phone = command.payload.phone || subscriber.phone;
 
-    if (!this.integration) {
+    if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -118,7 +129,7 @@ export class SendMessageSms extends SendMessageBase {
       return;
     }
 
-    const overrides = command.overrides[this.integration?.providerId] || {};
+    const overrides = command.overrides[integration?.providerId] || {};
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
@@ -133,8 +144,8 @@ export class SendMessageSms extends SendMessageBase {
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
       phone,
-      content,
-      providerId: this.integration?.providerId,
+      content: this.storeContent() ? content : null,
+      providerId: integration?.providerId,
       payload: messagePayload,
       overrides,
       templateIdentifier: command.identifier,
@@ -150,17 +161,17 @@ export class SendMessageSms extends SendMessageBase {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(messagePayload),
+        raw: this.storeContent() ? JSON.stringify(messagePayload) : null,
       })
     );
 
-    if (phone && this.integration) {
-      await this.sendMessage(phone, this.integration, content, message, command, notification, overrides);
+    if (phone && integration) {
+      await this.sendMessage(phone, integration, content, message, command, notification, overrides);
 
       return;
     }
 
-    await this.sendErrors(phone, this.integration, message, command, notification);
+    await this.sendErrors(phone, integration, message, command, notification);
   }
 
   private async sendErrors(
@@ -272,7 +283,8 @@ export class SendMessageSms extends SendMessageBase {
     overrides: object
   ) {
     try {
-      const smsHandler = this.smsFactory.getHandler(integration);
+      const smsFactory = new SmsFactory();
+      const smsHandler = smsFactory.getHandler(integration);
 
       const result = await smsHandler.send({
         to: phone,

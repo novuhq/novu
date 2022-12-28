@@ -56,6 +56,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   REDIS_CACHE_PORT: str({
     default: '',
   }),
+  STORE_NOTIFICATION_CONTENT: str({
+    default: 'false',
+  }),
 };
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {

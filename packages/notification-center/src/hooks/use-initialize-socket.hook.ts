@@ -16,7 +16,7 @@ export const useInitializeSocket = ({ socketUrl }: { socketUrl: string }) => {
         socketRef.current = io(socketUrl, {
           reconnectionDelayMax: 10000,
           transports: ['websocket'],
-          query: {
+          auth: {
             token: `${token}`,
           },
         });

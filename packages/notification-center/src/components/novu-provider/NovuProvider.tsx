@@ -8,7 +8,7 @@ import { NotificationsProvider } from '../../store/notifications-provider.contex
 import { NovuContext } from '../../store/novu-provider.context';
 import { NovuI18NProvider } from '../../store/i18n.context';
 import type { IStore } from '../../shared/interfaces';
-import { NotificationCenterStyles, StylesProvider } from '../../store/styles';
+import { INotificationCenterStyles, StylesProvider } from '../../store/styles';
 import { applyToken } from '../../utils/token';
 import type { ISession } from '../../shared/interfaces';
 import { useSession } from '../../hooks/use-session.hook';
@@ -34,7 +34,7 @@ export interface INovuProviderProps {
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash?: string;
   i18n?: I18NLanguage | ITranslationEntry;
-  styles?: NotificationCenterStyles;
+  styles?: INotificationCenterStyles;
 }
 
 export function NovuProvider({
