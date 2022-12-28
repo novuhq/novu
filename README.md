@@ -170,32 +170,6 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [ ] PagerDuty
 
-## 🤵 Meet Jarvis
-
-Meet Jarvis, a shell client sporting a dashing text gradient for all your Novu needs. Jarvis makes the following functions as simple as a few `yes` or `no` questions:
-
-- Reinstall Novu
-- Run Novu
-  - Full Project
-  - Web and API
-  - API only
-  - Docs
-- Test Novu
-  - Web tests
-  - API tests
-
-To run Jarvis at the root of Novu, you can use one of the following commands
-
-```
-npm run start
-```
-
-```
-npm run jarvis
-```
-
-Want to look through Jarvis' source code? Check out: [Jarvis.js](https://github.com/novuhq/novu/blob/main/scripts/jarvis.js)
-
 ## 💻 Need Help?
 
 We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
