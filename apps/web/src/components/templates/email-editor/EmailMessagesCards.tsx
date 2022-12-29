@@ -85,13 +85,14 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
                     width: '70px',
                   },
                   active: {
-                    background: theme.colorScheme === 'dark' ? colors.white : colors.B98,
+                    background: theme.colorScheme === 'dark' ? colors.B40 : colors.B98,
                     borderRadius: '30px',
                   },
                   labelActive: {
                     color: `${colors.B40} !important`,
                   },
                 }}
+                radius={'xl'}
                 data={[
                   {
                     value: 'web',
