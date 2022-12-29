@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ChatFactory } from '../../services/chat-service/chat.factory';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { CreateLog } from '../../../logs/usecases';
 import { SendMessageCommand } from './send-message.command';
 import * as Sentry from '@sentry/node';
 import {
@@ -20,7 +20,7 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
+import { CreateLogCommand } from '../../../logs/usecases';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import {
@@ -85,17 +85,7 @@ export class SendMessageChat extends SendMessageBase {
         })
       );
     } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify(data),
-        })
-      );
+      await this.sendErrorHandlebars(command.job, e.message);
 
       return;
     }

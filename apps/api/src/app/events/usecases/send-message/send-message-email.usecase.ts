@@ -135,17 +135,7 @@ export class SendMessageEmail extends SendMessageBase {
         preheader = await this.renderContent(preheader, subject, organization, subscriber, command, preheader);
       }
     } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify(payload),
-        })
-      );
+      await this.sendErrorHandlebars(command.job, e.message);
 
       return;
     }
