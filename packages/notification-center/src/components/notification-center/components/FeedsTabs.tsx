@@ -58,7 +58,11 @@ const TabLabelWrapper = styled.div`
 
 function UnseenBadgeContainer({ storeId }: { storeId: string }) {
   const { stores } = useNotifications();
-  const query = useMemo(() => stores?.find((i) => i.storeId === storeId)?.query || {}, [stores]);
+  const query = useMemo(() => {
+    const foundQuery = stores?.find((i) => i.storeId === storeId)?.query || {};
+
+    return Object.assign({}, foundQuery, { seen: false });
+  }, [stores]);
   const { data } = useFeedUnseenCount({ query });
   const unseenCount = query.seen ? 0 : data?.count ?? 0;
 
