@@ -326,4 +326,47 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.location('pathname').should('equal', `/templates`);
   });
+
+  it('should save Cta buttons state in inApp channel', function () {
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
+
+    fillBasicNotificationDetails('In App CTA Button');
+    addAndEditChannel('inApp');
+
+    cy.getByTestId('in-app-editor-content-input').type('Text content');
+
+    cy.getByTestId('control-add').click();
+    cy.getByTestId('template-container-click-area').eq(0).click();
+
+    cy.getByTestId('submit-btn').click();
+
+    cy.visit('/templates');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('notifications-template')
+      .get('tbody tr td')
+      .contains('In App CTA Button', {
+        matchCase: false,
+      })
+      .click();
+
+    cy.waitForNetworkIdle(500);
+    clickWorkflow();
+
+    editChannel('inApp');
+
+    cy.getByTestId('template-container').find('input').should('have.length', 1);
+
+    cy.getByTestId('remove-button-icon').click();
+
+    cy.getByTestId('submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    goBack();
+
+    editChannel('inApp');
+
+    cy.getByTestId('control-add');
+  });
 });
