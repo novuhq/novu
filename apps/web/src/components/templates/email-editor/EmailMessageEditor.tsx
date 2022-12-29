@@ -123,6 +123,9 @@ export function EmailMessageEditor({
         <div onClick={() => !branding?.logo && navigate(getBrandSettingsUrl())} role="link">
           <Dropzone
             styles={{
+              inner: {
+                height: '100%',
+              },
               root: {
                 borderRadius: '7px',
                 padding: '10px',
