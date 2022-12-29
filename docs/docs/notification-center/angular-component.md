@@ -2,7 +2,7 @@
 sidebar_position: 5
 ---
 
-# Angular Component
+# Angular
 
 The `@novu/notification-center-angular` package provides an Angular component wrapper over the Notification Center Web Component that you can use to integrate the notification center into your Angular application.
 

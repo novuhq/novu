@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Vue Component
+# Vue
 
 The `@novu/notification-center-vue` package provides a Vue component wrapper over the Notification Center Web Component that you can use to integrate the notification center into your Vue application.
 
