@@ -16,7 +16,7 @@ import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strate
 import { JwtAuthGuard } from './framework/auth.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 
-const AUTH_STRATEGIES = [];
+const AUTH_STRATEGIES: typeof GitHubStrategy[] = [];
 
 if (process.env.GITHUB_OAUTH_CLIENT_ID) {
   AUTH_STRATEGIES.push(GitHubStrategy);

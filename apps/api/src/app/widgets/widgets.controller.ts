@@ -304,8 +304,8 @@ export class WidgetsController {
     };
   }
 
-  private toArray(param: string[] | string): string[] {
-    let paramArray: string[];
+  private toArray(param: string[] | string | undefined): string[] {
+    let paramArray: string[] = [];
 
     if (param) {
       paramArray = Array.isArray(param) ? param : param.split(',');

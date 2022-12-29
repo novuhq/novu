@@ -1,6 +1,7 @@
 {
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
+  "entryFile": "src/main.ts",
   "compilerOptions": {
     "assets": [
       {

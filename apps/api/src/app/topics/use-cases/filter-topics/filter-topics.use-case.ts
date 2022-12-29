@@ -43,7 +43,7 @@ export class FilterTopicsUseCase {
     return {
       _environmentId: TopicRepository.convertStringToObjectId(command.environmentId),
       _organizationId: TopicRepository.convertStringToObjectId(command.organizationId),
-      ...(command.key && { key: command.key }),
+      key: command.key,
     };
   }
 

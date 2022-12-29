@@ -5,7 +5,7 @@ import {
   SubscriberRepository,
   TopicEntity,
   TopicRepository,
-  TopicSubscribersEntity,
+  CreateTopicSubscribersEntity,
   TopicSubscribersRepository,
 } from '@novu/dal';
 import { ISubscribersDefine, ITopic, TriggerRecipientsPayload } from '@novu/node';
@@ -586,7 +586,7 @@ const addSubscribersToTopic = async (
   const _organizationId = TopicSubscribersRepository.convertStringToObjectId(session.organization._id);
   const _topicId = TopicSubscribersRepository.convertStringToObjectId(topicId);
 
-  const entities: TopicSubscribersEntity[] = subscribers.map((subscriber) => ({
+  const entities: CreateTopicSubscribersEntity[] = subscribers.map((subscriber) => ({
     _environmentId,
     _organizationId,
     _subscriberId: TopicSubscribersRepository.convertStringToObjectId(subscriber._id),
@@ -597,8 +597,7 @@ const addSubscribersToTopic = async (
   await topicSubscribersRepository.addSubscribers(entities);
 
   const result = await topicRepository.findTopic(topicKey, _environmentId);
-
-  expect(result.subscribers.length).to.be.eql(subscribers.length);
+  if (!result) expect(result.subscribers.length).to.be.eql(subscribers.length);
   expect(result.subscribers).to.have.members(subscribers.map((subscriber) => subscriber.subscriberId));
 };
 

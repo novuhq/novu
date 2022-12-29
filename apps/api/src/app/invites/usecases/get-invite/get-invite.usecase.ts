@@ -1,4 +1,4 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -17,14 +17,20 @@ export class GetInvite {
   async execute(command: GetInviteCommand) {
     const member = await this.memberRepository.findByInviteToken(command.token);
     if (!member) throw new ApiException('No invite found');
+
     const organization = await this.organizationRepository.findById(member._organizationId);
+    if (!organization) throw new NotFoundException('Organization not found');
+
     const invitedMember = member;
 
     if (invitedMember.memberStatus !== MemberStatusEnum.INVITED) {
       throw new ApiException('Invite token expired');
     }
 
+    if (!invitedMember.invite) throw new NotFoundException(`Invite not found`);
+
     const user = await this.userRepository.findById(invitedMember.invite._inviterId);
+    if (!user) throw new NotFoundException('User not found');
 
     return {
       inviter: {

@@ -212,6 +212,7 @@ export class AuthController {
     if (!user) throw new BadRequestException('No user found');
 
     const member = organizationId ? await this.memberRepository.findMemberByUserId(organizationId, user._id) : null;
+    if (!member) throw new BadRequestException('No member found');
 
     return await this.authService.getSignedToken(user, organizationId, member, environmentId);
   }

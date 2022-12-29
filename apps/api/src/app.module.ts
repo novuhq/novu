@@ -1,4 +1,4 @@
-import { DynamicModule, HttpException, Module, OnModuleInit } from '@nestjs/common';
+import { DynamicModule, HttpException, Module, OnModuleInit, Provider } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -56,7 +56,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   TopicsModule,
 ];
 
-const providers = [];
+const providers: Provider[] = [];
 
 if (process.env.SENTRY_DSN) {
   modules.push(RavenModule);

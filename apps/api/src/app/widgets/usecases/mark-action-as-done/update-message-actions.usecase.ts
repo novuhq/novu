@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   MessageEntity,
   MessageRepository,
@@ -21,6 +21,11 @@ export class UpdateMessageActions {
   ) {}
 
   async execute(command: UpdateMessageActionsCommand): Promise<MessageEntity> {
+    const foundMessage = await this.messageRepository.findById(command.messageId);
+    if (!foundMessage) {
+      throw new NotFoundException(`Message ${command.messageId} not found`);
+    }
+
     const updatePayload: Partial<MessageTemplateEntity> = {};
 
     if (command.type) {
@@ -67,12 +72,14 @@ export class UpdateMessageActions {
     }
 
     const organizationAdmin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    this.analyticsService.track('Notification Action Clicked - [Notification Center]', organizationAdmin?._userId, {
-      _subscriber: subscriber._id,
-      _organization: command.organizationId,
-      _environment: command.environmentId,
-    });
+    if (organizationAdmin) {
+      this.analyticsService.track('Notification Action Clicked - [Notification Center]', organizationAdmin?._userId, {
+        _subscriber: subscriber._id,
+        _organization: command.organizationId,
+        _environment: command.environmentId,
+      });
+    }
 
-    return await this.messageRepository.findById(command.messageId);
+    return (await this.messageRepository.findById(command.messageId)) as MessageEntity;
   }
 }

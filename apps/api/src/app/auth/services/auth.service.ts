@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   EnvironmentRepository,
@@ -88,6 +88,7 @@ export class AuthService {
 
   async refreshToken(userId: string) {
     const user = await this.getUser({ _id: userId });
+    if (!user) throw new UnauthorizedException('User not found');
 
     return this.getSignedToken(user);
   }
@@ -101,7 +102,10 @@ export class AuthService {
     if (!environment) throw new UnauthorizedException('API Key not found');
 
     const key = environment.apiKeys.find((i) => i.key === apiKey);
+    if (!key) throw new UnauthorizedException('API Key not found');
+
     const user = await this.getUser({ _id: key._userId });
+    if (!user) throw new UnauthorizedException('User not found');
 
     return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
   }
@@ -196,7 +200,7 @@ export class AuthService {
     member?: MemberEntity,
     environmentId?: string
   ): Promise<string> {
-    const roles = [];
+    const roles: MemberRoleEnum[] = [];
     if (member && member.roles) {
       roles.push(...member.roles);
     }
@@ -221,6 +225,8 @@ export class AuthService {
 
   async validateUser(payload: IJwtPayload): Promise<UserEntity> {
     const user = await this.getUser({ _id: payload._id });
+    if (!user) throw new UnauthorizedException('User not found');
+
     if (payload.organizationId) {
       const isMember = await this.isAuthenticatedForOrganization(payload._id, payload.organizationId);
       if (!isMember) throw new UnauthorizedException(`No authorized for organization ${payload.organizationId}`);
@@ -248,16 +254,21 @@ export class AuthService {
     const environment = await this.environmentRepository.findOne({
       _id: payload.environmentId,
     });
+    if (!environment) throw new NotFoundException('Environment not found');
 
     return !!environment._parentId;
   }
 
   @Cached(CacheKeyPrefixEnum.SUBSCRIBER)
   private async getSubscriber({ _id, environmentId }: { _id: string; environmentId: string }) {
-    return await this.subscriberRepository.findOne({
+    const subscriber = await this.subscriberRepository.findOne({
       _environmentId: environmentId,
       _id: _id,
     });
+
+    if (!subscriber) throw new NotFoundException('Subscriber not found');
+
+    return subscriber;
   }
 
   @Cached(CacheKeyPrefixEnum.USER)

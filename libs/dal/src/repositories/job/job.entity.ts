@@ -3,7 +3,7 @@ import { NotificationStepEntity } from '../notification-template';
 
 export { JobStatusEnum };
 export class JobEntity {
-  _id?: string;
+  _id: string;
   identifier: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
@@ -18,7 +18,7 @@ export class JobEntity {
   providerId?: string;
   _userId: string;
   delay?: number;
-  _parentId?: string;
+  _parentId?: string | null;
   status: JobStatusEnum;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error?: any;

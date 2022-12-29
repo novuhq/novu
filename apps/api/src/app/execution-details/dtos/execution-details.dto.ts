@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ExecutionDetailsEntity } from '@novu/dal';
-import * as mongoose from 'mongoose';
 
 import { CreateExecutionDetailsCommand } from '../usecases/create-execution-details/create-execution-details.command';
 
@@ -11,7 +10,9 @@ export class CreateExecutionDetailsResponseDto {
   createdAt: string;
 }
 
-export const mapExecutionDetailsCommandToEntity = (command: CreateExecutionDetailsCommand): ExecutionDetailsEntity => {
+export const mapExecutionDetailsCommandToEntity = (
+  command: CreateExecutionDetailsCommand
+): Omit<ExecutionDetailsEntity, '_id'> => {
   const {
     jobId: _jobId,
     environmentId: _environmentId,
@@ -24,12 +25,12 @@ export const mapExecutionDetailsCommandToEntity = (command: CreateExecutionDetai
   } = command;
 
   return {
-    _jobId,
+    _jobId: _jobId as string,
     _environmentId,
     _organizationId,
     _subscriberId,
     _notificationId,
-    _notificationTemplateId,
+    _notificationTemplateId: _notificationTemplateId as string,
     _messageId,
     ...nonUnderscoredFields,
   };

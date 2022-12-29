@@ -29,6 +29,7 @@ export class PromoteNotificationTemplateChange {
       _environmentId: command.environmentId,
       _parentId: command.item._id,
     });
+    if (!item) throw new NotFoundException(`NotificationTemplate ${command.item._id} not found`);
 
     const newItem = command.item as NotificationTemplateEntity;
 
@@ -39,7 +40,7 @@ export class PromoteNotificationTemplateChange {
       },
     });
 
-    const missingMessages = [];
+    const missingMessages: string[] = [];
 
     const mapNewStepItem = (step: NotificationStepEntity) => {
       const oldMessage = messages.find((message) => {

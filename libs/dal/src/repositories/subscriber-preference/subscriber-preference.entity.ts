@@ -1,7 +1,7 @@
 import { IPreferenceChannels } from '@novu/shared';
 
 export class SubscriberPreferenceEntity {
-  _id?: string;
+  _id: string;
 
   _organizationId: string;
 
