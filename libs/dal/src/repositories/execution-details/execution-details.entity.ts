@@ -17,7 +17,7 @@ export class ExecutionDetailsEntity {
   status: ExecutionDetailsStatusEnum;
   isTest: boolean;
   isRetry: boolean;
-  createdAt?: string;
+  createdAt: string;
   raw?: string | null;
   webhookStatus?: string;
 }

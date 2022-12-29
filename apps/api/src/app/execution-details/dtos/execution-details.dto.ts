@@ -6,13 +6,14 @@ import { CreateExecutionDetailsCommand } from '../usecases/create-execution-deta
 export class CreateExecutionDetailsResponseDto {
   @ApiProperty()
   id: string;
+
   @ApiProperty()
   createdAt: string;
 }
 
 export const mapExecutionDetailsCommandToEntity = (
   command: CreateExecutionDetailsCommand
-): Omit<ExecutionDetailsEntity, '_id'> => {
+): Omit<ExecutionDetailsEntity, '_id' | 'createdAt'> => {
   const {
     jobId: _jobId,
     environmentId: _environmentId,

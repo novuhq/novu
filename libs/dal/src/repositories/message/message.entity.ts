@@ -17,7 +17,7 @@ export class MessageEntity {
 
   _notificationId: string;
 
-  _jobId?: string;
+  _jobId: string;
 
   _subscriberId: string;
 

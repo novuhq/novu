@@ -16,9 +16,9 @@ export class NodemailerHandler extends BaseHandler {
       user?: string;
       password?: string;
       dkim?: {
-        domainName?: string;
-        keySelector?: string;
-        privateKey?: string;
+        domainName: string;
+        keySelector: string;
+        privateKey: string;
       };
     } = {
       from: from as string,
@@ -28,9 +28,9 @@ export class NodemailerHandler extends BaseHandler {
       user: credentials.user,
       password: credentials.password,
       dkim: {
-        domainName: credentials.domain,
-        keySelector: credentials.accountSid,
-        privateKey: credentials.secretKey,
+        domainName: credentials.domain as string,
+        keySelector: credentials.accountSid as string,
+        privateKey: credentials.secretKey as string,
       },
     };
 
