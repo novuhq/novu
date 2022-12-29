@@ -75,7 +75,7 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
   return (
     <>
       <TemplateContainerWrap readonly={props.readonly}>
-        <TemplateContainer>
+        <TemplateContainer data-test-id="template-container">
           {buttons?.map((button: IMessageButton, buttonIndex: number) => {
             const buttonText = button?.content ? button?.content : '';
 
@@ -92,7 +92,7 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
             );
           })}
           <DeleteIcon buttonStyle={buttonStyle[lastButtonType]}>
-            <RemoveCircle onClick={props.onRemoveTemplate} />
+            <RemoveCircle onClick={props.onRemoveTemplate} data-test-id="remove-button-icon" />
           </DeleteIcon>
         </TemplateContainer>
       </TemplateContainerWrap>
