@@ -3,25 +3,20 @@ import { ConflictException, Injectable } from '@nestjs/common';
 
 import { RemoveSubscribersCommand } from './remove-subscribers.command';
 
+import { EnvironmentId, OrganizationId, TopicId } from '../../types';
+
 @Injectable()
 export class RemoveSubscribersUseCase {
   constructor(private topicSubscribersRepository: TopicSubscribersRepository) {}
 
-  async execute(command: RemoveSubscribersCommand) {
-    const entity = this.mapToEntity(command);
-
-    await this.topicSubscribersRepository.removeSubscribers(entity);
+  async execute(command: RemoveSubscribersCommand): Promise<void> {
+    await this.topicSubscribersRepository.removeSubscribers(
+      TopicSubscribersRepository.convertStringToObjectId(command.environmentId),
+      TopicSubscribersRepository.convertStringToObjectId(command.organizationId),
+      command.topicKey,
+      command.subscribers
+    );
 
     return undefined;
-  }
-
-  private mapToEntity(domainEntity: RemoveSubscribersCommand): TopicSubscribersEntity {
-    return {
-      _environmentId: TopicSubscribersRepository.convertStringToObjectId(domainEntity.environmentId),
-      _organizationId: TopicSubscribersRepository.convertStringToObjectId(domainEntity.organizationId),
-      _topicId: TopicSubscribersRepository.convertStringToObjectId(domainEntity.topicId),
-      _userId: TopicSubscribersRepository.convertStringToObjectId(domainEntity.userId),
-      subscribers: domainEntity.subscribers,
-    };
   }
 }

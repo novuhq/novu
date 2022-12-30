@@ -4,10 +4,12 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class ChangeTemplateActiveStatus {
   constructor(
+    private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createChange: CreateChange
   ) {}
@@ -26,6 +28,14 @@ export class ChangeTemplateActiveStatus {
       throw new BadRequestException('You must provide a different status from the current status');
     }
 
+    this.invalidateCache.clearCache({
+      storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
+      credentials: {
+        _id: command.templateId,
+        environmentId: command.environmentId,
+      },
+    });
+
     await this.notificationTemplateRepository.update(
       {
         _id: command.templateId,
@@ -39,7 +49,7 @@ export class ChangeTemplateActiveStatus {
       }
     );
 
-    const item = await this.notificationTemplateRepository.findById(command.templateId, command.organizationId);
+    const item = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
 
     await this.createChange.execute(
       CreateChangeCommand.create({

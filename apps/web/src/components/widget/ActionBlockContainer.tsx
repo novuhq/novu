@@ -18,19 +18,26 @@ export function ActionBlockContainer({
   isButtonsTemplateSelected,
   onChange,
   value,
+  readonly,
 }: {
   onButtonAddClickHandle: () => void;
   onRemoveTemplate: () => void;
   isButtonsTemplateSelected: boolean;
   onChange: (data: any) => void;
   value: IMessageAction;
+  readonly: boolean;
 }) {
   return (
     <>
       {isButtonsTemplateSelected ? (
-        <SelectedButtonTemplate onChange={onChange} value={value} onRemoveTemplate={onRemoveTemplate} />
+        <SelectedButtonTemplate
+          onChange={onChange}
+          value={value}
+          onRemoveTemplate={onRemoveTemplate}
+          readonly={readonly}
+        />
       ) : (
-        <AddButtonSection onButtonAddClick={onButtonAddClickHandle} />
+        <AddButtonSection onButtonAddClick={onButtonAddClickHandle} readonly={readonly} />
       )}
     </>
   );
@@ -40,6 +47,7 @@ interface ISelectedButtonTemplateProps {
   value: IMessageAction;
   onRemoveTemplate: () => void;
   onChange: (actions: any) => void;
+  readonly: boolean;
 }
 
 function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
@@ -66,8 +74,8 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
 
   return (
     <>
-      <TemplateContainerWrap>
-        <TemplateContainer>
+      <TemplateContainerWrap readonly={props.readonly}>
+        <TemplateContainer data-test-id="template-container">
           {buttons?.map((button: IMessageButton, buttonIndex: number) => {
             const buttonText = button?.content ? button?.content : '';
 
@@ -84,7 +92,7 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
             );
           })}
           <DeleteIcon buttonStyle={buttonStyle[lastButtonType]}>
-            <RemoveCircle onClick={props.onRemoveTemplate} />
+            <RemoveCircle onClick={props.onRemoveTemplate} data-test-id="remove-button-icon" />
           </DeleteIcon>
         </TemplateContainer>
       </TemplateContainerWrap>
@@ -92,17 +100,22 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
   );
 }
 
-function AddButtonSection({ onButtonAddClick }: { onButtonAddClick?: () => void }) {
+function AddButtonSection({ onButtonAddClick, readonly }: { onButtonAddClick?: () => void; readonly: boolean }) {
   const { colorScheme } = useMantineColorScheme();
 
   return (
-    <AddButtonTemplateButton colorScheme={colorScheme} data-test-id="control-add" onClick={onButtonAddClick}>
+    <AddButtonTemplateButton
+      colorScheme={colorScheme}
+      data-test-id="control-add"
+      onClick={onButtonAddClick}
+      readonly={readonly}
+    >
       <span>+ Add Action</span>
     </AddButtonTemplateButton>
   );
 }
 
-const AddButtonTemplateButton = styled.div<{ colorScheme: ColorScheme }>`
+const AddButtonTemplateButton = styled.div<{ colorScheme: ColorScheme; readonly: boolean }>`
   display: flex;
   justify-content: center;
   align-items: center;
@@ -114,6 +127,12 @@ const AddButtonTemplateButton = styled.div<{ colorScheme: ColorScheme }>`
   cursor: pointer;
   font-weight: 700;
   font-size: 12px;
+
+  ${({ readonly }) => {
+    if (readonly) {
+      return `pointer-events: none`;
+    }
+  }}
 `;
 
 const TemplateContainer = styled.div`
@@ -123,10 +142,16 @@ const TemplateContainer = styled.div`
   margin: 15px -15px;
 `;
 
-const TemplateContainerWrap = styled.div`
+const TemplateContainerWrap = styled.div<{ readonly: boolean }>`
   margin-left: 10px;
   margin-right: 10px;
   border: none;
+
+  ${({ readonly }) => {
+    if (readonly) {
+      return `pointer-events: none`;
+    }
+  }}
 `;
 
 const NotificationButton = styled(Button)<{ background }>`

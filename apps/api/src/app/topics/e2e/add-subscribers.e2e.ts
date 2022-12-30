@@ -2,9 +2,7 @@ import { SubscriberEntity } from '@novu/dal';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-import { CreateTopicResponseDto } from '../dtos';
-
-describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async () => {
+describe('Add subscribers to topic - /topics/:topicKey/subscribers (POST)', async () => {
   const topicKey = 'topic-key-add-subscribers';
   const topicName = 'topic-name';
   const URL = '/v1/topics';
@@ -15,7 +13,7 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
   let secondSubscriber: SubscriberEntity;
   let thirdSubscriber: SubscriberEntity;
   let topicId: string;
-  let getTopicUrl: string;
+  let topicUrl: string;
   let addSubscribersUrl: string;
 
   before(async () => {
@@ -35,8 +33,8 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
     expect(response.statusCode).to.eql(201);
     topicId = response.body.data._id;
     expect(topicId).to.exist;
-    getTopicUrl = `${URL}/${topicId}`;
-    addSubscribersUrl = `${getTopicUrl}/subscribers`;
+    topicUrl = `${URL}/${topicKey}`;
+    addSubscribersUrl = `${topicUrl}/subscribers`;
   });
 
   it('should throw validation error for missing request payload information', async () => {
@@ -47,70 +45,105 @@ describe('Add subscribers to topic - /topics/:topicId/subscribers (POST)', async
   });
 
   it('should add subscriber to topic', async () => {
-    const subscribers = [subscriber._id];
+    const subscribers = [subscriber.subscriberId];
 
     const response = await session.testAgent.post(addSubscribersUrl).send({ subscribers });
 
-    expect(response.statusCode).to.eql(204);
-    expect(response.body).to.be.empty;
+    expect(response.statusCode).to.eql(200);
+    expect(response.body.data).to.eql({
+      succeeded: [subscriber.subscriberId],
+    });
 
-    const getResponse = await session.testAgent.get(getTopicUrl);
+    const getResponse = await session.testAgent.get(topicUrl);
     expect(getResponse.statusCode).to.eql(200);
 
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
     expect(getResponseTopic.name).to.eql(topicName);
-    expect(getResponseTopic.subscribers).to.eql([subscriber._id]);
+    expect(getResponseTopic.subscribers).to.eql([subscriber.subscriberId]);
+  });
+
+  it('should not add subscriber to topic if it does not exist', async () => {
+    const subscribers = ['this-is-a-made-up-subscriber-id'];
+
+    const response = await session.testAgent.post(addSubscribersUrl).send({ subscribers });
+
+    expect(response.statusCode).to.eql(200);
+    expect(response.body.data).to.eql({
+      succeeded: [],
+      failed: {
+        notFound: subscribers,
+      },
+    });
+
+    const getResponse = await session.testAgent.get(topicUrl);
+    expect(getResponse.statusCode).to.eql(200);
+
+    const getResponseTopic = getResponse.body.data;
+
+    expect(getResponseTopic._id).to.eql(topicId);
+    expect(getResponseTopic._environmentId).to.eql(session.environment._id);
+    expect(getResponseTopic._organizationId).to.eql(session.organization._id);
+    expect(getResponseTopic.key).to.eql(topicKey);
+    expect(getResponseTopic.name).to.eql(topicName);
+    expect(getResponseTopic.subscribers).to.eql([subscriber.subscriberId]);
   });
 
   it('should not duplicate subscribers if adding a subscriber already added to topic', async () => {
-    const preconditionResponse = await session.testAgent.get(getTopicUrl);
+    const preconditionResponse = await session.testAgent.get(topicUrl);
     expect(preconditionResponse.statusCode).to.eql(200);
-    expect(preconditionResponse.body.data.subscribers).to.eql([subscriber._id]);
+    expect(preconditionResponse.body.data.subscribers).to.eql([subscriber.subscriberId]);
 
-    const subscribers = [subscriber._id];
+    const subscribers = [subscriber.subscriberId];
 
     const response = await session.testAgent.post(addSubscribersUrl).send({ subscribers });
 
-    expect(response.statusCode).to.eql(204);
+    expect(response.statusCode).to.eql(200);
+    expect(response.body.data).to.eql({
+      succeeded: [subscriber.subscriberId],
+    });
 
-    const getResponse = await session.testAgent.get(getTopicUrl);
+    const getResponse = await session.testAgent.get(topicUrl);
     expect(getResponse.statusCode).to.eql(200);
 
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
     expect(getResponseTopic.name).to.eql(topicName);
-    expect(getResponseTopic.subscribers).to.eql([subscriber._id]);
+    expect(getResponseTopic.subscribers).to.eql([subscriber.subscriberId]);
   });
 
   it('should add multiple subscribers to topic', async () => {
-    const subscribers = [secondSubscriber._id, thirdSubscriber._id];
+    const subscribers = [secondSubscriber.subscriberId, thirdSubscriber.subscriberId];
 
     const response = await session.testAgent.post(addSubscribersUrl).send({ subscribers });
 
-    expect(response.statusCode).to.eql(204);
+    expect(response.statusCode).to.eql(200);
+    expect(response.body.data).to.eql({
+      succeeded: subscribers,
+    });
 
-    const getResponse = await session.testAgent.get(getTopicUrl);
+    const getResponse = await session.testAgent.get(topicUrl);
     expect(getResponse.statusCode).to.eql(200);
 
     const getResponseTopic = getResponse.body.data;
 
     expect(getResponseTopic._id).to.eql(topicId);
-    expect(getResponseTopic._userId).to.eql(session.user._id);
     expect(getResponseTopic._environmentId).to.eql(session.environment._id);
     expect(getResponseTopic._organizationId).to.eql(session.organization._id);
     expect(getResponseTopic.key).to.eql(topicKey);
     expect(getResponseTopic.name).to.eql(topicName);
-    expect(getResponseTopic.subscribers).to.eql([subscriber._id, secondSubscriber._id, thirdSubscriber._id]);
+    expect(getResponseTopic.subscribers).to.have.members([
+      subscriber.subscriberId,
+      secondSubscriber.subscriberId,
+      thirdSubscriber.subscriberId,
+    ]);
   });
 });

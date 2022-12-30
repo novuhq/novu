@@ -21,6 +21,13 @@ describe('Delete Message - /messages/:messageId (DELETE)', function () {
     subscriber = await subscriberService.createSubscriber();
   });
 
+  it('should fail to delete non existing message', async function () {
+    const response = await session.testAgent.delete(`/v1/messages/${MessageRepository.createObjectId()}`);
+
+    expect(response.statusCode).to.equal(404);
+    expect(response.body.error).to.equal('Not Found');
+  });
+
   it('should delete a existing message', async function () {
     await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,

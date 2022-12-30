@@ -1,4 +1,4 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
@@ -9,7 +9,6 @@ import { differenceInDays, format, isSameDay, subDays } from 'date-fns';
 
 import { MessageContainer } from './MessageContainer';
 import { ActivityGraphGlobalStyles } from './ActivityGraphGlobalStyles';
-
 import { getActivityGraphStats } from '../../../api/activity';
 import { IActivityGraphStats } from '../interfaces';
 import { getOptions, getChartData } from '../services';
@@ -20,7 +19,7 @@ export function ActivityGraph() {
   const [isTriggerSent, setIsTriggerSent] = useState<boolean>(false);
   const [graphState, setGraphState] = useState<IActivityGraphStats[]>([]);
   const { data: activityGraphStats, isLoading: loadingActivityStats } = useQuery<IActivityGraphStats[]>(
-    'activityGraphStats',
+    ['activityGraphStats'],
     getActivityGraphStats
   );
   const isDark = useMantineTheme().colorScheme === 'dark';

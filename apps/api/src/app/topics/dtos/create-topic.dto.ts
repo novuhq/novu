@@ -5,7 +5,7 @@ import { TopicDto } from './topic.dto';
 
 import { TopicKey, TopicName } from '../types';
 
-export class CreateTopicResponseDto implements Pick<TopicDto, '_id'> {}
+export class CreateTopicResponseDto implements Pick<TopicDto, '_id' & 'key'> {}
 
 export class CreateTopicRequestDto {
   @ApiProperty({

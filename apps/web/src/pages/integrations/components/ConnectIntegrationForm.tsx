@@ -1,12 +1,13 @@
 import { useEffect, useState, useReducer } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled/macro';
-import { useMutation, useQuery } from 'react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
 import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
+
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
@@ -210,7 +211,7 @@ export function ConnectIntegrationForm({
 
         <InlineDiv>
           <span>Read our guide on where to get the credentials </span>
-          <a href={provider?.docReference} target="_blank" rel="noreferrer">
+          <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
             here.
           </a>
         </InlineDiv>

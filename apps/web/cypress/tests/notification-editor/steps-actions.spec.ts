@@ -9,10 +9,9 @@ describe('Workflow Editor - Steps Actions', function () {
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
 
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-    });
+    clickWorkflow();
 
     cy.get('.react-flow__node').should('have.length', 4);
     cy.getByTestId('step-actions-dropdown').first().click().getByTestId('delete-step-action').click();
@@ -23,10 +22,9 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.getByTestId('submit-btn').click();
 
     cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
 
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-    });
+    clickWorkflow();
 
     cy.get('.react-flow__node').should('have.length', 3);
   });
@@ -35,6 +33,9 @@ describe('Workflow Editor - Steps Actions', function () {
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
+
+    cy.waitForNetworkIdle(500);
+
     cy.waitLoadEnv(() => {
       clickWorkflow();
     });
@@ -51,9 +52,8 @@ describe('Workflow Editor - Steps Actions', function () {
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-    });
+    cy.waitForNetworkIdle(500);
+    clickWorkflow();
 
     dragAndDrop('sms');
 
@@ -62,10 +62,9 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.getByTestId('submit-btn').click();
 
     cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
 
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-    });
+    clickWorkflow();
 
     cy.get('.react-flow__node').should('have.length', 5);
     cy.get('.react-flow__node')
@@ -84,9 +83,9 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.visit('/templates/edit/' + template._id);
 
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-    });
+    cy.waitForNetworkIdle(500);
+
+    clickWorkflow();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-active-switch`).get('label').contains('Step is active');
@@ -102,9 +101,9 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.visit('/templates/edit/' + template._id);
 
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-    });
+    cy.waitForNetworkIdle(500);
+
+    clickWorkflow();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-should-stop-on-fail-switch`).get('label').contains('Stop workflow if this step fails?');

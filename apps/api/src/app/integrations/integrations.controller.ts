@@ -106,6 +106,7 @@ export class IntegrationsController {
   ): Promise<IntegrationResponseDto> {
     return await this.createIntegrationUsecase.execute(
       CreateIntegrationCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         providerId: body.providerId,

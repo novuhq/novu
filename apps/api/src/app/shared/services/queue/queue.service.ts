@@ -27,7 +27,7 @@ export class QueueService {
 
   public wsSocketQueue: Queue<IWsQueuePayload> = new Bull(WS_SOCKET_QUEUE, this.bullConfig) as Queue;
 
-  async getJobStats(type: 'ws_socket_queue'): Promise<{ waiting: number; active: number }> {
+  async getJobStats(type: string): Promise<{ waiting: number; active: number }> {
     if (type === WS_SOCKET_QUEUE) {
       return {
         waiting: await this.wsSocketQueue.getWaitingCount(),

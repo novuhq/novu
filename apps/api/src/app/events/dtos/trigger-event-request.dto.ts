@@ -1,6 +1,7 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientsType, TriggerRecipientsTypeSingle } from '@novu/node';
+import { TriggerRecipientSubscriber, TriggerRecipients } from '@novu/node';
+import { TopicId, TopicKey, TriggerRecipientsTypeEnum } from '@novu/shared';
 
 export class SubscriberPayloadDto {
   @ApiProperty()
@@ -15,7 +16,15 @@ export class SubscriberPayloadDto {
   avatar?: string;
 }
 
+export class TopicPayloadDto {
+  @ApiProperty()
+  topicKey: TopicKey;
+  @ApiProperty()
+  type: TriggerRecipientsTypeEnum.TOPIC;
+}
+
 @ApiExtraModels(SubscriberPayloadDto)
+@ApiExtraModels(TopicPayloadDto)
 export class TriggerEventRequestDto {
   @ApiProperty({
     description:
@@ -53,7 +62,7 @@ export class TriggerEventRequestDto {
   overrides?: Record<string, Record<string, unknown>>;
 
   @ApiProperty({
-    description: 'The recipients list of people who will receive the notification',
+    description: 'The recipients list of people who will receive the notification.',
     oneOf: [
       {
         $ref: getSchemaPath(SubscriberPayloadDto),
@@ -67,10 +76,17 @@ export class TriggerEventRequestDto {
         type: '[string]',
         description: 'List of subscriber identifiers',
       },
+      {
+        $ref: getSchemaPath(TopicPayloadDto),
+      },
+      {
+        type: '[TopicPayloadDto]',
+        description: 'List of topics',
+      },
     ],
   })
   @IsDefined()
-  to: TriggerRecipientsType;
+  to: TriggerRecipients;
 
   @ApiProperty({
     description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',
@@ -89,5 +105,5 @@ export class TriggerEventRequestDto {
     ],
   })
   @IsOptional()
-  actor?: TriggerRecipientsTypeSingle;
+  actor?: TriggerRecipientSubscriber;
 }

@@ -106,7 +106,7 @@ export class NotificationTemplateService {
 
     return await this.notificationTemplateRepository.findById(
       notificationTemplate._id,
-      notificationTemplate._organizationId
+      notificationTemplate._environmentId
     );
   }
 }

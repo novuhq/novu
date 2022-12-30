@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Stack, Group, Box } from '@mantine/core';
-import { useQuery, useMutation } from 'react-query';
+import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
+
 import {
   completeVercelIntegration,
   getVercelConfigurationDetails,
@@ -26,14 +27,17 @@ export type ProjectLinkFormValues = {
 export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   const { organizations } = useAuthController();
   const { configurationId, next } = useVercelParams();
-  const { data: vercelProjects } = useQuery(
-    ['vercelProjects', configurationId],
-    () => getVercelProjects(configurationId as string),
-    {
-      enabled: typeof configurationId === 'string',
-      placeholderData: [],
-    }
-  );
+  const {
+    data: vercelProjects,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['vercelProjects', configurationId],
+    queryFn: getVercelProjects,
+    enabled: typeof configurationId === 'string',
+    getNextPageParam: (lastPage) => lastPage.pagination.next,
+  });
 
   const { mutateAsync: completeIntegrationMutate, isLoading } = useMutation(completeVercelIntegration, {
     onSuccess: () => {
@@ -129,6 +133,16 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
     return <VercelSetupLoader title={`${type === 'create' ? 'Setting up' : 'Updating'} Vercel integration...`} />;
   }
 
+  const projects = useMemo(
+    () =>
+      vercelProjects?.pages.reduce((acc, curr) => {
+        acc.push(...curr.projects);
+
+        return acc;
+      }, []),
+    [vercelProjects]
+  );
+
   return (
     <Stack>
       <Group position="apart" grow>
@@ -147,16 +161,25 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
             {fields.map((field, index) => (
               <ProjectRow
                 key={field.id}
-                projectData={vercelProjects}
+                projectData={projects && projects?.length > 0 ? projects : []}
                 organizationsData={organizations || []}
                 deleteProjectRow={deleteProjectRow}
                 showDeleteBtn={index !== 0}
                 control={control}
                 index={index}
+                fetchNextPage={fetchNextPage}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
               />
             ))}
           </Stack>
-          <LinkMoreProjectRow addMoreProjectRow={addMoreProjectRow} disableMoreProjectsBtn={disableMoreProjectsBtn} />
+          <LinkMoreProjectRow
+            addMoreProjectRow={addMoreProjectRow}
+            disableMoreProjectsBtn={disableMoreProjectsBtn}
+            organizationLength={
+              organizations && organizations?.length > 0 ? organizations?.length - projectRowCount : 0
+            }
+          />
           <Button submit>Link Projects</Button>
         </Stack>
       </form>

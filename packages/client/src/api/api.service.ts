@@ -53,8 +53,10 @@ export class ApiService {
    * @deprecated The method should not be used - Use markMessageAs instead.
    */
   async markMessageAsSeen(messageId: string | string[]): Promise<any> {
+    const messageIdString = messageId ? messageId.toString() : '';
+
     return await this.httpClient.post(
-      `/widgets/messages/${messageId}/seen`,
+      `/widgets/messages/${messageIdString}/seen`,
       {}
     );
   }
@@ -63,8 +65,10 @@ export class ApiService {
    * @deprecated The method should not be used - Use markMessageAs instead.
    */
   async markMessageAsRead(messageId: string | string[]): Promise<any> {
+    const messageIdString = messageId ? messageId.toString() : '';
+
     return await this.httpClient.post(
-      `/widgets/messages/${messageId}/read`,
+      `/widgets/messages/${messageIdString}/read`,
       {}
     );
   }

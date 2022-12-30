@@ -42,7 +42,7 @@ export const VarItemsDropdown = ({ name, type }) => {
           {Object.keys(type).map((key, index) => {
             let varType = type[key];
 
-            if (!['boolean', 'string', 'number', 'object'].includes(varType)) {
+            if (!['boolean', 'string', 'number', 'object', 'array'].includes(varType)) {
               varType = typeof varType;
             }
 
