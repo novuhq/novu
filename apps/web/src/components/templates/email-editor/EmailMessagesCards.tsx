@@ -89,7 +89,7 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
                     borderRadius: '30px',
                   },
                   labelActive: {
-                    color: `${colors.B40} !important`,
+                    color: `${theme.colorScheme === 'dark' ? colors.white : colors.B40} !important`,
                   },
                 }}
                 radius={'xl'}
