@@ -169,7 +169,11 @@ class Novu {
 
   ensureAllowed = () => {
     if (!this.domainAllowed) {
-      throw new DomainVerificationError(`${window.location.host} is not permitted to use client ID ${this.clientId}`);
+      const hostName = window.location.host || '';
+      const clientIdType = typeof this.clientId;
+      const clientIdValue = clientIdType !== 'string' && clientIdType !== 'number' ? '' : '' + this.clientId;
+
+      throw new DomainVerificationError(`${hostName} is not permitted to use client ID ${clientIdValue}`);
     }
   };
 

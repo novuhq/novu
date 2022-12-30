@@ -48,11 +48,12 @@ describe('ContentService', function () {
   describe('extractVariables', function () {
     it('should not find any variables', function () {
       const contentService = new ContentService();
-      const extractVariables = contentService.extractVariables(
-        'This is a text without variables {{ asdasdas }} {{ aasdasda sda{ {na}}'
-      );
-      expect(extractVariables.length).to.equal(0);
-      expect(Array.isArray(extractVariables)).to.equal(true);
+      try {
+        contentService.extractVariables('This is a text without variables {{ invalid }} {{ not valid{ {var}}');
+        expect(true).to.equal(false);
+      } catch (e) {
+        expect(e.response.message).to.equal('Failed to extract variables');
+      }
     });
 
     it('should extract all valid variables', function () {
@@ -60,11 +61,33 @@ describe('ContentService', function () {
       const extractVariables = contentService.extractVariables(
         ' {{name}} d {{lastName}} dd {{_validName}} {{not valid}} aa {{0notValid}}tr {{organization_name}}'
       );
+      const variablesNames = extractVariables.map((variable) => variable.name);
+
       expect(extractVariables.length).to.equal(4);
-      expect(extractVariables).to.include('_validName');
-      expect(extractVariables).to.include('lastName');
-      expect(extractVariables).to.include('name');
-      expect(extractVariables).to.include('organization_name');
+      expect(variablesNames).to.include('_validName');
+      expect(variablesNames).to.include('lastName');
+      expect(variablesNames).to.include('name');
+      expect(variablesNames).to.include('organization_name');
+    });
+
+    it('should correctly extract variables related to registered handlebar helpers', function () {
+      const contentService = new ContentService();
+      const extractVariables = contentService.extractVariables(' {{titlecase word}}');
+
+      expect(extractVariables.length).to.equal(1);
+      expect(extractVariables[0].name).to.include('word');
+    });
+
+    it('should not show @data variables ', function () {
+      const contentService = new ContentService();
+      const extractVariables = contentService.extractVariables(
+        ' {{#each array}} {{@index}} {{#if @first}} First {{/if}} {{name}} {{/each}}'
+      );
+
+      expect(extractVariables.length).to.equal(2);
+      expect(extractVariables[0].name).to.include('array');
+      expect(extractVariables[0].type).to.eq('Array');
+      expect(extractVariables[1].name).to.include('name');
     });
   });
 
@@ -95,7 +118,7 @@ describe('ContentService', function () {
         },
       ]);
       expect(variables.length).to.equal(1);
-      expect(variables).to.include('firstName');
+      expect(variables[0].name).to.include('firstName');
     });
 
     it('should add $phone when SMS channel Exists', function () {
@@ -181,11 +204,13 @@ describe('ContentService', function () {
 
       const variables = contentService.extractMessageVariables(messages);
       const subscriberVariables = contentService.extractSubscriberMessageVariables(messages);
+      const variablesNames = variables.map((variable) => variable.name);
+
       expect(variables.length).to.equal(4);
       expect(subscriberVariables.length).to.equal(1);
-      expect(variables).to.include('lastName');
-      expect(variables).to.include('url');
-      expect(variables).to.include('firstName');
+      expect(variablesNames).to.include('lastName');
+      expect(variablesNames).to.include('url');
+      expect(variablesNames).to.include('firstName');
       expect(subscriberVariables).to.include('email');
     });
 
@@ -201,7 +226,29 @@ describe('ContentService', function () {
       ]);
 
       expect(variables.length).to.equal(1);
-      expect(variables).to.include('customVariables');
+      expect(variables[0].name).to.include('customVariables');
+    });
+
+    it('should not extract variables reserved for the system', function () {
+      const contentService = new ContentService();
+      const messages = [
+        {
+          template: {
+            type: StepTypeEnum.EMAIL,
+            subject: 'Test {{subscriber.firstName}}',
+            content: [
+              {
+                content: 'Test of {{subscriber.firstName}} {{lastName}}',
+                type: 'text',
+              },
+            ],
+          },
+        },
+      ] as INotificationTemplateStep[];
+      const extractVariables = contentService.extractMessageVariables(messages);
+
+      expect(extractVariables.length).to.equal(1);
+      expect(extractVariables[0].name).to.include('lastName');
     });
   });
 });

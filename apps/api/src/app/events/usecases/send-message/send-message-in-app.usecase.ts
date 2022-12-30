@@ -181,6 +181,14 @@ export class SendMessageInApp extends SendMessageBase {
       message = await this.messageRepository.findById(oldMessage._id);
     }
 
+    await this.queueService.wsSocketQueue.add({
+      event: 'notification_received',
+      userId: command.subscriberId,
+      payload: {
+        message,
+      },
+    });
+
     const unseenCount = await this.messageRepository.getCount(
       command.environmentId,
       command.subscriberId,

@@ -60,10 +60,12 @@ const AvatarContainer = ({
   index,
   opened,
   setOpened,
+  readonly,
 }: {
   index: number;
   opened: boolean;
   setOpened: Dispatch<SetStateAction<boolean>>;
+  readonly: boolean;
 }) => {
   const {
     field: { value, onChange },
@@ -99,11 +101,12 @@ const AvatarContainer = ({
         closeOnClickOutside
         clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
         withinPortal
+        disabled={readonly}
       >
         <Popover.Target>
           <span>
             <Tooltip label={<TooltipLabel />} position="left" withinPortal opened={tooltipOpened}>
-              <AvatarWrapper onClick={handleAvatarPopover} dark={dark}>
+              <AvatarWrapper onClick={handleAvatarPopover} dark={dark} readonly={readonly}>
                 <RenderAvatar actor={value} />
               </AvatarWrapper>
             </Tooltip>

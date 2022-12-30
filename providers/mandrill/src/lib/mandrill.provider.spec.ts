@@ -19,7 +19,11 @@ test('should trigger mandrill correctly', async () => {
     subject: 'test subject',
     html: '<div> Mail Content </div>',
     attachments: [
-      { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
+      {
+        mime: 'text/plain',
+        file: Buffer.from('test'),
+        name: 'test.txt',
+      },
     ],
   };
 
@@ -39,7 +43,7 @@ test('should trigger mandrill correctly', async () => {
       ],
       attachments: [
         {
-          content: 'test',
+          content: Buffer.from('test').toString('base64'),
           type: 'text/plain',
           name: 'test.txt',
         },
