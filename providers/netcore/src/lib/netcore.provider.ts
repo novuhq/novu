@@ -90,10 +90,10 @@ export class NetCoreProvider implements IEmailProvider {
 
   getMessageId(body: any | any[]): string[] {
     if (Array.isArray(body)) {
-      return body.map((item) => item.['TRANSID']);
+      return body.map((item) => item['TRANSID']);
     }
 
-    return [body.['TRANSID']];
+    return [body['TRANSID']];
   }
 
   parseEventBody(
@@ -101,14 +101,14 @@ export class NetCoreProvider implements IEmailProvider {
     identifier: string
   ): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
-      body = body.find((item) => item.['TRANSID'] === identifier);
+      body = body.find((item) => item['TRANSID'] === identifier);
     }
 
     if (!body) {
       return undefined;
     }
 
-    const status = this.getStatus(body.['EVENT']);
+    const status = this.getStatus(body['EVENT']);
 
     if (status === undefined) {
       return undefined;
@@ -117,7 +117,7 @@ export class NetCoreProvider implements IEmailProvider {
     return {
       status: status,
       date: new Date().toISOString(),
-      externalId: body.['TRANSID'],
+      externalId: body['TRANSID'],
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
       response: body.response ? body.response : '',
       row: body,
