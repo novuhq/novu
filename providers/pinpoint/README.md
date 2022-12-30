@@ -5,12 +5,12 @@ A Pinpoint SMS provider library for [@novu/stateless](https://github.com/novuhq/
 ## Usage
 
 ```javascript
-import { SESEmailProvider } from "@novu/pinpoint"
+import { PinpointSMSProvider } from '@novu/pinpoint';
 
 const provider = new PinpointSMSProvider({
-    region: "eu-central-1",
-    accessKeyId: "AWS_ACCESS_KEY_ID",
-    secretAccessKey: "AWS_SECRET_ACCESS_KEY",
-    from: "+1234567",
+  region: 'eu-central-1',
+  accessKeyId: 'AWS_ACCESS_KEY_ID',
+  secretAccessKey: 'AWS_SECRET_ACCESS_KEY',
+  from: '+1234567',
 });
 ```
