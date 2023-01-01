@@ -442,6 +442,6 @@ export class SubscribersController {
       paramArray = Array.isArray(param) ? param : param.split(',');
     }
 
-    return paramArray;
+    return paramArray as string[];
   }
 }

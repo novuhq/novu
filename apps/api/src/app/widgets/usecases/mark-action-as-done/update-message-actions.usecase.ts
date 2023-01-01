@@ -21,7 +21,10 @@ export class UpdateMessageActions {
   ) {}
 
   async execute(command: UpdateMessageActionsCommand): Promise<MessageEntity> {
-    const foundMessage = await this.messageRepository.findById(command.messageId);
+    const foundMessage = await this.messageRepository.findOne({
+      _environmentId: command.environmentId,
+      _id: command.messageId,
+    });
     if (!foundMessage) {
       throw new NotFoundException(`Message ${command.messageId} not found`);
     }

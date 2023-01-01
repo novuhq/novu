@@ -305,12 +305,12 @@ export class WidgetsController {
   }
 
   private toArray(param: string[] | string | undefined): string[] {
-    let paramArray: string[] = [];
+    let paramArray: string[] | null = null;
 
     if (param) {
       paramArray = Array.isArray(param) ? param : param.split(',');
     }
 
-    return paramArray;
+    return paramArray as string[];
   }
 }
