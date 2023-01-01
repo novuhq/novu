@@ -597,7 +597,8 @@ const addSubscribersToTopic = async (
   await topicSubscribersRepository.addSubscribers(entities);
 
   const result = await topicRepository.findTopic(topicKey, _environmentId);
-  if (!result) expect(result.subscribers.length).to.be.eql(subscribers.length);
+
+  expect(result.subscribers.length).to.be.eql(subscribers.length);
   expect(result.subscribers).to.have.members(subscribers.map((subscriber) => subscriber.subscriberId));
 };
 

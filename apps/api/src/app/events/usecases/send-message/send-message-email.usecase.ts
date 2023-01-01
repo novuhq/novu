@@ -30,7 +30,6 @@ import {
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
-import Api from 'twilio/lib/rest/Api';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()

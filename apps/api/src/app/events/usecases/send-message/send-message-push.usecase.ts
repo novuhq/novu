@@ -138,7 +138,16 @@ export class SendMessagePush extends SendMessageBase {
     }
 
     const overrides = command.overrides[integration.providerId] || {};
-    if (!subscriber.channels?.length) {
+
+    const pushChannels =
+      subscriber.channels?.filter((chan) =>
+        Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
+      ) || [];
+
+    const messagePayload = Object.assign({}, command.payload);
+    delete messagePayload.attachments;
+
+    if (!pushChannels.length) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -149,14 +158,9 @@ export class SendMessagePush extends SendMessageBase {
           isRetry: false,
         })
       );
+
       return;
     }
-    const pushChannels = subscriber.channels.filter((chan) =>
-      Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
-    );
-
-    const messagePayload = Object.assign({}, command.payload);
-    delete messagePayload.attachments;
 
     if (integration) {
       for (const channel of pushChannels) {
