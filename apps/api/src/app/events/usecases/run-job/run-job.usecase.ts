@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository, JobStatusEnum, UserRepository } from '@novu/dal';
+import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -9,7 +9,7 @@ import { QueueNextJob } from '../queue-next-job/queue-next-job.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { RunJobCommand } from './run-job.command';
-import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
+import { shouldBackoff } from '../../services/workflow.queue.service';
 
 @Injectable()
 export class RunJob {
@@ -59,7 +59,7 @@ export class RunJob {
 
       await this.storageHelperService.deleteAttachments(job.payload?.attachments);
     } catch (error) {
-      if (job.step.shouldStopOnFail || jobBackoffNeeded(error)) {
+      if (job.step.shouldStopOnFail || shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
       throw new ApiException(error);
@@ -89,8 +89,4 @@ export class RunJob {
 
     return count > 0;
   }
-}
-
-function jobBackoffNeeded(error) {
-  return error.message.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
 }

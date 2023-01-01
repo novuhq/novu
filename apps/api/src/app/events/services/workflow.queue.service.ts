@@ -44,6 +44,7 @@ export class WorkflowQueueService {
         attempts: this.DEFAULT_ATTEMPTS,
       },
     });
+
     this.worker = new Worker(
       'standard',
       async ({ data }: { data: JobEntity }) => {
@@ -61,7 +62,7 @@ export class WorkflowQueueService {
         lockDuration: 90000,
         concurrency: 100,
         settings: {
-          backoffStrategies: getBackoffStrategies(this.createExecutionDetails),
+          backoffStrategies: this.getBackoffStrategies(),
         },
       }
     );
@@ -72,8 +73,7 @@ export class WorkflowQueueService {
       await this.jobRepository.updateStatus(job.data._organizationId, job.data._id, JobStatusEnum.FAILED);
       await this.jobRepository.setError(job.data._organizationId, job.data._id, e);
 
-      const lastWebhookFilterRetry =
-        job.attemptsMade === this.DEFAULT_ATTEMPTS && e.message.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
+      const lastWebhookFilterRetry = job.attemptsMade === this.DEFAULT_ATTEMPTS && shouldBackoff(e);
 
       if (lastWebhookFilterRetry) {
         await this.handleLastFailedWebhookFilter(job, e);
@@ -88,11 +88,11 @@ export class WorkflowQueueService {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job.data),
-        detail: DetailEnum.WEBHOOK_FILTER_FAILED,
+        detail: DetailEnum.WEBHOOK_FILTER_FAILED_LAST_RETRY,
         source: ExecutionDetailsSourceEnum.WEBHOOK,
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
-        isRetry: false,
+        isRetry: true,
         raw: JSON.stringify({ message: JSON.parse(e.message).message }),
       })
     );
@@ -121,32 +121,32 @@ export class WorkflowQueueService {
 
     await this.queue.add(id, data, options);
   }
+
+  private getBackoffStrategies = () => {
+    return {
+      webhookFilterBackoff: async (attemptsMade, err, job) => {
+        if (!shouldBackoff(err)) {
+          return -1;
+        }
+
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(job.data),
+            detail: DetailEnum.WEBHOOK_FILTER_FAILED_RETRY,
+            source: ExecutionDetailsSourceEnum.WEBHOOK,
+            status: ExecutionDetailsStatusEnum.PENDING,
+            isTest: false,
+            isRetry: true,
+            raw: JSON.stringify({ message: JSON.parse(err.message).message, attempt: attemptsMade }),
+          })
+        );
+
+        return Math.round(Math.random() * Math.pow(2, attemptsMade) * 1000);
+      },
+    };
+  };
 }
 
-const getBackoffStrategies = (createExecutionDetails) => {
-  return {
-    webhookFilterBackoff: async (attemptsMade, err, job) => {
-      if (!shouldBackoff(err)) {
-        return -1;
-      }
-
-      await createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job.data),
-          detail: DetailEnum.WEBHOOK_FILTER_FAILED_RETRY,
-          source: ExecutionDetailsSourceEnum.WEBHOOK,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: true,
-          raw: JSON.stringify({ message: JSON.parse(err.message).message, attempt: attemptsMade }),
-        })
-      );
-
-      return Math.round(Math.random() * Math.pow(2, attemptsMade) * 1000);
-    },
-  };
-};
-
-function shouldBackoff(err) {
+export function shouldBackoff(err) {
   return err.message.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
 }
