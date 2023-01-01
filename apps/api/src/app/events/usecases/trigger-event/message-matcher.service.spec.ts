@@ -1,13 +1,15 @@
 import { BuilderFieldOperator, StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { NotificationStepEntity } from '@novu/dal';
-import { matchMessageWithFilters } from './message-filter.matcher';
-import got from 'got';
 import * as sinon from 'sinon';
+import { MessageMatcher } from './message-matcher.service';
+import axios from 'axios';
 
 describe('Message filter matcher', function () {
+  let messageMatcher = new MessageMatcher(undefined, undefined, undefined);
+
   it('should filter correct message by the filter value', async function () {
-    const matchedMessage = await matchMessageWithFilters(
+    const matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'OR', [
         {
           operator: 'EQUAL',
@@ -27,7 +29,7 @@ describe('Message filter matcher', function () {
   });
 
   it('should match a message for AND filter group', async function () {
-    const matchedMessage = await matchMessageWithFilters(
+    const matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'EQUAL',
@@ -54,7 +56,7 @@ describe('Message filter matcher', function () {
   });
 
   it('should not match AND group for single bad item', async function () {
-    const matchedMessage = await matchMessageWithFilters(
+    const matchedMessage = await messageMatcher.filter(
       messageWrapper('Title', 'AND', [
         {
           operator: 'EQUAL',
@@ -81,7 +83,7 @@ describe('Message filter matcher', function () {
   });
 
   it('should match a NOT_EQUAL for EQUAL var', async function () {
-    const matchedMessage = await matchMessageWithFilters(
+    const matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'EQUAL',
@@ -108,7 +110,7 @@ describe('Message filter matcher', function () {
   });
 
   it('should match a EQUAL for a boolean var', async function () {
-    const matchedMessage = await matchMessageWithFilters(
+    const matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'EQUAL',
@@ -128,7 +130,7 @@ describe('Message filter matcher', function () {
   });
 
   it('should fall thru for no filters item', async function () {
-    const matchedMessage = await matchMessageWithFilters(messageWrapper('Correct Match 2', 'OR', []), {
+    const matchedMessage = await messageMatcher.filter(messageWrapper('Correct Match 2', 'OR', []), {
       payload: {
         varField: 'firstVar',
         secondField: 'secondVarBad',
@@ -139,7 +141,7 @@ describe('Message filter matcher', function () {
   });
 
   it('should get larger payload var then filter value', async function () {
-    const matchedMessage = await matchMessageWithFilters(
+    const matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'LARGER',
@@ -159,7 +161,7 @@ describe('Message filter matcher', function () {
   });
 
   it('should get smaller payload var then filter value', async function () {
-    const matchedMessage = await matchMessageWithFilters(
+    const matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'SMALLER',
@@ -179,7 +181,7 @@ describe('Message filter matcher', function () {
   });
 
   it('should get larger or equal payload var then filter value', async function () {
-    let matchedMessage = await matchMessageWithFilters(
+    let matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'LARGER_EQUAL',
@@ -197,7 +199,7 @@ describe('Message filter matcher', function () {
 
     expect(matchedMessage).to.equal(true);
 
-    matchedMessage = await matchMessageWithFilters(
+    matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'LARGER_EQUAL',
@@ -217,7 +219,7 @@ describe('Message filter matcher', function () {
   });
 
   it('should get smaller or equal payload var then filter value', async function () {
-    let matchedMessage = await matchMessageWithFilters(
+    let matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'SMALLER_EQUAL',
@@ -235,7 +237,7 @@ describe('Message filter matcher', function () {
 
     expect(matchedMessage).to.equal(true);
 
-    matchedMessage = await matchMessageWithFilters(
+    matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'SMALLER_EQUAL',
@@ -255,7 +257,7 @@ describe('Message filter matcher', function () {
   });
 
   it('should handle now filters', async function () {
-    let matchedMessage = await matchMessageWithFilters(
+    let matchedMessage = await messageMatcher.filter(
       {
         _templateId: '123',
         template: {
@@ -277,7 +279,7 @@ describe('Message filter matcher', function () {
     );
     expect(matchedMessage).to.equal(true);
 
-    matchedMessage = await matchMessageWithFilters(
+    matchedMessage = await messageMatcher.filter(
       {
         _templateId: '123',
         template: {
@@ -298,7 +300,7 @@ describe('Message filter matcher', function () {
       }
     );
     expect(matchedMessage).to.equal(true);
-    matchedMessage = await matchMessageWithFilters(
+    matchedMessage = await messageMatcher.filter(
       {
         _templateId: '123',
         template: {
@@ -326,7 +328,7 @@ describe('Message filter matcher', function () {
       }
     );
     expect(matchedMessage).to.equal(true);
-    matchedMessage = await matchMessageWithFilters(
+    matchedMessage = await messageMatcher.filter(
       {
         _templateId: '123',
         template: {
@@ -357,13 +359,13 @@ describe('Message filter matcher', function () {
   });
 
   it('should handle webhook filter', async function () {
-    const gotGetStub = sinon.stub(got, 'post').resolves(
+    const gotGetStub = sinon.stub(axios, 'post').resolves(
       Promise.resolve({
-        body: '{"varField":true}',
+        data: { varField: true },
       })
     );
 
-    let matchedMessage = await matchMessageWithFilters(
+    let matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', undefined, [
         {
           operator: 'EQUAL',
@@ -384,13 +386,13 @@ describe('Message filter matcher', function () {
   });
 
   it('should skip async filter if child under OR returned true', async function () {
-    const gotGetStub = sinon.stub(got, 'post').resolves(
+    const gotGetStub = sinon.stub(axios, 'post').resolves(
       Promise.resolve({
         body: '{"varField":true}',
       })
     );
 
-    let matchedMessage = await matchMessageWithFilters(
+    let matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'OR', [
         {
           operator: 'EQUAL',
@@ -418,7 +420,7 @@ describe('Message filter matcher', function () {
 
     //Reorder children order to make sure it is not random
 
-    matchedMessage = await matchMessageWithFilters(
+    matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'OR', [
         {
           operator: 'EQUAL',
@@ -448,13 +450,13 @@ describe('Message filter matcher', function () {
   });
 
   it('should skip async filter if child under AND returned false', async function () {
-    const gotGetStub = sinon.stub(got, 'post').resolves(
+    const gotGetStub = sinon.stub(axios, 'post').resolves(
       Promise.resolve({
         body: '{"varField":true}',
       })
     );
 
-    let matchedMessage = await matchMessageWithFilters(
+    let matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'EQUAL',
@@ -482,7 +484,7 @@ describe('Message filter matcher', function () {
 
     //Reorder children order to make sure it is not random
 
-    matchedMessage = await matchMessageWithFilters(
+    matchedMessage = await messageMatcher.filter(
       messageWrapper('Correct Match', 'AND', [
         {
           operator: 'EQUAL',
