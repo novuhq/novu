@@ -3,7 +3,6 @@ import { ChangeEntity, ChangeRepository } from '@novu/dal';
 import { ApplyChangeCommand } from '../apply-change/apply-change.command';
 import { BulkApplyChangeCommand } from './bulk-apply-change.command';
 import { ApplyChange } from '../apply-change/apply-change.usecase';
-import { ApiError } from '@google-cloud/storage/build/src/nodejs-common';
 
 @Injectable()
 export class BulkApplyChange {
