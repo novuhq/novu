@@ -1,4 +1,10 @@
-import { StepTypeEnum, INotificationTemplateStep, getTemplateVariables, IMustacheVariable } from '@novu/shared';
+import {
+  StepTypeEnum,
+  INotificationTemplateStep,
+  getTemplateVariables,
+  IMustacheVariable,
+  TemplateSystemVariables,
+} from '@novu/shared';
 import Handlebars from 'handlebars';
 import { ApiException } from '../exceptions/api.exception';
 
@@ -35,7 +41,11 @@ export class ContentService {
       variables.push(...extractedVariables);
     }
 
-    return [...new Map(variables.map((item) => [item.name, item])).values()];
+    return [
+      ...new Map(
+        variables.filter((item) => !this.isSystemVariable(item.name)).map((item) => [item.name, item])
+      ).values(),
+    ];
   }
 
   extractSubscriberMessageVariables(messages: INotificationTemplateStep[]): string[] {
@@ -75,6 +85,10 @@ export class ContentService {
         yield message.template.content;
       }
     }
+  }
+
+  private isSystemVariable(variableName: string): boolean {
+    return TemplateSystemVariables.includes(variableName.includes('.') ? variableName.split('.')[0] : variableName);
   }
 
   private escapeForRegExp(content: string) {
