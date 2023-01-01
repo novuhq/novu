@@ -12,6 +12,12 @@ The `@novu/notification-center-angular` package provides an Angular component wr
 npm install @novu/notification-center-angular
 ```
 
+:::note
+
+Only >0.15.0 angular version is supported
+
+:::
+
 ## Example usage
 
 Module:
@@ -59,3 +65,9 @@ Component HTML template:
 ## Props
 
 The `notification-center-component` accepts the same set of props as the [Web Component](./web-component#properties).
+
+:::info
+
+May need to add "allowSyntheticDefaultImports": true in tsconfig.json and <i>@types/react</i> as dev dependency to work angular component properly.
+
+:::
