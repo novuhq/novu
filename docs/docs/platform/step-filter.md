@@ -12,7 +12,7 @@ improving the efficiency and effectiveness of your communication.
 ## On Filter
 
 - On payload: You can specify a list of keywords or values that the 'payload' field must
-  match in order for the notification to be delivered. his is useful if you only want to
+  match in order for the notification to be delivered. This is useful if you only want to
   receive notifications that contain certain information.
 
 - On subscriber: You can filter which subscribers receive notifications based on subscriber
@@ -33,16 +33,14 @@ improving the efficiency and effectiveness of your communication.
    met for the notification to be delivered.
 
    <div align="center">
-     <a href="https://novu.co" target="_blank">
      <picture>
        <source media="(prefers-color-scheme: dark)" srcset="/img/platform/filter/dark-filter-section.png"/>
        <img src="/img/platform/filter/light-filter-section.png" width="1280" alt="Logo"/>
      </picture>
-     </a>
    </div>
 
 3. If you want to add multiple filters, you will need to choose a logical condition
-   of AND or OR (1). This will determine how the filters are applied to the notification.
+   between AND and OR (1). This will determine how the filters are applied to the notification.
    For example, if you choose AND, the notification will only be delivered if all of the
    filters are met. If you choose OR, the notification will be delivered if any of the
    filters are met.
@@ -55,12 +53,10 @@ improving the efficiency and effectiveness of your communication.
 > If only one rule is provided, a logical condition of AND or OR is not mandatory.
 
 <div align="center">
-  <a href="https://novu.co" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="/img/platform/filter/dark-add-filter-section.png"/>
     <img src="/img/platform/filter/light-add-filter-section.png" width="680" alt="Logo"/>
   </picture>
-  </a>
 </div>
 
 A rule is composed of the following elements:
@@ -82,12 +78,10 @@ Example: In this filter rule, the notification will only be delivered if the
 webhook response includes a field called 'isOnline' that is set to 'true'.
 
 <div align="center">
-  <a href="https://novu.co" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="/img/platform/filter/dark-webhook-rule-example.png"/>
     <img src="/img/platform/filter/light-webhook-rule-example.png" width="680" alt="Logo"/>
   </picture>
-  </a>
 </div>
 
 ## Filtering with Webhook
@@ -96,7 +90,7 @@ To filter notifications based on a webhook response, you will need to create a w
 that accepts POST requests and returns a one-level object. The webhook should be set up
 to receive object the following parameters:
 
-- subscriber - subscriberEntity: This is an object containing information about the subscriber that
+- subscriber - This is an object containing information about the subscriber that
   the notification is being sent to.
 - payload - This is an object containing the payload of the trigger that initiated
   the notification.
