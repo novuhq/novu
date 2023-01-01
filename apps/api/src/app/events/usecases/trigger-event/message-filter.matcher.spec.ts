@@ -2,6 +2,7 @@ import { BuilderFieldOperator, StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { NotificationStepEntity } from '@novu/dal';
 import { matchMessageWithFilters } from './message-filter.matcher';
+import { MessageTemplateEntity } from '@novu/dal/src';
 
 describe('Message filter matcher', function () {
   it('should filter correct message by the filter value', function () {
@@ -264,7 +265,7 @@ describe('Message filter matcher', function () {
           _organizationId: '123',
           _environmentId: 'asdas',
           _creatorId: '123',
-        },
+        } as MessageTemplateEntity,
         filters: undefined,
       },
       {
@@ -286,7 +287,7 @@ describe('Message filter matcher', function () {
           _organizationId: '123',
           _environmentId: 'asdas',
           _creatorId: '123',
-        },
+        } as MessageTemplateEntity,
         filters: [],
       },
       {
@@ -307,13 +308,13 @@ describe('Message filter matcher', function () {
           _organizationId: '123',
           _environmentId: 'asdas',
           _creatorId: '123',
-        },
+        } as MessageTemplateEntity,
         filters: [
           {
             isNegated: false,
             type: 'GROUP',
             value: 'AND',
-            children: undefined,
+            children: [],
           },
         ],
       },
@@ -335,7 +336,7 @@ describe('Message filter matcher', function () {
           _organizationId: '123',
           _environmentId: 'asdas',
           _creatorId: '123',
-        },
+        } as MessageTemplateEntity,
         filters: [
           {
             isNegated: false,
@@ -376,7 +377,7 @@ function messageWrapper(
       _organizationId: '123',
       _environmentId: 'asdas',
       _creatorId: '123',
-    },
+    } as MessageTemplateEntity,
     filters: filters?.length
       ? [
           {

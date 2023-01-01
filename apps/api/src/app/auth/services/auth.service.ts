@@ -235,11 +235,13 @@ export class AuthService {
     return user;
   }
 
-  async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity> {
-    return await this.getSubscriber({
+  async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity | null> {
+    const subscriber = await this.getSubscriber({
       environmentId: payload.environmentId,
       _id: payload._id,
     });
+
+    return subscriber;
   }
 
   async decodeJwt<T>(token: string) {
@@ -265,8 +267,6 @@ export class AuthService {
       _environmentId: environmentId,
       _id: _id,
     });
-
-    if (!subscriber) throw new NotFoundException('Subscriber not found');
 
     return subscriber;
   }
