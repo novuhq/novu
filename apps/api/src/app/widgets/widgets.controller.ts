@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { SessionInitializeRequestDto } from './dtos/session-initialize-request.dto';
@@ -151,6 +162,7 @@ export class WidgetsController {
     @Param('messageId') messageId: string
   ): Promise<MessageEntity> {
     const messageIds = this.toArray(messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -175,6 +187,7 @@ export class WidgetsController {
     @Param('messageId') messageId: string | string[]
   ): Promise<MessageEntity[]> {
     const messageIds = this.toArray(messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -197,6 +210,7 @@ export class WidgetsController {
     @Body() body: { messageId: string | string[]; mark: { seen?: boolean; read?: boolean } }
   ): Promise<MessageEntity[]> {
     const messageIds = this.toArray(body.messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -304,8 +318,8 @@ export class WidgetsController {
     };
   }
 
-  private toArray(param: string[] | string | undefined): string[] {
-    let paramArray: string[] | null = null;
+  private toArray(param: string[] | string | undefined): string[] | undefined {
+    let paramArray: string[] | undefined = undefined;
 
     if (param) {
       paramArray = Array.isArray(param) ? param : param.split(',');
