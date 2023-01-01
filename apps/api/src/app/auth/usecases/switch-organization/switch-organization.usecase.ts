@@ -33,7 +33,6 @@ export class SwitchOrganization {
       _organizationId: command.newOrganizationId,
       _parentId: { $exists: false },
     });
-    if (!environment) throw new ApiError(`Environment not found for organization ${command.newOrganizationId}`);
 
     const token = await this.authService.getSignedToken(user, command.newOrganizationId, member, environment?._id);
 
