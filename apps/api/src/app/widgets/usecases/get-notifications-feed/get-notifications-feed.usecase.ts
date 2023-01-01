@@ -37,7 +37,7 @@ export class GetNotificationsFeed {
       { feedId: command.feedId, seen: command.query.seen, read: command.query.read },
       {
         limit: LIMIT,
-        skip: command.page ? command.page * LIMIT : undefined,
+        skip: command.page * LIMIT,
       }
     );
 
