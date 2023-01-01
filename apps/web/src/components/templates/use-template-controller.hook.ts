@@ -1,4 +1,9 @@
 import { useEffect } from 'react';
+import { showNotification } from '@mantine/notifications';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { useFormContext } from 'react-hook-form';
+import * as Sentry from '@sentry/react';
 import {
   DigestUnitEnum,
   ICreateNotificationTemplateDto,
@@ -11,12 +16,9 @@ import {
   BuilderGroupValues,
   BuilderFieldOperator,
   ActorTypeEnum,
+  ChannelCTATypeEnum,
 } from '@novu/shared';
-import { showNotification } from '@mantine/notifications';
-import { useMutation, useQueryClient } from 'react-query';
-import { useNavigate } from 'react-router-dom';
-import { useFormContext } from 'react-hook-form';
-import * as Sentry from '@sentry/react';
+
 import { createTemplate, updateTemplate, deleteTemplateById } from '../../api/templates';
 import { useTemplateFetcher } from './use-template.fetcher';
 import { QueryKeys } from '../../api/query.keys';
@@ -116,6 +118,11 @@ export function useTemplateController(templateId: string) {
                     data: null,
                   },
               enableAvatar: item.template.actor?.type && item.template.actor.type !== ActorTypeEnum.NONE ? true : false,
+              cta: {
+                data: item.template.cta?.data ?? {},
+                type: ChannelCTATypeEnum.REDIRECT,
+                action: item.template.cta?.action ?? {},
+              },
             },
           };
         }
@@ -179,10 +186,10 @@ export function useTemplateController(templateId: string) {
         });
         setTrigger(response.triggers[0]);
         refetch();
-        reset(payloadToUpdate);
+        reset(data);
         setIsDirty(false);
 
-        await client.refetchQueries(QueryKeys.changesCount);
+        await client.refetchQueries([QueryKeys.changesCount]);
         successMessage('Template updated successfully');
       } else {
         const response = await createNotification({ ...payloadToCreate, active: true, draft: false });
@@ -192,7 +199,7 @@ export function useTemplateController(templateId: string) {
         setCreatedTemplateId(response._id || '');
         reset(payloadToCreate);
         setIsDirty(false);
-        await client.refetchQueries(QueryKeys.changesCount);
+        await client.refetchQueries([QueryKeys.changesCount]);
         successMessage('Template saved successfully');
       }
     } catch (e: any) {

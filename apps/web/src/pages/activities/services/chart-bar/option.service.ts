@@ -132,7 +132,7 @@ function buildBody(html: string, bodyLines) {
 
   resHtml += '<div class="tooltip-body">';
   bodyLines.forEach(function (body) {
-    const bodyText = getBodyText(body);
+    const bodyText: string | string[] = getBodyText(body) || '';
 
     resHtml += `<span >${bodyText} Total</span>`;
   });

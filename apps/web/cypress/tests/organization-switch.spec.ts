@@ -20,7 +20,7 @@ describe('Organization Switch', function () {
 
       cy.getByTestId('organization-switch').focus();
 
-      cy.get('.mantine-Select-item').contains(capitalize(newOrg.name)).click();
+      cy.get('.mantine-Select-item').contains(capitalize(newOrg.name)).click({ force: true });
 
       cy.wait(1000);
 

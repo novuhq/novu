@@ -209,7 +209,7 @@ function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentia
       ? integration?.credentials.serviceAccount
       : integration?.credentials.user;
 
-    clonedCredentials?.map((cred) => {
+    clonedCredentials?.forEach((cred) => {
       if (cred.key === 'serviceAccount') {
         cred.value = serviceAccount;
       }

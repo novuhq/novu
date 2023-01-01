@@ -21,7 +21,7 @@ describe('Notification Templates Screen', function () {
       .getByTestId('active-status-label')
       .should('be.visible');
 
-    cy.getByTestId('create-template-btn').should('have.attr', 'href', '/templates/create');
+    cy.getByTestId('create-template-btn').should('not.be.disabled');
     cy.getByTestId('category-label').contains('General');
   });
 });

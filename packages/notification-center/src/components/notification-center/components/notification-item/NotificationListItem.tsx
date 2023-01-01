@@ -13,7 +13,8 @@ import {
   IActor,
 } from '@novu/shared';
 
-import { useNovuTheme, useNotificationCenter, useDefaultBellColors, useTranslations } from '../../../../hooks';
+import { useNovuTheme, useNotificationCenter, useTranslations } from '../../../../hooks';
+import { getDefaultBellColors } from '../../../../utils/defaultTheme';
 import { ActionContainer } from './ActionContainer';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { When } from '../../../../shared/utils/When';
@@ -205,7 +206,7 @@ function ActionContainerOrNone({
 }
 
 function GradientDotWrapper({ colorScheme }: { colorScheme: ColorScheme }) {
-  const { bellColors } = useDefaultBellColors({
+  const { bellColors } = getDefaultBellColors({
     colorScheme: colorScheme,
     bellColors: {
       unseenBadgeBackgroundColor: 'transparent',
@@ -323,6 +324,7 @@ const NotificationContentContainer = styled.div`
 
 const AvatarContainer = styled.div`
   width: 40px;
+  min-width: 40px;
   height: 40px;
   border-radius: 50%;
   display: flex;

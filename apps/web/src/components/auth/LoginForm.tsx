@@ -1,10 +1,11 @@
 import { useContext, useMemo } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation } from 'react-query';
+import { Link, useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
+
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
@@ -32,6 +33,7 @@ export function LoginForm({ email, token }: Props) {
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
   const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
+  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : `/auth/reset/request`;
   const githubLink = isFromVercel
     ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
     : `${API_ROOT}/v1/auth/github`;
@@ -118,13 +120,13 @@ export function LoginForm({ email, token }: Props) {
           placeholder="Type your password..."
           data-test-id="password"
         />
-        {!isFromVercel && (
-          <Link to="/auth/reset/request">
-            <Text my={30} gradient align="center">
-              Forgot Your Password?
-            </Text>
-          </Link>
-        )}
+
+        <Link to={resetPasswordLink}>
+          <Text my={30} gradient align="center">
+            Forgot Your Password?
+          </Text>
+        </Link>
+
         <Button mt={60} inherit loading={isLoading} submit data-test-id="submit-btn">
           Sign In
         </Button>

@@ -25,7 +25,6 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
@@ -33,30 +32,33 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { SendMessageBase } from './send-message.base';
 
 @Injectable()
-export class SendMessageInApp extends SendMessageType {
+export class SendMessageInApp extends SendMessageBase {
+  channelType = ChannelTypeEnum.IN_APP;
+
   constructor(
+    private invalidateCache: InvalidateCacheService,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     private queueService: QueueService,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
-    private subscriberRepository: SubscriberRepository,
+    protected subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
   }
 
   public async execute(command: SendMessageCommand) {
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+
     Sentry.addBreadcrumb({
       message: 'Sending In App',
     });
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
     const inAppChannel: NotificationStepEntity = command.step;
     let content = '';
 
@@ -78,7 +80,7 @@ export class SendMessageInApp extends SendMessageType {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
-            subscriber,
+            subscriber: subscriber,
             step: {
               digest: !!command.events.length,
               events: command.events,
@@ -132,6 +134,14 @@ export class SendMessageInApp extends SendMessageType {
 
     let message: MessageEntity;
 
+    this.invalidateCache.clearCache({
+      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
+      credentials: {
+        subscriberId: subscriber.subscriberId,
+        environmentId: command.environmentId,
+      },
+    });
+
     if (!oldMessage) {
       message = await this.messageRepository.create({
         _notificationId: notification._id,
@@ -144,7 +154,7 @@ export class SendMessageInApp extends SendMessageType {
         cta: inAppChannel.template.cta,
         _feedId: inAppChannel.template._feedId,
         transactionId: command.transactionId,
-        content,
+        content: this.storeContent() ? content : null,
         payload: messagePayload,
         templateIdentifier: command.identifier,
         _jobId: command.jobId,
@@ -170,6 +180,14 @@ export class SendMessageInApp extends SendMessageType {
       );
       message = await this.messageRepository.findById(oldMessage._id);
     }
+
+    await this.queueService.wsSocketQueue.add({
+      event: 'notification_received',
+      userId: command.subscriberId,
+      payload: {
+        message,
+      },
+    });
 
     const unseenCount = await this.messageRepository.getCount(
       command.environmentId,
@@ -211,10 +229,12 @@ export class SendMessageInApp extends SendMessageType {
         subscriberId: command.subscriberId,
         code: LogCodeEnum.IN_APP_MESSAGE_CREATED,
         templateId: notification._templateId,
-        raw: {
-          payload: command.payload,
-          triggerIdentifier: command.identifier,
-        },
+        raw: this.storeContent()
+          ? {
+              payload: command.payload,
+              triggerIdentifier: command.identifier,
+            }
+          : null,
       })
     );
 
