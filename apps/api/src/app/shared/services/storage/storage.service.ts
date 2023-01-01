@@ -33,12 +33,12 @@ export abstract class StorageService {
   abstract deleteFile(key: string): Promise<void>;
 }
 
-async function streamToString(stream: Readable): Promise<string> {
+async function streamToBuffer(stream: Readable): Promise<Buffer> {
   return await new Promise((resolve, reject) => {
     const chunks: Uint8Array[] = [];
     stream.on('data', (chunk) => chunks.push(chunk));
     stream.on('error', reject);
-    stream.on('end', () => resolve(Buffer.concat(chunks).toString('base64')));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
   });
 }
 export class S3StorageService implements StorageService {
@@ -66,7 +66,7 @@ export class S3StorageService implements StorageService {
         Key: key,
       });
       const data = await this.s3.send(command);
-      const bodyContents = await streamToString(data.Body as Readable);
+      const bodyContents = await streamToBuffer(data.Body as Readable);
 
       return bodyContents as unknown as Buffer;
     } catch (error) {

@@ -16,6 +16,7 @@ import {
   BuilderGroupValues,
   BuilderFieldOperator,
   ActorTypeEnum,
+  ChannelCTATypeEnum,
 } from '@novu/shared';
 
 import { createTemplate, updateTemplate, deleteTemplateById } from '../../api/templates';
@@ -117,6 +118,11 @@ export function useTemplateController(templateId: string) {
                     data: null,
                   },
               enableAvatar: item.template.actor?.type && item.template.actor.type !== ActorTypeEnum.NONE ? true : false,
+              cta: {
+                data: item.template.cta?.data ?? {},
+                type: ChannelCTATypeEnum.REDIRECT,
+                action: item.template.cta?.action ?? {},
+              },
             },
           };
         }
@@ -180,7 +186,7 @@ export function useTemplateController(templateId: string) {
         });
         setTrigger(response.triggers[0]);
         refetch();
-        reset(payloadToUpdate);
+        reset(data);
         setIsDirty(false);
 
         await client.refetchQueries([QueryKeys.changesCount]);
