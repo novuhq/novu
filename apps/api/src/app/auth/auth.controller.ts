@@ -14,7 +14,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
+import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { IJwtPayload } from '@novu/shared';
@@ -212,8 +212,7 @@ export class AuthController {
     if (!user) throw new BadRequestException('No user found');
 
     const member = organizationId ? await this.memberRepository.findMemberByUserId(organizationId, user._id) : null;
-    if (!member) throw new BadRequestException('No member found');
 
-    return await this.authService.getSignedToken(user, organizationId, member, environmentId);
+    return await this.authService.getSignedToken(user, organizationId, member as MemberEntity, environmentId);
   }
 }
