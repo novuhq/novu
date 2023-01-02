@@ -23,6 +23,8 @@ export enum DetailEnum {
   DIGESTED_EVENTS_PROVIDED = 'Steps to get digest events found',
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEP_FILTERED_BY_PREFERENCES = 'Step filtered by subscriber preferences',
+  WEBHOOK_FILTER_FAILED_RETRY = 'Webhook filter failed, retry will be executed',
+  WEBHOOK_FILTER_FAILED_LAST_RETRY = 'Failed to get response from remote webhook filter on last retry',
   DIGEST_MERGED = 'Digest was merged with other digest',
   DELAY_FINISHED = 'Delay is finished',
   PUSH_MISSING_DEVICE_TOKENS = 'Subscriber credentials is missing the tokens for sending a push notification message',
