@@ -1,12 +1,15 @@
 import { useState } from 'react';
-import { Collapse, UnstyledButton, useMantineTheme } from '@mantine/core';
+import { ActionIcon, Collapse, Tooltip, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { ChevronUp } from '../../../../design-system/icons';
 import { ChevronDown } from '../../../../design-system/icons';
 import { VarItem } from './VarItem';
 import { colors } from '../../../../design-system';
+import { useClipboard } from '@mantine/hooks';
+import { Check, Copy } from '../../../../design-system/icons';
 
 export const VarItemsDropdown = ({ name, type }) => {
   const [open, setOpen] = useState(false);
+  const idClipboard = useClipboard({ timeout: 500 });
   const theme = useMantineTheme();
 
   return (
@@ -50,7 +53,17 @@ export const VarItemsDropdown = ({ name, type }) => {
               return <VarItemsDropdown key={index} name={key} type={type[key]} />;
             }
 
-            return <VarItem key={index} name={key} type={varType} />;
+            return (
+              <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? <Check /> : <Copy />}>
+                <ActionIcon
+                  variant="transparent"
+                  onClick={() => idClipboard.copy(`${name}.${key}`)}
+                  sx={{ width: '100%', height: 'unset', minWidth: 'unset', minHeight: 'unset' }}
+                >
+                  <VarItem key={index} name={key} type={varType} />
+                </ActionIcon>
+              </Tooltip>
+            );
           })}
         </div>
       </Collapse>

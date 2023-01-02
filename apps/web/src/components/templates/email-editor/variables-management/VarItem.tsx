@@ -13,6 +13,7 @@ export const VarItem = ({ name, type, children = null }: { name: string; type: s
         borderRadius: 7,
         background: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
         color: colors.B60,
+        width: '100%',
       }}
     >
       {name}:
