@@ -641,7 +641,7 @@ If you want to hide it, you can use the prop `showUserPreferences` on the `Popov
 <details>
  <summary> Notification center is not loading properly</summary>
 
-Possible causes of not loading notifcation center properly
+Possible causes of not loading notification center properly
 
 - Invalid subscriberId
 - Invalid applicationIdentifier

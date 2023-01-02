@@ -43,9 +43,9 @@ For an in-depth explanation with examples, check out [Templates](https://docs.no
 </details>
 
 <details>
-<summary>Is creating and switching to new organisation deactivates other organisations</summary>
+<summary>Is creating and switching to new organization deactivates other organizations</summary>
 
-No, switching organisation will only switch organisation in UI, from API side all organisations are still active. Each organisation has different api keys, subscibers and notification templates. Notification template of one organisation can not be used with other organisation's subscriber.
+No, switching organization will only switch organization in UI, from API side all organizations are still active. Each organization has different api keys, subscribers and notification templates. Notification template of one organization can not be used with other organization's subscriber.
 
 </details>
 
