@@ -56,7 +56,7 @@ export class SendTestEmail {
       subject = await this.renderContent(command.subject, command.subject, organization, command, command.preheader);
       content = await this.getContent(isEditorMode, command, subject, organization);
     } catch (e) {
-      throw new ApiException(`Message content could not be generated`);
+      throw new ApiException(e?.message || `Message content could not be generated`);
     }
 
     const customTemplate = SendMessageEmail.addPreheader(content as string, command.contentType);
