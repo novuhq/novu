@@ -5,9 +5,10 @@ import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
-import { useDefaultTheme, useUnseenCount } from '../../hooks';
+import { useUnseenCount } from '../../hooks';
 import { ColorScheme, INovuThemePopoverProvider } from '../../index';
 import { ITab, ListItem } from '../../shared/interfaces';
+import { getDefaultTheme } from '../../utils/defaultTheme';
 
 export interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
@@ -30,7 +31,7 @@ export interface IPopoverNotificationCenterProps {
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
-  const { theme } = useDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
+  const { theme } = getDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
   const { setUnseenCount, unseenCount } = useUnseenCount();
 
   function handlerOnUnseenCount(count: number) {

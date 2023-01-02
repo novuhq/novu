@@ -220,4 +220,24 @@ describe('Password reset - /auth/reset (POST)', async () => {
       expect(found.resetToken).to.be.ok;
     }
   });
+
+  it("should throw error when the password doesn't meets the requirements", async () => {
+    const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
+      email: session.user.email,
+    });
+
+    expect(body.data.success).to.equal(true);
+
+    const foundUser = await userRepository.findById(session.user._id);
+
+    const { body: resetChange } = await session.testAgent.post('/v1/auth/reset').send({
+      password: 'password',
+      token: foundUser.resetToken,
+    });
+
+    expect(resetChange.message[0]).to.contain(
+      // eslint-disable-next-line max-len
+      'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-'
+    );
+  });
 });

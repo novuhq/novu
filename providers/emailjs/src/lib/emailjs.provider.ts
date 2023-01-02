@@ -37,7 +37,7 @@ export class EmailJsProvider implements IEmailProvider {
       ? attachments.map((attachment) => {
           return {
             name: attachment.name,
-            data: attachment.file.toString(),
+            data: attachment.file.toString('base64'),
             type: attachment.mime,
           };
         })

@@ -5,12 +5,17 @@ import { PlusCircle } from '../../../design-system/icons';
 type LinkMoreProjectRowProps = {
   addMoreProjectRow: VoidFunction;
   disableMoreProjectsBtn: boolean;
+  organizationLength: number;
 };
-export function LinkMoreProjectRow({ addMoreProjectRow, disableMoreProjectsBtn }: LinkMoreProjectRowProps) {
+export function LinkMoreProjectRow({
+  addMoreProjectRow,
+  disableMoreProjectsBtn,
+  organizationLength,
+}: LinkMoreProjectRowProps) {
   return (
     <Group position="center">
       <Button variant="outline" onClick={addMoreProjectRow} disabled={disableMoreProjectsBtn} icon={<PlusCircle />}>
-        Add more projects
+        Link more organizations ({organizationLength} available)
       </Button>
     </Group>
   );

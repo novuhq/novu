@@ -1,33 +1,37 @@
-import { Body, Controller, Delete, Param, Post, UseGuards } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
+import { ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/node';
+import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
+import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
+
+import {
+  TestSendEmailRequestDto,
+  TriggerEventRequestDto,
+  TriggerEventResponseDto,
+  TriggerEventToAllRequestDto,
+} from './dtos';
 import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
-import { UserSession } from '../shared/framework/user.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ISubscribersDefine, TriggerRecipientsTypeSingle } from '@novu/node';
 import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
 import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
-import { TriggerEventRequestDto, TriggerEventResponseDto, TriggerEventToAllRequestDto } from './dtos';
-import {
-  ApiCreatedResponse,
-  ApiExcludeEndpoint,
-  ApiOkResponse,
-  ApiOperation,
-  ApiResponse,
-  ApiTags,
-} from '@nestjs/swagger';
 import { SendTestEmail } from './usecases/send-message/test-send-email.usecase';
 import { TestSendMessageCommand } from './usecases/send-message/send-message.command';
-import { TestSendEmailRequestDto } from './dtos/test-email-request.dto';
+import { MapTriggerRecipients, MapTriggerRecipientsCommand } from './usecases/map-trigger-recipients';
 
-@Controller('events')
+import { UserSession } from '../shared/framework/user.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { JwtAuthGuard } from '../auth/framework/auth.guard';
+
+@Controller({
+  path: 'events',
+  scope: Scope.REQUEST,
+})
 @ApiTags('Events')
 export class EventsController {
   constructor(
     private triggerEvent: TriggerEvent,
+    private mapTriggerRecipients: MapTriggerRecipients,
     private cancelDelayedUsecase: CancelDelayed,
     private triggerEventToAll: TriggerEventToAll,
     private sendTestEmail: SendTestEmail
@@ -60,21 +64,31 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
-    const mappedSubscribers = this.mapSubscribers(body);
-    const mappedActor = this.mapActor(body.actor);
     const transactionId = body.transactionId || uuidv4();
 
-    await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
+    const { _id: userId, environmentId, organizationId } = user;
+
+    await this.triggerEvent.validateTransactionIdProperty(transactionId, organizationId, environmentId);
+
+    const mappedActor = this.mapActor(body.actor);
+    const mapTriggerRecipientsCommand = MapTriggerRecipientsCommand.create({
+      environmentId,
+      organizationId,
+      recipients: body.to,
+      transactionId,
+      userId,
+    });
+    const mappedTo = await this.mapTriggerRecipients.execute(mapTriggerRecipientsCommand);
 
     const result = await this.triggerEvent.execute(
       TriggerEventCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
+        userId,
+        environmentId,
+        organizationId,
         identifier: body.name,
         payload: body.payload,
         overrides: body.overrides || {},
-        to: mappedSubscribers,
+        to: mappedTo,
         actor: mappedActor,
         transactionId,
       })
@@ -171,26 +185,9 @@ export class EventsController {
     );
   }
 
-  private mapSubscribers(body: TriggerEventRequestDto): ISubscribersDefine[] {
-    const subscribers = Array.isArray(body.to) ? body.to : [body.to];
-
-    return subscribers.map((subscriber) => {
-      if (typeof subscriber === 'string') {
-        return {
-          subscriberId: subscriber,
-        };
-      } else {
-        return subscriber;
-      }
-    });
-  }
-
-  private mapActor(actor: TriggerRecipientsTypeSingle): ISubscribersDefine {
+  private mapActor(actor: TriggerRecipientSubscriber): ISubscribersDefine {
     if (!actor) return;
-    if (typeof actor === 'string') {
-      return { subscriberId: actor };
-    }
 
-    return actor;
+    return this.mapTriggerRecipients.mapSubscriber(actor);
   }
 }

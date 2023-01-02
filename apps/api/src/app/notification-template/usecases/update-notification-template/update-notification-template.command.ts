@@ -6,7 +6,7 @@ import { NotificationStep } from '../../../shared/dtos/notification-step';
 export class UpdateNotificationTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsMongoId()
-  templateId: string;
+  id: string;
 
   @IsArray()
   @IsOptional()

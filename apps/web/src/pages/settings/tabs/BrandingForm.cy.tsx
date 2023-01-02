@@ -1,7 +1,8 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { IOrganizationEntity } from '@novu/shared';
+
 import { BrandingForm } from './BrandingForm';
 import { TestWrapper } from '../../../testing';
-import { IOrganizationEntity } from '@novu/shared';
-import { QueryClient, QueryClientProvider } from 'react-query';
 
 const defaultProps: {
   isLoading: boolean;

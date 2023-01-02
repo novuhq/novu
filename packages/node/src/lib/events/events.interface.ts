@@ -1,23 +1,29 @@
 import { DigestUnitEnum } from '@novu/shared';
+
 import { IAttachmentOptions } from '../novu.interface';
+import { ITopic } from '../topics/topic.interface';
 import { ISubscribersDefine } from '../subscribers/subscriber.interface';
 
-export type TriggerRecipientsTypeArray = string[] | ISubscribersDefine[];
+export type TriggerRecipientSubscriber = string | ISubscribersDefine;
+export type TriggerRecipientTopics = ITopic[];
 
-export type TriggerRecipientsTypeSingle = string | ISubscribersDefine;
+export type TriggerRecipient = TriggerRecipientSubscriber | ITopic;
 
-export type TriggerRecipientsType =
-  | TriggerRecipientsTypeSingle
-  | TriggerRecipientsTypeArray;
+export type TriggerRecipients = TriggerRecipient[];
 
-export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
-  to: TriggerRecipientsType;
-  actor?: TriggerRecipientsTypeSingle;
-}
+// string | ISubscribersDefine | (string | ISubscribersDefine | ITopic)[]
+export type TriggerRecipientsPayload =
+  | TriggerRecipientSubscriber
+  | TriggerRecipients;
 
 export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
+}
+
+export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
+  to: TriggerRecipientsPayload;
+  actor?: TriggerRecipientSubscriber;
 }
 
 export interface ITriggerPayload {

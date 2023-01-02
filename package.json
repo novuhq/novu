@@ -139,7 +139,8 @@
       "apps/*",
       "libs/*",
       "packages/*",
-      "providers/*"
+      "providers/*",
+      "examples/*"
     ]
   },
   "husky": {

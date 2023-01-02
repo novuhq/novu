@@ -1,7 +1,7 @@
 import * as bcrypt from 'bcrypt';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { differenceInMinutes, parseISO } from 'date-fns';
-import { UserRepository, UserEntity } from '@novu/dal';
+import { UserRepository, UserEntity, OrganizationRepository } from '@novu/dal';
 import { LoginCommand } from './login.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
@@ -17,7 +17,8 @@ export class Login {
   constructor(
     private userRepository: UserRepository,
     private authService: AuthService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private organizationRepository: OrganizationRepository
   ) {}
 
   async execute(command: LoginCommand) {
@@ -62,6 +63,13 @@ export class Login {
     }
 
     this.analyticsService.upsertUser(user, user._id);
+
+    const userActiveOrganizations = (await this.organizationRepository.findUserActiveOrganizations(user._id)) || [];
+    this.analyticsService.track('[Authentication] - Login', user._id, {
+      loginType: 'email',
+      _organization:
+        userActiveOrganizations && userActiveOrganizations[0] ? userActiveOrganizations[0]?._id : undefined,
+    });
 
     if (user?.failedLogin?.times > 0) {
       await this.resetFailedAttempts(user);

@@ -2,11 +2,13 @@ import { useEffect } from 'react';
 import { useMantineColorScheme } from '@mantine/core';
 
 export function PartnerIntegrationLayout({ children }: { children: React.ReactNode }) {
-  const { toggleColorScheme } = useMantineColorScheme();
+  const { toggleColorScheme, colorScheme } = useMantineColorScheme();
 
   useEffect(() => {
-    toggleColorScheme('dark');
-  }, []);
+    if (colorScheme === 'light') {
+      toggleColorScheme('dark');
+    }
+  }, [colorScheme, toggleColorScheme]);
 
   return <div>{children}</div>;
 }

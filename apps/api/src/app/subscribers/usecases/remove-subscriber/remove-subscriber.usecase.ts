@@ -1,15 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberRepository, DalException } from '@novu/dal';
-
 import { RemoveSubscriberCommand } from './remove-subscriber.command';
-
-import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
-
+import { GetSubscriber } from '../get-subscriber';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class RemoveSubscriber {
-  constructor(private subscriberRepository: SubscriberRepository, private getSubscriber: GetSubscriber) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private subscriberRepository: SubscriberRepository,
+    private getSubscriber: GetSubscriber
+  ) {}
 
   async execute(command: RemoveSubscriberCommand) {
     try {
@@ -18,6 +20,14 @@ export class RemoveSubscriber {
         environmentId: _environmentId,
         organizationId,
         subscriberId,
+      });
+
+      this.invalidateCache.clearCache({
+        storeKeyPrefix: [CacheKeyPrefixEnum.SUBSCRIBER],
+        credentials: {
+          _id: subscriber._id,
+          environmentId: command.environmentId,
+        },
       });
 
       await this.subscriberRepository.delete({

@@ -13,11 +13,9 @@ export * from './entities/step';
 export * from './entities/job';
 export * from './entities/subscriber-preference';
 export * from './entities/subscriber';
-export * from './types/builder/builder.types';
+export * from './types';
 export * from './dto';
 export * from './consts';
 export * from './ui';
 export * from './services';
 export * from './config';
-
-//

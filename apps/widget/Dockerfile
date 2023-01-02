@@ -2,6 +2,7 @@ FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine
 
 WORKDIR /usr/src/app
 
+RUN apk add --no-cache bash
 RUN npm install -g pnpm@7.5.0 --loglevel notice
 
 COPY .npmrc .

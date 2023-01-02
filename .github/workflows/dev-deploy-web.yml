@@ -9,6 +9,7 @@ on:
   push:
     branches:
       - next
+      - main
     paths:
       - 'apps/web/**'
       - 'libs/shared/**'
