@@ -108,7 +108,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
                 error={fieldState.error?.message}
                 value={field.value || ''}
                 disabled={readonly}
-                description="The URL that will be opened when the user clicks the CTA button."
+                description="The URL that will be opened when user clicks the notification"
                 data-test-id="inAppRedirect"
                 label="Redirect URL"
                 placeholder="i.e /tasks/{{taskId}}"

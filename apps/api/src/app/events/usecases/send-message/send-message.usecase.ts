@@ -12,13 +12,13 @@ import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
-import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
 import {
   JobEntity,
   SubscriberRepository,
   NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
+  EnvironmentRepository,
 } from '@novu/dal';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { SendMessageDelay } from './send-message-delay.usecase';
@@ -34,6 +34,7 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { MessageMatcher } from '../trigger-event/message-matcher.service';
 
 @Injectable()
 export class SendMessage {
@@ -50,6 +51,8 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
+    private environmentRepository: EnvironmentRepository,
+    private matchMessage: MessageMatcher,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -111,7 +114,12 @@ export class SendMessage {
   private async filter(command: SendMessageCommand) {
     const data = await this.getFilterData(command);
 
-    const shouldRun = matchMessageWithFilters(command.step, data);
+    const configuration = {
+      job: command.job,
+      command,
+    };
+
+    const shouldRun = await this.matchMessage.filter(command.step, data, configuration);
 
     if (!shouldRun) {
       await this.createExecutionDetails.execute(
