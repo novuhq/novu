@@ -33,6 +33,7 @@ import { TemplateFormProvider } from './components/templates/TemplateFormProvide
 import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
+import { BrandPage } from './pages/brand/BrandPage';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -212,6 +213,16 @@ function App() {
                         <RequiredAuth>
                           <SpotLight>
                             <SubscribersList />
+                          </SpotLight>
+                        </RequiredAuth>
+                      }
+                    />
+                    <Route
+                      path="/brand"
+                      element={
+                        <RequiredAuth>
+                          <SpotLight>
+                            <BrandPage />
                           </SpotLight>
                         </RequiredAuth>
                       }
