@@ -10,7 +10,7 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import axios from 'axios';
-import { WorkflowQueueService } from '../services/workflow.queue.service';
+import { WorkflowQueueService } from '../services/workflow-queue/workflow.queue.service';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';

@@ -9,7 +9,7 @@ import { QueueNextJob } from '../queue-next-job/queue-next-job.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { RunJobCommand } from './run-job.command';
-import { shouldBackoff } from '../../services/workflow.queue.service';
+import { shouldBackoff } from '../../services/workflow-queue/workflow.queue.service';
 
 @Injectable()
 export class RunJob {
