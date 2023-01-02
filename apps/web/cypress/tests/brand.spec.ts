@@ -2,6 +2,7 @@ describe('Brand Screen', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
     cy.visit('/brand');
+    cy.intercept('*/organizations/branding').as('updateBrandingSettings');
   });
 
   it('should update logo', function () {
