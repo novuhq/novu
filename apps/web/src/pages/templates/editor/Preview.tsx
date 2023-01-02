@@ -12,7 +12,6 @@ import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useProcessVariables } from '../../../hooks/use-process-variables';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
-import { errorMessage } from '../../../utils/notifications';
 
 export const Preview = ({ activeStep, view }: { activeStep: number; view: string }) => {
   const { control } = useFormContext();
@@ -59,16 +58,12 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     mutateAsync({
       ...args,
       subject: subject ? subject : '',
-    })
-      .then((result: { html: string; subject: string }) => {
-        setContent(result.html);
-        setParsedSubject(result.subject);
+    }).then((result: { html: string; subject: string }) => {
+      setContent(result.html);
+      setParsedSubject(result.subject);
 
-        return result;
-      })
-      .catch((e: any) => {
-        errorMessage(e?.message || 'Un-expected error occurred');
-      });
+      return result;
+    });
   };
 
   useEffect(() => {

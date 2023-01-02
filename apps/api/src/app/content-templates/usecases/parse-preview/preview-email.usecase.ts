@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { IEmailBlock, OrganizationRepository, OrganizationEntity } from '@novu/dal';
+import { IEmailBlock, OrganizationRepository } from '@novu/dal';
 import { CompileTemplate } from '../compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../compile-template/compile-template.command';
 import { PreviewEmailCommand } from './preview-email.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class PreviewEmail {
@@ -18,20 +17,13 @@ export class PreviewEmail {
     }
 
     const isEditorMode = command.contentType === 'editor';
-    let subject = '';
-    let content: string | IEmailBlock[] = '';
-    let organization: OrganizationEntity;
 
-    try {
-      [organization, content] = await Promise.all([
-        this.organizationRepository.findById(command.organizationId),
-        this.getContent(isEditorMode, command.content, payload),
-      ]);
+    const [organization, content] = await Promise.all([
+      this.organizationRepository.findById(command.organizationId),
+      this.getContent(isEditorMode, command.content, payload),
+    ]);
 
-      subject = await this.renderContent(command.subject, payload);
-    } catch (e) {
-      throw new ApiException(e?.message || `Message content could not be generated`);
-    }
+    const subject = await this.renderContent(command.subject, payload);
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
