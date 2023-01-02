@@ -13,9 +13,7 @@ npm install @novu/notification-center-angular
 ```
 
 :::note
-
-Only >0.15.0 angular version is supported
-
+Novu supports Angular version >0.15.0.
 :::
 
 ## Example usage
