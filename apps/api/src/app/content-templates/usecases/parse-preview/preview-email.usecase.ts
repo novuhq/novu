@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IEmailBlock, OrganizationRepository } from '@novu/dal';
+import { IEmailBlock, OrganizationRepository, OrganizationEntity } from '@novu/dal';
 import { CompileTemplate } from '../compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../compile-template/compile-template.command';
 import { PreviewEmailCommand } from './preview-email.command';
@@ -17,8 +17,7 @@ export class PreviewEmail {
     }
 
     const isEditorMode = command.contentType === 'editor';
-
-    const [organization, content] = await Promise.all([
+    const [organization, content]: [OrganizationEntity, string | IEmailBlock[]] = await Promise.all([
       this.organizationRepository.findById(command.organizationId),
       this.getContent(isEditorMode, command.content, payload),
     ]);
