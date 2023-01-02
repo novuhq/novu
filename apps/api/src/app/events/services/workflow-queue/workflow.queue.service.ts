@@ -139,8 +139,8 @@ export class WorkflowQueueService {
   }
 
   private stepContainsFilter(data: JobEntity, onFilter: string) {
-    return data.step.filters.some((filter) => {
-      return filter.children.some((child) => {
+    return data.step.filters?.some((filter) => {
+      return filter.children?.some((child) => {
         return child.on === onFilter;
       });
     });
