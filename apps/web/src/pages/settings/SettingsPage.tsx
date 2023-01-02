@@ -8,7 +8,6 @@ import { Tabs } from '../../design-system';
 import { ApiKeysCard, InAppCenterCard } from './tabs';
 import { AuthContext } from '../../store/authContext';
 
-const BRANDING = 'Branding';
 const IN_APP_CENTER = 'In App Center';
 const API_KEYS = 'API Keys';
 
@@ -31,7 +30,7 @@ export function SettingsPage() {
       <PageMeta title="Settings" />
       <PageHeader title="Settings" />
       <Container fluid mt={15} ml={5}>
-        <Tabs loading={!currentOrganization} menuTabs={menuTabs} defaultValue={BRANDING} />
+        <Tabs loading={!currentOrganization} menuTabs={menuTabs} defaultValue={IN_APP_CENTER} />
       </Container>
     </PageContainer>
   );
