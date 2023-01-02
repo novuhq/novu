@@ -88,10 +88,7 @@ export default function TemplateEditorPage() {
 
   useEffect(() => {
     const id = localStorage.getItem('blueprintId');
-
-    if (id) {
-      setBluePrintId(id);
-    }
+    setBluePrintId(id === null ? undefined : id);
   }, [localStorage.getItem('blueprintId')]);
 
   const onConfirmSaveChanges = async (data: IForm) => {

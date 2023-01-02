@@ -5,6 +5,7 @@ import { CreateNotificationTemplate } from './create-notification-template';
 import { GetNotificationTemplate } from './get-notification-template/get-notification-template.usecase';
 import { DeleteNotificationTemplate } from './delete-notification-template/delete-notification-template.usecase';
 import { GetBlueprintNotificationTemplate } from './get-blueprint-notification-template/get-blueprint-notification-template.usecase';
+import { CreateBlueprintNotificationTemplate } from './create-blueprint-notification-template/create-blueprint-notification-template.usecase';
 
 export const USE_CASES = [
   //
@@ -15,4 +16,5 @@ export const USE_CASES = [
   GetNotificationTemplate,
   DeleteNotificationTemplate,
   GetBlueprintNotificationTemplate,
+  CreateBlueprintNotificationTemplate,
 ];

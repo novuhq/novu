@@ -17,6 +17,10 @@ export async function getBlueprintTemplateById(id: string) {
   return api.get(`/v1/notification-templates/blueprint/${id}`);
 }
 
+export async function createTemplateFromBluePrintId(id: string) {
+  return api.post(`/v1/notification-templates/blueprint/${id}`, {});
+}
+
 export async function updateTemplateStatus(templateId: string, active: boolean) {
   return api.put(`/v1/notification-templates/${templateId}/status`, { active });
 }
