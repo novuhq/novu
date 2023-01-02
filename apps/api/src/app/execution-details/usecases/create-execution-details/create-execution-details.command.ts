@@ -10,6 +10,7 @@ export enum DetailEnum {
   STEP_QUEUED = 'Step queued',
   STEP_DELAYED = 'Step delayed',
   MESSAGE_CONTENT_NOT_GENERATED = 'Message content could not be generated',
+  MESSAGE_CONTENT_SYNTAX_ERROR = 'Message content could not be generated due to syntax error in email editor',
   MESSAGE_CREATED = 'Message created',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
   SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber missing recipient details',
