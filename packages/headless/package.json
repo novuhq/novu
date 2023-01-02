@@ -31,7 +31,7 @@
     "@novu/client": "^0.10.0",
     "@novu/shared": "^0.10.0",
     "@tanstack/query-core": "^4.15.1",
-    "socket.io-client": "2.3.1"
+    "socket.io-client": "4.5.4"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.13.15",

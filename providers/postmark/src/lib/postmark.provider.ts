@@ -76,7 +76,7 @@ export class PostmarkEmailProvider implements IEmailProvider {
         (attachment) =>
           new Models.Attachment(
             attachment.name,
-            attachment.file.toString(),
+            attachment.file.toString('base64'),
             attachment.mime
           )
       ),
