@@ -46,7 +46,7 @@ Update the `.env` file with your own secrets. In particular, these are required:
 To keep the setup simple, we made some choices that may not be optimal for production:
 
 - the database is in the same machine as the servers
-- the storage uses the filesystem backend instead of S3
+- the storage uses localstack instead of S3
 
 We strongly recommend that you decouple your database before deploying.
 
