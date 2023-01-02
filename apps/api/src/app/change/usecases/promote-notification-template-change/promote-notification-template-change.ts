@@ -116,6 +116,8 @@ export class PromoteNotificationTemplateChange {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _notificationGroupId: notificationGroup._id,
+        isBlueprint: command.organizationId === process.env.BLUEPRINT_CREATOR,
+        blueprintId: newItem.blueprintId,
       });
     }
 
@@ -154,6 +156,7 @@ export class PromoteNotificationTemplateChange {
         preferenceSettings: newItem.preferenceSettings,
         steps,
         _notificationGroupId: notificationGroup._id,
+        isBlueprint: command.organizationId === process.env.BLUEPRINT_CREATOR,
       }
     );
   }

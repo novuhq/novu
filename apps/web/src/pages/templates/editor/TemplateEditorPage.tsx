@@ -19,6 +19,8 @@ import { TestWorkflowModal } from '../../../components/templates/TestWorkflowMod
 import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
 import { useDisclosure } from '@mantine/hooks';
 import { ExecutionDetailsModalWrapper } from '../../../components/templates/ExecutionDetailsModalWrapper';
+import { useSearchParams } from '../../../hooks/use-SearchParams';
+import { BluePrintModal } from '../../../components/templates/BlueprintModal';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -58,6 +60,7 @@ export default function TemplateEditorPage() {
     onTriggerModalDismiss,
   } = useTemplateController(templateId);
   const isCreateTemplatePage = location.pathname === '/templates/create';
+  const [blueprintId, setBluePrintId] = useState<undefined | string>();
 
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
 
@@ -71,6 +74,25 @@ export default function TemplateEditorPage() {
   );
   const [saveChangesModalOpened, { close: closeSaveChangesModal, open: openSaveChangesModal }] = useDisclosure(false);
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const page = searchParams.page;
+    if (page !== ActivePageEnum.WORKFLOW) {
+      return;
+    }
+
+    setActivePage(page);
+  }, [searchParams.page]);
+
+  useEffect(() => {
+    const id = localStorage.getItem('blueprintId');
+
+    if (id) {
+      setBluePrintId(id);
+    }
+  }, [localStorage.getItem('blueprintId')]);
 
   const onConfirmSaveChanges = async (data: IForm) => {
     await onSubmit(data);
@@ -187,6 +209,7 @@ export default function TemplateEditorPage() {
         cancelNavigation={cancelNavigation}
         confirmNavigation={confirmNavigation}
       />
+      <BluePrintModal blueprintId={blueprintId} />
     </>
   );
 }

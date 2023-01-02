@@ -13,6 +13,10 @@ export async function getTemplateById(id: string) {
   return api.get(`/v1/notification-templates/${id}`);
 }
 
+export async function getBlueprintTemplateById(id: string) {
+  return api.get(`/v1/notification-templates/blueprint/${id}`);
+}
+
 export async function updateTemplateStatus(templateId: string, active: boolean) {
   return api.put(`/v1/notification-templates/${templateId}/status`, { active });
 }

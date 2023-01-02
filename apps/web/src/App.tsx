@@ -1,8 +1,8 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
-import { Route, Routes, Navigate, BrowserRouter, useLocation } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
@@ -12,7 +12,7 @@ import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import HomePage from './pages/HomePage';
-import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
+import TemplateEditorPage, { ActivePageEnum } from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
@@ -33,6 +33,7 @@ import { TemplateFormProvider } from './components/templates/TemplateFormProvide
 import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
+import { useSearchParams } from './hooks/use-SearchParams';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -237,8 +238,30 @@ function jwtHasKey(key: string) {
 }
 
 function RequiredAuth({ children }: any) {
+  const searchParams = useSearchParams();
   const { logout } = useContext(AuthContext);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const id = localStorage.getItem('blueprintId');
+    const token = getToken();
+
+    if (id && token) {
+      navigate(`/templates/create?page=${ActivePageEnum.WORKFLOW}`, {
+        replace: true,
+      });
+    }
+  }, [localStorage.getItem('blueprintId'), getToken()]);
+
+  useEffect(() => {
+    if (searchParams.blueprintId) {
+      localStorage.setItem('blueprintId', searchParams.blueprintId);
+      navigate(`/templates/create?page=${ActivePageEnum.WORKFLOW}`, {
+        replace: true,
+      });
+    }
+  }, [searchParams.blueprintId]);
 
   // TODO: remove after env migration
   const payload = getTokenPayload();

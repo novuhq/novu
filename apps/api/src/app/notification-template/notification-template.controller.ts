@@ -36,6 +36,8 @@ import { NotificationTemplatesResponseDto } from './dto/notification-templates.r
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { NotificationTemplatesRequestDto } from './dto/notification-templates-request.dto';
 import { Roles } from '../auth/framework/roles.decorator';
+import { GetBlueprintNotificationTemplate } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.usecase';
+import { GetBlueprintNotificationTemplateCommand } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.command';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -48,7 +50,8 @@ export class NotificationTemplateController {
     private getNotificationTemplateUsecase: GetNotificationTemplate,
     private updateTemplateByIdUsecase: UpdateNotificationTemplate,
     private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
-    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus
+    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus,
+    private getBlueprintNotificationTemplate: GetBlueprintNotificationTemplate
   ) {}
 
   @Get('')
@@ -140,6 +143,28 @@ export class NotificationTemplateController {
   ): Promise<NotificationTemplateResponse> {
     return this.getNotificationTemplateUsecase.execute(
       GetNotificationTemplateCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        templateId,
+      })
+    );
+  }
+
+  @Get('/blueprint/:templateId')
+  @ApiOkResponse({
+    type: NotificationTemplateResponse,
+  })
+  @ApiOperation({
+    summary: 'Get blueprint notification template',
+  })
+  @ExternalApiAccessible()
+  getNotificationTemplateBlueprintById(
+    @UserSession() user: IJwtPayload,
+    @Param('templateId') templateId: string
+  ): Promise<NotificationTemplateResponse> {
+    return this.getBlueprintNotificationTemplate.execute(
+      GetBlueprintNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
