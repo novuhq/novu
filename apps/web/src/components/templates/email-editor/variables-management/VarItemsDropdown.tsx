@@ -54,7 +54,7 @@ export const VarItemsDropdown = ({ name, type }) => {
             }
 
             return (
-              <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? <Check /> : <Copy />}>
+              <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? <Check /> : <Copy />} key={index}>
                 <ActionIcon
                   variant="transparent"
                   onClick={() => idClipboard.copy(`${name}.${key}`)}

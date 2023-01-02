@@ -66,7 +66,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
           }
 
           return (
-            <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? <Check /> : <Copy />}>
+            <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? <Check /> : <Copy />} key={index}>
               <ActionIcon
                 variant="transparent"
                 onClick={() => idClipboard.copy(`${name}`)}
@@ -90,7 +90,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
             }
 
             return (
-              <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? <Check /> : <Copy />}>
+              <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? <Check /> : <Copy />} key={ind}>
                 <ActionIcon
                   variant="transparent"
                   onClick={() => idClipboard.copy(`${name}`)}
