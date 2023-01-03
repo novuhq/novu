@@ -31,7 +31,7 @@
     "@nestjs/platform-socket.io": "^9.2.1",
     "@nestjs/swagger": "^4.8.0",
     "@nestjs/terminus": "^7.2.0",
-    "@nestjs/websockets": "^7.6.17",
+    "@nestjs/websockets": "^9.2.1",
     "@novu/dal": "^0.10.0",
     "@novu/shared": "^0.10.0",
     "@novu/testing": "^0.10.0",

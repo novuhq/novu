@@ -37,7 +37,6 @@ import { SendMessageBase } from './send-message.base';
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
   channelType = ChannelTypeEnum.PUSH;
-  private pushFactory = new PushFactory();
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
@@ -96,17 +95,7 @@ export class SendMessagePush extends SendMessageBase {
         })
       );
     } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify(data),
-        })
-      );
+      await this.sendErrorHandlebars(command.job, e.message);
 
       return;
     }
@@ -277,7 +266,8 @@ export class SendMessagePush extends SendMessageBase {
     );
 
     try {
-      const pushHandler = this.pushFactory.getHandler(integration);
+      const pushFactory = new PushFactory();
+      const pushHandler = pushFactory.getHandler(integration);
       const result = await pushHandler.send({
         target: (overrides as { deviceTokens?: string[] }).deviceTokens || target,
         title,
