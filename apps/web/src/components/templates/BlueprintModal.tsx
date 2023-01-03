@@ -13,7 +13,9 @@ export function BluePrintModal({ blueprintId }: { blueprintId?: string }) {
   const navigate = useNavigate();
   const onClose = () => {
     localStorage.removeItem('blueprintId');
-    navigate('/templates');
+    navigate('/templates', {
+      replace: true,
+    });
   };
 
   const { data: blueprint, isInitialLoading: isBluePrintLoading } = useQuery(
@@ -29,7 +31,9 @@ export function BluePrintModal({ blueprintId }: { blueprintId?: string }) {
     onSuccess: (template) => {
       localStorage.removeItem('blueprintId');
       if (template) {
-        navigate(`/templates/edit/${template?._id}?page=${ActivePageEnum.WORKFLOW}`);
+        navigate(`/templates/edit/${template?._id}?page=${ActivePageEnum.WORKFLOW}`, {
+          replace: true,
+        });
       }
     },
     onError: (err: any) => {
