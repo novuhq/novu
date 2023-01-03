@@ -11,7 +11,7 @@
     "build:watch": "rollup -c -w",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
-    "test": "jest --env=jsdom"
+    "test": "jest"
   },
   "author": "",
   "license": "ISC",

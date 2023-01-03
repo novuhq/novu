@@ -65,7 +65,7 @@ export function NovuProvider({
 
   const { socket, initializeSocket } = useInitializeSocket({ socketUrl });
 
-  const onSuccessfullSession = useCallback(
+  const onSuccessfulSession = useCallback(
     (newSession: ISession) => {
       applyToken({ apiService, token: newSession.token });
       initializeSocket(newSession);
@@ -102,7 +102,7 @@ export function NovuProvider({
   return (
     <QueryClientProvider client={queryClient}>
       <NovuContext.Provider value={contextValue}>
-        <SessionInitializer onSuccess={onSuccessfullSession}>
+        <SessionInitializer onSuccess={onSuccessfulSession}>
           <NotificationsProvider stores={stores}>
             <NovuI18NProvider i18n={i18n}>
               <StylesProvider styles={styles}>{children}</StylesProvider>
