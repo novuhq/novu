@@ -25,8 +25,11 @@ jobs:
           version: 7.5.0
           run_install: true
 
-      - name: Build
-        run: pnpm run build
+      - uses: mansagroup/nrwl-nx-action@v2
+        with:
+          targets: build
+          projects: "@novu/node"
+          nxCloud: true
 
       - name: Test
         working-directory: "packages/node"
