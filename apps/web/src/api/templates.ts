@@ -14,11 +14,11 @@ export async function getTemplateById(id: string) {
 }
 
 export async function getBlueprintTemplateById(id: string) {
-  return api.get(`/v1/notification-templates/blueprint/${id}`);
+  return api.get(`/v1/notification-templates/${id}/blueprint`);
 }
 
 export async function createTemplateFromBluePrintId(id: string) {
-  return api.post(`/v1/notification-templates/blueprint/${id}`, {});
+  return api.post(`/v1/notification-templates/${id}/blueprint`, {});
 }
 
 export async function updateTemplateStatus(templateId: string, active: boolean) {

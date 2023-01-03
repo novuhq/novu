@@ -153,7 +153,7 @@ export class NotificationTemplateController {
     );
   }
 
-  @Get('/blueprint/:templateId')
+  @Get('/:templateId/blueprint')
   @ApiOkResponse({
     type: NotificationTemplateResponse,
   })
@@ -175,7 +175,7 @@ export class NotificationTemplateController {
     );
   }
 
-  @Post('/blueprint/:templateId')
+  @Post('/:templateId/blueprint')
   @ApiOkResponse({
     type: NotificationTemplateResponse,
   })
