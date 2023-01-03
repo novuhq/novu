@@ -5,7 +5,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-export const SegmentContext = React.createContext<SegmentService>(undefined!);
+export const SegmentContext = React.createContext<SegmentService>(undefined as any);
 
 export const SegmentProvider = ({ children }: Props) => {
   const segment = React.useMemo(() => new SegmentService(), []);
