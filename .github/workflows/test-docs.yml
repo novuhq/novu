@@ -38,13 +38,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - uses: mansagroup/nrwl-nx-action@v2
+      - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint
           projects: "@novu/docs"
           nxCloud: true
 
-      - uses: mansagroup/nrwl-nx-action@v2
+      - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: build
           projects: "@novu/docs"
