@@ -54,7 +54,7 @@ jobs:
     - name: Install dependencies
       run: pnpm install
 
-    - uses: mansagroup/nrwl-nx-action@v2
+    - uses: mansagroup/nrwl-nx-action@v3
       with:
         targets: lint
         projects: "@novu/api"

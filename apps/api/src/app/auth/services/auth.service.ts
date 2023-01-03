@@ -70,6 +70,10 @@ export class AuthService {
       if (distinctId) {
         this.analyticsService.alias(distinctId, user._id);
       }
+
+      this.analyticsService.track('[Authentication] - Signup', user._id, {
+        loginType: authProvider,
+      });
     } else {
       this.analyticsService.track('[Authentication] - Login', user._id, {
         loginType: authProvider,

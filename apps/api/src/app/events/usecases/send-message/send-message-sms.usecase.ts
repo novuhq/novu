@@ -37,7 +37,6 @@ import { SendMessageBase } from './send-message.base';
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
   channelType = ChannelTypeEnum.SMS;
-  private smsFactory = new SmsFactory();
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
@@ -98,17 +97,7 @@ export class SendMessageSms extends SendMessageBase {
         })
       );
     } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify(payload),
-        })
-      );
+      await this.sendErrorHandlebars(command.job, e.message);
 
       return;
     }
@@ -284,7 +273,8 @@ export class SendMessageSms extends SendMessageBase {
     overrides: object
   ) {
     try {
-      const smsHandler = this.smsFactory.getHandler(integration);
+      const smsFactory = new SmsFactory();
+      const smsHandler = smsFactory.getHandler(integration);
 
       const result = await smsHandler.send({
         to: phone,

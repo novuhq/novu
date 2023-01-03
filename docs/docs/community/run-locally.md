@@ -159,7 +159,7 @@ The script can be run on its own without any previously dependency installed, as
 - Will create a local development domain `local.novu.co` in your local machine
 - Will clone Novu repository in your local machine (skippable step) to a selected folder `$HOME/Dev`
 
-:::warn
+:::warning
 
 This script has only been thoroughly tested in MacOSx. Little testing has been run in GNU Linux.
 
