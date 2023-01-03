@@ -23,7 +23,17 @@ novu.trigger('event-name', {
     subscriberId: '...',
   },
   payload: {
-    abc: 'def',
+    abc: 'def', // If the notification is a data notification, the payload will be sent as the data
+  },
+  overrides: {
+    fcm: {
+      type: 'notification',
+      // type: 'data' => will turn this into a FCM data notification, where the payload is sent as a data notification
+      data: {
+        key: 'value',
+        // If type is "notification", you can use the "data" override to send notification messages with optional data payload
+      },
+    },
   },
 });
 ```
@@ -38,7 +48,6 @@ import { Novu, PushProviderIdEnum } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-const body = req.body; // From your HTTPS listener
 await novu.subscribers.setCredentials('subscriberId', PushProviderIdEnum.FCM, {
   deviceTokens: ['token1', 'token2'],
 });

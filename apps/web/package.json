@@ -45,6 +45,7 @@
     "@mantine/spotlight": "^5.7.1",
     "@novu/notification-center": "^0.10.0",
     "@novu/shared": "^0.10.0",
+    "@segment/analytics-next": "^1.48.0",
     "@sentry/react": "^6.3.1",
     "@sentry/tracing": "^6.3.1",
     "@storybook/addon-docs": "^6.4.19",
