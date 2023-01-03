@@ -7,8 +7,9 @@ import { createTemplateFromBluePrintId, getBlueprintTemplateById } from '../../a
 import { When } from '../utils/When';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { errorMessage } from '../../utils/notifications';
+import { useEffect, useState } from 'react';
 
-export function BluePrintModal({ blueprintId }: { blueprintId?: string }) {
+export function BlueprintModal() {
   const theme = useMantineTheme();
   const navigate = useNavigate();
   const onClose = () => {
@@ -17,6 +18,13 @@ export function BluePrintModal({ blueprintId }: { blueprintId?: string }) {
       replace: true,
     });
   };
+
+  const [blueprintId, setBluePrintId] = useState<undefined | string>();
+
+  useEffect(() => {
+    const id = localStorage.getItem('blueprintId');
+    setBluePrintId(id === null ? undefined : id);
+  }, [localStorage.getItem('blueprintId')]);
 
   const { data: blueprint, isInitialLoading: isBluePrintLoading } = useQuery(
     ['blueprint', blueprintId],

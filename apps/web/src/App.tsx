@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
@@ -33,7 +33,7 @@ import { TemplateFormProvider } from './components/templates/TemplateFormProvide
 import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
-import { useSearchParams } from './hooks/use-SearchParams';
+import { useBlueprint } from './hooks/useBlueprint';
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -238,30 +238,9 @@ function jwtHasKey(key: string) {
 }
 
 function RequiredAuth({ children }: any) {
-  const searchParams = useSearchParams();
+  useBlueprint();
   const { logout } = useContext(AuthContext);
   const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const id = localStorage.getItem('blueprintId');
-    const token = getToken();
-
-    if (id && token) {
-      navigate(`/templates/create?page=${ActivePageEnum.WORKFLOW}`, {
-        replace: true,
-      });
-    }
-  }, [localStorage.getItem('blueprintId'), getToken()]);
-
-  useEffect(() => {
-    if (searchParams.blueprintId) {
-      localStorage.setItem('blueprintId', searchParams.blueprintId);
-      navigate(`/templates/create?page=${ActivePageEnum.WORKFLOW}`, {
-        replace: true,
-      });
-    }
-  }, [searchParams.blueprintId]);
 
   // TODO: remove after env migration
   const payload = getTokenPayload();
