@@ -93,5 +93,5 @@ Novu manages a data model to help your users configure their preferences in an e
 
 <details>
   <summary>How to get subscriber properties before step execution in workflow</summary>
-  <p>Workflow has access to all existing properties of subscriber as well as payload variables. So there is no any extra step needed</p>
+  <p>Workflow has access to all existing properties of subscriber as well as payload variables. So no extra steps are needed</p>
 </details>

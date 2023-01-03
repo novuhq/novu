@@ -65,7 +65,5 @@ Component HTML template:
 The `notification-center-component` accepts the same set of props as the [Web Component](./web-component#properties).
 
 :::info
-
-May need to add "allowSyntheticDefaultImports": true in tsconfig.json and <i>@types/react</i> as dev dependency to work angular component properly.
-
+May need to add "allowSyntheticDefaultImports": true in tsconfig.json and <i>@types/react</i> as dev dependency for the angular component to work properly
 :::
