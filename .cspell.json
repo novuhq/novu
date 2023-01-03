@@ -197,7 +197,9 @@
     "getsentry",
     "martinbeentjes",
     "varvalue",
-    "varname"
+    "varname",
+    "EVENT",
+    "TRANSID"
   ],
   "flagWords": [],
   "patterns": [
