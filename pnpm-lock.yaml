@@ -1657,6 +1657,7 @@ importers:
       jest: ^29.3.1
       jest-environment-jsdom: ^29.3.1
       jest-transform-stub: ^2.0.0
+      lodash.clonedeep: ^4.5.0
       lodash.merge: ^4.6.2
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -1686,6 +1687,7 @@ importers:
       axios: 0.26.1
       chroma-js: 2.4.2
       date-fns: 2.29.1
+      lodash.clonedeep: 4.5.0
       lodash.merge: 4.6.2
       react-infinite-scroll-component: 6.1.0_react@17.0.2
       react-query: 3.34.19_sfoxds7t5ydpegc3knd667wn6m
@@ -18209,7 +18211,7 @@ packages:
     engines: {node: ^8.13.0 || >=10.10.0}
     dependencies:
       '@grpc/proto-loader': 0.6.9
-      '@types/node': 18.6.1
+      '@types/node': 18.11.13
     dev: false
 
   /@grpc/grpc-js/1.6.8:
@@ -27773,7 +27775,7 @@ packages:
   /@types/jsonwebtoken/8.5.8:
     resolution: {integrity: sha512-zm6xBQpFDIDM6o9r6HSgDeIcLy82TKWctCXEPbJJcXb5AKmi5BNNdLXneixK4lplX3PqIVcwLBCGE/kAGnlD4A==}
     dependencies:
-      '@types/node': 18.6.1
+      '@types/node': 18.11.13
 
   /@types/jsonwebtoken/8.5.9:
     resolution: {integrity: sha512-272FMnFGzAVMGtu9tkr29hRL6bZj4Zs1KZNeHLnKqAvp06tAIcarTMwOh8/8bz4FmKRcMxZhZNeUAQsNLoiPhg==}
