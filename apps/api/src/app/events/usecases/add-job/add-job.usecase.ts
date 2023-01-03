@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum, DigestUnitEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { WorkflowQueueService } from '../../services/workflow.queue.service';
+import { WorkflowQueueService } from '../../services/workflow-queue/workflow.queue.service';
 import { AddDelayJob } from './add-delay-job.usecase';
 import { AddDigestJob } from './add-digest-job.usecase';
 import { AddJobCommand } from './add-job.command';
@@ -53,6 +53,7 @@ export class AddJob {
     );
 
     await this.workflowQueueService.addToQueue(job._id, job, delay);
+
     if (delay) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
