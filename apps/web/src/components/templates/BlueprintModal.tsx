@@ -52,6 +52,8 @@ export function BlueprintModal() {
     },
   });
 
+  const isLoading = isBluePrintLoading || isCreating;
+
   return (
     <>
       <Modal
@@ -69,8 +71,8 @@ export function BlueprintModal() {
             paddingTop: '180px',
           },
         }}
-        withCloseButton={!isBluePrintLoading && !isCreating}
-        closeOnClickOutside={!isBluePrintLoading && !isCreating}
+        withCloseButton={!isLoading}
+        closeOnClickOutside={!isLoading}
         title={<Title size={2}>{isBluePrintLoading ? 'Loading template' : `Create ${blueprint?.name} template`}</Title>}
         sx={{ backdropFilter: 'blur(10px)' }}
         shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
@@ -78,12 +80,12 @@ export function BlueprintModal() {
         size="lg"
         onClose={onClose}
       >
-        <When truthy={isBluePrintLoading || isCreating}>
+        <When truthy={isLoading}>
           <Center>
             <Loader color={colors.B70} mb={20} mt={20} size={32} />
           </Center>
         </When>
-        <When truthy={!isBluePrintLoading && !isCreating}>
+        <When truthy={!isLoading}>
           <Text>{blueprint?.description}</Text>
           <Button
             onClick={() => {
