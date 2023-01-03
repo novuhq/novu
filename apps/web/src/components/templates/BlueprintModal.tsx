@@ -26,8 +26,7 @@ export function BluePrintModal({ blueprintId }: { blueprintId?: string }) {
   );
 
   const { mutate, isLoading: isCreating } = useMutation(createTemplateFromBluePrintId, {
-    onSuccess: (template, ...args) => {
-      console.log(template, args);
+    onSuccess: (template) => {
       localStorage.removeItem('blueprintId');
       if (template) {
         navigate(`/templates/edit/${template?._id}?page=${ActivePageEnum.WORKFLOW}`);
