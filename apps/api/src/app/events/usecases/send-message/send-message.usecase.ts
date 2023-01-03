@@ -80,18 +80,20 @@ export class SendMessage {
       );
     }
 
-    this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
-      _template: command.job._templateId,
-      _organization: command.organizationId,
-      _subscriber: command.job?._subscriberId,
-      provider: command.job?.providerId,
-      delay: command.job?.delay,
-      jobType: command.job?.type,
-      digestType: command.job.digest?.type,
-      digestEventsCount: command.job.digest?.events?.length,
-      digestUnit: command.job.digest?.unit,
-      digestAmount: command.job.digest?.amount,
-    });
+    if (!command.payload?.$on_boarding_trigger) {
+      this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
+        _template: command.job._templateId,
+        _organization: command.organizationId,
+        _subscriber: command.job?._subscriberId,
+        provider: command.job?.providerId,
+        delay: command.job?.delay,
+        jobType: command.job?.type,
+        digestType: command.job.digest?.type,
+        digestEventsCount: command.job.digest?.events?.length,
+        digestUnit: command.job.digest?.unit,
+        digestAmount: command.job.digest?.amount,
+      });
+    }
 
     switch (command.step.template.type) {
       case StepTypeEnum.SMS:
