@@ -49,7 +49,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     const requestQuery: EnforceEnvironmentQuery = {
       _id: id,
       isBlueprint: true,
-      _organizationId: process.env.BLUEPRINT_CREATOR,
+      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId(),
     };
 
     const item = await NotificationTemplate.findOne(requestQuery).populate('steps.template');
@@ -60,7 +60,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   async getBlueprintList(skip = 0, limit = 10) {
     const requestQuery: EnforceEnvironmentQuery = {
       isBlueprint: true,
-      _organizationId: process.env.BLUEPRINT_CREATOR,
+      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId(),
     };
 
     const totalItemsCount = await this.count(requestQuery);
@@ -112,5 +112,9 @@ export class NotificationTemplateRepository extends BaseRepository<
     const res = await this.notificationTemplate.findDeleted(query);
 
     return this.mapEntity(res);
+  }
+
+  public static getBlueprintOrganizationId(): string {
+    return process.env.BLUEPRINT_CREATOR;
   }
 }

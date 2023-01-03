@@ -127,6 +127,6 @@ export class CreateBlueprintNotificationTemplate {
   }
 
   private getBlueprintOrganizationId(): string {
-    return process.env.BLUEPRINT_CREATOR;
+    return NotificationTemplateRepository.getBlueprintOrganizationId();
   }
 }
