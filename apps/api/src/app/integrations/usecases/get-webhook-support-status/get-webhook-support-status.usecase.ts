@@ -1,12 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
-import { MailFactory, SmsFactory, ISmsHandler, IMailHandler } from '@novu/application-generic';
+import { IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
 import { GetWebhookSupportStatusCommand } from './get-webhook-support-status.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class GetWebhookSupportStatus {
   public readonly mailFactory = new MailFactory();
   public readonly smsFactory = new SmsFactory();

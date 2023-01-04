@@ -33,6 +33,7 @@ import {
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
@@ -58,20 +59,23 @@ export class SendMessageChat extends SendMessageBase {
 
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    if (!subscriber) throw new ApiException('Subscriber not found');
 
     Sentry.addBreadcrumb({
       message: 'Sending Chat',
     });
     const chatChannel: NotificationStepEntity = command.step;
+    if (!chatChannel || !chatChannel.template) throw new ApiException('Chat channel template not found');
+
     const notification = await this.notificationRepository.findById(command.notificationId);
 
     let content = '';
     const data = {
       subscriber: subscriber,
       step: {
-        digest: !!command.events.length,
+        digest: !!command.events?.length,
         events: command.events,
-        total_count: command.events.length,
+        total_count: command.events?.length,
       },
       ...command.payload,
     };
@@ -90,9 +94,10 @@ export class SendMessageChat extends SendMessageBase {
       return;
     }
 
-    const chatChannels = subscriber.channels.filter((chan) =>
-      Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
-    );
+    const chatChannels =
+      subscriber.channels?.filter((chan) =>
+        Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
+      ) || [];
 
     if (chatChannels.length === 0) {
       await this.createExecutionDetails.execute(

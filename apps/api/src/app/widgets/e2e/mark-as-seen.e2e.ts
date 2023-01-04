@@ -1,4 +1,4 @@
-import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { MessageRepository, NotificationTemplateEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { ChannelTypeEnum } from '@novu/shared';
@@ -52,7 +52,7 @@ describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => 
       }
     );
 
-    const modifiedMessage = await messageRepository.findById(messageId);
+    const modifiedMessage = (await messageRepository.findById(messageId)) as MessageEntity;
 
     expect(modifiedMessage.seen).to.equal(true);
     expect(modifiedMessage.lastSeenDate).to.be.ok;

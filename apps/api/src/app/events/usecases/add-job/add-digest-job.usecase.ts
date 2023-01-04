@@ -9,6 +9,7 @@ import { CreateExecutionDetails } from '../../../execution-details/usecases/crea
 import { AddJobCommand } from './add-job.command';
 import { AddJob } from './add-job.usecase';
 import { ShouldAddDigestJob } from './should-add-digest-job.usecase';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class AddDigestJob {
@@ -20,8 +21,9 @@ export class AddDigestJob {
 
   public async execute(command: AddJobCommand): Promise<number | undefined> {
     const data = await this.jobRepository.findById(command.jobId);
+    if (!data) throw new ApiException('Job not found');
 
-    const isValidDigestStep = data.type === StepTypeEnum.DIGEST && data.digest.amount && data.digest.unit;
+    const isValidDigestStep = data.type === StepTypeEnum.DIGEST && data.digest?.amount && data.digest.unit;
     if (!isValidDigestStep || !data) {
       return undefined;
     }
@@ -42,7 +44,11 @@ export class AddDigestJob {
 
       return undefined;
     }
+
     await this.jobRepository.updateStatus(command.organizationId, data._id, JobStatusEnum.DELAYED);
+    if (!data.digest?.amount || !data.digest?.unit) {
+      throw new ApiException('Invalid digest amount or unit');
+    }
 
     return AddJob.toMilliseconds(data.digest.amount, data.digest.unit);
   }

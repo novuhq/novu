@@ -34,6 +34,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -54,12 +55,18 @@ export class SendMessageInApp extends SendMessageBase {
 
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    if (!subscriber) throw new ApiException('Subscriber not found');
+    if (!command.step.template) throw new ApiException('Template not found');
 
     Sentry.addBreadcrumb({
       message: 'Sending In App',
     });
     const notification = await this.notificationRepository.findById(command.notificationId);
+    if (!notification) throw new ApiException('Notification not found');
+
     const inAppChannel: NotificationStepEntity = command.step;
+    if (!inAppChannel.template) throw new ApiException('Template not found');
+
     let content = '';
 
     const { actor } = command.step.template;
@@ -114,7 +121,7 @@ export class SendMessageInApp extends SendMessageBase {
       _feedId: inAppChannel.template._feedId,
     });
 
-    let message: MessageEntity;
+    let message: MessageEntity | null = null;
 
     this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
@@ -162,6 +169,8 @@ export class SendMessageInApp extends SendMessageBase {
       );
       message = await this.messageRepository.findById(oldMessage._id);
     }
+
+    if (!message) throw new ApiException('Message not found');
 
     await this.queueService.wsSocketQueue.add({
       event: 'notification_received',
@@ -263,9 +272,9 @@ export class SendMessageInApp extends SendMessageBase {
         data: {
           subscriber,
           step: {
-            digest: !!command.events.length,
+            digest: !!command.events?.length,
             events: command.events,
-            total_count: command.events.length,
+            total_count: command.events?.length,
           },
           ...payload,
         },
@@ -281,7 +290,7 @@ export class SendMessageInApp extends SendMessageBase {
     const actorId = command.job?._actorId;
     if (actor.type === ActorTypeEnum.USER && actorId) {
       try {
-        const actorSubscriber: SubscriberEntity = await this.subscriberRepository.findOne(
+        const actorSubscriber: SubscriberEntity | null = await this.subscriberRepository.findOne(
           {
             _environmentId: command.environmentId,
             _id: actorId,

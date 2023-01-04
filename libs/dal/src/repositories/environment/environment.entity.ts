@@ -8,7 +8,7 @@ export interface IWidgetSettings {
 }
 
 export class EnvironmentEntity {
-  _id?: string;
+  _id: string;
 
   name: string;
 

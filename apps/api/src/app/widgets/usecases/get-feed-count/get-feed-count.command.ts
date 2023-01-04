@@ -4,7 +4,7 @@ import { IsArray, IsOptional } from 'class-validator';
 export class GetFeedCountCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @IsArray()
-  feedId: string[];
+  feedId?: string[];
 
   @IsOptional()
   seen?: boolean;
