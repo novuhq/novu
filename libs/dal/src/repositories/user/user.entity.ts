@@ -23,13 +23,13 @@ export class UserEntity {
 
   resetTokenCount?: IUserResetTokenCount;
 
-  firstName: string;
+  firstName?: string | null;
 
-  lastName: string;
+  lastName?: string | null;
 
-  email: string;
+  email?: string | null;
 
-  profilePicture: string;
+  profilePicture?: string | null;
 
   @Exclude({ toPlainOnly: true })
   tokens: IUserToken[];

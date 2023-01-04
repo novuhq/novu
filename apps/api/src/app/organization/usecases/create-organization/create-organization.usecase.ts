@@ -10,6 +10,7 @@ import { AddMember } from '../membership/add-member/add-member.usecase';
 import { CreateOrganizationCommand } from './create-organization.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -31,6 +32,7 @@ export class CreateOrganization {
     organization.name = command.name;
 
     const user = await this.userRepository.findById(command.userId);
+    if (!user) throw new ApiException('User not found');
 
     const createdOrganization = await this.organizationRepository.create(organization);
 
@@ -71,6 +73,6 @@ export class CreateOrganization {
       })
     );
 
-    return organizationAfterChanges;
+    return organizationAfterChanges as OrganizationEntity;
   }
 }

@@ -104,7 +104,7 @@ export class TriggerEvent {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    const jobs: JobEntity[][] = [];
+    const jobs: Omit<JobEntity, '_id'>[][] = [];
 
     for (const subscriberToTrigger of command.to) {
       jobs.push(
@@ -150,11 +150,11 @@ export class TriggerEvent {
     };
   }
 
-  private async storeAndAddJob(jobs: JobEntity[]) {
+  private async storeAndAddJob(jobs: Omit<JobEntity, '_id'>[]) {
     const storedJobs = await this.jobRepository.storeJobs(jobs);
     const channels = storedJobs
-      .map((item) => item.type)
-      .reduce((list, channel) => {
+      .map((item) => item.type as StepTypeEnum)
+      .reduce<StepTypeEnum[]>((list, channel) => {
         if (list.includes(channel) || channel === StepTypeEnum.TRIGGER) {
           return list;
         }

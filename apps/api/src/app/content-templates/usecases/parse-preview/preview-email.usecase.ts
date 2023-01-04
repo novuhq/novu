@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { IEmailBlock, OrganizationRepository, OrganizationEntity } from '@novu/dal';
 import { CompileTemplate } from '../compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../compile-template/compile-template.command';
@@ -20,7 +20,7 @@ export class PreviewEmail {
     const isEditorMode = command.contentType === 'editor';
     let subject = '';
     let content: string | IEmailBlock[] = '';
-    let organization: OrganizationEntity;
+    let organization: OrganizationEntity | null;
 
     try {
       [organization, content] = await Promise.all([
@@ -32,6 +32,8 @@ export class PreviewEmail {
     } catch (e) {
       throw new ApiException(e?.message || `Message content could not be generated`);
     }
+
+    if (!organization) throw new NotFoundException(`Organization ${command.organizationId} not found`);
 
     const html = await this.compileTemplate.execute(
       CompileTemplateCommand.create({

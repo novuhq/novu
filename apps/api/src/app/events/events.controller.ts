@@ -123,7 +123,7 @@ export class EventsController {
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
     await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
-    const mappedActor = this.mapActor(body.actor);
+    const mappedActor = body.actor ? this.mapActor(body.actor) : null;
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -185,8 +185,8 @@ export class EventsController {
     );
   }
 
-  private mapActor(actor: TriggerRecipientSubscriber): ISubscribersDefine {
-    if (!actor) return;
+  private mapActor(actor?: TriggerRecipientSubscriber | null): ISubscribersDefine | null {
+    if (!actor) return null;
 
     return this.mapTriggerRecipients.mapSubscriber(actor);
   }

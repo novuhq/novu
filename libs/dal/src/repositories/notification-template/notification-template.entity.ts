@@ -12,7 +12,7 @@ import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 
 export class NotificationTemplateEntity {
-  _id?: string;
+  _id: string;
 
   name: string;
 
@@ -85,7 +85,7 @@ export class NotificationStepEntity {
 
   filters?: StepFilter[];
 
-  _parentId?: string;
+  _parentId?: string | null;
 
   metadata?: {
     amount?: number;

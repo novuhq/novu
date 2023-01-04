@@ -14,13 +14,13 @@ export class DigestFilterSteps {
 
   public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
     const matchedSteps = command.steps.filter((step) => step.active === true);
-    const digestStep = matchedSteps.find((step) => step.template.type === StepTypeEnum.DIGEST);
+    const digestStep = matchedSteps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
 
     if (!digestStep) {
       return matchedSteps;
     }
 
-    const type = digestStep.metadata.type;
+    const type = digestStep?.metadata?.type;
     if (type === DigestTypeEnum.REGULAR) {
       return this.filterStepsRegular.execute({
         ...command,
@@ -42,7 +42,7 @@ export class DigestFilterSteps {
         _creatorId: command.userId,
         type: StepTypeEnum.TRIGGER,
         content: '',
-      },
+      } as any,
       _templateId: command.templateId,
     };
   }

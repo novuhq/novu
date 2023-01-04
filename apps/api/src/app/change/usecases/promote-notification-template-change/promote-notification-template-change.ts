@@ -39,7 +39,7 @@ export class PromoteNotificationTemplateChange {
       },
     });
 
-    const missingMessages = [];
+    const missingMessages: string[] = [];
 
     const mapNewStepItem = (step: NotificationStepEntity) => {
       const oldMessage = messages.find((message) => {

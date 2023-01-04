@@ -33,6 +33,7 @@ import {
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
@@ -59,6 +60,8 @@ export class SendMessageSms extends SendMessageBase {
 
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    if (!subscriber) throw new ApiException('Subscriber not found');
+
     const integration = await this.getIntegration(
       GetDecryptedIntegrationsCommand.create({
         organizationId: command.organizationId,
@@ -74,14 +77,17 @@ export class SendMessageSms extends SendMessageBase {
     });
 
     const smsChannel: NotificationStepEntity = command.step;
+    if (!smsChannel.template) throw new ApiException(`Unexpected error: SMS template is missing`);
+
     const notification = await this.notificationRepository.findById(command.notificationId);
+    if (!notification) throw new ApiException(`Unexpected error: Notification not found`);
 
     const payload = {
       subscriber: subscriber,
       step: {
-        digest: !!command.events.length,
+        digest: !!command.events?.length,
         events: command.events,
-        total_count: command.events.length,
+        total_count: command.events?.length,
       },
       ...command.payload,
     };
