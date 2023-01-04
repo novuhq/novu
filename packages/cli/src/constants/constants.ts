@@ -31,7 +31,7 @@ export const GITHUB_DOCKER_URL = 'https://github.com/novuhq/novu/tree/main/docke
 
 // segment analytics
 export const ANALYTICS_ENABLED = process.env.ANALYTICS_ENABLED === 'false' ? false : true;
-export const SEGMENTS_WRITE_KEY = 'tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW';
+export const SEGMENTS_WRITE_KEY = process.env.CLI_SEGMENT_WRITE_KEY || 'tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW';
 
 let SERVER_PORT;
 
