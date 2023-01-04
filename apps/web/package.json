@@ -67,6 +67,7 @@
     "chart.js": "^3.7.1",
     "customize-cra": "^1.0.0",
     "date-fns": "^2.29.2",
+    "dotenv": "^8.2.0",
     "graphql": "^15.4.0",
     "html-webpack-plugin": "5.5.0",
     "jwt-decode": "^3.1.2",

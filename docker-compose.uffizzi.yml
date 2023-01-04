@@ -1,0 +1,147 @@
+version: "3"
+
+# uffizzi integration
+x-uffizzi:
+  ingress:
+    service: nginx
+    port: 8081
+
+services:
+
+  nginx:
+    image: "nginx:alpine"
+    ports:
+      - 8081:8081
+    volumes:
+      - ./nginx-uffizzi:/etc/nginx
+
+
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    logging:
+      driver: "none"
+
+  mongodb:
+    image: mongo
+    container_name: mongodb
+    volumes:
+      - mongodb:/data/db
+    ports:
+      - 27017:27017
+    restart: unless-stopped
+    deploy:
+          resources:
+            limits:
+              memory: 1000M
+
+  api:
+    image: "${API_IMAGE}"
+    depends_on:
+      - mongodb
+      - redis
+    container_name: api
+    entrypoint: /bin/sh
+    command:
+         - "-c"
+         - "FRONT_BASE_URL=$$UFFIZZI_URL/ &&
+            API_ROOT_URL=$$UFFIZZI_URL/api/ &&
+            PORT=3000 &&
+            pm2-runtime start dist/main.js"
+    environment:
+      NODE_ENV: dev
+      DISABLE_USER_REGISTRATION: false
+      MONGO_URL: mongodb://localhost:27017/novu-db
+      S3_BUCKET_NAME: bucket-name
+      S3_REGION: region
+      AWS_ACCESS_KEY_ID: access_key_id
+      AWS_SECRET_ACCESS_KEY: secret_access_key
+      JWT_SECRET: your-secret
+      STORE_ENCRYPTION_KEY: store_encryption_key_11111111111
+    ports:
+      - "3000:3000"
+    deploy:
+          resources:
+            limits:
+              memory: 2000M
+
+  ws:
+    image: "${WS_IMAGE}"
+    depends_on:
+      - mongodb
+      - redis
+    container_name: ws
+    environment:
+      PORT: 3002
+      NODE_ENV: dev
+      MONGO_URL: mongodb://localhost:27017/novu-db
+      JWT_SECRET: your-secret
+    entrypoint: /bin/sh
+    command:
+         - "-c"
+         - "WS_CONTEXT_PATH=$$UFFIZZI_URL/ws &&  pm2-runtime dist/src/main.js"
+    ports:
+      - "3002:3002"
+
+  web:
+    image: "${WEB_IMAGE}"
+    depends_on:
+      - api
+    container_name: web
+    environment:
+      REACT_APP_ENVIRONMENT: dev
+      REACT_APP_DOCKER_HOSTED_ENV: 'true'
+    entrypoint: /bin/sh
+    command:
+         - "-c"
+         - "REACT_APP_API_URL=$$UFFIZZI_URL/api/ && REACT_APP_WIDGET_EMBED_PATH=$$UFFIZZI_URL/widget/ && pnpm start:static:web"
+    ports:
+      - 4200:4200
+    deploy:
+          resources:
+            limits:
+              memory: 2000M
+
+  widget:
+    image: "${WIDGET_IMAGE}"
+    depends_on:
+      - api
+      - web
+    container_name: widget
+    environment:
+      # REACT_APP_API_URL: http://127.0.0.1:3000
+      # REACT_APP_WS_URL: http://127.0.0.1:3002
+      REACT_APP_ENVIRONMENT: dev
+    entrypoint: /bin/sh
+    command:
+         - "-c"
+         - "REACT_APP_API_URL=$$UFFIZZI_URL/api/
+            && REACT_APP_WS_URL=$$UFFIZZI_URL/ws/
+           && pnpm start:static:widget"
+    ports:
+      - 4500:4500
+    deploy:
+          resources:
+            limits:
+              memory: 1000M
+
+  embed:
+    depends_on:
+      - widget
+    image: "${EMBED_IMAGE}"
+    container_name: embed
+    # environment:
+    #   WIDGET_URL: http://127.0.0.1:4500
+    entrypoint: /bin/sh
+    command:
+         - "-c"
+         - "WIDGET_URL=$$UFFIZZI_URL/widget/
+           && pnpm start:docker:embed"
+    ports:
+      - 4701:4701
+    deploy:
+          resources:
+            limits:
+              memory: 1000M
+volumes:
+  mongodb: ~

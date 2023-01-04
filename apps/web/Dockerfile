@@ -4,6 +4,7 @@ WORKDIR /usr/src/app
 
 RUN apk add --no-cache bash
 RUN npm install -g pnpm@7.5.0 --loglevel notice
+RUN apk update && apk add git
 
 COPY .npmrc .
 COPY package.json .
