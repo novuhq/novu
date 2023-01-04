@@ -165,16 +165,13 @@ export class ProcessSubscriber {
     );
   }
 
-  private subscriberNeedUpdate(
-    subscriber: SubscriberEntity,
-    subscriberPayload: ISubscribersDefine
-  ): '' | undefined | boolean {
+  private subscriberNeedUpdate(subscriber: SubscriberEntity, subscriberPayload: ISubscribersDefine): boolean {
     return (
-      (subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email) ||
-      (subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
-      (subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
-      (subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
-      (subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
+      !!(subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email) ||
+      !!(subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
+      !!(subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
+      !!(subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
+      !!(subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
     );
   }
 
