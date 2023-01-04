@@ -14,8 +14,8 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     super(Job, JobEntity);
   }
 
-  public async storeJobs(jobs: JobEntity[]): Promise<JobEntity[]> {
-    const stored = [];
+  public async storeJobs(jobs: Omit<JobEntity, '_id'>[]): Promise<JobEntity[]> {
+    const stored: JobEntity[] = [];
     for (let index = 0; index < jobs.length; index++) {
       if (index > 0) {
         jobs[index]._parentId = stored[index - 1]._id;

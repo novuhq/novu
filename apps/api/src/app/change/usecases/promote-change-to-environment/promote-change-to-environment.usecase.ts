@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
@@ -31,6 +31,7 @@ export class PromoteChangeToEnvironment {
     const environment = await this.environmentRepository.findOne({
       _parentId: command.environmentId,
     });
+    if (!environment) throw new NotFoundException(`Environment ${command.environmentId} not found`);
 
     const typeCommand = PromoteTypeChangeCommand.create({
       organizationId: command.organizationId,

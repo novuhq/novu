@@ -18,6 +18,7 @@ import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.us
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { Cached } from '../../../shared/interceptors';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -31,7 +32,7 @@ export class ProcessSubscriber {
     private integrationRepository: IntegrationRepository
   ) {}
 
-  public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
+  public async execute(command: ProcessSubscriberCommand): Promise<Omit<JobEntity, '_id'>[]> {
     const template = await this.getNotificationTemplate({
       _id: command.templateId,
       environmentId: command.environmentId,
@@ -48,7 +49,8 @@ export class ProcessSubscriber {
     if (subscriber === null) {
       return [];
     }
-    let actorSubscriber: SubscriberEntity;
+
+    let actorSubscriber: SubscriberEntity | null = null;
     if (command.actor) {
       actorSubscriber = await this.getSubscriber(
         {
@@ -89,15 +91,18 @@ export class ProcessSubscriber {
       })
     );
 
-    const jobs: JobEntity[] = [];
+    const jobs: Omit<JobEntity, '_id'>[] = [];
 
     for (const step of steps) {
+      if (!step.template) throw new ApiException('Step template was not found');
+
       const integration = await this.integrationRepository.findOne({
         _organizationId: command.organizationId,
         _environmentId: command.environmentId,
         channel: step.template.type,
         active: true,
       });
+
       jobs.push({
         identifier: command.identifier,
         payload: command.payload,
@@ -162,11 +167,11 @@ export class ProcessSubscriber {
 
   private subscriberNeedUpdate(subscriber: SubscriberEntity, subscriberPayload: ISubscribersDefine): boolean {
     return (
-      (subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email) ||
-      (subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
-      (subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
-      (subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
-      (subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
+      !!(subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email) ||
+      !!(subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
+      !!(subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
+      !!(subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
+      !!(subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
     );
   }
 

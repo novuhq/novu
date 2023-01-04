@@ -52,3 +52,9 @@ await novu.subscribers.setCredentials('subscriberId', PushProviderIdEnum.FCM, {
   deviceTokens: ['token1', 'token2'],
 });
 ```
+
+:::info
+
+Novu uses FCM version V1
+
+:::

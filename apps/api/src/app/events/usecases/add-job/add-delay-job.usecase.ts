@@ -12,6 +12,8 @@ export class AddDelayJob {
 
   public async execute(command: AddJobCommand): Promise<number | undefined> {
     const data = await this.jobRepository.findById(command.jobId);
+    if (!data) throw new ApiException(`Job with id ${command.jobId} not found`);
+
     const isDelayStep = data.type === StepTypeEnum.DELAY;
 
     if (!data || !isDelayStep) {
@@ -36,8 +38,12 @@ export class AddDelayJob {
   }
 
   private async calculateDelayAmount(data: JobEntity): Promise<number> {
+    if (!data.step.metadata) throw new ApiException(`Step metadata not found`);
+
     if (data.step.metadata.type === DelayTypeEnum.SCHEDULED) {
       const delayPath = data.step.metadata.delayPath;
+      if (!delayPath) throw new ApiException(`Delay path not found`);
+
       const delayDate = data.payload[delayPath];
 
       const delay = differenceInMilliseconds(new Date(delayDate), new Date());
@@ -59,7 +65,7 @@ export class AddDelayJob {
       return AddJob.toMilliseconds(data.overrides.delay.amount as number, data.overrides.delay.unit as DigestUnitEnum);
     }
 
-    return AddJob.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
+    return AddJob.toMilliseconds(data.step.metadata.amount as number, data.step.metadata.unit as DigestUnitEnum);
   }
 
   /**

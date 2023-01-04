@@ -119,7 +119,7 @@ export class NotificationStep {
   filters?: StepFilter[];
 
   @ApiPropertyOptional()
-  _parentId?: string;
+  _parentId?: string | null;
 
   @ApiPropertyOptional({
     type: NotificationStepMetadata,

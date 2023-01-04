@@ -69,7 +69,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   @IsString()
-  raw?: string;
+  raw?: string | null;
 
   webhookStatus?: EmailEventStatusEnum | SmsEventStatusEnum;
 

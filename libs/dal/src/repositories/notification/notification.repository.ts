@@ -46,7 +46,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
       };
     }
 
-    if (query.subscriberIds.length > 0) {
+    if (query.subscriberIds && query.subscriberIds.length > 0) {
       requestQuery._subscriberId = {
         $in: query.subscriberIds,
       };
