@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActionIcon, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { AlignCenterOutlined, AlignLeftOutlined, AlignRightOutlined } from '@ant-design/icons';
-import { IEmailBlock } from '@novu/shared';
+import { IEmailBlock, TextAlignEnum } from '@novu/shared';
 
 import { DotsHorizontalOutlined, Trash } from '../../../design-system/icons';
 import { Button, colors, Dropdown } from '../../../design-system';
@@ -21,11 +21,11 @@ export function ContentRow({
   onRemove: () => void;
   allowRemove: boolean;
   block: IEmailBlock;
-  onStyleChanged: (data: { textAlign: 'left' | 'right' | 'center' }) => void;
+  onStyleChanged: (data: { textAlign: TextAlignEnum }) => void;
 }) {
   const { readonly } = useEnvController();
   const theme = useMantineTheme();
-  const [textAlign, settextAlign] = useState<'left' | 'right' | 'center'>(block?.styles?.textAlign || 'left');
+  const [textAlign, settextAlign] = useState<TextAlignEnum>(block?.styles?.textAlign || TextAlignEnum.LEFT);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const parentRef = useRef<HTMLDivElement>(null);
 
