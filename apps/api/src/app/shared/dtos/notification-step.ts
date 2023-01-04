@@ -46,6 +46,8 @@ class StepFilterChild {
   field: string;
   @ApiProperty()
   value: string;
+  @ApiPropertyOptional()
+  webhookUrl?: string;
   @ApiProperty({
     enum: [
       'LARGER',
@@ -67,9 +69,9 @@ class StepFilterChild {
   operator: BuilderFieldOperator;
 
   @ApiProperty({
-    enum: ['payload', 'subscriber'],
+    enum: ['payload', 'subscriber', 'webhook'],
   })
-  on?: 'payload' | 'subscriber';
+  on?: 'payload' | 'subscriber' | 'webhook';
 }
 
 class StepFilter {

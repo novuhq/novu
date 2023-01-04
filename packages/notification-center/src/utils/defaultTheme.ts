@@ -1,4 +1,5 @@
 import merge from 'lodash.merge';
+import cloneDeep from 'lodash.clonedeep';
 
 import {
   defaultCommonTheme,
@@ -22,10 +23,10 @@ export function getDefaultTheme(props: IDefaultThemeProps): {
 } {
   const theme =
     props.colorScheme === 'light'
-      ? merge(structuredClone(defaultLightTheme), props?.theme?.light)
-      : merge(structuredClone(defaultDarkTheme), props?.theme?.dark);
+      ? merge(cloneDeep(defaultLightTheme), props?.theme?.light)
+      : merge(cloneDeep(defaultDarkTheme), props?.theme?.dark);
 
-  const common = merge(structuredClone(defaultCommonTheme), props?.theme?.common);
+  const common = merge(cloneDeep(defaultCommonTheme), props?.theme?.common);
 
   return {
     theme,
@@ -43,8 +44,8 @@ export function getDefaultBellColors(props: IDefaultBellColors): { bellColors: I
 
   const bellColors =
     colorScheme === 'light'
-      ? { ...structuredClone(defaultNotificationBellLightTheme), bellColors: props?.bellColors }
-      : { ...structuredClone(defaultNotificationBellDarkTheme), bellColors: props?.bellColors };
+      ? { ...cloneDeep(defaultNotificationBellLightTheme), bellColors: props?.bellColors }
+      : { ...cloneDeep(defaultNotificationBellDarkTheme), bellColors: props?.bellColors };
 
   return {
     bellColors,

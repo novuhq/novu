@@ -22,6 +22,7 @@ import {
 } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
+import * as sinon from 'sinon';
 
 const axiosInstance = axios.create();
 
@@ -940,6 +941,278 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     expect(messages).to.equal(1);
+  });
+
+  it('should filter a message based on webhook filter', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Password reset',
+          content: [
+            {
+              type: 'text',
+              content: 'This are the text contents of the template for {{firstName}}',
+            },
+            {
+              type: 'button',
+              content: 'SIGN UP',
+              url: 'https://url-of-app.com/{{urlVariable}}',
+            },
+          ],
+          filters: [
+            {
+              isNegated: false,
+              type: 'GROUP',
+              value: 'AND',
+              children: [
+                {
+                  field: 'isOnline',
+                  value: 'true',
+                  operator: 'EQUAL',
+                  on: 'webhook',
+                  webhookUrl: 'www.user.com/webhook',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    let axiosPostStub = sinon.stub(axios, 'post').resolves(
+      Promise.resolve({
+        data: { isOnline: true },
+      })
+    );
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    let messages = await messageRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+
+    expect(messages).to.equal(1);
+
+    axiosPostStub.restore();
+    axiosPostStub = sinon.stub(axios, 'post').resolves(
+      Promise.resolve({
+        data: { isOnline: false },
+      })
+    );
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    messages = await messageRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+
+    expect(messages).to.equal(1);
+    axiosPostStub.restore();
+  });
+
+  it('should throw exception on webhook filter - demo unavailable server', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Password reset',
+          content: [
+            {
+              type: 'text',
+              content: 'This are the text contents of the template for {{firstName}}',
+            },
+            {
+              type: 'button',
+              content: 'SIGN UP',
+              url: 'https://url-of-app.com/{{urlVariable}}',
+            },
+          ],
+          filters: [
+            {
+              isNegated: false,
+              type: 'GROUP',
+              value: 'AND',
+              children: [
+                {
+                  field: 'isOnline',
+                  value: 'true',
+                  operator: 'EQUAL',
+                  on: 'webhook',
+                  webhookUrl: 'www.user.com/webhook',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const axiosPostStub = sinon.stub(axios, 'post').throws(new Error('Users remote error'));
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    const messages = await messageRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+
+    expect(messages).to.equal(0);
+    axiosPostStub.restore();
+  });
+
+  it('should backoff on exception while webhook filter (original request + 2 retries)', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Password reset',
+          content: [
+            {
+              type: 'text',
+              content: 'This are the text contents of the template for {{firstName}}',
+            },
+            {
+              type: 'button',
+              content: 'SIGN UP',
+              url: 'https://url-of-app.com/{{urlVariable}}',
+            },
+          ],
+          filters: [
+            {
+              isNegated: false,
+              type: 'GROUP',
+              value: 'AND',
+              children: [
+                {
+                  field: 'isOnline',
+                  value: 'true',
+                  operator: 'EQUAL',
+                  on: 'webhook',
+                  webhookUrl: 'www.user.com/webhook',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    let axiosPostStub = sinon.stub(axios, 'post');
+
+    axiosPostStub
+      .onCall(0)
+      .throws(new Error('Users remote error'))
+      .onCall(1)
+      .resolves({
+        data: { isOnline: true },
+      });
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    let messages = await messageRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+
+    expect(messages).to.equal(1);
+
+    axiosPostStub.restore();
+    axiosPostStub = sinon
+      .stub(axios, 'post')
+      .onCall(0)
+      .throws(new Error('Users remote error'))
+      .onCall(1)
+      .throws(new Error('Users remote error'))
+      .onCall(2)
+      .throws(new Error('Users remote error'))
+      .resolves(
+        Promise.resolve({
+          data: { isOnline: true },
+        })
+      );
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    messages = await messageRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+
+    expect(messages).to.equal(1);
+    axiosPostStub.restore();
   });
 });
 

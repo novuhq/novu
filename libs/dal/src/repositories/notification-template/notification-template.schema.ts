@@ -76,6 +76,7 @@ const notificationTemplateSchema = new Schema(
                 value: Schema.Types.String,
                 operator: Schema.Types.String,
                 on: Schema.Types.String,
+                webhookUrl: Schema.Types.String,
               },
             ],
           },
