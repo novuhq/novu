@@ -1,7 +1,7 @@
 import { ChangeEntityTypeEnum } from '@novu/shared';
 
 export class ChangeEntity {
-  _id?: string;
+  _id: string;
 
   _creatorId: string;
 

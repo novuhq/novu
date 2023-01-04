@@ -36,9 +36,13 @@ export class GetVercelProjects {
       payload.configurationId
     );
 
+    if (!organization || !organization.length || !organization[0].partnerConfigurations?.length) {
+      throw new Error('No configuration found for vercel');
+    }
+
     return {
-      accessToken: organization[0].partnerConfigurations[0].accessToken,
-      teamId: organization[0].partnerConfigurations[0].teamId,
+      accessToken: organization[0].partnerConfigurations[0].accessToken as string,
+      teamId: organization[0].partnerConfigurations[0].teamId as string,
     };
   }
 

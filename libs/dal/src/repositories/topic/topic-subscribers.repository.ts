@@ -1,7 +1,7 @@
-import { AuthProviderEnum, ExternalSubscriberId } from '@novu/shared';
+import { ExternalSubscriberId } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 
-import { TopicSubscribersEntity } from './topic-subscribers.entity';
+import { CreateTopicSubscribersEntity, TopicSubscribersEntity } from './topic-subscribers.entity';
 import { TopicSubscribers } from './topic-subscribers.schema';
 import { EnvironmentId, OrganizationId, TopicId, TopicKey } from './types';
 
@@ -17,7 +17,7 @@ export class TopicSubscribersRepository extends BaseRepository<EnforceEnvironmen
     super(TopicSubscribers, TopicSubscribersEntity);
   }
 
-  async addSubscribers(subscribers: TopicSubscribersEntity[]): Promise<void> {
+  async addSubscribers(subscribers: CreateTopicSubscribersEntity[]): Promise<void> {
     await this.upsertMany(subscribers);
   }
 

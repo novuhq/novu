@@ -43,7 +43,7 @@ export class GetChanges {
     );
 
     const changes = await changeItems.reduce(async (prev, change) => {
-      const list = await prev;
+      const list: any[] = await prev;
       let item: Record<string, unknown> | IViewEntity = {};
       if (change.type === ChangeEntityTypeEnum.MESSAGE_TEMPLATE) {
         item = await this.getTemplateDataForMessageTemplate(change._entityId, command.environmentId);

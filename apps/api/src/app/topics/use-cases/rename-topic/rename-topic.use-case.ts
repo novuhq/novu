@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TopicEntity, TopicRepository } from '@novu/dal';
 
 import { RenameTopicCommand } from './rename-topic.command';
@@ -13,6 +13,7 @@ export class RenameTopicUseCase {
 
   async execute(command: RenameTopicCommand): Promise<TopicDto> {
     const topic = await this.getTopicUseCase.execute(command);
+    if (!topic) throw new NotFoundException(`Topic ${command.topicKey} not found`);
 
     const query = this.mapToQuery(command);
     const renamedTopic = await this.topicRepository.renameTopic(

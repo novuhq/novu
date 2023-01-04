@@ -21,5 +21,5 @@ export class TriggerEventCommand extends EnvironmentWithUserCommand {
   transactionId: string;
 
   @IsOptional()
-  actor?: ISubscribersDefine;
+  actor?: ISubscribersDefine | null;
 }
