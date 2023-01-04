@@ -21,7 +21,7 @@ export class PasswordReset {
       throw new ApiException('Bad token provided');
     }
 
-    if (isBefore(new Date(user.resetTokenDate), subDays(new Date(), 7))) {
+    if (user.resetTokenDate && isBefore(new Date(user.resetTokenDate), subDays(new Date(), 7))) {
       throw new ApiException('Token has expired');
     }
 

@@ -55,8 +55,8 @@ export class BaseRepository<T_Query, T_Response> {
     const data = await this.MongooseModel.find(query, select, {
       sort: options.sort || null,
     })
-      .skip(options.skip)
-      .limit(options.limit)
+      .skip(options.skip as number)
+      .limit(options.limit as number)
       .lean()
       .exec();
 

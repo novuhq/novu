@@ -23,7 +23,7 @@ import {
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
-import { testServer } from './test-server.service';
+import { TestServer, testServer } from './test-server.service';
 
 import { OrganizationService } from './organization.service';
 import { EnvironmentService } from './environment.service';
@@ -46,7 +46,7 @@ export class UserSession {
 
   subscriberProfile: {
     _id: string;
-  } = null;
+  } | null = null;
 
   notificationGroups: NotificationGroupEntity[] = [];
 
@@ -58,7 +58,7 @@ export class UserSession {
 
   environment: EnvironmentEntity;
 
-  testServer = testServer;
+  testServer: null | TestServer = testServer;
 
   apiKey: string;
 
@@ -141,7 +141,7 @@ export class UserSession {
   }
 
   private get requestEndpoint() {
-    return this.shouldUseTestServer() ? this.testServer.getHttpServer() : this.serverUrl;
+    return this.shouldUseTestServer() ? this.testServer?.getHttpServer() : this.serverUrl;
   }
 
   async fetchJWT() {
@@ -155,7 +155,7 @@ export class UserSession {
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
-  async createEnvironment(name = 'Test environment', parentId: string = undefined) {
+  async createEnvironment(name = 'Test environment', parentId: string | undefined = undefined) {
     this.environment = await this.environmentRepository.create({
       name,
       identifier: uuid(),

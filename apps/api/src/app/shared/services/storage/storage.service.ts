@@ -107,6 +107,8 @@ export class GCSStorageService implements StorageService {
   private gcs = new Storage();
 
   async uploadFile(key: string, file: Buffer, contentType: string): Promise<PutObjectCommandOutput> {
+    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
+
     const bucket = this.gcs.bucket(process.env.GCS_BUCKET_NAME);
     const fileObject = bucket.file(key);
 
@@ -119,6 +121,8 @@ export class GCSStorageService implements StorageService {
   }
 
   async getFile(key: string): Promise<Buffer> {
+    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
+
     try {
       const bucket = this.gcs.bucket(process.env.GCS_BUCKET_NAME);
       const fileObject = bucket.file(key);
@@ -134,12 +138,16 @@ export class GCSStorageService implements StorageService {
   }
 
   async deleteFile(key: string): Promise<void> {
+    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
+
     const bucket = this.gcs.bucket(process.env.GCS_BUCKET_NAME);
     const fileObject = bucket.file(key);
     fileObject.delete();
   }
 
   async getSignedUrl(key: string, contentType: string) {
+    if (!process.env.GCS_BUCKET_NAME) throw new Error('GCS_BUCKET_NAME is not defined as env variable');
+
     const [signedUrl] = await this.gcs
       .bucket(process.env.GCS_BUCKET_NAME)
       .file(key)
@@ -161,8 +169,8 @@ export class GCSStorageService implements StorageService {
 
 export class AzureBlobStorageService implements StorageService {
   private sharedKeyCredential = new StorageSharedKeyCredential(
-    process.env.AZURE_ACCOUNT_NAME,
-    process.env.AZURE_ACCOUNT_KEY
+    process.env.AZURE_ACCOUNT_NAME as string,
+    process.env.AZURE_ACCOUNT_KEY as string
   );
   private blobServiceClient = new BlobServiceClient(
     process.env.AZURE_HOST_NAME || `https://${process.env.AZURE_ACCOUNT_NAME}.blob.core.windows.net`,
@@ -170,6 +178,8 @@ export class AzureBlobStorageService implements StorageService {
   );
 
   async uploadFile(key: string, file: Buffer, contentType: string): Promise<PutObjectCommandOutput> {
+    if (!process.env.AZURE_CONTAINER_NAME) throw new Error('AZURE_CONTAINER_NAME is not defined as env variable');
+
     const containerClient = this.blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
     const blockBlobClient = containerClient.getBlockBlobClient(key);
 
@@ -181,6 +191,8 @@ export class AzureBlobStorageService implements StorageService {
   }
 
   async getFile(key: string): Promise<Buffer> {
+    if (!process.env.AZURE_CONTAINER_NAME) throw new Error('AZURE_CONTAINER_NAME is not defined as env variable');
+
     const containerClient = this.blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
     const blockBlobClient = containerClient.getBlockBlobClient(key);
 
@@ -195,6 +207,8 @@ export class AzureBlobStorageService implements StorageService {
   }
 
   async deleteFile(key: string): Promise<void> {
+    if (!process.env.AZURE_CONTAINER_NAME) throw new Error('AZURE_CONTAINER_NAME is not defined as env variable');
+
     const containerClient = this.blobServiceClient.getContainerClient(process.env.AZURE_CONTAINER_NAME);
     const blockBlobClient = containerClient.getBlockBlobClient(key);
     blockBlobClient.delete();

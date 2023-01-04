@@ -1,7 +1,7 @@
 import { StepTypeEnum, IMessageCTA, TemplateVariableTypeEnum, IActor } from '@novu/shared';
 
 export class MessageTemplateEntity {
-  _id?: string;
+  _id: string;
 
   _environmentId: string;
 
