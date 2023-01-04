@@ -39,7 +39,7 @@
     "class-validator": "^0.13.2",
     "dotenv": "^8.2.0",
     "envalid": "^7.1.0",
-    "jsonwebtoken": "8.5.1",
+    "jsonwebtoken": "9.0.0",
     "lodash": "^4.17.15",
     "nest-raven": "^7.2.0",
     "reflect-metadata": "^0.1.13",
