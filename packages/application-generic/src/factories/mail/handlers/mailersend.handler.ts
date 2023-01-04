@@ -11,7 +11,7 @@ export class MailerSendHandler extends BaseHandler {
 
   buildProvider(credentials: ICredentials, from?: string) {
     this.provider = new MailersendEmailProvider({
-      apiKey: credentials.apiKey,
+      apiKey: credentials.apiKey as string,
       from,
       senderName: credentials.senderName,
     });

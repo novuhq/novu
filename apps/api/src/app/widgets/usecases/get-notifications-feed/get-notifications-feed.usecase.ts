@@ -60,7 +60,7 @@ export class GetNotificationsFeed {
     );
 
     return {
-      data: feed,
+      data: feed || [],
       totalCount: totalCount,
       pageSize: LIMIT,
       page: command.page,

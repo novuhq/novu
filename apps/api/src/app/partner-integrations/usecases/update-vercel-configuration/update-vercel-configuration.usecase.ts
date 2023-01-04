@@ -48,8 +48,10 @@ export class UpdateVercelConfiguration {
   async execute(command: UpdateVercelConfigurationCommand): Promise<{ success: boolean }> {
     try {
       const organizationIds = Object.keys(command.data);
-      const projectIds = Object.keys(command.data).reduce((acc, curr) => {
-        return acc.concat(command.data[curr]);
+      const projectIds = Object.keys(command.data).reduce<string[]>((history, current) => {
+        if (!command.data[current]) return history;
+
+        return history.concat(command.data[current]);
       }, []);
 
       const envKeys = await this.getEnvKeys(organizationIds);

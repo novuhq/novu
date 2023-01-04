@@ -1,8 +1,8 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
-import { MailFactory, SmsFactory, ISmsHandler, IMailHandler } from '@novu/application-generic';
+import { IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
 
 import { WebhookCommand } from './webhook.command';
 
@@ -11,7 +11,7 @@ import { CreateExecutionDetails } from '../execution-details/create-execution-de
 import { IWebhookResult } from '../../dtos/webhooks-response.dto';
 import { WebhookTypes } from '../../interfaces/webhook.interface';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class Webhook {
   public readonly mailFactory = new MailFactory();
   public readonly smsFactory = new SmsFactory();

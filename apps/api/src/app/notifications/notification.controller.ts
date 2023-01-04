@@ -40,18 +40,18 @@ export class NotificationsController {
     @UserSession() user: IJwtPayload,
     @Query() query: ActivitiesRequestDto
   ): Promise<ActivitiesResponseDto> {
-    let channelsQuery: ChannelTypeEnum[];
+    let channelsQuery: ChannelTypeEnum[] | null = null;
 
     if (query.channels) {
       channelsQuery = Array.isArray(query.channels) ? query.channels : [query.channels];
     }
 
-    let templatesQuery: string[];
+    let templatesQuery: string[] | null = null;
     if (query.templates) {
       templatesQuery = Array.isArray(query.templates) ? query.templates : [query.templates];
     }
 
-    let emailsQuery: string[];
+    let emailsQuery: string[] | null = null;
     if (query.emails) {
       emailsQuery = Array.isArray(query.emails) ? query.emails : [query.emails];
     }

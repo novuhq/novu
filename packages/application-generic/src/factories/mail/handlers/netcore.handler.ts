@@ -10,7 +10,7 @@ export class NetCoreHandler extends BaseHandler {
   buildProvider(credentials, from?: string) {
     const config: { apiKey: string; from: string } = {
       apiKey: credentials.apiKey,
-      from,
+      from: from as string,
     };
 
     this.provider = new NetCoreProvider(config);

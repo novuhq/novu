@@ -12,7 +12,7 @@ describe('GET /widget/notifications/feed', function () {
   let subscriberToken: string;
   let subscriberProfile: {
     _id: string;
-  } = null;
+  } | null = null;
 
   beforeEach(async () => {
     session = new UserSession();
@@ -40,6 +40,25 @@ describe('GET /widget/notifications/feed', function () {
     subscriberProfile = profile;
   });
 
+  it('should fetch a feed without filters and with feed id', async function () {
+    /**
+     * This test help preventing accidental passing `null` as a feed id which causes
+     * the feed to be fetched with explicit null as a property of feedId.
+     *
+     * This test will fail if the feedId is not passed as a query parameter,
+     * but the null query still was applied mistakenly
+     */
+    template = await session.createTemplate();
+
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+
+    await session.awaitRunningJobs(template._id);
+
+    const response = await getSubscriberFeed();
+    expect(response.data.length).to.equal(2);
+  });
+
   it('should fetch a feed without filters', async function () {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
@@ -58,7 +77,7 @@ describe('GET /widget/notifications/feed', function () {
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile._id,
+      subscriberProfile?._id as string,
       ChannelTypeEnum.IN_APP
     );
     const messageId = messages[0]._id;
@@ -83,7 +102,7 @@ describe('GET /widget/notifications/feed', function () {
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile._id,
+      subscriberProfile?._id as string,
       ChannelTypeEnum.IN_APP
     );
     const messageId = messages[0]._id;
