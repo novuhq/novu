@@ -70,48 +70,30 @@ export class SendMessageInApp extends SendMessageBase {
 
     try {
       content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
-    } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            subscriber: subscriber,
-            step: {
-              digest: !!command.events.length,
-              events: command.events,
-              total_count: command.events.length,
-            },
-            ...command.payload,
-          }),
-        })
-      );
 
-      return;
-    }
-
-    if (inAppChannel.template.cta?.data?.url) {
-      inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
-        inAppChannel.template.cta?.data?.url,
-        command.payload,
-        subscriber,
-        command
-      );
-    }
-
-    if (inAppChannel.template.cta?.action?.buttons) {
-      const ctaButtons: IMessageButton[] = [];
-
-      for (const action of inAppChannel.template.cta.action.buttons) {
-        const buttonContent = await this.compileInAppTemplate(action.content, command.payload, subscriber, command);
-        ctaButtons.push({ type: action.type, content: buttonContent });
+      if (inAppChannel.template.cta?.data?.url) {
+        inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
+          inAppChannel.template.cta?.data?.url,
+          command.payload,
+          subscriber,
+          command
+        );
       }
 
-      inAppChannel.template.cta.action.buttons = ctaButtons;
+      if (inAppChannel.template.cta?.action?.buttons) {
+        const ctaButtons: IMessageButton[] = [];
+
+        for (const action of inAppChannel.template.cta.action.buttons) {
+          const buttonContent = await this.compileInAppTemplate(action.content, command.payload, subscriber, command);
+          ctaButtons.push({ type: action.type, content: buttonContent });
+        }
+
+        inAppChannel.template.cta.action.buttons = ctaButtons;
+      }
+    } catch (e) {
+      await this.sendErrorHandlebars(command.job, e.message);
+
+      return;
     }
 
     const messagePayload = Object.assign({}, command.payload);

@@ -116,11 +116,13 @@ export class CreateNotificationTemplate {
       })
     );
 
-    this.analyticsService.track('Create Notification Template - [Platform]', command.userId, {
-      _organization: command.organizationId,
-      steps: command.steps?.length,
-      channels: command.steps?.map((i) => i.template.type),
-    });
+    if (command.name !== 'On-boarding notification') {
+      this.analyticsService.track('Create Notification Template - [Platform]', command.userId, {
+        _organization: command.organizationId,
+        steps: command.steps?.length,
+        channels: command.steps?.map((i) => i.template.type),
+      });
+    }
 
     return item;
   }

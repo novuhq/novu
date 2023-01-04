@@ -78,6 +78,7 @@
     "axios": "^0.26.1",
     "chroma-js": "^2.4.2",
     "date-fns": "^2.29.1",
+    "lodash.clonedeep": "^4.5.0",
     "lodash.merge": "^4.6.2",
     "react-infinite-scroll-component": "^6.0.0",
     "socket.io-client": "4.5.4",

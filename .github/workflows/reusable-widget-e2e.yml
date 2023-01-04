@@ -47,7 +47,7 @@ jobs:
           version: 7.5.0
           run_install: true
 
-      - uses: mansagroup/nrwl-nx-action@v2
+      - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint
           projects: '@novu/widget'

@@ -135,17 +135,7 @@ export class SendMessageEmail extends SendMessageBase {
         preheader = await this.renderContent(preheader, subject, organization, subscriber, command, preheader);
       }
     } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify(payload),
-        })
-      );
+      await this.sendErrorHandlebars(command.job, e.message);
 
       return;
     }
@@ -186,28 +176,55 @@ export class SendMessageEmail extends SendMessageBase {
     );
 
     const customTemplate = SendMessageEmail.addPreheader(content as string, emailChannel.template.contentType);
+    let html;
+    try {
+      html = await this.compileTemplate.execute(
+        CompileTemplateCommand.create({
+          templateId: isEditorMode ? 'basic' : 'custom',
+          customTemplate: customTemplate,
+          data: {
+            subject,
+            preheader,
+            branding: {
+              logo: organization.branding?.logo,
+              color: organization.branding?.color || '#f47373',
+            },
+            blocks: isEditorMode ? content : [],
+            step: {
+              digest: !!command.events.length,
+              events: command.events,
+              total_count: command.events.length,
+            },
+            ...command.payload,
+          },
+        })
+      );
+    } catch (error) {
+      await this.sendErrorStatus(
+        message,
+        'error',
+        'mail_unexpected_error',
+        'syntax error in email editor',
+        command,
+        notification,
+        LogCodeEnum.SYNTAX_ERROR_IN_EMAIL_EDITOR
+      );
 
-    const html = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: isEditorMode ? 'basic' : 'custom',
-        customTemplate: customTemplate,
-        data: {
-          subject,
-          preheader,
-          branding: {
-            logo: organization.branding?.logo,
-            color: organization.branding?.color || '#f47373',
-          },
-          blocks: isEditorMode ? content : [],
-          step: {
-            digest: !!command.events.length,
-            events: command.events,
-            total_count: command.events.length,
-          },
-          ...command.payload,
-        },
-      })
-    );
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.MESSAGE_CONTENT_SYNTAX_ERROR,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          messageId: message._id,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify(error.message),
+        })
+      );
+
+      return;
+    }
 
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
       (attachment) =>

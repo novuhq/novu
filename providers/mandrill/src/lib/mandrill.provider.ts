@@ -66,7 +66,7 @@ export class MandrillProvider implements IEmailProvider {
         html: options.html,
         to,
         attachments: options.attachments?.map((attachment) => ({
-          content: attachment.file.toString(),
+          content: attachment.file.toString('base64'),
           type: attachment.mime,
           name: attachment?.name,
         })),
