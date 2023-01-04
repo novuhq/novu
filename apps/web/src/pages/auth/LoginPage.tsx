@@ -9,13 +9,16 @@ import AuthContainer from '../../components/layout/components/AuthContainer';
 import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
 import VercelSetupLoader from '../../components/auth/VercelSetupLoader';
 import { useVercelParams } from '../../hooks/use-vercelParams';
+import { useSegment } from '../../hooks/use-segment';
 
 export default function LoginPage() {
   const { setToken, token } = useContext(AuthContext);
+  const segment = useSegment();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const queryToken = params.get('token');
   const source = params.get('source');
+  const sourceWidget = params.get('source_widget');
 
   const { startVercelSetup, isLoading } = useVercelIntegration();
   const { code, isFromVercel, next } = useVercelParams();
@@ -38,6 +41,13 @@ export default function LoginPage() {
           startVercelSetup();
 
           return;
+        }
+
+        if (source === 'cli') {
+          segment.track('Dashboard Visit', {
+            widget: sourceWidget || 'unknown',
+            source: 'cli',
+          });
         }
 
         navigate(source === 'cli' ? '/quickstart' : '/');

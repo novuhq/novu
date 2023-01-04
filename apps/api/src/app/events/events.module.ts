@@ -8,7 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 import { SubscribersModule } from '../subscribers/subscribers.module';
 import { LogsModule } from '../logs/logs.module';
 import { ContentTemplatesModule } from '../content-templates/content-templates.module';
-import { WorkflowQueueService } from './services/workflow.queue.service';
+import { WorkflowQueueService } from './services/workflow-queue/workflow.queue.service';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { StorageHelperService } from './services/storage-helper-service/storage-helper.service';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';

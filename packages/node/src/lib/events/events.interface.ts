@@ -62,6 +62,7 @@ export type ITriggerOverrideDelayAction = {
 };
 
 export type ITriggerOverrideFCM = {
+  type?: 'notification' | 'data';
   tag?: string;
   body?: string;
   icon?: string;
