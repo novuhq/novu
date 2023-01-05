@@ -73,8 +73,12 @@ export function BlueprintModal() {
         }}
         withCloseButton={!isLoading}
         closeOnClickOutside={!isLoading}
-        title={<Title size={2}>{isBluePrintLoading ? 'Loading template' : `Create ${blueprint?.name} template`}</Title>}
-        sx={{ backdropFilter: 'blur(10px)' }}
+        title={
+          <Title size={2}>
+            {isBluePrintLoading ? 'Loading template' : `Create the ${blueprint?.name} notification flow!`}
+          </Title>
+        }
+        sx={{ backdropFilter: 'blur(1px)' }}
         shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
         radius="md"
         size="lg"
@@ -86,7 +90,11 @@ export function BlueprintModal() {
           </Center>
         </When>
         <When truthy={!isLoading}>
-          <Text>{blueprint?.description}</Text>
+          <Text mb={16}>Feel free to modify the flow by dragging and dropping steps onto the canvas.</Text>
+          <Text weight="bold" mb={16}>
+            {blueprint?.name}:
+          </Text>
+          <Text mb={16}>{blueprint?.description}</Text>
           <Button
             onClick={() => {
               if (blueprintId) {
@@ -94,7 +102,7 @@ export function BlueprintModal() {
               }
             }}
           >
-            Create template
+            Create the flow!
           </Button>
         </When>
       </Modal>
