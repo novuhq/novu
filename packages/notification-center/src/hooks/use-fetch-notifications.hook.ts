@@ -4,6 +4,7 @@ import type { IMessage, IPaginatedResponse } from '@novu/shared';
 
 import { useNovuContext } from './use-novu-context.hook';
 import { INFINITE_NOTIFICATIONS_QUERY_KEY } from './queryKeys';
+import { getNextPageParam } from '../utils/pagination';
 
 export const useFetchNotifications = (
   { query }: { query?: IStoreQuery },
@@ -17,8 +18,7 @@ export const useFetchNotifications = (
     {
       ...options,
       enabled: isSessionInitialized,
-      getNextPageParam: (lastPage) =>
-        (lastPage.page + 1) * lastPage.pageSize < lastPage.totalCount ? lastPage.page + 1 : undefined,
+      getNextPageParam,
     }
   );
 

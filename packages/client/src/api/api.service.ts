@@ -93,13 +93,12 @@ export class ApiService {
     page: number,
     query: IStoreQuery = {}
   ): Promise<IPaginatedResponse<IMessage>> {
-    return await this.httpClient.get(
+    return await this.httpClient.getFullResponse(
       `/widgets/notifications/feed`,
       {
         page,
         ...query,
-      },
-      true
+      }
     );
   }
 

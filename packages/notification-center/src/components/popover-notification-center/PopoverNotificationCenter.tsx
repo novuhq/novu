@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { PopoverProps } from '@mantine/core';
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 
@@ -30,19 +30,9 @@ export interface IPopoverNotificationCenterProps {
   position?: PopoverProps['position'];
 }
 
-export function PopoverNotificationCenter({
-  children,
-  onUnseenCountChanged,
-  ...props
-}: IPopoverNotificationCenterProps) {
+export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
   const { theme } = getDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
   const { unseenCount } = useNotifications();
-
-  useEffect(() => {
-    if (onUnseenCountChanged) {
-      onUnseenCountChanged(unseenCount);
-    }
-  }, [unseenCount, (window as any).parentIFrame]);
 
   return (
     <Popover
@@ -65,6 +55,7 @@ export function PopoverNotificationCenter({
         tabs={props.tabs}
         showUserPreferences={props.showUserPreferences}
         onTabClick={props.onTabClick}
+        onUnseenCountChanged={props.onUnseenCountChanged}
       />
     </Popover>
   );

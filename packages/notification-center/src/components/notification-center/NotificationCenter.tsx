@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 
 import { AppContent } from './components';
@@ -43,12 +43,14 @@ export function NotificationCenter({
 }: INotificationCenterProps) {
   const { applicationIdentifier } = useNovuContext();
   const { unseenCount } = useNotifications();
+  const onUnseenCountChangedRef = useRef(onUnseenCountChanged);
+  onUnseenCountChangedRef.current = onUnseenCountChanged;
 
   useEffect(() => {
-    if (onUnseenCountChanged) {
-      onUnseenCountChanged(unseenCount);
+    if (onUnseenCountChangedRef.current) {
+      onUnseenCountChangedRef.current(unseenCount);
     }
-  }, [unseenCount, (window as any).parentIFrame]);
+  }, [unseenCount, (window as any).parentIFrame, onUnseenCountChangedRef]);
 
   return (
     <NotificationCenterContext.Provider
