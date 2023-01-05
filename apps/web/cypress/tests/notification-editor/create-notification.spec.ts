@@ -62,6 +62,7 @@ describe('Creation functionality', function () {
 
     cy.getByTestId('trigger-snippet-btn').click();
 
+    cy.intercept('**/notifications/feed?page=0').as('getNotifications');
     // trigger the notification
     cy.task('createNotifications', {
       identifier: 'test-notification-title',
@@ -71,6 +72,8 @@ describe('Creation functionality', function () {
 
     // click on the notifications bell
     cy.getByTestId('notification-bell').click();
+    cy.wait('@getNotifications');
+
     // check the notification
     cy.getByTestId('notifications-scroll-area')
       .getByTestId('notification-content')
