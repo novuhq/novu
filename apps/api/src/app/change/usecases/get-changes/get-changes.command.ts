@@ -8,9 +8,9 @@ export class GetChangesCommand extends EnvironmentWithUserCommand {
 
   @IsNumber()
   @IsOptional()
-  page?: number = 0;
+  page = 0;
 
   @IsNumber()
   @IsOptional()
-  limit?: number = 10;
+  limit = 10;
 }

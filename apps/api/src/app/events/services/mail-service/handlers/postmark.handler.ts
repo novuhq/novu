@@ -8,7 +8,7 @@ export class PostmarkHandler extends BaseHandler {
     super('postmark', ChannelTypeEnum.EMAIL);
   }
   buildProvider(credentials: ICredentials, from?: string) {
-    const config: { apiKey: string; from: string } = { from, apiKey: credentials.apiKey };
+    const config: { apiKey: string; from: string } = { from: from as string, apiKey: credentials.apiKey as string };
 
     this.provider = new PostmarkEmailProvider(config);
   }

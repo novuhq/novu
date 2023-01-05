@@ -104,7 +104,7 @@
           <div class="flex-shrink-0"> <img class="h-8 w-8" src="https://tailwindui.com/img/logos/workflow-mark-indigo-500.svg" alt="Workflow"> </div>
           <div class="hidden md:block">
             <div class="ml-10 flex items-baseline space-x-4">
-            
+
             </div>
           </div>
         </div>
@@ -173,9 +173,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /> </svg>
           </button>
         </div>
-        <div class="mt-3 px-2 space-y-1"> 
+        <div class="mt-3 px-2 space-y-1">
           <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Your Profile</a>
-           <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Settings</a> 
+           <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Settings</a>
            <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">Signout</a>
           </div>
       </div>
@@ -209,7 +209,7 @@
                         </p>
                       </div>
 
-                      <a href="REPLACE_WITH_dashboardURL" id="skip-tutorial-link" target="_blank" class="inline-block  focus-visible:ring ring-indigo-300  text-sm md:text-base font-semibold text-center rounded-lg outline-none transition duration-100 px-8 py-3">Skip Tutorial</a>
+                      <a href="REPLACE_WITH_dashboardURL&source_widget=skip-tutorial" id="skip-tutorial-link" target="_blank" class="inline-block  focus-visible:ring ring-indigo-300  text-sm md:text-base font-semibold text-center rounded-lg outline-none transition duration-100 px-8 py-3">Skip Tutorial</a>
                     </div>
                   </div>
                 </div>
@@ -245,7 +245,7 @@
                             <h2 class="font-medium title-font text-sm text-gray-900 mb-1 tracking-wider">STEP 2</h2>
                             <p class="leading-relaxed">
                               Click on the received in-app notification to visit your management admin panel. Didn't get it?
-                              <a href="REPLACE_WITH_dashboardURL" >Click here</a>
+                              <a href="REPLACE_WITH_dashboardURL&source_widget=didnt-get-notification" >Click here</a>
                             </p>
                           </div>
                         </div>
@@ -346,10 +346,11 @@
 </div>
 <script>
 
-analytics.identify('REPLACE_WITH_subscriberId')
+analytics.identify('REPLACE_WITH_subscriberId');
+analytics.track('REPLACE_WITH_dashboardOpened')
+
 $('#skip-tutorial-link').click(function(){
   analytics.track('REPLACE_WITH_skipTutorial')
-
 })
 function copyToClipboard(id) {
   const r = document.createRange();

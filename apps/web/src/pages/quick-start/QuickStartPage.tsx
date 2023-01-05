@@ -1,6 +1,6 @@
 import { Center } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { IUserEntity } from '@novu/shared';
 
@@ -9,10 +9,16 @@ import PageMeta from '../../components/layout/components/PageMeta';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { updateUserOnBoarding } from '../../api/user';
 import { OnboardingSteps } from './components/OnboardingSteps';
+import { useSegment } from '../../hooks/use-segment';
 
 function QuickStart() {
+  const segment = useSegment();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    segment.track('Quick Start Page Visit');
+  }, []);
 
   const { mutateAsync: updateOnBoardingStatus } = useMutation<
     IUserEntity,
