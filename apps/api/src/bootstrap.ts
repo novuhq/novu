@@ -80,6 +80,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .setVersion('1.0')
     .addTag('Events')
     .addTag('Subscribers')
+    .addTag('Topics')
     .addTag('Activity')
     .addTag('Integrations')
     .addTag('Notification templates')
