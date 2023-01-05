@@ -72,8 +72,6 @@ describe('Creation functionality', function () {
     // click on the notifications bell
     cy.getByTestId('notification-bell').click();
 
-    cy.waitForNetworkIdle(500);
-
     // check the notification
     cy.getByTestId('notifications-scroll-area')
       .getByTestId('notification-content')
