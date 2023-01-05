@@ -7,6 +7,7 @@ import { SideNav } from './components/SideNav';
 import { colors } from '../../design-system';
 import { IntercomProvider } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../config';
+import { HEADER_HEIGHT } from './constants';
 
 export function AppLayout() {
   return (
@@ -19,7 +20,7 @@ export function AppLayout() {
           styles={(theme) => ({
             root: { minHeight: '100vh', position: 'relative', zIndex: 1 },
             body: {
-              minHeight: 'calc(100vh - 65px)',
+              minHeight: `calc(100vh - ${HEADER_HEIGHT})`,
               '@media (max-width: 768px)': {
                 flexDirection: 'column',
                 height: 'auto',
