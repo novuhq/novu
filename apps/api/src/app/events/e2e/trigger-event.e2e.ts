@@ -19,6 +19,7 @@ import {
   IEmailBlock,
   TemplateVariableTypeEnum,
   EmailProviderIdEnum,
+  SmsProviderIdEnum,
 } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
@@ -484,12 +485,12 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should not trigger notification with subscriber data if integration is inactive', async function () {
     const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
-    const channelType = ChannelTypeEnum.EMAIL;
+    const channelType = ChannelTypeEnum.SMS;
 
     const integration = await integrationRepository.findOne({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
-      providerId: 'sendgrid',
+      providerId: SmsProviderIdEnum.Twilio,
     });
 
     await integrationRepository.update(
@@ -503,7 +504,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       steps: [
         {
           name: 'Message Name',
-          subject: 'Test email {{nested.subject}}',
+          subject: 'Test sms {{nested.subject}}',
           type: StepTypeEnum.EMAIL,
           content: [
             {
