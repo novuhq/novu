@@ -5,32 +5,27 @@ import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
-import { ApiKeysCard, InAppCenterCard } from './tabs';
 import { AuthContext } from '../../store/authContext';
+import { BrandingForm } from './tabs';
 
-const IN_APP_CENTER = 'In App Center';
-const API_KEYS = 'API Keys';
+const BRANDING = 'Branding';
 
-export function SettingsPage() {
+export function BrandPage() {
   const { currentOrganization } = useContext(AuthContext);
 
   const menuTabs = [
     {
-      value: IN_APP_CENTER,
-      content: <InAppCenterCard />,
-    },
-    {
-      value: API_KEYS,
-      content: <ApiKeysCard />,
+      value: BRANDING,
+      content: <BrandingForm isLoading={!currentOrganization} organization={currentOrganization} />,
     },
   ];
 
   return (
     <PageContainer>
-      <PageMeta title="Settings" />
-      <PageHeader title="Settings" />
+      <PageMeta title="Brand" />
+      <PageHeader title="Brand" />
       <Container fluid mt={15} ml={5}>
-        <Tabs loading={!currentOrganization} menuTabs={menuTabs} defaultValue={IN_APP_CENTER} />
+        <Tabs loading={!currentOrganization} menuTabs={menuTabs} defaultValue={BRANDING} />
       </Container>
     </PageContainer>
   );
