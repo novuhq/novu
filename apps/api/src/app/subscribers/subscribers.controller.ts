@@ -137,7 +137,7 @@ export class SubscribersController {
       CreateSubscriberCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        subscriberId: body.subscriberId,
+        subscriberId: body.subscriberId.trim(),
         firstName: body.firstName,
         lastName: body.lastName,
         email: body.email,

@@ -1,9 +1,9 @@
-import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class CreateSubscriberCommand extends EnvironmentCommand {
   @IsString()
-  @IsDefined()
+  @IsNotEmpty()
   subscriberId: string;
 
   @IsEmail()
