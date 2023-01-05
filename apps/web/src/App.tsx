@@ -219,6 +219,16 @@ function App() {
                           </RequiredAuth>
                         }
                       />
+                      <Route
+                        path="/brand"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <BrandPage />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
                     </Route>
                   </Routes>
                 </SpotLightProvider>
