@@ -31,6 +31,10 @@ export class SubscriberEntity {
   updatedAt: string;
 
   __v?: number;
+
+  isOnline: boolean;
+
+  lastOnlineAt?: string;
 }
 
 export class IChannelSettings {
