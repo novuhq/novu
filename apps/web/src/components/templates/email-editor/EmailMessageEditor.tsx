@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMantineTheme, Group, Container, Card } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
-import { IEmailBlock } from '@novu/shared';
+import { EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
 
 import { Upload } from '../../../design-system/icons';
 import { colors, Text } from '../../../design-system';
@@ -26,16 +26,14 @@ export function EmailMessageEditor({
   const theme = useMantineTheme();
   const navigate = useNavigate();
 
-  const [blocks, setBlocks] = useState<IEmailBlock[]>(
-    value?.length
-      ? value
-      : [
-          {
-            type: 'text',
-            content: '',
-          },
-        ]
-  );
+  const emailBlock: IEmailBlock[] = [
+    {
+      type: EmailBlockTypeEnum.TEXT,
+      content: '',
+    },
+  ];
+
+  const [blocks, setBlocks] = useState<IEmailBlock[]>(value?.length ? value : emailBlock);
 
   const isMounted = useIsMounted();
 
@@ -48,7 +46,7 @@ export function EmailMessageEditor({
     }
   }, [blocks, isMounted]);
 
-  function onBlockStyleChanged(blockIndex: number, styles: { textAlign: 'left' | 'right' | 'center' }) {
+  function onBlockStyleChanged(blockIndex: number, styles: { textAlign: TextAlignEnum }) {
     blocks[blockIndex].styles = {
       ...styles,
     };
@@ -82,19 +80,19 @@ export function EmailMessageEditor({
     }
   }
 
-  function onBlockAdd(type: 'button' | 'text') {
+  function onBlockAdd(type: EmailBlockTypeEnum) {
     const modifiedBlocks = [...blocks];
 
     if (type === 'button') {
       modifiedBlocks.push({
-        type: 'button',
+        type: EmailBlockTypeEnum.BUTTON,
         content: 'Button text',
       });
     }
 
     if (type === 'text') {
       modifiedBlocks.push({
-        type: 'text',
+        type: EmailBlockTypeEnum.TEXT,
         content: '',
       });
     }

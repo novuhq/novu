@@ -1,13 +1,15 @@
 import { ActorTypeEnum, ChannelCTATypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from './channel.enum';
 
+import { EmailBlockTypeEnum, TextAlignEnum } from '../../types';
+
 export type MessageTemplateContentType = 'editor' | 'customHtml';
 
 export interface IEmailBlock {
-  type: 'text' | 'button';
+  type: EmailBlockTypeEnum;
   content: string;
   url?: string;
   styles?: {
-    textAlign?: 'left' | 'right' | 'center';
+    textAlign?: TextAlignEnum;
   };
 }
 

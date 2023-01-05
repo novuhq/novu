@@ -1,5 +1,7 @@
 import { StepTypeEnum, IMessageCTA, TemplateVariableTypeEnum, IActor } from '@novu/shared';
 
+import { IEmailBlock, ITemplateVariable } from './types';
+
 export class MessageTemplateEntity {
   _id: string;
 
@@ -34,26 +36,4 @@ export class MessageTemplateEntity {
   _parentId?: string;
 
   actor?: IActor;
-}
-
-export class IEmailBlock {
-  type: 'button' | 'text';
-
-  content: string;
-
-  url?: string;
-
-  styles?: {
-    textAlign?: 'left' | 'right' | 'center';
-  };
-}
-
-export class ITemplateVariable {
-  type: TemplateVariableTypeEnum;
-
-  name: string;
-
-  required: boolean;
-
-  defaultValue?: string | boolean;
 }
