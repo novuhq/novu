@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
+export const NovuProvider = 'novu';
+
 export enum CredentialsKeyEnum {
   ApiKey = 'apiKey',
   User = 'user',

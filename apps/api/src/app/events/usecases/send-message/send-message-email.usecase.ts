@@ -31,6 +31,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration/get-novu-integration.usecase';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
@@ -338,7 +339,13 @@ export class SendMessageEmail extends SendMessageBase {
     notification: NotificationEntity
   ) {
     const mailFactory = new MailFactory();
-    const mailHandler = mailFactory.getHandler(integration, mailData.from);
+    const mailHandler = mailFactory.getHandler(
+      {
+        ...integration,
+        providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, integration.providerId),
+      },
+      mailData.from
+    );
 
     try {
       const result = await mailHandler.send(mailData);
