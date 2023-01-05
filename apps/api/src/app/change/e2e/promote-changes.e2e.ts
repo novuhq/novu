@@ -6,7 +6,7 @@ import {
   NotificationGroupRepository,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, ChannelCTATypeEnum, StepTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, ChannelCTATypeEnum, EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -53,7 +53,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -100,7 +100,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -194,7 +194,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -273,7 +273,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -324,7 +324,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: step.template.type,
             cta: {
               type: ChannelCTATypeEnum.REDIRECT,
@@ -379,7 +379,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -420,7 +420,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
