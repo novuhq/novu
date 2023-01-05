@@ -19,6 +19,7 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { CacheKeyPrefixEnum, CacheService } from '../../../shared/services/cache';
 import { InvalidateCache } from '../../../shared/interceptors';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -121,6 +122,8 @@ export class UpdateNotificationTemplate {
       for (const message of steps) {
         let stepId = message._id;
         if (message._templateId) {
+          if (!message.template) throw new ApiException("Something un-expected happened, template couldn't be found");
+
           const template = await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
               templateId: message._templateId,
@@ -152,6 +155,8 @@ export class UpdateNotificationTemplate {
             shouldStopOnFail: message.shouldStopOnFail,
           });
         } else {
+          if (!message.template) throw new ApiException("Something un-expected happened, template couldn't be found");
+
           const template = await this.createMessageTemplate.execute(
             CreateMessageTemplateCommand.create({
               type: message.template.type,
@@ -182,7 +187,7 @@ export class UpdateNotificationTemplate {
             shouldStopOnFail: message.shouldStopOnFail,
           });
         }
-        parentStepId = stepId;
+        parentStepId = stepId || null;
       }
       updatePayload.steps = templateMessages;
     }
@@ -226,7 +231,7 @@ export class UpdateNotificationTemplate {
     this.analyticsService.track('Update Notification Template - [Platform]', command.userId, {
       _organization: command.organizationId,
       steps: command.steps?.length,
-      channels: command.steps?.map((i) => i.template.type),
+      channels: command.steps?.map((i) => i.template?.type),
       critical: command.critical,
     });
 

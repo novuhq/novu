@@ -49,7 +49,7 @@ export class Novu extends EventEmitter {
 
   public broadcast: typeof Events.prototype.broadcast;
 
-  private buildBackendUrl(config: INovuConfiguration) {
+  private buildBackendUrl(config?: INovuConfiguration) {
     const novuVersion = 'v1';
 
     if (!config?.backendUrl) {

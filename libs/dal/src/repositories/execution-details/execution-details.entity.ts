@@ -1,7 +1,7 @@
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 
 export class ExecutionDetailsEntity {
-  _id?: string;
+  _id: string;
   _jobId: string;
   _environmentId: string;
   _organizationId: string;
@@ -17,7 +17,7 @@ export class ExecutionDetailsEntity {
   status: ExecutionDetailsStatusEnum;
   isTest: boolean;
   isRetry: boolean;
-  createdAt?: string;
-  raw?: string;
+  createdAt: string;
+  raw?: string | null;
   webhookStatus?: string;
 }

@@ -33,6 +33,7 @@ import {
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
@@ -58,6 +59,7 @@ export class SendMessagePush extends SendMessageBase {
 
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    if (!subscriber) throw new ApiException(`Subscriber not found`);
 
     Sentry.addBreadcrumb({
       message: 'Sending Push',
@@ -65,13 +67,14 @@ export class SendMessagePush extends SendMessageBase {
 
     const pushChannel: NotificationStepEntity = command.step;
     const notification = await this.notificationRepository.findById(command.notificationId);
+    if (!notification) throw new ApiException(`Notification not found`);
 
     const data = {
       subscriber: subscriber,
       step: {
-        digest: !!command.events.length,
+        digest: !!command.events?.length,
         events: command.events,
-        total_count: command.events.length,
+        total_count: command.events?.length,
       },
       ...command.payload,
     };
@@ -82,7 +85,7 @@ export class SendMessagePush extends SendMessageBase {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
           templateId: 'custom',
-          customTemplate: pushChannel.template.content as string,
+          customTemplate: pushChannel.template?.content as string,
           data,
         })
       );
@@ -90,22 +93,12 @@ export class SendMessagePush extends SendMessageBase {
       title = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
           templateId: 'custom',
-          customTemplate: pushChannel.template.title as string,
+          customTemplate: pushChannel.template?.title as string,
           data,
         })
       );
     } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify(data),
-        })
-      );
+      await this.sendErrorHandlebars(command.job, e.message);
 
       return;
     }
@@ -135,29 +128,31 @@ export class SendMessagePush extends SendMessageBase {
     }
 
     const overrides = command.overrides[integration.providerId] || {};
-    const pushChannels = subscriber.channels.filter((chan) =>
-      Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
-    );
+
+    const pushChannels =
+      subscriber.channels?.filter((chan) =>
+        Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
+      ) || [];
 
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
 
+    if (!pushChannels.length) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
+
     if (integration) {
-      if (pushChannels.length === 0) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-          })
-        );
-
-        return;
-      }
-
       for (const channel of pushChannels) {
         if (!channel.credentials?.deviceTokens) {
           await this.createExecutionDetails.execute(
@@ -250,7 +245,7 @@ export class SendMessagePush extends SendMessageBase {
       _organizationId: command.organizationId,
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
-      _messageTemplateId: command.step.template._id,
+      _messageTemplateId: command.step?.template?._id,
       channel: ChannelTypeEnum.PUSH,
       transactionId: command.transactionId,
       deviceTokens: target,

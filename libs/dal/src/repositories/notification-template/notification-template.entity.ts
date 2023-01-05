@@ -12,7 +12,7 @@ import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 
 export class NotificationTemplateEntity {
-  _id?: string;
+  _id: string;
 
   name: string;
 
@@ -81,7 +81,7 @@ export class NotificationStepEntity {
 
   filters?: StepFilter[];
 
-  _parentId?: string;
+  _parentId?: string | null;
 
   metadata?: {
     amount?: number;
@@ -108,6 +108,7 @@ export class StepFilter {
     field: string;
     value: string;
     operator: BuilderFieldOperator;
-    on?: 'payload' | 'subscriber';
+    webhookUrl?: string;
+    on?: 'payload' | 'subscriber' | 'webhook';
   }[];
 }

@@ -2,7 +2,7 @@ import { StepTypeEnum } from '@novu/shared';
 import { NotificationTemplateEntity } from '../notification-template';
 
 export class NotificationEntity {
-  _id?: string;
+  _id: string;
 
   _templateId: string;
 

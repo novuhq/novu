@@ -1,5 +1,5 @@
 export class NotificationGroupEntity {
-  _id?: string;
+  _id: string;
 
   name: string;
 

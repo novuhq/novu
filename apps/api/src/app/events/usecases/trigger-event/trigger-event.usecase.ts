@@ -104,7 +104,7 @@ export class TriggerEvent {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    const jobs: JobEntity[][] = [];
+    const jobs: Omit<JobEntity, '_id'>[][] = [];
 
     for (const subscriberToTrigger of command.to) {
       jobs.push(
@@ -127,11 +127,13 @@ export class TriggerEvent {
 
     const steps = template.steps;
 
-    this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
-      _template: template._id,
-      _organization: command.organizationId,
-      channels: steps.map((step) => step.template?.type),
-    });
+    if (!command.payload.$on_boarding_trigger) {
+      this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
+        _template: template._id,
+        _organization: command.organizationId,
+        channels: steps.map((step) => step.template?.type),
+      });
+    }
 
     for (const job of jobs) {
       await this.storeAndAddJob(job);
@@ -148,11 +150,11 @@ export class TriggerEvent {
     };
   }
 
-  private async storeAndAddJob(jobs: JobEntity[]) {
+  private async storeAndAddJob(jobs: Omit<JobEntity, '_id'>[]) {
     const storedJobs = await this.jobRepository.storeJobs(jobs);
     const channels = storedJobs
-      .map((item) => item.type)
-      .reduce((list, channel) => {
+      .map((item) => item.type as StepTypeEnum)
+      .reduce<StepTypeEnum[]>((list, channel) => {
         if (list.includes(channel) || channel === StepTypeEnum.TRIGGER) {
           return list;
         }

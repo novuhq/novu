@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
@@ -21,6 +21,7 @@ export class MarkMessageAs {
   @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED])
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
 
     await this.messageRepository.changeStatus(command.environmentId, subscriber._id, command.messageIds, command.mark);
 
@@ -51,11 +52,13 @@ export class MarkMessageAs {
     this.updateSocketCount(subscriber, count, marked);
 
     for (const message of messages) {
-      this.analyticsService.track(`Mark as ${marked} - [Notification Center]`, admin._userId, {
-        _subscriber: message._subscriberId,
-        _organization: command.organizationId,
-        _template: message._templateId,
-      });
+      if (admin) {
+        this.analyticsService.track(`Mark as ${marked} - [Notification Center]`, admin._userId, {
+          _subscriber: message._subscriberId,
+          _organization: command.organizationId,
+          _template: message._templateId,
+        });
+      }
     }
   }
 

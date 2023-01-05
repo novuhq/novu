@@ -9,8 +9,8 @@ export class PostmarkHandler extends BaseHandler {
   }
   buildProvider(credentials: ICredentials, from?: string) {
     const config: { apiKey: string; from: string } = {
-      from,
-      apiKey: credentials.apiKey,
+      from: from as string,
+      apiKey: credentials.apiKey as string,
     };
 
     this.provider = new PostmarkEmailProvider(config);

@@ -52,7 +52,6 @@ jobs:
           version: 7.5.0
           run_install: false
 
-
       - uses: pnpm/action-setup@v2
         name: Install pnpm
         id: pnpm-install

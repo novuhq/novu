@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ChatFactory } from '../../services/chat-service/chat.factory';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { CreateLog } from '../../../logs/usecases';
 import { SendMessageCommand } from './send-message.command';
 import * as Sentry from '@sentry/node';
 import {
@@ -20,7 +20,7 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
+import { CreateLogCommand } from '../../../logs/usecases';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import {
@@ -33,6 +33,7 @@ import {
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
@@ -58,20 +59,23 @@ export class SendMessageChat extends SendMessageBase {
 
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    if (!subscriber) throw new ApiException('Subscriber not found');
 
     Sentry.addBreadcrumb({
       message: 'Sending Chat',
     });
     const chatChannel: NotificationStepEntity = command.step;
+    if (!chatChannel || !chatChannel.template) throw new ApiException('Chat channel template not found');
+
     const notification = await this.notificationRepository.findById(command.notificationId);
 
     let content = '';
     const data = {
       subscriber: subscriber,
       step: {
-        digest: !!command.events.length,
+        digest: !!command.events?.length,
         events: command.events,
-        total_count: command.events.length,
+        total_count: command.events?.length,
       },
       ...command.payload,
     };
@@ -85,24 +89,15 @@ export class SendMessageChat extends SendMessageBase {
         })
       );
     } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify(data),
-        })
-      );
+      await this.sendErrorHandlebars(command.job, e.message);
 
       return;
     }
 
-    const chatChannels = subscriber.channels.filter((chan) =>
-      Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
-    );
+    const chatChannels =
+      subscriber.channels?.filter((chan) =>
+        Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
+      ) || [];
 
     if (chatChannels.length === 0) {
       await this.createExecutionDetails.execute(

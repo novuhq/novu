@@ -41,7 +41,7 @@ export class MailFactory {
       const handler =
         this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
 
-      if (!handler) return null;
+      if (!handler) throw new Error('Handler for provider was not found');
 
       handler.buildProvider(integration.credentials, from);
 

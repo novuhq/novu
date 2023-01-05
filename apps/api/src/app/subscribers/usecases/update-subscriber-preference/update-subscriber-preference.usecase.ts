@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   SubscriberPreferenceEntity,
   SubscriberPreferenceRepository,
@@ -29,6 +29,8 @@ export class UpdateSubscriberPreference {
 
   async execute(command: UpdateSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    if (!subscriber) throw new NotFoundException(`Subscriber not found`);
+
     const userPreference = await this.subscriberPreferenceRepository.findOne({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
@@ -47,7 +49,9 @@ export class UpdateSubscriberPreference {
 
     if (!userPreference) {
       const channelObj = {} as Record<'email' | 'sms' | 'in_app' | 'chat' | 'push', boolean>;
-      channelObj[command.channel?.type] = command.channel?.enabled;
+      if (command.channel) {
+        channelObj[command.channel.type] = command.channel?.enabled;
+      }
 
       await this.subscriberPreferenceRepository.create({
         _environmentId: command.environmentId,

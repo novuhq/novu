@@ -8,6 +8,7 @@ import type { IJwtPayload, IOrganizationEntity, IUserEntity } from '@novu/shared
 
 import { getUser } from '../api/user';
 import { getOrganizations } from '../api/organization';
+import { useSegment } from '../hooks/use-segment';
 
 export function applyToken(token: string | null) {
   if (token) {
@@ -31,6 +32,7 @@ export function getToken(): string {
 }
 
 export function useAuthController() {
+  const segment = useSegment();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(() => {
@@ -69,6 +71,8 @@ export function useAuthController() {
 
   useEffect(() => {
     if (user && organization) {
+      segment.identify(user);
+
       Sentry.setUser({
         email: user.email,
         username: `${user.firstName} ${user.lastName}`,
@@ -108,6 +112,7 @@ export function useAuthController() {
     setTokenCallback(null);
     queryClient.clear();
     navigate('/auth/login');
+    segment.reset();
   };
 
   return {

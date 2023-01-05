@@ -12,7 +12,7 @@ describe('Mark all as read - /widgets/messages/seen (POST)', function () {
   let subscriberToken: string;
   let subscriberProfile: {
     _id: string;
-  } = null;
+  } | null = null;
 
   beforeEach(async () => {
     session = new UserSession();

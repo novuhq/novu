@@ -35,7 +35,7 @@ export class PasswordResetRequest {
       const resetTokenCount = this.getUpdatedRequestCount(foundUser);
       await this.userRepository.updatePasswordResetToken(foundUser._id, token, resetTokenCount);
 
-      if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
+      if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') && process.env.NOVU_API_KEY) {
         const novu = new Novu(process.env.NOVU_API_KEY);
 
         novu.trigger(process.env.NOVU_TEMPLATEID_PASSWORD_RESET || 'password-reset-llS-wzWMq', {
@@ -69,7 +69,9 @@ export class PasswordResetRequest {
     const diffHours = differenceInHours(new Date(), formattedDate);
 
     const withinDailyLimit = diffHours < this.RATE_LIMIT_IN_HOURS;
-    const exceededDailyAttempt = user?.resetTokenCount?.reqInDay >= this.MAX_ATTEMPTS_IN_A_DAY;
+    const exceededDailyAttempt = user?.resetTokenCount
+      ? user?.resetTokenCount?.reqInDay >= this.MAX_ATTEMPTS_IN_A_DAY
+      : false;
     if (withinDailyLimit && exceededDailyAttempt) {
       return {
         isBlocked: true,
@@ -78,7 +80,9 @@ export class PasswordResetRequest {
     }
 
     const withinMinuteLimit = diffSeconds < this.RATE_LIMIT_IN_SECONDS;
-    const exceededMinuteAttempt = user?.resetTokenCount?.reqInMinute >= this.MAX_ATTEMPTS_IN_A_MINUTE;
+    const exceededMinuteAttempt = user?.resetTokenCount
+      ? user?.resetTokenCount?.reqInMinute >= this.MAX_ATTEMPTS_IN_A_MINUTE
+      : false;
     if (withinMinuteLimit && exceededMinuteAttempt) {
       return {
         isBlocked: true,

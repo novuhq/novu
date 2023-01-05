@@ -25,7 +25,7 @@ export class APNSPushProvider implements IPushProvider {
         keyId: config.keyId,
         teamId: config.teamId,
       },
-      production: process.env.NODE_ENV === 'production',
+      production: process.env.NODE_ENV === 'prod',
     });
   }
 

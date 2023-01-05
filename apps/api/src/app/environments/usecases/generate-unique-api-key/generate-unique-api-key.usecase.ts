@@ -9,7 +9,7 @@ export class GenerateUniqueApiKey {
   constructor(private environmentRepository: EnvironmentRepository) {}
 
   async execute(): Promise<string> {
-    let apiKey: string;
+    let apiKey = '';
     let count = 0;
     let isApiKeyUsed = true;
     while (isApiKeyUsed) {
@@ -24,7 +24,7 @@ export class GenerateUniqueApiKey {
       }
     }
 
-    return apiKey;
+    return apiKey as string;
   }
 
   /**
