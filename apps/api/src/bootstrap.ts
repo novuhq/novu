@@ -85,6 +85,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Notification templates')
     .addTag('Notification groups')
     .addTag('Changes')
+    .addTag('Topics')
     .addTag('Environments')
     .addTag('Execution details')
     .addTag('Feeds')
