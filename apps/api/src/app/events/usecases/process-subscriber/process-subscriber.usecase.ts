@@ -8,7 +8,7 @@ import {
   JobStatusEnum,
   NotificationStepEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, NovuProvider } from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, InAppProviderIdEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
@@ -125,7 +125,7 @@ export class ProcessSubscriber {
         _templateId: notification._templateId,
         digest: step.metadata,
         type: step.template.type,
-        providerId: integration?.providerId ?? NovuProvider,
+        providerId: integration?.providerId ?? InAppProviderIdEnum.Novu,
         ...(actorSubscriber && { _actorId: actorSubscriber._id }),
       });
     }

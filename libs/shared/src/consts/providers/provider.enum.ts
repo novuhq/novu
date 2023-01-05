@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
-export const NovuProvider = 'novu';
-
 export enum CredentialsKeyEnum {
   ApiKey = 'apiKey',
   User = 'user',
@@ -40,6 +38,7 @@ export enum EmailProviderIdEnum {
   MailerSend = 'mailersend',
   Clickatell = 'clickatell',
   Outlook365 = 'outlook365',
+  Novu = 'novu-email',
 }
 
 export enum SmsProviderIdEnum {

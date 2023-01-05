@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, MessageRepository, IntegrationRepository, ExecutionDetailsRepository } from '@novu/dal';
 import { GetNovuIntegrationCommand } from './get-novu-integration.command';
-import { ChannelTypeEnum, NovuProvider, EmailProviderIdEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
 @Injectable()
@@ -13,6 +13,8 @@ export class GetNovuIntegration {
   ) {}
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity[]> {
+    const providerId = this.getProviderId(command.channelType);
+
     const sentMessagesCount = await this.executionDetailsRepository.count({
       status: ExecutionDetailsStatusEnum.SUCCESS,
       _organizationId: command.organizationId,
@@ -36,7 +38,7 @@ export class GetNovuIntegration {
     const messagesCount = await this.messageRepository.count({
       channel: command.channelType,
       _organizationId: command.organizationId,
-      providerId: NovuProvider,
+      providerId,
       createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
     });
 
@@ -54,7 +56,7 @@ export class GetNovuIntegration {
 
   private createNovuEmailIntegration(): IntegrationEntity {
     const item = new IntegrationEntity();
-    item.providerId = NovuProvider;
+    item.providerId = EmailProviderIdEnum.Novu;
     item.active = true;
     item.channel = ChannelTypeEnum.EMAIL;
 
@@ -67,8 +69,17 @@ export class GetNovuIntegration {
     return item;
   }
 
+  private getProviderId(type: ChannelTypeEnum) {
+    switch (type) {
+      case ChannelTypeEnum.EMAIL:
+        return EmailProviderIdEnum.Novu;
+      default:
+        return EmailProviderIdEnum.Novu;
+    }
+  }
+
   public static mapProviders(type: ChannelTypeEnum, providerId: string) {
-    if (providerId !== NovuProvider) {
+    if ([EmailProviderIdEnum.Novu.toString()].includes(providerId)) {
       return providerId;
     }
 
