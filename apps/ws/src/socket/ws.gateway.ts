@@ -2,10 +2,11 @@ import { OnGatewayConnection, WebSocketGateway, WebSocketServer } from '@nestjs/
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { ISubscriberJwt } from '@novu/shared';
+import { SubscriberRepository } from '@novu/dal';
 
 @WebSocketGateway()
 export class WSGateway implements OnGatewayConnection {
-  constructor(private jwtService: JwtService) {}
+  constructor(private jwtService: JwtService, private subscriberRepository: SubscriberRepository) {}
 
   @WebSocketServer()
   server: Server;
@@ -28,7 +29,12 @@ export class WSGateway implements OnGatewayConnection {
       return this.disconnect(connection);
     }
 
-    return await connection.join(subscriber._id);
+    await connection.join(subscriber._id);
+    await this.handleOnlineStatus(subscriber, true);
+
+    connection.on('disconnect', async () => {
+      await this.handleOnlineStatus(subscriber, false);
+    });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -38,5 +44,17 @@ export class WSGateway implements OnGatewayConnection {
 
   private disconnect(socket: Socket) {
     socket.disconnect();
+  }
+
+  private async handleOnlineStatus(subscriber: ISubscriberJwt, isOnline: boolean) {
+    await this.subscriberRepository.update(
+      { _id: subscriber._id, _organizationId: subscriber.organizationId },
+      {
+        $set: {
+          isOnline,
+          lastOnlineAt: new Date(),
+        },
+      }
+    );
   }
 }
