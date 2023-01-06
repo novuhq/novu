@@ -33,7 +33,6 @@ importers:
       cross-env: ^7.0.3
       cspell: ^4.2.8
       cypress-intellij-reporter: ^0.0.6
-      cz-conventional-changelog: 3.3.0
       deep-extend: ^0.6.0
       detect-port: ^1.3.0
       eslint: 7.32.0
@@ -109,7 +108,6 @@ importers:
       cross-env: 7.0.3
       cspell: 4.2.8
       cypress-intellij-reporter: 0.0.6
-      cz-conventional-changelog: 3.3.0
       deep-extend: 0.6.0
       detect-port: 1.3.0
       eslint: 7.32.0
@@ -1172,7 +1170,6 @@ importers:
       concurrently: ^5.3.0
       coveralls: ^3.0.2
       cross-env: ^5.2.0
-      cz-conventional-changelog: ^2.1.0
       http-server: ^0.12.3
       husky: ^1.0.1
       iframe-resizer: ^4.3.1
@@ -1213,7 +1210,6 @@ importers:
       concurrently: 5.3.0
       coveralls: 3.1.1
       cross-env: 5.2.1
-      cz-conventional-changelog: 2.1.0
       http-server: 0.12.3
       husky: 1.3.1
       jest: 29.3.1_dnlfjp7n5lpfgnj4digwzn5fhe
@@ -1360,7 +1356,6 @@ importers:
       class-validator: ^0.13.2
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       node-fetch: ^3.2.10
@@ -1411,7 +1406,6 @@ importers:
       '@types/sinon': 9.0.11
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -1533,7 +1527,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -1552,7 +1545,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -1574,7 +1566,6 @@ importers:
       '@types/node': ^16.15.1
       axios: ^0.26.1
       codecov: ^3.5.0
-      cz-conventional-changelog: ^3.3.0
       handlebars: ^4.7.7
       jest: ^29.3.1
       lodash.get: ^4.4.2
@@ -1598,7 +1589,6 @@ importers:
       '@types/lodash.merge': 4.6.6
       '@types/node': 16.18.3
       codecov: 3.8.3
-      cz-conventional-changelog: 3.3.0
       jest: 29.3.1_@types+node@16.18.3
       npm-run-all: 4.1.5
       open-cli: 6.0.1
@@ -1821,7 +1811,6 @@ importers:
       '@types/node': ^16.15.1
       axios: ^0.26.1
       codecov: ^3.5.0
-      cz-conventional-changelog: ^3.3.0
       handlebars: ^4.7.7
       jest: ^29.3.1
       lodash.get: ^4.4.2
@@ -1844,7 +1833,6 @@ importers:
       '@types/lodash.merge': 4.6.6
       '@types/node': 16.18.3
       codecov: 3.8.3
-      cz-conventional-changelog: 3.3.0
       jest: 29.3.1_@types+node@16.18.3
       npm-run-all: 4.1.5
       open-cli: 6.0.1
@@ -1860,7 +1848,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       node-apn: ^3.0.0
@@ -1879,7 +1866,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -1898,7 +1884,6 @@ importers:
       axios: ^0.27.2
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -1920,7 +1905,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -1942,7 +1926,6 @@ importers:
       axios: ^0.27.2
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -1960,7 +1943,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -1978,7 +1960,6 @@ importers:
       axios: ^0.27.2
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -1997,7 +1978,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2016,7 +1996,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       emailjs: ^3.6.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
@@ -2036,7 +2015,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2055,7 +2033,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       expo-server-sdk: ^3.6.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
@@ -2075,7 +2052,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2095,7 +2071,6 @@ importers:
       '@types/mocha': ^8.0.1
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       eslint: 7.32.0
       firebase-admin: ^11.0.0
       gh-pages: ^3.1.0
@@ -2118,7 +2093,6 @@ importers:
       '@types/mocha': 8.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       eslint: 7.32.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
@@ -2141,7 +2115,6 @@ importers:
       '@types/uuid': ^8.3.4
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       fetch-mock: ^9.11.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
@@ -2164,7 +2137,6 @@ importers:
       '@types/uuid': 8.3.4
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       fetch-mock: 9.11.0_node-fetch@3.2.10
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
@@ -2185,7 +2157,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       node-fetch: ^3.2.10
@@ -2206,7 +2177,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2226,7 +2196,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2245,7 +2214,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2264,7 +2232,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       mailersend: ^1.3.1
@@ -2284,7 +2251,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2303,7 +2269,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       form-data: ^4.0.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
@@ -2327,7 +2292,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2347,7 +2311,6 @@ importers:
       '@types/node-mailjet': ^3.3.7
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       node-mailjet: ^3.3.4
@@ -2368,7 +2331,6 @@ importers:
       '@types/node-mailjet': 3.3.8
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2388,7 +2350,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       eslint: ^8.16.0
       eslint-plugin-eslint-comments: ^3.2.0
       gh-pages: ^3.1.0
@@ -2409,7 +2370,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       eslint: 8.18.0
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.18.0
       gh-pages: 3.2.3
@@ -2431,7 +2391,6 @@ importers:
       axios: ^0.27.2
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2451,7 +2410,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2471,7 +2429,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2491,7 +2448,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2511,7 +2467,6 @@ importers:
       '@vonage/server-sdk': ^2.10.10
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2530,7 +2485,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2550,7 +2504,6 @@ importers:
       '@types/nodemailer': ^6.4.4
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       nodemailer: ^6.6.5
@@ -2571,7 +2524,6 @@ importers:
       '@types/nodemailer': 6.4.4
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2590,7 +2542,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       nodemailer: ^6.6.5
@@ -2610,7 +2561,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2629,7 +2579,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2649,7 +2598,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2668,7 +2616,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2688,7 +2635,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2708,7 +2654,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2727,7 +2672,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2748,7 +2692,6 @@ importers:
       '@types/request': ^2.48.7
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2768,7 +2711,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2788,7 +2730,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       nodemailer: ^6.6.5
@@ -2809,7 +2750,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2830,7 +2770,6 @@ importers:
       axios: ^0.27.2
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2850,7 +2789,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2870,7 +2808,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       node-fetch: ^2.6.7
@@ -2893,7 +2830,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2913,7 +2849,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2932,7 +2867,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2952,7 +2886,6 @@ importers:
       '@types/sparkpost': ^2.1.5
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -2973,7 +2906,6 @@ importers:
       '@types/sparkpost': 2.1.5
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -2992,7 +2924,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -3012,7 +2943,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -3032,7 +2962,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       node-fetch: ^3.2.10
@@ -3053,7 +2982,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -3072,7 +3000,6 @@ importers:
       '@types/jest': ^29.2.3
       codecov: ^3.5.0
       cspell: ^4.2.8
-      cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^29.3.1
       npm-run-all: ^4.1.5
@@ -3092,7 +3019,6 @@ importers:
       '@types/jest': 29.2.3
       codecov: 3.8.3
       cspell: 4.2.8
-      cz-conventional-changelog: 3.3.0
       gh-pages: 3.2.3
       jest: 29.3.1_sfpnjnnyjha3fwltwg26xa3eti
       npm-run-all: 4.1.5
@@ -36641,23 +36567,6 @@ packages:
 
   /cz-conventional-changelog/3.2.0:
     resolution: {integrity: sha512-yAYxeGpVi27hqIilG1nh4A9Bnx4J3Ov+eXy4koL3drrR+IO9GaWPsKjik20ht608Asqi8TQPf0mczhEeyAtMzg==}
-    engines: {node: '>= 10'}
-    dependencies:
-      chalk: 2.4.2
-      commitizen: 4.2.4
-      conventional-commit-types: 3.0.0
-      lodash.map: 4.6.0
-      longest: 2.0.1
-      word-wrap: 1.2.3
-    optionalDependencies:
-      '@commitlint/load': 17.0.3
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
-    dev: true
-
-  /cz-conventional-changelog/3.3.0:
-    resolution: {integrity: sha512-U466fIzU5U22eES5lTNiNbZ+d8dfcHcssH4o7QsdWaCcRs/feIPCxKYSWkYBNs5mny7MvEfwpTLWjvbm94hecw==}
     engines: {node: '>= 10'}
     dependencies:
       chalk: 2.4.2
