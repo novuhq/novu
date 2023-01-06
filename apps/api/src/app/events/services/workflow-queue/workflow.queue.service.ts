@@ -22,7 +22,7 @@ export class WorkflowQueueService {
       host: process.env.REDIS_HOST,
       password: process.env.REDIS_PASSWORD,
       connectTimeout: 50000,
-      keepAlive: 30000,
+      keepAlive: 30000 as never,
       family: 4,
       keyPrefix: getRedisPrefix(),
     },

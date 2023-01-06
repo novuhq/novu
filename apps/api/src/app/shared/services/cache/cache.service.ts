@@ -29,10 +29,11 @@ export class CacheService implements ICacheService {
 
   constructor(private config: ICacheServiceConfig) {
     if (this.config.port && this.config.host) {
+      const keepAlive = this.config.keepAlive ? Number(this.config.keepAlive) : this.DEFAULT_KEEP_ALIVE;
       this.client = new Redis(Number(this.config.port), this.config.host, {
-        password: this.config.password ?? null,
+        password: this.config.password ?? undefined,
         connectTimeout: this.config.connectTimeout ? Number(this.config.connectTimeout) : this.DEFAULT_CONNECT_TIMEOUT,
-        keepAlive: this.config.keepAlive ? Number(this.config.keepAlive) : this.DEFAULT_KEEP_ALIVE,
+        keepAlive: keepAlive as never,
         family: this.config.family ? Number(this.config.family) : this.DEFAULT_FAMILY,
         keyPrefix: this.config.keyPrefix ?? this.DEFAULT_KEY_PREFIX,
       });
