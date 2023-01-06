@@ -33,7 +33,7 @@
     "@novu/stateless": "^0.10.1",
     "@novu/testing": "^0.10.1",
     "@sentry/node": "^6.3.3",
-    "axios": "^0.24.0",
+    "axios": "^0.27.2",
     "bull": "^4.4.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",

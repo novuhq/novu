@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@novu/shared": "^0.10.1",
-    "axios": "^0.26.1"
+    "axios": "^0.27.2"
   },
   "devDependencies": {
     "@types/jest": "^29.2.3",

@@ -24,8 +24,8 @@
   "semverGroups": [
     {
       "range": "^",
-      "dependencies": ["@novu/*"],
-      "packages": ["@novu/*"]
+      "dependencies": ["@novu/**"],
+      "packages": ["**"]
     }
   ]
 }

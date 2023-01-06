@@ -222,7 +222,7 @@ importers:
       '@types/supertest': ^2.0.8
       agenda: ^4.2.1
       analytics-node: ^6.2.0
-      axios: ^0.24.0
+      axios: ^0.27.2
       bcrypt: ^5.0.0
       body-parser: ^1.20.0
       bull: ^4.2.1
@@ -323,7 +323,7 @@ importers:
       '@types/handlebars': 4.1.0
       agenda: 4.2.1
       analytics-node: 6.2.0
-      axios: 0.24.0
+      axios: 0.27.2
       bcrypt: 5.0.1
       body-parser: 1.20.0
       bull: 4.8.1
@@ -436,7 +436,7 @@ importers:
       ace-builds: ^1.4.12
       antd: ^4.10.0
       autoprefixer: ^9.8.6
-      axios: ^0.21.1
+      axios: ^0.27.2
       babel-plugin-import: ^1.13.3
       chart.js: ^3.7.1
       customize-cra: ^1.0.0
@@ -528,7 +528,7 @@ importers:
       ace-builds: 1.4.14
       antd: 4.19.3_sfoxds7t5ydpegc3knd667wn6m
       autoprefixer: 9.8.8
-      axios: 0.21.4
+      axios: 0.27.2
       babel-plugin-import: 1.13.3
       chart.js: 3.7.1
       customize-cra: 1.0.0
@@ -625,7 +625,7 @@ importers:
       '@types/sinon': ^9.0.0
       '@types/socket.io': ^2.1.13
       '@types/supertest': ^2.0.10
-      axios: ^0.24.0
+      axios: ^0.27.2
       bull: ^4.4.0
       chai: ^4.2.0
       class-transformer: ^0.5.1
@@ -665,7 +665,7 @@ importers:
       '@novu/stateless': link:../../packages/stateless
       '@novu/testing': link:../../libs/testing
       '@sentry/node': 6.19.3
-      axios: 0.24.0
+      axios: 0.27.2
       bull: 4.8.1
       class-transformer: 0.5.1
       class-validator: 0.13.2
@@ -727,7 +727,7 @@ importers:
       '@types/react-dom': 17.0.2
       '@types/react-router-dom': ^5.1.7
       antd: ^4.10.0
-      axios: ^0.21.1
+      axios: ^0.27.2
       babel-plugin-import: ^1.13.3
       chroma-js: ^2.4.2
       craco-antd: ^1.19.0
@@ -772,7 +772,7 @@ importers:
       '@testing-library/react': 11.2.7_sfoxds7t5ydpegc3knd667wn6m
       '@testing-library/user-event': 12.8.3_jlger254bgvlyiofkvfke55nxu
       antd: 4.19.3_sfoxds7t5ydpegc3knd667wn6m
-      axios: 0.21.4
+      axios: 0.27.2
       babel-plugin-import: 1.13.3
       chroma-js: 2.4.2
       eslint-plugin-cypress: 2.12.1_eslint@7.32.0
@@ -1238,14 +1238,14 @@ importers:
   libs/shared:
     specifiers:
       '@types/bluebird': ^3.5.24
-      axios: ^0.26.1
+      axios: ^0.27.2
       class-transformer: 0.5.1
       class-validator: 0.13.2
       mixpanel: ^0.13.0
       rimraf: ^3.0.2
       typescript: 4.8.2
     dependencies:
-      axios: 0.26.1
+      axios: 0.27.2
       class-transformer: 0.5.1
       class-validator: 0.13.2
       mixpanel: 0.13.0
@@ -1266,7 +1266,7 @@ importers:
       '@typescript-eslint/parser': ^5.28.0
       apollo-boost: 0.4.9
       async: ^3.2.0
-      axios: 0.25.0
+      axios: ^0.27.2
       bcrypt: ~5.0.0
       class-transformer: 0.5.1
       cross-fetch: ^3.0.4
@@ -1292,7 +1292,7 @@ importers:
       '@novu/node': link:../../packages/node
       '@novu/shared': link:../shared
       async: 3.2.3
-      axios: 0.25.0
+      axios: 0.27.2
       bcrypt: 5.0.1
       class-transformer: 0.5.1
       cross-fetch: 3.1.5
@@ -1426,7 +1426,7 @@ importers:
       '@types/inquirer': ^8.2.0
       '@types/mocha': 9.1.1
       analytics-node: ^6.2.0
-      axios: ^0.25.0
+      axios: ^0.27.2
       chalk: 4.1.2
       commander: ^9.0.0
       configstore: ^5.0.0
@@ -1445,7 +1445,7 @@ importers:
     dependencies:
       '@novu/shared': link:../../libs/shared
       analytics-node: 6.2.0
-      axios: 0.25.0
+      axios: 0.27.2
       chalk: 4.1.2
       commander: 9.1.0
       configstore: 5.0.1
@@ -1472,7 +1472,7 @@ importers:
       '@novu/shared': ^0.10.1
       '@types/jest': ^29.2.3
       '@types/node': ^16.15.1
-      axios: ^0.26.1
+      axios: ^0.27.2
       codecov: ^3.5.0
       jest: ^29.3.1
       rimraf: ^3.0.2
@@ -1480,7 +1480,7 @@ importers:
       typescript: 4.8.2
     dependencies:
       '@novu/shared': link:../../libs/shared
-      axios: 0.26.1
+      axios: 0.27.2
     devDependencies:
       '@types/jest': 29.2.3
       '@types/node': 16.18.3
@@ -1564,7 +1564,7 @@ importers:
       '@types/lodash.get': ^4.4.6
       '@types/lodash.merge': ^4.6.6
       '@types/node': ^16.15.1
-      axios: ^0.26.1
+      axios: ^0.27.2
       codecov: ^3.5.0
       handlebars: ^4.7.7
       jest: ^29.3.1
@@ -1578,7 +1578,7 @@ importers:
       typescript: 4.8.2
     dependencies:
       '@novu/shared': link:../../libs/shared
-      axios: 0.26.1
+      axios: 0.27.2
       handlebars: 4.7.7
       lodash.get: 4.4.2
       lodash.merge: 4.6.2
@@ -1628,7 +1628,7 @@ importers:
       '@types/react-dom': ^17.0.0
       acorn: ^8.7.1
       acorn-jsx: ^5.3.2
-      axios: ^0.26.1
+      axios: ^0.27.2
       babel-loader: ^8.2.4
       chroma-js: ^2.4.2
       date-fns: ^2.29.1
@@ -1662,7 +1662,7 @@ importers:
       '@novu/shared': link:../../libs/shared
       '@rollup/plugin-babel': 6.0.3_33xvyxcmf5jjujxdnhmxirweba
       acorn-jsx: 5.3.2_acorn@8.7.1
-      axios: 0.26.1
+      axios: 0.27.2
       chroma-js: 2.4.2
       date-fns: 2.29.1
       lodash.clonedeep: 4.5.0
@@ -1809,7 +1809,7 @@ importers:
       '@types/lodash.get': ^4.4.6
       '@types/lodash.merge': ^4.6.6
       '@types/node': ^16.15.1
-      axios: ^0.26.1
+      axios: ^0.27.2
       codecov: ^3.5.0
       handlebars: ^4.7.7
       jest: ^29.3.1
@@ -1822,7 +1822,7 @@ importers:
       ts-jest: ^29.0.3
       typescript: 4.8.2
     dependencies:
-      axios: 0.26.1
+      axios: 0.27.2
       handlebars: 4.7.7
       lodash.get: 4.4.2
       lodash.merge: 4.6.2
@@ -31992,14 +31992,6 @@ packages:
       follow-redirects: 1.14.9
     transitivePeerDependencies:
       - debug
-
-  /axios/0.24.0:
-    resolution: {integrity: sha512-Q6cWsys88HoPgAaFAVUb0WpPk0O8iTeisR9IMqy9G8AbO4NlpVknrnQS03zzF9PGAWgO3cgletO3VjV/P7VztA==}
-    dependencies:
-      follow-redirects: 1.14.9
-    transitivePeerDependencies:
-      - debug
-    dev: false
 
   /axios/0.25.0:
     resolution: {integrity: sha512-cD8FOb0tRH3uuEe6+evtAbgJtfxr7ly3fQjYcMcuPlgkwVS9xboaVIpcDV+cYQe+yGykgwZCs1pzjntcGa6l5g==}
