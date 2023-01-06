@@ -11,7 +11,7 @@ export class WSGateway implements OnGatewayConnection {
   server: Server;
 
   async handleConnection(connection: Socket) {
-    const { token } = connection.handshake.auth;
+    const token = connection.handshake.auth?.token || connection.handshake.query?.token;
 
     if (!token || token === 'null') {
       return this.disconnect(connection);
