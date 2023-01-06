@@ -365,6 +365,7 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string
   ): Promise<MessageEntity> {
     const messageIds = this.toArray(messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: user.organizationId,
@@ -436,12 +437,12 @@ export class SubscribersController {
     );
   }
 
-  private toArray(param: string[] | string): string[] {
-    let paramArray: string[] = [];
+  private toArray(param: string[] | string): string[] | undefined {
+    let paramArray: string[] | undefined;
     if (param) {
       paramArray = Array.isArray(param) ? param : param.split(',');
     }
 
-    return paramArray;
+    return paramArray as string[];
   }
 }
