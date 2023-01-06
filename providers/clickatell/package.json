@@ -47,7 +47,6 @@
     "nyc": "^15.1.0",
     "open-cli": "^6.0.1",
     "prettier": "^2.7.1",
-    "standard-version": "^9.0.0",
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1"
   },
