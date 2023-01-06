@@ -3,6 +3,7 @@ import { UserSession } from '@novu/testing';
 import {
   ChannelCTATypeEnum,
   ChannelTypeEnum,
+  EmailBlockTypeEnum,
   StepTypeEnum,
   INotificationTemplate,
   TriggerTypeEnum,
@@ -63,7 +64,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
             name: 'Message Name',
             subject: 'Test email subject',
             preheader: 'Test email preheader',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [

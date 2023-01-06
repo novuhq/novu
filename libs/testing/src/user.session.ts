@@ -6,7 +6,7 @@ import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 
 import { TriggerRecipientsPayload } from '@novu/node';
-import { StepTypeEnum } from '@novu/shared';
+import { EmailBlockTypeEnum, IEmailBlock, StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
   EnvironmentEntity,
@@ -23,13 +23,20 @@ import {
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
-import { testServer } from './test-server.service';
+import { TestServer, testServer } from './test-server.service';
 
 import { OrganizationService } from './organization.service';
 import { EnvironmentService } from './environment.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 import { IntegrationService } from './integration.service';
 import { UserService } from './user.service';
+
+const EMAIL_BLOCK: IEmailBlock[] = [
+  {
+    type: EmailBlockTypeEnum.TEXT,
+    content: 'Email Content',
+  },
+];
 
 export class UserSession {
   private environmentRepository = new EnvironmentRepository();
@@ -46,7 +53,7 @@ export class UserSession {
 
   subscriberProfile: {
     _id: string;
-  } = null;
+  } | null = null;
 
   notificationGroups: NotificationGroupEntity[] = [];
 
@@ -58,7 +65,7 @@ export class UserSession {
 
   environment: EnvironmentEntity;
 
-  testServer = testServer;
+  testServer: null | TestServer = testServer;
 
   apiKey: string;
 
@@ -141,7 +148,7 @@ export class UserSession {
   }
 
   private get requestEndpoint() {
-    return this.shouldUseTestServer() ? this.testServer.getHttpServer() : this.serverUrl;
+    return this.shouldUseTestServer() ? this.testServer?.getHttpServer() : this.serverUrl;
   }
 
   async fetchJWT() {
@@ -155,7 +162,7 @@ export class UserSession {
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
   }
 
-  async createEnvironment(name = 'Test environment', parentId: string = undefined) {
+  async createEnvironment(name = 'Test environment', parentId: string | undefined = undefined) {
     this.environment = await this.environmentRepository.create({
       name,
       identifier: uuid(),
@@ -242,15 +249,7 @@ export class UserSession {
       steps: [
         {
           type: channel,
-          content:
-            channel === StepTypeEnum.EMAIL
-              ? [
-                  {
-                    type: 'text',
-                    content: 'Email Content',
-                  },
-                ]
-              : 'Test notification content',
+          content: channel === StepTypeEnum.EMAIL ? EMAIL_BLOCK : 'Test notification content',
         },
       ],
     });

@@ -37,7 +37,7 @@ export class GetSubscriberTemplatePreference {
     const subscriberPreferenceEnabled = subscriberPreference?.enabled ?? true;
 
     if (subscriberPreferenceIsWhole(subscriberPreference?.channels, activeChannels)) {
-      return getResponse(responseTemplate, subscriberPreferenceEnabled, subscriberPreference.channels, activeChannels);
+      return getResponse(responseTemplate, subscriberPreferenceEnabled, subscriberPreference?.channels, activeChannels);
     }
 
     const templatePreference = command.template.preferenceSettings;
@@ -71,7 +71,10 @@ export class GetSubscriberTemplatePreference {
   }
 }
 
-function filterActiveChannels(activeChannels: ChannelTypeEnum[], preference: IPreferenceChannels): IPreferenceChannels {
+function filterActiveChannels(
+  activeChannels: ChannelTypeEnum[],
+  preference?: IPreferenceChannels
+): IPreferenceChannels {
   const filteredChannels = Object.assign({}, preference);
   for (const key in preference) {
     if (!activeChannels.some((channel) => channel === key)) {
@@ -108,7 +111,10 @@ function mapResponseTemplate(template: NotificationTemplateEntity): IGetSubscrib
   };
 }
 
-function subscriberPreferenceIsWhole(preference: IPreferenceChannels, activeChannels: ChannelTypeEnum[]): boolean {
+function subscriberPreferenceIsWhole(
+  preference?: IPreferenceChannels | null,
+  activeChannels?: ChannelTypeEnum[] | null
+): boolean {
   if (!preference || !activeChannels) return false;
 
   return Object.keys(preference).length === activeChannels.length;
@@ -117,7 +123,7 @@ function subscriberPreferenceIsWhole(preference: IPreferenceChannels, activeChan
 function getResponse(
   responseTemplate: IGetSubscriberPreferenceTemplateResponse,
   subscriberPreferenceEnabled: boolean,
-  subscriberPreferenceChannels: IPreferenceChannels,
+  subscriberPreferenceChannels: IPreferenceChannels | undefined,
   activeChannels: ChannelTypeEnum[]
 ): ISubscriberPreferenceResponse {
   return {

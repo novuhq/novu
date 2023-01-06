@@ -44,7 +44,7 @@ export class FilterTopicsUseCase {
       _environmentId: TopicRepository.convertStringToObjectId(command.environmentId),
       _organizationId: TopicRepository.convertStringToObjectId(command.organizationId),
       ...(command.key && { key: command.key }),
-    };
+    } as Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'>;
   }
 
   private mapFromEntityToDto(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {

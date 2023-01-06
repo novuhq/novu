@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "strictNullChecks": true,
     "module": "commonjs",
     "sourceMap": true,
     "allowSyntheticDefaultImports": true,

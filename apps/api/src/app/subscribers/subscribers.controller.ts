@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -286,9 +298,9 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Query('page') page?: string,
     @Query('feedIdentifier') feedId?: string,
-    @Query() query?: StoreQuery
+    @Query() query: StoreQuery = {}
   ) {
-    let feedsQuery: string[];
+    let feedsQuery: string[] | undefined;
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
     }
@@ -320,7 +332,7 @@ export class SubscribersController {
     @Query('seen') seen: boolean,
     @Param('subscriberId') subscriberId: string
   ): Promise<UnseenCountResponse> {
-    let feedsQuery: string[];
+    let feedsQuery: string[] | undefined;
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
     }
@@ -353,6 +365,7 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string
   ): Promise<MessageEntity> {
     const messageIds = this.toArray(messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: user.organizationId,
@@ -379,7 +392,10 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Body() body: { messageId: string | string[]; mark: { seen?: boolean; read?: boolean } }
   ): Promise<MessageEntity[]> {
+    if (!body.messageId) throw new BadRequestException('messageId is required');
+
     const messageIds = this.toArray(body.messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: user.organizationId,
@@ -420,12 +436,13 @@ export class SubscribersController {
       })
     );
   }
-  private toArray(param: string[] | string): string[] {
-    let paramArray: string[];
+
+  private toArray(param: string[] | string): string[] | undefined {
+    let paramArray: string[] | undefined;
     if (param) {
       paramArray = Array.isArray(param) ? param : param.split(',');
     }
 
-    return paramArray;
+    return paramArray as string[];
   }
 }
