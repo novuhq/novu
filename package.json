@@ -124,7 +124,7 @@
     "mississippi": "^4.0.0",
     "ora": "~5.4.1",
     "pnpm": "7.5.0",
-    "prettier": "^2.6.2",
+    "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
     "stop-only": "^3.1.2",

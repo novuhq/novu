@@ -64,7 +64,7 @@
     "jest": "^27.0.6",
     "mocha": "^8.1.1",
     "nodemon": "^2.0.7",
-    "prettier": "^2.1.2",
+    "prettier": "^2.7.1",
     "sinon": "^9.2.4",
     "supertest": "^6.0.0",
     "ts-jest": "^27.0.7",

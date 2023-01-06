@@ -48,7 +48,7 @@
     "@types/node": "^14.6.0",
     "@typescript-eslint/parser": "^5.28.0",
     "apollo-boost": "0.4.9",
-    "eslint-plugin-prettier": "^3.4.0",
+    "eslint-plugin-prettier": "^3.4.1",
     "nodemon": "^2.0.3",
     "ts-node": "^9.0.0",
     "tsconfig-paths": "^3.9.0",
