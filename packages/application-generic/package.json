@@ -68,13 +68,13 @@
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
-    "@types/jest": "27.4.0",
+    "@types/jest": "^29.2.3",
     "@types/sinon": "^9.0.0",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",
     "gh-pages": "^3.1.0",
-    "jest": "^27.1.0",
+    "jest": "^29.3.1",
     "npm-run-all": "^4.1.5",
     "nyc": "^15.1.0",
     "open-cli": "^6.0.1",
@@ -82,9 +82,8 @@
     "rimraf": "^3.0.2",
     "sinon": "^9.2.4",
     "standard-version": "^9.0.0",
-    "ts-jest": "^27.0.5",
+    "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
-    "typedoc": "^0.19.0",
     "typescript": "4.8.2"
   },
   "files": [

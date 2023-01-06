@@ -54,7 +54,6 @@
     "standard-version": "^9.0.0",
     "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",
-    "typedoc": "^0.19.0",
     "typescript": "4.6.2",
     "rimraf": "^3.0.2"
   },

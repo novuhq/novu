@@ -31,10 +31,7 @@
     "cov:lcov": "nyc report --reporter=lcov",
     "cov:send": "run-s cov:lcov && codecov",
     "cov:check": "nyc report && nyc check-coverage --lines 100 --functions 100 --branches 100",
-    "doc": "run-s doc:html && open-cli build/docs/index.html",
-    "doc:html": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --out build/docs",
-    "doc:json": "typedoc src/ --exclude **/*.spec.ts --target ES6 --mode file --json build/docs/typedoc.json",
-    "doc:publish": "gh-pages -m \"[ci skip] Updates\" -d build/docs",
+
     "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
     "prepare-release": "run-s reset-hard test"
   },
@@ -50,21 +47,20 @@
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
-    "@types/jest": "27.4.0",
+    "@types/jest": "^29.2.3",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",
     "gh-pages": "^3.1.0",
-    "jest": "27.4.7",
+    "jest": "^29.3.1",
     "npm-run-all": "^4.1.5",
     "nyc": "^15.1.0",
     "open-cli": "^6.0.1",
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
     "standard-version": "9.3.2",
-    "ts-jest": "^27.0.5",
+    "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
-    "typedoc": "^0.19.0",
     "typescript": "4.8.2"
   },
   "files": [
