@@ -69,7 +69,7 @@
     "ts-loader": "^8.0.8",
     "ts-node": "^9.0.0",
     "tsconfig-paths": "^3.9.0",
-    "typescript": "~4.8.2"
+    "typescript": "4.8.2"
   },
   "workspaces": {
     "nohoist": [
