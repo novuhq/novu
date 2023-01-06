@@ -436,12 +436,12 @@ export class SubscribersController {
     );
   }
 
-  private toArray(param: string[] | string): string[] | undefined {
-    let paramArray: string[] | undefined;
+  private toArray(param: string[] | string): string[] {
+    let paramArray: string[] = [];
     if (param) {
       paramArray = Array.isArray(param) ? param : param.split(',');
     }
 
-    return paramArray as string[];
+    return paramArray;
   }
 }
