@@ -69,7 +69,7 @@
     "supertest": "^6.0.0",
     "ts-jest": "^27.0.7",
     "ts-loader": "^8.0.8",
-    "ts-node": "^9.0.0",
+    "ts-node": "^10.9.1",
     "tsconfig-paths": "^3.9.0",
     "typescript": "4.8.2"
   },
