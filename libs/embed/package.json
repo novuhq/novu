@@ -95,7 +95,7 @@
     "@commitlint/config-conventional": "^7.1.2",
     "@rollup/plugin-replace": "^2.4.2",
     "@types/jest": "^29.2.3",
-    "@types/node": "^14.14.16",
+    "@types/node": "^16.15.1",
     "colors": "1.4.0",
     "commitizen": "^3.0.0",
     "concurrently": "^5.3.0",
