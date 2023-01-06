@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { ActionIcon, Collapse, Tooltip, UnstyledButton, useMantineTheme } from '@mantine/core';
-import { ChevronUp } from '../../../../design-system/icons';
+import { Check, ChevronUp, Copy } from '../../../../design-system/icons';
 import { ChevronDown } from '../../../../design-system/icons';
 import { VarItem } from './VarItem';
 import { colors } from '../../../../design-system';
 import { useClipboard } from '@mantine/hooks';
-import { Check, Copy } from '../../../../design-system/icons';
 
 export const VarItemsDropdown = ({ name, type }) => {
   const [open, setOpen] = useState(false);
-  const idClipboard = useClipboard({ timeout: 500 });
+  const [copiedVariable, setCopiedVariable] = useState<number | null>(null);
   const theme = useMantineTheme();
+  const { copy } = useClipboard();
 
   return (
     <>
@@ -54,13 +54,23 @@ export const VarItemsDropdown = ({ name, type }) => {
             }
 
             return (
-              <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? <Check /> : <Copy />} key={index}>
+              <Tooltip data-test-id={'Tooltip'} label={index === copiedVariable ? 'Copied!' : 'Copy key'} key={index}>
                 <ActionIcon
                   variant="transparent"
-                  onClick={() => idClipboard.copy(`${name}.${key}`)}
-                  sx={{ width: '100%', height: 'unset', minWidth: 'unset', minHeight: 'unset' }}
+                  onClick={() => {
+                    setCopiedVariable(index);
+                    copy(`${name}.${key}`);
+                    setTimeout(() => setCopiedVariable(null), 500);
+                  }}
+                  sx={{ width: '100%', height: 'unset', minWidth: 'unset', minHeight: 'unset', lineHeight: '1.15' }}
                 >
-                  <VarItem key={index} name={key} type={varType} />
+                  <VarItem key={index} name={key} type={varType}>
+                    <span
+                      style={{ position: 'absolute', right: '2%', bottom: index === copiedVariable ? '40%' : '20%' }}
+                    >
+                      {index === copiedVariable ? <Check /> : <Copy />}
+                    </span>
+                  </VarItem>
                 </ActionIcon>
               </Tooltip>
             );

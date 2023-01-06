@@ -9,10 +9,12 @@ import { EditGradient } from '../../../../design-system/icons/gradient/EditGradi
 import { useProcessVariables } from '../../../../hooks/use-process-variables';
 import { useClipboard } from '@mantine/hooks';
 import { Check, Copy } from '../../../../design-system/icons';
+import { useState } from 'react';
 
 export const VariablesManagement = ({ index, openVariablesModal }) => {
+  const [copiedVariable, setCopiedVariable] = useState<number | null>(null);
   const { control } = useFormContext();
-  const idClipboard = useClipboard({ timeout: 500 });
+  const { copy } = useClipboard();
   const theme = useMantineTheme();
   const variableArray = useWatch({
     name: `steps.${index}.template.variables`,
@@ -66,13 +68,21 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
           }
 
           return (
-            <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? <Check /> : <Copy />} key={index}>
+            <Tooltip data-test-id={'Tooltip'} label={ind === copiedVariable ? 'Copied!' : 'Copy key'} key={ind}>
               <ActionIcon
                 variant="transparent"
-                onClick={() => idClipboard.copy(`${name}`)}
-                sx={{ width: '100%', height: 'unset', minWidth: 'unset', minHeight: 'unset' }}
+                onClick={() => {
+                  setCopiedVariable(ind);
+                  copy(`${name}`);
+                  setTimeout(() => setCopiedVariable(null), 500);
+                }}
+                sx={{ width: '100%', height: 'unset', minWidth: 'unset', minHeight: 'unset', lineHeight: '1.15' }}
               >
-                <VarItem key={index} name={name} type={type} />
+                <VarItem key={ind} name={name} type={type}>
+                  <span style={{ position: 'absolute', right: '2%', bottom: ind === copiedVariable ? '40%' : '20%' }}>
+                    {ind === copiedVariable ? <Check /> : <Copy />}
+                  </span>
+                </VarItem>
               </ActionIcon>
             </Tooltip>
           );
@@ -90,13 +100,21 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
             }
 
             return (
-              <Tooltip data-test-id={'Tooltip'} label={idClipboard.copied ? <Check /> : <Copy />} key={ind}>
+              <Tooltip data-test-id={'Tooltip'} label={ind === copiedVariable ? 'Copied!' : 'Copy key'} key={ind}>
                 <ActionIcon
                   variant="transparent"
-                  onClick={() => idClipboard.copy(`${name}`)}
-                  sx={{ width: '100%', height: 'unset', minWidth: 'unset', minHeight: 'unset' }}
+                  onClick={() => {
+                    setCopiedVariable(ind);
+                    copy(`${name}`);
+                    setTimeout(() => setCopiedVariable(null), 500);
+                  }}
+                  sx={{ width: '100%', height: 'unset', minWidth: 'unset', minHeight: 'unset', lineHeight: '1.15' }}
                 >
-                  <VarItem key={ind} name={name} type={typeof processedVariables[name]} />
+                  <VarItem key={ind} name={name} type={typeof processedVariables[name]}>
+                    <span style={{ position: 'absolute', right: '2%', bottom: ind === copiedVariable ? '40%' : '20%' }}>
+                      {ind === copiedVariable ? <Check /> : <Copy />}
+                    </span>
+                  </VarItem>
                 </ActionIcon>
               </Tooltip>
             );
