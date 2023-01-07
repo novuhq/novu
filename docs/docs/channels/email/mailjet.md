@@ -4,7 +4,7 @@ You can use the [Mailjet](https://mailjet.com/) provider to send transactional e
 
 ## Getting Started
 
-To use the Mailjet channel, you will need to create a Mailjet account and add your API key to the Mailjet integration on the Novu platform.
+To use the Mailjet provider, you will need to create a Mailjet account and add your API key to the Mailjet integration on the Novu platform.
 
 ## Find the API Key
 
