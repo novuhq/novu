@@ -1,22 +1,29 @@
-import { Check, Copy } from '../../../../design-system/icons';
-import { ActionIcon, Tooltip, useMantineTheme } from '@mantine/core';
-import { VarItem } from './VarItem';
+import { useState } from 'react';
+import { ActionIcon, Tooltip } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 
+import { Check, Copy } from '../../../../design-system/icons';
+import { VarItem } from './VarItem';
+
 export const VarItemTooltip = ({ pathToCopy, name, type }: { pathToCopy: string; name: string; type: string }) => {
-  const theme = useMantineTheme();
+  const [isHovered, setIsHovered] = useState(false);
   const { copy, copied } = useClipboard({ timeout: 1000 });
 
   return (
-    <Tooltip data-test-id={'Tooltip'} label={copied ? <Check /> : <Copy />}>
+    <Tooltip data-test-id={'Tooltip'} label={copied ? 'Copied!' : 'Copy key'}>
       <ActionIcon
         variant="transparent"
-        onClick={() => {
-          copy(pathToCopy);
-        }}
+        onMouseOver={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={() => copy(pathToCopy)}
         sx={{ width: '100%', height: 'unset', minWidth: 'unset', minHeight: 'unset', lineHeight: '1.15' }}
       >
-        <VarItem name={name} type={type} />
+        <VarItem name={name} type={type}>
+          <span style={{ position: 'absolute', right: '2%', bottom: copied ? '40%' : '20%' }}>
+            {isHovered && !copied && <Copy />}
+            {copied && <Check />}
+          </span>
+        </VarItem>
       </ActionIcon>
     </Tooltip>
   );
