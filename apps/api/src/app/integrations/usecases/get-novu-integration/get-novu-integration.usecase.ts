@@ -15,6 +15,10 @@ export class GetNovuIntegration {
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity[]> {
     const providerId = this.getProviderId(command.channelType);
 
+    if (providerId === undefined) {
+      return [];
+    }
+
     const sentMessagesCount = await this.executionDetailsRepository.count({
       status: ExecutionDetailsStatusEnum.SUCCESS,
       _organizationId: command.organizationId,
@@ -74,12 +78,12 @@ export class GetNovuIntegration {
       case ChannelTypeEnum.EMAIL:
         return EmailProviderIdEnum.Novu;
       default:
-        return EmailProviderIdEnum.Novu;
+        return undefined;
     }
   }
 
   public static mapProviders(type: ChannelTypeEnum, providerId: string) {
-    if ([EmailProviderIdEnum.Novu.toString()].includes(providerId)) {
+    if (![EmailProviderIdEnum.Novu.toString()].includes(providerId)) {
       return providerId;
     }
 
