@@ -51,7 +51,7 @@ export const VarItemsDropdown = ({ name, type }) => {
               return <VarItemsDropdown key={index} name={key} type={type[key]} />;
             }
 
-            return <VarItemTooltip pathToCopy={`${name}.${key}`} name={key} type={type[key]} key={index} />;
+            return <VarItemTooltip pathToCopy={`${name}.${key}`} name={key} type={varType} key={index} />;
           })}
         </div>
       </Collapse>
