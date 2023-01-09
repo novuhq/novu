@@ -50,44 +50,15 @@ export default function Home({ appID, subscriberID }: HomeProps) {
         </div>
 
         <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a href="https://docs.novu.co/" className={styles.card} target="_blank" rel="noopener noreferrer">
             <h2 className={inter.className}>
               Docs <span>-&gt;</span>
             </h2>
-            <p className={inter.className}>Find in-depth information about Next.js features and&nbsp;API.</p>
+            <p className={inter.className}>Find in-depth information about Novu features and&nbsp;API.</p>
           </a>
 
           <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>Discover and deploy boilerplate example Next.js&nbsp;projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
+            href="https://docs.novu.co/overview/docker-deploy"
             className={styles.card}
             target="_blank"
             rel="noopener noreferrer"
@@ -95,7 +66,31 @@ export default function Home({ appID, subscriberID }: HomeProps) {
             <h2 className={inter.className}>
               Deploy <span>-&gt;</span>
             </h2>
-            <p className={inter.className}>Instantly deploy your Next.js site to a shareable URL with&nbsp;Vercel.</p>
+            <p className={inter.className}>Get started with self-hosted Novu.</p>
+          </a>
+
+          <a
+            href="https://discord.com/invite/WCaaK8nwZ7"
+            className={styles.card}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <h2 className={inter.className}>
+              Community <span>-&gt;</span>
+            </h2>
+            <p className={inter.className}>Say hello to the Novu Discord community.</p>
+          </a>
+
+          <a
+            href="https://docs.novu.co/community/faq"
+            className={styles.card}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <h2 className={inter.className}>
+              FAQs <span>-&gt;</span>
+            </h2>
+            <p className={inter.className}>Find answers to common questions.</p>
           </a>
         </div>
       </main>
