@@ -2,10 +2,22 @@ import Head from 'next/head';
 import Image from 'next/image';
 import { Inter } from '@next/font/google';
 import styles from '../styles/Home.module.css';
+import { IMessage, NotificationBell, NovuProvider, PopoverNotificationCenter } from '@novu/notification-center';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export default function Home() {
+interface HomeProps {
+  appID: string;
+  subscriberID: string;
+}
+
+export default function Home({ appID, subscriberID }: HomeProps) {
+  const onNotificationClick = (message: IMessage) => {
+    if (message?.cta?.data?.url) {
+      window.location.href = message.cta.data.url;
+    }
+  };
+
   return (
     <>
       <Head>
@@ -21,21 +33,11 @@ export default function Home() {
             <code className={styles.code}>pages/index.tsx</code>
           </p>
           <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
+            <NovuProvider subscriberId={subscriberID} applicationIdentifier={appID}>
+              <PopoverNotificationCenter onNotificationClick={onNotificationClick} colorScheme="light">
+                {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
+              </PopoverNotificationCenter>
+            </NovuProvider>
           </div>
         </div>
 
@@ -98,4 +100,13 @@ export default function Home() {
       </main>
     </>
   );
+}
+
+export async function getStaticProps(): Promise<{ props: HomeProps }> {
+  return {
+    props: {
+      appID: process.env.NOVU_APP_ID ?? '<YOUR_APP_ID>',
+      subscriberID: process.env.NOVU_SUBSCRIBER_ID ?? '<YOUR_SUBSCRIBER_ID>',
+    },
+  };
 }
