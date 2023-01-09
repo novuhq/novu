@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import * as sinon from 'sinon';
 import { AuthModule } from '../../../auth/auth.module';
-import { MessageRepository, IntegrationRepository, ExecutionDetailsRepository } from '@novu/dal';
+import { MessageRepository, IntegrationRepository } from '@novu/dal';
 import { SharedModule } from '../../../shared/shared.module';
 import { IntegrationModule } from '../../integrations.module';
 import { GetNovuIntegration } from './get-novu-integration.usecase';
@@ -14,7 +14,6 @@ import { endOfMonth, startOfMonth } from 'date-fns';
 
 describe('Get Novu Integration', function () {
   let getNovuIntegration: GetNovuIntegration;
-  let executionDetailsRepository: ExecutionDetailsRepository;
   let integrationRepository: IntegrationRepository;
   let messageRepository: MessageRepository;
   let session: UserSession;
@@ -34,7 +33,6 @@ describe('Get Novu Integration', function () {
       noIntegrations: true,
     });
     getNovuIntegration = moduleRef.get<GetNovuIntegration>(GetNovuIntegration);
-    executionDetailsRepository = moduleRef.get<ExecutionDetailsRepository>(ExecutionDetailsRepository);
     integrationRepository = moduleRef.get<IntegrationRepository>(IntegrationRepository);
     messageRepository = moduleRef.get<MessageRepository>(MessageRepository);
   });
@@ -58,20 +56,6 @@ describe('Get Novu Integration', function () {
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         channelType: ChannelTypeEnum.SMS,
-      })
-    );
-
-    expect(result).to.have.length(0);
-  });
-
-  it('should not return Novu integration if notifications are sent', async function () {
-    sinon.stub(executionDetailsRepository, 'count').resolves(1);
-
-    const result = await getNovuIntegration.execute(
-      GetNovuIntegrationCommand.create({
-        organizationId: session.organization._id,
-        environmentId: session.environment._id,
-        channelType: ChannelTypeEnum.EMAIL,
       })
     );
 
@@ -108,26 +92,34 @@ describe('Get Novu Integration', function () {
     sinon.restore();
     sinon.stub(messageRepository, 'count').resolves(200);
 
-    result = await getNovuIntegration.execute(
-      GetNovuIntegrationCommand.create({
-        organizationId: session.organization._id,
-        environmentId: session.environment._id,
-        channelType: ChannelTypeEnum.EMAIL,
-      })
-    );
-
-    expect(result).to.have.length(0);
+    try {
+      await getNovuIntegration.execute(
+        GetNovuIntegrationCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          channelType: ChannelTypeEnum.EMAIL,
+        })
+      );
+      expect(true).to.equal(false);
+    } catch (e) {
+      expect(e.message).to.equal('You have have reached the limit for Novus email provider.');
+    }
 
     sinon.restore();
     const stub = sinon.stub(messageRepository, 'count').resolves(201);
 
-    result = await getNovuIntegration.execute(
-      GetNovuIntegrationCommand.create({
-        organizationId: session.organization._id,
-        environmentId: session.environment._id,
-        channelType: ChannelTypeEnum.EMAIL,
-      })
-    );
+    try {
+      await getNovuIntegration.execute(
+        GetNovuIntegrationCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          channelType: ChannelTypeEnum.EMAIL,
+        })
+      );
+      expect(true).to.equal(false);
+    } catch (e) {
+      expect(e.message).to.equal('You have have reached the limit for Novus email provider.');
+    }
 
     sinon.assert.calledWith(stub, {
       channel: ChannelTypeEnum.EMAIL,
@@ -135,8 +127,6 @@ describe('Get Novu Integration', function () {
       providerId: EmailProviderIdEnum.Novu,
       createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
     });
-
-    expect(result).to.have.length(0);
   });
 
   it('should map novu email to sendgrid', () => {

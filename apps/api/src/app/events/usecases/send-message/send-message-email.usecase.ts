@@ -60,15 +60,33 @@ export class SendMessageEmail extends SendMessageBase {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
     if (!subscriber) throw new ApiException('Subscriber not found');
 
-    const integration = await this.getIntegration(
-      GetDecryptedIntegrationsCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.EMAIL,
-        findOne: true,
-        active: true,
-      })
-    );
+    let integration: IntegrationEntity | undefined = undefined;
+
+    try {
+      integration = await this.getIntegration(
+        GetDecryptedIntegrationsCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          channelType: ChannelTypeEnum.EMAIL,
+          findOne: true,
+          active: true,
+        })
+      );
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          raw: JSON.stringify({ message: e.message }),
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
     const emailChannel: NotificationStepEntity = command.step;
     if (!emailChannel) throw new ApiException('Email channel step not found');
     if (!emailChannel.template) throw new ApiException('Email channel template not found');

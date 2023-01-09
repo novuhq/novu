@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity, MessageRepository, IntegrationRepository, ExecutionDetailsRepository } from '@novu/dal';
+import { IntegrationEntity, MessageRepository, IntegrationRepository } from '@novu/dal';
 import { GetNovuIntegrationCommand } from './get-novu-integration.command';
-import { ChannelTypeEnum, EmailProviderIdEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
 @Injectable()
 export class GetNovuIntegration {
-  constructor(
-    private messageRepository: MessageRepository,
-    private integrationRepository: IntegrationRepository,
-    private executionDetailsRepository: ExecutionDetailsRepository
-  ) {}
+  constructor(private messageRepository: MessageRepository, private integrationRepository: IntegrationRepository) {}
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity[]> {
     const providerId = this.getProviderId(command.channelType);
@@ -19,20 +15,11 @@ export class GetNovuIntegration {
       return [];
     }
 
-    const sentMessagesCount = await this.executionDetailsRepository.count({
-      status: ExecutionDetailsStatusEnum.SUCCESS,
-      _organizationId: command.organizationId,
-      channel: command.channelType,
-    });
-
-    if (sentMessagesCount > 0) {
-      return [];
-    }
-
     const activeIntegrationsCount = await this.integrationRepository.count({
       _organizationId: command.organizationId,
       active: true,
       channel: command.channelType,
+      _environmentId: command.environmentId,
     });
 
     if (activeIntegrationsCount > 0) {
@@ -46,8 +33,9 @@ export class GetNovuIntegration {
       createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
     });
 
-    if (messagesCount >= 200) {
-      return [];
+    if (messagesCount >= 300) {
+      // add analytics event.
+      throw new Error(`Limit for Novus ${command.channelType.toLowerCase()} provider was reached.`);
     }
 
     switch (command.channelType) {
