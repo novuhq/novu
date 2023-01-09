@@ -138,4 +138,15 @@ describe('Get Novu Integration', function () {
 
     expect(result).to.have.length(0);
   });
+
+  it('should map novu email to sendgrid', () => {
+    let result = GetNovuIntegration.mapProviders(ChannelTypeEnum.SMS, EmailProviderIdEnum.Novu);
+    expect(result).to.equal(EmailProviderIdEnum.Novu);
+
+    result = GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, EmailProviderIdEnum.Novu);
+    expect(result).to.equal(EmailProviderIdEnum.SendGrid);
+
+    result = GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, EmailProviderIdEnum.CustomSMTP);
+    expect(result).to.equal(EmailProviderIdEnum.CustomSMTP);
+  });
 });
