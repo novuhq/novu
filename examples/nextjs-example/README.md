@@ -42,8 +42,8 @@ To get started, you'll need to do the following:
 
 1. Install dependencies by running the following command in the root directory of this project:
 
-```base
-npm install
+```bash
+pnpm install
 ```
 
 2. Create a `.env.local` by copying the `.env.example` file, this will contain the environment variables that is needed to
