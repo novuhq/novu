@@ -46,7 +46,7 @@ export class GetNovuIntegration {
       createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
     });
 
-    if (messagesCount === 200) {
+    if (messagesCount >= 200) {
       return [];
     }
 
