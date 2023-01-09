@@ -125,7 +125,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('var-items-branding').contains('branding');
     cy.getByTestId('var-items-subscriber').contains('subscriber');
     cy.getByTestId('var-item-firstName-string').contains('firstName').contains('string');
-    cy.getByTestId('var-item-customVariable-string').contains('string').contains('string');
+    cy.getByTestId('var-item-customVariable-string').contains('customVariable').contains('string');
     cy.getByTestId('var-items-subscriber').click();
     cy.getByTestId('var-item-phone-string').contains('string');
 
