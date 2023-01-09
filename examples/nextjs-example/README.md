@@ -1,7 +1,7 @@
 <br/>
 <br/>
 
-<div align="center">
+<div style="text-align: center;">
   <a href="https://novu.co" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png">
@@ -57,11 +57,15 @@ cp .env.example .env
    variable.
 
 ```bash
-NOVU_API_KEY=# Your Novu API Key (You can find this in your Novu Dashboard > Settings > API Keys)
-NOVU_APP_ID=# Your Novu App ID (You can find this in your Novu Dashboard > Settings > API Keys)
+# Novu API Keys from Dashboard > Settings > API Keys
+NOVU_API_KEY=
+NOVU_APP_ID=
 
-NOVU_TEST_TRIGGER_ID=# Your Novu Trigger ID (based on the template you created)
-NOVU_SUBSCRIBER_ID=# Set this to any value you want (this is used to identify the subscriber)
+# Trigger ID based on the template you created
+NOVU_TEST_TRIGGER_ID=
+
+# Subscriber ID, set this to any value that you want
+NOVU_SUBSCRIBER_ID=my-subscriber
 ```
 
 4. Run the development server:
