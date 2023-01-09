@@ -539,18 +539,16 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   });
 
   it('should use Novu integration for new orgs', async function () {
-    const old = await integrationRepository.find({
+    const existingIntegrations = await integrationRepository.find({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
     });
 
-    for (const oldKey in old) {
-      await integrationRepository.delete({
-        _id: old[oldKey]._id,
-        _organizationId: session.organization._id,
-        _environmentId: session.environment._id,
-      });
-    }
+    await integrationRepository.delete({
+      _id: { $in: existingIntegrations.map((integration) => integration._id) },
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
 
     const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
     const channelType = ChannelTypeEnum.EMAIL;

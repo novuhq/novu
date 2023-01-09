@@ -92,7 +92,7 @@ describe('Get Novu Integration', function () {
     expect(result).to.have.length(0);
   });
 
-  it('should not return Novu integration if usage are used already', async function () {
+  it('should not return Novu integration if usage limit was met', async function () {
     sinon.stub(messageRepository, 'count').resolves(199);
 
     let result = await getNovuIntegration.execute(

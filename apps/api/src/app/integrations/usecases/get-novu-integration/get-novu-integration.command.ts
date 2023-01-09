@@ -1,8 +1,8 @@
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { IsString } from 'class-validator';
+import { IsEnum } from 'class-validator';
 import { ChannelTypeEnum } from '@novu/shared';
 
 export class GetNovuIntegrationCommand extends EnvironmentCommand {
-  @IsString()
+  @IsEnum(ChannelTypeEnum)
   channelType: ChannelTypeEnum;
 }
