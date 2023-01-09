@@ -59,13 +59,13 @@ cp .env.example .env
 ```bash
 # Novu API Keys from Dashboard > Settings > API Keys
 NOVU_API_KEY=
-NOVU_APP_ID=
+NEXT_PUBLIC_NOVU_APP_ID=
 
 # Trigger ID based on the template you created
 NOVU_TEST_TRIGGER_ID=
 
 # Subscriber ID, set this to any value that you want
-NOVU_SUBSCRIBER_ID=my-subscriber
+NEXT_PUBLIC_NOVU_SUBSCRIBER_ID=my-subscriber
 ```
 
 4. Run the development server:

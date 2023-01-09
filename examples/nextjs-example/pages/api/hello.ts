@@ -5,7 +5,7 @@ const novu = new Novu(process.env.NOVU_API_KEY ?? '<YOUR_API_KEY>');
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const triggerId = process.env.NOVU_TEST_TRIGGER_ID ?? '<YOUR_TRIGGER_ID>';
-  const subscriberId = process.env.NOVU_SUBSCRIBER_ID ?? '<YOUR_SUBSCRIBER_ID>';
+  const subscriberId = process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID ?? '<YOUR_SUBSCRIBER_ID>';
 
   try {
     await novu.subscribers.get(subscriberId);
