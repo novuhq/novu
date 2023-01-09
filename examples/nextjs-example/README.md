@@ -46,14 +46,14 @@ To get started, you'll need to do the following:
 npm install
 ```
 
-2. Create a `.env` by copying the `.env.example` file, this will contain the environment variables that is needed to
+2. Create a `.env.local` by copying the `.env.example` file, this will contain the environment variables that is needed to
    configure the Novu packages. You may use the command below:
 
 ```bash
-cp .env.example .env
+cp .env.example .env.local
 ```
 
-3. Fill out the environment variables in the `.env` file. You may refer to the table below for the description of each
+3. Fill out the environment variables in the `.env.local` file. You may refer to the table below for the description of each
    variable.
 
 ```bash
