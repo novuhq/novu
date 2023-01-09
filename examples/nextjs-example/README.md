@@ -1,44 +1,85 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped
-with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+<br/>
+<br/>
 
-## Getting Started
+<div align="center">
+  <a href="https://novu.co" target="_blank">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png">
+    <img src="https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png" width="280" alt="Logo"/>
+  </picture>
+  </a>
+</div>
 
-First, run the development server:
+<h1 align="center">Novu + Next.js 13 Template</h1>
+
+<div align="center">
+Template to get started with integrating Novu with Next.js
+</div>
+
+  <p align="center">
+    <br />
+    <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
+    <br />
+  </p>
+
+## 🚀 Project setup
+
+To get started, you'll need to do the following:
+
+### Create a Notification Template
+
+1. Create your account on [Novu](https://novu.co)
+2. Head to [Templates](https://web.novu.co/templates) and create a new Notification Template.
+3. Fill out the required details.
+4. In the workflow editor, add an "In-App" step to your workflow. You may customize the In-App template to your liking.
+5. Leave everything else as is and click "Create".
+6. Take note of your **Trigger ID**, you'll need this for the suceeding steps.
+
+### Setup the Next.js project
+
+> Note: This assumes that you already have a copy of the project on your local machine. If not, you can either clone the
+> repository or download the zip file.
+
+1. Install dependencies by running the following command in the root directory of this project:
+
+```base
+npm install
+```
+
+2. Create a `.env` by copying the `.env.example` file, this will contain the environment variables that is needed to
+   configure the Novu packages. You may use the command below:
+
+```bash
+cp .env.example .env
+```
+
+3. Fill out the environment variables in the `.env` file. You may refer to the table below for the description of each
+   variable.
+
+```bash
+NOVU_API_KEY=# Your Novu API Key (You can find this in your Novu Dashboard > Settings > API Keys)
+NOVU_APP_ID=# Your Novu App ID (You can find this in your Novu Dashboard > Settings > API Keys)
+
+NOVU_TEST_TRIGGER_ID=# Your Novu Trigger ID (based on the template you created)
+NOVU_SUBSCRIBER_ID=# Set this to any value you want (this is used to identify the subscriber)
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
-
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed
-on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited
-in `pages/api/hello.ts`.
-
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated
-as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and
-load Inter, a custom Google Font.
+Your Novu web app should now be running locally on your machine! If you encounter any issues setting up the project,
+please don't hesitate to open and issue.
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
+To learn more about Novu, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- [Novu Documentation](https://docs.novu.co/) - learn about Novu features and API.
+- [Projects and Articles Showcase](https://docs.novu.co/community/projects-and-articles) - learn about how other
+  developers are using Novu.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions
-are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use
-the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme)
-from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+You can check out [the Novu GitHub repository](https://github.com/novuhq/novu) - your feedback and contributions are
+welcome!
