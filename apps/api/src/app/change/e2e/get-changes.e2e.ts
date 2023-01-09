@@ -1,5 +1,5 @@
 import { ChangeRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -27,7 +27,7 @@ describe('Get changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [

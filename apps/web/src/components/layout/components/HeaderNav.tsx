@@ -12,6 +12,7 @@ import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget'
 import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
 import { SpotlightContext } from '../../../store/spotlightContext';
+import { HEADER_HEIGHT } from '../constants';
 
 type Props = {};
 const menuItem = [
@@ -126,9 +127,10 @@ export function HeaderNav({}: Props) {
 
   return (
     <Header
-      height="65px"
+      height={HEADER_HEIGHT}
       sx={(theme) => ({
-        position: 'static',
+        position: 'sticky',
+        top: 0,
         boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.light,
         borderBottom: 'none',
       })}
