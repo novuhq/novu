@@ -76,7 +76,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
               return <VarItemsDropdown key={ind} name={name} type={processedVariables[name]} />;
             }
 
-            return <VarItemTooltip pathToCopy={name} name={name} type={processedVariables[name]} key={ind} />;
+            return <VarItemTooltip pathToCopy={name} name={name} type={typeof processedVariables[name]} key={ind} />;
           })}
         </VarLabel>
       </div>

@@ -10,7 +10,7 @@ export const VarItemTooltip = ({ pathToCopy, name, type }: { pathToCopy: string;
   const { copy, copied } = useClipboard({ timeout: 1000 });
 
   return (
-    <Tooltip data-test-id={'Tooltip'} label={copied ? 'Copied!' : 'Copy key'}>
+    <Tooltip data-test-id={`var-item-${name}-${type}`} label={copied ? 'Copied!' : 'Copy key'}>
       <ActionIcon
         variant="transparent"
         onMouseOver={() => setIsHovered(true)}
