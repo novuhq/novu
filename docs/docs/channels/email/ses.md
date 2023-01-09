@@ -4,7 +4,7 @@ You can use the [Amazon SES](https://aws.amazon.com/ses/) provider to send trans
 
 ## Getting Started
 
-To use the Amazon SES provider, you will need to create a Sendgrid account and add your credentials to the Amazon SES integration on the Novu platform.
+To use the Amazon SES provider, you will need to create a SES account and add your credentials to the Amazon SES integration on the Novu platform.
 
 ## How to set up SES in AWS?
 
@@ -17,7 +17,7 @@ To use the Amazon SES provider, you will need to create a Sendgrid account and a
 - Verify recipient email also by creating new email identity type [only in sandbox mode].
 - Test if your SES is setup correctly using test email feature.
 
-## Create a SendGrid integration with Novu
+## Create a SES integration with Novu
 
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate Amazon SES and click on the **Connect** button.
