@@ -1,7 +1,7 @@
 <br/>
 <br/>
 
-<div style="text-align: center;">
+<div align="center">
   <a href="https://novu.co" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png">
