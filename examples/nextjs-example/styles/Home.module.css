@@ -72,6 +72,18 @@
   max-width: 30ch;
 }
 
+.brands {
+    gap: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.brands span {
+    font-size: 32px;
+}
+
 .center {
   display: flex;
   justify-content: center;
@@ -192,6 +204,10 @@
 
   .card h2 {
     margin-bottom: 0.5rem;
+  }
+
+  .brands {
+      padding: 8rem 0 6rem;
   }
 
   .center {

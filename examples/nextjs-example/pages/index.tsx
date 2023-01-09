@@ -28,10 +28,11 @@ export default function Home({ appID, subscriberID }: HomeProps) {
       </Head>
       <main className={styles.main}>
         <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>pages/index.tsx</code>
-          </p>
+          <div className={styles.brands}>
+            <Image src="/novu.svg" alt="Novu Logo" width={100} height={32} />
+            <span>❤️</span>
+            <Image className={styles.logo} src="/next.svg" alt="Next.js Logo" width={100} height={24} />
+          </div>
           <div>
             <NovuProvider subscriberId={subscriberID} applicationIdentifier={appID}>
               <PopoverNotificationCenter onNotificationClick={onNotificationClick} colorScheme="light">
