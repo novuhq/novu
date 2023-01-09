@@ -2,11 +2,11 @@ import { OnGatewayConnection, WebSocketGateway, WebSocketServer } from '@nestjs/
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { ISubscriberJwt } from '@novu/shared';
-import { SubscriberRepository } from '@novu/dal';
+import { SubscriberOnlineService } from '../shared/subscriber-online';
 
 @WebSocketGateway()
 export class WSGateway implements OnGatewayConnection {
-  constructor(private jwtService: JwtService, private subscriberRepository: SubscriberRepository) {}
+  constructor(private jwtService: JwtService, private subscriberOnlineService: SubscriberOnlineService) {}
 
   @WebSocketServer()
   server: Server;
@@ -30,10 +30,11 @@ export class WSGateway implements OnGatewayConnection {
     }
 
     await connection.join(subscriber._id);
-    await this.handleOnlineStatus(subscriber, true);
+    await this.subscriberOnlineService.handleConnection(subscriber);
 
     connection.on('disconnect', async () => {
-      await this.handleOnlineStatus(subscriber, false);
+      const activeConnections = await this.getActiveConnections(connection, subscriber._id);
+      await this.subscriberOnlineService.handleDisconnection(subscriber, activeConnections);
     });
   }
 
@@ -46,15 +47,9 @@ export class WSGateway implements OnGatewayConnection {
     socket.disconnect();
   }
 
-  private async handleOnlineStatus(subscriber: ISubscriberJwt, isOnline: boolean) {
-    await this.subscriberRepository.update(
-      { _id: subscriber._id, _organizationId: subscriber.organizationId },
-      {
-        $set: {
-          isOnline,
-          lastOnlineAt: new Date(),
-        },
-      }
-    );
+  private async getActiveConnections(socket: Socket, subscriberId: string) {
+    const activeSockets = await socket.in(subscriberId).fetchSockets();
+
+    return activeSockets.length;
   }
 }

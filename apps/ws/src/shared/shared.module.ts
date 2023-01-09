@@ -12,6 +12,7 @@ import {
 } from '@novu/dal';
 import { JwtModule } from '@nestjs/jwt';
 import { QueueService } from './queue';
+import { SubscriberOnlineService } from './subscriber-online';
 
 const DAL_MODELS = [
   UserRepository,
@@ -41,6 +42,7 @@ const PROVIDERS = [
       return dalService;
     },
   },
+  SubscriberOnlineService,
   ...DAL_MODELS,
 ];
 
