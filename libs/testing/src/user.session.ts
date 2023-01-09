@@ -6,7 +6,7 @@ import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 
 import { TriggerRecipientsPayload } from '@novu/node';
-import { StepTypeEnum } from '@novu/shared';
+import { EmailBlockTypeEnum, IEmailBlock, StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
   EnvironmentEntity,
@@ -30,6 +30,13 @@ import { EnvironmentService } from './environment.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 import { IntegrationService } from './integration.service';
 import { UserService } from './user.service';
+
+const EMAIL_BLOCK: IEmailBlock[] = [
+  {
+    type: EmailBlockTypeEnum.TEXT,
+    content: 'Email Content',
+  },
+];
 
 export class UserSession {
   private environmentRepository = new EnvironmentRepository();
@@ -242,15 +249,7 @@ export class UserSession {
       steps: [
         {
           type: channel,
-          content:
-            channel === StepTypeEnum.EMAIL
-              ? [
-                  {
-                    type: 'text',
-                    content: 'Email Content',
-                  },
-                ]
-              : 'Test notification content',
+          content: channel === StepTypeEnum.EMAIL ? EMAIL_BLOCK : 'Test notification content',
         },
       ],
     });

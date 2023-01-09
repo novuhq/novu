@@ -18,6 +18,7 @@ import { useEnvController } from '../../../store/use-env-controller';
 import { AuthContext } from '../../../store/authContext';
 import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
+import { HEADER_HEIGHT } from '../constants';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -119,17 +120,20 @@ export function SideNav({}: Props) {
     <Navbar
       p={30}
       sx={{
-        position: 'static',
+        position: 'sticky',
+        top: HEADER_HEIGHT,
+        zIndex: 'auto',
         backgroundColor: 'transparent',
         borderRight: 'none',
         paddingRight: 0,
         width: '300px',
+        height: 'max-content',
         '@media (max-width: 768px)': {
           width: '100%',
         },
       }}
     >
-      <Navbar.Section grow>
+      <Navbar.Section>
         <Popover
           classNames={classes}
           withArrow
@@ -209,11 +213,6 @@ const StyledLink = styled.a`
   &:hover {
     cursor: pointer;
   }
-`;
-
-const BottomNavWrapper = styled.div`
-  margin-top: auto;
-  padding-top: 30px;
 `;
 
 const BottomNav = styled.div<{ dark: boolean }>`
