@@ -20,6 +20,7 @@ import { AnalyticsService } from '../../../shared/services/analytics/analytics.s
 import { CacheKeyPrefixEnum, CacheService } from '../../../shared/services/cache';
 import { InvalidateCache } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { NotificationStep } from '../../../shared/dtos/notification-step';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -144,16 +145,7 @@ export class UpdateNotificationTemplate {
               parentChangeId,
             })
           );
-
-          templateMessages.push({
-            _id: stepId,
-            _templateId: template._id,
-            filters: message.filters,
-            _parentId: parentStepId,
-            active: message.active,
-            metadata: message.metadata,
-            shouldStopOnFail: message.shouldStopOnFail,
-          });
+          stepId = template._id;
         } else {
           if (!message.template) throw new ApiException("Something un-expected happened, template couldn't be found");
 
@@ -177,16 +169,12 @@ export class UpdateNotificationTemplate {
           );
 
           stepId = template._id;
-          templateMessages.push({
-            _id: stepId,
-            _templateId: template._id,
-            filters: message.filters,
-            _parentId: parentStepId,
-            active: message.active,
-            metadata: message.metadata,
-            shouldStopOnFail: message.shouldStopOnFail,
-          });
         }
+
+        const partialNotificationStep = this.getPartialTemplateStep(stepId, parentStepId, message);
+
+        templateMessages.push(partialNotificationStep as NotificationStepEntity);
+
         parentStepId = stepId || null;
       }
       updatePayload.steps = templateMessages;
@@ -236,6 +224,36 @@ export class UpdateNotificationTemplate {
     });
 
     return notificationTemplateWithStepTemplate;
+  }
+
+  private getPartialTemplateStep(stepId: string | undefined, parentStepId: string | null, message: NotificationStep) {
+    const partialNotificationStep: Partial<NotificationStepEntity> = {
+      _id: stepId,
+      _templateId: stepId,
+      _parentId: parentStepId,
+    };
+
+    if (message.filters != null) {
+      partialNotificationStep.filters = message.filters;
+    }
+
+    if (message.active != null) {
+      partialNotificationStep.active = message.active;
+    }
+
+    if (message.metadata != null) {
+      partialNotificationStep.metadata = message.metadata;
+    }
+
+    if (message.shouldStopOnFail != null) {
+      partialNotificationStep.shouldStopOnFail = message.shouldStopOnFail;
+    }
+
+    if (message.replyCallback != null) {
+      partialNotificationStep.replyCallback = message.replyCallback;
+    }
+
+    return partialNotificationStep;
   }
 
   private cleanNotificationTemplate(notificationTemplateWithStepTemplate) {

@@ -47,4 +47,11 @@ export class UpdateNotificationTemplateRequestDto implements ICreateNotification
     type: PreferenceChannels,
   })
   preferenceSettings?: IPreferenceChannels;
+
+  @ValidateNested()
+  @IsOptional()
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
 }
