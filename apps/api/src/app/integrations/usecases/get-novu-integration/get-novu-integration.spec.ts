@@ -77,7 +77,7 @@ describe('Get Novu Integration', function () {
   });
 
   it('should not return Novu integration if usage limit was met', async function () {
-    sinon.stub(messageRepository, 'count').resolves(199);
+    sinon.stub(messageRepository, 'count').resolves(299);
 
     let result = await getNovuIntegration.execute(
       GetNovuIntegrationCommand.create({
@@ -90,7 +90,7 @@ describe('Get Novu Integration', function () {
     expect(result).to.have.length(1);
 
     sinon.restore();
-    sinon.stub(messageRepository, 'count').resolves(200);
+    sinon.stub(messageRepository, 'count').resolves(300);
 
     try {
       await getNovuIntegration.execute(
@@ -102,11 +102,11 @@ describe('Get Novu Integration', function () {
       );
       expect(true).to.equal(false);
     } catch (e) {
-      expect(e.message).to.equal('You have have reached the limit for Novus email provider.');
+      expect(e.message).to.equal('Limit for Novus email provider was reached.');
     }
 
     sinon.restore();
-    const stub = sinon.stub(messageRepository, 'count').resolves(201);
+    const stub = sinon.stub(messageRepository, 'count').resolves(301);
 
     try {
       await getNovuIntegration.execute(
@@ -118,7 +118,7 @@ describe('Get Novu Integration', function () {
       );
       expect(true).to.equal(false);
     } catch (e) {
-      expect(e.message).to.equal('You have have reached the limit for Novus email provider.');
+      expect(e.message).to.equal('Limit for Novus email provider was reached.');
     }
 
     sinon.assert.calledWith(stub, {
