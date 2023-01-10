@@ -8,6 +8,8 @@ import { startOfMonth, endOfMonth } from 'date-fns';
 export class GetNovuIntegration {
   constructor(private messageRepository: MessageRepository, private integrationRepository: IntegrationRepository) {}
 
+  static MAX_NOVU_INTEGRATIONS = parseInt(process.env.MAX_NOVU_INTEGRATIONS || '300', 10);
+
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity[]> {
     const providerId = this.getProviderId(command.channelType);
 
@@ -33,7 +35,7 @@ export class GetNovuIntegration {
       createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
     });
 
-    if (messagesCount >= 300) {
+    if (messagesCount >= GetNovuIntegration.MAX_NOVU_INTEGRATIONS) {
       // add analytics event.
       throw new Error(`Limit for Novus ${command.channelType.toLowerCase()} provider was reached.`);
     }
