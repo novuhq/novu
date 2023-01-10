@@ -1,4 +1,4 @@
-import type { App } from 'vue';
+import type { App } from 'vue-demi';
 import FloatingVue from 'floating-vue';
 import 'floating-vue/dist/style.css';
 import { NotificationCenterContentWebComponent } from '@novu/notification-center';

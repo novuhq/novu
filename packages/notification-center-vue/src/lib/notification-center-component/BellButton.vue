@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed } from 'vue-demi';
 import { colors as themeColors } from '@novu/notification-center';
 
 export interface ISvgStopColor {

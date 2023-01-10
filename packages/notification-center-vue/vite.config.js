@@ -4,6 +4,9 @@ import typescript2 from 'rollup-plugin-typescript2';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    exclude: ['vue-demi'],
+  },
   plugins: [
     vue({
       template: {

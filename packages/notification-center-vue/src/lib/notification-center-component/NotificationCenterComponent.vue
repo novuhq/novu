@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, useSlots, computed, onMounted } from 'vue';
+import { ref, watch, useSlots, computed, onMounted } from 'vue-demi';
 import type { NotificationCenterContentComponentProps } from '@novu/notification-center';
 import BellButton from './BellButton.vue';
 import { calculateStyles } from './utils';
