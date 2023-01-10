@@ -28,8 +28,8 @@ export class CacheService implements ICacheService {
   private readonly cacheTtl: number;
 
   constructor(private config: ICacheServiceConfig) {
-    if (this.config.port && this.config.host) {
-      this.client = new Redis(Number(this.config.port), this.config.host, {
+    if (this.config.host) {
+      this.client = new Redis(Number(this.config.port || 6379), this.config.host, {
         password: this.config.password ?? null,
         connectTimeout: this.config.connectTimeout ? Number(this.config.connectTimeout) : this.DEFAULT_CONNECT_TIMEOUT,
         keepAlive: this.config.keepAlive ? Number(this.config.keepAlive) : this.DEFAULT_KEEP_ALIVE,
