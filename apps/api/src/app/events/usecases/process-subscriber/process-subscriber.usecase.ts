@@ -74,21 +74,6 @@ export class ProcessSubscriber {
       })
     );
 
-    this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.INFO,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        notificationId: notification._id,
-        text: 'Request processed',
-        userId: command.userId,
-        subscriberId: subscriber._id,
-        code: LogCodeEnum.TRIGGER_PROCESSED,
-        templateId: notification._templateId,
-      })
-    );
-
     const jobs: JobEntity[] = [];
 
     for (const step of steps) {
