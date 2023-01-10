@@ -1,13 +1,8 @@
-import {
-  BuilderFieldOperator,
-  BuilderFieldType,
-  BuilderGroupValues,
-  DigestUnitEnum,
-  DigestTypeEnum,
-  DelayTypeEnum,
-} from '@novu/shared';
-import { MessageTemplate } from './message-template';
+import { DigestUnitEnum, DigestTypeEnum, DelayTypeEnum } from '@novu/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+import { MessageTemplate } from './message-template';
+import { StepFilter } from './step-filter';
 
 class NotificationStepMetadata {
   @ApiPropertyOptional()
@@ -39,59 +34,6 @@ class NotificationStepMetadata {
 
   @ApiPropertyOptional()
   updateMode?: boolean;
-}
-
-class StepFilterChild {
-  @ApiProperty()
-  field: string;
-  @ApiProperty()
-  value: string;
-  @ApiPropertyOptional()
-  webhookUrl?: string;
-  @ApiProperty({
-    enum: [
-      'LARGER',
-      'SMALLER',
-      'LARGER_EQUAL',
-      'SMALLER_EQUAL',
-      'EQUAL',
-      'NOT_EQUAL',
-      'ALL_IN',
-      'ANY_IN',
-      'NOT_IN',
-      'BETWEEN',
-      'NOT_BETWEEN',
-      'LIKE',
-      'NOT_LIKE',
-      'IN',
-    ],
-  })
-  operator: BuilderFieldOperator;
-
-  @ApiProperty({
-    enum: ['payload', 'subscriber', 'webhook'],
-  })
-  on?: 'payload' | 'subscriber' | 'webhook';
-}
-
-class StepFilter {
-  @ApiProperty()
-  isNegated: boolean;
-
-  @ApiProperty({
-    enum: ['BOOLEAN', 'TEXT', 'DATE', 'NUMBER', 'STATEMENT', 'LIST', 'MULTI_LIST', 'GROUP'],
-  })
-  type: BuilderFieldType;
-
-  @ApiProperty({
-    enum: ['AND', 'OR'],
-  })
-  value: BuilderGroupValues;
-
-  @ApiProperty({
-    type: [StepFilterChild],
-  })
-  children: StepFilterChild[];
 }
 
 export class NotificationStep {

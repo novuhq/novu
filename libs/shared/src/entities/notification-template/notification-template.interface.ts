@@ -1,4 +1,4 @@
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues } from '../../types';
+import type { BuilderFieldType, BuilderGroupValues, FilterParts } from '../../types';
 import { IMessageTemplate, TemplateVariableTypeEnum } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { DigestUnitEnum } from '../step';
@@ -58,9 +58,5 @@ export interface IMessageFilter {
   isNegated?: boolean;
   type: BuilderFieldType;
   value: BuilderGroupValues;
-  children: {
-    field: string;
-    value: string;
-    operator: BuilderFieldOperator;
-  }[];
+  children: FilterParts[];
 }
