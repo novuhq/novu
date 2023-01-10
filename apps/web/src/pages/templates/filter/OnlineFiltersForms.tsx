@@ -26,6 +26,18 @@ export function OnlineFiltersForms({
       ) : (
         <OnlineInTheLastForm control={control} stepIndex={stepIndex} index={index} remove={remove} />
       )}
+      <Grid.Col span={1}>
+        <DeleteStepButton
+          variant="outline"
+          size="md"
+          mt={30}
+          onClick={() => {
+            remove(index);
+          }}
+        >
+          <Trash />
+        </DeleteStepButton>
+      </Grid.Col>
     </>
   );
 }
@@ -78,18 +90,6 @@ function OnlineRightNowForm({
           }}
         />
       </Grid.Col>
-      <Grid.Col span={1}>
-        <DeleteStepButton
-          variant="outline"
-          size="md"
-          mt={30}
-          onClick={() => {
-            remove(index);
-          }}
-        >
-          <Trash />
-        </DeleteStepButton>
-      </Grid.Col>
     </>
   );
 }
@@ -134,18 +134,6 @@ function OnlineInTheLastForm({
             return <Input {...field} error={fieldState.error?.message} placeholder="value" type="number" />;
           }}
         />
-      </Grid.Col>
-      <Grid.Col span={1}>
-        <DeleteStepButton
-          variant="outline"
-          size="md"
-          mt={30}
-          onClick={() => {
-            remove(index);
-          }}
-        >
-          <Trash />
-        </DeleteStepButton>
       </Grid.Col>
     </>
   );
