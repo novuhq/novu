@@ -1,9 +1,10 @@
 import { Divider, Grid, Group, Modal, useMantineTheme } from '@mantine/core';
-import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
 import { Controller, useFieldArray } from 'react-hook-form';
-import styled from '@emotion/styled';
-import { Trash } from '../../../design-system/icons';
 import { When } from '../../../components/utils/When';
+import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
+import { Trash } from '../../../design-system/icons';
+import { DeleteStepButton, FilterButton } from './FilterModal.styles';
+import { OnlineFiltersForms } from './OnlineFiltersForms';
 
 export function FilterModal({
   isOpen,
@@ -117,6 +118,8 @@ export function FilterModal({
                           { value: 'payload', label: 'Payload' },
                           { value: 'subscriber', label: 'Subscriber' },
                           { value: 'webhook', label: 'Webhook' },
+                          { value: 'isOnline', label: 'Online right now' },
+                          { value: 'isOnlineInLast', label: "Online in the last 'X' time period" },
                         ]}
                         {...field}
                         onChange={handleOnChildOnChange(index)}
@@ -125,30 +128,41 @@ export function FilterModal({
                   }}
                 />
               </Grid.Col>
-              {filterFieldOn === 'webhook' ? (
-                <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} />
-              ) : (
-                <EqualityForm
-                  fieldOn={filterFieldOn}
-                  control={control}
-                  stepIndex={stepIndex}
-                  index={index}
-                  remove={remove}
-                />
-              )}
-            </Grid>
-            <When truthy={filterFieldOn === 'webhook'}>
-              <Grid columns={10} key={item.id} align="center" gutter="xs">
-                <EqualityForm
-                  fieldOn={filterFieldOn}
-                  control={control}
-                  stepIndex={stepIndex}
-                  index={index}
-                  remove={remove}
-                />
-              </Grid>
-            </When>
 
+              <When truthy={filterFieldOn === 'webhook'}>
+                <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} />
+                <EqualityForm
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
+              </When>
+
+              <When truthy={filterFieldOn === 'isOnline' || filterFieldOn === 'isOnlineInLast'}>
+                <OnlineFiltersForms
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
+              </When>
+              <When
+                truthy={
+                  filterFieldOn !== 'webhook' && filterFieldOn !== 'isOnline' && filterFieldOn !== 'isOnlineInLast'
+                }
+              >
+                <EqualityForm
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
+              </When>
+            </Grid>
             <When truthy={fields.length > index + 1}>
               <Divider style={{ margin: 5 }} />
             </When>
@@ -168,20 +182,6 @@ export function FilterModal({
     </Modal>
   );
 }
-
-const FilterButton = styled(Button)`
-  margin-top: 0px;
-`;
-
-const DeleteStepButton = styled(Button)`
-  background: rgba(229, 69, 69, 0.15);
-  color: ${colors.error};
-  box-shadow: none;
-  :hover {
-    background: rgba(229, 69, 69, 0.15);
-  }
-  margin-top: 0px;
-`;
 
 function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: number; index: number }) {
   return (
