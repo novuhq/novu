@@ -50,13 +50,6 @@ export class TriggerEvent {
   ) {}
 
   async execute(command: TriggerEventCommand) {
-    Sentry.addBreadcrumb({
-      message: 'Sending trigger',
-      data: {
-        triggerIdentifier: command.identifier,
-      },
-    });
-
     await this.validateSubscriberIdProperty(command);
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
@@ -78,6 +71,13 @@ export class TriggerEvent {
         status: 'no_workflow_steps_defined',
       };
     }
+
+    Sentry.addBreadcrumb({
+      message: 'Sending trigger',
+      data: {
+        triggerIdentifier: command.identifier,
+      },
+    });
 
     if (!template.steps?.some((step) => step.active)) {
       return {
@@ -260,21 +260,6 @@ export class TriggerEvent {
   }
 
   private async logSubscriberIdMissing(command: TriggerEventCommand) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'SubscriberId missing in to property',
-        userId: command.userId,
-        code: LogCodeEnum.SUBSCRIBER_ID_MISSING,
-        raw: {
-          triggerIdentifier: command.identifier,
-        },
-      })
-    );
-
     return {
       acknowledged: true,
       status: 'subscriber_id_missing',
