@@ -23,6 +23,7 @@ export class CacheService implements ICacheService {
   private readonly DEFAULT_FAMILY = 4;
   private readonly DEFAULT_KEY_PREFIX = '';
   private readonly TTL_VARIANT_PERCENTAGE = 0.1;
+  private readonly STREAM_BATCH_COUNT = 200;
 
   private readonly client: Redis;
   private readonly cacheTtl: number;
@@ -64,8 +65,8 @@ export class CacheService implements ICacheService {
   }
 
   public async set(key: string, value: string, options?: CachingConfig) {
-    this.client.set(key, value);
-    this.updateTtl(key, options);
+    await this.client.set(key, value);
+    await this.updateTtl(key, options);
   }
 
   public async keys(pattern?: string) {
@@ -83,11 +84,12 @@ export class CacheService implements ICacheService {
     return this.client.del([key]);
   }
 
-  public delByPattern(pattern: string) {
+  public async delByPattern(pattern: string) {
     return new Promise((resolve, reject) => {
       const client = this.client;
       const stream = client.scanStream({
         match: pattern,
+        count: this.STREAM_BATCH_COUNT,
       });
 
       stream.on('data', function (keys) {
@@ -96,7 +98,7 @@ export class CacheService implements ICacheService {
           keys.forEach(function (key) {
             pipeline.del(key);
           });
-          pipeline.exec().then(resolve).catch(reject);
+          pipeline.exec().catch(reject);
         }
       });
       stream.on('end', () => {
@@ -108,7 +110,7 @@ export class CacheService implements ICacheService {
     });
   }
 
-  private updateTtl(key: string, options?: CachingConfig) {
+  private async updateTtl(key: string, options?: CachingConfig) {
     const seconds = options?.ttl || this.cacheTtl;
 
     return this.client.expire(key, this.ttlVariant(seconds));
