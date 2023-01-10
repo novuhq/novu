@@ -70,7 +70,7 @@ export class NetCoreProvider implements IEmailProvider {
     const response = await controller.createGeneratethemailsendrequest(body);
 
     return {
-      id: response?.data?.message_id,
+      id: response?.data?.TRANSID,
       date: new Date().toISOString(),
     };
   }
