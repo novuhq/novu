@@ -564,7 +564,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           type: StepTypeEnum.EMAIL,
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
