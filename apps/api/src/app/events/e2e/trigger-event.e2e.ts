@@ -15,6 +15,7 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import {
   ChannelTypeEnum,
+  EmailBlockTypeEnum,
   StepTypeEnum,
   IEmailBlock,
   TemplateVariableTypeEnum,
@@ -258,7 +259,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     expect(email.channel).to.equal(ChannelTypeEnum.EMAIL);
     expect(Array.isArray(email.content)).to.be.ok;
-    expect((email.content[0] as IEmailBlock).type).to.equal('text');
+    expect((email.content[0] as IEmailBlock).type).to.equal(EmailBlockTypeEnum.TEXT);
     expect((email.content[0] as IEmailBlock).content).to.equal(
       'This are the text contents of the template for Testing of User Name'
     );
@@ -450,7 +451,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           type: StepTypeEnum.EMAIL,
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -508,7 +509,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           type: StepTypeEnum.EMAIL,
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -674,7 +675,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           ],
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -756,7 +757,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           ],
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -826,7 +827,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           variables: [{ name: 'myUser.lastName', required: true, type: TemplateVariableTypeEnum.STRING }],
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -865,7 +866,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           type: StepTypeEnum.EMAIL,
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -907,11 +908,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },
@@ -940,11 +941,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },
@@ -1007,11 +1008,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },
@@ -1105,11 +1106,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },
@@ -1169,11 +1170,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },

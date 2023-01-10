@@ -1,5 +1,7 @@
 import { StepTypeEnum, IMessageCTA, TemplateVariableTypeEnum, IActor } from '@novu/shared';
 
+import { IEmailBlock, ITemplateVariable } from './types';
+
 export class MessageTemplateEntity {
   _id: string;
 
@@ -8,6 +10,9 @@ export class MessageTemplateEntity {
   _organizationId: string;
 
   _creatorId: string;
+
+  // TODO: Due a circular dependency I can't import LayoutId from Layout.
+  _layoutId: string | null;
 
   type: StepTypeEnum;
 
@@ -34,26 +39,4 @@ export class MessageTemplateEntity {
   _parentId?: string;
 
   actor?: IActor;
-}
-
-export class IEmailBlock {
-  type: 'button' | 'text';
-
-  content: string;
-
-  url?: string;
-
-  styles?: {
-    textAlign?: 'left' | 'right' | 'center';
-  };
-}
-
-export class ITemplateVariable {
-  type: TemplateVariableTypeEnum;
-
-  name: string;
-
-  required: boolean;
-
-  defaultValue?: string | boolean;
 }
