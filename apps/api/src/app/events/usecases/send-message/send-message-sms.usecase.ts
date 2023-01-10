@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  IntegrationRepository,
   MessageRepository,
   NotificationStepEntity,
   NotificationRepository,
@@ -45,7 +44,6 @@ export class SendMessageSms extends SendMessageBase {
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
-    private integrationRepository: IntegrationRepository,
     private compileTemplate: CompileTemplate,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {

@@ -7,9 +7,8 @@ import {
   JobEntity,
   JobStatusEnum,
   NotificationStepEntity,
-  IntegrationRepository,
 } from '@novu/dal';
-import { InAppProviderIdEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, InAppProviderIdEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
@@ -19,6 +18,10 @@ import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-s
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { Cached } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -29,7 +32,7 @@ export class ProcessSubscriber {
     private createLogUsecase: CreateLog,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private filterSteps: DigestFilterSteps,
-    private integrationRepository: IntegrationRepository
+    private getDecryptedIntegrations: GetDecryptedIntegrations
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<Omit<JobEntity, '_id'>[]> {
@@ -96,12 +99,16 @@ export class ProcessSubscriber {
     for (const step of steps) {
       if (!step.template) throw new ApiException('Step template was not found');
 
-      const integration = await this.integrationRepository.findOne({
-        _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
-        channel: step.template.type,
-        active: true,
-      });
+      const integrations = await this.getDecryptedIntegrations.execute(
+        GetDecryptedIntegrationsCommand.create({
+          channelType: ChannelTypeEnum[step.template.type],
+          active: true,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        })
+      );
+
+      const integration = integrations[0];
 
       jobs.push({
         identifier: command.identifier,

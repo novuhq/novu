@@ -64,7 +64,7 @@ export class UserSession {
 
   constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {}
 
-  async initialize(options: { noOrganization?: boolean; noEnvironment?: boolean } = {}) {
+  async initialize(options: { noOrganization?: boolean; noEnvironment?: boolean; noIntegrations?: boolean } = {}) {
     const card = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
@@ -96,7 +96,9 @@ export class UserSession {
         this.environment = environment;
         this.apiKey = this.environment.apiKeys[0].key;
 
-        await this.createIntegration();
+        if (!options?.noIntegrations) {
+          await this.createIntegration();
+        }
         await this.createFeed();
         await this.createFeed('New');
       }

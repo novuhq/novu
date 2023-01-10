@@ -19,6 +19,7 @@ import {
   IEmailBlock,
   TemplateVariableTypeEnum,
   EmailProviderIdEnum,
+  SmsProviderIdEnum,
 } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
@@ -484,12 +485,12 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should not trigger notification with subscriber data if integration is inactive', async function () {
     const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
-    const channelType = ChannelTypeEnum.EMAIL;
+    const channelType = ChannelTypeEnum.SMS;
 
     const integration = await integrationRepository.findOne({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
-      providerId: 'sendgrid',
+      providerId: SmsProviderIdEnum.Twilio,
     });
 
     await integrationRepository.update(
@@ -503,7 +504,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       steps: [
         {
           name: 'Message Name',
-          subject: 'Test email {{nested.subject}}',
+          subject: 'Test sms {{nested.subject}}',
           type: StepTypeEnum.EMAIL,
           content: [
             {
@@ -535,6 +536,61 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     expect(message).to.be.null;
+  });
+
+  it('should use Novu integration for new orgs', async function () {
+    const existingIntegrations = await integrationRepository.find({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    await integrationRepository.delete({
+      _id: { $in: existingIntegrations.map((integration) => integration._id) },
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
+    const channelType = ChannelTypeEnum.EMAIL;
+
+    template = await createTemplate(session, channelType);
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test sms {{nested.subject}}',
+          type: StepTypeEnum.EMAIL,
+          content: [
+            {
+              type: 'text',
+              content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+      ],
+    });
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification, {
+      nested: {
+        subject: 'a subject nested',
+      },
+    });
+
+    await session.awaitRunningJobs(template._id);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
+    );
+
+    const message = await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
+    });
+
+    expect(message.providerId).to.equal(EmailProviderIdEnum.Novu);
   });
 
   it('should trigger message with active integration', async function () {
