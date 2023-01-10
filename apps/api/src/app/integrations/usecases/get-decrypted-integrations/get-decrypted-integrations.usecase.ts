@@ -42,7 +42,7 @@ export class GetDecryptedIntegrations {
       return integrations;
     }
 
-    const novuIntegrations = await this.getNovuIntegration.execute(
+    const novuIntegration = await this.getNovuIntegration.execute(
       GetNovuIntegrationCommand.create({
         channelType: command.channelType,
         organizationId: command.organizationId,
@@ -50,6 +50,6 @@ export class GetDecryptedIntegrations {
       })
     );
 
-    return novuIntegrations.length > 0 ? novuIntegrations : integrations;
+    return novuIntegration ? [novuIntegration] : integrations;
   }
 }

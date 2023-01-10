@@ -10,11 +10,11 @@ export class GetNovuIntegration {
 
   static MAX_NOVU_INTEGRATIONS = parseInt(process.env.MAX_NOVU_INTEGRATIONS || '300', 10);
 
-  async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity[]> {
+  async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity | undefined> {
     const providerId = this.getProviderId(command.channelType);
 
     if (providerId === undefined) {
-      return [];
+      return;
     }
 
     const activeIntegrationsCount = await this.integrationRepository.count({
@@ -25,7 +25,7 @@ export class GetNovuIntegration {
     });
 
     if (activeIntegrationsCount > 0) {
-      return [];
+      return;
     }
 
     const messagesCount = await this.messageRepository.count({
@@ -42,9 +42,9 @@ export class GetNovuIntegration {
 
     switch (command.channelType) {
       case ChannelTypeEnum.EMAIL:
-        return [this.createNovuEmailIntegration()];
+        return this.createNovuEmailIntegration();
       default:
-        return [];
+        return undefined;
     }
   }
 

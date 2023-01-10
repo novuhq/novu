@@ -46,8 +46,7 @@ describe('Get Novu Integration', function () {
       })
     );
 
-    expect(result).to.have.length(1);
-    expect(result[0].providerId).to.equal(EmailProviderIdEnum.Novu);
+    expect(result?.providerId).to.equal(EmailProviderIdEnum.Novu);
   });
 
   it('should not return Novu integration for sms', async function () {
@@ -59,7 +58,7 @@ describe('Get Novu Integration', function () {
       })
     );
 
-    expect(result).to.have.length(0);
+    expect(result).to.equal(undefined);
   });
 
   it('should not return Novu integration if there is active integrations', async function () {
@@ -73,7 +72,7 @@ describe('Get Novu Integration', function () {
       })
     );
 
-    expect(result).to.have.length(0);
+    expect(result).to.equal(undefined);
   });
 
   it('should not return Novu integration if usage limit was met', async function () {
@@ -87,7 +86,7 @@ describe('Get Novu Integration', function () {
       })
     );
 
-    expect(result).to.have.length(1);
+    expect(result).to.not.equal(undefined);
 
     sinon.restore();
     sinon.stub(messageRepository, 'count').resolves(GetNovuIntegration.MAX_NOVU_INTEGRATIONS);
