@@ -197,23 +197,6 @@ export class TriggerEvent {
   }
 
   private async logTemplateNotActive(command: TriggerEventCommand, template: NotificationTemplateEntity) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'Template not active',
-        userId: command.userId,
-        code: LogCodeEnum.TEMPLATE_NOT_ACTIVE,
-        templateId: template._id,
-        raw: {
-          payload: command.payload,
-          triggerIdentifier: command.identifier,
-        },
-      })
-    );
-
     return {
       acknowledged: true,
       status: 'trigger_not_active',
