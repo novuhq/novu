@@ -55,7 +55,7 @@ export class GetNovuIntegration {
     item.channel = ChannelTypeEnum.EMAIL;
 
     item.credentials = {
-      apiKey: '',
+      apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
       from: 'no-reply@novu.co',
       senderName: 'Novu',
     };
