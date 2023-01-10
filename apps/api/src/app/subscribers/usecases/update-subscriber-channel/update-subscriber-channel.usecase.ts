@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { IChannelSettings, SubscriberRepository, IntegrationRepository } from '@novu/dal';
+import { isEqual } from 'lodash';
+import { IChannelSettings, SubscriberRepository, IntegrationRepository, SubscriberEntity } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
@@ -79,6 +80,12 @@ export class UpdateSubscriberChannel {
     updatePayload: Partial<IChannelSettings>,
     foundSubscriber
   ) {
+    const equal = isEqual(existingChannel.credentials, updatePayload.credentials); // returns false if different
+
+    if (equal) {
+      return;
+    }
+
     const mergedChannel = Object.assign(existingChannel, updatePayload);
 
     await this.subscriberRepository.update(
