@@ -91,11 +91,14 @@ export function BlueprintModal() {
         </When>
         <When truthy={!isLoading}>
           <Text mb={16}>Feel free to modify the flow by dragging and dropping steps onto the canvas.</Text>
-          <Text weight="bold" mb={16}>
+          <Text weight="bold" data-test-id="blueprint-name" mb={16}>
             {blueprint?.name}:
           </Text>
-          <Text mb={16}>{blueprint?.description}</Text>
+          <Text data-test-id="blueprint-description" mb={16}>
+            {blueprint?.description}
+          </Text>
           <Button
+            data-test-id="create-from-blueprint"
             onClick={() => {
               if (blueprintId) {
                 mutate(blueprintId);
