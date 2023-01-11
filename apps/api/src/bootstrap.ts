@@ -96,6 +96,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   SwaggerModule.setup('api', app, document);
 
+  console.log('BOOTSTRAPPED SUCCESSFULLY');
+
   if (expressApp) {
     await app.init();
   } else {
