@@ -1,0 +1,36 @@
+import { Injectable } from '@nestjs/common';
+import { ISubscriberJwt } from '@novu/shared';
+import { SubscriberRepository } from '@novu/dal';
+
+@Injectable()
+export class SubscriberOnlineService {
+  constructor(private subscriberRepository: SubscriberRepository) {}
+
+  async handleConnection(subscriber: ISubscriberJwt) {
+    const isOnline = true;
+
+    await this.updateOnlineStatus(subscriber, { isOnline });
+  }
+
+  async handleDisconnection(subscriber: ISubscriberJwt, activeConnections: number) {
+    const lastOnlineAt = new Date();
+    let isOnline = false;
+    if (activeConnections > 1) {
+      isOnline = true;
+    }
+
+    await this.updateOnlineStatus(subscriber, { isOnline, lastOnlineAt });
+  }
+
+  private async updateOnlineStatus(
+    subscriber: ISubscriberJwt,
+    updatePayload: { isOnline: boolean; lastOnlineAt?: Date }
+  ) {
+    await this.subscriberRepository.update(
+      { _id: subscriber._id, _organizationId: subscriber.organizationId },
+      {
+        $set: updatePayload,
+      }
+    );
+  }
+}
