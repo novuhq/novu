@@ -118,6 +118,7 @@ export class TriggerEvent {
             userId: command.organizationId,
             templateId: template._id,
             actor: command.actor,
+            template,
           })
         )
       );
@@ -162,7 +163,7 @@ export class TriggerEvent {
       }, []);
 
     for (const job of storedJobs) {
-      await this.createExecutionDetails.execute(
+      this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_CREATED,
@@ -193,6 +194,7 @@ export class TriggerEvent {
       environmentId: firstJob._environmentId,
       organizationId: firstJob._organizationId,
       jobId: firstJob._id,
+      job: firstJob,
     });
   }
 

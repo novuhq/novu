@@ -33,10 +33,12 @@ export class ProcessSubscriber {
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
-    const template = await this.getNotificationTemplate({
-      _id: command.templateId,
-      environmentId: command.environmentId,
-    });
+    const template =
+      command.template ??
+      (await this.getNotificationTemplate({
+        _id: command.templateId,
+        environmentId: command.environmentId,
+      }));
 
     const subscriber: SubscriberEntity = await this.getSubscriber(
       {
@@ -77,13 +79,16 @@ export class ProcessSubscriber {
 
     const jobs: JobEntity[] = [];
 
+    const integrations = await this.integrationRepository.find({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      channel: { $in: steps.map((step) => step.template.type) },
+      active: true,
+    });
+
     for (const step of steps) {
-      const integration = await this.integrationRepository.findOne({
-        _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
-        channel: step.template.type,
-        active: true,
-      });
+      const integration = integrations.find((i) => i.channel === (step.template.type as any));
+
       jobs.push({
         identifier: command.identifier,
         payload: command.payload,

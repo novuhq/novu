@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { encryptOldCredentialsMigration } from './encrypt-credentials-migration';
 import { UserSession } from '@novu/testing/src';
 import { ChannelTypeEnum } from '@novu/stateless';
-import { IntegrationRepository } from '@novu/dal/src';
+import { IntegrationRepository } from '@novu/dal';
 
 describe('Encrypt Old Credentials', function () {
   let session: UserSession;
