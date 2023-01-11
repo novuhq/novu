@@ -76,7 +76,7 @@ describe('Get Novu Integration', function () {
   });
 
   it('should not return Novu integration if usage limit was met', async function () {
-    sinon.stub(messageRepository, 'count').resolves(GetNovuIntegration.MAX_NOVU_INTEGRATIONS - 1);
+    sinon.stub(messageRepository, 'count').resolves(GetNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS - 1);
 
     let result = await getNovuIntegration.execute(
       GetNovuIntegrationCommand.create({
@@ -89,7 +89,7 @@ describe('Get Novu Integration', function () {
     expect(result).to.not.equal(undefined);
 
     sinon.restore();
-    sinon.stub(messageRepository, 'count').resolves(GetNovuIntegration.MAX_NOVU_INTEGRATIONS);
+    sinon.stub(messageRepository, 'count').resolves(GetNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS);
 
     try {
       await getNovuIntegration.execute(
@@ -105,7 +105,9 @@ describe('Get Novu Integration', function () {
     }
 
     sinon.restore();
-    const stub = sinon.stub(messageRepository, 'count').resolves(GetNovuIntegration.MAX_NOVU_INTEGRATIONS + 1);
+    const stub = sinon
+      .stub(messageRepository, 'count')
+      .resolves(GetNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS + 1);
 
     try {
       await getNovuIntegration.execute(
