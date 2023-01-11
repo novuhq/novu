@@ -81,7 +81,7 @@ export function SubscriberPreference() {
 
             const handleUpdateChannelPreference = async (type: string, checked: boolean) => {
               setLoadingUpdate(true);
-              await updatePreference(item, type, checked, index);
+              await updatePreference(item, type, checked);
               setLoadingUpdate(false);
             };
 
