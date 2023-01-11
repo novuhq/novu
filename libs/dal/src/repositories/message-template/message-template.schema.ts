@@ -59,6 +59,15 @@ const messageTemplateSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
     },
+    _layoutId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Layout',
+      /*
+       * This will make it retro-compatible and will allow
+       * that if no layout assigned to not break.
+       */
+      default: null,
+    },
     actor: {
       type: {
         type: Schema.Types.String,

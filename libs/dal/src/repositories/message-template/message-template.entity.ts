@@ -11,6 +11,9 @@ export class MessageTemplateEntity {
 
   _creatorId: string;
 
+  // TODO: Due a circular dependency I can't import LayoutId from Layout.
+  _layoutId: string | null;
+
   type: StepTypeEnum;
 
   variables?: ITemplateVariable[];
