@@ -5,11 +5,15 @@ import { ArrowLeft } from '../../../design-system/icons';
 import { Button, Checkbox, colors, Input, Text } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { successMessage } from '../../../utils/notifications';
+import { useEffect, useState } from 'react';
+import { parse } from '@handlebars/parser';
+import { getTemplateVariables, TemplateVariableTypeEnum } from '@novu/shared';
 
 export function LayoutEditor({ id, goBack }: { id: string; goBack: () => void }) {
   const { readonly } = useEnvController();
+  const [variables, setVariables] = useState([{ name: 'var', type: TemplateVariableTypeEnum.BOOLEAN }]);
 
-  const { handleSubmit, watch, control } = useForm({
+  const methods = useForm({
     defaultValues: {
       layout: '',
       name: '',
@@ -17,8 +21,21 @@ export function LayoutEditor({ id, goBack }: { id: string; goBack: () => void })
       isDefault: false,
     },
   });
+  const { handleSubmit, watch, control, getValues } = methods;
 
+  // const variablesArray = useVariablesManagerLayout(['layout'], watch);
+
+  // console.log(variablesArray);
   const content = watch('layout');
+
+  useEffect(() => {
+    try {
+      const ast = parse(content);
+      const vars = getTemplateVariables(ast.body);
+    } catch (e) {
+      return;
+    }
+  }, [content]);
 
   async function onUpdateLayout(data) {
     const updatePayload = {
@@ -30,6 +47,8 @@ export function LayoutEditor({ id, goBack }: { id: string; goBack: () => void })
     successMessage('Layout updated!');
     goBack();
   }
+
+  // console.log(variableArray);
 
   return (
     <>
