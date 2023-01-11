@@ -8,8 +8,8 @@ export class SubscriberOnlineService {
 
   async handleConnection(subscriber: ISubscriberJwt) {
     const isOnline = true;
-    const lastOnlineAt = new Date();
-    await this.updateOnlineStatus(subscriber, isOnline, lastOnlineAt);
+
+    await this.updateOnlineStatus(subscriber, { isOnline });
   }
 
   async handleDisconnection(subscriber: ISubscriberJwt, activeConnections: number) {
@@ -19,17 +19,17 @@ export class SubscriberOnlineService {
       isOnline = true;
     }
 
-    await this.updateOnlineStatus(subscriber, isOnline, lastOnlineAt);
+    await this.updateOnlineStatus(subscriber, { isOnline, lastOnlineAt });
   }
 
-  private async updateOnlineStatus(subscriber: ISubscriberJwt, isOnline: boolean, lastOnlineAt: Date) {
+  private async updateOnlineStatus(
+    subscriber: ISubscriberJwt,
+    updatePayload: { isOnline: boolean; lastOnlineAt?: Date }
+  ) {
     await this.subscriberRepository.update(
       { _id: subscriber._id, _organizationId: subscriber.organizationId },
       {
-        $set: {
-          isOnline,
-          lastOnlineAt,
-        },
+        $set: updatePayload,
       }
     );
   }
