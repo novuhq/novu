@@ -48,35 +48,6 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     subscriber = await subscriberService.createSubscriber();
   });
 
-  it('should generate logs for the notification', async function () {
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: subscriber.subscriberId,
-        payload: {
-          firstName: 'Testing of User Name',
-          urlVariable: '/test/url/path',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    await session.awaitRunningJobs(template._id);
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    const logs = await logRepository.find({
-      _environmentId: session.environment._id,
-      _organizationId: session.organization._id,
-    });
-
-    expect(logs.length).to.be.gt(2);
-  });
-
   it('should trigger an event successfully', async function () {
     const response = await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,

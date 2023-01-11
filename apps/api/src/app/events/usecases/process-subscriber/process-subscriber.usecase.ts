@@ -12,7 +12,6 @@ import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, InAppProviderIdEnum } from
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
-import { ISubscribersDefine } from '@novu/node';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
@@ -22,6 +21,7 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
+import { subscriberNeedUpdate } from '../../../subscribers/usecases/update-subscriber';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -79,21 +79,6 @@ export class ProcessSubscriber {
       })
     );
 
-    this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.INFO,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        notificationId: notification._id,
-        text: 'Request processed',
-        userId: command.userId,
-        subscriberId: subscriber._id,
-        code: LogCodeEnum.TRIGGER_PROCESSED,
-        templateId: notification._templateId,
-      })
-    );
-
     const jobs: Omit<JobEntity, '_id'>[] = [];
 
     for (const step of steps) {
@@ -147,16 +132,17 @@ export class ProcessSubscriber {
       subscriberPayload.subscriberId
     );
 
-    if (subscriber && !this.subscriberNeedUpdate(subscriber, subscriberPayload)) {
+    if (subscriber && !subscriberNeedUpdate(subscriber, subscriberPayload)) {
       return subscriber;
     }
 
-    return await this.createOrUpdateSubscriber(command, subscriberPayload);
+    return await this.createOrUpdateSubscriber(command, subscriberPayload, subscriber);
   }
 
   private async createOrUpdateSubscriber(
     command: Pick<ProcessSubscriberCommand, 'environmentId' | 'organizationId'>,
-    subscriberPayload
+    subscriberPayload,
+    subscriber: SubscriberEntity | null
   ) {
     return await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
@@ -168,17 +154,8 @@ export class ProcessSubscriber {
         lastName: subscriberPayload?.lastName,
         phone: subscriberPayload?.phone,
         avatar: subscriberPayload?.avatar,
+        subscriber: subscriber ?? undefined,
       })
-    );
-  }
-
-  private subscriberNeedUpdate(subscriber: SubscriberEntity, subscriberPayload: ISubscribersDefine): boolean {
-    return (
-      !!(subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email) ||
-      !!(subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
-      !!(subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
-      !!(subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
-      !!(subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
     );
   }
 
