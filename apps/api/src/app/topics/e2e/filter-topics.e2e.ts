@@ -17,7 +17,6 @@ describe('Filter topics - /topics (GET)', async () => {
     await session.initialize();
 
     await createNewTopic(session, 'topic-key-1');
-    await createNewTopic(session, 'topic-key-3');
 
     const secondTopicKey = 'topic-key-2';
     await createNewTopic(session, secondTopicKey);
@@ -26,6 +25,8 @@ describe('Filter topics - /topics (GET)', async () => {
     secondSubscriber = await subscribersService.createSubscriber();
     const subscribers = [firstSubscriber.subscriberId, secondSubscriber.subscriberId];
     await addSubscribersToTopic(session, secondTopicKey, subscribers);
+
+    await createNewTopic(session, 'topic-key-3');
 
     const topicSubscribersRepository = new TopicSubscribersRepository();
     const result = await topicSubscribersRepository.find({
@@ -89,7 +90,7 @@ describe('Filter topics - /topics (GET)', async () => {
 
     expect(data.length).to.eql(3);
     expect(totalCount).to.eql(3);
-    expect(page).to.eql(0);
+    expect(page).to.eql(1);
     expect(pageSize).to.eql(10);
   });
 
@@ -105,7 +106,7 @@ describe('Filter topics - /topics (GET)', async () => {
 
     expect(data.length).to.eql(1);
     expect(totalCount).to.eql(1);
-    expect(page).to.eql(0);
+    expect(page).to.eql(1);
     expect(pageSize).to.eql(10);
     expect(topic._environmentId).to.eql(session.environment._id);
     expect(topic._organizationId).to.eql(session.organization._id);
@@ -124,7 +125,7 @@ describe('Filter topics - /topics (GET)', async () => {
 
     expect(data.length).to.eql(0);
     expect(totalCount).to.eql(0);
-    expect(page).to.eql(0);
+    expect(page).to.eql(1);
     expect(pageSize).to.eql(10);
   });
 
@@ -138,8 +139,55 @@ describe('Filter topics - /topics (GET)', async () => {
 
     expect(data.length).to.eql(3);
     expect(totalCount).to.eql(3);
-    expect(page).to.eql(0);
+    expect(page).to.eql(1);
     expect(pageSize).to.eql(10);
+  });
+
+  it('should retrieve two topics from the database for the environment if pageSize is set to 2 and page 1 selected', async () => {
+    const url = `${BASE_PATH}?page=1&pageSize=2`;
+    const response = await session.testAgent.get(url);
+
+    expect(response.statusCode).to.eql(200);
+
+    const { data, totalCount, page, pageSize } = response.body;
+
+    expect(data.length).to.eql(2);
+    expect(totalCount).to.eql(3);
+    expect(page).to.eql(1);
+    expect(pageSize).to.eql(2);
+
+    expect(data[0].name).to.eql('topic-key-1-name');
+    expect(data[1].name).to.eql('topic-key-2-name');
+  });
+
+  it('should retrieve one topic from the database for the environment if pageSize is set to 2 and page 2 selected', async () => {
+    const url = `${BASE_PATH}?page=2&pageSize=2`;
+    const response = await session.testAgent.get(url);
+
+    expect(response.statusCode).to.eql(200);
+
+    const { data, totalCount, page, pageSize } = response.body;
+
+    expect(data.length).to.eql(1);
+    expect(totalCount).to.eql(3);
+    expect(page).to.eql(2);
+    expect(pageSize).to.eql(2);
+
+    expect(data[0].name).to.eql('topic-key-3-name');
+  });
+
+  it('should retrieve zero topics from the database for the environment if pageSize is set to 2 and page 3 selected', async () => {
+    const url = `${BASE_PATH}?page=3&pageSize=2`;
+    const response = await session.testAgent.get(url);
+
+    expect(response.statusCode).to.eql(200);
+
+    const { data, totalCount, page, pageSize } = response.body;
+
+    expect(data.length).to.eql(0);
+    expect(totalCount).to.eql(3);
+    expect(page).to.eql(3);
+    expect(pageSize).to.eql(2);
   });
 });
 
