@@ -1,8 +1,9 @@
-import { FilterParts, StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { JobEntity, MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
 import * as sinon from 'sinon';
 import axios from 'axios';
+import { Duration, sub } from 'date-fns';
+import { FilterParts, StepTypeEnum } from '@novu/shared';
+import { JobEntity, MessageTemplateEntity, NotificationStepEntity, SubscriberRepository } from '@novu/dal';
 
 import { MessageMatcher } from './message-matcher.service';
 import type { SendMessageCommand } from '../send-message/send-message.command';
@@ -556,6 +557,189 @@ describe('Message filter matcher', function () {
     expect(matchedMessage).to.equal(false);
 
     gotGetStub.restore();
+  });
+
+  describe('is online filters', () => {
+    const getSubscriber = (
+      { isOnline }: { isOnline?: boolean } = {},
+      { subDuration }: { subDuration?: Duration } = {}
+    ) => ({
+      firstName: 'John',
+      lastName: 'Doe',
+      isOnline: isOnline ?? true,
+      lastOnlineAt: subDuration ? sub(new Date(), subDuration).toISOString() : new Date().toISOString(),
+    });
+
+    describe('isOnline', () => {
+      it('allows to process if the subscriber is online', async () => {
+        const matcher = new MessageMatcher(
+          { findOne: () => Promise.resolve(getSubscriber()) } as any,
+          undefined as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnline',
+                value: true,
+              },
+            ]),
+          }),
+          {
+            payload: {},
+          }
+        );
+        expect(matchedMessage).to.equal(true);
+      });
+
+      it("doesn't allow to process if the subscriber is not online", async () => {
+        const matcher = new MessageMatcher(
+          { findOne: () => Promise.resolve(getSubscriber({ isOnline: false })) } as any,
+          undefined as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnline',
+                value: true,
+              },
+            ]),
+          }),
+          {
+            payload: {},
+          }
+        );
+        expect(matchedMessage).to.equal(false);
+      });
+    });
+
+    describe('isOnlineInLast', () => {
+      it('allows to process if the subscriber is still online', async () => {
+        const matcher = new MessageMatcher(
+          {
+            findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 10 } })),
+          } as any,
+          undefined as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnlineInLast',
+                value: 5,
+                timeOperator: 'minutes',
+              },
+            ]),
+          }),
+          {
+            payload: {},
+          }
+        );
+        expect(matchedMessage).to.equal(true);
+      });
+
+      it('allows to process if the subscriber was online in last 5 min', async () => {
+        const matcher = new MessageMatcher(
+          {
+            findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 4 } })),
+          } as any,
+          undefined as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnlineInLast',
+                value: 5,
+                timeOperator: 'minutes',
+              },
+            ]),
+          }),
+          {
+            payload: {},
+          }
+        );
+        expect(matchedMessage).to.equal(true);
+      });
+
+      it("doesn't allow to process if the subscriber was online more that last 5 min", async () => {
+        const matcher = new MessageMatcher(
+          {
+            findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 6 } })),
+          } as any,
+          undefined as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnlineInLast',
+                value: 5,
+                timeOperator: 'minutes',
+              },
+            ]),
+          }),
+          {
+            payload: {},
+          }
+        );
+        expect(matchedMessage).to.equal(false);
+      });
+
+      it('allows to process if the subscriber was online in last 1 hour', async () => {
+        const matcher = new MessageMatcher(
+          {
+            findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 30 } })),
+          } as any,
+          undefined as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnlineInLast',
+                value: 1,
+                timeOperator: 'hours',
+              },
+            ]),
+          }),
+          {
+            payload: {},
+          }
+        );
+        expect(matchedMessage).to.equal(true);
+      });
+
+      it('allows to process if the subscriber was online in last 1 day', async () => {
+        const matcher = new MessageMatcher(
+          { findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { hours: 23 } })) } as any,
+          undefined as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnlineInLast',
+                value: 1,
+                timeOperator: 'days',
+              },
+            ]),
+          }),
+          {
+            payload: {},
+          }
+        );
+        expect(matchedMessage).to.equal(true);
+      });
+    });
   });
 });
 

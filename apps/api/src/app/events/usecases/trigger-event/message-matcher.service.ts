@@ -2,8 +2,16 @@ import * as _ from 'lodash';
 import { createHmac } from 'crypto';
 import axios from 'axios';
 import { Injectable } from '@nestjs/common';
+import { parseISO, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
 import type { ITriggerPayload } from '@novu/node';
-import type { IBaseFieldFilterPart, FilterParts, IWebhookFilterPart, IFieldFilterPart } from '@novu/shared';
+import type {
+  IBaseFieldFilterPart,
+  FilterParts,
+  IWebhookFilterPart,
+  IFieldFilterPart,
+  IRealtimeOnlineFilterPart,
+  IOnlineInLastFilterPart,
+} from '@novu/shared';
 import { SubscriberEntity, EnvironmentRepository, SubscriberRepository, StepFilter } from '@novu/dal';
 
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
@@ -20,6 +28,18 @@ const findFilterPartByType = (filterParts: FilterParts[], type: FilterParts['on'
   const types = Array.isArray(type) ? type : [type];
 
   return filterParts.filter((filterPart) => types.includes(filterPart.on));
+};
+
+const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: 'minutes' | 'hours' | 'days') => {
+  if (timeOperator === 'minutes') {
+    return differenceInMinutes(currentDate, lastDate);
+  }
+
+  if (timeOperator === 'hours') {
+    return differenceInHours(currentDate, lastDate);
+  }
+
+  return differenceInDays(currentDate, lastDate);
 };
 
 @Injectable()
@@ -110,6 +130,28 @@ export class MessageMatcher {
     }
 
     return !!(await findAsync(asyncFilters, (i) => this.processFilter(variables, i, command)));
+  }
+
+  private async processIsOnline(
+    filter: IRealtimeOnlineFilterPart | IOnlineInLastFilterPart,
+    command: SendMessageCommand
+  ): Promise<boolean> {
+    const subscriber = await this.subscriberRepository.findOne({
+      _id: command.subscriberId,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    const isOnlineMatch = subscriber?.isOnline === filter.value;
+    if (filter.on === 'isOnline') {
+      return isOnlineMatch;
+    }
+
+    const currentDate = new Date();
+    const lastOnlineAt = subscriber?.lastOnlineAt ? parseISO(subscriber?.lastOnlineAt) : new Date();
+    const diff = differenceIn(currentDate, lastOnlineAt, filter.timeOperator);
+
+    return subscriber?.isOnline || (!subscriber?.isOnline && diff <= filter.value);
   }
 
   private processFilterEquality(variables: IFilterVariables, fieldFilter: IBaseFieldFilterPart) {
@@ -233,6 +275,10 @@ export class MessageMatcher {
 
     if (child.on === 'payload' || child.on === 'subscriber') {
       return this.processFilterEquality(variables, child);
+    }
+
+    if (child.on === 'isOnline' || child.on === 'isOnlineInLast') {
+      return this.processIsOnline(child, command);
     }
 
     return false;

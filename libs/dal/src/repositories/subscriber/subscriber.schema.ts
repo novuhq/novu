@@ -27,7 +27,7 @@ const subscriberSchema = new Schema(
       type: Schema.Types.Boolean,
       default: false,
     },
-    lastOnlineAt: Schema.Types.String,
+    lastOnlineAt: Schema.Types.Date,
   },
   schemaOptions
 );
