@@ -63,6 +63,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
+                  on: 'subscriber',
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -110,6 +111,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
+                  on: 'subscriber',
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -204,6 +206,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
+                  on: 'subscriber',
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -283,6 +286,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
+                  on: 'subscriber',
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -340,6 +344,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
+                  on: 'subscriber',
                   field: 'secondName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -389,6 +394,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
+                  on: 'subscriber',
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -430,6 +436,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
+                  on: 'subscriber',
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',

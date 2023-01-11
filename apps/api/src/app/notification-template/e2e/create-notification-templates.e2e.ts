@@ -7,6 +7,7 @@ import {
   StepTypeEnum,
   INotificationTemplate,
   TriggerTypeEnum,
+  IFieldFilterPart,
 } from '@novu/shared';
 import {
   ChangeRepository,
@@ -74,6 +75,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
               value: 'AND',
               children: [
                 {
+                  on: 'subscriber',
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -100,7 +102,9 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(message.filters[0].type).to.equal(testTemplate.steps[0].filters[0].type);
     expect(message.filters[0].children.length).to.equal(testTemplate.steps[0].filters[0].children.length);
     expect(message.filters[0].children[0].value).to.equal(testTemplate.steps[0].filters[0].children[0].value);
-    expect(message.filters[0].children[0].operator).to.equal(testTemplate.steps[0].filters[0].children[0].operator);
+    expect((message.filters[0].children[0] as IFieldFilterPart).operator).to.equal(
+      (testTemplate.steps[0].filters[0].children[0] as IFieldFilterPart).operator
+    );
     expect(template.tags[0]).to.equal('test-tag');
 
     if (Array.isArray(message.template.content) && Array.isArray(testTemplate.steps[0].template.content)) {
