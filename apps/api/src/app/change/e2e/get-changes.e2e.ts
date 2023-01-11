@@ -37,6 +37,7 @@ describe('Get changes', () => {
               value: 'AND',
               children: [
                 {
+                  on: 'subscriber',
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
