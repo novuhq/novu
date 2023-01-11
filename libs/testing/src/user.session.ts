@@ -20,6 +20,7 @@ import {
   ChangeRepository,
   ChangeEntity,
   SubscriberRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
@@ -44,6 +45,7 @@ export class UserSession {
   private jobRepository = new JobRepository();
   private feedRepository = new FeedRepository();
   private changeRepository: ChangeRepository = new ChangeRepository();
+  private subscriberRepository = new SubscriberRepository();
 
   token: string;
 
@@ -330,5 +332,18 @@ export class UserSession {
     for (const change of changes) {
       await this.testAgent.post(`/v1/changes/${change._id}/apply`);
     }
+  }
+
+  async createSubscriber(fields: Partial<SubscriberEntity> = {}) {
+    return this.subscriberRepository.create({
+      _organizationId: this.organization._id,
+      _environmentId: this.environment._id,
+      subscriberId: '123',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'john@doe.com',
+      phone: '+972523333333',
+      ...fields,
+    });
   }
 }

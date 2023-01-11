@@ -13,7 +13,7 @@ export class SubscriberOnlineService {
   }
 
   async handleDisconnection(subscriber: ISubscriberJwt, activeConnections: number) {
-    const lastOnlineAt = new Date();
+    const lastOnlineAt = new Date().toISOString();
     let isOnline = false;
     if (activeConnections > 1) {
       isOnline = true;
@@ -24,7 +24,7 @@ export class SubscriberOnlineService {
 
   private async updateOnlineStatus(
     subscriber: ISubscriberJwt,
-    updatePayload: { isOnline: boolean; lastOnlineAt?: Date }
+    updatePayload: { isOnline: boolean; lastOnlineAt?: string }
   ) {
     await this.subscriberRepository.update(
       { _id: subscriber._id, _organizationId: subscriber.organizationId },

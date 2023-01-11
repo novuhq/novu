@@ -32,7 +32,7 @@ export class SubscriberEntity {
 
   __v?: number;
 
-  isOnline: boolean;
+  isOnline?: boolean;
 
   lastOnlineAt?: string;
 }

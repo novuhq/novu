@@ -48,6 +48,11 @@ import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/up
 import { StoreQuery } from '../widgets/queries/store.query';
 import { GetFeedCount } from '../widgets/usecases/get-feed-count/get-feed-count.usecase';
 import { GetFeedCountCommand } from '../widgets/usecases/get-feed-count/get-feed-count.command';
+import { UpdateSubscriberOnlineFlagRequestDto } from './dtos/update-subscriber-online-flag-request.dto';
+import {
+  UpdateSubscriberOnlineFlag,
+  UpdateSubscriberOnlineFlagCommand,
+} from './usecases/update-subscriber-online-flag';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -64,7 +69,8 @@ export class SubscribersController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
-    private updateMessageActionsUsecase: UpdateMessageActions
+    private updateMessageActionsUsecase: UpdateMessageActions,
+    private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag
   ) {}
 
   @Get('')
@@ -198,6 +204,31 @@ export class SubscribersController {
         subscriberId,
         providerId: body.providerId,
         credentials: body.credentials,
+      })
+    );
+  }
+
+  @Patch('/:subscriberId/online-status')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({
+    type: SubscriberResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Update subscriber online status',
+    description: 'Used to update the subscriber isOnline flag.',
+  })
+  async updateSubscriberOnlineFlag(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateSubscriberOnlineFlagRequestDto
+  ): Promise<SubscriberResponseDto> {
+    return await this.updateSubscriberOnlineFlagUsecase.execute(
+      UpdateSubscriberOnlineFlagCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        isOnline: body.isOnline,
       })
     );
   }
