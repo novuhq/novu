@@ -47,7 +47,7 @@ class WebhookFilterPart extends BaseFieldFilterPart {
   on: 'webhook';
 
   @ApiPropertyOptional()
-  webhookUrl?: string;
+  webhookUrl: string;
 }
 
 class RealtimeOnlineFilterPart extends BaseFilterPart {

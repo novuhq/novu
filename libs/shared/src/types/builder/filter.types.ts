@@ -18,7 +18,7 @@ export interface IFieldFilterPart extends IBaseFieldFilterPart {
 
 export interface IWebhookFilterPart extends IBaseFieldFilterPart {
   on: 'webhook';
-  webhookUrl?: string;
+  webhookUrl: string;
 }
 
 export interface IRealtimeOnlineFilterPart extends IBaseFilterPart {
