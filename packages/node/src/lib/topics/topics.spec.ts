@@ -88,7 +88,7 @@ describe('Novu Node.js package - Topics class', () => {
 
     const mockedResponse = {
       totalCount: 1,
-      page: 1,
+      page: 0,
       pageSize: 10,
       data: topic,
     };
@@ -111,7 +111,7 @@ describe('Novu Node.js package - Topics class', () => {
     const mockedResponse = {
       totalCount: 1,
       pageSize: 10,
-      page: 1,
+      page: 0,
       data: [
         {
           _id: 'topic-id',
@@ -125,11 +125,11 @@ describe('Novu Node.js package - Topics class', () => {
     };
     mockedAxios.get.mockResolvedValue(mockedResponse);
 
-    const result = await novu.topics.list({ page: 1 });
+    const result = await novu.topics.list({ page: 0 });
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith('/topics', {
-      params: { page: 1 },
+      params: { page: 0 },
     });
     expect(result).toBe(mockedResponse);
   });
@@ -143,7 +143,7 @@ describe('Novu Node.js package - Topics class', () => {
     const mockedResponse = {
       totalCount: 1,
       pageSize,
-      page: 1,
+      page: 0,
       data: [
         {
           _id: 'topic-id',
@@ -157,11 +157,11 @@ describe('Novu Node.js package - Topics class', () => {
     };
     mockedAxios.get.mockResolvedValue(mockedResponse);
 
-    const result = await novu.topics.list({ page: 1, pageSize });
+    const result = await novu.topics.list({ page: 0, pageSize });
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith('/topics', {
-      params: { page: 1, pageSize },
+      params: { page: 0, pageSize },
     });
 
     expect(result).toBe(mockedResponse);
