@@ -7,8 +7,10 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
 import { AuthContext } from '../../store/authContext';
 import { BrandingForm } from './tabs';
+import { LayoutsListPage } from './tabs/LayoutsListPage';
 
-const BRANDING = 'Branding';
+const BRANDING = 'Assets';
+const LAYOUT = 'Layouts';
 
 export function BrandPage() {
   const { currentOrganization } = useContext(AuthContext);
@@ -17,6 +19,10 @@ export function BrandPage() {
     {
       value: BRANDING,
       content: <BrandingForm isLoading={!currentOrganization} organization={currentOrganization} />,
+    },
+    {
+      value: LAYOUT,
+      content: <LayoutsListPage />,
     },
   ];
 
