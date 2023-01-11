@@ -235,7 +235,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       ]);
     });
 
-    it('should return an empty array if providing a topic that does not exist', async () => {
+    it('should throw an error if providing a topic that does not exist', async () => {
       const topicKey = 'topic-key-single-recipient';
       const topicName = 'topic-key-single-recipient-name';
       const transactionId = uuid();
@@ -247,9 +247,16 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const command = buildCommand(session, transactionId, [recipient]);
 
-      const result = await useCase.execute(command);
+      let error;
 
-      expect(result).to.be.eql([]);
+      try {
+        const result = await useCase.execute(command);
+      } catch (e) {
+        error = e;
+      }
+
+      expect(error).to.be.ok;
+      expect(error.message).to.contain('not found in current environment');
     });
 
     it('should map properly a mixed recipients list with a string, a subscribers define interface and two topics', async () => {

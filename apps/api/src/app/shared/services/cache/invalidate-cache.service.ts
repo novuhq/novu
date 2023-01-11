@@ -11,7 +11,7 @@ export class InvalidateCacheService {
     credentials,
   }: {
     storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[];
-    credentials: Record<string, unknown>;
+    credentials: { _id: string; _environmentId: string } | Record<string, unknown>;
   }) {
     if (!this.cacheService?.cacheEnabled()) return;
 
