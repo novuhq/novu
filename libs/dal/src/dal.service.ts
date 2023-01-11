@@ -6,8 +6,8 @@ export class DalService {
 
   async connect(url: string, config: ConnectOptions = {}) {
     const baseConfig: ConnectOptions = {
-      maxPoolSize: 300,
-      minPoolSize: 100,
+      maxPoolSize: 500,
+      minPoolSize: process.env.NODE_ENV === 'prod' ? 250 : 10,
     };
 
     const instance = await mongoose.connect(url, {
