@@ -1,9 +1,10 @@
-import { Body, Controller, Inject, Post, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Inject, Param, Post, UseGuards } from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
 
-import { CreateLayoutRequestDto, CreateLayoutResponseDto } from './dtos';
-import { CreateLayoutCommand, CreateLayoutUseCase } from './use-cases';
+import { CreateLayoutRequestDto, CreateLayoutResponseDto, GetLayoutResponseDto } from './dtos';
+import { CreateLayoutCommand, CreateLayoutUseCase, GetLayoutCommand, GetLayoutUseCase } from './use-cases';
+import { LayoutId } from './types';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -17,6 +18,7 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 export class LayoutsController {
   constructor(
     private createLayoutUseCase: CreateLayoutUseCase,
+    private getLayoutUseCase: GetLayoutUseCase,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -45,5 +47,24 @@ export class LayoutsController {
     return {
       _id: layout._id,
     };
+  }
+
+  @Get('/:layoutId')
+  @ExternalApiAccessible()
+  @ApiOkResponse({
+    type: GetLayoutResponseDto,
+  })
+  @ApiOperation({ summary: 'Get layout', description: 'Get a layout by its ID' })
+  async getLayout(
+    @UserSession() user: IJwtPayload,
+    @Param('layoutId') layoutId: LayoutId
+  ): Promise<GetLayoutResponseDto> {
+    return await this.getLayoutUseCase.execute(
+      GetLayoutCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        layoutId,
+      })
+    );
   }
 }

@@ -18,7 +18,7 @@ export class CreateLayoutUseCase {
     return this.mapFromEntity(layout);
   }
 
-  private mapToEntity(domainEntity: CreateLayoutCommand): Omit<LayoutEntity, '_id'> {
+  private mapToEntity(domainEntity: CreateLayoutCommand): Omit<LayoutEntity, '_id' | 'createdAt' | 'updatedAt'> {
     return {
       _environmentId: LayoutRepository.convertStringToObjectId(domainEntity.environmentId),
       _organizationId: LayoutRepository.convertStringToObjectId(domainEntity.organizationId),
@@ -29,7 +29,7 @@ export class CreateLayoutUseCase {
       name: domainEntity.name,
       variables: domainEntity.variables,
       isDefault: domainEntity.isDefault ?? false,
-      isDeleted: false,
+      deleted: false,
     };
   }
 
@@ -39,6 +39,7 @@ export class CreateLayoutUseCase {
       _id: LayoutRepository.convertObjectIdToString(layout._id),
       _organizationId: LayoutRepository.convertObjectIdToString(layout._organizationId),
       _environmentId: LayoutRepository.convertObjectIdToString(layout._environmentId),
+      isDeleted: layout.deleted,
     };
   }
 }

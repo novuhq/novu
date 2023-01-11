@@ -19,6 +19,8 @@ export class LayoutEntity {
   content: IEmailBlock[];
   contentType: 'customHtml';
   isDefault: boolean;
-  isDeleted: boolean;
+  deleted: boolean;
   channel: ChannelTypeEnum;
+  createdAt: string;
+  updatedAt: string;
 }

@@ -43,4 +43,10 @@ export class LayoutDto {
 
   @ApiProperty()
   isDeleted: boolean;
+
+  @ApiPropertyOptional()
+  createdAt?: string;
+
+  @ApiPropertyOptional()
+  updatedAt?: string;
 }
