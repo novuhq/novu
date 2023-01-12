@@ -64,10 +64,10 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
       lookup,
       topicWithSubscribersProjection,
       {
-        $limit: pagination.limit,
+        $skip: pagination.skip,
       },
       {
-        $skip: pagination.skip,
+        $limit: pagination.limit,
       },
     ]);
 
