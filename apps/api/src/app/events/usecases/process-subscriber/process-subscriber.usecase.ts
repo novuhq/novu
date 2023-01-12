@@ -36,10 +36,12 @@ export class ProcessSubscriber {
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<Omit<JobEntity, '_id'>[]> {
-    const template = await this.getNotificationTemplate({
-      _id: command.templateId,
-      environmentId: command.environmentId,
-    });
+    const template =
+      command.template ??
+      (await this.getNotificationTemplate({
+        _id: command.templateId,
+        environmentId: command.environmentId,
+      }));
 
     const subscriber: SubscriberEntity = await this.getSubscriber(
       {
