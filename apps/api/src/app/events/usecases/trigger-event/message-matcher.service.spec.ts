@@ -567,10 +567,66 @@ describe('Message filter matcher', function () {
       firstName: 'John',
       lastName: 'Doe',
       isOnline: isOnline ?? true,
-      lastOnlineAt: subDuration ? sub(new Date(), subDuration).toISOString() : new Date().toISOString(),
+      lastOnlineAt: subDuration ? sub(new Date(), subDuration).toISOString() : undefined,
     });
 
     describe('isOnline', () => {
+      it("doesn't allow to process if the subscriber has no online fields set and filter is true", async () => {
+        const matcher = new MessageMatcher(
+          {
+            findOne: () =>
+              Promise.resolve({
+                firstName: 'John',
+                lastName: 'Doe',
+              }),
+          } as any,
+          undefined as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnline',
+                value: true,
+              },
+            ]),
+          }),
+          {
+            payload: {},
+          }
+        );
+        expect(matchedMessage).to.equal(false);
+      });
+
+      it("doesn't allow to process if the subscriber has no online fields set and filter is false", async () => {
+        const matcher = new MessageMatcher(
+          {
+            findOne: () =>
+              Promise.resolve({
+                firstName: 'John',
+                lastName: 'Doe',
+              }),
+          } as any,
+          undefined as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnline',
+                value: false,
+              },
+            ]),
+          }),
+          {
+            payload: {},
+          }
+        );
+        expect(matchedMessage).to.equal(false);
+      });
+
       it('allows to process if the subscriber is online', async () => {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber()) } as any,
@@ -617,6 +673,35 @@ describe('Message filter matcher', function () {
     });
 
     describe('isOnlineInLast', () => {
+      it("doesn't allow to process if the subscriber with no online fields set", async () => {
+        const matcher = new MessageMatcher(
+          {
+            findOne: () =>
+              Promise.resolve({
+                firstName: 'John',
+                lastName: 'Doe',
+              }),
+          } as any,
+          undefined as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnlineInLast',
+                value: 5,
+                timeOperator: 'minutes',
+              },
+            ]),
+          }),
+          {
+            payload: {},
+          }
+        );
+        expect(matchedMessage).to.equal(false);
+      });
+
       it('allows to process if the subscriber is still online', async () => {
         const matcher = new MessageMatcher(
           {
@@ -719,7 +804,9 @@ describe('Message filter matcher', function () {
 
       it('allows to process if the subscriber was online in last 1 day', async () => {
         const matcher = new MessageMatcher(
-          { findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { hours: 23 } })) } as any,
+          {
+            findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { hours: 23 } })),
+          } as any,
           undefined as any,
           undefined as any
         );

@@ -142,6 +142,13 @@ export class MessageMatcher {
       _environmentId: command.environmentId,
     });
 
+    const hasNoOnlineFieldsSet =
+      typeof subscriber?.isOnline === 'undefined' && typeof subscriber?.lastOnlineAt === 'undefined';
+    // the old subscriber created before the is online functionality should not be processed
+    if (hasNoOnlineFieldsSet) {
+      return false;
+    }
+
     const isOnlineMatch = subscriber?.isOnline === filter.value;
     if (filter.on === 'isOnline') {
       return isOnlineMatch;
@@ -151,7 +158,7 @@ export class MessageMatcher {
     const lastOnlineAt = subscriber?.lastOnlineAt ? parseISO(subscriber?.lastOnlineAt) : new Date();
     const diff = differenceIn(currentDate, lastOnlineAt, filter.timeOperator);
 
-    return subscriber?.isOnline || (!subscriber?.isOnline && diff <= filter.value);
+    return subscriber?.isOnline || (!subscriber?.isOnline && diff >= 0 && diff <= filter.value);
   }
 
   private processFilterEquality(variables: IFilterVariables, fieldFilter: IBaseFieldFilterPart) {
