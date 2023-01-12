@@ -46,7 +46,7 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   REDIS_CACHE_SERVICE_HOST: str({
     default: '',
   }),
-  REDIS_CACHE_PORT: str({
+  REDIS_CACHE_SERVICE_PORT: str({
     default: '6379',
   }),
   STORE_NOTIFICATION_CONTENT: str({
