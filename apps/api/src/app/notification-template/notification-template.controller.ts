@@ -154,13 +154,6 @@ export class NotificationTemplateController {
   }
 
   @Get('/:templateId/blueprint')
-  @ApiOkResponse({
-    type: NotificationTemplateResponse,
-  })
-  @ApiOperation({
-    summary: 'Get blueprint notification template',
-  })
-  @ExternalApiAccessible()
   getNotificationTemplateBlueprintById(
     @UserSession() user: IJwtPayload,
     @Param('templateId') templateId: string
@@ -176,13 +169,6 @@ export class NotificationTemplateController {
   }
 
   @Post('/:templateId/blueprint')
-  @ApiOkResponse({
-    type: NotificationTemplateResponse,
-  })
-  @ApiOperation({
-    summary: 'create notification template from blueprint',
-  })
-  @ExternalApiAccessible()
   createNotificationTemplateFromBlueprintById(
     @UserSession() user: IJwtPayload,
     @Param('templateId') templateId: string
