@@ -14,6 +14,8 @@ on:
       - 'apps/api/**'
       - 'libs/dal/**'
       - 'libs/shared/**'
+env:
+  TF_WORKSPACE: novu-dev
 
 jobs:
   test_api:
@@ -129,8 +131,6 @@ jobs:
 
       - name: Terraform Init
         working-directory: cloud-infra/terraform
-        env:
-          TF_WORKSPACE: novu-dev
         run: terraform init
 
       - name: Terraform get output
