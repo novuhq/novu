@@ -35,8 +35,8 @@ export function LoginForm({ email, token }: Props) {
   const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
   const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : `/auth/reset/request`;
   const githubLink = isFromVercel
-    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
-    : `${API_ROOT}/v1/auth/github`;
+    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}&source=vercel`
+    : `${API_ROOT}/v1/auth/github?source=web`;
 
   const {
     register,

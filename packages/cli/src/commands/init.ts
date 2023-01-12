@@ -69,8 +69,6 @@ export async function initCommand() {
       const user = config.getDecodedToken();
 
       analytics.identify(user);
-      analytics.alias({ previousId: anonymousId, userId: user._id });
-
       if (result === 'visitDashboard') {
         await handleExistingSession(result, config);
 
@@ -191,7 +189,7 @@ async function gitHubOAuth(httpServer: HttpServer, config: ConfigService): Promi
   const redirectUrl = `http://${SERVER_HOST}:${await getServerPort()}${REDIRECT_ROUTE}`;
 
   try {
-    await open(`${API_OAUTH_URL}?&redirectUrl=${redirectUrl}`);
+    await open(`${API_OAUTH_URL}?&redirectUrl=${redirectUrl}&source=cli&distinctId=${anonymousId}`);
 
     const userJwt = await httpServer.redirectResponse();
 

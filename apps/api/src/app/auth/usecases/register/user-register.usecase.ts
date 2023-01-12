@@ -47,6 +47,11 @@ export class UserRegister {
 
     this.analyticsService.upsertUser(user, user._id);
 
+    this.analyticsService.track('[Authentication] - Signup', user._id, {
+      loginType: 'email',
+      origin: 'web',
+    });
+
     return {
       user: await this.userRepository.findById(user._id),
       token: await this.authService.generateUserToken(user),
