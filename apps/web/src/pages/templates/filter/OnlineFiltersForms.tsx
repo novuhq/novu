@@ -64,7 +64,7 @@ function OnlineRightNowForm({ control, stepIndex, index }: { control; stepIndex:
                 placeholder="value"
                 data={[
                   { value: 'true', label: 'Yes' },
-                  { value: 'false', label: 'no' },
+                  { value: 'false', label: 'No' },
                 ]}
                 {...field}
                 onChange={(val) => field.onChange(val === 'true' ? true : false)}
