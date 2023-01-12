@@ -72,7 +72,7 @@ const cacheService = {
   provide: CacheService,
   useFactory: async () => {
     return new CacheService({
-      host: process.env.REDIS_CACHE_HOST,
+      host: process.env.REDIS_CACHE_SERVICE_HOST,
       port: process.env.REDIS_CACHE_PORT || '6379',
       ttl: process.env.REDIS_CACHE_TTL,
       password: process.env.REDIS_CACHE_PASSWORD,
