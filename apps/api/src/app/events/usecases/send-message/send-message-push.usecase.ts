@@ -195,24 +195,6 @@ export class SendMessagePush extends SendMessageBase {
     integration: IntegrationEntity
   ) {
     if (!pushChannels) {
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: 'Subscriber does not have active channel',
-          userId: command.userId,
-          subscriberId: command.subscriberId,
-          code: LogCodeEnum.SUBSCRIBER_MISSING_PUSH,
-          templateId: notification._templateId,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
-      );
-
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),

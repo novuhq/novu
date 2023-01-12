@@ -88,26 +88,16 @@ export class MapTriggerRecipients {
       const subscribers: ISubscribersDefine[] = [];
 
       for (const topic of topics) {
-        try {
-          const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
-            environmentId,
-            topicKey: topic.topicKey,
-            organizationId,
-          });
-          const topicSubscribers = await this.getTopicSubscribers.execute(getTopicSubscribersCommand);
+        const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
+          environmentId,
+          topicKey: topic.topicKey,
+          organizationId,
+        });
+        const topicSubscribers = await this.getTopicSubscribers.execute(getTopicSubscribersCommand);
 
-          topicSubscribers.forEach((subscriber: TopicSubscribersDto) =>
-            subscribers.push({ subscriberId: subscriber.externalSubscriberId })
-          );
-        } catch (error) {
-          this.logTopicSubscribersError({
-            environmentId,
-            organizationId,
-            topicKey: topic.topicKey,
-            transactionId,
-            userId,
-          });
-        }
+        topicSubscribers.forEach((subscriber: TopicSubscribersDto) =>
+          subscribers.push({ subscriberId: subscriber.externalSubscriberId })
+        );
       }
 
       return subscribers;
@@ -130,31 +120,5 @@ export class MapTriggerRecipients {
 
   private findTopics(recipients: TriggerRecipients): TriggerRecipientTopics {
     return recipients.filter(isTopic);
-  }
-
-  private logTopicSubscribersError({
-    environmentId,
-    organizationId,
-    topicKey,
-    transactionId,
-    userId,
-  }: ILogTopicSubscribersPayload) {
-    this.createLog
-      .execute(
-        CreateLogCommand.create({
-          transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId,
-          organizationId,
-          text: 'Failed retrieving topic subscribers',
-          userId,
-          code: LogCodeEnum.TOPIC_SUBSCRIBERS_ERROR,
-          raw: {
-            topicKey,
-          },
-        })
-      )
-      // eslint-disable-next-line no-console
-      .catch((e) => console.error(e));
   }
 }
