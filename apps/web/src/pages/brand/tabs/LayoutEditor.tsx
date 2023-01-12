@@ -1,8 +1,8 @@
 import { useForm, Controller } from 'react-hook-form';
 import { EmailCustomCodeEditor } from '../../../components/templates/email-editor/EmailCustomCodeEditor';
-import { Center, Grid, LoadingOverlay, useMantineTheme } from '@mantine/core';
+import { Center, Grid } from '@mantine/core';
 import { ArrowLeft } from '../../../design-system/icons';
-import { Button, Checkbox, colors, Input, Text } from '../../../design-system';
+import { Button, Checkbox, colors, Input, Text, LoadingOverlay } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -19,7 +19,6 @@ export function LayoutEditor({
   goBack: () => void;
 }) {
   const { readonly } = useEnvController();
-  const theme = useMantineTheme();
 
   const { data: layout, isLoading: isLoadingLayout } = useQuery(['getLayout', id], () => getLayoutById(id), {
     enabled: !!id,
@@ -58,23 +57,17 @@ export function LayoutEditor({
 
     try {
       await createNewLayout(data);
+      successMessage(`Layout ${editMode ? 'Updated' : 'Created'}!`);
+      goBack();
     } catch (e: any) {
-      errorMessage(e.message || 'Un-expected error occurred');
+      errorMessage(e.message || 'Unexpected error occurred');
     }
-
-    successMessage(`Layout ${editMode ? 'Updated' : 'Created'}!`);
-    goBack();
   }
 
+  const isLoading = (editMode && isLoadingLayout) || isLoadingCreate;
+
   return (
-    <div style={{ position: 'relative', minHeight: 500 }}>
-      <LoadingOverlay
-        visible={(editMode && isLoadingLayout) || isLoadingCreate}
-        overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
-        loaderProps={{
-          color: colors.error,
-        }}
-      />
+    <LoadingOverlay visible={isLoading}>
       <Center mb={10} data-test-id="go-back-button" onClick={() => goBack()} inline style={{ cursor: 'pointer' }}>
         <ArrowLeft color={colors.B60} />
         <Text ml={5} color={colors.B60}>
@@ -142,6 +135,7 @@ export function LayoutEditor({
 
         <Controller
           name="content"
+          data-test-id="layout-content"
           control={control}
           render={({ field }) => {
             return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} />;
@@ -151,6 +145,6 @@ export function LayoutEditor({
           {editMode ? 'Update' : 'Create'}
         </Button>
       </form>
-    </div>
+    </LoadingOverlay>
   );
 }
