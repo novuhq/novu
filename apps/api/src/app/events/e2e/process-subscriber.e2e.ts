@@ -23,7 +23,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
   const invalidateCache = new InvalidateCacheService(
     new CacheService({
-      host: process.env.REDIS_CACHE_HOST,
+      host: process.env.REDIS_CACHE_SERVICE_HOST,
       port: process.env.REDIS_CACHE_PORT,
     })
   );
