@@ -22,9 +22,9 @@ export function OnlineFiltersForms({
   return (
     <>
       {fieldOn === 'isOnline' ? (
-        <OnlineRightNowForm control={control} stepIndex={stepIndex} index={index} remove={remove} />
+        <OnlineRightNowForm control={control} stepIndex={stepIndex} index={index} />
       ) : (
-        <OnlineInTheLastForm control={control} stepIndex={stepIndex} index={index} remove={remove} />
+        <OnlineInTheLastForm control={control} stepIndex={stepIndex} index={index} />
       )}
       <Grid.Col span={1}>
         <DeleteStepButton
@@ -42,41 +42,23 @@ export function OnlineFiltersForms({
   );
 }
 
-function OnlineRightNowForm({
-  control,
-  stepIndex,
-  index,
-  remove,
-}: {
-  control;
-  stepIndex: number;
-  index: number;
-  remove: (index?: number | number[]) => void;
-}) {
+function OnlineRightNowForm({ control, stepIndex, index }: { control; stepIndex: number; index: number }) {
   return (
     <>
       <Grid.Col span={spanSize}>
-        <Controller
-          control={control}
-          name={`steps.${stepIndex}.filters.0.children.${index}.operator`}
-          render={({ field }) => {
-            return (
-              <Select
-                placeholder="Operator"
-                data={[{ value: 'EQUAL', label: 'Equal' }]}
-                {...field}
-                value={'EQUAL'}
-                disabled
-              />
-            );
-          }}
-        />
+        <Select placeholder="Operator" data={[{ value: 'EQUAL', label: 'Equal' }]} value={'EQUAL'} disabled />
       </Grid.Col>
       <Grid.Col span={spanSize}>
         <Controller
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.value`}
           render={({ field }) => {
+            const fieldValue = field.value ?? '';
+            let value = fieldValue ? 'true' : 'false';
+            if (fieldValue === '') {
+              value = '';
+            }
+
             return (
               <Select
                 placeholder="value"
@@ -85,6 +67,8 @@ function OnlineRightNowForm({
                   { value: 'false', label: 'no' },
                 ]}
                 {...field}
+                onChange={(val) => field.onChange(val === 'true' ? true : false)}
+                value={value}
               />
             );
           }}
@@ -94,17 +78,7 @@ function OnlineRightNowForm({
   );
 }
 
-function OnlineInTheLastForm({
-  control,
-  stepIndex,
-  index,
-  remove,
-}: {
-  control;
-  stepIndex: number;
-  index: number;
-  remove: (index?: number | number[]) => void;
-}) {
+function OnlineInTheLastForm({ control, stepIndex, index }: { control; stepIndex: number; index: number }) {
   return (
     <>
       <Grid.Col span={spanSize}>
