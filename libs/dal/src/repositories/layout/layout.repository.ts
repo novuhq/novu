@@ -22,7 +22,7 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
     this.layout = Layout;
   }
 
-  async createLayout(entity: Omit<LayoutEntity, '_id'>): Promise<LayoutEntity> {
+  async createLayout(entity: Omit<LayoutEntity, '_id' | 'createdAt' | 'updatedAt'>): Promise<LayoutEntity> {
     const { channel, content, contentType, isDefault, name, variables, _creatorId, _environmentId, _organizationId } =
       entity;
 
@@ -33,7 +33,7 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
       content,
       contentType,
       isDefault,
-      isDeleted: false,
+      deleted: false,
       name,
       variables,
     });
@@ -70,10 +70,10 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
         },
       },
       {
-        $limit: pagination.limit,
+        $skip: pagination.skip,
       },
       {
-        $skip: pagination.skip,
+        $limit: pagination.limit,
       },
     ]);
 

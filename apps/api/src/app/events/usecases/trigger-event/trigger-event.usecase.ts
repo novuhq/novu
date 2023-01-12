@@ -50,16 +50,7 @@ export class TriggerEvent {
   ) {}
 
   async execute(command: TriggerEventCommand) {
-    Sentry.addBreadcrumb({
-      message: 'Sending trigger',
-      data: {
-        triggerIdentifier: command.identifier,
-      },
-    });
-
     await this.validateSubscriberIdProperty(command);
-
-    this.logEventTriggered(command);
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
@@ -67,7 +58,7 @@ export class TriggerEvent {
     );
 
     if (!template) {
-      return this.logTemplateNotFound(command);
+      throw new UnprocessableEntityException('TEMPLATE_NOT_FOUND');
     }
 
     if (!template.active || template.draft) {
@@ -80,6 +71,13 @@ export class TriggerEvent {
         status: 'no_workflow_steps_defined',
       };
     }
+
+    Sentry.addBreadcrumb({
+      message: 'Sending trigger',
+      data: {
+        triggerIdentifier: command.identifier,
+      },
+    });
 
     if (!template.steps?.some((step) => step.active)) {
       return {
@@ -199,66 +197,10 @@ export class TriggerEvent {
   }
 
   private async logTemplateNotActive(command: TriggerEventCommand, template: NotificationTemplateEntity) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'Template not active',
-        userId: command.userId,
-        code: LogCodeEnum.TEMPLATE_NOT_ACTIVE,
-        templateId: template._id,
-        raw: {
-          payload: command.payload,
-          triggerIdentifier: command.identifier,
-        },
-      })
-    );
-
     return {
       acknowledged: true,
       status: 'trigger_not_active',
     };
-  }
-
-  private async logTemplateNotFound(command: TriggerEventCommand) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'Template not found',
-        userId: command.userId,
-        code: LogCodeEnum.TEMPLATE_NOT_FOUND,
-        raw: {
-          triggerIdentifier: command.identifier,
-        },
-      })
-    );
-    throw new UnprocessableEntityException('TEMPLATE_NOT_FOUND');
-  }
-
-  private logEventTriggered(command: TriggerEventCommand) {
-    this.createLogUsecase
-      .execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.INFO,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: 'Trigger request received',
-          userId: command.userId,
-          code: LogCodeEnum.TRIGGER_RECEIVED,
-          raw: {
-            subscribers: command.to,
-            payload: command.payload,
-          },
-        })
-      )
-      // eslint-disable-next-line no-console
-      .catch((e) => console.error(e));
   }
 
   private async validateSubscriberIdProperty(command: TriggerEventCommand): Promise<boolean> {
@@ -301,21 +243,6 @@ export class TriggerEvent {
   }
 
   private async logSubscriberIdMissing(command: TriggerEventCommand) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'SubscriberId missing in to property',
-        userId: command.userId,
-        code: LogCodeEnum.SUBSCRIBER_ID_MISSING,
-        raw: {
-          triggerIdentifier: command.identifier,
-        },
-      })
-    );
-
     return {
       acknowledged: true,
       status: 'subscriber_id_missing',

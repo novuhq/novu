@@ -114,11 +114,15 @@ export function LayoutsListPage() {
   return (
     <>
       <When truthy={editId.length && activeScreen === ActivePageEnum.EDIT_LAYOUT}>
-        <LayoutEditor goBack={goBack} id={editId} />
+        <LayoutEditor editMode goBack={goBack} id={editId} />
+      </When>
+      <When truthy={activeScreen === ActivePageEnum.CREATE_LAYOUT}>
+        <LayoutEditor goBack={goBack} />
       </When>
       <When truthy={activeScreen === ActivePageEnum.LAYOUTS_LIST}>
         <Button
           variant="outline"
+          onClick={() => setActiveScreen(ActivePageEnum.CREATE_LAYOUT)}
           icon={theme.colorScheme === 'dark' ? <PlusCircle /> : <PlusGradient style={{ width: '20', height: '20' }} />}
         >
           Add Layout

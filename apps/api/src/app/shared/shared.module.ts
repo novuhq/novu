@@ -12,6 +12,7 @@ import {
   NotificationGroupRepository,
   MessageTemplateRepository,
   MemberRepository,
+  LayoutRepository,
   LogRepository,
   IntegrationRepository,
   ChangeRepository,
@@ -43,6 +44,7 @@ const DAL_MODELS = [
   MessageTemplateRepository,
   NotificationGroupRepository,
   MemberRepository,
+  LayoutRepository,
   LogRepository,
   IntegrationRepository,
   ChangeRepository,
@@ -73,7 +75,7 @@ const cacheService = {
   useFactory: async () => {
     return new CacheService({
       host: process.env.REDIS_CACHE_HOST,
-      port: process.env.REDIS_CACHE_PORT,
+      port: process.env.REDIS_CACHE_PORT || '6379',
       ttl: process.env.REDIS_CACHE_TTL,
       password: process.env.REDIS_CACHE_PASSWORD,
       connectTimeout: process.env.REDIS_CACHE_CONNECTION_TIMEOUT,
