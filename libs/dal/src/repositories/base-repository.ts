@@ -123,5 +123,5 @@ export class BaseRepository<T_Query, T_Response> {
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const Omit = <T, K extends keyof T>(Class: new () => T, keys: K[]): new () => Omit<T, (typeof keys)[number]> =>
+export const Omit = <T, K extends keyof T>(Class: new () => T, keys: K[]): new () => Omit<T, typeof keys[number]> =>
   Class;
