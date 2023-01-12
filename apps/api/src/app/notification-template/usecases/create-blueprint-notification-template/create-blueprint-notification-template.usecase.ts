@@ -97,6 +97,7 @@ export class CreateBlueprintNotificationTemplate {
     let group = await this.notificationGroupRepository.findOne({
       name: 'General',
       _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
     });
 
     if (!group) {
