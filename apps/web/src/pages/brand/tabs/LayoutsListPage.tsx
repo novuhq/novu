@@ -1,6 +1,6 @@
 import { ColumnWithStrictAccessor } from 'react-table';
 import { Data, Table } from '../../../design-system/table/Table';
-import { Button, colors, Tag, Text, Tooltip } from '../../../design-system';
+import { Button, colors, LoadingOverlay, Tag, Text, Tooltip } from '../../../design-system';
 import { format } from 'date-fns';
 import { ActionIcon, useMantineTheme } from '@mantine/core';
 import { Edit, PlusCircle, PlusGradient, Trash } from '../../../design-system/icons';
@@ -9,11 +9,7 @@ import { useState } from 'react';
 import { LayoutEditor } from './LayoutEditor';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
 import { When } from '../../../components/utils/When';
-
-const data = [
-  { id: '1', name: 'Try 1', createdAt: new Date(), updatedAt: new Date(), used: true },
-  { id: '2', name: 'Try 2', createdAt: new Date(), updatedAt: new Date(), used: false },
-];
+import { useLayouts } from '../../../api/hooks/use-layouts';
 
 const enum ActivePageEnum {
   LAYOUTS_LIST = 'layouts_list',
@@ -23,10 +19,15 @@ const enum ActivePageEnum {
 
 export function LayoutsListPage() {
   const theme = useMantineTheme();
-  const [layouts, setLayouts] = useState(data);
+  const [page, setPage] = useState<number>(0);
   const [editId, setEditId] = useState('');
   const [activeScreen, setActiveScreen] = useState(ActivePageEnum.LAYOUTS_LIST);
   const [toDelete, setToDelete] = useState('');
+  const { layouts, isLoading, totalCount, pageSize } = useLayouts(page);
+
+  function handleTableChange(pageIndex) {
+    setPage(pageIndex);
+  }
 
   const cancelDelete = () => {
     setToDelete('');
@@ -79,12 +80,12 @@ export function LayoutsListPage() {
       Cell: ({ used }: any) => <Tag>{used ? 'Used' : 'Not Used'}</Tag>,
     },
     {
-      accessor: 'id',
+      accessor: '_id',
       Header: '',
       maxWidth: 50,
-      Cell: ({ id }: any) => (
+      Cell: ({ _id }: any) => (
         <ActionButtonWrapper>
-          <ActionIcon variant="transparent" onClick={() => editLayout(id)}>
+          <ActionIcon variant="transparent" onClick={() => editLayout(_id)}>
             <Edit
               style={{
                 width: '20px',
@@ -97,7 +98,7 @@ export function LayoutsListPage() {
             variant="transparent"
             onClick={(e) => {
               e.stopPropagation();
-              onDelete(id);
+              onDelete(_id);
             }}
           >
             <Trash color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
@@ -108,7 +109,7 @@ export function LayoutsListPage() {
   ];
 
   function onRowClick(row) {
-    editLayout(row.values.id);
+    editLayout(row.values._id);
   }
 
   return (
@@ -120,16 +121,30 @@ export function LayoutsListPage() {
         <LayoutEditor goBack={goBack} />
       </When>
       <When truthy={activeScreen === ActivePageEnum.LAYOUTS_LIST}>
-        <Button
-          variant="outline"
-          onClick={() => setActiveScreen(ActivePageEnum.CREATE_LAYOUT)}
-          icon={theme.colorScheme === 'dark' ? <PlusCircle /> : <PlusGradient style={{ width: '20', height: '20' }} />}
-        >
-          Add Layout
-        </Button>
-        <TemplateListTableWrapper>
-          <Table columns={columns} data={layouts} onRowClick={onRowClick} />
-        </TemplateListTableWrapper>
+        <LoadingOverlay visible={isLoading}>
+          <Button
+            variant="outline"
+            onClick={() => setActiveScreen(ActivePageEnum.CREATE_LAYOUT)}
+            icon={
+              theme.colorScheme === 'dark' ? <PlusCircle /> : <PlusGradient style={{ width: '20', height: '20' }} />
+            }
+          >
+            Add Layout
+          </Button>
+          <TemplateListTableWrapper>
+            <Table
+              columns={columns}
+              data={layouts || []}
+              onRowClick={onRowClick}
+              pagination={{
+                pageSize: pageSize,
+                current: page,
+                total: totalCount,
+                onPageChange: handleTableChange,
+              }}
+            />
+          </TemplateListTableWrapper>
+        </LoadingOverlay>
       </When>
 
       <DeleteConfirmModal target="layout" isOpen={toDelete.length > 0} confirm={confirmDelete} cancel={cancelDelete} />

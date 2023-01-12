@@ -8,6 +8,8 @@ import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLayout, getLayoutById } from '../../../api/layouts';
 import { useEffect } from 'react';
+import { ILayoutEntity } from '@novu/shared';
+import { QueryKeys } from '../../../api/query.keys';
 
 export function LayoutEditor({
   id = '',
@@ -20,9 +22,13 @@ export function LayoutEditor({
 }) {
   const { readonly } = useEnvController();
 
-  const { data: layout, isLoading: isLoadingLayout } = useQuery(['getLayout', id], () => getLayoutById(id), {
-    enabled: !!id,
-  });
+  const { data: layout, isLoading: isLoadingLayout } = useQuery<ILayoutEntity>(
+    [QueryKeys.getLayoutById, id],
+    () => getLayoutById(id),
+    {
+      enabled: !!id,
+    }
+  );
 
   const { handleSubmit, watch, control, setValue } = useForm({
     defaultValues: {
@@ -54,7 +60,6 @@ export function LayoutEditor({
       content: data.content,
       isDefault: data.isDefault,
     };
-
     try {
       await createNewLayout(data);
       successMessage(`Layout ${editMode ? 'Updated' : 'Created'}!`);
@@ -98,7 +103,7 @@ export function LayoutEditor({
             <Controller
               name="description"
               control={control}
-              render={({ field, fieldState }) => (
+              render={({ field }) => (
                 <Input
                   {...field}
                   value={field.value || ''}
@@ -116,7 +121,7 @@ export function LayoutEditor({
               <Controller
                 name="isDefault"
                 control={control}
-                render={({ field, fieldState }) => {
+                render={({ field }) => {
                   return (
                     <Checkbox
                       checked={field.value === true}
