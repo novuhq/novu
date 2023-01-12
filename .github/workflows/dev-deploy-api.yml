@@ -129,11 +129,9 @@ jobs:
 
       - name: Terraform Init
         working-directory: cloud-infra/terraform
+        env:
+          TF_WORKSPACE: novu-dev
         run: terraform init
-
-      - name: Terraform Change Workspace
-        working-directory: cloud-infra/terraform
-        run: terraform workspace select novu-dev
 
       - name: Terraform get output
         working-directory: cloud-infra/terraform
