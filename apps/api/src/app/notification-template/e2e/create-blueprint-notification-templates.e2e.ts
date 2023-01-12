@@ -36,6 +36,7 @@ describe('Create Notification template from blueprint - /notification-templates/
               value: 'AND',
               children: [
                 {
+                  on: 'subscriber',
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
