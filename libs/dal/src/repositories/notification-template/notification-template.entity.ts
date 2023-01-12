@@ -1,5 +1,5 @@
 import {
-  BuilderFieldOperator,
+  FilterParts,
   BuilderFieldType,
   BuilderGroupValues,
   DigestUnitEnum,
@@ -104,11 +104,5 @@ export class StepFilter {
 
   value: BuilderGroupValues;
 
-  children: {
-    field: string;
-    value: string;
-    operator: BuilderFieldOperator;
-    webhookUrl?: string;
-    on?: 'payload' | 'subscriber' | 'webhook';
-  }[];
+  children: FilterParts[];
 }
