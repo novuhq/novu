@@ -30,19 +30,7 @@ export const Filters = ({ step }: { step: StepEntity | null }) => {
 export const Filter = ({ filter }: { filter: FilterParts }) => {
   const { colorScheme } = useMantineColorScheme();
 
-  const filterValue = useMemo(() => {
-    let value = filter.value;
-    if (filter.on === 'isOnline') {
-      if (filter.value === true) {
-        value = 'Yes';
-      }
-      if (filter.value === false) {
-        value = 'No';
-      }
-    }
-
-    return value;
-  }, [filter.on, filter.value]);
+  const filterValue = getFilterValue(filter);
 
   return (
     <FilterItem className="filter-item" dark={colorScheme === 'dark'}>
@@ -79,14 +67,29 @@ export const translateOperator = (operator?: BuilderFieldOperator) => {
 };
 
 const getFilterLabel = (filter: FilterParts): string => {
-  if ('field' in filter) {
-    return `${filter.on} ${filter.field} ${translateOperator(filter.operator)}`;
+  if (filter.on === 'isOnline') {
+    return `is online right now ${translateOperator('EQUAL')}`;
   }
-  if ('timeOperator' in filter) {
+  if (filter.on === 'isOnlineInLast') {
     return `online in the last "X" ${filter.timeOperator}`;
   }
 
-  return `is online right now ${translateOperator('EQUAL')}`;
+  return `${filter.on} ${filter.field} ${translateOperator(filter.operator)}`;
+};
+
+const getFilterValue = (filter: FilterParts) => {
+  let value = filter.value;
+
+  if (filter.on === 'isOnline') {
+    if (filter.value === true) {
+      value = 'Yes';
+    }
+    if (filter.value === false) {
+      value = 'No';
+    }
+  }
+
+  return value;
 };
 
 const FilterPosition = styled.span`

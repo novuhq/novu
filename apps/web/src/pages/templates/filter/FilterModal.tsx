@@ -149,11 +149,7 @@ export function FilterModal({
                   remove={remove}
                 />
               </When>
-              <When
-                truthy={
-                  filterFieldOn !== 'webhook' && filterFieldOn !== 'isOnline' && filterFieldOn !== 'isOnlineInLast'
-                }
-              >
+              <When truthy={filterFieldOn === 'payload' || filterFieldOn === 'subscriber'}>
                 <EqualityForm
                   fieldOn={filterFieldOn}
                   control={control}

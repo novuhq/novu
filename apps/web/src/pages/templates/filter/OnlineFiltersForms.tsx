@@ -53,11 +53,7 @@ function OnlineRightNowForm({ control, stepIndex, index }: { control; stepIndex:
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.value`}
           render={({ field }) => {
-            const fieldValue = field.value ?? '';
-            let value = fieldValue ? 'true' : 'false';
-            if (fieldValue === '') {
-              value = '';
-            }
+            const value = typeof field.value !== 'undefined' ? `${field.value}` : '';
 
             return (
               <Select
@@ -67,7 +63,7 @@ function OnlineRightNowForm({ control, stepIndex, index }: { control; stepIndex:
                   { value: 'false', label: 'No' },
                 ]}
                 {...field}
-                onChange={(val) => field.onChange(val === 'true' ? true : false)}
+                onChange={(val) => field.onChange(val === 'true')}
                 value={value}
               />
             );
