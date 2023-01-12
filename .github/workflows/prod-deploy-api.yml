@@ -9,6 +9,8 @@ on:
       - '**@novu/node@**'
       - '**@novu/shared@**'
   workflow_dispatch:
+env:
+  TF_WORKSPACE: novu-prod
 
 jobs:
   test_api:
@@ -133,10 +135,6 @@ jobs:
       - name: Terraform Init
         working-directory: cloud-infra/terraform
         run: terraform init
-
-      - name: Terraform Change Workspace
-        working-directory: cloud-infra/terraform
-        run: terraform workspace select novu-prod
 
       - name: Terraform get output
         working-directory: cloud-infra/terraform
