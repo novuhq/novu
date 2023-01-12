@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@novu/notification-center-vue": "^0.10.1",
-    "vue-demi": "^0.13.11"
+    "vue": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^16.18.3",
