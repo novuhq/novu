@@ -2,37 +2,72 @@ import { useForm, Controller } from 'react-hook-form';
 import { EmailCustomCodeEditor } from '../../../components/templates/email-editor/EmailCustomCodeEditor';
 import { Center, Grid } from '@mantine/core';
 import { ArrowLeft } from '../../../design-system/icons';
-import { Button, Checkbox, colors, Input, Text } from '../../../design-system';
+import { Button, Checkbox, colors, Input, Text, LoadingOverlay } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
-import { successMessage } from '../../../utils/notifications';
+import { errorMessage, successMessage } from '../../../utils/notifications';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { createLayout, getLayoutById } from '../../../api/layouts';
+import { useEffect } from 'react';
 
-export function LayoutEditor({ id, goBack }: { id: string; goBack: () => void }) {
+export function LayoutEditor({
+  id = '',
+  editMode = false,
+  goBack,
+}: {
+  id?: string;
+  editMode?: boolean;
+  goBack: () => void;
+}) {
   const { readonly } = useEnvController();
 
-  const { handleSubmit, watch, control } = useForm({
-    defaultValues: {
-      layout: '',
-      name: '',
-      description: '',
-      isDefault: false,
-    },
+  const { data: layout, isLoading: isLoadingLayout } = useQuery(['getLayout', id], () => getLayoutById(id), {
+    enabled: !!id,
   });
 
-  const content = watch('layout');
+  const { handleSubmit, watch, control, setValue } = useForm({
+    defaultValues: {
+      content: layout?.content || '',
+      name: layout?.name || '',
+      description: '',
+      isDefault: layout?.isDefault || false,
+    },
+  });
+  const { mutateAsync: createNewLayout, isLoading: isLoadingCreate } = useMutation(createLayout);
+
+  useEffect(() => {
+    if (layout) {
+      if (layout.content) {
+        setValue('content', layout?.content);
+      }
+      if (layout.name) {
+        setValue('name', layout?.name);
+      }
+      if (layout.isDefault != null) {
+        setValue('isDefault', layout?.isDefault);
+      }
+    }
+  }, [layout]);
 
   async function onUpdateLayout(data) {
     const updatePayload = {
       name: data.name,
-      content: data.layout,
+      content: data.content,
       isDefault: data.isDefault,
     };
 
-    successMessage('Layout updated!');
-    goBack();
+    try {
+      await createNewLayout(data);
+      successMessage(`Layout ${editMode ? 'Updated' : 'Created'}!`);
+      goBack();
+    } catch (e: any) {
+      errorMessage(e.message || 'Unexpected error occurred');
+    }
   }
 
+  const isLoading = (editMode && isLoadingLayout) || isLoadingCreate;
+
   return (
-    <>
+    <LoadingOverlay visible={isLoading}>
       <Center mb={10} data-test-id="go-back-button" onClick={() => goBack()} inline style={{ cursor: 'pointer' }}>
         <ArrowLeft color={colors.B60} />
         <Text ml={5} color={colors.B60}>
@@ -99,16 +134,17 @@ export function LayoutEditor({ id, goBack }: { id: string; goBack: () => void })
         </Grid>
 
         <Controller
-          name="layout"
+          name="content"
+          data-test-id="layout-content"
           control={control}
           render={({ field }) => {
             return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} />;
           }}
         />
         <Button submit mb={20} mt={25} data-test-id="submit-layout">
-          Update
+          {editMode ? 'Update' : 'Create'}
         </Button>
       </form>
-    </>
+    </LoadingOverlay>
   );
 }

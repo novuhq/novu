@@ -6,8 +6,7 @@ import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
 import { AuthContext } from '../../store/authContext';
-import { BrandingForm } from './tabs';
-import { LayoutsListPage } from './tabs/LayoutsListPage';
+import { BrandingForm, LayoutsListPage } from './tabs';
 
 const BRANDING = 'Assets';
 const LAYOUT = 'Layouts';
