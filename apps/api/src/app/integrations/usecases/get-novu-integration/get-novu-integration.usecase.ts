@@ -11,6 +11,9 @@ export class GetNovuIntegration {
   static MAX_NOVU_INTEGRATION_MAIL_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_MAIL_REQUESTS || '300', 10);
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity | undefined> {
+    if (process.env.DOCKER_HOSTED_ENV === 'true') {
+      return;
+    }
     const providerId = this.getProviderId(command.channelType);
 
     if (providerId === undefined) {
