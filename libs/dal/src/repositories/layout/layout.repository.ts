@@ -70,10 +70,10 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
         },
       },
       {
-        $limit: pagination.limit,
+        $skip: pagination.skip,
       },
       {
-        $skip: pagination.skip,
+        $limit: pagination.limit,
       },
     ]);
 

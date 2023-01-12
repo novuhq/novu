@@ -1,9 +1,22 @@
-import { Body, Controller, Get, Inject, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
 
-import { CreateLayoutRequestDto, CreateLayoutResponseDto, GetLayoutResponseDto } from './dtos';
-import { CreateLayoutCommand, CreateLayoutUseCase, GetLayoutCommand, GetLayoutUseCase } from './use-cases';
+import {
+  CreateLayoutRequestDto,
+  CreateLayoutResponseDto,
+  FilterLayoutsRequestDto,
+  FilterLayoutsResponseDto,
+  GetLayoutResponseDto,
+} from './dtos';
+import {
+  CreateLayoutCommand,
+  CreateLayoutUseCase,
+  FilterLayoutsCommand,
+  FilterLayoutsUseCase,
+  GetLayoutCommand,
+  GetLayoutUseCase,
+} from './use-cases';
 import { LayoutId } from './types';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
@@ -18,6 +31,7 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 export class LayoutsController {
   constructor(
     private createLayoutUseCase: CreateLayoutUseCase,
+    private filterLayoutsUseCase: FilterLayoutsUseCase,
     private getLayoutUseCase: GetLayoutUseCase,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
@@ -47,6 +61,42 @@ export class LayoutsController {
     return {
       _id: layout._id,
     };
+  }
+
+  @Get('')
+  @ExternalApiAccessible()
+  @ApiQuery({
+    name: 'page',
+    type: Number,
+    description: 'Number of page for the pagination',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'pageSize',
+    type: Number,
+    description: 'Size of page for the pagination',
+    required: false,
+  })
+  @ApiOkResponse({
+    type: FilterLayoutsResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Filter layouts',
+    description:
+      'Returns a list of layouts that can be paginated using the `page` query parameter and filtered by the environment where it is executed from the organization the user belongs to.',
+  })
+  async filterLayouts(
+    @UserSession() user: IJwtPayload,
+    @Query() query?: FilterLayoutsRequestDto
+  ): Promise<FilterLayoutsResponseDto> {
+    return await this.filterLayoutsUseCase.execute(
+      FilterLayoutsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        page: query?.page,
+        pageSize: query?.pageSize,
+      })
+    );
   }
 
   @Get('/:layoutId')
