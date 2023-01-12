@@ -1,4 +1,4 @@
-import { UserSession } from '@novu/testing';
+import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import axios from 'axios';
 import { sub } from 'date-fns';
@@ -16,11 +16,12 @@ describe('Update Subscriber online flag - /subscribers/:subscriberId/online-stat
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    onlineSubscriber = await session.createSubscriber({
+    const subscribersService = new SubscribersService(session.organization._id, session.environment._id);
+    onlineSubscriber = await subscribersService.createSubscriber({
       subscriberId: '123',
       isOnline: true,
     });
-    offlineSubscriber = await session.createSubscriber({
+    offlineSubscriber = await subscribersService.createSubscriber({
       subscriberId: '456',
       isOnline: false,
       lastOnlineAt: sub(new Date(), { minutes: 1 }).toISOString(),
