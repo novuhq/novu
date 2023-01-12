@@ -7,6 +7,7 @@ import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 import { InvalidateCache } from '../../../shared/interceptors';
+import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class MarkMessageAs {
@@ -20,7 +21,11 @@ export class MarkMessageAs {
 
   @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED])
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    const subscriber = await this.fetchSubscriber({
+      _environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+    });
+
     if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
 
     await this.messageRepository.changeStatus(command.environmentId, subscriber._id, command.messageIds, command.mark);
@@ -73,5 +78,17 @@ export class MarkMessageAs {
         [countKey]: count,
       },
     });
+  }
+  @CachedEntity({
+    builder: subscriberBuilder,
+  })
+  private async fetchSubscriber({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity | null> {
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 }

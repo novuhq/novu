@@ -13,6 +13,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { CachedEntity, commonBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -26,11 +27,13 @@ export abstract class SendMessageBase extends SendMessageType {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
-  @Cached(CacheKeyPrefixEnum.SUBSCRIBER)
-  protected async getSubscriber({ _id, environmentId }: { _id: string; environmentId: string }) {
+  @CachedEntity({
+    builder: commonBuilder,
+  })
+  protected async getSubscriber({ _id, _environmentId }: { _id: string; _environmentId: string }) {
     return await this.subscriberRepository.findOne({
-      _environmentId: environmentId,
-      _id: _id,
+      _environmentId,
+      _id,
     });
   }
 

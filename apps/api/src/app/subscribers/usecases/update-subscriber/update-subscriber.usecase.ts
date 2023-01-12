@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class UpdateSubscriber {
@@ -44,9 +44,11 @@ export class UpdateSubscriber {
       };
     }
 
-    await this.invalidateCache.clearCache({
-      storeKeyPrefix: CacheKeyPrefixEnum.SUBSCRIBER,
-      credentials: { _id: foundSubscriber._id, _environmentId: foundSubscriber._environmentId },
+    await this.invalidateCache.invalidateSubscriber({
+      credentials: {
+        _id: foundSubscriber._id,
+        _environmentId: command.environmentId,
+      },
     });
 
     await this.subscriberRepository.update(

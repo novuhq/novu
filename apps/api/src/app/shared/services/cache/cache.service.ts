@@ -36,7 +36,7 @@ export class CacheService implements ICacheService {
       console.log('Connecting to ' + this.config.host + ':' + this.config.port);
 
       this.client = new Redis(Number(this.config.port || 6379), this.config.host, {
-        password: this.config.password ?? null,
+        password: this.config.password ?? undefined,
         connectTimeout: this.config.connectTimeout ? Number(this.config.connectTimeout) : this.DEFAULT_CONNECT_TIMEOUT,
         keepAlive: this.config.keepAlive ? Number(this.config.keepAlive) : this.DEFAULT_KEEP_ALIVE,
         family: this.config.family ? Number(this.config.family) : this.DEFAULT_FAMILY,
@@ -79,8 +79,10 @@ export class CacheService implements ICacheService {
     return this.client.get(key);
   }
 
-  public async del(key: string) {
-    return this.client.del([key]);
+  public async del(key: string | string[]) {
+    const keys = Array.isArray(key) ? key : [key];
+
+    return this.client.del(keys);
   }
 
   public delByPattern(pattern: string) {

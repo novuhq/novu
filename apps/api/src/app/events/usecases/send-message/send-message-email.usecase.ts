@@ -15,7 +15,7 @@ import {
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { CreateLog } from '../../../logs/usecases';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
@@ -31,7 +31,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration/get-novu-integration.usecase';
+import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
@@ -57,7 +57,7 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, _environmentId: command.environmentId });
     if (!subscriber) throw new ApiException('Subscriber not found');
 
     let integration: IntegrationEntity | undefined = undefined;

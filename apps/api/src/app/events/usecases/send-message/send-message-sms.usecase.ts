@@ -8,16 +8,9 @@ import {
   MessageEntity,
   IntegrationEntity,
 } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  LogCodeEnum,
-  LogStatusEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
+import { CreateLog } from '../../../logs/usecases';
 import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { SendMessageCommand } from './send-message.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
@@ -57,7 +50,7 @@ export class SendMessageSms extends SendMessageBase {
   }
 
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, _environmentId: command.environmentId });
     if (!subscriber) throw new ApiException('Subscriber not found');
 
     const integration = await this.getIntegration(

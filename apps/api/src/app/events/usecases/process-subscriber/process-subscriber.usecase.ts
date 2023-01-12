@@ -8,9 +8,9 @@ import {
   JobStatusEnum,
   NotificationStepEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
-import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
+import { CreateLog } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
@@ -22,6 +22,7 @@ import {
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
 import { subscriberNeedUpdate } from '../../../subscribers/usecases/update-subscriber';
+import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -129,16 +130,29 @@ export class ProcessSubscriber {
     command: Pick<ProcessSubscriberCommand, 'environmentId' | 'organizationId'>,
     subscriberPayload
   ): Promise<SubscriberEntity> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(
-      command.environmentId,
-      subscriberPayload.subscriberId
-    );
+    const subscriber = await this.fetchSubscriber({
+      _environmentId: command.environmentId,
+      subscriberId: subscriberPayload.subscriberId,
+    });
 
     if (subscriber && !subscriberNeedUpdate(subscriber, subscriberPayload)) {
       return subscriber;
     }
 
     return await this.createOrUpdateSubscriber(command, subscriberPayload, subscriber);
+  }
+
+  @CachedEntity({
+    builder: subscriberBuilder,
+  })
+  private async fetchSubscriber({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity | null> {
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 
   private async createOrUpdateSubscriber(

@@ -22,6 +22,7 @@ import { AnalyticsService } from '../../shared/services/analytics/analytics.serv
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 import { CacheKeyPrefixEnum } from '../../shared/services/cache';
 import { Cached } from '../../shared/interceptors';
+import { CachedEntity, commonBuilder } from '../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class AuthService {
@@ -236,12 +237,10 @@ export class AuthService {
   }
 
   async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity | null> {
-    const subscriber = await this.getSubscriber({
-      environmentId: payload.environmentId,
+    return await this.getSubscriber({
+      _environmentId: payload.environmentId,
       _id: payload._id,
     });
-
-    return subscriber;
   }
 
   async decodeJwt<T>(token: string) {
@@ -261,14 +260,14 @@ export class AuthService {
     return !!environment._parentId;
   }
 
-  @Cached(CacheKeyPrefixEnum.SUBSCRIBER)
-  private async getSubscriber({ _id, environmentId }: { _id: string; environmentId: string }) {
-    const subscriber = await this.subscriberRepository.findOne({
-      _environmentId: environmentId,
-      _id: _id,
+  @CachedEntity({
+    builder: commonBuilder,
+  })
+  private async getSubscriber({ _id, _environmentId }: { _id: string; _environmentId: string }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      _id,
     });
-
-    return subscriber;
   }
 
   @Cached(CacheKeyPrefixEnum.USER)
