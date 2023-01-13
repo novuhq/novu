@@ -6,7 +6,7 @@ import {
   NotificationGroupRepository,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, ChannelCTATypeEnum, StepTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, ChannelCTATypeEnum, EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -53,7 +53,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -100,7 +100,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -194,7 +194,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -273,7 +273,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -324,7 +324,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: step.template.type,
             cta: {
               type: ChannelCTATypeEnum.REDIRECT,
@@ -379,7 +379,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -420,7 +420,7 @@ describe('Promote changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -502,6 +502,69 @@ describe('Promote changes', () => {
     });
 
     expect(count).to.eq(0);
+  });
+
+  it('should set isBlueprint correctly', async () => {
+    process.env.BLUEPRINT_CREATOR = session.organization._id;
+    const prodEnv = await getProductionEnvironment();
+
+    const parentGroup = await notificationGroupRepository.create({
+      name: 'test',
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
+    await notificationGroupRepository.create({
+      name: 'test',
+      _environmentId: prodEnv._id,
+      _organizationId: session.organization._id,
+      _parentId: parentGroup._id,
+    });
+
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      name: 'test email template',
+      description: 'This is a test description',
+      tags: ['test-tag'],
+      notificationGroupId: parentGroup._id,
+      steps: [
+        {
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+          },
+          filters: [
+            {
+              isNegated: false,
+              type: 'GROUP',
+              value: 'AND',
+              children: [
+                {
+                  field: 'firstName',
+                  value: 'test value',
+                  operator: 'EQUAL',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+    const notificationTemplateId = body.data._id;
+
+    await session.applyChanges({
+      enabled: false,
+    });
+
+    const prodVersion = await notificationTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
+      _parentId: notificationTemplateId,
+    });
+
+    expect(prodVersion.isBlueprint).to.equal(true);
   });
 
   async function getProductionEnvironment() {

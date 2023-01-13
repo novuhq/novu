@@ -70,7 +70,7 @@ export class WorkflowQueueService {
     return {
       ...this.bullConfig,
       lockDuration: 90000,
-      concurrency: 100,
+      concurrency: 50,
       settings: {
         backoffStrategies: this.getBackoffStrategies(),
       },

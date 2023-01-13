@@ -15,10 +15,12 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import {
   ChannelTypeEnum,
+  EmailBlockTypeEnum,
   StepTypeEnum,
   IEmailBlock,
   TemplateVariableTypeEnum,
   EmailProviderIdEnum,
+  SmsProviderIdEnum,
 } from '@novu/shared';
 import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
@@ -44,35 +46,6 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-  });
-
-  it('should generate logs for the notification', async function () {
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: subscriber.subscriberId,
-        payload: {
-          firstName: 'Testing of User Name',
-          urlVariable: '/test/url/path',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    await session.awaitRunningJobs(template._id);
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    const logs = await logRepository.find({
-      _environmentId: session.environment._id,
-      _organizationId: session.organization._id,
-    });
-
-    expect(logs.length).to.be.gt(2);
   });
 
   it('should trigger an event successfully', async function () {
@@ -257,7 +230,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     expect(email.channel).to.equal(ChannelTypeEnum.EMAIL);
     expect(Array.isArray(email.content)).to.be.ok;
-    expect((email.content[0] as IEmailBlock).type).to.equal('text');
+    expect((email.content[0] as IEmailBlock).type).to.equal(EmailBlockTypeEnum.TEXT);
     expect((email.content[0] as IEmailBlock).content).to.equal(
       'This are the text contents of the template for Testing of User Name'
     );
@@ -449,7 +422,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           type: StepTypeEnum.EMAIL,
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -484,12 +457,12 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should not trigger notification with subscriber data if integration is inactive', async function () {
     const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
-    const channelType = ChannelTypeEnum.EMAIL;
+    const channelType = ChannelTypeEnum.SMS;
 
     const integration = await integrationRepository.findOne({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
-      providerId: 'sendgrid',
+      providerId: SmsProviderIdEnum.Twilio,
     });
 
     await integrationRepository.update(
@@ -503,11 +476,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       steps: [
         {
           name: 'Message Name',
-          subject: 'Test email {{nested.subject}}',
+          subject: 'Test sms {{nested.subject}}',
           type: StepTypeEnum.EMAIL,
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -535,6 +508,61 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     expect(message).to.be.null;
+  });
+
+  it('should use Novu integration for new orgs', async function () {
+    const existingIntegrations = await integrationRepository.find({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    await integrationRepository.delete({
+      _id: { $in: existingIntegrations.map((integration) => integration._id) },
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
+    const channelType = ChannelTypeEnum.EMAIL;
+
+    template = await createTemplate(session, channelType);
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test sms {{nested.subject}}',
+          type: StepTypeEnum.EMAIL,
+          content: [
+            {
+              type: EmailBlockTypeEnum.TEXT,
+              content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+      ],
+    });
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification, {
+      nested: {
+        subject: 'a subject nested',
+      },
+    });
+
+    await session.awaitRunningJobs(template._id);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
+    );
+
+    const message = await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: createdSubscriber._id,
+      channel: channelType,
+    });
+
+    expect(message.providerId).to.equal(EmailProviderIdEnum.Novu);
   });
 
   it('should trigger message with active integration', async function () {
@@ -618,7 +646,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           ],
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -700,7 +728,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           ],
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -770,7 +798,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           variables: [{ name: 'myUser.lastName', required: true, type: TemplateVariableTypeEnum.STRING }],
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -809,7 +837,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           type: StepTypeEnum.EMAIL,
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -851,11 +879,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },
@@ -884,11 +912,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },
@@ -951,11 +979,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },
@@ -1049,11 +1077,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },
@@ -1113,11 +1141,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },

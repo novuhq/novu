@@ -80,6 +80,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .setVersion('1.0')
     .addTag('Events')
     .addTag('Subscribers')
+    .addTag('Topics')
     .addTag('Activity')
     .addTag('Integrations')
     .addTag('Notification templates')
@@ -94,6 +95,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   const document = SwaggerModule.createDocument(app, options);
 
   SwaggerModule.setup('api', app, document);
+
+  console.log('BOOTSTRAPPED SUCCESSFULLY');
 
   if (expressApp) {
     await app.init();

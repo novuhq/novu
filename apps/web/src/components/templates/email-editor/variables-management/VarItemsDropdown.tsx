@@ -4,6 +4,7 @@ import { ChevronUp } from '../../../../design-system/icons';
 import { ChevronDown } from '../../../../design-system/icons';
 import { VarItem } from './VarItem';
 import { colors } from '../../../../design-system';
+import { VarItemTooltip } from './VarItemTooltip';
 
 export const VarItemsDropdown = ({ name, type }) => {
   const [open, setOpen] = useState(false);
@@ -50,7 +51,7 @@ export const VarItemsDropdown = ({ name, type }) => {
               return <VarItemsDropdown key={index} name={key} type={type[key]} />;
             }
 
-            return <VarItem key={index} name={key} type={varType} />;
+            return <VarItemTooltip pathToCopy={`${name}.${key}`} name={key} type={varType} key={index} />;
           })}
         </div>
       </Collapse>
