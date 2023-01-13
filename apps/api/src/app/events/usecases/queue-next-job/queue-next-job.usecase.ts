@@ -27,6 +27,7 @@ export class QueueNextJob {
       environmentId: job._environmentId,
       organizationId: job._organizationId,
       jobId: job._id,
+      job,
     });
 
     return job;

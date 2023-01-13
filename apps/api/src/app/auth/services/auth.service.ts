@@ -100,7 +100,7 @@ export class AuthService {
   }
 
   async apiKeyAuthenticate(apiKey: string) {
-    const environment = await this.environmentRepository.findByApiKey(apiKey);
+    const environment = await this.getEnvironment({ _id: apiKey });
     if (!environment) throw new UnauthorizedException('API Key not found');
 
     const key = environment.apiKeys.find((i) => i.key === apiKey);
@@ -276,5 +276,14 @@ export class AuthService {
   @Cached(CacheKeyPrefixEnum.USER)
   private async getUser({ _id }: { _id: string }) {
     return await this.userRepository.findById(_id);
+  }
+
+  @Cached(CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY)
+  private async getEnvironment({ _id }: { _id: string }) {
+    /**
+     * _id is used here because the Cached decorator needs and it.
+     * TODO: Refactor cached decorator to support custom keys
+     */
+    return await this.environmentRepository.findByApiKey(_id);
   }
 }

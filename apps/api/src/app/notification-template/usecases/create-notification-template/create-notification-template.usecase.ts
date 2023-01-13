@@ -104,6 +104,7 @@ export class CreateNotificationTemplate {
       steps: templateSteps,
       triggers: [trigger],
       _notificationGroupId: command.notificationGroupId,
+      blueprintId: command.blueprintId,
     });
 
     const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);
