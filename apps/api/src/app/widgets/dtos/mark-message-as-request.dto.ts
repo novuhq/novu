@@ -3,13 +3,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 class MarkMessageFields {
   @ApiPropertyOptional({
     type: Boolean,
-    required: false,
   })
   seen?: boolean;
 
   @ApiPropertyOptional({
     type: Boolean,
-    required: false,
   })
   read?: boolean;
 }
@@ -25,7 +23,6 @@ export class MarkMessageAsRequestDto {
         },
       },
     ],
-    required: true,
   })
   messageId: string | string[];
 
