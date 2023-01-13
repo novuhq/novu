@@ -10,7 +10,6 @@ import { CreateOrganizationCommand } from '../../../organization/usecases/create
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { SignUpOriginEnum } from '@novu/shared';
-// eslint-disable-next-line max-len
 
 @Injectable()
 export class UserRegister {
