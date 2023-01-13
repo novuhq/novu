@@ -1,15 +1,13 @@
-import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChannelPreference } from '../../shared/dtos/channel-preference';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class MarkMessageFields {
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: Boolean,
     required: false,
   })
   seen?: boolean;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: Boolean,
     required: false,
   })
@@ -18,8 +16,15 @@ class MarkMessageFields {
 
 export class MarkMessageAsRequestDto {
   @ApiProperty({
-    type: String,
-    isArray: true,
+    oneOf: [
+      { type: 'string' },
+      {
+        type: 'array',
+        items: {
+          type: 'string',
+        },
+      },
+    ],
     required: true,
   })
   messageId: string | string[];
