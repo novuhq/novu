@@ -9,7 +9,10 @@ import { MessageMatcher } from './message-matcher.service';
 import type { SendMessageCommand } from '../send-message/send-message.command';
 
 describe('Message filter matcher', function () {
-  let messageMatcher = new MessageMatcher(undefined as any, undefined as any, undefined as any);
+  const createExecutionDetails = {
+    execute: sinon.stub(),
+  };
+  let messageMatcher = new MessageMatcher(undefined as any, createExecutionDetails as any, undefined as any);
 
   it('should filter correct message by the filter value', async function () {
     const matchedMessage = await messageMatcher.filter(
@@ -571,6 +574,34 @@ describe('Message filter matcher', function () {
     });
 
     describe('isOnline', () => {
+      it('allows to process multiple filter parts', async () => {
+        const matcher = new MessageMatcher(
+          { findOne: () => Promise.resolve(getSubscriber()) } as any,
+          createExecutionDetails as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnline',
+                value: true,
+              },
+              {
+                operator: 'EQUAL',
+                value: 'true',
+                field: 'payloadVarField',
+                on: 'payload',
+              },
+            ]),
+          }),
+          {
+            payload: { payloadVarField: true },
+          }
+        );
+        expect(matchedMessage).to.equal(true);
+      });
+
       it("doesn't allow to process if the subscriber has no online fields set and filter is true", async () => {
         const matcher = new MessageMatcher(
           {
@@ -580,7 +611,7 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -608,7 +639,7 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -630,7 +661,7 @@ describe('Message filter matcher', function () {
       it('allows to process if the subscriber is online', async () => {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber()) } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -652,7 +683,7 @@ describe('Message filter matcher', function () {
       it("doesn't allow to process if the subscriber is not online", async () => {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber({ isOnline: false })) } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -673,6 +704,37 @@ describe('Message filter matcher', function () {
     });
 
     describe('isOnlineInLast', () => {
+      it('allows to process multiple filter parts', async () => {
+        const matcher = new MessageMatcher(
+          {
+            findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 3 } })),
+          } as any,
+          createExecutionDetails as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: 'isOnlineInLast',
+                value: 5,
+                timeOperator: 'minutes',
+              },
+              {
+                operator: 'EQUAL',
+                value: 'true',
+                field: 'payloadVarField',
+                on: 'payload',
+              },
+            ]),
+          }),
+          {
+            payload: { payloadVarField: true },
+          }
+        );
+        expect(matchedMessage).to.equal(true);
+      });
+
       it("doesn't allow to process if the subscriber with no online fields set", async () => {
         const matcher = new MessageMatcher(
           {
@@ -682,7 +744,7 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -707,7 +769,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 10 } })),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -732,7 +794,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 4 } })),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -757,7 +819,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 6 } })),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -782,7 +844,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 30 } })),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -807,7 +869,7 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { hours: 23 } })),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -873,6 +935,12 @@ function sendMessageCommand({ step }: { step: NotificationStepEntity }): SendMes
     notificationId: '123',
     subscriberId: '123',
     jobId: '123',
-    job: {} as JobEntity,
+    job: {
+      _notificationId: '123',
+      transactionId: '123',
+      _environmentId: '123',
+      _organizationId: '123',
+      _subscriberId: '123',
+    } as JobEntity,
   };
 }
