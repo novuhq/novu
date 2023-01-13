@@ -197,7 +197,10 @@
     "getsentry",
     "martinbeentjes",
     "varvalue",
-    "varname"
+    "varname",
+    "uffizzi",
+    "WORKDIR",
+    "Uffizzi's"
   ],
   "flagWords": [],
   "patterns": [
