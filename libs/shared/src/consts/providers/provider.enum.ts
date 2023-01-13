@@ -38,6 +38,7 @@ export enum EmailProviderIdEnum {
   MailerSend = 'mailersend',
   Clickatell = 'clickatell',
   Outlook365 = 'outlook365',
+  Novu = 'novu-email',
 }
 
 export enum SmsProviderIdEnum {

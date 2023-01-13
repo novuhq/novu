@@ -84,7 +84,7 @@ export function ContentRow({
   ];
 
   return (
-    <div onMouseEnter={onHover} ref={parentRef} data-test-id="editor-row">
+    <div onMouseEnter={onHover} ref={parentRef} role="presentation" data-test-id="editor-row">
       <ContentRowWrapper>
         <div style={{ width: '100%' }}>{children}</div>
         <SettingsWrapper>
