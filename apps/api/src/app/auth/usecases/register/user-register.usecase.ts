@@ -9,6 +9,7 @@ import { CreateOrganization } from '../../../organization/usecases/create-organi
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { SignUpOriginEnum } from '../../../../../../../libs/shared/dist/cjs';
 // eslint-disable-next-line max-len
 
 @Injectable()
@@ -49,7 +50,7 @@ export class UserRegister {
 
     this.analyticsService.track('[Authentication] - Signup', user._id, {
       loginType: 'email',
-      origin: 'web',
+      origin: SignUpOriginEnum.WEB,
     });
 
     return {
