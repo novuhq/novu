@@ -1,4 +1,4 @@
-import { Center, Container, Grid, Group } from '@mantine/core';
+import { Center, Container, Grid, Group, Tooltip } from '@mantine/core';
 import { Button, colors, Switch, Title, Text } from '../../design-system';
 import { ArrowLeft } from '../../design-system/icons';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
@@ -122,12 +122,22 @@ export const TemplatePageHeader = ({
                   />
                 </Grid.Col>
               )}
-
-              <Grid.Col span={editMode ? 4 : 6}>
-                <Button variant="outline" data-test-id="test-workflow-btn" onClick={onTestWorkflowClicked}>
-                  Test Workflow
-                </Button>
-              </Grid.Col>
+              <Tooltip
+                disabled={editMode ? true : false}
+                label="You must first save the template to test the workflow"
+                events={{ hover: true, focus: true, touch: false }}
+              >
+                <Grid.Col span={editMode ? 4 : 6}>
+                  <Button
+                    disabled={editMode ? false : true}
+                    variant="outline"
+                    data-test-id="test-workflow-btn"
+                    onClick={onTestWorkflowClicked}
+                  >
+                    Test Workflow
+                  </Button>
+                </Grid.Col>
+              </Tooltip>
             </When>
 
             <Grid.Col span={editMode ? 4 : 6}>
