@@ -44,7 +44,7 @@ export class DigestFilterStepsRegular {
     const where: any = {
       status: JobStatusEnum.DELAYED,
       type: StepTypeEnum.DIGEST,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _templateId: command.templateId,
       _environmentId: command.environmentId,
     };

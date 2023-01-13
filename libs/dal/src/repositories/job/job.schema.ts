@@ -37,6 +37,10 @@ const jobSchema = new Schema(
       ref: 'Notification',
       index: true,
     },
+    subscriberId: {
+      type: Schema.Types.ObjectId,
+      index: true,
+    },
     _subscriberId: {
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',

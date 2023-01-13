@@ -71,7 +71,7 @@ export class ProcessSubscriber {
 
     const steps: NotificationStepEntity[] = await this.filterSteps.execute(
       DigestFilterStepsCommand.create({
-        subscriberId: subscriber._id,
+        _subscriberId: subscriber._id,
         payload: command.payload,
         steps: template.steps,
         environmentId: command.environmentId,
@@ -108,6 +108,7 @@ export class ProcessSubscriber {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _userId: command.userId,
+        subscriberId: subscriber.subscriberId,
         _subscriberId: subscriber._id,
         status: JobStatusEnum.PENDING,
         _templateId: notification._templateId,

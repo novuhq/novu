@@ -51,7 +51,7 @@ export class SendMessageInApp extends SendMessageBase {
   }
 
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriber({ _id: command.subscriberId, _environmentId: command.environmentId });
+    const subscriber = await this.getSubscriber({ _id: command._subscriberId, _environmentId: command.environmentId });
     if (!subscriber) throw new ApiException('Subscriber not found');
     if (!command.step.template) throw new ApiException('Template not found');
 
@@ -107,7 +107,7 @@ export class SendMessageInApp extends SendMessageBase {
       _notificationId: notification._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
@@ -131,7 +131,7 @@ export class SendMessageInApp extends SendMessageBase {
         _notificationId: notification._id,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        _subscriberId: command.subscriberId,
+        _subscriberId: command._subscriberId,
         _templateId: notification._templateId,
         _messageTemplateId: inAppChannel.template._id,
         channel: ChannelTypeEnum.IN_APP,
@@ -169,7 +169,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     await this.queueService.wsSocketQueue.add({
       event: 'notification_received',
-      userId: command.subscriberId,
+      userId: command._subscriberId,
       payload: {
         message,
       },
@@ -177,14 +177,14 @@ export class SendMessageInApp extends SendMessageBase {
 
     const unseenCount = await this.messageRepository.getCount(
       command.environmentId,
-      command.subscriberId,
+      command._subscriberId,
       ChannelTypeEnum.IN_APP,
       { seen: false }
     );
 
     const unreadCount = await this.messageRepository.getCount(
       command.environmentId,
-      command.subscriberId,
+      command._subscriberId,
       ChannelTypeEnum.IN_APP,
       { read: false }
     );
@@ -204,7 +204,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     await this.queueService.wsSocketQueue.add({
       event: 'unseen_count_changed',
-      userId: command.subscriberId,
+      userId: command._subscriberId,
       payload: {
         unseenCount,
       },
@@ -212,7 +212,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     await this.queueService.wsSocketQueue.add({
       event: 'unread_count_changed',
-      userId: command.subscriberId,
+      userId: command._subscriberId,
       payload: {
         unreadCount,
       },

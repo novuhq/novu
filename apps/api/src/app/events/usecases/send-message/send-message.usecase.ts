@@ -35,6 +35,7 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { MessageMatcher } from '../trigger-event/message-matcher.service';
+import { CachedEntity, commonBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class SendMessage {
@@ -66,12 +67,12 @@ export class SendMessage {
       return;
     }
 
-    if (command.step.template.type !== StepTypeEnum.DELAY) {
+    if (command.step.template?.type !== StepTypeEnum.DELAY) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail:
-            command.step.template.type === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
+            command.step.template?.type === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,
@@ -95,7 +96,7 @@ export class SendMessage {
       });
     }
 
-    switch (command.step.template.type) {
+    switch (command.step.template?.type) {
       case StepTypeEnum.SMS:
         return await this.sendMessageSms.execute(command);
       case StepTypeEnum.IN_APP:
@@ -151,14 +152,23 @@ export class SendMessage {
     let subscriber;
 
     if (fetchSubscriber) {
-      /// TODO: refactor command.subscriberId to command._subscriberId
-      subscriber = await this.subscriberRepository.findById(command.subscriberId);
+      subscriber = await this.getSubscriber({ _id: command._subscriberId, _environmentId: command.environmentId });
     }
 
     return {
       subscriber,
       payload: command.payload,
     };
+  }
+
+  @CachedEntity({
+    builder: commonBuilder,
+  })
+  protected async getSubscriber({ _id, _environmentId }: { _id: string; _environmentId: string }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      _id,
+    });
   }
 
   private async filterPreferredChannels(job: JobEntity): Promise<boolean> {

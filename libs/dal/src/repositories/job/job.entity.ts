@@ -12,6 +12,7 @@ export class JobEntity {
   step: NotificationStepEntity;
   transactionId: string;
   _notificationId: string;
+  subscriberId: string;
   _subscriberId: string;
   _environmentId: string;
   _organizationId: string;

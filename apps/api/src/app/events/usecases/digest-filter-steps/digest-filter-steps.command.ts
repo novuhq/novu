@@ -4,7 +4,7 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 
 export class DigestFilterStepsCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
-  subscriberId: string;
+  _subscriberId: string;
 
   @IsDefined()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
