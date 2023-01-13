@@ -35,7 +35,7 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { MessageMatcher } from '../trigger-event/message-matcher.service';
-import { CachedEntity, commonBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class SendMessage {
@@ -152,7 +152,10 @@ export class SendMessage {
     let subscriber;
 
     if (fetchSubscriber) {
-      subscriber = await this.getSubscriber({ _id: command._subscriberId, _environmentId: command.environmentId });
+      subscriber = await this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      });
     }
 
     return {
@@ -162,12 +165,18 @@ export class SendMessage {
   }
 
   @CachedEntity({
-    builder: commonBuilder,
+    builder: subscriberBuilder,
   })
-  protected async getSubscriber({ _id, _environmentId }: { _id: string; _environmentId: string }) {
+  private async getSubscriberBySubscriberId({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }) {
     return await this.subscriberRepository.findOne({
       _environmentId,
-      _id,
+      subscriberId,
     });
   }
 

@@ -22,7 +22,6 @@ import { AnalyticsService } from '../../shared/services/analytics/analytics.serv
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 import { CacheKeyPrefixEnum } from '../../shared/services/cache';
 import { Cached } from '../../shared/interceptors';
-import { CachedEntity, commonBuilder } from '../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class AuthService {
@@ -237,7 +236,7 @@ export class AuthService {
   }
 
   async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity | null> {
-    return await this.getSubscriber({
+    return await this.subscriberRepository.findOne({
       _environmentId: payload.environmentId,
       _id: payload._id,
     });
@@ -258,16 +257,6 @@ export class AuthService {
     if (!environment) throw new NotFoundException('Environment not found');
 
     return !!environment._parentId;
-  }
-
-  @CachedEntity({
-    builder: commonBuilder,
-  })
-  private async getSubscriber({ _id, _environmentId }: { _id: string; _environmentId: string }) {
-    return await this.subscriberRepository.findOne({
-      _environmentId,
-      _id,
-    });
   }
 
   @Cached(CacheKeyPrefixEnum.USER)

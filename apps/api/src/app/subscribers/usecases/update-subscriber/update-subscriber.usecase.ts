@@ -3,6 +3,7 @@ import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InvalidateCacheService } from '../../../shared/services/cache';
+import { subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class UpdateSubscriber {
@@ -44,11 +45,11 @@ export class UpdateSubscriber {
       };
     }
 
-    await this.invalidateCache.invalidateSubscriber({
-      credentials: {
-        _id: foundSubscriber._id,
+    await this.invalidateCache.invalidateByKey({
+      key: subscriberBuilder({
+        subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
-      },
+      }),
     });
 
     await this.subscriberRepository.update(

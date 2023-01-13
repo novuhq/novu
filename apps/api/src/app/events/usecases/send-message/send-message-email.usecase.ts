@@ -57,7 +57,10 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriber({ _id: command._subscriberId, _environmentId: command.environmentId });
+    const subscriber = await this.getSubscriberBySubscriberId({
+      subscriberId: command.subscriberId,
+      _environmentId: command.environmentId,
+    });
     if (!subscriber) throw new ApiException('Subscriber not found');
 
     let integration: IntegrationEntity | undefined = undefined;

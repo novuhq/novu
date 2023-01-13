@@ -47,8 +47,5 @@ export function CachedEntity({ builder }: { builder: (...args) => string }) {
   };
 }
 
-export const commonBuilder = (query: { _id: string; _environmentId: string }): string =>
-  `${CacheKeyPrefixEnum.SUBSCRIBER}:i${query._id}:e${query._environmentId}`;
-
 export const subscriberBuilder = (query: { subscriberId: string; _environmentId: string }): string =>
   `${CacheKeyPrefixEnum.SUBSCRIBER}:s${query.subscriberId}:e${query._environmentId}`;

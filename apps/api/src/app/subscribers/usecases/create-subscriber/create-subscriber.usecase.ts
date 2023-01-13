@@ -20,7 +20,7 @@ export class CreateSubscriber {
       (await this.fetchSubscriber({ _environmentId: command.environmentId, subscriberId: command.subscriberId }));
 
     if (!subscriber) {
-      await this.invalidateCache.invalidateById({
+      await this.invalidateCache.invalidateByKey({
         key: subscriberBuilder({
           subscriberId: command.subscriberId,
           _environmentId: command.environmentId,

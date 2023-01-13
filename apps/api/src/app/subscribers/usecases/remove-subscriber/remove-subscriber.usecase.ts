@@ -4,6 +4,7 @@ import { RemoveSubscriberCommand } from './remove-subscriber.command';
 import { GetSubscriber } from '../get-subscriber';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InvalidateCacheService } from '../../../shared/services/cache';
+import { subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class RemoveSubscriber {
@@ -22,11 +23,11 @@ export class RemoveSubscriber {
         subscriberId,
       });
 
-      await this.invalidateCache.invalidateSubscriber({
-        credentials: {
-          _id: subscriber._id,
+      await this.invalidateCache.invalidateByKey({
+        key: subscriberBuilder({
+          subscriberId: command.subscriberId,
           _environmentId: command.environmentId,
-        },
+        }),
       });
 
       await this.subscriberRepository.delete({

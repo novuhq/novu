@@ -4,6 +4,7 @@ import { IChannelSettings, SubscriberRepository, IntegrationRepository, Subscrib
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
 import { InvalidateCacheService } from '../../../shared/services/cache';
+import { subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class UpdateSubscriberChannel {
@@ -66,11 +67,11 @@ export class UpdateSubscriberChannel {
     updatePayload._integrationId = foundIntegration._id;
     updatePayload.providerId = command.providerId;
 
-    await this.invalidateCache.invalidateSubscriber({
-      credentials: {
-        _id: foundSubscriber._id,
+    await this.invalidateCache.invalidateByKey({
+      key: subscriberBuilder({
+        subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
-      },
+      }),
     });
 
     await this.subscriberRepository.update(
@@ -95,11 +96,11 @@ export class UpdateSubscriberChannel {
       return;
     }
 
-    await this.invalidateCache.invalidateSubscriber({
-      credentials: {
-        _id: foundSubscriber._id,
+    await this.invalidateCache.invalidateByKey({
+      key: subscriberBuilder({
+        subscriberId: foundSubscriber.subscriberId,
         _environmentId: foundSubscriber._environmentId,
-      },
+      }),
     });
 
     const mergedChannel = Object.assign(existingChannel, updatePayload);
