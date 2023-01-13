@@ -21,6 +21,6 @@ export class LayoutEntity {
   isDefault: boolean;
   deleted: boolean;
   channel: ChannelTypeEnum;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
