@@ -72,6 +72,7 @@ export function FilterModal({
                     { value: 'OR', label: 'Or' },
                   ]}
                   {...field}
+                  data-test-id="group-rules-dropdown"
                 />
               );
             }}
@@ -89,6 +90,7 @@ export function FilterModal({
                 on: 'payload',
               });
             }}
+            data-test-id="create-rule-btn"
           >
             Create rule
           </FilterButton>
@@ -170,7 +172,7 @@ export function FilterModal({
           <Button variant="outline" size="md" mt={30} onClick={() => cancel()}>
             Cancel
           </Button>
-          <Button mt={30} size="md" onClick={() => confirm()}>
+          <Button mt={30} size="md" onClick={() => confirm()} data-test-id="filter-confirm-btn">
             Add
           </Button>
         </Group>
@@ -217,7 +219,9 @@ function EqualityForm({
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.field`}
           render={({ field, fieldState }) => {
-            return <Input {...field} error={fieldState.error?.message} placeholder="Key" />;
+            return (
+              <Input {...field} error={fieldState.error?.message} placeholder="Key" data-test-id="filter-key-input" />
+            );
           }}
         />
       </Grid.Col>
@@ -240,6 +244,7 @@ function EqualityForm({
                   { value: 'NOT_IN', label: 'Not contains' },
                 ]}
                 {...field}
+                data-test-id="filter-operator-dropdown"
               />
             );
           }}
@@ -250,7 +255,14 @@ function EqualityForm({
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.value`}
           render={({ field, fieldState }) => {
-            return <Input {...field} error={fieldState.error?.message} placeholder="Value" />;
+            return (
+              <Input
+                {...field}
+                error={fieldState.error?.message}
+                placeholder="Value"
+                data-test-id="filter-value-input"
+              />
+            );
           }}
         />
       </Grid.Col>
@@ -262,6 +274,7 @@ function EqualityForm({
           onClick={() => {
             remove(index);
           }}
+          data-test-id="filter-remove-btn"
         >
           <Trash />
         </DeleteStepButton>
