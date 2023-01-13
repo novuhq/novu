@@ -2,7 +2,7 @@ import * as open from 'open';
 import { Answers } from 'inquirer';
 import * as ora from 'ora';
 import { v4 as uuidv4 } from 'uuid';
-import { IEnvironment, ICreateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
+import { IEnvironment, ICreateNotificationTemplateDto, StepTypeEnum, SignUpOriginEnum } from '@novu/shared';
 import { prompt } from '../client';
 import {
   environmentQuestions,
@@ -191,7 +191,7 @@ async function gitHubOAuth(httpServer: HttpServer, config: ConfigService): Promi
   const redirectUrl = `http://${SERVER_HOST}:${await getServerPort()}${REDIRECT_ROUTE}`;
 
   try {
-    await open(`${API_OAUTH_URL}?&redirectUrl=${redirectUrl}`);
+    await open(`${API_OAUTH_URL}?&redirectUrl=${redirectUrl}&source=${SignUpOriginEnum.CLI}&distinctId=${anonymousId}`);
 
     const userJwt = await httpServer.redirectResponse();
 
@@ -254,7 +254,7 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
 }
 
 function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
-  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}&source=cli&source_widget=notification`;
+  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}&source=${SignUpOriginEnum.CLI}&source_widget=notification`;
 
   const steps = [
     {
@@ -293,7 +293,7 @@ function storeDashboardData(
   decodedToken,
   applicationIdentifier: string
 ) {
-  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
+  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=${SignUpOriginEnum.CLI}`;
   const analyticsSource = `${ANALYTICS_SOURCE}-(UI)`;
   const tmpPayload: { key: string; value: string }[] = [
     { key: 'embedPath', value: EMBED_PATH },
@@ -371,7 +371,7 @@ async function handleExistingSession(result: string, config: ConfigService) {
       },
     });
 
-    const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
+    const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=${SignUpOriginEnum.CLI}`;
 
     await open(dashboardURL);
   } else if (result === 'exit') {
