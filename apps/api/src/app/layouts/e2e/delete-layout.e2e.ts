@@ -15,6 +15,7 @@ describe('Delete a layout - /layouts/:layoutId (DELETE)', async () => {
 
   it('should soft delete the requested layout successfully if exists in the database for that user', async () => {
     const layoutName = 'layout-name-deletion';
+    const layoutDescription = 'Amazing new layout';
     const content = [
       {
         type: 'text',
@@ -33,6 +34,7 @@ describe('Delete a layout - /layouts/:layoutId (DELETE)', async () => {
     const isDefault = true;
     const response = await session.testAgent.post(BASE_PATH).send({
       name: layoutName,
+      description: layoutDescription,
       content,
       variables,
       isDefault,

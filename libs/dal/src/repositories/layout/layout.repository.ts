@@ -23,8 +23,18 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
   }
 
   async createLayout(entity: Omit<LayoutEntity, '_id' | 'createdAt' | 'updatedAt'>): Promise<LayoutEntity> {
-    const { channel, content, contentType, isDefault, name, variables, _creatorId, _environmentId, _organizationId } =
-      entity;
+    const {
+      channel,
+      content,
+      contentType,
+      description,
+      isDefault,
+      name,
+      variables,
+      _creatorId,
+      _environmentId,
+      _organizationId,
+    } = entity;
 
     return await this.create({
       _creatorId,
@@ -34,6 +44,7 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
       contentType,
       isDefault,
       deleted: false,
+      description,
       name,
       variables,
     });

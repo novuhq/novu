@@ -40,12 +40,14 @@ describe('Layout update - /layouts (PATCH)', async () => {
     const url = `${BASE_PATH}/${createdLayout._id}`;
 
     const updatedLayoutName = 'layout-name-update';
+    const updatedDescription = 'We thought it was more amazing than it is';
     const updatedContent = [];
     const updatedVariables = [];
     const updatedIsDefault = false;
 
     const updateResponse = await session.testAgent.patch(url).send({
       name: updatedLayoutName,
+      description: updatedDescription,
       content: updatedContent,
       variables: updatedVariables,
       isDefault: updatedIsDefault,
@@ -59,6 +61,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
     expect(updatedBody._organizationId).to.eql(session.organization._id);
     expect(updatedBody._creatorId).to.eql(session.user._id);
     expect(updatedBody.name).to.eql(updatedLayoutName);
+    expect(updatedBody.description).to.eql(updatedDescription);
     expect(updatedBody.content).to.eql(updatedContent);
     expect(updatedBody.variables).to.eql(updatedVariables);
     expect(updatedBody.contentType).to.eql('customHtml');
@@ -71,6 +74,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
 
 const createLayout = async (session: UserSession): Promise<LayoutDto> => {
   const layoutName = 'layout-name-creation';
+  const description = 'Amazing new layout';
   const content = [
     {
       type: 'text',
@@ -88,6 +92,7 @@ const createLayout = async (session: UserSession): Promise<LayoutDto> => {
   const isDefault = true;
   const response = await session.testAgent.post(BASE_PATH).send({
     name: layoutName,
+    description,
     content,
     variables,
     isDefault,

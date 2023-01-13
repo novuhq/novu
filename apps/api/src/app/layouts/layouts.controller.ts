@@ -78,9 +78,10 @@ export class LayoutsController {
     const layout = await this.createLayoutUseCase.execute(
       CreateLayoutCommand.create({
         environmentId: user.environmentId,
-        name: body.name,
         organizationId: user.organizationId,
         userId: user._id,
+        name: body.name,
+        description: body.description,
         content: body.content,
         variables: body.variables,
         isDefault: body.isDefault,
@@ -186,6 +187,7 @@ export class LayoutsController {
         organizationId: user.organizationId,
         layoutId,
         name: body.name,
+        description: body.description,
         content: body.content,
         variables: body.variables,
         isDefault: body.isDefault,

@@ -31,6 +31,7 @@ export class UpdateLayoutUseCase {
     return {
       ...layout,
       ...(updates.name && { name: updates.name }),
+      ...(updates.description && { description: updates.description }),
       ...(updates.content && { content: updates.content }),
       ...(updates.variables && { variables: updates.variables }),
       ...(typeof updates.isDefault === 'boolean' && { isDefault: updates.isDefault }),
@@ -53,7 +54,6 @@ export class UpdateLayoutUseCase {
       _id: LayoutRepository.convertStringToObjectId(layout._id),
       _organizationId: LayoutRepository.convertStringToObjectId(layout._organizationId),
       _environmentId: LayoutRepository.convertStringToObjectId(layout._environmentId),
-      content: layout?.content,
       contentType: 'customHtml',
       deleted: layout.isDeleted,
     };

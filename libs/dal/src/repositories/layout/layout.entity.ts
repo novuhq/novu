@@ -4,6 +4,7 @@ import {
   IEmailBlock,
   ITemplateVariable,
   OrganizationId,
+  LayoutDescription,
   LayoutId,
   LayoutName,
   UserId,
@@ -15,6 +16,7 @@ export class LayoutEntity {
   _organizationId: OrganizationId;
   _creatorId: UserId;
   name: LayoutName;
+  description?: LayoutDescription;
   variables?: ITemplateVariable[];
   content: IEmailBlock[];
   contentType: 'customHtml';
