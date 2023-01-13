@@ -33,8 +33,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          # build-args: |
-          #  PACKAGE_PATH=apps/api
           file: ./apps/api/Dockerfile.uffizzi
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
