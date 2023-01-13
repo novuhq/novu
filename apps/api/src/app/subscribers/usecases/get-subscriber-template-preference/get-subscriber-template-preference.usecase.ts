@@ -6,6 +6,7 @@ import {
   SubscriberPreferenceRepository,
   SubscriberRepository,
   SubscriberEntity,
+  SubscriberPreferenceEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IPreferenceChannels } from '@novu/shared';
@@ -27,16 +28,7 @@ export class GetSubscriberTemplatePreference {
 
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const activeChannels = await this.queryActiveChannels(command);
-    const subscriber = await this.fetchSubscriber({
-      _environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
-    });
-
-    const subscriberPreference = await this.subscriberPreferenceRepository.findOne({
-      _environmentId: command.environmentId,
-      _subscriberId: subscriber !== null ? subscriber._id : command.subscriberId,
-      _templateId: command.template._id,
-    });
+    const subscriberPreference = await this.getSubscriberPreference(command);
 
     const responseTemplate = mapResponseTemplate(command.template);
     const subscriberPreferenceEnabled = subscriberPreference?.enabled ?? true;
@@ -58,6 +50,31 @@ export class GetSubscriberTemplatePreference {
     }
 
     return getNoSettingFallback(responseTemplate, activeChannels);
+  }
+
+  private async getSubscriberPreference(command: GetSubscriberTemplatePreferenceCommand) {
+    let _subscriberId = (command.subscriber as { _subscriberId: string })._subscriberId || undefined;
+
+    if (!_subscriberId) {
+      const subscriber = await this.fetchSubscriber({
+        _environmentId: command.environmentId,
+        subscriberId: (command.subscriber as { subscriberId: string }).subscriberId,
+      });
+
+      _subscriberId = subscriber?._id;
+    }
+
+    let subscriberPreference: SubscriberPreferenceEntity | null = null;
+
+    if (_subscriberId) {
+      subscriberPreference = await this.subscriberPreferenceRepository.findOne({
+        _environmentId: command.environmentId,
+        _subscriberId: _subscriberId,
+        _templateId: command.template._id,
+      });
+    }
+
+    return subscriberPreference;
   }
 
   private async queryActiveChannels(command: GetSubscriberTemplatePreferenceCommand): Promise<ChannelTypeEnum[]> {

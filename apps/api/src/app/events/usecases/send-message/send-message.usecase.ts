@@ -169,7 +169,7 @@ export class SendMessage {
 
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: job._organizationId,
-      subscriberId: job._subscriberId,
+      subscriber: { _subscriberId: job._subscriberId },
       environmentId: job._environmentId,
       template,
     });
