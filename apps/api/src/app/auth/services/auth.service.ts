@@ -10,7 +10,7 @@ import {
   UserEntity,
   UserRepository,
 } from '@novu/dal';
-import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum } from '@novu/shared';
+import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum, SignUpOriginEnum } from '@novu/shared';
 
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
@@ -44,7 +44,7 @@ export class AuthService {
     refreshToken: string,
     profile: { name: string; login: string; email: string; avatar_url: string; id: string },
     distinctId: string,
-    source?: 'cli' | 'web'
+    origin?: SignUpOriginEnum
   ) {
     let user = await this.userRepository.findByLoginProvider(profile.id, authProvider);
     let newUser = false;
@@ -74,7 +74,7 @@ export class AuthService {
 
       this.analyticsService.track('[Authentication] - Signup', user._id, {
         loginType: authProvider,
-        origin: source,
+        origin: origin,
       });
     } else {
       this.analyticsService.track('[Authentication] - Login', user._id, {
