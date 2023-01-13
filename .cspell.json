@@ -200,7 +200,8 @@
     "varname",
     "uffizzi",
     "WORKDIR",
-    "Uffizzi's"
+    "Uffizzi's",
+    "envsubst"
   ],
   "flagWords": [],
   "patterns": [
