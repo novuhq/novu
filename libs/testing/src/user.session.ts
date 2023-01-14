@@ -6,7 +6,7 @@ import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 import { Queue } from 'bullmq';
 import { TriggerRecipientsPayload } from '@novu/node';
-import { EmailBlockTypeEnum, IEmailBlock, StepTypeEnum } from '@novu/shared';
+import { IEmailBlock, StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
   EnvironmentEntity,
@@ -30,13 +30,6 @@ import { EnvironmentService } from './environment.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 import { IntegrationService } from './integration.service';
 import { UserService } from './user.service';
-
-const EMAIL_BLOCK: IEmailBlock[] = [
-  {
-    type: EmailBlockTypeEnum.TEXT,
-    content: 'Email Content',
-  },
-];
 
 /**
  * TODO: move this to a reusable area
