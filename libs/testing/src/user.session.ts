@@ -38,6 +38,9 @@ const EMAIL_BLOCK: IEmailBlock[] = [
   },
 ];
 
+/**
+ * TODO: move this to a resuable area
+ */
 const queue = new Queue('trigger-handler', {
   connection: {
     db: Number(process.env.REDIS_DB_INDEX || '1'),
