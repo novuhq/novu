@@ -1,5 +1,5 @@
 import { Inject } from '@nestjs/common';
-import { CacheKeyPrefixEnum, CacheService } from '../services/cache';
+import { CacheService } from '../services/cache';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function CachedEntity({ builder }: { builder: (...args) => string }) {
@@ -46,6 +46,3 @@ export function CachedEntity({ builder }: { builder: (...args) => string }) {
     };
   };
 }
-
-export const subscriberBuilder = (query: { subscriberId: string; _environmentId: string }): string =>
-  `${CacheKeyPrefixEnum.SUBSCRIBER}:s${query.subscriberId}:e${query._environmentId}`;

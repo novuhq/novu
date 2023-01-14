@@ -8,7 +8,8 @@ import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
-import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class GetNotificationsFeed {
@@ -72,7 +73,7 @@ export class GetNotificationsFeed {
     };
   }
   @CachedEntity({
-    builder: subscriberBuilder,
+    builder: KeyGenerator.subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

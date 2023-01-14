@@ -4,7 +4,7 @@ import { IChannelSettings, SubscriberRepository, IntegrationRepository, Subscrib
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class UpdateSubscriberChannel {
@@ -68,7 +68,7 @@ export class UpdateSubscriberChannel {
     updatePayload.providerId = command.providerId;
 
     await this.invalidateCache.invalidateByKey({
-      key: subscriberBuilder({
+      key: KeyGenerator.subscriber({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
@@ -97,7 +97,7 @@ export class UpdateSubscriberChannel {
     }
 
     await this.invalidateCache.invalidateByKey({
-      key: subscriberBuilder({
+      key: KeyGenerator.subscriber({
         subscriberId: foundSubscriber.subscriberId,
         _environmentId: foundSubscriber._environmentId,
       }),

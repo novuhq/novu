@@ -4,7 +4,7 @@ import { RemoveSubscriberCommand } from './remove-subscriber.command';
 import { GetSubscriber } from '../get-subscriber';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class RemoveSubscriber {
@@ -24,7 +24,7 @@ export class RemoveSubscriber {
       });
 
       await this.invalidateCache.invalidateByKey({
-        key: subscriberBuilder({
+        key: KeyGenerator.subscriber({
           subscriberId: command.subscriberId,
           _environmentId: command.environmentId,
         }),

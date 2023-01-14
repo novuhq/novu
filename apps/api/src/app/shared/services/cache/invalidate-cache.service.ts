@@ -1,6 +1,7 @@
 import { CacheService } from './cache.service';
 import { buildKey, CacheInterceptorTypeEnum } from '../../interceptors';
 import { Injectable } from '@nestjs/common';
+import { CacheKeyPrefixEnum } from './keys';
 
 @Injectable()
 export class InvalidateCacheService {
@@ -51,14 +52,4 @@ export class InvalidateCacheService {
       console.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);
     }
   }
-}
-
-export enum CacheKeyPrefixEnum {
-  MESSAGE_COUNT = 'message_count',
-  FEED = 'feed',
-  SUBSCRIBER = 'subscriber',
-  NOTIFICATION_TEMPLATE = 'notification_template',
-  USER = 'user',
-  INTEGRATION = 'integration',
-  ENVIRONMENT_BY_API_KEY = 'environment_by_api_key',
 }

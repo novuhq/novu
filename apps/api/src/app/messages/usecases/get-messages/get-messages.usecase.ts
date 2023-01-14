@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import { GetMessagesCommand } from './get-messages.command';
-import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class GetMessages {
@@ -50,7 +51,7 @@ export class GetMessages {
   }
 
   @CachedEntity({
-    builder: subscriberBuilder,
+    builder: KeyGenerator.subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

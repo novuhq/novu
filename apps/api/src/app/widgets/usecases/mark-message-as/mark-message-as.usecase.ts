@@ -7,7 +7,8 @@ import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 import { InvalidateCache } from '../../../shared/interceptors';
-import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class MarkMessageAs {
@@ -80,7 +81,7 @@ export class MarkMessageAs {
     });
   }
   @CachedEntity({
-    builder: subscriberBuilder,
+    builder: KeyGenerator.subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-
 import { GetSubscriberCommand } from './get-subscriber.command';
-import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class GetSubscriber {
@@ -19,7 +19,7 @@ export class GetSubscriber {
   }
 
   @CachedEntity({
-    builder: subscriberBuilder,
+    builder: KeyGenerator.subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

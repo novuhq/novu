@@ -13,7 +13,8 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -28,7 +29,7 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   @CachedEntity({
-    builder: subscriberBuilder,
+    builder: KeyGenerator.subscriber,
   })
   protected async getSubscriberBySubscriberId({
     subscriberId,

@@ -35,7 +35,8 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { MessageMatcher } from '../trigger-event/message-matcher.service';
-import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class SendMessage {
@@ -165,7 +166,7 @@ export class SendMessage {
   }
 
   @CachedEntity({
-    builder: subscriberBuilder,
+    builder: KeyGenerator.subscriber,
   })
   private async getSubscriberBySubscriberId({
     subscriberId,

@@ -22,7 +22,8 @@ import {
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
 import { subscriberNeedUpdate } from '../../../subscribers/usecases/update-subscriber';
-import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -144,7 +145,7 @@ export class ProcessSubscriber {
   }
 
   @CachedEntity({
-    builder: subscriberBuilder,
+    builder: KeyGenerator.subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

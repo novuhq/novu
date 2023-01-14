@@ -2,9 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
 import { CreateSubscriberCommand } from './create-subscriber.command';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
-import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { SubscriberEntity } from '@novu/dal';
 import { InvalidateCacheService } from '../../../shared/services/cache';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class CreateSubscriber {
@@ -21,7 +22,7 @@ export class CreateSubscriber {
 
     if (!subscriber) {
       await this.invalidateCache.invalidateByKey({
-        key: subscriberBuilder({
+        key: KeyGenerator.subscriber({
           subscriberId: command.subscriberId,
           _environmentId: command.environmentId,
         }),
@@ -57,7 +58,7 @@ export class CreateSubscriber {
   }
 
   @CachedEntity({
-    builder: subscriberBuilder,
+    builder: KeyGenerator.subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

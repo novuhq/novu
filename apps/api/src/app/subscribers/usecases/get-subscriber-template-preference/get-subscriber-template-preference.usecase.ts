@@ -15,7 +15,8 @@ import {
   ISubscriberPreferenceResponse,
 } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
-import { CachedEntity, subscriberBuilder } from '../../../shared/interceptors/cached-entity.interceptor';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class GetSubscriberTemplatePreference {
@@ -93,7 +94,7 @@ export class GetSubscriberTemplatePreference {
   }
 
   @CachedEntity({
-    builder: subscriberBuilder,
+    builder: KeyGenerator.subscriber,
   })
   private async fetchSubscriber({
     subscriberId,
