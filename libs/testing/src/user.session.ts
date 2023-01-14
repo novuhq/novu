@@ -39,7 +39,7 @@ const EMAIL_BLOCK: IEmailBlock[] = [
 ];
 
 /**
- * TODO: move this to a resuable area
+ * TODO: move this to a reusable area
  */
 const queue = new Queue('trigger-handler', {
   connection: {
