@@ -10,7 +10,6 @@ import {
   TriggerEventResponseDto,
   TriggerEventToAllRequestDto,
 } from './dtos';
-import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
 import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
 import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
 import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
@@ -22,6 +21,8 @@ import { MapTriggerRecipients, MapTriggerRecipientsCommand } from './usecases/ma
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ParseEventRequest } from './usecases/parse-event-request/parse-event-request.usecase';
+import { ParseEventRequestCommand } from './usecases/parse-event-request/parse-event-request.command';
 
 @Controller({
   path: 'events',
@@ -30,11 +31,11 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 @ApiTags('Events')
 export class EventsController {
   constructor(
-    private triggerEvent: TriggerEvent,
     private mapTriggerRecipients: MapTriggerRecipients,
     private cancelDelayedUsecase: CancelDelayed,
     private triggerEventToAll: TriggerEventToAll,
-    private sendTestEmail: SendTestEmail
+    private sendTestEmail: SendTestEmail,
+    private parseEventRequest: ParseEventRequest
   ) {}
 
   @ExternalApiAccessible()
@@ -68,8 +69,6 @@ export class EventsController {
 
     const { _id: userId, environmentId, organizationId } = user;
 
-    await this.triggerEvent.validateTransactionIdProperty(transactionId, organizationId, environmentId);
-
     const mappedActor = this.mapActor(body.actor);
     const mapTriggerRecipientsCommand = MapTriggerRecipientsCommand.create({
       environmentId,
@@ -80,8 +79,8 @@ export class EventsController {
     });
     const mappedTo = await this.mapTriggerRecipients.execute(mapTriggerRecipientsCommand);
 
-    const result = await this.triggerEvent.execute(
-      TriggerEventCommand.create({
+    const result = await this.parseEventRequest.execute(
+      ParseEventRequestCommand.create({
         userId,
         environmentId,
         organizationId,
@@ -122,7 +121,6 @@ export class EventsController {
     @Body() body: TriggerEventToAllRequestDto
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
-    await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
     const mappedActor = body.actor ? this.mapActor(body.actor) : null;
 
     return this.triggerEventToAll.execute(
