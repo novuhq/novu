@@ -64,8 +64,7 @@ export class CacheService implements ICacheService {
   }
 
   public async set(key: string, value: string, options?: CachingConfig) {
-    this.client.set(key, value);
-    this.updateTtl(key, options);
+    this.client.set(key, value, 'EX', this.getTtlInSeconds(options));
   }
 
   public async keys(pattern?: string) {
@@ -110,13 +109,13 @@ export class CacheService implements ICacheService {
     });
   }
 
-  private updateTtl(key: string, options?: CachingConfig) {
+  private getTtlInSeconds(options?: CachingConfig): number {
     const seconds = options?.ttl || this.cacheTtl;
 
-    return this.client.expire(key, this.ttlVariant(seconds));
+    return this.ttlVariant(seconds);
   }
 
-  private ttlVariant(num) {
+  private ttlVariant(num): number {
     const variant = this.TTL_VARIANT_PERCENTAGE * num * Math.random();
 
     return Math.floor(num - (this.TTL_VARIANT_PERCENTAGE * num) / 2 + variant);
