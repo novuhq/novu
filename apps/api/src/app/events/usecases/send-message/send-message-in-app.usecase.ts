@@ -32,6 +32,7 @@ import {
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -121,8 +122,15 @@ export class SendMessageInApp extends SendMessageBase {
 
     let message: MessageEntity | null = null;
 
+    await this.invalidateCache.invalidateQuery({
+      key: KeyGenerator.invalidateFeed({
+        subscriberId: subscriber.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
     this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
+      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT],
       credentials: {
         subscriberId: subscriber.subscriberId,
         environmentId: command.environmentId,

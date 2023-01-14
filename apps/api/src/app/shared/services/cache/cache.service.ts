@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import { QUERY_PREFIX } from './keys';
 
 const STORE_CONNECTED = 'ready';
 
@@ -67,6 +68,18 @@ export class CacheService implements ICacheService {
     this.client.set(key, value, 'EX', this.getTtlInSeconds(options));
   }
 
+  public async setQuery(key: string, value: string, options?: CachingConfig) {
+    const { credentials, query } = this.splitKey(key);
+
+    const pipeline = this.client.pipeline();
+
+    pipeline.sadd(credentials, query);
+    pipeline.expire(credentials, this.DEFAULT_TTL_SECONDS + this.getTtlInSeconds(options));
+
+    pipeline.set(key, value, 'EX', this.getTtlInSeconds(options));
+    await pipeline.exec();
+  }
+
   public async keys(pattern?: string) {
     const ALL_KEYS = '*';
     const queryPattern = pattern ?? ALL_KEYS;
@@ -82,6 +95,22 @@ export class CacheService implements ICacheService {
     const keys = Array.isArray(key) ? key : [key];
 
     return this.client.del(keys);
+  }
+
+  public async delQuery(key: string) {
+    const queries = await this.client.smembers(key);
+
+    if (queries.length === 0) return;
+
+    const pipeline = this.client.pipeline();
+    // invalidate queries
+    queries.forEach(function (query) {
+      const fullKey = `${key}:${QUERY_PREFIX}=${query}`;
+      pipeline.del(fullKey);
+    });
+    // invalidate queries set
+    pipeline.del(key);
+    await pipeline.exec();
   }
 
   public delByPattern(pattern: string) {
@@ -119,6 +148,15 @@ export class CacheService implements ICacheService {
     const variant = this.TTL_VARIANT_PERCENTAGE * num * Math.random();
 
     return Math.floor(num - (this.TTL_VARIANT_PERCENTAGE * num) / 2 + variant);
+  }
+
+  private splitKey(key: string) {
+    const keyDelimiter = `:${QUERY_PREFIX}=`;
+    const keyParts = key.split(keyDelimiter);
+    const credentials = keyParts[0];
+    const query = keyParts[1];
+
+    return { credentials, query };
   }
 }
 

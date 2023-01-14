@@ -6,10 +6,9 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { Cached } from '../../../shared/interceptors';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
 
 @Injectable()
 export class GetNotificationsFeed {
@@ -19,7 +18,7 @@ export class GetNotificationsFeed {
     private subscriberRepository: SubscriberRepository
   ) {}
 
-  @Cached(CacheKeyPrefixEnum.FEED)
+  @CachedQuery({ builder: KeyGenerator.feed })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
     const LIMIT = 10;
 

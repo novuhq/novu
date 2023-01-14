@@ -2,7 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
@@ -13,6 +13,7 @@ import { KeyGenerator } from '../../../shared/services/cache/keys';
 @Injectable()
 export class MarkMessageAs {
   constructor(
+    private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
     private queueService: QueueService,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
@@ -20,8 +21,15 @@ export class MarkMessageAs {
     private memberRepository: MemberRepository
   ) {}
 
-  @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED])
+  @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT])
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
+    await this.invalidateCache.invalidateQuery({
+      key: KeyGenerator.invalidateFeed({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
     const subscriber = await this.fetchSubscriber({
       _environmentId: command.environmentId,
       subscriberId: command.subscriberId,

@@ -38,6 +38,17 @@ export class InvalidateCacheService {
     }
   }
 
+  public async invalidateQuery({ key }: { key: string }) {
+    if (!this.cacheService?.cacheEnabled()) return;
+
+    try {
+      await this.cacheService.delQuery(key);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(`An error has occurred when deleting "key: ${key}",`, 'InvalidateCache', err);
+    }
+  }
+
   private async clearByPattern(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>) {
     const cacheKey = buildKey(storeKeyPrefix, credentials, CacheInterceptorTypeEnum.INVALIDATE);
 
