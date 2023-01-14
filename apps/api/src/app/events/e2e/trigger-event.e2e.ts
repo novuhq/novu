@@ -97,6 +97,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
+    await session.awaitRunningJobs();
     const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
     expect(createdSubscriber.subscriberId).to.equal(subscriberId);
@@ -127,6 +128,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         },
       }
     );
+    await session.awaitRunningJobs();
 
     let jobs: JobEntity[] = await jobRepository.find({ _environmentId: session.environment._id });
     let statuses: JobStatusEnum[] = jobs.map((job) => job.status);

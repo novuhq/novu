@@ -11,8 +11,6 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  LogCodeEnum,
-  LogStatusEnum,
   IMessageButton,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -22,7 +20,6 @@ import {
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
