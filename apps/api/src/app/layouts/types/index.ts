@@ -3,6 +3,7 @@ export {
   EnvironmentId,
   IEmailBlock,
   OrganizationId,
+  LayoutDescription,
   LayoutId,
   LayoutName,
   TemplateVariableTypeEnum,

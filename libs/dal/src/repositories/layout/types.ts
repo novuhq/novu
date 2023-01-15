@@ -9,3 +9,4 @@ export { UserId } from '../user';
 
 export type LayoutId = Types.ObjectId;
 export type LayoutName = string;
+export type LayoutDescription = string;

@@ -21,6 +21,7 @@ const layoutSchema = new Schema(
       ref: 'User',
     },
     name: Schema.Types.String,
+    description: Schema.Types.String,
     variables: [
       {
         name: Schema.Types.String,

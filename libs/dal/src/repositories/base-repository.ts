@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { Document, Model, Types, ProjectionType } from 'mongoose';
+import { Document, Model, Query, Types, ProjectionType } from 'mongoose';
 
 export class BaseRepository<T_Query, T_Response> {
   public _model: Model<any & Document>;
@@ -43,7 +43,7 @@ export class BaseRepository<T_Query, T_Response> {
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: T_Query) {
+  async delete(query: T_Query): Promise<void> {
     return await this.MongooseModel.remove(query);
   }
 
