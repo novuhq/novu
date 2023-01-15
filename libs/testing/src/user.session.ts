@@ -227,17 +227,6 @@ export class UserSession {
       })
       .expect(200);
 
-    await this.testAgent
-      .put('/v1/channels/sms/settings')
-      .send({
-        twillio: {
-          authToken: '123456',
-          phoneNumber: '45678',
-          accountSid: '123123',
-        },
-      })
-      .expect(200);
-
     const groupsResponse = await this.testAgent.get('/v1/notification-groups');
 
     this.notificationGroups = groupsResponse.body.data;
