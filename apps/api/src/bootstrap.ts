@@ -19,7 +19,6 @@ import { ResponseInterceptor } from './app/shared/framework/response.interceptor
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
-import { NewrelicInterceptor } from './newrelic.interceptor';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -54,10 +53,6 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.enableCors(corsOptionsDelegate);
 
   app.setGlobalPrefix(CONTEXT_PATH + 'v1');
-
-  if (process.env.NEW_RELIC_LICENSE_KEY) {
-    app.useGlobalInterceptors(new NewrelicInterceptor());
-  }
 
   app.use(passport.initialize());
 
