@@ -53,6 +53,10 @@ export class NotificationTemplateEntity {
   updatedAt?: string;
 
   readonly notificationGroup?: NotificationGroupEntity;
+
+  isBlueprint: boolean;
+
+  blueprintId?: string;
 }
 
 export class NotificationTriggerEntity {

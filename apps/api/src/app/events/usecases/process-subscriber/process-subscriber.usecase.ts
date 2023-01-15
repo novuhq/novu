@@ -7,18 +7,21 @@ import {
   JobEntity,
   JobStatusEnum,
   NotificationStepEntity,
-  IntegrationRepository,
 } from '@novu/dal';
-import { InAppProviderIdEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, InAppProviderIdEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
-import { ISubscribersDefine } from '@novu/node';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { Cached } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
+import { subscriberNeedUpdate } from '../../../subscribers/usecases/update-subscriber';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -29,14 +32,16 @@ export class ProcessSubscriber {
     private createLogUsecase: CreateLog,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private filterSteps: DigestFilterSteps,
-    private integrationRepository: IntegrationRepository
+    private getDecryptedIntegrations: GetDecryptedIntegrations
   ) {}
 
   public async execute(command: ProcessSubscriberCommand): Promise<Omit<JobEntity, '_id'>[]> {
-    const template = await this.getNotificationTemplate({
-      _id: command.templateId,
-      environmentId: command.environmentId,
-    });
+    const template =
+      command.template ??
+      (await this.getNotificationTemplate({
+        _id: command.templateId,
+        environmentId: command.environmentId,
+      }));
 
     const subscriber: SubscriberEntity = await this.getSubscriber(
       {
@@ -76,32 +81,21 @@ export class ProcessSubscriber {
       })
     );
 
-    this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.INFO,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        notificationId: notification._id,
-        text: 'Request processed',
-        userId: command.userId,
-        subscriberId: subscriber._id,
-        code: LogCodeEnum.TRIGGER_PROCESSED,
-        templateId: notification._templateId,
-      })
-    );
-
     const jobs: Omit<JobEntity, '_id'>[] = [];
 
     for (const step of steps) {
       if (!step.template) throw new ApiException('Step template was not found');
 
-      const integration = await this.integrationRepository.findOne({
-        _organizationId: command.organizationId,
-        _environmentId: command.environmentId,
-        channel: step.template.type,
-        active: true,
-      });
+      const integrations = await this.getDecryptedIntegrations.execute(
+        GetDecryptedIntegrationsCommand.create({
+          channelType: ChannelTypeEnum[step.template.type],
+          active: true,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        })
+      );
+
+      const integration = integrations[0];
 
       jobs.push({
         identifier: command.identifier,
@@ -140,16 +134,17 @@ export class ProcessSubscriber {
       subscriberPayload.subscriberId
     );
 
-    if (subscriber && !this.subscriberNeedUpdate(subscriber, subscriberPayload)) {
+    if (subscriber && !subscriberNeedUpdate(subscriber, subscriberPayload)) {
       return subscriber;
     }
 
-    return await this.createOrUpdateSubscriber(command, subscriberPayload);
+    return await this.createOrUpdateSubscriber(command, subscriberPayload, subscriber);
   }
 
   private async createOrUpdateSubscriber(
     command: Pick<ProcessSubscriberCommand, 'environmentId' | 'organizationId'>,
-    subscriberPayload
+    subscriberPayload,
+    subscriber: SubscriberEntity | null
   ) {
     return await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
@@ -161,17 +156,8 @@ export class ProcessSubscriber {
         lastName: subscriberPayload?.lastName,
         phone: subscriberPayload?.phone,
         avatar: subscriberPayload?.avatar,
+        subscriber: subscriber ?? undefined,
       })
-    );
-  }
-
-  private subscriberNeedUpdate(subscriber: SubscriberEntity, subscriberPayload: ISubscribersDefine): boolean {
-    return (
-      !!(subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email) ||
-      !!(subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
-      !!(subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
-      !!(subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
-      !!(subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
     );
   }
 

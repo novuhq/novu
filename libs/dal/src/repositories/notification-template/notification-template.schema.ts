@@ -20,6 +20,13 @@ const notificationTemplateSchema = new Schema(
       type: Schema.Types.Boolean,
       default: false,
     },
+    isBlueprint: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
+    blueprintId: {
+      type: Schema.Types.String,
+    },
     _notificationGroupId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationGroup',

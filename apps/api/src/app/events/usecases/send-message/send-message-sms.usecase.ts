@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  IntegrationRepository,
   MessageRepository,
   NotificationStepEntity,
   NotificationRepository,
@@ -45,7 +44,6 @@ export class SendMessageSms extends SendMessageBase {
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
-    private integrationRepository: IntegrationRepository,
     private compileTemplate: CompileTemplate,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
@@ -178,23 +176,6 @@ export class SendMessageSms extends SendMessageBase {
     notification: NotificationEntity
   ) {
     if (!phone) {
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: 'Subscriber does not have active phone',
-          userId: command.userId,
-          subscriberId: command.subscriberId,
-          code: LogCodeEnum.SUBSCRIBER_MISSING_PHONE,
-          templateId: notification._templateId,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
-      );
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
         message._id,
