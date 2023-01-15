@@ -9,10 +9,9 @@ export class UpdateSubscriber {
   constructor(private invalidateCache: InvalidateCacheService, private subscriberRepository: SubscriberRepository) {}
 
   async execute(command: UpdateSubscriberCommand) {
-    const foundSubscriber = await this.subscriberRepository.findBySubscriberId(
-      command.environmentId,
-      command.subscriberId
-    );
+    const foundSubscriber = command.subscriber
+      ? command.subscriber
+      : await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     if (!foundSubscriber) {
       throw new ApiException(`SubscriberId: ${command.subscriberId} not found`);

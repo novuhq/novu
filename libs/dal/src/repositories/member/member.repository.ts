@@ -161,13 +161,10 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
   }
 
   async isMemberOfOrganization(organizationId: string, userId: string): Promise<boolean> {
-    return !!(await this.findOne(
-      {
-        _organizationId: organizationId,
-        _userId: userId,
-      },
-      '_id'
-    ));
+    return !!(await this.count({
+      _organizationId: organizationId,
+      _userId: userId,
+    }));
   }
 
   async findMemberByUserId(organizationId: string, userId: string): Promise<MemberEntity | null> {

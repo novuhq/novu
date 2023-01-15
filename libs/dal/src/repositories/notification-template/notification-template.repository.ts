@@ -45,6 +45,34 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(item);
   }
 
+  async findBlueprint(id: string) {
+    const requestQuery: EnforceEnvironmentQuery = {
+      _id: id,
+      isBlueprint: true,
+      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId(),
+    };
+
+    const item = await NotificationTemplate.findOne(requestQuery).populate('steps.template');
+
+    return this.mapEntity(item);
+  }
+
+  async getBlueprintList(skip = 0, limit = 10) {
+    const requestQuery: EnforceEnvironmentQuery = {
+      isBlueprint: true,
+      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId(),
+    };
+
+    const totalItemsCount = await this.count(requestQuery);
+    const items = await NotificationTemplate.find(requestQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate({ path: 'notificationGroup' });
+
+    return { totalCount: totalItemsCount, data: this.mapEntities(items) };
+  }
+
   async getList(organizationId: string, environmentId: string, skip = 0, limit = 10) {
     const totalItemsCount = await this.count({ _environmentId: environmentId });
 
@@ -84,5 +112,9 @@ export class NotificationTemplateRepository extends BaseRepository<
     const res = await this.notificationTemplate.findDeleted(query);
 
     return this.mapEntity(res);
+  }
+
+  public static getBlueprintOrganizationId(): string {
+    return process.env.BLUEPRINT_CREATOR;
   }
 }
