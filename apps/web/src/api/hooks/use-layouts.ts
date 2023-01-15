@@ -6,7 +6,7 @@ import { ILayoutEntity } from '@novu/shared';
 
 export function useLayouts(page = 0, pageSize = 10) {
   const { environment } = useEnvController();
-  const { data, isLoading } = useQuery<{
+  const { data, isLoading, refetch } = useQuery<{
     data: ILayoutEntity[];
     totalCount: number;
     pageSize: number;
@@ -19,5 +19,6 @@ export function useLayouts(page = 0, pageSize = 10) {
     isLoading,
     totalCount: data?.totalCount,
     pageSize: data?.pageSize,
+    refetchLayouts: refetch,
   };
 }

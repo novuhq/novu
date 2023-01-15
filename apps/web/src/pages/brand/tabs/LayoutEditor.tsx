@@ -6,7 +6,7 @@ import { Button, Checkbox, colors, Input, Text, LoadingOverlay } from '../../../
 import { useEnvController } from '../../../store/use-env-controller';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { createLayout, getLayoutById } from '../../../api/layouts';
+import { createLayout, getLayoutById, updateLayout } from '../../../api/layouts';
 import { useEffect } from 'react';
 import { ILayoutEntity } from '@novu/shared';
 import { QueryKeys } from '../../../api/query.keys';
@@ -34,11 +34,16 @@ export function LayoutEditor({
     defaultValues: {
       content: layout?.content || '',
       name: layout?.name || '',
-      description: '',
+      description: layout?.description || '',
       isDefault: layout?.isDefault || false,
     },
   });
   const { mutateAsync: createNewLayout, isLoading: isLoadingCreate } = useMutation(createLayout);
+  const { mutateAsync: updateCurrLayout, isLoading: isLoadingUpdate } = useMutation<
+    ILayoutEntity,
+    { error: string; message: string; statusCode: number },
+    { layoutId: string; data: any }
+  >(({ layoutId, data }) => updateLayout(layoutId, data));
 
   useEffect(() => {
     if (layout) {
@@ -47,6 +52,9 @@ export function LayoutEditor({
       }
       if (layout.name) {
         setValue('name', layout?.name);
+      }
+      if (layout.description) {
+        setValue('description', layout?.description);
       }
       if (layout.isDefault != null) {
         setValue('isDefault', layout?.isDefault);
@@ -58,10 +66,16 @@ export function LayoutEditor({
     const updatePayload = {
       name: data.name,
       content: data.content,
+      description: data.description,
       isDefault: data.isDefault,
     };
     try {
-      await createNewLayout(data);
+      if (editMode) {
+        await updateCurrLayout({ layoutId: id, data: updatePayload });
+      } else {
+        await createNewLayout(data);
+      }
+
       successMessage(`Layout ${editMode ? 'Updated' : 'Created'}!`);
       goBack();
     } catch (e: any) {
@@ -69,7 +83,7 @@ export function LayoutEditor({
     }
   }
 
-  const isLoading = (editMode && isLoadingLayout) || isLoadingCreate;
+  const isLoading = (editMode && isLoadingLayout) || isLoadingCreate || isLoadingUpdate;
 
   return (
     <LoadingOverlay visible={isLoading}>
