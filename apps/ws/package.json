@@ -41,6 +41,7 @@
     "class-transformer": "^0.5.1",
     "dotenv": "^8.2.0",
     "envalid": "^7.1.0",
+    "newrelic": "9.7.5",
     "ioredis": "^5.2.4",
     "jsonwebtoken": "8.5.1",
     "lodash": "^4.17.15",
