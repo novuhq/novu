@@ -23,10 +23,12 @@ export class FilterTopicsUseCase {
 
     const totalCount = await this.topicRepository.count(query);
 
+    const skipTimes = page <= 0 ? 0 : page;
     const pagination = {
       limit: pageSize,
-      skip: page * pageSize,
+      skip: skipTimes * pageSize,
     };
+
     const filteredTopics = await this.topicRepository.filterTopics(query, pagination);
 
     return {

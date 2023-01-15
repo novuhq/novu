@@ -17,7 +17,7 @@ export type CachingConfig = {
 };
 
 export class CacheService implements ICacheService {
-  private readonly DEFAULT_TTL_SECONDS = 60 * 60;
+  private readonly DEFAULT_TTL_SECONDS = 60 * 60 * 2;
   private readonly DEFAULT_CONNECT_TIMEOUT = 50000;
   private readonly DEFAULT_KEEP_ALIVE = 30000;
   private readonly DEFAULT_FAMILY = 4;
@@ -28,13 +28,27 @@ export class CacheService implements ICacheService {
   private readonly cacheTtl: number;
 
   constructor(private config: ICacheServiceConfig) {
-    if (this.config.port && this.config.host) {
-      this.client = new Redis(Number(this.config.port), this.config.host, {
+    if (!this.config.host) {
+      console.log('Caching is not enabled for the API Service');
+    }
+
+    if (this.config.host) {
+      console.log('Connecting to ' + this.config.host + ':' + this.config.port);
+
+      this.client = new Redis(Number(this.config.port || 6379), this.config.host, {
         password: this.config.password ?? null,
         connectTimeout: this.config.connectTimeout ? Number(this.config.connectTimeout) : this.DEFAULT_CONNECT_TIMEOUT,
         keepAlive: this.config.keepAlive ? Number(this.config.keepAlive) : this.DEFAULT_KEEP_ALIVE,
         family: this.config.family ? Number(this.config.family) : this.DEFAULT_FAMILY,
         keyPrefix: this.config.keyPrefix ?? this.DEFAULT_KEY_PREFIX,
+      });
+
+      this.client.on('connect', () => {
+        console.log('REDIS CONNECTED');
+      });
+
+      this.client.on('error', (error) => {
+        console.error(error);
       });
 
       this.cacheTtl = this.config.ttl ? Number(this.config.ttl) : this.DEFAULT_TTL_SECONDS;

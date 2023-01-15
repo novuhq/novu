@@ -43,11 +43,11 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: true,
     choices: [false, true],
   }),
-  REDIS_CACHE_HOST: str({
+  REDIS_CACHE_SERVICE_HOST: str({
     default: '',
   }),
-  REDIS_CACHE_PORT: str({
-    default: '',
+  REDIS_CACHE_SERVICE_PORT: str({
+    default: '6379',
   }),
   STORE_NOTIFICATION_CONTENT: str({
     default: 'false',

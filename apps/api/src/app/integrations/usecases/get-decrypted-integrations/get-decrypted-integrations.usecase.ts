@@ -2,10 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { GetDecryptedIntegrationsCommand } from './get-decrypted-integrations.command';
 import { decryptCredentials } from '../../../shared/services/encryption';
+import { GetNovuIntegration } from '../get-novu-integration';
+import { GetNovuIntegrationCommand } from '../get-novu-integration/get-novu-integration.command';
 
 @Injectable()
 export class GetDecryptedIntegrations {
-  constructor(private integrationRepository: IntegrationRepository) {}
+  constructor(private integrationRepository: IntegrationRepository, private getNovuIntegration: GetNovuIntegration) {}
 
   async execute(command: GetDecryptedIntegrationsCommand): Promise<IntegrationEntity[]> {
     const query: Partial<IntegrationEntity> & { _environmentId: string } = {
@@ -24,16 +26,30 @@ export class GetDecryptedIntegrations {
       query.providerId = command.providerId;
     }
 
-    const integrations = command.findOne
+    let integrations = command.findOne
       ? [await this.integrationRepository.findOne(query)]
       : await this.integrationRepository.find(query);
 
-    return integrations
+    integrations = integrations
       .filter((integration) => integration)
       .map((integration: IntegrationEntity) => {
         integration.credentials = decryptCredentials(integration.credentials);
 
         return integration;
       });
+
+    if (command.channelType === undefined) {
+      return integrations;
+    }
+
+    const novuIntegration = await this.getNovuIntegration.execute(
+      GetNovuIntegrationCommand.create({
+        channelType: command.channelType,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      })
+    );
+
+    return novuIntegration ? [novuIntegration] : integrations;
   }
 }
