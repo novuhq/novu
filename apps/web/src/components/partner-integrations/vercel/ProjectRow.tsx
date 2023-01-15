@@ -1,5 +1,5 @@
 import { forwardRef, useRef, useEffect } from 'react';
-import { Box, Group, CloseButton, ThemeIcon } from '@mantine/core';
+import { Box, Group, CloseButton } from '@mantine/core';
 import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useWatch, Control, Controller } from 'react-hook-form';
 import { useIntersection } from '@mantine/hooks';
@@ -110,13 +110,9 @@ export function ProjectRow(props: ProjectRowProps) {
         />
       </Box>
       <Group grow position="apart">
-        <ThemeIcon>
-          <ArrowLeftOutlined />
-        </ThemeIcon>
+        <ArrowLeftOutlined />
         <Text align="center">links to</Text>
-        <ThemeIcon>
-          <ArrowRightOutlined />
-        </ThemeIcon>
+        <ArrowRightOutlined />
       </Group>
       <Box>
         <Group position="left" noWrap>
