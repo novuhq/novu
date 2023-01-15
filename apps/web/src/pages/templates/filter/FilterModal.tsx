@@ -125,6 +125,7 @@ export function FilterModal({
                         ]}
                         {...field}
                         onChange={handleOnChildOnChange(index)}
+                        data-test-id="filter-on-dropdown"
                       />
                     );
                   }}
@@ -189,7 +190,14 @@ function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: num
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.webhookUrl`}
           render={({ field, fieldState }) => {
-            return <Input {...field} error={fieldState.error?.message} placeholder="Url" />;
+            return (
+              <Input
+                {...field}
+                error={fieldState.error?.message}
+                placeholder="Url"
+                data-test-id="webhook-filter-url-input"
+              />
+            );
           }}
         />
       </Grid.Col>

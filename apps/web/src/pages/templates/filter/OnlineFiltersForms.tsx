@@ -65,6 +65,7 @@ function OnlineRightNowForm({ control, stepIndex, index }: { control; stepIndex:
                 {...field}
                 onChange={(val) => field.onChange(val === 'true')}
                 value={value}
+                data-test-id="online-now-value-dropdown"
               />
             );
           }}
@@ -91,6 +92,7 @@ function OnlineInTheLastForm({ control, stepIndex, index }: { control; stepIndex
                   { value: 'days', label: 'Days' },
                 ]}
                 {...field}
+                data-test-id="online-in-last-operator-dropdown"
               />
             );
           }}
@@ -101,7 +103,15 @@ function OnlineInTheLastForm({ control, stepIndex, index }: { control; stepIndex
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.value`}
           render={({ field, fieldState }) => {
-            return <Input {...field} error={fieldState.error?.message} placeholder="value" type="number" />;
+            return (
+              <Input
+                {...field}
+                error={fieldState.error?.message}
+                placeholder="value"
+                type="number"
+                data-test-id="online-in-last-value-input"
+              />
+            );
           }}
         />
       </Grid.Col>
