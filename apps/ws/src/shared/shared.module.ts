@@ -1,30 +1,6 @@
 import { Module } from '@nestjs/common';
-import {
-  DalService,
-  UserRepository,
-  OrganizationRepository,
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  MemberRepository,
-} from '@novu/dal';
 import { JwtModule } from '@nestjs/jwt';
 import { QueueService } from './queue';
-
-const DAL_MODELS = [
-  UserRepository,
-  OrganizationRepository,
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  MemberRepository,
-];
-
-const dalService = new DalService();
 
 const PROVIDERS = [
   {
@@ -33,15 +9,6 @@ const PROVIDERS = [
       return new QueueService();
     },
   },
-  {
-    provide: DalService,
-    useFactory: async () => {
-      await dalService.connect(process.env.MONGO_URL as string);
-
-      return dalService;
-    },
-  },
-  ...DAL_MODELS,
 ];
 
 @Module({
