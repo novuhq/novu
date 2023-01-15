@@ -1,15 +1,22 @@
 import { useForm, Controller } from 'react-hook-form';
 import { EmailCustomCodeEditor } from '../../../components/templates/email-editor/EmailCustomCodeEditor';
-import { Center, Grid } from '@mantine/core';
+import { Center, Grid, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { ArrowLeft } from '../../../design-system/icons';
-import { Button, Checkbox, colors, Input, Text, LoadingOverlay } from '../../../design-system';
+import { Button, Checkbox, colors, Input, Text, LoadingOverlay, Tooltip } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createLayout, getLayoutById } from '../../../api/layouts';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { parse } from '@handlebars/parser';
+import { getTemplateVariables, IMustacheVariable, SystemVariablesWithTypes } from '@novu/shared';
 import { ILayoutEntity } from '@novu/shared';
 import { QueryKeys } from '../../../api/query.keys';
+import { EditGradient } from '../../../design-system/icons/gradient/EditGradient';
+import { VarLabel } from '../../../components/templates/email-editor/variables-management/VarLabel';
+import { VarItemsDropdown } from '../../../components/templates/email-editor/variables-management/VarItemsDropdown';
+import { VarItemTooltip } from '../../../components/templates/email-editor/variables-management/VarItemTooltip';
+import { useProcessVariables } from '../../../hooks/use-process-variables';
 
 export function LayoutEditor({
   id = '',
@@ -21,6 +28,9 @@ export function LayoutEditor({
   goBack: () => void;
 }) {
   const { readonly } = useEnvController();
+  const theme = useMantineTheme();
+  const [variables, setVariables] = useState<IMustacheVariable[]>([]);
+  const processedVariables = useProcessVariables(variables, false);
 
   const { data: layout, isLoading: isLoadingLayout } = useQuery<ILayoutEntity>(
     [QueryKeys.getLayoutById, id],
@@ -38,6 +48,7 @@ export function LayoutEditor({
       isDefault: layout?.isDefault || false,
     },
   });
+  const layoutContent = watch('content');
   const { mutateAsync: createNewLayout, isLoading: isLoadingCreate } = useMutation(createLayout);
 
   useEffect(() => {
@@ -56,12 +67,13 @@ export function LayoutEditor({
 
   useEffect(() => {
     try {
-      const ast = parse(content);
+      const ast = parse(layoutContent);
       const vars = getTemplateVariables(ast.body);
+      setVariables(vars);
     } catch (e) {
       return;
     }
-  }, [content]);
+  }, [layoutContent]);
 
   async function onUpdateLayout(data) {
     const updatePayload = {
@@ -89,6 +101,64 @@ export function LayoutEditor({
           Go Back
         </Text>
       </Center>
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+          borderRadius: 7,
+          padding: 15,
+        }}
+      >
+        <div
+          style={{
+            textAlign: 'right',
+            marginBottom: '20px',
+          }}
+        >
+          <Tooltip label="Add defaults or mark as required">
+            <UnstyledButton onClick={() => {}} type="button">
+              <Text gradient>
+                Edit Variables
+                <EditGradient
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    marginBottom: '-4px',
+                    marginLeft: 5,
+                  }}
+                />
+              </Text>
+            </UnstyledButton>
+          </Tooltip>
+        </div>
+        <VarLabel label="System Variables">
+          {Object.keys(SystemVariablesWithTypes).map((name, ind) => {
+            const type = SystemVariablesWithTypes[name];
+
+            if (typeof type === 'object') {
+              return <VarItemsDropdown name={name} key={ind} type={type} />;
+            }
+
+            return <VarItemTooltip pathToCopy={name} name={name} type={type} key={ind} />;
+          })}
+        </VarLabel>
+        <div
+          style={{
+            marginTop: '20px',
+          }}
+        >
+          <VarLabel label="Step Variables">
+            {Object.keys(processedVariables).map((name, ind) => {
+              if (typeof processedVariables[name] === 'object') {
+                return <VarItemsDropdown key={ind} name={name} type={processedVariables[name]} />;
+              }
+
+              return <VarItemTooltip pathToCopy={name} name={name} type={typeof processedVariables[name]} key={ind} />;
+            })}
+          </VarLabel>
+        </div>
+      </div>
       <form name={'layout-form'} onSubmit={handleSubmit(onUpdateLayout)}>
         <Grid gutter={30} grow>
           <Grid.Col md={5} sm={12}>
