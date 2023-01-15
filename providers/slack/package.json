@@ -1,6 +1,6 @@
 {
   "name": "@novu/slack",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "A slack wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -32,8 +32,8 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/node": "^0.10.1",
-    "@novu/stateless": "^0.10.1",
+    "@novu/node": "^0.10.2",
+    "@novu/stateless": "^0.10.2",
     "axios": "^0.27.2"
   },
   "devDependencies": {

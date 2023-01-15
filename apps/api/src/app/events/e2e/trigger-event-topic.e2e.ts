@@ -40,7 +40,6 @@ describe('Topic Trigger Event', () => {
     let triggerEndpointUrl: string;
     const notificationRepository = new NotificationRepository();
     const messageRepository = new MessageRepository();
-    const logRepository = new LogRepository();
 
     beforeEach(async () => {
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';

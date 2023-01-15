@@ -34,6 +34,7 @@ export class CreateSubscriber {
           email: command.email,
           phone: command.phone,
           avatar: command.avatar,
+          subscriber,
         })
       );
     }

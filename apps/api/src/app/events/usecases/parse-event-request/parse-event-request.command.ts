@@ -1,9 +1,8 @@
 import { IsDefined, IsString, IsOptional } from 'class-validator';
 import { ISubscribersDefine } from '@novu/node';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { NotificationTemplateEntity } from '@novu/dal';
 
-export class ProcessSubscriberCommand extends EnvironmentWithUserCommand {
+export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsString()
   identifier: string;
@@ -15,18 +14,12 @@ export class ProcessSubscriberCommand extends EnvironmentWithUserCommand {
   overrides: Record<string, Record<string, unknown>>;
 
   @IsDefined()
-  to: ISubscribersDefine;
+  to: ISubscribersDefine[];
 
   @IsString()
   @IsDefined()
   transactionId: string;
 
-  @IsDefined()
-  templateId: string;
-
   @IsOptional()
   actor?: ISubscribersDefine | null;
-
-  @IsOptional()
-  template?: NotificationTemplateEntity;
 }
