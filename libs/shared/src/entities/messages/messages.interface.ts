@@ -20,6 +20,7 @@ export interface IMessage {
   createdAt: string;
   cta: IMessageCTA;
   _feedId: string;
+  _layoutId: string;
   payload: Record<string, unknown>;
   actor?: IActor;
 }

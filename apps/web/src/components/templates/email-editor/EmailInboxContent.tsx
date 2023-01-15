@@ -1,7 +1,8 @@
 import { Grid, useMantineTheme } from '@mantine/core';
 import { format } from 'date-fns';
 import { Controller, useFormContext } from 'react-hook-form';
-import { colors, Input } from '../../../design-system';
+import { colors, Input, Select } from '../../../design-system';
+import { useLayouts } from '../../../api/hooks/use-layouts';
 
 export const EmailInboxContent = ({
   integration,
@@ -14,6 +15,7 @@ export const EmailInboxContent = ({
 }) => {
   const theme = useMantineTheme();
   const { control } = useFormContext();
+  const { layouts, isLoading } = useLayouts(0, 10);
 
   return (
     <div
@@ -85,6 +87,22 @@ export const EmailInboxContent = ({
           {format(new Date(), 'MMM dd')}
         </Grid.Col>
       </Grid>
+      <Controller
+        name={`steps.${index}.template.layoutId` as any}
+        control={control}
+        render={({ field }) => {
+          return (
+            <Select
+              label="Layouts"
+              data-test-id="templates-layout"
+              loading={isLoading}
+              placeholder="Select layout"
+              data={(layouts || []).map((layout) => ({ value: layout._id as string, label: layout.name }))}
+              {...field}
+            />
+          );
+        }}
+      />
     </div>
   );
 };

@@ -32,6 +32,10 @@ export class MessageTemplate {
 
   @IsOptional()
   @IsString()
+  layoutId?: string;
+
+  @IsOptional()
+  @IsString()
   name?: string;
 
   @IsOptional()

@@ -77,6 +77,9 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
         },
       },
       {
+        $sort: { createdAt: -1 },
+      },
+      {
         $skip: pagination.skip,
       },
       {

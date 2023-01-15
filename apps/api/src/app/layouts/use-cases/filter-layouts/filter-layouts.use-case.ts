@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { EnvironmentId, OrganizationId, LayoutEntity, LayoutRepository } from '@novu/dal';
+import { LayoutEntity, LayoutRepository } from '@novu/dal';
 
 import { FilterLayoutsCommand } from './filter-layouts.command';
 

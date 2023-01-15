@@ -95,13 +95,16 @@ export function useTemplateController(templateId: string) {
       };
 
       formValues.steps = (template.steps as StepEntity[]).map((item) => {
-        if (item.template.type === StepTypeEnum.EMAIL && item.template?.contentType === 'customHtml') {
+        if (item.template.type === StepTypeEnum.EMAIL) {
           return {
             ...item,
             template: {
               ...item.template,
-              htmlContent: item.template.content as string,
-              content: [],
+              layoutId: item.template._layoutId || '',
+              ...(item.template?.contentType === 'customHtml' && {
+                htmlContent: item.template.content as string,
+                content: [],
+              }),
             },
           };
         }

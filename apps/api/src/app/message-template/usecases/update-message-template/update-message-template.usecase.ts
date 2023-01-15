@@ -55,8 +55,13 @@ export class UpdateMessageTemplate {
     if (command.feedId) {
       updatePayload._feedId = command.feedId;
     }
+
     if (!command.feedId && existingTemplate._feedId) {
       updatePayload._feedId = null;
+    }
+
+    if (command.layoutId) {
+      updatePayload._layoutId = command.layoutId;
     }
 
     if (command.subject) {
