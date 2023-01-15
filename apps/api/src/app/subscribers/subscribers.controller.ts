@@ -48,6 +48,7 @@ import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/up
 import { StoreQuery } from '../widgets/queries/store.query';
 import { GetFeedCount } from '../widgets/usecases/get-feed-count/get-feed-count.usecase';
 import { GetFeedCountCommand } from '../widgets/usecases/get-feed-count/get-feed-count.command';
+import { MarkMessageAsRequestDto } from '../widgets/dtos/mark-message-as-request.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -390,7 +391,7 @@ export class SubscribersController {
   async markMessageAs(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Body() body: { messageId: string | string[]; mark: { seen?: boolean; read?: boolean } }
+    @Body() body: MarkMessageAsRequestDto
   ): Promise<MessageEntity[]> {
     if (!body.messageId) throw new BadRequestException('messageId is required');
 

@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
@@ -70,8 +70,8 @@
     "@emotion/styled": "^11.6.0",
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
-    "@novu/client": "^0.10.1",
-    "@novu/shared": "^0.10.1",
+    "@novu/client": "^0.10.2",
+    "@novu/shared": "^0.10.2",
     "@rollup/plugin-babel": "^6.0.3",
     "acorn-jsx": "^5.3.2",
     "axios": "^0.26.1",

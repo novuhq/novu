@@ -44,6 +44,7 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      DOCKER_HOSTED_ENV: 'true'
     ports:
       - "3000:3000"
   ws:

@@ -5,4 +5,5 @@ export * from './message-template';
 export * from './organization';
 export * from './subscriber';
 export * from './topic';
+export * from './analytics';
 export * from './user';

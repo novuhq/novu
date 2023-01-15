@@ -28,12 +28,15 @@ export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'g
   async validate(req, accessToken: string, refreshToken: string, githubProfile, done: (err, data) => void) {
     try {
       const profile = { ...githubProfile._json, email: githubProfile.emails[0].value };
+      const parsedState = this.parseState(req);
+
       const response = await this.authService.authenticate(
         AuthProviderEnum.GITHUB,
         accessToken,
         refreshToken,
         profile,
-        this.parseState(req)?.distinctId
+        parsedState?.distinctId,
+        parsedState?.source
       );
 
       done(null, {

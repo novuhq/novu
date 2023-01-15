@@ -1,32 +1,16 @@
-import {
-  JobEntity,
-  JobRepository,
-  NotificationTemplateEntity,
-  NotificationTemplateRepository,
-  NotificationRepository,
-} from '@novu/dal';
-import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import {
-  StepTypeEnum,
-  LogCodeEnum,
-  LogStatusEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-} from '@novu/shared';
+import { JobEntity, JobRepository, NotificationTemplateRepository, NotificationRepository } from '@novu/dal';
+import { Inject, Injectable } from '@nestjs/common';
+import { StepTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import * as hat from 'hat';
-import { merge } from 'lodash';
 
 import { TriggerEventCommand } from './trigger-event.command';
-import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
+import { CreateLog } from '../../../logs/usecases';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
 import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
-import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
-import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { AddJob } from '../add-job/add-job.usecase';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
@@ -45,64 +29,23 @@ export class TriggerEvent {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private addJobUsecase: AddJob,
     private notificationRepository: NotificationRepository,
-    private storageHelperService: StorageHelperService,
     protected createExecutionDetails: CreateExecutionDetails
   ) {}
 
   async execute(command: TriggerEventCommand) {
-    Sentry.addBreadcrumb({
-      message: 'Sending trigger',
-      data: {
-        triggerIdentifier: command.identifier,
-      },
-    });
-
-    await this.validateSubscriberIdProperty(command);
-
-    this.logEventTriggered(command);
+    await this.validateTransactionIdProperty(command.transactionId, command.organizationId, command.environmentId);
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
       command.identifier
     );
 
-    if (!template) {
-      return this.logTemplateNotFound(command);
-    }
-
-    if (!template.active || template.draft) {
-      return this.logTemplateNotActive(command, template);
-    }
-
-    if (!template.steps?.length) {
-      return {
-        acknowledged: true,
-        status: 'no_workflow_steps_defined',
-      };
-    }
-
-    if (!template.steps?.some((step) => step.active)) {
-      return {
-        acknowledged: true,
-        status: 'no_workflow_active_steps_defined',
-      };
-    }
-
-    // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
-    if (command.payload && Array.isArray(command.payload.attachments)) {
-      this.modifyAttachments(command);
-      await this.storageHelperService.uploadAttachments(command.payload.attachments);
-      command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
-    }
-
-    const defaultPayload = this.verifyPayload.execute(
-      VerifyPayloadCommand.create({
-        payload: command.payload,
-        template,
-      })
-    );
-
-    command.payload = merge({}, defaultPayload, command.payload);
+    Sentry.addBreadcrumb({
+      message: 'Sending trigger',
+      data: {
+        triggerIdentifier: command.identifier,
+      },
+    });
 
     const jobs: Omit<JobEntity, '_id'>[][] = [];
 
@@ -120,34 +63,15 @@ export class TriggerEvent {
             userId: command.organizationId,
             templateId: template._id,
             actor: command.actor,
+            template,
           })
         )
       );
     }
 
-    const steps = template.steps;
-
-    if (!command.payload.$on_boarding_trigger) {
-      this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
-        _template: template._id,
-        _organization: command.organizationId,
-        channels: steps.map((step) => step.template?.type),
-      });
-    }
-
     for (const job of jobs) {
       await this.storeAndAddJob(job);
     }
-
-    if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
-      return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
-    }
-
-    return {
-      acknowledged: true,
-      status: 'processed',
-      transactionId: command.transactionId,
-    };
   }
 
   private async storeAndAddJob(jobs: Omit<JobEntity, '_id'>[]) {
@@ -164,7 +88,7 @@ export class TriggerEvent {
       }, []);
 
     for (const job of storedJobs) {
-      await this.createExecutionDetails.execute(
+      this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_CREATED,
@@ -195,86 +119,8 @@ export class TriggerEvent {
       environmentId: firstJob._environmentId,
       organizationId: firstJob._organizationId,
       jobId: firstJob._id,
+      job: firstJob,
     });
-  }
-
-  private async logTemplateNotActive(command: TriggerEventCommand, template: NotificationTemplateEntity) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'Template not active',
-        userId: command.userId,
-        code: LogCodeEnum.TEMPLATE_NOT_ACTIVE,
-        templateId: template._id,
-        raw: {
-          payload: command.payload,
-          triggerIdentifier: command.identifier,
-        },
-      })
-    );
-
-    return {
-      acknowledged: true,
-      status: 'trigger_not_active',
-    };
-  }
-
-  private async logTemplateNotFound(command: TriggerEventCommand) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'Template not found',
-        userId: command.userId,
-        code: LogCodeEnum.TEMPLATE_NOT_FOUND,
-        raw: {
-          triggerIdentifier: command.identifier,
-        },
-      })
-    );
-    throw new UnprocessableEntityException('TEMPLATE_NOT_FOUND');
-  }
-
-  private logEventTriggered(command: TriggerEventCommand) {
-    this.createLogUsecase
-      .execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.INFO,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: 'Trigger request received',
-          userId: command.userId,
-          code: LogCodeEnum.TRIGGER_RECEIVED,
-          raw: {
-            subscribers: command.to,
-            payload: command.payload,
-          },
-        })
-      )
-      // eslint-disable-next-line no-console
-      .catch((e) => console.error(e));
-  }
-
-  private async validateSubscriberIdProperty(command: TriggerEventCommand): Promise<boolean> {
-    for (const subscriber of command.to) {
-      const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
-
-      if (!subscriberIdExists) {
-        this.logSubscriberIdMissing(command);
-
-        throw new ApiException(
-          'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
-        );
-      }
-    }
-
-    return true;
   }
 
   public async validateTransactionIdProperty(
@@ -282,14 +128,11 @@ export class TriggerEvent {
     organizationId: string,
     environmentId: string
   ): Promise<boolean> {
-    const found = await this.jobRepository.findOne(
-      {
-        transactionId,
-        _organizationId: organizationId,
-        _environmentId: environmentId,
-      },
-      '_id'
-    );
+    const found = await this.jobRepository.count({
+      transactionId,
+      _organizationId: organizationId,
+      _environmentId: environmentId,
+    });
 
     if (found) {
       throw new ApiException(
@@ -298,36 +141,5 @@ export class TriggerEvent {
     }
 
     return true;
-  }
-
-  private async logSubscriberIdMissing(command: TriggerEventCommand) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'SubscriberId missing in to property',
-        userId: command.userId,
-        code: LogCodeEnum.SUBSCRIBER_ID_MISSING,
-        raw: {
-          triggerIdentifier: command.identifier,
-        },
-      })
-    );
-
-    return {
-      acknowledged: true,
-      status: 'subscriber_id_missing',
-    };
-  }
-
-  private modifyAttachments(command: TriggerEventCommand) {
-    command.payload.attachments = command.payload.attachments.map((attachment) => ({
-      ...attachment,
-      name: attachment.name,
-      file: Buffer.from(attachment.file, 'base64'),
-      storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
-    }));
   }
 }
