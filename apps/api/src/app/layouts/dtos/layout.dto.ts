@@ -5,6 +5,7 @@ import {
   IEmailBlock,
   ITemplateVariable,
   OrganizationId,
+  LayoutDescription,
   LayoutId,
   LayoutName,
   UserId,
@@ -25,6 +26,9 @@ export class LayoutDto {
 
   @ApiProperty()
   name: LayoutName;
+
+  @ApiProperty()
+  description?: LayoutDescription;
 
   @ApiProperty()
   channel: ChannelTypeEnum;

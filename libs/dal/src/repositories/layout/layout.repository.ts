@@ -23,8 +23,18 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
   }
 
   async createLayout(entity: Omit<LayoutEntity, '_id' | 'createdAt' | 'updatedAt'>): Promise<LayoutEntity> {
-    const { channel, content, contentType, isDefault, name, variables, _creatorId, _environmentId, _organizationId } =
-      entity;
+    const {
+      channel,
+      content,
+      contentType,
+      description,
+      isDefault,
+      name,
+      variables,
+      _creatorId,
+      _environmentId,
+      _organizationId,
+    } = entity;
 
     return await this.create({
       _creatorId,
@@ -34,29 +44,26 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
       contentType,
       isDefault,
       deleted: false,
+      description,
       name,
       variables,
     });
   }
 
   async deleteLayout(_id: LayoutId, _environmentId: EnvironmentId, _organizationId: OrganizationId): Promise<void> {
-    const layout = await this.findOne({
+    const deleteQuery: EnforceEnvironmentQuery = {
       _id,
       _environmentId,
       _organizationId,
-    });
-
-    if (!layout) {
-      throw new DalException(`Could not find layout ${_id} to delete`);
-    }
-
-    const deleteQuery: EnforceEnvironmentQuery = {
-      _id: layout._id,
-      _environmentId: layout._environmentId,
-      _organizationId: layout._organizationId,
     };
 
-    await this.layout.delete(deleteQuery);
+    const result = await this.layout.delete(deleteQuery);
+
+    if (result.modifiedCount !== 1) {
+      throw new DalException(
+        `Soft delete of layout ${_id} in environment ${_environmentId} was not performed properly`
+      );
+    }
   }
 
   async filterLayouts(
@@ -95,5 +102,32 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
         isDefault: true,
       }
     );
+  }
+
+  async updateLayout(entity: LayoutEntity): Promise<LayoutEntity> {
+    const { _id, _environmentId, _organizationId, createdAt, updatedAt, ...updates } = entity;
+
+    const updated = await this.update(
+      {
+        _id,
+        _environmentId,
+        _organizationId,
+      },
+      updates
+    );
+
+    if (updated.matched === 0 || updated.modified === 0) {
+      throw new DalException(`Update of layout ${_id} in environment ${_environmentId} was not performed properly`);
+    }
+
+    const updatedEntity = await this.findOne({ _id, _environmentId, _organizationId });
+
+    if (!updatedEntity) {
+      throw new DalException(
+        `Update of layout ${_id} in environment ${_environmentId} was performed but entity could not been retrieved`
+      );
+    }
+
+    return updatedEntity;
   }
 }

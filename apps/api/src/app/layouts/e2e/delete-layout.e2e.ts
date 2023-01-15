@@ -5,7 +5,7 @@ import { TemplateVariableTypeEnum } from '../types';
 
 const BASE_PATH = '/v1/layouts';
 
-describe('Get a layout - /layouts/:layoutId (GET)', async () => {
+describe('Delete a layout - /layouts/:layoutId (DELETE)', async () => {
   let session: UserSession;
 
   before(async () => {
@@ -13,9 +13,9 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
     await session.initialize();
   });
 
-  it('should retrieve the requested layout successfully if exists in the database for that user', async () => {
-    const layoutName = 'layout-name-creation';
-    const description = 'Amazing new layout';
+  it('should soft delete the requested layout successfully if exists in the database for that user', async () => {
+    const layoutName = 'layout-name-deletion';
+    const layoutDescription = 'Amazing new layout';
     const content = [
       {
         type: 'text',
@@ -34,7 +34,7 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
     const isDefault = true;
     const response = await session.testAgent.post(BASE_PATH).send({
       name: layoutName,
-      description,
+      description: layoutDescription,
       content,
       variables,
       isDefault,
@@ -48,31 +48,19 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
     expect(createdLayout._id).to.be.string;
 
     const url = `${BASE_PATH}/${createdLayout._id}`;
-    const getResponse = await session.testAgent.get(url);
+    const getResponse = await session.testAgent.delete(url);
 
-    expect(getResponse.statusCode).to.eql(200);
+    expect(getResponse.statusCode).to.eql(204);
+    expect(getResponse.body).to.eql({});
 
-    const layout = getResponse.body.data;
-
-    expect(layout._id).to.eql(createdLayout._id);
-    expect(layout._environmentId).to.eql(session.environment._id);
-    expect(layout._organizationId).to.eql(session.organization._id);
-    expect(layout._creatorId).to.eql(session.user._id);
-    expect(layout.name).to.eql(layoutName);
-    expect(layout.description).to.eql(description);
-    expect(layout.content).to.eql(content);
-    expect(layout.variables).to.eql(variables);
-    expect(layout.contentType).to.eql('customHtml');
-    expect(layout.isDefault).to.eql(true);
-    expect(layout.isDeleted).to.eql(false);
-    expect(layout.createdAt).to.be.ok;
-    expect(layout.updatedAt).to.be.ok;
+    const checkIfDeletedResponse = await session.testAgent.get(url);
+    expect(checkIfDeletedResponse.statusCode).to.eql(404);
   });
 
-  it('should throw a not found error when the layout ID does not exist in the database for the user requesting it', async () => {
+  it('should throw a not found error when the layout ID to soft delete does not exist in the database', async () => {
     const nonExistingLayoutId = 'ab12345678901234567890ab';
     const url = `${BASE_PATH}/${nonExistingLayoutId}`;
-    const { body } = await session.testAgent.get(url);
+    const { body } = await session.testAgent.delete(url);
 
     expect(body.statusCode).to.equal(404);
     expect(body.message).to.eql(
