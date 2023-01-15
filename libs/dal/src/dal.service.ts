@@ -6,7 +6,7 @@ export class DalService {
 
   async connect(url: string, config: ConnectOptions = {}) {
     const baseConfig: ConnectOptions = {
-      maxPoolSize: 900,
+      maxPoolSize: 700,
       minPoolSize: process.env.NODE_ENV === 'prod' ? 500 : 10,
     };
 
