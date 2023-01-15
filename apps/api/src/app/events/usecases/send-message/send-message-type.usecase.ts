@@ -43,21 +43,6 @@ export abstract class SendMessageType {
       errorId,
       errorString
     );
-
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        notificationId: notification._id,
-        text: errorString,
-        userId: command.userId,
-        subscriberId: command.subscriberId,
-        code: logCodeEnum,
-        templateId: notification._templateId,
-      })
-    );
   }
 }
 

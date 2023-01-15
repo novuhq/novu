@@ -17,7 +17,6 @@ describe('Filter topics - /topics (GET)', async () => {
     await session.initialize();
 
     await createNewTopic(session, 'topic-key-1');
-    await createNewTopic(session, 'topic-key-3');
 
     const secondTopicKey = 'topic-key-2';
     await createNewTopic(session, secondTopicKey);
@@ -26,6 +25,8 @@ describe('Filter topics - /topics (GET)', async () => {
     secondSubscriber = await subscribersService.createSubscriber();
     const subscribers = [firstSubscriber.subscriberId, secondSubscriber.subscriberId];
     await addSubscribersToTopic(session, secondTopicKey, subscribers);
+
+    await createNewTopic(session, 'topic-key-3');
 
     const topicSubscribersRepository = new TopicSubscribersRepository();
     const result = await topicSubscribersRepository.find({
@@ -45,9 +46,9 @@ describe('Filter topics - /topics (GET)', async () => {
     expect(response.statusCode).to.eql(400);
     expect(response.body.error).to.eql('Bad Request');
     expect(response.body.message).to.eql([
-      'page must be a positive number',
+      'page must not be less than 0',
       'page must be an integer number',
-      'pageSize must be a positive number',
+      'pageSize must not be less than 0',
       'pageSize must be an integer number',
     ]);
   });
@@ -67,7 +68,7 @@ describe('Filter topics - /topics (GET)', async () => {
 
     expect(response.statusCode).to.eql(400);
     expect(response.body.error).to.eql('Bad Request');
-    expect(response.body.message).to.eql(['page must be a positive number', 'pageSize must be a positive number']);
+    expect(response.body.message).to.eql(['page must not be less than 0', 'pageSize must not be less than 0']);
   });
 
   it('should return a Bad Request error if the page size requested is bigger than the default one (10)', async () => {
@@ -140,6 +141,53 @@ describe('Filter topics - /topics (GET)', async () => {
     expect(totalCount).to.eql(3);
     expect(page).to.eql(0);
     expect(pageSize).to.eql(10);
+  });
+
+  it('should retrieve two topics from the database for the environment if pageSize is set to 2 and page 0 selected', async () => {
+    const url = `${BASE_PATH}?page=0&pageSize=2`;
+    const response = await session.testAgent.get(url);
+
+    expect(response.statusCode).to.eql(200);
+
+    const { data, totalCount, page, pageSize } = response.body;
+
+    expect(data.length).to.eql(2);
+    expect(totalCount).to.eql(3);
+    expect(page).to.eql(0);
+    expect(pageSize).to.eql(2);
+
+    expect(data[0].name).to.eql('topic-key-1-name');
+    expect(data[1].name).to.eql('topic-key-2-name');
+  });
+
+  it('should retrieve one topic from the database for the environment if pageSize is set to 2 and page 1 selected', async () => {
+    const url = `${BASE_PATH}?page=1&pageSize=2`;
+    const response = await session.testAgent.get(url);
+
+    expect(response.statusCode).to.eql(200);
+
+    const { data, totalCount, page, pageSize } = response.body;
+
+    expect(data.length).to.eql(1);
+    expect(totalCount).to.eql(3);
+    expect(page).to.eql(1);
+    expect(pageSize).to.eql(2);
+
+    expect(data[0].name).to.eql('topic-key-3-name');
+  });
+
+  it('should retrieve zero topics from the database for the environment if pageSize is set to 2 and page 2 selected', async () => {
+    const url = `${BASE_PATH}?page=2&pageSize=2`;
+    const response = await session.testAgent.get(url);
+
+    expect(response.statusCode).to.eql(200);
+
+    const { data, totalCount, page, pageSize } = response.body;
+
+    expect(data.length).to.eql(0);
+    expect(totalCount).to.eql(3);
+    expect(page).to.eql(2);
+    expect(pageSize).to.eql(2);
   });
 });
 

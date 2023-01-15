@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
+import { isEqual } from 'lodash';
 import { IChannelSettings, SubscriberRepository, IntegrationRepository, SubscriberEntity } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
-import { InvalidateCache } from '../../../shared/interceptors';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class UpdateSubscriberChannel {
   constructor(
+    private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
     private integrationRepository: IntegrationRepository
   ) {}
 
-  @InvalidateCache(CacheKeyPrefixEnum.SUBSCRIBER)
   async execute(command: UpdateSubscriberChannelCommand) {
     const foundSubscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
@@ -66,6 +66,11 @@ export class UpdateSubscriberChannel {
     updatePayload._integrationId = foundIntegration._id;
     updatePayload.providerId = command.providerId;
 
+    await this.invalidateCache.clearCache({
+      storeKeyPrefix: CacheKeyPrefixEnum.SUBSCRIBER,
+      credentials: { _id: foundSubscriber._id, _environmentId: foundSubscriber._environmentId },
+    });
+
     await this.subscriberRepository.update(
       { _environmentId: command.environmentId, _id: foundSubscriber },
       {
@@ -82,6 +87,17 @@ export class UpdateSubscriberChannel {
     updatePayload: Partial<IChannelSettings>,
     foundSubscriber
   ) {
+    const equal = isEqual(existingChannel.credentials, updatePayload.credentials); // returns false if different
+
+    if (equal) {
+      return;
+    }
+
+    await this.invalidateCache.clearCache({
+      storeKeyPrefix: CacheKeyPrefixEnum.SUBSCRIBER,
+      credentials: { _id: foundSubscriber._id, _environmentId: foundSubscriber._environmentId },
+    });
+
     const mergedChannel = Object.assign(existingChannel, updatePayload);
 
     await this.subscriberRepository.update(
