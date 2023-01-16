@@ -9,6 +9,7 @@ import { GetDecryptedIntegrations } from './get-decrypted-integrations/get-decry
 import { CheckIntegration } from './check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
 import { GetNovuIntegration } from './get-novu-integration';
+import { CalculateLimitNovuIntegration } from './calculate-limit-novu-integration';
 
 export const USE_CASES = [
   GetWebhookSupportStatus,
@@ -22,4 +23,5 @@ export const USE_CASES = [
   CheckIntegration,
   CheckIntegrationEMail,
   GetNovuIntegration,
+  CalculateLimitNovuIntegration,
 ];
