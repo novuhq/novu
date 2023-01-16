@@ -92,4 +92,31 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
       }
     );
   }
+
+  async updateLayout(entity: LayoutEntity): Promise<LayoutEntity> {
+    const { _id, _environmentId, _organizationId, createdAt, updatedAt, ...updates } = entity;
+
+    const updated = await this.update(
+      {
+        _id,
+        _environmentId,
+        _organizationId,
+      },
+      updates
+    );
+
+    if (updated.matched === 0 || updated.modified === 0) {
+      throw new DalException(`Update of layout ${_id} in environment ${_environmentId} was not performed properly`);
+    }
+
+    const updatedEntity = await this.findOne({ _id, _environmentId, _organizationId });
+
+    if (!updatedEntity) {
+      throw new DalException(
+        `Update of layout ${_id} in environment ${_environmentId} was performed but entity could not been retrieved`
+      );
+    }
+
+    return updatedEntity;
+  }
 }

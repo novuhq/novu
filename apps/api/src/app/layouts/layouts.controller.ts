@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,6 +8,7 @@ import {
   HttpStatus,
   Inject,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -27,6 +29,8 @@ import {
   FilterLayoutsRequestDto,
   FilterLayoutsResponseDto,
   GetLayoutResponseDto,
+  UpdateLayoutRequestDto,
+  UpdateLayoutResponseDto,
 } from './dtos';
 import {
   CreateLayoutCommand,
@@ -37,6 +41,8 @@ import {
   FilterLayoutsUseCase,
   GetLayoutCommand,
   GetLayoutUseCase,
+  UpdateLayoutCommand,
+  UpdateLayoutUseCase,
 } from './use-cases';
 import { LayoutId } from './types';
 
@@ -55,6 +61,7 @@ export class LayoutsController {
     private deleteLayoutUseCase: DeleteLayoutUseCase,
     private filterLayoutsUseCase: FilterLayoutsUseCase,
     private getLayoutUseCase: GetLayoutUseCase,
+    private updateLayoutUseCase: UpdateLayoutUseCase,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -151,6 +158,37 @@ export class LayoutsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         layoutId,
+      })
+    );
+  }
+
+  @Patch('/:layoutId')
+  @ExternalApiAccessible()
+  @ApiOkResponse({
+    type: UpdateLayoutResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Update a layout',
+    description: 'Update the name, content and variables of a layout. Also change it to be default or no.',
+  })
+  async updateLayout(
+    @UserSession() user: IJwtPayload,
+    @Param('layoutId') layoutId: LayoutId,
+    @Body() body: UpdateLayoutRequestDto
+  ): Promise<UpdateLayoutResponseDto> {
+    if (!body || Object.keys(body).length === 0) {
+      throw new BadRequestException('Payload can not be empty');
+    }
+
+    return await this.updateLayoutUseCase.execute(
+      UpdateLayoutCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        layoutId,
+        name: body.name,
+        content: body.content,
+        variables: body.variables,
+        isDefault: body.isDefault,
       })
     );
   }
