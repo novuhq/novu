@@ -833,6 +833,7 @@ importers:
       '@nestjs/terminus': ^7.2.0
       '@nestjs/testing': ^7.6.17
       '@nestjs/websockets': ^9.2.1
+      '@novu/dal': ^0.10.2
       '@novu/shared': ^0.10.2
       '@novu/testing': ^0.10.2
       '@sentry/node': ^7.30.0
@@ -876,6 +877,7 @@ importers:
       '@nestjs/swagger': 4.8.2_nbdecqaxleyhtlunrwnfx32c5i
       '@nestjs/terminus': 7.2.0_wm2v5kvloi7ffzyl7suhjvomxe
       '@nestjs/websockets': 9.2.1_prbpmj4dbrzta2vwkktnn5u5v4
+      '@novu/dal': link:../../libs/dal
       '@novu/shared': link:../../libs/shared
       '@novu/testing': link:../../libs/testing
       '@sentry/node': 7.30.0
