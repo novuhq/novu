@@ -1,5 +1,24 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
 
 import {
@@ -12,6 +31,8 @@ import {
 import {
   CreateLayoutCommand,
   CreateLayoutUseCase,
+  DeleteLayoutCommand,
+  DeleteLayoutUseCase,
   FilterLayoutsCommand,
   FilterLayoutsUseCase,
   GetLayoutCommand,
@@ -31,6 +52,7 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 export class LayoutsController {
   constructor(
     private createLayoutUseCase: CreateLayoutUseCase,
+    private deleteLayoutUseCase: DeleteLayoutUseCase,
     private filterLayoutsUseCase: FilterLayoutsUseCase,
     private getLayoutUseCase: GetLayoutUseCase,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
@@ -111,6 +133,21 @@ export class LayoutsController {
   ): Promise<GetLayoutResponseDto> {
     return await this.getLayoutUseCase.execute(
       GetLayoutCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        layoutId,
+      })
+    );
+  }
+
+  @Delete('/:layoutId')
+  @ExternalApiAccessible()
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete layout', description: 'Execute a soft delete of a layout given a certain ID.' })
+  async deleteLayout(@UserSession() user: IJwtPayload, @Param('layoutId') layoutId: LayoutId): Promise<void> {
+    return await this.deleteLayoutUseCase.execute(
+      DeleteLayoutCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         layoutId,

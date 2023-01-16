@@ -40,23 +40,19 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
   }
 
   async deleteLayout(_id: LayoutId, _environmentId: EnvironmentId, _organizationId: OrganizationId): Promise<void> {
-    const layout = await this.findOne({
+    const deleteQuery: EnforceEnvironmentQuery = {
       _id,
       _environmentId,
       _organizationId,
-    });
-
-    if (!layout) {
-      throw new DalException(`Could not find layout ${_id} to delete`);
-    }
-
-    const deleteQuery: EnforceEnvironmentQuery = {
-      _id: layout._id,
-      _environmentId: layout._environmentId,
-      _organizationId: layout._organizationId,
     };
 
-    await this.layout.delete(deleteQuery);
+    const result = await this.layout.delete(deleteQuery);
+
+    if (result.modifiedCount !== 1) {
+      throw new DalException(
+        `Soft delete of layout ${_id} in environment ${_environmentId} was not performed properly`
+      );
+    }
   }
 
   async filterLayouts(
