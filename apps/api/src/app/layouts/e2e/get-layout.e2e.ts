@@ -15,6 +15,7 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
 
   it('should retrieve the requested layout successfully if exists in the database for that user', async () => {
     const layoutName = 'layout-name-creation';
+    const description = 'Amazing new layout';
     const content = [
       {
         type: 'text',
@@ -33,6 +34,7 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
     const isDefault = true;
     const response = await session.testAgent.post(BASE_PATH).send({
       name: layoutName,
+      description,
       content,
       variables,
       isDefault,
@@ -57,6 +59,7 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
     expect(layout._organizationId).to.eql(session.organization._id);
     expect(layout._creatorId).to.eql(session.user._id);
     expect(layout.name).to.eql(layoutName);
+    expect(layout.description).to.eql(description);
     expect(layout.content).to.eql(content);
     expect(layout.variables).to.eql(variables);
     expect(layout.contentType).to.eql('customHtml');

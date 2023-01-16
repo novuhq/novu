@@ -137,6 +137,7 @@ describe('Filter layouts - /layouts (GET)', async () => {
 });
 
 const createNewLayout = async (session: UserSession, layoutName: LayoutName): Promise<CreateLayoutResponseDto> => {
+  const description = 'Amazing new layout';
   const content = [
     {
       type: 'text',
@@ -157,6 +158,7 @@ const createNewLayout = async (session: UserSession, layoutName: LayoutName): Pr
     .post(BASE_PATH)
     .send({
       name: layoutName,
+      description,
       content,
       variables,
       isDefault,

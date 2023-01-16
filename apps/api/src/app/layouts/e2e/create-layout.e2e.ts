@@ -28,6 +28,7 @@ describe('Layout creation - /layouts (POST)', async () => {
 
   it('should create a new layout successfully', async () => {
     const layoutName = 'layout-name-creation';
+    const layoutDescription = 'Amazing new layout';
     const content = [
       {
         type: 'text',
@@ -45,6 +46,7 @@ describe('Layout creation - /layouts (POST)', async () => {
     const isDefault = true;
     const response = await session.testAgent.post(URL).send({
       name: layoutName,
+      description: layoutDescription,
       content,
       variables,
       isDefault,
