@@ -17,11 +17,10 @@ export class DeleteLayoutUseCase {
 
     const layout = await this.getLayoutUseCase.execute(getLayoutCommand);
 
-    const result = await this.layoutRepository.deleteLayout(
+    await this.layoutRepository.deleteLayout(
       LayoutRepository.convertStringToObjectId(command.layoutId),
       LayoutRepository.convertStringToObjectId(layout._environmentId),
       LayoutRepository.convertStringToObjectId(layout._organizationId)
     );
-    console.log({ result });
   }
 }
