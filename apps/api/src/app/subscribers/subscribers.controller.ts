@@ -53,6 +53,7 @@ import {
   UpdateSubscriberOnlineFlag,
   UpdateSubscriberOnlineFlagCommand,
 } from './usecases/update-subscriber-online-flag';
+import { MarkMessageAsRequestDto } from '../widgets/dtos/mark-message-as-request.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -421,7 +422,7 @@ export class SubscribersController {
   async markMessageAs(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Body() body: { messageId: string | string[]; mark: { seen?: boolean; read?: boolean } }
+    @Body() body: MarkMessageAsRequestDto
   ): Promise<MessageEntity[]> {
     if (!body.messageId) throw new BadRequestException('messageId is required');
 

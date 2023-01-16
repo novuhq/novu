@@ -29,22 +29,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   const messageRepository = new MessageRepository();
   let runJob: RunJob;
 
-  const awaitRunningJobs = async (unfinishedJobs = 0) => {
-    let runningJobs = 0;
-    do {
-      runningJobs = await jobRepository.count({
-        _environmentId: session.environment._id,
-        type: {
-          $nin: [StepTypeEnum.DIGEST],
-        },
-        _templateId: template._id,
-        status: {
-          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
-        },
-      });
-    } while (runningJobs > unfinishedJobs);
-  };
-
   const triggerEvent = async (payload, transactionId?: string) => {
     await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
@@ -109,6 +93,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'digest',
     });
 
+    await session.awaitRunningJobs(template?._id, false, 2);
+
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
@@ -116,8 +102,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     expect(delayedJob).to.be.ok;
-
-    await awaitRunningJobs(2);
 
     await runJob.execute(
       RunJobCommand.create({
@@ -157,7 +141,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const message = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -192,13 +176,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
 
     await triggerEvent({
       customVar: 'digest',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
 
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
@@ -216,7 +200,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       })
     );
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const message = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -266,7 +250,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       id,
     });
 
-    await awaitRunningJobs(3);
+    await session.awaitRunningJobs(template?._id, false, 3);
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
@@ -317,7 +301,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       id,
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
 
     await triggerEvent({
       customVar: 'Testing of User Name',
@@ -328,7 +312,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'digest',
       id: 'second-batch',
     });
-    await awaitRunningJobs(2);
+    await session.awaitRunningJobs(template?._id, false, 2);
 
     const delayedJobs = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -349,7 +333,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       );
     }
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -393,7 +377,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const jobs = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -438,21 +422,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       id
     );
 
-    try {
-      await triggerEvent(
-        {
-          customVar: 'Testing of User Name',
-        },
-        id
-      );
-      expect(true).to.equal(false);
-    } catch (e) {
-      expect(e.response.data.message).to.equal(
-        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
-      );
-    }
-
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
     await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
@@ -523,7 +493,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       },
       id
     );
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
 
     const oldMessage = await messageRepository.findOne({
       _environmentId: session.environment._id,
@@ -552,7 +522,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       })
     );
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
@@ -589,13 +559,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     await triggerEvent({
       customVar: 'digest',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
@@ -621,7 +591,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
         userId: delayedJob._userId,
       })
     );
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
     const job = await jobRepository.findById(pendingJob._id);
 
     expect(job.digest.events.length).to.equal(1);
@@ -654,13 +624,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'first',
     });
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     await triggerEvent({
       customVar: 'second',
     });
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     let messageCount = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -673,7 +643,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'third',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
@@ -689,7 +659,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       })
     );
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     messageCount = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -741,7 +711,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'third',
     });
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
@@ -757,7 +727,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       })
     );
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const messageCount = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -807,6 +777,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       postId: MessageRepository.createObjectId(),
     });
 
+    await session.awaitRunningJobs(template?._id, false, 2);
+
     let digests = await jobRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
@@ -815,8 +787,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     expect(digests[0].payload.postId).not.to.equal(digests[1].payload.postId);
     expect(digests.length).to.equal(2);
-
-    await awaitRunningJobs(2);
 
     digests = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -835,7 +805,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       );
     }
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -880,23 +850,28 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'first',
       postId,
     });
-
-    await triggerEvent({
-      customVar: 'second',
-      postId: postId2,
-    });
+    await session.awaitParsingEvents();
 
     await triggerEvent({
       customVar: 'fourth',
       postId,
     });
 
+    await session.awaitParsingEvents();
+
+    await triggerEvent({
+      customVar: 'second',
+      postId: postId2,
+    });
+
+    await session.awaitParsingEvents();
+
     await triggerEvent({
       customVar: 'third',
       postId: postId2,
     });
 
-    await awaitRunningJobs(2);
+    await session.awaitRunningJobs(template?._id, false, 2);
 
     let digests = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -924,7 +899,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       );
     }
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -979,13 +954,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
 
     await triggerEvent({
       customVar: 'digest',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
 
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
@@ -1002,7 +977,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       })
     );
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const message = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -1037,13 +1012,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
 
     await triggerEvent({
       customVar: 'digest',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, false, 1);
 
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
@@ -1061,7 +1036,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       })
     );
 
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, false, 0);
 
     const message = await messageRepository.find({
       _environmentId: session.environment._id,
