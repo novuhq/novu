@@ -55,6 +55,7 @@ export const SystemVariablesWithTypes = {
     email: 'string',
     phone: 'string',
     avatar: 'string',
+    locale: 'string',
     subscriberId: 'string',
   },
   step: {
