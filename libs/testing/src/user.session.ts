@@ -6,7 +6,7 @@ import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 import { Queue } from 'bullmq';
 import { TriggerRecipientsPayload } from '@novu/node';
-import { EmailBlockTypeEnum, getRedisPrefix, IEmailBlock, StepTypeEnum } from '@novu/shared';
+import { EmailBlockTypeEnum, IEmailBlock, StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
   EnvironmentEntity,
@@ -31,13 +31,6 @@ import { CreateTemplatePayload } from './create-notification-template.interface'
 import { IntegrationService } from './integration.service';
 import { UserService } from './user.service';
 
-const EMAIL_BLOCK: IEmailBlock[] = [
-  {
-    type: EmailBlockTypeEnum.TEXT,
-    content: 'Email Content',
-  },
-];
-
 /**
  * TODO: move this to a reusable area
  */
@@ -56,6 +49,14 @@ const queue = new Queue('trigger-handler', {
 });
 
 queue.obliterate({ force: true });
+
+const EMAIL_BLOCK: IEmailBlock[] = [
+  {
+    type: EmailBlockTypeEnum.TEXT,
+    content: 'Email Content',
+  },
+];
+
 export class UserSession {
   private environmentRepository = new EnvironmentRepository();
   private notificationGroupRepository = new NotificationGroupRepository();
@@ -223,17 +224,6 @@ export class UserSession {
         fontColor: '#214e49',
         contentBackground: '#c2cbd2',
         fontFamily: 'Montserrat',
-      })
-      .expect(200);
-
-    await this.testAgent
-      .put('/v1/channels/sms/settings')
-      .send({
-        twillio: {
-          authToken: '123456',
-          phoneNumber: '45678',
-          accountSid: '123123',
-        },
       })
       .expect(200);
 

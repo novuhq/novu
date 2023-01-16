@@ -1,22 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity, MessageRepository, IntegrationRepository } from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { GetNovuIntegrationCommand } from './get-novu-integration.command';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { startOfMonth, endOfMonth } from 'date-fns';
+import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
+import { CalculateLimitNovuIntegrationCommand } from '../calculate-limit-novu-integration/calculate-limit-novu-integration.command';
 
 @Injectable()
 export class GetNovuIntegration {
-  constructor(private messageRepository: MessageRepository, private integrationRepository: IntegrationRepository) {}
-
-  static MAX_NOVU_INTEGRATION_MAIL_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_MAIL_REQUESTS || '300', 10);
+  constructor(
+    private integrationRepository: IntegrationRepository,
+    private calculateLimitNovuIntegration: CalculateLimitNovuIntegration
+  ) {}
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity | undefined> {
     if (process.env.DOCKER_HOSTED_ENV === 'true') {
-      return;
-    }
-    const providerId = this.getProviderId(command.channelType);
-
-    if (providerId === undefined) {
       return;
     }
 
@@ -31,14 +28,19 @@ export class GetNovuIntegration {
       return;
     }
 
-    const messagesCount = await this.messageRepository.count({
-      channel: command.channelType,
-      _organizationId: command.organizationId,
-      providerId,
-      createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
-    });
+    const limit = await this.calculateLimitNovuIntegration.execute(
+      CalculateLimitNovuIntegrationCommand.create({
+        channelType: command.channelType,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      })
+    );
 
-    if (messagesCount >= GetNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS) {
+    if (!limit) {
+      return;
+    }
+
+    if (limit.count >= limit.limit) {
       // add analytics event.
       throw new Error(`Limit for Novus ${command.channelType.toLowerCase()} provider was reached.`);
     }
@@ -64,15 +66,6 @@ export class GetNovuIntegration {
     };
 
     return item;
-  }
-
-  private getProviderId(type: ChannelTypeEnum) {
-    switch (type) {
-      case ChannelTypeEnum.EMAIL:
-        return EmailProviderIdEnum.Novu;
-      default:
-        return undefined;
-    }
   }
 
   public static mapProviders(type: ChannelTypeEnum, providerId: string) {

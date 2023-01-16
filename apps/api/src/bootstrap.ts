@@ -59,6 +59,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
+      forbidUnknownValues: false,
     })
   );
 

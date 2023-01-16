@@ -63,7 +63,7 @@
     "@novu/twilio": "^0.10.2",
     "@sentry/node": "^7.12.1",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.13.2",
+    "class-validator": "^0.14.0",
     "node-fetch": "^3.2.10"
   },
   "devDependencies": {
