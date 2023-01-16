@@ -80,6 +80,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       firstName: 'Test Name',
       lastName: 'Last of name',
       email: 'test@email.novu',
+      locale: 'en',
     };
     const { data: body } = await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
@@ -106,6 +107,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(createdSubscriber.firstName).to.equal(payload.firstName);
     expect(createdSubscriber.lastName).to.equal(payload.lastName);
     expect(createdSubscriber.email).to.equal(payload.email);
+    expect(createdSubscriber.locale).to.equal(payload.locale);
   });
 
   it('should override subscriber email based on event data', async function () {
