@@ -10,7 +10,7 @@ import {
   UserEntity,
   UserRepository,
 } from '@novu/dal';
-import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum } from '@novu/shared';
+import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum, SignUpOriginEnum } from '@novu/shared';
 
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
@@ -43,7 +43,8 @@ export class AuthService {
     accessToken: string,
     refreshToken: string,
     profile: { name: string; login: string; email: string; avatar_url: string; id: string },
-    distinctId: string
+    distinctId: string,
+    origin?: SignUpOriginEnum
   ) {
     let user = await this.userRepository.findByLoginProvider(profile.id, authProvider);
     let newUser = false;
@@ -65,14 +66,15 @@ export class AuthService {
       );
       newUser = true;
 
-      this.analyticsService.upsertUser(user, distinctId || user._id);
-
       if (distinctId) {
         this.analyticsService.alias(distinctId, user._id);
       }
 
+      this.analyticsService.upsertUser(user, user._id);
+
       this.analyticsService.track('[Authentication] - Signup', user._id, {
         loginType: authProvider,
+        origin: origin,
       });
     } else {
       this.analyticsService.track('[Authentication] - Login', user._id, {
@@ -98,7 +100,7 @@ export class AuthService {
   }
 
   async apiKeyAuthenticate(apiKey: string) {
-    const environment = await this.environmentRepository.findByApiKey(apiKey);
+    const environment = await this.getEnvironment({ _id: apiKey });
     if (!environment) throw new UnauthorizedException('API Key not found');
 
     const key = environment.apiKeys.find((i) => i.key === apiKey);
@@ -274,5 +276,14 @@ export class AuthService {
   @Cached(CacheKeyPrefixEnum.USER)
   private async getUser({ _id }: { _id: string }) {
     return await this.userRepository.findById(_id);
+  }
+
+  @Cached(CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY)
+  private async getEnvironment({ _id }: { _id: string }) {
+    /**
+     * _id is used here because the Cached decorator needs and it.
+     * TODO: Refactor cached decorator to support custom keys
+     */
+    return await this.environmentRepository.findByApiKey(_id);
   }
 }

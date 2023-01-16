@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import {
   DalService,
   UserRepository,
@@ -10,7 +11,7 @@ import {
   MessageRepository,
   MemberRepository,
 } from '@novu/dal';
-import { JwtModule } from '@nestjs/jwt';
+
 import { QueueService } from './queue';
 import { SubscriberOnlineService } from './subscriber-online';
 
@@ -42,8 +43,8 @@ const PROVIDERS = [
       return dalService;
     },
   },
-  SubscriberOnlineService,
   ...DAL_MODELS,
+  SubscriberOnlineService,
 ];
 
 @Module({

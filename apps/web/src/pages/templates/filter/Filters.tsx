@@ -66,7 +66,7 @@ export const translateOperator = (operator?: BuilderFieldOperator) => {
   return 'equal';
 };
 
-const getFilterLabel = (filter: FilterParts): string => {
+export const getFilterLabel = (filter: FilterParts): string => {
   if (filter.on === 'isOnline') {
     return `is online right now ${translateOperator('EQUAL')}`;
   }

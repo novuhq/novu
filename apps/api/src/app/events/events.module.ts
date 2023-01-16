@@ -13,6 +13,7 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { StorageHelperService } from './services/storage-helper-service/storage-helper.service';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
 import { TopicsModule } from '../topics/topics.module';
+import { TriggerHandlerQueueService } from './services/workflow-queue/trigger-handler-queue.service';
 
 @Module({
   imports: [
@@ -28,6 +29,6 @@ import { TopicsModule } from '../topics/topics.module';
     TopicsModule,
   ],
   controllers: [EventsController],
-  providers: [...USE_CASES, WorkflowQueueService, StorageHelperService],
+  providers: [...USE_CASES, WorkflowQueueService, StorageHelperService, TriggerHandlerQueueService],
 })
 export class EventsModule {}
