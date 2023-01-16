@@ -1,8 +1,8 @@
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues, FilterPartType } from '@novu/shared';
+import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues, FilterPartTypeEnum } from '@novu/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class BaseFilterPart {
-  on: FilterPartType;
+  on: FilterPartTypeEnum;
 }
 
 class BaseFieldFilterPart extends BaseFilterPart {
@@ -35,16 +35,16 @@ class BaseFieldFilterPart extends BaseFilterPart {
 
 class FieldFilterPart extends BaseFieldFilterPart {
   @ApiProperty({
-    enum: ['payload', 'subscriber'],
+    enum: [FilterPartTypeEnum.SUBSCRIBER, FilterPartTypeEnum.PAYLOAD],
   })
-  on: 'payload' | 'subscriber';
+  on: FilterPartTypeEnum.SUBSCRIBER | FilterPartTypeEnum.PAYLOAD;
 }
 
 class WebhookFilterPart extends BaseFieldFilterPart {
   @ApiProperty({
-    enum: ['webhook'],
+    enum: [FilterPartTypeEnum.WEBHOOK],
   })
-  on: 'webhook';
+  on: FilterPartTypeEnum.WEBHOOK;
 
   @ApiPropertyOptional()
   webhookUrl: string;
@@ -52,9 +52,9 @@ class WebhookFilterPart extends BaseFieldFilterPart {
 
 class RealtimeOnlineFilterPart extends BaseFilterPart {
   @ApiProperty({
-    enum: ['isOnline'],
+    enum: [FilterPartTypeEnum.IS_ONLINE],
   })
-  on: 'isOnline';
+  on: FilterPartTypeEnum.IS_ONLINE;
 
   @ApiProperty()
   value: boolean;
@@ -62,9 +62,9 @@ class RealtimeOnlineFilterPart extends BaseFilterPart {
 
 class OnlineInLastFilterPart extends BaseFilterPart {
   @ApiProperty({
-    enum: ['isOnlineInLast'],
+    enum: [FilterPartTypeEnum.IS_ONLINE_IN_LAST],
   })
-  on: 'isOnlineInLast';
+  on: FilterPartTypeEnum.IS_ONLINE_IN_LAST;
 
   @ApiProperty({
     enum: ['minutes', 'hours', 'days'],

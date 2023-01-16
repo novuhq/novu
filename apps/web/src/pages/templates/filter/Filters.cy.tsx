@@ -4,6 +4,7 @@ import {
   IOnlineInLastFilterPart,
   IWebhookFilterPart,
   IFieldFilterPart,
+  FilterPartTypeEnum,
 } from '@novu/shared';
 import { TestWrapper } from '../../../testing';
 import { Filters, translateOperator, getFilterLabel } from './Filters';
@@ -84,7 +85,7 @@ describe('Filters Component', function () {
               {
                 children: [
                   {
-                    on: 'payload',
+                    on: FilterPartTypeEnum.PAYLOAD,
                     field: 'name',
                     value: 'Novu',
                     operator: 'EQUAL',
@@ -113,18 +114,22 @@ describe('Filters Component', function () {
   });
 
   it('should print correct filter description value according to the filter type', () => {
-    const onlineRightNowFilter: IRealtimeOnlineFilterPart = { on: 'isOnline', value: true };
-    const onlineInLastFilter: IOnlineInLastFilterPart = { on: 'isOnlineInLast', timeOperator: 'hours', value: 5 };
+    const onlineRightNowFilter: IRealtimeOnlineFilterPart = { on: FilterPartTypeEnum.IS_ONLINE, value: true };
+    const onlineInLastFilter: IOnlineInLastFilterPart = {
+      on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
+      timeOperator: 'hours',
+      value: 5,
+    };
     const webhookFilter: IWebhookFilterPart = {
       field: 'test-field',
-      on: 'webhook',
+      on: FilterPartTypeEnum.WEBHOOK,
       operator: 'EQUAL',
       value: 'test',
       webhookUrl: 'test-url',
     };
     const fieldFilters: IFieldFilterPart = {
       field: 'test-field',
-      on: 'payload',
+      on: FilterPartTypeEnum.PAYLOAD,
       operator: 'IN',
       value: 'test-value',
     };

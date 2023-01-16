@@ -1,5 +1,7 @@
 import { Divider, Grid, Group, Modal, useMantineTheme } from '@mantine/core';
 import { Controller, useFieldArray } from 'react-hook-form';
+import { FILTER_TO_LABEL, FilterPartTypeEnum } from '@novu/shared';
+
 import { When } from '../../../components/utils/When';
 import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
 import { Trash } from '../../../design-system/icons';
@@ -117,11 +119,17 @@ export function FilterModal({
                       <Select
                         placeholder="On"
                         data={[
-                          { value: 'payload', label: 'Payload' },
-                          { value: 'subscriber', label: 'Subscriber' },
-                          { value: 'webhook', label: 'Webhook' },
-                          { value: 'isOnline', label: 'Online right now' },
-                          { value: 'isOnlineInLast', label: "Online in the last 'X' time period" },
+                          { value: FilterPartTypeEnum.PAYLOAD, label: FILTER_TO_LABEL[FilterPartTypeEnum.PAYLOAD] },
+                          {
+                            value: FilterPartTypeEnum.SUBSCRIBER,
+                            label: FILTER_TO_LABEL[FilterPartTypeEnum.SUBSCRIBER],
+                          },
+                          { value: FilterPartTypeEnum.WEBHOOK, label: FILTER_TO_LABEL[FilterPartTypeEnum.WEBHOOK] },
+                          { value: FilterPartTypeEnum.IS_ONLINE, label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE] },
+                          {
+                            value: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
+                            label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE_IN_LAST],
+                          },
                         ]}
                         {...field}
                         onChange={handleOnChildOnChange(index)}

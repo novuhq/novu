@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import axios from 'axios';
 import { Duration, sub } from 'date-fns';
-import { FilterParts, StepTypeEnum } from '@novu/shared';
+import { FilterParts, FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 import { JobEntity, MessageTemplateEntity, NotificationStepEntity, SubscriberRepository } from '@novu/dal';
 
 import { MessageMatcher } from './message-matcher.service';
@@ -22,7 +22,7 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'firstVar',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -44,13 +44,13 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'firstVar',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
           {
             operator: 'EQUAL',
             value: 'secondVar',
             field: 'secondField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -73,13 +73,13 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'firstVar',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
           {
             operator: 'EQUAL',
             value: 'secondVar',
             field: 'secondField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -102,13 +102,13 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'firstVar',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
           {
             operator: 'NOT_EQUAL',
             value: 'secondVar',
             field: 'secondField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -131,7 +131,7 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -167,7 +167,7 @@ describe('Message filter matcher', function () {
             operator: 'LARGER',
             value: '0',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -189,7 +189,7 @@ describe('Message filter matcher', function () {
             operator: 'SMALLER',
             value: '3',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -211,7 +211,7 @@ describe('Message filter matcher', function () {
             operator: 'LARGER_EQUAL',
             value: '0',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -231,7 +231,7 @@ describe('Message filter matcher', function () {
             operator: 'LARGER_EQUAL',
             value: '3',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -253,7 +253,7 @@ describe('Message filter matcher', function () {
             operator: 'SMALLER_EQUAL',
             value: '3',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -273,7 +273,7 @@ describe('Message filter matcher', function () {
             operator: 'SMALLER_EQUAL',
             value: '3',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -411,7 +411,7 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'webhook',
+            on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
         ]),
@@ -440,13 +440,13 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'payloadVarField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
           {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'webhook',
+            on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
         ]),
@@ -470,14 +470,14 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'webhook',
+            on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
           {
             operator: 'EQUAL',
             value: 'true',
             field: 'payloadVarField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -508,13 +508,13 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'payloadVarField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
           {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'webhook',
+            on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
         ]),
@@ -538,14 +538,14 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'webhook',
+            on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
           {
             operator: 'EQUAL',
             value: 'true',
             field: 'payloadVarField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -584,14 +584,14 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnline',
+                on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
               },
               {
                 operator: 'EQUAL',
                 value: 'true',
                 field: 'payloadVarField',
-                on: 'payload',
+                on: FilterPartTypeEnum.PAYLOAD,
               },
             ]),
           }),
@@ -618,7 +618,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnline',
+                on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
               },
             ]),
@@ -646,7 +646,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnline',
+                on: FilterPartTypeEnum.IS_ONLINE,
                 value: false,
               },
             ]),
@@ -668,7 +668,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnline',
+                on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
               },
             ]),
@@ -690,7 +690,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnline',
+                on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
               },
             ]),
@@ -716,7 +716,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
                 timeOperator: 'minutes',
               },
@@ -724,7 +724,7 @@ describe('Message filter matcher', function () {
                 operator: 'EQUAL',
                 value: 'true',
                 field: 'payloadVarField',
-                on: 'payload',
+                on: FilterPartTypeEnum.PAYLOAD,
               },
             ]),
           }),
@@ -751,7 +751,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
                 timeOperator: 'minutes',
               },
@@ -776,7 +776,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
                 timeOperator: 'minutes',
               },
@@ -801,7 +801,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
                 timeOperator: 'minutes',
               },
@@ -826,7 +826,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
                 timeOperator: 'minutes',
               },
@@ -851,7 +851,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 1,
                 timeOperator: 'hours',
               },
@@ -876,7 +876,7 @@ describe('Message filter matcher', function () {
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 1,
                 timeOperator: 'days',
               },

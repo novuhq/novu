@@ -2,8 +2,8 @@ import { StepFilter } from '@novu/dal';
 import { IFilterVariables } from './types';
 
 interface ICondition {
-  on: string;
-  field: string | string[];
+  filter: string;
+  field: string;
   expected: string;
   actual: string;
   operator: string;

@@ -3,12 +3,14 @@ import { createHmac } from 'crypto';
 import axios from 'axios';
 import { Injectable } from '@nestjs/common';
 import { parseISO, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
-import type {
+import {
   IBaseFieldFilterPart,
   FilterParts,
   IWebhookFilterPart,
   IRealtimeOnlineFilterPart,
   IOnlineInLastFilterPart,
+  FILTER_TO_LABEL,
+  FilterPartTypeEnum,
 } from '@novu/shared';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { SubscriberEntity, EnvironmentRepository, SubscriberRepository, StepFilter } from '@novu/dal';
@@ -184,11 +186,11 @@ export class MessageMatcher {
     // the old subscriber created before the is online functionality should not be processed
     if (hasNoOnlineFieldsSet) {
       filterProcessingDetails.addCondition({
-        on: filter.on,
+        filter: FILTER_TO_LABEL[filter.on],
         field: 'isOnline',
         expected: `${filter.value}`,
-        actual: `${filter.on === 'isOnline' ? isOnlineString : lastOnlineAtString}`,
-        operator: `${filter.on === 'isOnline' ? 'EQUAL' : filter.timeOperator}`,
+        actual: `${filter.on === FilterPartTypeEnum.IS_ONLINE ? isOnlineString : lastOnlineAtString}`,
+        operator: `${filter.on === FilterPartTypeEnum.IS_ONLINE ? 'EQUAL' : filter.timeOperator}`,
         passed: false,
       });
 
@@ -196,9 +198,9 @@ export class MessageMatcher {
     }
 
     const isOnlineMatch = subscriber?.isOnline === filter.value;
-    if (filter.on === 'isOnline') {
+    if (filter.on === FilterPartTypeEnum.IS_ONLINE) {
       filterProcessingDetails.addCondition({
-        on: filter.on,
+        filter: FILTER_TO_LABEL[filter.on],
         field: 'isOnline',
         expected: `${filter.value}`,
         actual: isOnlineString,
@@ -215,10 +217,10 @@ export class MessageMatcher {
     const result = subscriber?.isOnline || (!subscriber?.isOnline && diff >= 0 && diff <= filter.value);
 
     filterProcessingDetails.addCondition({
-      on: filter.on,
-      field: ['isOnline', 'lastOnlineAt'],
-      expected: `${filter.value}`,
-      actual: `${subscriber?.isOnline ? true : diff}`,
+      filter: FILTER_TO_LABEL[filter.on],
+      field: subscriber?.isOnline ? 'isOnline' : 'lastOnlineAt',
+      expected: subscriber?.isOnline ? 'true' : `${filter.value}`,
+      actual: `${subscriber?.isOnline ? 'true' : diff}`,
       operator: `${filter.timeOperator}`,
       passed: result,
     });
@@ -263,7 +265,7 @@ export class MessageMatcher {
     const actualValueString: string = Array.isArray(actualValue) ? JSON.stringify(actualValue) : `${actualValue ?? ''}`;
 
     filterProcessingDetails.addCondition({
-      on: fieldFilter.on,
+      filter: FILTER_TO_LABEL[fieldFilter.on],
       field: fieldFilter.field,
       expected: `${filterValue}`,
       actual: `${actualValueString}`,
@@ -358,16 +360,16 @@ export class MessageMatcher {
   ): Promise<boolean> {
     let passed = false;
 
-    if (child.on === 'webhook') {
+    if (child.on === FilterPartTypeEnum.WEBHOOK) {
       const res = await this.getWebhookResponse(child, variables, command);
       passed = this.processFilterEquality({ payload: undefined, webhook: res }, child, filterProcessingDetails);
     }
 
-    if (child.on === 'payload' || child.on === 'subscriber') {
+    if (child.on === FilterPartTypeEnum.PAYLOAD || child.on === FilterPartTypeEnum.SUBSCRIBER) {
       passed = this.processFilterEquality(variables, child, filterProcessingDetails);
     }
 
-    if (child.on === 'isOnline' || child.on === 'isOnlineInLast') {
+    if (child.on === FilterPartTypeEnum.IS_ONLINE || child.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {
       passed = await this.processIsOnline(child, command, filterProcessingDetails);
     }
 
