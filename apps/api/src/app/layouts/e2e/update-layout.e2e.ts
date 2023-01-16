@@ -1,6 +1,8 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
+import { createLayout } from './helpers';
+
 import { LayoutDto } from '../dtos';
 import { TemplateVariableTypeEnum } from '../types';
 
@@ -13,7 +15,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
   before(async () => {
     session = new UserSession();
     await session.initialize();
-    createdLayout = await createLayout(session);
+    createdLayout = await createLayout(session, 'layout-name-update', true);
   });
 
   it('should throw validation error for empty payload when not sending a body', async () => {
@@ -71,42 +73,3 @@ describe('Layout update - /layouts (PATCH)', async () => {
     expect(updatedBody.updatedAt).to.be.ok;
   });
 });
-
-const createLayout = async (session: UserSession): Promise<LayoutDto> => {
-  const layoutName = 'layout-name-creation';
-  const description = 'Amazing new layout';
-  const content = [
-    {
-      type: 'text',
-      content: 'This are the text contents of the template for {{firstName}}',
-    },
-    {
-      type: 'button',
-      content: 'SIGN UP',
-      url: 'https://url-of-app.com/{{urlVariable}}',
-    },
-  ];
-  const variables = [
-    { name: 'firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
-  ];
-  const isDefault = true;
-  const response = await session.testAgent.post(BASE_PATH).send({
-    name: layoutName,
-    description,
-    content,
-    variables,
-    isDefault,
-  });
-
-  expect(response.statusCode).to.eql(201);
-
-  const { body } = response;
-  const createdLayout = body.data;
-  expect(createdLayout._id).to.exist;
-  expect(createdLayout._id).to.be.string;
-
-  const url = `${BASE_PATH}/${createdLayout._id}`;
-  const getResponse = await session.testAgent.get(url);
-
-  return getResponse.body.data;
-};

@@ -3,7 +3,7 @@ import { LayoutRepository } from '@novu/dal';
 import { LayoutName, TemplateVariableTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-import { CreateLayoutResponseDto } from '../dtos';
+import { createLayout } from './helpers';
 
 const BASE_PATH = '/v1/layouts';
 
@@ -14,9 +14,9 @@ describe('Filter layouts - /layouts (GET)', async () => {
     session = new UserSession();
     await session.initialize();
 
-    await createNewLayout(session, 'layout-name-1');
-    await createNewLayout(session, 'layout-name-2');
-    await createNewLayout(session, 'layout-name-3');
+    await createLayout(session, 'layout-name-1', false);
+    await createLayout(session, 'layout-name-2', false);
+    await createLayout(session, 'layout-name-3', false);
   });
 
   it('should return a validation error if the params provided are not in the right type', async () => {
@@ -135,42 +135,3 @@ describe('Filter layouts - /layouts (GET)', async () => {
     expect(pageSize).to.eql(10);
   });
 });
-
-const createNewLayout = async (session: UserSession, layoutName: LayoutName): Promise<CreateLayoutResponseDto> => {
-  const description = 'Amazing new layout';
-  const content = [
-    {
-      type: 'text',
-      content: 'This are the text contents of the template for {{firstName}}',
-    },
-    {
-      type: 'button',
-      content: 'SIGN UP',
-      url: 'https://url-of-app.com/{{urlVariable}}',
-    },
-  ];
-  const variables = [
-    { name: 'firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
-  ];
-  const isDefault = true;
-
-  const result = await session.testAgent
-    .post(BASE_PATH)
-    .send({
-      name: layoutName,
-      description,
-      content,
-      variables,
-      isDefault,
-    })
-    .set('Accept', 'application/json')
-    .expect('Content-Type', /json/);
-
-  expect(result.status).to.eql(201);
-
-  const { _id } = result.body.data;
-
-  return {
-    _id,
-  };
-};
