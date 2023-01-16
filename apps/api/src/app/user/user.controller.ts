@@ -10,9 +10,6 @@ import { UpdateOnBoardingUsecase } from './usecases/update-on-boarding/update-on
 import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserOnboardingRequestDto } from './dtos/user-onboarding-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ChangeProfileEmailDto } from './dtos/change-profile-email.dto';
-import { UpdateProfileEmail } from './usecases/update-profile-email/update-profile-email.usecase';
-import { UpdateProfileEmailCommand } from './usecases/update-profile-email/update-profile-email.command';
 
 @Controller('/users')
 @ApiTags('Users')
@@ -22,8 +19,7 @@ import { UpdateProfileEmailCommand } from './usecases/update-profile-email/updat
 export class UsersController {
   constructor(
     private getMyProfileUsecase: GetMyProfileUsecase,
-    private updateOnBoardingUsecase: UpdateOnBoardingUsecase,
-    private updateProfileEmailUsecase: UpdateProfileEmail
+    private updateOnBoardingUsecase: UpdateOnBoardingUsecase
   ) {}
 
   @Get('/me')
@@ -40,19 +36,6 @@ export class UsersController {
     });
 
     return await this.getMyProfileUsecase.execute(command);
-  }
-
-  @Put('/profile/email')
-  async updateProfileEmail(
-    @UserSession() user: IJwtPayload,
-    @Body() body: ChangeProfileEmailDto
-  ): Promise<UserResponseDto> {
-    return await this.updateProfileEmailUsecase.execute(
-      UpdateProfileEmailCommand.create({
-        userId: user._id,
-        email: body.email,
-      })
-    );
   }
 
   @Put('/onboarding')

@@ -1,6 +1,5 @@
 import { IsDefined, IsEmail, IsNotEmpty, IsOptional, MinLength } from 'class-validator';
 import { BaseCommand } from '../../../shared/commands/base.command';
-import { SignUpOriginEnum } from '@novu/shared';
 
 export class UserRegisterCommand extends BaseCommand {
   @IsDefined()
@@ -15,12 +14,9 @@ export class UserRegisterCommand extends BaseCommand {
   @IsDefined()
   firstName: string;
 
-  @IsOptional()
-  lastName?: string;
+  @IsDefined()
+  lastName: string;
 
   @IsOptional()
   organizationName?: string;
-
-  @IsOptional()
-  origin?: SignUpOriginEnum;
 }

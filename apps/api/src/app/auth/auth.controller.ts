@@ -134,7 +134,6 @@ export class AuthController {
         firstName: body.firstName,
         lastName: body.lastName,
         organizationName: body.organizationName,
-        origin: body.origin,
       })
     );
   }
