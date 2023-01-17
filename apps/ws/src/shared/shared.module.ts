@@ -51,9 +51,9 @@ const PROVIDERS = [
   {
     provide: AnalyticsService,
     useFactory: async () => {
-      const analyticsService = new AnalyticsService();
+      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
 
-      await analyticsService.initialize(process.env.SEGMENT_TOKEN);
+      await analyticsService.initialize();
 
       return analyticsService;
     },

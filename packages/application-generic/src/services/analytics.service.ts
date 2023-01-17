@@ -20,9 +20,11 @@ interface IUser {
 export class AnalyticsService {
   private segment: Analytics;
 
-  async initialize(segmentToken?: string | null) {
-    if (segmentToken) {
-      this.segment = new AnalyticsClass(segmentToken);
+  constructor(private segmentToken?: string | null) {}
+
+  async initialize() {
+    if (this.segmentToken) {
+      this.segment = new AnalyticsClass(this.segmentToken);
     }
   }
 
