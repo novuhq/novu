@@ -51,13 +51,13 @@ describe('Filter layouts - /layouts (GET)', async () => {
     expect(response.body.message).to.eql(['page must not be less than 0', 'pageSize must not be less than 0']);
   });
 
-  it('should return a Bad Request error if the page size requested is bigger than the default one (10)', async () => {
-    const url = `${BASE_PATH}?page=1&pageSize=101`;
+  it('should return a Bad Request error if the page size requested is bigger than the max allowed (1000)', async () => {
+    const url = `${BASE_PATH}?page=1&pageSize=1001`;
     const response = await session.testAgent.get(url);
 
     expect(response.statusCode).to.eql(400);
     expect(response.body.error).to.eql('Bad Request');
-    expect(response.body.message).to.eql('Page size can not be larger then 10');
+    expect(response.body.message).to.eql('Page size can not be larger then 1000');
   });
 
   it('should retrieve all the layouts that exist in the database for the environment if not query params provided', async () => {

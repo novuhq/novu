@@ -36,6 +36,7 @@ export interface IMessageTemplate {
     action?: any;
   };
   _feedId?: string;
+  _layoutId?: string;
   active?: boolean;
   preheader?: string;
   actor?: {

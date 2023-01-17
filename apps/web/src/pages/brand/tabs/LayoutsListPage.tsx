@@ -10,6 +10,9 @@ import { LayoutEditor } from './LayoutEditor';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
 import { When } from '../../../components/utils/When';
 import { useLayouts } from '../../../api/hooks/use-layouts';
+import { useMutation } from '@tanstack/react-query';
+import { deleteLayoutById } from '../../../api/layouts';
+import { errorMessage, successMessage } from '../../../utils/notifications';
 
 const enum ActivePageEnum {
   LAYOUTS_LIST = 'layouts_list',
@@ -23,7 +26,8 @@ export function LayoutsListPage() {
   const [editId, setEditId] = useState('');
   const [activeScreen, setActiveScreen] = useState(ActivePageEnum.LAYOUTS_LIST);
   const [toDelete, setToDelete] = useState('');
-  const { layouts, isLoading, totalCount, pageSize } = useLayouts(page);
+  const { mutateAsync: deleteLayout, isLoading: isLoadingDelete } = useMutation(deleteLayoutById);
+  const { layouts, isLoading, totalCount, pageSize, refetchLayouts } = useLayouts(page);
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
@@ -37,16 +41,24 @@ export function LayoutsListPage() {
     setToDelete(id);
   };
 
-  const confirmDelete = () => {
-    handleDeleteLayout(toDelete);
+  const confirmDelete = async () => {
+    await handleDeleteLayout(toDelete);
     setToDelete('');
   };
 
-  const handleDeleteLayout = (layoutId: string) => {};
+  const handleDeleteLayout = async (layoutId: string) => {
+    try {
+      await deleteLayout(layoutId);
+      await refetchLayouts();
+      successMessage('Layout deleted!');
+    } catch (e: any) {
+      errorMessage(e?.message || 'Could not delete');
+    }
+  };
 
-  const goBack = () => {
-    setActiveScreen(ActivePageEnum.LAYOUTS_LIST);
+  const goBack = async () => {
     setEditId('');
+    setActiveScreen(ActivePageEnum.LAYOUTS_LIST);
   };
 
   const editLayout = (id: string) => {
@@ -121,7 +133,7 @@ export function LayoutsListPage() {
         <LayoutEditor goBack={goBack} />
       </When>
       <When truthy={activeScreen === ActivePageEnum.LAYOUTS_LIST}>
-        <LoadingOverlay visible={isLoading}>
+        <LoadingOverlay visible={isLoading || isLoadingDelete}>
           <Button
             variant="outline"
             onClick={() => setActiveScreen(ActivePageEnum.CREATE_LAYOUT)}
