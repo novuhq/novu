@@ -51,7 +51,7 @@ describe('Filter layouts - /layouts (GET)', async () => {
     expect(response.body.message).to.eql(['page must not be less than 0', 'pageSize must not be less than 0']);
   });
 
-  it('should return a Bad Request error if the page size requested is bigger than the default one (10)', async () => {
+  it('should return a Bad Request error if the page size requested is bigger than the max allowed (1000)', async () => {
     const url = `${BASE_PATH}?page=1&pageSize=1001`;
     const response = await session.testAgent.get(url);
 
