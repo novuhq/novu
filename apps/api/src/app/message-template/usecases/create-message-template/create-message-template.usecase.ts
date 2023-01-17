@@ -27,6 +27,7 @@ export class CreateMessageTemplate {
       title: command.title,
       type: command.type,
       _feedId: command.feedId ? command.feedId : null,
+      _layoutId: command.layoutId || null,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       _creatorId: command.userId,
