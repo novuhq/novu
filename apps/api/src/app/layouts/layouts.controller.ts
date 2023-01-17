@@ -8,8 +8,8 @@ import {
   HttpStatus,
   Inject,
   Param,
+  Patch,
   Post,
-  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -163,7 +163,7 @@ export class LayoutsController {
     );
   }
 
-  @Put('/:layoutId')
+  @Patch('/:layoutId')
   @ExternalApiAccessible()
   @ApiOkResponse({
     type: UpdateLayoutResponseDto,

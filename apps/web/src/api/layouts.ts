@@ -5,7 +5,7 @@ export async function createLayout(data: any) {
 }
 
 export async function updateLayoutById(layoutId: string, data: any) {
-  return api.put(`/v1/layouts/${layoutId}`, data);
+  return api.patch(`/v1/layouts/${layoutId}`, data);
 }
 
 export async function getLayoutById(id: string) {
