@@ -201,7 +201,12 @@
     "uffizzi",
     "WORKDIR",
     "Uffizzi's",
-    "envsubst"
+    "envsubst",
+    "testnovu",
+    "testapp",
+    "novuapp",
+    "yahoofs",
+    "novutest"
   ],
   "flagWords": [],
   "patterns": [
