@@ -19,7 +19,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
   it('should throw validation error for empty payload when not sending a body', async () => {
     const url = `${BASE_PATH}/${createdLayout._id}`;
 
-    const updateResponse = await session.testAgent.patch(url).send();
+    const updateResponse = await session.testAgent.put(url).send();
 
     const { body } = updateResponse;
     expect(body.statusCode).to.eql(400);
@@ -29,7 +29,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
   it('should throw validation error for empty payload when sending a body of an empty object', async () => {
     const url = `${BASE_PATH}/${createdLayout._id}`;
 
-    const updateResponse = await session.testAgent.patch(url).send({});
+    const updateResponse = await session.testAgent.put(url).send({});
 
     const { body } = updateResponse;
     expect(body.statusCode).to.eql(400);
@@ -45,7 +45,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
     const updatedVariables = [];
     const updatedIsDefault = false;
 
-    const updateResponse = await session.testAgent.patch(url).send({
+    const updateResponse = await session.testAgent.put(url).send({
       name: updatedLayoutName,
       description: updatedDescription,
       content: updatedContent,
