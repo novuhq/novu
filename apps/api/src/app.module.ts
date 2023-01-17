@@ -1,4 +1,4 @@
-import { DynamicModule, HttpException, Module, OnModuleInit, Provider } from '@nestjs/common';
+import { DynamicModule, HttpException, Module, Logger, Provider } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -85,5 +85,7 @@ if (process.env.NODE_ENV === 'test') {
   providers,
 })
 export class AppModule {
-  constructor(private queueService: QueueService) {}
+  constructor(private queueService: QueueService) {
+    Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
+  }
 }

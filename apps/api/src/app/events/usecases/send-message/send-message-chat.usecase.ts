@@ -212,23 +212,6 @@ export class SendMessageChat extends SendMessageBase {
     notification: NotificationEntity
   ) {
     if (!chatWebhookUrl) {
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: 'Subscriber does not have active chat channel Id',
-          userId: command.userId,
-          subscriberId: command.subscriberId,
-          code: LogCodeEnum.SUBSCRIBER_MISSING_CHAT_CHANNEL_ID,
-          templateId: notification._templateId,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
-      );
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
         message._id,

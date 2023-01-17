@@ -197,7 +197,12 @@
     "getsentry",
     "martinbeentjes",
     "varvalue",
-    "varname"
+    "varname",
+    "testnovu",
+    "testapp",
+    "novuapp",
+    "yahoofs",
+    "novutest"
   ],
   "flagWords": [],
   "patterns": [

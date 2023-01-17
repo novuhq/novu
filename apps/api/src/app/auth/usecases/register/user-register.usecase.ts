@@ -9,7 +9,7 @@ import { CreateOrganization } from '../../../organization/usecases/create-organi
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-// eslint-disable-next-line max-len
+import { SignUpOriginEnum } from '@novu/shared';
 
 @Injectable()
 export class UserRegister {
@@ -31,7 +31,7 @@ export class UserRegister {
     const user = await this.userRepository.create({
       email,
       firstName: command.firstName.toLowerCase(),
-      lastName: command.lastName.toLowerCase(),
+      lastName: command.lastName?.toLowerCase(),
       password: passwordHash,
     });
 
@@ -46,6 +46,11 @@ export class UserRegister {
     }
 
     this.analyticsService.upsertUser(user, user._id);
+
+    this.analyticsService.track('[Authentication] - Signup', user._id, {
+      loginType: 'email',
+      origin: command.origin || SignUpOriginEnum.WEB,
+    });
 
     return {
       user: await this.userRepository.findById(user._id),
