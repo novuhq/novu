@@ -160,6 +160,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] Discord
 - [x] MS Teams
 - [ ] Mattermost
+- [x] Telegram
 
 #### 📱 In-App
 

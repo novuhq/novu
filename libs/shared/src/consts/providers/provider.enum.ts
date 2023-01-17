@@ -59,6 +59,7 @@ export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
   MsTeams = 'msteams',
+  Telegram = 'telegram',
 }
 
 export enum PushProviderIdEnum {

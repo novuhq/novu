@@ -122,6 +122,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
 - [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
+- [Telegram](https://github.com/novuhq/novu/tree/main/providers/telegram)
 
 ### 📱 In-App
 

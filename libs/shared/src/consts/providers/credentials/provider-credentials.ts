@@ -366,6 +366,15 @@ export const slackConfig: IConfigCredentials[] = [
   },
 ];
 
+export const telegramConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Bot Token',
+    type: 'string',
+    required: false,
+  },
+];
+
 export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,

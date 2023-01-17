@@ -67,6 +67,7 @@
     "@novu/sms77": "^0.10.2",
     "@novu/sns": "^0.10.2",
     "@novu/stateless": "^0.10.2",
+    "@novu/telegram": "^0.10.2",
     "@novu/telnyx": "^0.10.2",
     "@novu/termii": "^0.10.2",
     "@novu/testing": "^0.10.3",

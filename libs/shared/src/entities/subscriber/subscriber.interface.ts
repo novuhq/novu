@@ -26,4 +26,5 @@ export interface IChannelSettings {
 export interface IChannelCredentials {
   webhookUrl?: string;
   deviceTokens?: string[];
+  chatUserId?: string;
 }

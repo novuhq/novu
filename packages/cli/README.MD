@@ -124,19 +124,20 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Bandwidth
 - [ ] RingCentral
 
-#### 📱 Push 
+#### 📱 Push
 
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Pushwoosh
 
-#### 👇 Chat 
+#### 👇 Chat
 
 - [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
 - [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)
 - [ ] MS Teams
 - [ ] Mattermost
+- [x] [Telegram](https://github.com/novuhq/novu/tree/main/providers/telegram)
 
 #### 📱 In-App
 
