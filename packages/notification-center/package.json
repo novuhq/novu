@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center",
-  "version": "0.10.2",
+  "version": "0.10.3",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
@@ -54,6 +54,7 @@
     "rollup": "^3.7.3",
     "rollup-plugin-gzip": "^3.1.0",
     "rollup-plugin-node-externals": "^5.0.2",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-polyfill-node": "^0.11.0",
     "rollup-plugin-terser": "^7.0.2",
     "ts-jest": "^29.0.3",
