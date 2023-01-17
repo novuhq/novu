@@ -36,7 +36,7 @@
     "axios": "^0.24.0",
     "bull": "^4.4.0",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.13.2",
+    "class-validator": "^0.14.0",
     "dotenv": "^8.2.0",
     "envalid": "^7.1.0",
     "jsonwebtoken": "9.0.0",

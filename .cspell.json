@@ -200,6 +200,11 @@
     "varname",
     "EVENT",
     "TRANSID"
+    "testnovu",
+    "testapp",
+    "novuapp",
+    "yahoofs",
+    "novutest"
   ],
   "flagWords": [],
   "patterns": [
