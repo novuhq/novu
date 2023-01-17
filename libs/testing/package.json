@@ -40,7 +40,8 @@
     "rimraf": "^3.0.2",
     "superagent-defaults": "^0.1.14",
     "supertest": "^5.0.0",
-    "uuid": "^8.3.0"
+    "uuid": "^8.3.0",
+    "bullmq": "^3.5.6"
   },
   "devDependencies": {
     "@types/async": "^3.2.1",

@@ -99,6 +99,8 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await triggerEvent(session, template, payload);
 
+    await session.awaitRunningJobs(template._id);
+
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
       subscriber.subscriberId

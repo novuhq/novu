@@ -1,4 +1,5 @@
 import './config';
+import 'newrelic';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
 import { RedisIoAdapter } from './shared/framework/redis.adapter';
