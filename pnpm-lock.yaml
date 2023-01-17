@@ -131,7 +131,6 @@ importers:
       '@aws-sdk/s3-request-presigner': ^3.14.0
       '@azure/storage-blob': ^12.11.0
       '@faker-js/faker': ^6.0.0
-      '@godaddy/terminus': ^4.10.2
       '@google-cloud/storage': ^6.2.3
       '@nestjs/axios': 0.1.0
       '@nestjs/cli': 9.0.0
@@ -234,7 +233,6 @@ importers:
       shortid: ^2.2.16
       sinon: ^9.2.4
       slugify: ^1.4.6
-      swagger-ui-express: ^4.4.0
       ts-loader: 9.2.8
       ts-node: ^9.0.0
       tsconfig-paths: 3.11.0
@@ -245,7 +243,6 @@ importers:
       '@aws-sdk/client-s3': 3.58.0
       '@aws-sdk/s3-request-presigner': 3.58.0
       '@azure/storage-blob': 12.11.0
-      '@godaddy/terminus': 4.10.2
       '@google-cloud/storage': 6.2.3
       '@nestjs/axios': 0.1.0_m35besaglbko3ybu6uaqzypui4
       '@nestjs/common': 9.0.2_mgahpprohdkjk6lephiejykozi
@@ -295,8 +292,6 @@ importers:
       '@sentry/hub': 7.22.0
       '@sentry/node': 7.12.1
       '@sentry/tracing': 7.12.1
-      '@types/analytics-node': 3.1.9
-      '@types/handlebars': 4.1.0
       agenda: 4.2.1
       analytics-node: 6.2.0
       axios: 0.24.0
@@ -331,7 +326,6 @@ importers:
       sanitize-html: 2.7.0
       shortid: 2.2.16
       slugify: 1.6.5
-      swagger-ui-express: 4.4.0_express@4.18.2
       twilio: 3.76.0
       uuid: 8.3.2
     devDependencies:
@@ -339,10 +333,12 @@ importers:
       '@nestjs/cli': 9.0.0
       '@nestjs/schematics': 9.0.1_jzdczmpfje4274sct5gg4q5iim
       '@nestjs/testing': 9.0.2_hcykwrqddffqd4ecobanjogwlq
+      '@types/analytics-node': 3.1.9
       '@types/bcrypt': 3.0.1
       '@types/bull': 3.15.8
       '@types/chai': 4.3.0
       '@types/express': 4.17.7
+      '@types/handlebars': 4.1.0
       '@types/mocha': 8.2.3
       '@types/node': 14.18.12
       '@types/passport-github': 1.1.7
@@ -21348,7 +21344,7 @@ packages:
       mkdirp: 1.0.4
       npm-pick-manifest: 8.0.1
       proc-log: 3.0.0
-      promise-inflight: 1.0.1_bluebird@3.7.2
+      promise-inflight: 1.0.1
       promise-retry: 2.0.1
       semver: 7.3.8
       which: 3.0.0
@@ -28808,6 +28804,7 @@ packages:
 
   /@types/analytics-node/3.1.9:
     resolution: {integrity: sha512-C7L7/Dd/CmBST7AvgoCnf4yI9h6W5aYfCOcfUZS5GHlXDQjnXLVOUDpTdwTIZjW4lKECeil6+G+Ul6Xzwv/P0g==}
+    dev: true
 
   /@types/aria-query/4.2.2:
     resolution: {integrity: sha512-HnYpAE1Y6kRyKM/XkEuiRQhTHvkzMBurTHnpFLYLBGPIylZNPs9jJcuOOYWxPLJCSEtmZT0Y8rHDokKN7rRTig==}
@@ -29035,7 +29032,7 @@ packages:
     deprecated: This is a stub types definition. handlebars provides its own type definitions, so you do not need this installed.
     dependencies:
       handlebars: 4.7.7
-    dev: false
+    dev: true
 
   /@types/hast/2.3.4:
     resolution: {integrity: sha512-wLEm0QvaoawEDoTRwzTXp4b4jpwiJDvR5KMnFnVodm3scufTlBOWRD6N1OBf9TZMhjlNsSfcO5V+7AF4+Vy+9g==}
@@ -34197,7 +34194,7 @@ packages:
       mississippi: 3.0.0
       mkdirp: 0.5.6
       move-concurrently: 1.0.1
-      promise-inflight: 1.0.1_bluebird@3.7.2
+      promise-inflight: 1.0.1
       rimraf: 2.7.1
       ssri: 6.0.2
       unique-filename: 1.1.1
@@ -34220,7 +34217,7 @@ packages:
       minipass-pipeline: 1.2.4
       mkdirp: 1.0.4
       p-map: 4.0.0
-      promise-inflight: 1.0.1_bluebird@3.7.2
+      promise-inflight: 1.0.1
       rimraf: 3.0.2
       ssri: 8.0.1
       tar: 6.1.11
@@ -34267,7 +34264,7 @@ packages:
       minipass-flush: 1.0.5
       minipass-pipeline: 1.2.4
       p-map: 4.0.0
-      promise-inflight: 1.0.1_bluebird@3.7.2
+      promise-inflight: 1.0.1
       ssri: 10.0.1
       tar: 6.1.11
       unique-filename: 3.0.0
@@ -54154,17 +54151,6 @@ packages:
     peerDependenciesMeta:
       bluebird:
         optional: true
-    dev: true
-
-  /promise-inflight/1.0.1_bluebird@3.7.2:
-    resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
-    peerDependencies:
-      bluebird: '*'
-    peerDependenciesMeta:
-      bluebird:
-        optional: true
-    dependencies:
-      bluebird: 3.7.2
 
   /promise-limit/2.7.0:
     resolution: {integrity: sha512-7nJ6v5lnJsXwGprnGXga4wx6d1POjvi5Qmf1ivTRxTjH4Z/9Czja/UCMLVmB9N93GeWOU93XaFaEt6jbuoagNw==}
@@ -59603,16 +59589,6 @@ packages:
     resolution: {integrity: sha512-V3eIa28lwB6gg7/wfNvAbjwJYmDXy1Jo1POjyTzlB6wPcHiGlRxq39TSjYGVjQrUSAzpv+a7nzp7mDxgNy57xA==}
     dev: false
 
-  /swagger-ui-express/4.4.0_express@4.18.2:
-    resolution: {integrity: sha512-1CzRkHG386VQMVZK406jcpgnW2a9A5A/NiAjKhsFTQqUBWRF+uGbXTU/mA7WSV3mTzyOQDvjBdWP/c2qd5lqKw==}
-    engines: {node: '>= v0.10.32'}
-    peerDependencies:
-      express: '>=4.0.0'
-    dependencies:
-      express: 4.18.2
-      swagger-ui-dist: 4.12.0
-    dev: false
-
   /swap-case/1.1.2:
     resolution: {integrity: sha512-BAmWG6/bx8syfc6qXPprof3Mn5vQgf5dwdUNJhsNqU9WdPt5P+ES/wQ5bxfijy8zwZgZZHslC3iAsxsuQMCzJQ==}
     dependencies:
@@ -60831,9 +60807,9 @@ packages:
       webpack: ^5.0.0
     dependencies:
       chalk: 4.1.2
-      enhanced-resolve: 5.9.3
+      enhanced-resolve: 5.10.0
       micromatch: 4.0.5
-      semver: 7.3.7
+      semver: 7.3.8
       typescript: 4.3.5
       webpack: 5.75.0
     dev: true
