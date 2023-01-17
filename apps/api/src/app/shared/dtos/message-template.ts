@@ -31,6 +31,9 @@ export class MessageTemplate {
   feedId?: string;
 
   @IsOptional()
+  layoutId?: string | null;
+
+  @IsOptional()
   @IsString()
   name?: string;
 

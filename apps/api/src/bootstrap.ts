@@ -59,6 +59,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
+      forbidUnknownValues: false,
     })
   );
 
@@ -95,6 +96,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   const document = SwaggerModule.createDocument(app, options);
 
   SwaggerModule.setup('api', app, document);
+
+  console.log('BOOTSTRAPPED SUCCESSFULLY');
 
   if (expressApp) {
     await app.init();

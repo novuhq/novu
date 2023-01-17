@@ -22,14 +22,13 @@ export class AddJob {
   ) {}
 
   public async execute(command: AddJobCommand): Promise<void> {
-    const digestAmount = await this.addDigestJob.execute(command);
-    const delayAmount = await this.addDelayJob.execute(command);
-
-    const job = await this.jobRepository.findById(command.jobId);
-
+    const job = command.job ?? (await this.jobRepository.findById(command.jobId));
     if (!job) {
       return;
     }
+
+    const digestAmount = job.type === StepTypeEnum.DIGEST ? await this.addDigestJob.execute(command) : null;
+    const delayAmount = job.type === StepTypeEnum.DELAY ? await this.addDelayJob.execute(command) : null;
 
     if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
       return;
@@ -41,7 +40,7 @@ export class AddJob {
 
     const delay = digestAmount ?? delayAmount;
 
-    await this.createExecutionDetails.execute(
+    this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.STEP_QUEUED,
@@ -55,7 +54,7 @@ export class AddJob {
     await this.workflowQueueService.addToQueue(job._id, job, delay);
 
     if (delay) {
-      await this.createExecutionDetails.execute(
+      this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_DELAYED,

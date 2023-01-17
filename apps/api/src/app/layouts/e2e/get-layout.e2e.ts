@@ -1,22 +1,28 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
+import { createLayout } from './helpers';
+
+import { LayoutDto } from '../dtos';
 import { TemplateVariableTypeEnum } from '../types';
 
 const BASE_PATH = '/v1/layouts';
 
 describe('Get a layout - /layouts/:layoutId (GET)', async () => {
+  const layoutName = 'layout-name-creation';
+  const isDefault = true;
   let session: UserSession;
+  let createdLayout: LayoutDto;
 
   before(async () => {
     session = new UserSession();
     await session.initialize();
+    createdLayout = await createLayout(session, layoutName, isDefault);
   });
 
   it('should retrieve the requested layout successfully if exists in the database for that user', async () => {
-    const layoutName = 'layout-name-creation';
-    const description = 'Amazing new layout';
-    const content = [
+    const expectedDescription = 'Amazing new layout';
+    const expectedContent = [
       {
         type: 'text',
         content: 'This are the text contents of the template for {{firstName}}',
@@ -28,24 +34,10 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
         url: 'https://url-of-app.com/{{urlVariable}}',
       },
     ];
-    const variables = [
+
+    const expectedVariables = [
       { name: 'firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
     ];
-    const isDefault = true;
-    const response = await session.testAgent.post(BASE_PATH).send({
-      name: layoutName,
-      description,
-      content,
-      variables,
-      isDefault,
-    });
-
-    expect(response.statusCode).to.eql(201);
-
-    const { body } = response;
-    const createdLayout = body.data;
-    expect(createdLayout._id).to.exist;
-    expect(createdLayout._id).to.be.string;
 
     const url = `${BASE_PATH}/${createdLayout._id}`;
     const getResponse = await session.testAgent.get(url);
@@ -59,9 +51,9 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
     expect(layout._organizationId).to.eql(session.organization._id);
     expect(layout._creatorId).to.eql(session.user._id);
     expect(layout.name).to.eql(layoutName);
-    expect(layout.description).to.eql(description);
-    expect(layout.content).to.eql(content);
-    expect(layout.variables).to.eql(variables);
+    expect(layout.description).to.eql(expectedDescription);
+    expect(layout.content).to.eql(expectedContent);
+    expect(layout.variables).to.eql(expectedVariables);
     expect(layout.contentType).to.eql('customHtml');
     expect(layout.isDefault).to.eql(true);
     expect(layout.isDeleted).to.eql(false);

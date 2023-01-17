@@ -1,10 +1,9 @@
-import { AuthProviderEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
 import { LayoutEntity } from './layout.entity';
 import { Layout } from './layout.schema';
-import { EnvironmentId, ExternalSubscriberId, OrganizationId, LayoutId, LayoutName } from './types';
+import { EnvironmentId, OrganizationId, LayoutId } from './types';
 
 import { BaseRepository, Omit } from '../base-repository';
 import { DalException } from '../../shared';
@@ -66,6 +65,10 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
     }
   }
 
+  async findDefault(_environmentId: EnvironmentId, _organizationId: OrganizationId): Promise<LayoutEntity | null> {
+    return await this.findOne({ _environmentId, _organizationId, isDefault: true });
+  }
+
   async filterLayouts(
     query: EnforceEnvironmentQuery,
     pagination: { limit: number; skip: number }
@@ -87,21 +90,28 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
     return data;
   }
 
-  async setLayoutAsDefault(
+  async updateIsDefault(
     _id: LayoutId,
     _environmentId: EnvironmentId,
-    _organizationId: OrganizationId
+    _organizationId: OrganizationId,
+    isDefault: boolean
   ): Promise<void> {
-    await this.update(
+    const updated = await this.update(
       {
         _id,
         _environmentId,
         _organizationId,
       },
       {
-        isDefault: true,
+        isDefault,
       }
     );
+
+    if (updated.matched === 0 || updated.modified === 0) {
+      throw new DalException(
+        `Update of layout ${_id} in environment ${_environmentId} was not performed properly. Not able to set 'isDefault' to ${isDefault}`
+      );
+    }
   }
 
   async updateLayout(entity: LayoutEntity): Promise<LayoutEntity> {

@@ -17,7 +17,7 @@ export type CachingConfig = {
 };
 
 export class CacheService implements ICacheService {
-  private readonly DEFAULT_TTL_SECONDS = 60 * 60;
+  private readonly DEFAULT_TTL_SECONDS = 60 * 60 * 2;
   private readonly DEFAULT_CONNECT_TIMEOUT = 50000;
   private readonly DEFAULT_KEEP_ALIVE = 30000;
   private readonly DEFAULT_FAMILY = 4;

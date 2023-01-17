@@ -41,6 +41,8 @@ import {
   FilterLayoutsUseCase,
   GetLayoutCommand,
   GetLayoutUseCase,
+  SetDefaultLayoutCommand,
+  SetDefaultLayoutUseCase,
   UpdateLayoutCommand,
   UpdateLayoutUseCase,
 } from './use-cases';
@@ -61,6 +63,7 @@ export class LayoutsController {
     private deleteLayoutUseCase: DeleteLayoutUseCase,
     private filterLayoutsUseCase: FilterLayoutsUseCase,
     private getLayoutUseCase: GetLayoutUseCase,
+    private setDefaultLayoutUseCase: SetDefaultLayoutUseCase,
     private updateLayoutUseCase: UpdateLayoutUseCase,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
@@ -191,6 +194,26 @@ export class LayoutsController {
         content: body.content,
         variables: body.variables,
         isDefault: body.isDefault,
+      })
+    );
+  }
+
+  @Post('/:layoutId/default')
+  @ExternalApiAccessible()
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Set default layout',
+    description:
+      'Sets the default layout for the environment and updates to non default to the existing default layout (if any).',
+  })
+  async setDefaultLayout(@UserSession() user: IJwtPayload, @Param('layoutId') layoutId: LayoutId): Promise<void> {
+    await this.setDefaultLayoutUseCase.execute(
+      SetDefaultLayoutCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        layoutId,
       })
     );
   }

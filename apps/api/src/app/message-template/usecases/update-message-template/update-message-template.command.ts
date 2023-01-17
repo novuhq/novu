@@ -43,6 +43,9 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   feedId?: string | null;
 
+  @IsOptional()
+  layoutId?: string | null;
+
   @IsMongoId()
   parentChangeId: string;
 

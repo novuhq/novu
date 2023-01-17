@@ -12,6 +12,7 @@ import { PasswordInput, Button, colors, Input, Text } from '../../design-system'
 import { GitHub } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { useVercelParams } from '../../hooks/use-vercelParams';
+import { SignUpOriginEnum } from '@novu/shared';
 
 type Props = {
   token?: string;
@@ -35,8 +36,8 @@ export function LoginForm({ email, token }: Props) {
   const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
   const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : `/auth/reset/request`;
   const githubLink = isFromVercel
-    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
-    : `${API_ROOT}/v1/auth/github`;
+    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}&source=${SignUpOriginEnum.VERCEL}`
+    : `${API_ROOT}/v1/auth/github?source=${SignUpOriginEnum.WEB}`;
 
   const {
     register,
