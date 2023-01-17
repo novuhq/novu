@@ -1,16 +1,17 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
 import { UpdateProfileEmailCommand } from './update-profile-email.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class UpdateProfileEmail {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private readonly userRepository: UserRepository,
-    private analyticsService: AnalyticsService
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateProfileEmailCommand) {
