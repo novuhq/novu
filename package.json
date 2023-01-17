@@ -63,8 +63,6 @@
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh"
   },
   "devDependencies": {
-    "@auto-it/npm": "^10.36.5",
-    "@auto-it/released": "^10.36.5",
     "@commitlint/cli": "17.0.1",
     "@commitlint/config-angular": "^13.2.0",
     "@commitlint/config-conventional": "17.0.0",
@@ -184,7 +182,6 @@
     "pnpm": "7.5.0"
   },
   "dependencies": {
-    "nx": "^14.5.10",
-    "tslib": "^2.0.0"
+    "nx": "^14.5.10"
   }
 }
