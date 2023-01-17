@@ -160,7 +160,7 @@ The online filter feature can be used to determine if a subscriber is online rig
 
 - To determine if a subscriber is online right now, Novu checks the value of the `isOnline` field. If `isOnline` is `true`, the subscriber is online, otherwise when the `isOnline` is `false` the subscriber is considered offline.
 
-- To determine if a subscriber was online within a specific time period, Novu compares both the `isOnline` and `lastOnlineAt` fields. If `isOnline` is `true`, the subscriber is still online and the filter is applied. If `isOnline` is `false`, the difference between the `current timestamp` and the `timestamp` value of `lastOnlineAt` is calculated. If this difference is within the specified time period because it is `diff >= 0 && diff <= filter.value`, the subscriber was online within that time period and the filter is applied. Otherwise, the filter is not applied.
+- To determine if a subscriber was online within a specific time period, Novu compares both the `isOnline` and `lastOnlineAt` fields. If `isOnline` is `true`, the subscriber is still online and the filter is applied. If `isOnline` is `false`, the difference between the `current timestamp` and the `timestamp` value of `lastOnlineAt` is calculated. If this difference is within the specified time period, the subscriber was online within that time period and the filter is applied. Otherwise, the filter is not applied.
 
 For example, to determine if a subscriber has been online in the last 5 minutes, Novu checks if the subscriber is currently online or if the `lastOnlineAt` timestamp value is less than or equal to 5 minutes ago. If either of these conditions are met, the filter is applied.
 
