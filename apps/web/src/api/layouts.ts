@@ -4,7 +4,7 @@ export async function createLayout(data: any) {
   return api.post(`/v1/layouts`, data);
 }
 
-export async function updateLayout(layoutId: string, data: any) {
+export async function updateLayoutById(layoutId: string, data: any) {
   return api.put(`/v1/layouts/${layoutId}`, data);
 }
 

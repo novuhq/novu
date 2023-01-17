@@ -27,7 +27,6 @@ export function LayoutsListPage() {
   const [activeScreen, setActiveScreen] = useState(ActivePageEnum.LAYOUTS_LIST);
   const [toDelete, setToDelete] = useState('');
   const { mutateAsync: deleteLayout, isLoading: isLoadingDelete } = useMutation(deleteLayoutById);
-
   const { layouts, isLoading, totalCount, pageSize, refetchLayouts } = useLayouts(page);
 
   function handleTableChange(pageIndex) {
@@ -60,7 +59,6 @@ export function LayoutsListPage() {
   const goBack = async () => {
     setEditId('');
     setActiveScreen(ActivePageEnum.LAYOUTS_LIST);
-    await refetchLayouts();
   };
 
   const editLayout = (id: string) => {

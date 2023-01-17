@@ -5,8 +5,8 @@ import { ArrowLeft } from '../../../design-system/icons';
 import { Button, Checkbox, colors, Input, Text, LoadingOverlay } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { createLayout, getLayoutById, updateLayout } from '../../../api/layouts';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { createLayout, getLayoutById, updateLayoutById } from '../../../api/layouts';
 import { useEffect } from 'react';
 import { ILayoutEntity } from '@novu/shared';
 import { QueryKeys } from '../../../api/query.keys';
@@ -21,6 +21,7 @@ export function LayoutEditor({
   goBack: () => void;
 }) {
   const { readonly } = useEnvController();
+  const queryClient = useQueryClient();
 
   const { data: layout, isLoading: isLoadingLayout } = useQuery<ILayoutEntity>(
     [QueryKeys.getLayoutById, id],
@@ -39,11 +40,11 @@ export function LayoutEditor({
     },
   });
   const { mutateAsync: createNewLayout, isLoading: isLoadingCreate } = useMutation(createLayout);
-  const { mutateAsync: updateCurrLayout, isLoading: isLoadingUpdate } = useMutation<
+  const { mutateAsync: updateLayout, isLoading: isLoadingUpdate } = useMutation<
     ILayoutEntity,
     { error: string; message: string; statusCode: number },
     { layoutId: string; data: any }
-  >(({ layoutId, data }) => updateLayout(layoutId, data));
+  >(({ layoutId, data }) => updateLayoutById(layoutId, data));
 
   useEffect(() => {
     if (layout) {
@@ -71,10 +72,11 @@ export function LayoutEditor({
     };
     try {
       if (editMode) {
-        await updateCurrLayout({ layoutId: id, data: updatePayload });
+        await updateLayout({ layoutId: id, data: updatePayload });
       } else {
         await createNewLayout(data);
       }
+      await queryClient.refetchQueries([QueryKeys.getLayoutsList]);
 
       successMessage(`Layout ${editMode ? 'Updated' : 'Created'}!`);
       goBack();
