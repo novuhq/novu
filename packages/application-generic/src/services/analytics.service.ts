@@ -1,21 +1,36 @@
-import { UserEntity } from '@novu/dal';
-import { OrganizationEntity } from '@novu/dal';
 import Analytics from 'analytics-node';
 
 // Due to problematic analytics-node types, we need to use require
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const AnalyticsClass = require('analytics-node');
 
+interface IOrganization {
+  name?: string | null;
+  createdAt?: string | null;
+}
+
+interface IUser {
+  firstName?: string | null;
+  lastName?: string | null;
+  email?: string | null;
+  profilePicture?: string | null;
+  createdAt?: string | null;
+}
+
 export class AnalyticsService {
   private segment: Analytics;
 
-  async initialize() {
-    if (process.env.SEGMENT_TOKEN) {
-      this.segment = new AnalyticsClass(process.env.SEGMENT_TOKEN);
+  async initialize(segmentToken?: string | null) {
+    if (segmentToken) {
+      this.segment = new AnalyticsClass(segmentToken);
     }
   }
 
-  upsertGroup(organizationId: string, organization: OrganizationEntity, userId: string) {
+  upsertGroup(
+    organizationId: string,
+    organization: IOrganization,
+    userId: string
+  ) {
     if (this.segmentEnabled) {
       this.segment.group({
         userId: userId,
@@ -24,8 +39,7 @@ export class AnalyticsService {
           _organization: organizationId,
           id: organizationId,
           name: organization.name,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          createdAt: (organization as any).createdAt,
+          createdAt: organization.createdAt,
         },
       });
     }
@@ -40,7 +54,7 @@ export class AnalyticsService {
     }
   }
 
-  upsertUser(user: UserEntity, distinctId: string) {
+  upsertUser(user: IUser, distinctId: string) {
     if (this.segmentEnabled) {
       this.segment.identify({
         userId: distinctId,

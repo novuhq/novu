@@ -1,10 +1,10 @@
-import { NotificationTemplateRepository } from '@novu/dal';
 import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
+import { AnalyticsService } from '@novu/application-generic';
+import { NotificationTemplateRepository } from '@novu/dal';
 
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
