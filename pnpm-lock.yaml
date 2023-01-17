@@ -172,14 +172,14 @@ importers:
       '@nestjs/terminus': 9.0.0
       '@nestjs/testing': 9.0.2
       '@novu/apns': ^0.10.2
-      '@novu/application-generic': ^0.10.2
+      '@novu/application-generic': ^0.10.3
       '@novu/burst-sms': ^0.10.2
       '@novu/clickatell': ^0.10.2
-      '@novu/dal': ^0.10.2
+      '@novu/dal': ^0.10.3
       '@novu/discord': ^0.10.2
       '@novu/emailjs': ^0.10.2
       '@novu/expo': ^0.10.2
-      '@novu/fcm': ^0.10.2
+      '@novu/fcm': ^0.10.3
       '@novu/firetext': ^0.10.2
       '@novu/gupshup': ^0.10.2
       '@novu/infobip': ^0.10.2
@@ -204,7 +204,7 @@ importers:
       '@novu/stateless': ^0.10.2
       '@novu/telnyx': ^0.10.2
       '@novu/termii': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@novu/twilio': ^0.10.2
       '@sendgrid/mail': ^7.6.0
       '@sentry/hub': 7.22.0
@@ -409,10 +409,10 @@ importers:
       '@mantine/notifications': ^5.7.1
       '@mantine/prism': ^5.7.1
       '@mantine/spotlight': ^5.7.1
-      '@novu/dal': ^0.10.2
-      '@novu/notification-center': ^0.10.2
+      '@novu/dal': ^0.10.3
+      '@novu/notification-center': ^0.10.3
       '@novu/shared': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@segment/analytics-next': ^1.48.0
       '@sentry/react': ^6.3.1
       '@sentry/tracing': ^6.3.1
@@ -613,11 +613,11 @@ importers:
       '@nestjs/swagger': ^4.8.0
       '@nestjs/terminus': ^7.2.0
       '@nestjs/testing': ^7.6.17
-      '@novu/application-generic': ^0.10.2
-      '@novu/dal': ^0.10.2
+      '@novu/application-generic': ^0.10.3
+      '@novu/dal': ^0.10.3
       '@novu/shared': ^0.10.2
       '@novu/stateless': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@sentry/node': ^6.3.3
       '@types/chai': ^4.2.11
       '@types/express': ^4.17.8
@@ -716,10 +716,10 @@ importers:
       '@faker-js/faker': ^6.0.0
       '@mantine/core': 4.1.0
       '@mantine/hooks': 4.1.0
-      '@novu/dal': ^0.10.2
-      '@novu/notification-center': ^0.10.2
+      '@novu/dal': ^0.10.3
+      '@novu/notification-center': ^0.10.3
       '@novu/shared': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
       '@testing-library/user-event': ^12.1.10
@@ -834,7 +834,7 @@ importers:
       '@nestjs/testing': ^7.6.17
       '@nestjs/websockets': ^9.2.1
       '@novu/shared': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@sentry/node': ^7.30.0
       '@socket.io/redis-adapter': ^7.2.0
       '@types/express': ^4.17.8
@@ -1003,7 +1003,7 @@ importers:
       '@angular/platform-browser': ^15.0.0
       '@angular/platform-browser-dynamic': ^15.0.0
       '@angular/router': ^15.0.0
-      '@novu/notification-center-angular': ^0.10.2
+      '@novu/notification-center-angular': ^0.10.3
       '@types/jasmine': ~4.3.0
       jasmine-core: ~4.5.0
       karma: ~6.4.0
@@ -1044,7 +1044,7 @@ importers:
 
   examples/vue-notification-center-example:
     specifiers:
-      '@novu/notification-center-vue': ^0.10.2
+      '@novu/notification-center-vue': ^0.10.3
       '@types/node': ^16.18.3
       '@vitejs/plugin-vue': ^3.1.2
       '@vitejs/plugin-vue-jsx': ^2.0.1
@@ -1162,7 +1162,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^7.1.2
       '@commitlint/config-conventional': ^7.1.2
-      '@novu/notification-center': ^0.10.2
+      '@novu/notification-center': ^0.10.3
       '@rollup/plugin-replace': ^2.4.2
       '@types/iframe-resizer': ^3.5.8
       '@types/jest': 27.4.0
@@ -1261,7 +1261,7 @@ importers:
   libs/testing:
     specifiers:
       '@faker-js/faker': ^6.0.0
-      '@novu/dal': ^0.10.2
+      '@novu/dal': ^0.10.3
       '@novu/node': ^0.10.2
       '@novu/shared': ^0.10.2
       '@types/async': ^3.2.1
@@ -1329,10 +1329,10 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': ^8.2.0
-      '@novu/dal': ^0.10.2
+      '@novu/dal': ^0.10.3
       '@novu/discord': ^0.10.2
       '@novu/emailjs': ^0.10.2
-      '@novu/fcm': ^0.10.2
+      '@novu/fcm': ^0.10.3
       '@novu/gupshup': ^0.10.2
       '@novu/mailersend': ^0.10.2
       '@novu/mailgun': ^0.10.2
@@ -1353,7 +1353,7 @@ importers:
       '@novu/stateless': ^0.10.2
       '@novu/telnyx': ^0.10.2
       '@novu/termii': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@novu/twilio': ^0.10.2
       '@sentry/node': ^7.12.1
       '@types/jest': 27.4.0
@@ -1746,7 +1746,7 @@ importers:
       '@angular/core': ^15.0.0
       '@angular/platform-browser': ^15.0.0
       '@angular/platform-browser-dynamic': ^15.0.0
-      '@novu/notification-center': ^0.10.2
+      '@novu/notification-center': ^0.10.3
       '@types/jasmine': ~4.3.0
       jasmine-core: ~4.5.0
       karma: ~6.4.0
@@ -1788,7 +1788,7 @@ importers:
   packages/notification-center-vue:
     specifiers:
       '@emotion/css': ^11.10.5
-      '@novu/notification-center': ^0.10.2
+      '@novu/notification-center': ^0.10.3
       '@rushstack/eslint-patch': ^1.1.4
       '@types/node': ^18.11.12
       '@vitejs/plugin-vue': ^4.0.0
@@ -35417,7 +35417,7 @@ packages:
     resolution: {integrity: sha512-j4dx+Fb0URmzbwwMUrhqWM2BEWHdFGx+qZ9qqASHRPqvTYdqvWnHg0H1hIbcyLnvgnoNAVMlwkepyqM3DaIFUg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
