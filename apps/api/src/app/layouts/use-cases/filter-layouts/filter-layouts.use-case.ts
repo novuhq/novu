@@ -6,6 +6,7 @@ import { FilterLayoutsCommand } from './filter-layouts.command';
 import { LayoutDto } from '../../dtos/layout.dto';
 
 const DEFAULT_LAYOUT_LIMIT = 10;
+const MAX_LAYOUT_LIMIT = 1000;
 
 @Injectable()
 export class FilterLayoutsUseCase {
@@ -14,8 +15,8 @@ export class FilterLayoutsUseCase {
   async execute(command: FilterLayoutsCommand) {
     const { pageSize = DEFAULT_LAYOUT_LIMIT, page = 0 } = command;
 
-    if (pageSize > DEFAULT_LAYOUT_LIMIT) {
-      throw new BadRequestException(`Page size can not be larger then ${DEFAULT_LAYOUT_LIMIT}`);
+    if (pageSize > MAX_LAYOUT_LIMIT) {
+      throw new BadRequestException(`Page size can not be larger then ${MAX_LAYOUT_LIMIT}`);
     }
 
     const query = this.mapFromCommandToEntity(command);

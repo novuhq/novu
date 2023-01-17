@@ -1,10 +1,9 @@
-import { AuthProviderEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
 import { LayoutEntity } from './layout.entity';
 import { Layout } from './layout.schema';
-import { EnvironmentId, ExternalSubscriberId, OrganizationId, LayoutId, LayoutName } from './types';
+import { EnvironmentId, OrganizationId, LayoutId } from './types';
 
 import { BaseRepository, Omit } from '../base-repository';
 import { DalException } from '../../shared';
@@ -75,9 +74,6 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
         $match: {
           ...query,
         },
-      },
-      {
-        $sort: { createdAt: -1 },
       },
       {
         $skip: pagination.skip,

@@ -15,7 +15,7 @@ export const EmailInboxContent = ({
 }) => {
   const theme = useMantineTheme();
   const { control } = useFormContext();
-  const { layouts, isLoading } = useLayouts(0, 10);
+  const { layouts, isLoading } = useLayouts(0, 100);
 
   return (
     <div

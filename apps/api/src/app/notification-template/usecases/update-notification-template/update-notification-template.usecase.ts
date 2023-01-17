@@ -137,7 +137,7 @@ export class UpdateNotificationTemplate {
               contentType: message.template.contentType,
               cta: message.template.cta,
               feedId: message.template.feedId ? message.template.feedId : null,
-              layoutId: message.template.layoutId ? message.template.layoutId : null,
+              layoutId: message.template.layoutId || null,
               subject: message.template.subject,
               title: message.template.title,
               preheader: message.template.preheader,
