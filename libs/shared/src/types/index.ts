@@ -1,4 +1,5 @@
 export * from './builder';
+export * from './channel';
 export * from './environment';
 export * from './layout';
 export * from './message-template';

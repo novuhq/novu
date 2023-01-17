@@ -1,6 +1,7 @@
-import { ChannelCTATypeEnum, ChannelTypeEnum, IEmailBlock, ActorTypeEnum } from '../message-template';
 import { INotificationTemplate } from '../notification-template';
 import { ButtonTypeEnum } from './action.enum';
+
+import { ChannelCTATypeEnum, ChannelTypeEnum, IEmailBlock, ActorTypeEnum } from '../../types';
 
 export interface IMessage {
   _id: string;

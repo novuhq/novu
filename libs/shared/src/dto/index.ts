@@ -1,5 +1,6 @@
 export * from './events';
 export * from './integration';
+export * from './layout';
 export * from './message-template';
 export * from './notification-templates';
 export * from './organization';

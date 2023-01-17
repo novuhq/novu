@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { IEmailBlock, OrganizationRepository, OrganizationEntity } from '@novu/dal';
+import { OrganizationRepository, OrganizationEntity } from '@novu/dal';
+import { IEmailBlock } from '@novu/shared';
 import { CompileTemplate } from '../compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../compile-template/compile-template.command';
 import { PreviewEmailCommand } from './preview-email.command';
