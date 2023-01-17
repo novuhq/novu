@@ -5,9 +5,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { IEnvironment, ICreateNotificationTemplateDto, StepTypeEnum, SignUpOriginEnum } from '@novu/shared';
 import { prompt } from '../client';
 import {
+  emailQuestion,
   environmentQuestions,
   existingSessionQuestions,
+  fullNameQuestion,
   introQuestions,
+  passwordQuestion,
+  privateDomainQuestions,
+  proceedSignupQuestions,
   registerMethodQuestions,
   showWelcomeScreen,
   termAndPrivacyQuestions,
@@ -36,6 +41,9 @@ import {
   getEnvironmentApiKeys,
 } from '../api';
 import { AnalyticService, ConfigService, AnalyticsEventEnum, ANALYTICS_SOURCE } from '../services';
+import { signup, updateEmail } from '../api/auth';
+import * as chalk from 'chalk';
+import { privateEmailDomains } from '../constants/domains';
 
 export enum ChannelCTATypeEnum {
   REDIRECT = 'redirect',
@@ -129,25 +137,85 @@ async function handleOnboardingFlow(config: ConfigService) {
       },
     });
 
+    const { accept } = await prompt(termAndPrivacyQuestions);
+
+    analytics.track({
+      identity: { anonymousId },
+      event: AnalyticsEventEnum.TERMS_AND_CONDITIONS_QUESTION,
+      data: {
+        accepted: accept,
+      },
+    });
+
+    if (accept === false) {
+      await analytics.flush();
+      process.exit();
+    }
+
     if (regMethod.value === 'github') {
-      const { accept } = await prompt(termAndPrivacyQuestions);
-
-      analytics.track({
-        identity: { anonymousId },
-        event: AnalyticsEventEnum.TERMS_AND_CONDITIONS_QUESTION,
-        data: {
-          accepted: accept,
-        },
-      });
-
-      if (accept === false) {
-        await analytics.flush();
-        process.exit();
-      }
-
       spinner = ora('Waiting for a brave unicorn to login').start();
       await gitHubOAuth(httpServer, config);
       spinner.stop();
+    } else if (regMethod.value === 'email') {
+      let errorInSignup = true;
+      const { fullName } = await prompt(fullNameQuestion);
+
+      while (errorInSignup) {
+        const { email } = await prompt(emailQuestion);
+
+        if (privateEmailDomains.includes(email.split('@')[1])) {
+          analytics.track({
+            identity: { anonymousId },
+            event: AnalyticsEventEnum.PRIVATE_EMAIL_ATTEMPT,
+            data: {
+              method: 'email',
+            },
+          });
+
+          const { domain } = await prompt(privateDomainQuestions(email));
+
+          if (domain === 'updateEmail') {
+            errorInSignup = true;
+
+            continue;
+          }
+        }
+
+        const { password } = await prompt(passwordQuestion);
+        try {
+          const response = await signup({
+            email,
+            password,
+            firstName: fullName.split(' ')[0],
+            lastName: fullName.split(' ')[1] || '',
+            origin: SignUpOriginEnum.CLI,
+          });
+
+          storeToken(config, response.token);
+          errorInSignup = false;
+        } catch (e) {
+          const error = e.response.data;
+
+          if (error?.message === 'User already exists') {
+            const { proceedSignup } = await prompt(proceedSignupQuestions);
+
+            if (proceedSignup === 'resetPassword') {
+              await open(`${CLIENT_LOGIN_URL.replace('/auth/login', '/auth/reset/request')}`);
+              console.log('Finished flow');
+              process.exit();
+            } else {
+              errorInSignup = true;
+            }
+          } else {
+            errorInSignup = true;
+            console.log(
+              chalk.bold.red(
+                Array.isArray(error?.message) ? error?.messag?.join('\n') : error?.message || 'Something went wrong'
+              )
+            );
+          }
+        }
+      }
     }
 
     spinner = ora('Setting up your new account').start();
@@ -159,6 +227,35 @@ async function handleOnboardingFlow(config: ConfigService) {
 
     const user = config.getDecodedToken();
 
+    if (regMethod.value === 'github' && privateEmailDomains.includes(user.email.split('@')[1])) {
+      analytics.track({
+        identity: { anonymousId },
+        event: AnalyticsEventEnum.PRIVATE_EMAIL_ATTEMPT,
+        data: {
+          method: 'github',
+        },
+      });
+
+      spinner.stop();
+      let updateErrorForEmail = false;
+      do {
+        const { domain } = await prompt(privateDomainQuestions(user.email));
+
+        if (domain === 'updateEmail') {
+          const { email } = await prompt(emailQuestion);
+
+          try {
+            await updateEmail({ email });
+          } catch (e) {
+            const error = e.response.data;
+            updateErrorForEmail = true;
+            console.error('Un-expected error ', error);
+          }
+        }
+      } while (updateErrorForEmail);
+    }
+
+    spinner.start();
     analytics.identify(user);
     analytics.alias({ previousId: anonymousId, userId: user._id });
 

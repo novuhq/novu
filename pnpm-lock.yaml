@@ -172,14 +172,14 @@ importers:
       '@nestjs/terminus': 9.0.0
       '@nestjs/testing': 9.0.2
       '@novu/apns': ^0.10.2
-      '@novu/application-generic': ^0.10.2
+      '@novu/application-generic': ^0.10.3
       '@novu/burst-sms': ^0.10.2
       '@novu/clickatell': ^0.10.2
-      '@novu/dal': ^0.10.2
+      '@novu/dal': ^0.10.3
       '@novu/discord': ^0.10.2
       '@novu/emailjs': ^0.10.2
       '@novu/expo': ^0.10.2
-      '@novu/fcm': ^0.10.2
+      '@novu/fcm': ^0.10.3
       '@novu/firetext': ^0.10.2
       '@novu/gupshup': ^0.10.2
       '@novu/infobip': ^0.10.2
@@ -204,7 +204,7 @@ importers:
       '@novu/stateless': ^0.10.2
       '@novu/telnyx': ^0.10.2
       '@novu/termii': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@novu/twilio': ^0.10.2
       '@sendgrid/mail': ^7.6.0
       '@sentry/hub': 7.22.0
@@ -409,10 +409,10 @@ importers:
       '@mantine/notifications': ^5.7.1
       '@mantine/prism': ^5.7.1
       '@mantine/spotlight': ^5.7.1
-      '@novu/dal': ^0.10.2
-      '@novu/notification-center': ^0.10.2
+      '@novu/dal': ^0.10.3
+      '@novu/notification-center': ^0.10.3
       '@novu/shared': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@segment/analytics-next': ^1.48.0
       '@sentry/react': ^6.3.1
       '@sentry/tracing': ^6.3.1
@@ -613,11 +613,11 @@ importers:
       '@nestjs/swagger': ^4.8.0
       '@nestjs/terminus': ^7.2.0
       '@nestjs/testing': ^7.6.17
-      '@novu/application-generic': ^0.10.2
-      '@novu/dal': ^0.10.2
+      '@novu/application-generic': ^0.10.3
+      '@novu/dal': ^0.10.3
       '@novu/shared': ^0.10.2
       '@novu/stateless': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@sentry/node': ^6.3.3
       '@types/chai': ^4.2.11
       '@types/express': ^4.17.8
@@ -716,10 +716,10 @@ importers:
       '@faker-js/faker': ^6.0.0
       '@mantine/core': 4.1.0
       '@mantine/hooks': 4.1.0
-      '@novu/dal': ^0.10.2
-      '@novu/notification-center': ^0.10.2
+      '@novu/dal': ^0.10.3
+      '@novu/notification-center': ^0.10.3
       '@novu/shared': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
       '@testing-library/user-event': ^12.1.10
@@ -834,7 +834,7 @@ importers:
       '@nestjs/testing': ^7.6.17
       '@nestjs/websockets': ^9.2.1
       '@novu/shared': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@sentry/node': ^7.30.0
       '@socket.io/redis-adapter': ^7.2.0
       '@types/express': ^4.17.8
@@ -908,7 +908,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.6.1
       supertest: 6.2.2
-      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
+      ts-jest: 27.1.4_t4ldjoaolo4tjxxklyv3omdwf4
       ts-loader: 8.3.0_vhanpkig4omek67hjhmtrlsh2y
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.14.1
@@ -1003,7 +1003,7 @@ importers:
       '@angular/platform-browser': ^15.0.0
       '@angular/platform-browser-dynamic': ^15.0.0
       '@angular/router': ^15.0.0
-      '@novu/notification-center-angular': ^0.10.2
+      '@novu/notification-center-angular': ^0.10.3
       '@types/jasmine': ~4.3.0
       jasmine-core: ~4.5.0
       karma: ~6.4.0
@@ -1044,7 +1044,7 @@ importers:
 
   examples/vue-notification-center-example:
     specifiers:
-      '@novu/notification-center-vue': ^0.10.2
+      '@novu/notification-center-vue': ^0.10.3
       '@types/node': ^16.18.3
       '@vitejs/plugin-vue': ^3.1.2
       '@vitejs/plugin-vue-jsx': ^2.0.1
@@ -1162,7 +1162,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^7.1.2
       '@commitlint/config-conventional': ^7.1.2
-      '@novu/notification-center': ^0.10.2
+      '@novu/notification-center': ^0.10.3
       '@rollup/plugin-replace': ^2.4.2
       '@types/iframe-resizer': ^3.5.8
       '@types/jest': 27.4.0
@@ -1261,7 +1261,7 @@ importers:
   libs/testing:
     specifiers:
       '@faker-js/faker': ^6.0.0
-      '@novu/dal': ^0.10.2
+      '@novu/dal': ^0.10.3
       '@novu/node': ^0.10.2
       '@novu/shared': ^0.10.2
       '@types/async': ^3.2.1
@@ -1329,10 +1329,10 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': ^8.2.0
-      '@novu/dal': ^0.10.2
+      '@novu/dal': ^0.10.3
       '@novu/discord': ^0.10.2
       '@novu/emailjs': ^0.10.2
-      '@novu/fcm': ^0.10.2
+      '@novu/fcm': ^0.10.3
       '@novu/gupshup': ^0.10.2
       '@novu/mailersend': ^0.10.2
       '@novu/mailgun': ^0.10.2
@@ -1353,7 +1353,7 @@ importers:
       '@novu/stateless': ^0.10.2
       '@novu/telnyx': ^0.10.2
       '@novu/termii': ^0.10.2
-      '@novu/testing': ^0.10.2
+      '@novu/testing': ^0.10.3
       '@novu/twilio': ^0.10.2
       '@sentry/node': ^7.12.1
       '@types/jest': 27.4.0
@@ -1425,7 +1425,7 @@ importers:
       rimraf: 3.0.2
       sinon: 9.2.4
       standard-version: 9.3.2
-      ts-jest: 27.1.4_vqlr6pm7mnv5rngd46vdqt4eby
+      ts-jest: 27.1.4_4xhzrl3rpmfnzk4dio663nrbja
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
@@ -1671,6 +1671,7 @@ importers:
       rollup: ^3.7.3
       rollup-plugin-gzip: ^3.1.0
       rollup-plugin-node-externals: ^5.0.2
+      rollup-plugin-peer-deps-external: ^2.2.4
       rollup-plugin-polyfill-node: ^0.11.0
       rollup-plugin-terser: ^7.0.2
       socket.io-client: 4.5.4
@@ -1729,6 +1730,7 @@ importers:
       rollup: 3.7.3
       rollup-plugin-gzip: 3.1.0_rollup@3.7.3
       rollup-plugin-node-externals: 5.0.2_rollup@3.7.3
+      rollup-plugin-peer-deps-external: 2.2.4_rollup@3.7.3
       rollup-plugin-polyfill-node: 0.11.0_rollup@3.7.3
       rollup-plugin-terser: 7.0.2_rollup@3.7.3
       ts-jest: 29.0.3_apl2kovhlf4augjpviu3seobxq
@@ -1744,7 +1746,7 @@ importers:
       '@angular/core': ^15.0.0
       '@angular/platform-browser': ^15.0.0
       '@angular/platform-browser-dynamic': ^15.0.0
-      '@novu/notification-center': ^0.10.2
+      '@novu/notification-center': ^0.10.3
       '@types/jasmine': ~4.3.0
       jasmine-core: ~4.5.0
       karma: ~6.4.0
@@ -1786,7 +1788,7 @@ importers:
   packages/notification-center-vue:
     specifiers:
       '@emotion/css': ^11.10.5
-      '@novu/notification-center': ^0.10.2
+      '@novu/notification-center': ^0.10.3
       '@rushstack/eslint-patch': ^1.1.4
       '@types/node': ^18.11.12
       '@vitejs/plugin-vue': ^4.0.0
@@ -1809,7 +1811,8 @@ importers:
       '@emotion/css': 11.10.5_@babel+core@7.20.5
       '@novu/notification-center': link:../notification-center
       floating-vue: '@github.com/LetItRock/floating-vue/raw/main/packages/floating-vue/floating-vue-2.0.0-beta.21.tgz_vue@3.2.45'
-      vue: 3.2.45
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
     devDependencies:
       '@rushstack/eslint-patch': 1.2.0
       '@types/node': 18.11.13
@@ -1822,10 +1825,9 @@ importers:
       eslint-plugin-vue: 9.8.0_eslint@8.30.0
       npm-run-all: 4.1.5
       prettier: 2.7.1
-      react: 17.0.2
-      react-dom: 17.0.2_react@17.0.2
       typescript: 4.7.4
       vite: 4.0.2_@types+node@18.11.13
+      vue: 3.2.45
       vue-tsc: 1.0.14_typescript@4.7.4
 
   packages/stateless:
@@ -2975,7 +2977,7 @@ importers:
       prettier: 2.7.1
       rimraf: 3.0.2
       standard-version: 9.3.2
-      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
+      ts-jest: 27.1.4_t4ldjoaolo4tjxxklyv3omdwf4
       ts-node: 9.1.1_typescript@4.3.5
       typedoc: 0.19.2_typescript@4.3.5
       typescript: 4.3.5
@@ -3956,7 +3958,7 @@ packages:
       '@angular/common': 15.0.0_udk3bsk46pcospqdnjcqej46we
       '@angular/compiler': 15.0.0_@angular+core@15.0.0
       '@angular/core': 15.0.0_rxjs@7.5.6+zone.js@0.12.0
-      '@angular/platform-browser': 15.0.0_qbiqfif4udibgvsmhnccc7le2y
+      '@angular/platform-browser': 15.0.0_7psesmusmj4excifnjgc7jfosa
       tslib: 2.4.1
     dev: false
 
@@ -35338,7 +35340,7 @@ packages:
     resolution: {integrity: sha512-j4dx+Fb0URmzbwwMUrhqWM2BEWHdFGx+qZ9qqASHRPqvTYdqvWnHg0H1hIbcyLnvgnoNAVMlwkepyqM3DaIFUg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -57040,6 +57042,14 @@ packages:
       resolve: 1.22.1
     dev: true
 
+  /rollup-plugin-peer-deps-external/2.2.4_rollup@3.7.3:
+    resolution: {integrity: sha512-AWdukIM1+k5JDdAqV/Cxd+nejvno2FVLVeZ74NKggm3Q5s9cbbcOgUPGdbxPi4BXu7xGaZ8HG12F+thImYu/0g==}
+    peerDependencies:
+      rollup: '*'
+    dependencies:
+      rollup: 3.7.3
+    dev: true
+
   /rollup-plugin-polyfill-node/0.11.0_rollup@3.7.3:
     resolution: {integrity: sha512-5t+qhq4LAQKQBgbPOQJEoxxGzU5b+zLfvzpUAGy9u0MCMs8y+mrjUAv8+xrkWdxnwXQwJtjmCMnA9lCflsMzNw==}
     peerDependencies:
@@ -59952,7 +59962,7 @@ packages:
       schema-utils: 3.1.1
       serialize-javascript: 5.0.1
       source-map: 0.6.1
-      terser: 5.12.1
+      terser: 5.15.1
       webpack: 4.46.0
       webpack-sources: 1.4.3
     transitivePeerDependencies:
@@ -60567,6 +60577,41 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
+  /ts-jest/27.1.4_4xhzrl3rpmfnzk4dio663nrbja:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@babel/core': 7.20.2
+      '@types/jest': 27.4.0
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.8
+      typescript: 4.6.2
+      yargs-parser: 20.2.9
+    dev: true
+
   /ts-jest/27.1.4_6wduk63hndnifocwptujn7mfjm:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -60777,6 +60822,41 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
+  /ts-jest/27.1.4_t4ldjoaolo4tjxxklyv3omdwf4:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@babel/core': 7.20.5
+      '@types/jest': 27.4.1
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.8
+      typescript: 4.3.5
+      yargs-parser: 20.2.9
+    dev: true
+
   /ts-jest/27.1.4_umhwpvuqw4p7q7gqrua2jbjayq:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -60803,40 +60883,6 @@ packages:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.4.7_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.8
-      typescript: 4.6.2
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.4_vqlr6pm7mnv5rngd46vdqt4eby:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@types/jest': 27.4.0
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
       jest-util: 27.5.1
       json5: 2.2.1
       lodash.memoize: 4.1.2
