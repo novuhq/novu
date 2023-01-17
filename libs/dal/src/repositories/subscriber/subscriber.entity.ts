@@ -44,4 +44,5 @@ export class IChannelSettings {
 export class IChannelCredentials {
   webhookUrl?: string;
   deviceTokens?: string[];
+  chatUserId?: string;
 }

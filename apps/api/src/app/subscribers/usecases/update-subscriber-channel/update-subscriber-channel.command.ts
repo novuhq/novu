@@ -11,6 +11,10 @@ export class IChannelCredentialsCommand implements ChannelCredentials {
   @IsString({ each: true })
   @IsOptional()
   deviceTokens?: string[];
+
+  @IsString()
+  @IsOptional()
+  chatUserId?: string;
 }
 
 export class UpdateSubscriberChannelCommand extends EnvironmentCommand implements SubscriberChannel {

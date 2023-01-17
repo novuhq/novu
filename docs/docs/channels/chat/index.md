@@ -8,3 +8,4 @@ To read a provider specific documentation:
 - [Discord](/channels/chat/discord)
 - [Slack](/channels/chat/slack)
 - [MS Teams](/channels/chat/msteams)
+- [Telegram](/channels/chat/telegram)
