@@ -158,7 +158,7 @@ When a subscriber comes online, an active websocket connection is established wi
 
 The online filter feature can be used to determine if a subscriber is online right now or if the subscriber was online within a specific time period.
 
-- To determine if a subscriber is online right now, Novu checks the value of the `isOnline` field. If `isOnline` is `true`, the subscriber is online, otherwise the subscriber is offline.
+- To determine if a subscriber is online right now, Novu checks the value of the `isOnline` field. If `isOnline` is `true`, the subscriber is online, otherwise when the `isOnline` is `false` the subscriber is considered offline.
 
 - To determine if a subscriber was online within a specific time period, Novu compares both the `isOnline` and `lastOnlineAt` fields. If `isOnline` is `true`, the subscriber is still online and the filter is applied. If `isOnline` is `false`, the difference between the `current timestamp` and the `timestamp` value of `lastOnlineAt` is calculated. If this difference is within the specified time period because it is `diff >= 0 && diff <= filter.value`, the subscriber was online within that time period and the filter is applied. Otherwise, the filter is not applied.
 
