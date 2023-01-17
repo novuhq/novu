@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsString } from 'class-validator';
-import { IEmailBlock } from '@novu/dal';
+import { IEmailBlock } from '@novu/shared';
 
 export class TestSendEmailRequestDto {
   @IsDefined()

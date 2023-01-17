@@ -1,10 +1,15 @@
+import { LayoutDto } from '@novu/shared';
+
 import { api } from './api.client';
 
-export async function createLayout(data: any) {
+export async function createLayout(data: LayoutDto) {
   return api.post(`/v1/layouts`, data);
 }
 
-export async function updateLayoutById(layoutId: string, data: any) {
+export async function updateLayoutById(
+  layoutId: string,
+  data: Pick<LayoutDto, 'name' | 'description' | 'content' | 'variables' | 'isDefault'>
+) {
   return api.patch(`/v1/layouts/${layoutId}`, data);
 }
 

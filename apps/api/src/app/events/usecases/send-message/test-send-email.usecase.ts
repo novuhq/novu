@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { IEmailBlock, OrganizationRepository, OrganizationEntity, IntegrationEntity } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { OrganizationRepository, OrganizationEntity, IntegrationEntity } from '@novu/dal';
+import { ChannelTypeEnum, IEmailBlock } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IEmailOptions } from '@novu/stateless';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
