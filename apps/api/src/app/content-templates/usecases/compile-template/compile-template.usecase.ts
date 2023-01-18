@@ -43,15 +43,7 @@ const cache = new Map();
 @Injectable()
 export class CompileTemplate {
   async execute(command: CompileTemplateCommand): Promise<string | null> {
-    let templateContent = cache.get(command.templateId);
-    if (!templateContent) {
-      templateContent = await this.loadTemplateContent('layout.handlebars');
-      cache.set(command.templateId, templateContent);
-    }
-
-    if (command.templateId === 'custom') {
-      templateContent = command.customTemplate;
-    }
+    const templateContent = command.customTemplate;
 
     const template = Handlebars.compile(templateContent);
 
