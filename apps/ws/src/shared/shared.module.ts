@@ -11,9 +11,12 @@ import {
   MessageRepository,
   MemberRepository,
 } from '@novu/dal';
+import { AnalyticsService } from '@novu/application-generic';
 
 import { QueueService } from './queue';
 import { SubscriberOnlineService } from './subscriber-online';
+
+export const ANALYTICS_SERVICE = 'AnalyticsService';
 
 const DAL_MODELS = [
   UserRepository,
@@ -45,6 +48,16 @@ const PROVIDERS = [
   },
   ...DAL_MODELS,
   SubscriberOnlineService,
+  {
+    provide: AnalyticsService,
+    useFactory: async () => {
+      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
+
+      await analyticsService.initialize();
+
+      return analyticsService;
+    },
+  },
 ];
 
 @Module({

@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
