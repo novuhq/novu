@@ -6,14 +6,15 @@ import {
   NotificationTemplateEntity,
   MemberRepository,
 } from '@novu/dal';
-import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import { IPreferenceChannels } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
+import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../get-subscriber-template-preference';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class GetSubscriberPreference {

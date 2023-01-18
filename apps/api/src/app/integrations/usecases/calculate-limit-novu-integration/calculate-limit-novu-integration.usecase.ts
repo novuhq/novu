@@ -15,7 +15,7 @@ export class CalculateLimitNovuIntegration {
       return;
     }
 
-    const providerId = this.getProviderId(command.channelType);
+    const providerId = CalculateLimitNovuIntegration.getProviderId(command.channelType);
 
     if (providerId === undefined) {
       return;
@@ -34,7 +34,7 @@ export class CalculateLimitNovuIntegration {
     };
   }
 
-  private getProviderId(type: ChannelTypeEnum) {
+  static getProviderId(type: ChannelTypeEnum) {
     switch (type) {
       case ChannelTypeEnum.EMAIL:
         return EmailProviderIdEnum.Novu;

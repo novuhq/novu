@@ -44,6 +44,7 @@ describe('Get Novu Integration', function () {
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         channelType: ChannelTypeEnum.EMAIL,
+        userId: session.user._id,
       })
     );
 
@@ -56,6 +57,7 @@ describe('Get Novu Integration', function () {
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         channelType: ChannelTypeEnum.SMS,
+        userId: session.user._id,
       })
     );
 
@@ -70,6 +72,7 @@ describe('Get Novu Integration', function () {
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         channelType: ChannelTypeEnum.EMAIL,
+        userId: session.user._id,
       })
     );
 
@@ -86,6 +89,7 @@ describe('Get Novu Integration', function () {
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         channelType: ChannelTypeEnum.EMAIL,
+        userId: session.user._id,
       })
     );
 
@@ -100,6 +104,7 @@ describe('Get Novu Integration', function () {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           channelType: ChannelTypeEnum.EMAIL,
+          userId: session.user._id,
         })
       );
       expect(true).to.equal(false);
@@ -118,6 +123,7 @@ describe('Get Novu Integration', function () {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           channelType: ChannelTypeEnum.EMAIL,
+          userId: session.user._id,
         })
       );
       expect(true).to.equal(false);

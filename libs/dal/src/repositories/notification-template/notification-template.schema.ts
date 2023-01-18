@@ -73,10 +73,11 @@ const notificationTemplateSchema = new Schema(
             children: [
               {
                 field: Schema.Types.String,
-                value: Schema.Types.String,
+                value: Schema.Types.Mixed,
                 operator: Schema.Types.String,
                 on: Schema.Types.String,
                 webhookUrl: Schema.Types.String,
+                timeOperator: Schema.Types.String,
               },
             ],
           },
