@@ -2,14 +2,17 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import axios from 'axios';
 import { Duration, sub } from 'date-fns';
-import { FilterParts, StepTypeEnum } from '@novu/shared';
+import { FilterParts, FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 import { JobEntity, MessageTemplateEntity, NotificationStepEntity, SubscriberRepository } from '@novu/dal';
 
 import { MessageMatcher } from './message-matcher.service';
 import type { SendMessageCommand } from '../send-message/send-message.command';
 
 describe('Message filter matcher', function () {
-  let messageMatcher = new MessageMatcher(undefined as any, undefined as any, undefined as any);
+  const createExecutionDetails = {
+    execute: sinon.stub(),
+  };
+  let messageMatcher = new MessageMatcher(undefined as any, createExecutionDetails as any, undefined as any);
 
   it('should filter correct message by the filter value', async function () {
     const matchedMessage = await messageMatcher.filter(
@@ -19,7 +22,7 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'firstVar',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -41,13 +44,13 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'firstVar',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
           {
             operator: 'EQUAL',
             value: 'secondVar',
             field: 'secondField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -70,13 +73,13 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'firstVar',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
           {
             operator: 'EQUAL',
             value: 'secondVar',
             field: 'secondField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -99,13 +102,13 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'firstVar',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
           {
             operator: 'NOT_EQUAL',
             value: 'secondVar',
             field: 'secondField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -128,7 +131,7 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -164,7 +167,7 @@ describe('Message filter matcher', function () {
             operator: 'LARGER',
             value: '0',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -186,7 +189,7 @@ describe('Message filter matcher', function () {
             operator: 'SMALLER',
             value: '3',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -208,7 +211,7 @@ describe('Message filter matcher', function () {
             operator: 'LARGER_EQUAL',
             value: '0',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -228,7 +231,7 @@ describe('Message filter matcher', function () {
             operator: 'LARGER_EQUAL',
             value: '3',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -250,7 +253,7 @@ describe('Message filter matcher', function () {
             operator: 'SMALLER_EQUAL',
             value: '3',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -270,7 +273,7 @@ describe('Message filter matcher', function () {
             operator: 'SMALLER_EQUAL',
             value: '3',
             field: 'varField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -408,7 +411,7 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'webhook',
+            on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
         ]),
@@ -437,13 +440,13 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'payloadVarField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
           {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'webhook',
+            on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
         ]),
@@ -467,14 +470,14 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'webhook',
+            on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
           {
             operator: 'EQUAL',
             value: 'true',
             field: 'payloadVarField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -505,13 +508,13 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'payloadVarField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
           {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'webhook',
+            on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
         ]),
@@ -535,14 +538,14 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'true',
             field: 'varField',
-            on: 'webhook',
+            on: FilterPartTypeEnum.WEBHOOK,
             webhookUrl: 'www.user.com/webhook',
           },
           {
             operator: 'EQUAL',
             value: 'true',
             field: 'payloadVarField',
-            on: 'payload',
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
@@ -571,6 +574,34 @@ describe('Message filter matcher', function () {
     });
 
     describe('isOnline', () => {
+      it('allows to process multiple filter parts', async () => {
+        const matcher = new MessageMatcher(
+          { findOne: () => Promise.resolve(getSubscriber()) } as any,
+          createExecutionDetails as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: FilterPartTypeEnum.IS_ONLINE,
+                value: true,
+              },
+              {
+                operator: 'EQUAL',
+                value: 'true',
+                field: 'payloadVarField',
+                on: FilterPartTypeEnum.PAYLOAD,
+              },
+            ]),
+          }),
+          {
+            payload: { payloadVarField: true },
+          }
+        );
+        expect(matchedMessage).to.equal(true);
+      });
+
       it("doesn't allow to process if the subscriber has no online fields set and filter is true", async () => {
         const matcher = new MessageMatcher(
           {
@@ -580,14 +611,14 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnline',
+                on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
               },
             ]),
@@ -608,14 +639,14 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnline',
+                on: FilterPartTypeEnum.IS_ONLINE,
                 value: false,
               },
             ]),
@@ -630,14 +661,14 @@ describe('Message filter matcher', function () {
       it('allows to process if the subscriber is online', async () => {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber()) } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnline',
+                on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
               },
             ]),
@@ -652,14 +683,14 @@ describe('Message filter matcher', function () {
       it("doesn't allow to process if the subscriber is not online", async () => {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber({ isOnline: false })) } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnline',
+                on: FilterPartTypeEnum.IS_ONLINE,
                 value: true,
               },
             ]),
@@ -673,6 +704,37 @@ describe('Message filter matcher', function () {
     });
 
     describe('isOnlineInLast', () => {
+      it('allows to process multiple filter parts', async () => {
+        const matcher = new MessageMatcher(
+          {
+            findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 3 } })),
+          } as any,
+          createExecutionDetails as any,
+          undefined as any
+        );
+        const matchedMessage = await matcher.filter(
+          sendMessageCommand({
+            step: makeStep('Correct Match', 'AND', [
+              {
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
+                value: 5,
+                timeOperator: 'minutes',
+              },
+              {
+                operator: 'EQUAL',
+                value: 'true',
+                field: 'payloadVarField',
+                on: FilterPartTypeEnum.PAYLOAD,
+              },
+            ]),
+          }),
+          {
+            payload: { payloadVarField: true },
+          }
+        );
+        expect(matchedMessage).to.equal(true);
+      });
+
       it("doesn't allow to process if the subscriber with no online fields set", async () => {
         const matcher = new MessageMatcher(
           {
@@ -682,14 +744,14 @@ describe('Message filter matcher', function () {
                 lastName: 'Doe',
               }),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
                 timeOperator: 'minutes',
               },
@@ -707,14 +769,14 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 10 } })),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
                 timeOperator: 'minutes',
               },
@@ -732,14 +794,14 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 4 } })),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
                 timeOperator: 'minutes',
               },
@@ -757,14 +819,14 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 6 } })),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
                 timeOperator: 'minutes',
               },
@@ -782,14 +844,14 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 30 } })),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 1,
                 timeOperator: 'hours',
               },
@@ -807,14 +869,14 @@ describe('Message filter matcher', function () {
           {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { hours: 23 } })),
           } as any,
-          undefined as any,
+          createExecutionDetails as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
           sendMessageCommand({
             step: makeStep('Correct Match', 'AND', [
               {
-                on: 'isOnlineInLast',
+                on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 1,
                 timeOperator: 'days',
               },
@@ -873,6 +935,12 @@ function sendMessageCommand({ step }: { step: NotificationStepEntity }): SendMes
     notificationId: '123',
     subscriberId: '123',
     jobId: '123',
-    job: {} as JobEntity,
+    job: {
+      _notificationId: '123',
+      transactionId: '123',
+      _environmentId: '123',
+      _organizationId: '123',
+      _subscriberId: '123',
+    } as JobEntity,
   };
 }

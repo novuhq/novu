@@ -3,32 +3,27 @@ import { createHmac } from 'crypto';
 import axios from 'axios';
 import { Injectable } from '@nestjs/common';
 import { parseISO, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
-import type { ITriggerPayload } from '@novu/node';
-import type {
+import {
   IBaseFieldFilterPart,
   FilterParts,
   IWebhookFilterPart,
-  IFieldFilterPart,
   IRealtimeOnlineFilterPart,
   IOnlineInLastFilterPart,
+  FILTER_TO_LABEL,
+  FilterPartTypeEnum,
 } from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { SubscriberEntity, EnvironmentRepository, SubscriberRepository, StepFilter } from '@novu/dal';
 
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
-
-export interface IFilterVariables {
-  payload?: ITriggerPayload;
-  subscriber?: SubscriberEntity;
-  webhook?: Record<string, unknown>;
-}
-
-const findFilterPartByType = (filterParts: FilterParts[], type: FilterParts['on'] | FilterParts['on'][]) => {
-  const types = Array.isArray(type) ? type : [type];
-
-  return filterParts.filter((filterPart) => types.includes(filterPart.on));
-};
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import type { IFilterVariables } from './types';
+import { FilterProcessingDetails } from './filter-processing-details';
 
 const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: 'minutes' | 'hours' | 'days') => {
   if (timeOperator === 'minutes') {
@@ -57,6 +52,9 @@ export class MessageMatcher {
     }
     if (step.filters?.length) {
       const foundFilter = await findAsync(step.filters, async (filter) => {
+        const filterProcessingDetails = new FilterProcessingDetails();
+        filterProcessingDetails.addFilter(filter, variables);
+
         const children = filter.children;
         const noRules = !children || (Array.isArray(children) && children.length === 0);
         if (noRules) {
@@ -65,13 +63,39 @@ export class MessageMatcher {
 
         const singleRule = !children || (Array.isArray(children) && children.length === 1);
         if (singleRule) {
-          return await this.processFilter(variables, children[0], command);
+          const result = await this.processFilter(variables, children[0], command, filterProcessingDetails);
+          await this.createExecutionDetails.execute(
+            CreateExecutionDetailsCommand.create({
+              ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+              detail: DetailEnum.PROCESSING_STEP_FILTER,
+              source: ExecutionDetailsSourceEnum.INTERNAL,
+              status: ExecutionDetailsStatusEnum.PENDING,
+              isTest: false,
+              isRetry: false,
+              raw: filterProcessingDetails.toString(),
+            })
+          );
+
+          return result;
         }
 
-        return await this.handleGroupFilters(filter, variables, command);
+        const result = await this.handleGroupFilters(filter, variables, command, filterProcessingDetails);
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.PROCESSING_STEP_FILTER,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.PENDING,
+            isTest: false,
+            isRetry: false,
+            raw: filterProcessingDetails.toString(),
+          })
+        );
+
+        return result;
       });
 
-      return foundFilter !== undefined;
+      return !!foundFilter;
     }
 
     return true;
@@ -80,61 +104,74 @@ export class MessageMatcher {
   private async handleGroupFilters(
     filter: StepFilter,
     variables: IFilterVariables,
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
     if (filter.value === 'OR') {
-      return await this.handleOrFilters(filter, variables, command);
+      return await this.handleOrFilters(filter, variables, command, filterProcessingDetails);
     }
 
     if (filter.value === 'AND') {
-      return await this.handleAndFilters(filter, variables, command);
+      return await this.handleAndFilters(filter, variables, command, filterProcessingDetails);
     }
 
     return false;
   }
 
-  private splitToSyncAsync(filter: StepFilter) {
-    const asyncFilters = findFilterPartByType(filter.children, 'webhook') as IWebhookFilterPart[];
-    const syncFilters = findFilterPartByType(filter.children, ['payload', 'subscriber']) as IFieldFilterPart[];
+  private splitFilters(filter: StepFilter) {
+    const webhookFilters = filter.children.filter((childFilter) => childFilter.on === 'webhook');
 
-    return { asyncFilters, syncFilters };
+    const otherFilters = filter.children.filter((childFilter) => childFilter.on !== 'webhook');
+
+    return { webhookFilters, otherFilters };
   }
 
   private async handleAndFilters(
     filter: StepFilter,
     variables: IFilterVariables,
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    const { asyncFilters, syncFilters } = this.splitToSyncAsync(filter);
+    const { webhookFilters, otherFilters } = this.splitFilters(filter);
 
-    const foundSyncFilterMatches = syncFilters.filter((i) => this.processFilterEquality(variables, i));
-    if (syncFilters.length !== foundSyncFilterMatches.length) {
+    const matchedOtherFilters = await filterAsync(otherFilters, (i) =>
+      this.processFilter(variables, i, command, filterProcessingDetails)
+    );
+    if (otherFilters.length !== matchedOtherFilters.length) {
       return false;
     }
 
-    const foundAsyncFilterMatches = await filterAsync(asyncFilters, (i) => this.processFilter(variables, i, command));
+    const matchedWebhookFilters = await filterAsync(webhookFilters, (i) =>
+      this.processFilter(variables, i, command, filterProcessingDetails)
+    );
 
-    return foundAsyncFilterMatches.length === asyncFilters.length;
+    return matchedWebhookFilters.length === webhookFilters.length;
   }
 
   private async handleOrFilters(
     filter: StepFilter,
     variables: IFilterVariables,
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    const { asyncFilters, syncFilters } = this.splitToSyncAsync(filter);
+    const { webhookFilters, otherFilters } = this.splitFilters(filter);
 
-    const syncRes = syncFilters.find((i) => this.processFilterEquality(variables, i));
-    if (syncRes) {
+    const foundFilter = await findAsync(otherFilters, (i) =>
+      this.processFilter(variables, i, command, filterProcessingDetails)
+    );
+    if (foundFilter) {
       return true;
     }
 
-    return !!(await findAsync(asyncFilters, (i) => this.processFilter(variables, i, command)));
+    return !!(await findAsync(webhookFilters, (i) =>
+      this.processFilter(variables, i, command, filterProcessingDetails)
+    ));
   }
 
   private async processIsOnline(
     filter: IRealtimeOnlineFilterPart | IOnlineInLastFilterPart,
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
     const subscriber = await this.subscriberRepository.findOne({
       _id: command.subscriberId,
@@ -144,53 +181,99 @@ export class MessageMatcher {
 
     const hasNoOnlineFieldsSet =
       typeof subscriber?.isOnline === 'undefined' && typeof subscriber?.lastOnlineAt === 'undefined';
+    const isOnlineString = `${subscriber?.isOnline ?? ''}`;
+    const lastOnlineAtString = `${subscriber?.lastOnlineAt ?? ''}`;
     // the old subscriber created before the is online functionality should not be processed
     if (hasNoOnlineFieldsSet) {
+      filterProcessingDetails.addCondition({
+        filter: FILTER_TO_LABEL[filter.on],
+        field: 'isOnline',
+        expected: `${filter.value}`,
+        actual: `${filter.on === FilterPartTypeEnum.IS_ONLINE ? isOnlineString : lastOnlineAtString}`,
+        operator: `${filter.on === FilterPartTypeEnum.IS_ONLINE ? 'EQUAL' : filter.timeOperator}`,
+        passed: false,
+      });
+
       return false;
     }
 
     const isOnlineMatch = subscriber?.isOnline === filter.value;
-    if (filter.on === 'isOnline') {
+    if (filter.on === FilterPartTypeEnum.IS_ONLINE) {
+      filterProcessingDetails.addCondition({
+        filter: FILTER_TO_LABEL[filter.on],
+        field: 'isOnline',
+        expected: `${filter.value}`,
+        actual: isOnlineString,
+        operator: 'EQUAL',
+        passed: isOnlineMatch,
+      });
+
       return isOnlineMatch;
     }
 
     const currentDate = new Date();
     const lastOnlineAt = subscriber?.lastOnlineAt ? parseISO(subscriber?.lastOnlineAt) : new Date();
     const diff = differenceIn(currentDate, lastOnlineAt, filter.timeOperator);
+    const result = subscriber?.isOnline || (!subscriber?.isOnline && diff >= 0 && diff <= filter.value);
 
-    return subscriber?.isOnline || (!subscriber?.isOnline && diff >= 0 && diff <= filter.value);
+    filterProcessingDetails.addCondition({
+      filter: FILTER_TO_LABEL[filter.on],
+      field: subscriber?.isOnline ? 'isOnline' : 'lastOnlineAt',
+      expected: subscriber?.isOnline ? 'true' : `${filter.value}`,
+      actual: `${subscriber?.isOnline ? 'true' : diff}`,
+      operator: `${filter.timeOperator}`,
+      passed: result,
+    });
+
+    return result;
   }
 
-  private processFilterEquality(variables: IFilterVariables, fieldFilter: IBaseFieldFilterPart) {
-    const payloadVariable = _.get(variables, [fieldFilter.on, fieldFilter.field]);
-    const value = this.parseValue(payloadVariable, fieldFilter.value);
+  private processFilterEquality(
+    variables: IFilterVariables,
+    fieldFilter: IBaseFieldFilterPart,
+    filterProcessingDetails: FilterProcessingDetails
+  ): boolean {
+    const actualValue = _.get(variables, [fieldFilter.on, fieldFilter.field]);
+    const filterValue = this.parseValue(actualValue, fieldFilter.value);
+    let result = false;
 
     if (fieldFilter.operator === 'EQUAL') {
-      return payloadVariable === value;
+      result = actualValue === filterValue;
     }
     if (fieldFilter.operator === 'NOT_EQUAL') {
-      return payloadVariable !== value;
+      result = actualValue !== filterValue;
     }
     if (fieldFilter.operator === 'LARGER') {
-      return payloadVariable > value;
+      result = actualValue > filterValue;
     }
     if (fieldFilter.operator === 'SMALLER') {
-      return payloadVariable < value;
+      result = actualValue < filterValue;
     }
     if (fieldFilter.operator === 'LARGER_EQUAL') {
-      return payloadVariable >= value;
+      result = actualValue >= filterValue;
     }
     if (fieldFilter.operator === 'SMALLER_EQUAL') {
-      return payloadVariable <= value;
+      result = actualValue <= filterValue;
     }
     if (fieldFilter.operator === 'NOT_IN') {
-      return !payloadVariable.includes(value);
+      result = !actualValue.includes(filterValue);
     }
     if (fieldFilter.operator === 'IN') {
-      return payloadVariable.includes(value);
+      result = actualValue.includes(filterValue);
     }
 
-    return false;
+    const actualValueString: string = Array.isArray(actualValue) ? JSON.stringify(actualValue) : `${actualValue ?? ''}`;
+
+    filterProcessingDetails.addCondition({
+      filter: FILTER_TO_LABEL[fieldFilter.on],
+      field: fieldFilter.field,
+      expected: `${filterValue}`,
+      actual: `${actualValueString}`,
+      operator: `${fieldFilter.operator}`,
+      passed: result,
+    });
+
+    return result;
   }
 
   private async getWebhookResponse(
@@ -272,23 +355,25 @@ export class MessageMatcher {
   private async processFilter(
     variables: IFilterVariables,
     child: FilterParts,
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    filterProcessingDetails: FilterProcessingDetails
   ): Promise<boolean> {
-    if (child.on === 'webhook') {
+    let passed = false;
+
+    if (child.on === FilterPartTypeEnum.WEBHOOK) {
       const res = await this.getWebhookResponse(child, variables, command);
-
-      return this.processFilterEquality({ payload: undefined, webhook: res }, child);
+      passed = this.processFilterEquality({ payload: undefined, webhook: res }, child, filterProcessingDetails);
     }
 
-    if (child.on === 'payload' || child.on === 'subscriber') {
-      return this.processFilterEquality(variables, child);
+    if (child.on === FilterPartTypeEnum.PAYLOAD || child.on === FilterPartTypeEnum.SUBSCRIBER) {
+      passed = this.processFilterEquality(variables, child, filterProcessingDetails);
     }
 
-    if (child.on === 'isOnline' || child.on === 'isOnlineInLast') {
-      return this.processIsOnline(child, command);
+    if (child.on === FilterPartTypeEnum.IS_ONLINE || child.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {
+      passed = await this.processIsOnline(child, command, filterProcessingDetails);
     }
 
-    return false;
+    return passed;
   }
 
   private parseValue(originValue, parsingValue) {

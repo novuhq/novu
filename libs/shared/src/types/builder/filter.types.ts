@@ -1,9 +1,15 @@
 import type { BuilderFieldOperator } from './builder.types';
 
-export type FilterPartType = 'payload' | 'subscriber' | 'webhook' | 'isOnline' | 'isOnlineInLast';
+export enum FilterPartTypeEnum {
+  PAYLOAD = 'payload',
+  SUBSCRIBER = 'subscriber',
+  WEBHOOK = 'webhook',
+  IS_ONLINE = 'isOnline',
+  IS_ONLINE_IN_LAST = 'isOnlineInLast',
+}
 
 export interface IBaseFilterPart {
-  on: FilterPartType;
+  on: FilterPartTypeEnum;
 }
 
 export interface IBaseFieldFilterPart extends IBaseFilterPart {
@@ -13,21 +19,21 @@ export interface IBaseFieldFilterPart extends IBaseFilterPart {
 }
 
 export interface IFieldFilterPart extends IBaseFieldFilterPart {
-  on: 'subscriber' | 'payload';
+  on: FilterPartTypeEnum.SUBSCRIBER | FilterPartTypeEnum.PAYLOAD;
 }
 
 export interface IWebhookFilterPart extends IBaseFieldFilterPart {
-  on: 'webhook';
+  on: FilterPartTypeEnum.WEBHOOK;
   webhookUrl: string;
 }
 
 export interface IRealtimeOnlineFilterPart extends IBaseFilterPart {
-  on: 'isOnline';
+  on: FilterPartTypeEnum.IS_ONLINE;
   value: boolean;
 }
 
 export interface IOnlineInLastFilterPart extends IBaseFilterPart {
-  on: 'isOnlineInLast';
+  on: FilterPartTypeEnum.IS_ONLINE_IN_LAST;
   timeOperator: 'minutes' | 'hours' | 'days';
   value: number;
 }

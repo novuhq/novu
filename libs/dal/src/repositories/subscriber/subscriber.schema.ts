@@ -25,7 +25,7 @@ const subscriberSchema = new Schema(
     channels: [Schema.Types.Mixed],
     isOnline: {
       type: Schema.Types.Boolean,
-      default: false,
+      required: false,
     },
     lastOnlineAt: Schema.Types.Date,
   },

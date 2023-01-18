@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { expect } from 'chai';
 import {
   ChangeRepository,
   EnvironmentRepository,
@@ -6,9 +7,15 @@ import {
   NotificationGroupRepository,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, ChannelCTATypeEnum, EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
+import {
+  ChangeEntityTypeEnum,
+  ChannelCTATypeEnum,
+  EmailBlockTypeEnum,
+  StepTypeEnum,
+  FilterPartTypeEnum,
+} from '@novu/shared';
 import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
+
 import {
   CreateNotificationTemplateRequestDto,
   UpdateNotificationTemplateRequestDto,
@@ -63,7 +70,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -111,7 +118,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -206,7 +213,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -286,7 +293,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -344,7 +351,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'secondName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -394,7 +401,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -436,7 +443,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -548,7 +555,7 @@ describe('Promote changes', () => {
               value: 'AND',
               children: [
                 {
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',

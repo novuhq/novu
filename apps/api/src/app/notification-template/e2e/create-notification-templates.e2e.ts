@@ -8,6 +8,7 @@ import {
   INotificationTemplate,
   TriggerTypeEnum,
   IFieldFilterPart,
+  FilterPartTypeEnum,
 } from '@novu/shared';
 import {
   ChangeRepository,
@@ -75,7 +76,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
               value: 'AND',
               children: [
                 {
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
