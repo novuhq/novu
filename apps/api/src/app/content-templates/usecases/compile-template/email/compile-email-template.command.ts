@@ -1,30 +1,26 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { IEmailBlock } from '@novu/dal';
+import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
 import { MessageTemplateContentType } from '@novu/shared';
 
-export class TestSendEmailRequestDto {
+export class CompileEmailTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
+  content: string | IEmailBlock[];
+
   @IsString()
   contentType: MessageTemplateContentType;
 
   @IsDefined()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-  @IsDefined()
   @IsString()
   subject: string;
 
   @IsOptional()
   @IsString()
-  preheader?: string;
-
-  @IsDefined()
-  content: string | IEmailBlock[];
-
-  @IsDefined()
-  to: string | string[];
-
-  @IsOptional()
-  @IsString()
   layoutId?: string | null;
+
+  @IsString()
+  @IsOptional()
+  preheader?: string | null;
 }
