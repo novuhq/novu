@@ -20,7 +20,7 @@
         "outDir": "dist/src"
       },
       {
-        "include": "app/content-templates/usecases/compile-template/templates/basic.handlebars",
+        "include": "app/content-templates/usecases/compile-template/templates/layout.handlebars",
         "outDir": "dist/src"
       }
     ],
