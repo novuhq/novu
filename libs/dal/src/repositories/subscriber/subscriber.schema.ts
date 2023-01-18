@@ -23,6 +23,11 @@ const subscriberSchema = new Schema(
     email: Schema.Types.String,
     avatar: Schema.Types.String,
     channels: [Schema.Types.Mixed],
+    isOnline: {
+      type: Schema.Types.Boolean,
+      required: false,
+    },
+    lastOnlineAt: Schema.Types.Date,
   },
   schemaOptions
 );

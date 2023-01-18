@@ -1,9 +1,12 @@
 import { Divider, Grid, Group, Modal, useMantineTheme } from '@mantine/core';
-import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
 import { Controller, useFieldArray } from 'react-hook-form';
-import styled from '@emotion/styled';
-import { Trash } from '../../../design-system/icons';
+import { FILTER_TO_LABEL, FilterPartTypeEnum } from '@novu/shared';
+
 import { When } from '../../../components/utils/When';
+import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
+import { Trash } from '../../../design-system/icons';
+import { DeleteStepButton, FilterButton } from './FilterModal.styles';
+import { OnlineFiltersForms } from './OnlineFiltersForms';
 
 export function FilterModal({
   isOpen,
@@ -71,6 +74,7 @@ export function FilterModal({
                     { value: 'OR', label: 'Or' },
                   ]}
                   {...field}
+                  data-test-id="group-rules-dropdown"
                 />
               );
             }}
@@ -88,6 +92,7 @@ export function FilterModal({
                 on: 'payload',
               });
             }}
+            data-test-id="create-rule-btn"
           >
             Create rule
           </FilterButton>
@@ -114,41 +119,57 @@ export function FilterModal({
                       <Select
                         placeholder="On"
                         data={[
-                          { value: 'payload', label: 'Payload' },
-                          { value: 'subscriber', label: 'Subscriber' },
-                          { value: 'webhook', label: 'Webhook' },
+                          { value: FilterPartTypeEnum.PAYLOAD, label: FILTER_TO_LABEL[FilterPartTypeEnum.PAYLOAD] },
+                          {
+                            value: FilterPartTypeEnum.SUBSCRIBER,
+                            label: FILTER_TO_LABEL[FilterPartTypeEnum.SUBSCRIBER],
+                          },
+                          { value: FilterPartTypeEnum.WEBHOOK, label: FILTER_TO_LABEL[FilterPartTypeEnum.WEBHOOK] },
+                          { value: FilterPartTypeEnum.IS_ONLINE, label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE] },
+                          {
+                            value: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
+                            label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE_IN_LAST],
+                          },
                         ]}
                         {...field}
                         onChange={handleOnChildOnChange(index)}
+                        data-test-id="filter-on-dropdown"
                       />
                     );
                   }}
                 />
               </Grid.Col>
-              {filterFieldOn === 'webhook' ? (
-                <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} />
-              ) : (
-                <EqualityForm
-                  fieldOn={filterFieldOn}
-                  control={control}
-                  stepIndex={stepIndex}
-                  index={index}
-                  remove={remove}
-                />
-              )}
-            </Grid>
-            <When truthy={filterFieldOn === 'webhook'}>
-              <Grid columns={10} key={item.id} align="center" gutter="xs">
-                <EqualityForm
-                  fieldOn={filterFieldOn}
-                  control={control}
-                  stepIndex={stepIndex}
-                  index={index}
-                  remove={remove}
-                />
-              </Grid>
-            </When>
 
+              <When truthy={filterFieldOn === 'webhook'}>
+                <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} />
+                <EqualityForm
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
+              </When>
+
+              <When truthy={filterFieldOn === 'isOnline' || filterFieldOn === 'isOnlineInLast'}>
+                <OnlineFiltersForms
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
+              </When>
+              <When truthy={filterFieldOn === 'payload' || filterFieldOn === 'subscriber'}>
+                <EqualityForm
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
+              </When>
+            </Grid>
             <When truthy={fields.length > index + 1}>
               <Divider style={{ margin: 5 }} />
             </When>
@@ -160,7 +181,7 @@ export function FilterModal({
           <Button variant="outline" size="md" mt={30} onClick={() => cancel()}>
             Cancel
           </Button>
-          <Button mt={30} size="md" onClick={() => confirm()}>
+          <Button mt={30} size="md" onClick={() => confirm()} data-test-id="filter-confirm-btn">
             Add
           </Button>
         </Group>
@@ -168,20 +189,6 @@ export function FilterModal({
     </Modal>
   );
 }
-
-const FilterButton = styled(Button)`
-  margin-top: 0px;
-`;
-
-const DeleteStepButton = styled(Button)`
-  background: rgba(229, 69, 69, 0.15);
-  color: ${colors.error};
-  box-shadow: none;
-  :hover {
-    background: rgba(229, 69, 69, 0.15);
-  }
-  margin-top: 0px;
-`;
 
 function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: number; index: number }) {
   return (
@@ -191,7 +198,14 @@ function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: num
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.webhookUrl`}
           render={({ field, fieldState }) => {
-            return <Input {...field} error={fieldState.error?.message} placeholder="Url" />;
+            return (
+              <Input
+                {...field}
+                error={fieldState.error?.message}
+                placeholder="Url"
+                data-test-id="webhook-filter-url-input"
+              />
+            );
           }}
         />
       </Grid.Col>
@@ -221,7 +235,9 @@ function EqualityForm({
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.field`}
           render={({ field, fieldState }) => {
-            return <Input {...field} error={fieldState.error?.message} placeholder="Key" />;
+            return (
+              <Input {...field} error={fieldState.error?.message} placeholder="Key" data-test-id="filter-key-input" />
+            );
           }}
         />
       </Grid.Col>
@@ -244,6 +260,7 @@ function EqualityForm({
                   { value: 'NOT_IN', label: 'Not contains' },
                 ]}
                 {...field}
+                data-test-id="filter-operator-dropdown"
               />
             );
           }}
@@ -254,7 +271,14 @@ function EqualityForm({
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.value`}
           render={({ field, fieldState }) => {
-            return <Input {...field} error={fieldState.error?.message} placeholder="Value" />;
+            return (
+              <Input
+                {...field}
+                error={fieldState.error?.message}
+                placeholder="Value"
+                data-test-id="filter-value-input"
+              />
+            );
           }}
         />
       </Grid.Col>
@@ -266,6 +290,7 @@ function EqualityForm({
           onClick={() => {
             remove(index);
           }}
+          data-test-id="filter-remove-btn"
         >
           <Trash />
         </DeleteStepButton>

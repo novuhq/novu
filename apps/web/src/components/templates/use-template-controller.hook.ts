@@ -14,9 +14,9 @@ import {
   IPreferenceChannels,
   BuilderFieldType,
   BuilderGroupValues,
-  BuilderFieldOperator,
   ActorTypeEnum,
   ChannelCTATypeEnum,
+  FilterParts,
 } from '@novu/shared';
 
 import { createTemplate, updateTemplate, deleteTemplateById } from '../../api/templates';
@@ -300,12 +300,7 @@ export interface StepEntity {
 
     value?: BuilderGroupValues;
 
-    children?: {
-      on?: 'payload' | 'subscriber';
-      field?: string;
-      value?: string;
-      operator?: BuilderFieldOperator;
-    }[];
+    children?: FilterParts[];
   }[];
 
   active: boolean;
