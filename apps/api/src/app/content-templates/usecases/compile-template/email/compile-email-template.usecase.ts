@@ -107,7 +107,7 @@ export class CompileEmailTemplateUsecase {
       })
     );
 
-    return { html, subject };
+    return { html, content, subject };
   }
 
   private async renderContent(content: string, payload: Record<string, unknown>) {

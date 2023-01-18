@@ -125,6 +125,7 @@ export class SendMessageEmail extends SendMessageBase {
     const overrides = command.overrides[integration?.providerId] || {};
     let html;
     let subject = '';
+    let content;
 
     const payload = {
       subject: emailChannel.template.subject || '',
@@ -144,7 +145,7 @@ export class SendMessageEmail extends SendMessageBase {
     };
 
     try {
-      ({ html, subject } = await this.compileEmailTemplateUsecase.execute(
+      ({ html, content, subject } = await this.compileEmailTemplateUsecase.execute(
         CompileEmailTemplateCommand.create({
           environmentId: command.environmentId,
           organizationId: command.organizationId,
@@ -168,7 +169,7 @@ export class SendMessageEmail extends SendMessageBase {
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
-      content: this.storeContent() ? html : null,
+      content: this.storeContent() ? content : null,
       subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
