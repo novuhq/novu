@@ -128,6 +128,7 @@ export function SelectedStep({
             }}
             dark={colorScheme === 'dark'}
             disabled={readonly}
+            data-test-id="add-filter-btn"
           >
             <PlusCircle
               style={{
