@@ -11,6 +11,7 @@ export function useIntegrationLimit(type: ChannelTypeEnum) {
     refetch,
   } = useQuery(['integrationLimit', type], () => getIntegrationLimit(type), {
     enabled: selfHosted,
+    refetchInterval: 10000,
   });
 
   return {
