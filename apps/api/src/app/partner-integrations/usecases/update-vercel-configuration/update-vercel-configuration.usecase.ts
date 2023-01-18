@@ -246,7 +246,7 @@ export class UpdateVercelConfiguration {
     );
   }
 
-  private async saveProjectIds(command) {
+  private async saveProjectIds(command: UpdateVercelConfigurationCommand) {
     await this.organizationRepository.bulkUpdatePartnerConfiguration(
       command.userId,
       command.data,
