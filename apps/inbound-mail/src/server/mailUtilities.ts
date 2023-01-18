@@ -1,20 +1,19 @@
-'use strict';
+import child_process from 'child_process';
+import * as shell from 'shelljs';
+import logger from './logger';
+import path from 'path';
+import * as Spamc from 'spamc';
 
-var child_process = require('child_process');
-var shell = require('shelljs');
-var logger = require('./logger');
-var path = require('path');
-var Spamc = require('spamc');
-var spamc = new Spamc();
+const spamc = new Spamc();
 
 /* Verify Python availability. */
-var isPythonAvailable = shell.which('python');
+const isPythonAvailable = shell.which('python');
 if (!isPythonAvailable) {
   logger.warn('Python is not available. Dkim and spf checking is disabled.');
 }
 
 /* Verify spamc/spamassassin availability. */
-var isSpamcAvailable = true;
+let isSpamcAvailable = true;
 if (!shell.which('spamassassin') || !shell.which('spamc')) {
   logger.warn('Either spamassassin or spamc are not available. Spam score computation is disabled.');
   isSpamcAvailable = false;
@@ -31,8 +30,8 @@ module.exports = {
       return callback(null, false);
     }
 
-    var verifyDkimPath = path.join(__dirname, '../python/verifydkim.py');
-    var verifyDkim = child_process.spawn('python', [verifyDkimPath]);
+    const verifyDkimPath = path.join(__dirname, '../python/verifydkim.py');
+    const verifyDkim = child_process.spawn('python', [verifyDkimPath]);
 
     verifyDkim.stdout.on('data', function (data) {
       logger.verbose(data.toString());
@@ -54,11 +53,11 @@ module.exports = {
       return callback(null, false);
     }
 
-    var verifySpfPath = path.join(__dirname, '../python/verifyspf.py');
-    var cmd = 'python ' + verifySpfPath + ' ' + ip + ' ' + address + ' ' + host;
+    const verifySpfPath = path.join(__dirname, '../python/verifyspf.py');
+    const cmd = 'python ' + verifySpfPath + ' ' + ip + ' ' + address + ' ' + host;
     child_process.exec(cmd, function (err, stdout) {
       logger.verbose(stdout);
-      var code = 0;
+      let code = 0;
       if (err) {
         code = err.code;
       }

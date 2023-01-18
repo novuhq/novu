@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { GetNovuIntegrationCommand } from './get-novu-integration.command';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
-import { CalculateLimitNovuIntegrationCommand } from '../calculate-limit-novu-integration/calculate-limit-novu-integration.command';
+import {
+  CalculateLimitNovuIntegration,
+  CalculateLimitNovuIntegrationCommand,
+} from '../calculate-limit-novu-integration';
 
 @Injectable()
 export class GetNovuIntegration {

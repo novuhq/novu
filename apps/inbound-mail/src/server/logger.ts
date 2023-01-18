@@ -1,10 +1,8 @@
-'use strict';
+import * as _ from 'lodash';
+import util from 'util';
+import * as winston from 'winston';
 
-const _ = require('lodash');
-const util = require('util');
-const winston = require('winston');
-
-var logger = new winston.Logger({
+const logger = new winston.Logger({
   transports: [
     new winston.transports.Console({
       colorize: true,
@@ -56,8 +54,9 @@ logger.error = function (err) {
       })
     );
   } else {
+    // eslint-disable-next-line prefer-spread,prefer-rest-params
     this._error.apply(this, arguments);
   }
 };
 
-module.exports = logger;
+export default logger;
