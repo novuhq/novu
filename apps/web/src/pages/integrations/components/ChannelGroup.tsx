@@ -6,7 +6,7 @@ import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';
 import { IS_DOCKER_HOSTED } from '../../../config';
-import { LimitBar } from './LImitBar';
+import { LimitBar } from './LimitBar';
 
 export function ChannelGroup({
   title,
@@ -50,8 +50,8 @@ export function ChannelGroup({
               betaVersion: false,
               novu: true,
             }}
-            ribbonText="Test Provider"
-            onConnectClick={handlerOnConnectClick}
+            ribbonText="Free Trial"
+            onConnectClick={() => {}}
           >
             <LimitBar />
           </ProviderCard>
