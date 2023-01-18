@@ -1,15 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { GetNovuIntegrationCommand } from './get-novu-integration.command';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
 import { CalculateLimitNovuIntegrationCommand } from '../calculate-limit-novu-integration/calculate-limit-novu-integration.command';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class GetNovuIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
-    private calculateLimitNovuIntegration: CalculateLimitNovuIntegration
+    private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity | undefined> {
@@ -41,6 +44,13 @@ export class GetNovuIntegration {
     }
 
     if (limit.count >= limit.limit) {
+      this.analyticsService.track('[Novu Integration] - Limit reached', command.userId, {
+        channelType: command.channelType,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        providerId: CalculateLimitNovuIntegration.getProviderId(command.channelType),
+        ...limit,
+      });
       // add analytics event.
       throw new Error(`Limit for Novus ${command.channelType.toLowerCase()} provider was reached.`);
     }

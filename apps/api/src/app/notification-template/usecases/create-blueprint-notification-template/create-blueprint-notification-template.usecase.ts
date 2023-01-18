@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject } from '@nestjs/common';
 import {
   FeedRepository,
   NotificationGroupEntity,
@@ -7,6 +7,8 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
+import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from '../create-notification-template';
 import { CreateBlueprintNotificationTemplateCommand } from './create-blueprint-notification-template.command';
 
@@ -16,7 +18,8 @@ export class CreateBlueprintNotificationTemplate {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createNotificationTemplateUsecase: CreateNotificationTemplate,
     private notificationGroupRepository: NotificationGroupRepository,
-    private feedRepository: FeedRepository
+    private feedRepository: FeedRepository,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateBlueprintNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
@@ -28,7 +31,7 @@ export class CreateBlueprintNotificationTemplate {
     const group: NotificationGroupEntity = await this.handleGroup(template._notificationGroupId, command);
     const steps: NotificationStepEntity[] = await this.handleFeeds(template.steps, command);
 
-    return this.createNotificationTemplateUsecase.execute(
+    const saved = await this.createNotificationTemplateUsecase.execute(
       CreateNotificationTemplateCommand.create({
         organizationId: command.organizationId,
         userId: command.userId,
@@ -45,6 +48,14 @@ export class CreateBlueprintNotificationTemplate {
         blueprintId: command.templateId,
       })
     );
+
+    await this.analyticsService.track('[Notification directory] - Template created from blueprint', command.userId, {
+      blueprintId: command.templateId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
+
+    return saved;
   }
 
   private async handleFeeds(
