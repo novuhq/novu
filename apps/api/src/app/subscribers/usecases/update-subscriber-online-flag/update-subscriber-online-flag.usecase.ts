@@ -23,9 +23,9 @@ export class UpdateSubscriberOnlineFlag {
   private async trackIsOnlineUpdate(command: UpdateSubscriberOnlineFlagCommand, subscriber: SubscriberEntity) {
     const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
     this.analyticsService.track('Update online flag - [Subscriber]', admin._userId, {
-      _organization: command.organizationId,
+      _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      _subscriber: subscriber._id,
+      _subscriberId: subscriber._id,
       ...this.getUpdatedFields(command.isOnline),
     });
   }
@@ -40,7 +40,7 @@ export class UpdateSubscriberOnlineFlag {
         $set: this.getUpdatedFields(command.isOnline),
       }
     );
-    await this.trackIsOnlineUpdate(command, subscriber);
+    this.trackIsOnlineUpdate(command, subscriber);
 
     return (await this.subscriberRepository.findBySubscriberId(
       command.environmentId,

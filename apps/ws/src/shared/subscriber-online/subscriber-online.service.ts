@@ -25,9 +25,9 @@ export class SubscriberOnlineService {
   private async trackIsOnlineUpdate(updatePayload: IUpdateSubscriberPayload, subscriber: ISubscriberJwt) {
     const admin = await this.memberRepository.getOrganizationAdminAccount(subscriber.organizationId);
     this.analyticsService.track('Update online flag - [Subscriber]', admin._userId, {
-      _organization: subscriber.organizationId,
+      _organizationId: subscriber.organizationId,
       _environmentId: subscriber.environmentId,
-      _subscriber: subscriber._id,
+      _subscriberId: subscriber._id,
       ...updatePayload,
     });
   }
@@ -49,6 +49,6 @@ export class SubscriberOnlineService {
         $set: updatePayload,
       }
     );
-    await this.trackIsOnlineUpdate(updatePayload, subscriber);
+    this.trackIsOnlineUpdate(updatePayload, subscriber);
   }
 }
