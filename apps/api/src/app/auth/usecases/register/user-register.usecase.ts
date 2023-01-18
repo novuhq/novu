@@ -32,7 +32,7 @@ export class UserRegister {
     const user = await this.userRepository.create({
       email,
       firstName: command.firstName.toLowerCase(),
-      lastName: command.lastName.toLowerCase(),
+      lastName: command.lastName?.toLowerCase(),
       password: passwordHash,
     });
 
@@ -50,7 +50,7 @@ export class UserRegister {
 
     this.analyticsService.track('[Authentication] - Signup', user._id, {
       loginType: 'email',
-      origin: SignUpOriginEnum.WEB,
+      origin: command.origin || SignUpOriginEnum.WEB,
     });
 
     return {
