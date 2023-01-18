@@ -35,7 +35,7 @@ const layoutSchema = new Schema(
         defaultValue: Schema.Types.Mixed,
       },
     ],
-    content: Schema.Types.Mixed,
+    content: Schema.Types.String,
     contentType: Schema.Types.String,
     isDefault: {
       type: Schema.Types.Boolean,
