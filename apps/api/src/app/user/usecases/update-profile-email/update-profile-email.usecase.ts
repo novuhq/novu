@@ -1,9 +1,10 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { UpdateProfileEmailCommand } from './update-profile-email.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()

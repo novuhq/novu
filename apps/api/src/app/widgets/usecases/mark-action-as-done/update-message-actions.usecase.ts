@@ -6,8 +6,9 @@ import {
   SubscriberRepository,
   MemberRepository,
 } from '@novu/dal';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { UpdateMessageActionsCommand } from './update-message-actions.command';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
