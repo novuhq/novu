@@ -13,7 +13,7 @@ import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
-import { LimitBar } from '../../../pages/integrations/components/LImitBar';
+import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 
 type Props = {};
 const menuItem = [
