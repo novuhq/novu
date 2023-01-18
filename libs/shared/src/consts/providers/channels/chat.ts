@@ -37,5 +37,6 @@ export const chatProviders: IProviderConfig[] = [
     credentials: telegramConfig,
     docReference: 'https://core.telegram.org/bots/api',
     logoFileName: { light: 'telegram.svg', dark: 'telegram.svg' },
+    betaVersion: true,
   },
 ];
