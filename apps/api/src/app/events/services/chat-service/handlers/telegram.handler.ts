@@ -9,7 +9,7 @@ export class TelegramHandler extends BaseChatHandler {
   }
 
   buildProvider(_credentials: ICredentials) {
-    const config: { botToken?: string } = { botToken: _credentials.token };
+    const config: { botToken?: string } = { botToken: _credentials.botToken };
     this.provider = new TelegramProvider(config);
   }
 }

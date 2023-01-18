@@ -73,7 +73,7 @@ After all steps followed if you still face problems plaese make sure:
 2. Make sure your telegram bot is added as admin to the channel you wish to send messages
 3. Make sure your bot is added as member to the group you wish to send messages
 4. If you are trying to send mesage to individual user make sure user started communication with your bot and still
-5. Make sure you configured your bot token properly in Novu integration, bot token should start with bot(ex:bot5532049960:AAEs1234AAl9T45Nm1234i59NwwEy6V-viM)
+5. Make sure you configured your bot token properly in Novu integration, token looks similar to this 5532049960:AAEs1234AAl9T45Nm1234i59NwwEy6V-viM
 6. You can send message directly to the channel/group/user by using telegram bot REST API and check if you are able to send message properly or get any error.
 
    Please note: for **indivudual users** the above instructions are just for testing purpose, but for practical use cases you may need to write bot program to collect chat_ids of users who start the conversation with your bot and associate the chat_id with your users and updated credentials of those subscribers in novu system.

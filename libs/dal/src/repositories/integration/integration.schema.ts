@@ -30,6 +30,7 @@ const integrationSchema = new Schema(
       accountSid: Schema.Types.String,
       messageProfileId: Schema.Types.String,
       token: Schema.Types.String,
+      botToken: Schema.Types.String,
       from: Schema.Types.String,
       senderName: Schema.Types.String,
       applicationId: Schema.Types.String,

@@ -48,6 +48,17 @@ export class IntegrationService {
 
     await this.integrationRepository.create(chatDiscordPayload);
 
+    const chatTelegramPayload = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId: 'telegram',
+      channel: ChannelTypeEnum.CHAT,
+      credentials: { botToken: 'bottoken_123' },
+      active: true,
+    };
+
+    await this.integrationRepository.create(chatTelegramPayload);
+
     const pushFcmPayload = {
       _environmentId: environmentId,
       _organizationId: organizationId,

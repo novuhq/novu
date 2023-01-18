@@ -13,6 +13,7 @@ export enum CredentialsKeyEnum {
   AccountSid = 'accountSid',
   MessageProfileId = 'messageProfileId',
   Token = 'token',
+  BotToken = 'botToken',
   From = 'from',
   SenderName = 'senderName',
   ApplicationId = 'applicationId',
