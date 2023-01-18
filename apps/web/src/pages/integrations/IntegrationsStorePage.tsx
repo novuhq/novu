@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { ChannelTypeEnum, IConfigCredentials, ILogoFileName, providers, PushProviderIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  IConfigCredentials,
+  ILogoFileName,
+  providers,
+  PushProviderIdEnum,
+  EmailProviderIdEnum,
+} from '@novu/shared';
 import { Modal } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
 import PageMeta from '../../components/layout/components/PageMeta';
@@ -10,6 +17,7 @@ import { ChannelGroup } from './components/ChannelGroup';
 import { ConnectIntegrationForm } from './components/ConnectIntegrationForm';
 import { useIntegrations } from '../../api/hooks';
 import { When } from '../../components/utils/When';
+import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
 
 export function IntegrationsStore() {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
@@ -81,6 +89,9 @@ export function IntegrationsStore() {
                 showModal={handlerShowModal}
                 createModel={isCreateIntegrationModal}
               />
+            </When>
+            <When truthy={provider?.providerId === EmailProviderIdEnum.Novu}>
+              <NovuEmailProviderModal onClose={() => setModalIsOpened(false)} provider={provider} />
             </When>
           </Modal>
 

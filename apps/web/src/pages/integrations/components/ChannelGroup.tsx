@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Grid } from '@mantine/core';
 import { ProviderCard } from './ProviderCard';
 import { Title } from '../../../design-system';
@@ -51,7 +50,7 @@ export function ChannelGroup({
               novu: true,
             }}
             ribbonText="Free Trial"
-            onConnectClick={() => {}}
+            onConnectClick={handlerOnConnectClick}
           >
             <LimitBar />
           </ProviderCard>
