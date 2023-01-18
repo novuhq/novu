@@ -1,6 +1,4 @@
 import { UserSession } from '@novu/testing';
-import { LayoutRepository } from '@novu/dal';
-import { LayoutName, TemplateVariableTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 import { createLayout } from './helpers';

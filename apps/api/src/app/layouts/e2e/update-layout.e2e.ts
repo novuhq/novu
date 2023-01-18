@@ -43,7 +43,7 @@ describe('Layout update - /layouts (PATCH)', async () => {
 
     const updatedLayoutName = 'layout-name-update';
     const updatedDescription = 'We thought it was more amazing than it is';
-    const updatedContent = [];
+    const updatedContent = `{{{body}}}`;
     const updatedVariables = [];
     const updatedIsDefault = false;
 

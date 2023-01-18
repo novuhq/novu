@@ -8,20 +8,9 @@ const BASE_PATH = '/v1/layouts';
 
 export const createLayout = async (session: UserSession, name: LayoutName, isDefault: boolean): Promise<LayoutDto> => {
   const description = 'Amazing new layout';
-  const content = [
-    {
-      type: 'text',
-      content: 'This are the text contents of the template for {{firstName}}',
-      styles: { textAlign: 'left' },
-    },
-    {
-      type: 'button',
-      content: 'SIGN UP',
-      url: 'https://url-of-app.com/{{urlVariable}}',
-    },
-  ];
+  const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
   const variables = [
-    { name: 'firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
+    { name: 'organizationName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'Company', required: false },
   ];
   const response = await session.testAgent.post(BASE_PATH).send({
     name,
