@@ -86,7 +86,7 @@ export class UpdateVercelConfiguration {
         removedProjectIds
       );
 
-      await this.removeEnvironments({
+      await this.removeEnvironmentVariables({
         removedProjectDetails,
         teamId: configurationDetails.teamId,
         token: configurationDetails.accessToken,
@@ -98,14 +98,14 @@ export class UpdateVercelConfiguration {
       });
 
       for (const key of Object.keys(mappedProjectData)) {
-        await this.setEnvironments({
+        await this.setEnvironmentVariables({
           clientKey: mappedProjectData[key].clientKey,
           privateKey: mappedProjectData[key].privateKey,
           projectIds: mappedProjectData[key].addProjectIds,
           teamId: configurationDetails.teamId,
           token: configurationDetails.accessToken,
         });
-        await this.updateEnvironments({
+        await this.updateEnvironmentVariables({
           clientKey: mappedProjectData[key].clientKey,
           privateKey: mappedProjectData[key].privateKey,
           projectDetails: mappedProjectData[key].updateProjectDetails,
@@ -155,7 +155,13 @@ export class UpdateVercelConfiguration {
     return mappedData;
   }
 
-  private async setEnvironments({ clientKey, projectIds, privateKey, teamId, token }: ISetEnvironment): Promise<void> {
+  private async setEnvironmentVariables({
+    clientKey,
+    projectIds,
+    privateKey,
+    teamId,
+    token,
+  }: ISetEnvironment): Promise<void> {
     const projectApiUrl = `${process.env.VERCEL_BASE_URL}/v9/projects`;
     const target = ['production', 'preview', 'development'];
     const type = 'encrypted';
@@ -212,14 +218,14 @@ export class UpdateVercelConfiguration {
       (acc, curr) => {
         const id = curr.id;
         const vercelEnvs = curr?.env;
-        const clientEnv = vercelEnvs?.filter((e) => e.key === 'NOVU_CLIENT_APP_ID');
-        const secretEnv = vercelEnvs?.filter((e) => e.key === 'NOVU_API_SECRET');
+        const clientEnv = vercelEnvs?.find((e) => e.key === 'NOVU_CLIENT_APP_ID');
+        const secretEnv = vercelEnvs?.find((e) => e.key === 'NOVU_API_SECRET');
         if (newAndUpdatedProjectIds.includes(id)) {
-          if (clientEnv.length > 0 && secretEnv.length > 0) {
+          if (clientEnv && secretEnv) {
             acc.updateProjectDetails.push({
               projectId: id,
-              clientEnvId: clientEnv[0].id,
-              secretEnvId: secretEnv[0].id,
+              clientEnvId: clientEnv.id,
+              secretEnvId: secretEnv.id,
             });
           } else {
             acc.addProjectIds.push(id);
@@ -229,8 +235,8 @@ export class UpdateVercelConfiguration {
         if (removedProjectIds.includes(id)) {
           acc.removedProjectDetails.push({
             projectId: id,
-            clientEnvId: clientEnv[0].id,
-            secretEnvId: secretEnv[0].id,
+            clientEnvId: clientEnv.id,
+            secretEnvId: secretEnv.id,
           });
         }
 
@@ -248,7 +254,7 @@ export class UpdateVercelConfiguration {
     );
   }
 
-  private async updateEnvironments({
+  private async updateEnvironmentVariables({
     clientKey,
     projectDetails,
     privateKey,
@@ -301,7 +307,11 @@ export class UpdateVercelConfiguration {
     );
   }
 
-  private async removeEnvironments({ removedProjectDetails, teamId, token }: IRemoveEnvironment): Promise<void> {
+  private async removeEnvironmentVariables({
+    removedProjectDetails,
+    teamId,
+    token,
+  }: IRemoveEnvironment): Promise<void> {
     const projectApiUrl = `${process.env.VERCEL_BASE_URL}/v9/projects`;
 
     await Promise.all(
