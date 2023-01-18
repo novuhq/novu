@@ -1,5 +1,26 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
 
 import {
@@ -8,14 +29,22 @@ import {
   FilterLayoutsRequestDto,
   FilterLayoutsResponseDto,
   GetLayoutResponseDto,
+  UpdateLayoutRequestDto,
+  UpdateLayoutResponseDto,
 } from './dtos';
 import {
   CreateLayoutCommand,
   CreateLayoutUseCase,
+  DeleteLayoutCommand,
+  DeleteLayoutUseCase,
   FilterLayoutsCommand,
   FilterLayoutsUseCase,
   GetLayoutCommand,
   GetLayoutUseCase,
+  SetDefaultLayoutCommand,
+  SetDefaultLayoutUseCase,
+  UpdateLayoutCommand,
+  UpdateLayoutUseCase,
 } from './use-cases';
 import { LayoutId } from './types';
 
@@ -31,8 +60,11 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 export class LayoutsController {
   constructor(
     private createLayoutUseCase: CreateLayoutUseCase,
+    private deleteLayoutUseCase: DeleteLayoutUseCase,
     private filterLayoutsUseCase: FilterLayoutsUseCase,
     private getLayoutUseCase: GetLayoutUseCase,
+    private setDefaultLayoutUseCase: SetDefaultLayoutUseCase,
+    private updateLayoutUseCase: UpdateLayoutUseCase,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -49,9 +81,10 @@ export class LayoutsController {
     const layout = await this.createLayoutUseCase.execute(
       CreateLayoutCommand.create({
         environmentId: user.environmentId,
-        name: body.name,
         organizationId: user.organizationId,
         userId: user._id,
+        name: body.name,
+        description: body.description,
         content: body.content,
         variables: body.variables,
         isDefault: body.isDefault,
@@ -113,6 +146,73 @@ export class LayoutsController {
       GetLayoutCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
+        layoutId,
+      })
+    );
+  }
+
+  @Delete('/:layoutId')
+  @ExternalApiAccessible()
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete layout', description: 'Execute a soft delete of a layout given a certain ID.' })
+  async deleteLayout(@UserSession() user: IJwtPayload, @Param('layoutId') layoutId: LayoutId): Promise<void> {
+    return await this.deleteLayoutUseCase.execute(
+      DeleteLayoutCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        layoutId,
+      })
+    );
+  }
+
+  @Patch('/:layoutId')
+  @ExternalApiAccessible()
+  @ApiOkResponse({
+    type: UpdateLayoutResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Update a layout',
+    description: 'Update the name, content and variables of a layout. Also change it to be default or no.',
+  })
+  async updateLayout(
+    @UserSession() user: IJwtPayload,
+    @Param('layoutId') layoutId: LayoutId,
+    @Body() body: UpdateLayoutRequestDto
+  ): Promise<UpdateLayoutResponseDto> {
+    if (!body || Object.keys(body).length === 0) {
+      throw new BadRequestException('Payload can not be empty');
+    }
+
+    return await this.updateLayoutUseCase.execute(
+      UpdateLayoutCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        layoutId,
+        name: body.name,
+        description: body.description,
+        content: body.content,
+        variables: body.variables,
+        isDefault: body.isDefault,
+      })
+    );
+  }
+
+  @Post('/:layoutId/default')
+  @ExternalApiAccessible()
+  @ApiNoContentResponse()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Set default layout',
+    description:
+      'Sets the default layout for the environment and updates to non default to the existing default layout (if any).',
+  })
+  async setDefaultLayout(@UserSession() user: IJwtPayload, @Param('layoutId') layoutId: LayoutId): Promise<void> {
+    await this.setDefaultLayoutUseCase.execute(
+      SetDefaultLayoutCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
         layoutId,
       })
     );

@@ -1,10 +1,9 @@
-import { AuthProviderEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
 import { LayoutEntity } from './layout.entity';
 import { Layout } from './layout.schema';
-import { EnvironmentId, ExternalSubscriberId, OrganizationId, LayoutId, LayoutName } from './types';
+import { EnvironmentId, OrganizationId, LayoutId } from './types';
 
 import { BaseRepository, Omit } from '../base-repository';
 import { DalException } from '../../shared';
@@ -23,8 +22,18 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
   }
 
   async createLayout(entity: Omit<LayoutEntity, '_id' | 'createdAt' | 'updatedAt'>): Promise<LayoutEntity> {
-    const { channel, content, contentType, isDefault, name, variables, _creatorId, _environmentId, _organizationId } =
-      entity;
+    const {
+      channel,
+      content,
+      contentType,
+      description,
+      isDefault,
+      name,
+      variables,
+      _creatorId,
+      _environmentId,
+      _organizationId,
+    } = entity;
 
     return await this.create({
       _creatorId,
@@ -34,29 +43,30 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
       contentType,
       isDefault,
       deleted: false,
+      description,
       name,
       variables,
     });
   }
 
   async deleteLayout(_id: LayoutId, _environmentId: EnvironmentId, _organizationId: OrganizationId): Promise<void> {
-    const layout = await this.findOne({
+    const deleteQuery: EnforceEnvironmentQuery = {
       _id,
       _environmentId,
       _organizationId,
-    });
-
-    if (!layout) {
-      throw new DalException(`Could not find layout ${_id} to delete`);
-    }
-
-    const deleteQuery: EnforceEnvironmentQuery = {
-      _id: layout._id,
-      _environmentId: layout._environmentId,
-      _organizationId: layout._organizationId,
     };
 
-    await this.layout.delete(deleteQuery);
+    const result = await this.layout.delete(deleteQuery);
+
+    if (result.modifiedCount !== 1) {
+      throw new DalException(
+        `Soft delete of layout ${_id} in environment ${_environmentId} was not performed properly`
+      );
+    }
+  }
+
+  async findDefault(_environmentId: EnvironmentId, _organizationId: OrganizationId): Promise<LayoutEntity | null> {
+    return await this.findOne({ _environmentId, _organizationId, isDefault: true });
   }
 
   async filterLayouts(
@@ -80,20 +90,54 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
     return data;
   }
 
-  async setLayoutAsDefault(
+  async updateIsDefault(
     _id: LayoutId,
     _environmentId: EnvironmentId,
-    _organizationId: OrganizationId
+    _organizationId: OrganizationId,
+    isDefault: boolean
   ): Promise<void> {
-    await this.update(
+    const updated = await this.update(
       {
         _id,
         _environmentId,
         _organizationId,
       },
       {
-        isDefault: true,
+        isDefault,
       }
     );
+
+    if (updated.matched === 0 || updated.modified === 0) {
+      throw new DalException(
+        `Update of layout ${_id} in environment ${_environmentId} was not performed properly. Not able to set 'isDefault' to ${isDefault}`
+      );
+    }
+  }
+
+  async updateLayout(entity: LayoutEntity): Promise<LayoutEntity> {
+    const { _id, _environmentId, _organizationId, createdAt, updatedAt, ...updates } = entity;
+
+    const updated = await this.update(
+      {
+        _id,
+        _environmentId,
+        _organizationId,
+      },
+      updates
+    );
+
+    if (updated.matched === 0 || updated.modified === 0) {
+      throw new DalException(`Update of layout ${_id} in environment ${_environmentId} was not performed properly`);
+    }
+
+    const updatedEntity = await this.findOne({ _id, _environmentId, _organizationId });
+
+    if (!updatedEntity) {
+      throw new DalException(
+        `Update of layout ${_id} in environment ${_environmentId} was performed but entity could not been retrieved`
+      );
+    }
+
+    return updatedEntity;
   }
 }

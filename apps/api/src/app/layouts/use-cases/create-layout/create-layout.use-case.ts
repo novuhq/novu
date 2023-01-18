@@ -26,6 +26,7 @@ export class CreateLayoutUseCase {
       channel: ChannelTypeEnum.EMAIL,
       content: domainEntity.content,
       contentType: 'customHtml',
+      description: domainEntity.description,
       name: domainEntity.name,
       variables: domainEntity.variables,
       isDefault: domainEntity.isDefault ?? false,

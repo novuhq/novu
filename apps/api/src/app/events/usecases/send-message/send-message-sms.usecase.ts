@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  IntegrationRepository,
   MessageRepository,
   NotificationStepEntity,
   NotificationRepository,
@@ -21,8 +20,7 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { SendMessageCommand } from './send-message.command';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -45,7 +43,6 @@ export class SendMessageSms extends SendMessageBase {
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
-    private integrationRepository: IntegrationRepository,
     private compileTemplate: CompileTemplate,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {

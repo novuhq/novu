@@ -1,5 +1,13 @@
-import { EnvironmentId, LayoutId, LayoutName, OrganizationId, UserId } from '../../types';
-import { ChannelTypeEnum, ITemplateVariable } from '../message-template';
+import {
+  ChannelTypeEnum,
+  EnvironmentId,
+  ITemplateVariable,
+  LayoutDescription,
+  LayoutId,
+  LayoutName,
+  OrganizationId,
+  UserId,
+} from '../../types';
 
 export interface ILayoutEntity {
   _id?: LayoutId;
@@ -9,6 +17,7 @@ export interface ILayoutEntity {
   name: LayoutName;
   channel: ChannelTypeEnum;
   content: string;
+  description?: LayoutDescription;
   contentType: string;
   variables?: ITemplateVariable[];
   isDefault: boolean;

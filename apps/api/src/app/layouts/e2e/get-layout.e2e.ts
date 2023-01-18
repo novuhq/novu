@@ -1,49 +1,32 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
+import { createLayout } from './helpers';
+
+import { LayoutDto } from '../dtos';
 import { TemplateVariableTypeEnum } from '../types';
 
 const BASE_PATH = '/v1/layouts';
 
 describe('Get a layout - /layouts/:layoutId (GET)', async () => {
+  const layoutName = 'layout-name-creation';
+  const isDefault = true;
   let session: UserSession;
+  let createdLayout: LayoutDto;
 
   before(async () => {
     session = new UserSession();
     await session.initialize();
+    createdLayout = await createLayout(session, layoutName, isDefault);
   });
 
   it('should retrieve the requested layout successfully if exists in the database for that user', async () => {
-    const layoutName = 'layout-name-creation';
-    const content = [
-      {
-        type: 'text',
-        content: 'This are the text contents of the template for {{firstName}}',
-        styles: { textAlign: 'left' },
-      },
-      {
-        type: 'button',
-        content: 'SIGN UP',
-        url: 'https://url-of-app.com/{{urlVariable}}',
-      },
-    ];
-    const variables = [
-      { name: 'firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
-    ];
-    const isDefault = true;
-    const response = await session.testAgent.post(BASE_PATH).send({
-      name: layoutName,
-      content,
-      variables,
-      isDefault,
-    });
+    const expectedDescription = 'Amazing new layout';
+    const expectedContent = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
 
-    expect(response.statusCode).to.eql(201);
-
-    const { body } = response;
-    const createdLayout = body.data;
-    expect(createdLayout._id).to.exist;
-    expect(createdLayout._id).to.be.string;
+    const expectedVariables = [
+      { name: 'organizationName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'Company', required: false },
+    ];
 
     const url = `${BASE_PATH}/${createdLayout._id}`;
     const getResponse = await session.testAgent.get(url);
@@ -57,8 +40,9 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
     expect(layout._organizationId).to.eql(session.organization._id);
     expect(layout._creatorId).to.eql(session.user._id);
     expect(layout.name).to.eql(layoutName);
-    expect(layout.content).to.eql(content);
-    expect(layout.variables).to.eql(variables);
+    expect(layout.description).to.eql(expectedDescription);
+    expect(layout.content).to.eql(expectedContent);
+    expect(layout.variables).to.eql(expectedVariables);
     expect(layout.contentType).to.eql('customHtml');
     expect(layout.isDefault).to.eql(true);
     expect(layout.isDeleted).to.eql(false);

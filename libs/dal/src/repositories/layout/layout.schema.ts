@@ -21,6 +21,7 @@ const layoutSchema = new Schema(
       ref: 'User',
     },
     name: Schema.Types.String,
+    description: Schema.Types.String,
     variables: [
       {
         name: Schema.Types.String,
@@ -34,7 +35,7 @@ const layoutSchema = new Schema(
         defaultValue: Schema.Types.Mixed,
       },
     ],
-    content: Schema.Types.Mixed,
+    content: Schema.Types.String,
     contentType: Schema.Types.String,
     isDefault: {
       type: Schema.Types.Boolean,

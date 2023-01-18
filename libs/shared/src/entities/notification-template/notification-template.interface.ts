@@ -1,5 +1,5 @@
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues } from '../../types';
-import { IMessageTemplate, TemplateVariableTypeEnum } from '../message-template';
+import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum } from '../../types';
+import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { DigestUnitEnum } from '../step';
 

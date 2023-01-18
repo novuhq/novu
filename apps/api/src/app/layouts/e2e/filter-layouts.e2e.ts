@@ -1,9 +1,7 @@
 import { UserSession } from '@novu/testing';
-import { LayoutRepository } from '@novu/dal';
-import { LayoutName, TemplateVariableTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-import { CreateLayoutResponseDto } from '../dtos';
+import { createLayout } from './helpers';
 
 const BASE_PATH = '/v1/layouts';
 
@@ -14,9 +12,9 @@ describe('Filter layouts - /layouts (GET)', async () => {
     session = new UserSession();
     await session.initialize();
 
-    await createNewLayout(session, 'layout-name-1');
-    await createNewLayout(session, 'layout-name-2');
-    await createNewLayout(session, 'layout-name-3');
+    await createLayout(session, 'layout-name-1', false);
+    await createLayout(session, 'layout-name-2', false);
+    await createLayout(session, 'layout-name-3', false);
   });
 
   it('should return a validation error if the params provided are not in the right type', async () => {
@@ -51,13 +49,13 @@ describe('Filter layouts - /layouts (GET)', async () => {
     expect(response.body.message).to.eql(['page must not be less than 0', 'pageSize must not be less than 0']);
   });
 
-  it('should return a Bad Request error if the page size requested is bigger than the default one (10)', async () => {
-    const url = `${BASE_PATH}?page=1&pageSize=101`;
+  it('should return a Bad Request error if the page size requested is bigger than the max allowed (1000)', async () => {
+    const url = `${BASE_PATH}?page=1&pageSize=1001`;
     const response = await session.testAgent.get(url);
 
     expect(response.statusCode).to.eql(400);
     expect(response.body.error).to.eql('Bad Request');
-    expect(response.body.message).to.eql('Page size can not be larger then 10');
+    expect(response.body.message).to.eql('Page size can not be larger then 1000');
   });
 
   it('should retrieve all the layouts that exist in the database for the environment if not query params provided', async () => {
@@ -135,40 +133,3 @@ describe('Filter layouts - /layouts (GET)', async () => {
     expect(pageSize).to.eql(10);
   });
 });
-
-const createNewLayout = async (session: UserSession, layoutName: LayoutName): Promise<CreateLayoutResponseDto> => {
-  const content = [
-    {
-      type: 'text',
-      content: 'This are the text contents of the template for {{firstName}}',
-    },
-    {
-      type: 'button',
-      content: 'SIGN UP',
-      url: 'https://url-of-app.com/{{urlVariable}}',
-    },
-  ];
-  const variables = [
-    { name: 'firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
-  ];
-  const isDefault = true;
-
-  const result = await session.testAgent
-    .post(BASE_PATH)
-    .send({
-      name: layoutName,
-      content,
-      variables,
-      isDefault,
-    })
-    .set('Accept', 'application/json')
-    .expect('Content-Type', /json/);
-
-  expect(result.status).to.eql(201);
-
-  const { _id } = result.body.data;
-
-  return {
-    _id,
-  };
-};

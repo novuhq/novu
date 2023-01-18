@@ -71,6 +71,7 @@ export class CreateNotificationTemplate {
           subject: message.template.subject,
           title: message.template.title,
           feedId: message.template.feedId,
+          layoutId: message.template.layoutId,
           preheader: message.template.preheader,
           parentChangeId,
           actor: message.template.actor,
@@ -104,6 +105,7 @@ export class CreateNotificationTemplate {
       steps: templateSteps,
       triggers: [trigger],
       _notificationGroupId: command.notificationGroupId,
+      blueprintId: command.blueprintId,
     });
 
     const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);

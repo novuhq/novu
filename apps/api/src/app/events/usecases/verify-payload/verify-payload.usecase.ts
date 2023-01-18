@@ -1,5 +1,4 @@
-import { ITemplateVariable } from '@novu/dal';
-import { TemplateSystemVariables, DelayTypeEnum, StepTypeEnum } from '@novu/shared';
+import { ITemplateVariable, TemplateSystemVariables, DelayTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayloadCommand } from './verify-payload.command';
 import { BadRequestException } from '@nestjs/common';

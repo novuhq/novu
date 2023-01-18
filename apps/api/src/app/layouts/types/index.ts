@@ -1,15 +1,27 @@
-export {
+import {
   ChannelTypeEnum,
   EnvironmentId,
   IEmailBlock,
+  ITemplateVariable,
   OrganizationId,
+  LayoutDescription,
   LayoutId,
   LayoutName,
   TemplateVariableTypeEnum,
   UserId,
 } from '@novu/shared';
-import { ITemplateVariable } from '@novu/dal';
 
 export type LayoutVariables = ITemplateVariable[];
 
-export { ITemplateVariable };
+export {
+  ChannelTypeEnum,
+  EnvironmentId,
+  IEmailBlock,
+  ITemplateVariable,
+  OrganizationId,
+  LayoutDescription,
+  LayoutId,
+  LayoutName,
+  TemplateVariableTypeEnum,
+  UserId,
+};

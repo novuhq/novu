@@ -3,7 +3,7 @@ import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
 import { LayoutDto } from './layout.dto';
 
-import { IEmailBlock, LayoutName, LayoutVariables } from '../types';
+import { LayoutDescription, LayoutName, LayoutVariables } from '../types';
 
 export class CreateLayoutResponseDto implements Pick<LayoutDto, '_id'> {}
 
@@ -15,19 +15,26 @@ export class CreateLayoutRequestDto {
   @IsDefined()
   name: LayoutName;
 
+  @ApiPropertyOptional({
+    description: 'User description of the layout',
+  })
+  @IsString()
+  @IsOptional()
+  description: LayoutDescription;
+
   @ApiProperty({
     description: 'User defined content for the layout.',
   })
   @IsDefined()
-  content: IEmailBlock[];
+  content: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'User defined variables to render in the layout placeholders.',
   })
   @IsOptional()
   variables?: LayoutVariables;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Variable that defines if the layout is chosen as default when creating a layout.',
   })
   @IsBoolean()
