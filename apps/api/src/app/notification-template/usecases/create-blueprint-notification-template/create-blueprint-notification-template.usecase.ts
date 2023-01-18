@@ -7,7 +7,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { AnalyticsService } from '@novu/application-generic';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from '../create-notification-template';
 import { CreateBlueprintNotificationTemplateCommand } from './create-blueprint-notification-template.command';

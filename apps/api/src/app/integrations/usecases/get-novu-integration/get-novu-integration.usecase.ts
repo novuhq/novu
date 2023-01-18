@@ -5,7 +5,7 @@ import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
 import { CalculateLimitNovuIntegrationCommand } from '../calculate-limit-novu-integration/calculate-limit-novu-integration.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { AnalyticsService } from '@novu/application-generic';
 
 @Injectable()
 export class GetNovuIntegration {
