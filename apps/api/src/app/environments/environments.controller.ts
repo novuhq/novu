@@ -31,6 +31,7 @@ import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
+import { ValidateMxRecord } from './usecases/validate-mx-record/validate-mx-record.usecase';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -38,6 +39,7 @@ import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.d
 @ApiTags('Environments')
 export class EnvironmentsController {
   constructor(
+    private validateMxRecordUsecase: ValidateMxRecord,
     private createEnvironmentUsecase: CreateEnvironment,
     private updateEnvironmentUsecase: UpdateEnvironment,
     private getApiKeysUsecase: GetApiKeys,
@@ -121,6 +123,7 @@ export class EnvironmentsController {
         name: payload.name,
         identifier: payload.identifier,
         _parentId: payload.parentId,
+        dns: payload.dns,
       })
     );
   }
@@ -160,6 +163,18 @@ export class EnvironmentsController {
     });
 
     return await this.regenerateApiKeysUsecase.execute(command);
+  }
+
+  @Get('/mx-record-status')
+  @ApiOperation({
+    summary: 'validate mx record',
+  })
+  @ApiOkResponse({
+    type: [ApiKey],
+  })
+  @ExternalApiAccessible()
+  async getMxRecordStatus(@UserSession() user: IJwtPayload): Promise<any> {
+    return await this.validateMxRecordUsecase.execute(user);
   }
 
   @Put('/widget/settings')

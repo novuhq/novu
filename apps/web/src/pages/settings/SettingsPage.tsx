@@ -7,26 +7,34 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
 import { BrandingForm, ApiKeysCard, InAppCenterCard } from './tabs';
 import { AuthContext } from '../../store/authContext';
+import { EmailSettings } from './tabs/EmailSettings';
 
-const BRANDING = 'Branding';
-const IN_APP_CENTER = 'In App Center';
-const API_KEYS = 'API Keys';
+enum MenuTitleEnum {
+  BRANDING = 'Branding',
+  IN_APP_CENTER = 'In App Center',
+  API_KEYS = 'API Keys',
+  EMAIL_SETTINGS = 'Email Settings',
+}
 
 export function SettingsPage() {
   const { currentOrganization } = useContext(AuthContext);
 
   const menuTabs = [
     {
-      value: BRANDING,
+      value: MenuTitleEnum.BRANDING,
       content: <BrandingForm isLoading={!currentOrganization} organization={currentOrganization} />,
     },
     {
-      value: IN_APP_CENTER,
+      value: MenuTitleEnum.IN_APP_CENTER,
       content: <InAppCenterCard />,
     },
     {
-      value: API_KEYS,
+      value: MenuTitleEnum.API_KEYS,
       content: <ApiKeysCard />,
+    },
+    {
+      value: MenuTitleEnum.EMAIL_SETTINGS,
+      content: <EmailSettings />,
     },
   ];
 
@@ -35,7 +43,7 @@ export function SettingsPage() {
       <PageMeta title="Settings" />
       <PageHeader title="Settings" />
       <Container fluid mt={15} ml={5}>
-        <Tabs loading={!currentOrganization} menuTabs={menuTabs} defaultValue={BRANDING} />
+        <Tabs loading={!currentOrganization} menuTabs={menuTabs} defaultValue={MenuTitleEnum.BRANDING} />
       </Container>
     </PageContainer>
   );

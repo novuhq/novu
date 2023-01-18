@@ -4,7 +4,7 @@ import { colors } from '../../design-system';
 import {
   Chat,
   Check,
-  CheckCircle,
+  SuccessIcon,
   Clicked,
   Digest,
   ErrorIcon,
@@ -34,7 +34,7 @@ export const getLogoByStatus = (
   status: ExecutionDetailsStatusEnum
 ): React.FunctionComponent<React.ComponentPropsWithoutRef<'svg'>> => {
   if (status === ExecutionDetailsStatusEnum.SUCCESS) {
-    return CheckCircle;
+    return SuccessIcon;
   }
 
   if (status === ExecutionDetailsStatusEnum.FAILED) {

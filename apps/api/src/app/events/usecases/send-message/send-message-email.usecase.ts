@@ -31,7 +31,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration/get-novu-integration.usecase';
+import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
@@ -278,7 +278,7 @@ export class SendMessageEmail extends SendMessageBase {
 
     if (command.step.replyCallback?.url) {
       // todo here we need to use MX domain of the user from the _environment if available
-      mailData.replyTo = `parse+${command.transactionId}@novu.co`;
+      mailData.replyTo = `parse+${command.transactionId}@${process.env.REPLY_CALLBACK_ROUTE}`;
     }
 
     if (email && integration) {

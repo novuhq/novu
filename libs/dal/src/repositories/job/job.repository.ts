@@ -2,7 +2,8 @@ import { BaseRepository, Omit } from '../base-repository';
 import { JobEntity, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Document, FilterQuery } from 'mongoose';
+import { Document, FilterQuery, ProjectionType } from 'mongoose';
+import { NotificationTemplateEntity } from '../notification-template';
 
 class PartialJobEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
 
@@ -126,5 +127,13 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     );
 
     return result;
+  }
+
+  public async findOnePopulateTemplate(
+    query: { _environmentId: string; transactionId: string },
+    select: ProjectionType<JobEntity> = '',
+    selectTemplate: ProjectionType<NotificationTemplateEntity> = ''
+  ) {
+    return Job.findOne(query, select).populate('template', selectTemplate);
   }
 }

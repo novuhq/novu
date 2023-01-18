@@ -9,7 +9,7 @@ import {
   IEmailEventBody,
 } from '@novu/stateless';
 
-import { MailService } from '@sendgrid/mail';
+import { MailDataRequired, MailService } from '@sendgrid/mail';
 
 export class SendgridEmailProvider implements IEmailProvider {
   id = 'sendgrid';
@@ -64,7 +64,7 @@ export class SendgridEmailProvider implements IEmailProvider {
   }
 
   private createMailData(options: IEmailOptions) {
-    return {
+    const res: Partial<MailDataRequired> = {
       from: {
         email: options.from || this.config.from,
         name: this.config.senderName,
@@ -84,6 +84,12 @@ export class SendgridEmailProvider implements IEmailProvider {
         };
       }),
     };
+
+    if (options.replyTo) {
+      res.replyTo = options.replyTo;
+    }
+
+    return res as MailDataRequired;
   }
 
   getMessageId(body: any | any[]): string[] {

@@ -69,136 +69,138 @@ export function SelectedStep({
 
   return (
     <StyledNav data-test-id="step-properties-side-menu">
-      <When truthy={selectedChannel !== StepTypeEnum.DIGEST && selectedChannel !== StepTypeEnum.DELAY}>
-        <NavSection>
-          <ButtonWrapper>
-            <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
-            <ActionIcon
-              data-test-id="close-side-menu-btn"
-              variant="transparent"
-              onClick={() => setSelectedChannel(null)}
-            >
-              <Close />
-            </ActionIcon>
-          </ButtonWrapper>
-        </NavSection>
-        <NavSection>
-          <EditTemplateButton
-            mt={10}
-            variant="outline"
-            data-test-id="edit-template-channel"
-            fullWidth
-            onClick={() =>
-              setActivePage(selectedChannel === StepTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel))
-            }
-          >
-            {readonly ? 'View' : 'Edit'} Template
-          </EditTemplateButton>
-          <Divider my={30} />
-          {steps.map((i, index) => {
-            return (
-              <When truthy={index === activeStep}>
-                <Stack key={index}>
-                  <StepActiveSwitch index={activeStep} control={control} />
-                  <ShouldStopOnFailSwitch index={activeStep} control={control} />
-                  <When truthy={selectedChannel === StepTypeEnum.EMAIL}>
-                    <ReplyCallback index={activeStep} control={control} errors={errors} />
+      <MenuBar>
+        <Stack justify="flex-start" spacing="xs">
+          <When truthy={selectedChannel !== StepTypeEnum.DIGEST && selectedChannel !== StepTypeEnum.DELAY}>
+            <NavSection>
+              <ButtonWrapper>
+                <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
+                <ActionIcon
+                  data-test-id="close-side-menu-btn"
+                  variant="transparent"
+                  onClick={() => setSelectedChannel(null)}
+                >
+                  <Close />
+                </ActionIcon>
+              </ButtonWrapper>
+            </NavSection>
+            <NavSection>
+              <EditTemplateButton
+                mt={10}
+                variant="outline"
+                data-test-id="edit-template-channel"
+                fullWidth
+                onClick={() =>
+                  setActivePage(selectedChannel === StepTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel))
+                }
+              >
+                {readonly ? 'View' : 'Edit'} Template
+              </EditTemplateButton>
+              <Divider my={30} />
+              {steps.map((i, index) => {
+                return (
+                  <When truthy={index === activeStep}>
+                    <Stack key={index}>
+                      <StepActiveSwitch index={activeStep} control={control} />
+                      <ShouldStopOnFailSwitch index={activeStep} control={control} />
+                      <When truthy={selectedChannel === StepTypeEnum.EMAIL}>
+                        <ReplyCallback index={activeStep} control={control} errors={errors} />
+                      </When>
+                    </Stack>
                   </When>
-                </Stack>
-              </When>
-            );
-          })}
-        </NavSection>
-        <NavSection>
-          <Divider
-            style={{
-              marginBottom: '15px',
-            }}
-            label="Filters"
-            labelPosition="center"
-          />
-          {steps.map((i, index) => {
-            return index !== activeStep ? null : <Filters key={index} step={i} />;
-          })}
-          <FilterButton
-            fullWidth
-            variant="outline"
-            onClick={() => {
-              setFilterOpen(true);
-            }}
-            dark={colorScheme === 'dark'}
-            disabled={readonly}
-            data-test-id="add-filter-btn"
-          >
-            <PlusCircle
-              style={{
-                marginRight: '7px',
-              }}
-            />{' '}
-            Add filter
-          </FilterButton>
-        </NavSection>
-      </When>
-      <When truthy={selectedChannel === StepTypeEnum.DIGEST}>
-        <NavSection>
-          <ButtonWrapper>
-            <Title size={2}>Digest Properties</Title>
-            <ActionIcon
-              data-test-id="close-side-menu-btn"
-              variant="transparent"
-              onClick={() => setSelectedChannel(null)}
-            >
-              <Close />
-            </ActionIcon>
-          </ButtonWrapper>
-
-          <Text mr={10} mt={10} size="md" color={colors.B60}>
-            Configure the digest parameters. Read more about the digest engine{' '}
-            <a target={'_blank'} rel="noopener noreferrer" href={'https://docs.novu.co/platform/digest'}>
-              here
-            </a>
-            .
-          </Text>
-        </NavSection>
-        <NavSection>
-          {steps.map((i, index) => {
-            return index === activeStep ? (
-              <DigestMetadata
-                key={index}
-                control={control}
-                index={index}
-                loading={isLoading || isUpdateLoading}
-                disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
-                setSelectedChannel={setSelectedChannel}
+                );
+              })}
+            </NavSection>
+            <NavSection>
+              <Divider
+                style={{
+                  marginBottom: '15px',
+                }}
+                label="Filters"
+                labelPosition="center"
               />
-            ) : null;
-          })}
-        </NavSection>
-      </When>
-      <When truthy={selectedChannel === StepTypeEnum.DELAY}>
-        <NavSection>
-          <ButtonWrapper>
-            <Title size={2}>Delay Properties</Title>
-            <ActionIcon
-              data-test-id="close-side-menu-btn"
-              variant="transparent"
-              onClick={() => setSelectedChannel(null)}
-            >
-              <Close />
-            </ActionIcon>
-          </ButtonWrapper>
+              {steps.map((i, index) => {
+                return index !== activeStep ? null : <Filters key={index} step={i} />;
+              })}
+              <FilterButton
+                fullWidth
+                variant="outline"
+                onClick={() => {
+                  setFilterOpen(true);
+                }}
+                dark={colorScheme === 'dark'}
+                disabled={readonly}
+                data-test-id="add-filter-btn"
+              >
+                <PlusCircle
+                  style={{
+                    marginRight: '7px',
+                  }}
+                />
+                Add filter
+              </FilterButton>
+            </NavSection>
+          </When>
+          <When truthy={selectedChannel === StepTypeEnum.DIGEST}>
+            <NavSection>
+              <ButtonWrapper>
+                <Title size={2}>Digest Properties</Title>
+                <ActionIcon
+                  data-test-id="close-side-menu-btn"
+                  variant="transparent"
+                  onClick={() => setSelectedChannel(null)}
+                >
+                  <Close />
+                </ActionIcon>
+              </ButtonWrapper>
 
-          <Text mr={10} mt={10} size="md" color={colors.B60}>
-            Configure the delay parameters.
-          </Text>
-        </NavSection>
-        <NavSection>
-          {steps.map((i, index) => {
-            return index === activeStep ? <DelayMetadata key={index} control={control} index={index} /> : null;
-          })}
-        </NavSection>
-      </When>
-      <NavSection>
+              <Text mr={10} mt={10} size="md" color={colors.B60}>
+                Configure the digest parameters. Read more about the digest engine{' '}
+                <a target={'_blank'} rel="noopener noreferrer" href={'https://docs.novu.co/platform/digest'}>
+                  here
+                </a>
+                .
+              </Text>
+            </NavSection>
+            <NavSection>
+              {steps.map((i, index) => {
+                return index === activeStep ? (
+                  <DigestMetadata
+                    key={index}
+                    control={control}
+                    index={index}
+                    loading={isLoading || isUpdateLoading}
+                    disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+                    setSelectedChannel={setSelectedChannel}
+                  />
+                ) : null;
+              })}
+            </NavSection>
+          </When>
+          <When truthy={selectedChannel === StepTypeEnum.DELAY}>
+            <NavSection>
+              <ButtonWrapper>
+                <Title size={2}>Delay Properties</Title>
+                <ActionIcon
+                  data-test-id="close-side-menu-btn"
+                  variant="transparent"
+                  onClick={() => setSelectedChannel(null)}
+                >
+                  <Close />
+                </ActionIcon>
+              </ButtonWrapper>
+
+              <Text mr={10} mt={10} size="md" color={colors.B60}>
+                Configure the delay parameters.
+              </Text>
+            </NavSection>
+            <NavSection>
+              {steps.map((i, index) => {
+                return index === activeStep ? <DelayMetadata key={index} control={control} index={index} /> : null;
+              })}
+            </NavSection>
+          </When>
+        </Stack>
         <DeleteStepButton
           mt={10}
           variant="outline"
@@ -215,7 +217,7 @@ export function SelectedStep({
           />
           Delete {getChannel(selectedChannel.toString())?.type === NodeTypeEnum.CHANNEL ? 'Step' : 'Action'}
         </DeleteStepButton>
-      </NavSection>
+      </MenuBar>
     </StyledNav>
   );
 }
@@ -237,11 +239,19 @@ const FilterButton = styled(Button)<{ dark: boolean }>`
   }
 `;
 
+const MenuBar = styled.div`
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  height: 100%;
+`;
+
 const DeleteStepButton = styled(Button)`
-  position: absolute;
-  bottom: 15px;
-  left: 20px;
-  right: 20px;
+  //display: flex;
+  //position: inherit;
+  //bottom: 15px;
+  //left: 20px;
+  //right: 20px;
   background: rgba(229, 69, 69, 0.15);
   color: ${colors.error};
   box-shadow: none;

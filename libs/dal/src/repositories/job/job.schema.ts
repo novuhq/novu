@@ -23,6 +23,7 @@ const jobSchema = new Schema(
     },
     _templateId: {
       type: Schema.Types.String,
+      ref: 'NotificationTemplate',
       index: true,
     },
     transactionId: {
@@ -107,6 +108,13 @@ jobSchema.virtual('executionDetails', {
   ref: 'ExecutionDetails',
   localField: '_id',
   foreignField: '_jobId',
+});
+
+jobSchema.virtual('template', {
+  ref: 'NotificationTemplate',
+  localField: '_templateId',
+  foreignField: '_id',
+  justOne: true,
 });
 
 interface IJobDocument extends JobEntity, Document {

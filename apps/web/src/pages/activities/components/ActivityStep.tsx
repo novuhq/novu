@@ -3,7 +3,7 @@ import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
 import { colors, shadows } from '../../../design-system';
-import { CheckCircle, ErrorIcon } from '../../../design-system/icons';
+import { SuccessIcon, ErrorIcon } from '../../../design-system/icons';
 import { When } from '../../../components/utils/When';
 import { Digest, Mail, Mobile, Chat, Sms, InApp, Timer } from '../../../design-system/icons';
 
@@ -63,7 +63,7 @@ export const ActivityStep = ({ job, span = 4, isOld }) => {
                 <Timer width={16} height={16} />
               </When>
               <When truthy={status === JobStatusEnum.COMPLETED}>
-                <CheckCircle width="16" height="16" color={colors.success} />
+                <SuccessIcon width="16" height="16" color={colors.success} />
               </When>
               <When truthy={status === JobStatusEnum.FAILED}>
                 <ErrorIcon width="16" height="16" color={colors.error} />
