@@ -6,7 +6,6 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   MessageEntity,
-  IEmailBlock,
   NotificationEntity,
 } from '@novu/dal';
 import {
@@ -14,6 +13,7 @@ import {
   IMessageButton,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IEmailBlock,
   InAppProviderIdEnum,
   ActorTypeEnum,
   IActor,

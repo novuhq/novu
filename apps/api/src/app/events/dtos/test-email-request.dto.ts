@@ -1,6 +1,5 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
-import { IEmailBlock } from '@novu/dal';
-import { MessageTemplateContentType } from '@novu/shared';
+import { IsDefined, IsString, IsOptional } from 'class-validator';
+import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 
 export class TestSendEmailRequestDto {
   @IsDefined()
