@@ -1,6 +1,13 @@
-import { StepTypeEnum } from '@novu/shared';
+import {
+  StepTypeEnum,
+  IRealtimeOnlineFilterPart,
+  IOnlineInLastFilterPart,
+  IWebhookFilterPart,
+  IFieldFilterPart,
+  FilterPartTypeEnum,
+} from '@novu/shared';
 import { TestWrapper } from '../../../testing';
-import { Filters, translateOperator } from './Filters';
+import { Filters, translateOperator, getFilterLabel } from './Filters';
 
 const defaultStep = {
   id: '',
@@ -78,7 +85,7 @@ describe('Filters Component', function () {
               {
                 children: [
                   {
-                    on: 'payload',
+                    on: FilterPartTypeEnum.PAYLOAD,
                     field: 'name',
                     value: 'Novu',
                     operator: 'EQUAL',
@@ -104,5 +111,32 @@ describe('Filters Component', function () {
     expect(translateOperator('SMALLER_EQUAL')).to.equal('smaller or equal');
     expect(translateOperator('NOT_IN')).to.equal('do not include');
     expect(translateOperator('IN')).to.equal('includes');
+  });
+
+  it('should print correct filter description value according to the filter type', () => {
+    const onlineRightNowFilter: IRealtimeOnlineFilterPart = { on: FilterPartTypeEnum.IS_ONLINE, value: true };
+    const onlineInLastFilter: IOnlineInLastFilterPart = {
+      on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
+      timeOperator: 'hours',
+      value: 5,
+    };
+    const webhookFilter: IWebhookFilterPart = {
+      field: 'test-field',
+      on: FilterPartTypeEnum.WEBHOOK,
+      operator: 'EQUAL',
+      value: 'test',
+      webhookUrl: 'test-url',
+    };
+    const fieldFilters: IFieldFilterPart = {
+      field: 'test-field',
+      on: FilterPartTypeEnum.PAYLOAD,
+      operator: 'IN',
+      value: 'test-value',
+    };
+
+    expect(getFilterLabel(onlineRightNowFilter)).to.equal('is online right now equal');
+    expect(getFilterLabel(onlineInLastFilter)).to.equal(`online in the last "X" ${onlineInLastFilter.timeOperator}`);
+    expect(getFilterLabel(webhookFilter)).to.equal('webhook test-field equal');
+    expect(getFilterLabel(fieldFilters)).to.equal('payload test-field includes');
   });
 });
