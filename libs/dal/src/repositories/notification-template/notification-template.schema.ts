@@ -20,6 +20,13 @@ const notificationTemplateSchema = new Schema(
       type: Schema.Types.Boolean,
       default: false,
     },
+    isBlueprint: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
+    blueprintId: {
+      type: Schema.Types.String,
+    },
     _notificationGroupId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationGroup',
@@ -70,10 +77,11 @@ const notificationTemplateSchema = new Schema(
             children: [
               {
                 field: Schema.Types.String,
-                value: Schema.Types.String,
+                value: Schema.Types.Mixed,
                 operator: Schema.Types.String,
                 on: Schema.Types.String,
                 webhookUrl: Schema.Types.String,
+                timeOperator: Schema.Types.String,
               },
             ],
           },

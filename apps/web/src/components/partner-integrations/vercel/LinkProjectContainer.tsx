@@ -60,6 +60,15 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   });
 
   const [projectRowCount, setProjectRowCount] = useState(1);
+  const projects = useMemo(
+    () =>
+      vercelProjects?.pages.reduce((acc, curr) => {
+        acc.push(...curr.projects);
+
+        return acc;
+      }, []),
+    [vercelProjects]
+  );
 
   const { control, handleSubmit, reset } = useForm<ProjectLinkFormValues>({
     defaultValues: {
@@ -132,16 +141,6 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   if (isLoading || loading) {
     return <VercelSetupLoader title={`${type === 'create' ? 'Setting up' : 'Updating'} Vercel integration...`} />;
   }
-
-  const projects = useMemo(
-    () =>
-      vercelProjects?.pages.reduce((acc, curr) => {
-        acc.push(...curr.projects);
-
-        return acc;
-      }, []),
-    [vercelProjects]
-  );
 
   return (
     <Stack>
