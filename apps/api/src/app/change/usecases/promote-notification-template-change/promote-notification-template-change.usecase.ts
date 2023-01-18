@@ -1,8 +1,6 @@
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { ApplyChange } from '../apply-change/apply-change.usecase';
-import { ChangeRepository } from '@novu/dal';
 import {
+  ChangeRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   MessageTemplateRepository,
@@ -10,7 +8,9 @@ import {
   NotificationGroupRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { ApplyChangeCommand } from '../apply-change/apply-change.command';
+
+import { ApplyChange, ApplyChangeCommand } from '../apply-change';
+import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()

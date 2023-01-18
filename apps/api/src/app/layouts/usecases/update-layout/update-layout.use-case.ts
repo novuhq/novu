@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import { UpdateLayoutCommand } from './update-layout.command';
 
+import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos/layout.dto';
@@ -12,6 +13,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 export class UpdateLayoutUseCase {
   constructor(
     private getLayoutUseCase: GetLayoutUseCase,
+    private createLayoutChange: CreateLayoutChangeUseCase,
     private setDefaultLayout: SetDefaultLayoutUseCase,
     private layoutRepository: LayoutRepository
   ) {}
@@ -44,7 +46,20 @@ export class UpdateLayoutUseCase {
       await this.setDefaultLayout.execute(setDefaultLayoutCommand);
     }
 
+    await this.createChange(command);
+
     return dto;
+  }
+
+  private async createChange(command: UpdateLayoutCommand): Promise<void> {
+    const createLayoutChangeCommand = CreateLayoutChangeCommand.create({
+      environmentId: command.environmentId,
+      layoutId: command.layoutId,
+      organizationId: command.organizationId,
+      userId: command.userId,
+    });
+
+    await this.createLayoutChange.execute(createLayoutChangeCommand);
   }
 
   private applyUpdatesToEntity(layout: LayoutEntity, updates: UpdateLayoutCommand): LayoutEntity {

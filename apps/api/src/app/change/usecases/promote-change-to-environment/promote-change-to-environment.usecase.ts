@@ -1,9 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { PromoteNotificationTemplateChange } from '../promote-notification-template-change/promote-notification-template-change';
+import { PromoteNotificationTemplateChange } from '../promote-notification-template-change';
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
 import { applyDiff } from 'recursive-diff';
@@ -14,6 +14,7 @@ export class PromoteChangeToEnvironment {
   constructor(
     private changeRepository: ChangeRepository,
     private environmentRepository: EnvironmentRepository,
+    @Inject(forwardRef(() => PromoteNotificationTemplateChange))
     private promoteNotificationTemplateChange: PromoteNotificationTemplateChange,
     private promoteMessageTemplateChange: PromoteMessageTemplateChange,
     private promoteNotificationGroupChange: PromoteNotificationGroupChange,

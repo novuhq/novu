@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
+
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum, INotificationTemplateStep, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
@@ -9,8 +10,7 @@ import { CreateNotificationTemplateCommand } from './create-notification-templat
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
