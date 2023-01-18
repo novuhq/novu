@@ -110,6 +110,7 @@ export class SendMessagePush extends SendMessageBase {
         channelType: ChannelTypeEnum.PUSH,
         findOne: true,
         active: true,
+        userId: command.userId,
       })
     );
     if (!integration) {
