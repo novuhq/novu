@@ -51,7 +51,7 @@ import { LayoutId } from './types';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { AnalyticsService } from '../shared/services/analytics/analytics.service';
+import { AnalyticsService } from '@novu/application-generic';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
 
 @Controller('/layouts')
