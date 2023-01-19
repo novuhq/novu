@@ -400,6 +400,8 @@ class Mailin extends events.EventEmitter {
           removeOnComplete: true,
           removeOnFail: true,
         });
+
+        return resolve();
       });
     }
     function postWebhook(connection, finalizedMessage) {
