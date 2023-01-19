@@ -1,82 +1,134 @@
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsNumber, IsString } from 'class-validator';
 import { BaseCommand } from '@novu/application-generic';
 
 export class EmailParseCommand extends BaseCommand {
-  @IsNumber()
-  @IsOptional()
-  id?: number;
-
+  @IsDefined()
   @IsString()
-  rcptTo: string;
+  html: string;
 
+  @IsDefined()
   @IsString()
-  mailFrom: string;
+  text: string;
 
-  @IsString()
-  @IsOptional()
-  token?: string;
+  @IsDefined()
+  headers: IHeaders;
 
+  @IsDefined()
   @IsString()
   subject: string;
 
+  @IsDefined()
   @IsString()
   messageId: string;
 
+  @IsDefined()
+  @IsString()
+  priority: string;
+
+  @IsDefined()
+  from: IFrom[];
+
+  @IsDefined()
+  to: ITo[];
+
+  @IsDefined()
+  date: Date;
+
+  @IsDefined()
+  @IsString()
+  dkim: string;
+
+  @IsDefined()
+  @IsString()
+  spf: string;
+
+  @IsDefined()
   @IsNumber()
-  @IsOptional()
-  timestamp?: number;
+  spamScore: number;
 
+  @IsDefined()
   @IsString()
-  @IsOptional()
-  size?: string;
+  language: string;
 
-  @IsString()
-  @IsOptional()
-  spamStatus?: string;
+  @IsDefined()
+  cc: any[];
 
-  @IsBoolean()
-  @IsOptional()
-  bounce?: boolean;
+  @IsDefined()
+  attachments: any[];
 
-  @IsBoolean()
-  @IsOptional()
-  receivedWithSsl?: boolean;
+  @IsDefined()
+  connection: IConnection;
 
-  @IsString()
-  to: string;
+  @IsDefined()
+  envelopeFrom: IEnvelopeFrom;
 
-  @IsString()
-  @IsOptional()
-  cc?: string;
+  @IsDefined()
+  envelopeTo: IEnvelopeTo[];
+}
 
-  @IsString()
+export interface IHeaders {
+  'content-type': string;
   from: string;
-
-  @IsString()
+  to: string;
+  subject: string;
+  'message-id': string;
   date: string;
+  'mime-version': string;
+}
 
-  @IsOptional()
-  inReplyTo?: any;
+export interface IFrom {
+  address: string;
+  name: string;
+}
 
-  @IsOptional()
-  references?: any;
+export interface ITo {
+  address: string;
+  name: string;
+}
 
-  @IsString()
-  htmlBody: string;
+export interface ITlsOptions {
+  name: string;
+  standardName: string;
+  version: string;
+}
 
-  @IsNumber()
-  attachmentQuantity: number;
+export interface IMailFrom {
+  address: string;
+  args: boolean;
+}
 
-  @IsOptional()
-  autoSubmitted?: any;
+export interface IRcptTo {
+  address: string;
+  args: boolean;
+}
 
-  @IsOptional()
-  replyTo?: any;
+export interface IEnvelope {
+  mailFrom: IMailFrom;
+  rcptTo: IRcptTo[];
+}
 
-  @IsString()
-  @IsOptional()
-  plainBody?: string;
+export interface IConnection {
+  id: string;
+  remoteAddress: string;
+  remotePort: number;
+  clientHostname: string;
+  openingCommand: string;
+  hostNameAppearsAs: string;
+  xClient: any;
+  xForward: any;
+  transmissionType: string;
+  tlsOptions: ITlsOptions;
+  envelope: IEnvelope;
+  transaction: number;
+  mailPath: string;
+}
 
-  @IsOptional()
-  attachments?: any[];
+export interface IEnvelopeFrom {
+  address: string;
+  args: boolean;
+}
+
+export interface IEnvelopeTo {
+  address: string;
+  args: boolean;
 }

@@ -45,7 +45,7 @@ export class EmailParse {
   }
 
   private splitTo(command: EmailParseCommand) {
-    const [toUser, toDomain] = command.to.split('@');
+    const [toUser, toDomain] = command.to[0].address.split('@');
     const toTransactionId = toUser.split('+')[1];
 
     return { toDomain, toTransactionId };
