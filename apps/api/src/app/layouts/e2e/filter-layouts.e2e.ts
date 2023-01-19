@@ -87,7 +87,7 @@ describe('Filter layouts - /layouts (GET)', async () => {
     expect(page).to.eql(0);
     expect(pageSize).to.eql(2);
 
-    expect(data[0].name).to.eql('layout-name-1');
+    expect(data[0].name).to.eql('layout-name-3');
     expect(data[1].name).to.eql('layout-name-2');
   });
 
@@ -104,7 +104,7 @@ describe('Filter layouts - /layouts (GET)', async () => {
     expect(page).to.eql(1);
     expect(pageSize).to.eql(2);
 
-    expect(data[0].name).to.eql('layout-name-3');
+    expect(data[0].name).to.eql('layout-name-1');
   });
 
   it('should retrieve zero layouts from the database for the environment if pageSize is set to 2 and page 2 selected', async () => {
@@ -133,5 +133,58 @@ describe('Filter layouts - /layouts (GET)', async () => {
     expect(totalCount).to.eql(3);
     expect(page).to.eql(0);
     expect(pageSize).to.eql(10);
+  });
+
+  it('should order the filtered layouts by creation date in ascendent order', async () => {
+    const url = `${BASE_PATH}?sortBy=createdAt&orderBy=1`;
+    const response = await session.testAgent.get(url);
+
+    expect(response.statusCode).to.eql(200);
+
+    const { data, totalCount, page, pageSize } = response.body;
+
+    expect(data.length).to.eql(3);
+    expect(totalCount).to.eql(3);
+    expect(page).to.eql(0);
+    expect(pageSize).to.eql(10);
+
+    expect(data[0].name).to.eql('layout-name-1');
+    expect(data[1].name).to.eql('layout-name-2');
+    expect(data[2].name).to.eql('layout-name-3');
+  });
+
+  it('should order the filtered layouts by creation date in descendent order', async () => {
+    const url = `${BASE_PATH}?sortBy=createdAt&orderBy=-1`;
+    const response = await session.testAgent.get(url);
+
+    expect(response.statusCode).to.eql(200);
+
+    const { data, totalCount, page, pageSize } = response.body;
+
+    expect(data.length).to.eql(3);
+    expect(totalCount).to.eql(3);
+    expect(page).to.eql(0);
+    expect(pageSize).to.eql(10);
+
+    expect(data[0].name).to.eql('layout-name-3');
+    expect(data[1].name).to.eql('layout-name-2');
+    expect(data[2].name).to.eql('layout-name-1');
+  });
+
+  it('should order the filtered layouts by creation date in descendent order limited to the amount of layouts by page size', async () => {
+    const url = `${BASE_PATH}?sortBy=createdAt&orderBy=-1&pageSize=2`;
+    const response = await session.testAgent.get(url);
+
+    expect(response.statusCode).to.eql(200);
+
+    const { data, totalCount, page, pageSize } = response.body;
+
+    expect(data.length).to.eql(2);
+    expect(totalCount).to.eql(3);
+    expect(page).to.eql(0);
+    expect(pageSize).to.eql(2);
+
+    expect(data[0].name).to.eql('layout-name-3');
+    expect(data[1].name).to.eql('layout-name-2');
   });
 });
