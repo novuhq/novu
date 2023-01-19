@@ -95,11 +95,9 @@ export class S3StorageService implements StorageService {
 
     const signedUrl = await getSignedUrl(this.s3, command, { expiresIn: 3600 });
     const parsedUrl = new URL(signedUrl);
+    const path = process.env.CDN_URL ? `${process.env.CDN_URL}/${key}` : `${parsedUrl.origin}${parsedUrl.pathname}`;
 
-    return {
-      signedUrl,
-      path: `${parsedUrl.origin}${parsedUrl.pathname}`,
-    };
+    return { signedUrl, path };
   }
 }
 
@@ -159,11 +157,11 @@ export class GCSStorageService implements StorageService {
       });
 
     const parsedUrl = new URL(signedUrl);
+    const path = process.env.CDN_URL
+      ? `${process.env.CDN_URL}/${key}`
+      : `${process.env.GCS_DOMAIN}${parsedUrl.pathname}`;
 
-    return {
-      signedUrl,
-      path: `${process.env.GCS_DOMAIN}${parsedUrl.pathname}`,
-    };
+    return { signedUrl, path };
   }
 }
 
@@ -233,13 +231,14 @@ export class AzureBlobStorageService implements StorageService {
     ).toString();
 
     const signedUrl = `${blobClient.url}?${blobSAS}`;
+    const path = process.env.CDN_URL ? `${process.env.CDN_URL}/${key}` : `${blobClient.url}`;
     const additionalHeaders = {
       'x-ms-blob-type': 'BlockBlob',
     };
 
     return {
       signedUrl,
-      path: `${blobClient.url}`,
+      path,
       additionalHeaders: additionalHeaders,
     };
   }

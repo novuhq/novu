@@ -24,6 +24,12 @@ improving the efficiency and effectiveness of your communication.
   returns a field indicating whether a subscriber is currently online, you can use this field
   to send notifications only to online subscribers.
 
+- On online right now: You can filter notifications on the basis of the current online status of the subscriber.
+  For example, You can choose to send a notification if the subscriber is currently online or offline.
+
+- On online in the last "X" time period: You can use this to filter notifications for a subscriber
+  if the subscriber was online in the last "X" minutes/hours/days.
+
 ### Steps to set filter
 
 1. Create a step in your notification workflow. This step will be the location where
@@ -129,3 +135,42 @@ if (hmacHash === hmac) {
 The webhook should return a one-level object containing any information that you want to use
 to filter the notification flow. For example, you might include a field called 'isOnline' that
 indicates whether the subscriber is currently online.
+
+## Subscriber online filters
+
+This feature allows you to apply a filter on step notifications based on the subscriber's online status. The filter can be applied to determine if the subscriber is currently online or if the subscriber was online in the "X" time-period.
+
+Example:
+To send an email notification to all subscribers who were active within the last 30 minutes, follow these steps:
+
+- On the Workflow editor page, Add the "Email" step notification.
+- Click on the "Add Filter" button from the sidebar.
+- Select "Online in the last X time period" and choose "minutes" as the time period.
+- Enter "30" in the input field.
+
+By applying this filter, the notification will only be delivered to subscribers who have been active within the last 30 minutes, ensuring that the message is reaching engaged and active recipients.
+
+### Online filter Mechanism
+
+Novu uses a websocket connection within the `notification-center` package to track the online status of subscribers. The `isOnline` and `lastOnlineAt` fields of the subscriber's entity are updated accordingly.
+
+When a subscriber comes online, an active websocket connection is established with the server. Novu then updates the `isOnline` field of the subscriber's entity to `isOnline: true`. When the subscriber disconnects, Novu updates `isOnline: false` and `lastOnlineAt: current_timestamp`.
+
+The online filter feature can be used to determine if a subscriber is online right now or if the subscriber was online within a specific time period.
+
+- To determine if a subscriber is online right now, Novu checks the value of the `isOnline` field. If `isOnline` is `true`, the subscriber is online, otherwise when the `isOnline` is `false` the subscriber is considered offline.
+
+- To determine if a subscriber was online within a specific time period, Novu compares both the `isOnline` and `lastOnlineAt` fields. If `isOnline` is `true`, the subscriber is still online and the filter is applied. If `isOnline` is `false`, the difference between the `current timestamp` and the `timestamp` value of `lastOnlineAt` is calculated. If this difference is within the specified time period, the subscriber was online within that time period and the filter is applied. Otherwise, the filter is not applied.
+
+For example, to determine if a subscriber has been online in the last 5 minutes, Novu checks if the subscriber is currently online or if the `lastOnlineAt` timestamp value is less than or equal to 5 minutes ago. If either of these conditions are met, the filter is applied.
+
+## Monitoring the filter's status inside Activity Feed
+
+To check if the notification sent was filtered or not, visit the `Activity Feed` page.
+
+- Select the notification you're interested in checking the filter status for.
+- A new popup `Execution Details` will open up.
+  ![Execution Details Screen](/img/execution-details.png)
+- Click on the notification step row to open up the details for the corresponding step.
+- On this screen, you can monitor the notification status along with filter details if any.
+  ![Step Execution Details Screen](/img/step-execution-details.png)

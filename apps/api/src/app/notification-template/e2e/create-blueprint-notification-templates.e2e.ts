@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import { EmailBlockTypeEnum, StepTypeEnum, INotificationTemplate } from '@novu/shared';
+import { EmailBlockTypeEnum, StepTypeEnum, INotificationTemplate, FilterPartTypeEnum } from '@novu/shared';
 import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
+
 import { CreateNotificationTemplateRequestDto } from '../dto';
 
 describe('Create Notification template from blueprint - /notification-templates/:templateId/blueprint (POST)', async () => {
@@ -36,6 +37,7 @@ describe('Create Notification template from blueprint - /notification-templates/
               value: 'AND',
               children: [
                 {
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',

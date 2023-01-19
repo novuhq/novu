@@ -75,6 +75,7 @@ export class SendMessageEmail extends SendMessageBase {
           channelType: ChannelTypeEnum.EMAIL,
           findOne: true,
           active: true,
+          userId: command.userId,
         })
       );
     } catch (e) {

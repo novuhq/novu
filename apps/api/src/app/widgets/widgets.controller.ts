@@ -10,8 +10,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
+import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { SessionInitializeRequestDto } from './dtos/session-initialize-request.dto';
 import { InitializeSessionCommand } from './usecases/initialize-session/initialize-session.command';
 import { InitializeSession } from './usecases/initialize-session/initialize-session.usecase';
@@ -20,12 +24,9 @@ import { GetNotificationsFeedCommand } from './usecases/get-notifications-feed/g
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { GetOrganizationData } from './usecases/get-organization-data/get-organization-data.usecase';
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
-import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
-import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecase';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
-import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
 import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
 import { UnseenCountResponse } from './dtos/unseen-count-response.dto';

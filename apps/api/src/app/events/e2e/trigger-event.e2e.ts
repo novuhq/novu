@@ -1,3 +1,6 @@
+import { expect } from 'chai';
+import axios from 'axios';
+import * as sinon from 'sinon';
 import {
   LogRepository,
   MessageRepository,
@@ -11,8 +14,6 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-
-import { expect } from 'chai';
 import {
   ChannelTypeEnum,
   EmailBlockTypeEnum,
@@ -21,10 +22,9 @@ import {
   TemplateVariableTypeEnum,
   EmailProviderIdEnum,
   SmsProviderIdEnum,
+  FilterPartTypeEnum,
 } from '@novu/shared';
-import axios from 'axios';
 import { ISubscribersDefine } from '@novu/node';
-import * as sinon from 'sinon';
 
 const axiosInstance = axios.create();
 
@@ -903,7 +903,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
                   field: 'run',
                   value: 'true',
                   operator: 'EQUAL',
-                  on: 'payload',
+                  on: FilterPartTypeEnum.PAYLOAD,
                 },
               ],
             },
@@ -936,7 +936,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
                   field: 'subscriberId',
                   value: subscriber.subscriberId,
                   operator: 'NOT_EQUAL',
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                 },
               ],
             },
@@ -1000,7 +1000,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
                   field: 'isOnline',
                   value: 'true',
                   operator: 'EQUAL',
-                  on: 'webhook',
+                  on: FilterPartTypeEnum.WEBHOOK,
                   webhookUrl: 'www.user.com/webhook',
                 },
               ],
@@ -1098,7 +1098,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
                   field: 'isOnline',
                   value: 'true',
                   operator: 'EQUAL',
-                  on: 'webhook',
+                  on: FilterPartTypeEnum.WEBHOOK,
                   webhookUrl: 'www.user.com/webhook',
                 },
               ],
@@ -1162,7 +1162,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
                   field: 'isOnline',
                   value: 'true',
                   operator: 'EQUAL',
-                  on: 'webhook',
+                  on: FilterPartTypeEnum.WEBHOOK,
                   webhookUrl: 'www.user.com/webhook',
                 },
               ],
