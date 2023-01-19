@@ -14,7 +14,10 @@ export const EmailInboxContent = ({
   integration: any;
 }) => {
   const theme = useMantineTheme();
-  const { control } = useFormContext();
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext();
   const { layouts, isLoading } = useLayouts(0, 100);
 
   return (
@@ -26,7 +29,7 @@ export const EmailInboxContent = ({
         padding: '5px 10px',
       }}
     >
-      <Grid grow align="center">
+      <Grid grow justify="center" align="stretch">
         <Grid.Col span={3}>
           <div
             style={{
@@ -44,11 +47,12 @@ export const EmailInboxContent = ({
             <Controller
               name={`steps.${index}.template.subject` as any}
               control={control}
-              render={({ field, fieldState }) => {
+              render={({ field }) => {
                 return (
                   <Input
                     {...field}
-                    error={fieldState.error?.message}
+                    required
+                    error={errors?.steps ? errors.steps[index]?.template?.subject?.message : undefined}
                     disabled={readonly}
                     value={field.value}
                     placeholder="Type the email subject..."
@@ -79,9 +83,11 @@ export const EmailInboxContent = ({
         </Grid.Col>
         <Grid.Col
           span={1}
-          sx={{
+          style={{
             color: colors.B60,
             fontWeight: 'normal',
+            alignSelf: 'center',
+            justifyContent: 'stretch',
           }}
         >
           {format(new Date(), 'MMM dd')}
@@ -93,12 +99,15 @@ export const EmailInboxContent = ({
         render={({ field }) => {
           return (
             <Select
+              {...field}
               label="Layouts"
               data-test-id="templates-layout"
               loading={isLoading}
+              required
+              error={errors?.steps ? errors?.steps[index]?.template?.layoutId?.message : undefined}
+              searchable
               placeholder="Select layout"
               data={(layouts || []).map((layout) => ({ value: layout._id as string, label: layout.name }))}
-              {...field}
             />
           );
         }}
