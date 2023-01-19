@@ -60,19 +60,9 @@ describe('Layout creation - /layouts (POST)', async () => {
 
     const layoutName = 'layout-name-creation-new-default';
     const layoutDescription = 'new-default-layout';
-    const content = [
-      {
-        type: 'text',
-        content: 'This are the text contents of the template for {{firstName}}',
-      },
-      {
-        type: 'button',
-        content: 'SIGN UP',
-        url: 'https://url-of-app.com/{{urlVariable}}',
-      },
-    ];
+    const content = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
     const variables = [
-      { name: 'firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
+      { name: 'organizationName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'Company', required: false },
     ];
     const isDefault = true;
     const response = await session.testAgent.post(BASE_PATH).send({
