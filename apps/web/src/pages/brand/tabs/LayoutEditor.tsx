@@ -8,7 +8,7 @@ import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { parse } from '@handlebars/parser';
-import { getTemplateVariables, ITemplateVariable } from '@novu/shared';
+import { getTemplateVariables, ITemplateVariable, isReservedVariableName } from '@novu/shared';
 
 import { QueryKeys } from '../../../api/query.keys';
 import { VariableManager } from '../../../components/templates/VariableManager';
@@ -74,7 +74,9 @@ export function LayoutEditor({
   }, [layout]);
 
   useMemo(() => {
-    const variables = getTemplateVariables(ast.body) as ITemplateVariable[];
+    const variables = getTemplateVariables(ast.body).filter(
+      ({ name }) => !isReservedVariableName(name)
+    ) as ITemplateVariable[];
     const arrayFields = [...(variableArray || [])];
 
     variables.forEach((vari) => {
@@ -82,7 +84,6 @@ export function LayoutEditor({
         arrayFields.push(vari);
       }
     });
-
     arrayFields.forEach((vari, ind) => {
       if (!variables.find((field) => field.name === vari.name)) {
         delete arrayFields[ind];

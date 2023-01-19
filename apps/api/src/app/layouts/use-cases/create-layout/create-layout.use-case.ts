@@ -6,17 +6,14 @@ import { CreateLayoutCommand } from './create-layout.command';
 import { LayoutDto } from '../../dtos/layout.dto';
 import { ChannelTypeEnum, ITemplateVariable } from '../../types';
 import { ContentService } from '../../../shared/helpers/content.service';
+import { isReservedVariableName } from '@novu/shared';
 
 @Injectable()
 export class CreateLayoutUseCase {
   constructor(private layoutRepository: LayoutRepository) {}
 
   async execute(command: CreateLayoutCommand) {
-    const contentService = new ContentService();
-    const extractedVariables = contentService.extractVariables(command.content);
-    const variables = [
-      ...new Map([...extractedVariables, ...(command.variables || [])].map((item) => [item.name, item])).values(),
-    ] as ITemplateVariable[];
+    const variables = this.getExtractedVariables(command.variables as ITemplateVariable[], command.content);
 
     const entity = this.mapToEntity({ ...command, variables });
 
@@ -49,5 +46,28 @@ export class CreateLayoutUseCase {
       _environmentId: LayoutRepository.convertObjectIdToString(layout._environmentId),
       isDeleted: layout.deleted,
     };
+  }
+
+  private getExtractedVariables(variables: ITemplateVariable[], content: string): ITemplateVariable[] {
+    const contentService = new ContentService();
+    const extractedVariables = contentService
+      .extractVariables(content)
+      .filter((item) => !isReservedVariableName(item.name));
+
+    if (!variables || variables.length === 0) {
+      return extractedVariables;
+    }
+
+    return extractedVariables.map((variable) => {
+      const { name, type, defaultValue, required } = variable;
+      const variableFromRequest = variables.find((item) => item.name === name);
+
+      return {
+        name,
+        type,
+        defaultValue: variableFromRequest?.defaultValue ?? defaultValue,
+        required: variableFromRequest?.required ?? required,
+      };
+    });
   }
 }
