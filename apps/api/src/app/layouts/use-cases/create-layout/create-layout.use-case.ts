@@ -3,19 +3,32 @@ import { Injectable } from '@nestjs/common';
 
 import { CreateLayoutCommand } from './create-layout.command';
 
+import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos/layout.dto';
 import { ChannelTypeEnum, IEmailBlock } from '../../types';
 
 @Injectable()
 export class CreateLayoutUseCase {
-  constructor(private layoutRepository: LayoutRepository) {}
+  constructor(private setDefaultLayout: SetDefaultLayoutUseCase, private layoutRepository: LayoutRepository) {}
 
-  async execute(command: CreateLayoutCommand) {
+  async execute(command: CreateLayoutCommand): Promise<LayoutDto> {
     const entity = this.mapToEntity(command);
 
     const layout = await this.layoutRepository.createLayout(entity);
 
-    return this.mapFromEntity(layout);
+    const dto = this.mapFromEntity(layout);
+
+    if (dto._id && dto.isDefault === true) {
+      const setDefaultLayoutCommand = SetDefaultLayoutCommand.create({
+        environmentId: dto._environmentId,
+        layoutId: dto._id,
+        organizationId: dto._organizationId,
+        userId: dto._creatorId,
+      });
+      await this.setDefaultLayout.execute(setDefaultLayoutCommand);
+    }
+
+    return dto;
   }
 
   private mapToEntity(domainEntity: CreateLayoutCommand): Omit<LayoutEntity, '_id' | 'createdAt' | 'updatedAt'> {
