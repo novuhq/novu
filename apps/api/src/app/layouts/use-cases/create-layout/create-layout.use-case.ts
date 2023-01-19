@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 import { CreateLayoutCommand } from './create-layout.command';
 
-import { LayoutDto } from '../../dtos/layout.dto';
+import { LayoutDto } from '../../dtos';
 import { ChannelTypeEnum, ITemplateVariable } from '../../types';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { isReservedVariableName } from '@novu/shared';
@@ -52,7 +52,7 @@ export class CreateLayoutUseCase {
     const contentService = new ContentService();
     const extractedVariables = contentService
       .extractVariables(content)
-      .filter((item) => !isReservedVariableName(item.name));
+      .filter((item) => !isReservedVariableName(item.name)) as ITemplateVariable[];
 
     if (!variables || variables.length === 0) {
       return extractedVariables;

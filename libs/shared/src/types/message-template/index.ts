@@ -23,6 +23,6 @@ export interface IEmailBlock {
 export interface ITemplateVariable {
   type: TemplateVariableTypeEnum;
   name: string;
-  required: boolean;
+  required?: boolean;
   defaultValue?: string | boolean;
 }
