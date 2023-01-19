@@ -52,6 +52,10 @@ export class MailersendEmailProvider implements IEmailProvider {
       .setText(options.text)
       .setAttachments(attachments);
 
+    if (options.replyTo) {
+      emailParams.setReplyTo(options.replyTo);
+    }
+
     return emailParams;
   }
 

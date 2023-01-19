@@ -64,7 +64,7 @@ export class SendgridEmailProvider implements IEmailProvider {
   }
 
   private createMailData(options: IEmailOptions) {
-    const res: Partial<MailDataRequired> = {
+    const mailData: Partial<MailDataRequired> = {
       from: {
         email: options.from || this.config.from,
         name: this.config.senderName,
@@ -86,10 +86,10 @@ export class SendgridEmailProvider implements IEmailProvider {
     };
 
     if (options.replyTo) {
-      res.replyTo = options.replyTo;
+      mailData.replyTo = options.replyTo;
     }
 
-    return res as MailDataRequired;
+    return mailData as MailDataRequired;
   }
 
   getMessageId(body: any | any[]): string[] {
