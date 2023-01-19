@@ -4,7 +4,7 @@
 
 ## Getting Started
 
-To use the MailerSend channel, you will need to create a MailerSend account and add your API key to the MailerSend integration on the Novu platform.
+To use the MailerSend provider, you will need to create a MailerSend account and add your API key to the MailerSend integration on the Novu platform.
 To generate the API token go visit the [MailerSend API Tokens](https://www.mailersend.com/help/managing-api-tokens) page.
 
 ## Create the MailerSend integration with Novu
