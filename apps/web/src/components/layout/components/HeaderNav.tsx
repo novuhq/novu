@@ -13,7 +13,6 @@ import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
-import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 
 type Props = {};
 const menuItem = [
@@ -149,9 +148,6 @@ export function HeaderNav({}: Props) {
           />
         </Link>
         <Group>
-          <Link to="/integrations">
-            <LimitBar />
-          </Link>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
             <Tooltip label={themeTitle()}>
               <div>{Icon()}</div>
