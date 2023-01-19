@@ -1,24 +1,30 @@
 import { useState } from 'react';
-import { Badge, ActionIcon, useMantineTheme } from '@mantine/core';
+import { Badge, ActionIcon, useMantineTheme, Group } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
 
-import { useTemplates } from '../../api/hooks/use-templates';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Tag, Button, Table, colors, Text } from '../../design-system';
+import { Tag, Button, Table, colors, Text, Input } from '../../design-system';
 import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { useEnvController } from '../../store/use-env-controller';
+import { useFilterTemplates } from '../../api/hooks/use-filter-templates';
 
 function NotificationList() {
   const { readonly } = useEnvController();
   const [page, setPage] = useState<number>(0);
-  const { templates, loading: isLoading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const {
+    templates,
+    loading: isLoading,
+    totalCount: totalTemplatesCount,
+    pageSize,
+  } = useFilterTemplates(searchQuery, page);
   const theme = useMantineTheme();
   const navigate = useNavigate();
 
@@ -108,14 +114,23 @@ function NotificationList() {
       <PageHeader
         title="Notification Template"
         actions={
-          <Button
-            disabled={readonly}
-            onClick={handleRedirectToCreateTemplate}
-            icon={<PlusCircle />}
-            data-test-id="create-template-btn"
-          >
-            New
-          </Button>
+          <Group align="center" spacing={20}>
+            <StyledInput
+              placeholder="Search templates"
+              onChange={(event) => {
+                setSearchQuery(event.target.value);
+              }}
+              value={searchQuery}
+            />
+            <Button
+              disabled={readonly}
+              onClick={handleRedirectToCreateTemplate}
+              icon={<PlusCircle />}
+              data-test-id="create-template-btn"
+            >
+              New
+            </Button>
+          </Group>
         }
       />
       <TemplateListTableWrapper>
@@ -159,4 +174,16 @@ const TemplateListTableWrapper = styled.div`
       }
     }
   }
+`;
+
+const StyledInput = styled(Input)`
+  width: 300px;
+
+  .mantine-TextInput-wrapper,
+  input {
+    min-height: auto;
+    height: 42px;
+  }
+  position: relative;
+  top: -2px;
 `;
