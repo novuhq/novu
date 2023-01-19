@@ -4,7 +4,6 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import mailin from './server/index';
-import * as process from 'process';
 import logger from './server/logger';
 
 const env = process.env;

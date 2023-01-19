@@ -1,5 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { SharedModule } from '../shared/shared.module';
+import { SharedModule } from '../../../../webhook/src/shared/shared.module';
 import { USE_CASES } from './usecases';
 import { InboundParseQueueService } from './services/inbound-parse.queue.service';
 
