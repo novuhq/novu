@@ -117,6 +117,27 @@ jobSchema.virtual('template', {
   justOne: true,
 });
 
+jobSchema.virtual('notification', {
+  ref: 'Notification',
+  localField: '_notificationId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+jobSchema.virtual('subscriber', {
+  ref: 'Subscriber',
+  localField: '_subscriberId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+jobSchema.virtual('environment', {
+  ref: 'Environment',
+  localField: '_environmentId',
+  foreignField: '_id',
+  justOne: true,
+});
+
 interface IJobDocument extends JobEntity, Document {
   _id: never;
 }

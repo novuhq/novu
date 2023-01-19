@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import {
+  EnvironmentRepository,
   IEmailBlock,
+  IntegrationEntity,
+  MessageEntity,
   MessageRepository,
-  NotificationStepEntity,
+  NotificationEntity,
   NotificationRepository,
+  NotificationStepEntity,
+  OrganizationEntity,
+  OrganizationRepository,
   SubscriberEntity,
   SubscriberRepository,
-  OrganizationRepository,
-  MessageEntity,
-  NotificationEntity,
-  OrganizationEntity,
-  IntegrationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -38,6 +39,7 @@ export class SendMessageEmail extends SendMessageBase {
   channelType = ChannelTypeEnum.EMAIL;
 
   constructor(
+    protected environmentRepository: EnvironmentRepository,
     protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
@@ -277,8 +279,10 @@ export class SendMessageEmail extends SendMessageBase {
     };
 
     if (command.step.replyCallback?.url) {
-      // todo here we need to use MX domain of the user from the _environment if available
-      mailData.replyTo = `parse+${command.transactionId}@${process.env.REPLY_CALLBACK_ROUTE}`;
+      mailData.replyTo = await this.getReplyTo({
+        environmentId: command.environmentId,
+        transactionId: command.transactionId,
+      });
     }
 
     if (email && integration) {
@@ -287,6 +291,18 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
     await this.sendErrors(email, integration, message, command, notification);
+  }
+
+  private async getReplyTo({ environmentId, transactionId }: { environmentId: string; transactionId: string }) {
+    const environment = await this.environmentRepository.findOne({ _id: environmentId });
+
+    let replyCallbackRoute = process.env.REPLY_CALLBACK_ROUTE;
+
+    if (environment.dns?.mxRecordConfigured) {
+      replyCallbackRoute = environment.dns?.domain;
+    }
+
+    return `parse+${transactionId}@${replyCallbackRoute}`;
   }
 
   private async sendErrors(

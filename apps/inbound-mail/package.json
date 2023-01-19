@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
-    "build": "nest build",
+    "build": "tsc -p tsconfig.json",
     "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | docker build --build-arg PACKAGE_PATH=apps/inbound-mail - -t novu-inbound-mail",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nodemon",

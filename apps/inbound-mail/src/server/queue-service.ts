@@ -1,6 +1,7 @@
 import { Queue, QueueBaseOptions, Worker } from 'bullmq';
 
 export class QueueService {
+  readonly DEFAULT_ATTEMPTS = 5;
   private bullConfig: QueueBaseOptions = {
     connection: {
       db: Number(process.env.REDIS_DB_INDEX),
@@ -21,6 +22,11 @@ export class QueueService {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
+        attempts: this.DEFAULT_ATTEMPTS,
+        backoff: {
+          type: 'exponential',
+          delay: 4000,
+        },
       },
     });
   }

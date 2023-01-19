@@ -394,9 +394,9 @@ class Mailin extends events.EventEmitter {
 
     function postQueue(connection, finalizedMessage) {
       return new Promise(function (resolve) {
-        logger.info(connection.id + ' adding mail to queue ');
+        logger.info(connection.id + ' Adding mail to queue ');
 
-        queueService.queue.add(finalizedMessage.messageId, 'finalizedMessage', {
+        queueService.queue.add(finalizedMessage.messageId, finalizedMessage, {
           removeOnComplete: true,
           removeOnFail: true,
         });

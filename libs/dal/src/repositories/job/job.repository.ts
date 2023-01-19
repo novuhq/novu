@@ -4,6 +4,9 @@ import { Job } from './job.schema';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { Document, FilterQuery, ProjectionType } from 'mongoose';
 import { NotificationTemplateEntity } from '../notification-template';
+import { SubscriberEntity } from '../subscriber';
+import { NotificationEntity } from '../notification';
+import { EnvironmentEntity } from '../environment';
 
 class PartialJobEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
 
@@ -129,11 +132,27 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     return result;
   }
 
-  public async findOnePopulateTemplate(
-    query: { _environmentId: string; transactionId: string },
-    select: ProjectionType<JobEntity> = '',
-    selectTemplate: ProjectionType<NotificationTemplateEntity> = ''
-  ) {
-    return Job.findOne(query, select).populate('template', selectTemplate);
+  public async findOnePopulate({
+    query,
+    select = '',
+    selectTemplate = '',
+    selectNotification = '',
+    selectSubscriber = '',
+    selectEnvironment = '',
+  }: {
+    query: { _environmentId: string; transactionId: string };
+    select?: ProjectionType<JobEntity>;
+    selectTemplate?: ProjectionType<NotificationTemplateEntity>;
+    selectNotification?: ProjectionType<NotificationEntity>;
+    selectSubscriber?: ProjectionType<SubscriberEntity>;
+    selectEnvironment?: ProjectionType<EnvironmentEntity>;
+  }) {
+    return Job.findOne(query, select)
+      .populate('template', selectTemplate)
+      .populate('notification', selectNotification)
+      .populate('subscriber', selectSubscriber)
+      .populate('environment', selectEnvironment)
+      .lean()
+      .exec();
   }
 }
