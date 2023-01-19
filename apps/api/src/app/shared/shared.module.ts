@@ -22,7 +22,8 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { AnalyticsService } from './services/analytics/analytics.service';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { QueueService } from './services/queue';
 import {
   AzureBlobStorageService,
@@ -111,7 +112,7 @@ const PROVIDERS = [
   {
     provide: ANALYTICS_SERVICE,
     useFactory: async () => {
-      const analyticsService = new AnalyticsService();
+      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
 
       await analyticsService.initialize();
 

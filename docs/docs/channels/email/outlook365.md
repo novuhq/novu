@@ -14,4 +14,4 @@ To use the Outlook 365 channel, you will need to have the sender's email (user) 
   - `from`: Complete email address of the sending user. (e.g. jdoe@mycompany.com)
   - `senderName`: Sender Name should be the same email address of the sending user. (e.g. jdoe@mycompany.com)
   - `password`: Password used to sign in with the email account.
-- You should now be able to send notifications using Nodemailer in Novu.
+- You should now be able to send notifications using Outlook 365 in Novu.

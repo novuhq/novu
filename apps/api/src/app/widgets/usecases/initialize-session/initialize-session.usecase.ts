@@ -1,11 +1,12 @@
+import { createHmac } from 'crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { EnvironmentRepository, FeedRepository, MemberRepository } from '@novu/dal';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { InitializeSessionCommand } from './initialize-session.command';
-import { createHmac } from 'crypto';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
 

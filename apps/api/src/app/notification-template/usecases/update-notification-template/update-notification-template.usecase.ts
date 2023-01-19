@@ -7,6 +7,8 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
@@ -16,7 +18,6 @@ import { UpdateMessageTemplate } from '../../../message-template/usecases/update
 import { CreateChange } from '../../../change/usecases/create-change.usecase';
 import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { CacheKeyPrefixEnum, CacheService } from '../../../shared/services/cache';
 import { InvalidateCache } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
