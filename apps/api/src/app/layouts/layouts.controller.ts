@@ -51,7 +51,7 @@ import { LayoutId } from './types';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { AnalyticsService } from '../shared/services/analytics/analytics.service';
+import { AnalyticsService } from '@novu/application-generic';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
 
 @Controller('/layouts')
@@ -110,6 +110,18 @@ export class LayoutsController {
     description: 'Size of page for the pagination',
     required: false,
   })
+  @ApiQuery({
+    name: 'sortBy',
+    type: String,
+    description: 'Sort field. Currently only supported `createdAt`',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'orderBy',
+    type: Number,
+    description: 'Direction of the sorting query param. Either ascending (1) or descending (-1)',
+    required: false,
+  })
   @ApiOkResponse({
     type: FilterLayoutsResponseDto,
   })
@@ -128,6 +140,8 @@ export class LayoutsController {
         organizationId: user.organizationId,
         page: query?.page,
         pageSize: query?.pageSize,
+        sortBy: query?.sortBy,
+        orderBy: query?.orderBy,
       })
     );
   }

@@ -5,9 +5,10 @@ import { NotificationTemplateController } from './notification-template.controll
 import { MessageTemplateModule } from '../message-template/message-template.module';
 import { ChangeModule } from '../change/change.module';
 import { AuthModule } from '../auth/auth.module';
+import { IntegrationModule } from '../integrations/integrations.module';
 
 @Module({
-  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule],
+  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule],
   controllers: [NotificationTemplateController],
   providers: [...USE_CASES],
   exports: [...USE_CASES],

@@ -4,14 +4,19 @@ import { Injectable } from '@nestjs/common';
 import { UpdateLayoutCommand } from './update-layout.command';
 
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
+import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos/layout.dto';
 import { ChannelTypeEnum, IEmailBlock } from '../../types';
 
 @Injectable()
 export class UpdateLayoutUseCase {
-  constructor(private getLayoutUseCase: GetLayoutUseCase, private layoutRepository: LayoutRepository) {}
+  constructor(
+    private getLayoutUseCase: GetLayoutUseCase,
+    private setDefaultLayout: SetDefaultLayoutUseCase,
+    private layoutRepository: LayoutRepository
+  ) {}
 
-  async execute(command: UpdateLayoutCommand) {
+  async execute(command: UpdateLayoutCommand): Promise<LayoutDto> {
     const getLayoutCommand = GetLayoutCommand.create({
       layoutId: command.layoutId,
       environmentId: command.environmentId,
@@ -24,7 +29,19 @@ export class UpdateLayoutUseCase {
 
     const updatedEntity = await this.layoutRepository.updateLayout(patchedEntity);
 
-    return this.mapFromEntity(updatedEntity);
+    const dto = this.mapFromEntity(updatedEntity);
+
+    if (dto._id && dto.isDefault === true) {
+      const setDefaultLayoutCommand = SetDefaultLayoutCommand.create({
+        environmentId: dto._environmentId,
+        layoutId: dto._id,
+        organizationId: dto._organizationId,
+        userId: dto._creatorId,
+      });
+      await this.setDefaultLayout.execute(setDefaultLayoutCommand);
+    }
+
+    return dto;
   }
 
   private applyUpdatesToEntity(layout: LayoutEntity, updates: UpdateLayoutCommand): LayoutEntity {

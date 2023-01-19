@@ -2,6 +2,8 @@ import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
+import { OrderDirectionEnum } from '../../types';
+
 export class FilterLayoutsCommand extends EnvironmentCommand {
   @IsNumber()
   @IsOptional()
@@ -10,4 +12,12 @@ export class FilterLayoutsCommand extends EnvironmentCommand {
   @IsNumber()
   @IsOptional()
   pageSize?: number;
+
+  @IsString()
+  @IsOptional()
+  sortBy?: string;
+
+  @IsNumber()
+  @IsOptional()
+  orderBy?: OrderDirectionEnum;
 }

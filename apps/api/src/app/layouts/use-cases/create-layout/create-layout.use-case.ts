@@ -3,23 +3,36 @@ import { Injectable } from '@nestjs/common';
 
 import { CreateLayoutCommand } from './create-layout.command';
 
-import { LayoutDto } from '../../dtos/layout.dto';
+import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
+import { LayoutDto } from '../../dtos';
 import { ChannelTypeEnum, ITemplateVariable } from '../../types';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { isReservedVariableName } from '@novu/shared';
 
 @Injectable()
 export class CreateLayoutUseCase {
-  constructor(private layoutRepository: LayoutRepository) {}
+  constructor(private setDefaultLayout: SetDefaultLayoutUseCase, private layoutRepository: LayoutRepository) {}
 
-  async execute(command: CreateLayoutCommand) {
+  async execute(command: CreateLayoutCommand): Promise<LayoutDto> {
     const variables = this.getExtractedVariables(command.variables as ITemplateVariable[], command.content);
 
     const entity = this.mapToEntity({ ...command, variables });
 
     const layout = await this.layoutRepository.createLayout(entity);
 
-    return this.mapFromEntity(layout);
+    const dto = this.mapFromEntity(layout);
+
+    if (dto._id && dto.isDefault === true) {
+      const setDefaultLayoutCommand = SetDefaultLayoutCommand.create({
+        environmentId: dto._environmentId,
+        layoutId: dto._id,
+        organizationId: dto._organizationId,
+        userId: dto._creatorId,
+      });
+      await this.setDefaultLayout.execute(setDefaultLayoutCommand);
+    }
+
+    return dto;
   }
 
   private mapToEntity(domainEntity: CreateLayoutCommand): Omit<LayoutEntity, '_id' | 'createdAt' | 'updatedAt'> {
@@ -52,7 +65,7 @@ export class CreateLayoutUseCase {
     const contentService = new ContentService();
     const extractedVariables = contentService
       .extractVariables(content)
-      .filter((item) => !isReservedVariableName(item.name));
+      .filter((item) => !isReservedVariableName(item.name)) as ITemplateVariable[];
 
     if (!variables || variables.length === 0) {
       return extractedVariables;

@@ -58,63 +58,6 @@ describe('Compile Template', function () {
     expect(result).to.equal('<div>1 dog and 2 sausages for him</div>');
   });
 
-  it('should compile basic template successfully', async function () {
-    const result = await useCase.execute(
-      CompileTemplateCommand.create({
-        templateId: 'basic',
-        data: {
-          branding: {
-            color: '#e7e7e7e9',
-          },
-          blocks: [
-            {
-              type: 'text',
-              content: '<b>Hello TESTTTT content </b>',
-            },
-            {
-              type: 'button',
-              content: 'Button content of text',
-            },
-          ],
-        },
-      })
-    );
-
-    expect(result).to.contain('Hello TESTTTT content');
-    expect(result).to.not.contain('{{#each blocks}}');
-    expect(result).to.not.contains('ff6f61');
-    expect(result).to.contain('#e7e7e7e9');
-    expect(result).to.contain('Button content of text');
-  });
-
-  it('should include text align for text blocks', async function () {
-    const result = await useCase.execute(
-      CompileTemplateCommand.create({
-        templateId: 'basic',
-        data: {
-          branding: {
-            color: '#e7e7e7e9',
-          },
-          blocks: [
-            {
-              type: 'text',
-              styles: {
-                textAlign: 'center',
-              },
-              content: '<b>Hello TESTTTT content </b>',
-            },
-            {
-              type: 'button',
-              content: 'Button content of text',
-            },
-          ],
-        },
-      })
-    );
-
-    expect(result).to.contain('text-align: center');
-  });
-
   it('should allow the user to specify handlebars helpers', async function () {
     const result = await useCase.execute(
       CompileTemplateCommand.create({

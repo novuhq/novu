@@ -21,7 +21,7 @@ export const VariablesManagement = ({
 }) => {
   const theme = useMantineTheme();
   const variableArray = useWatch({
-    name: path ? path : `steps.${index}.template.variables`,
+    name: path ?? `steps.${index}.template.variables`,
     control,
   });
   const processedVariables = useProcessVariables(variableArray, false);
