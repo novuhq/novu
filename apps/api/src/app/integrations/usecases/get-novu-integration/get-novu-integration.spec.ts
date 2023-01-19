@@ -11,6 +11,7 @@ import { GetNovuIntegrationCommand } from './get-novu-integration.command';
 import { ChannelTypeEnum } from '../../../../../../../packages/stateless/src/lib/template/template.interface';
 import { EmailProviderIdEnum } from '../../../../../../../libs/shared/src/consts/providers/provider.enum';
 import { endOfMonth, startOfMonth } from 'date-fns';
+import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration/calculate-limit-novu-integration.usecase';
 
 describe('Get Novu Integration', function () {
   let getNovuIntegration: GetNovuIntegration;
@@ -43,6 +44,7 @@ describe('Get Novu Integration', function () {
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         channelType: ChannelTypeEnum.EMAIL,
+        userId: session.user._id,
       })
     );
 
@@ -55,6 +57,7 @@ describe('Get Novu Integration', function () {
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         channelType: ChannelTypeEnum.SMS,
+        userId: session.user._id,
       })
     );
 
@@ -69,6 +72,7 @@ describe('Get Novu Integration', function () {
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         channelType: ChannelTypeEnum.EMAIL,
+        userId: session.user._id,
       })
     );
 
@@ -76,20 +80,23 @@ describe('Get Novu Integration', function () {
   });
 
   it('should not return Novu integration if usage limit was met', async function () {
-    sinon.stub(messageRepository, 'count').resolves(GetNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS - 1);
+    sinon
+      .stub(messageRepository, 'count')
+      .resolves(CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS - 1);
 
     let result = await getNovuIntegration.execute(
       GetNovuIntegrationCommand.create({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         channelType: ChannelTypeEnum.EMAIL,
+        userId: session.user._id,
       })
     );
 
     expect(result).to.not.equal(undefined);
 
     sinon.restore();
-    sinon.stub(messageRepository, 'count').resolves(GetNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS);
+    sinon.stub(messageRepository, 'count').resolves(CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS);
 
     try {
       await getNovuIntegration.execute(
@@ -97,6 +104,7 @@ describe('Get Novu Integration', function () {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           channelType: ChannelTypeEnum.EMAIL,
+          userId: session.user._id,
         })
       );
       expect(true).to.equal(false);
@@ -107,7 +115,7 @@ describe('Get Novu Integration', function () {
     sinon.restore();
     const stub = sinon
       .stub(messageRepository, 'count')
-      .resolves(GetNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS + 1);
+      .resolves(CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS + 1);
 
     try {
       await getNovuIntegration.execute(
@@ -115,6 +123,7 @@ describe('Get Novu Integration', function () {
           organizationId: session.organization._id,
           environmentId: session.environment._id,
           channelType: ChannelTypeEnum.EMAIL,
+          userId: session.user._id,
         })
       );
       expect(true).to.equal(false);

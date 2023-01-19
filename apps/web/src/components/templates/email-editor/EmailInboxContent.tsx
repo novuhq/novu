@@ -2,6 +2,7 @@ import { Grid, useMantineTheme } from '@mantine/core';
 import { format } from 'date-fns';
 import { Controller, useFormContext } from 'react-hook-form';
 import { colors, Input, Select } from '../../../design-system';
+import { EmailIntegrationInfo } from '../../../pages/templates/editor/EmailIntegrationInfo';
 import { useLayouts } from '../../../api/hooks/use-layouts';
 
 export const EmailInboxContent = ({
@@ -36,7 +37,7 @@ export const EmailInboxContent = ({
               margin: '5px 0px',
             }}
           >
-            {integration ? integration?.credentials?.from : 'No active email integration'}
+            <EmailIntegrationInfo integration={integration} field={'from'} />
           </div>
         </Grid.Col>
         <Grid.Col span={4}>

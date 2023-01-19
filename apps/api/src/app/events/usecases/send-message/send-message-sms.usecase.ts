@@ -66,6 +66,7 @@ export class SendMessageSms extends SendMessageBase {
         channelType: ChannelTypeEnum.SMS,
         findOne: true,
         active: true,
+        userId: command.userId,
       })
     );
 

@@ -27,6 +27,8 @@ export class FilterLayoutsUseCase {
     const pagination = {
       limit: pageSize,
       skip: skipTimes * pageSize,
+      ...(command.sortBy && { sortBy: command.sortBy }),
+      ...(command.orderBy && { orderBy: command.orderBy }),
     };
 
     const filteredLayouts = await this.layoutRepository.filterLayouts(query, pagination);

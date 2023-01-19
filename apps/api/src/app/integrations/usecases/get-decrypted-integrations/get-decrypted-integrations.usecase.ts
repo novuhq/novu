@@ -47,6 +47,7 @@ export class GetDecryptedIntegrations {
         channelType: command.channelType,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        userId: command.userId,
       })
     );
 

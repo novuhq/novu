@@ -72,4 +72,32 @@ describe('Layout update - /layouts (PATCH)', async () => {
     expect(updatedBody.createdAt).to.be.ok;
     expect(updatedBody.updatedAt).to.be.ok;
   });
+
+  it('if the layout updated is assigned as default it should set as non default the existing default layout', async () => {
+    const firstLayout = await createLayout(session, 'layout-name-update-first-created', true);
+    const secondLayout = await createLayout(session, 'layout-name-update-second-created', false);
+
+    const firstLayoutUrl = `${BASE_PATH}/${firstLayout._id}`;
+    const firstLayoutResponse = await session.testAgent.get(firstLayoutUrl);
+    expect(firstLayoutResponse.body.data._id).to.eql(firstLayout._id);
+    expect(firstLayoutResponse.body.data.isDefault).to.eql(true);
+
+    const secondLayoutUrl = `${BASE_PATH}/${secondLayout._id}`;
+    const secondLayoutResponse = await session.testAgent.get(secondLayoutUrl);
+    expect(secondLayoutResponse.body.data._id).to.eql(secondLayout._id);
+    expect(secondLayoutResponse.body.data.isDefault).to.eql(false);
+
+    // We proceed to set the second layout as default by update
+    const updateResponse = await session.testAgent.patch(secondLayoutUrl).send({
+      isDefault: true,
+    });
+
+    const firstLayoutNonDefaultResponse = await session.testAgent.get(firstLayoutUrl);
+    expect(firstLayoutNonDefaultResponse.body.data._id).to.eql(firstLayout._id);
+    expect(firstLayoutNonDefaultResponse.body.data.isDefault).to.eql(false);
+
+    const secondLayoutDefaultResponse = await session.testAgent.get(secondLayoutUrl);
+    expect(secondLayoutDefaultResponse.body.data._id).to.eql(secondLayout._id);
+    expect(secondLayoutDefaultResponse.body.data.isDefault).to.eql(true);
+  });
 });

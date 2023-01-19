@@ -131,6 +131,7 @@ export class SendMessageChat extends SendMessageBase {
         channelType: ChannelTypeEnum.CHAT,
         findOne: true,
         active: true,
+        userId: command.userId,
       })
     );
 

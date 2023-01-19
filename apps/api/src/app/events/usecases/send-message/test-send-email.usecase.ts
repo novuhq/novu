@@ -40,6 +40,7 @@ export class SendTestEmail {
           channelType: ChannelTypeEnum.EMAIL,
           findOne: true,
           active: true,
+          userId: command.userId,
         })
       )
     )[0];

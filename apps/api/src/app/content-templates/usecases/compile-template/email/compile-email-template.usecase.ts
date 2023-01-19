@@ -72,7 +72,7 @@ export class CompileEmailTemplateUsecase {
     try {
       subject = await this.renderContent(command.subject, payload);
       if (isEditorMode) {
-        content = await this.getContent(content, payload);
+        content = await this.getContent(content as IEmailBlock[], payload);
       }
       if (preheader) {
         preheader = await this.renderContent(preheader, payload);
@@ -126,11 +126,8 @@ export class CompileEmailTemplateUsecase {
     return renderedContent?.trim() || '';
   }
 
-  private async getContent(
-    content: string | IEmailBlock[],
-    payload: Record<string, unknown> = {}
-  ): Promise<string | IEmailBlock[]> {
-    content = [...content] as IEmailBlock[];
+  private async getContent(content: IEmailBlock[], payload: Record<string, unknown> = {}): Promise<IEmailBlock[]> {
+    content = [...content];
     for (const block of content) {
       block.content = await this.renderContent(block.content, payload);
       block.url = await this.renderContent(block.url || '', payload);
