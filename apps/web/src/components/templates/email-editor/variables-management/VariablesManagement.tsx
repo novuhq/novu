@@ -1,5 +1,5 @@
 import { colors, Text, Tooltip } from '../../../../design-system';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
 import { SystemVariablesWithTypes } from '@novu/shared';
 import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
@@ -8,11 +8,20 @@ import { EditGradient } from '../../../../design-system/icons/gradient/EditGradi
 import { useProcessVariables } from '../../../../hooks/use-process-variables';
 import { VarItemTooltip } from './VarItemTooltip';
 
-export const VariablesManagement = ({ index, openVariablesModal }) => {
-  const { control } = useFormContext();
+export const VariablesManagement = ({
+  index,
+  openVariablesModal,
+  control,
+  path,
+}: {
+  index: number;
+  openVariablesModal: () => void;
+  control?: any;
+  path?: string;
+}) => {
   const theme = useMantineTheme();
   const variableArray = useWatch({
-    name: `steps.${index}.template.variables`,
+    name: path ? path : `steps.${index}.template.variables`,
     control,
   });
   const processedVariables = useProcessVariables(variableArray, false);
@@ -54,32 +63,30 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
           </UnstyledButton>
         </Tooltip>
       </div>
-      <VarLabel label="System Variables">
-        {Object.keys(SystemVariablesWithTypes).map((name, ind) => {
-          const type = SystemVariablesWithTypes[name];
-
-          if (typeof type === 'object') {
-            return <VarItemsDropdown name={name} key={ind} type={type} />;
-          }
-
-          return <VarItemTooltip pathToCopy={name} name={name} type={type} key={ind} />;
-        })}
-      </VarLabel>
+      <VariableSection label="System Variables" variables={SystemVariablesWithTypes} />
       <div
         style={{
           marginTop: '20px',
         }}
       >
-        <VarLabel label="Step Variables">
-          {Object.keys(processedVariables).map((name, ind) => {
-            if (typeof processedVariables[name] === 'object') {
-              return <VarItemsDropdown key={ind} name={name} type={processedVariables[name]} />;
-            }
-
-            return <VarItemTooltip pathToCopy={name} name={name} type={typeof processedVariables[name]} key={ind} />;
-          })}
-        </VarLabel>
+        <VariableSection label="Step Variables" variables={processedVariables} />
       </div>
     </div>
+  );
+};
+
+export const VariableSection = ({ label, variables }: { label: string; variables: any }) => {
+  return (
+    <VarLabel label={label}>
+      {Object.keys(variables).map((name, ind) => {
+        const type = variables[name];
+
+        if (typeof type === 'object') {
+          return <VarItemsDropdown name={name} key={ind} type={type} />;
+        }
+
+        return <VarItemTooltip pathToCopy={name} name={name} type={type} key={ind} />;
+      })}
+    </VarLabel>
   );
 };

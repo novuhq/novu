@@ -1,24 +1,34 @@
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { EmailCustomCodeEditor } from '../../../components/templates/email-editor/EmailCustomCodeEditor';
-import { Center, Grid, UnstyledButton, useMantineTheme } from '@mantine/core';
+import { Center, Grid, Group, Modal, Title, useMantineTheme } from '@mantine/core';
 import { ArrowLeft } from '../../../design-system/icons';
-import { Button, Checkbox, colors, Input, Text, LoadingOverlay, Tooltip } from '../../../design-system';
+import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createLayout, getLayoutById, updateLayoutById } from '../../../api/layouts';
-import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
 import { parse } from '@handlebars/parser';
-import { getTemplateVariables, IMustacheVariable, SystemVariablesWithTypes } from '@novu/shared';
-import { EditGradient } from '../../../design-system/icons/gradient/EditGradient';
-import { VarLabel } from '../../../components/templates/email-editor/variables-management/VarLabel';
-import { VarItemsDropdown } from '../../../components/templates/email-editor/variables-management/VarItemsDropdown';
-import { VarItemTooltip } from '../../../components/templates/email-editor/variables-management/VarItemTooltip';
-import { useProcessVariables } from '../../../hooks/use-process-variables';
+import { getTemplateVariables, ITemplateVariable } from '@novu/shared';
 
-import { ILayoutEntity } from '@novu/shared';
 import { QueryKeys } from '../../../api/query.keys';
+import { VariableManager } from '../../../components/templates/VariableManager';
+import { VariablesManagement } from '../../../components/templates/email-editor/variables-management/VariablesManagement';
+import { useLayoutsEditor } from '../../../api/hooks/use-layouts-editor';
 
+interface ILayoutForm {
+  content: string;
+  name: string;
+  description: string;
+  isDefault: boolean;
+  variables: ITemplateVariable[];
+}
+const defaultFormValues = {
+  content: '',
+  name: '',
+  description: '',
+  isDefault: false,
+  variables: [],
+};
 export function LayoutEditor({
   id = '',
   editMode = false,
@@ -30,33 +40,18 @@ export function LayoutEditor({
 }) {
   const { readonly } = useEnvController();
   const theme = useMantineTheme();
-  const [variables, setVariables] = useState<IMustacheVariable[]>([]);
-  const processedVariables = useProcessVariables(variables, false);
   const queryClient = useQueryClient();
+  const [ast, setAst] = useState<any>({ body: [] });
+  const [modalOpen, setModalOpen] = useState(false);
 
-  const { data: layout, isLoading: isLoadingLayout } = useQuery<ILayoutEntity>(
-    [QueryKeys.getLayoutById, id],
-    () => getLayoutById(id),
-    {
-      enabled: !!id,
-    }
-  );
+  const { layout, isLoading, createNewLayout, updateLayout } = useLayoutsEditor(id);
 
-  const { handleSubmit, watch, control, setValue } = useForm({
-    defaultValues: {
-      content: layout?.content || '',
-      name: layout?.name || '',
-      description: layout?.description || '',
-      isDefault: layout?.isDefault || false,
-    },
+  const { handleSubmit, watch, control, setValue } = useForm<ILayoutForm>({
+    defaultValues: defaultFormValues,
   });
   const layoutContent = watch('content');
-  const { mutateAsync: createNewLayout, isLoading: isLoadingCreate } = useMutation(createLayout);
-  const { mutateAsync: updateLayout, isLoading: isLoadingUpdate } = useMutation<
-    ILayoutEntity,
-    { error: string; message: string; statusCode: number },
-    { layoutId: string; data: any }
-  >(({ layoutId, data }) => updateLayoutById(layoutId, data));
+  const variablesArray = useFieldArray({ control, name: `variables` });
+  const variableArray = watch(`variables`, []);
 
   useEffect(() => {
     if (layout) {
@@ -69,33 +64,46 @@ export function LayoutEditor({
       if (layout.description) {
         setValue('description', layout?.description);
       }
+      if (layout.variables) {
+        setValue('variables', layout?.variables);
+      }
       if (layout.isDefault != null) {
         setValue('isDefault', layout?.isDefault);
       }
     }
   }, [layout]);
 
+  useMemo(() => {
+    const variables = getTemplateVariables(ast.body) as ITemplateVariable[];
+    const arrayFields = [...(variableArray || [])];
+
+    variables.forEach((vari) => {
+      if (!arrayFields.find((field) => field.name === vari.name)) {
+        arrayFields.push(vari);
+      }
+    });
+
+    arrayFields.forEach((vari, ind) => {
+      if (!variables.find((field) => field.name === vari.name)) {
+        delete arrayFields[ind];
+      }
+    });
+
+    variablesArray.replace(arrayFields.filter((field) => !!field));
+  }, [ast]);
+
   useEffect(() => {
     try {
-      const ast = parse(layoutContent);
-      const vars = getTemplateVariables(ast.body);
-      setVariables(vars);
+      setAst(parse(layoutContent));
     } catch (e) {
       return;
     }
   }, [layoutContent]);
 
-  async function onUpdateLayout(data) {
-    const updatePayload = {
-      name: data.name,
-      content: data.content,
-      description: data.description,
-      isDefault: data.isDefault,
-    };
-
+  async function onSubmitLayout(data) {
     try {
       if (editMode) {
-        await updateLayout({ layoutId: id, data: updatePayload });
+        await updateLayout({ layoutId: id, data });
       } else {
         await createNewLayout(data);
       }
@@ -108,8 +116,6 @@ export function LayoutEditor({
     }
   }
 
-  const isLoading = (editMode && isLoadingLayout) || isLoadingCreate || isLoadingUpdate;
-
   return (
     <LoadingOverlay visible={isLoading}>
       <Center mb={10} data-test-id="go-back-button" onClick={() => goBack()} inline style={{ cursor: 'pointer' }}>
@@ -118,135 +124,134 @@ export function LayoutEditor({
           Go Back
         </Text>
       </Center>
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
-          borderRadius: 7,
-          padding: 15,
-        }}
-      >
-        <div
-          style={{
-            textAlign: 'right',
-            marginBottom: '20px',
-          }}
-        >
-          <Tooltip label="Add defaults or mark as required">
-            <UnstyledButton onClick={() => {}} type="button">
-              <Text gradient>
-                Edit Variables
-                <EditGradient
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    marginBottom: '-4px',
-                    marginLeft: 5,
-                  }}
-                />
-              </Text>
-            </UnstyledButton>
-          </Tooltip>
-        </div>
-        <VarLabel label="System Variables">
-          {Object.keys(SystemVariablesWithTypes).map((name, ind) => {
-            const type = SystemVariablesWithTypes[name];
-
-            if (typeof type === 'object') {
-              return <VarItemsDropdown name={name} key={ind} type={type} />;
-            }
-
-            return <VarItemTooltip pathToCopy={name} name={name} type={type} key={ind} />;
-          })}
-        </VarLabel>
-        <div
-          style={{
-            marginTop: '20px',
-          }}
-        >
-          <VarLabel label="Step Variables">
-            {Object.keys(processedVariables).map((name, ind) => {
-              if (typeof processedVariables[name] === 'object') {
-                return <VarItemsDropdown key={ind} name={name} type={processedVariables[name]} />;
-              }
-
-              return <VarItemTooltip pathToCopy={name} name={name} type={typeof processedVariables[name]} key={ind} />;
-            })}
-          </VarLabel>
-        </div>
-      </div>
-      <form name={'layout-form'} onSubmit={handleSubmit(onUpdateLayout)}>
-        <Grid gutter={30} grow>
-          <Grid.Col md={5} sm={12}>
-            <Controller
-              control={control}
-              name="name"
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  mb={30}
-                  data-test-id="layout-name"
-                  disabled={readonly}
-                  required
-                  value={field.value || ''}
-                  label="Layout Name"
-                  placeholder="Layout name goes here..."
-                />
-              )}
-            />
-          </Grid.Col>
-          <Grid.Col md={5} sm={12}>
-            <Controller
-              name="description"
-              control={control}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  value={field.value || ''}
-                  disabled={readonly}
-                  mb={30}
-                  data-test-id="layout-description"
-                  label="Layout Description"
-                  placeholder="Describe your layout..."
-                />
-              )}
-            />
-          </Grid.Col>
-          <Grid.Col md={2} sm={12}>
-            <Center>
-              <Controller
-                name="isDefault"
-                control={control}
-                render={({ field }) => {
-                  return (
-                    <Checkbox
-                      checked={field.value === true}
+      <Grid grow>
+        <Grid.Col span={9}>
+          <form name={'layout-form'} onSubmit={handleSubmit(onSubmitLayout)}>
+            <Grid gutter={30} grow>
+              <Grid.Col md={5} sm={12}>
+                <Controller
+                  control={control}
+                  name="name"
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      mb={30}
+                      data-test-id="layout-name"
                       disabled={readonly}
-                      onChange={field.onChange}
-                      mt={30}
-                      data-test-id="is-default-layout"
-                      label="Set as Default"
+                      required
+                      value={field.value || ''}
+                      label="Layout Name"
+                      placeholder="Layout name goes here..."
                     />
-                  );
-                }}
-              />
-            </Center>
-          </Grid.Col>
-        </Grid>
+                  )}
+                />
+              </Grid.Col>
+              <Grid.Col md={5} sm={12}>
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      disabled={readonly}
+                      mb={30}
+                      data-test-id="layout-description"
+                      label="Layout Description"
+                      placeholder="Describe your layout..."
+                    />
+                  )}
+                />
+              </Grid.Col>
+              <Grid.Col md={2} sm={12}>
+                <Center>
+                  <Controller
+                    name="isDefault"
+                    control={control}
+                    render={({ field }) => {
+                      return (
+                        <Checkbox
+                          checked={field.value === true}
+                          disabled={readonly}
+                          onChange={field.onChange}
+                          mt={30}
+                          data-test-id="is-default-layout"
+                          label="Set as Default"
+                        />
+                      );
+                    }}
+                  />
+                </Center>
+              </Grid.Col>
+            </Grid>
 
-        <Controller
-          name="content"
-          data-test-id="layout-content"
-          control={control}
-          render={({ field }) => {
-            return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} />;
+            <Controller
+              name="content"
+              data-test-id="layout-content"
+              control={control}
+              render={({ field }) => {
+                return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} />;
+              }}
+            />
+            <Button submit mb={20} mt={25} data-test-id="submit-layout">
+              {editMode ? 'Update' : 'Create'}
+            </Button>
+          </form>
+        </Grid.Col>
+        <Grid.Col
+          span={3}
+          style={{
+            maxWidth: '350px',
           }}
-        />
-        <Button submit mb={20} mt={25} data-test-id="submit-layout">
-          {editMode ? 'Update' : 'Create'}
-        </Button>
-      </form>
+        >
+          <VariablesManagement
+            index={0}
+            openVariablesModal={() => {
+              setModalOpen(true);
+            }}
+            path="variables"
+            control={control}
+          />
+        </Grid.Col>
+      </Grid>
+      <Modal
+        opened={modalOpen}
+        overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
+        overlayOpacity={0.7}
+        styles={{
+          modal: {
+            backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
+            width: '90%',
+          },
+          body: {
+            paddingTop: '5px',
+            paddingInline: '8px',
+          },
+        }}
+        title={<Title>Variables</Title>}
+        sx={{ backdropFilter: 'blur(10px)' }}
+        shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
+        radius="md"
+        size="lg"
+        onClose={() => {
+          setModalOpen(false);
+        }}
+        centered
+        overflow="inside"
+      >
+        <VariableManager index={0} variablesArray={variablesArray} path="" control={control} />
+        <Group position="right">
+          <Button
+            data-test-id="close-var-manager-modal"
+            mt={30}
+            onClick={() => {
+              setModalOpen(false);
+            }}
+          >
+            Close
+          </Button>
+        </Group>
+      </Modal>
     </LoadingOverlay>
   );
 }

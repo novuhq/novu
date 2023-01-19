@@ -4,14 +4,21 @@ import { Injectable } from '@nestjs/common';
 import { CreateLayoutCommand } from './create-layout.command';
 
 import { LayoutDto } from '../../dtos/layout.dto';
-import { ChannelTypeEnum, IEmailBlock } from '../../types';
+import { ChannelTypeEnum, ITemplateVariable } from '../../types';
+import { ContentService } from '../../../shared/helpers/content.service';
 
 @Injectable()
 export class CreateLayoutUseCase {
   constructor(private layoutRepository: LayoutRepository) {}
 
   async execute(command: CreateLayoutCommand) {
-    const entity = this.mapToEntity(command);
+    const contentService = new ContentService();
+    const extractedVariables = contentService.extractVariables(command.content);
+    const variables = [
+      ...new Map([...extractedVariables, ...(command.variables || [])].map((item) => [item.name, item])).values(),
+    ] as ITemplateVariable[];
+
+    const entity = this.mapToEntity({ ...command, variables });
 
     const layout = await this.layoutRepository.createLayout(entity);
 

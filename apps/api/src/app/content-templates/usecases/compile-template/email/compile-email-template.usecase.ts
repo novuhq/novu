@@ -4,23 +4,11 @@ import { CompileTemplate } from '../compile-template.usecase';
 import { CompileTemplateCommand } from '../compile-template.command';
 import { ApiException } from '../../../../shared/exceptions/api.exception';
 import * as fs from 'fs';
+import { merge } from 'lodash';
 import { CompileEmailTemplateCommand } from './compile-email-template.command';
 import { GetLayoutCommand, GetLayoutUseCase } from '../../../../layouts/use-cases';
 import { LayoutId } from '@novu/shared';
-
-const helperContent = fs.readFileSync(
-  `${__dirname}${
-    !process.env.E2E_RUNNER ? '/src/app/content-templates/usecases/compile-template' : '/../../compile-template'
-  }/templates/basic.handlebars`,
-  'utf8'
-);
-
-const defaultLayout = fs.readFileSync(
-  `${__dirname}${
-    !process.env.E2E_RUNNER ? '/src/app/content-templates/usecases/compile-template' : '/../../compile-template'
-  }/templates/layout.handlebars`,
-  'utf8'
-);
+import { VerifyPayloadService } from '../../../../shared/helpers/verify-payload.service';
 
 @Injectable()
 export class CompileEmailTemplateUsecase {
@@ -31,11 +19,12 @@ export class CompileEmailTemplateUsecase {
   ) {}
 
   public async execute(command: CompileEmailTemplateCommand) {
+    const verifyPayloadService = new VerifyPayloadService();
     const organization: OrganizationEntity | null = await this.organizationRepository.findById(command.organizationId);
     if (!organization) throw new NotFoundException(`Organization ${command.organizationId} not found`);
+
     let useNovuDefault = !command.layoutId;
     let layout;
-
     if (!useNovuDefault) {
       try {
         layout = await this.getLayoutUsecase.execute(
@@ -49,12 +38,25 @@ export class CompileEmailTemplateUsecase {
         useNovuDefault = true;
       }
     }
+    const layoutVariables = layout?.variables || [];
+    const defaultPayload = verifyPayloadService.verifyPayload(layoutVariables, command.payload);
 
+    let helperBlocksContent;
+    let defaultNovuLayout;
     const isEditorMode = command.contentType === 'editor';
+    if (isEditorMode) {
+      helperBlocksContent = await this.loadTemplateContent('basic.handlebars');
+    }
+    if (useNovuDefault) {
+      defaultNovuLayout = await this.loadTemplateContent('layout.handlebars');
+    }
+
     let subject = '';
     let content: string | IEmailBlock[] = command.content;
     let preheader = command.preheader;
-    const layoutContent = useNovuDefault ? defaultLayout : layout.content;
+    const layoutContent = useNovuDefault ? defaultNovuLayout : layout.content;
+
+    command.payload = merge({}, defaultPayload, command.payload);
 
     const payload = {
       ...command.payload,
@@ -92,7 +94,7 @@ export class CompileEmailTemplateUsecase {
     const body = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         templateId: 'custom',
-        customTemplate: !isEditorMode ? (content as string) : helperContent,
+        customTemplate: !isEditorMode ? (content as string) : helperBlocksContent,
         data: templateVariables,
       })
     );
@@ -148,5 +150,21 @@ export class CompileEmailTemplateUsecase {
           </div>
         {{/if}}`
     );
+  }
+
+  private async loadTemplateContent(name: string) {
+    return new Promise<string>((resolve, reject) => {
+      let path = '/../../compile-template';
+      if (!process.env.E2E_RUNNER) {
+        path = '/src/app/content-templates/usecases/compile-template';
+      }
+      fs.readFile(`${__dirname}${path}/templates/${name}`, (err, content) => {
+        if (err) {
+          return reject(err);
+        }
+
+        return resolve(content.toString());
+      });
+    });
   }
 }
