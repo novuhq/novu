@@ -51,4 +51,7 @@ export class TestSendMessageCommand extends EnvironmentWithUserCommand {
   content: string | IEmailBlock[];
   @IsDefined()
   to: string | string[];
+  @IsOptional()
+  @IsString()
+  layoutId?: string | null;
 }

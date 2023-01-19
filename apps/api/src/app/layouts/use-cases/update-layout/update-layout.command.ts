@@ -1,6 +1,6 @@
 import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
-import { IEmailBlock, LayoutDescription, LayoutId, LayoutName, LayoutVariables } from '../../types';
+import { LayoutDescription, LayoutId, LayoutName, LayoutVariables } from '../../types';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
@@ -18,7 +18,7 @@ export class UpdateLayoutCommand extends EnvironmentCommand {
   description?: LayoutDescription;
 
   @IsOptional()
-  content?: IEmailBlock[];
+  content?: string;
 
   @IsOptional()
   variables?: LayoutVariables;

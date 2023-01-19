@@ -29,7 +29,7 @@ describe('Brand Screen', function () {
 
   it('should change look and feel settings', function () {
     cy.getByTestId('color-picker').click({ force: true });
-    cy.get('button[aria-label="#BA68C8"]').click({ force: true });
+    cy.get('button[aria-label="#BA68C8"]').click();
     cy.getByTestId('color-picker').should('have.value', '#BA68C8');
     cy.getByTestId('color-picker').click({ force: true });
     cy.get('div[aria-valuetext="rgba(185, 103, 199, 1)"]');

@@ -4,15 +4,19 @@ import { Injectable } from '@nestjs/common';
 import { CreateLayoutCommand } from './create-layout.command';
 
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
-import { LayoutDto } from '../../dtos/layout.dto';
-import { ChannelTypeEnum, IEmailBlock } from '../../types';
+import { LayoutDto } from '../../dtos';
+import { ChannelTypeEnum, ITemplateVariable } from '../../types';
+import { ContentService } from '../../../shared/helpers/content.service';
+import { isReservedVariableName } from '@novu/shared';
 
 @Injectable()
 export class CreateLayoutUseCase {
   constructor(private setDefaultLayout: SetDefaultLayoutUseCase, private layoutRepository: LayoutRepository) {}
 
   async execute(command: CreateLayoutCommand): Promise<LayoutDto> {
-    const entity = this.mapToEntity(command);
+    const variables = this.getExtractedVariables(command.variables as ITemplateVariable[], command.content);
+
+    const entity = this.mapToEntity({ ...command, variables });
 
     const layout = await this.layoutRepository.createLayout(entity);
 
@@ -55,5 +59,28 @@ export class CreateLayoutUseCase {
       _environmentId: LayoutRepository.convertObjectIdToString(layout._environmentId),
       isDeleted: layout.deleted,
     };
+  }
+
+  private getExtractedVariables(variables: ITemplateVariable[], content: string): ITemplateVariable[] {
+    const contentService = new ContentService();
+    const extractedVariables = contentService
+      .extractVariables(content)
+      .filter((item) => !isReservedVariableName(item.name)) as ITemplateVariable[];
+
+    if (!variables || variables.length === 0) {
+      return extractedVariables;
+    }
+
+    return extractedVariables.map((variable) => {
+      const { name, type, defaultValue, required } = variable;
+      const variableFromRequest = variables.find((item) => item.name === name);
+
+      return {
+        name,
+        type,
+        defaultValue: variableFromRequest?.defaultValue ?? defaultValue,
+        required: variableFromRequest?.required ?? required,
+      };
+    });
   }
 }

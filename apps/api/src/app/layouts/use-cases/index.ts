@@ -1,9 +1,9 @@
-import { CreateLayoutUseCase } from './create-layout/create-layout.use-case';
-import { DeleteLayoutUseCase } from './delete-layout/delete-layout.use-case';
-import { FilterLayoutsUseCase } from './filter-layouts/filter-layouts.use-case';
-import { GetLayoutUseCase } from './get-layout/get-layout.use-case';
-import { SetDefaultLayoutUseCase } from './set-default-layout/set-default-layout.use-case';
-import { UpdateLayoutUseCase } from './update-layout/update-layout.use-case';
+import { CreateLayoutUseCase } from './create-layout';
+import { DeleteLayoutUseCase } from './delete-layout';
+import { FilterLayoutsUseCase } from './filter-layouts';
+import { GetLayoutUseCase } from './get-layout';
+import { SetDefaultLayoutUseCase } from './set-default-layout';
+import { UpdateLayoutUseCase } from './update-layout';
 
 export * from './create-layout';
 export * from './delete-layout';
