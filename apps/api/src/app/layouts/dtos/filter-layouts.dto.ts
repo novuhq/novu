@@ -1,8 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 import { LayoutDto } from './layout.dto';
+
+import { OrderDirectionEnum } from '../types';
 
 export class FilterLayoutsRequestDto {
   @Transform(({ value }) => Number(value))
@@ -18,6 +20,17 @@ export class FilterLayoutsRequestDto {
   @Min(0)
   @ApiPropertyOptional({ type: Number })
   public pageSize?: number;
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({ type: String })
+  public sortBy?: string;
+
+  @Transform(({ value }) => Number(value))
+  @IsOptional()
+  @IsInt()
+  @ApiPropertyOptional({ type: Number })
+  public orderBy?: OrderDirectionEnum;
 }
 
 export class FilterLayoutsResponseDto {

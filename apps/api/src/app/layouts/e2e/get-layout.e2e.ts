@@ -9,8 +9,8 @@ import { TemplateVariableTypeEnum } from '../types';
 const BASE_PATH = '/v1/layouts';
 
 describe('Get a layout - /layouts/:layoutId (GET)', async () => {
-  const layoutName = 'layout-name-creation';
-  const isDefault = true;
+  const layoutName = 'layout-name-retrieval';
+  const isDefault = false;
   let session: UserSession;
   let createdLayout: LayoutDto;
 
@@ -44,7 +44,7 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
     expect(layout.content).to.eql(expectedContent);
     expect(layout.variables).to.eql(expectedVariables);
     expect(layout.contentType).to.eql('customHtml');
-    expect(layout.isDefault).to.eql(true);
+    expect(layout.isDefault).to.eql(false);
     expect(layout.isDeleted).to.eql(false);
     expect(layout.createdAt).to.be.ok;
     expect(layout.updatedAt).to.be.ok;
