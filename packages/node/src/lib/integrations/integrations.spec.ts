@@ -31,8 +31,8 @@ describe('test use of novus node package - Integrations class', () => {
 
     await novu.integrations.create('emailjs', {
       credentials: {
-        apiKey: 'apikey',
-        secretKey: 'apisecret',
+        apiKey: 'api key',
+        secretKey: 'api secret',
       },
       active: true,
       channel: ChannelTypeEnum.EMAIL,
@@ -43,8 +43,8 @@ describe('test use of novus node package - Integrations class', () => {
     expect(mockedAxios.post).toHaveBeenCalledWith('/integrations', {
       providerId: 'emailjs',
       credentials: {
-        apiKey: 'apikey',
-        secretKey: 'apisecret',
+        apiKey: 'api key',
+        secretKey: 'api secret',
       },
       active: true,
       channel: ChannelTypeEnum.EMAIL,
