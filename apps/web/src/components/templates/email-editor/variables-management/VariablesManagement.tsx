@@ -1,5 +1,5 @@
 import { colors, Text, Tooltip } from '../../../../design-system';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
 import { SystemVariablesWithTypes } from '@novu/shared';
 import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
@@ -8,11 +8,20 @@ import { EditGradient } from '../../../../design-system/icons/gradient/EditGradi
 import { useProcessVariables } from '../../../../hooks/use-process-variables';
 import { VarItemTooltip } from './VarItemTooltip';
 
-export const VariablesManagement = ({ index, openVariablesModal }) => {
-  const { control } = useFormContext();
+export const VariablesManagement = ({
+  index,
+  openVariablesModal,
+  control,
+  path,
+}: {
+  index: number;
+  openVariablesModal: () => void;
+  control?: any;
+  path?: string;
+}) => {
   const theme = useMantineTheme();
   const variableArray = useWatch({
-    name: `steps.${index}.template.variables`,
+    name: path ?? `steps.${index}.template.variables`,
     control,
   });
   const processedVariables = useProcessVariables(variableArray, false);
