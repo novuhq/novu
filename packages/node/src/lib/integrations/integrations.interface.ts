@@ -2,8 +2,8 @@ import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
 
 export interface IIntegrations {
   getAll();
-  getActive();
   create(providerId: string, data: IIntegrationsPayload);
+  getActive();
   getWebhookProviderStatus(providerId: string);
   update(integrationId: string, data: IIntegrationsUpdatePayload);
   delete(integrationId: string);
