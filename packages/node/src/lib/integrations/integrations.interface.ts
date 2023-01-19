@@ -14,7 +14,7 @@ export interface IIntegrationsPayload extends IIntegrationsUpdatePayload {
 }
 
 export interface IIntegrationsUpdatePayload {
-  credintials: ICredentialsDto;
+  credentials: ICredentialsDto;
   active: boolean;
   check: boolean;
 }
