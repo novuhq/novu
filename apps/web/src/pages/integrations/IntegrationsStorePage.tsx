@@ -7,6 +7,7 @@ import {
   providers,
   PushProviderIdEnum,
   EmailProviderIdEnum,
+  InAppProviderIdEnum,
 } from '@novu/shared';
 import { Modal } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
@@ -18,6 +19,8 @@ import { ConnectIntegrationForm } from './components/ConnectIntegrationForm';
 import { useIntegrations } from '../../api/hooks';
 import { When } from '../../components/utils/When';
 import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
+import { NovuIntegrationGroup } from './components/NovuIntegrationsGroup';
+import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
 
 export function IntegrationsStore() {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
@@ -91,35 +94,19 @@ export function IntegrationsStore() {
               />
             </When>
             <When truthy={provider?.providerId === EmailProviderIdEnum.Novu}>
-              <NovuEmailProviderModal onClose={() => setModalIsOpened(false)} provider={provider} />
+              <NovuEmailProviderModal onClose={() => setModalIsOpened(false)} />
+            </When>
+            <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
+              <NovuInAppProviderModal onClose={() => setModalIsOpened(false)} />
             </When>
           </Modal>
 
           <ContentWrapper>
-            <ChannelGroup
-              type={ChannelTypeEnum.EMAIL}
-              providers={emailProviders}
-              title="Email"
-              onProviderClick={handlerVisible}
-            />
-            <ChannelGroup
-              type={ChannelTypeEnum.SMS}
-              providers={smsProvider}
-              title="SMS"
-              onProviderClick={handlerVisible}
-            />
-            <ChannelGroup
-              type={ChannelTypeEnum.CHAT}
-              providers={chatProvider}
-              title="Chat"
-              onProviderClick={handlerVisible}
-            />
-            <ChannelGroup
-              type={ChannelTypeEnum.PUSH}
-              providers={pushProvider}
-              title="Push"
-              onProviderClick={handlerVisible}
-            />
+            <NovuIntegrationGroup providers={emailProviders} onProviderClick={handlerVisible} />
+            <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={chatProvider} title="Chat" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={pushProvider} title="Push" onProviderClick={handlerVisible} />
           </ContentWrapper>
         </PageContainer>
       ) : null}

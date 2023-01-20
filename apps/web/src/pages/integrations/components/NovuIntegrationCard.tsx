@@ -1,79 +1,64 @@
-import { IConfigCredentials } from '@novu/shared';
+import { ChannelTypeEnum, IConfigCredentials } from '@novu/shared';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
-import { Button, colors, shadows } from '../../../design-system';
+import { colors, shadows } from '../../../design-system';
 import { CardStatusBar } from './CardStatusBar';
-import { Settings } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
-import { When } from '../../../components/utils/When';
+import { LimitBar } from './LimitBar';
 
-export function ProviderCard({
+export function NovuIntegrationCard({
   provider,
-  onConnectClick,
+  onConnectClick = undefined,
+  ribbonText = 'Starting provider',
 }: {
   provider: IIntegratedProvider;
-  onConnectClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
+  onConnectClick?: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
+  ribbonText?: string;
 }) {
   const { colorScheme } = useMantineColorScheme();
-  const logoSrc = `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
+  const logoSrc = provider.logoFileName[`${colorScheme}`];
   const brightCard =
     provider.active ||
     provider.credentials.some((cred: IConfigCredentials) => {
       return !cred.value;
     });
 
-  function handleOnClickSettings() {
-    onConnectClick(true, false, provider);
-  }
-
   return (
     <StyledCard
       dark={colorScheme === 'dark'}
       active={brightCard}
-      data-test-id="integration-provider-card"
+      data-test-id="nouv-integration-provider-card"
       onClick={() => {
-        if (provider.comingSoon) return;
-        if (provider.connected) {
-          handleOnClickSettings();
-        } else {
+        if (onConnectClick) {
           onConnectClick(true, true, provider);
         }
       }}
+      clickable={onConnectClick !== undefined}
     >
-      <When truthy={provider.comingSoon || provider.betaVersion}>
-        <RibbonWrapper>
-          <Ribbon>{provider.comingSoon ? 'COMING SOON' : 'BETA'}</Ribbon>
-        </RibbonWrapper>
-      </When>
-
+      <RibbonWrapper>
+        <Ribbon>{ribbonText}</Ribbon>
+      </RibbonWrapper>
       <StyledGroup position="apart">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
-          {provider.connected && !provider.betaVersion && !provider.novu ? (
-            <Settings data-test-id="provider-card-settings-svg" />
-          ) : null}
         </CardHeader>
-
         <CardFooter>
-          {!provider.connected ? (
-            <StyledButton fullWidth variant={'outline'} disabled={provider.comingSoon}>
-              Connect
-            </StyledButton>
-          ) : (
+          <LimitBar
+            channel={provider.channel}
+            label={`${provider.channel === ChannelTypeEnum.EMAIL ? 'Email' : 'Sms'} credits used`}
+          />
+          <div
+            style={{
+              marginTop: '12px',
+            }}
+          >
             <CardStatusBar active={provider.active} />
-          )}
+          </div>
         </CardFooter>
       </StyledGroup>
     </StyledCard>
   );
 }
-
-const StyledButton = styled(Button)`
-  background-image: ${({ theme }) =>
-    theme.colorScheme === 'dark'
-      ? `linear-gradient(0deg, ${colors.B17} 0%, ${colors.B17} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`
-      : `linear-gradient(0deg, ${colors.B98} 0%, ${colors.B98} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`};
-`;
 
 const StyledGroup = styled(Group)`
   height: 100%;
@@ -91,7 +76,7 @@ const RibbonWrapper = styled.div`
 `;
 
 const Ribbon = styled.div`
-  background: ${colors.horizontal};
+  background: ${colors.success};
   font-size: 9px;
   width: 100%;
   text-align: center;
@@ -119,7 +104,7 @@ const CardFooter = styled.div`
   width: 100%;
 `;
 
-const StyledCard = styled.div<{ dark: boolean; active: boolean }>`
+const StyledCard = styled.div<{ dark: boolean; active: boolean; clickable: boolean }>`
   background-color: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
   border-radius: 7px;
   display: inline-block;
@@ -143,16 +128,18 @@ const StyledCard = styled.div<{ dark: boolean; active: boolean }>`
   }};
 
   &:hover {
-    cursor: pointer;
-    ${({ dark }) =>
-      dark
-        ? `
+    cursor: ${({ clickable }) => (clickable ? 'pointer' : undefined)};
+    ${({ dark, clickable }) =>
+      clickable
+        ? dark
+          ? `
             background-color: ${colors.B20};
             box-shadow: ${shadows.dark};
           `
-        : `
+          : `
             background-color: ${colors.BGLight};
             box-shadow: ${shadows.light};
-          `};
+          `
+        : undefined};
   }
 `;

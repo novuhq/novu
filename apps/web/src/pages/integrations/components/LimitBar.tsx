@@ -5,12 +5,20 @@ import { useIntegrationLimit } from '../../../api/hooks/integrations/use-integra
 import styled from '@emotion/styled/macro';
 import { Link } from 'react-router-dom';
 
-export const LimitBar = ({ withLink = false }: { withLink?: boolean }) => {
-  const {
-    limit: { limit, count } = { limit: 0, count: 0 },
-    loading,
-    enabled,
-  } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+export const LimitBar = ({
+  withLink = false,
+  channel = ChannelTypeEnum.EMAIL,
+  label = null,
+}: {
+  withLink?: boolean;
+  channel?: ChannelTypeEnum;
+  label?: string | null;
+}) => {
+  const { limit: { limit, count } = { limit: 0, count: 0 }, loading, enabled } = useIntegrationLimit(channel);
+
+  if (channel !== ChannelTypeEnum.EMAIL && channel !== ChannelTypeEnum.SMS) {
+    return null;
+  }
 
   if (loading || !enabled) {
     return null;
@@ -19,31 +27,41 @@ export const LimitBar = ({ withLink = false }: { withLink?: boolean }) => {
   if (withLink) {
     return (
       <Link to="/integrations">
-        <LimitBarBase limit={limit} count={count} />
+        <LimitBarBase limit={limit} count={count} channel={channel} label={label} />
       </Link>
     );
   }
 
-  return <LimitBarBase limit={limit} count={count} />;
+  return <LimitBarBase limit={limit} count={count} channel={channel} label={label} />;
 };
 
-const LimitBarBase = ({ limit, count }: { limit: number; count: number }) => {
+const LimitBarBase = ({
+  limit,
+  count,
+  channel = ChannelTypeEnum.EMAIL,
+  label = null,
+}: {
+  limit: number;
+  count: number;
+  channel?: ChannelTypeEnum;
+  label?: string | null;
+}) => {
   return (
     <Stack spacing={2} sx={{ color: colors.B60 }}>
       <Tooltip
         label={
           <>
-            You now can send up to {limit} emails
+            You now can send up to {limit} {channel === ChannelTypeEnum.EMAIL ? 'emails' : 'sms'}
             <br /> without even connecting a provider!
           </>
         }
       >
         <div>
-          Novu email credits used
+          {label}
           <ProgressContainer>
             <ProgressBar count={count} limit={limit} />
           </ProgressContainer>
-          {count}/{limit} emails left
+          {count}/{limit} {channel === ChannelTypeEnum.EMAIL ? 'emails' : 'sms'} left
         </div>
       </Tooltip>
     </Stack>
@@ -51,18 +69,19 @@ const LimitBarBase = ({ limit, count }: { limit: number; count: number }) => {
 };
 
 const ProgressContainer = styled.div`
-  height: 3px;
+  height: 9px;
   width: 200px;
   position: relative;
   border-radius: 3px;
   background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.B60)};
   margin-top: 6px;
   margin-bottom: 6px;
+  overflow: hidden;
 `;
 
 const ProgressBar = styled.div<{ count: number; limit: number }>`
   border-radius: '3px';
   background: ${colors.horizontal};
-  height: 3px;
+  height: 9px;
   width: ${({ count, limit }) => (100 * count) / limit}%;
 `;
