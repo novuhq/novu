@@ -28,33 +28,31 @@ export const NovuInAppProviderModal = ({ onClose }: { onClose: () => void }) => 
       <Close />
     </CloseButton>
 
-    <div>
-      <Title
-        align="center"
-        sx={(theme) => ({
-          fontWeight: 700,
-          color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
-        })}
-        order={2}
-      >
-        Novu’s Notification Center
-      </Title>
-      <Text mt={16}>
-        Our notification center can be used for free!
-        <br />
-        Novu allows up to 60,000 events / month without any payment.
-      </Text>
-      <Text mt={16}>
-        This includes all of the suite of features we have for the notification center including Feeds, Seen/Read events
-        and our is-online cross-channel filter.
-      </Text>
-      <Text mt={16}>
-        Our notification center speaks all modern frontend frameworks including Vue, Angular, React and embedded.
-      </Text>
-      <Text mt={16}>If you are just getting started we recommend checking the Getting Started Guide.</Text>
-      <Center>
-        <GotAQuestionButton mt={30} size="lg" />
-      </Center>
-    </div>
+    <Title
+      align="center"
+      sx={(theme) => ({
+        fontWeight: 700,
+        color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+      })}
+      order={2}
+    >
+      Novu’s Notification Center
+    </Title>
+    <Text mt={16}>
+      Our notification center can be used for free!
+      <br />
+      Novu allows up to 60,000 events / month without any payment.
+    </Text>
+    <Text mt={16}>
+      This includes all of the suite of features we have for the notification center including Feeds, Seen/Read events
+      and our is-online cross-channel filter.
+    </Text>
+    <Text mt={16}>
+      Our notification center speaks all modern frontend frameworks including Vue, Angular, React and embedded.
+    </Text>
+    <Text mt={16}>If you are just getting started we recommend checking the Getting Started Guide.</Text>
+    <Center>
+      <GotAQuestionButton mt={30} size="lg" />
+    </Center>
   </div>
 );

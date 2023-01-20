@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Stack } from '@mantine/core';
 import { colors, Tooltip } from '../../../design-system';
@@ -46,12 +47,16 @@ const LimitBarBase = ({
   channel?: ChannelTypeEnum;
   label?: string | null;
 }) => {
+  const unit = useMemo<string>(() => {
+    return channel === ChannelTypeEnum.EMAIL ? 'emails' : 'sms';
+  }, [channel]);
+
   return (
     <Stack spacing={2} sx={{ color: colors.B60 }}>
       <Tooltip
         label={
           <>
-            You now can send up to {limit} {channel === ChannelTypeEnum.EMAIL ? 'emails' : 'sms'}
+            You now can send up to {limit} {unit}
             <br /> without even connecting a provider!
           </>
         }
@@ -61,7 +66,7 @@ const LimitBarBase = ({
           <ProgressContainer>
             <ProgressBar count={count} limit={limit} />
           </ProgressContainer>
-          {count}/{limit} {channel === ChannelTypeEnum.EMAIL ? 'emails' : 'sms'} left
+          {count}/{limit} {unit} left
         </div>
       </Tooltip>
     </Stack>

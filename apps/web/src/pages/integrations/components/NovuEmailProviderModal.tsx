@@ -21,7 +21,7 @@ export function NovuEmailProviderModal({ onClose }: { onClose: () => void }) {
 
       <ColumnDiv>
         <Title align="center" order={2}>
-          Our Sendgrid gift to you
+          Our E-mail gift to you
         </Title>
         <InlineDiv>
           <Text>
