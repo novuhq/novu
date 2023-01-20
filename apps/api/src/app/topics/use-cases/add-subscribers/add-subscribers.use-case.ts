@@ -1,4 +1,4 @@
-import { TopicSubscribersEntity, TopicSubscribersRepository, TopicEntity, TopicRepository } from '@novu/dal';
+import { TopicSubscribersRepository, TopicEntity, TopicRepository, CreateTopicSubscribersEntity } from '@novu/dal';
 import { SubscriberDto } from '@novu/shared';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ExternalSubscriberId } from '../../types';
@@ -80,8 +80,8 @@ export class AddSubscribersUseCase {
     };
   }
 
-  private mapSubscribersToTopic(topic: TopicEntity, subscribers: SubscriberDto[]): TopicSubscribersEntity[] {
-    return subscribers.map((subscriber: SubscriberDto) => ({
+  private mapSubscribersToTopic(topic: TopicEntity, subscribers: SubscriberDto[]): CreateTopicSubscribersEntity[] {
+    return subscribers.map((subscriber) => ({
       _environmentId: TopicSubscribersRepository.convertStringToObjectId(subscriber._environmentId),
       _organizationId: TopicSubscribersRepository.convertStringToObjectId(subscriber._organizationId),
       _subscriberId: TopicSubscribersRepository.convertStringToObjectId(subscriber._id),

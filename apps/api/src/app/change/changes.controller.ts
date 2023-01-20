@@ -88,7 +88,7 @@ export class ChangesController {
   async bulkApplyDiff(
     @UserSession() user: IJwtPayload,
     @Body('changeIds') changeIds: string[]
-  ): Promise<ChangeResponseDto[]> {
+  ): Promise<ChangeResponseDto[][]> {
     return this.bulkApplyChange.execute(
       BulkApplyChangeCommand.create({
         changeIds,

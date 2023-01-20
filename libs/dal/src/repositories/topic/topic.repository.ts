@@ -64,10 +64,10 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
       lookup,
       topicWithSubscribersProjection,
       {
-        $limit: pagination.limit,
+        $skip: pagination.skip,
       },
       {
-        $skip: pagination.skip,
+        $limit: pagination.limit,
       },
     ]);
 
@@ -77,7 +77,7 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
   async findTopic(
     topicKey: TopicKey,
     environmentId: EnvironmentId
-  ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }> {
+  ): Promise<(TopicEntity & { subscribers: ExternalSubscriberId[] }) | null> {
     const [result] = await this.aggregate([
       {
         $match: { _environmentId: environmentId, key: topicKey },
@@ -88,7 +88,7 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
     ]);
 
     if (!result) {
-      return undefined;
+      return null;
     }
 
     return result;
@@ -98,7 +98,7 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
     key: TopicKey,
     organizationId: OrganizationId,
     environmentId: EnvironmentId
-  ): Promise<TopicEntity> {
+  ): Promise<TopicEntity | null> {
     return await this.findOne({
       key,
       _organizationId: organizationId,

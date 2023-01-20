@@ -40,7 +40,7 @@ export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, Ch
       enabled: false,
     });
 
-    if (change) {
+    if (change?._id) {
       return change._id;
     }
 

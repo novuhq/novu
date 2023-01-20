@@ -7,6 +7,7 @@ import nodeExternals from 'rollup-plugin-node-externals';
 import replace from '@rollup/plugin-replace';
 import gzipPlugin from 'rollup-plugin-gzip';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
+import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import packageJson from './package.json' assert { type: 'json' };
 
 export default [
@@ -26,6 +27,7 @@ export default [
       },
     ],
     plugins: [
+      peerDepsExternal(),
       nodeExternals(),
       resolve({ preferBuiltins: false, browser: true }),
       commonjs(),

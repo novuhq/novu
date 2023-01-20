@@ -4,7 +4,7 @@ import { ExternalSubscriberId } from './types';
 
 export class SubscriberEntity {
   // TODO: Use SubscriberId. Means lot of changes across whole codebase. Cool down.
-  _id?: string;
+  _id: string;
 
   firstName: string;
 
@@ -31,6 +31,10 @@ export class SubscriberEntity {
   updatedAt: string;
 
   __v?: number;
+
+  isOnline?: boolean;
+
+  lastOnlineAt?: string;
 }
 
 export class IChannelSettings {

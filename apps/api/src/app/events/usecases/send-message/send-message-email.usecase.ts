@@ -30,6 +30,8 @@ import {
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration/get-novu-integration.usecase';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
@@ -56,18 +58,46 @@ export class SendMessageEmail extends SendMessageBase {
 
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
-    const integration = await this.getIntegration(
-      GetDecryptedIntegrationsCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.EMAIL,
-        findOne: true,
-        active: true,
-      })
-    );
+    if (!subscriber) throw new ApiException('Subscriber not found');
+
+    let integration: IntegrationEntity | undefined = undefined;
+
+    try {
+      integration = await this.getIntegration(
+        GetDecryptedIntegrationsCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          channelType: ChannelTypeEnum.EMAIL,
+          findOne: true,
+          active: true,
+          userId: command.userId,
+        })
+      );
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          raw: JSON.stringify({ message: e.message }),
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
     const emailChannel: NotificationStepEntity = command.step;
+    if (!emailChannel) throw new ApiException('Email channel step not found');
+    if (!emailChannel.template) throw new ApiException('Email channel template not found');
+
     const notification = await this.notificationRepository.findById(command.notificationId);
-    const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
+    if (!notification) throw new ApiException('Notification not found');
+
+    const organization: OrganizationEntity | null = await this.organizationRepository.findById(command.organizationId);
+    if (!organization) throw new ApiException('Organization not found');
+
     const email = command.payload.email || subscriber.email;
 
     Sentry.addBreadcrumb({
@@ -103,9 +133,9 @@ export class SendMessageEmail extends SendMessageBase {
       },
       blocks: [],
       step: {
-        digest: !!command.events.length,
+        digest: !!command.events?.length,
         events: command.events,
-        total_count: command.events.length,
+        total_count: command.events?.length,
       },
       subscriber: subscriber,
       ...command.payload,
@@ -113,7 +143,7 @@ export class SendMessageEmail extends SendMessageBase {
 
     try {
       subject = await this.renderContent(
-        emailChannel.template.subject,
+        emailChannel.template.subject || '',
         emailChannel.template.subject,
         organization,
         subscriber,
@@ -191,9 +221,9 @@ export class SendMessageEmail extends SendMessageBase {
             },
             blocks: isEditorMode ? content : [],
             step: {
-              digest: !!command.events.length,
+              digest: !!command.events?.length,
               events: command.events,
-              total_count: command.events.length,
+              total_count: command.events?.length,
             },
             ...command.payload,
           },
@@ -328,7 +358,13 @@ export class SendMessageEmail extends SendMessageBase {
     notification: NotificationEntity
   ) {
     const mailFactory = new MailFactory();
-    const mailHandler = mailFactory.getHandler(integration, mailData.from);
+    const mailHandler = mailFactory.getHandler(
+      {
+        ...integration,
+        providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, integration.providerId),
+      },
+      mailData.from
+    );
 
     try {
       const result = await mailHandler.send(mailData);
@@ -397,7 +433,7 @@ export class SendMessageEmail extends SendMessageBase {
     preheader
   ): Promise<string | IEmailBlock[]> {
     if (isEditorMode) {
-      const content: IEmailBlock[] = [...emailChannel.template.content] as IEmailBlock[];
+      const content: IEmailBlock[] = [...(emailChannel.template?.content as IEmailBlock[])] as IEmailBlock[];
       for (const block of content) {
         /*
          * We need to trim the content in order to avoid mail provider like GMail
@@ -410,7 +446,7 @@ export class SendMessageEmail extends SendMessageBase {
       return content;
     }
 
-    return emailChannel.template.content;
+    return emailChannel.template?.content || '';
   }
 
   private async renderContent(
@@ -434,9 +470,9 @@ export class SendMessageEmail extends SendMessageBase {
           },
           blocks: [],
           step: {
-            digest: !!command.events.length,
+            digest: !!command.events?.length,
             events: command.events,
-            total_count: command.events.length,
+            total_count: command.events?.length,
           },
           subscriber,
           ...command.payload,
@@ -447,7 +483,7 @@ export class SendMessageEmail extends SendMessageBase {
     return renderedContent.trim();
   }
 
-  public static addPreheader(content: string, contentType: 'editor' | 'customHtml'): string | undefined {
+  public static addPreheader(content: string, contentType: 'editor' | 'customHtml' | undefined): string | undefined {
     if (contentType === 'customHtml') {
       // "&nbsp;&zwnj;&nbsp;&zwnj;" is needed to spacing away the rest of the email from the preheader area in email clients
       return content.replace(

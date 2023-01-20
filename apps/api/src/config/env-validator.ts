@@ -15,11 +15,6 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     choices: ['dev', 'test', 'prod', 'ci', 'local'],
     default: 'local',
   }),
-  S3_LOCAL_STACK: str({
-    default: '',
-  }),
-  S3_BUCKET_NAME: str(),
-  S3_REGION: str(),
   PORT: port(),
   FRONT_BASE_URL: url(),
   DISABLE_USER_REGISTRATION: str({
@@ -33,8 +28,6 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: '',
   }),
   MONGO_URL: str(),
-  AWS_ACCESS_KEY_ID: str(),
-  AWS_SECRET_ACCESS_KEY: str(),
   NOVU_API_KEY: str({
     default: '',
   }),
@@ -50,16 +43,42 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: true,
     choices: [false, true],
   }),
-  REDIS_CACHE_HOST: str({
+  REDIS_CACHE_SERVICE_HOST: str({
     default: '',
   }),
-  REDIS_CACHE_PORT: str({
-    default: '',
+  REDIS_CACHE_SERVICE_PORT: str({
+    default: '6379',
   }),
   STORE_NOTIFICATION_CONTENT: str({
     default: 'false',
   }),
 };
+
+if (process.env.STORAGE_SERVICE === 'AZURE') {
+  validators.AZURE_ACCOUNT_NAME = str();
+  validators.AZURE_ACCOUNT_KEY = str();
+  validators.AZURE_HOST_NAME = str({
+    default: `https://${process.env.AZURE_ACCOUNT_NAME}.blob.core.windows.net`,
+  });
+  validators.AZURE_CONTAINER_NAME = str({
+    default: 'novu',
+  });
+}
+
+if (process.env.STORAGE_SERVICE === 'GCS') {
+  validators.GCS_BUCKET_NAME = str();
+  validators.GCS_DOMAIN = str();
+}
+
+if (process.env.STORAGE_SERVICE === 'AWS' || !process.env.STORAGE_SERVICE) {
+  validators.S3_LOCAL_STACK = str({
+    default: '',
+  });
+  validators.S3_BUCKET_NAME = str();
+  validators.S3_REGION = str();
+  validators.AWS_ACCESS_KEY_ID = str();
+  validators.AWS_SECRET_ACCESS_KEY = str();
+}
 
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
   validators.SENTRY_DSN = str({

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Navbar,
   Popover,
@@ -18,6 +18,8 @@ import { useEnvController } from '../../../store/use-env-controller';
 import { AuthContext } from '../../../store/authContext';
 import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
+import { HEADER_HEIGHT } from '../constants';
+import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -113,17 +115,20 @@ export function SideNav({}: Props) {
     <Navbar
       p={30}
       sx={{
-        position: 'static',
+        position: 'sticky',
+        top: HEADER_HEIGHT,
+        zIndex: 'auto',
         backgroundColor: 'transparent',
         borderRight: 'none',
         paddingRight: 0,
         width: '300px',
+        height: 'max-content',
         '@media (max-width: 768px)': {
           width: '100%',
         },
       }}
     >
-      <Navbar.Section grow>
+      <Navbar.Section>
         <Popover
           classNames={classes}
           withArrow
@@ -158,6 +163,9 @@ export function SideNav({}: Props) {
           </Popover.Dropdown>
         </Popover>
         <NavMenu menuItems={menuItems} />
+      </Navbar.Section>
+      <Navbar.Section mt={15}>
+        <LimitBar withLink={true} />
       </Navbar.Section>
       <Navbar.Section mt={15}>
         <Navbar.Section>
@@ -203,11 +211,6 @@ const StyledLink = styled.a`
   &:hover {
     cursor: pointer;
   }
-`;
-
-const BottomNavWrapper = styled.div`
-  margin-top: auto;
-  padding-top: 30px;
 `;
 
 const BottomNav = styled.div<{ dark: boolean }>`

@@ -2,15 +2,20 @@ import { ITemplateVariable } from '@novu/dal';
 import { TemplateSystemVariables, DelayTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayloadCommand } from './verify-payload.command';
+import { BadRequestException } from '@nestjs/common';
 
 export class VerifyPayload {
   execute(command: VerifyPayloadCommand): Record<string, unknown> {
-    const invalidKeys = [];
+    const invalidKeys: string[] = [];
     let defaultPayload;
 
     for (const step of command.template.steps) {
-      invalidKeys.push(...this.checkRequired(step.template.variables || [], command.payload));
-      if (step.template.type === StepTypeEnum.DELAY && step.metadata.type === DelayTypeEnum.SCHEDULED) {
+      invalidKeys.push(...this.checkRequired(step.template?.variables || [], command.payload));
+      if (step.template?.type === StepTypeEnum.DELAY && step.metadata?.type === DelayTypeEnum.SCHEDULED) {
+        if (!step.metadata.delayPath) {
+          throw new BadRequestException('Delay path is required for scheduled delay');
+        }
+
         const invalidKey = this.checkRequiredDelayPath(step.metadata.delayPath, command.payload);
         if (invalidKey) {
           invalidKeys.push(invalidKey);
@@ -24,7 +29,7 @@ export class VerifyPayload {
     }
 
     for (const step of command.template.steps) {
-      defaultPayload = this.fillDefaults(step.template.variables || []);
+      defaultPayload = this.fillDefaults(step.template?.variables || []);
     }
 
     // TODO: create execution detail for payload created
@@ -32,7 +37,7 @@ export class VerifyPayload {
   }
 
   private checkRequired(variables: ITemplateVariable[], payload: Record<string, unknown>): string[] {
-    const invalidKeys = [];
+    const invalidKeys: string[] = [];
 
     for (const variable of variables.filter((vari) => vari.required && !this.isSystemVariable(vari.name))) {
       let value;
@@ -69,7 +74,7 @@ export class VerifyPayload {
     return invalidKeys;
   }
 
-  private checkRequiredDelayPath(delayPath: string, payload: Record<string, unknown>): string {
+  private checkRequiredDelayPath(delayPath: string, payload: Record<string, unknown>): string | undefined {
     const invalidKey = `${delayPath} (ISO Date)`;
 
     if (!payload.hasOwnProperty(delayPath)) {

@@ -1,4 +1,5 @@
 import './config';
+import 'newrelic';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
 import { RedisIoAdapter } from './shared/framework/redis.adapter';
@@ -30,5 +31,5 @@ export async function bootstrap() {
 
   app.useWebSocketAdapter(redisIoAdapter);
 
-  await app.listen(process.env.PORT);
+  await app.listen(process.env.PORT as string);
 }

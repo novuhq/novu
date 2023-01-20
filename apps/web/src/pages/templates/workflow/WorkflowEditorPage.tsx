@@ -36,6 +36,8 @@ const DraggableNode = ({ channel, setDragging, onDragStart }) => (
       setDragging(false);
     }}
     draggable
+    role="presentation"
+    aria-grabbed="true"
   >
     <DragButton
       Icon={channel.Icon}
@@ -217,6 +219,7 @@ const WorkflowEditorPage = ({
                       }}
                       dark={colorScheme === 'dark'}
                       disabled={readonly}
+                      data-test-id="add-filter-btn"
                     >
                       <PlusCircle
                         style={{

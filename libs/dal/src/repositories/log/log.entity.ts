@@ -1,7 +1,7 @@
 import { LogCodeEnum, LogStatusEnum } from '@novu/shared';
 
 export class LogEntity {
-  _id?: string;
+  _id: string;
 
   transactionId: string;
 

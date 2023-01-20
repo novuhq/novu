@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ChannelTypeEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
@@ -60,7 +61,7 @@ export class GetNotificationsFeed {
     );
 
     return {
-      data: feed,
+      data: feed || [],
       totalCount: totalCount,
       pageSize: LIMIT,
       page: command.page,

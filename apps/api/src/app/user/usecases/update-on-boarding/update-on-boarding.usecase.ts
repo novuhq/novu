@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
 import { UpdateOnBoardingCommand } from './update-on-boarding.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
@@ -26,6 +26,9 @@ export class UpdateOnBoardingUsecase {
       }
     );
 
-    return await this.userRepository.findById(command.userId);
+    const user = await this.userRepository.findById(command.userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    return user;
   }
 }

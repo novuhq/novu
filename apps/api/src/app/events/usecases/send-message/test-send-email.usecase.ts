@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { IEmailBlock, OrganizationRepository, OrganizationEntity, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -16,8 +16,6 @@ import { SendMessageEmail } from './send-message-email.usecase';
 
 @Injectable()
 export class SendTestEmail {
-  private mailFactory = new MailFactory();
-
   constructor(
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
@@ -25,7 +23,10 @@ export class SendTestEmail {
   ) {}
 
   public async execute(command: TestSendMessageCommand) {
-    const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
+    const mailFactory = new MailFactory();
+    const organization = await this.organizationRepository.findById(command.organizationId);
+    if (!organization) throw new NotFoundException('Organization not found');
+
     const email = command.to;
 
     Sentry.addBreadcrumb({
@@ -41,6 +42,7 @@ export class SendTestEmail {
           channelType: ChannelTypeEnum.EMAIL,
           findOne: true,
           active: true,
+          userId: command.userId,
         })
       )
     )[0];
@@ -53,7 +55,13 @@ export class SendTestEmail {
     let content: string | IEmailBlock[] = '';
 
     try {
-      subject = await this.renderContent(command.subject, command.subject, organization, command, command.preheader);
+      subject = (await this.renderContent(
+        command.subject,
+        command.subject,
+        organization,
+        command,
+        command.preheader
+      )) as string;
       content = await this.getContent(isEditorMode, command, subject, organization);
     } catch (e) {
       throw new ApiException(e?.message || `Message content could not be generated`);
@@ -86,19 +94,19 @@ export class SendTestEmail {
     const mailData: IEmailOptions = {
       to: email,
       subject,
-      html,
+      html: html as string,
       from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
     };
 
     if (email && integration) {
-      await this.sendMessage(integration, mailData);
+      await this.sendMessage(integration, mailData, mailFactory);
 
       return;
     }
   }
 
-  private async sendMessage(integration: IntegrationEntity, mailData: IEmailOptions) {
-    const mailHandler = this.mailFactory.getHandler(integration, mailData.from);
+  private async sendMessage(integration: IntegrationEntity, mailData: IEmailOptions, mailFactory: MailFactory) {
+    const mailHandler = mailFactory.getHandler(integration, mailData.from);
 
     try {
       await mailHandler.send(mailData);
@@ -120,9 +128,21 @@ export class SendTestEmail {
          * We need to trim the content in order to avoid mail provider like GMail
          * to display the mail with `[Message clipped]` footer.
          */
-        block.content = await this.renderContent(block.content, subject, organization, command, command.preheader);
+        block.content = (await this.renderContent(
+          block.content,
+          subject,
+          organization,
+          command,
+          command.preheader
+        )) as string;
         block.content = block.content.trim();
-        block.url = await this.renderContent(block.url || '', subject, organization, command, command.preheader);
+        block.url = (await this.renderContent(
+          block.url || '',
+          subject,
+          organization,
+          command,
+          command.preheader
+        )) as string;
       }
 
       return content;

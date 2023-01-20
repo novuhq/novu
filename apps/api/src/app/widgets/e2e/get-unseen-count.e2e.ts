@@ -13,11 +13,11 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
   let subscriberToken: string;
   let subscriberProfile: {
     _id: string;
-  } = null;
+  } | null = null;
   const invalidateCache = new InvalidateCacheService(
     new CacheService({
-      host: process.env.REDIS_CACHE_HOST,
-      port: process.env.REDIS_CACHE_PORT,
+      host: process.env.REDIS_CACHE_SERVICE_HOST as string,
+      port: process.env.REDIS_CACHE_SERVICE_PORT as string,
     })
   );
 
@@ -82,6 +82,7 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
 
     await session.awaitRunningJobs(template._id);
+    if (!subscriberProfile) throw new Error('Subscriber profile is null');
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,

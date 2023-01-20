@@ -1,3 +1,3 @@
 export class SubscriptionPreferenceEntity {
-  _id?: string;
+  _id: string;
 }
