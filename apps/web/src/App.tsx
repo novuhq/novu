@@ -79,8 +79,8 @@ function App() {
                   <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
                   <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
                   <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
-                  <Route path={ROUTES.AUTH_RESET__TOKEN} element={<PasswordResetPage />} />
-                  <Route path={ROUTES.AUTH_INVITATION__TOKEN} element={<InvitationPage />} />
+                  <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
+                  <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
                   <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} />
                   <Route
                     path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
@@ -124,7 +124,7 @@ function App() {
                       }
                     />
                     <Route
-                      path={ROUTES.TEMPLATES_EDIT__TEMPLATEID}
+                      path={ROUTES.TEMPLATES_EDIT_TEMPLATEID}
                       element={
                         <RequiredAuth>
                           <TemplateFormProvider>

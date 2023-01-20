@@ -9,6 +9,8 @@ import { colors, Dropdown, Tag } from '../../design-system';
 import useStyles from '../../design-system/config/text.styles';
 import { MemberRole } from './MemberRole';
 import { When } from '../utils/When';
+import { parseUrl } from '../../utils/routeUtils';
+import { ROUTES } from '../../constants/routes.enum';
 
 export function MembersTable({
   members,
@@ -36,7 +38,8 @@ export function MembersTable({
   }
 
   function onCopyInviteLinkClick(currentMemberToken: any): void {
-    const inviteLink = `${window.location.origin.toString()}/auth/invitation/${currentMemberToken}`;
+    const inviteLink =
+      `${window.location.origin.toString()}` + parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: currentMemberToken });
     clipboardInviteLink.copy(inviteLink);
   }
 
