@@ -29,8 +29,8 @@ export function useSocketController() {
     }
 
     return () => {
-      socket = null;
       socket?.disconnect();
+      socket = null;
     };
   }, [token]);
 
