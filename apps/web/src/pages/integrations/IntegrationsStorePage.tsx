@@ -19,7 +19,6 @@ import { ConnectIntegrationForm } from './components/ConnectIntegrationForm';
 import { useIntegrations } from '../../api/hooks';
 import { When } from '../../components/utils/When';
 import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
-import { NovuIntegrationGroup } from './components/NovuIntegrationsGroup';
 import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
 
 export function IntegrationsStore() {
@@ -102,11 +101,30 @@ export function IntegrationsStore() {
           </Modal>
 
           <ContentWrapper>
-            <NovuIntegrationGroup providers={emailProviders} onProviderClick={handlerVisible} />
-            <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
-            <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
-            <ChannelGroup providers={chatProvider} title="Chat" onProviderClick={handlerVisible} />
-            <ChannelGroup providers={pushProvider} title="Push" onProviderClick={handlerVisible} />
+            <ChannelGroup
+              channel={ChannelTypeEnum.EMAIL}
+              providers={emailProviders}
+              title="Email"
+              onProviderClick={handlerVisible}
+            />
+            <ChannelGroup
+              channel={ChannelTypeEnum.SMS}
+              providers={smsProvider}
+              title="SMS"
+              onProviderClick={handlerVisible}
+            />
+            <ChannelGroup
+              channel={ChannelTypeEnum.CHAT}
+              providers={chatProvider}
+              title="Chat"
+              onProviderClick={handlerVisible}
+            />
+            <ChannelGroup
+              channel={ChannelTypeEnum.PUSH}
+              providers={pushProvider}
+              title="Push"
+              onProviderClick={handlerVisible}
+            />
           </ContentWrapper>
         </PageContainer>
       ) : null}
