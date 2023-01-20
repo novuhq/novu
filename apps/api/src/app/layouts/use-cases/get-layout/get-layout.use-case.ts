@@ -12,8 +12,8 @@ export class GetLayoutUseCase {
 
   async execute(command: GetLayoutCommand): Promise<LayoutDto> {
     const layout = await this.layoutRepository.findOne({
-      _id: LayoutRepository.convertStringToObjectId(command.layoutId),
-      _environmentId: LayoutRepository.convertStringToObjectId(command.environmentId),
+      _id: command.layoutId,
+      _environmentId: command.environmentId,
     });
 
     if (!layout) {
@@ -28,9 +28,9 @@ export class GetLayoutUseCase {
   private mapFromEntity(layout: LayoutEntity): LayoutDto {
     return {
       ...layout,
-      _id: LayoutRepository.convertObjectIdToString(layout._id),
-      _organizationId: LayoutRepository.convertObjectIdToString(layout._organizationId),
-      _environmentId: LayoutRepository.convertObjectIdToString(layout._environmentId),
+      _id: layout._id,
+      _organizationId: layout._organizationId,
+      _environmentId: layout._environmentId,
       variables: this.mapVariablesFromEntity(layout.variables),
       isDeleted: layout.deleted,
     };

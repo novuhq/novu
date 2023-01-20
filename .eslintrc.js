@@ -64,7 +64,14 @@ module.exports = {
     'no-restricted-imports': [
       'error',
       {
-        patterns: ['@novu/shared/*', '@novu/dal/*', '!import2/good'],
+        patterns: [
+          '@novu/shared/*',
+          '@novu/dal/*',
+          '!import2/good',
+          '*../libs/dal/*',
+          '*../libs/shared/*',
+          '*../libs/stateless/*',
+        ],
       },
     ],
     'padding-line-between-statements': [

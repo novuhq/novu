@@ -45,17 +45,17 @@ export class FilterLayoutsUseCase {
     command: FilterLayoutsCommand
   ): Pick<LayoutEntity, '_environmentId' | '_organizationId'> {
     return {
-      _environmentId: LayoutRepository.convertStringToObjectId(command.environmentId),
-      _organizationId: LayoutRepository.convertStringToObjectId(command.organizationId),
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
     } as Pick<LayoutEntity, '_environmentId' | '_organizationId'>;
   }
 
   private mapFromEntityToDto(layout: LayoutEntity): LayoutDto {
     return {
       ...layout,
-      _id: LayoutRepository.convertObjectIdToString(layout._id),
-      _organizationId: LayoutRepository.convertObjectIdToString(layout._organizationId),
-      _environmentId: LayoutRepository.convertObjectIdToString(layout._environmentId),
+      _id: layout._id,
+      _organizationId: layout._organizationId,
+      _environmentId: layout._environmentId,
       isDeleted: layout.deleted,
     };
   }

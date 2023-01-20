@@ -1,7 +1,7 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { IEmailBlock } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
-import { MessageTemplateContentType } from '@novu/shared';
+import { LayoutId, MessageTemplateContentType } from '@novu/shared';
 
 export class CompileEmailTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -18,7 +18,7 @@ export class CompileEmailTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsString()
-  layoutId?: string | null;
+  layoutId?: LayoutId | null;
 
   @IsString()
   @IsOptional()

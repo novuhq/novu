@@ -25,14 +25,13 @@ describe('Compile Template', function () {
   it('should render custom html', async function () {
     const result = await useCase.execute(
       CompileTemplateCommand.create({
-        templateId: 'custom',
         data: {
           branding: {
             color: '#e7e7e7e9',
           },
           name: 'Test Name',
         },
-        customTemplate: '<div>{{name}}</div>',
+        template: '<div>{{name}}</div>',
       })
     );
 
@@ -42,7 +41,6 @@ describe('Compile Template', function () {
   it('should render pluralisation in html', async function () {
     const result = await useCase.execute(
       CompileTemplateCommand.create({
-        templateId: 'custom',
         data: {
           branding: {
             color: '#e7e7e7e9',
@@ -50,7 +48,7 @@ describe('Compile Template', function () {
           dog_count: 1,
           sausage_count: 2,
         },
-        customTemplate:
+        template:
           '<div>{{dog_count}} {{pluralize dog_count "dog" "dogs"}} and {{sausage_count}} {{pluralize sausage_count "sausage" "sausages"}} for {{pluralize dog_count "him" "them"}}</div>',
       })
     );
@@ -61,7 +59,6 @@ describe('Compile Template', function () {
   it('should allow the user to specify handlebars helpers', async function () {
     const result = await useCase.execute(
       CompileTemplateCommand.create({
-        templateId: 'custom',
         data: {
           branding: {
             color: '#e7e7e7e9',
@@ -69,7 +66,7 @@ describe('Compile Template', function () {
           message: 'hello world',
           messageTwo: 'hEllo world',
         },
-        customTemplate: '<div>{{titlecase message}} and {{lowercase messageTwo}} and {{uppercase message}}</div>',
+        template: '<div>{{titlecase message}} and {{lowercase messageTwo}} and {{uppercase message}}</div>',
       })
     );
 
@@ -80,11 +77,10 @@ describe('Compile Template', function () {
     it('should allow user to format the date', async function () {
       const result = await useCase.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
           data: {
             date: '2020-01-01',
           },
-          customTemplate: "<div>{{dateFormat date 'EEEE, MMMM Do yyyy'}}</div>",
+          template: "<div>{{dateFormat date 'EEEE, MMMM Do yyyy'}}</div>",
         })
       );
       expect(result).to.equal('<div>Wednesday, January 1st 2020</div>');
@@ -93,11 +89,10 @@ describe('Compile Template', function () {
     it('should not fail and return same date for invalid date', async function () {
       const result = await useCase.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
           data: {
             date: 'ABCD',
           },
-          customTemplate: "<div>{{dateFormat date 'EEEE, MMMM Do yyyy'}}</div>",
+          template: "<div>{{dateFormat date 'EEEE, MMMM Do yyyy'}}</div>",
         })
       );
       expect(result).to.equal('<div>ABCD</div>');

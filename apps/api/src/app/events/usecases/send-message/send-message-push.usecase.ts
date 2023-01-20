@@ -83,16 +83,14 @@ export class SendMessagePush extends SendMessageBase {
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
-          customTemplate: pushChannel.template?.content as string,
+          template: pushChannel.template?.content as string,
           data,
         })
       );
 
       title = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
-          customTemplate: pushChannel.template?.title as string,
+          template: pushChannel.template?.title as string,
           data,
         })
       );

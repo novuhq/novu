@@ -7,11 +7,11 @@ import * as fs from 'fs';
 import { merge } from 'lodash';
 import { CompileEmailTemplateCommand } from './compile-email-template.command';
 import { GetLayoutCommand, GetLayoutUseCase } from '../../../../layouts/use-cases';
-import { LayoutId } from '@novu/shared';
 import { VerifyPayloadService } from '../../../../shared/helpers/verify-payload.service';
+import { LayoutDto } from '../../../../layouts/dtos';
 
 @Injectable()
-export class CompileEmailTemplateUsecase {
+export class CompileEmailTemplate {
   constructor(
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
@@ -20,41 +20,39 @@ export class CompileEmailTemplateUsecase {
 
   public async execute(command: CompileEmailTemplateCommand) {
     const verifyPayloadService = new VerifyPayloadService();
-    const organization: OrganizationEntity | null = await this.organizationRepository.findById(command.organizationId);
+    const organization = await this.organizationRepository.findById(command.organizationId);
     if (!organization) throw new NotFoundException(`Organization ${command.organizationId} not found`);
 
-    let useNovuDefault = !command.layoutId;
-    let layout;
-    if (!useNovuDefault) {
-      try {
-        layout = await this.getLayoutUsecase.execute(
-          GetLayoutCommand.create({
-            layoutId: command.layoutId as LayoutId,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-          })
-        );
-      } catch (e) {
-        useNovuDefault = true;
-      }
+    const isEditorMode = command.contentType === 'editor';
+
+    let layout: LayoutDto | null = null;
+    let layoutContent: string | null = null;
+
+    if (command.layoutId) {
+      layout = await this.getLayoutUsecase.execute(
+        GetLayoutCommand.create({
+          layoutId: command.layoutId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
+      );
+
+      layoutContent = layout.content;
+    } else if (isEditorMode && !command.layoutId) {
+      layoutContent = await this.loadTemplateContent('layout.handlebars');
     }
+
     const layoutVariables = layout?.variables || [];
     const defaultPayload = verifyPayloadService.verifyPayload(layoutVariables, command.payload);
 
-    let helperBlocksContent;
-    let defaultNovuLayout;
-    const isEditorMode = command.contentType === 'editor';
+    let helperBlocksContent: string | null = null;
     if (isEditorMode) {
       helperBlocksContent = await this.loadTemplateContent('basic.handlebars');
     }
-    if (useNovuDefault) {
-      defaultNovuLayout = await this.loadTemplateContent('layout.handlebars');
-    }
 
     let subject = '';
-    let content: string | IEmailBlock[] = command.content;
+    const content: string | IEmailBlock[] = command.content;
     let preheader = command.preheader;
-    const layoutContent = useNovuDefault ? defaultNovuLayout : layout.content;
 
     command.payload = merge({}, defaultPayload, command.payload);
 
@@ -71,9 +69,7 @@ export class CompileEmailTemplateUsecase {
 
     try {
       subject = await this.renderContent(command.subject, payload);
-      if (isEditorMode) {
-        content = await this.getContent(content as IEmailBlock[], payload);
-      }
+
       if (preheader) {
         preheader = await this.renderContent(preheader, payload);
       }
@@ -81,7 +77,7 @@ export class CompileEmailTemplateUsecase {
       throw new ApiException(e?.message || `Message content could not be generated`);
     }
 
-    const customTemplate = CompileEmailTemplateUsecase.addPreheader(layoutContent as string);
+    const customLayout = CompileEmailTemplate.addPreheader(layoutContent as string);
 
     const templateVariables = {
       ...payload,
@@ -91,23 +87,30 @@ export class CompileEmailTemplateUsecase {
       blocks: isEditorMode ? content : [],
     };
 
+    if (isEditorMode) {
+      for (const block of content as IEmailBlock[]) {
+        block.content = await this.renderContent(block.content, payload);
+        block.url = await this.renderContent(block.url || '', payload);
+      }
+    }
+
     const body = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: !isEditorMode ? (content as string) : helperBlocksContent,
+        template: !isEditorMode ? (content as string) : (helperBlocksContent as string),
         data: templateVariables,
       })
     );
 
     templateVariables.body = body as string;
 
-    const html = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate,
-        data: templateVariables,
-      })
-    );
+    const html = customLayout
+      ? await this.compileTemplate.execute(
+          CompileTemplateCommand.create({
+            template: customLayout,
+            data: templateVariables,
+          })
+        )
+      : body;
 
     return { html, content, subject };
   }
@@ -115,8 +118,7 @@ export class CompileEmailTemplateUsecase {
   private async renderContent(content: string, payload: Record<string, unknown>) {
     const renderedContent = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: content,
+        template: content,
         data: {
           ...payload,
         },
@@ -126,19 +128,9 @@ export class CompileEmailTemplateUsecase {
     return renderedContent?.trim() || '';
   }
 
-  private async getContent(content: IEmailBlock[], payload: Record<string, unknown> = {}): Promise<IEmailBlock[]> {
-    content = [...content];
-    for (const block of content) {
-      block.content = await this.renderContent(block.content, payload);
-      block.url = await this.renderContent(block.url || '', payload);
-    }
-
-    return content;
-  }
-
   public static addPreheader(content: string): string {
     // "&nbsp;&zwnj;&nbsp;&zwnj;" is needed to spacing away the rest of the email from the preheader area in email clients
-    return content.replace(
+    return content?.replace(
       /<body[^>]*>/g,
       `$&{{#if preheader}}
           <div style="display: none; max-height: 0px; overflow: hidden;">

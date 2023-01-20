@@ -1,9 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { LayoutEntity, LayoutRepository } from '@novu/dal';
+import { Injectable } from '@nestjs/common';
+import { LayoutRepository } from '@novu/dal';
 
 import { DeleteLayoutCommand } from './delete-layout.command';
 
-import { LayoutDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 
 @Injectable()
@@ -17,10 +16,6 @@ export class DeleteLayoutUseCase {
 
     const layout = await this.getLayoutUseCase.execute(getLayoutCommand);
 
-    await this.layoutRepository.deleteLayout(
-      LayoutRepository.convertStringToObjectId(command.layoutId),
-      LayoutRepository.convertStringToObjectId(layout._environmentId),
-      LayoutRepository.convertStringToObjectId(layout._organizationId)
-    );
+    await this.layoutRepository.deleteLayout(command.layoutId, layout._environmentId, layout._organizationId);
   }
 }

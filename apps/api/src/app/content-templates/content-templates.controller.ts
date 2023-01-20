@@ -2,12 +2,12 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { IEmailBlock, IJwtPayload, MessageTemplateContentType } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { CompileEmailTemplateUsecase, CompileEmailTemplateCommand } from './usecases';
+import { CompileEmailTemplate, CompileEmailTemplateCommand } from './usecases';
 
 @Controller('/content-templates')
 @ApiExcludeController()
 export class ContentTemplatesController {
-  constructor(private compileEmailTemplateUsecase: CompileEmailTemplateUsecase) {}
+  constructor(private compileEmailTemplateUsecase: CompileEmailTemplate) {}
 
   @Post('/preview/email')
   public previewEmail(

@@ -3,7 +3,6 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { SetDefaultLayoutCommand } from './set-default-layout.command';
 
-import { LayoutDto } from '../../dtos/layout.dto';
 import { EnvironmentId, LayoutId, OrganizationId } from '../../types';
 
 @Injectable()
@@ -29,9 +28,9 @@ export class SetDefaultLayoutUseCase {
     domainEntity: SetDefaultLayoutCommand
   ): Pick<LayoutEntity, '_id' | '_environmentId' | '_organizationId' | '_creatorId'> {
     return {
-      _id: LayoutRepository.convertStringToObjectId(domainEntity.userId),
-      _environmentId: LayoutRepository.convertStringToObjectId(domainEntity.environmentId),
-      _organizationId: LayoutRepository.convertStringToObjectId(domainEntity.organizationId),
+      _id: domainEntity.userId,
+      _environmentId: domainEntity.environmentId,
+      _organizationId: domainEntity.organizationId,
       _creatorId: domainEntity.userId,
     };
   }
@@ -40,16 +39,13 @@ export class SetDefaultLayoutUseCase {
     environmentId: EnvironmentId,
     organizationId: OrganizationId
   ): Promise<LayoutId | undefined> {
-    const defaultLayout = await this.layoutRepository.findDefault(
-      LayoutRepository.convertStringToObjectId(environmentId),
-      LayoutRepository.convertStringToObjectId(organizationId)
-    );
+    const defaultLayout = await this.layoutRepository.findDefault(environmentId, organizationId);
 
     if (!defaultLayout) {
       return undefined;
     }
 
-    return LayoutRepository.convertObjectIdToString(defaultLayout._id);
+    return defaultLayout._id;
   }
 
   private async setIsDefaultForLayout(
@@ -58,11 +54,6 @@ export class SetDefaultLayoutUseCase {
     organizationId: OrganizationId,
     isDefault: boolean
   ): Promise<void> {
-    this.layoutRepository.updateIsDefault(
-      LayoutRepository.convertStringToObjectId(layoutId),
-      LayoutRepository.convertStringToObjectId(environmentId),
-      LayoutRepository.convertStringToObjectId(organizationId),
-      isDefault
-    );
+    this.layoutRepository.updateIsDefault(layoutId, environmentId, organizationId, isDefault);
   }
 }

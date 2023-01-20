@@ -34,7 +34,7 @@ import {
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration/get-novu-integration.usecase';
-import { CompileEmailTemplateUsecase } from '../../../content-templates/usecases/compile-template/email/compile-email-template.usecase';
+import { CompileEmailTemplate } from '../../../content-templates/usecases/compile-template/email/compile-email-template.usecase';
 import { CompileEmailTemplateCommand } from '../../../content-templates/usecases/compile-template/email/compile-email-template.command';
 
 @Injectable()
@@ -48,7 +48,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private organizationRepository: OrganizationRepository,
-    private compileEmailTemplateUsecase: CompileEmailTemplateUsecase,
+    private compileEmailTemplateUsecase: CompileEmailTemplate,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
     super(
