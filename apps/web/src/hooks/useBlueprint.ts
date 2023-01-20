@@ -3,10 +3,12 @@ import { useSearchParams } from './useSearchParams';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { getToken } from '../store/use-auth-controller';
+import { useSegment } from './use-segment';
 
 export const useBlueprint = () => {
   const searchParams = useSearchParams();
   const navigate = useNavigate();
+  const segment = useSegment();
 
   useEffect(() => {
     const id = localStorage.getItem('blueprintId');
@@ -21,6 +23,9 @@ export const useBlueprint = () => {
 
   useEffect(() => {
     if (searchParams.blueprintId) {
+      segment.track('Notification directory CTA clicked', {
+        blueprintId: searchParams.blueprintId,
+      });
       localStorage.setItem('blueprintId', searchParams.blueprintId);
       navigate(`/templates/create?page=${ActivePageEnum.WORKFLOW}`, {
         replace: true,
