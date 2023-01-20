@@ -30,7 +30,7 @@ export function ProviderCard({
     <StyledCard
       dark={colorScheme === 'dark'}
       active={brightCard}
-      data-test-id="integration-provider-card"
+      data-test-id={`integration-provider-card-${provider.providerId}`}
       onClick={() => {
         if (provider.comingSoon) return;
         if (provider.connected) {

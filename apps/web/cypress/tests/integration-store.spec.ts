@@ -17,15 +17,9 @@ describe('Integration store page', function () {
 
     cy.visit('/integrations');
 
-    cy.getByTestId('integration-group-email')
-      .getByTestId('integration-provider-card')
-      .eq(1)
-      .getByTestId('card-status-bar-active')
-      .contains('Active');
+    getFirstIntegrationCard().getByTestId('card-status-bar-active').contains('Active');
 
-    cy.getByTestId('integration-group-email')
-      .getByTestId('integration-provider-card')
-      .eq(1)
+    getFirstIntegrationCard()
       .getByTestId('card-status-bar-active')
       .should(($div) => {
         const text = $div.text();
@@ -55,7 +49,7 @@ describe('Integration store page', function () {
 });
 
 function getFirstIntegrationCard() {
-  return cy.getByTestId('integration-group-email').getByTestId('integration-provider-card').eq(0);
+  return cy.getByTestId('integration-group-email').getByTestId('integration-provider-card-sendgrid').eq(0);
 }
 
 function interceptIntegration(isActive: boolean) {
