@@ -722,7 +722,7 @@ importers:
       '@types/jest': ^26.0.15
       '@types/node': ^12.0.0
       '@types/react': 17.0.53
-      '@types/react-dom': 17.0.2
+      '@types/react-dom': 17.0.18
       '@types/react-router-dom': ^5.1.7
       antd: ^4.10.0
       axios: ^0.21.1
@@ -799,7 +799,7 @@ importers:
       '@types/jest': 26.0.24
       '@types/node': 12.20.47
       '@types/react': 17.0.53
-      '@types/react-dom': 17.0.2
+      '@types/react-dom': 17.0.18
       '@types/react-router-dom': 5.3.3
       craco-antd: 1.19.0_wv4wf7uapyhgl6svy2rg2rnpzm
       cross-env: 7.0.3
@@ -30550,8 +30550,8 @@ packages:
     dependencies:
       '@types/react': 17.0.47
 
-  /@types/react-dom/17.0.2:
-    resolution: {integrity: sha512-Icd9KEgdnFfJs39KyRyr0jQ7EKhq8U6CcHRMGAS45fp5qgUvxL3ujUCfWFttUK2UErqZNj97t9gsVPNAqcwoCg==}
+  /@types/react-dom/17.0.18:
+    resolution: {integrity: sha512-rLVtIfbwyur2iFKykP2w0pl/1unw26b5td16d5xMgp7/yjTHomkyxPYChFoCr/FtEX1lN9wY6lFj1qvKdS5kDw==}
     dependencies:
       '@types/react': 17.0.53
     dev: true
