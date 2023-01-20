@@ -41,14 +41,13 @@ describe('Create Environment - /environments (POST)', async () => {
       name: 'Hello App',
     };
     const { body } = await session.testAgent.post('/v1/environments').send(demoEnvironment).expect(201);
+    session.environment = body.data;
 
-    const layouts = await layoutRepository.find({
-      _environmentId: body.data._id,
-      channel: 'email',
-    });
+    await session.fetchJWT();
+    const { body: layouts } = await session.testAgent.get('/v1/layouts');
 
-    expect(layouts.length).to.equal(1);
-    expect(layouts[0].isDefault).to.equal(true);
-    expect(layouts[0].content.length).to.be.greaterThan(20);
+    expect(layouts.data.length).to.equal(1);
+    expect(layouts.data[0].isDefault).to.equal(true);
+    expect(layouts.data[0].content.length).to.be.greaterThan(20);
   });
 });

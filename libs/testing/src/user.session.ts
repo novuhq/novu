@@ -5,7 +5,7 @@ import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 import { Queue } from 'bullmq';
-import { TriggerRecipientsPayload } from '@novu/node';
+import { Novu, TriggerRecipientsPayload } from '@novu/node';
 import { EmailBlockTypeEnum, IEmailBlock, StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
@@ -88,6 +88,8 @@ export class UserSession {
 
   apiKey: string;
 
+  serverSdk: Novu;
+
   constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {}
 
   async initialize(options: { noOrganization?: boolean; noEnvironment?: boolean; noIntegrations?: boolean } = {}) {
@@ -143,6 +145,10 @@ export class UserSession {
       this.subscriberToken = token;
       this.subscriberProfile = profile;
     }
+
+    this.serverSdk = new Novu(this.apiKey, {
+      backendUrl: this.serverUrl,
+    });
   }
 
   private async initializeWidgetSession() {
