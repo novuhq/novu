@@ -46,7 +46,7 @@
     "@docusaurus/module-type-aliases": "2.0.0-beta.20",
     "@tsconfig/docusaurus": "^1.0.5",
     "@types/react": "^17.0.14",
-    "@types/react-helmet": "6.1.5",
+    "@types/react-helmet": "6.1.6",
     "@types/react-router-dom": "5.3.3",
     "eslint-config-airbnb-typescript": "^17.0.0",
     "eslint-config-prettier": "^8.5.0",

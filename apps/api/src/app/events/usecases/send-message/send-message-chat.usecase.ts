@@ -80,8 +80,7 @@ export class SendMessageChat extends SendMessageBase {
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
-          customTemplate: chatChannel.template.content as string,
+          template: chatChannel.template.content as string,
           data,
         })
       );

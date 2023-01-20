@@ -43,8 +43,8 @@ export class FilterTopicsUseCase {
     command: FilterTopicsCommand
   ): Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'> {
     return {
-      _environmentId: TopicRepository.convertStringToObjectId(command.environmentId),
-      _organizationId: TopicRepository.convertStringToObjectId(command.organizationId),
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
       ...(command.key && { key: command.key }),
     } as Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'>;
   }
@@ -52,9 +52,9 @@ export class FilterTopicsUseCase {
   private mapFromEntityToDto(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {
     return {
       ...topic,
-      _id: TopicRepository.convertObjectIdToString(topic._id),
-      _organizationId: TopicRepository.convertObjectIdToString(topic._organizationId),
-      _environmentId: TopicRepository.convertObjectIdToString(topic._environmentId),
+      _id: topic._id,
+      _organizationId: topic._organizationId,
+      _environmentId: topic._environmentId,
     };
   }
 }

@@ -239,8 +239,7 @@ export class SendMessageInApp extends SendMessageBase {
   ): Promise<string | null> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: content as string,
+        template: content as string,
         data: {
           subscriber,
           step: {

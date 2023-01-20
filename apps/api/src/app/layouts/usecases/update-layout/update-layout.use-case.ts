@@ -6,7 +6,6 @@ import { UpdateLayoutCommand } from './update-layout.command';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos/layout.dto';
-import { ChannelTypeEnum, IEmailBlock } from '../../types';
 
 @Injectable()
 export class UpdateLayoutUseCase {
@@ -23,7 +22,6 @@ export class UpdateLayoutUseCase {
       organizationId: command.organizationId,
     });
     const databaseEntity = await this.getLayoutUseCase.execute(getLayoutCommand);
-    const databaseLayout = this.mapToEntity(databaseEntity);
 
     const patchedEntity = this.applyUpdatesToEntity(this.mapToEntity(databaseEntity), command);
 
@@ -58,9 +56,9 @@ export class UpdateLayoutUseCase {
   private mapFromEntity(layout: LayoutEntity): LayoutDto {
     return {
       ...layout,
-      _id: LayoutRepository.convertObjectIdToString(layout._id),
-      _organizationId: LayoutRepository.convertObjectIdToString(layout._organizationId),
-      _environmentId: LayoutRepository.convertObjectIdToString(layout._environmentId),
+      _id: layout._id,
+      _organizationId: layout._organizationId,
+      _environmentId: layout._environmentId,
       isDeleted: layout.deleted,
     };
   }
@@ -68,9 +66,9 @@ export class UpdateLayoutUseCase {
   private mapToEntity(layout: LayoutDto): LayoutEntity {
     return {
       ...layout,
-      _id: LayoutRepository.convertStringToObjectId(layout._id),
-      _organizationId: LayoutRepository.convertStringToObjectId(layout._organizationId),
-      _environmentId: LayoutRepository.convertStringToObjectId(layout._environmentId),
+      _id: layout._id,
+      _organizationId: layout._organizationId,
+      _environmentId: layout._environmentId,
       contentType: 'customHtml',
       deleted: layout.isDeleted,
     };

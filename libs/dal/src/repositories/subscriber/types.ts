@@ -1,7 +1,5 @@
-import { Types } from 'mongoose';
-
 export type ExternalSubscriberId = string;
-export type SubscriberId = Types.ObjectId;
+export type SubscriberId = string;
 
 export interface IExternalSubscribersEntity {
   // TODO: Move to EnvironmentId, OrganizationId when possible

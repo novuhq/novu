@@ -46,6 +46,7 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
       description,
       name,
       variables,
+      channel,
     });
   }
 
@@ -75,11 +76,15 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
   ): Promise<LayoutEntity[]> {
     const order = pagination.orderBy ?? OrderDirectionEnum.DESC;
     const sort = pagination.sortBy ? { [pagination.sortBy]: order } : { createdAt: OrderDirectionEnum.DESC };
+    const parsedQuery = { ...query };
+
+    parsedQuery._environmentId = this.convertStringToObjectId(parsedQuery._environmentId);
+    parsedQuery._organizationId = this.convertStringToObjectId(parsedQuery._organizationId);
 
     const data = await this.aggregate([
       {
         $match: {
-          ...query,
+          ...parsedQuery,
         },
       },
       { $sort: sort },

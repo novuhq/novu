@@ -1,7 +1,5 @@
 import * as dotenv from 'dotenv';
 import { getContextPath, NovuComponentEnum } from '@novu/shared';
-import * as envalid from 'envalid';
-import { str, url, port, ValidatorSpec } from 'envalid';
 
 dotenv.config();
 
