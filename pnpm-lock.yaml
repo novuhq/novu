@@ -600,6 +600,7 @@ importers:
   apps/webhook:
     specifiers:
       '@godaddy/terminus': ^4.3.1
+      '@nestjs/axios': 0.1.0
       '@nestjs/cli': ^7.6.0
       '@nestjs/common': ^9.2.1
       '@nestjs/core': ^9.2.1
@@ -651,12 +652,13 @@ importers:
       typescript: 4.3.5
     dependencies:
       '@godaddy/terminus': 4.10.2
+      '@nestjs/axios': 0.1.0_jeqwo7fzb4lebm6nefyhh5xlci
       '@nestjs/common': 9.2.1_r72jqgu3m7fr66qxp7vl4agwte
       '@nestjs/core': 9.2.1_wtldhlqnooa3jww7w3todoksxm
       '@nestjs/platform-express': 9.2.1_hjcqpoaebdr7gdo5hgc22hthbe
       '@nestjs/platform-socket.io': 9.2.1_f6yiacuxgrzeaccazi56qscy2e
       '@nestjs/swagger': 6.1.4_4fhhxyztwhblafku3krlstrun4
-      '@nestjs/terminus': 9.1.4_5jpsbfbll2knk5qgjb5qqh7xhu
+      '@nestjs/terminus': 9.1.4_vmpofzc6zdumhbegrneadvieny
       '@novu/application-generic': link:../../packages/application-generic
       '@novu/dal': link:../../libs/dal
       '@novu/shared': link:../../libs/shared
@@ -21293,6 +21295,21 @@ packages:
     dev: false
     optional: true
 
+  /@nestjs/axios/0.1.0_jeqwo7fzb4lebm6nefyhh5xlci:
+    resolution: {integrity: sha512-b2TT2X6BFbnNoeteiaxCIiHaFcSbVW+S5yygYqiIq5i6H77yIU3IVuLdpQkHq8/EqOWFwMopLN8jdkUT71Am9w==}
+    peerDependencies:
+      '@nestjs/common': ^7.0.0 || ^8.0.0 || ^9.0.0
+      reflect-metadata: ^0.1.12
+      rxjs: ^6.0.0 || ^7.0.0
+    dependencies:
+      '@nestjs/common': 9.2.1_r72jqgu3m7fr66qxp7vl4agwte
+      axios: 0.27.2
+      reflect-metadata: 0.1.13
+      rxjs: 7.5.6
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
   /@nestjs/axios/0.1.0_m35besaglbko3ybu6uaqzypui4:
     resolution: {integrity: sha512-b2TT2X6BFbnNoeteiaxCIiHaFcSbVW+S5yygYqiIq5i6H77yIU3IVuLdpQkHq8/EqOWFwMopLN8jdkUT71Am9w==}
     peerDependencies:
@@ -22106,7 +22123,7 @@ packages:
       rxjs: 7.5.5
     dev: false
 
-  /@nestjs/terminus/9.1.4_5jpsbfbll2knk5qgjb5qqh7xhu:
+  /@nestjs/terminus/9.1.4_vmpofzc6zdumhbegrneadvieny:
     resolution: {integrity: sha512-VUkafKRK6uWzwyHPind3RejxQAFJxPaXjDtvHQRaNdJ5Pk9wVD4e6e8KLGhcrPGC8ZDorqBLZABnECIcGzkodA==}
     peerDependencies:
       '@grpc/grpc-js': '*'
@@ -22151,6 +22168,7 @@ packages:
       typeorm:
         optional: true
     dependencies:
+      '@nestjs/axios': 0.1.0_jeqwo7fzb4lebm6nefyhh5xlci
       '@nestjs/common': 9.2.1_r72jqgu3m7fr66qxp7vl4agwte
       '@nestjs/core': 9.2.1_wtldhlqnooa3jww7w3todoksxm
       boxen: 5.1.2
@@ -40781,6 +40799,7 @@ packages:
     dependencies:
       eslint: 7.32.0
       globals: 11.12.0
+    dev: false
 
   /eslint-plugin-cypress/2.12.1_eslint@8.30.0:
     resolution: {integrity: sha512-c2W/uPADl5kospNDihgiLc7n87t5XhUbFDoTl6CfVkmG+kDAb5Ux10V9PoLPu9N+r7znpc+iQlcmAqT1A/89HA==}
