@@ -8,6 +8,7 @@ RUN npm i pm2 -g
 COPY .npmrc .
 COPY package.json .
 
+COPY providers ./providers
 COPY apps/ws ./apps/ws
 COPY libs/dal ./libs/dal
 COPY libs/shared ./libs/shared
