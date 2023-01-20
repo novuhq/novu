@@ -2,8 +2,8 @@ import { Grid, useMantineTheme } from '@mantine/core';
 import { format } from 'date-fns';
 import { Controller, useFormContext } from 'react-hook-form';
 import { colors, Input, Select } from '../../../design-system';
-import { useLayouts } from '../../../api/hooks/use-layouts';
 import { EmailIntegrationInfo } from '../../../pages/templates/editor/EmailIntegrationInfo';
+import { useLayouts } from '../../../api/hooks/use-layouts';
 
 export const EmailInboxContent = ({
   integration,

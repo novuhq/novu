@@ -13,6 +13,7 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { StorageHelperService } from './services/storage-helper-service/storage-helper.service';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
 import { TopicsModule } from '../topics/topics.module';
+import { LayoutsModule } from '../layouts/layouts.module';
 import { TriggerHandlerQueueService } from './services/workflow-queue/trigger-handler-queue.service';
 
 @Module({
@@ -27,6 +28,7 @@ import { TriggerHandlerQueueService } from './services/workflow-queue/trigger-ha
     IntegrationModule,
     ExecutionDetailsModule,
     TopicsModule,
+    LayoutsModule,
   ],
   controllers: [EventsController],
   providers: [...USE_CASES, WorkflowQueueService, StorageHelperService, TriggerHandlerQueueService],

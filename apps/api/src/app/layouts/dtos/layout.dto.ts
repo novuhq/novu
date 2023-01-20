@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ChannelTypeEnum,
   EnvironmentId,
-  IEmailBlock,
   ITemplateVariable,
   OrganizationId,
   LayoutDescription,
@@ -34,7 +33,7 @@ export class LayoutDto {
   channel: ChannelTypeEnum;
 
   @ApiProperty()
-  content: IEmailBlock[];
+  content: string;
 
   @ApiProperty()
   contentType: string;

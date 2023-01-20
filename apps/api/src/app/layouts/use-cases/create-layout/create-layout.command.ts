@@ -1,6 +1,6 @@
 import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
-import { IEmailBlock, LayoutDescription, LayoutName, LayoutVariables } from '../../types';
+import { LayoutDescription, LayoutName, LayoutVariables } from '../../types';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -14,7 +14,7 @@ export class CreateLayoutCommand extends EnvironmentWithUserCommand {
   description?: LayoutDescription;
 
   @IsDefined()
-  content: IEmailBlock[];
+  content: string;
 
   @IsOptional()
   variables?: LayoutVariables;

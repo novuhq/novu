@@ -1,9 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 
 import { LayoutDto } from './layout.dto';
 
-import { IEmailBlock, LayoutDescription, LayoutName, LayoutVariables } from '../types';
+import { LayoutDescription, LayoutName, LayoutVariables } from '../types';
 
 export class UpdateLayoutResponseDto extends LayoutDto {}
 
@@ -26,7 +26,7 @@ export class UpdateLayoutRequestDto {
     description: 'User defined content for the layout.',
   })
   @IsOptional()
-  content?: IEmailBlock[];
+  content?: string;
 
   @ApiPropertyOptional({
     description: 'User defined variables to render in the layout placeholders.',

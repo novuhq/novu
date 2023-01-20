@@ -22,21 +22,10 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
 
   it('should retrieve the requested layout successfully if exists in the database for that user', async () => {
     const expectedDescription = 'Amazing new layout';
-    const expectedContent = [
-      {
-        type: 'text',
-        content: 'This are the text contents of the template for {{firstName}}',
-        styles: { textAlign: 'left' },
-      },
-      {
-        type: 'button',
-        content: 'SIGN UP',
-        url: 'https://url-of-app.com/{{urlVariable}}',
-      },
-    ];
+    const expectedContent = '<html><body><div>Hello {{organizationName}} {{{body}}}</div></body></html>';
 
     const expectedVariables = [
-      { name: 'firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
+      { name: 'organizationName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'Company', required: false },
     ];
 
     const url = `${BASE_PATH}/${createdLayout._id}`;

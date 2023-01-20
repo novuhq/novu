@@ -1,7 +1,6 @@
 import {
   ChannelTypeEnum,
   EnvironmentId,
-  IEmailBlock,
   ITemplateVariable,
   OrganizationId,
   LayoutDescription,
@@ -18,7 +17,7 @@ export class LayoutEntity {
   name: LayoutName;
   description?: LayoutDescription;
   variables?: ITemplateVariable[];
-  content: IEmailBlock[];
+  content: string;
   contentType: 'customHtml';
   isDefault: boolean;
   deleted: boolean;
