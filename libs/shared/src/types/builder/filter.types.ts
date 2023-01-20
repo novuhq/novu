@@ -39,3 +39,12 @@ export interface IOnlineInLastFilterPart extends IBaseFilterPart {
 }
 
 export type FilterParts = IFieldFilterPart | IWebhookFilterPart | IRealtimeOnlineFilterPart | IOnlineInLastFilterPart;
+
+export interface ICondition {
+  filter: string;
+  field: string;
+  expected: string;
+  actual: string;
+  operator: string;
+  passed: boolean;
+}
