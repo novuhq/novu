@@ -15,6 +15,7 @@ COPY libs/testing ./libs/testing
 COPY packages/client ./packages/client
 COPY packages/stateless ./packages/stateless
 COPY packages/node ./packages/node
+COPY packages/application-generic ./packages/application-generic
 
 COPY ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
 
