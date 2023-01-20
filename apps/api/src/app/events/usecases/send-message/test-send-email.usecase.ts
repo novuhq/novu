@@ -10,8 +10,8 @@ import {
 } from '../../../integrations/usecases/get-decrypted-integrations';
 import { TestSendMessageCommand } from './send-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CompileEmailTemplate } from '../../../content-templates/usecases/compile-template/email/compile-email-template.usecase';
-import { CompileEmailTemplateCommand } from '../../../content-templates/usecases/compile-template/email/compile-email-template.command';
+import { CompileEmailTemplate } from '../../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
+import { CompileEmailTemplateCommand } from '../../../content-templates/usecases/compile-email-template/compile-email-template.command';
 
 @Injectable()
 export class SendTestEmail {

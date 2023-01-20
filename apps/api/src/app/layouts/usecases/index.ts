@@ -5,6 +5,8 @@ import { FilterLayoutsUseCase } from './filter-layouts/filter-layouts.use-case';
 import { GetLayoutUseCase } from './get-layout/get-layout.use-case';
 import { SetDefaultLayoutUseCase } from './set-default-layout/set-default-layout.use-case';
 import { UpdateLayoutUseCase } from './update-layout/update-layout.use-case';
+import { CreateDefaultLayout } from './create-default-layout';
+import { GetNovuLayout } from './get-novu-layout/get-novu-layout.usecase';
 
 export * from './check-layout-is-used';
 export * from './create-layout';
@@ -22,4 +24,6 @@ export const USE_CASES = [
   GetLayoutUseCase,
   SetDefaultLayoutUseCase,
   UpdateLayoutUseCase,
+  CreateDefaultLayout,
+  GetNovuLayout,
 ];

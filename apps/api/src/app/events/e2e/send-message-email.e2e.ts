@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { CompileEmailTemplate } from '../../content-templates/usecases';
+import { CompileEmailTemplate } from '../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
 
 describe('Trigger event - Send message email - /v1/events/trigger (POST)', function () {
   it('should add a preheader to html string after <body>', async function () {
