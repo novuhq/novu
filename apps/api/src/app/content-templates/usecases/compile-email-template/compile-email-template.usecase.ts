@@ -1,21 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { IEmailBlock, OrganizationRepository, OrganizationEntity } from '@novu/dal';
-import { CompileTemplate } from '../compile-template.usecase';
-import { CompileTemplateCommand } from '../compile-template.command';
-import { ApiException } from '../../../../shared/exceptions/api.exception';
+import { CompileTemplate } from '../compile-template/compile-template.usecase';
+import { CompileTemplateCommand } from '../compile-template/compile-template.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 import * as fs from 'fs';
 import { merge } from 'lodash';
 import { CompileEmailTemplateCommand } from './compile-email-template.command';
-import { GetLayoutCommand, GetLayoutUseCase } from '../../../../layouts/use-cases';
-import { VerifyPayloadService } from '../../../../shared/helpers/verify-payload.service';
-import { LayoutDto } from '../../../../layouts/dtos';
+import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts/usecases';
+import { VerifyPayloadService } from '../../../shared/helpers/verify-payload.service';
+import { LayoutDto } from '../../../layouts/dtos';
+import { GetNovuLayout } from '../../../layouts/usecases/get-novu-layout/get-novu-layout.usecase';
 
 @Injectable()
 export class CompileEmailTemplate {
   constructor(
     private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
-    private getLayoutUsecase: GetLayoutUseCase
+    private getLayoutUsecase: GetLayoutUseCase,
+    private getNovuLayoutUsecase: GetNovuLayout
   ) {}
 
   public async execute(command: CompileEmailTemplateCommand) {
@@ -39,7 +41,7 @@ export class CompileEmailTemplate {
 
       layoutContent = layout.content;
     } else if (isEditorMode && !command.layoutId) {
-      layoutContent = await this.loadTemplateContent('layout.handlebars');
+      layoutContent = await this.getNovuLayoutUsecase.execute({});
     }
 
     const layoutVariables = layout?.variables || [];
@@ -143,9 +145,9 @@ export class CompileEmailTemplate {
 
   private async loadTemplateContent(name: string) {
     return new Promise<string>((resolve, reject) => {
-      let path = '/../../compile-template';
+      let path = '';
       if (!process.env.E2E_RUNNER) {
-        path = '/src/app/content-templates/usecases/compile-template';
+        path = '/src/app/content-templates/usecases/compile-email-template';
       }
       fs.readFile(`${__dirname}${path}/templates/${name}`, (err, content) => {
         if (err) {

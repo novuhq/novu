@@ -46,6 +46,7 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
       description,
       name,
       variables,
+      channel,
     });
   }
 

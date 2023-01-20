@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { USE_CASES } from './usecases';
 import { ContentTemplatesController } from './content-templates.controller';
 import { SharedModule } from '../shared/shared.module';

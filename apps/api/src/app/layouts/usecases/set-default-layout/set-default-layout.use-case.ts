@@ -13,7 +13,7 @@ export class SetDefaultLayoutUseCase {
     const defaultLayoutId = await this.findDefaultLayoutId(command.environmentId, command.organizationId);
 
     try {
-      if (defaultLayoutId) {
+      if (defaultLayoutId && defaultLayoutId !== command.layoutId) {
         await this.setIsDefaultForLayout(defaultLayoutId, command.environmentId, command.organizationId, false);
       }
 

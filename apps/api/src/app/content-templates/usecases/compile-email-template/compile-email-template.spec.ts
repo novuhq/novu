@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { SharedModule } from '../../../../shared/shared.module';
-import { ContentTemplatesModule } from '../../../content-templates.module';
+import { SharedModule } from '../../../shared/shared.module';
+import { ContentTemplatesModule } from '../../content-templates.module';
 import { CompileEmailTemplate } from './compile-email-template.usecase';
 import { CompileEmailTemplateCommand } from './compile-email-template.command';
 import { ChannelTypeEnum, EmailBlockTypeEnum, ITemplateVariable } from '@novu/shared';
