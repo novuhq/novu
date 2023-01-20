@@ -20,6 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
 
 import {
   AddSubscribersRequestDto,
@@ -46,11 +47,9 @@ import {
   RenameTopicCommand,
   RenameTopicUseCase,
 } from './use-cases';
-
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
 
 @Controller('/topics')

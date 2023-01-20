@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "0.10.1",
+  "version": "0.10.3",
   "description": "On-Boarding Cli",
   "main": "index.js",
   "scripts": {
@@ -30,7 +30,7 @@
     "typescript": "^4.5.5"
   },
   "dependencies": {
-    "@novu/shared": "^0.10.1",
+    "@novu/shared": "^0.10.2",
     "analytics-node": "^6.2.0",
     "axios": "^0.25.0",
     "chalk": "4.1.2",

@@ -4,7 +4,7 @@ import {
   IPushOptions,
   IPushProvider,
 } from '@novu/stateless';
-import { initializeApp, cert } from 'firebase-admin/app';
+import { initializeApp, cert, deleteApp, getApp } from 'firebase-admin/app';
 import { getMessaging, Messaging } from 'firebase-admin/messaging';
 import crypto from 'crypto';
 
@@ -12,6 +12,7 @@ export class FcmPushProvider implements IPushProvider {
   id = 'fcm';
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
+  private appName: string;
   private messaging: Messaging;
   constructor(
     private config: {
@@ -21,6 +22,7 @@ export class FcmPushProvider implements IPushProvider {
     }
   ) {
     this.config = config;
+    this.appName = crypto.randomBytes(32).toString();
     const firebase = initializeApp(
       {
         credential: cert({
@@ -29,7 +31,7 @@ export class FcmPushProvider implements IPushProvider {
           privateKey: this.config.secretKey,
         }),
       },
-      crypto.randomBytes(4).toString()
+      this.appName
     );
     this.messaging = getMessaging(firebase);
   }
@@ -70,6 +72,9 @@ export class FcmPushProvider implements IPushProvider {
         }"`
       );
     }
+
+    const app = getApp(this.appName);
+    await deleteApp(app);
 
     return {
       ids: res?.responses?.map((response) => response.messageId),

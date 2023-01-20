@@ -8,6 +8,8 @@ import { GetActiveIntegrations } from './get-active-integration/get-active-integ
 import { GetDecryptedIntegrations } from './get-decrypted-integrations/get-decrypted-integrations.usecase';
 import { CheckIntegration } from './check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
+import { GetNovuIntegration } from './get-novu-integration';
+import { CalculateLimitNovuIntegration } from './calculate-limit-novu-integration';
 
 export const USE_CASES = [
   GetWebhookSupportStatus,
@@ -20,4 +22,6 @@ export const USE_CASES = [
   DeactivateSimilarChannelIntegrations,
   CheckIntegration,
   CheckIntegrationEMail,
+  GetNovuIntegration,
+  CalculateLimitNovuIntegration,
 ];

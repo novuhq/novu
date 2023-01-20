@@ -5,13 +5,7 @@ import {
   IPreferenceChannels,
   StepTypeEnum,
 } from '@novu/shared';
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageEmail } from './send-message-email.usecase';
-import { SendMessageSms } from './send-message-sms.usecase';
-import { SendMessageInApp } from './send-message-in-app.usecase';
-import { SendMessageChat } from './send-message-chat.usecase';
-import { SendMessagePush } from './send-message-push.usecase';
-import { Digest } from './digest/digest.usecase';
+import { AnalyticsService } from '@novu/application-generic';
 import {
   JobEntity,
   SubscriberRepository,
@@ -20,6 +14,14 @@ import {
   JobStatusEnum,
   EnvironmentRepository,
 } from '@novu/dal';
+
+import { SendMessageCommand } from './send-message.command';
+import { SendMessageEmail } from './send-message-email.usecase';
+import { SendMessageSms } from './send-message-sms.usecase';
+import { SendMessageInApp } from './send-message-in-app.usecase';
+import { SendMessageChat } from './send-message-chat.usecase';
+import { SendMessagePush } from './send-message-push.usecase';
+import { Digest } from './digest/digest.usecase';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { SendMessageDelay } from './send-message-delay.usecase';
 import {
@@ -30,7 +32,6 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
@@ -60,6 +61,24 @@ export class SendMessage {
     const shouldRun = await this.filter(command);
     const preferred = await this.filterPreferredChannels(command.job);
 
+    if (!command.payload?.$on_boarding_trigger) {
+      this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
+        _template: command.job._templateId,
+        _organization: command.organizationId,
+        _environment: command.environmentId,
+        _subscriber: command.job?._subscriberId,
+        provider: command.job?.providerId,
+        delay: command.job?.delay,
+        jobType: command.job?.type,
+        digestType: command.job.digest?.type,
+        digestEventsCount: command.job.digest?.events?.length,
+        digestUnit: command.job.digest?.unit,
+        digestAmount: command.job.digest?.amount,
+        filterPassed: shouldRun,
+        preferencesPassed: preferred,
+      });
+    }
+
     if (!shouldRun || !preferred) {
       await this.jobRepository.updateStatus(command.organizationId, command.jobId, JobStatusEnum.CANCELED);
 
@@ -78,21 +97,6 @@ export class SendMessage {
           isRetry: false,
         })
       );
-    }
-
-    if (!command.payload?.$on_boarding_trigger) {
-      this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
-        _template: command.job._templateId,
-        _organization: command.organizationId,
-        _subscriber: command.job?._subscriberId,
-        provider: command.job?.providerId,
-        delay: command.job?.delay,
-        jobType: command.job?.type,
-        digestType: command.job.digest?.type,
-        digestEventsCount: command.job.digest?.events?.length,
-        digestUnit: command.job.digest?.unit,
-        digestAmount: command.job.digest?.amount,
-      });
     }
 
     switch (command.step.template.type) {
@@ -116,12 +120,7 @@ export class SendMessage {
   private async filter(command: SendMessageCommand) {
     const data = await this.getFilterData(command);
 
-    const configuration = {
-      job: command.job,
-      command,
-    };
-
-    const shouldRun = await this.matchMessage.filter(command.step, data, configuration);
+    const shouldRun = await this.matchMessage.filter(command, data);
 
     if (!shouldRun) {
       await this.createExecutionDetails.execute(

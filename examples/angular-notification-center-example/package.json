@@ -1,6 +1,6 @@
 {
   "name": "angular-notification-center-example",
-  "version": "0.10.1",
+  "version": "0.10.3",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -19,7 +19,7 @@
     "@angular/platform-browser": "^15.0.0",
     "@angular/platform-browser-dynamic": "^15.0.0",
     "@angular/router": "^15.0.0",
-    "@novu/notification-center-angular": "^0.10.1",
+    "@novu/notification-center-angular": "^0.10.3",
     "rxjs": "~7.5.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"
