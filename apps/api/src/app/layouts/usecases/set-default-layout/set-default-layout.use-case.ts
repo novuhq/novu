@@ -12,8 +12,12 @@ export class SetDefaultLayoutUseCase {
   async execute(command: SetDefaultLayoutCommand) {
     const defaultLayoutId = await this.findDefaultLayoutId(command.environmentId, command.organizationId);
 
+    if (defaultLayoutId && defaultLayoutId !== command.layoutId) {
+      return;
+    }
+
     try {
-      if (defaultLayoutId && defaultLayoutId !== command.layoutId) {
+      if (defaultLayoutId) {
         await this.setIsDefaultForLayout(defaultLayoutId, command.environmentId, command.organizationId, false);
       }
 

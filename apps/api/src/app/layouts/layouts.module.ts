@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 
 import { USE_CASES } from './usecases';
 import { LayoutsController } from './layouts.controller';

@@ -10,6 +10,7 @@ import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts/usecases';
 import { VerifyPayloadService } from '../../../shared/helpers/verify-payload.service';
 import { LayoutDto } from '../../../layouts/dtos';
 import { GetNovuLayout } from '../../../layouts/usecases/get-novu-layout/get-novu-layout.usecase';
+import { readFile } from 'fs/promises';
 
 @Injectable()
 export class CompileEmailTemplate {
@@ -144,18 +145,13 @@ export class CompileEmailTemplate {
   }
 
   private async loadTemplateContent(name: string) {
-    return new Promise<string>((resolve, reject) => {
-      let path = '';
-      if (!process.env.E2E_RUNNER) {
-        path = '/src/app/content-templates/usecases/compile-email-template';
-      }
-      fs.readFile(`${__dirname}${path}/templates/${name}`, (err, content) => {
-        if (err) {
-          return reject(err);
-        }
+    let path = '';
+    if (!process.env.E2E_RUNNER) {
+      path = '/src/app/content-templates/usecases/compile-email-template';
+    }
 
-        return resolve(content.toString());
-      });
-    });
+    const content = await readFile(`${__dirname}${path}/templates/${name}`);
+
+    return content.toString();
   }
 }
