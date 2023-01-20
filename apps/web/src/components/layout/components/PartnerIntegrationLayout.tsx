@@ -4,7 +4,7 @@ export function PartnerIntegrationLayout({ children }: { children: React.ReactNo
   const { colorScheme } = useMantineColorScheme();
 
   const isDark = colorScheme === 'dark';
-  const logoUrl = `/static/images/logo-formerly-${isDark ? 'dark' : 'light'}-bg.png`;
+  const logoUrl = isDark ? '/static/images/logo-light.png' : '/static/images/logo.png';
 
   return (
     <div>
