@@ -846,6 +846,7 @@ importers:
       cross-env: ^7.0.3
       dotenv: ^8.2.0
       envalid: ^7.1.0
+      helmet: ^6.0.1
       ioredis: ^5.2.4
       jest: ^27.0.6
       jsonwebtoken: 9.0.0
@@ -884,6 +885,7 @@ importers:
       class-transformer: 0.5.1
       dotenv: 8.6.0
       envalid: 7.3.0
+      helmet: 6.0.1
       ioredis: 5.2.4
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
@@ -46895,7 +46897,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 9.1.1_typescript@4.6.2
+      ts-node: 9.1.1_typescript@4.3.5
     transitivePeerDependencies:
       - bufferutil
       - canvas
