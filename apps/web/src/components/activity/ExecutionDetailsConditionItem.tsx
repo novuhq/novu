@@ -9,7 +9,7 @@ export function ExecutionDetailsConditionItem({ condition }: { condition: ICondi
   const isPassed = condition.passed;
   const Icon = isPassed ? CheckCircle : ErrorIcon;
   const passedStatusColor = isPassed ? colors.success : colors.error;
-  const tooltipLabel = isPassed ? 'Filter matched' : "Filter didn't matched";
+  const tooltipLabel = isPassed ? 'Filter matched' : "Filter didn't match";
 
   return (
     <ItemContainer spacing={5}>
@@ -60,4 +60,5 @@ const ConditionTitle = styled(Text)`
 const ConditionHeader = styled.div`
   display: flex;
   gap: 5px;
+  cursor: pointer;
 `;
