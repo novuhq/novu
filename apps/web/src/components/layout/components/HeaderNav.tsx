@@ -13,7 +13,6 @@ import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
-import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 
 type Props = {};
 const menuItem = [
@@ -143,15 +142,12 @@ export function HeaderNav({}: Props) {
       >
         <Link to="/">
           <img
-            src={dark ? '/static/images/logo-formerly-dark-bg.png' : '/static/images/logo-formerly-light-bg.png'}
+            src={dark ? '/static/images/logo-light.png' : '/static/images/logo.png'}
             alt="logo"
             style={{ maxWidth: 150, maxHeight: 25 }}
           />
         </Link>
         <Group>
-          <Link to="/integrations">
-            <LimitBar />
-          </Link>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
             <Tooltip label={themeTitle()}>
               <div>{Icon()}</div>

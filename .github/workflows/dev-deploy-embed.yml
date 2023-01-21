@@ -66,6 +66,10 @@ jobs:
           NETLIFY_SITE_ID: 22682666-3a8d-40be-af26-017bfadf5ae9
         timeout-minutes: 1
 
+      - name: Remove build outputs
+        working-directory: libs/embed
+        run: rm -rf dist
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
