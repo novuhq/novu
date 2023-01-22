@@ -8,6 +8,7 @@ import {
 } from '@novu/stateless';
 import { Message, SMTPClient, MessageAttachment } from 'emailjs';
 import { IEmailJsConfig } from './emailjs.config';
+import { MessageHeaders } from 'emailjs/smtp/message';
 
 export class EmailJsProvider implements IEmailProvider {
   readonly id = 'emailjs';
@@ -25,16 +26,33 @@ export class EmailJsProvider implements IEmailProvider {
     });
   }
 
-  async sendMessage({
-    from,
-    to,
-    subject,
-    text,
-    html,
-    attachments,
-  }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
-    const attachmentsModel: MessageAttachment[] = attachments
-      ? attachments.map((attachment) => {
+  async sendMessage(
+    emailOptions: IEmailOptions
+  ): Promise<ISendMessageSuccessResponse> {
+    const headers: Partial<MessageHeaders> = {
+      from: emailOptions.from || this.config.from,
+      to: emailOptions.to,
+      subject: emailOptions.subject,
+      text: emailOptions.text,
+      attachment: this.mapAttachments(emailOptions),
+    };
+
+    if (emailOptions.replyTo) {
+      headers['reply-to'] = emailOptions.replyTo;
+    }
+
+    const sent = await this.client.sendAsync(new Message(headers));
+
+    return {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      id: sent.header['message-id']!,
+      date: sent.header.date,
+    };
+  }
+
+  private mapAttachments(emailOptions: IEmailOptions) {
+    const attachmentsModel: MessageAttachment[] = emailOptions.attachments
+      ? emailOptions.attachments.map((attachment) => {
           return {
             name: attachment.name,
             data: attachment.file.toString('base64'),
@@ -43,23 +61,9 @@ export class EmailJsProvider implements IEmailProvider {
         })
       : [];
 
-    attachmentsModel?.push({ data: html, alternative: true });
+    attachmentsModel?.push({ data: emailOptions.html, alternative: true });
 
-    const sent = await this.client.sendAsync(
-      new Message({
-        from: from || this.config.from,
-        to,
-        subject,
-        text,
-        attachment: attachmentsModel,
-      })
-    );
-
-    return {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      id: sent.header['message-id']!,
-      date: sent.header.date,
-    };
+    return attachmentsModel;
   }
 
   async checkIntegration(

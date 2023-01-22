@@ -1,7 +1,7 @@
 {
   "name": "vue-notification-center-example",
   "private": true,
-  "version": "0.10.1",
+  "version": "0.10.3",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check build-only",
@@ -10,7 +10,7 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@novu/notification-center-vue": "^0.10.1",
+    "@novu/notification-center-vue": "^0.10.3",
     "vue": "^3.2.41"
   },
   "devDependencies": {

@@ -40,7 +40,6 @@ describe('Topic Trigger Event', () => {
     let triggerEndpointUrl: string;
     const notificationRepository = new NotificationRepository();
     const messageRepository = new MessageRepository();
-    const logRepository = new LogRepository();
 
     beforeEach(async () => {
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
@@ -64,31 +63,6 @@ describe('Topic Trigger Event', () => {
 
     afterEach(() => {
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
-    });
-
-    it('should generate logs for the notification for a topic with 2 subscribers', async () => {
-      await axiosInstance.post(
-        triggerEndpointUrl,
-        buildTriggerRequestPayload(template, to),
-        buildTriggerRequestHeaders(session)
-      );
-
-      await session.awaitRunningJobs(template._id);
-
-      const logs = await logRepository.find({
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-      });
-
-      expect(logs.length).to.be.eql(5);
-      expect(logs.find((log) => log.text === 'Request processed' && log._subscriberId === firstSubscriber._id)).to
-        .exist;
-      expect(logs.find((log) => log.text === 'Request processed' && log._subscriberId === secondSubscriber._id)).to
-        .exist;
-      expect(logs.find((log) => log.text === 'In App message created' && log._subscriberId === firstSubscriber._id)).to
-        .exist;
-      expect(logs.find((log) => log.text === 'In App message created' && log._subscriberId === secondSubscriber._id)).to
-        .exist;
     });
 
     it('should trigger an event successfully', async () => {
@@ -282,28 +256,6 @@ describe('Topic Trigger Event', () => {
 
     afterEach(() => {
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
-    });
-
-    it('should generate logs for the notification for 2 topics with 2 subscribers and 2 individual subscribers', async () => {
-      await axiosInstance.post(
-        triggerEndpointUrl,
-        buildTriggerRequestPayload(template, to),
-        buildTriggerRequestHeaders(session)
-      );
-
-      await session.awaitRunningJobs(template._id);
-
-      const logs = await logRepository.find({
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-      });
-
-      expect(logs.length).to.be.eql(13);
-      expect(subscribers.length).to.be.greaterThan(0);
-      for (const subscriber of subscribers) {
-        expect(logs.find((log) => log.text === 'Request processed' && log._subscriberId === subscriber._id)).to.exist;
-        expect(logs.find((log) => log.text === 'Request processed' && log._subscriberId === subscriber._id)).to.exist;
-      }
     });
 
     it('should trigger an event successfully', async () => {

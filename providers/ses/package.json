@@ -1,6 +1,6 @@
 {
   "name": "@novu/ses",
-  "version": "0.10.1",
+  "version": "0.10.2",
   "description": "A ses wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-ses": "3.48.0",
-    "@novu/stateless": "^0.10.1",
+    "@novu/stateless": "^0.10.2",
     "nodemailer": "^6.6.5"
   },
   "devDependencies": {

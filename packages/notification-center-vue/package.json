@@ -1,7 +1,7 @@
 {
   "name": "@novu/notification-center-vue",
   "sideEffects": false,
-  "version": "0.10.1",
+  "version": "0.10.3",
   "description": "Vue specific wrapper for notification-center",
   "repository": {
     "type": "git",
@@ -20,9 +20,13 @@
   ],
   "dependencies": {
     "@emotion/css": "^11.10.5",
-    "@novu/notification-center": "^0.10.1",
+    "@novu/notification-center": "^0.10.3",
     "floating-vue": "https://github.com/LetItRock/floating-vue/raw/main/packages/floating-vue/floating-vue-2.0.0-beta.21.tgz",
-    "vue": "^3.2.45"
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1"
+  },
+  "peerDependencies": {
+    "vue": ">=3.0.0"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.4",
@@ -36,10 +40,9 @@
     "eslint-plugin-vue": "^9.3.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.7.1",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
     "typescript": "~4.7.4",
     "vite": "^4.0.0",
+    "vue": "^3.2.45",
     "vue-tsc": "^1.0.12"
   },
   "jest": {

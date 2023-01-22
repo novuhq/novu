@@ -16,6 +16,10 @@ export function regenerateApiKeys() {
   return api.post(`/v1/environments/api-keys/regenerate`, {});
 }
 
+export function updateDnsSettings(payload: { domain: string | undefined }, environmentId: string) {
+  return api.put(`/v1/environments/${environmentId}`, { dns: payload });
+}
+
 export function updateEmailSettings(payload: { senderEmail: string; senderName: string }) {
   return api.put(`/v1/channels/email/settings`, payload);
 }
@@ -26,4 +30,8 @@ export function updateSmsSettings(payload: { authToken: string; accountSid: stri
 
 export function updateWidgetSettings(payload: { notificationCenterEncryption: boolean | undefined }) {
   return api.put(`/v1/environments/widget/settings`, payload);
+}
+
+export function validateMxRecord() {
+  return api.get(`/v1/environments/mx-record-status`);
 }

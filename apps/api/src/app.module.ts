@@ -1,4 +1,4 @@
-import { DynamicModule, HttpException, Module, OnModuleInit, Provider } from '@nestjs/common';
+import { DynamicModule, HttpException, Module, Logger, Provider } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -29,8 +29,10 @@ import { FeedsModule } from './app/feeds/feeds.module';
 import { MessagesModule } from './app/messages/messages.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
 import { TopicsModule } from './app/topics/topics.module';
+import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+  InboundParseModule,
   OrganizationModule,
   SharedModule,
   UserModule,
@@ -85,5 +87,7 @@ if (process.env.NODE_ENV === 'test') {
   providers,
 })
 export class AppModule {
-  constructor(private queueService: QueueService) {}
+  constructor(private queueService: QueueService) {
+    Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
+  }
 }

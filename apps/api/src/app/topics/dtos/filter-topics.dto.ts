@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 import { TopicDto } from './topic.dto';
@@ -10,14 +10,14 @@ export class FilterTopicsRequestDto {
   @Transform(({ value }) => Number(value))
   @IsOptional()
   @IsInt()
-  @IsPositive()
+  @Min(0)
   @ApiPropertyOptional({ type: Number })
   public page?: number;
 
   @Transform(({ value }) => Number(value))
   @IsOptional()
   @IsInt()
-  @IsPositive()
+  @Min(0)
   @ApiPropertyOptional({ type: Number })
   public pageSize?: number;
 

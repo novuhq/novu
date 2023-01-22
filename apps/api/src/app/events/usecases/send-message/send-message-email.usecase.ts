@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import {
+  EnvironmentRepository,
   IEmailBlock,
+  IntegrationEntity,
+  MessageEntity,
   MessageRepository,
-  NotificationStepEntity,
+  NotificationEntity,
   NotificationRepository,
+  NotificationStepEntity,
+  OrganizationEntity,
+  OrganizationRepository,
   SubscriberEntity,
   SubscriberRepository,
-  OrganizationRepository,
-  MessageEntity,
-  NotificationEntity,
-  OrganizationEntity,
-  IntegrationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -31,12 +32,14 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
   channelType = ChannelTypeEnum.EMAIL;
 
   constructor(
+    protected environmentRepository: EnvironmentRepository,
     protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
@@ -59,15 +62,34 @@ export class SendMessageEmail extends SendMessageBase {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
     if (!subscriber) throw new ApiException(`Subscriber ${command.subscriberId} not found`);
 
-    const integration = await this.getIntegration(
-      GetDecryptedIntegrationsCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.EMAIL,
-        findOne: true,
-        active: true,
-      })
-    );
+    let integration: IntegrationEntity | undefined = undefined;
+
+    try {
+      integration = await this.getIntegration(
+        GetDecryptedIntegrationsCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          channelType: ChannelTypeEnum.EMAIL,
+          findOne: true,
+          active: true,
+          userId: command.userId,
+        })
+      );
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          raw: JSON.stringify({ message: e.message }),
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
     const emailChannel: NotificationStepEntity = command.step;
     if (!emailChannel) throw new ApiException('Email channel step not found');
     if (!emailChannel.template) throw new ApiException('Email channel template not found');
@@ -257,8 +279,10 @@ export class SendMessageEmail extends SendMessageBase {
     };
 
     if (command.step.replyCallback?.url) {
-      // todo here we need to use MX domain of the user from the _environment if available
-      mailData.replyTo = `parse+${command.transactionId}@novu.co`;
+      mailData.replyTo = await this.getReplyTo({
+        environmentId: command.environmentId,
+        transactionId: command.transactionId,
+      });
     }
 
     if (email && integration) {
@@ -267,6 +291,18 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
     await this.sendErrors(email, integration, message, command, notification);
+  }
+
+  private async getReplyTo({ environmentId, transactionId }: { environmentId: string; transactionId: string }) {
+    const environment = await this.environmentRepository.findOne({ _id: environmentId });
+
+    let replyCallbackRoute = process.env.REPLY_CALLBACK_ROUTE;
+
+    if (environment.dns?.mxRecordConfigured) {
+      replyCallbackRoute = environment.dns?.domain;
+    }
+
+    return `parse+${transactionId}@${replyCallbackRoute}`;
   }
 
   private async sendErrors(
@@ -344,7 +380,13 @@ export class SendMessageEmail extends SendMessageBase {
     notification: NotificationEntity
   ) {
     const mailFactory = new MailFactory();
-    const mailHandler = mailFactory.getHandler(integration, mailData.from);
+    const mailHandler = mailFactory.getHandler(
+      {
+        ...integration,
+        providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, integration.providerId),
+      },
+      mailData.from
+    );
 
     try {
       const result = await mailHandler.send(mailData);

@@ -70,6 +70,8 @@ const DraggableNode = ({ channel, setDragging, onDragStart }) => (
       setDragging(false);
     }}
     draggable
+    role="presentation"
+    aria-grabbed="true"
   >
     <DragButton
       Icon={channel.Icon}

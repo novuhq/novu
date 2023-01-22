@@ -22,17 +22,12 @@ export function useSubscriberPreference() {
     setLoading(false);
   }
 
-  async function updatePreference(
-    preferenceItem: IUserPreferenceSettings,
-    channelType: string,
-    checked: boolean,
-    preferenceIndex: number
-  ) {
+  async function updatePreference(preferenceItem: IUserPreferenceSettings, channelType: string, checked: boolean) {
     const result = await api.updateSubscriberPreference(preferenceItem.template._id, channelType, checked);
 
     setPreferences((prev) => {
-      return prev.map((workflow, i) => {
-        if (i === preferenceIndex) {
+      return prev.map((workflow) => {
+        if (workflow.template._id === result.template._id) {
           return result;
         }
 
