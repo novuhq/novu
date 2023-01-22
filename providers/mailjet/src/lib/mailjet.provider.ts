@@ -91,7 +91,7 @@ export class MailjetEmailProvider implements IEmailProvider {
     };
 
     if (options.replyTo) {
-      message.ReplyTo = options.replyTo;
+      message.ReplyTo.Email = options.replyTo;
     }
 
     return {

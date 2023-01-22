@@ -53,7 +53,7 @@ export class SendinblueEmailProvider implements IEmailProvider {
     }));
 
     if (options.replyTo) {
-      email.replyTo = options.replyTo;
+      email.replyTo.email = options.replyTo;
     }
 
     const { response, body } =
