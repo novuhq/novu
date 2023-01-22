@@ -87,6 +87,7 @@ export class CreateNotificationTemplate {
         metadata: message.metadata,
         active: message.active,
         shouldStopOnFail: message.shouldStopOnFail,
+        replyCallback: message.replyCallback,
       });
       parentStepId = stepId;
     }

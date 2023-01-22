@@ -46,6 +46,10 @@ export interface INotificationTemplateStep {
   template?: IMessageTemplate;
   active?: boolean;
   shouldStopOnFail?: boolean;
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
   metadata?: {
     amount?: number;
     unit?: DigestUnitEnum;
