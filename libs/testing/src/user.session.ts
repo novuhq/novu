@@ -20,6 +20,7 @@ import {
   ChangeRepository,
   ChangeEntity,
   SubscriberRepository,
+  LayoutRepository,
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
@@ -62,6 +63,7 @@ export class UserSession {
   private notificationGroupRepository = new NotificationGroupRepository();
   private jobRepository = new JobRepository();
   private feedRepository = new FeedRepository();
+  private layoutRepository = new LayoutRepository();
   private changeRepository: ChangeRepository = new ChangeRepository();
 
   token: string;
@@ -216,6 +218,13 @@ export class UserSession {
       _environmentId: this.environment._id,
       _organizationId: this.organization._id,
       _parentId: parentGroup?._id,
+    });
+
+    await this.layoutRepository.create({
+      name: 'Default',
+      _environmentId: this.environment._id,
+      _organizationId: this.organization._id,
+      isDefault: true,
     });
 
     return this.environment;

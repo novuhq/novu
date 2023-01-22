@@ -66,8 +66,8 @@ describe('Filter layouts - /layouts (GET)', async () => {
 
     const { data, totalCount, page, pageSize } = response.body;
 
-    expect(data.length).to.eql(3);
-    expect(totalCount).to.eql(3);
+    expect(data.length).to.eql(4);
+    expect(totalCount).to.eql(4);
     expect(page).to.eql(0);
     expect(pageSize).to.eql(10);
   });
@@ -81,7 +81,7 @@ describe('Filter layouts - /layouts (GET)', async () => {
     const { data, totalCount, page, pageSize } = response.body;
 
     expect(data.length).to.eql(2);
-    expect(totalCount).to.eql(3);
+    expect(totalCount).to.eql(4);
     expect(page).to.eql(0);
     expect(pageSize).to.eql(2);
 
@@ -89,7 +89,7 @@ describe('Filter layouts - /layouts (GET)', async () => {
     expect(data[1].name).to.eql('layout-name-2');
   });
 
-  it('should retrieve one layout from the database for the environment if pageSize is set to 2 and page 1 selected', async () => {
+  it('should retrieve two layout from the database for the environment if pageSize is set to 2 and page 1 selected', async () => {
     const url = `${BASE_PATH}?page=1&pageSize=2`;
     const response = await session.testAgent.get(url);
 
@@ -97,8 +97,8 @@ describe('Filter layouts - /layouts (GET)', async () => {
 
     const { data, totalCount, page, pageSize } = response.body;
 
-    expect(data.length).to.eql(1);
-    expect(totalCount).to.eql(3);
+    expect(data.length).to.eql(2);
+    expect(totalCount).to.eql(4);
     expect(page).to.eql(1);
     expect(pageSize).to.eql(2);
 
@@ -114,7 +114,7 @@ describe('Filter layouts - /layouts (GET)', async () => {
     const { data, totalCount, page, pageSize } = response.body;
 
     expect(data.length).to.eql(0);
-    expect(totalCount).to.eql(3);
+    expect(totalCount).to.eql(4);
     expect(page).to.eql(2);
     expect(pageSize).to.eql(2);
   });
@@ -127,8 +127,8 @@ describe('Filter layouts - /layouts (GET)', async () => {
 
     const { data, totalCount, page, pageSize } = response.body;
 
-    expect(data.length).to.eql(3);
-    expect(totalCount).to.eql(3);
+    expect(data.length).to.eql(4);
+    expect(totalCount).to.eql(4);
     expect(page).to.eql(0);
     expect(pageSize).to.eql(10);
   });
@@ -141,14 +141,14 @@ describe('Filter layouts - /layouts (GET)', async () => {
 
     const { data, totalCount, page, pageSize } = response.body;
 
-    expect(data.length).to.eql(3);
-    expect(totalCount).to.eql(3);
+    expect(data.length).to.eql(4);
+    expect(totalCount).to.eql(4);
     expect(page).to.eql(0);
     expect(pageSize).to.eql(10);
 
-    expect(data[0].name).to.eql('layout-name-1');
-    expect(data[1].name).to.eql('layout-name-2');
-    expect(data[2].name).to.eql('layout-name-3');
+    expect(data[1].name).to.eql('layout-name-1');
+    expect(data[2].name).to.eql('layout-name-2');
+    expect(data[3].name).to.eql('layout-name-3');
   });
 
   it('should order the filtered layouts by creation date in descendent order', async () => {
@@ -159,8 +159,8 @@ describe('Filter layouts - /layouts (GET)', async () => {
 
     const { data, totalCount, page, pageSize } = response.body;
 
-    expect(data.length).to.eql(3);
-    expect(totalCount).to.eql(3);
+    expect(data.length).to.eql(4);
+    expect(totalCount).to.eql(4);
     expect(page).to.eql(0);
     expect(pageSize).to.eql(10);
 
@@ -178,7 +178,7 @@ describe('Filter layouts - /layouts (GET)', async () => {
     const { data, totalCount, page, pageSize } = response.body;
 
     expect(data.length).to.eql(2);
-    expect(totalCount).to.eql(3);
+    expect(totalCount).to.eql(4);
     expect(page).to.eql(0);
     expect(pageSize).to.eql(2);
 
