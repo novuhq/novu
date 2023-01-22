@@ -8,6 +8,7 @@ import { LayoutDto } from '../../dtos';
 import { ChannelTypeEnum, ITemplateVariable } from '../../types';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { isReservedVariableName } from '@novu/shared';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class CreateLayoutUseCase {
@@ -15,7 +16,10 @@ export class CreateLayoutUseCase {
 
   async execute(command: CreateLayoutCommand): Promise<LayoutDto> {
     const variables = this.getExtractedVariables(command.variables as ITemplateVariable[], command.content);
-
+    const hasBody = command.content.includes('{{{body}}}');
+    if (!hasBody) {
+      throw new ApiException('Layout content must contain {{{body}}}');
+    }
     const entity = this.mapToEntity({ ...command, variables });
 
     const layout = await this.layoutRepository.createLayout(entity);

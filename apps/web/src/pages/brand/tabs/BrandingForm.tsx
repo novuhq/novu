@@ -201,9 +201,15 @@ export function BrandingForm({
             />
           </Card>
         </Flex>
-        <Button submit mb={20} mt={25} loading={isUpdateBrandingLoading} data-test-id="submit-branding-settings">
-          Update
-        </Button>
+        <div
+          style={{
+            textAlign: 'right',
+          }}
+        >
+          <Button submit mb={20} mt={25} loading={isUpdateBrandingLoading} data-test-id="submit-branding-settings">
+            Update
+          </Button>
+        </div>
       </form>
     </>
   );

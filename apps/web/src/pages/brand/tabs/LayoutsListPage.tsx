@@ -1,9 +1,9 @@
 import { ColumnWithStrictAccessor } from 'react-table';
 import { Data, Table } from '../../../design-system/table/Table';
-import { Button, colors, LoadingOverlay, Tag, Text, Tooltip } from '../../../design-system';
+import { colors, LoadingOverlay, Text, Tooltip } from '../../../design-system';
 import { format } from 'date-fns';
-import { ActionIcon, useMantineTheme } from '@mantine/core';
-import { Edit, PlusCircle, PlusGradient, Trash } from '../../../design-system/icons';
+import { ActionIcon, useMantineTheme, UnstyledButton } from '@mantine/core';
+import { Edit, Trash } from '../../../design-system/icons';
 import styled from '@emotion/styled';
 import { useState } from 'react';
 import { LayoutEditor } from './LayoutEditor';
@@ -87,11 +87,6 @@ export function LayoutsListPage() {
       Cell: ({ updatedAt }: any) => format(new Date(updatedAt), 'dd/MM/yyyy HH:mm'),
     },
     {
-      accessor: 'used',
-      Header: 'Used in Prod',
-      Cell: ({ used }: any) => <Tag>{used ? 'Used' : 'Not Used'}</Tag>,
-    },
-    {
       accessor: '_id',
       Header: '',
       maxWidth: 50,
@@ -134,15 +129,17 @@ export function LayoutsListPage() {
       </When>
       <When truthy={activeScreen === ActivePageEnum.LAYOUTS_LIST}>
         <LoadingOverlay visible={isLoading || isLoadingDelete}>
-          <Button
-            variant="outline"
-            onClick={() => setActiveScreen(ActivePageEnum.CREATE_LAYOUT)}
-            icon={
-              theme.colorScheme === 'dark' ? <PlusCircle /> : <PlusGradient style={{ width: '20', height: '20' }} />
-            }
+          <div
+            style={{
+              textAlign: 'right',
+              marginBottom: '10px',
+            }}
           >
-            Add Layout
-          </Button>
+            <UnstyledButton onClick={() => setActiveScreen(ActivePageEnum.CREATE_LAYOUT)}>
+              <Text gradient>+ Create New Layout</Text>
+            </UnstyledButton>
+          </div>
+
           <TemplateListTableWrapper>
             <Table
               columns={columns}
