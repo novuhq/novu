@@ -63,6 +63,10 @@ jobs:
           NETLIFY_SITE_ID: 0689c015-fca0-4940-a26d-3e33f561bc48
         timeout-minutes: 1
 
+      - name: Remove build outputs
+        working-directory: libs/embed
+        run: rm -rf dist
+
       - name: Build, tag, and push image to ghcr.io
         id: build-image
         env:

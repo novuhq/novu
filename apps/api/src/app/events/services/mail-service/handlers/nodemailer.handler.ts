@@ -12,7 +12,7 @@ export class NodemailerHandler extends BaseHandler {
       from: string;
       host: string;
       port: number;
-      secure: boolean;
+      secure?: boolean;
       user: string;
       password: string;
       dkim: {
