@@ -135,9 +135,9 @@ export function LayoutEditor({
           Go Back
         </Text>
       </Center>
-      <Grid grow>
-        <Grid.Col span={9}>
-          <form name={'layout-form'} onSubmit={handleSubmit(onSubmitLayout)}>
+      <form name={'layout-form'} onSubmit={handleSubmit(onSubmitLayout)}>
+        <Grid grow>
+          <Grid.Col span={9}>
             <Grid gutter={30} grow>
               <Grid.Col md={5} sm={12}>
                 <Controller
@@ -184,46 +184,46 @@ export function LayoutEditor({
                 return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} />;
               }}
             />
-          </form>
-        </Grid.Col>
-        <Grid.Col
-          span={3}
-          style={{
-            maxWidth: '350px',
-          }}
-        >
-          <VariablesManagement
-            index={0}
-            openVariablesModal={() => {
-              setModalOpen(true);
+          </Grid.Col>
+          <Grid.Col
+            span={3}
+            style={{
+              maxWidth: '350px',
             }}
-            path="variables"
+          >
+            <VariablesManagement
+              index={0}
+              openVariablesModal={() => {
+                setModalOpen(true);
+              }}
+              path="variables"
+              control={control}
+            />
+          </Grid.Col>
+        </Grid>
+        <Group position="right" py={20}>
+          <Controller
+            name="isDefault"
             control={control}
+            render={({ field }) => {
+              return (
+                <Checkbox
+                  checked={field.value === true}
+                  disabled={readonly}
+                  onChange={field.onChange}
+                  // mt={30}
+                  data-test-id="is-default-layout"
+                  label="Set as Default"
+                />
+              );
+            }}
           />
-        </Grid.Col>
-      </Grid>
-      <Group position="right" py={20}>
-        <Controller
-          name="isDefault"
-          control={control}
-          render={({ field }) => {
-            return (
-              <Checkbox
-                checked={field.value === true}
-                disabled={readonly}
-                onChange={field.onChange}
-                // mt={30}
-                data-test-id="is-default-layout"
-                label="Set as Default"
-              />
-            );
-          }}
-        />
 
-        <Button submit data-test-id="submit-layout">
-          {editMode ? 'Update' : 'Create'}
-        </Button>
-      </Group>
+          <Button submit data-test-id="submit-layout">
+            {editMode ? 'Update' : 'Create'}
+          </Button>
+        </Group>
+      </form>
       <Modal
         opened={modalOpen}
         overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
