@@ -27,13 +27,15 @@ export const EmailInboxContent = ({
   useEffect(() => {
     const layout = getValues(`steps.${index}.template.layoutId`);
     if (layouts?.length && !layout) {
-      const defaultLayout = getDefaultLayout();
-      setValue(`steps.${index}.template.layoutId`, defaultLayout?._id);
+      getDefaultLayout();
     }
   }, [layouts]);
 
   function getDefaultLayout() {
-    return layouts?.find((layout) => layout.isDefault);
+    const defaultLayout = layouts?.find((layout) => layout.isDefault);
+    setTimeout(() => {
+      setValue(`steps.${index}.template.layoutId`, defaultLayout?._id, { shouldValidate: true });
+    }, 0);
   }
 
   return (
