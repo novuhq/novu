@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { colors, Input, Select } from '../../../design-system';
 import { EmailIntegrationInfo } from '../../../pages/templates/editor/EmailIntegrationInfo';
 import { useLayouts } from '../../../api/hooks/use-layouts';
+import { useEffect } from 'react';
 
 export const EmailInboxContent = ({
   integration,
@@ -17,9 +18,23 @@ export const EmailInboxContent = ({
   const theme = useMantineTheme();
   const {
     control,
+    getValues,
+    setValue,
     formState: { errors },
   } = useFormContext();
   const { layouts, isLoading } = useLayouts(0, 100);
+
+  useEffect(() => {
+    const layout = getValues(`steps.${index}.template.layoutId`);
+    if (layouts?.length && !layout) {
+      const defaultLayout = getDefaultLayout();
+      setValue(`steps.${index}.template.layoutId`, defaultLayout?._id);
+    }
+  }, [layouts]);
+
+  function getDefaultLayout() {
+    return layouts?.find((layout) => layout.isDefault);
+  }
 
   return (
     <div
