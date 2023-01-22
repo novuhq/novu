@@ -45,7 +45,7 @@ import {
   SetDefaultLayoutUseCase,
   UpdateLayoutCommand,
   UpdateLayoutUseCase,
-} from './use-cases';
+} from './usecases';
 import { LayoutId } from './types';
 
 import { JwtAuthGuard } from '../auth/framework/auth.guard';

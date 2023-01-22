@@ -37,8 +37,8 @@ export class CreateLayoutUseCase {
 
   private mapToEntity(domainEntity: CreateLayoutCommand): Omit<LayoutEntity, '_id' | 'createdAt' | 'updatedAt'> {
     return {
-      _environmentId: LayoutRepository.convertStringToObjectId(domainEntity.environmentId),
-      _organizationId: LayoutRepository.convertStringToObjectId(domainEntity.organizationId),
+      _environmentId: domainEntity.environmentId,
+      _organizationId: domainEntity.organizationId,
       _creatorId: domainEntity.userId,
       channel: ChannelTypeEnum.EMAIL,
       content: domainEntity.content,
@@ -54,9 +54,9 @@ export class CreateLayoutUseCase {
   private mapFromEntity(layout: LayoutEntity): LayoutDto {
     return {
       ...layout,
-      _id: LayoutRepository.convertObjectIdToString(layout._id),
-      _organizationId: LayoutRepository.convertObjectIdToString(layout._organizationId),
-      _environmentId: LayoutRepository.convertObjectIdToString(layout._environmentId),
+      _id: layout._id,
+      _organizationId: layout._organizationId,
+      _environmentId: layout._environmentId,
       isDeleted: layout.deleted,
     };
   }

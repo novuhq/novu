@@ -1,3 +1,1 @@
-import { Types } from 'mongoose';
-
-export type EnvironmentId = Types.ObjectId;
+export type EnvironmentId = string;

@@ -11,14 +11,12 @@ import {
 import {
   ChannelTypeEnum,
   LogCodeEnum,
-  LogStatusEnum,
   PushProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { PushFactory } from '../../services/push-service/push.factory';
 import { SendMessageCommand } from './send-message.command';
 import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
@@ -83,16 +81,14 @@ export class SendMessagePush extends SendMessageBase {
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
-          customTemplate: pushChannel.template?.content as string,
+          template: pushChannel.template?.content as string,
           data,
         })
       );
 
       title = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
-          customTemplate: pushChannel.template?.title as string,
+          template: pushChannel.template?.title as string,
           data,
         })
       );

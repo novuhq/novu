@@ -1,13 +1,11 @@
 import { CompileTemplate } from './compile-template/compile-template.usecase';
-import { CompileEmailTemplateUsecase } from './compile-template/email/compile-email-template.usecase';
+import { CompileEmailTemplate } from './compile-email-template/compile-email-template.usecase';
 
 export * from './compile-template/compile-template.usecase';
 export * from './compile-template/compile-template.command';
-export * from './compile-template/email/compile-email-template.usecase';
-export * from './compile-template/email/compile-email-template.command';
 
 export const USE_CASES = [
   CompileTemplate,
-  CompileEmailTemplateUsecase,
+  CompileEmailTemplate,
   //
 ];
