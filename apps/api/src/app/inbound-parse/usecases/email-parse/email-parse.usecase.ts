@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EmailParseCommand } from './email-parse.command';
 import { JobEntity, JobRepository, MessageRepository } from '@novu/dal';
 import axios from 'axios';
@@ -10,11 +10,11 @@ export class EmailParse {
   constructor(private jobRepository: JobRepository, private messageRepository: MessageRepository) {}
 
   async execute(command: EmailParseCommand) {
-    const { toDomain, toTransactionId } = this.splitTo(command);
+    const { toDomain, toTransactionId } = this.splitTo(command.to[0].address);
 
     if (!toTransactionId) {
       // eslint-disable-next-line no-console
-      console.error('missing transactionId');
+      Logger.warn(`missing transactionId on address ${command.to[0].address}`);
 
       return;
     }
@@ -23,12 +23,19 @@ export class EmailParse {
 
     if (toDomain !== environment?.dns?.domain) {
       // eslint-disable-next-line no-console
-      console.error('to domain is not in environment white list');
+      Logger.warn('to domain is not in environment white list');
 
       return;
     }
 
-    const currentParseWebhook = template.steps.find((step) => step._id.toString() === job.step.id)?.replyCallback.url;
+    const currentParseWebhook = template.steps.find((step) => step?._id?.toString() === job?.step?._id)?.replyCallback
+      ?.url;
+
+    if (!currentParseWebhook) {
+      Logger.warn(`missing parse webhook on template ${template._id} job ${job._id} transactionId ${toTransactionId}.`);
+
+      return;
+    }
 
     const userPayload = {
       hmac: this.createHmac(environment.apiKeys, subscriber.subscriberId),
@@ -44,8 +51,8 @@ export class EmailParse {
     await this.axiosInstance.post(`${currentParseWebhook}`, userPayload);
   }
 
-  private splitTo(command: EmailParseCommand) {
-    const [toUser, toDomain] = command.to[0].address.split('@');
+  private splitTo(address: string) {
+    const [toUser, toDomain] = address.split('@');
     const toTransactionId = toUser.split('+')[1];
 
     return { toDomain, toTransactionId };

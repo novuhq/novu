@@ -146,7 +146,14 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     selectNotification?: ProjectionType<NotificationEntity>;
     selectSubscriber?: ProjectionType<SubscriberEntity>;
     selectEnvironment?: ProjectionType<EnvironmentEntity>;
-  }) {
+  }): Promise<
+    JobEntity & {
+      template: NotificationTemplateEntity;
+      notification: NotificationEntity;
+      subscriber: SubscriberEntity;
+      environment: EnvironmentEntity;
+    }
+  > {
     return Job.findOne(query, select)
       .populate('template', selectTemplate)
       .populate('notification', selectNotification)
