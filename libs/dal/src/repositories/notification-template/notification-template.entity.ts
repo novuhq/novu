@@ -77,6 +77,11 @@ export class NotificationStepEntity {
 
   active?: boolean;
 
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
+
   template?: MessageTemplateEntity;
 
   filters?: StepFilter[];

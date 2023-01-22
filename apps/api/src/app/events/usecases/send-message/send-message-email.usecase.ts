@@ -15,7 +15,7 @@ import {
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { CreateLog } from '../../../logs/usecases';
 import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
 import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
@@ -57,7 +57,7 @@ export class SendMessageEmail extends SendMessageBase {
 
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
-    if (!subscriber) throw new ApiException('Subscriber not found');
+    if (!subscriber) throw new ApiException(`Subscriber ${command.subscriberId} not found`);
 
     const integration = await this.getIntegration(
       GetDecryptedIntegrationsCommand.create({
@@ -73,10 +73,10 @@ export class SendMessageEmail extends SendMessageBase {
     if (!emailChannel.template) throw new ApiException('Email channel template not found');
 
     const notification = await this.notificationRepository.findById(command.notificationId);
-    if (!notification) throw new ApiException('Notification not found');
+    if (!notification) throw new ApiException(`Notification ${command.notificationId} not found`);
 
     const organization: OrganizationEntity | null = await this.organizationRepository.findById(command.organizationId);
-    if (!organization) throw new ApiException('Organization not found');
+    if (!organization) throw new ApiException(`Organization ${command.organizationId} not found`);
 
     const email = command.payload.email || subscriber.email;
 
@@ -122,14 +122,15 @@ export class SendMessageEmail extends SendMessageBase {
     };
 
     try {
-      subject = await this.renderContent(
-        emailChannel.template.subject || '',
-        emailChannel.template.subject,
-        organization,
-        subscriber,
-        command,
-        preheader
-      );
+      subject =
+        (await this.renderContent(
+          emailChannel.template.subject || '',
+          emailChannel.template.subject,
+          organization,
+          subscriber,
+          command,
+          preheader
+        )) ?? '';
 
       content = await this.getContent(
         isEditorMode,
@@ -254,6 +255,11 @@ export class SendMessageEmail extends SendMessageBase {
       attachments,
       id: message._id,
     };
+
+    if (command.step.replyCallback?.url) {
+      // todo here we need to use MX domain of the user from the _environment if available
+      mailData.replyTo = `parse+${command.transactionId}@novu.co`;
+    }
 
     if (email && integration) {
       await this.sendMessage(integration, mailData, message, command, notification);
@@ -413,7 +419,8 @@ export class SendMessageEmail extends SendMessageBase {
          * We need to trim the content in order to avoid mail provider like GMail
          * to display the mail with `[Message clipped]` footer.
          */
-        block.content = await this.renderContent(block.content, subject, organization, subscriber, command, preheader);
+        block.content =
+          (await this.renderContent(block.content, subject, organization, subscriber, command, preheader)) ?? '';
         block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command, preheader);
       }
 
@@ -454,7 +461,7 @@ export class SendMessageEmail extends SendMessageBase {
       })
     );
 
-    return renderedContent.trim();
+    return renderedContent?.trim();
   }
 
   public static addPreheader(content: string, contentType: 'editor' | 'customHtml' | undefined): string | undefined {

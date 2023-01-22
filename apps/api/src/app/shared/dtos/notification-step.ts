@@ -125,4 +125,10 @@ export class NotificationStep {
     type: NotificationStepMetadata,
   })
   metadata?: NotificationStepMetadata;
+
+  @ApiPropertyOptional()
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
 }
