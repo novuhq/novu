@@ -17,7 +17,7 @@ export interface IEmailOptions {
   text?: string;
   attachments?: IAttachmentOptions[];
   id?: string;
-  replyTo?;
+  replyTo?: string;
 }
 
 export interface ISmsOptions {

@@ -40,16 +40,7 @@ export function SelectedStep({
   onDelete,
   selectedNodeId,
 }: {
-  selectedChannel:
-    | StepTypeEnum.IN_APP
-    | StepTypeEnum.EMAIL
-    | StepTypeEnum.SMS
-    | StepTypeEnum.CHAT
-    | StepTypeEnum.PUSH
-    | StepTypeEnum.DIGEST
-    | StepTypeEnum.TRIGGER
-    | StepTypeEnum.DELAY
-    | StepTypeEnum;
+  selectedChannel: StepTypeEnum;
   setSelectedChannel: (value: SetStateAction<StepTypeEnum | null>) => void;
   setActivePage: (string) => void;
   steps;
