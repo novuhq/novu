@@ -6,6 +6,7 @@ import { UpdateLayoutCommand } from './update-layout.command';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos/layout.dto';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class UpdateLayoutUseCase {
@@ -24,6 +25,10 @@ export class UpdateLayoutUseCase {
     const databaseEntity = await this.getLayoutUseCase.execute(getLayoutCommand);
 
     const patchedEntity = this.applyUpdatesToEntity(this.mapToEntity(databaseEntity), command);
+    const hasBody = patchedEntity.content.includes('{{{body}}}');
+    if (!hasBody) {
+      throw new ApiException('Layout content must contain {{{body}}}');
+    }
 
     const updatedEntity = await this.layoutRepository.updateLayout(patchedEntity);
 
