@@ -51,7 +51,7 @@
     "shelljs": "^0.8.5",
     "smtp-server": "^1.4.0",
     "spamc": "0.0.5",
-    "superagent": "^1.2.0",
+    "superagent": "^8.0.8",
     "winston": "^1.0.0"
   },
   "devDependencies": {
