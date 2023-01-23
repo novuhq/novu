@@ -9,6 +9,7 @@ import { CountChanges } from './count-changes/count-changes.usecase';
 import { PromoteNotificationGroupChange } from './promote-notification-group-change/promote-notification-group-change';
 import { UpdateChange } from './update-change/update-change';
 import { PromoteFeedChange } from './promote-feed-change/promote-feed-change';
+import { PromoteLayoutChange } from './promote-layout-change/promote-layout-change.use-case';
 
 export * from './apply-change';
 export * from './create-change';
@@ -19,6 +20,7 @@ export const USE_CASES = [
   CreateChange,
   PromoteChangeToEnvironment,
   PromoteFeedChange,
+  PromoteLayoutChange,
   PromoteNotificationGroupChange,
   PromoteNotificationTemplateChange,
   PromoteMessageTemplateChange,

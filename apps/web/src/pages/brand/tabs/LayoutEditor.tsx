@@ -211,7 +211,6 @@ export function LayoutEditor({
                   checked={field.value === true}
                   disabled={readonly}
                   onChange={field.onChange}
-                  // mt={30}
                   data-test-id="is-default-layout"
                   label="Set as Default"
                 />
@@ -219,7 +218,7 @@ export function LayoutEditor({
             }}
           />
 
-          <Button submit data-test-id="submit-layout">
+          <Button disabled={readonly} submit data-test-id="submit-layout">
             {editMode ? 'Update' : 'Create'}
           </Button>
         </Group>

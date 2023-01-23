@@ -52,4 +52,7 @@ export class LayoutDto {
 
   @ApiPropertyOptional()
   updatedAt?: string;
+
+  @ApiPropertyOptional()
+  _parentId?: string;
 }

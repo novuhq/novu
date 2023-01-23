@@ -13,6 +13,7 @@ import { useLayouts } from '../../../api/hooks/use-layouts';
 import { useMutation } from '@tanstack/react-query';
 import { deleteLayoutById } from '../../../api/layouts';
 import { errorMessage, successMessage } from '../../../utils/notifications';
+import { useEnvController } from '../../../store/use-env-controller';
 
 const enum ActivePageEnum {
   LAYOUTS_LIST = 'layouts_list',
@@ -22,6 +23,7 @@ const enum ActivePageEnum {
 
 export function LayoutsListPage() {
   const theme = useMantineTheme();
+  const { readonly } = useEnvController();
   const [page, setPage] = useState<number>(0);
   const [editId, setEditId] = useState('');
   const [activeScreen, setActiveScreen] = useState(ActivePageEnum.LAYOUTS_LIST);
@@ -101,15 +103,17 @@ export function LayoutsListPage() {
               color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80}
             />
           </ActionIcon>
-          <ActionIcon
-            variant="transparent"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(_id);
-            }}
-          >
-            <Trash color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
-          </ActionIcon>
+          {!readonly && (
+            <ActionIcon
+              variant="transparent"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(_id);
+              }}
+            >
+              <Trash color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
+            </ActionIcon>
+          )}
         </ActionButtonWrapper>
       ),
     },
@@ -135,8 +139,10 @@ export function LayoutsListPage() {
               marginBottom: '10px',
             }}
           >
-            <UnstyledButton onClick={() => setActiveScreen(ActivePageEnum.CREATE_LAYOUT)}>
-              <Text gradient>+ Create New Layout</Text>
+            <UnstyledButton disabled={readonly} onClick={() => setActiveScreen(ActivePageEnum.CREATE_LAYOUT)}>
+              <Text gradient={!readonly} color={colors.B60}>
+                + Create New Layout
+              </Text>
             </UnstyledButton>
           </div>
 

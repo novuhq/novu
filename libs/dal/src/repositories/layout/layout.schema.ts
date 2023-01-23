@@ -20,6 +20,10 @@ const layoutSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    _parentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Layout',
+    },
     name: Schema.Types.String,
     description: Schema.Types.String,
     variables: [
