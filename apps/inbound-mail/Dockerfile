@@ -63,4 +63,4 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
 RUN chown -R 1000:root .
 
 WORKDIR /usr/src/app/apps/inbound-mail
-CMD [ "pm2-runtime", "src/main.js" ]
+CMD [ "pm2-runtime", "dist/main.js" ]
