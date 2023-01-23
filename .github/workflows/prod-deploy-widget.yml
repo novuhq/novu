@@ -63,7 +63,7 @@ jobs:
           echo REACT_APP_WS_URL="https://ws.novu.co" >> .env
           echo REACT_APP_ENVIRONMENT=prod >> .env
 
-      - name: Envsetup  
+      - name: Envsetup
         working-directory: apps/widget
         run: npm run envsetup
 
@@ -91,6 +91,10 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: 6f927fd4-dcb0-4cf3-8c0b-8c5539d0d034
         timeout-minutes: 1
+
+      - name: Remove build outputs
+        working-directory: apps/widget
+        run: rm -rf build
 
       - name: Build, tag, and push image to ghcr.io
         id: build-image

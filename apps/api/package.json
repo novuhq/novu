@@ -27,7 +27,7 @@
     "@azure/storage-blob": "^12.11.0",
     "@godaddy/terminus": "^4.10.2",
     "@google-cloud/storage": "^6.2.3",
-    "@nestjs/axios": "0.1.0",
+    "@nestjs/axios": "0.1.1",
     "@nestjs/common": "9.0.2",
     "@nestjs/core": "9.0.2",
     "@nestjs/graphql": "10.0.18",
