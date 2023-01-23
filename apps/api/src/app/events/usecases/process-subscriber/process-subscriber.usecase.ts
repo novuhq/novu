@@ -92,6 +92,7 @@ export class ProcessSubscriber {
           active: true,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
+          userId: command.userId,
         })
       );
 

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Navbar,
   Popover,
@@ -19,6 +19,7 @@ import { AuthContext } from '../../../store/authContext';
 import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
+import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -162,6 +163,9 @@ export function SideNav({}: Props) {
           </Popover.Dropdown>
         </Popover>
         <NavMenu menuItems={menuItems} />
+      </Navbar.Section>
+      <Navbar.Section mt={15}>
+        <LimitBar withLink={true} label="Novu email credits used" />
       </Navbar.Section>
       <Navbar.Section mt={15}>
         <Navbar.Section>

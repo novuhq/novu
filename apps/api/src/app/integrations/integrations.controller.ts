@@ -58,7 +58,11 @@ export class IntegrationsController {
   @ExternalApiAccessible()
   async getIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationResponseDto[]> {
     return await this.getIntegrationsUsecase.execute(
-      GetIntegrationsCommand.create({ environmentId: user.environmentId, organizationId: user.organizationId })
+      GetIntegrationsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+      })
     );
   }
 
@@ -72,7 +76,11 @@ export class IntegrationsController {
   @ExternalApiAccessible()
   async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationResponseDto[]> {
     return await this.getActiveIntegrationsUsecase.execute(
-      GetIntegrationsCommand.create({ environmentId: user.environmentId, organizationId: user.organizationId })
+      GetIntegrationsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+      })
     );
   }
 

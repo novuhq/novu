@@ -8,6 +8,7 @@ RUN npm i pm2 -g
 COPY .npmrc .
 COPY package.json .
 
+COPY providers ./providers
 COPY apps/ws ./apps/ws
 COPY libs/dal ./libs/dal
 COPY libs/shared ./libs/shared
@@ -15,6 +16,7 @@ COPY libs/testing ./libs/testing
 COPY packages/client ./packages/client
 COPY packages/stateless ./packages/stateless
 COPY packages/node ./packages/node
+COPY packages/application-generic ./packages/application-generic
 
 COPY ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
 
