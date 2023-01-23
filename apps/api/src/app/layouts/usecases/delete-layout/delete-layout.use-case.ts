@@ -54,6 +54,7 @@ export class DeleteLayoutUseCase {
       userId: command.userId,
     });
 
-    await this.createLayoutChange.execute(createLayoutChangeCommand);
+    const isDeleteChange = true;
+    await this.createLayoutChange.execute(createLayoutChangeCommand, isDeleteChange);
   }
 }
