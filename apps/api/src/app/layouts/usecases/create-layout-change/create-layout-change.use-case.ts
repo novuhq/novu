@@ -6,8 +6,6 @@ import { CreateLayoutChangeCommand } from './create-layout-change.command';
 
 import { FindDeletedLayoutCommand, FindDeletedLayoutUseCase } from '../find-deleted-layout';
 
-import { LayoutDto } from '../../dtos/layout.dto';
-import { ChannelTypeEnum, IEmailBlock } from '../../types';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 
 @Injectable()
@@ -21,7 +19,11 @@ export class CreateLayoutChangeUseCase {
   async execute(command: CreateLayoutChangeCommand, isDeleteChange = false): Promise<void> {
     const item = isDeleteChange
       ? await this.findDeletedLayout.execute(FindDeletedLayoutCommand.create(command))
-      : await this.layoutRepository.findById(command.layoutId, command.environmentId);
+      : await this.layoutRepository.findOne({
+          _id: command.layoutId,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        });
 
     if (item) {
       const changeId = LayoutRepository.createObjectId();

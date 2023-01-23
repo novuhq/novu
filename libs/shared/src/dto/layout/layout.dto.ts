@@ -15,6 +15,7 @@ export class LayoutDto {
   _organizationId: OrganizationId;
   _environmentId: EnvironmentId;
   _creatorId: UserId;
+  _parentId?: LayoutId;
   name: LayoutName;
   description?: LayoutDescription;
   channel: ChannelTypeEnum;

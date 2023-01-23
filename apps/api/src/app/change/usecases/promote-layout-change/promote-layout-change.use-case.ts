@@ -10,23 +10,40 @@ export class PromoteLayoutChange {
   async execute(command: PromoteTypeChangeCommand) {
     const item = await this.layoutRepository.findOne({
       _environmentId: command.environmentId,
-      _id: command.item._id,
+      _parentId: command.item._id,
     });
 
     const newItem = command.item as LayoutEntity;
 
     if (!item) {
       const layoutEntity = {
-        ...newItem,
+        name: newItem.name,
+        content: newItem.content,
+        contentType: newItem.contentType,
+        variables: newItem.variables,
+        isDefault: newItem.isDefault,
+        channel: newItem.channel,
         _creatorId: command.userId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
+        _parentId: newItem._id,
       };
 
-      return this.layoutRepository.createLayout(layoutEntity);
+      return await this.layoutRepository.create(layoutEntity);
     }
 
-    return this.layoutRepository.update(
+    const count = await this.layoutRepository.count({
+      _organizationId: command.organizationId,
+      _id: command.item._id,
+    });
+
+    if (count === 0) {
+      await this.layoutRepository.deleteLayout(item._id, command.environmentId, command.organizationId);
+
+      return;
+    }
+
+    return await this.layoutRepository.update(
       {
         _environmentId: command.environmentId,
         _id: item._id,
@@ -36,6 +53,8 @@ export class PromoteLayoutChange {
         content: newItem.content,
         contentType: newItem.contentType,
         variables: newItem.variables,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
       }
     );
   }

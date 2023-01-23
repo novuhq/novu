@@ -61,6 +61,19 @@ export class CreateMessageTemplate {
       );
     }
 
+    if (command.layoutId) {
+      await this.updateChange.execute(
+        UpdateChangeCommand.create({
+          _entityId: command.layoutId,
+          type: ChangeEntityTypeEnum.LAYOUT,
+          parentChangeId: command.parentChangeId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+        })
+      );
+    }
+
     return item;
   }
 }
