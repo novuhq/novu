@@ -24,6 +24,7 @@ describe('Get Novu Integration', function () {
   });
 
   beforeEach(async () => {
+    process.env.NOVU_EMAIL_INTEGRATION_API_KEY = 'true';
     const moduleRef = await Test.createTestingModule({
       imports: [SharedModule, AuthModule, IntegrationModule],
       providers: [],
