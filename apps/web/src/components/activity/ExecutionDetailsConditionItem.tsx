@@ -10,33 +10,40 @@ export function ExecutionDetailsConditionItem({ condition }: { condition: ICondi
   const Icon = isPassed ? CheckCircle : ErrorIcon;
   const passedStatusColor = isPassed ? colors.success : colors.error;
   const tooltipLabel = isPassed ? 'Filter matched' : "Filter didn't match";
+  const iconClass = isPassed ? 'condition-passed' : 'condition-failed';
 
   return (
-    <ItemContainer spacing={5}>
+    <ItemContainer spacing={5} data-test-id="condition-item-list">
       <Tooltip label={tooltipLabel} position="left">
         <ConditionHeader>
-          <Icon color={passedStatusColor} width="15px" height="15px" />
-          <Text weight="bold">{condition.filter}</Text>
+          <Icon color={passedStatusColor} width="15px" height="15px" className={iconClass} />
+          <Text weight="bold" data-test-id="condition-filter-value">
+            {condition.filter}
+          </Text>
         </ConditionHeader>
       </Tooltip>
       <Group>
         <ConditionPair>
           <ConditionTitle>Field:</ConditionTitle>
-          <Text>{condition.field}</Text>
+          <Text data-test-id="condition-field-value">{condition.field}</Text>
         </ConditionPair>
         <ConditionPair>
           <ConditionTitle>Operator:</ConditionTitle>
-          <Text>{condition.operator}</Text>
+          <Text data-test-id="condition-operator-value">{condition.operator}</Text>
         </ConditionPair>
       </Group>
       <Group>
         <ConditionPair>
           <ConditionTitle>Expected:</ConditionTitle>
-          <Text color={passedStatusColor}>{condition.expected}</Text>
+          <Text color={passedStatusColor} data-test-id="condition-expected-value">
+            {condition.expected}
+          </Text>
         </ConditionPair>
         <ConditionPair>
           <ConditionTitle>Actual:</ConditionTitle>
-          <Text color={passedStatusColor}>{condition.actual}</Text>
+          <Text color={passedStatusColor} data-test-id="condition-actual-value">
+            {condition.actual}
+          </Text>
         </ConditionPair>
       </Group>
     </ItemContainer>
