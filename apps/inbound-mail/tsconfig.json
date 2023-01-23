@@ -5,7 +5,7 @@
     "strictNullChecks": false,
     "module": "commonjs",
     "allowSyntheticDefaultImports": true,
-    "types": ["node", "mocha", "chai", "sinon"],
+    "types": ["node"],
     "target": "es2017",
     "allowJs": false,
     "esModuleInterop": false,

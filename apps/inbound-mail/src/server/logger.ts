@@ -11,15 +11,6 @@ const logger = new winston.Logger({
   ],
 });
 
-logger.setLogFile = function (logFilePath) {
-  this.add(winston.transports.File, {
-    filename: logFilePath,
-    json: false,
-    maxsize: 20000000,
-    timestamp: true,
-  });
-};
-
 /*
  * Parameter level is one of 'silly', 'verbose', 'debug', 'info', 'warn',
  * 'error'.

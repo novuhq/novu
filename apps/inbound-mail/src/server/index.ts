@@ -5,7 +5,6 @@ import * as htmlToText from 'html-to-text';
 import * as events from 'events';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as request from 'superagent';
 import * as shell from 'shelljs';
 import * as util from 'util';
 import { SMTPServer } from 'smtp-server';
@@ -23,7 +22,7 @@ const queueService = new QueueService();
 class Mailin extends events.EventEmitter {
   public configuration: IConfiguration;
 
-  private _smtp: any;
+  private _smtp: SMTPServer;
 
   constructor() {
     super();
@@ -31,9 +30,7 @@ class Mailin extends events.EventEmitter {
       host: '0.0.0.0',
       port: 2500,
       tmp: '.tmp',
-      webhook: 'http://localhost:3000/webhook',
       disableWebhook: true,
-      logFile: null,
       disableDkim: false,
       disableSpf: false,
       disableSpamScore: false,
@@ -79,11 +76,6 @@ class Mailin extends events.EventEmitter {
       shell.mkdir('-p', configuration.tmp);
     }
 
-    /* Log to a file if necessary. */
-    if (configuration.logFile) {
-      logger.setLogFile(configuration.logFile);
-    }
-
     /* Set log level if necessary. */
     if (configuration.logLevel) {
       logger.setLevel(configuration.logLevel);
@@ -119,25 +111,6 @@ class Mailin extends events.EventEmitter {
             memoryUsage.heapUsed / million
         );
       }, 500);
-    }
-
-    /* Check the webhook validity. */
-    if (!configuration.disableWebhook) {
-      const url = configuration.webhook;
-      request
-        .head(url)
-        .timeout(3000)
-        .end(function (err, resp) {
-          if (err || resp.statusCode !== 200) {
-            logger.warn(
-              'Webhook ' +
-                configuration.webhook +
-                ' seems invalid or down. You may want to double check the webhook url.'
-            );
-          } else {
-            logger.info('Webhook ' + configuration.webhook + ' is valid, up and running.');
-          }
-        });
     }
 
     function validateAddress(addressType, email, envelope) {
@@ -243,7 +216,6 @@ class Mailin extends events.EventEmitter {
           return finalizeMessage.apply(this, args);
         })
         .then(postQueue.bind(null, connection))
-        .then(postWebhook.bind(null, connection))
         .then(unlinkFile.bind(null, connection))
         .catch(function (error) {
           logger.error(connection.id + ' Unable to finish processing message!!', error);
@@ -378,7 +350,7 @@ class Mailin extends events.EventEmitter {
        * json easier to use on the webhook receiver side.
        */
       parsedEmail.cc = parsedEmail.cc || [];
-      parsedEmail.attachments = parsedEmail.attachments || [];
+      // parsedEmail.attachments = parsedEmail.attachments || [];
 
       /* Add the connection authentication to the parsedEmail. */
       parsedEmail.connection = connection;
@@ -404,57 +376,6 @@ class Mailin extends events.EventEmitter {
         return resolve();
       });
     }
-    function postWebhook(connection, finalizedMessage) {
-      return new Promise(function (resolve) {
-        if (configuration.disableWebhook) return resolve();
-
-        logger.info(connection.id + ' Sending request to webhook ' + configuration.webhook);
-
-        /*
-         * Convert the attachments contents from Buffer to
-         * base64 encoded strings and remove them from the
-         * message. They will be posted as multipart of a form
-         * as key values pairs (attachmentName, attachmentContent).
-         */
-        logger.profile('Convert attachments to strings');
-        const attachmentNamesAndContent = {};
-        finalizedMessage.attachments.forEach(function (attachment) {
-          attachmentNamesAndContent[attachment.generatedFileName] = (attachment.content || new Buffer('')).toString(
-            'base64'
-          );
-          delete attachment.content;
-        });
-        logger.profile('Convert attachments to strings');
-
-        logger.debug(finalizedMessage);
-
-        const req = request.post(configuration.webhook);
-        req.field('mailinMsg', JSON.stringify(finalizedMessage));
-
-        _.forEach(attachmentNamesAndContent, function (content, name) {
-          req.field(name, content);
-        });
-
-        req.end(function (err, resp) {
-          /* Avoid memory leak by hinting the gc. */
-
-          if (err || resp.statusCode !== 200) {
-            logger.error(connection.id + ' Error in posting to webhook ' + configuration.webhook);
-            if (resp) {
-              logger.error(connection.id + ' Response status code: ' + resp.statusCode);
-            }
-
-            return resolve();
-          }
-
-          logger.info(connection.id + ' Succesfully posted to webhook ' + configuration.webhook);
-          logger.debug(resp.text);
-
-          return resolve();
-        });
-      });
-    }
-
     function unlinkFile(connection) {
       /* Don't forget to unlink the tmp file. */
       return fs.promises.unlink(connection.mailPath).then(function () {
@@ -547,10 +468,6 @@ class Mailin extends events.EventEmitter {
         logger.error('Ports under 1000 require root privileges.');
       }
 
-      if (configuration.logFile) {
-        logger.error('Do you have write access to log file ' + configuration.logFile + '?');
-      }
-
       logger.error(error);
       _this.emit('error', _session, error);
     });
@@ -598,9 +515,7 @@ interface IConfiguration {
   host: string;
   port: number;
   tmp: string;
-  webhook: string;
   disableWebhook: boolean;
-  logFile: string | null;
   disableDkim: boolean;
   disableSpf: boolean;
   disableSpamScore: boolean;

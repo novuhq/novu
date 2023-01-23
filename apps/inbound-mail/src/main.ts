@@ -12,8 +12,6 @@ mailin.start(
   {
     port: env.PORT || 25,
     host: env.HOST || '0.0.0.0',
-    webhook: env.WEBHOOK || 'http://localhost:3000/webhook',
-    logFile: env.logFile || '/var/log/mailin.log',
     disableDkim: env.disableDkim,
     disableSpf: env.disableSpf,
     disableSpamScore: env.disableSpamScore,
@@ -25,10 +23,6 @@ mailin.start(
   },
   function (err) {
     if (err) process.exit(1);
-
-    logger.info('Webhook url: ' + mailin.configuration.webhook);
-
-    if (mailin.configuration.logFile) logger.info('Log file: ' + mailin.configuration.logFile);
 
     if (mailin.configuration.disableDkim) logger.info('Dkim checking is disabled');
     if (mailin.configuration.disableSpf) logger.info('Spf checking is disabled');
