@@ -175,6 +175,7 @@ export class LayoutsController {
       DeleteLayoutCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
+        userId: user._id,
         layoutId,
       })
     );
@@ -202,6 +203,7 @@ export class LayoutsController {
       UpdateLayoutCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
+        userId: user._id,
         layoutId,
         name: body.name,
         description: body.description,

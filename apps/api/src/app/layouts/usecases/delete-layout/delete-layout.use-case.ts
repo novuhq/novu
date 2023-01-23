@@ -4,6 +4,7 @@ import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { DeleteLayoutCommand } from './delete-layout.command';
 
 import { CheckLayoutIsUsedCommand, CheckLayoutIsUsedUseCase } from '../check-layout-is-used';
+import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class DeleteLayoutUseCase {
   constructor(
     private getLayoutUseCase: GetLayoutUseCase,
     private checkLayoutIsUsed: CheckLayoutIsUsedUseCase,
+    private createLayoutChange: CreateLayoutChangeUseCase,
     private layoutRepository: LayoutRepository
   ) {}
 
@@ -33,5 +35,26 @@ export class DeleteLayoutUseCase {
     }
 
     await this.layoutRepository.deleteLayout(command.layoutId, layout._environmentId, layout._organizationId);
+
+    const createLayoutChangeCommand = CreateLayoutChangeCommand.create({
+      environmentId: command.environmentId,
+      layoutId: command.layoutId,
+      organizationId: command.organizationId,
+      userId: command.userId,
+    });
+
+    await this.createChange(command);
+  }
+
+  private async createChange(command: DeleteLayoutCommand): Promise<void> {
+    const createLayoutChangeCommand = CreateLayoutChangeCommand.create({
+      environmentId: command.environmentId,
+      layoutId: command.layoutId,
+      organizationId: command.organizationId,
+      userId: command.userId,
+    });
+
+    const isDeleteChange = true;
+    await this.createLayoutChange.execute(createLayoutChangeCommand, isDeleteChange);
   }
 }
