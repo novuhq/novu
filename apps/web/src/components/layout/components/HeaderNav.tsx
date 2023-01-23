@@ -142,7 +142,7 @@ export function HeaderNav({}: Props) {
       >
         <Link to="/">
           <img
-            src={dark ? '/static/images/logo-formerly-dark-bg.png' : '/static/images/logo-formerly-light-bg.png'}
+            src={dark ? '/static/images/logo-light.png' : '/static/images/logo.png'}
             alt="logo"
             style={{ maxWidth: 150, maxHeight: 25 }}
           />

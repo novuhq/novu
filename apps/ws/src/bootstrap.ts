@@ -7,6 +7,7 @@ import { version } from '../package.json';
 
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
+import helmet from 'helmet';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -21,6 +22,8 @@ export async function bootstrap() {
   const redisIoAdapter = new RedisIoAdapter(app);
 
   app.setGlobalPrefix(CONTEXT_PATH);
+
+  app.use(helmet());
 
   app.enableCors({
     origin: '*',
