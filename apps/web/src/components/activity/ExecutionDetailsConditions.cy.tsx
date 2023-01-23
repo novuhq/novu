@@ -1,7 +1,8 @@
+import { ICondition } from '@novu/shared';
 import { TestWrapper } from '../../testing';
 import { ExecutionDetailsConditions } from './ExecutionDetailsConditions';
 
-const conditions = [
+const conditions: ICondition[] = [
   {
     filter: 'Payload',
     field: 'test',

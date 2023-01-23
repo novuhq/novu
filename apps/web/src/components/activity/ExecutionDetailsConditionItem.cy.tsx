@@ -1,9 +1,8 @@
-import { colors } from '../../design-system';
-import { ErrorIcon } from '../../design-system/icons';
+import { ICondition } from '@novu/shared';
 import { TestWrapper } from '../../testing';
 import { ExecutionDetailsConditionItem } from './ExecutionDetailsConditionItem';
 
-const condition = {
+const condition: ICondition = {
   filter: 'Payload',
   field: 'test',
   expected: '1000',
