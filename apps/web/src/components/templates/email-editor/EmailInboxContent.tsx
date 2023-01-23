@@ -121,6 +121,7 @@ export const EmailInboxContent = ({
               label="Layouts"
               data-test-id="templates-layout"
               loading={isLoading}
+              disabled={readonly}
               required
               error={errors?.steps ? errors?.steps[index]?.template?.layoutId?.message : undefined}
               searchable
