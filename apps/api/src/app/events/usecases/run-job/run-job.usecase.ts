@@ -53,6 +53,7 @@ export class RunJob {
           organizationId: job._organizationId,
           userId: job._userId,
           subscriberId: job._subscriberId,
+          fromSubscriberId: job._fromSubscriberId,
           jobId: job._id,
           events: job.digest?.events,
           job,

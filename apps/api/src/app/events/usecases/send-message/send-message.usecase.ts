@@ -67,6 +67,7 @@ export class SendMessage {
         _organization: command.organizationId,
         _environment: command.environmentId,
         _subscriber: command.job?._subscriberId,
+        _fromSubscriber: command.job?._fromSubscriberId,
         provider: command.job?.providerId,
         delay: command.job?.delay,
         jobType: command.job?.type,

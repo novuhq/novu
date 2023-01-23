@@ -99,6 +99,10 @@ const jobSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
     },
+    _fromSubscriberId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Subscriber',
+    },
   },
   schemaOptions
 );

@@ -27,6 +27,9 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   subscriberId: string;
 
+  @IsOptional()
+  fromSubscriberId: string;
+
   @IsDefined()
   jobId: string;
 

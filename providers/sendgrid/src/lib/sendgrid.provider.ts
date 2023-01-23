@@ -67,7 +67,7 @@ export class SendgridEmailProvider implements IEmailProvider {
     return {
       from: {
         email: options.from || this.config.from,
-        name: this.config.senderName,
+        name: options.senderName || this.config.senderName,
       },
       to: options.to,
       html: options.html,

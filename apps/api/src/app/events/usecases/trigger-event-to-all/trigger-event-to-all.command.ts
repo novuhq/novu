@@ -20,4 +20,7 @@ export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   actor?: ISubscribersDefine | null;
+
+  @IsOptional()
+  from?: ISubscribersDefine | null;
 }

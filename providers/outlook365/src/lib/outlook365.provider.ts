@@ -71,7 +71,7 @@ export class Outlook365Provider implements IEmailProvider {
 
   private createMailData(options: IEmailOptions): SendMailOptions {
     return {
-      from: this.config.from,
+      from: options.from || this.config.from,
       to: options.to,
       subject: options.subject,
       html: options.html,

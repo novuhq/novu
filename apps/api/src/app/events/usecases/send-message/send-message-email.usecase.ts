@@ -60,6 +60,11 @@ export class SendMessageEmail extends SendMessageBase {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
     if (!subscriber) throw new ApiException('Subscriber not found');
 
+    const fromSubscriber = await this.getSubscriber({
+      _id: command.fromSubscriberId,
+      environmentId: command.environmentId,
+    });
+
     let integration: IntegrationEntity | undefined = undefined;
 
     try {
@@ -270,7 +275,8 @@ export class SendMessageEmail extends SendMessageBase {
       to: email,
       subject,
       html,
-      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
+      from: fromSubscriber?.email || integration?.credentials.from || 'no-reply@novu.co',
+      senderName: `${fromSubscriber?.firstName} ${fromSubscriber?.lastName}`,
       attachments,
       id: message._id,
     };

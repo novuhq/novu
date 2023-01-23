@@ -8,9 +8,9 @@ import {
   JobStatusEnum,
   NotificationStepEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
-import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
+import { CreateLog } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
@@ -66,6 +66,17 @@ export class ProcessSubscriber {
       );
     }
 
+    let fromSubscriber: SubscriberEntity | null = null;
+    if (command.from) {
+      fromSubscriber = await this.getSubscriber(
+        {
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        },
+        command.from
+      );
+    }
+
     const notification = await this.createNotification(command, template._id, subscriber);
 
     const steps: NotificationStepEntity[] = await this.filterSteps.execute(
@@ -115,6 +126,7 @@ export class ProcessSubscriber {
         type: step.template.type,
         providerId: integration?.providerId ?? InAppProviderIdEnum.Novu,
         ...(actorSubscriber && { _actorId: actorSubscriber._id }),
+        ...(fromSubscriber && { _fromSubscriberId: fromSubscriber._id }),
       });
     }
 
@@ -174,6 +186,7 @@ export class ProcessSubscriber {
       _templateId: templateId,
       transactionId: command.transactionId,
       to: command.to,
+      from: command.from,
       payload: command.payload,
     });
   }

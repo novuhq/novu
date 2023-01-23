@@ -16,6 +16,7 @@ export class Events extends WithHttp {
       },
       overrides: data.overrides || {},
       ...(data.actor && { actor: data.actor }),
+      ...(data.from && { from: data.from }),
     });
   }
 

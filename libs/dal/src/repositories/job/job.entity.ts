@@ -37,4 +37,5 @@ export class JobEntity {
   };
   type?: StepTypeEnum;
   _actorId?: string;
+  _fromSubscriberId?: string;
 }

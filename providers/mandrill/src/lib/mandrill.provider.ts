@@ -61,7 +61,7 @@ export class MandrillProvider implements IEmailProvider {
 
     const response = await this.transporter.messages.send({
       message: {
-        from_email: this.config.from,
+        from_email: options.from || this.config.from,
         subject: options.subject,
         html: options.html,
         to,

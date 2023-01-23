@@ -56,4 +56,14 @@ export class TriggerEventToAllRequestDto {
   })
   @IsOptional()
   actor?: TriggerRecipientSubscriber;
+
+  @ApiProperty({
+    description: `Notification from address`,
+    oneOf: [
+      { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
+      { $ref: getSchemaPath(SubscriberPayloadDto) },
+    ],
+  })
+  @IsOptional()
+  from?: TriggerRecipientSubscriber;
 }

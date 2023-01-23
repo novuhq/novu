@@ -89,6 +89,16 @@ export class TriggerEventRequestDto {
   to: TriggerRecipients;
 
   @ApiProperty({
+    description: `Notification from address`,
+    oneOf: [
+      { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
+      { $ref: getSchemaPath(SubscriberPayloadDto) },
+    ],
+  })
+  @IsOptional()
+  from?: TriggerRecipientSubscriber;
+
+  @ApiProperty({
     description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',
   })
   @IsString()

@@ -22,4 +22,7 @@ export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   actor?: ISubscribersDefine | null;
+
+  @IsOptional()
+  from?: ISubscribersDefine | null;
 }

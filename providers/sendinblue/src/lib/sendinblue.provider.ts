@@ -40,7 +40,7 @@ export class SendinblueEmailProvider implements IEmailProvider {
     const email = new SendSmtpEmail();
     email.sender = {
       email: options.from || this.config.from,
-      name: this.config.senderName,
+      name: options.senderName || this.config.senderName,
     };
     email.to = getFormattedTo(options.to);
     email.subject = options.subject;

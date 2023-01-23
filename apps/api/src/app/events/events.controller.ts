@@ -78,7 +78,7 @@ export class EventsController {
       userId,
     });
     const mappedTo = await this.mapTriggerRecipients.execute(mapTriggerRecipientsCommand);
-
+    const mappedFrom = this.mapFrom(body.from);
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
         userId,
@@ -88,6 +88,7 @@ export class EventsController {
         payload: body.payload,
         overrides: body.overrides || {},
         to: mappedTo,
+        from: mappedFrom,
         actor: mappedActor,
         transactionId,
       })
@@ -122,6 +123,7 @@ export class EventsController {
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
     const mappedActor = body.actor ? this.mapActor(body.actor) : null;
+    const mappedFrom = body.from ? this.mapActor(body.from) : null;
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -133,6 +135,7 @@ export class EventsController {
         transactionId,
         overrides: body.overrides || {},
         actor: mappedActor,
+        from: mappedFrom,
       })
     );
   }
@@ -187,5 +190,11 @@ export class EventsController {
     if (!actor) return null;
 
     return this.mapTriggerRecipients.mapSubscriber(actor);
+  }
+
+  private mapFrom(from?: TriggerRecipientSubscriber | null): ISubscribersDefine | null {
+    if (!from) return null;
+
+    return this.mapTriggerRecipients.mapSubscriber(from);
   }
 }
