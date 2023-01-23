@@ -9,7 +9,7 @@ export interface IWidgetSettings {
 
 export interface IDnsSettings {
   mxRecordConfigured: boolean;
-  domain: string;
+  inboundParseDomain: string;
 }
 
 export class EnvironmentEntity {

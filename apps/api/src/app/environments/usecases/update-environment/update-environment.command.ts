@@ -9,18 +9,18 @@ export class UpdateEnvironmentCommand extends OrganizationCommand {
 
   @IsOptional()
   @IsString()
-  name: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
-  identifier: string;
+  identifier?: string;
 
   @IsOptional()
   @IsString()
   @IsMongoId()
-  _parentId: string;
+  _parentId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  dns: { domain: string };
+  dns?: { inboundParseDomain: string };
 }

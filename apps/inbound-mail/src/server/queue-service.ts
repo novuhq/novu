@@ -2,6 +2,8 @@ import { Queue, QueueBaseOptions, Worker } from 'bullmq';
 
 export class QueueService {
   readonly DEFAULT_ATTEMPTS = 5;
+  readonly QUEUE_NAME = 'inbound-parse-mail';
+
   private bullConfig: QueueBaseOptions = {
     connection: {
       db: Number(process.env.REDIS_DB_INDEX),
@@ -18,7 +20,7 @@ export class QueueService {
   public readonly worker: Worker;
 
   constructor() {
-    this.queue = new Queue<string>('inbound-mail', {
+    this.queue = new Queue<string>(this.QUEUE_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,

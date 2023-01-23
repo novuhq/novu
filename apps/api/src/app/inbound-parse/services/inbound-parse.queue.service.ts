@@ -1,12 +1,12 @@
 import { Queue, QueueBaseOptions, Worker } from 'bullmq';
 import { Injectable } from '@nestjs/common';
 import { getRedisPrefix } from '@novu/shared';
-import { EmailParse } from '../usecases/email-parse/email-parse.usecase';
-import { EmailParseCommand } from '../usecases/email-parse/email-parse.command';
+import { InboundEmailParse } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
 
 @Injectable()
 export class InboundParseQueueService {
-  readonly QUEUE_NAME = 'inbound-mail';
+  readonly QUEUE_NAME = 'inbound-parse-mail';
 
   private bullConfig: QueueBaseOptions = {
     connection: {
@@ -23,8 +23,8 @@ export class InboundParseQueueService {
   public readonly queue: Queue;
   public readonly worker: Worker;
 
-  constructor(private emailParseUsecase: EmailParse) {
-    this.queue = new Queue<EmailParseCommand>(this.QUEUE_NAME, {
+  constructor(private emailParseUsecase: InboundEmailParse) {
+    this.queue = new Queue<InboundEmailParseCommand>(this.QUEUE_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
@@ -43,8 +43,8 @@ export class InboundParseQueueService {
   }
 
   public getWorkerProcessor() {
-    return async ({ data }: { data: EmailParseCommand }) => {
-      await this.emailParseUsecase.execute(EmailParseCommand.create({ ...data }));
+    return async ({ data }: { data: InboundEmailParseCommand }) => {
+      await this.emailParseUsecase.execute(InboundEmailParseCommand.create({ ...data }));
     };
   }
 }

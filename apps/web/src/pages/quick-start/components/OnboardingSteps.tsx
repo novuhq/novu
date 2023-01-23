@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import useStyles, { ActiveWrapper, StyledDescription, StyledTitle } from './OnboardingSteps.styles';
 import { Button, colors, Text } from '../../../design-system';
-import { SuccessIcon } from '../../../design-system/icons';
+import { CheckCircle } from '../../../design-system/icons';
 import { TriggerCard } from './TriggerCard';
 import { useTemplates } from '../../../api/hooks/use-templates';
 import { useIntegrations } from '../../../api/hooks';
@@ -55,7 +55,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
             </Button>
           ) : (
             <Center mt={20} inline>
-              <SuccessIcon color={colors.success} />
+              <CheckCircle color={colors.success} />
               <Text ml={7} color={colors.success}>
                 Configured
               </Text>
@@ -75,7 +75,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
             </Button>
           ) : (
             <Center mt={20} inline>
-              <SuccessIcon color={colors.success} />
+              <CheckCircle color={colors.success} />
               <Text data-test-id="template-created" ml={7} color={colors.success}>
                 Created
               </Text>

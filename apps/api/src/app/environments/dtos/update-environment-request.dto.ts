@@ -17,5 +17,5 @@ export class UpdateEnvironmentRequestDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  dns?: { domain: string };
+  dns?: { inboundParseDomain: string };
 }

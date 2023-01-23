@@ -20,8 +20,8 @@ export class UpdateEnvironment {
       updatePayload.identifier = command.identifier;
     }
 
-    if (command.dns && command.dns.domain !== '') {
-      updatePayload[`dns.domain`] = command.dns.domain;
+    if (command.dns && command.dns.inboundParseDomain !== '') {
+      updatePayload[`dns.inboundParseDomain`] = command.dns.inboundParseDomain;
     }
 
     return await this.environmentRepository.update(

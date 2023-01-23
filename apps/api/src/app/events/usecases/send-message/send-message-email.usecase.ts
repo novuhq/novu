@@ -278,11 +278,12 @@ export class SendMessageEmail extends SendMessageBase {
       id: message._id,
     };
 
-    if (command.step.replyCallback?.url) {
-      mailData.replyTo = await this.getReplyTo({
-        environmentId: command.environmentId,
-        transactionId: command.transactionId,
-      });
+    if (command.step.replyCallback?.active) {
+      const replyTo = await this.getReplyTo(command, message._id);
+
+      if (replyTo) {
+        mailData.replyTo = replyTo;
+      }
     }
 
     if (email && integration) {
@@ -293,16 +294,52 @@ export class SendMessageEmail extends SendMessageBase {
     await this.sendErrors(email, integration, message, command, notification);
   }
 
-  private async getReplyTo({ environmentId, transactionId }: { environmentId: string; transactionId: string }) {
-    const environment = await this.environmentRepository.findOne({ _id: environmentId });
+  private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
+    const userNamePrefix = 'parse';
+    const userNameDelimiter = ':nv-e=';
 
-    let replyCallbackRoute = process.env.REPLY_CALLBACK_ROUTE;
+    if (!command.step.replyCallback?.url) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: messageId,
+          detail: DetailEnum.REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.WARNING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
 
-    if (environment.dns?.mxRecordConfigured) {
-      replyCallbackRoute = environment.dns?.domain;
+      return null;
     }
 
-    return `parse+${transactionId}@${replyCallbackRoute}`;
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+
+    if (environment.dns?.mxRecordConfigured && environment.dns?.inboundParseDomain) {
+      return `${userNamePrefix}+${command.transactionId}${userNameDelimiter}${environment._id}@${environment?.dns?.inboundParseDomain}`;
+    } else {
+      const detailEnum =
+        !environment.dns?.mxRecordConfigured && !environment.dns?.inboundParseDomain
+          ? DetailEnum.REPLY_CALLBACK_NOT_CONFIGURATION
+          : !environment.dns?.mxRecordConfigured
+          ? DetailEnum.REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION
+          : DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION;
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: messageId,
+          detail: detailEnum,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.WARNING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return null;
+    }
   }
 
   private async sendErrors(

@@ -18,8 +18,9 @@ enum MenuTitleEnum {
 
 export function SettingsPage() {
   const { currentOrganization } = useContext(AuthContext);
+  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
-  const menuTabs = [
+  let menuTabs = [
     {
       value: MenuTitleEnum.BRANDING,
       content: <BrandingForm isLoading={!currentOrganization} organization={currentOrganization} />,
@@ -32,11 +33,17 @@ export function SettingsPage() {
       value: MenuTitleEnum.API_KEYS,
       content: <ApiKeysCard />,
     },
-    {
-      value: MenuTitleEnum.EMAIL_SETTINGS,
-      content: <EmailSettings />,
-    },
   ];
+
+  if (!selfHosted) {
+    menuTabs = [
+      ...menuTabs,
+      {
+        value: MenuTitleEnum.EMAIL_SETTINGS,
+        content: <EmailSettings />,
+      },
+    ];
+  }
 
   return (
     <PageContainer>

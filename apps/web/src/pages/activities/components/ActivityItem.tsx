@@ -9,7 +9,7 @@ import { DigestedStep } from './DigestedStep';
 
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
-import { SuccessIcon, ErrorIcon, Timer } from '../../../design-system/icons';
+import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
 import { useNotificationStatus } from '../hooks/useNotificationStatus';
 
 const JOB_LENGTH_UPPER_THRESHOLD = 3;
@@ -78,7 +78,7 @@ export const ActivityItem = ({ item, onClick }) => {
                         <Timer width={26} height={26} />
                       </When>
                       <When truthy={status === JobStatusEnum.COMPLETED}>
-                        <SuccessIcon width="26" height="26" color={colors.success} />
+                        <CheckCircle width="26" height="26" color={colors.success} />
                       </When>
                       <When truthy={status === JobStatusEnum.FAILED}>
                         <ErrorIcon width="26" height="26" color={colors.error} />

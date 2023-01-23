@@ -6,7 +6,7 @@ import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
 import { ExecutionDetailsWebhookFeedback } from './ExecutionDetailsWebhookFeedback';
 import { getLogoByType } from './helpers';
 import { colors, Text } from '../../design-system';
-import { SuccessIcon, ErrorIcon } from '../../design-system/icons';
+import { CheckCircle, ErrorIcon } from '../../design-system/icons';
 
 const StepName = styled(Text)`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
@@ -48,7 +48,7 @@ const LogoWrapper = styled(Container)`
 
 const getLogoStyledComponentByStepStatus = (status, type) => {
   if (status === JobStatusEnum.COMPLETED) {
-    return SuccessIcon;
+    return CheckCircle;
   }
 
   return getLogoByType(type);

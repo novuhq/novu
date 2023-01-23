@@ -1,7 +1,7 @@
 import { IsDefined, IsNumber, IsString } from 'class-validator';
 import { BaseCommand } from '@novu/application-generic';
 
-export class EmailParseCommand extends BaseCommand {
+export class InboundEmailParseCommand extends BaseCommand {
   @IsDefined()
   @IsString()
   html: string;

@@ -12,7 +12,7 @@ export const ReplyCallback = ({ control, index, errors }) => {
   const { environment } = useEnvController();
   const { getValues } = useFormContext();
   const replyCallbackActive = getValues(`steps.${index}.replyCallback.active`);
-  const domainConfigured = environment?.dns?.domain;
+  const domainConfigured = environment?.dns?.inboundParseDomain;
 
   return (
     <>
@@ -32,7 +32,7 @@ export const ReplyCallback = ({ control, index, errors }) => {
 };
 
 export const ReplyCallbackUrlInput = ({ control, index }) => {
-  const { readonly, environment } = useEnvController();
+  const { readonly } = useEnvController();
   const { getValues } = useFormContext();
   const replyCallbackActive = getValues(`steps.${index}.replyCallback.active`);
 
@@ -61,7 +61,7 @@ export const ReplyCallbackUrlInput = ({ control, index }) => {
 };
 
 export const ReplyCallbackSwitch = ({ control, index }) => {
-  const { readonly, environment } = useEnvController();
+  const { readonly } = useEnvController();
 
   return (
     <>

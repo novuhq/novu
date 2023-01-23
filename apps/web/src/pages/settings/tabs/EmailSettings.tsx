@@ -4,37 +4,39 @@ import { inputStyles } from '../../../design-system/config/inputs.styles';
 import Card from '../../../components/layout/components/Card';
 import { ActionIcon, Center, Input as MantineInput } from '@mantine/core';
 import { colors, Text, Input, Tooltip, Button } from '../../../design-system';
-import { Check, SuccessIcon, Copy } from '../../../design-system/icons';
+import { Check, CheckCircle, Copy } from '../../../design-system/icons';
 import React, { useEffect } from 'react';
 import { Control, Controller, useForm } from 'react-hook-form';
 import { useEnvController } from '../../../store/use-env-controller';
 import { useMutation } from '@tanstack/react-query';
-import { updateDnsSettings, validateMxRecord } from '../../../api/environment';
+import { updateDnsSettings } from '../../../api/environment';
 import { showNotification } from '@mantine/notifications';
-import { WarningIcon } from '../../../design-system/icons/statuses/WarningIcon';
+import { WarningIcon } from '../../../design-system/icons/general/WarningIcon';
+import { validateMxRecord } from '../../../api/inbound-parse';
 
 export const EmailSettings = () => {
+  const MAIL_SERVER_DOMAIN = process.env.MAIL_SERVER_DOMAIN ?? '10 parse-dev.novu.co';
+
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
-  const MAIL_SERVER_DOMAIN = '10 postal-dev.novu.co';
   const { readonly, environment, refetchEnvironment } = useEnvController();
 
   const { mutateAsync: updateDnsSettingsMutation, isLoading: isUpdateDnsSettingsLoading } = useMutation<
-    { dns: { mxRecordConfigured: string; domain: string } },
+    { dns: { mxRecordConfigured: boolean; inboundParseDomain: string } },
     { error: string; message: string; statusCode: number },
-    { payload: { domain: string | undefined }; environmentId: string }
+    { payload: { inboundParseDomain: string | undefined }; environmentId: string }
   >(({ payload, environmentId }) => updateDnsSettings(payload, environmentId));
 
   const { setValue, handleSubmit, control } = useForm({
     defaultValues: {
       mxRecordConfigured: false,
-      domain: '',
+      inboundParseDomain: '',
     },
   });
 
   useEffect(() => {
     if (environment) {
-      if (environment.dns?.domain) {
-        setValue('domain', environment.dns?.domain);
+      if (environment.dns?.inboundParseDomain) {
+        setValue('inboundParseDomain', environment.dns?.inboundParseDomain);
       }
       if (environment.dns?.mxRecordConfigured) {
         setValue('mxRecordConfigured', environment.dns?.mxRecordConfigured);
@@ -46,9 +48,9 @@ export const EmailSettings = () => {
     handleCheckRecords();
   }, []);
 
-  async function handleUpdateDnsSettings({ domain }) {
+  async function handleUpdateDnsSettings({ inboundParseDomain }) {
     const payload = {
-      domain,
+      inboundParseDomain,
     };
 
     await updateDnsSettings(payload, environment?._id ?? '');
@@ -60,12 +62,9 @@ export const EmailSettings = () => {
   }
 
   async function handleCheckRecords() {
-    const record = await validateMxRecord();
+    const record = (await validateMxRecord()).data.mxRecordConfigured;
 
-    // eslint-disable-next-line no-console
-    console.log('record ', record);
-
-    if (record.mxRecordConfigured !== environment?.dns?.mxRecordConfigured) {
+    if (record !== environment?.dns?.mxRecordConfigured) {
       await refetchEnvironment();
     }
   }
@@ -101,12 +100,12 @@ export const EmailSettings = () => {
           </MantineInput.Wrapper>
           <Controller
             control={control}
-            name="domain"
+            name="inboundParseDomain"
             render={({ field }) => (
               <Input
                 {...field}
                 mb={30}
-                data-test-id="title"
+                data-test-id="inbound-parse-domain"
                 disabled={readonly}
                 value={field.value || ''}
                 label={'Domain routing'}
@@ -138,7 +137,7 @@ function DescriptionText() {
   );
 }
 
-function Label({ control }: { control: Control<{ mxRecordConfigured: boolean; domain: string }, any> }) {
+function Label({ control }: { control: Control<{ mxRecordConfigured: boolean; inboundParseDomain: string }, any> }) {
   return (
     <div style={{ display: 'flex' }}>
       <div>MX Record</div>
@@ -148,7 +147,7 @@ function Label({ control }: { control: Control<{ mxRecordConfigured: boolean; do
         render={({ field }) => {
           return (
             <Center ml={5}>
-              {field.value ? <SuccessIcon color={colors.success} /> : <WarningIcon />}
+              {field.value ? <CheckCircle color={colors.success} /> : <WarningIcon />}
 
               <Text ml={7} color={field.value ? colors.success : colors.warning}>
                 {field.value ? 'Configured' : 'Not Configured'}

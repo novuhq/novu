@@ -1,28 +1,35 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EmailParseCommand } from './email-parse.command';
+import { InboundEmailParseCommand } from './inbound-email-parse.command';
 import { JobEntity, JobRepository, MessageRepository } from '@novu/dal';
 import axios from 'axios';
 import { createHmac } from 'crypto';
 
 @Injectable()
-export class EmailParse {
+export class InboundEmailParse {
   axiosInstance = axios.create();
   constructor(private jobRepository: JobRepository, private messageRepository: MessageRepository) {}
 
-  async execute(command: EmailParseCommand) {
-    const { toDomain, toTransactionId } = this.splitTo(command.to[0].address);
+  async execute(command: InboundEmailParseCommand) {
+    const { toDomain, toTransactionId, toEnvironmentId } = this.splitTo(command.to[0].address);
 
     if (!toTransactionId) {
-      // eslint-disable-next-line no-console
       Logger.warn(`missing transactionId on address ${command.to[0].address}`);
 
       return;
     }
 
-    const { template, notification, subscriber, environment, job, message } = await this.getEntities(toTransactionId);
+    if (!toEnvironmentId) {
+      Logger.warn(`missing environmentId on address ${command.to[0].address}`);
 
-    if (toDomain !== environment?.dns?.domain) {
-      // eslint-disable-next-line no-console
+      return;
+    }
+
+    const { template, notification, subscriber, environment, job, message } = await this.getEntities(
+      toTransactionId,
+      toEnvironmentId
+    );
+
+    if (toDomain !== environment?.dns?.inboundParseDomain) {
       Logger.warn('to domain is not in environment white list');
 
       return;
@@ -52,17 +59,20 @@ export class EmailParse {
   }
 
   private splitTo(address: string) {
-    const [toUser, toDomain] = address.split('@');
-    const toTransactionId = toUser.split('+')[1];
+    const userNameDelimiter = ':nv-e=';
 
-    return { toDomain, toTransactionId };
+    const [toUser, toDomain] = address.split('@');
+    const toMetaIds = toUser.split('+')[1];
+    const [toTransactionId, toEnvironmentId] = toMetaIds.split(userNameDelimiter);
+
+    return { toDomain, toTransactionId, toEnvironmentId };
   }
 
-  private async getEntities(transactionId: string) {
-    const partial: Partial<JobEntity> = { transactionId };
+  private async getEntities(transactionId: string, environmentId: string) {
+    const partial: Partial<JobEntity> = { transactionId, _environmentId: environmentId };
 
     const { template, notification, subscriber, environment, ...job } = await this.jobRepository.findOnePopulate({
-      query: partial as unknown as JobEntity,
+      query: partial as JobEntity,
       selectTemplate: 'steps',
       selectSubscriber: 'subscriberId',
       selectEnvironment: 'apiKeys dns',
