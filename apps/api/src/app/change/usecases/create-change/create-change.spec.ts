@@ -1,11 +1,11 @@
 import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
-import { CreateChange } from './create-change.usecase';
-import { ChangeModule } from '../change.module';
-import { CreateChangeCommand } from './create-change.command';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { SharedModule } from '../../shared/shared.module';
 import { expect } from 'chai';
+
+import { CreateChange, CreateChangeCommand } from './index';
+import { ChangeModule } from '../../change.module';
+import { SharedModule } from '../../../shared/shared.module';
 
 describe('Create Change', function () {
   let useCase: CreateChange;

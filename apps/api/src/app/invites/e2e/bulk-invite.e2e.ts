@@ -28,7 +28,7 @@ describe('Bulk invite members - /invites/bulk (POST)', async () => {
       .send({
         invitees: [
           {
-            email: 'asdasda',
+            email: 'email@bad',
             role: 'admin',
           },
         ],

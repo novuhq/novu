@@ -70,6 +70,19 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
     return await this.findOne({ _environmentId, _organizationId, isDefault: true });
   }
 
+  async findDeleted(id: LayoutId, environmentId: EnvironmentId): Promise<LayoutEntity | undefined> {
+    const deletedLayout = await this.layout.findOneDeleted({
+      _id: this.convertStringToObjectId(id),
+      _environmentId: this.convertStringToObjectId(environmentId),
+    });
+
+    if (!deletedLayout?._id) {
+      return undefined;
+    }
+
+    return this.mapEntity(deletedLayout);
+  }
+
   async filterLayouts(
     query: EnforceEnvironmentQuery,
     pagination: { limit: number; skip: number; sortBy: string; orderBy: OrderDirectionEnum }

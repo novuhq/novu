@@ -15,8 +15,7 @@ import { CreateMessageTemplate } from '../../../message-template/usecases/create
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
 import { UpdateMessageTemplateCommand } from '../../../message-template/usecases/update-message-template/update-message-template.command';
 import { UpdateMessageTemplate } from '../../../message-template/usecases/update-message-template/update-message-template.usecase';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { CacheKeyPrefixEnum, CacheService } from '../../../shared/services/cache';
 import { InvalidateCache } from '../../../shared/interceptors';

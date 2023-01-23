@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { UpdateChange } from '../../../change/usecases/update-change/update-change';
 import { UpdateChangeCommand } from '../../../change/usecases/update-change/update-change.command';
 
