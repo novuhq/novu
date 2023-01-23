@@ -12,16 +12,20 @@ export class SetDefaultLayoutUseCase {
   constructor(private createLayoutChange: CreateLayoutChangeUseCase, private layoutRepository: LayoutRepository) {}
 
   async execute(command: SetDefaultLayoutCommand) {
-    const defaultLayoutId = await this.findDefaultLayoutId(command.environmentId, command.organizationId);
+    const existingDefaultLayoutId = await this.findExistingDefaultLayoutId(
+      command.layoutId,
+      command.environmentId,
+      command.organizationId
+    );
 
-    if (defaultLayoutId && defaultLayoutId === command.layoutId) {
+    if (!existingDefaultLayoutId) {
       return;
     }
 
     try {
-      if (defaultLayoutId) {
-        await this.setIsDefaultForLayout(defaultLayoutId, command.environmentId, command.organizationId, false);
-        await this.createLayoutChangeForPreviousDefault(command, defaultLayoutId);
+      if (existingDefaultLayoutId) {
+        await this.setIsDefaultForLayout(existingDefaultLayoutId, command.environmentId, command.organizationId, false);
+        await this.createLayoutChangeForPreviousDefault(command, existingDefaultLayoutId);
       }
 
       await this.setIsDefaultForLayout(command.layoutId, command.environmentId, command.organizationId, true);
@@ -56,11 +60,17 @@ export class SetDefaultLayoutUseCase {
     };
   }
 
-  private async findDefaultLayoutId(
+  private async findExistingDefaultLayoutId(
+    layoutId: LayoutId,
     environmentId: EnvironmentId,
     organizationId: OrganizationId
   ): Promise<LayoutId | undefined> {
-    const defaultLayout = await this.layoutRepository.findDefault(environmentId, organizationId);
+    const defaultLayout = await this.layoutRepository.findOne({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      isDefault: true,
+      _id: { $ne: layoutId },
+    });
 
     if (!defaultLayout) {
       return undefined;
