@@ -32,9 +32,11 @@ export interface IRealtimeOnlineFilterPart extends IBaseFilterPart {
   value: boolean;
 }
 
+export type OnlineTimeOperator = 'minutes' | 'hours' | 'days';
+
 export interface IOnlineInLastFilterPart extends IBaseFilterPart {
   on: FilterPartTypeEnum.IS_ONLINE_IN_LAST;
-  timeOperator: 'minutes' | 'hours' | 'days';
+  timeOperator: OnlineTimeOperator;
   value: number;
 }
 
@@ -45,6 +47,6 @@ export interface ICondition {
   field: string;
   expected: string;
   actual: string;
-  operator: string;
+  operator: BuilderFieldOperator | OnlineTimeOperator;
   passed: boolean;
 }
