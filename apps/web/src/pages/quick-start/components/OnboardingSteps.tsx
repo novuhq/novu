@@ -173,6 +173,9 @@ novu.trigger('<REPLACE_WITH_TRIGGER_ID>', {
   to: { 
     subscriberId: '<REPLACE_WITH_USER_ID>', 
   },
+  from: { 
+    subscriberId: '<REPLACE_WITH_USER_ID>', 
+  },
   payload: {
      '<REPLACE_WITH_VARIABLE_NAME>': "<REPLACE_WITH_DATA>",
   }

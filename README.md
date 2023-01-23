@@ -96,6 +96,13 @@ await novu.trigger('<TRIGGER_NAME>', {
       lastName: 'Doe',
     },
   ],
+  from:
+    {
+      subscriberId: '<UNIQUE_IDENTIFIER>',
+      email: 'fromtest@doemail.com',
+      firstName: 'Order',
+      lastName: 'Confirmation',
+    },
   payload: {
     name: 'Hello World',
     organization: {

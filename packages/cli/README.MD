@@ -73,6 +73,12 @@ await novu.trigger('<TRIGGER_NAME>', {
     firstName: 'John',
     lastName: 'Doe',
   },
+  from: {
+    subscriberId: '<UNIQUE_IDENTIFIER>',
+    email: 'fromtest@doemail.com',
+    firstName: 'Order',
+    lastName: 'Confirmattion',
+  },
   payload: {
     name: 'Hello World',
     organization: {
@@ -124,14 +130,14 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Bandwidth
 - [ ] RingCentral
 
-#### 📱 Push 
+#### 📱 Push
 
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Pushwoosh
 
-#### 👇 Chat 
+#### 👇 Chat
 
 - [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
 - [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)

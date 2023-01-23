@@ -73,6 +73,13 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
     firstName: 'John',
     lastName: 'Doe',
   },
+  from: {
+    //from is optional
+    subscriberId: '<USER_IDENTIFIER>',
+    email: 'fromtest@email.com',
+    firstName: 'Order',
+    lastName: 'Confirmation',
+  },
   payload: {
     customVariables: 'Hello',
   },
