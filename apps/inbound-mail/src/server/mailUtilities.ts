@@ -54,8 +54,10 @@ module.exports = {
     }
 
     const verifySpfPath = path.join(__dirname, '../python/verifyspf.py');
-    const cmd = 'python ' + verifySpfPath + ' ' + ip + ' ' + address + ' ' + host;
-    child_process.exec(cmd, function (err, stdout) {
+    const cmd = 'python ';
+    const args = [verifySpfPath, ip, address, host];
+
+    child_process.execFile(cmd, args, function (err, stdout) {
       logger.verbose(stdout);
       let code = 0;
       if (err) {
