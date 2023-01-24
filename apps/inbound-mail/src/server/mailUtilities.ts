@@ -1,4 +1,4 @@
-import child_process from 'child_process';
+import * as child_process from 'child_process';
 import * as shell from 'shelljs';
 import logger from './logger';
 import * as path from 'path';
