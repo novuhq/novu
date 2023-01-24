@@ -22,7 +22,7 @@ importers:
       '@pnpm/logger': ^4.0.0
       '@types/inquirer': 8.2.5
       '@types/jest': 27.4.0
-      '@types/node': 16.11.7
+      '@types/node': 16.18.11
       '@typescript-eslint/eslint-plugin': ^5.28.0
       '@typescript-eslint/parser': ^5.28.0
       auto: ^10.36.5
@@ -98,7 +98,7 @@ importers:
       '@pnpm/logger': 4.0.0
       '@types/inquirer': 8.2.5
       '@types/jest': 27.4.0
-      '@types/node': 16.11.7
+      '@types/node': 16.18.11
       '@typescript-eslint/eslint-plugin': 5.29.0_yb4yj2f76b5nauodfyweowgpmu
       '@typescript-eslint/parser': 5.29.0_cl6qtdo3npn4kngw26aibg642e
       auto: 10.36.5_y4qulqmukjoftrdyqj7awk6qby
@@ -29866,8 +29866,8 @@ packages:
   /@types/node/14.18.12:
     resolution: {integrity: sha512-q4jlIR71hUpWTnGhXWcakgkZeHa3CCjcQcnuzU8M891BAWA2jHiziiWEPEkdS5pFsz7H9HJiy8BrK7tBRNrY7A==}
 
-  /@types/node/16.11.7:
-    resolution: {integrity: sha512-QB5D2sqfSjCmTuWcBWyJ+/44bcjO7VbjSbOE0ucoVbAsSNQc4Lt6QkgkVXkTDwkL4z/beecZNDvVX15D4P8Jbw==}
+  /@types/node/16.18.11:
+    resolution: {integrity: sha512-3oJbGBUWuS6ahSnEq1eN2XrCyf4YsWI8OyCvo7c64zQJNplk3mO84t53o8lfTk+2ji59g5ycfc6qQ3fdHliHuA==}
     dev: true
 
   /@types/node/16.18.3:

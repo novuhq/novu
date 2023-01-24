@@ -83,7 +83,7 @@
     "@pnpm/logger": "^4.0.0",
     "@types/inquirer": "8.2.5",
     "@types/jest": "27.4.0",
-    "@types/node": "16.11.7",
+    "@types/node": "16.18.11",
     "@typescript-eslint/eslint-plugin": "^5.28.0",
     "@typescript-eslint/parser": "^5.28.0",
     "auto": "^10.36.5",
