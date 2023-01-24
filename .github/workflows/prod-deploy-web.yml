@@ -63,6 +63,7 @@ jobs:
         working-directory: apps/web
         run: |
           touch .env
+          echo "\n" >> .env
           echo REACT_APP_INTERCOM_APP_ID=${{ secrets.INTERCOM_APP_ID }} >> .env
           echo REACT_APP_API_URL="https://api.novu.co" >> .env
           echo REACT_APP_WS_URL="https://ws.novu.co" >> .env
