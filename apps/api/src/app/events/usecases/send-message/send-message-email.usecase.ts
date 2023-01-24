@@ -6,16 +6,12 @@ import {
   NotificationStepEntity,
   OrganizationEntity,
   OrganizationRepository,
-  SubscriberEntity,
   SubscriberRepository,
+  EnvironmentRepository,
+  IntegrationEntity,
+  MessageEntity,
 } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IEmailBlock,
-  LogCodeEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { CreateLog } from '../../../logs/usecases';

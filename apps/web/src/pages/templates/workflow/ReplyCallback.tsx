@@ -12,17 +12,16 @@ export const ReplyCallback = ({ control, index, errors }) => {
   const { environment } = useEnvController();
   const { getValues } = useFormContext();
   const replyCallbackActive = getValues(`steps.${index}.replyCallback.active`);
-  const domainConfigured = environment?.dns?.inboundParseDomain;
+
+  const domainMxRecordConfigured =
+    environment?.dns?.inboundParseDomain && environment?.dns?.mxRecordConfigured === true;
 
   return (
     <>
       <ReplyCallbackSwitch index={index} control={control} />
-      <When truthy={!domainConfigured && replyCallbackActive}>
+      <When truthy={!domainMxRecordConfigured && replyCallbackActive}>
         <LackConfigurationError
-          text={
-            'Looks like you haven’t configured your domain routing under email settings yet, ' +
-            'be aware that unless you configure it Novu`s domain will be presented..'
-          }
+          text={'Looks like you haven’t configured your domain mx record or routing under email settings yet.'}
           redirectTo={'/settings'}
         />
       </When>
