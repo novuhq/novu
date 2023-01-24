@@ -11,6 +11,7 @@ import {
   MessageRepository,
   MemberRepository,
   IntegrationRepository,
+  JobRepository,
 } from '@novu/dal';
 
 const DAL_MODELS = [
@@ -24,6 +25,7 @@ const DAL_MODELS = [
   MessageRepository,
   MemberRepository,
   IntegrationRepository,
+  JobRepository,
 ];
 
 const dalService = new DalService();

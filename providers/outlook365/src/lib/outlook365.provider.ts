@@ -5,7 +5,6 @@ import {
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
-  IEmailEventBody,
 } from '@novu/stateless';
 import nodemailer, { SendMailOptions, Transporter } from 'nodemailer';
 
@@ -70,8 +69,8 @@ export class Outlook365Provider implements IEmailProvider {
   }
 
   private createMailData(options: IEmailOptions): SendMailOptions {
-    return {
-      from: options.from || this.config.from,
+    const sendMailOptions: SendMailOptions = {
+      from: options || this.config.from,
       to: options.to,
       subject: options.subject,
       html: options.html,
@@ -82,5 +81,11 @@ export class Outlook365Provider implements IEmailProvider {
         contentType: attachment.mime,
       })),
     };
+
+    if (options.replyTo) {
+      sendMailOptions.replyTo = options.replyTo;
+    }
+
+    return sendMailOptions;
   }
 }

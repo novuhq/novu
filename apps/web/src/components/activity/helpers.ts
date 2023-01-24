@@ -17,6 +17,7 @@ import {
   Sms,
   Timer,
 } from '../../design-system/icons';
+import { WarningIcon } from '../../design-system/icons/general/WarningIcon';
 
 export const getColorByStatus = (theme: MantineTheme, status: ExecutionDetailsStatusEnum): string => {
   if (status === ExecutionDetailsStatusEnum.FAILED) {
@@ -33,15 +34,16 @@ export const getColorByStatus = (theme: MantineTheme, status: ExecutionDetailsSt
 export const getLogoByStatus = (
   status: ExecutionDetailsStatusEnum
 ): React.FunctionComponent<React.ComponentPropsWithoutRef<'svg'>> => {
-  if (status === ExecutionDetailsStatusEnum.SUCCESS) {
-    return CheckCircle;
+  switch (status) {
+    case ExecutionDetailsStatusEnum.SUCCESS:
+      return CheckCircle;
+    case ExecutionDetailsStatusEnum.WARNING:
+      return WarningIcon;
+    case ExecutionDetailsStatusEnum.FAILED:
+      return ErrorIcon;
+    default:
+      return Check;
   }
-
-  if (status === ExecutionDetailsStatusEnum.FAILED) {
-    return ErrorIcon;
-  }
-
-  return Check;
 };
 
 export const getLogoByType = (

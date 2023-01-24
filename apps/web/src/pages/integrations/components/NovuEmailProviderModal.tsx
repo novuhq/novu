@@ -1,20 +1,13 @@
 import styled from '@emotion/styled/macro';
-import { Image, useMantineColorScheme, Center, Group } from '@mantine/core';
-import { colors, Title } from '../../../design-system';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { useContext } from 'react';
+import { Center, Title, Text } from '@mantine/core';
+import { colors } from '../../../design-system';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { LimitBar } from './LimitBar';
+import { AuthContext } from '../../../store/authContext';
 
-export function NovuEmailProviderModal({
-  provider,
-  onClose,
-}: {
-  provider: IIntegratedProvider | null;
-  onClose: () => void;
-}) {
-  const { colorScheme } = useMantineColorScheme();
-
-  const logoSrc = provider ? `/static/images/logo-formerly-${colorScheme}-bg.png` : '';
+export function NovuEmailProviderModal({ onClose }: { onClose: () => void }) {
+  const { currentOrganization } = useContext(AuthContext);
 
   return (
     <div
@@ -27,16 +20,21 @@ export function NovuEmailProviderModal({
       </CloseButton>
 
       <ColumnDiv>
-        <Group>
-          <Image style={{ maxWidth: 140 }} radius="md" src={logoSrc} alt={`${provider?.providerId} image`} />
-          <Title size={2}>Our gift to you</Title>
-        </Group>
+        <Title align="center" order={2}>
+          Our E-mail gift to you
+        </Title>
         <InlineDiv>
-          Get ready to take your email game to the next level! We've set up an email provider for you. You can try it
-          out for free.
+          <Text>
+            Get ready to take your email game to the next level! We've set up an email provider for you. You can try it
+            out for free.
+          </Text>
+          <Text mt={16}>
+            Using this provider your emails will be sent from no-reply@novu.co and with sender name{' '}
+            {currentOrganization?.name || 'Novu'}.
+          </Text>
         </InlineDiv>
         <Center>
-          <LimitBar />
+          <LimitBar label={'Email credits used'} />
         </Center>
       </ColumnDiv>
     </div>
@@ -50,7 +48,7 @@ const ColumnDiv = styled.div`
 
 const InlineDiv = styled.div`
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   margin-bottom: 30px;
   margin-top: 30px;
 

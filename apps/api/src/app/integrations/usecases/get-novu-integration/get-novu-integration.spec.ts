@@ -8,10 +8,9 @@ import { SharedModule } from '../../../shared/shared.module';
 import { IntegrationModule } from '../../integrations.module';
 import { GetNovuIntegration } from './get-novu-integration.usecase';
 import { GetNovuIntegrationCommand } from './get-novu-integration.command';
-import { ChannelTypeEnum } from '../../../../../../../packages/stateless/src/lib/template/template.interface';
-import { EmailProviderIdEnum } from '../../../../../../../libs/shared/src/consts/providers/provider.enum';
 import { endOfMonth, startOfMonth } from 'date-fns';
 import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration/calculate-limit-novu-integration.usecase';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
 describe('Get Novu Integration', function () {
   let getNovuIntegration: GetNovuIntegration;
@@ -24,6 +23,7 @@ describe('Get Novu Integration', function () {
   });
 
   beforeEach(async () => {
+    process.env.NOVU_EMAIL_INTEGRATION_API_KEY = 'true';
     const moduleRef = await Test.createTestingModule({
       imports: [SharedModule, AuthModule, IntegrationModule],
       providers: [],

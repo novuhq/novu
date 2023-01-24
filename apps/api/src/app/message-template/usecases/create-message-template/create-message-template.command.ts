@@ -40,6 +40,10 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsString()
   feedId?: string;
 
+  @IsOptional()
+  @IsString()
+  layoutId?: string | null;
+
   @IsMongoId()
   parentChangeId: string;
 

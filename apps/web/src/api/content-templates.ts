@@ -6,11 +6,13 @@ export async function previewEmail({
   contentType,
   payload,
   subject,
+  layoutId,
 }: {
   content: string | IEmailBlock[];
   contentType: MessageTemplateContentType;
   payload: string;
   subject: string;
+  layoutId?: string;
 }) {
-  return api.post('/v1/content-templates/preview/email', { content, contentType, payload, subject });
+  return api.post('/v1/content-templates/preview/email', { content, contentType, payload, subject, layoutId });
 }

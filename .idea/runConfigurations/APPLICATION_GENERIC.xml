@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="APPLICATION GENERIC" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/packages/application-generic/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="watch:build" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>

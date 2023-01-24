@@ -28,6 +28,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
     name: `steps.${index}.template`,
     control,
   });
+
   const { data: organizationMembers } = useQuery<any[]>(['getOrganizationMembers'], getOrganizationMembers);
 
   const [sendTo, setSendTo] = useState<string[]>(currentUser?.email ? [currentUser?.email] : []);
@@ -53,12 +54,14 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 
   const onTestEmail = async () => {
     const payload = JSON.parse(payloadValue);
+
     try {
       await testSendEmailEvent({
         ...template,
         payload,
         to: sendTo,
         content: template.contentType === 'customHtml' ? (template.htmlContent as string) : template.content,
+        layoutId: template.layoutId,
       });
       successMessage('Test sent successfully!');
     } catch (e: any) {

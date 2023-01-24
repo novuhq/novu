@@ -19,4 +19,15 @@ export class MessageTemplateRepository extends BaseRepository<EnforceEnvironment
       _feedId: feedId,
     });
   }
+
+  async getMessageTemplatesByLayout(_environmentId: string, _layoutId: string, pagination?: { limit?: number }) {
+    return await this.find(
+      {
+        _environmentId,
+        _layoutId,
+      },
+      {},
+      pagination
+    );
+  }
 }
