@@ -6,9 +6,9 @@ export class QueueService {
 
   private bullConfig: QueueBaseOptions = {
     connection: {
-      db: Number(process.env.REDIS_DB_INDEX),
-      port: Number(process.env.REDIS_PORT),
+      db: Number(process.env.REDIS_DB_INDEX) ?? 2,
       host: process.env.REDIS_HOST,
+      port: Number(process.env.REDIS_PORT) ?? 6379,
       password: process.env.REDIS_PASSWORD,
       connectTimeout: 50000,
       keepAlive: 30000,
