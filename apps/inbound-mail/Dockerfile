@@ -24,7 +24,6 @@ RUN NODE_ENV=production pnpm build:inbound-mail
 
 WORKDIR /usr/src/app/apps/inbound-mail
 
-RUN cp .example.env dist/.env
 RUN cp .env.test dist/.env.test
 RUN cp .env.development dist/.env.development
 RUN cp .env.production dist/.env.production

@@ -1,7 +1,6 @@
 // Source is taken from the un-maintained https://github.com/Flolagale/mailin and refactored
 
-import * as dotenv from 'dotenv';
-dotenv.config();
+import './config';
 
 import mailin from './server/index';
 import logger from './server/logger';
