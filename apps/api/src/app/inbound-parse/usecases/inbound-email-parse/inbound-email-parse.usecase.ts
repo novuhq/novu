@@ -59,7 +59,7 @@ export class InboundEmailParse {
   }
 
   private splitTo(address: string) {
-    const userNameDelimiter = ':nv-e=';
+    const userNameDelimiter = '-nv-e=';
 
     const [toUser, toDomain] = address.split('@');
     const toMetaIds = toUser.split('+')[1];
