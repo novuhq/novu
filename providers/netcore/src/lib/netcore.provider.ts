@@ -13,6 +13,7 @@ export enum NetCoreStatusEnum {
   OPENED = 'open',
   SENT = 'send',
   BOUNCED = 'bounce',
+  INVALID = 'invalid',
   DROPPED = 'drop',
   CLICKED = 'click',
   SPAM = 'spam',
