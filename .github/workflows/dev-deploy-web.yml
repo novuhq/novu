@@ -77,6 +77,10 @@ jobs:
         working-directory: apps/web
         run: npm run envsetup
 
+      - name: Test
+        working-directory: apps/web
+        run: cat public/env-config.js
+
       # Runs a single command using the runners shell
       - name: Build
         env:
@@ -90,6 +94,10 @@ jobs:
           REACT_APP_ENVIRONMENT: dev
         working-directory: apps/web
         run: npm run build
+
+      - name: Test
+        working-directory: apps/web
+        run: cat public/env-config.js
 
       - name: Deploy WEB to DEV
         uses: nwtgck/actions-netlify@v1.2
