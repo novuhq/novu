@@ -34,7 +34,7 @@ export class PlivoSmsProvider implements ISmsProvider {
     );
 
     return {
-      id: plivoResponse.messageUuid[0],
+      ids: plivoResponse.messageUuid,
       date: new Date().toISOString(),
     };
   }
@@ -44,7 +44,7 @@ export class PlivoSmsProvider implements ISmsProvider {
       return body.map((item) => item.messageUuid);
     }
 
-    return [body.apiId];
+    return [body.messageUuid];
   }
 
   parseEventBody(
