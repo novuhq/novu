@@ -10,15 +10,16 @@ on:
       - main
     paths:
       - 'package.json'
-      - 'yarn.lock'
-      - 'apps/api/**'
+      - 'pnpm-lock.yaml'
+      - 'apps/inbound-mail/**'
       - 'libs/dal/**'
       - 'libs/shared/**'
+      - 'libs/testing/**'
 env:
   TF_WORKSPACE: novu-dev
 
 jobs:
-  deploy_dev_inbound-mail:
+  deploy_dev_inbound_mail:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -113,7 +114,7 @@ jobs:
       - name: Terraform setup
         uses: hashicorp/setup-terraform@v1
         with:
-          cli_config_credentials_token: ${{ secrets.TF_INBOUND_MAIL_TOKEN }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_version: 1.3.4
           terraform_wrapper: false
 
@@ -125,14 +126,14 @@ jobs:
         working-directory: cloud-infra/terraform
         id: terraform
         run: |
-          echo "inbound-mail_ecs_container_name=$(terraform output -json inbound-mail_ecs_container_name | jq -r .)" >> $GITHUB_ENV
-          echo "inbound-mail_ecs_service=$(terraform output -json inbound-mail_ecs_service | jq -r .)" >> $GITHUB_ENV
-          echo "inbound-mail_ecs_cluster=$(terraform output -json inbound-mail_ecs_cluster | jq -r .)" >> $GITHUB_ENV
-          echo "inbound-mail_task_name=$(terraform output -json inbound-mail_task_name | jq -r .)" >> $GITHUB_ENV
+          echo "inbound_mail_ecs_container_name=$(terraform output -json inbound_mail_ecs_container_name | jq -r .)" >> $GITHUB_ENV
+          echo "inbound_mail_ecs_service=$(terraform output -json inbound_mail_ecs_service | jq -r .)" >> $GITHUB_ENV
+          echo "inbound_mail_ecs_cluster=$(terraform output -json inbound_mail_ecs_cluster | jq -r .)" >> $GITHUB_ENV
+          echo "inbound_mail_task_name=$(terraform output -json inbound_mail_task_name | jq -r .)" >> $GITHUB_ENV
 
       - name: Download task definition
         run: |
-          aws ecs describe-task-definition --task-definition ${{ env.inbound-mail_task_name }} \
+          aws ecs describe-task-definition --task-definition ${{ env.inbound_mail_task_name }} \
           --query taskDefinition > task-definition.json
 
       - name: Render Amazon ECS task definition
@@ -140,15 +141,15 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: ${{ env.inbound-mail_ecs_container_name }}
+          container-name: ${{ env.inbound_mail_ecs_container_name }}
           image: ${{ steps.build-image.outputs.IMAGE }}
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.render-web-container.outputs.task-definition }}
-          service: ${{ env.inbound-mail_ecs_service }}
-          cluster: ${{ env.inbound-mail_ecs_cluster }}
+          service: ${{ env.inbound_mail_ecs_service }}
+          cluster: ${{ env.inbound_mail_ecs_cluster }}
           wait-for-service-stability: true
 
       - name: get-npm-version
