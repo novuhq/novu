@@ -7,6 +7,7 @@ export enum AnalyticsEventEnum {
   CREATE_APP_QUESTION_EVENT = 'Create App Question',
   REGISTER_METHOD_SELECT_EVENT = 'Select Register Method',
   TERMS_AND_CONDITIONS_QUESTION = 'Terms And Conditions Question',
+  PRIVATE_EMAIL_ATTEMPT = 'Private Email Register Attempt',
   ACCOUNT_CREATED = 'account_created',
   OPEN_DASHBOARD = 'open_dashboard',
   DASHBOARD_PAGE_OPENED = 'Dashboard Page Opened',

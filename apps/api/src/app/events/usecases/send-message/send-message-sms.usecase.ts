@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  IntegrationRepository,
   MessageRepository,
   NotificationStepEntity,
   NotificationRepository,
@@ -9,20 +8,12 @@ import {
   MessageEntity,
   IntegrationEntity,
 } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  LogCodeEnum,
-  LogStatusEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
+import { CreateLog } from '../../../logs/usecases';
 import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { SendMessageCommand } from './send-message.command';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -45,7 +36,6 @@ export class SendMessageSms extends SendMessageBase {
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
-    private integrationRepository: IntegrationRepository,
     private compileTemplate: CompileTemplate,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
@@ -69,6 +59,7 @@ export class SendMessageSms extends SendMessageBase {
         channelType: ChannelTypeEnum.SMS,
         findOne: true,
         active: true,
+        userId: command.userId,
       })
     );
 
@@ -92,13 +83,12 @@ export class SendMessageSms extends SendMessageBase {
       ...command.payload,
     };
 
-    let content = '';
+    let content: string | null = '';
 
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
-          customTemplate: smsChannel.template.content as string,
+          template: smsChannel.template.content as string,
           data: payload,
         })
       );
@@ -106,6 +96,10 @@ export class SendMessageSms extends SendMessageBase {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return;
+    }
+
+    if (!content) {
+      throw new ApiException(`Unexpected error: SMS content is missing`);
     }
 
     const phone = command.payload.phone || subscriber.phone;
@@ -178,23 +172,6 @@ export class SendMessageSms extends SendMessageBase {
     notification: NotificationEntity
   ) {
     if (!phone) {
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: 'Subscriber does not have active phone',
-          userId: command.userId,
-          subscriberId: command.subscriberId,
-          code: LogCodeEnum.SUBSCRIBER_MISSING_PHONE,
-          templateId: notification._templateId,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
-      );
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
         message._id,
@@ -286,7 +263,6 @@ export class SendMessageSms extends SendMessageBase {
         to: phone,
         from: integration.credentials.from,
         content,
-        attachments: null,
         id: message._id,
       });
 

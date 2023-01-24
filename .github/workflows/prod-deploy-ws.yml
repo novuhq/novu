@@ -7,6 +7,8 @@ on:
     tags:
       - '**@novu/ws**'
   workflow_dispatch:
+env:
+  TF_WORKSPACE: novu-prod
 
 jobs:
   # This workflow contains a single job called "build"
@@ -52,16 +54,13 @@ jobs:
       - name: Terraform setup
         uses: hashicorp/setup-terraform@v1
         with:
-          terraform_version: 0.14.4
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_version: 1.3.4
           terraform_wrapper: false
 
       - name: Terraform Init
         working-directory: cloud-infra/terraform
         run: terraform init
-
-      - name: Terraform Change Workspace
-        working-directory: cloud-infra/terraform
-        run: terraform workspace select prod
 
       - name: Terraform get output
         working-directory: cloud-infra/terraform

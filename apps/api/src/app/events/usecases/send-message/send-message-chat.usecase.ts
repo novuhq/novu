@@ -15,14 +15,11 @@ import {
 import {
   ChannelTypeEnum,
   LogCodeEnum,
-  LogStatusEnum,
   ChatProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
-import { CreateLogCommand } from '../../../logs/usecases';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -83,8 +80,7 @@ export class SendMessageChat extends SendMessageBase {
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
-          customTemplate: chatChannel.template.content as string,
+          template: chatChannel.template.content as string,
           data,
         })
       );
@@ -134,6 +130,7 @@ export class SendMessageChat extends SendMessageBase {
         channelType: ChannelTypeEnum.CHAT,
         findOne: true,
         active: true,
+        userId: command.userId,
       })
     );
 
@@ -212,23 +209,6 @@ export class SendMessageChat extends SendMessageBase {
     notification: NotificationEntity
   ) {
     if (!chatWebhookUrl) {
-      await this.createLogUsecase.execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.ERROR,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: 'Subscriber does not have active chat channel Id',
-          userId: command.userId,
-          subscriberId: command.subscriberId,
-          code: LogCodeEnum.SUBSCRIBER_MISSING_CHAT_CHANNEL_ID,
-          templateId: notification._templateId,
-          raw: {
-            payload: command.payload,
-            triggerIdentifier: command.identifier,
-          },
-        })
-      );
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
         message._id,

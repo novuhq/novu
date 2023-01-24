@@ -3,6 +3,12 @@
   "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/master/cspell.schema.json",
   "language": "en",
   "words": [
+    "spamassassin",
+    "mailparser",
+    "maxsize",
+    "mailin",
+    "Spamc",
+    "spamc",
     "hmac",
     "dtos",
     "bitauth",
@@ -197,7 +203,14 @@
     "getsentry",
     "martinbeentjes",
     "varvalue",
-    "varname"
+    "varname",
+    "testnovu",
+    "testapp",
+    "novuapp",
+    "yahoofs",
+    "novutest",
+    "nunito",
+    "codesee"
   ],
   "flagWords": [],
   "patterns": [

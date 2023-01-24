@@ -30,7 +30,7 @@ export function ProviderCard({
     <StyledCard
       dark={colorScheme === 'dark'}
       active={brightCard}
-      data-test-id="integration-provider-card"
+      data-test-id={`integration-provider-card-${provider.providerId}`}
       onClick={() => {
         if (provider.comingSoon) return;
         if (provider.connected) {
@@ -49,7 +49,9 @@ export function ProviderCard({
       <StyledGroup position="apart">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
-          {provider.connected && !provider.betaVersion ? <Settings data-test-id="provider-card-settings-svg" /> : null}
+          {provider.connected && !provider.betaVersion && !provider.novu ? (
+            <Settings data-test-id="provider-card-settings-svg" />
+          ) : null}
         </CardHeader>
 
         <CardFooter>

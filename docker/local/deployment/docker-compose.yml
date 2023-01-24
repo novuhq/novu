@@ -1,15 +1,15 @@
-version: "3"
+version: '3'
 services:
   redis:
-    image: "redis:alpine"
+    image: 'redis:alpine'
     container_name: redis
     logging:
-      driver: "none"
+      driver: 'none'
   mongodb:
     image: mongo
     container_name: mongodb
     logging:
-      driver: "none"
+      driver: 'none'
     environment:
       - PUID=1000
       - PGID=1000
@@ -19,7 +19,7 @@ services:
       - 27017:27017
     restart: unless-stopped
   api:
-    image: "ghcr.io/novuhq/novu/api:0.10.1"
+    image: 'ghcr.io/novuhq/novu/api:0.10.1'
     depends_on:
       - mongodb
       - redis
@@ -34,6 +34,8 @@ services:
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       REDIS_DB_INDEX: 2
+      REDIS_CACHE_SERVICE_HOST: ${REDIS_CACHE_SERVICE_HOST}
+      REDIS_CACHE_SERVICE_PORT: ${REDIS_CACHE_SERVICE_PORT}
       S3_LOCAL_STACK: ${S3_LOCAL_STACK}
       S3_BUCKET_NAME: ${S3_BUCKET_NAME}
       S3_REGION: ${S3_REGION}
@@ -45,9 +47,9 @@ services:
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
     ports:
-      - "3000:3000"
+      - '3000:3000'
   ws:
-    image: "ghcr.io/novuhq/novu/ws:0.10.1"
+    image: 'ghcr.io/novuhq/novu/ws:0.10.1'
     depends_on:
       - mongodb
       - redis
@@ -60,9 +62,9 @@ services:
       REDIS_PORT: ${REDIS_PORT}
       JWT_SECRET: ${JWT_SECRET}
     ports:
-      - "3002:3002"
+      - '3002:3002'
   web:
-    image: "ghcr.io/novuhq/novu/web:0.10.1"
+    image: 'ghcr.io/novuhq/novu/web:0.10.1'
     depends_on:
       - api
     container_name: web
@@ -74,7 +76,7 @@ services:
     ports:
       - 4200:4200
   widget:
-    image: "ghcr.io/novuhq/novu/widget:0.10.1"
+    image: 'ghcr.io/novuhq/novu/widget:0.10.1'
     depends_on:
       - api
       - web
@@ -88,7 +90,7 @@ services:
   embed:
     depends_on:
       - widget
-    image: "ghcr.io/novuhq/novu/embed:0.10.1"
+    image: 'ghcr.io/novuhq/novu/embed:0.10.1'
     container_name: embed
     environment:
       WIDGET_URL: ${WIDGET_URL}

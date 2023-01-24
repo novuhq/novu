@@ -1,5 +1,6 @@
-import { IsDefined, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { OrganizationCommand } from '../../../shared/commands/organization.command';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateEnvironmentCommand extends OrganizationCommand {
   @IsDefined()
@@ -8,14 +9,18 @@ export class UpdateEnvironmentCommand extends OrganizationCommand {
 
   @IsOptional()
   @IsString()
-  name: string;
+  name?: string;
 
   @IsOptional()
   @IsString()
-  identifier: string;
+  identifier?: string;
 
   @IsOptional()
   @IsString()
   @IsMongoId()
-  _parentId: string;
+  _parentId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  dns?: { inboundParseDomain: string };
 }

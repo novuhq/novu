@@ -30,22 +30,6 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   const messageRepository = new MessageRepository();
   let runJob: RunJob;
 
-  const awaitRunningJobs = async (unfinishedJobs = 0) => {
-    let runningJobs = 0;
-    do {
-      runningJobs = await jobRepository.count({
-        _environmentId: session.environment._id,
-        type: {
-          $nin: [StepTypeEnum.DELAY],
-        },
-        _templateId: template._id,
-        status: {
-          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
-        },
-      });
-    } while (runningJobs > unfinishedJobs);
-  };
-
   const triggerEvent = async (payload, transactionId?: string, overrides = {}) => {
     await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
@@ -107,7 +91,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       customVar: 'Testing of User Name',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 1);
 
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
@@ -134,7 +118,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
         userId: delayedJob._userId,
       })
     );
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, true, 0);
 
     const messagesAfter = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -172,7 +156,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       id,
       { delay: { amount: 3, unit: DigestUnitEnum.SECONDS } }
     );
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, true, 0);
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -204,7 +188,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       customVar: 'Testing of User Name',
       sendAt: addSeconds(new Date(), 30),
     });
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 1);
 
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
@@ -215,7 +199,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(delayedJob?.updatedAt));
 
     const delay = await workflowQueueService.queue.getDelayed();
-    expect(delay[0].opts.delay).to.approximately(diff, 5);
+    expect(delay[0].opts.delay).to.approximately(diff, 500);
   });
 
   it('should not include delayed event in digested sent message', async function () {
@@ -250,7 +234,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       eventNumber: '1',
     });
 
-    await awaitRunningJobs(2);
+    await session.awaitRunningJobs(template?._id, true, 2);
 
     const delayedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
@@ -277,7 +261,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       eventNumber: '2',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 1);
 
     await runJob.execute(
       RunJobCommand.create({
@@ -288,7 +272,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       })
     );
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 1);
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -336,7 +320,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       eventNumber: '2',
       sendAt: dateValue,
     });
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 1);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -417,7 +401,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       id
     );
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 1);
     await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,

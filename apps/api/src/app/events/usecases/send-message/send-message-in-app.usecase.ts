@@ -6,27 +6,23 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   MessageEntity,
-  IEmailBlock,
   NotificationEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  LogCodeEnum,
-  LogStatusEnum,
   IMessageButton,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IEmailBlock,
   InAppProviderIdEnum,
   ActorTypeEnum,
   IActor,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
@@ -115,9 +111,7 @@ export class SendMessageInApp extends SendMessageBase {
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
-      content,
       providerId: 'novu',
-      payload: messagePayload,
       _feedId: inAppChannel.template._feedId,
     });
 
@@ -207,28 +201,6 @@ export class SendMessageInApp extends SendMessageBase {
       })
     );
 
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.SUCCESS,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        notificationId: notification._id,
-        messageId: message._id,
-        text: 'In App message created',
-        userId: command.userId,
-        subscriberId: command.subscriberId,
-        code: LogCodeEnum.IN_APP_MESSAGE_CREATED,
-        templateId: notification._templateId,
-        raw: this.storeContent()
-          ? {
-              payload: command.payload,
-              triggerIdentifier: command.identifier,
-            }
-          : null,
-      })
-    );
-
     await this.queueService.wsSocketQueue.add({
       event: 'unseen_count_changed',
       userId: command.subscriberId,
@@ -264,11 +236,10 @@ export class SendMessageInApp extends SendMessageBase {
     payload: any,
     subscriber: SubscriberEntity,
     command: SendMessageCommand
-  ): Promise<string> {
+  ): Promise<string | null> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: content as string,
+        template: content as string,
         data: {
           subscriber,
           step: {
@@ -289,38 +260,15 @@ export class SendMessageInApp extends SendMessageBase {
   ): Promise<string | null> {
     const actorId = command.job?._actorId;
     if (actor.type === ActorTypeEnum.USER && actorId) {
-      try {
-        const actorSubscriber: SubscriberEntity | null = await this.subscriberRepository.findOne(
-          {
-            _environmentId: command.environmentId,
-            _id: actorId,
-          },
-          'avatar'
-        );
+      const actorSubscriber: SubscriberEntity | null = await this.subscriberRepository.findOne(
+        {
+          _environmentId: command.environmentId,
+          _id: actorId,
+        },
+        'avatar'
+      );
 
-        return actorSubscriber?.avatar || null;
-      } catch (error) {
-        await this.createLogUsecase.execute(
-          CreateLogCommand.create({
-            transactionId: command.transactionId,
-            status: LogStatusEnum.ERROR,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            notificationId: notification._id,
-            text: "Couldn't get Avatar actor details",
-            userId: command.userId,
-            subscriberId: command.subscriberId,
-            code: LogCodeEnum.AVATAR_ACTOR_ERROR,
-            templateId: notification._templateId,
-            raw: {
-              payload: command.payload,
-              triggerIdentifier: command.identifier,
-            },
-          })
-        );
-
-        return null;
-      }
+      return actorSubscriber?.avatar || null;
     }
 
     return actor.data || null;

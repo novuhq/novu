@@ -1,18 +1,27 @@
 import { colors, Text, Tooltip } from '../../../../design-system';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
 import { SystemVariablesWithTypes } from '@novu/shared';
-import { VarItem } from './VarItem';
 import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
 import { UnstyledButton, useMantineTheme } from '@mantine/core';
 import { EditGradient } from '../../../../design-system/icons/gradient/EditGradient';
 import { useProcessVariables } from '../../../../hooks/use-process-variables';
+import { VarItemTooltip } from './VarItemTooltip';
 
-export const VariablesManagement = ({ index, openVariablesModal }) => {
-  const { control } = useFormContext();
+export const VariablesManagement = ({
+  index,
+  openVariablesModal,
+  control,
+  path,
+}: {
+  index: number;
+  openVariablesModal: () => void;
+  control?: any;
+  path?: string;
+}) => {
   const theme = useMantineTheme();
   const variableArray = useWatch({
-    name: `steps.${index}.template.variables`,
+    name: path ?? `steps.${index}.template.variables`,
     control,
   });
   const processedVariables = useProcessVariables(variableArray, false);
@@ -62,7 +71,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
             return <VarItemsDropdown name={name} key={ind} type={type} />;
           }
 
-          return <VarItem name={name} key={ind} type={type} />;
+          return <VarItemTooltip pathToCopy={name} name={name} type={type} key={ind} />;
         })}
       </VarLabel>
       <div
@@ -76,7 +85,7 @@ export const VariablesManagement = ({ index, openVariablesModal }) => {
               return <VarItemsDropdown key={ind} name={name} type={processedVariables[name]} />;
             }
 
-            return <VarItem key={ind} name={name} type={typeof processedVariables[name]} />;
+            return <VarItemTooltip pathToCopy={name} name={name} type={typeof processedVariables[name]} key={ind} />;
           })}
         </VarLabel>
       </div>

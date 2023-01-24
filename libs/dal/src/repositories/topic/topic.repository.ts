@@ -1,9 +1,7 @@
-import { AuthProviderEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 
 import { TopicEntity } from './topic.entity';
 import { Topic } from './topic.schema';
-import { TopicSubscribers } from './topic-subscribers.schema';
 import { EnvironmentId, ExternalSubscriberId, OrganizationId, TopicId, TopicKey, TopicName } from './types';
 
 import { BaseRepository, Omit } from '../base-repository';
@@ -55,19 +53,25 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
     query: EnforceEnvironmentQuery,
     pagination: { limit: number; skip: number }
   ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }[]> {
+    const parsedQuery = { ...query };
+    if (query._id) {
+      parsedQuery._id = this.convertStringToObjectId(query._id);
+    }
+
+    parsedQuery._environmentId = this.convertStringToObjectId(query._environmentId);
+    parsedQuery._organizationId = this.convertStringToObjectId(query._organizationId);
+
     const data = await this.aggregate([
       {
-        $match: {
-          ...query,
-        },
+        $match: parsedQuery,
       },
       lookup,
       topicWithSubscribersProjection,
       {
-        $limit: pagination.limit,
+        $skip: pagination.skip,
       },
       {
-        $skip: pagination.skip,
+        $limit: pagination.limit,
       },
     ]);
 
@@ -80,7 +84,7 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
   ): Promise<(TopicEntity & { subscribers: ExternalSubscriberId[] }) | null> {
     const [result] = await this.aggregate([
       {
-        $match: { _environmentId: environmentId, key: topicKey },
+        $match: { _environmentId: this.convertStringToObjectId(environmentId), key: topicKey },
       },
       lookup,
       topicWithSubscribersProjection,
@@ -124,8 +128,8 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
     const [updatedTopic] = await this.aggregate([
       {
         $match: {
-          _id,
-          _environmentId,
+          _id: this.convertStringToObjectId(_id),
+          _environmentId: this.convertStringToObjectId(_environmentId),
         },
       },
       lookup,

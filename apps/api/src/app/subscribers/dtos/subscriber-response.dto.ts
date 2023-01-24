@@ -55,6 +55,12 @@ export class SubscriberResponseDto {
   channels?: ChannelSettings[];
 
   @ApiProperty()
+  isOnline?: boolean;
+
+  @ApiProperty()
+  lastOnlineAt?: string;
+
+  @ApiProperty()
   _organizationId: string;
 
   @ApiProperty()
