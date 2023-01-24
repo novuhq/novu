@@ -19,6 +19,7 @@ export class PromoteLayoutChange {
       const layoutEntity = {
         name: newItem.name,
         content: newItem.content,
+        description: newItem.description,
         contentType: newItem.contentType,
         variables: newItem.variables,
         isDefault: newItem.isDefault,
@@ -51,8 +52,10 @@ export class PromoteLayoutChange {
       {
         name: newItem.name,
         content: newItem.content,
+        description: newItem.description,
         contentType: newItem.contentType,
         variables: newItem.variables,
+        isDefault: newItem.isDefault,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       }
