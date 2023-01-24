@@ -15,7 +15,7 @@ import { WarningIcon } from '../../../design-system/icons/general/WarningIcon';
 import { validateMxRecord } from '../../../api/inbound-parse';
 
 export const EmailSettings = () => {
-  const MAIL_SERVER_DOMAIN = process.env.MAIL_SERVER_DOMAIN ?? '10 parse-dev.novu.co';
+  const MAIL_SERVER_DOMAIN = `10 ${process.env.REACT_APP_MAIL_SERVER_DOMAIN ?? 'dev.inbound-mail.novu.co'}`;
 
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
   const { readonly, environment, refetchEnvironment } = useEnvController();
