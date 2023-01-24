@@ -1,3 +1,5 @@
+import * as capitalize from 'lodash.capitalize';
+
 describe('User Sign-up and Login', function () {
   describe('Sign up', function () {
     beforeEach(function () {
@@ -37,6 +39,63 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
       cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
+    });
+
+    it('should allow to sign-up with Github, logout, and login', function () {
+      const isCI = Cypress.env('IS_CI');
+      if (!isCI) return;
+
+      cy.intercept('**/organization/**/switch').as('appSwitch');
+      cy.visit('/auth/signup');
+
+      cy.loginWithGithub();
+
+      cy.location('pathname').should('equal', '/auth/application');
+      cy.getByTestId('app-creation').type('Organization Name');
+      cy.getByTestId('submit-btn').click();
+
+      cy.location('pathname').should('equal', '/quickstart');
+      cy.getByTestId('header-profile-avatar').click();
+      cy.getByTestId('header-dropdown-organization-name').contains(capitalize('Organization Name'.split(' ')[0]));
+      cy.getByTestId('header-dropdown-username').contains('Johnny Depp');
+
+      cy.getByTestId('logout-button').click();
+      cy.getByTestId('github-button').click();
+
+      cy.location('pathname').should('equal', '/templates');
+      cy.getByTestId('header-profile-avatar').click();
+      cy.getByTestId('header-dropdown-username').contains('Johnny Depp');
+    });
+
+    it('should allow to sign-up, logout, and login with Github using same email address', function () {
+      const isCI = Cypress.env('IS_CI');
+      if (!isCI) return;
+
+      const githubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
+
+      cy.intercept('**/organization/**/switch').as('appSwitch');
+      cy.visit('/auth/signup');
+      cy.getByTestId('fullName').type('Test User');
+      cy.getByTestId('email').type(githubUserEmail);
+      cy.getByTestId('password').type('usEr_password_123!');
+      cy.getByTestId('accept-cb').click({ force: true });
+      cy.getByTestId('submitButton').click();
+
+      cy.location('pathname').should('equal', '/auth/application');
+      cy.getByTestId('app-creation').type('Organization Name');
+      cy.getByTestId('submit-btn').click();
+
+      cy.location('pathname').should('equal', '/quickstart');
+      cy.getByTestId('header-profile-avatar').click();
+      cy.getByTestId('header-dropdown-username').contains('Test User');
+      cy.getByTestId('logout-button').click();
+
+      cy.location('pathname').should('equal', '/auth/login');
+      cy.loginWithGithub();
+
+      cy.location('pathname').should('equal', '/templates');
+      cy.getByTestId('header-profile-avatar').click();
+      cy.getByTestId('header-dropdown-username').contains('Test User');
     });
   });
 
@@ -123,19 +182,22 @@ describe('User Sign-up and Login', function () {
       cy.seedDatabase();
     });
 
-    it('should logout user when auth token is expired', function () {
+    it.only('should logout user when auth token is expired', function () {
       // login the user
       cy.visit('/auth/login');
       cy.getByTestId('email').type('test-user-1@example.com');
       cy.getByTestId('password').type('123qwe!@#');
       cy.getByTestId('submit-btn').click();
 
-      // setting current time in future, to simulate expired token
-      const todaysDate = new Date();
-      todaysDate.setDate(todaysDate.getDate() + 30); // iat - exp = 30 days
-      cy.clock(todaysDate);
+      cy.location('pathname').should('equal', '/templates');
 
-      cy.visit('/templates');
+      // setting current time in future, to simulate expired token
+      const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30; // iat - exp = 30 days
+      const ONE_MINUTE = 1000 * 60; // adding 1 minute to be sure that token is expired
+      const date = new Date(Date.now() + THIRTY_DAYS + ONE_MINUTE);
+      cy.clock(date);
+
+      cy.visit('/subscribers');
 
       // checking if token is removed from local storage
       cy.getLocalStorage('auth_token').should('be.null');

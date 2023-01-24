@@ -111,6 +111,8 @@ Cypress.Commands.add('inviteUser', (email: string) => {
         })
         .as('token');
 
+      cy.then(() => session.user).as('inviter');
+
       cy.logout().then(() => {
         return session.organization;
       });
@@ -128,6 +130,31 @@ Cypress.Commands.add('seedDatabase', () => {
 
 Cypress.Commands.add('clearDatabase', () => {
   return cy.task('clearDatabase');
+});
+
+Cypress.Commands.add('loginWithGithub', () => {
+  const githubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
+  const githubPassword = Cypress.env('GITHUB_USER_PASSWORD');
+
+  cy.getByTestId('github-button').click();
+
+  return cy.origin(
+    'https://github.com',
+    { args: { githubUserEmail, githubPassword } },
+    ({ githubUserEmail, githubPassword }) => {
+      cy.get('#login_field').type(githubUserEmail);
+      cy.get('#password').type(githubPassword);
+      cy.get('input[type="submit"]').click();
+
+      cy.get('body').then(($body) => {
+        if ($body.find('#js-oauth-authorize-btn').length) {
+          cy.wait(2000).then(() => {
+            $body.find('#js-oauth-authorize-btn').trigger('click');
+          });
+        }
+      });
+    }
+  );
 });
 
 export {};
