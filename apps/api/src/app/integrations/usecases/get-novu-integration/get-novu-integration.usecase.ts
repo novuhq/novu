@@ -2,8 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, OrganizationEntity, OrganizationRepository } from '@novu/dal';
 import { GetNovuIntegrationCommand } from './get-novu-integration.command';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
-import { CalculateLimitNovuIntegrationCommand } from '../calculate-limit-novu-integration/calculate-limit-novu-integration.command';
+import {
+  CalculateLimitNovuIntegration,
+  CalculateLimitNovuIntegrationCommand,
+} from '../calculate-limit-novu-integration';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '@novu/application-generic';
 
@@ -17,7 +19,7 @@ export class GetNovuIntegration {
   ) {}
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity | undefined> {
-    if (process.env.DOCKER_HOSTED_ENV === 'true') {
+    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY) {
       return;
     }
 

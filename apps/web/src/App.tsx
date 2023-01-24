@@ -34,6 +34,7 @@ import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { useBlueprint } from './hooks/useBlueprint';
+import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
 
 if (SENTRY_DSN) {
@@ -215,6 +216,16 @@ function App() {
                           <RequiredAuth>
                             <SpotLight>
                               <SubscribersList />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/brand"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <BrandPage />
                             </SpotLight>
                           </RequiredAuth>
                         }

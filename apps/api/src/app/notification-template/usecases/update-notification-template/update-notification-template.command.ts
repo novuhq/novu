@@ -41,4 +41,11 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
   @ValidateNested()
   @IsOptional()
   steps?: NotificationStep[];
+
+  @ValidateNested()
+  @IsOptional()
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
 }

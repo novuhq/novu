@@ -5,7 +5,7 @@ import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
 import { Queue } from 'bullmq';
-import { TriggerRecipientsPayload } from '@novu/node';
+import { Novu, TriggerRecipientsPayload } from '@novu/node';
 import { EmailBlockTypeEnum, IEmailBlock, StepTypeEnum } from '@novu/shared';
 import {
   UserEntity,
@@ -20,6 +20,7 @@ import {
   ChangeRepository,
   ChangeEntity,
   SubscriberRepository,
+  LayoutRepository,
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
@@ -62,6 +63,7 @@ export class UserSession {
   private notificationGroupRepository = new NotificationGroupRepository();
   private jobRepository = new JobRepository();
   private feedRepository = new FeedRepository();
+  private layoutRepository = new LayoutRepository();
   private changeRepository: ChangeRepository = new ChangeRepository();
 
   token: string;
@@ -87,6 +89,8 @@ export class UserSession {
   testServer: null | TestServer = testServer;
 
   apiKey: string;
+
+  serverSdk: Novu;
 
   constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {}
 
@@ -143,6 +147,10 @@ export class UserSession {
       this.subscriberToken = token;
       this.subscriberProfile = profile;
     }
+
+    this.serverSdk = new Novu(this.apiKey, {
+      backendUrl: this.serverUrl,
+    });
   }
 
   private async initializeWidgetSession() {
@@ -210,6 +218,13 @@ export class UserSession {
       _environmentId: this.environment._id,
       _organizationId: this.organization._id,
       _parentId: parentGroup?._id,
+    });
+
+    await this.layoutRepository.create({
+      name: 'Default',
+      _environmentId: this.environment._id,
+      _organizationId: this.organization._id,
+      isDefault: true,
     });
 
     return this.environment;
