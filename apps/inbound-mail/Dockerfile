@@ -24,10 +24,10 @@ RUN NODE_ENV=production pnpm build:inbound-mail
 
 WORKDIR /usr/src/app/apps/inbound-mail
 
-RUN cp src/.example.env dist/src/.env
-RUN cp src/.env.test dist/src/.env.test
-RUN cp src/.env.development dist/src/.env.development
-RUN cp src/.env.production dist/src/.env.production
+RUN cp .example.env dist/.env
+RUN cp .env.test dist/.env.test
+RUN cp .env.development dist/.env.development
+RUN cp .env.production dist/.env.production
 
 WORKDIR /usr/src/app
 
