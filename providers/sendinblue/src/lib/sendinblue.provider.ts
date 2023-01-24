@@ -52,6 +52,10 @@ export class SendinblueEmailProvider implements IEmailProvider {
       contentType: attachment.mime,
     }));
 
+    if (options.replyTo) {
+      email.replyTo.email = options.replyTo;
+    }
+
     const { response, body } =
       await this.transactionalEmailsApi.sendTransacEmail(email);
 

@@ -1,25 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import {
   MessageRepository,
-  NotificationStepEntity,
-  NotificationRepository,
-  SubscriberRepository,
-  OrganizationRepository,
-  MessageEntity,
   NotificationEntity,
+  NotificationRepository,
+  NotificationStepEntity,
   OrganizationEntity,
+  OrganizationRepository,
+  SubscriberRepository,
+  EnvironmentRepository,
   IntegrationEntity,
+  MessageEntity,
 } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IEmailBlock,
-  LogCodeEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { CreateLog } from '../../../logs/usecases';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
 import {
@@ -33,7 +28,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration/get-novu-integration.usecase';
+import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration';
 import { CompileEmailTemplate } from '../../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
 import { CompileEmailTemplateCommand } from '../../../content-templates/usecases/compile-email-template/compile-email-template.command';
 
@@ -42,6 +37,7 @@ export class SendMessageEmail extends SendMessageBase {
   channelType = ChannelTypeEnum.EMAIL;
 
   constructor(
+    protected environmentRepository: EnvironmentRepository,
     protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
@@ -62,7 +58,7 @@ export class SendMessageEmail extends SendMessageBase {
 
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
-    if (!subscriber) throw new ApiException('Subscriber not found');
+    if (!subscriber) throw new ApiException(`Subscriber ${command.subscriberId} not found`);
 
     let integration: IntegrationEntity | undefined = undefined;
 
@@ -97,10 +93,10 @@ export class SendMessageEmail extends SendMessageBase {
     if (!emailChannel.template) throw new ApiException('Email channel template not found');
 
     const notification = await this.notificationRepository.findById(command.notificationId);
-    if (!notification) throw new ApiException('Notification not found');
+    if (!notification) throw new ApiException(`Notification ${command.notificationId} not found`);
 
     const organization: OrganizationEntity | null = await this.organizationRepository.findById(command.organizationId);
-    if (!organization) throw new ApiException('Organization not found');
+    if (!organization) throw new ApiException(`Organization ${command.organizationId} not found`);
 
     const email = command.payload.email || subscriber.email;
 
@@ -214,12 +210,68 @@ export class SendMessageEmail extends SendMessageBase {
       id: message._id,
     };
 
+    if (command.step.replyCallback?.active) {
+      const replyTo = await this.getReplyTo(command, message._id);
+
+      if (replyTo) {
+        mailData.replyTo = replyTo;
+      }
+    }
+
     if (email && integration) {
       await this.sendMessage(integration, mailData, message, command, notification);
 
       return;
     }
     await this.sendErrors(email, integration, message, command, notification);
+  }
+
+  private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
+    const userNamePrefix = 'parse';
+    const userNameDelimiter = ':nv-e=';
+
+    if (!command.step.replyCallback?.url) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: messageId,
+          detail: DetailEnum.REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.WARNING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return null;
+    }
+
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+
+    if (environment.dns?.mxRecordConfigured && environment.dns?.inboundParseDomain) {
+      return `${userNamePrefix}+${command.transactionId}${userNameDelimiter}${environment._id}@${environment?.dns?.inboundParseDomain}`;
+    } else {
+      const detailEnum =
+        !environment.dns?.mxRecordConfigured && !environment.dns?.inboundParseDomain
+          ? DetailEnum.REPLY_CALLBACK_NOT_CONFIGURATION
+          : !environment.dns?.mxRecordConfigured
+          ? DetailEnum.REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION
+          : DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION;
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: messageId,
+          detail: detailEnum,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.WARNING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return null;
+    }
   }
 
   private async sendErrors(

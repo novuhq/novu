@@ -25,6 +25,10 @@ export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 
     variables?: ITemplateVariable[];
     name?: string;
     type: StepTypeEnum;
+    replyCallback?: {
+      active: boolean;
+      url: string;
+    };
     metadata?: {
       amount?: number;
       unit?: DigestUnitEnum;
