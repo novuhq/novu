@@ -1,5 +1,5 @@
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 
 import { UpdateLayoutCommand } from './update-layout.command';
 
@@ -25,6 +25,10 @@ export class UpdateLayoutUseCase {
       organizationId: command.organizationId,
     });
     const databaseEntity = await this.getLayoutUseCase.execute(getLayoutCommand);
+
+    if (!command.isDefault && databaseEntity.isDefault) {
+      throw new ConflictException(`One default layout is required`);
+    }
 
     const patchedEntity = this.applyUpdatesToEntity(this.mapToEntity(databaseEntity), command);
     const hasBody = patchedEntity.content.includes('{{{body}}}');
