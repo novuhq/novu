@@ -26,7 +26,7 @@ export class UpdateLayoutUseCase {
     });
     const databaseEntity = await this.getLayoutUseCase.execute(getLayoutCommand);
 
-    if (!command.isDefault && databaseEntity.isDefault) {
+    if (typeof command.isDefault === 'boolean' && !command.isDefault && databaseEntity.isDefault) {
       throw new ConflictException(`One default layout is required`);
     }
 
