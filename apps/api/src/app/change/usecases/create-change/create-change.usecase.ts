@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeRepository } from '@novu/dal';
 import { getDiff, applyDiff } from 'recursive-diff';
+
 import { CreateChangeCommand } from './create-change.command';
 
 @Injectable()

@@ -1,5 +1,5 @@
 import { TemplateVariableTypeEnum, TemplateSystemVariables } from '@novu/shared';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { Code, Space, Table } from '@mantine/core';
 import styled from '@emotion/styled';
 import { colors, Input, Switch, Text } from '../../design-system';
@@ -10,18 +10,28 @@ interface VariableManagerProps {
   index: number;
   variablesArray: Record<string, any>;
   hideLabel?: boolean;
+  control?: any;
+  path?: string;
 }
 
 interface VariableComponentProps {
   index: number;
   template: string;
+  control?: any;
+  path?: string;
 }
 
-export const VariableComponent = ({ index, template }: VariableComponentProps) => {
-  const { control, watch } = useFormContext();
+export const VariableComponent = ({ index, template, control, path }: VariableComponentProps) => {
+  const formPrefix = path ? `${path}variables.${index}` : `${template}.variables.${index}`;
+  const variableName = useWatch({
+    name: `${formPrefix}.name`,
+    control,
+  });
 
-  const variableName = watch(`${template}.variables.${index}.name`);
-  const variableType = watch(`${template}.variables.${index}.type`);
+  const variableType = useWatch({
+    name: `${formPrefix}.type`,
+    control,
+  });
 
   const variableTypeHumanize = {
     [TemplateVariableTypeEnum.STRING]: 'value',
@@ -57,7 +67,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
       <td>
         {variableType === TemplateVariableTypeEnum.STRING && !isSystemVariable && (
           <Controller
-            name={`${template}.variables.${index}.defaultValue`}
+            name={`${formPrefix}.defaultValue`}
             control={control}
             render={({ field, fieldState }) => {
               return (
@@ -74,7 +84,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
         )}
         {variableType === TemplateVariableTypeEnum.BOOLEAN && !isSystemVariable && (
           <Controller
-            name={`${template}.variables.${index}.defaultValue`}
+            name={`${formPrefix}.defaultValue`}
             control={control}
             render={({ field }) => {
               return (
@@ -95,7 +105,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
       </td>
       <td className="required-td">
         <Controller
-          name={`${template}.variables.${index}.required`}
+          name={`${formPrefix}.required`}
           control={control}
           render={({ field }) => {
             return (
@@ -113,7 +123,7 @@ export const VariableComponent = ({ index, template }: VariableComponentProps) =
   );
 };
 
-export function VariableManager({ variablesArray, index, hideLabel = false }: VariableManagerProps) {
+export function VariableManager({ variablesArray, index, hideLabel = false, path, control }: VariableManagerProps) {
   if (!variablesArray.fields.length) return null;
 
   return (
@@ -136,7 +146,13 @@ export function VariableManager({ variablesArray, index, hideLabel = false }: Va
         <tbody>
           <FieldArrayProvider fieldArrays={{ variablesArray }}>
             {variablesArray.fields.map((field, ind) => (
-              <VariableComponent key={field.id} index={ind} template={`steps.${index}.template`} />
+              <VariableComponent
+                key={field.id}
+                index={ind}
+                path={''}
+                template={path ?? `steps.${index}.template`}
+                control={control}
+              />
             ))}
           </FieldArrayProvider>
         </tbody>

@@ -3,7 +3,6 @@ import { useForm, Controller } from 'react-hook-form';
 import { Dropzone } from '@mantine/dropzone';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
-import { showNotification } from '@mantine/notifications';
 import { useMantineTheme, Group, Input, LoadingOverlay, Flex } from '@mantine/core';
 import { IOrganizationEntity } from '@novu/shared';
 
@@ -13,6 +12,7 @@ import { updateBrandingSettings } from '../../../api/organization';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Upload } from '../../../design-system/icons';
 import Card from '../../../components/layout/components/Card';
+import { successMessage } from '../../../utils/notifications';
 
 const mimeTypes = {
   'image/jpeg': 'jpeg',
@@ -103,10 +103,7 @@ export function BrandingForm({
 
     await updateBrandingSettingsMutation(brandData);
 
-    showNotification({
-      message: 'Branding info updated successfully',
-      color: 'green',
-    });
+    successMessage('Branding info updated successfully');
   }
 
   const { setValue, handleSubmit, control } = useForm({
@@ -204,9 +201,15 @@ export function BrandingForm({
             />
           </Card>
         </Flex>
-        <Button submit mb={20} mt={25} loading={isUpdateBrandingLoading} data-test-id="submit-branding-settings">
-          Update
-        </Button>
+        <div
+          style={{
+            textAlign: 'right',
+          }}
+        >
+          <Button submit mb={20} mt={25} loading={isUpdateBrandingLoading} data-test-id="submit-branding-settings">
+            Update
+          </Button>
+        </div>
       </form>
     </>
   );

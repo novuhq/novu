@@ -12,7 +12,7 @@ import {
 import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from '../../../design-system/icons';
+import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
 import { useEnvController } from '../../../store/use-env-controller';
 import { AuthContext } from '../../../store/authContext';
@@ -84,6 +84,12 @@ export function SideNav({}: Props) {
       link: '/subscribers',
       label: 'Subscribers',
       testId: 'side-nav-subscribers-link',
+    },
+    {
+      icon: <Brand />,
+      link: '/brand',
+      label: 'Brand',
+      testId: 'side-nav-brand-link',
     },
     { icon: <Activity />, link: '/activities', label: 'Activity Feed', testId: 'side-nav-activities-link' },
     { icon: <Box />, link: '/integrations', label: 'Integrations Store', testId: 'side-nav-integrations-link' },

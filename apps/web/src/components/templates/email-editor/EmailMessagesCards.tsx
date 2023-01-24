@@ -26,7 +26,7 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();
   const [modalOpen, setModalOpen] = useState(false);
-  const variablesArray = useVariablesManager(index, ['content', 'htmlContent', 'subject']);
+  const variablesArray = useVariablesManager(index, ['content', 'htmlContent', 'subject', 'preheader']);
 
   useHotkeys([
     [

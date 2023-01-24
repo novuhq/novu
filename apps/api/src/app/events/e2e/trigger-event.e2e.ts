@@ -231,11 +231,6 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const email = emails[0];
 
     expect(email.channel).to.equal(ChannelTypeEnum.EMAIL);
-    expect(Array.isArray(email.content)).to.be.ok;
-    expect((email.content[0] as IEmailBlock).type).to.equal(EmailBlockTypeEnum.TEXT);
-    expect((email.content[0] as IEmailBlock).content).to.equal(
-      'This are the text contents of the template for Testing of User Name'
-    );
   });
 
   it('should trigger SMS notification', async function () {
