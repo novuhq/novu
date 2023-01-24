@@ -65,7 +65,6 @@ jobs:
         working-directory: apps/web
         run: |
           touch .env
-          echo "\n" >> .env
           echo REACT_APP_API_URL="https://dev.api.novu.co" >> .env
           echo REACT_APP_WS_URL="https://dev.ws.novu.co" >> .env
           echo REACT_APP_WIDGET_EMBED_PATH="https://dev.embed.novu.co/embed.umd.min.js" >> .env
@@ -78,10 +77,6 @@ jobs:
       - name: Envsetup
         working-directory: apps/web
         run: npm run envsetup
-
-      - name: Test
-        working-directory: apps/web
-        run: cat public/env-config.js
 
       # Runs a single command using the runners shell
       - name: Build
@@ -98,10 +93,6 @@ jobs:
 
         working-directory: apps/web
         run: npm run build
-
-      - name: Test
-        working-directory: apps/web
-        run: cat public/env-config.js
 
       - name: Deploy WEB to DEV
         uses: nwtgck/actions-netlify@v1.2

@@ -6,8 +6,6 @@ import { expect } from 'chai';
 
 import { createLayout } from './helpers';
 
-import { TemplateVariableTypeEnum } from '../types';
-
 import { MessageTemplateModule } from '../../message-template/message-template.module';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../message-template/usecases';
 import { SharedModule } from '../../shared/shared.module';
@@ -32,7 +30,7 @@ describe('Delete a layout - /layouts/:layoutId (DELETE)', async () => {
 
   it('should soft delete the requested layout successfully if exists in the database for that user', async () => {
     const layoutName = 'layout-name-deletion';
-    const isDefault = true;
+    const isDefault = false;
     const createdLayout = await createLayout(session, layoutName, isDefault);
     const url = `${BASE_PATH}/${createdLayout._id}`;
     const deleteResponse = await session.testAgent.delete(url);
@@ -54,6 +52,21 @@ describe('Delete a layout - /layouts/:layoutId (DELETE)', async () => {
       `Layout not found for id ${nonExistingLayoutId} in the environment ${session.environment._id}`
     );
     expect(body.error).to.eql('Not Found');
+  });
+
+  it('should throw a conflict error when the layout ID to soft delete is the default layout', async () => {
+    const layoutName = 'layout-name-deletion';
+    const isDefault = true;
+    const createdLayout = await createLayout(session, layoutName, isDefault);
+    const url = `${BASE_PATH}/${createdLayout._id}`;
+    const deleteResponse = await session.testAgent.delete(url);
+
+    expect(deleteResponse.statusCode).to.eql(409);
+    expect(deleteResponse.body).to.eql({
+      error: 'Conflict',
+      message: `Layout with id ${createdLayout._id} is being used as your default layout, so it can not be deleted`,
+      statusCode: 409,
+    });
   });
 
   it('should throw a conflict error when the layout ID to soft delete is associated to message templates', async () => {

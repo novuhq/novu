@@ -9,7 +9,6 @@ import { FindDeletedLayoutCommand } from './find-deleted-layout.command';
 
 import { CreateLayoutUseCase, CreateLayoutCommand } from '../create-layout';
 import { DeleteLayoutUseCase, DeleteLayoutCommand } from '../delete-layout';
-import { LayoutId } from '../../types';
 
 import { SharedModule } from '../../../shared/shared.module';
 import { ChangeModule } from '../../../change/change.module';
@@ -68,7 +67,7 @@ describe('Find Deleted Layout Usecase', function () {
     const variables = [
       { name: 'organizationName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'Company', required: false },
     ];
-    const isDefault = true;
+    const isDefault = false;
 
     const createCommand = CreateLayoutCommand.create({
       content,
