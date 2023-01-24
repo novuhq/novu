@@ -508,6 +508,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   });
 
   it('should use Novu integration for new orgs', async function () {
+    process.env.NOVU_EMAIL_INTEGRATION_API_KEY = 'true';
+
     const existingIntegrations = await integrationRepository.find({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
