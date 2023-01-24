@@ -245,6 +245,8 @@ importers:
       nanoid: ^3.1.20
       nest-raven: 8.2.0
       newrelic: 9.7.5
+      nock: ^13.1.3
+      nodemailer: ^6.6.5
       nodemon: ^2.0.3
       passport: 0.6.0
       passport-github2: ^0.1.12
@@ -373,6 +375,8 @@ importers:
       '@types/supertest': 2.0.12
       chai: 4.3.6
       mocha: 8.4.0
+      nock: 13.2.4
+      nodemailer: 6.7.3
       nodemon: 2.0.15
       sinon: 9.2.4
       ts-loader: 9.2.8_vhanpkig4omek67hjhmtrlsh2y
@@ -49147,7 +49151,6 @@ packages:
 
   /lodash.set/4.3.2:
     resolution: {integrity: sha512-4hNPN5jlm/N/HLMCO43v8BXKq9Z7QdAGc/VGrRD61w8gN9g/6jF9A4L1pbUgBLCffi0w9VsXfTOij5x8iTyFvg==}
-    dev: false
 
   /lodash.snakecase/4.1.1:
     resolution: {integrity: sha512-QZ1d4xoBHYUeuouhEq3lk3Uq7ldgyFXGBhg04+oRLnIz8o9T65Eh+8YdroUwn846zchkA9yDsDl5CVVaV2nqYw==}
@@ -51168,7 +51171,6 @@ packages:
       propagate: 2.0.1
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /node-abi/3.22.0:
     resolution: {integrity: sha512-u4uAs/4Zzmp/jjsD9cyFYDXeISfUWaAVWshPmDZOFOv4Xl4SbzTXm53I04C2uRueYJ+0t5PEtLH/owbn2Npf/w==}
@@ -51407,7 +51409,6 @@ packages:
   /nodemailer/6.7.3:
     resolution: {integrity: sha512-KUdDsspqx89sD4UUyUKzdlUOper3hRkDVkrKh/89G+d9WKsU5ox51NWS4tB1XR5dPUdR4SP0E3molyEfOvSa3g==}
     engines: {node: '>=6.0.0'}
-    dev: false
 
   /nodemon/2.0.15:
     resolution: {integrity: sha512-gdHMNx47Gw7b3kWxJV64NI+Q5nfl0y5DgDbiVtShiwa7Z0IZ07Ll4RLFo6AjrhzMtoEZn5PDE3/c2AbVsiCkpA==}
@@ -55371,7 +55372,6 @@ packages:
   /propagate/2.0.1:
     resolution: {integrity: sha512-vGrhOavPSTz4QVNuBNdcNXePNdNMaO1xj9yBeH1ScQPjk/rhg9sSlCXPhMkFuaNNW/syTvYqsnbIJxMBfRbbag==}
     engines: {node: '>= 8'}
-    dev: false
 
   /property-expr/1.5.1:
     resolution: {integrity: sha512-CGuc0VUTGthpJXL36ydB6jnbyOf/rAHFvmVrJlH+Rg0DqqLFQGAP6hIaxD/G0OAmBJPhXDHuEJigrp0e0wFV6g==}
