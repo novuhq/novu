@@ -210,7 +210,8 @@ export class SendMessageEmail extends SendMessageBase {
       to: email,
       subject,
       html,
-      from: fromSubscriber?.email || integration?.credentials.from || 'no-reply@novu.co',
+      from:
+        fromSubscriber?.email || command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
       senderName: `${fromSubscriber?.firstName} ${fromSubscriber?.lastName}`,
       attachments,
       id: message._id,
