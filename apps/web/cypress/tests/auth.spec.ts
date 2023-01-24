@@ -182,7 +182,7 @@ describe('User Sign-up and Login', function () {
       cy.seedDatabase();
     });
 
-    it.only('should logout user when auth token is expired', function () {
+    it('should logout user when auth token is expired', function () {
       // login the user
       cy.visit('/auth/login');
       cy.getByTestId('email').type('test-user-1@example.com');
