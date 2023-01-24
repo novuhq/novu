@@ -19,7 +19,7 @@ export class GetNovuIntegration {
   ) {}
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity | undefined> {
-    if (process.env.DOCKER_HOSTED_ENV === 'true') {
+    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY) {
       return;
     }
 

@@ -52,6 +52,7 @@ export class CreateOrganization {
         organizationId: createdOrganization._id,
       })
     );
+
     await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
         userId: user._id,

@@ -1,14 +1,6 @@
 import { StepFilter } from '@novu/dal';
+import { ICondition } from '@novu/shared';
 import { IFilterVariables } from './types';
-
-interface ICondition {
-  filter: string;
-  field: string;
-  expected: string;
-  actual: string;
-  operator: string;
-  passed: boolean;
-}
 
 export class FilterProcessingDetails {
   private conditions: ICondition[] = [];

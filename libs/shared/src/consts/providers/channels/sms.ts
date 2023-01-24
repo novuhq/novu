@@ -1,5 +1,4 @@
 import { IProviderConfig } from '../provider.interface';
-import { ChannelTypeEnum } from '../../../entities/message-template';
 import {
   gupshupConfig,
   nexmoConfig,
@@ -14,6 +13,8 @@ import {
   clickatellConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
+
+import { ChannelTypeEnum } from '../../../types';
 
 export const smsProviders: IProviderConfig[] = [
   {

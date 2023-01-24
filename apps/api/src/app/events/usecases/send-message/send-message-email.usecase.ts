@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  EnvironmentRepository,
-  IEmailBlock,
-  IntegrationEntity,
-  MessageEntity,
   MessageRepository,
   NotificationEntity,
   NotificationRepository,
@@ -13,12 +9,16 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IEmailBlock,
+  LogCodeEnum,
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import { CreateLog } from '../../../logs/usecases';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
 import {
@@ -33,6 +33,8 @@ import {
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration';
+import { CompileEmailTemplate } from '../../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
+import { CompileEmailTemplateCommand } from '../../../content-templates/usecases/compile-email-template/compile-email-template.command';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
@@ -45,8 +47,8 @@ export class SendMessageEmail extends SendMessageBase {
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
-    private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
+    private compileEmailTemplateUsecase: CompileEmailTemplate,
     protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
     super(
@@ -105,7 +107,6 @@ export class SendMessageEmail extends SendMessageBase {
     Sentry.addBreadcrumb({
       message: 'Sending Email',
     });
-    const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
 
     if (!integration) {
       await this.createExecutionDetails.execute(
@@ -121,52 +122,38 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
+
     const overrides = command.overrides[integration?.providerId] || {};
+    let html;
     let subject = '';
-    let preheader = emailChannel.template.preheader;
-    let content: string | IEmailBlock[] = '';
+    let content;
 
     const payload = {
-      subject: emailChannel.template.subject,
-      preheader,
-      branding: {
-        logo: organization.branding?.logo,
-        color: organization.branding?.color || '#f47373',
+      subject: emailChannel.template.subject || '',
+      preheader: emailChannel.template.preheader,
+      content: emailChannel.template.content,
+      layoutId: emailChannel.template._layoutId,
+      contentType: emailChannel.template.contentType ? emailChannel.template.contentType : 'editor',
+      payload: {
+        ...command.payload,
+        step: {
+          digest: !!command.events?.length,
+          events: command.events,
+          total_count: command.events?.length,
+        },
+        subscriber,
       },
-      blocks: [],
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
-      subscriber: subscriber,
-      ...command.payload,
     };
 
     try {
-      subject =
-        (await this.renderContent(
-          emailChannel.template.subject || '',
-          emailChannel.template.subject,
-          organization,
-          subscriber,
-          command,
-          preheader
-        )) ?? '';
-
-      content = await this.getContent(
-        isEditorMode,
-        emailChannel,
-        command,
-        subscriber,
-        subject,
-        organization,
-        preheader
-      );
-
-      if (preheader) {
-        preheader = await this.renderContent(preheader, subject, organization, subscriber, command, preheader);
-      }
+      ({ html, content, subject } = await this.compileEmailTemplateUsecase.execute(
+        CompileEmailTemplateCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          ...payload,
+        })
+      ));
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
@@ -207,57 +194,6 @@ export class SendMessageEmail extends SendMessageBase {
         raw: this.storeContent() ? JSON.stringify(payload) : null,
       })
     );
-
-    const customTemplate = SendMessageEmail.addPreheader(content as string, emailChannel.template.contentType);
-    let html;
-    try {
-      html = await this.compileTemplate.execute(
-        CompileTemplateCommand.create({
-          templateId: isEditorMode ? 'basic' : 'custom',
-          customTemplate: customTemplate,
-          data: {
-            subject,
-            preheader,
-            branding: {
-              logo: organization.branding?.logo,
-              color: organization.branding?.color || '#f47373',
-            },
-            blocks: isEditorMode ? content : [],
-            step: {
-              digest: !!command.events?.length,
-              events: command.events,
-              total_count: command.events?.length,
-            },
-            ...command.payload,
-          },
-        })
-      );
-    } catch (error) {
-      await this.sendErrorStatus(
-        message,
-        'error',
-        'mail_unexpected_error',
-        'syntax error in email editor',
-        command,
-        notification,
-        LogCodeEnum.SYNTAX_ERROR_IN_EMAIL_EDITOR
-      );
-
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_SYNTAX_ERROR,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          messageId: message._id,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify(error.message),
-        })
-      );
-
-      return;
-    }
 
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
       (attachment) =>
@@ -480,83 +416,5 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
-  }
-
-  private async getContent(
-    isEditorMode,
-    emailChannel: NotificationStepEntity,
-    command: SendMessageCommand,
-    subscriber: SubscriberEntity,
-    subject,
-    organization: OrganizationEntity,
-    preheader
-  ): Promise<string | IEmailBlock[]> {
-    if (isEditorMode) {
-      const content: IEmailBlock[] = [...(emailChannel.template?.content as IEmailBlock[])] as IEmailBlock[];
-      for (const block of content) {
-        /*
-         * We need to trim the content in order to avoid mail provider like GMail
-         * to display the mail with `[Message clipped]` footer.
-         */
-        block.content =
-          (await this.renderContent(block.content, subject, organization, subscriber, command, preheader)) ?? '';
-        block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command, preheader);
-      }
-
-      return content;
-    }
-
-    return emailChannel.template?.content || '';
-  }
-
-  private async renderContent(
-    content: string,
-    subject,
-    organization: OrganizationEntity,
-    subscriber,
-    command: SendMessageCommand,
-    preheader?: string
-  ) {
-    const renderedContent = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: content as string,
-        data: {
-          subject,
-          preheader,
-          branding: {
-            logo: organization.branding?.logo,
-            color: organization.branding?.color || '#f47373',
-          },
-          blocks: [],
-          step: {
-            digest: !!command.events?.length,
-            events: command.events,
-            total_count: command.events?.length,
-          },
-          subscriber,
-          ...command.payload,
-        },
-      })
-    );
-
-    return renderedContent?.trim();
-  }
-
-  public static addPreheader(content: string, contentType: 'editor' | 'customHtml' | undefined): string | undefined {
-    if (contentType === 'customHtml') {
-      // "&nbsp;&zwnj;&nbsp;&zwnj;" is needed to spacing away the rest of the email from the preheader area in email clients
-      return content.replace(
-        /<body[^>]*>/g,
-        `$&{{#if preheader}}
-          <div style="display: none; max-height: 0px; overflow: hidden;">
-            {{preheader}}
-            &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;
-          </div>
-        {{/if}}`
-      );
-    }
-
-    return undefined;
   }
 }
