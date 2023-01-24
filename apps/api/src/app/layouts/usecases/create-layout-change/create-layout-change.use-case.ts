@@ -18,12 +18,6 @@ export class CreateLayoutChangeUseCase {
   ) {}
 
   async execute(command: CreateLayoutChangeCommand, isDeleteChange = false): Promise<void> {
-    const parentChangeId: string = await this.changeRepository.getChangeId(
-      command.environmentId,
-      ChangeEntityTypeEnum.LAYOUT,
-      command.layoutId
-    );
-
     const item = isDeleteChange
       ? await this.findDeletedLayout.execute(FindDeletedLayoutCommand.create(command))
       : await this.layoutRepository.findOne({
@@ -33,6 +27,12 @@ export class CreateLayoutChangeUseCase {
         });
 
     if (item) {
+      const parentChangeId: string = await this.changeRepository.getChangeId(
+        command.environmentId,
+        ChangeEntityTypeEnum.LAYOUT,
+        command.layoutId
+      );
+
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,
