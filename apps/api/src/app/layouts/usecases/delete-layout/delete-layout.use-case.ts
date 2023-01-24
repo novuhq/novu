@@ -35,7 +35,9 @@ export class DeleteLayoutUseCase {
     }
 
     if (layout.isDefault) {
-      throw new ConflictException(`Layout is being used as your default layout, so it can not be deleted`);
+      throw new ConflictException(
+        `Layout with id ${command.layoutId} is being used as your default layout, so it can not be deleted`
+      );
     }
 
     await this.layoutRepository.deleteLayout(command.layoutId, layout._environmentId, layout._organizationId);
