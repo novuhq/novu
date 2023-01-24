@@ -44,6 +44,7 @@
     "build:api": "nx build @novu/api",
     "build:ws": "nx build @novu/ws",
     "build:webhook": "nx build @novu/webhook",
+    "build:inbound-email": "nx build @novu/inbound-email",
     "build:web": "nx build @novu/web",
     "build:widget": "nx build @novu/widget",
     "build:embed": "nx build @novu/embed",
