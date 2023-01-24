@@ -26,7 +26,7 @@ if (!shell.which('spamassassin') || !shell.which('spamc')) {
 module.exports = {
   /* @param rawEmail is the full raw mime email as a string. */
   validateDkim: function (rawEmail, callback) {
-    if (!isPythonAvailable) {
+    if (true || !isPythonAvailable) {
       return callback(null, false);
     }
 
@@ -49,7 +49,7 @@ module.exports = {
   },
 
   validateSpf: function (ip, address, host, callback) {
-    if (!isPythonAvailable) {
+    if (true || !isPythonAvailable) {
       return callback(null, false);
     }
 
