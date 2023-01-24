@@ -38,6 +38,8 @@ describe('Blueprint Modal', () => {
     cy.get("[data-test-id='blueprint-name']").contains('test name');
     cy.get("[data-test-id='create-from-blueprint']").click();
     cy.wait('@createTemplate');
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(1000);
     cy.getAllLocalStorage().should('deep.equal', {});
   });
 
@@ -64,6 +66,8 @@ describe('Blueprint Modal', () => {
     );
     cy.wait('@getTemplate');
     cy.get('.mantine-Modal-close').click();
+    // eslint-disable-next-line cypress/no-unnecessary-waiting
+    cy.wait(1000);
     cy.getAllLocalStorage().should('deep.equal', {});
   });
 });
