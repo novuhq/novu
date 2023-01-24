@@ -16,7 +16,6 @@ export enum NetCoreStatusEnum {
   DROPPED = 'drop',
   CLICKED = 'click',
   SPAM = 'spam',
-  INVALID = 'invalid',
   UNSUBSCRIBED = 'unsub',
 }
 
@@ -113,7 +112,7 @@ export class NetCoreProvider implements IEmailProvider {
 
     return {
       status: status,
-      date: new Date().toISOString(),
+      date: new Date(body.TIMESTAMP).toISOString(),
       externalId: body.TRANSID,
       attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
       response: body.response ?? '',
@@ -125,6 +124,7 @@ export class NetCoreProvider implements IEmailProvider {
     switch (event) {
       case NetCoreStatusEnum.OPENED:
         return EmailEventStatusEnum.OPENED;
+      case NetCoreStatusEnum.INVALID:
       case NetCoreStatusEnum.BOUNCED:
         return EmailEventStatusEnum.BOUNCED;
       case NetCoreStatusEnum.CLICKED:
@@ -137,8 +137,6 @@ export class NetCoreProvider implements IEmailProvider {
         return EmailEventStatusEnum.UNSUBSCRIBED;
       case NetCoreStatusEnum.DROPPED:
         return EmailEventStatusEnum.DROPPED;
-      case NetCoreStatusEnum.INVALID:
-        return EmailEventStatusEnum.INVALID;
     }
   }
 }
