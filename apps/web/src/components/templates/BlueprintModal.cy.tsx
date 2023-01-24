@@ -38,11 +38,7 @@ describe('Blueprint Modal', () => {
     cy.get("[data-test-id='blueprint-name']").contains('test name');
     cy.get("[data-test-id='create-from-blueprint']").click();
     cy.wait('@createTemplate');
-    cy.getAllLocalStorage().then((result) => {
-      expect(result).to.deep.equal({});
-
-      return;
-    });
+    cy.getAllLocalStorage().should('deep.equal', {});
   });
 
   it('should render and remove blueprintId on close', () => {
@@ -68,10 +64,6 @@ describe('Blueprint Modal', () => {
     );
     cy.wait('@getTemplate');
     cy.get('.mantine-Modal-close').click();
-    cy.getAllLocalStorage().then((result) => {
-      expect(result).to.deep.equal({});
-
-      return;
-    });
+    cy.getAllLocalStorage().should('deep.equal', {});
   });
 });
