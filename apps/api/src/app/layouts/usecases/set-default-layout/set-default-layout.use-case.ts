@@ -1,6 +1,5 @@
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { Injectable, Logger } from '@nestjs/common';
-import { LayoutDto } from '@novu/shared';
 
 import { SetDefaultLayoutCommand } from './set-default-layout.command';
 
@@ -85,6 +84,6 @@ export class SetDefaultLayoutUseCase {
     organizationId: OrganizationId,
     isDefault: boolean
   ): Promise<void> {
-    this.layoutRepository.updateIsDefault(layoutId, environmentId, organizationId, isDefault);
+    await this.layoutRepository.updateIsDefault(layoutId, environmentId, organizationId, isDefault);
   }
 }

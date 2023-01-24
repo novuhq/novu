@@ -72,16 +72,11 @@ jobs:
           echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
           echo REACT_APP_SENTRY_DSN="https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907" >> .env
           echo REACT_APP_ENVIRONMENT=dev >> .env
-          echo REACT_APP_MAIL_SERVER_DOMAIN=dev.inbound-mail.novu.co >> .env
-
+          echo REACT_APP_MAIL_SERVER_DOMAIN="dev.inbound-mail.novu.co" >> .env
 
       - name: Envsetup
         working-directory: apps/web
         run: npm run envsetup
-
-      - name: Test
-        working-directory: apps/web
-        run: cat public/env-config.js
 
       # Runs a single command using the runners shell
       - name: Build
@@ -98,10 +93,6 @@ jobs:
 
         working-directory: apps/web
         run: npm run build
-
-      - name: Test
-        working-directory: apps/web
-        run: cat public/env-config.js
 
       - name: Deploy WEB to DEV
         uses: nwtgck/actions-netlify@v1.2

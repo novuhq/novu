@@ -8,7 +8,7 @@ import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { parse } from '@handlebars/parser';
-import { getTemplateVariables, ITemplateVariable, isReservedVariableName } from '@novu/shared';
+import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
 
 import { QueryKeys } from '../../../api/query.keys';
 import { VariableManager } from '../../../components/templates/VariableManager';
@@ -40,13 +40,14 @@ export function LayoutEditor({
   editMode?: boolean;
   goBack: () => void;
 }) {
-  const { readonly } = useEnvController();
+  const { readonly, environment } = useEnvController();
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
   const [ast, setAst] = useState<any>({ body: [] });
   const [modalOpen, setModalOpen] = useState(false);
+  const [layoutId, setLayoutId] = useState<LayoutId>(id);
 
-  const { layout, isLoading, createNewLayout, updateLayout } = useLayoutsEditor(id);
+  const { layout, isLoading, createNewLayout, updateLayout } = useLayoutsEditor(layoutId);
 
   const {
     handleSubmit,
@@ -82,6 +83,18 @@ export function LayoutEditor({
       }
     }
   }, [layout]);
+
+  useEffect(() => {
+    if (environment && layout) {
+      if (environment._id !== layout._environmentId) {
+        if (layout._parentId) {
+          setLayoutId(layout._parentId);
+        } else {
+          goBack();
+        }
+      }
+    }
+  }, [environment, layout]);
 
   useMemo(() => {
     const variables = getTemplateVariables(ast.body).filter(
