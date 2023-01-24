@@ -37,6 +37,7 @@ export function Content(props: IContentProps) {
             width: '100%',
             outline: 'none',
             backgroundColor: 'transparent',
+            overflowWrap: 'anywhere',
             ...(props.readonly
               ? {
                   backgroundColor: props.theme?.colorScheme === 'dark' ? colors.B20 : colors.B98,
