@@ -4,7 +4,6 @@ import { expect } from 'chai';
 import { createLayout } from './helpers';
 
 import { LayoutDto } from '../dtos';
-import { TemplateVariableTypeEnum } from '../types';
 
 const BASE_PATH = '/v1/layouts';
 
@@ -45,14 +44,12 @@ describe('Layout update - /layouts (PATCH)', async () => {
     const updatedDescription = 'We thought it was more amazing than it is';
     const updatedContent = `{{{body}}}`;
     const updatedVariables = [];
-    const updatedIsDefault = false;
 
     const updateResponse = await session.testAgent.patch(url).send({
       name: updatedLayoutName,
       description: updatedDescription,
       content: updatedContent,
       variables: updatedVariables,
-      isDefault: updatedIsDefault,
     });
 
     expect(updateResponse.statusCode).to.eql(200);
@@ -67,10 +64,26 @@ describe('Layout update - /layouts (PATCH)', async () => {
     expect(updatedBody.content).to.eql(updatedContent);
     expect(updatedBody.variables).to.eql(updatedVariables);
     expect(updatedBody.contentType).to.eql('customHtml');
-    expect(updatedBody.isDefault).to.eql(updatedIsDefault);
     expect(updatedBody.isDeleted).to.eql(false);
     expect(updatedBody.createdAt).to.be.ok;
     expect(updatedBody.updatedAt).to.be.ok;
+  });
+
+  it('should throw a conflict error when a default layout is updated to not be default', async () => {
+    const url = `${BASE_PATH}/${createdLayout._id}`;
+
+    const updatedIsDefault = false;
+
+    const updateResponse = await session.testAgent.patch(url).send({
+      isDefault: updatedIsDefault,
+    });
+
+    expect(updateResponse.statusCode).to.eql(409);
+    expect(updateResponse.body).to.eql({
+      error: 'Conflict',
+      message: `One default layout is required`,
+      statusCode: 409,
+    });
   });
 
   it('if the layout updated is assigned as default it should set as non default the existing default layout', async () => {
