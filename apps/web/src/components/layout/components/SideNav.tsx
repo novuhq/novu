@@ -171,7 +171,7 @@ export function SideNav({}: Props) {
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
       <Navbar.Section mt={15}>
-        <LimitBar withLink={true} />
+        <LimitBar withLink={true} label="Novu email credits used" />
       </Navbar.Section>
       <Navbar.Section mt={15}>
         <Navbar.Section>
