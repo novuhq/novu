@@ -1,5 +1,6 @@
 import { ActivePageEnum } from '../pages/templates/editor/TemplateEditorPage';
 import { useSearchParams } from './useSearchParams';
+import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { getToken } from '../store/use-auth-controller';
@@ -8,18 +9,19 @@ import { useSegment } from './use-segment';
 export const useBlueprint = () => {
   const searchParams = useSearchParams();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const segment = useSegment();
 
   useEffect(() => {
     const id = localStorage.getItem('blueprintId');
     const token = getToken();
 
-    if (id && token) {
+    if (id && token !== null) {
       navigate(`/templates/create?page=${ActivePageEnum.WORKFLOW}`, {
         replace: true,
       });
     }
-  }, [localStorage.getItem('blueprintId'), getToken()]);
+  }, [localStorage.getItem('blueprintId'), getToken(), pathname]);
 
   useEffect(() => {
     if (searchParams.blueprintId) {
@@ -27,9 +29,6 @@ export const useBlueprint = () => {
         blueprintId: searchParams.blueprintId,
       });
       localStorage.setItem('blueprintId', searchParams.blueprintId);
-      navigate(`/templates/create?page=${ActivePageEnum.WORKFLOW}`, {
-        replace: true,
-      });
     }
   }, [searchParams.blueprintId]);
 };
