@@ -2,9 +2,14 @@ import { useIntercom } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../config';
 import { Button, Size } from '../../design-system';
 
+interface GotAQuestionButtonProps {
+  mt: number;
+  size: Size;
+}
+
 const isIntercomEnabled = !!INTERCOM_APP_ID;
 
-export function GotAQuestionButton({ mt, size }: { mt: number; size: Size }) {
+export function GotAQuestionButton({ mt, size }: GotAQuestionButtonProps) {
   if (!isIntercomEnabled) {
     return null;
   }
@@ -12,7 +17,7 @@ export function GotAQuestionButton({ mt, size }: { mt: number; size: Size }) {
   return <QuestionButton mt={mt} size={size} />;
 }
 
-function QuestionButton({ mt, size }: { mt: number; size: Size }) {
+function QuestionButton({ mt, size }: GotAQuestionButtonProps) {
   const { show } = useIntercom();
 
   const text = 'Got a question?';
