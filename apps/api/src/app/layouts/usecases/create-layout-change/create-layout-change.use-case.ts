@@ -1,4 +1,4 @@
-import { LayoutEntity, LayoutRepository } from '@novu/dal';
+import { LayoutRepository, ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
 
@@ -13,7 +13,8 @@ export class CreateLayoutChangeUseCase {
   constructor(
     private createChange: CreateChange,
     private findDeletedLayout: FindDeletedLayoutUseCase,
-    private layoutRepository: LayoutRepository
+    private layoutRepository: LayoutRepository,
+    private changeRepository: ChangeRepository
   ) {}
 
   async execute(command: CreateLayoutChangeCommand, isDeleteChange = false): Promise<void> {
@@ -26,7 +27,11 @@ export class CreateLayoutChangeUseCase {
         });
 
     if (item) {
-      const changeId = LayoutRepository.createObjectId();
+      const parentChangeId: string = await this.changeRepository.getChangeId(
+        command.environmentId,
+        ChangeEntityTypeEnum.LAYOUT,
+        command.layoutId
+      );
 
       await this.createChange.execute(
         CreateChangeCommand.create({
@@ -35,7 +40,7 @@ export class CreateLayoutChangeUseCase {
           userId: command.userId,
           type: ChangeEntityTypeEnum.LAYOUT,
           item,
-          changeId,
+          changeId: parentChangeId,
         })
       );
     }
