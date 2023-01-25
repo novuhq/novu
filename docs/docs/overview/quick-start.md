@@ -105,6 +105,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
     email,
     phone,
     avatar,
+    locale,
   },
   payload: {},
 });

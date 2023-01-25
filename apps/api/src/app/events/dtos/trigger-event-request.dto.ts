@@ -14,6 +14,8 @@ export class SubscriberPayloadDto {
   phone?: string;
   @ApiProperty()
   avatar?: string;
+  @ApiProperty()
+  locale?: string;
 }
 
 export class TopicPayloadDto {

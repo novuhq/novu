@@ -7,6 +7,7 @@ export interface ISubscriber {
   email: string;
   phone?: string;
   avatar?: string;
+  locale?: string;
   subscriberId: string;
   channels?: IChannelSettings[];
   _organizationId: string;

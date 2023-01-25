@@ -234,9 +234,6 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
-    const userNamePrefix = 'parse';
-    const userNameDelimiter = ':nv-e=';
-
     if (!command.step.replyCallback?.url) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -256,7 +253,7 @@ export class SendMessageEmail extends SendMessageBase {
     const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
 
     if (environment.dns?.mxRecordConfigured && environment.dns?.inboundParseDomain) {
-      return `${userNamePrefix}+${command.transactionId}${userNameDelimiter}${environment._id}@${environment?.dns?.inboundParseDomain}`;
+      return getReplyToAddress(command.transactionId, environment._id, environment?.dns?.inboundParseDomain);
     } else {
       const detailEnum =
         !environment.dns?.mxRecordConfigured && !environment.dns?.inboundParseDomain
@@ -420,4 +417,11 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
   }
+}
+
+export function getReplyToAddress(transactionId: string, environmentId: string, inboundParseDomain: string) {
+  const userNamePrefix = 'parse';
+  const userNameDelimiter = '-nv-e=';
+
+  return `${userNamePrefix}+${transactionId}${userNameDelimiter}${environmentId}@${inboundParseDomain}`;
 }
