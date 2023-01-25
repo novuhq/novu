@@ -75,6 +75,8 @@
     "lodash.clonedeep": "^4.5.0",
     "lodash.get": "^4.3.2",
     "lodash.set": "^4.3.2",
+    "logrocket": "^3.0.1",
+    "logrocket-react": "^5.0.1",
     "polished": "^4.1.3",
     "react": "^17.0.1",
     "react-ace": "^9.4.3",
