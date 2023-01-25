@@ -42,6 +42,9 @@ export class SubscriberResponseDto {
   @ApiPropertyOptional()
   avatar?: string;
 
+  @ApiPropertyOptional()
+  locale?: string;
+
   @ApiProperty({
     description:
       'The internal identifier you used to create this subscriber, usually correlates to the id the user in your systems',

@@ -32,6 +32,7 @@ export interface ISubscriberPayload {
   email?: string;
   phone?: string;
   avatar?: string;
+  locale?: string;
   [key: string]: string | string[] | boolean | number | undefined;
 }
 

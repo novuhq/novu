@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsDefined, IsEmail, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsEmail, IsLocale, IsOptional, IsString } from 'class-validator';
 
 export class CreateSubscriberRequestDto {
   @ApiProperty({
@@ -36,4 +36,9 @@ export class CreateSubscriberRequestDto {
   @IsString()
   @IsOptional()
   avatar?: string;
+
+  @ApiPropertyOptional()
+  @IsLocale()
+  @IsOptional()
+  locale?: string;
 }
