@@ -93,7 +93,7 @@ jobs:
 
       # run cypress install only when cache was not hit
       - name: Cypress install
-        if: steps.setup-project.outputs.cache-cypress-binary-hit != 'true'
+        if: steps.setup-project.outputs.cypress_cache_hit != 'true'
         working-directory: apps/web
         run: pnpm cypress install
 
@@ -138,7 +138,7 @@ jobs:
 
       # run cypress install only when cache was not hit
       - name: Cypress install
-        if: steps.setup-project.outputs.cache-cypress-binary-hit != 'true'
+        if: steps.setup-project.outputs.cypress_cache_hit != 'true'
         working-directory: apps/web
         run: pnpm cypress install
 

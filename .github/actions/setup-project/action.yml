@@ -8,7 +8,7 @@ inputs:
     required: false
     default: ''
 outputs:
-  cache-cypress-binary-hit:
+  cypress_cache_hit:
     description: 'Did cypress used binary cache'
     value: ${{ steps.cache-cypress-binary.outputs.cache-hit }}
 
