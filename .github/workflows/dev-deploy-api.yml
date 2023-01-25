@@ -41,6 +41,7 @@ jobs:
         with:
           tag: dev
           push: 'true'
+          gh_password: ${{ secrets.GH_PACKAGES }}
 
       - name: Checkout cloud infra
         uses: actions/checkout@master
