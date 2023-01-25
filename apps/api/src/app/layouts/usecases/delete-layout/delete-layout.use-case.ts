@@ -30,6 +30,7 @@ export class DeleteLayoutUseCase {
         organizationId: command.organizationId,
       })
     );
+
     if (isUsed) {
       throw new ConflictException(`Layout with id ${command.layoutId} is being used so it can not be deleted`);
     }
