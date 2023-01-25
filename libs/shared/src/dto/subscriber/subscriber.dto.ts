@@ -21,6 +21,7 @@ export class SubscriberDto {
   email: string;
   phone?: string;
   avatar?: string;
+  locale?: string;
   subscriberId: ExternalSubscriberId;
   channels?: IChannelSettings[];
   deleted: boolean;
