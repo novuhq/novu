@@ -10,7 +10,7 @@ inputs:
 outputs:
   cypress_cache_hit:
     description: 'Did cypress used binary cache'
-    value: ${{ steps.cache-cypress-binary.outputs.cache-hit }}
+    value: ${{ inputs.cypress_version != '' && steps.cache-cypress-binary-version.outputs.cache-hit || steps.cache-cypress-binary.outputs.cache-hit}}
 
 runs:
   using: composite
@@ -55,7 +55,7 @@ runs:
           ${{ runner.os }}-pnpm-store-
 
     - name: Cache Cypress Binary For Version
-      id: cache-cypress-binary
+      id: cache-cypress-binary-version
       if: ${{ inputs.cypress_version != '' }}
       uses: actions/cache@v3
       with:
