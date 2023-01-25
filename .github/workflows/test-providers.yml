@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - "providers/**"
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest

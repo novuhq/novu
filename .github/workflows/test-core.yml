@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - "packages/node/**"
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
