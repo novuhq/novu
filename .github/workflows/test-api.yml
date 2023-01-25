@@ -23,7 +23,8 @@ jobs:
     timeout-minutes: 80
     permissions:
       contents: read
-      packages: read
+      packages: write
+      deployments: write
       id-token: write
     steps:
       - uses: actions/checkout@v3
