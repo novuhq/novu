@@ -23,9 +23,12 @@ jobs:
     timeout-minutes: 80
     permissions:
       contents: read
+      packages: read
       id-token: write
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-api
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 

@@ -41,7 +41,7 @@ jobs:
         with:
           tag: dev
           push: 'true'
-          gh_password: ${{ secrets.GH_PACKAGES }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout cloud infra
         uses: actions/checkout@master

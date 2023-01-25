@@ -10,9 +10,9 @@ inputs:
     description: 'Push the image to the registry'
     required: false
     default: 'false'
-  gh_password:
-    description: 'The password to use for logging into ghcr.io'
-    required: false
+  github_token:
+    description: 'The token to use for logging into ghcr.io'
+    required: true
 
 outputs:
   image:
@@ -30,6 +30,13 @@ runs:
       uses: depot/setup-action@v1
       with:
         oidc: true
+    - name: Login To Registry
+      shell: bash
+      env:
+        GH_ACTOR: ${{ github.actor }}
+        GH_PASSWORD: ${{ inputs.github_token }}
+      run: |
+        echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
@@ -54,18 +61,6 @@ runs:
       run: |
         docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:${{ inputs.tag }}
 
-    - name: Login To Registry
-      if: ${{ inputs.push == 'true' }}
-      shell: bash
-      env:
-        GH_ACTOR: ${{ github.actor }}
-        GH_PASSWORD: ${{ inputs.gh_password }}
-      run: |
-        if [ -z "$GH_PASSWORD" ]; then
-          echo "No GH_PASSWORD provided"
-          exit 1
-        fi
-        echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
     - name: Push Base Image
       if: ${{ inputs.push == 'true' }}
