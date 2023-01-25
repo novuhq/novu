@@ -49,13 +49,13 @@ runs:
         echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
     - name: Optionally tag docker image
-      if: inputs.tag
+      if: ${{ inputs.tag }}
       shell: bash
       run: |
         docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:${{ inputs.tag }}
 
     - name: Login To Registry
-      if: inputs.push === 'true'
+      if: ${{ inputs.push == 'true' }}
       shell: bash
       env:
         GH_ACTOR: ${{ github.actor }}
@@ -68,14 +68,14 @@ runs:
         echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
     - name: Push Base Image
-      if: inputs.push === 'true'
+      if: ${{ inputs.push == 'true' }}
       shell: bash
       run: |
         docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
         docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:${{ inputs.tag }}
 
     - name: Push Base Image
-      if: inputs.push === 'true' && inputs.tag
+      if: ${{ inputs.push == 'true' && inputs.tag }}
       shell: bash
       run: |
         docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:${{ inputs.tag }}
