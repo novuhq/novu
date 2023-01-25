@@ -59,7 +59,7 @@ runs:
       shell: bash
       env:
         GH_ACTOR: ${{ github.actor }}
-        GH_PASSWORD: ${{ input.gh_password }}
+        GH_PASSWORD: ${{ inputs.gh_password }}
       run: |
         if [ -z "$GH_PASSWORD" ]; then
           echo "No GH_PASSWORD provided"
