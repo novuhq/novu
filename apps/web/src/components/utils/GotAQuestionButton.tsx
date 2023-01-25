@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { IntercomContextValues, useIntercom } from 'react-use-intercom';
-
+import { useIntercom } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../config';
 import { Button, Size } from '../../design-system';
 
