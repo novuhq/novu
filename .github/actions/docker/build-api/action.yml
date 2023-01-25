@@ -61,7 +61,6 @@ runs:
       run: |
         docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:${{ inputs.tag }}
 
-
     - name: Push Base Image
       if: ${{ inputs.push == 'true' }}
       shell: bash
