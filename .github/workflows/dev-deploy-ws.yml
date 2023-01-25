@@ -24,20 +24,8 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16.15.1'
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.2.0
-
-      - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.3.0
-        with:
-          mongodb-version: 4.2.8
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
