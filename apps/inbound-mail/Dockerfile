@@ -28,9 +28,7 @@ RUN cp src/.env.test dist/.env.test
 RUN cp src/.env.development dist/.env.development
 RUN cp src/.env.production dist/.env.production
 
-WORKDIR /usr/src/app/apps/inbound-mail/src
-
-COPY python ../dist/python/
+RUN cp -r src/python dist/python
 
 WORKDIR /usr/src/app
 
