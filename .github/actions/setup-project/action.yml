@@ -2,6 +2,11 @@ name: Setup Novu Monorepo
 
 description: Sets up the whole monorepo and install dependencies
 
+inputs:
+  cypress_version:
+    description: 'The version of cypress to install'
+    required: false
+    default: ''
 outputs:
   cache-cypress-binary-hit:
     description: 'Did cypress used binary cache'
@@ -49,8 +54,17 @@ runs:
         restore-keys: |
           ${{ runner.os }}-pnpm-store-
 
+    - name: Cache Cypress Binary For Version
+      id: cache-cypress-binary
+      if: ${{ inputs.cypress_version != '' }}
+      uses: actions/cache@v3
+      with:
+        path: /home/runner/.cache/Cypress/${{ inputs.cypress_version }}
+        key: cypress-binary-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ inputs.cypress_version }}
+
     - name: Cache Cypress Binary
       id: cache-cypress-binary
+      if: ${{ inputs.cypress_version == '' }}
       uses: actions/cache@v3
       with:
         path: /home/runner/.cache/Cypress

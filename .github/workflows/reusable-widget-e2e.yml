@@ -22,7 +22,8 @@ jobs:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
         id: setup-project
-
+        with:
+          cypress_version: 10.1.0
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint
@@ -61,6 +62,7 @@ jobs:
         run: wait-on --timeout=90000 http://localhost:3500
 
       - name: Cypress install
+        if: steps.setup-project.outputs.cache-cypress-binary-hit != 'true'
         working-directory: apps/widget
         run: pnpm cypress install
 
