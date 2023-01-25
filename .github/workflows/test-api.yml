@@ -19,6 +19,8 @@ jobs:
     uses: ./.github/workflows/reusable-api-e2e.yml
 
   build_docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
