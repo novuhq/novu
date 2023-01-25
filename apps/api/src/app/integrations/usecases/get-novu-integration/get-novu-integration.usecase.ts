@@ -19,7 +19,7 @@ export class GetNovuIntegration {
   ) {}
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity | undefined> {
-    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY) {
+    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY || !command.channelType) {
       return;
     }
 
