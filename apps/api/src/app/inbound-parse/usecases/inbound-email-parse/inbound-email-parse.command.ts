@@ -1,4 +1,4 @@
-import { IsDefined, IsNumber, IsString } from 'class-validator';
+import { IsDefined, IsNumber, IsOptional, IsString } from 'class-validator';
 import { BaseCommand } from '@novu/application-generic';
 
 export class InboundEmailParseCommand extends BaseCommand {
@@ -54,7 +54,8 @@ export class InboundEmailParseCommand extends BaseCommand {
   cc: any[];
 
   @IsDefined()
-  attachments: any[];
+  @IsOptional()
+  attachments?: any[];
 
   @IsDefined()
   connection: IConnection;

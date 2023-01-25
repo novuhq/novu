@@ -128,7 +128,7 @@
     "cypress-network-idle": "^1.11.2",
     "cypress-wait-until": "^1.7.2",
     "eslint-plugin-cypress": "^2.12.1",
-    "http-server": "^0.12.3",
+    "http-server": "^0.13.0",
     "less-loader": "4.1.0",
     "nodemon": "^2.0.15",
     "react-error-overlay": "6.0.11",
