@@ -61,7 +61,6 @@ jobs:
         run: wait-on --timeout=90000 http://localhost:3500
 
       - name: Cypress install
-        if: steps.setup-project.outputs.cache-cypress-binary-hit != 'true'
         working-directory: apps/widget
         run: pnpm cypress install
 
