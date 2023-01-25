@@ -80,7 +80,6 @@ export enum EmailEventStatusEnum {
   BLOCKED = 'blocked',
   SPAM = 'spam',
   UNSUBSCRIBED = 'unsubscribed',
-  INVALID = 'invalid',
 }
 
 export enum SmsEventStatusEnum {
