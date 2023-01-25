@@ -166,5 +166,3 @@ jobs:
           sourcemaps: apps/inbound-mail/dist
           ignore_empty: true
           ignore_missing: true
-          url_prefix: "~"
-
