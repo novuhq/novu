@@ -5,7 +5,7 @@ import { StepTypeEnum } from '@novu/shared';
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import { colors } from '../../../design-system';
 import { getChannel, NodeTypeEnum } from '../shared/channels';
-import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
+import { useTemplateController } from '../../../components/templates/use-template-controller';
 import { useEnvController } from '../../../store/use-env-controller';
 import { When } from '../../../components/utils/When';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';

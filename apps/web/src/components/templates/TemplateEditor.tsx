@@ -3,7 +3,7 @@ import { useActiveIntegrations } from '../../api/hooks';
 import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
 import { TemplateSMSEditor } from './TemplateSMSEditor';
-import { useTemplateController } from './use-template-controller.hook';
+import { useTemplateController } from './use-template-controller';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';

@@ -4,7 +4,7 @@ import { NotificationSettingsForm } from './notification-setting-form/Notificati
 import { TemplatesSideBar } from './TemplatesSideBar';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';
 import styled from '@emotion/styled';
-import { useTemplateController } from './use-template-controller.hook';
+import { useTemplateController } from './use-template-controller';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { Trash } from '../../design-system/icons';
 import { useState } from 'react';

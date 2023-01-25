@@ -1,6 +1,6 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { LackIntegrationError } from './LackIntegrationError';
-import { IForm } from './use-template-controller.hook';
+import { IForm } from './use-template-controller';
 import { Textarea } from '../../design-system';
 import { useEnvController } from '../../store/use-env-controller';
 import { VariableManager } from './VariableManager';

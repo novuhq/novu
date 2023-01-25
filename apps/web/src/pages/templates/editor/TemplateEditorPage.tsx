@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
-import { IForm, useTemplateController } from '../../../components/templates/use-template-controller.hook';
+import { IForm, useTemplateController } from '../../../components/templates/use-template-controller';
 import { useActiveIntegrations } from '../../../api/hooks';
 import { useEnvController } from '../../../store/use-env-controller';
 import WorkflowEditorPage from '../workflow/WorkflowEditorPage';

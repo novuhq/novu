@@ -19,7 +19,7 @@ import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
-import { StepEntity, useTemplateController } from '../templates/use-template-controller.hook';
+import { StepEntity, useTemplateController } from '../templates/use-template-controller';
 import { StepTypeEnum } from '@novu/shared';
 import { v4 as uuid4 } from 'uuid';
 import AddNode from './node-types/AddNode';

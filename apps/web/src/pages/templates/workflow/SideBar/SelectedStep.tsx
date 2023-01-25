@@ -5,7 +5,7 @@ import { StepTypeEnum } from '@novu/shared';
 import { Button, colors, Text, Title } from '../../../../design-system';
 import { Close } from '../../../../design-system/icons/actions/Close';
 import { getChannel, NodeTypeEnum } from '../../shared/channels';
-import { IForm } from '../../../../components/templates/use-template-controller.hook';
+import { IForm } from '../../../../components/templates/use-template-controller';
 import { StepActiveSwitch } from '../StepActiveSwitch';
 import { useEnvController } from '../../../../store/use-env-controller';
 import { When } from '../../../../components/utils/When';

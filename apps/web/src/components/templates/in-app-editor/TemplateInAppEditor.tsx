@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { IFeedEntity } from '@novu/shared';
 
-import { IForm } from '../use-template-controller.hook';
+import { IForm } from '../use-template-controller';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Checkbox, colors, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/use-env-controller';
