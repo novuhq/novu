@@ -150,6 +150,7 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
+        locale: body.locale,
       })
     );
   }
@@ -179,6 +180,7 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
+        locale: body.locale,
       })
     );
   }

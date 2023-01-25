@@ -20,14 +20,15 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  --unsafe-perm\
  --reporter=silent
 
-RUN NODE_ENV=production pnpm build:inbound-mail
+RUN NODE_ENV=prod pnpm build:inbound-mail
 
 WORKDIR /usr/src/app/apps/inbound-mail
 
-RUN cp .example.env dist/.env
-RUN cp .env.test dist/.env.test
-RUN cp .env.development dist/.env.development
-RUN cp .env.production dist/.env.production
+RUN cp src/.env.test dist/.env.test
+RUN cp src/.env.development dist/.env.development
+RUN cp src/.env.production dist/.env.production
+
+RUN cp -r src/python dist/python
 
 WORKDIR /usr/src/app
 

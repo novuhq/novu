@@ -16,6 +16,8 @@ export class SubscriberEntity {
 
   avatar?: string;
 
+  locale?: string;
+
   subscriberId: ExternalSubscriberId;
 
   channels?: IChannelSettings[];
