@@ -2,6 +2,9 @@ name: Setup Novu Monorepo
 
 description: Sets up the whole monorepo and install dependencies
 
+outputs:
+  cache-cypress-binary-hit: ${{ steps.cache-cypress-binary.outputs.cache-hit }}
+
 runs:
   using: composite
   steps:

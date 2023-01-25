@@ -21,6 +21,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
+        id: setup-project
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -58,6 +59,11 @@ jobs:
 
       - name: Wait on WIDGET
         run: wait-on --timeout=90000 http://localhost:3500
+
+      - name: Cypress install
+        if: steps.setup-project.outputs.cache-cypress-binary-hit != 'true'
+        working-directory: apps/widget
+        run: pnpm cypress install
 
       - name: Cypress run
         uses: cypress-io/github-action@v2

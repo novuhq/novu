@@ -34,6 +34,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - uses: ./.github/actions/setup-project
+        id: setup-project
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -92,7 +93,7 @@ jobs:
 
       # run cypress install only when cache was not hit
       - name: Cypress install
-        if: steps.cache-cypress-binary.outputs.cache-hit != 'true'
+        if: steps.setup-project.outputs.cache-cypress-binary-hit != 'true'
         working-directory: apps/web
         run: pnpm cypress install
 
