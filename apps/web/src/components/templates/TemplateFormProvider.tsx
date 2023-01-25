@@ -1,6 +1,6 @@
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { FieldArrayProvider } from './FieldArrayProvider';
-import { IForm } from './use-template-controller';
+import { IForm } from './useTemplateController';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';

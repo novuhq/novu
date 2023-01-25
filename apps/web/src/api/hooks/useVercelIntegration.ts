@@ -3,7 +3,7 @@ import { useContext, useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
-import { useVercelParams } from '../../hooks/use-vercel-params';
+import { useVercelParams } from '../../hooks/useVercelParams';
 import { AuthContext } from '../../store/authContext';
 import { errorMessage } from '../../utils/notifications';
 import { vercelIntegrationSetup } from '../vercel-integration';

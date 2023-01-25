@@ -6,7 +6,7 @@ import { Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { useActiveIntegrations } from '../../../api/hooks';
 import { EmailInboxContent } from './EmailInboxContent';
 

@@ -2,16 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
-import { IForm, useTemplateController } from '../../../components/templates/use-template-controller';
+import { IForm, useTemplateController } from '../../../components/templates/useTemplateController';
 import { useActiveIntegrations } from '../../../api/hooks';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
 import { TemplateEditor } from '../../../components/templates/TemplateEditor';
 import { TemplateSettings } from '../../../components/templates/TemplateSettings';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
-import { usePrompt } from '../../../hooks/use-prompt';
+import { usePrompt } from '../../../hooks/usePrompt';
 import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
 import { When } from '../../../components/utils/When';
 import { UserPreference } from '../../user-preference/UserPreference';
@@ -19,7 +19,7 @@ import { TestWorkflowModal } from '../../../components/templates/TestWorkflowMod
 import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
 import { useDisclosure } from '@mantine/hooks';
 import { ExecutionDetailsModalWrapper } from '../../../components/templates/ExecutionDetailsModalWrapper';
-import { useSearchParams } from '../../../hooks/use-search-params';
+import { useSearchParams } from '../../../hooks/useSearchParams';
 import { BlueprintModal } from '../../../components/templates/BlueprintModal';
 
 export enum ActivePageEnum {

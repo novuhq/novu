@@ -2,7 +2,7 @@ import { IUserEntity, IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '
 import { useMantineColorScheme } from '@mantine/core';
 import React from 'react';
 import { API_ROOT, WS_URL } from '../../config';
-import { useEnvController } from '../../store/use-env-controller';
+import { useEnvController } from '../../store/useEnvController';
 import { NotificationBell, NovuProvider, PopoverNotificationCenter, useNotifications } from '@novu/notification-center';
 
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {

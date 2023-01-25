@@ -7,7 +7,7 @@ import { Integrations } from '@sentry/tracing';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
 import { AuthContext } from './store/authContext';
-import { applyToken, getToken, getTokenPayload, useAuthController } from './store/use-auth-controller';
+import { applyToken, getToken, getTokenPayload, useAuthController } from './store/useAuthController';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
@@ -20,7 +20,7 @@ import InvitationPage from './pages/auth/InvitationPage';
 import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { ThemeContext } from './store/themeContext';
-import { useThemeController } from './store/use-theme-controller';
+import { useThemeController } from './store/useThemeController';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
@@ -33,7 +33,7 @@ import { TemplateFormProvider } from './components/templates/TemplateFormProvide
 import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
-import { useBlueprint } from './hooks/use-blueprint';
+import { useBlueprint } from './hooks/useBlueprint';
 import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
 

@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Controller, useFormContext } from 'react-hook-form';
 import { colors, Input, Select } from '../../../design-system';
 import { EmailIntegrationInfo } from '../../../pages/templates/editor/EmailIntegrationInfo';
-import { useLayouts } from '../../../api/hooks/use-layouts';
+import { useLayouts } from '../../../api/hooks/useLayouts';
 import { useEffect } from 'react';
 
 export const EmailInboxContent = ({

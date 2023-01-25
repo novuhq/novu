@@ -1,2 +1,2 @@
-export * from './use-integrations';
-export * from './use-active-integrations';
+export * from './useIntegrations';
+export * from './useActiveIntegrations';

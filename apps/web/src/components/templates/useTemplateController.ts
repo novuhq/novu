@@ -20,7 +20,7 @@ import {
 } from '@novu/shared';
 
 import { createTemplate, updateTemplate, deleteTemplateById } from '../../api/templates';
-import { useTemplateFetcher } from './use-template.fetcher';
+import { useTemplateFetcher } from './useTemplateFetcher';
 import { QueryKeys } from '../../api/query.keys';
 import { useTemplateEditor } from './TemplateEditorProvider';
 import { useFieldArrayContext } from './FieldArrayProvider';

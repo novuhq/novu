@@ -10,7 +10,7 @@ import { errorMessage } from '../../utils/notifications';
 import { useEffect, useState } from 'react';
 import { updateUserOnBoarding } from '../../api/user';
 import { IUserEntity } from '@novu/shared';
-import { useSegment } from '../../hooks/use-segment';
+import { useSegment } from '../../hooks/useSegment';
 
 export function BlueprintModal() {
   const theme = useMantineTheme();

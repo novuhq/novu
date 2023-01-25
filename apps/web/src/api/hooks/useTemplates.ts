@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { INotificationTemplate } from '@novu/shared';
 
 import { getNotificationsList } from '../notifications';
-import { useEnvController } from '../../store/use-env-controller';
+import { useEnvController } from '../../store/useEnvController';
 
 export function useTemplates(page = 0, limit = 10) {
   const { environment } = useEnvController();
