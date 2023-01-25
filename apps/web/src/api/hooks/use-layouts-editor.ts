@@ -1,16 +1,25 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QueryKeys } from '../query.keys';
 import { createLayout, getLayoutById, updateLayoutById } from '../layouts';
 import { ILayoutEntity } from '@novu/shared';
 
 export function useLayoutsEditor(id: string) {
-  const { mutateAsync: createNewLayout, isLoading: isLoadingCreate } = useMutation(createLayout);
+  const queryClient = useQueryClient();
+  const { mutateAsync: createNewLayout, isLoading: isLoadingCreate } = useMutation(createLayout, {
+    onSuccess: () => {
+      queryClient.refetchQueries([QueryKeys.changesCount]);
+    },
+  });
 
   const { mutateAsync: updateLayout, isLoading: isLoadingUpdate } = useMutation<
     ILayoutEntity,
     { error: string; message: string; statusCode: number },
     { layoutId: string; data: any }
-  >(({ layoutId, data }) => updateLayoutById(layoutId, data));
+  >(({ layoutId, data }) => updateLayoutById(layoutId, data), {
+    onSuccess: () => {
+      queryClient.refetchQueries([QueryKeys.changesCount]);
+    },
+  });
 
   const { data: layout, isLoading: isLoadingLayout } = useQuery<ILayoutEntity>(
     [QueryKeys.getLayoutById, id],
