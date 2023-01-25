@@ -10,10 +10,11 @@ import { LayoutEditor } from './LayoutEditor';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
 import { When } from '../../../components/utils/When';
 import { useLayouts } from '../../../api/hooks/use-layouts';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteLayoutById } from '../../../api/layouts';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useEnvController } from '../../../store/use-env-controller';
+import { QueryKeys } from '../../../api/query.keys';
 
 const enum ActivePageEnum {
   LAYOUTS_LIST = 'layouts_list',
@@ -23,12 +24,17 @@ const enum ActivePageEnum {
 
 export function LayoutsListPage() {
   const theme = useMantineTheme();
+  const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const [page, setPage] = useState<number>(0);
   const [editId, setEditId] = useState('');
   const [activeScreen, setActiveScreen] = useState(ActivePageEnum.LAYOUTS_LIST);
   const [toDelete, setToDelete] = useState('');
-  const { mutateAsync: deleteLayout, isLoading: isLoadingDelete } = useMutation(deleteLayoutById);
+  const { mutateAsync: deleteLayout, isLoading: isLoadingDelete } = useMutation(deleteLayoutById, {
+    onSuccess: () => {
+      queryClient.refetchQueries([QueryKeys.changesCount]);
+    },
+  });
   const { layouts, isLoading, totalCount, pageSize, refetchLayouts } = useLayouts(page);
 
   function handleTableChange(pageIndex) {
@@ -74,7 +80,20 @@ export function LayoutsListPage() {
       Header: 'Name',
       Cell: ({ name }: any) => (
         <Tooltip label={name}>
-          <Text rows={1}>{name}</Text>
+          <div>
+            <Text rows={1}>{name}</Text>
+          </div>
+        </Tooltip>
+      ),
+    },
+    {
+      accessor: 'description',
+      Header: 'Description',
+      Cell: ({ description }: any) => (
+        <Tooltip label={description}>
+          <div>
+            <Text rows={1}>{description}</Text>
+          </div>
         </Tooltip>
       ),
     },
