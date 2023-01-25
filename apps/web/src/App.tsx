@@ -33,7 +33,7 @@ import { TemplateFormProvider } from './components/templates/TemplateFormProvide
 import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
-import { useBlueprint } from './hooks/useBlueprint';
+import { useBlueprint } from './hooks/use-blueprint';
 import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
 

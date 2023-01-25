@@ -14,7 +14,7 @@ import { GitHub } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { applyToken } from '../../store/use-auth-controller';
 import { useAcceptInvite } from './use-accept-invite.hook';
-import { useVercelParams } from '../../hooks/use-vercelParams';
+import { useVercelParams } from '../../hooks/use-vercel-params';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 
 type Props = {

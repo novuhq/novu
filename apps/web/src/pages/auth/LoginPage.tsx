@@ -8,7 +8,7 @@ import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
 import VercelSetupLoader from '../../components/auth/VercelSetupLoader';
-import { useVercelParams } from '../../hooks/use-vercelParams';
+import { useVercelParams } from '../../hooks/use-vercel-params';
 import { useSegment } from '../../hooks/use-segment';
 
 export default function LoginPage() {

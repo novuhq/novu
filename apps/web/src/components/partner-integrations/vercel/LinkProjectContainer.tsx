@@ -9,7 +9,7 @@ import {
   getVercelProjects,
   updateVercelIntegration,
 } from '../../../api/vercel-integration';
-import { useVercelParams } from '../../../hooks/use-vercelParams';
+import { useVercelParams } from '../../../hooks/use-vercel-params';
 import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '../../../design-system';

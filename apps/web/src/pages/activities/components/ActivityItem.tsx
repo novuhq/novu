@@ -10,7 +10,7 @@ import { DigestedStep } from './DigestedStep';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
-import { useNotificationStatus } from '../hooks/useNotificationStatus';
+import { useNotificationStatus } from '../hooks/use-notification-status';
 
 const JOB_LENGTH_UPPER_THRESHOLD = 3;
 

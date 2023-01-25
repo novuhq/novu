@@ -1,5 +1,5 @@
 import { ActivePageEnum } from '../pages/templates/editor/TemplateEditorPage';
-import { useSearchParams } from './useSearchParams';
+import { useSearchParams } from './use-search-params';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { getToken } from '../store/use-auth-controller';

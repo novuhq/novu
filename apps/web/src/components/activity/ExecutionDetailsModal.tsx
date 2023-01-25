@@ -8,7 +8,7 @@ import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
 import { getNotification } from '../../api/activity';
 import { colors, shadows, Text, Title } from '../../design-system';
 import { When } from '../utils/When';
-import { useNotificationStatus } from '../../pages/activities/hooks/useNotificationStatus';
+import { useNotificationStatus } from '../../pages/activities/hooks/use-notification-status';
 
 export function ExecutionDetailsModal({
   notificationId,

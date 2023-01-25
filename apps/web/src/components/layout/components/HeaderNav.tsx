@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
-import { useLocalThemePreference } from '../../../hooks/use-localThemePreference';
+import { useLocalThemePreference } from '../../../hooks/use-local-theme-preference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';

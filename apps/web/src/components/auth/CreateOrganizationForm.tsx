@@ -9,7 +9,7 @@ import { Button, Input } from '../../design-system';
 import { api } from '../../api/api.client';
 import { AuthContext } from '../../store/authContext';
 import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
-import { useVercelParams } from '../../hooks/use-vercelParams';
+import { useVercelParams } from '../../hooks/use-vercel-params';
 
 type Props = {};
 

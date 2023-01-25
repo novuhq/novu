@@ -19,7 +19,7 @@ import { TestWorkflowModal } from '../../../components/templates/TestWorkflowMod
 import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
 import { useDisclosure } from '@mantine/hooks';
 import { ExecutionDetailsModalWrapper } from '../../../components/templates/ExecutionDetailsModalWrapper';
-import { useSearchParams } from '../../../hooks/useSearchParams';
+import { useSearchParams } from '../../../hooks/use-search-params';
 import { BlueprintModal } from '../../../components/templates/BlueprintModal';
 
 export enum ActivePageEnum {
