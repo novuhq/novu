@@ -6,7 +6,6 @@ runs:
   using: composite
   steps:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
     - name: Setup kernel for react native, increase watchers
       shell: bash
       run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
