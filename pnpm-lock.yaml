@@ -509,7 +509,7 @@ importers:
       eslint-plugin-cypress: ^2.12.1
       graphql: ^15.4.0
       html-webpack-plugin: 5.5.0
-      http-server: ^0.12.3
+      http-server: ^0.13.0
       jwt-decode: ^3.1.2
       less: ^4.1.0
       less-loader: 4.1.0
@@ -657,7 +657,7 @@ importers:
       cypress-network-idle: 1.11.2
       cypress-wait-until: 1.7.2
       eslint-plugin-cypress: 2.12.1_eslint@8.30.0
-      http-server: 0.12.3
+      http-server: 0.13.0
       less-loader: 4.1.0_less@4.1.2+webpack@5.74.0
       nodemon: 2.0.15
       react-error-overlay: 6.0.11
@@ -806,7 +806,7 @@ importers:
       cypress-network-idle: ^1.10.0
       eslint-plugin-cypress: ^2.12.1
       html-webpack-plugin: 5.5.0
-      http-server: ^0.12.3
+      http-server: ^0.13.0
       iframe-resizer: ^4.3.1
       jest: 27.0.6
       jwt-decode: ^3.1.2
@@ -878,7 +878,7 @@ importers:
       cypress-intellij-reporter: 0.0.7
       cypress-network-idle: 1.10.0
       html-webpack-plugin: 5.5.0_webpack@4.44.2
-      http-server: 0.12.3
+      http-server: 0.13.0
       jest: 27.0.6
       less: 4.1.2
       less-loader: 4.1.0_less@4.1.2+webpack@4.44.2
@@ -1246,7 +1246,7 @@ importers:
       coveralls: ^3.0.2
       cross-env: ^5.2.0
       cz-conventional-changelog: ^2.1.0
-      http-server: ^0.12.3
+      http-server: ^0.13.0
       husky: ^1.0.1
       iframe-resizer: ^4.3.1
       jest: ^27.0.6
@@ -1287,7 +1287,7 @@ importers:
       coveralls: 3.1.1
       cross-env: 5.2.1
       cz-conventional-changelog: 2.1.0
-      http-server: 0.12.3
+      http-server: 0.13.0
       husky: 1.3.1
       jest: 27.5.1_ts-node@7.0.1
       jest-config: 27.5.1_ts-node@7.0.1
@@ -2389,7 +2389,7 @@ importers:
       prettier: 2.7.1
       rimraf: 3.0.2
       standard-version: 9.3.2
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
@@ -34205,7 +34205,7 @@ packages:
     dev: false
 
   /basic-auth/1.1.0:
-    resolution: {integrity: sha1-RSIe5Cn37h5QNb4/UVM/HN/SmIQ=}
+    resolution: {integrity: sha512-CtGuTyWf3ig+sgRyC7uP6DM3N+5ur/p8L+FPfsd+BbIfIs74TFfCajZTHnCw6K5dqM0bZEbRIqRy1fAdiUJhTA==}
     engines: {node: '>= 0.6'}
     dev: true
 
@@ -36664,7 +36664,7 @@ packages:
       vary: 1.1.2
 
   /corser/2.0.1:
-    resolution: {integrity: sha1-jtolLsqrWEDc2XXOuQ2TcMgZ/4c=}
+    resolution: {integrity: sha512-utCYNzRSQIZNPIcGZdQc92UVJYAhtGAteCFg0yRaFm8f0P+CPtyGyHXJcGXnffjCybUCEx3FQ2G7U3/o9eIkVQ==}
     engines: {node: '>= 0.4.0'}
     dev: true
 
@@ -39111,17 +39111,6 @@ packages:
     resolution: {integrity: sha512-nagl3RYrbNv6kQkeJIpt6NJZy8twLB/2vtz6yN9Z4vRKHN4/QZJIEbqohALSgwKdnksuY3k5Addp5lg8sVoVcQ==}
     dependencies:
       safe-buffer: 5.2.1
-
-  /ecstatic/3.3.2:
-    resolution: {integrity: sha512-fLf9l1hnwrHI2xn9mEDT7KIi22UDqA2jaCwyCbSUJh9a1V+LEUSL/JO/6TIz/QyuBURWUHrFL5Kg2TtO1bkkog==}
-    deprecated: This package is unmaintained and deprecated. See the GH Issue 259.
-    hasBin: true
-    dependencies:
-      he: 1.2.0
-      mime: 1.6.0
-      minimist: 1.2.6
-      url-join: 2.0.5
-    dev: true
 
   /ee-first/1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
@@ -44657,21 +44646,23 @@ packages:
     transitivePeerDependencies:
       - debug
 
-  /http-server/0.12.3:
-    resolution: {integrity: sha512-be0dKG6pni92bRjq0kvExtj/NrrAd28/8fCXkaI/4piTwQMSDSLMhWyW0NI1V+DBI3aa1HMlQu46/HjVLfmugA==}
+  /http-server/0.13.0:
+    resolution: {integrity: sha512-/MjH9k/y470zbtXzKLkP8vioIVvxRArTkz8f9UX1ztkLZzr6S0hg6BW8h6MBn/HUfwjlTQvIe9DRknorN2u20Q==}
     engines: {node: '>=6'}
     hasBin: true
     dependencies:
       basic-auth: 1.1.0
       colors: 1.4.0
       corser: 2.0.1
-      ecstatic: 3.3.2
+      he: 1.2.0
       http-proxy: 1.18.1
+      mime: 1.6.0
       minimist: 1.2.6
       opener: 1.5.2
       portfinder: 1.0.28
       secure-compare: 3.0.1
       union: 0.5.0
+      url-join: 2.0.5
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -58934,7 +58925,7 @@ packages:
     dev: false
 
   /secure-compare/3.0.1:
-    resolution: {integrity: sha1-8aAymzCLIh+uN7mXTz1XjQypmeM=}
+    resolution: {integrity: sha512-AckIIV90rPDcBcglUwXPF3kg0P0qmPsPXAj6BBEENQE1p5yA1xfmDJzfi1Tappj37Pv2mVbKpL3Z1T+Nn7k1Qw==}
     dev: true
 
   /select-hose/2.0.0:
@@ -63255,7 +63246,7 @@ packages:
     resolution: {integrity: sha512-N6uOhuW6zO95P3Mel2I2zMsbsanvvtgn6jVqJv4vbVcz/JN0OkL9suomjQGmWtxJQXOCqUJvquc1sMeNz/IwlA==}
     engines: {node: '>= 0.8.0'}
     dependencies:
-      qs: 6.10.3
+      qs: 6.11.0
     dev: true
 
   /uniq/1.0.1:
@@ -63498,7 +63489,7 @@ packages:
     deprecated: Please see https://github.com/lydell/urix#deprecated
 
   /url-join/2.0.5:
-    resolution: {integrity: sha1-WvIvGMBSoACkjXuCxenC4v7tpyg=}
+    resolution: {integrity: sha512-c2H1fIgpUdwFRIru9HFno5DT73Ok8hg5oOb5AT3ayIgvCRfxgs2jyt5Slw8kEB7j3QUr6yJmMPDT/odjk7jXow==}
     dev: true
 
   /url-join/4.0.1:
