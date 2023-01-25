@@ -23,6 +23,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
         lastName: 'Doe',
         email: 'john@doe.com',
         phone: '+972523333333',
+        locale: 'en',
       },
       {
         headers: {
@@ -39,6 +40,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
     expect(createdSubscriber.firstName).to.equal('John');
     expect(createdSubscriber.email).to.equal('john@doe.com');
     expect(createdSubscriber.phone).to.equal('+972523333333');
+    expect(createdSubscriber.locale).to.equal('en');
   });
 
   it('should update subscriber if already created', async function () {
@@ -76,6 +78,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
         firstName: 'Mary',
         lastName: 'Doe',
         email: 'john@doe.com',
+        locale: 'en',
       },
       {
         headers: {
@@ -91,5 +94,6 @@ describe('Create Subscriber - /subscribers (POST)', function () {
 
     expect(createdSubscriber.firstName).to.equal('Mary');
     expect(createdSubscriber.email).to.equal('john@doe.com');
+    expect(createdSubscriber.locale).to.equal('en');
   });
 });

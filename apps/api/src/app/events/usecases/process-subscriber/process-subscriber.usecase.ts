@@ -157,6 +157,7 @@ export class ProcessSubscriber {
         lastName: subscriberPayload?.lastName,
         phone: subscriberPayload?.phone,
         avatar: subscriberPayload?.avatar,
+        locale: subscriberPayload?.locale,
         subscriber: subscriber ?? undefined,
       })
     );

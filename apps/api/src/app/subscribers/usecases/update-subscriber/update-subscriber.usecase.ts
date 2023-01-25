@@ -38,6 +38,10 @@ export class UpdateSubscriber {
       updatePayload.avatar = command.avatar;
     }
 
+    if (command.locale != null) {
+      updatePayload.locale = command.locale;
+    }
+
     if (!subscriberNeedUpdate(foundSubscriber, updatePayload)) {
       return {
         ...foundSubscriber,
@@ -73,6 +77,7 @@ export function subscriberNeedUpdate(
     !!(subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
     !!(subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
     !!(subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
-    !!(subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
+    !!(subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar) ||
+    !!(subscriberPayload?.locale && subscriber?.locale !== subscriberPayload?.locale)
   );
 }
