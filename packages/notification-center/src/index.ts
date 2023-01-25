@@ -1,5 +1,6 @@
 export type { IStoreQuery } from '@novu/client';
 export type { IUserPreferenceSettings } from '@novu/client';
+export { ChannelTypeEnum, ChannelCTATypeEnum, MessageActionStatusEnum, ButtonTypeEnum } from '@novu/shared';
 
 export * from './components';
 export * from './hooks';
