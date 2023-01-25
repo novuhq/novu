@@ -1,0 +1,56 @@
+name: Build API Docker Image
+
+description: Build API Docker Image and tag with sha
+
+runs:
+  using: composite
+  steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - name: ⚙️ Setup kernel for react native, increase watchers
+      shell: bash
+      run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+
+    - uses: actions/setup-node@v2
+      name: ⚙️ Setup Node Version
+      with:
+        node-version: '16.15.1'
+
+    - name: 💵 Start Redis
+      uses: supercharge/redis-github-action@1.2.0
+
+    - name: 📚 Start MongoDB
+      uses: supercharge/mongodb-github-action@1.3.0
+      with:
+        mongodb-version: 4.2.8
+
+    - uses: pnpm/action-setup@v2
+      name: 🛟 Install pnpm
+      id: pnpm-install
+      with:
+        version: 7.5.0
+        run_install: false
+
+    - name: ⛏️ Get pnpm store directory
+      id: pnpm-cache
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+    - uses: actions/cache@v3
+      name: 🏦 Setup pnpm cache
+      with:
+        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Cache Cypress Binary
+      id: cache-cypress-binary
+      uses: actions/cache@v3
+      with:
+        path: /home/runner/.cache/Cypress
+        key: cypress-binary-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+    - name: 🛟 Install dependencies
+      shell: bash
+      run: pnpm install

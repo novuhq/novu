@@ -17,3 +17,13 @@ on:
 jobs:
   test_api:
     uses: ./.github/workflows/reusable-api-e2e.yml
+
+  build_docker:
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/docker/build-api
+        id: docker_build
+        with:
+          tag: dev
+          push: 'true'
