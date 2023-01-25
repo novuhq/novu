@@ -5,7 +5,7 @@ import type { IMessage } from '@novu/shared';
 import { NotificationsContext } from './notifications.context';
 import type { IStore } from '../shared/interfaces';
 import { useFetchNotifications, useUnseenCount } from '../hooks';
-import { useMarkNotificationsAs } from '../hooks/use-mark-notification-as.hook';
+import { useMarkNotificationsAs } from '../hooks';
 
 const DEFAULT_STORES = [{ storeId: 'default_store' }];
 

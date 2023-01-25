@@ -1,35 +1,39 @@
 import { useMutation, useQueryClient, UseMutationOptions, InfiniteData } from '@tanstack/react-query';
-import { IMessage, ButtonTypeEnum, MessageActionStatusEnum, IPaginatedResponse } from '@novu/shared';
+import type { IMessage, IPaginatedResponse } from '@novu/shared';
 
-import { useNovuContext } from './use-novu-context.hook';
+import { useNovuContext } from './useNovuContext';
 import { INFINITE_NOTIFICATIONS_QUERY_KEY } from './queryKeys';
+import type { IMessageId } from '../shared/interfaces';
 
-interface IUpdateActionVariables {
-  messageId: string;
-  actionButtonType: ButtonTypeEnum;
-  status: MessageActionStatusEnum;
-  payload?: Record<string, unknown>;
+interface IMarkNotificationsAsVariables {
+  messageId: IMessageId;
+  seen: boolean;
+  read: boolean;
 }
 
-export const useUpdateAction = ({
+export const useMarkNotificationsAs = ({
   onSuccess,
   ...options
-}: UseMutationOptions<IMessage, Error, IUpdateActionVariables> = {}) => {
+}: UseMutationOptions<IMessage[], Error, IMarkNotificationsAsVariables> = {}) => {
   const queryClient = useQueryClient();
   const { apiService } = useNovuContext();
 
-  const { mutate, ...result } = useMutation<IMessage, Error, IUpdateActionVariables>(
-    (variables) =>
-      apiService.updateAction(variables.messageId, variables.actionButtonType, variables.status, variables.payload),
+  const { mutate, ...result } = useMutation<IMessage[], Error, IMarkNotificationsAsVariables>(
+    ({ messageId, seen, read }) =>
+      apiService.markMessageAs(messageId, {
+        seen,
+        read,
+      }),
     {
       ...options,
-      onSuccess: (newMessage, variables, context) => {
+      onSuccess: (newMessages, variables, context) => {
         queryClient.setQueriesData<InfiniteData<IPaginatedResponse<IMessage>>>(
           { queryKey: INFINITE_NOTIFICATIONS_QUERY_KEY, exact: false },
           (infiniteData) => {
             const pages = infiniteData.pages.map((page) => {
               const data = page.data.map((message) => {
-                if (message._id === variables.messageId) {
+                const newMessage = newMessages.find((item) => item._id === message._id);
+                if (newMessage) {
                   return newMessage;
                 }
 
@@ -48,10 +52,10 @@ export const useUpdateAction = ({
             };
           }
         );
-        onSuccess?.(newMessage, variables, context);
+        onSuccess?.(newMessages, variables, context);
       },
     }
   );
 
-  return { ...result, updateAction: mutate };
+  return { ...result, markNotificationsAs: mutate };
 };

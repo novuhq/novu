@@ -16,5 +16,4 @@ export type { ColorScheme } from './shared/config/colors';
 export { getDefaultTheme, getDefaultBellColors } from './utils/defaultTheme';
 export { getStyleByPath } from './utils/styles';
 
-export * from './shared/enums';
 export * from './shared/interfaces';

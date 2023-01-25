@@ -3,20 +3,18 @@ import { ActionIcon } from '@mantine/core';
 import styled from '@emotion/styled';
 import { css, cx } from '@emotion/css';
 
-import { useNotifications, useNovuTheme, useScreens, useTranslations } from '../../../../../hooks';
+import { useNotifications, useNovuTheme, useTranslations } from '../../../../../hooks';
 import { INotificationCenterContext } from '../../../../../shared/interfaces';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
-import { ScreensEnum } from '../../../../../shared/enums/screens.enum';
 import { Cogs } from '../../../../../shared/icons';
 import { UnseenBadge } from '../../UnseenBadge';
 import { useStyles } from '../../../../../store/styles';
 import { INovuTheme } from '../../../../../store/novu-theme.context';
 
-export function Header() {
+export function Header({ onCogClick }: { onCogClick?: () => void }) {
   const [allRead, setAllRead] = useState<boolean>(true);
   const { markAllNotificationsAsRead, notifications, unseenCount } = useNotifications();
   const { theme } = useNovuTheme();
-  const { setScreen } = useScreens();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { t } = useTranslations();
   const [headerStyles, headerTitleStyles, headerMarkAsReadStyles, headerCogStyles] = useStyles([
@@ -58,11 +56,7 @@ export function Header() {
           {t('markAllAsRead')}
         </div>
         <div style={{ display: showUserPreferences ? 'inline-block' : 'none' }}>
-          <ActionIcon
-            data-test-id="user-preference-cog"
-            variant="transparent"
-            onClick={() => setScreen(ScreensEnum.SETTINGS)}
-          >
+          <ActionIcon data-test-id="user-preference-cog" variant="transparent" onClick={onCogClick}>
             <Cogs className={cx('nc-header-cog', cogClassName(theme), css(headerCogStyles))} />
           </ActionIcon>
         </div>

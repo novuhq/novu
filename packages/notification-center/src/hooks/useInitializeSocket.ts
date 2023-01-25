@@ -3,13 +3,26 @@ import { io } from 'socket.io-client';
 
 import type { Socket, ISession } from '../shared/interfaces';
 
-export const useInitializeSocket = ({ socketUrl }: { socketUrl: string }) => {
-  const socketRef = useRef<Socket | undefined>();
+type IUseInitializeSocket = (args: { socketUrl: string }) => {
+  socket: Socket | undefined;
+  initializeSocket: (args: ISession) => void;
+  disconnectSocket: () => void;
+};
+
+export const useInitializeSocket: IUseInitializeSocket = ({ socketUrl }) => {
+  const socketRef = useRef<Socket | null>(null);
+
+  const disconnectSocket = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+  }, [socketRef]);
 
   const initializeSocket = useCallback(
     ({ token }: ISession) => {
       if (socketRef.current) {
-        socketRef.current.disconnect();
+        disconnectSocket();
       }
 
       if (token) {
@@ -27,11 +40,12 @@ export const useInitializeSocket = ({ socketUrl }: { socketUrl: string }) => {
         });
       }
     },
-    [socketRef]
+    [socketRef, disconnectSocket]
   );
 
   return {
     socket: socketRef.current,
     initializeSocket,
+    disconnectSocket,
   };
 };

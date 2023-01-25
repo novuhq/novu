@@ -1,7 +1,7 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import type { IStoreQuery } from '@novu/client';
 
-import { useNovuContext } from './use-novu-context.hook';
+import { useNovuContext } from './useNovuContext';
 import { FEED_UNSEEN_COUNT_QUERY_KEY } from './queryKeys';
 import type { ICountData } from '../shared/interfaces';
 

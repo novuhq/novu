@@ -1,4 +1,4 @@
-import { useNovuContext } from './use-novu-context.hook';
+import { useNovuContext } from './useNovuContext';
 
 export function useSocket() {
   const { socket } = useNovuContext();

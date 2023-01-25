@@ -3,14 +3,14 @@ import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query
 
 import type { ICountData } from '../shared/interfaces';
 import { FEED_UNSEEN_COUNT_QUERY_KEY, INFINITE_NOTIFICATIONS_QUERY_KEY, UNSEEN_COUNT_QUERY_KEY } from './queryKeys';
-import { useNovuContext } from './use-novu-context.hook';
+import { useNovuContext } from './useNovuContext';
 
 const dispatchUnseenCountEvent = (count: number) => {
   document.dispatchEvent(new CustomEvent('novu:unseen_count_changed', { detail: count }));
 };
 
 export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<ICountData, Error, ICountData> = {}) => {
-  const { apiService, socket, isSessionInitialized } = useNovuContext();
+  const { apiService, socket, isSessionInitialized, fetchingStrategy } = useNovuContext();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -40,7 +40,7 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
 
   const result = useQuery<ICountData, Error, ICountData>(UNSEEN_COUNT_QUERY_KEY, () => apiService.getUnseenCount(), {
     ...restOptions,
-    enabled: isSessionInitialized,
+    enabled: isSessionInitialized && fetchingStrategy.fetchUnseenCount,
     onSuccess: (data) => {
       dispatchUnseenCountEvent(data.count);
       onSuccess?.(data);

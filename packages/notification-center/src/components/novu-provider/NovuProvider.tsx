@@ -7,12 +7,11 @@ import type { I18NLanguage, ITranslationEntry } from '../../i18n/lang';
 import { NotificationsProvider } from '../../store/notifications-provider.context';
 import { NovuContext } from '../../store/novu-provider.context';
 import { NovuI18NProvider } from '../../store/i18n.context';
-import type { IStore } from '../../shared/interfaces';
+import type { IStore, ISession, IFetchingStrategy } from '../../shared/interfaces';
 import { INotificationCenterStyles, StylesProvider } from '../../store/styles';
 import { applyToken } from '../../utils/token';
-import type { ISession } from '../../shared/interfaces';
-import { useSession } from '../../hooks/use-session.hook';
-import { useInitializeSocket } from '../../hooks/use-initialize-socket.hook';
+import { useSession } from '../../hooks/useSession';
+import { useInitializeSocket } from '../../hooks/useInitializeSocket';
 import { useFetchOrganization, useNovuContext } from '../../hooks';
 
 const queryClient = new QueryClient({
@@ -23,6 +22,13 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const DEFAULT_FETCHING_STRATEGY: IFetchingStrategy = {
+  fetchUnseenCount: true,
+  fetchOrganization: true,
+  fetchNotifications: false,
+  fetchUserPreferences: false,
+};
 
 export interface INovuProviderProps {
   stores?: IStore[];
@@ -35,6 +41,7 @@ export interface INovuProviderProps {
   subscriberHash?: string;
   i18n?: I18NLanguage | ITranslationEntry;
   styles?: INotificationCenterStyles;
+  initialFetchingStrategy?: Partial<IFetchingStrategy>;
 }
 
 export function NovuProvider({
@@ -46,12 +53,17 @@ export function NovuProvider({
   stores: initialStores,
   i18n,
   styles,
+  initialFetchingStrategy = DEFAULT_FETCHING_STRATEGY,
   children,
   onLoad,
 }: INovuProviderProps) {
   const backendUrl = initialBackendUrl ?? 'https://api.novu.co';
   const socketUrl = initialSocketUrl ?? 'https://ws.novu.co';
   const stores = initialStores ?? [{ storeId: 'default_store' }];
+  const [fetchingStrategy, setFetchingStrategyState] = useState({
+    ...DEFAULT_FETCHING_STRATEGY,
+    ...initialFetchingStrategy,
+  });
 
   const [isSessionInitialized, setSessionInitialized] = useState(false);
 
@@ -63,7 +75,7 @@ export function NovuProvider({
     return service;
   }, [backendUrl]);
 
-  const { socket, initializeSocket } = useInitializeSocket({ socketUrl });
+  const { socket, initializeSocket, disconnectSocket } = useInitializeSocket({ socketUrl });
 
   const onSuccessfulSession = useCallback(
     (newSession: ISession) => {
@@ -72,6 +84,11 @@ export function NovuProvider({
       setSessionInitialized(true);
     },
     [apiService, setSessionInitialized, initializeSocket]
+  );
+
+  const setFetchingStrategy = useCallback(
+    (strategy: Partial<IFetchingStrategy>) => setFetchingStrategyState((old) => ({ ...old, ...strategy })),
+    [setFetchingStrategyState]
   );
 
   const contextValue = useMemo(
@@ -84,6 +101,8 @@ export function NovuProvider({
       isSessionInitialized,
       apiService,
       socket,
+      fetchingStrategy,
+      setFetchingStrategy,
       onLoad,
     }),
     [
@@ -95,9 +114,13 @@ export function NovuProvider({
       isSessionInitialized,
       apiService,
       socket,
+      fetchingStrategy,
+      setFetchingStrategy,
       onLoad,
     ]
   );
+
+  useEffect(() => disconnectSocket, [disconnectSocket]);
 
   return (
     <QueryClientProvider client={queryClient}>

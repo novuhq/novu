@@ -6,7 +6,7 @@ import { PopoverNotificationCenter } from '../popover-notification-center';
 import { NotificationBell } from '../notification-bell';
 import { reactToWebComponent } from '../../utils';
 import type { NotificationCenterComponentProps, PopoverWrapperProps } from './notification-center-component.types';
-import { useUpdateAction } from '../../hooks/use-update-action.hook';
+import { useUpdateAction } from '../../hooks';
 
 /*
  * This array represents the public API of the web component.

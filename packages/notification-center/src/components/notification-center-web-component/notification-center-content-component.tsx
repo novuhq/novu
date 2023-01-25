@@ -35,10 +35,6 @@ export const NOTIFICATION_CENTER_CONTENT_PROPS = [
 ];
 
 export type NotificationCenterContentComponentProps = Omit<NotificationCenterComponentProps, 'popover'>;
-type NotificationCenterWrapperProps = Omit<
-  PopoverWrapperProps,
-  'popover' | 'unseenBadgeColor' | 'unseenBadgeBackgroundColor'
->;
 
 export const NotificationCenterContentComponent: FunctionComponent<NotificationCenterContentComponentProps> = ({
   backendUrl,
@@ -76,7 +72,7 @@ export const NotificationCenterContentComponent: FunctionComponent<NotificationC
       styles={styles}
       i18n={i18n}
     >
-      <NotificationCenterWrapper
+      <NotificationCenter
         onNotificationClick={onNotificationClick}
         onUnseenCountChanged={onUnseenCountChanged}
         colorScheme={colorScheme}
@@ -89,30 +85,6 @@ export const NotificationCenterContentComponent: FunctionComponent<NotificationC
     </NovuProvider>
   );
 };
-
-function NotificationCenterWrapper({
-  onNotificationClick,
-  onUnseenCountChanged,
-  onActionClick,
-  onTabClick,
-  colorScheme = 'dark',
-  theme,
-  tabs,
-  showUserPreferences,
-}: NotificationCenterWrapperProps) {
-  return (
-    <NotificationCenter
-      onNotificationClick={onNotificationClick}
-      onUnseenCountChanged={onUnseenCountChanged}
-      colorScheme={colorScheme}
-      theme={theme}
-      onActionClick={onActionClick}
-      tabs={tabs}
-      showUserPreferences={showUserPreferences}
-      onTabClick={onTabClick}
-    />
-  );
-}
 
 export const NotificationCenterContentWebComponent = reactToWebComponent(NotificationCenterContentComponent, {
   props: NOTIFICATION_CENTER_CONTENT_PROPS,

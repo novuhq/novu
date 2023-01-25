@@ -13,7 +13,7 @@ import { IUserPreferenceSettings } from '@novu/client';
 
 import { ISession, INotificationsContext } from '../shared/interfaces';
 import { NovuProvider } from '../components/novu-provider';
-import { useNotifications } from './use-notifications.hook';
+import { useNotifications } from './useNotifications';
 
 const promiseResolveTimeout = (ms: number, arg: unknown = {}) => new Promise((resolve) => setTimeout(resolve, ms, arg));
 
@@ -136,6 +136,7 @@ describe('useNotifications', () => {
         socketUrl="wss://mock_url.com"
         applicationIdentifier="mock_app"
         subscriberId="mock_subscriber_id"
+        initialFetchingStrategy={{ fetchNotifications: true }}
       >
         {children}
       </NovuProvider>
@@ -205,6 +206,7 @@ describe('useNotifications', () => {
         applicationIdentifier="mock_app"
         subscriberId="mock_subscriber_id"
         stores={stores}
+        initialFetchingStrategy={{ fetchNotifications: true }}
       >
         {children}
       </NovuProvider>

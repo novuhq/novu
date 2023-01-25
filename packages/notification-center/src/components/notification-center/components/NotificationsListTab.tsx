@@ -4,6 +4,7 @@ import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
 import { useNotifications, useNotificationCenter, useNovuContext } from '../../../hooks';
 import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
+import { Loader } from './Loader';
 
 export function NotificationsListTab() {
   const { apiService } = useNovuContext();
@@ -32,7 +33,9 @@ export function NotificationsListTab() {
     }
   }
 
-  return (
+  return isLoading ? (
+    <Loader />
+  ) : (
     <>
       {!isLoading && notifications?.length === 0 ? (
         <>

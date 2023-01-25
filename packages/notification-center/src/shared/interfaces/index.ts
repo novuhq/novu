@@ -13,6 +13,11 @@ export {
   IMessageButton,
 } from '@novu/shared';
 
+export enum ScreensEnum {
+  NOTIFICATIONS = 'notifications',
+  SETTINGS = 'settings',
+}
+
 export interface IAuthContext {
   applyToken: (token: string | null) => void;
   setUser: (profile: ISubscriberJwt) => void;
@@ -50,7 +55,7 @@ export interface INotificationCenterContext {
   onNotificationClick: (notification: IMessage) => void;
   onActionClick: (identifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   isLoading: boolean;
-  header: () => JSX.Element;
+  header: ({ setScreen }: { setScreen: (screen: ScreensEnum) => void }) => JSX.Element;
   footer: () => JSX.Element;
   emptyState: () => JSX.Element;
   listItem: ListItem;
@@ -65,6 +70,13 @@ export interface IStore {
   query?: IStoreQuery;
 }
 
+export interface IFetchingStrategy {
+  fetchUnseenCount: boolean;
+  fetchOrganization: boolean;
+  fetchNotifications: boolean;
+  fetchUserPreferences: boolean;
+}
+
 export interface INovuProviderContext {
   backendUrl?: string;
   subscriberId?: string;
@@ -74,6 +86,8 @@ export interface INovuProviderContext {
   subscriberHash: string;
   apiService: ApiService;
   socket?: ISocket;
+  fetchingStrategy: IFetchingStrategy;
+  setFetchingStrategy: (strategy: Partial<IFetchingStrategy>) => void;
   onLoad: (data: { organization: IOrganizationEntity }) => void;
 }
 

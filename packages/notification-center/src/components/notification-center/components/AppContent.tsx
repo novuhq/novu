@@ -3,10 +3,8 @@ import { MantineProvider, MantineThemeOverride } from '@mantine/core';
 import { css } from '@emotion/css';
 
 import { Layout } from './layout/Layout';
-import { Main } from './Main';
 import { useNovuTheme } from '../../../hooks';
-import { ScreenProvider } from '../../../store/screens-provider.context';
-import { useFetchOrganization } from '../../../hooks/use-fetch-organization.hook';
+import { useFetchOrganization } from '../../../hooks';
 
 export function AppContent() {
   const { theme, common } = useNovuTheme();
@@ -22,13 +20,9 @@ export function AppContent() {
 
   return (
     <MantineProvider withNormalizeCSS theme={themeConfig}>
-      <ScreenProvider>
-        <div className={wrapperClassName(primaryColor, fontFamily, dir)}>
-          <Layout>
-            <Main />
-          </Layout>
-        </div>
-      </ScreenProvider>
+      <div className={wrapperClassName(primaryColor, fontFamily, dir)}>
+        <Layout />
+      </div>
     </MantineProvider>
   );
 }

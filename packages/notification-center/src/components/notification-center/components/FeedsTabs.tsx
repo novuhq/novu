@@ -1,20 +1,25 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useLayoutEffect } from 'react';
 import { Tabs as MantineTabs } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { NotificationsListTab } from './NotificationsListTab';
 import { UnseenBadge } from './UnseenBadge';
 import { Tabs } from './layout/tabs/Tabs';
-import { useNotificationCenter, useNotifications, useFeedUnseenCount } from '../../../hooks';
+import { useNotificationCenter, useNotifications, useFeedUnseenCount, useNovuContext } from '../../../hooks';
 
 export function FeedsTabs() {
   const { tabs, onTabClick } = useNotificationCenter();
   const { storeId, setStore, markAllNotificationsAsSeen } = useNotifications();
+  const { setFetchingStrategy } = useNovuContext();
 
   async function handleOnTabChange(newStoreId: string) {
     markAllNotificationsAsSeen();
     setStore(newStoreId);
   }
+
+  useLayoutEffect(() => {
+    setFetchingStrategy({ fetchNotifications: true });
+  }, [setFetchingStrategy]);
 
   return (
     <>

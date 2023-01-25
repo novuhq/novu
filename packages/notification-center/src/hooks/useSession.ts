@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import { SESSION_QUERY_KEY } from './queryKeys';
 import type { ISession } from '../shared/interfaces';
-import { useNovuContext } from './use-novu-context.hook';
+import { useNovuContext } from './useNovuContext';
 
 export const useSession = ({ onSuccess }: { onSuccess?: (session: ISession) => void }) => {
   const { apiService, applicationIdentifier, subscriberId, subscriberHash } = useNovuContext();
