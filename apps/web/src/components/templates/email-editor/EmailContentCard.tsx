@@ -85,7 +85,12 @@ export function EmailContentCard({
 
   return (
     <>
-      {!isIntegrationActive ? <LackIntegrationError channelType="E-Mail" /> : null}
+      {!isIntegrationActive ? (
+        <LackIntegrationError
+          channelType="E-Mail"
+          text="Looks like you haven’t configured your E-Mail provider yet, visit the integrations page to configure."
+        />
+      ) : null}
       <div
         style={{
           fontWeight: 'bolder',
