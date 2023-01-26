@@ -12,6 +12,7 @@ import {
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
 import { QueueNextJobCommand } from '../../usecases/queue-next-job/queue-next-job.command';
 import { QueueNextJob } from '../../usecases/queue-next-job/queue-next-job.usecase';
+import { ConnectionOptions } from 'tls';
 
 @Injectable()
 export class WorkflowQueueService {
@@ -25,6 +26,7 @@ export class WorkflowQueueService {
       keepAlive: 30000,
       family: 4,
       keyPrefix: getRedisPrefix(),
+      tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
   public readonly queue: Queue;

@@ -1,4 +1,4 @@
-import { bool, makeValidator, port, str, url, ValidatorSpec } from 'envalid';
+import { bool, json, makeValidator, port, str, url, ValidatorSpec } from 'envalid';
 import * as envalid from 'envalid';
 
 const str32 = makeValidator((variable) => {
@@ -23,6 +23,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
+  REDIS_TLS: json({
+    default: undefined,
+  }),
   JWT_SECRET: str(),
   SENDGRID_API_KEY: str({
     default: '',
@@ -48,6 +51,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   REDIS_CACHE_SERVICE_PORT: str({
     default: '6379',
+  }),
+  REDIS_CACHE_SERVICE_TLS: json({
+    default: undefined,
   }),
   STORE_NOTIFICATION_CONTENT: str({
     default: 'false',

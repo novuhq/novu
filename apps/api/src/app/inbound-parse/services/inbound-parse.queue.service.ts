@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { getRedisPrefix } from '@novu/shared';
 import { InboundEmailParse } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
+import { ConnectionOptions } from 'tls';
 
 @Injectable()
 export class InboundParseQueueService {
@@ -18,6 +19,7 @@ export class InboundParseQueueService {
       keepAlive: 30000,
       family: 4,
       keyPrefix: getRedisPrefix(),
+      tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
   public readonly queue: Queue;

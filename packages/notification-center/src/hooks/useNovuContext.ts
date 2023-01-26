@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 import { NovuContext } from '../store/novu-provider.context';
-import { useProviderCheck } from './use-check-provider.hook';
+import { useProviderCheck } from './useProviderCheck';
 import { INovuProviderContext } from '../shared/interfaces';
 
 /**
