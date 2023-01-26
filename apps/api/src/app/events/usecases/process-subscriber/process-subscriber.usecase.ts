@@ -8,7 +8,7 @@ import {
   JobStatusEnum,
   NotificationStepEntity,
 } from '@novu/dal';
-import { ChannelCTATypeEnum, ChannelTypeEnum, InAppProviderIdEnum, StepTypeEnum } from '@novu/shared';
+import { STEP_TYPE_TO_CHANNEL_TYPE, InAppProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
@@ -86,7 +86,7 @@ export class ProcessSubscriber {
     for (const step of steps) {
       if (!step.template) throw new ApiException('Step template was not found');
 
-      const providerId: string | null = await this.getProviderId(command, step.template.type);
+      const providerId: string | undefined = await this.getProviderId(command, step.template.type);
       jobs.push({
         identifier: command.identifier,
         payload: command.payload,
@@ -110,9 +110,9 @@ export class ProcessSubscriber {
     return jobs;
   }
 
-  private async getProviderId(command: ProcessSubscriberCommand, stepType: StepTypeEnum): Promise<string | null> {
-    const channelType = ChannelTypeEnum[stepType.toUpperCase()];
-    if (!channelType) return null;
+  private async getProviderId(command: ProcessSubscriberCommand, stepType: StepTypeEnum): Promise<string | undefined> {
+    const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(stepType);
+    if (!channelType) return;
     const integrations = await this.getDecryptedIntegrations.execute(
       GetDecryptedIntegrationsCommand.create({
         channelType: channelType,

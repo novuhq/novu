@@ -51,6 +51,6 @@ export class GetDecryptedIntegrations {
       })
     );
 
-    return [novuIntegration];
+    return novuIntegration ? [novuIntegration] : [];
   }
 }
