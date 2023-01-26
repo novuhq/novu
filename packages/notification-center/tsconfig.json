@@ -12,7 +12,8 @@
     "declaration": false,
     "declarationMap": false,
     "sourceMap": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": "."
   },
   "exclude": ["src/**/*.test.*", "src/*.test.*"]
 }

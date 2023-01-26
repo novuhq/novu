@@ -1,4 +1,5 @@
 import { Queue, QueueBaseOptions, Worker } from 'bullmq';
+import { ConnectionOptions } from 'tls';
 
 export class QueueService {
   readonly DEFAULT_ATTEMPTS = 5;
@@ -14,6 +15,7 @@ export class QueueService {
       keepAlive: 30000,
       family: 4,
       keyPrefix: process.env.REDIS_PREFIX ?? '',
+      tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
   public readonly queue: Queue;
