@@ -32,6 +32,7 @@ import {
   StorageService,
 } from './services/storage/storage.service';
 import { CacheService, InvalidateCacheService } from './services/cache';
+import { ConnectionOptions } from 'tls';
 
 const DAL_MODELS = [
   UserRepository,
@@ -83,6 +84,7 @@ const cacheService = {
       keepAlive: process.env.REDIS_CACHE_KEEP_ALIVE,
       family: process.env.REDIS_CACHE_FAMILY,
       keyPrefix: process.env.REDIS_CACHE_KEY_PREFIX,
+      tls: process.env.REDIS_CACHE_SERVICE_TLS as ConnectionOptions,
     });
   },
 };

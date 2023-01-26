@@ -2,6 +2,7 @@ import * as Bull from 'bull';
 import { Queue } from 'bull';
 import { IWsQueuePayload } from './queue.interface';
 import { getRedisPrefix } from '@novu/shared';
+import { ConnectionOptions } from 'tls';
 
 export const WS_SOCKET_QUEUE = 'ws_socket_queue';
 
@@ -19,6 +20,7 @@ export class QueueService {
       keepAlive: 30000,
       family: 4,
       keyPrefix: getRedisPrefix(),
+      tls: process.env.REDIS_TLS as ConnectionOptions,
     },
     defaultJobOptions: {
       removeOnComplete: true,
