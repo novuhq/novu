@@ -42,6 +42,13 @@ Update the `.env` file with your own secrets. In particular, these are required:
 
 - `JWT_SECRET`: used by the API to generate JWT keys
 
+### Redis config
+
+Redis TLS can be configured by adding the following variables to the `.env` file and specifying the necessary properties inside:
+
+- `REDIS_TLS={"servername":"localhost"}`
+- `REDIS_CACHE_SERVICE_TLS={"servername":"localhost"}`
+
 ## Configuration
 
 To keep the setup simple, we made some choices that may not be optimal for production:
