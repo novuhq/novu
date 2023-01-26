@@ -109,13 +109,11 @@ describe('Shell Embed - Seen Read', function () {
 
     clickOnTab('unseen');
 
-    cy.intercept('**/notifications/feed?page=0&seen=false').as('unseenFeedRequest');
-    cy.wait('@unseenFeedRequest');
+    cy.waitForNetworkIdle(500);
 
     clickOnTab('seen');
 
-    cy.intercept('**/notifications/feed?page=0&seen=true').as('seenFeedRequest');
-    cy.wait('@seenFeedRequest');
+    cy.waitForNetworkIdle(500);
 
     getNotifications().should('have.length', 5);
   });
