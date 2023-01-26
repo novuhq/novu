@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import { ConnectionOptions } from 'tls';
 
 const STORE_CONNECTED = 'ready';
 
@@ -41,6 +42,7 @@ export class CacheService implements ICacheService {
         keepAlive: this.config.keepAlive ? Number(this.config.keepAlive) : this.DEFAULT_KEEP_ALIVE,
         family: this.config.family ? Number(this.config.family) : this.DEFAULT_FAMILY,
         keyPrefix: this.config.keyPrefix ?? this.DEFAULT_KEY_PREFIX,
+        tls: this.config.tls,
       });
 
       this.client.on('connect', () => {
@@ -130,4 +132,5 @@ export interface ICacheServiceConfig {
   keepAlive?: string;
   family?: string;
   keyPrefix?: string;
+  tls?: ConnectionOptions;
 }
