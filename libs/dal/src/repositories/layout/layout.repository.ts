@@ -85,7 +85,7 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
 
   async filterLayouts(
     query: EnforceEnvironmentQuery,
-    pagination: { limit: number; skip: number; sortBy: string; orderBy: OrderDirectionEnum }
+    pagination: { limit: number; skip: number; sortBy?: string; orderBy?: OrderDirectionEnum }
   ): Promise<LayoutEntity[]> {
     const order = pagination.orderBy ?? OrderDirectionEnum.DESC;
     const sort = pagination.sortBy ? { [pagination.sortBy]: order } : { createdAt: OrderDirectionEnum.DESC };

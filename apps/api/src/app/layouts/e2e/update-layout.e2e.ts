@@ -37,6 +37,28 @@ describe('Layout update - /layouts (PATCH)', async () => {
     expect(body.message).to.eql('Payload can not be empty');
   });
 
+  it('should throw a not found error when the layout ID does not exist in the database when trying to update it', async () => {
+    const nonExistingLayoutId = 'ab12345678901234567890ab';
+    const updatedLayoutName = 'layout-name-update';
+    const updatedDescription = 'We thought it was more amazing than it is';
+    const updatedContent = `{{{body}}}`;
+    const updatedVariables = [];
+
+    const url = `${BASE_PATH}/${nonExistingLayoutId}`;
+    const { body } = await session.testAgent.patch(url).send({
+      name: updatedLayoutName,
+      description: updatedDescription,
+      content: updatedContent,
+      variables: updatedVariables,
+    });
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.eql(
+      `Layout not found for id ${nonExistingLayoutId} in the environment ${session.environment._id}`
+    );
+    expect(body.error).to.eql('Not Found');
+  });
+
   it('should update a new layout successfully', async () => {
     const url = `${BASE_PATH}/${createdLayout._id}`;
 
