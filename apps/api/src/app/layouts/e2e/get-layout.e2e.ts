@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import { createLayout } from './helpers';
 
 import { LayoutDto } from '../dtos';
-import { TemplateVariableTypeEnum } from '../types';
+import { ChannelTypeEnum, TemplateVariableTypeEnum } from '../types';
 
 const BASE_PATH = '/v1/layouts';
 
@@ -43,6 +43,7 @@ describe('Get a layout - /layouts/:layoutId (GET)', async () => {
     expect(layout.description).to.eql(expectedDescription);
     expect(layout.content).to.eql(expectedContent);
     expect(layout.variables).to.eql(expectedVariables);
+    expect(layout.channel).to.eql(ChannelTypeEnum.EMAIL);
     expect(layout.contentType).to.eql('customHtml');
     expect(layout.isDefault).to.eql(false);
     expect(layout.isDeleted).to.eql(false);

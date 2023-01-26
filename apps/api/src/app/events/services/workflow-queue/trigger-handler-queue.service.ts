@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Queue, QueueBaseOptions, Worker } from 'bullmq';
 import { getRedisPrefix } from '@novu/shared';
 import { TriggerEvent, TriggerEventCommand } from '../../usecases/trigger-event';
+import { ConnectionOptions } from 'tls';
 
 @Injectable()
 export class TriggerHandlerQueueService {
@@ -15,6 +16,7 @@ export class TriggerHandlerQueueService {
       keepAlive: 30000,
       family: 4,
       keyPrefix: getRedisPrefix(),
+      tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
   public readonly queue: Queue;

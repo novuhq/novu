@@ -77,7 +77,11 @@ jobs:
         working-directory: apps/web
         env:
           REACT_APP_API_URL: http://localhost:1336
+          REACT_APP_WS_URL: http://localhost:1340
         run: pnpm pnpm start:static:build &
+
+      - name: Start WS
+        run: pnpm start:ws:test &
 
       - name: Start API in TEST
         run: cd apps/api && pnpm start:test &
@@ -87,6 +91,9 @@ jobs:
 
       - name: Wait on API
         run: wait-on --timeout=120000 http://localhost:1336/v1/health-check
+
+      - name: Wait on WS
+        run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
 
       - name: Wait on WEB
         run: wait-on --timeout=120000 http://localhost:4200
