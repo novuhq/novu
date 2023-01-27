@@ -51,7 +51,9 @@ const queue = new Queue('trigger-handler', {
   },
 });
 
-queue.obliterate({ force: true });
+if (process.env.NODE_ENV === 'test') {
+  queue.obliterate({ force: true });
+}
 
 const EMAIL_BLOCK: IEmailBlock[] = [
   {

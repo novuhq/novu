@@ -118,11 +118,11 @@ export const EmailInboxContent = ({
           return (
             <Select
               {...field}
-              label="Layouts"
+              label="Email Layout"
               data-test-id="templates-layout"
               loading={isLoading}
               disabled={readonly}
-              required
+              required={(layouts || [])?.length > 0}
               error={errors?.steps ? errors?.steps[index]?.template?.layoutId?.message : undefined}
               searchable
               placeholder="Select layout"
