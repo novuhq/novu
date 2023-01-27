@@ -26,6 +26,7 @@ await novu.subscribers.identify(user.id, {
   lastName: user.lastName,
   phone: user.phone,
   avatar: user.profile_avatar,
+  locale: user.locale,
 });
 ```
 

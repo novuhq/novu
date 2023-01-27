@@ -20,7 +20,12 @@ const layoutSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    _parentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Layout',
+    },
     name: Schema.Types.String,
+    description: Schema.Types.String,
     variables: [
       {
         name: Schema.Types.String,
@@ -34,7 +39,7 @@ const layoutSchema = new Schema(
         defaultValue: Schema.Types.Mixed,
       },
     ],
-    content: Schema.Types.Mixed,
+    content: Schema.Types.String,
     contentType: Schema.Types.String,
     isDefault: {
       type: Schema.Types.Boolean,

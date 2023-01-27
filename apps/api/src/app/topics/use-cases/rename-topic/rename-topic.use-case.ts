@@ -16,18 +16,14 @@ export class RenameTopicUseCase {
     if (!topic) throw new NotFoundException(`Topic ${command.topicKey} not found`);
 
     const query = this.mapToQuery(command);
-    const renamedTopic = await this.topicRepository.renameTopic(
-      TopicRepository.convertStringToObjectId(topic._id),
-      query._environmentId,
-      query.name
-    );
+    const renamedTopic = await this.topicRepository.renameTopic(topic._id, query._environmentId, query.name);
 
     return this.mapFromEntityToDto(renamedTopic);
   }
 
   private mapToQuery(domainEntity: RenameTopicCommand): Pick<TopicEntity, '_environmentId' | 'name'> {
     return {
-      _environmentId: TopicRepository.convertStringToObjectId(domainEntity.environmentId),
+      _environmentId: domainEntity.environmentId,
       name: domainEntity.name,
     };
   }
@@ -35,9 +31,9 @@ export class RenameTopicUseCase {
   private mapFromEntityToDto(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {
     return {
       ...topic,
-      _id: TopicRepository.convertObjectIdToString(topic._id),
-      _organizationId: TopicRepository.convertObjectIdToString(topic._organizationId),
-      _environmentId: TopicRepository.convertObjectIdToString(topic._environmentId),
+      _id: topic._id,
+      _organizationId: topic._organizationId,
+      _environmentId: topic._environmentId,
     };
   }
 }

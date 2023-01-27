@@ -89,7 +89,7 @@ export class NodemailerProvider implements IEmailProvider {
   }
 
   private createMailData(options: IEmailOptions): SendMailOptions {
-    return {
+    const sendMailOptions: SendMailOptions = {
       from: options.from || this.config.from,
       to: options.to,
       subject: options.subject,
@@ -101,5 +101,11 @@ export class NodemailerProvider implements IEmailProvider {
         contentType: attachment.mime,
       })),
     };
+
+    if (options.replyTo) {
+      sendMailOptions.replyTo = options.replyTo;
+    }
+
+    return sendMailOptions;
   }
 }

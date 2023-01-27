@@ -88,6 +88,13 @@ class NotificationStepCommand {
   @IsBoolean()
   shouldStopOnFail?: boolean;
 
+  @ValidateNested()
+  @IsOptional()
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
+
   @IsOptional()
   @IsArray()
   @ValidateNested()

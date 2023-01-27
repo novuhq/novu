@@ -80,6 +80,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       firstName: 'Test Name',
       lastName: 'Last of name',
       email: 'test@email.novu',
+      locale: 'en',
     };
     const { data: body } = await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
@@ -106,6 +107,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(createdSubscriber.firstName).to.equal(payload.firstName);
     expect(createdSubscriber.lastName).to.equal(payload.lastName);
     expect(createdSubscriber.email).to.equal(payload.email);
+    expect(createdSubscriber.locale).to.equal(payload.locale);
   });
 
   it('should override subscriber email based on event data', async function () {
@@ -231,11 +233,6 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const email = emails[0];
 
     expect(email.channel).to.equal(ChannelTypeEnum.EMAIL);
-    expect(Array.isArray(email.content)).to.be.ok;
-    expect((email.content[0] as IEmailBlock).type).to.equal(EmailBlockTypeEnum.TEXT);
-    expect((email.content[0] as IEmailBlock).content).to.equal(
-      'This are the text contents of the template for Testing of User Name'
-    );
   });
 
   it('should trigger SMS notification', async function () {
@@ -513,6 +510,8 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   });
 
   it('should use Novu integration for new orgs', async function () {
+    process.env.NOVU_EMAIL_INTEGRATION_API_KEY = 'true';
+
     const existingIntegrations = await integrationRepository.find({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,

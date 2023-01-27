@@ -1,10 +1,7 @@
-import {
-  ChannelCTATypeEnum,
-  MessageTemplateContentType,
-  StepTypeEnum,
-  IEmailBlock,
-} from '../../entities/message-template';
+import { MessageTemplateContentType } from '../../entities/message-template';
 import { IMessageCTA } from '../../entities/messages';
+
+import { ChannelCTATypeEnum, IEmailBlock, StepTypeEnum } from '../../types';
 
 export class ChannelCTADto {
   type: ChannelCTATypeEnum;

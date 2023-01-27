@@ -10,18 +10,12 @@ import { When } from '../../../components/utils/When';
 export function ProviderCard({
   provider,
   onConnectClick,
-  ribbonText,
-  children = null,
 }: {
   provider: IIntegratedProvider;
   onConnectClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
-  ribbonText?: string;
-  children?: React.ReactNode;
 }) {
   const { colorScheme } = useMantineColorScheme();
-  const logoSrc = provider.novu
-    ? provider.logoFileName[`${colorScheme}`]
-    : `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
+  const logoSrc = `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
   const brightCard =
     provider.active ||
     provider.credentials.some((cred: IConfigCredentials) => {
@@ -36,7 +30,7 @@ export function ProviderCard({
     <StyledCard
       dark={colorScheme === 'dark'}
       active={brightCard}
-      data-test-id="integration-provider-card"
+      data-test-id={`integration-provider-card-${provider.providerId}`}
       onClick={() => {
         if (provider.comingSoon) return;
         if (provider.connected) {
@@ -46,9 +40,9 @@ export function ProviderCard({
         }
       }}
     >
-      <When truthy={provider.comingSoon || provider.betaVersion || ribbonText}>
+      <When truthy={provider.comingSoon || provider.betaVersion}>
         <RibbonWrapper>
-          <Ribbon>{ribbonText ? ribbonText : provider.comingSoon ? 'COMING SOON' : 'BETA'}</Ribbon>
+          <Ribbon>{provider.comingSoon ? 'COMING SOON' : 'BETA'}</Ribbon>
         </RibbonWrapper>
       </When>
 
@@ -59,8 +53,6 @@ export function ProviderCard({
             <Settings data-test-id="provider-card-settings-svg" />
           ) : null}
         </CardHeader>
-
-        {children}
 
         <CardFooter>
           {!provider.connected ? (

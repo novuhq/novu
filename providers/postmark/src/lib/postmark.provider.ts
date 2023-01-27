@@ -66,7 +66,7 @@ export class PostmarkEmailProvider implements IEmailProvider {
   }
 
   private createMailData(options: IEmailOptions): Message {
-    return {
+    const mailData: Message = {
       From: options.from || this.config.from,
       To: getFormattedTo(options.to),
       HtmlBody: options.html,
@@ -81,6 +81,12 @@ export class PostmarkEmailProvider implements IEmailProvider {
           )
       ),
     };
+
+    if (options.replyTo) {
+      mailData.ReplyTo = options.replyTo;
+    }
+
+    return mailData;
   }
 
   getMessageId(body: any | any[]): string[] {

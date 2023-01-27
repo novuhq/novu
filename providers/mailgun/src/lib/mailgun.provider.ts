@@ -9,6 +9,7 @@ import {
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';
 import { IMailgunClient } from 'mailgun.js/interfaces/IMailgunClient';
+import { MailgunMessageData } from 'mailgun.js/interfaces/Messages';
 
 export class MailgunEmailProvider implements IEmailProvider {
   id = 'mailgun';
@@ -35,21 +36,29 @@ export class MailgunEmailProvider implements IEmailProvider {
     });
   }
 
-  async sendMessage(data: IEmailOptions): Promise<ISendMessageSuccessResponse> {
+  async sendMessage(
+    emailOptions: IEmailOptions
+  ): Promise<ISendMessageSuccessResponse> {
+    const mailgunMessageData: Partial<MailgunMessageData> = {
+      from: emailOptions.from || this.config.from,
+      to: emailOptions.to,
+      subject: emailOptions.subject,
+      html: emailOptions.html,
+      attachment: emailOptions.attachments?.map((attachment) => {
+        return {
+          data: attachment.file,
+          filename: attachment.name,
+        };
+      }),
+    };
+
+    if (emailOptions.replyTo) {
+      mailgunMessageData['h:Reply-To'] = emailOptions.replyTo;
+    }
+
     const response = await this.mailgunClient.messages.create(
       this.config.domain,
-      {
-        from: data.from || this.config.from,
-        to: data.to,
-        subject: data.subject,
-        html: data.html,
-        attachment: data.attachments?.map((attachment) => {
-          return {
-            data: attachment.file,
-            filename: attachment.name,
-          };
-        }),
-      }
+      mailgunMessageData as MailgunMessageData
     );
 
     return {

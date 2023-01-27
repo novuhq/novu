@@ -7,6 +7,11 @@ export interface IWidgetSettings {
   notificationCenterEncryption: boolean;
 }
 
+export interface IDnsSettings {
+  mxRecordConfigured: boolean;
+  inboundParseDomain: string;
+}
+
 export class EnvironmentEntity {
   _id: string;
 
@@ -19,6 +24,8 @@ export class EnvironmentEntity {
   apiKeys: IApiKey[];
 
   widget: IWidgetSettings;
+
+  dns?: IDnsSettings;
 
   _parentId: string;
 }

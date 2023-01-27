@@ -3,14 +3,14 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { getIntegrationLimit } from '../../integration';
 import { useActiveIntegrations } from '.';
 import { useMemo } from 'react';
+import { IS_DOCKER_HOSTED } from '../../../config/index';
 
 export function useIntegrationLimit(type: ChannelTypeEnum) {
-  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
   const { integrations = [] } = useActiveIntegrations();
 
   const enabled = useMemo<boolean>(() => {
-    return selfHosted && integrations.filter((integration) => integration.channel === type).length === 0;
-  }, [integrations, type, selfHosted]);
+    return !IS_DOCKER_HOSTED && integrations.filter((integration) => integration.channel === type).length === 0;
+  }, [integrations, type, IS_DOCKER_HOSTED]);
 
   const {
     data = { limit: 0, count: 0 },

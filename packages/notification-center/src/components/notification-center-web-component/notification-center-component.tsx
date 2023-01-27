@@ -4,9 +4,9 @@ import { IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '@novu/shared'
 import { NovuProvider } from '../novu-provider';
 import { PopoverNotificationCenter } from '../popover-notification-center';
 import { NotificationBell } from '../notification-bell';
-import { useNotifications } from '../../hooks';
 import { reactToWebComponent } from '../../utils';
 import type { NotificationCenterComponentProps, PopoverWrapperProps } from './notification-center-component.types';
+import { useUpdateAction } from '../../hooks';
 
 /*
  * This array represents the public API of the web component.
@@ -103,23 +103,16 @@ function PopoverWrapper({
   unseenBadgeColor,
   unseenBadgeBackgroundColor,
 }: PopoverWrapperProps) {
-  const { updateAction, markAsSeen } = useNotifications();
+  const { updateAction } = useUpdateAction();
 
-  function handlerOnNotificationClick(message: IMessage) {
-    if (message?.cta?.data?.url) {
-      markAsSeen();
-    }
-    onNotificationClick?.(message);
-  }
-
-  async function handlerOnActionClick(templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) {
-    await updateAction(message._id, type, MessageActionStatusEnum.DONE);
+  function handlerOnActionClick(templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) {
+    updateAction({ messageId: message._id, actionButtonType: type, status: MessageActionStatusEnum.DONE });
     onActionClick?.(templateIdentifier, type, message);
   }
 
   return (
     <PopoverNotificationCenter
-      onNotificationClick={handlerOnNotificationClick}
+      onNotificationClick={onNotificationClick}
       onUnseenCountChanged={onUnseenCountChanged}
       onActionClick={handlerOnActionClick}
       onTabClick={onTabClick}
