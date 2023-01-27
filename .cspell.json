@@ -384,7 +384,8 @@
     "yahoofs",
     "novutest",
     "nunito",
-    "codesee"
+    "codesee",
+    "ehlo"
   ],
   "flagWords": [],
   "patterns": [
