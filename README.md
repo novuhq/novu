@@ -132,6 +132,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
 - [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
 - [x] [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
+- [x] [MailerSend](https://github.com/novuhq/novu/tree/main/providers/mailersend)
 - [ ] SparkPost
 
 #### 📞 SMS
@@ -144,6 +145,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
 - [x] [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
+- [x] [MailerSend](https://github.com/novuhq/novu/tree/main/providers/mailersend)
 - [ ] Bandwidth
 - [ ] RingCentral
 
