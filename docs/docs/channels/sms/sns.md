@@ -20,6 +20,6 @@ For security reasons, it is suggested that you create a new User to use with Nov
 
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate **Amazon SNS** and click on the **Connect** button.
-- Enter your `Access key ID` and `Secret access key`.
+- Enter your `Access key ID`, `Secret access key`, and `AWS region`.
 - Click on the **Save** button.
 - You should now be able to send SMS notifications using **Amazon SNS** in Novu.
