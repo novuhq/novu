@@ -1261,7 +1261,7 @@ importers:
       rollup-plugin-commonjs: ^9.1.8
       rollup-plugin-json: ^3.1.0
       rollup-plugin-node-resolve: ^3.4.0
-      rollup-plugin-sourcemaps: ^0.4.2
+      rollup-plugin-sourcemaps: ^0.6.0
       rollup-plugin-terser: ^7.0.2
       rollup-plugin-typescript2: ^0.18.0
       semantic-release: ^19.0.3
@@ -1301,7 +1301,7 @@ importers:
       rollup-plugin-commonjs: 9.3.4_rollup@0.68.2
       rollup-plugin-json: 3.1.0
       rollup-plugin-node-resolve: 3.4.0
-      rollup-plugin-sourcemaps: 0.4.2_rollup@0.68.2
+      rollup-plugin-sourcemaps: 0.6.3_nhrbjcvifxxnbvmh7w7bwr5gmq
       rollup-plugin-terser: 7.0.2_rollup@0.68.2
       rollup-plugin-typescript2: 0.18.1_a3v6d2vuzxz7b3gv6yihseevea
       semantic-release: 19.0.3
@@ -1691,7 +1691,7 @@ importers:
       '@types/node': 14.18.12
       codecov: 3.8.3
       cz-conventional-changelog: 3.3.0
-      jest: 27.5.1_ts-node@10.9.1
+      jest: 27.5.1
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       rimraf: 3.0.2
@@ -33009,7 +33009,7 @@ packages:
     dependencies:
       call-bind: 1.0.2
       define-properties: 1.1.4
-      es-abstract: 1.20.1
+      es-abstract: 1.21.1
 
   /array.prototype.flat/1.3.0:
     resolution: {integrity: sha512-12IUEkHsAhA4DY5s0FPgNXIdc8VRSqD9Zp78a5au9abH/SOBrsp082JOWFNTjkMozh8mqcdiKuaLGhPeYztxSw==}
@@ -58308,15 +58308,20 @@ packages:
       rollup: 3.7.3
     dev: true
 
-  /rollup-plugin-sourcemaps/0.4.2_rollup@0.68.2:
-    resolution: {integrity: sha1-YhJaqUCHqt97g+9N+vYptHMTXoc=}
-    engines: {node: '>=4.5.0', npm: '>=2.15.9'}
+  /rollup-plugin-sourcemaps/0.6.3_nhrbjcvifxxnbvmh7w7bwr5gmq:
+    resolution: {integrity: sha512-paFu+nT1xvuO1tPFYXGe+XnQvg4Hjqv/eIhG8i5EspfYYPBKL57X7iVbfv55aNVASg3dzWvES9dmWsL2KhfByw==}
+    engines: {node: '>=10.0.0'}
     peerDependencies:
+      '@types/node': '>=10.0.0'
       rollup: '>=0.31.2'
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
     dependencies:
+      '@rollup/pluginutils': 3.1.0_rollup@0.68.2
+      '@types/node': 14.18.12
       rollup: 0.68.2
-      rollup-pluginutils: 2.8.2
-      source-map-resolve: 0.5.3
+      source-map-resolve: 0.6.0
     dev: true
 
   /rollup-plugin-sourcemaps/0.6.3_rollup@3.3.0:
@@ -60289,7 +60294,7 @@ packages:
     dependencies:
       call-bind: 1.0.2
       define-properties: 1.1.4
-      es-abstract: 1.20.1
+      es-abstract: 1.21.1
 
   /string.prototype.trimend/1.0.5:
     resolution: {integrity: sha512-I7RGvmjV4pJ7O3kdf+LXFpVfdNOxtCW/2C8f6jNiW4+PQchwxkCDzlk1/7p+Wl4bqFIZeF47qAHXLuHHWKAxog==}
