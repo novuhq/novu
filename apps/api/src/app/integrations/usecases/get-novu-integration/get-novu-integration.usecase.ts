@@ -78,6 +78,7 @@ export class GetNovuIntegration {
       apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
       from: 'no-reply@novu.co',
       senderName: organization !== null ? organization.name : 'Novu',
+      ipPoolName: 'Demo',
     };
 
     return item;
