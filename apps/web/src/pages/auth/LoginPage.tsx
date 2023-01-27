@@ -12,9 +12,11 @@ import SetupLoader from '../../components/auth/SetupLoader';
 import { useVercelParams } from '../../hooks/use-vercelParams';
 import { useSegment } from '../../hooks/use-segment';
 import { useAcceptInvite } from '../../components/auth/use-accept-invite.hook';
+import { useBlueprint } from '../../hooks/useBlueprint';
 
 export default function LoginPage() {
-  const { setToken } = useContext(AuthContext);
+  useBlueprint();
+  const { setToken, token } = useContext(AuthContext);
   const segment = useSegment();
   const navigate = useNavigate();
   const [params] = useSearchParams();

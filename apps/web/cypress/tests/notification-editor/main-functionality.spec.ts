@@ -198,7 +198,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('upload-image-button').click();
 
     cy.get('.mantine-Modal-modal button').contains('Yes').click();
-    cy.location('pathname').should('equal', '/settings');
+    cy.location('pathname').should('equal', '/brand');
   });
 
   it('should show the brand logo on main page', function () {
