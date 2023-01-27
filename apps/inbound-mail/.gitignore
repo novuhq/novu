@@ -33,5 +33,7 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# tmp mails
+.tmp
 
 dist
