@@ -12,6 +12,7 @@ export class SnsHandler extends BaseSmsHandler {
     const config: SNSConfig = {
       accessKeyId: credentials.apiKey,
       secretAccessKey: credentials.secretKey,
+      region: credentials.region,
     };
 
     this.provider = new SNSSmsProvider(config);

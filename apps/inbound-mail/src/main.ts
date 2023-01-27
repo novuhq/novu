@@ -4,8 +4,18 @@ import './config';
 
 import mailin from './server/index';
 import logger from './server/logger';
+import * as Sentry from '@sentry/node';
+import { version } from '../package.json';
 
 const env = process.env;
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV,
+    release: `v${version}`,
+  });
+}
 
 mailin.start(
   {

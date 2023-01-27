@@ -1,12 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InboundEmailParseCommand } from './inbound-email-parse.command';
-import { JobEntity, JobRepository, MessageRepository } from '@novu/dal';
+import {
+  JobEntity,
+  JobRepository,
+  MessageRepository,
+  MessageEntity,
+  NotificationEntity,
+  NotificationTemplateEntity,
+} from '@novu/dal';
 import axios from 'axios';
 import { createHmac } from 'crypto';
 
 @Injectable()
 export class InboundEmailParse {
-  axiosInstance = axios.create();
   constructor(private jobRepository: JobRepository, private messageRepository: MessageRepository) {}
 
   async execute(command: InboundEmailParseCommand) {
@@ -44,7 +50,7 @@ export class InboundEmailParse {
       return;
     }
 
-    const userPayload = {
+    const userPayload: IUserWebhookPayload = {
       hmac: this.createHmac(environment.apiKeys, subscriber.subscriberId),
       transactionId: toTransactionId,
       payload: job.payload,
@@ -55,7 +61,7 @@ export class InboundEmailParse {
       mail: command,
     };
 
-    await this.axiosInstance.post(`${currentParseWebhook}`, userPayload);
+    return await axios.post(currentParseWebhook, userPayload);
   }
 
   private splitTo(address: string) {
@@ -86,4 +92,17 @@ export class InboundEmailParse {
   createHmac(apiKeys, subscriberId: string) {
     return createHmac('sha256', apiKeys[0].key).update(subscriberId).digest('hex');
   }
+}
+
+class MailMetadata extends InboundEmailParseCommand {}
+
+export interface IUserWebhookPayload {
+  transactionId: string;
+  templateIdentifier: string;
+  payload: Record<string, unknown>;
+  template: NotificationTemplateEntity;
+  notification: NotificationEntity;
+  message: MessageEntity;
+  mail: MailMetadata;
+  hmac: string;
 }
