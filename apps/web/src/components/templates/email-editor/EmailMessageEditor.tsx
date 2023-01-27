@@ -112,7 +112,7 @@ export function EmailMessageEditor({
   }
 
   function getBrandSettingsUrl(): string {
-    return '/settings';
+    return '/brand';
   }
 
   return (

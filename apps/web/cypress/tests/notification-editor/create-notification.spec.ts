@@ -71,6 +71,7 @@ describe('Creation functionality', function () {
 
     // click on the notifications bell
     cy.getByTestId('notification-bell').click();
+
     // check the notification
     cy.getByTestId('notifications-scroll-area')
       .getByTestId('notification-content')

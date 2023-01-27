@@ -10,8 +10,10 @@ import { useVercelIntegration } from '../../api/hooks/useVercelIntegration';
 import VercelSetupLoader from '../../components/auth/VercelSetupLoader';
 import { useVercelParams } from '../../hooks/useVercelParams';
 import { useSegment } from '../../hooks/useSegment';
+import { useBlueprint } from '../../hooks/useBlueprint';
 
 export default function LoginPage() {
+  useBlueprint();
   const { setToken, token } = useContext(AuthContext);
   const segment = useSegment();
   const navigate = useNavigate();
