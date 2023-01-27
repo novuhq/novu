@@ -83,6 +83,7 @@ export class NotificationTemplateService {
         _templateId: saved._id,
         active: message.active,
         metadata: message.metadata,
+        replyCallback: message.replyCallback,
       });
     }
 
