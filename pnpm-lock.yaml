@@ -60,7 +60,7 @@ importers:
       lerna: 5.6.2
       lint-staged: ^10.5.4
       listr: ^0.14.3
-      markdownlint-cli: ^0.31.1
+      markdownlint-cli: ^0.33.0
       meow: ^10.1.1
       mississippi: ^4.0.0
       nx: ^14.5.10
@@ -136,7 +136,7 @@ importers:
       lerna: 5.6.2
       lint-staged: 10.5.4
       listr: 0.14.3
-      markdownlint-cli: 0.31.1
+      markdownlint-cli: 0.33.0
       meow: 10.1.3
       mississippi: 4.0.0
       ora: 5.4.1
@@ -171,41 +171,41 @@ importers:
       '@nestjs/swagger': 6.0.1
       '@nestjs/terminus': 9.0.0
       '@nestjs/testing': 9.0.2
-      '@novu/apns': ^0.10.2
-      '@novu/application-generic': ^0.10.3
-      '@novu/burst-sms': ^0.10.2
-      '@novu/clickatell': ^0.10.2
-      '@novu/dal': ^0.10.3
-      '@novu/discord': ^0.10.2
-      '@novu/emailjs': ^0.10.2
-      '@novu/expo': ^0.10.2
-      '@novu/fcm': ^0.10.3
-      '@novu/firetext': ^0.10.2
-      '@novu/gupshup': ^0.10.2
-      '@novu/infobip': ^0.10.2
-      '@novu/mailersend': ^0.10.2
-      '@novu/mailgun': ^0.10.2
-      '@novu/mailjet': ^0.10.2
-      '@novu/mandrill': ^0.10.2
-      '@novu/ms-teams': ^0.10.2
-      '@novu/netcore': ^0.10.2
-      '@novu/node': ^0.10.2
-      '@novu/nodemailer': ^0.10.2
-      '@novu/outlook365': ^0.10.2
-      '@novu/plivo': ^0.10.2
-      '@novu/postmark': ^0.10.2
-      '@novu/sendgrid': ^0.10.2
-      '@novu/sendinblue': ^0.10.2
-      '@novu/ses': ^0.10.2
-      '@novu/shared': ^0.10.2
-      '@novu/slack': ^0.10.2
-      '@novu/sms77': ^0.10.2
-      '@novu/sns': ^0.10.2
-      '@novu/stateless': ^0.10.2
-      '@novu/telnyx': ^0.10.2
-      '@novu/termii': ^0.10.2
-      '@novu/testing': ^0.10.3
-      '@novu/twilio': ^0.10.2
+      '@novu/apns': ^0.11.0
+      '@novu/application-generic': ^0.11.0
+      '@novu/burst-sms': ^0.11.0
+      '@novu/clickatell': ^0.11.0
+      '@novu/dal': ^0.11.0
+      '@novu/discord': ^0.11.0
+      '@novu/emailjs': ^0.11.0
+      '@novu/expo': ^0.11.0
+      '@novu/fcm': ^0.11.0
+      '@novu/firetext': ^0.11.0
+      '@novu/gupshup': ^0.11.0
+      '@novu/infobip': ^0.11.0
+      '@novu/mailersend': ^0.11.0
+      '@novu/mailgun': ^0.11.0
+      '@novu/mailjet': ^0.11.0
+      '@novu/mandrill': ^0.11.0
+      '@novu/ms-teams': ^0.11.0
+      '@novu/netcore': ^0.11.0
+      '@novu/node': ^0.11.0
+      '@novu/nodemailer': ^0.11.0
+      '@novu/outlook365': ^0.11.0
+      '@novu/plivo': ^0.11.0
+      '@novu/postmark': ^0.11.0
+      '@novu/sendgrid': ^0.11.0
+      '@novu/sendinblue': ^0.11.0
+      '@novu/ses': ^0.11.0
+      '@novu/shared': ^0.11.0
+      '@novu/slack': ^0.11.0
+      '@novu/sms77': ^0.11.0
+      '@novu/sns': ^0.11.0
+      '@novu/stateless': ^0.11.0
+      '@novu/telnyx': ^0.11.0
+      '@novu/termii': ^0.11.0
+      '@novu/testing': ^0.11.0
+      '@novu/twilio': ^0.11.0
       '@sendgrid/mail': ^7.6.0
       '@sentry/hub': 7.22.0
       '@sentry/node': ^7.12.1
@@ -382,7 +382,8 @@ importers:
 
   apps/inbound-mail:
     specifiers:
-      '@novu/shared': ^0.10.2
+      '@novu/shared': ^0.11.0
+      '@sentry/node': ^7.12.1
       '@types/express': ^4.17.8
       '@types/node': ^14.14.6
       '@types/smtp-server': ^3.5.7
@@ -413,6 +414,7 @@ importers:
       winston: ^1.0.0
     dependencies:
       '@novu/shared': link:../../libs/shared
+      '@sentry/node': 7.30.0
       axios: 0.24.0
       bluebird: 2.11.0
       bullmq: 3.5.9
@@ -468,10 +470,10 @@ importers:
       '@mantine/notifications': ^5.7.1
       '@mantine/prism': ^5.7.1
       '@mantine/spotlight': ^5.7.1
-      '@novu/dal': ^0.10.3
-      '@novu/notification-center': ^0.10.3
-      '@novu/shared': ^0.10.2
-      '@novu/testing': ^0.10.3
+      '@novu/dal': ^0.11.0
+      '@novu/notification-center': ^0.11.0
+      '@novu/shared': ^0.11.0
+      '@novu/testing': ^0.11.0
       '@segment/analytics-next': ^1.48.0
       '@sentry/react': ^6.3.1
       '@sentry/tracing': ^6.3.1
@@ -517,6 +519,8 @@ importers:
       lodash.clonedeep: ^4.5.0
       lodash.get: ^4.3.2
       lodash.set: ^4.3.2
+      logrocket: ^3.0.1
+      logrocket-react: ^5.0.1
       nodemon: ^2.0.15
       polished: ^4.1.3
       react: ^17.0.1
@@ -602,6 +606,8 @@ importers:
       lodash.clonedeep: 4.5.0
       lodash.get: 4.4.2
       lodash.set: 4.3.2
+      logrocket: 3.0.1
+      logrocket-react: 5.0.1_yo3aqogrrsw23ory4s7zu7wcpm
       polished: 4.1.4
       react: 17.0.2
       react-ace: 9.5.0_sfoxds7t5ydpegc3knd667wn6m
@@ -673,11 +679,11 @@ importers:
       '@nestjs/swagger': ^6.1.4
       '@nestjs/terminus': ^9.1.4
       '@nestjs/testing': ^9.2.1
-      '@novu/application-generic': ^0.10.3
-      '@novu/dal': ^0.10.3
-      '@novu/shared': ^0.10.2
-      '@novu/stateless': ^0.10.2
-      '@novu/testing': ^0.10.3
+      '@novu/application-generic': ^0.11.0
+      '@novu/dal': ^0.11.0
+      '@novu/shared': ^0.11.0
+      '@novu/stateless': ^0.11.0
+      '@novu/testing': ^0.11.0
       '@sentry/node': ^6.3.3
       '@types/chai': ^4.3.4
       '@types/express': ^4.17.8
@@ -763,7 +769,7 @@ importers:
       prettier: 2.7.1
       sinon: 9.2.4
       supertest: 6.2.2
-      ts-jest: 27.1.4_t4ldjoaolo4tjxxklyv3omdwf4
+      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
       ts-loader: 8.3.0_vhanpkig4omek67hjhmtrlsh2y
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.14.1
@@ -779,10 +785,10 @@ importers:
       '@faker-js/faker': ^6.0.0
       '@mantine/core': 4.1.0
       '@mantine/hooks': 4.1.0
-      '@novu/dal': ^0.10.3
-      '@novu/notification-center': ^0.10.3
-      '@novu/shared': ^0.10.2
-      '@novu/testing': ^0.10.3
+      '@novu/dal': ^0.11.0
+      '@novu/notification-center': ^0.11.0
+      '@novu/shared': ^0.11.0
+      '@novu/testing': ^0.11.0
       '@testing-library/jest-dom': ^5.11.4
       '@testing-library/react': ^11.1.0
       '@testing-library/user-event': ^12.1.10
@@ -894,10 +900,10 @@ importers:
       '@nestjs/terminus': ^7.2.0
       '@nestjs/testing': ^7.6.17
       '@nestjs/websockets': ^9.2.1
-      '@novu/application-generic': ^0.10.3
-      '@novu/dal': ^0.10.3
-      '@novu/shared': ^0.10.2
-      '@novu/testing': ^0.10.3
+      '@novu/application-generic': ^0.11.0
+      '@novu/dal': ^0.11.0
+      '@novu/shared': ^0.11.0
+      '@novu/testing': ^0.11.0
       '@sentry/node': ^7.30.0
       '@socket.io/redis-adapter': ^7.2.0
       '@types/express': ^4.17.8
@@ -975,7 +981,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.6.1
       supertest: 6.2.2
-      ts-jest: 27.1.4_t4ldjoaolo4tjxxklyv3omdwf4
+      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
       ts-loader: 8.3.0_vhanpkig4omek67hjhmtrlsh2y
       ts-node: 9.1.1_typescript@4.3.5
       tsconfig-paths: 3.14.1
@@ -1000,7 +1006,7 @@ importers:
       file-loader: ^6.2.0
       husky: ^8.0.0
       lint-staged: ^12.4.1
-      markdownlint-cli: ^0.31.1
+      markdownlint-cli: ^0.33.0
       prettier: 2.6.2
       prism-react-renderer: ^1.3.1
       react: ^17.0.1
@@ -1045,7 +1051,7 @@ importers:
       eslint-config-prettier: 8.5.0_eslint@8.30.0
       husky: 8.0.1
       lint-staged: 12.5.0
-      markdownlint-cli: 0.31.1
+      markdownlint-cli: 0.33.0
       prettier: 2.6.2
       sass-loader: 13.0.0_sass@1.52.3+webpack@5.75.0
       stylelint: 14.9.1
@@ -1070,7 +1076,7 @@ importers:
       '@angular/platform-browser': ^15.0.0
       '@angular/platform-browser-dynamic': ^15.0.0
       '@angular/router': ^15.0.0
-      '@novu/notification-center-angular': ^0.10.3
+      '@novu/notification-center-angular': ^0.11.0
       '@types/jasmine': ~4.3.0
       jasmine-core: ~4.5.0
       karma: ~6.4.0
@@ -1111,7 +1117,7 @@ importers:
 
   examples/vue-notification-center-example:
     specifiers:
-      '@novu/notification-center-vue': ^0.10.3
+      '@novu/notification-center-vue': ^0.11.0
       '@types/node': ^16.18.3
       '@vitejs/plugin-vue': ^3.1.2
       '@vitejs/plugin-vue-jsx': ^2.0.1
@@ -1139,7 +1145,7 @@ importers:
       '@aws-sdk/client-s3': ^3.14.0
       '@aws-sdk/s3-request-presigner': ^3.14.0
       '@faker-js/faker': ^6.0.0
-      '@novu/shared': ^0.10.2
+      '@novu/shared': ^0.11.0
       '@octokit/graphql': ^4.3.1
       '@sendgrid/mail': ^7.4.2
       '@types/async': ^3.2.1
@@ -1229,7 +1235,7 @@ importers:
     specifiers:
       '@commitlint/cli': ^7.1.2
       '@commitlint/config-conventional': ^7.1.2
-      '@novu/notification-center': ^0.10.3
+      '@novu/notification-center': ^0.11.0
       '@rollup/plugin-replace': ^2.4.2
       '@types/iframe-resizer': ^3.5.8
       '@types/jest': 27.4.0
@@ -1251,7 +1257,7 @@ importers:
       prompt: ^1.0.0
       replace-in-file: ^3.4.2
       rimraf: ^2.6.2
-      rollup: ^0.67.0
+      rollup: ^0.68.0
       rollup-plugin-commonjs: ^9.1.8
       rollup-plugin-json: ^3.1.0
       rollup-plugin-node-resolve: ^3.4.0
@@ -1272,7 +1278,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 7.6.1
       '@commitlint/config-conventional': 7.6.0
-      '@rollup/plugin-replace': 2.4.2_rollup@0.67.4
+      '@rollup/plugin-replace': 2.4.2_rollup@0.68.2
       '@types/jest': 27.4.0
       '@types/node': 14.18.12
       colors: 1.4.0
@@ -1291,13 +1297,13 @@ importers:
       prompt: 1.2.2
       replace-in-file: 3.4.4
       rimraf: 2.7.1
-      rollup: 0.67.4
-      rollup-plugin-commonjs: 9.3.4_rollup@0.67.4
+      rollup: 0.68.2
+      rollup-plugin-commonjs: 9.3.4_rollup@0.68.2
       rollup-plugin-json: 3.1.0
       rollup-plugin-node-resolve: 3.4.0
-      rollup-plugin-sourcemaps: 0.4.2_rollup@0.67.4
-      rollup-plugin-terser: 7.0.2_rollup@0.67.4
-      rollup-plugin-typescript2: 0.18.1_sgvo2t2top55ezlw3xjqadhlya
+      rollup-plugin-sourcemaps: 0.4.2_rollup@0.68.2
+      rollup-plugin-terser: 7.0.2_rollup@0.68.2
+      rollup-plugin-typescript2: 0.18.1_a3v6d2vuzxz7b3gv6yihseevea
       semantic-release: 19.0.3
       shelljs: 0.8.5
       travis-deploy-once: 5.0.11
@@ -1328,9 +1334,9 @@ importers:
   libs/testing:
     specifiers:
       '@faker-js/faker': ^6.0.0
-      '@novu/dal': ^0.10.3
-      '@novu/node': ^0.10.2
-      '@novu/shared': ^0.10.2
+      '@novu/dal': ^0.11.0
+      '@novu/node': ^0.11.0
+      '@novu/shared': ^0.11.0
       '@types/async': ^3.2.1
       '@types/bluebird': ^3.5.30
       '@types/node': ^14.6.0
@@ -1396,32 +1402,32 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': ^8.2.0
-      '@novu/dal': ^0.10.3
-      '@novu/discord': ^0.10.2
-      '@novu/emailjs': ^0.10.2
-      '@novu/fcm': ^0.10.3
-      '@novu/gupshup': ^0.10.2
-      '@novu/mailersend': ^0.10.2
-      '@novu/mailgun': ^0.10.2
-      '@novu/mailjet': ^0.10.2
-      '@novu/mandrill': ^0.10.2
-      '@novu/netcore': ^0.10.2
-      '@novu/node': ^0.10.2
-      '@novu/nodemailer': ^0.10.2
-      '@novu/plivo': ^0.10.2
-      '@novu/postmark': ^0.10.2
-      '@novu/sendgrid': ^0.10.2
-      '@novu/sendinblue': ^0.10.2
-      '@novu/ses': ^0.10.2
-      '@novu/shared': ^0.10.2
-      '@novu/slack': ^0.10.2
-      '@novu/sms77': ^0.10.2
-      '@novu/sns': ^0.10.2
-      '@novu/stateless': ^0.10.2
-      '@novu/telnyx': ^0.10.2
-      '@novu/termii': ^0.10.2
-      '@novu/testing': ^0.10.3
-      '@novu/twilio': ^0.10.2
+      '@novu/dal': ^0.11.0
+      '@novu/discord': ^0.11.0
+      '@novu/emailjs': ^0.11.0
+      '@novu/fcm': ^0.11.0
+      '@novu/gupshup': ^0.11.0
+      '@novu/mailersend': ^0.11.0
+      '@novu/mailgun': ^0.11.0
+      '@novu/mailjet': ^0.11.0
+      '@novu/mandrill': ^0.11.0
+      '@novu/netcore': ^0.11.0
+      '@novu/node': ^0.11.0
+      '@novu/nodemailer': ^0.11.0
+      '@novu/plivo': ^0.11.0
+      '@novu/postmark': ^0.11.0
+      '@novu/sendgrid': ^0.11.0
+      '@novu/sendinblue': ^0.11.0
+      '@novu/ses': ^0.11.0
+      '@novu/shared': ^0.11.0
+      '@novu/slack': ^0.11.0
+      '@novu/sms77': ^0.11.0
+      '@novu/sns': ^0.11.0
+      '@novu/stateless': ^0.11.0
+      '@novu/telnyx': ^0.11.0
+      '@novu/termii': ^0.11.0
+      '@novu/testing': ^0.11.0
+      '@novu/twilio': ^0.11.0
       '@sentry/node': ^7.12.1
       '@types/analytics-node': ^3.1.9
       '@types/jest': 27.4.0
@@ -1496,14 +1502,14 @@ importers:
       rimraf: 3.0.2
       sinon: 9.2.4
       standard-version: 9.3.2
-      ts-jest: 27.1.4_e7edjj3qv32mdmmvbihk7iemnq
+      ts-jest: 27.1.4_vqlr6pm7mnv5rngd46vdqt4eby
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
 
   packages/cli:
     specifiers:
-      '@novu/shared': ^0.10.2
+      '@novu/shared': ^0.11.0
       '@types/analytics-node': ^3.1.9
       '@types/configstore': ^5.0.1
       '@types/inquirer': ^8.2.0
@@ -1552,7 +1558,7 @@ importers:
 
   packages/client:
     specifiers:
-      '@novu/shared': ^0.10.2
+      '@novu/shared': ^0.11.0
       '@types/jest': 27.4.0
       '@types/node': ^14.6.0
       axios: ^0.26.1
@@ -1579,8 +1585,8 @@ importers:
     specifiers:
       '@babel/preset-env': ^7.13.15
       '@babel/preset-typescript': ^7.13.0
-      '@novu/client': ^0.10.2
-      '@novu/shared': ^0.10.2
+      '@novu/client': ^0.11.0
+      '@novu/shared': ^0.11.0
       '@tanstack/query-core': ^4.15.1
       '@types/jest': ^29.2.3
       '@types/node': ^14.6.0
@@ -1610,7 +1616,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': ^8.2.0
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1651,7 +1657,7 @@ importers:
 
   packages/node:
     specifiers:
-      '@novu/shared': ^0.10.2
+      '@novu/shared': ^0.11.0
       '@sendgrid/mail': ^7.4.6
       '@types/jest': 27.4.0
       '@types/lodash.get': ^4.4.6
@@ -1685,7 +1691,7 @@ importers:
       '@types/node': 14.18.12
       codecov: 3.8.3
       cz-conventional-changelog: 3.3.0
-      jest: 27.5.1
+      jest: 27.5.1_ts-node@10.9.1
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       rimraf: 3.0.2
@@ -1702,8 +1708,8 @@ importers:
       '@emotion/styled': ^11.6.0
       '@mantine/core': ^5.7.1
       '@mantine/hooks': ^5.7.1
-      '@novu/client': ^0.10.2
-      '@novu/shared': ^0.10.2
+      '@novu/client': ^0.11.0
+      '@novu/shared': ^0.11.0
       '@rollup/plugin-babel': ^6.0.3
       '@rollup/plugin-commonjs': ^23.0.4
       '@rollup/plugin-image': ^3.0.1
@@ -1817,7 +1823,7 @@ importers:
       '@angular/core': ^15.0.0
       '@angular/platform-browser': ^15.0.0
       '@angular/platform-browser-dynamic': ^15.0.0
-      '@novu/notification-center': ^0.10.3
+      '@novu/notification-center': ^0.11.0
       '@types/jasmine': ~4.3.0
       jasmine-core: ~4.5.0
       karma: ~6.4.0
@@ -1859,7 +1865,7 @@ importers:
   packages/notification-center-vue:
     specifiers:
       '@emotion/css': ^11.10.5
-      '@novu/notification-center': ^0.10.3
+      '@novu/notification-center': ^0.11.0
       '@rushstack/eslint-patch': ^1.1.4
       '@types/node': ^18.11.12
       '@vitejs/plugin-vue': ^4.0.0
@@ -1947,7 +1953,7 @@ importers:
   providers/apns:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -1988,7 +1994,7 @@ importers:
   providers/burst-sms:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       axios: ^0.27.2
       codecov: ^3.5.0
@@ -2035,7 +2041,7 @@ importers:
   providers/clickatell:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/axios': ^0.14.0
       '@types/jest': ^27.0.1
       axios: ^0.27.2
@@ -2076,7 +2082,7 @@ importers:
   providers/discord:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       axios: ^0.27.2
       codecov: ^3.5.0
@@ -2119,7 +2125,7 @@ importers:
   providers/emailjs:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2162,7 +2168,7 @@ importers:
   providers/expo:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2205,7 +2211,7 @@ importers:
   providers/fcm:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       '@types/mocha': ^8.0.1
       codecov: ^3.5.0
@@ -2255,7 +2261,7 @@ importers:
     specifiers:
       '@babel/preset-env': ^7.13.15
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       '@types/uuid': ^8.3.4
       codecov: ^3.5.0
@@ -2304,7 +2310,7 @@ importers:
     specifiers:
       '@babel/preset-env': ^7.13.15
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2349,7 +2355,7 @@ importers:
     specifiers:
       '@infobip-api/sdk': ^0.1.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2391,7 +2397,7 @@ importers:
   providers/mailersend:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2434,7 +2440,7 @@ importers:
   providers/mailgun:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2481,7 +2487,7 @@ importers:
   providers/mailjet:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       '@types/node-mailjet': ^3.3.7
       codecov: ^3.5.0
@@ -2527,7 +2533,7 @@ importers:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
       '@mailchimp/mailchimp_transactional': ^1.0.46
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2618,7 +2624,7 @@ importers:
   providers/netcore:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2661,7 +2667,7 @@ importers:
   providers/nexmo:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       '@vonage/server-sdk': ^2.10.10
       codecov: ^3.5.0
@@ -2704,7 +2710,7 @@ importers:
   providers/nodemailer:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       '@types/nodemailer': ^6.4.4
       codecov: ^3.5.0
@@ -2749,7 +2755,7 @@ importers:
   providers/outlook365:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2792,7 +2798,7 @@ importers:
   providers/plivo:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2827,7 +2833,7 @@ importers:
       prettier: 2.6.1
       rimraf: 3.0.2
       standard-version: 9.3.2
-      ts-jest: 27.1.4_umhwpvuqw4p7q7gqrua2jbjayq
+      ts-jest: 27.1.4_mjytj3422l35p4lu22eg53ghni
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.19.2_typescript@4.6.2
       typescript: 4.6.2
@@ -2835,7 +2841,7 @@ importers:
   providers/postmark:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -2878,7 +2884,7 @@ importers:
   providers/sendgrid:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@sendgrid/mail': ^7.4.6
       '@types/jest': 27.4.0
       codecov: ^3.5.0
@@ -2921,7 +2927,7 @@ importers:
   providers/sendinblue:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@sendinblue/client': ^3.0.1
       '@types/jest': 27.4.0
       '@types/request': ^2.48.7
@@ -2967,7 +2973,7 @@ importers:
     specifiers:
       '@aws-sdk/client-ses': 3.48.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -3011,8 +3017,8 @@ importers:
   providers/slack:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.10.2
-      '@novu/stateless': ^0.10.2
+      '@novu/node': ^0.11.0
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       axios: ^0.27.2
       codecov: ^3.5.0
@@ -3057,7 +3063,7 @@ importers:
     specifiers:
       '@babel/preset-env': ^7.13.15
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -3104,7 +3110,7 @@ importers:
     specifiers:
       '@aws-sdk/client-sns': ^3.39.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -3146,7 +3152,7 @@ importers:
   providers/sparkpost:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       '@types/sparkpost': ^2.1.5
       codecov: ^3.5.0
@@ -3191,7 +3197,7 @@ importers:
   providers/telnyx:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -3235,7 +3241,7 @@ importers:
     specifiers:
       '@babel/preset-env': ^7.13.15
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -3279,7 +3285,7 @@ importers:
   providers/twilio:
     specifiers:
       '@istanbuljs/nyc-config-typescript': 1.0.2
-      '@novu/stateless': ^0.10.2
+      '@novu/stateless': ^0.11.0
       '@types/jest': 27.4.0
       codecov: ^3.5.0
       cspell: ^4.1.0
@@ -21933,7 +21939,7 @@ packages:
     dependencies:
       '@npmcli/name-from-folder': 1.0.1
       glob: 8.0.3
-      minimatch: 5.1.0
+      minimatch: 5.1.6
       read-package-json-fast: 2.0.3
     dev: true
 
@@ -23429,14 +23435,14 @@ packages:
       resolve: 1.22.1
       rollup: 1.32.1
 
-  /@rollup/plugin-replace/2.4.2_rollup@0.67.4:
+  /@rollup/plugin-replace/2.4.2_rollup@0.68.2:
     resolution: {integrity: sha512-IGcu+cydlUMZ5En85jxHH4qj2hta/11BHq95iHEyb2sbgiN0eCdzvUcHw5gt9pBL5lTi4JDYJ1acCoMGpTvEZg==}
     peerDependencies:
       rollup: ^1.20.0 || ^2.0.0
     dependencies:
-      '@rollup/pluginutils': 3.1.0_rollup@0.67.4
+      '@rollup/pluginutils': 3.1.0_rollup@0.68.2
       magic-string: 0.25.9
-      rollup: 0.67.4
+      rollup: 0.68.2
     dev: true
 
   /@rollup/plugin-replace/2.4.2_rollup@1.32.1:
@@ -23487,7 +23493,7 @@ packages:
       typescript: 4.6.3
     dev: true
 
-  /@rollup/pluginutils/3.1.0_rollup@0.67.4:
+  /@rollup/pluginutils/3.1.0_rollup@0.68.2:
     resolution: {integrity: sha512-GksZ6pr6TpIjHm8h9lSQ8pi8BE9VeubNT0OMJ3B5uZJ8pz73NPiqOtCog/x2/QzM1ENChPKxMDhiQuRHsqc+lg==}
     engines: {node: '>= 8.0.0'}
     peerDependencies:
@@ -23496,7 +23502,7 @@ packages:
       '@types/estree': 0.0.39
       estree-walker: 1.0.1
       picomatch: 2.3.1
-      rollup: 0.67.4
+      rollup: 0.68.2
     dev: true
 
   /@rollup/pluginutils/3.1.0_rollup@1.32.1:
@@ -27024,7 +27030,7 @@ packages:
       core-js: 3.24.0
       global: 4.4.0
       lodash: 4.17.21
-      qs: 6.10.3
+      qs: 6.11.0
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       regenerator-runtime: 0.13.10
@@ -35091,7 +35097,7 @@ packages:
     resolution: {integrity: sha512-7O+FbCihrB5WGbFYesctwmTKae6rOiIzmz1icreWJ+0aA7LJfuqhEso2T9ncpcFtzMQtzXf2QGGueWJGTYsqrA==}
     dependencies:
       function-bind: 1.1.1
-      get-intrinsic: 1.1.2
+      get-intrinsic: 1.2.0
 
   /call-me-maybe/1.0.1:
     resolution: {integrity: sha1-JtII6onje1y95gJQoV8DHBak1ms=}
@@ -36015,11 +36021,6 @@ packages:
     resolution: {integrity: sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==}
     engines: {node: '>= 12'}
 
-  /commander/9.0.0:
-    resolution: {integrity: sha512-JJfP2saEKbQqvW+FI93OYUB4ByV5cizMpFMiiJI8xDbBvQvSkIk0VvQdn1CZ8mqAO8Loq2h0gYTYtDFUZUeERw==}
-    engines: {node: ^12.20.0 || >=14}
-    dev: true
-
   /commander/9.1.0:
     resolution: {integrity: sha512-i0/MaqBtdbnJ4XQs4Pmyb+oFQl+q0lsAmokVUH92SlSw4fkeAcG3bVon+Qt7hmtF+u3Het6o4VgrcY3qAoEB6w==}
     engines: {node: ^12.20.0 || >=14}
@@ -36182,7 +36183,7 @@ packages:
     resolution: {integrity: sha512-j4dx+Fb0URmzbwwMUrhqWM2BEWHdFGx+qZ9qqASHRPqvTYdqvWnHg0H1hIbcyLnvgnoNAVMlwkepyqM3DaIFUg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -39386,17 +39387,12 @@ packages:
   /entities/1.1.2:
     resolution: {integrity: sha512-f2LZMYl1Fzu7YSBKg+RoROelpOaNrcGmE9AZubeDfrCEia483oW4MI4VyFd5VNHIgQ/7qm1I0wUHK1eJnn2y2w==}
 
-  /entities/2.1.0:
-    resolution: {integrity: sha512-hCx1oky9PFrJ611mf0ifBLBRW8lUUVRlFolb5gWRfIELabBlbp9xZvrqZLZAs+NxFnbfQoeGd8wDkygjg7U85w==}
-    dev: true
-
   /entities/2.2.0:
     resolution: {integrity: sha512-p92if5Nz619I0w+akJrLZH0MX0Pb5DX39XOwQTtXSdQQOaYH03S1uIQp4mhOZtAXrxq4ViO67YTiLBo2638o9A==}
 
   /entities/3.0.1:
     resolution: {integrity: sha512-WiyBqoomrwMdFG1e0kqvASYfnlb0lp8M5o5Fw2OFq1hNZxxcNk8Ik0Xm7LxzBhuidnZB/UtBqVCgUz3kBOP51Q==}
     engines: {node: '>=0.12'}
-    dev: false
 
   /entities/4.3.0:
     resolution: {integrity: sha512-/iP1rZrSEJ0DTlPiX+jbzlA3eVkY/e8L8SozroF395fIqE3TYF/Nz7YOMAawta+vLmyJ/hkGNNPcSbMADCCXbg==}
@@ -39569,7 +39565,7 @@ packages:
     resolution: {integrity: sha512-QCOllgZJtaUo9miYBcLChTUaHNjJF3PYs1VidD7AwiEj1kYxKeQTctLAezAOH5ZKRH0g2IgPn6KwB4IT8iRpvA==}
     engines: {node: '>= 0.4'}
     dependencies:
-      is-callable: 1.2.4
+      is-callable: 1.2.7
       is-date-object: 1.0.5
       is-symbol: 1.0.4
 
@@ -42453,7 +42449,7 @@ packages:
   /for-each/0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
     dependencies:
-      is-callable: 1.2.4
+      is-callable: 1.2.7
 
   /for-in/1.0.2:
     resolution: {integrity: sha512-7EwmXrOjyL+ChxMhmG5lnW9MPt1aIeZEwKhQzoBUdTV0N3zuwWDZYVJatDvZ2OyzPUvdIAZDsCetk3coyMfcnQ==}
@@ -43040,7 +43036,7 @@ packages:
     dependencies:
       call-bind: 1.0.2
       define-properties: 1.1.4
-      es-abstract: 1.20.1
+      es-abstract: 1.21.1
       functions-have-names: 1.2.3
 
   /functional-red-black-tree/1.0.1:
@@ -43261,7 +43257,7 @@ packages:
     engines: {node: '>= 0.4'}
     dependencies:
       call-bind: 1.0.2
-      get-intrinsic: 1.1.2
+      get-intrinsic: 1.2.0
 
   /get-uri/3.0.2:
     resolution: {integrity: sha512-+5s0SJbGoyiJTZZ2JTpFPLMPSch72KEqGOTvQsBqg0RBWvwhWUSYZFAtz3TPW0GXJuLBJPts1E241iHg+VRfhg==}
@@ -43624,7 +43620,7 @@ packages:
       array-union: 2.1.0
       dir-glob: 3.0.1
       fast-glob: 3.2.11
-      ignore: 5.2.0
+      ignore: 5.2.4
       merge2: 1.4.1
       slash: 3.0.0
 
@@ -43645,7 +43641,7 @@ packages:
     dependencies:
       dir-glob: 3.0.1
       fast-glob: 3.2.11
-      ignore: 5.2.0
+      ignore: 5.2.4
       merge2: 1.4.1
       slash: 4.0.0
 
@@ -44060,7 +44056,7 @@ packages:
   /has-property-descriptors/1.0.0:
     resolution: {integrity: sha512-62DVLZGoiEBDHQyqG4w9xCuZ7eJEwNmJRWw2VY84Oedb7WFcA27fiEVe8oUQx9hAUJ4ekurquucTGwsyO1XGdQ==}
     dependencies:
-      get-intrinsic: 1.1.2
+      get-intrinsic: 1.2.0
 
   /has-proto/1.0.1:
     resolution: {integrity: sha512-7qE+iP+O+bgF9clE5+UoBFzE65mlBiVj3tKCrlNQ0Ogwm0BjpT/gK4SlLYDMybDh5I3TCTKnPPa0oMG7JDYrhg==}
@@ -44896,7 +44892,7 @@ packages:
     resolution: {integrity: sha512-yemi4pMf51WKT7khInJqAvsIGzoqYXblnsz0ql8tM+yi1EKYTY1evX4NAbJrLL/Aanr2HyZeluqU+Oi7MGHokw==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
     dependencies:
-      minimatch: 5.1.0
+      minimatch: 5.1.6
     dev: true
 
   /ignore-walk/6.0.0:
@@ -44916,6 +44912,10 @@ packages:
 
   /ignore/5.2.0:
     resolution: {integrity: sha512-CmxgYGiEPCLhfLnpPp1MoRmifwEIOgjcHXxOBjv7mY96c+eWScsOP9c112ZyLdWHi0FxHjI+4uVhKYp/gcdRmQ==}
+    engines: {node: '>= 4'}
+
+  /ignore/5.2.4:
+    resolution: {integrity: sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==}
     engines: {node: '>= 4'}
 
   /image-size/0.5.5:
@@ -45242,7 +45242,7 @@ packages:
     resolution: {integrity: sha512-O0DB1JC/sPyZl7cIo78n5dR7eUSwwpYPiXRhTzNxZVAMUuB8vlnRFyLxdrVToks6XPLVnFfbzaVd5WLjhgg+vA==}
     engines: {node: '>= 0.4'}
     dependencies:
-      get-intrinsic: 1.1.2
+      get-intrinsic: 1.2.0
       has: 1.0.3
       side-channel: 1.0.4
 
@@ -48437,7 +48437,7 @@ packages:
     engines: {node: '>=4.0'}
     dependencies:
       array-includes: 3.1.6
-      object.assign: 4.1.4
+      object.assign: 4.1.2
 
   /junk/3.1.0:
     resolution: {integrity: sha512-pBxcB3LFc8QVgdggvZWyeys+hnrNWg4OcZIU/1X59k5jQdLBlCsYGRQaz234SqoRLTCgMH00fY0xRJH+F9METQ==}
@@ -48928,8 +48928,8 @@ packages:
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dev: true
 
-  /linkify-it/3.0.3:
-    resolution: {integrity: sha512-ynTsyrFSdE5oZ/O9GEf00kPngmOfVwazR5GKDq6EYfhlpFug3J2zybX56a2PRRpc9P+FuSoGNAwjlbDs9jJBPQ==}
+  /linkify-it/4.0.1:
+    resolution: {integrity: sha512-C7bfi1UZmoj8+PQx22XyeXCuBlokoyWQL5pWSP+EI6nzRylyThouddufc2c1NDIcP9k5agmN9fLpA7VNJfIiqw==}
     dependencies:
       uc.micro: 1.0.6
     dev: true
@@ -49496,6 +49496,22 @@ packages:
     resolution: {integrity: sha512-G6A/nJLRgWOuuwdNuA6koovfEV1YpqqAG4pRUlFaz3jj2QNZ8M4vBqnVA+HBTmU/AMNUtlOsMmSpF6NyOjztbA==}
     engines: {node: '>= 0.6.0'}
 
+  /logrocket-react/5.0.1_yo3aqogrrsw23ory4s7zu7wcpm:
+    resolution: {integrity: sha512-d5RAi1giur9Yv7/lDK/c2S1hviopN5K1XMMpfpSFRDG3Rr/j5RmGuvNHdXNTJUwGuxTVrpnKUOB43ceQMJfO1Q==}
+    peerDependencies:
+      logrocket: '>=2.0'
+      react: '>=17.0'
+      react-dom: '>=17.0'
+    dependencies:
+      logrocket: 3.0.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /logrocket/3.0.1:
+    resolution: {integrity: sha512-jOWG+jEzobKVxGytzZ+4KGm2kiMQMRTHab2uDWQyVZcHfEF38BlCH1yjQVY4LCmuQUwZitP9biMzJZnyUQ0dtQ==}
+    dev: false
+
   /long/4.0.0:
     resolution: {integrity: sha512-XsP+KhQif4bjX1kbuSiySJFNAehNxgLb6hPRGJ9QsUr8ajHkuXGdrHmFUTUUXhDwVX2R5bY4JNZEwbUiMhV+MA==}
     dev: false
@@ -49834,13 +49850,13 @@ packages:
   /markdown-escapes/1.0.4:
     resolution: {integrity: sha512-8z4efJYk43E0upd0NbVXwgSTQs6cT3T06etieCMEg7dRbzCbxUCK/GHlX8mhHRDcp+OLlHkPKsvqQTCvsRl2cg==}
 
-  /markdown-it/12.3.2:
-    resolution: {integrity: sha512-TchMembfxfNVpHkbtriWltGWc+m3xszaRD0CZup7GFFhzIgQqxIfn3eGj1yZpfuflzPvfkt611B2Q/Bsk1YnGg==}
+  /markdown-it/13.0.1:
+    resolution: {integrity: sha512-lTlxriVoy2criHP0JKRhO2VDG9c2ypWCsT237eDiLqi09rmbKoUetyGHq2uOIRoRS//kfoJckS0eUzzkDR+k2Q==}
     hasBin: true
     dependencies:
       argparse: 2.0.1
-      entities: 2.1.0
-      linkify-it: 3.0.3
+      entities: 3.0.1
+      linkify-it: 4.0.1
       mdurl: 1.0.1
       uc.micro: 1.0.6
     dev: true
@@ -49853,32 +49869,27 @@ packages:
     dependencies:
       react: 17.0.2
 
-  /markdownlint-cli/0.31.1:
-    resolution: {integrity: sha512-keIOMwQn+Ch7MoBwA+TdkyVMuxAeZFEGmIIlvwgV0Z1TGS5MxPnRr29XCLhkNzCHU+uNKGjU+VEjLX+Z9kli6g==}
-    engines: {node: '>=12'}
+  /markdownlint-cli/0.33.0:
+    resolution: {integrity: sha512-zMK1oHpjYkhjO+94+ngARiBBrRDEUMzooDHBAHtmEIJ9oYddd9l3chCReY2mPlecwH7gflQp1ApilTo+o0zopQ==}
+    engines: {node: '>=14'}
     hasBin: true
     dependencies:
-      commander: 9.0.0
+      commander: 9.4.1
       get-stdin: 9.0.0
-      glob: 7.2.0
-      ignore: 5.2.0
+      glob: 8.0.3
+      ignore: 5.2.4
       js-yaml: 4.1.0
-      jsonc-parser: 3.0.0
-      markdownlint: 0.25.1
-      markdownlint-rule-helpers: 0.16.0
-      minimatch: 3.0.8
-      run-con: 1.2.10
+      jsonc-parser: 3.2.0
+      markdownlint: 0.27.0
+      minimatch: 5.1.6
+      run-con: 1.2.11
     dev: true
 
-  /markdownlint-rule-helpers/0.16.0:
-    resolution: {integrity: sha512-oEacRUVeTJ5D5hW1UYd2qExYI0oELdYK72k1TKGvIeYJIbqQWAz476NAc7LNixSySUhcNl++d02DvX0ccDk9/w==}
-    dev: true
-
-  /markdownlint/0.25.1:
-    resolution: {integrity: sha512-AG7UkLzNa1fxiOv5B+owPsPhtM4D6DoODhsJgiaNg1xowXovrYgOnLqAgOOFQpWOlHFVQUzjMY5ypNNTeov92g==}
-    engines: {node: '>=12'}
+  /markdownlint/0.27.0:
+    resolution: {integrity: sha512-HtfVr/hzJJmE0C198F99JLaeada+646B5SaG2pVoEakLFI6iRGsvMqrnnrflq8hm1zQgwskEgqSnhDW11JBp0w==}
+    engines: {node: '>=14.18.0'}
     dependencies:
-      markdown-it: 12.3.2
+      markdown-it: 13.0.1
     dev: true
 
   /marked-terminal/5.1.1_marked@4.0.18:
@@ -49977,7 +49988,7 @@ packages:
     resolution: {integrity: sha512-iV3XNKw06j5Q7mi6h+9vbx23Tv7JkjEVgKHW4pimwyDGWm0OIQntJJ+u1C6mg6mK1EaTv42XQ7w76yuzH7M2cA==}
 
   /mdurl/1.0.1:
-    resolution: {integrity: sha1-/oWy7HWlkDfyrf7BAP1sYBdhFS4=}
+    resolution: {integrity: sha512-/sKlQJCBYVY9Ers9hqzKou4H6V5UWc/M59TH2dvkt+84itfnq7uFOMLpOiOS4ujvHP4etln18fmIxA5R5fll0g==}
 
   /meant/1.0.3:
     resolution: {integrity: sha512-88ZRGcNxAq4EH38cQ4D85PM57pikCwS8Z99EWHODxN7KBY+UuPiqzRTtZzS8KTXO/ywSWbdjjJST2Hly/EQxLw==}
@@ -50442,6 +50453,13 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       brace-expansion: 2.0.1
+
+  /minimatch/5.1.6:
+    resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
+    engines: {node: '>=10'}
+    dependencies:
+      brace-expansion: 2.0.1
+    dev: true
 
   /minimist-options/3.0.2:
     resolution: {integrity: sha512-FyBrT/d0d4+uiZRbqznPXqw3IpZZG3gl3wKWiX784FycUKVwBt0uLBFkQrtE4tZOrgo78nZp2jnKz3L65T5LdQ==}
@@ -52252,7 +52270,7 @@ packages:
     dependencies:
       call-bind: 1.0.2
       define-properties: 1.1.4
-      es-abstract: 1.20.1
+      es-abstract: 1.21.1
 
   /object.hasown/1.1.0:
     resolution: {integrity: sha512-MhjYRfj3GBlhSkDHo6QmvgjRLXQ2zndabdf3nX0yTyZK9rPfxb6uRpAac8HXNLy1GpqWtZ81Qh4v3uOls2sRAg==}
@@ -58226,7 +58244,7 @@ packages:
       rollup: 1.32.1
       rollup-pluginutils: 2.8.2
 
-  /rollup-plugin-commonjs/9.3.4_rollup@0.67.4:
+  /rollup-plugin-commonjs/9.3.4_rollup@0.68.2:
     resolution: {integrity: sha512-DTZOvRoiVIHHLFBCL4pFxOaJt8pagxsVldEXBOn6wl3/V21wVaj17HFfyzTsQUuou3sZL3lEJZVWKPFblJfI6w==}
     deprecated: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-commonjs.
     peerDependencies:
@@ -58235,7 +58253,7 @@ packages:
       estree-walker: 0.6.1
       magic-string: 0.25.9
       resolve: 1.22.0
-      rollup: 0.67.4
+      rollup: 0.68.2
       rollup-pluginutils: 2.8.2
     dev: true
 
@@ -58290,13 +58308,13 @@ packages:
       rollup: 3.7.3
     dev: true
 
-  /rollup-plugin-sourcemaps/0.4.2_rollup@0.67.4:
+  /rollup-plugin-sourcemaps/0.4.2_rollup@0.68.2:
     resolution: {integrity: sha1-YhJaqUCHqt97g+9N+vYptHMTXoc=}
     engines: {node: '>=4.5.0', npm: '>=2.15.9'}
     peerDependencies:
       rollup: '>=0.31.2'
     dependencies:
-      rollup: 0.67.4
+      rollup: 0.68.2
       rollup-pluginutils: 2.8.2
       source-map-resolve: 0.5.3
     dev: true
@@ -58329,14 +58347,14 @@ packages:
       serialize-javascript: 4.0.0
       terser: 4.8.0
 
-  /rollup-plugin-terser/7.0.2_rollup@0.67.4:
+  /rollup-plugin-terser/7.0.2_rollup@0.68.2:
     resolution: {integrity: sha512-w3iIaU4OxcF52UUXiZNsNeuXIMDvFrr+ZXK6bFZ0Q60qyVfq4uLptoS4bbq3paG3x216eQllFZX7zt6TIImguQ==}
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
       '@babel/code-frame': 7.16.7
       jest-worker: 26.6.2
-      rollup: 0.67.4
+      rollup: 0.68.2
       serialize-javascript: 4.0.0
       terser: 5.12.1
     dev: true
@@ -58364,7 +58382,7 @@ packages:
       terser: 5.12.1
     dev: true
 
-  /rollup-plugin-typescript2/0.18.1_sgvo2t2top55ezlw3xjqadhlya:
+  /rollup-plugin-typescript2/0.18.1_a3v6d2vuzxz7b3gv6yihseevea:
     resolution: {integrity: sha512-aR2m5NCCAUV/KpcKgCWX6Giy8rTko9z92b5t0NX9eZyjOftCvcdDFa1C9Ze/9yp590hnRymr5hG0O9SAXi1oUg==}
     peerDependencies:
       rollup: '>=0.50.0'
@@ -58372,7 +58390,7 @@ packages:
     dependencies:
       fs-extra: 7.0.0
       resolve: 1.8.1
-      rollup: 0.67.4
+      rollup: 0.68.2
       rollup-pluginutils: 2.3.3
       tslib: 1.9.3
       typescript: 4.3.5
@@ -58390,12 +58408,12 @@ packages:
     dependencies:
       estree-walker: 0.6.1
 
-  /rollup/0.67.4:
-    resolution: {integrity: sha512-AVuP73mkb4BBMUmksQ3Jw0jTrBTU1i7rLiUYjFxLZGb3xiFmtVEg40oByphkZAsiL0bJC3hRAJUQos/e5EBd+w==}
+  /rollup/0.68.2:
+    resolution: {integrity: sha512-WgjNCXYv7ZbtStIap1+tz4pd2zwz0XYN//OILwEY6dINIFLVizK1iWdu+ZtUURL/OKnp8Lv2w8FBds8YihzX7Q==}
     hasBin: true
     dependencies:
       '@types/estree': 0.0.39
-      '@types/node': 17.0.23
+      '@types/node': 18.11.13
     dev: true
 
   /rollup/1.32.1:
@@ -58461,12 +58479,12 @@ packages:
     resolution: {integrity: sha512-tvVnVv01b8c1RrA6Ep7JkStj85Guv/YrMcwqYQnwjsAS2cTmmPGBBjAjpCW7RrSodNSoE2/qg9O4bceNvUuDgQ==}
     engines: {node: '>=0.12.0'}
 
-  /run-con/1.2.10:
-    resolution: {integrity: sha512-n7PZpYmMM26ZO21dd8y3Yw1TRtGABjRtgPSgFS/nhzfvbJMXFtJhJVyEgayMiP+w/23craJjsnfDvx4W4ue/HQ==}
+  /run-con/1.2.11:
+    resolution: {integrity: sha512-NEMGsUT+cglWkzEr4IFK21P4Jca45HqiAbIIZIBdX5+UZTB24Mb/21iNGgz9xZa8tL6vbW7CXmq7MFN42+VjNQ==}
     hasBin: true
     dependencies:
       deep-extend: 0.6.0
-      ini: 2.0.0
+      ini: 3.0.1
       minimist: 1.2.6
       strip-json-comments: 3.1.1
     dev: true
@@ -58845,7 +58863,7 @@ packages:
     dev: false
 
   /secure-compare/3.0.1:
-    resolution: {integrity: sha512-AckIIV90rPDcBcglUwXPF3kg0P0qmPsPXAj6BBEENQE1p5yA1xfmDJzfi1Tappj37Pv2mVbKpL3Z1T+Nn7k1Qw==}
+    resolution: {integrity: sha1-8aAymzCLIh+uN7mXTz1XjQypmeM=}
     dev: true
 
   /select-hose/2.0.0:
@@ -59299,7 +59317,7 @@ packages:
     resolution: {integrity: sha512-q5XPytqFEIKHkGdiMIrY10mvLRvnQh42/+GoBlFW3b2LXLE2xxJpZFdm94we0BaoV3RwJyGqg5wS7epxTv0Zvw==}
     dependencies:
       call-bind: 1.0.2
-      get-intrinsic: 1.1.2
+      get-intrinsic: 1.2.0
       object-inspect: 1.12.2
 
   /sift/16.0.0:
@@ -61814,6 +61832,40 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
+  /ts-jest/27.1.4_2zv7k5h6rtkokmofpwrobdeggm:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.1
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.8
+      typescript: 4.3.5
+      yargs-parser: 20.2.9
+    dev: true
+
   /ts-jest/27.1.4_6wduk63hndnifocwptujn7mfjm:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -61949,6 +62001,40 @@ packages:
       make-error: 1.3.6
       semver: 7.3.8
       typescript: 4.3.5
+      yargs-parser: 20.2.9
+    dev: true
+
+  /ts-jest/27.1.4_mjytj3422l35p4lu22eg53ghni:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.0
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.4.7_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.8
+      typescript: 4.6.2
       yargs-parser: 20.2.9
     dev: true
 
@@ -62118,6 +62204,40 @@ packages:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.4.7_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.8
+      typescript: 4.6.2
+      yargs-parser: 20.2.9
+    dev: true
+
+  /ts-jest/27.1.4_vqlr6pm7mnv5rngd46vdqt4eby:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.0
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
       jest-util: 27.5.1
       json5: 2.2.1
       lodash.memoize: 4.1.2
@@ -63238,7 +63358,7 @@ packages:
       is-yarn-global: 0.3.0
       latest-version: 5.1.0
       pupa: 2.1.1
-      semver: 7.3.7
+      semver: 7.3.8
       semver-diff: 3.1.1
       xdg-basedir: 4.0.0
 
@@ -63539,7 +63659,7 @@ packages:
     resolution: {integrity: sha512-g9JpC/3He3bm38zsLupWryXHoEcS22YHthuPQSJdMy6KNrzIRzWqcsHzD/WUnqe45whVou4VIsPew37DoXWNrA==}
     dependencies:
       define-properties: 1.1.4
-      es-abstract: 1.20.1
+      es-abstract: 1.21.1
       has-symbols: 1.0.3
       object.getownpropertydescriptors: 2.1.3
 

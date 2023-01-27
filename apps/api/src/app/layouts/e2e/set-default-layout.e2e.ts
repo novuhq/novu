@@ -53,4 +53,16 @@ describe('Set layout as default - /layouts/:layoutId/default (POST)', async () =
     const updatedSecondLayoutResponse = await session.testAgent.get(secondLayoutUrl);
     expect(updatedSecondLayoutResponse.body.data.isDefault).to.eql(true);
   });
+
+  it('should throw a not found error when the layout ID does not exist in the database when trying to set it as default', async () => {
+    const nonExistingLayoutId = 'ab12345678901234567890ab';
+    const url = `${BASE_PATH}/${nonExistingLayoutId}/default`;
+    const { body } = await session.testAgent.post(url);
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.eql(
+      `Layout not found for id ${nonExistingLayoutId} in the environment ${session.environment._id}`
+    );
+    expect(body.error).to.eql('Not Found');
+  });
 });

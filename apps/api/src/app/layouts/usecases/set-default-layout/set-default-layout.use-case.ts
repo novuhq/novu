@@ -4,15 +4,22 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SetDefaultLayoutCommand } from './set-default-layout.command';
 
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
+import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { EnvironmentId, LayoutId, OrganizationId } from '../../types';
 
 @Injectable()
 export class SetDefaultLayoutUseCase {
-  constructor(private createLayoutChange: CreateLayoutChangeUseCase, private layoutRepository: LayoutRepository) {}
+  constructor(
+    private getLayout: GetLayoutUseCase,
+    private createLayoutChange: CreateLayoutChangeUseCase,
+    private layoutRepository: LayoutRepository
+  ) {}
 
   async execute(command: SetDefaultLayoutCommand) {
+    const layout = await this.getLayout.execute(command);
+
     const existingDefaultLayoutId = await this.findExistingDefaultLayoutId(
-      command.layoutId,
+      layout._id,
       command.environmentId,
       command.organizationId
     );
@@ -27,7 +34,7 @@ export class SetDefaultLayoutUseCase {
         await this.createLayoutChangeForPreviousDefault(command, existingDefaultLayoutId);
       }
 
-      await this.setIsDefaultForLayout(command.layoutId, command.environmentId, command.organizationId, true);
+      await this.setIsDefaultForLayout(layout._id, command.environmentId, command.organizationId, true);
     } catch (error) {
       Logger.error(error);
       // TODO: Rollback through transactions
