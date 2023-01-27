@@ -9,7 +9,7 @@ inputs:
     default: ''
 outputs:
   cypress_cache_hit:
-    description: 'Did cypress used binary cache'
+    description: 'Did cypress use binary cache'
     value: ${{ inputs.cypress_version != '' && steps.cache-cypress-binary-version.outputs.cache-hit || steps.cache-cypress-binary.outputs.cache-hit}}
 
 runs:
