@@ -3,9 +3,12 @@ import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
 import { LayoutDto } from './layout.dto';
 
-import { LayoutDescription, LayoutName, LayoutVariables } from '../types';
+import { LayoutDescription, LayoutId, LayoutName, LayoutVariables } from '../types';
 
-export class CreateLayoutResponseDto implements Pick<LayoutDto, '_id'> {}
+export class CreateLayoutResponseDto implements Pick<LayoutDto, '_id'> {
+  @ApiProperty()
+  _id: LayoutId;
+}
 
 export class CreateLayoutRequestDto {
   @ApiProperty({

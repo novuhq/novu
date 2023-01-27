@@ -19,7 +19,7 @@ export class GetNovuIntegration {
   ) {}
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity | undefined> {
-    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY) {
+    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY || !command.channelType) {
       return;
     }
 
@@ -78,6 +78,7 @@ export class GetNovuIntegration {
       apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
       from: 'no-reply@novu.co',
       senderName: organization !== null ? organization.name : 'Novu',
+      ipPoolName: 'Demo',
     };
 
     return item;

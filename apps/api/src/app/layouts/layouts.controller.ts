@@ -14,8 +14,11 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
@@ -72,6 +75,7 @@ export class LayoutsController {
   @ExternalApiAccessible()
   @ApiCreatedResponse({
     type: CreateLayoutResponseDto,
+    description: 'The layout has been successfully created.',
   })
   @ApiOperation({ summary: 'Layout creation', description: 'Create a layout' })
   async createLayout(
@@ -124,6 +128,10 @@ export class LayoutsController {
   })
   @ApiOkResponse({
     type: FilterLayoutsResponseDto,
+    description: 'The list of layouts that match the criteria of the query params are successfully returned.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Page size can not be larger than the page size limit.',
   })
   @ApiOperation({
     summary: 'Filter layouts',
@@ -150,6 +158,10 @@ export class LayoutsController {
   @ExternalApiAccessible()
   @ApiOkResponse({
     type: GetLayoutResponseDto,
+    description: 'The layout with the layoutId provided exists in the database.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The layout with the layoutId provided does not exist in the database.',
   })
   @ApiOperation({ summary: 'Get layout', description: 'Get a layout by its ID' })
   async getLayout(
@@ -167,7 +179,16 @@ export class LayoutsController {
 
   @Delete('/:layoutId')
   @ExternalApiAccessible()
-  @ApiNoContentResponse()
+  @ApiNoContentResponse({
+    description: 'The layout has been deleted correctly',
+  })
+  @ApiNotFoundResponse({
+    description: 'The layout with the layoutId provided does not exist in the database so it can not be deleted.',
+  })
+  @ApiConflictResponse({
+    description:
+      'Either you are trying to delete a layout that is being used or a layout that is the default in the environment.',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete layout', description: 'Execute a soft delete of a layout given a certain ID.' })
   async deleteLayout(@UserSession() user: IJwtPayload, @Param('layoutId') layoutId: LayoutId): Promise<void> {
@@ -185,6 +206,17 @@ export class LayoutsController {
   @ExternalApiAccessible()
   @ApiOkResponse({
     type: UpdateLayoutResponseDto,
+    description: 'The layout with the layoutId provided has been updated correctly.',
+  })
+  @ApiBadRequestResponse({
+    description: 'The payload provided or the URL param are not right.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The layout with the layoutId provided does not exist in the database so it can not be updated.',
+  })
+  @ApiConflictResponse({
+    description:
+      'One default layout is needed. If you are trying to turn a default layout as not default, you should turn a different layout as default first and automatically it will be done by the system.',
   })
   @ApiOperation({
     summary: 'Update a layout',
@@ -216,7 +248,13 @@ export class LayoutsController {
 
   @Post('/:layoutId/default')
   @ExternalApiAccessible()
-  @ApiNoContentResponse()
+  @ApiNoContentResponse({
+    description: 'The selected layout has been set as the default for the environment.',
+  })
+  @ApiNotFoundResponse({
+    description:
+      'The layout with the layoutId provided does not exist in the database so it can not be set as the default for the environment.',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Set default layout',
