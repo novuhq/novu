@@ -29,14 +29,16 @@ export class MailjetEmailProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    emailOptions: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
     const send = this.mailjetClient.post('send', {
       version: MAILJET_API_VERSION,
     });
-    const requestObject = this.createMailData(options);
+    const requestObject = this.createMailData(emailOptions);
 
-    const response = (await send.request(requestObject)) as MailjetResponse;
+    const response = (await send.request(
+      requestObject
+    )) as unknown as MailjetResponse;
 
     return {
       id: response.response.header['x-mj-request-guid'],
@@ -68,28 +70,32 @@ export class MailjetEmailProvider implements IEmailProvider {
     }
   }
 
-  private createMailData(options: IEmailOptions) {
-    return {
-      Messages: [
+  private createMailData(options: IEmailOptions): Email.SendParams {
+    const message: Email.SendParamsMessage = {
+      From: {
+        Email: options.from || this.config.from,
+      },
+      To: [
         {
-          From: {
-            Email: options.from || this.config.from,
-          },
-          To: [
-            {
-              Email: options.to,
-            },
-          ],
-          Subject: options.subject,
-          TextPart: options.text,
-          HTMLPart: options.html,
-          Attachments: options.attachments?.map((attachment) => ({
-            ContentType: attachment.mime,
-            Filename: attachment.name,
-            Base64Content: attachment.file.toString('base64'),
-          })),
-        },
+          Email: options.to,
+        } as Email.SendParamsRecipient,
       ],
+      Subject: options.subject,
+      TextPart: options.text,
+      HTMLPart: options.html,
+      Attachments: options.attachments?.map((attachment) => ({
+        ContentType: attachment.mime,
+        Filename: attachment.name,
+        Base64Content: attachment.file.toString('base64'),
+      })),
+    };
+
+    if (options.replyTo) {
+      message.ReplyTo.Email = options.replyTo;
+    }
+
+    return {
+      Messages: [message],
     };
   }
 

@@ -14,6 +14,8 @@ on:
       - 'apps/webhook/**'
       - 'libs/dal/**'
       - 'libs/shared/**'
+env:
+  TF_WORKSPACE: novu-dev
 
 jobs:
   test_webhook:
@@ -90,16 +92,13 @@ jobs:
       - name: Terraform setup
         uses: hashicorp/setup-terraform@v1
         with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_version: 1.1.7
           terraform_wrapper: false
 
       - name: Terraform Init
         working-directory: cloud-infra/terraform
         run: terraform init
-
-      - name: Terraform Change Workspace
-        working-directory: cloud-infra/terraform
-        run: terraform workspace select dev
 
       - name: Terraform get output
         working-directory: cloud-infra/terraform

@@ -14,6 +14,5 @@ export class GetMessagesCommand extends EnvironmentCommand {
   channel?: ChannelTypeEnum;
 
   @IsNumber()
-  @IsOptional()
-  limit?: number;
+  limit: number;
 }

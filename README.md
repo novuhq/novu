@@ -4,8 +4,8 @@
 <div align="center">
   <a href="https://novu.co" target="_blank">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png">
-    <img src="https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png" width="280" alt="Logo"/>
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
+    <img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280" alt="Logo"/>
   </picture>
   </a>
 </div>
@@ -127,11 +127,12 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
 - [x] [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
 - [x] [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
-- [x] [NodeMailer](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
+- [x] [Custom SMTP](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
 - [x] [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
 - [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
 - [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
 - [x] [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
+- [x] [MailerSend](https://github.com/novuhq/novu/tree/main/providers/mailersend)
 - [ ] SparkPost
 
 #### 📞 SMS

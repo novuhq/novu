@@ -1,4 +1,6 @@
 import { expect } from 'chai';
+import { EmailBlockTypeEnum } from '@novu/shared';
+
 import { sanitizeHTML, sanitizeMessageContent } from './sanitizer.service';
 
 describe('HTML Sanitizer', function () {
@@ -15,7 +17,7 @@ describe('HTML Sanitizer', function () {
   it('should sanitized message email block content', function () {
     const result = sanitizeMessageContent([
       {
-        type: 'text',
+        type: EmailBlockTypeEnum.TEXT,
         content: 'hello <b>bold</b> <script>alert(123)</script>',
         url: '',
       },

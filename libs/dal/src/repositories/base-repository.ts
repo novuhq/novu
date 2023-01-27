@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { Document, Model, Types, ProjectionType } from 'mongoose';
+import { Document, Model, Query, Types, ProjectionType } from 'mongoose';
 
 export class BaseRepository<T_Query, T_Response> {
   public _model: Model<any & Document>;
@@ -13,11 +13,11 @@ export class BaseRepository<T_Query, T_Response> {
     return new Types.ObjectId().toString();
   }
 
-  public static convertObjectIdToString(value: Types.ObjectId): string {
+  protected convertObjectIdToString(value: Types.ObjectId): string {
     return value.toString();
   }
 
-  public static convertStringToObjectId(value: string): Types.ObjectId {
+  protected convertStringToObjectId(value: string): Types.ObjectId {
     return new Types.ObjectId(value);
   }
 
@@ -43,7 +43,7 @@ export class BaseRepository<T_Query, T_Response> {
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: T_Query) {
+  async delete(query: T_Query): Promise<void> {
     return await this.MongooseModel.remove(query);
   }
 
@@ -55,8 +55,8 @@ export class BaseRepository<T_Query, T_Response> {
     const data = await this.MongooseModel.find(query, select, {
       sort: options.sort || null,
     })
-      .skip(options.skip)
-      .limit(options.limit)
+      .skip(options.skip as number)
+      .limit(options.limit as number)
       .lean()
       .exec();
 

@@ -15,7 +15,7 @@ export abstract class BaseHandler implements IMailHandler {
 
   async send(mailData: IEmailOptions) {
     if (process.env.NODE_ENV === 'test') {
-      return null;
+      return {};
     }
 
     return await this.provider.sendMessage(mailData);

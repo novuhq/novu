@@ -12,8 +12,7 @@ import {
 import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ApplyChange } from '../change/usecases/apply-change/apply-change.usecase';
-import { ApplyChangeCommand } from '../change/usecases/apply-change/apply-change.command';
+import { ApplyChange, ApplyChangeCommand } from '../change/usecases';
 import { GetChanges } from './usecases/get-changes/get-changes.usecase';
 import { GetChangesCommand } from './usecases/get-changes/get-changes.command';
 import { BulkApplyChange } from './usecases/bulk-apply-change/bulk-apply-change.usecase';
@@ -88,7 +87,7 @@ export class ChangesController {
   async bulkApplyDiff(
     @UserSession() user: IJwtPayload,
     @Body('changeIds') changeIds: string[]
-  ): Promise<ChangeResponseDto[]> {
+  ): Promise<ChangeResponseDto[][]> {
     return this.bulkApplyChange.execute(
       BulkApplyChangeCommand.create({
         changeIds,

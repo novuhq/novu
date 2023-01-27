@@ -1,4 +1,4 @@
-import { TopicSubscribersEntity, TopicSubscribersRepository, TopicEntity, TopicRepository } from '@novu/dal';
+import { TopicSubscribersRepository, TopicEntity, TopicRepository, CreateTopicSubscribersEntity } from '@novu/dal';
 import { SubscriberDto } from '@novu/shared';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ExternalSubscriberId } from '../../types';
@@ -24,8 +24,8 @@ export class AddSubscribersUseCase {
   async execute(command: AddSubscribersCommand): Promise<Omit<ISubscriberGroups, 'subscribersAvailableToAdd'>> {
     const topic = await this.topicRepository.findTopicByKey(
       command.topicKey,
-      TopicRepository.convertStringToObjectId(command.organizationId),
-      TopicRepository.convertStringToObjectId(command.environmentId)
+      command.organizationId,
+      command.environmentId
     );
     if (!topic) {
       throw new NotFoundException(`Topic with key ${command.topicKey} not found in current environment`);
@@ -80,11 +80,11 @@ export class AddSubscribersUseCase {
     };
   }
 
-  private mapSubscribersToTopic(topic: TopicEntity, subscribers: SubscriberDto[]): TopicSubscribersEntity[] {
-    return subscribers.map((subscriber: SubscriberDto) => ({
-      _environmentId: TopicSubscribersRepository.convertStringToObjectId(subscriber._environmentId),
-      _organizationId: TopicSubscribersRepository.convertStringToObjectId(subscriber._organizationId),
-      _subscriberId: TopicSubscribersRepository.convertStringToObjectId(subscriber._id),
+  private mapSubscribersToTopic(topic: TopicEntity, subscribers: SubscriberDto[]): CreateTopicSubscribersEntity[] {
+    return subscribers.map((subscriber) => ({
+      _environmentId: subscriber._environmentId,
+      _organizationId: subscriber._organizationId,
+      _subscriberId: subscriber._id,
       _topicId: topic._id,
       topicKey: topic.key,
       externalSubscriberId: subscriber.subscriberId,

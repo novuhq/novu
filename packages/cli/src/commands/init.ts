@@ -2,12 +2,17 @@ import * as open from 'open';
 import { Answers } from 'inquirer';
 import * as ora from 'ora';
 import { v4 as uuidv4 } from 'uuid';
-import { IEnvironment, ICreateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
+import { IEnvironment, ICreateNotificationTemplateDto, StepTypeEnum, SignUpOriginEnum } from '@novu/shared';
 import { prompt } from '../client';
 import {
+  emailQuestion,
   environmentQuestions,
   existingSessionQuestions,
+  fullNameQuestion,
   introQuestions,
+  passwordQuestion,
+  privateDomainQuestions,
+  proceedSignupQuestions,
   registerMethodQuestions,
   showWelcomeScreen,
   termAndPrivacyQuestions,
@@ -36,6 +41,9 @@ import {
   getEnvironmentApiKeys,
 } from '../api';
 import { AnalyticService, ConfigService, AnalyticsEventEnum, ANALYTICS_SOURCE } from '../services';
+import { signup, updateEmail } from '../api/auth';
+import * as chalk from 'chalk';
+import { privateEmailDomains } from '../constants/domains';
 
 export enum ChannelCTATypeEnum {
   REDIRECT = 'redirect',
@@ -54,16 +62,21 @@ export async function initCommand() {
     }
 
     const existingEnvironment = await checkExistingEnvironment(config);
+    const isSessionExists = config.getDecodedToken();
+
+    analytics.track({
+      event: AnalyticsEventEnum.CLI_LAUNCHED,
+      identity: { anonymousId: isSessionExists ? undefined : anonymousId, userId: isSessionExists?._id },
+      data: {
+        existingEnvironment: !!existingEnvironment,
+      },
+    });
+
     if (existingEnvironment) {
+      const { result } = await prompt(existingSessionQuestions(existingEnvironment));
       const user = config.getDecodedToken();
 
-      analytics.track({
-        identity: { userId: user._id },
-        event: AnalyticsEventEnum.EXISTING_ENVIRONMENT,
-      });
-
-      const { result } = await prompt(existingSessionQuestions(existingEnvironment));
-
+      analytics.identify(user);
       if (result === 'visitDashboard') {
         await handleExistingSession(result, config);
 
@@ -90,13 +103,22 @@ async function handleOnboardingFlow(config: ConfigService) {
   try {
     const answers = await prompt(introQuestions);
 
-    const envAnswer = await prompt(environmentQuestions);
-    if (envAnswer.env === 'self-hosted-docker') {
-      analytics.track({
-        identity: { anonymousId },
-        event: AnalyticsEventEnum.SELF_HOSTED_DOCKER,
-      });
+    analytics.track({
+      identity: { anonymousId },
+      event: AnalyticsEventEnum.CREATE_APP_QUESTION_EVENT,
+    });
 
+    const envAnswer = await prompt(environmentQuestions);
+
+    analytics.track({
+      identity: { anonymousId },
+      event: AnalyticsEventEnum.ENVIRONMENT_SELECT_EVENT,
+      data: {
+        environment: envAnswer.env,
+      },
+    });
+
+    if (envAnswer.env === 'self-hosted-docker') {
       await open(GITHUB_DOCKER_URL);
       await analytics.flush();
 
@@ -105,20 +127,93 @@ async function handleOnboardingFlow(config: ConfigService) {
 
     const regMethod = await prompt(registerMethodQuestions);
 
-    if (regMethod.value === 'github') {
-      const { accept } = await prompt(termAndPrivacyQuestions);
-      if (accept === false) {
-        analytics.track({
-          identity: { anonymousId },
-          event: AnalyticsEventEnum.REJECTED_TERMS_AND_PRIVACY,
-        });
-        await analytics.flush();
-        process.exit();
-      }
+    analytics.track({
+      identity: { anonymousId },
+      event: AnalyticsEventEnum.REGISTER_METHOD_SELECT_EVENT,
+      data: {
+        environment: regMethod.value,
+      },
+    });
 
+    const { accept } = await prompt(termAndPrivacyQuestions);
+
+    analytics.track({
+      identity: { anonymousId },
+      event: AnalyticsEventEnum.TERMS_AND_CONDITIONS_QUESTION,
+      data: {
+        accepted: accept,
+      },
+    });
+
+    if (accept === false) {
+      await analytics.flush();
+      process.exit();
+    }
+
+    if (regMethod.value === 'github') {
       spinner = ora('Waiting for a brave unicorn to login').start();
       await gitHubOAuth(httpServer, config);
       spinner.stop();
+    } else if (regMethod.value === 'email') {
+      let errorInSignup = true;
+      const { fullName } = await prompt(fullNameQuestion);
+
+      while (errorInSignup) {
+        const { email } = await prompt(emailQuestion);
+
+        if (privateEmailDomains.includes(email.split('@')[1])) {
+          analytics.track({
+            identity: { anonymousId },
+            event: AnalyticsEventEnum.PRIVATE_EMAIL_ATTEMPT,
+            data: {
+              method: 'email',
+            },
+          });
+
+          const { domain } = await prompt(privateDomainQuestions(email));
+
+          if (domain === 'updateEmail') {
+            errorInSignup = true;
+
+            continue;
+          }
+        }
+
+        const { password } = await prompt(passwordQuestion);
+        try {
+          const response = await signup({
+            email,
+            password,
+            firstName: fullName.split(' ')[0],
+            lastName: fullName.split(' ')[1] || '',
+            origin: SignUpOriginEnum.CLI,
+          });
+
+          storeToken(config, response.token);
+          errorInSignup = false;
+        } catch (e) {
+          const error = e.response.data;
+
+          if (error?.message === 'User already exists') {
+            const { proceedSignup } = await prompt(proceedSignupQuestions);
+
+            if (proceedSignup === 'resetPassword') {
+              await open(`${CLIENT_LOGIN_URL.replace('/auth/login', '/auth/reset/request')}`);
+              console.log('Finished flow');
+              process.exit();
+            } else {
+              errorInSignup = true;
+            }
+          } else {
+            errorInSignup = true;
+            console.log(
+              chalk.bold.red(
+                Array.isArray(error?.message) ? error?.messag?.join('\n') : error?.message || 'Something went wrong'
+              )
+            );
+          }
+        }
+      }
     }
 
     spinner = ora('Setting up your new account').start();
@@ -129,15 +224,44 @@ async function handleOnboardingFlow(config: ConfigService) {
     const address = httpServer.getAddress();
 
     const user = config.getDecodedToken();
+
+    if (regMethod.value === 'github' && privateEmailDomains.includes(user.email.split('@')[1])) {
+      analytics.track({
+        identity: { anonymousId },
+        event: AnalyticsEventEnum.PRIVATE_EMAIL_ATTEMPT,
+        data: {
+          method: 'github',
+        },
+      });
+
+      spinner.stop();
+      let updateErrorForEmail = false;
+      do {
+        const { domain } = await prompt(privateDomainQuestions(user.email));
+
+        if (domain === 'updateEmail') {
+          const { email } = await prompt(emailQuestion);
+
+          try {
+            await updateEmail({ email });
+          } catch (e) {
+            const error = e.response.data;
+            updateErrorForEmail = true;
+            console.error('Un-expected error ', error);
+          }
+        }
+      } while (updateErrorForEmail);
+    }
+
+    spinner.start();
     analytics.identify(user);
+    analytics.alias({ previousId: anonymousId, userId: user._id });
 
     analytics.track({
       identity: { userId: user._id },
       event: AnalyticsEventEnum.ACCOUNT_CREATED,
       data: {
-        properties: {
-          signUpMethod: 'GitHub',
-        },
+        method: regMethod.value,
       },
     });
 
@@ -162,7 +286,7 @@ async function gitHubOAuth(httpServer: HttpServer, config: ConfigService): Promi
   const redirectUrl = `http://${SERVER_HOST}:${await getServerPort()}${REDIRECT_ROUTE}`;
 
   try {
-    await open(`${API_OAUTH_URL}?&redirectUrl=${redirectUrl}`);
+    await open(`${API_OAUTH_URL}?&redirectUrl=${redirectUrl}&source=${SignUpOriginEnum.CLI}&distinctId=${anonymousId}`);
 
     const userJwt = await httpServer.redirectResponse();
 
@@ -213,11 +337,19 @@ async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService,
 
   storeDashboardData(config, createNotificationTemplatesResponse, decodedToken, applicationIdentifier);
 
+  analytics.track({
+    identity: { userId: config.getDecodedToken()._id },
+    event: AnalyticsEventEnum.OPEN_DASHBOARD,
+    data: {
+      existingUser: false,
+    },
+  });
+
   httpServer.redirectSuccessDashboard(demoDashboardUrl);
 }
 
 function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
-  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}&source=cli`;
+  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}&source=${SignUpOriginEnum.CLI}&source_widget=notification`;
 
   const steps = [
     {
@@ -256,7 +388,7 @@ function storeDashboardData(
   decodedToken,
   applicationIdentifier: string
 ) {
-  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
+  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=${SignUpOriginEnum.CLI}`;
   const analyticsSource = `${ANALYTICS_SOURCE}-(UI)`;
   const tmpPayload: { key: string; value: string }[] = [
     { key: 'embedPath', value: EMBED_PATH },
@@ -271,6 +403,7 @@ function storeDashboardData(
     { key: 'token', value: config.getToken() },
     { key: 'dashboardURL', value: dashboardURL },
     { key: 'skipTutorial', value: `${AnalyticsEventEnum.SKIP_TUTORIAL} - ${analyticsSource}` },
+    { key: 'dashboardOpen', value: `${AnalyticsEventEnum.DASHBOARD_PAGE_OPENED} - ${analyticsSource}` },
     { key: 'copySnippet', value: `${AnalyticsEventEnum.COPY_SNIPPET} - ${analyticsSource}` },
     { key: 'triggerButton', value: `${AnalyticsEventEnum.TRIGGER_BUTTON} - ${analyticsSource}` },
   ];
@@ -327,10 +460,13 @@ async function handleExistingSession(result: string, config: ConfigService) {
   if (result === 'visitDashboard') {
     analytics.track({
       identity: { userId: config.getDecodedToken()._id },
-      event: AnalyticsEventEnum.OPENED_DASHBOARD_EXISTING_SESSION,
+      event: AnalyticsEventEnum.OPEN_DASHBOARD,
+      data: {
+        existingUser: true,
+      },
     });
 
-    const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=cli`;
+    const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=${SignUpOriginEnum.CLI}`;
 
     await open(dashboardURL);
   } else if (result === 'exit') {

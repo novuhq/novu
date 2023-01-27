@@ -46,7 +46,7 @@ Update the `.env` file with your own secrets. In particular, these are required:
 To keep the setup simple, we made some choices that may not be optimal for production:
 
 - the database is in the same machine as the servers
-- the storage uses the filesystem backend instead of S3
+- the storage uses localstack instead of S3
 
 We strongly recommend that you decouple your database before deploying.
 
@@ -98,8 +98,8 @@ See [Use your own backend and socket URL](https://docs.novu.co/notification-cent
 
 We are introducing the first stage of caching in our system to improve performance and efficiency. Caching is turned off by default, but can easily be activated by setting the following environment variables:
 
-- REDIS_CACHE_HOST
-- REDIS_CACHE_PORT
+- REDIS_CACHE_SERVICE_HOST
+- REDIS_CACHE_SERVICE_PORT
 
 Currently, we are caching data in the most heavily loaded areas of the system:
 the widget requests such as feed and unseen count, as well as common DAL requests during the execution of trigger event flow.

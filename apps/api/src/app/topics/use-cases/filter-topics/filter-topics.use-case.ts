@@ -23,10 +23,12 @@ export class FilterTopicsUseCase {
 
     const totalCount = await this.topicRepository.count(query);
 
+    const skipTimes = page <= 0 ? 0 : page;
     const pagination = {
       limit: pageSize,
-      skip: page * pageSize,
+      skip: skipTimes * pageSize,
     };
+
     const filteredTopics = await this.topicRepository.filterTopics(query, pagination);
 
     return {
@@ -41,18 +43,18 @@ export class FilterTopicsUseCase {
     command: FilterTopicsCommand
   ): Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'> {
     return {
-      _environmentId: TopicRepository.convertStringToObjectId(command.environmentId),
-      _organizationId: TopicRepository.convertStringToObjectId(command.organizationId),
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
       ...(command.key && { key: command.key }),
-    };
+    } as Pick<TopicEntity, '_environmentId' | 'key' | '_organizationId'>;
   }
 
   private mapFromEntityToDto(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {
     return {
       ...topic,
-      _id: TopicRepository.convertObjectIdToString(topic._id),
-      _organizationId: TopicRepository.convertObjectIdToString(topic._organizationId),
-      _environmentId: TopicRepository.convertObjectIdToString(topic._environmentId),
+      _id: topic._id,
+      _organizationId: topic._organizationId,
+      _environmentId: topic._environmentId,
     };
   }
 }

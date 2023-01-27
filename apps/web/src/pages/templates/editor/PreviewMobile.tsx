@@ -7,6 +7,7 @@ import { PreviewUserIcon } from './PreviewUserIcon';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Mobile } from './Mobile';
 import { When } from '../../../components/utils/When';
+import { EmailIntegrationInfo } from './EmailIntegrationInfo';
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -92,7 +93,7 @@ export const PreviewMobile = ({
                   </div>
                   <Group spacing={13} position="apart">
                     <div data-test-id="preview-from" className={classes.from}>
-                      {integration?.credentials?.from || 'No active email integration'}
+                      <EmailIntegrationInfo integration={integration} field={'from'} />
                     </div>
                     <div className={classes.date}>
                       <PreviewDateIcon />

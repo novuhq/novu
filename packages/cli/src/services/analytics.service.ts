@@ -3,15 +3,19 @@ import { IJwtPayload } from '@novu/shared';
 import { ANALYTICS_ENABLED, SEGMENTS_WRITE_KEY } from '../constants';
 
 export enum AnalyticsEventEnum {
-  EXISTING_ENVIRONMENT = 'existing_environment',
-  SELF_HOSTED_DOCKER = 'self_hosted_docker',
-  REJECTED_TERMS_AND_PRIVACY = 'rejected_terms_and_privacy',
+  ENVIRONMENT_SELECT_EVENT = 'Select Install Environment',
+  CREATE_APP_QUESTION_EVENT = 'Create App Question',
+  REGISTER_METHOD_SELECT_EVENT = 'Select Register Method',
+  TERMS_AND_CONDITIONS_QUESTION = 'Terms And Conditions Question',
+  PRIVATE_EMAIL_ATTEMPT = 'Private Email Register Attempt',
   ACCOUNT_CREATED = 'account_created',
-  OPENED_DASHBOARD_EXISTING_SESSION = 'opened_dashboard_existing_session',
+  OPEN_DASHBOARD = 'open_dashboard',
+  DASHBOARD_PAGE_OPENED = 'Dashboard Page Opened',
   EXIT_EXISTING_SESSION = 'exit_existing_session',
   SKIP_TUTORIAL = 'skip_tutorial',
   COPY_SNIPPET = 'copy_snippet',
   TRIGGER_BUTTON = 'trigger_button',
+  CLI_LAUNCHED = 'Cli Launched',
 }
 
 export const ANALYTICS_SOURCE = '[CLI Onboarding]';
@@ -25,6 +29,17 @@ export class AnalyticService {
     if (this._analyticsEnabled) {
       this._analytics = new Analytics(SEGMENTS_WRITE_KEY);
     }
+  }
+
+  alias({ previousId, userId }: { previousId: string; userId: string }) {
+    if (!this.isAnalyticsEnabled()) {
+      return;
+    }
+
+    this._analytics.alias({
+      previousId,
+      userId,
+    });
   }
 
   identify(user: IJwtPayload) {
@@ -54,12 +69,17 @@ export class AnalyticService {
     if (!this.isAnalyticsEnabled()) {
       return;
     }
-
-    this._analytics.track({
+    const payload = {
       event: `${event} - ${ANALYTICS_SOURCE}`,
       ...identity,
-      ...data,
-    });
+      properties: {},
+    };
+
+    if (data) {
+      payload.properties = { ...payload.properties, ...data };
+    }
+
+    this._analytics.track(payload);
   }
 
   async flush() {

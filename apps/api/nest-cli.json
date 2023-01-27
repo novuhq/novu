@@ -20,7 +20,11 @@
         "outDir": "dist/src"
       },
       {
-        "include": "app/content-templates/usecases/compile-template/templates/basic.handlebars",
+        "include": "app/layouts/usecases/get-novu-layout/templates/layout.handlebars",
+        "outDir": "dist/src"
+      },
+      {
+        "include": "app/content-templates/usecases/compile-email-template/templates/basic.handlebars",
         "outDir": "dist/src"
       }
     ],

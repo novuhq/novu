@@ -30,6 +30,7 @@ describe('test use of novus node package - Subscribers class', () => {
 
     await novu.subscribers.update('test-update-subscriber', {
       phone: '8989898',
+      locale: 'en',
     });
 
     expect(mockedAxios.put).toHaveBeenCalled();
@@ -37,6 +38,7 @@ describe('test use of novus node package - Subscribers class', () => {
       `/subscribers/test-update-subscriber`,
       {
         phone: '8989898',
+        locale: 'en',
       }
     );
   });

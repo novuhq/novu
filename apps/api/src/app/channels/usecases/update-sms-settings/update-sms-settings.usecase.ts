@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 import { UpdateSmsSettingsCommand } from './update-sms-settings.command';
 
@@ -20,6 +20,9 @@ export class UpdateSmsSettings {
       }
     );
 
-    return await this.environmentRepository.findById(command.environmentId);
+    const environment = await this.environmentRepository.findById(command.environmentId);
+    if (!environment) throw new NotFoundException(`Environment ${command.environmentId} not found`);
+
+    return environment;
   }
 }

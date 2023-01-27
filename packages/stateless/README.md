@@ -64,7 +64,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
 - [x] [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
 - [x] [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
-- [x] [NodeMailer](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
+- [x] [Custom SMTP](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
 - [x] [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
 - [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
 - [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
@@ -84,14 +84,14 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Bandwidth
 - [ ] RingCentral
 
-#### 📱 Push 
+#### 📱 Push
 
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Pushwoosh
 
-#### 👇 Chat 
+#### 👇 Chat
 
 - [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
 - [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)

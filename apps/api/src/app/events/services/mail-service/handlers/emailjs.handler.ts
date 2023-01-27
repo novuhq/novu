@@ -10,12 +10,12 @@ export class EmailJsHandler extends BaseHandler {
   }
   buildProvider(credentials: ICredentials, from?: string) {
     const config: IEmailJsConfig = {
-      from,
-      host: credentials.host,
+      from: from as string,
+      host: credentials.host as string,
       port: Number(credentials.port),
-      secure: credentials.secure,
-      user: credentials.user,
-      password: credentials.password,
+      secure: credentials.secure as boolean,
+      user: credentials.user as string,
+      password: credentials.password as string,
     };
 
     this.provider = new EmailJsProvider(config);

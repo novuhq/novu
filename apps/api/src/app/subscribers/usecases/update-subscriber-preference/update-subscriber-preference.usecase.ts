@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   SubscriberPreferenceEntity,
   SubscriberPreferenceRepository,
@@ -6,6 +6,8 @@ import {
   SubscriberRepository,
   MemberRepository,
 } from '@novu/dal';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { UpdateSubscriberPreferenceCommand } from './update-subscriber-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ISubscriberPreferenceResponse } from '../get-subscriber-preference/get-subscriber-preference.usecase';
@@ -14,7 +16,6 @@ import {
   GetSubscriberTemplatePreferenceCommand,
 } from '../get-subscriber-template-preference';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class UpdateSubscriberPreference {
@@ -29,6 +30,8 @@ export class UpdateSubscriberPreference {
 
   async execute(command: UpdateSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    if (!subscriber) throw new NotFoundException(`Subscriber not found`);
+
     const userPreference = await this.subscriberPreferenceRepository.findOne({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
@@ -47,7 +50,9 @@ export class UpdateSubscriberPreference {
 
     if (!userPreference) {
       const channelObj = {} as Record<'email' | 'sms' | 'in_app' | 'chat' | 'push', boolean>;
-      channelObj[command.channel?.type] = command.channel?.enabled;
+      if (command.channel) {
+        channelObj[command.channel.type] = command.channel?.enabled;
+      }
 
       await this.subscriberPreferenceRepository.create({
         _environmentId: command.environmentId,

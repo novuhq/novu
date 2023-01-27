@@ -1,13 +1,13 @@
 import { expect } from 'chai';
-import { SendMessageEmail } from '../usecases/send-message/send-message-email.usecase';
+import { CompileEmailTemplate } from '../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
 
 describe('Trigger event - Send message email - /v1/events/trigger (POST)', function () {
   it('should add a preheader to html string after <body>', async function () {
-    let result = SendMessageEmail.addPreheader('', 'editor');
+    let result = CompileEmailTemplate.addPreheader('');
 
-    expect(result).to.equal(undefined);
+    expect(result).to.equal('');
 
-    result = SendMessageEmail.addPreheader('<html><body><div>Hello World</div></body></html>', 'customHtml');
+    result = CompileEmailTemplate.addPreheader('<html><body><div>Hello World</div></body></html>');
 
     expect(result).to.equal(`<html><body>{{#if preheader}}
           <div style="display: none; max-height: 0px; overflow: hidden;">
@@ -16,10 +16,7 @@ describe('Trigger event - Send message email - /v1/events/trigger (POST)', funct
           </div>
         {{/if}}<div>Hello World</div></body></html>`);
 
-    result = SendMessageEmail.addPreheader(
-      '<html><body attribute="value"><div>Hello World</div></body></html>',
-      'customHtml'
-    );
+    result = CompileEmailTemplate.addPreheader('<html><body attribute="value"><div>Hello World</div></body></html>');
 
     expect(result).to.equal(`<html><body attribute="value">{{#if preheader}}
           <div style="display: none; max-height: 0px; overflow: hidden;">

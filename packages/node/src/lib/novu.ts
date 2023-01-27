@@ -4,11 +4,13 @@ import { EventEmitter } from 'events';
 import { Changes } from './changes/changes';
 import { INovuConfiguration } from './novu.interface';
 import { Events } from './events/events';
+import { Layouts } from './layouts/layouts';
 import { NotificationGroups } from './notification-groups/notification-groups';
 import { NotificationTemplates } from './notification-template/notification-template';
 import { Environments } from './environments/environments';
 import { Feeds } from './feeds/feeds';
 import { Topics } from './topics/topics';
+import { Integrations } from './integrations/integrations';
 
 export class Novu extends EventEmitter {
   private readonly apiKey?: string;
@@ -17,10 +19,12 @@ export class Novu extends EventEmitter {
   readonly environments: Environments;
   readonly events: Events;
   readonly changes: Changes;
+  readonly layouts: Layouts;
   readonly notificationGroups: NotificationGroups;
   readonly notificationTemplates: NotificationTemplates;
   readonly feeds: Feeds;
   readonly topics: Topics;
+  readonly integrations: Integrations;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -39,17 +43,19 @@ export class Novu extends EventEmitter {
     this.trigger = this.events.trigger;
     this.broadcast = this.events.broadcast;
     this.changes = new Changes(this.http);
+    this.layouts = new Layouts(this.http);
     this.notificationGroups = new NotificationGroups(this.http);
     this.notificationTemplates = new NotificationTemplates(this.http);
     this.feeds = new Feeds(this.http);
     this.topics = new Topics(this.http);
+    this.integrations = new Integrations(this.http);
   }
 
   public trigger: typeof Events.prototype.trigger;
 
   public broadcast: typeof Events.prototype.broadcast;
 
-  private buildBackendUrl(config: INovuConfiguration) {
+  private buildBackendUrl(config?: INovuConfiguration) {
     const novuVersion = 'v1';
 
     if (!config?.backendUrl) {

@@ -9,7 +9,7 @@ import {
   IEmailEventBody,
 } from '@novu/stateless';
 
-import { MailService } from '@sendgrid/mail';
+import { MailDataRequired, MailService } from '@sendgrid/mail';
 
 export class SendgridEmailProvider implements IEmailProvider {
   id = 'sendgrid';
@@ -21,6 +21,7 @@ export class SendgridEmailProvider implements IEmailProvider {
       apiKey: string;
       from: string;
       senderName: string;
+      ipPoolName?: string;
     }
   ) {
     this.sendgridMail = new MailService();
@@ -64,11 +65,12 @@ export class SendgridEmailProvider implements IEmailProvider {
   }
 
   private createMailData(options: IEmailOptions) {
-    return {
+    const mailData: Partial<MailDataRequired> = {
       from: {
         email: options.from || this.config.from,
         name: this.config.senderName,
       },
+      ipPoolName: this.config.ipPoolName,
       to: options.to,
       html: options.html,
       subject: options.subject,
@@ -84,6 +86,12 @@ export class SendgridEmailProvider implements IEmailProvider {
         };
       }),
     };
+
+    if (options.replyTo) {
+      mailData.replyTo = options.replyTo;
+    }
+
+    return mailData as MailDataRequired;
   }
 
   getMessageId(body: any | any[]): string[] {
