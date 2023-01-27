@@ -118,7 +118,7 @@ export const EmailInboxContent = ({
           return (
             <Select
               {...field}
-              label="Layouts"
+              label="Email Layout"
               data-test-id="templates-layout"
               loading={isLoading}
               disabled={readonly}
