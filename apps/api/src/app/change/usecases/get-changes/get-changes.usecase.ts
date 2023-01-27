@@ -6,6 +6,7 @@ import {
   NotificationGroupRepository,
   NotificationTemplateRepository,
   FeedRepository,
+  LayoutRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ChangesResponseDto } from '../../dtos/change-response.dto';
@@ -30,7 +31,8 @@ export class GetChanges {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
-    private feedRepository: FeedRepository
+    private feedRepository: FeedRepository,
+    private layoutRepository: LayoutRepository
   ) {}
 
   async execute(command: GetChangesCommand): Promise<ChangesResponseDto> {
@@ -43,7 +45,7 @@ export class GetChanges {
     );
 
     const changes = await changeItems.reduce(async (prev, change) => {
-      const list = await prev;
+      const list: any[] = await prev;
       let item: Record<string, unknown> | IViewEntity = {};
       if (change.type === ChangeEntityTypeEnum.MESSAGE_TEMPLATE) {
         item = await this.getTemplateDataForMessageTemplate(change._entityId, command.environmentId);
@@ -56,6 +58,9 @@ export class GetChanges {
       }
       if (change.type === ChangeEntityTypeEnum.FEED) {
         item = await this.getTemplateDataForFeed(change._entityId, command.environmentId);
+      }
+      if (change.type === ChangeEntityTypeEnum.LAYOUT) {
+        item = await this.getTemplateDataForLayout(change._entityId, command.environmentId);
       }
 
       list.push({
@@ -159,6 +164,29 @@ export class GetChanges {
       item = items[0];
       if (!item) {
         Logger.error(`Could not find feed for id ${entityId}`);
+
+        return {};
+      }
+    }
+
+    return {
+      templateName: item.name,
+    };
+  }
+
+  private async getTemplateDataForLayout(
+    entityId: string,
+    environmentId: string
+  ): Promise<IViewEntity | Record<string, unknown>> {
+    let item = await this.layoutRepository.findOne({
+      _environmentId: environmentId,
+      _id: entityId,
+    });
+
+    if (!item) {
+      item = await this.layoutRepository.findDeleted(entityId, environmentId);
+      if (!item) {
+        Logger.error(`Could not find layout for id ${entityId}`);
 
         return {};
       }

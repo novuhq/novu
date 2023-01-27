@@ -21,7 +21,7 @@ export class FeedRepository extends BaseRepository<EnforceEnvironmentQuery, Feed
 
   async delete(query: EnforceEnvironmentQuery) {
     const feed = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
-    if (!feed) throw new DalException(`Could not find feed with id ${query._id}`);
+    if (!feed || !feed?._id) throw new DalException(`Could not find feed with id ${query._id}`);
     const relatedMessages = await this.messageTemplateRepository.getMessageTemplatesByFeed(
       feed._environmentId,
       feed._id

@@ -1,7 +1,15 @@
 import { useMantineTheme } from '@mantine/core';
 import { colors } from '../../../../design-system';
 
-export const VarItem = ({ name, type, children = null }: { name: string; type: string; children?: any }) => {
+export const VarItem = ({
+  name,
+  type,
+  children = null,
+}: {
+  name: string;
+  type: string;
+  children?: React.ReactNode;
+}) => {
   const theme = useMantineTheme();
 
   return (
@@ -13,6 +21,7 @@ export const VarItem = ({ name, type, children = null }: { name: string; type: s
         borderRadius: 7,
         background: theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight,
         color: colors.B60,
+        width: '100%',
       }}
     >
       {name}:

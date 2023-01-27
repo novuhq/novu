@@ -28,6 +28,8 @@ export class RunJob {
     });
 
     const job = await this.jobRepository.findById(command.jobId);
+    if (!job) throw new ApiException(`Job with id ${command.jobId} not found`);
+
     const canceled = await this.delayedEventIsCanceled(job);
     if (canceled) {
       return;
@@ -52,7 +54,7 @@ export class RunJob {
           userId: job._userId,
           subscriberId: job._subscriberId,
           jobId: job._id,
-          events: job.digest.events,
+          events: job.digest?.events,
           job,
         })
       );

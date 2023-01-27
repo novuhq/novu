@@ -148,6 +148,7 @@ export class EventsController {
         contentType: body.contentType,
         content: body.content,
         preheader: body.preheader,
+        layoutId: body.layoutId,
         to: body.to,
         userId: user._id,
         environmentId: user.environmentId,
@@ -183,8 +184,8 @@ export class EventsController {
     );
   }
 
-  private mapActor(actor: TriggerRecipientSubscriber): ISubscribersDefine {
-    if (!actor) return;
+  private mapActor(actor?: TriggerRecipientSubscriber | null): ISubscribersDefine | null {
+    if (!actor) return null;
 
     return this.mapTriggerRecipients.mapSubscriber(actor);
   }

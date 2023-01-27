@@ -19,21 +19,24 @@ export function validateCredentials(keyPrefix: CacheKeyPrefixEnum, credentials: 
  * @param key
  * @param keyConfig
  */
-export function getIdentifier(key: string, keyConfig: Record<string, unknown>): { key: string; value: string } {
+export function getIdentifier(
+  key: string,
+  keyConfig: Record<string, unknown>
+): { key: string | undefined; value: string } {
   const entitiesSubscriberPreferred = [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED];
   const subscriberPreferredKeys = ['subscriberId', '_subscriberId', '_id', 'id'];
   const idPreferredKeys = ['_id', 'id', '_subscriberId', 'subscriberId'];
 
   const subscriberPrefKey = subscriberPreferredKeys.find((prefKey) => keyConfig[prefKey]);
-  const subscriberPreferred = { key: subscriberPrefKey, value: keyConfig[subscriberPrefKey] as string };
+  const subscriberPreferred = { key: subscriberPrefKey, value: keyConfig[subscriberPrefKey as string] as string };
 
   const idPrefKey = idPreferredKeys.find((prefKey) => keyConfig[prefKey]);
-  const idPreferred = { key: idPrefKey, value: keyConfig[idPrefKey] as string };
+  const idPreferred = { key: idPrefKey, value: keyConfig[idPrefKey as string] as string };
 
   return entitiesSubscriberPreferred.some((entity) => key.startsWith(entity)) ? subscriberPreferred : idPreferred;
 }
 
-export function getEnvironment(keyConfig: Record<string, unknown>): { key: string; value: string } {
+export function getEnvironment(keyConfig: Record<string, unknown>): { key: string; value: string } | undefined {
   return keyConfig._environmentId
     ? { key: '_environmentId', value: keyConfig._environmentId as string }
     : keyConfig.environmentId

@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
-import { Route, Routes, Navigate, BrowserRouter, useLocation } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
@@ -12,7 +12,7 @@ import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import HomePage from './pages/HomePage';
-import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
+import TemplateEditorPage, { ActivePageEnum } from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
@@ -25,7 +25,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
-import { ENV, SENTRY_DSN, CONTEXT_PATH } from './config';
+import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import QuickStartPage from './pages/quick-start/QuickStartPage';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
@@ -33,7 +33,16 @@ import { TemplateFormProvider } from './components/templates/TemplateFormProvide
 import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
+import { useBlueprint } from './hooks/useBlueprint';
+import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
+import LogRocket from 'logrocket';
+import setupLogRocketReact from 'logrocket-react';
+
+if (LOGROCKET_ID) {
+  LogRocket.init(LOGROCKET_ID);
+  setupLogRocketReact(LogRocket);
+}
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -46,6 +55,29 @@ if (SENTRY_DSN) {
      * We recommend adjusting this value in production
      */
     tracesSampleRate: 1.0,
+    beforeSend(event: Sentry.Event) {
+      const logRocketSession = LogRocket.sessionURL;
+
+      if (logRocketSession !== null || event !== '' || event !== undefined) {
+        /*
+         * Must ignore the next line as this variable could be null but
+         * can not be null because of the check in the if statement above.
+         */
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        event.extra.LogRocket = logRocketSession;
+
+        return event;
+      } else {
+        return event;
+      } //else
+    },
+  });
+
+  LogRocket.getSessionURL((sessionURL) => {
+    Sentry.configureScope((scope) => {
+      scope.setExtra('sessionURL', sessionURL);
+    });
   });
 }
 
@@ -218,6 +250,16 @@ function App() {
                           </RequiredAuth>
                         }
                       />
+                      <Route
+                        path="/brand"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <BrandPage />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
                     </Route>
                   </Routes>
                 </SpotLightProvider>
@@ -240,6 +282,7 @@ function jwtHasKey(key: string) {
 }
 
 function RequiredAuth({ children }: any) {
+  useBlueprint();
   const { logout } = useContext(AuthContext);
   const location = useLocation();
 

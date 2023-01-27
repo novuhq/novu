@@ -5,6 +5,10 @@ import { EnvironmentWithSubscriber } from '../../../shared/commands/project.comm
 import { JobEntity } from '@novu/dal';
 
 export enum DetailEnum {
+  REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL = 'Inbound mail - Missing replay callback URL',
+  REPLY_CALLBACK_NOT_CONFIGURATION = 'Inbound mail - Missing configuration',
+  REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION = 'Inbound mail - Missing MX Record configuration',
+  REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION = 'Inbound mail - Missing MX route domain configuration',
   CHAT_WEBHOOK_URL_MISSING = 'Webhook URL for the chat channel is missing',
   STEP_CREATED = 'Step created',
   STEP_QUEUED = 'Step queued',
@@ -13,12 +17,14 @@ export enum DetailEnum {
   MESSAGE_CONTENT_SYNTAX_ERROR = 'Message content could not be generated due to syntax error in email editor',
   MESSAGE_CREATED = 'Message created',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
+  LIMIT_PASSED_NOVU_INTEGRATION = "Novu's provider limit has been reached",
   SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber missing recipient details',
   SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
   MESSAGE_SENT = 'Message sent',
   PROVIDER_ERROR = 'Unexpected provider error',
   START_SENDING = 'Start sending message',
   START_DIGESTING = 'Start digesting',
+  PROCESSING_STEP_FILTER = 'Processing step filter',
   FILTER_STEPS = 'Step was filtered based on steps filters',
   DIGESTED_EVENTS_PROVIDED = 'Steps to get digest events found',
   DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
@@ -69,7 +75,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   @IsString()
-  raw?: string;
+  raw?: string | null;
 
   webhookStatus?: EmailEventStatusEnum | SmsEventStatusEnum;
 

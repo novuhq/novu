@@ -1,10 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { IEmailBlock, OrganizationRepository, OrganizationEntity, IntegrationEntity } from '@novu/dal';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { OrganizationRepository, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IEmailOptions } from '@novu/stateless';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import {
   GetDecryptedIntegrations,
@@ -12,26 +10,27 @@ import {
 } from '../../../integrations/usecases/get-decrypted-integrations';
 import { TestSendMessageCommand } from './send-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { SendMessageEmail } from './send-message-email.usecase';
+import { CompileEmailTemplate } from '../../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
+import { CompileEmailTemplateCommand } from '../../../content-templates/usecases/compile-email-template/compile-email-template.command';
 
 @Injectable()
 export class SendTestEmail {
-  private mailFactory = new MailFactory();
-
   constructor(
-    private compileTemplate: CompileTemplate,
+    private compileEmailTemplateUsecase: CompileEmailTemplate,
     private organizationRepository: OrganizationRepository,
     private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {}
 
   public async execute(command: TestSendMessageCommand) {
-    const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
+    const mailFactory = new MailFactory();
+    const organization = await this.organizationRepository.findById(command.organizationId);
+    if (!organization) throw new NotFoundException('Organization not found');
+
     const email = command.to;
 
     Sentry.addBreadcrumb({
       message: 'Sending Email',
     });
-    const isEditorMode = command.contentType === 'editor';
 
     const integration = (
       await this.getDecryptedIntegrationsUsecase.execute(
@@ -41,6 +40,7 @@ export class SendTestEmail {
           channelType: ChannelTypeEnum.EMAIL,
           findOne: true,
           active: true,
+          userId: command.userId,
         })
       )
     )[0];
@@ -49,107 +49,11 @@ export class SendTestEmail {
       throw new ApiException(`Missing an active email integration`);
     }
 
-    let subject = '';
-    let content: string | IEmailBlock[] = '';
-
-    try {
-      subject = await this.renderContent(command.subject, command.subject, organization, command, command.preheader);
-      content = await this.getContent(isEditorMode, command, subject, organization);
-    } catch (e) {
-      throw new ApiException(e?.message || `Message content could not be generated`);
-    }
-
-    const customTemplate = SendMessageEmail.addPreheader(content as string, command.contentType);
-
-    const html = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: isEditorMode ? 'basic' : 'custom',
-        customTemplate: customTemplate,
-        data: {
-          subject,
-          preheader: command.preheader,
-          branding: {
-            logo: organization.branding?.logo,
-            color: organization.branding?.color || '#f47373',
-          },
-          blocks: isEditorMode ? content : [],
-          step: {
-            digest: true,
-            events: [],
-            total_count: 1,
-          },
+    const { html, subject } = await this.compileEmailTemplateUsecase.execute(
+      CompileEmailTemplateCommand.create({
+        ...command,
+        payload: {
           ...command.payload,
-        },
-      })
-    );
-
-    const mailData: IEmailOptions = {
-      to: email,
-      subject,
-      html,
-      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
-    };
-
-    if (email && integration) {
-      await this.sendMessage(integration, mailData);
-
-      return;
-    }
-  }
-
-  private async sendMessage(integration: IntegrationEntity, mailData: IEmailOptions) {
-    const mailHandler = this.mailFactory.getHandler(integration, mailData.from);
-
-    try {
-      await mailHandler.send(mailData);
-    } catch (error) {
-      throw new ApiException(`Unexpected provider error`);
-    }
-  }
-
-  private async getContent(
-    isEditorMode,
-    command: TestSendMessageCommand,
-    subject,
-    organization: OrganizationEntity
-  ): Promise<string | IEmailBlock[]> {
-    if (isEditorMode) {
-      const content: IEmailBlock[] = [...command.content] as IEmailBlock[];
-      for (const block of content) {
-        /*
-         * We need to trim the content in order to avoid mail provider like GMail
-         * to display the mail with `[Message clipped]` footer.
-         */
-        block.content = await this.renderContent(block.content, subject, organization, command, command.preheader);
-        block.content = block.content.trim();
-        block.url = await this.renderContent(block.url || '', subject, organization, command, command.preheader);
-      }
-
-      return content;
-    }
-
-    return command.content;
-  }
-
-  private async renderContent(
-    content: string,
-    subject,
-    organization: OrganizationEntity,
-    command: TestSendMessageCommand,
-    preheader?: string
-  ) {
-    return await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: content as string,
-        data: {
-          subject,
-          preheader,
-          branding: {
-            logo: organization.branding?.logo,
-            color: organization.branding?.color || '#f47373',
-          },
-          blocks: [],
           step: {
             digest: true,
             events: [],
@@ -157,10 +61,32 @@ export class SendTestEmail {
             ...this.getSystemVariables('step', command),
           },
           subscriber: this.getSystemVariables('subscriber', command),
-          ...command.payload,
         },
       })
     );
+
+    const mailData: IEmailOptions = {
+      to: email,
+      subject,
+      html: html as string,
+      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
+    };
+
+    if (email && integration) {
+      await this.sendMessage(integration, mailData, mailFactory);
+
+      return;
+    }
+  }
+
+  private async sendMessage(integration: IntegrationEntity, mailData: IEmailOptions, mailFactory: MailFactory) {
+    const mailHandler = mailFactory.getHandler(integration, mailData.from);
+
+    try {
+      await mailHandler.send(mailData);
+    } catch (error) {
+      throw new ApiException(`Unexpected provider error`);
+    }
   }
 
   private getSystemVariables(variableType: 'subscriber' | 'step' | 'branding', command: TestSendMessageCommand) {

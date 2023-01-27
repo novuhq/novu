@@ -48,6 +48,7 @@ const schema = z
                 content: z.any(),
                 subject: z.any(),
                 title: z.any(),
+                layoutId: z.any(),
               })
               .passthrough()
               .superRefine((template: any, ctx) => {
@@ -67,15 +68,24 @@ const schema = z
                     path: ['content'],
                   });
                 }
-                if (template.type === ChannelTypeEnum.EMAIL && !template.subject) {
-                  ctx.addIssue({
-                    code: z.ZodIssueCode.too_small,
-                    minimum: 1,
-                    type: 'string',
-                    inclusive: true,
-                    message: 'Required - Email Subject',
-                    path: ['subject'],
-                  });
+                if (template.type === ChannelTypeEnum.EMAIL) {
+                  if (!template.subject) {
+                    ctx.addIssue({
+                      code: z.ZodIssueCode.too_small,
+                      minimum: 1,
+                      type: 'string',
+                      inclusive: true,
+                      message: 'Required - Email Subject',
+                      path: ['subject'],
+                    });
+                  }
+                  if (!template.layoutId) {
+                    ctx.addIssue({
+                      code: z.ZodIssueCode.custom,
+                      message: 'Required - Layout',
+                      path: ['layoutId'],
+                    });
+                  }
                 }
 
                 if (template.type === ChannelTypeEnum.PUSH && !template.title) {

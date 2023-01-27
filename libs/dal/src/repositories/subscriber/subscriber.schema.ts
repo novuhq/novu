@@ -22,7 +22,13 @@ const subscriberSchema = new Schema(
     subscriberId: Schema.Types.String,
     email: Schema.Types.String,
     avatar: Schema.Types.String,
+    locale: Schema.Types.String,
     channels: [Schema.Types.Mixed],
+    isOnline: {
+      type: Schema.Types.Boolean,
+      required: false,
+    },
+    lastOnlineAt: Schema.Types.Date,
   },
   schemaOptions
 );

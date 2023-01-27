@@ -6,6 +6,7 @@ import { PreviewUserIcon } from './PreviewUserIcon';
 import Frame from 'react-frame-component';
 import { ErrorBoundary } from 'react-error-boundary';
 import { When } from '../../../components/utils/When';
+import { EmailIntegrationInfo } from './EmailIntegrationInfo';
 
 const useStyles = createStyles((theme) => ({
   browser: {
@@ -120,7 +121,7 @@ export const PreviewWeb = ({
                     {subject}
                   </div>
                   <div data-test-id="preview-from" className={classes.from}>
-                    {integration?.credentials?.from || 'No active email integration'}
+                    <EmailIntegrationInfo integration={integration} field={'from'} />
                   </div>
                 </div>
               </Group>

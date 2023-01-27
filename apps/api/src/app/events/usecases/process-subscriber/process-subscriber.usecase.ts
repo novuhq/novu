@@ -7,9 +7,8 @@ import {
   JobEntity,
   JobStatusEnum,
   NotificationStepEntity,
-  IntegrationRepository,
 } from '@novu/dal';
-import { InAppProviderIdEnum, LogCodeEnum, LogStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, InAppProviderIdEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
@@ -18,6 +17,10 @@ import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-s
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { Cached } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 import { subscriberNeedUpdate } from '../../../subscribers/usecases/update-subscriber';
 
 @Injectable()
@@ -29,10 +32,10 @@ export class ProcessSubscriber {
     private createLogUsecase: CreateLog,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private filterSteps: DigestFilterSteps,
-    private integrationRepository: IntegrationRepository
+    private getDecryptedIntegrations: GetDecryptedIntegrations
   ) {}
 
-  public async execute(command: ProcessSubscriberCommand): Promise<JobEntity[]> {
+  public async execute(command: ProcessSubscriberCommand): Promise<Omit<JobEntity, '_id'>[]> {
     const template =
       command.template ??
       (await this.getNotificationTemplate({
@@ -51,7 +54,8 @@ export class ProcessSubscriber {
     if (subscriber === null) {
       return [];
     }
-    let actorSubscriber: SubscriberEntity;
+
+    let actorSubscriber: SubscriberEntity | null = null;
     if (command.actor) {
       actorSubscriber = await this.getSubscriber(
         {
@@ -77,17 +81,22 @@ export class ProcessSubscriber {
       })
     );
 
-    const jobs: JobEntity[] = [];
-
-    const integrations = await this.integrationRepository.find({
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      channel: { $in: steps.map((step) => step.template.type) },
-      active: true,
-    });
+    const jobs: Omit<JobEntity, '_id'>[] = [];
 
     for (const step of steps) {
-      const integration = integrations.find((i) => i.channel === (step.template.type as any));
+      if (!step.template) throw new ApiException('Step template was not found');
+
+      const integrations = await this.getDecryptedIntegrations.execute(
+        GetDecryptedIntegrationsCommand.create({
+          channelType: ChannelTypeEnum[step.template.type],
+          active: true,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+        })
+      );
+
+      const integration = integrations[0];
 
       jobs.push({
         identifier: command.identifier,
@@ -148,6 +157,7 @@ export class ProcessSubscriber {
         lastName: subscriberPayload?.lastName,
         phone: subscriberPayload?.phone,
         avatar: subscriberPayload?.avatar,
+        locale: subscriberPayload?.locale,
         subscriber: subscriber ?? undefined,
       })
     );

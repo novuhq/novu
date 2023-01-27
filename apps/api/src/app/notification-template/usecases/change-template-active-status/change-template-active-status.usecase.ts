@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()

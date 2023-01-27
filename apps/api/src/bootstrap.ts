@@ -59,6 +59,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
+      forbidUnknownValues: false,
     })
   );
 
@@ -83,6 +84,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Topics')
     .addTag('Activity')
     .addTag('Integrations')
+    .addTag('Layouts')
     .addTag('Notification templates')
     .addTag('Notification groups')
     .addTag('Changes')
@@ -120,7 +122,10 @@ const corsOptionsDelegate = function (req, callback) {
   if (['dev', 'test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url)) {
     corsOptions.origin = '*';
   } else {
-    corsOptions.origin = [process.env.FRONT_BASE_URL, process.env.WIDGET_BASE_URL];
+    corsOptions.origin = [process.env.FRONT_BASE_URL];
+    if (process.env.WIDGET_BASE_URL) {
+      corsOptions.origin.push(process.env.WIDGET_BASE_URL);
+    }
   }
   callback(null, corsOptions);
 };

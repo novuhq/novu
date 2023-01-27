@@ -2,7 +2,11 @@ import { BaseRepository, Omit } from '../base-repository';
 import { JobEntity, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Document, FilterQuery } from 'mongoose';
+import { Document, FilterQuery, ProjectionType } from 'mongoose';
+import { NotificationTemplateEntity } from '../notification-template';
+import { SubscriberEntity } from '../subscriber';
+import { NotificationEntity } from '../notification';
+import { EnvironmentEntity } from '../environment';
 
 class PartialJobEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
 
@@ -14,8 +18,8 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     super(Job, JobEntity);
   }
 
-  public async storeJobs(jobs: JobEntity[]): Promise<JobEntity[]> {
-    const stored = [];
+  public async storeJobs(jobs: Omit<JobEntity, '_id'>[]): Promise<JobEntity[]> {
+    const stored: JobEntity[] = [];
     for (let index = 0; index < jobs.length; index++) {
       if (index > 0) {
         jobs[index]._parentId = stored[index - 1]._id;
@@ -126,5 +130,36 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     );
 
     return result;
+  }
+
+  public async findOnePopulate({
+    query,
+    select = '',
+    selectTemplate = '',
+    selectNotification = '',
+    selectSubscriber = '',
+    selectEnvironment = '',
+  }: {
+    query: { _environmentId: string; transactionId: string };
+    select?: ProjectionType<JobEntity>;
+    selectTemplate?: ProjectionType<NotificationTemplateEntity>;
+    selectNotification?: ProjectionType<NotificationEntity>;
+    selectSubscriber?: ProjectionType<SubscriberEntity>;
+    selectEnvironment?: ProjectionType<EnvironmentEntity>;
+  }): Promise<
+    JobEntity & {
+      template: NotificationTemplateEntity;
+      notification: NotificationEntity;
+      subscriber: SubscriberEntity;
+      environment: EnvironmentEntity;
+    }
+  > {
+    return Job.findOne(query, select)
+      .populate('template', selectTemplate)
+      .populate('notification', selectNotification)
+      .populate('subscriber', selectSubscriber)
+      .populate('environment', selectEnvironment)
+      .lean()
+      .exec();
   }
 }

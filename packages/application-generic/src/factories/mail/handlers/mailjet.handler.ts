@@ -9,9 +9,9 @@ export class MailjetHandler extends BaseHandler {
   }
   buildProvider(credentials: ICredentials, from?: string) {
     const config: { apiKey: string; apiSecret: string; from: string } = {
-      from,
-      apiKey: credentials.apiKey,
-      apiSecret: credentials.secretKey,
+      from: from as string,
+      apiKey: credentials.apiKey as string,
+      apiSecret: credentials.secretKey as string,
     };
 
     this.provider = new MailjetEmailProvider(config);

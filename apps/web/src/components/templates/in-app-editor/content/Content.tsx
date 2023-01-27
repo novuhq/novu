@@ -1,7 +1,7 @@
 import { RefObject } from 'react';
 import { MantineTheme, Textarea } from '@mantine/core';
 import { colors } from '../../../../design-system';
-import { IEmailBlock } from '@novu/shared/src';
+import { IEmailBlock } from '@novu/shared';
 import { FieldErrors, FieldValues } from 'react-hook-form';
 import styled from '@emotion/styled';
 
@@ -37,6 +37,7 @@ export function Content(props: IContentProps) {
             width: '100%',
             outline: 'none',
             backgroundColor: 'transparent',
+            overflowWrap: 'anywhere',
             ...(props.readonly
               ? {
                   backgroundColor: props.theme?.colorScheme === 'dark' ? colors.B20 : colors.B98,

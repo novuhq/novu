@@ -1,9 +1,10 @@
+import styled from '@emotion/styled';
 import { Container, Group, useMantineColorScheme } from '@mantine/core';
 import { Prism } from '@mantine/prism';
-import styled from '@emotion/styled';
-
 import { Button, colors, Text } from '../../design-system';
 import { Close } from '../../design-system/icons/actions/Close';
+import { When } from '../utils/When';
+import { ExecutionDetailsConditions } from './ExecutionDetailsConditions';
 
 const ExecutionDetailShowRawWrapper = styled(Container)`
   display: flex;
@@ -67,10 +68,12 @@ export const ExecutionDetailRawSnippet = ({ raw, onClose }) => {
       fontWeight: 400,
       color: `${colors.B60} !important`,
       backgroundColor: 'transparent !important',
-      border: ` 1px solid ${theme.colorScheme === 'dark' ? colors.B70 : colors.B30}`,
+      border: `1px solid ${theme.colorScheme === 'dark' ? colors.B70 : colors.B30}`,
       borderRadius: '7px',
     },
   };
+
+  const parsedValue = JSON.parse(raw);
 
   return (
     <ExecutionDetailShowRawWrapper>
@@ -80,6 +83,9 @@ export const ExecutionDetailRawSnippet = ({ raw, onClose }) => {
           <Close />
         </CloseButton>
       </Group>
+      <When truthy={parsedValue && parsedValue.conditions && parsedValue.conditions.length}>
+        <ExecutionDetailsConditions conditions={parsedValue.conditions} />
+      </When>
       <Prism
         colorScheme={theme.colorScheme}
         mt={5}
@@ -87,7 +93,7 @@ export const ExecutionDetailRawSnippet = ({ raw, onClose }) => {
         data-test-id="execution-detail-raw-snippet"
         language="json"
       >
-        {JSON.stringify(JSON.parse(raw), null, 2)}
+        {JSON.stringify(parsedValue, null, 2)}
       </Prism>
     </ExecutionDetailShowRawWrapper>
   );

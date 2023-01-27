@@ -77,8 +77,6 @@ export async function initCommand() {
       const user = config.getDecodedToken();
 
       analytics.identify(user);
-      analytics.alias({ previousId: anonymousId, userId: user._id });
-
       if (result === 'visitDashboard') {
         await handleExistingSession(result, config);
 

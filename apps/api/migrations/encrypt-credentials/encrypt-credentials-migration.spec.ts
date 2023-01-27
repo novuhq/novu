@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { encryptOldCredentialsMigration } from './encrypt-credentials-migration';
-import { UserSession } from '@novu/testing/src';
+import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IntegrationRepository } from '@novu/dal';
 

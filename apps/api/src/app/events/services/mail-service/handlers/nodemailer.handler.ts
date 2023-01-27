@@ -12,7 +12,7 @@ export class NodemailerHandler extends BaseHandler {
       from: string;
       host: string;
       port: number;
-      secure: boolean;
+      secure?: boolean;
       user: string;
       password: string;
       dkim: {
@@ -21,16 +21,16 @@ export class NodemailerHandler extends BaseHandler {
         privateKey: string;
       };
     } = {
-      from,
-      host: credentials.host,
+      from: from as string,
+      host: credentials.host as string,
       port: Number(credentials.port),
-      secure: credentials.secure,
-      user: credentials.user,
-      password: credentials.password,
+      secure: credentials.secure as boolean,
+      user: credentials.user as string,
+      password: credentials.password as string,
       dkim: {
-        domainName: credentials.domain,
-        keySelector: credentials.accountSid,
-        privateKey: credentials.secretKey,
+        domainName: credentials.domain as string,
+        keySelector: credentials.accountSid as string,
+        privateKey: credentials.secretKey as string,
       },
     };
 

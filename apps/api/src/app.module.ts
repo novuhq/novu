@@ -1,4 +1,4 @@
-import { DynamicModule, HttpException, Logger, Module, OnModuleInit } from '@nestjs/common';
+import { DynamicModule, HttpException, Module, Logger, Provider } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -26,11 +26,14 @@ import { IntegrationModule } from './app/integrations/integrations.module';
 import { ChangeModule } from './app/change/change.module';
 import { SubscribersModule } from './app/subscribers/subscribers.module';
 import { FeedsModule } from './app/feeds/feeds.module';
+import { LayoutsModule } from './app/layouts/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
 import { TopicsModule } from './app/topics/topics.module';
+import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+  InboundParseModule,
   OrganizationModule,
   SharedModule,
   UserModule,
@@ -51,12 +54,13 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   ChangeModule,
   SubscribersModule,
   FeedsModule,
+  LayoutsModule,
   MessagesModule,
   PartnerIntegrationsModule,
   TopicsModule,
 ];
 
-const providers = [];
+const providers: Provider[] = [];
 
 if (process.env.SENTRY_DSN) {
   modules.push(RavenModule);

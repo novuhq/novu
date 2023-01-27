@@ -1,5 +1,13 @@
-import { StepTypeEnum, IPreferenceChannels, DigestTypeEnum, DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
-import { IEmailBlock, NotificationTemplateEntity, StepFilter, ITemplateVariable } from '@novu/dal';
+import {
+  IEmailBlock,
+  ITemplateVariable,
+  StepTypeEnum,
+  IPreferenceChannels,
+  DigestTypeEnum,
+  DigestUnitEnum,
+  DelayTypeEnum,
+} from '@novu/shared';
+import { NotificationTemplateEntity, StepFilter } from '@novu/dal';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 'steps'> {
@@ -17,6 +25,10 @@ export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 
     variables?: ITemplateVariable[];
     name?: string;
     type: StepTypeEnum;
+    replyCallback?: {
+      active: boolean;
+      url: string;
+    };
     metadata?: {
       amount?: number;
       unit?: DigestUnitEnum;

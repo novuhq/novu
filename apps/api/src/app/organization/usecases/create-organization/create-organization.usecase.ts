@@ -1,6 +1,8 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 import { MemberRoleEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../environments/usecases/create-environment/create-environment.usecase';
 import { GetOrganizationCommand } from '../get-organization/get-organization.command';
@@ -9,7 +11,7 @@ import { AddMemberCommand } from '../membership/add-member/add-member.command';
 import { AddMember } from '../membership/add-member/add-member.usecase';
 import { CreateOrganizationCommand } from './create-organization.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -31,6 +33,7 @@ export class CreateOrganization {
     organization.name = command.name;
 
     const user = await this.userRepository.findById(command.userId);
+    if (!user) throw new ApiException('User not found');
 
     const createdOrganization = await this.organizationRepository.create(organization);
 
@@ -49,6 +52,7 @@ export class CreateOrganization {
         organizationId: createdOrganization._id,
       })
     );
+
     await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
         userId: user._id,
@@ -71,6 +75,6 @@ export class CreateOrganization {
       })
     );
 
-    return organizationAfterChanges;
+    return organizationAfterChanges as OrganizationEntity;
   }
 }

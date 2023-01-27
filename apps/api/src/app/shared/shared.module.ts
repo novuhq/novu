@@ -12,6 +12,7 @@ import {
   NotificationGroupRepository,
   MessageTemplateRepository,
   MemberRepository,
+  LayoutRepository,
   LogRepository,
   IntegrationRepository,
   ChangeRepository,
@@ -21,7 +22,8 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { AnalyticsService } from './services/analytics/analytics.service';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { QueueService } from './services/queue';
 import {
   AzureBlobStorageService,
@@ -30,6 +32,7 @@ import {
   StorageService,
 } from './services/storage/storage.service';
 import { CacheService, InvalidateCacheService } from './services/cache';
+import { ConnectionOptions } from 'tls';
 
 const DAL_MODELS = [
   UserRepository,
@@ -43,6 +46,7 @@ const DAL_MODELS = [
   MessageTemplateRepository,
   NotificationGroupRepository,
   MemberRepository,
+  LayoutRepository,
   LogRepository,
   IntegrationRepository,
   ChangeRepository,
@@ -80,6 +84,7 @@ const cacheService = {
       keepAlive: process.env.REDIS_CACHE_KEEP_ALIVE,
       family: process.env.REDIS_CACHE_FAMILY,
       keyPrefix: process.env.REDIS_CACHE_KEY_PREFIX,
+      tls: process.env.REDIS_CACHE_SERVICE_TLS as ConnectionOptions,
     });
   },
 };
@@ -109,7 +114,7 @@ const PROVIDERS = [
   {
     provide: ANALYTICS_SERVICE,
     useFactory: async () => {
-      const analyticsService = new AnalyticsService();
+      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
 
       await analyticsService.initialize();
 

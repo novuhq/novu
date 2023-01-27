@@ -14,9 +14,9 @@ import {
   IPreferenceChannels,
   BuilderFieldType,
   BuilderGroupValues,
-  BuilderFieldOperator,
   ActorTypeEnum,
   ChannelCTATypeEnum,
+  FilterParts,
 } from '@novu/shared';
 
 import { createTemplate, updateTemplate, deleteTemplateById } from '../../api/templates';
@@ -95,13 +95,16 @@ export function useTemplateController(templateId: string) {
       };
 
       formValues.steps = (template.steps as StepEntity[]).map((item) => {
-        if (item.template.type === StepTypeEnum.EMAIL && item.template?.contentType === 'customHtml') {
+        if (item.template.type === StepTypeEnum.EMAIL) {
           return {
             ...item,
             template: {
               ...item.template,
-              htmlContent: item.template.content as string,
-              content: [],
+              layoutId: item.template._layoutId || '',
+              ...(item.template?.contentType === 'customHtml' && {
+                htmlContent: item.template.content as string,
+                content: [],
+              }),
             },
           };
         }
@@ -300,12 +303,7 @@ export interface StepEntity {
 
     value?: BuilderGroupValues;
 
-    children?: {
-      on?: 'payload' | 'subscriber';
-      field?: string;
-      value?: string;
-      operator?: BuilderFieldOperator;
-    }[];
+    children?: FilterParts[];
   }[];
 
   active: boolean;

@@ -25,7 +25,7 @@ export class ProcessSubscriberCommand extends EnvironmentWithUserCommand {
   templateId: string;
 
   @IsOptional()
-  actor: ISubscribersDefine;
+  actor?: ISubscribersDefine | null;
 
   @IsOptional()
   template?: NotificationTemplateEntity;

@@ -1,6 +1,6 @@
 {
   "name": "@novu/docs",
-  "version": "0.0.0",
+  "version": "0.11.0",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
@@ -38,7 +38,7 @@
     "react-dom": "^17.0.1",
     "sass": "^1.51.0",
     "sharp": "^0.30.6",
-    "styled-components": "5.3.5",
+    "styled-components": "5.3.6",
     "stylelint-config-css-modules": "^4.1.0",
     "url-loader": "^4.1.1"
   },
@@ -46,13 +46,13 @@
     "@docusaurus/module-type-aliases": "2.0.0-beta.20",
     "@tsconfig/docusaurus": "^1.0.5",
     "@types/react": "^17.0.14",
-    "@types/react-helmet": "6.1.5",
+    "@types/react-helmet": "6.1.6",
     "@types/react-router-dom": "5.3.3",
     "eslint-config-airbnb-typescript": "^17.0.0",
     "eslint-config-prettier": "^8.5.0",
     "husky": "^8.0.0",
     "lint-staged": "^12.4.1",
-    "markdownlint-cli": "^0.31.1",
+    "markdownlint-cli": "^0.33.0",
     "prettier": "2.6.2",
     "sass-loader": "^13.0.0",
     "stylelint": "^14.8.2",

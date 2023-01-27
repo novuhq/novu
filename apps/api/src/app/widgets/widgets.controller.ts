@@ -1,6 +1,21 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
+import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { SessionInitializeRequestDto } from './dtos/session-initialize-request.dto';
 import { InitializeSessionCommand } from './usecases/initialize-session/initialize-session.command';
 import { InitializeSession } from './usecases/initialize-session/initialize-session.usecase';
@@ -9,12 +24,9 @@ import { GetNotificationsFeedCommand } from './usecases/get-notifications-feed/g
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { GetOrganizationData } from './usecases/get-organization-data/get-organization-data.usecase';
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
-import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
-import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecase';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
-import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
 import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
 import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
@@ -151,6 +163,7 @@ export class WidgetsController {
     @Param('messageId') messageId: string
   ): Promise<MessageEntity> {
     const messageIds = this.toArray(messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -175,6 +188,7 @@ export class WidgetsController {
     @Param('messageId') messageId: string | string[]
   ): Promise<MessageEntity[]> {
     const messageIds = this.toArray(messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -197,6 +211,7 @@ export class WidgetsController {
     @Body() body: { messageId: string | string[]; mark: { seen?: boolean; read?: boolean } }
   ): Promise<MessageEntity[]> {
     const messageIds = this.toArray(body.messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -304,13 +319,13 @@ export class WidgetsController {
     };
   }
 
-  private toArray(param: string[] | string): string[] {
-    let paramArray: string[];
+  private toArray(param: string[] | string | undefined): string[] | undefined {
+    let paramArray: string[] | undefined = undefined;
 
     if (param) {
       paramArray = Array.isArray(param) ? param : param.split(',');
     }
 
-    return paramArray;
+    return paramArray as string[];
   }
 }

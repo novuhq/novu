@@ -51,7 +51,10 @@ export class UpdateSubscriberChannel {
       await this.addChannelToSubscriber(updatePayload, foundIntegration, command, foundSubscriber);
     }
 
-    return await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    return (await this.subscriberRepository.findBySubscriberId(
+      command.environmentId,
+      command.subscriberId
+    )) as SubscriberEntity;
   }
 
   private async addChannelToSubscriber(
@@ -113,10 +116,10 @@ export class UpdateSubscriberChannel {
     };
 
     if (command.credentials != null) {
-      if (command.credentials.webhookUrl != null) {
+      if (command.credentials.webhookUrl != null && updatePayload.credentials) {
         updatePayload.credentials.webhookUrl = command.credentials.webhookUrl;
       }
-      if (command.credentials.deviceTokens != null) {
+      if (command.credentials.deviceTokens != null && updatePayload.credentials) {
         updatePayload.credentials.deviceTokens = command.credentials.deviceTokens;
       }
     }

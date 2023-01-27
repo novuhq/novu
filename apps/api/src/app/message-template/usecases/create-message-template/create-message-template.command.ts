@@ -30,15 +30,19 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   content: string | IEmailBlock[];
 
   @IsOptional()
-  contentType: MessageTemplateContentType;
+  contentType?: MessageTemplateContentType;
 
   @IsOptional()
   @ValidateNested()
-  cta: IMessageCTA;
+  cta?: IMessageCTA;
 
   @IsOptional()
   @IsString()
-  feedId: string;
+  feedId?: string;
+
+  @IsOptional()
+  @IsString()
+  layoutId?: string | null;
 
   @IsMongoId()
   parentChangeId: string;
