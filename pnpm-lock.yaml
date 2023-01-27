@@ -517,6 +517,8 @@ importers:
       lodash.clonedeep: ^4.5.0
       lodash.get: ^4.3.2
       lodash.set: ^4.3.2
+      logrocket: ^3.0.1
+      logrocket-react: ^5.0.1
       nodemon: ^2.0.15
       polished: ^4.1.3
       react: ^17.0.1
@@ -602,6 +604,8 @@ importers:
       lodash.clonedeep: 4.5.0
       lodash.get: 4.4.2
       lodash.set: 4.3.2
+      logrocket: 3.0.1
+      logrocket-react: 5.0.1_yo3aqogrrsw23ory4s7zu7wcpm
       polished: 4.1.4
       react: 17.0.2
       react-ace: 9.5.0_sfoxds7t5ydpegc3knd667wn6m
@@ -30623,6 +30627,7 @@ packages:
       typescript: 4.7.2
     transitivePeerDependencies:
       - supports-color
+    dev: true
 
   /@typescript-eslint/parser/5.31.0_usgz66ey7ky77b5itadjl3r2ua:
     resolution: {integrity: sha512-UStjQiZ9OFTFReTrN+iGrC6O/ko9LVDhreEK5S3edmXgR396JGq7CoX2TWIptqt/ESzU2iRKXAHfSF2WJFcWHw==}
@@ -30923,6 +30928,7 @@ packages:
       typescript: 4.7.2
     transitivePeerDependencies:
       - supports-color
+    dev: true
 
   /@typescript-eslint/typescript-estree/5.31.0_typescript@4.7.4:
     resolution: {integrity: sha512-3S625TMcARX71wBc2qubHaoUwMEn+l9TCsaIzYI/ET31Xm2c9YQ+zhGgpydjorwQO9pLfR/6peTzS/0G3J/hDw==}
@@ -40351,7 +40357,7 @@ packages:
       eslint-import-resolver-webpack:
         optional: true
     dependencies:
-      '@typescript-eslint/parser': 5.31.0_uqvic3pjifzbwcy5z3ixu3wwru
+      '@typescript-eslint/parser': 5.31.0_usgz66ey7ky77b5itadjl3r2ua
       debug: 3.2.7
       eslint-import-resolver-node: 0.3.6
       find-up: 2.1.0
@@ -49489,6 +49495,22 @@ packages:
     resolution: {integrity: sha512-G6A/nJLRgWOuuwdNuA6koovfEV1YpqqAG4pRUlFaz3jj2QNZ8M4vBqnVA+HBTmU/AMNUtlOsMmSpF6NyOjztbA==}
     engines: {node: '>= 0.6.0'}
 
+  /logrocket-react/5.0.1_yo3aqogrrsw23ory4s7zu7wcpm:
+    resolution: {integrity: sha512-d5RAi1giur9Yv7/lDK/c2S1hviopN5K1XMMpfpSFRDG3Rr/j5RmGuvNHdXNTJUwGuxTVrpnKUOB43ceQMJfO1Q==}
+    peerDependencies:
+      logrocket: '>=2.0'
+      react: '>=17.0'
+      react-dom: '>=17.0'
+    dependencies:
+      logrocket: 3.0.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+    dev: false
+
+  /logrocket/3.0.1:
+    resolution: {integrity: sha512-jOWG+jEzobKVxGytzZ+4KGm2kiMQMRTHab2uDWQyVZcHfEF38BlCH1yjQVY4LCmuQUwZitP9biMzJZnyUQ0dtQ==}
+    dev: false
+
   /long/4.0.0:
     resolution: {integrity: sha512-XsP+KhQif4bjX1kbuSiySJFNAehNxgLb6hPRGJ9QsUr8ajHkuXGdrHmFUTUUXhDwVX2R5bY4JNZEwbUiMhV+MA==}
     dev: false
@@ -53374,7 +53396,7 @@ packages:
     resolution: {integrity: sha512-2Rb3vm+EXble/sMXNSu6eoBx8e79gKqhNq9F5ZWW6ERNCTE/Q0wQNne5541tE5vKjfM8hpNCYL+LGc1YTfI0dg==}
     engines: {node: '>=6'}
     dependencies:
-      ts-pnp: 1.2.0_typescript@4.3.5
+      ts-pnp: 1.2.0_typescript@4.5.4
     transitivePeerDependencies:
       - typescript
     dev: true
@@ -54001,7 +54023,7 @@ packages:
       cosmiconfig: 7.0.1
       klona: 2.0.5
       postcss: 8.4.14
-      semver: 7.3.7
+      semver: 7.3.8
       webpack: 5.74.0
 
   /postcss-loader/6.2.1_xvg4ntyrrwt57qzvggqcbeozu4:
@@ -58345,7 +58367,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.77.2
       serialize-javascript: 4.0.0
-      terser: 5.12.1
+      terser: 5.15.1
 
   /rollup-plugin-terser/7.0.2_rollup@3.7.3:
     resolution: {integrity: sha512-w3iIaU4OxcF52UUXiZNsNeuXIMDvFrr+ZXK6bFZ0Q60qyVfq4uLptoS4bbq3paG3x216eQllFZX7zt6TIImguQ==}
@@ -62679,6 +62701,7 @@ packages:
     dependencies:
       tslib: 1.14.1
       typescript: 4.7.2
+    dev: true
 
   /tsutils/3.21.0_typescript@4.7.4:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
@@ -63331,7 +63354,7 @@ packages:
       is-yarn-global: 0.3.0
       latest-version: 5.1.0
       pupa: 2.1.1
-      semver: 7.3.7
+      semver: 7.3.8
       semver-diff: 3.1.1
       xdg-basedir: 4.0.0
 
