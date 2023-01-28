@@ -33,6 +33,8 @@ import { IGetOrganizationsDto } from './dtos/get-organizations.dto';
 import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
 import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-organization.command';
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
+import { UpdateOrganizationCommand } from './usecases/update-organization/update-organization-command';
+import { UpdateOrganization } from './usecases/update-organization/update-organization.usecase';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -47,7 +49,8 @@ export class OrganizationController {
     private changeMemberRoleUsecase: ChangeMemberRole,
     private updateBrandingDetailsUsecase: UpdateBrandingDetails,
     private getOrganizationsUsecase: GetOrganizations,
-    private getMyOrganizationUsecase: GetMyOrganization
+    private getMyOrganizationUsecase: GetMyOrganization,
+    private updateOrganizationUsecase: UpdateOrganization
   ) {}
 
   @Post('/')
@@ -151,6 +154,17 @@ export class OrganizationController {
         fontColor: body.fontColor,
         fontFamily: body.fontFamily,
         contentBackground: body.contentBackground,
+      })
+    );
+  }
+
+  @Put('/')
+  async updateOrganization(@UserSession() user: IJwtPayload, @Body() body: { name: string }) {
+    return await this.updateOrganizationUsecase.execute(
+      UpdateOrganizationCommand.create({
+        name: body.name,
+        userId: user._id,
+        id: user.organizationId,
       })
     );
   }
