@@ -420,7 +420,7 @@ class Mailin extends events.EventEmitter {
           _this.emit('error', connection, error);
         });
       } catch (e) {
-        logger.error(e);
+        logger.error('Exception occurred while performing onData callback', e);
       }
     }
 
