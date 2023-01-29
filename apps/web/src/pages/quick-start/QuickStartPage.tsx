@@ -9,7 +9,7 @@ import PageMeta from '../../components/layout/components/PageMeta';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { updateUserOnBoarding } from '../../api/user';
 import { OnboardingSteps } from './components/OnboardingSteps';
-import { useSegment } from '../../hooks/use-segment';
+import { useSegment } from '../../hooks/useSegment';
 
 function QuickStart() {
   const segment = useSegment();

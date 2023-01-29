@@ -14,8 +14,8 @@ import { ArrowDown, Check, Copy, Invite } from '../../../design-system/icons';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import useStyles from '../../../design-system/select/Select.styles';
 import { getOrganizationMembers } from '../../../api/organization';
-import { useProcessVariables } from '../../../hooks/use-process-variables';
-import { useIntegrationLimit } from '../../../api/hooks/integrations/use-integration-limit';
+import { useProcessVariables } from '../../../hooks/useProcessVariables';
+import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
 
 export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
   const { currentUser } = useContext(AuthContext);

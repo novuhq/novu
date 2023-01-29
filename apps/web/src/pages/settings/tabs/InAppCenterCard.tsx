@@ -4,7 +4,7 @@ import { Input } from '@mantine/core';
 
 import { colors, Text } from '../../../design-system';
 import { WIDGET_EMBED_PATH } from '../../../config';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { Security } from './components/Security';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 

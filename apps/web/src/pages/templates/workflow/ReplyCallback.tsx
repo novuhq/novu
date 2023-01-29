@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Switch, Text } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { When } from '../../../components/utils/When';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';

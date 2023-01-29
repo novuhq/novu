@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import styled from '@emotion/styled';
 import { useMantineColorScheme } from '@mantine/core';
 import { BuilderFieldOperator, FilterParts } from '@novu/shared';
-import { StepEntity } from '../../../components/templates/use-template-controller.hook';
+import { StepEntity } from '../../../components/templates/useTemplateController';
 import { colors } from '../../../design-system';
 
 export const Filters = ({ step }: { step: StepEntity | null }) => {
