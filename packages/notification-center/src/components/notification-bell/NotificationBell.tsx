@@ -5,7 +5,7 @@ import { cx, css } from '@emotion/css';
 
 import { colors, ColorScheme } from '../../shared/config/colors';
 import { Bell as BellIcon, GradientDot } from '../../shared/icons';
-import { useUnseenCount } from '../../hooks';
+import { useNotifications } from '../../hooks';
 import { getDefaultBellColors } from '../../utils/defaultTheme';
 import type { ISvgStopColor } from '../../store/novu-theme.context';
 import { useStyles } from '../../store/styles';
@@ -20,7 +20,7 @@ export interface INotificationBellProps {
 }
 
 export function NotificationBell(props: INotificationBellProps) {
-  const { unseenCount } = useUnseenCount();
+  const { unseenCount } = useNotifications();
   const { bellColors } = getDefaultBellColors({
     bellColors: {
       unseenBadgeColor: props?.unseenBadgeColor,

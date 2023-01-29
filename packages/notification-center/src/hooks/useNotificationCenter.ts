@@ -7,7 +7,6 @@ export function useNotificationCenter(): INotificationCenterContext {
   const {
     onUrlChange,
     onNotificationClick,
-    onUnseenCountChanged,
     onActionClick,
     isLoading,
     header,
@@ -23,7 +22,6 @@ export function useNotificationCenter(): INotificationCenterContext {
   return {
     onUrlChange,
     onNotificationClick,
-    onUnseenCountChanged,
     onActionClick,
     isLoading,
     header,

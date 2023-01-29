@@ -4,14 +4,16 @@ import { Text } from '../../design-system';
 import { DoubleArrowRight } from '../../design-system/icons/arrows/CircleArrowRight';
 import { useNavigate } from 'react-router-dom';
 
-export function LackIntegrationError({ channelType }: { channelType: string }) {
+export function LackIntegrationError({ channelType, text }: { channelType: string; text?: string }) {
   const navigate = useNavigate();
 
   return (
     <>
       <WarningMessage>
         <Text>
-          {`Looks like you haven’t configured your ${channelType} provider yet, this channel will be disabled until you configure it.`}
+          {text
+            ? text
+            : `Looks like you haven’t configured your ${channelType} provider yet, this channel will be disabled until you configure it.`}
         </Text>
         <DoubleArrowRight onClick={() => navigate('/integrations')} />
       </WarningMessage>

@@ -22,6 +22,7 @@ import {
   SubscriberRepository,
   LayoutRepository,
 } from '@novu/dal';
+import { ConnectionOptions } from 'tls';
 
 import { NotificationTemplateService } from './notification-template.service';
 import { TestServer, testServer } from './test-server.service';
@@ -43,13 +44,16 @@ const queue = new Queue('trigger-handler', {
     password: process.env.REDIS_PASSWORD,
     connectTimeout: 50000,
     keepAlive: 30000,
+    tls: process.env.REDIS_TLS as ConnectionOptions,
   },
   defaultJobOptions: {
     removeOnComplete: true,
   },
 });
 
-queue.obliterate({ force: true });
+if (process.env.NODE_ENV === 'test') {
+  queue.obliterate({ force: true });
+}
 
 const EMAIL_BLOCK: IEmailBlock[] = [
   {
