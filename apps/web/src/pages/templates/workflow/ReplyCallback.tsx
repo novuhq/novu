@@ -23,7 +23,7 @@ export const ReplyCallback = ({ control, index, errors }) => {
         <LackConfigurationError
           text={
             'Looks like you haven’t configured your domain mx record or ' +
-            'whitelisted your domain under email settings yet.'
+            'added your domain to the allowed domain list under email settings yet.'
           }
           redirectTo={'/settings'}
         />

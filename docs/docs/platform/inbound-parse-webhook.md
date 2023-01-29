@@ -14,10 +14,10 @@ multipart/form-data format.
    - Log in to your domain host's website and navigate to the MX Records page.
    - Create a new MX record for the subdomain you want to process incoming email (e.g. parse.yourdomain.com).
    - Assign the MX record a priority of 10 and point it to the specified inbound mail server that located on the admin dashboard on the Email Settings.
-2. Whitelist Domain:
+2. Add Domain to allowed list:
    - Log in to the dashboard.
    - Navigate to Email Settings in Settings.
-   - Add your domain to the whitelist.
+   - Add your domain to the allowed list.
 3. Enable Inbound Parse and Set Webhook URL:
    - Log in to the dashboard.
    - Navigate to the Notification Workflow Editor.

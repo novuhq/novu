@@ -108,10 +108,10 @@ export const EmailSettings = () => {
                 data-test-id="inbound-parse-domain"
                 disabled={readonly}
                 value={field.value || ''}
-                label={'Whitelisted Domain'}
+                label={'Allowed Domain'}
                 description={
                   'To ensure proper delivery of correspondence, we request that you provide us with your domain so ' +
-                  'that it can be added to our whitelist'
+                  'that it can be added to our allowed domains list'
                 }
                 placeholder="Domain goes here..."
               />
