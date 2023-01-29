@@ -91,6 +91,7 @@ export enum SmsEventStatusEnum {
   SENT = 'sent',
   FAILED = 'failed',
   UNDELIVERED = 'undelivered',
+  REJECTED = 'rejected',
 }
 
 export interface IEventBody {
