@@ -48,7 +48,7 @@ const schema = z
                 content: z.any(),
                 subject: z.any(),
                 title: z.any(),
-                layoutId: z.any(),
+                layoutId: z.any().optional(),
               })
               .passthrough()
               .superRefine((template: any, ctx) => {
@@ -77,13 +77,6 @@ const schema = z
                       inclusive: true,
                       message: 'Required - Email Subject',
                       path: ['subject'],
-                    });
-                  }
-                  if (!template.layoutId) {
-                    ctx.addIssue({
-                      code: z.ZodIssueCode.custom,
-                      message: 'Required - Layout',
-                      path: ['layoutId'],
                     });
                   }
                 }
