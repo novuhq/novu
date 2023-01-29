@@ -8,12 +8,12 @@ Novu allows the creation of layouts - a specific html design or structure to wra
 Layouts can be manipulated and assigned to new and existing templates within the Novu platform,
 allowing users to create, manage, and assign these layouts to templates, so they can be reused to structure the appearance of notifications sent through the platform.
 
-By default, a novu layout will be created and assigned as the organisation's default layout. At any time, you can choose any of your layouts as the default for your organisation.
+By default, a novu layout will be created and assigned as the organization's default layout. At any time, you can choose any of your layouts as the default for your organisation.
 All new email templates will be assigned the default layout unless assigned a different one through the email editor.
 
 ## Manage Layouts
 
-You can find and manage your organisation's layouts in `Brand -> Layouts`
+You can find and manage your organization's layouts in `Brand -> Layouts`
 
    <div align="center">
      <picture>
@@ -27,7 +27,7 @@ You can find and manage your organisation's layouts in `Brand -> Layouts`
 You can create new or edit existing layouts through the layout editor.
 
 - You can create any html code to structure your layout.
-- Set a layout as default for your organisation. Notice there could only be one default layout at a time.
+- Set a layout as default for your organization. Notice there could only be one default layout at a time.
 - Manage layout variables - set default values or required variables.
 
    <div align="center">
