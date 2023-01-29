@@ -4,11 +4,11 @@ sidebar_position: 11
 
 # Layouts
 
-Novu allows the creation of layouts - a specific html design or structure to wrap content of email notifications.
+Novu allows the creation of layouts - a specific HTML design or structure to wrap content of email notifications.
 Layouts can be manipulated and assigned to new and existing templates within the Novu platform,
 allowing users to create, manage, and assign these layouts to templates, so they can be reused to structure the appearance of notifications sent through the platform.
 
-By default, a novu layout will be created and assigned as the organization's default layout. At any time, you can choose any of your layouts as the default for your organization.
+By default, a Novu layout will be created and assigned as the organization's default layout. At any time, you can choose any of your layouts as the default for your organization.
 All new email templates will be assigned the default layout unless assigned a different one through the email editor.
 
 ## Manage Layouts
