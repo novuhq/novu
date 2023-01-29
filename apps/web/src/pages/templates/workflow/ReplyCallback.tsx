@@ -21,7 +21,10 @@ export const ReplyCallback = ({ control, index, errors }) => {
       <ReplyCallbackSwitch index={index} control={control} />
       <When truthy={!domainMxRecordConfigured && replyCallbackActive}>
         <LackConfigurationError
-          text={'Looks like you haven’t configured your domain mx record or routing under email settings yet.'}
+          text={
+            'Looks like you haven’t configured your domain mx record or ' +
+            'added your domain to the allowed domain list under email settings yet.'
+          }
           redirectTo={'/settings'}
         />
       </When>
