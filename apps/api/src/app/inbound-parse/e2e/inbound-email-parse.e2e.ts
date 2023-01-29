@@ -71,13 +71,62 @@ describe('Should handler the new arrived mail', () => {
     expect(payload.notification).to.ok;
     expect(payload.templateIdentifier).to.ok;
   });
-  async function triggerEmail() {
+
+  it('should not send webhook request with missing transactionId', async () => {
+    const message = await triggerEmail();
+
+    const mail = getMailData(message, false);
+
+    const getStub = sandbox.stub(axios, 'post').resolves();
+
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+
+    sinon.assert.notCalled(getStub);
+  });
+
+  it('should not send webhook request with when domain white list', async () => {
+    const message = await triggerEmail(true, false);
+
+    const mail = getMailData(message);
+
+    const getStub = sandbox.stub(axios, 'post').resolves();
+
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+
+    sinon.assert.notCalled(getStub);
+  });
+
+  it('should not send webhook request when missing replay callback url', async () => {
+    const message = await triggerEmail(true, true, true, false);
+
+    const mail = getMailData(message);
+
+    const getStub = sandbox.stub(axios, 'post').resolves();
+
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+
+    sinon.assert.notCalled(getStub);
+  });
+
+  async function triggerEmail(
+    mxRecordConfigured = true,
+    inboundParseDomain = true,
+    replyCallbackActive = true,
+    replyCallbackUrl = true
+  ) {
     await environmentRepository.update(
       { _id: session.environment._id, _organizationId: session.organization._id },
-      { $set: { dns: { mxRecordConfigured: true, inboundParseDomain: USER_MAIL_DOMAIN } } }
+      {
+        $set: {
+          dns: {
+            mxRecordConfigured: mxRecordConfigured,
+            inboundParseDomain: inboundParseDomain ? USER_MAIL_DOMAIN : undefined,
+          },
+        },
+      }
     );
 
-    const template = await createTemplate(session);
+    const template = await createTemplate(session, replyCallbackActive, replyCallbackUrl);
 
     await sendTrigger(session, template, subscriber.subscriberId);
 
@@ -91,20 +140,21 @@ describe('Should handler the new arrived mail', () => {
     });
   }
 
-  function getMailData(message) {
+  function getMailData(message, transactionId = true, environmentId = true) {
     const mail = JSON.parse(mailData) as InboundEmailParseCommand;
-
-    mail.to[0].address = `parse+${message.transactionId}-nv-e=${message._environmentId}@${USER_MAIL_DOMAIN}`;
+    mail.to[0].address = `parse+${transactionId ? message.transactionId : ''}-nv-e=${
+      environmentId ? message._environmentId : ''
+    }@${USER_MAIL_DOMAIN}`;
 
     return mail;
   }
 });
 
-async function createTemplate(session: UserSession) {
+async function createTemplate(session: UserSession, replyCallbackActive = true, replyCallbackUrl = true) {
   const test: Partial<CreateTemplatePayload> = {
     steps: [
       {
-        replyCallback: { active: true, url: USER_PARSE_WEBHOOK },
+        replyCallback: { active: replyCallbackActive, url: replyCallbackUrl ? USER_PARSE_WEBHOOK : '' },
         type: StepTypeEnum.EMAIL,
         name: 'Message Name',
         subject: 'Test email {{nested.subject}}',
