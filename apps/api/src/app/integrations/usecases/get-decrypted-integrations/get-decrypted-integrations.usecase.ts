@@ -38,7 +38,7 @@ export class GetDecryptedIntegrations {
         return integration;
       });
 
-    if (command.channelType === undefined) {
+    if (command.channelType === undefined || integrations.length > 0) {
       return integrations;
     }
 
@@ -47,9 +47,10 @@ export class GetDecryptedIntegrations {
         channelType: command.channelType,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
+        userId: command.userId,
       })
     );
 
-    return novuIntegration ? [novuIntegration] : integrations;
+    return novuIntegration ? [novuIntegration] : [];
   }
 }

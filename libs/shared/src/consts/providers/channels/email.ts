@@ -14,8 +14,9 @@ import {
   infobipEmailConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
-import { ChannelTypeEnum } from '../../../entities/message-template';
 import { EmailProviderIdEnum } from '../provider.enum';
+
+import { ChannelTypeEnum } from '../../../types';
 
 export const emailProviders: IProviderConfig[] = [
   {

@@ -1,5 +1,5 @@
 import {
-  BuilderFieldOperator,
+  FilterParts,
   BuilderFieldType,
   BuilderGroupValues,
   DigestUnitEnum,
@@ -81,6 +81,11 @@ export class NotificationStepEntity {
 
   active?: boolean;
 
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
+
   template?: MessageTemplateEntity;
 
   filters?: StepFilter[];
@@ -108,11 +113,5 @@ export class StepFilter {
 
   value: BuilderGroupValues;
 
-  children: {
-    field: string;
-    value: string;
-    operator: BuilderFieldOperator;
-    webhookUrl?: string;
-    on?: 'payload' | 'subscriber' | 'webhook';
-  }[];
+  children: FilterParts[];
 }

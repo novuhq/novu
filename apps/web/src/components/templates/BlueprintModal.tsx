@@ -8,16 +8,33 @@ import { When } from '../utils/When';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { errorMessage } from '../../utils/notifications';
 import { useEffect, useState } from 'react';
+import { updateUserOnBoarding } from '../../api/user';
+import { IUserEntity } from '@novu/shared';
+import { useSegment } from '../../hooks/useSegment';
 
 export function BlueprintModal() {
   const theme = useMantineTheme();
   const navigate = useNavigate();
+  const segment = useSegment();
   const onClose = () => {
+    segment.track('Blueprint canceled', {
+      blueprintId: localStorage.getItem('blueprintId'),
+    });
     localStorage.removeItem('blueprintId');
     navigate('/templates', {
       replace: true,
     });
   };
+
+  const { mutateAsync: updateOnBoardingStatus } = useMutation<
+    IUserEntity,
+    { error: string; message: string; statusCode: number },
+    { showOnBoarding: boolean }
+  >(({ showOnBoarding }) => updateUserOnBoarding(showOnBoarding));
+
+  async function disableOnboarding() {
+    await updateOnBoardingStatus({ showOnBoarding: false });
+  }
 
   const [blueprintId, setBluePrintId] = useState<undefined | string>();
 
@@ -39,6 +56,7 @@ export function BlueprintModal() {
     onSuccess: (template) => {
       localStorage.removeItem('blueprintId');
       if (template) {
+        disableOnboarding();
         navigate(`/templates/edit/${template?._id}?page=${ActivePageEnum.WORKFLOW}`, {
           replace: true,
         });

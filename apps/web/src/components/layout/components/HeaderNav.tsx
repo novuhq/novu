@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
-import { useLocalThemePreference } from '../../../hooks/use-localThemePreference';
+import { useLocalThemePreference } from '../../../hooks/useLocalThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
 import { INTERCOM_APP_ID } from '../../../config';
@@ -142,7 +142,7 @@ export function HeaderNav({}: Props) {
       >
         <Link to="/">
           <img
-            src={dark ? '/static/images/logo-formerly-dark-bg.png' : '/static/images/logo-formerly-light-bg.png'}
+            src={dark ? '/static/images/logo-light.png' : '/static/images/logo.png'}
             alt="logo"
             style={{ maxWidth: 150, maxHeight: 25 }}
           />

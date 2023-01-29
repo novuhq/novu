@@ -1,6 +1,6 @@
 {
   "name": "@novu/embed",
-  "version": "0.10.2",
+  "version": "0.11.0",
   "private": true,
   "description": "",
   "keywords": [],
@@ -102,7 +102,7 @@
     "coveralls": "^3.0.2",
     "cross-env": "^5.2.0",
     "cz-conventional-changelog": "^2.1.0",
-    "http-server": "^0.12.3",
+    "http-server": "^0.13.0",
     "husky": "^1.0.1",
     "jest": "^27.0.6",
     "jest-config": "^27.4.7",
@@ -112,7 +112,7 @@
     "prompt": "^1.0.0",
     "replace-in-file": "^3.4.2",
     "rimraf": "^2.6.2",
-    "rollup": "^0.67.0",
+    "rollup": "^0.68.0",
     "rollup-plugin-commonjs": "^9.1.8",
     "rollup-plugin-json": "^3.1.0",
     "rollup-plugin-node-resolve": "^3.4.0",
@@ -128,7 +128,7 @@
     "typescript": "4.3.5"
   },
   "dependencies": {
-    "@novu/notification-center": "^0.10.2",
+    "@novu/notification-center": "^0.11.0",
     "@types/iframe-resizer": "^3.5.8",
     "iframe-resizer": "^4.3.1"
   }

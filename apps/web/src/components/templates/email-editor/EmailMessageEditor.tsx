@@ -10,7 +10,7 @@ import { ContentRow } from './ContentRow';
 import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
-import { useIsMounted } from '../../../hooks/use-is-mounted';
+import { useIsMounted } from '../../../hooks/useIsMounted';
 
 export function EmailMessageEditor({
   onChange,
@@ -112,7 +112,7 @@ export function EmailMessageEditor({
   }
 
   function getBrandSettingsUrl(): string {
-    return '/settings';
+    return '/brand';
   }
 
   return (

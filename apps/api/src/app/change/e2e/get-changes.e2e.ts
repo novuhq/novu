@@ -1,7 +1,8 @@
-import { ChangeRepository } from '@novu/dal';
-import { EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
-import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { ChangeRepository } from '@novu/dal';
+import { EmailBlockTypeEnum, StepTypeEnum, FilterPartTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+
 import {
   CreateNotificationTemplateRequestDto,
   UpdateNotificationTemplateRequestDto,
@@ -37,6 +38,7 @@ describe('Get changes', () => {
               value: 'AND',
               children: [
                 {
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',

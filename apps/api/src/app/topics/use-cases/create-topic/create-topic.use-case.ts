@@ -31,8 +31,8 @@ export class CreateTopicUseCase {
 
   private mapToEntity(domainEntity: CreateTopicCommand): Omit<TopicEntity, '_id'> {
     return {
-      _environmentId: TopicRepository.convertStringToObjectId(domainEntity.environmentId),
-      _organizationId: TopicRepository.convertStringToObjectId(domainEntity.organizationId),
+      _environmentId: domainEntity.environmentId,
+      _organizationId: domainEntity.organizationId,
       key: domainEntity.key,
       name: domainEntity.name,
     };
@@ -41,9 +41,9 @@ export class CreateTopicUseCase {
   private mapFromEntity(topic: TopicEntity): TopicDto {
     return {
       ...topic,
-      _id: TopicRepository.convertObjectIdToString(topic._id),
-      _organizationId: TopicRepository.convertObjectIdToString(topic._organizationId),
-      _environmentId: TopicRepository.convertObjectIdToString(topic._environmentId),
+      _id: topic._id,
+      _organizationId: topic._organizationId,
+      _environmentId: topic._environmentId,
       subscribers: [],
     };
   }

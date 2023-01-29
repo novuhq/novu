@@ -30,8 +30,8 @@ describe('Filter topics - /topics (GET)', async () => {
 
     const topicSubscribersRepository = new TopicSubscribersRepository();
     const result = await topicSubscribersRepository.find({
-      _environmentId: TopicSubscribersRepository.convertStringToObjectId(session.environment._id),
-      _organizationId: TopicSubscribersRepository.convertStringToObjectId(session.organization._id),
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
       topicKey: secondTopicKey,
     });
 

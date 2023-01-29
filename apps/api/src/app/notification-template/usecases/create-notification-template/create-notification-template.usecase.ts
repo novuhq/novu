@@ -1,16 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { NotificationTemplateRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum, INotificationTemplateStep, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
+
+import { NotificationTemplateRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum, INotificationTemplateStep, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { CreateNotificationTemplateCommand } from './create-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
@@ -71,6 +72,7 @@ export class CreateNotificationTemplate {
           subject: message.template.subject,
           title: message.template.title,
           feedId: message.template.feedId,
+          layoutId: message.template.layoutId,
           preheader: message.template.preheader,
           parentChangeId,
           actor: message.template.actor,
@@ -86,6 +88,7 @@ export class CreateNotificationTemplate {
         metadata: message.metadata,
         active: message.active,
         shouldStopOnFail: message.shouldStopOnFail,
+        replyCallback: message.replyCallback,
       });
       parentStepId = stepId;
     }

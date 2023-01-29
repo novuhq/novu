@@ -1,10 +1,10 @@
 # Custom SMTP
 
-You can use the [Custom SMTP](https://nodemailer.com/about/) provider to send transactional emails through your custom SMTP server to your customers using the Novu Platform with a single API.
+You can use the Custom SMTP provider like [Nodemailer](https://nodemailer.com/about/) to send transactional emails through your custom SMTP server to your customers using the Novu Platform with a single API.
 
 ## Getting Started
 
-To use the Custom SMTP channel, you will need to have your personal SMTP server configured and add `host`, `port`, `user`, `password` to the Nodemailer integration on the Novu platform.
+To use the Custom SMTP channel, you will need to have your personal SMTP server configured and add `host`, `port`, `user`, `password` to the Custom SMTP integration on the Novu platform.
 
 You can also provide value **`true`** for `secure` field if you want the connection to be secure, and if not, leave it empty.
 

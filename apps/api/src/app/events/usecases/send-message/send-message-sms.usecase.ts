@@ -13,8 +13,7 @@ import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases';
 import { SmsFactory } from '../../services/sms-service/sms.factory';
 import { SendMessageCommand } from './send-message.command';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -63,6 +62,7 @@ export class SendMessageSms extends SendMessageBase {
         channelType: ChannelTypeEnum.SMS,
         findOne: true,
         active: true,
+        userId: command.userId,
       })
     );
 
@@ -86,13 +86,12 @@ export class SendMessageSms extends SendMessageBase {
       ...command.payload,
     };
 
-    let content = '';
+    let content: string | null = '';
 
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
-          customTemplate: smsChannel.template.content as string,
+          template: smsChannel.template.content as string,
           data: payload,
         })
       );
@@ -100,6 +99,10 @@ export class SendMessageSms extends SendMessageBase {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return;
+    }
+
+    if (!content) {
+      throw new ApiException(`Unexpected error: SMS content is missing`);
     }
 
     const phone = command.payload.phone || subscriber.phone;
@@ -263,7 +266,6 @@ export class SendMessageSms extends SendMessageBase {
         to: phone,
         from: integration.credentials.from,
         content,
-        attachments: null,
         id: message._id,
       });
 

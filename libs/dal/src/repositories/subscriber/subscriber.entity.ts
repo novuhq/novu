@@ -16,6 +16,8 @@ export class SubscriberEntity {
 
   avatar?: string;
 
+  locale?: string;
+
   subscriberId: ExternalSubscriberId;
 
   channels?: IChannelSettings[];
@@ -31,6 +33,10 @@ export class SubscriberEntity {
   updatedAt: string;
 
   __v?: number;
+
+  isOnline?: boolean;
+
+  lastOnlineAt?: string;
 }
 
 export class IChannelSettings {

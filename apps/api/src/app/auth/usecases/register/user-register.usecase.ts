@@ -1,15 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationEntity, UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
+import { SignUpOriginEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { AuthService } from '../../services/auth.service';
 import { UserRegisterCommand } from './user-register.command';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { SignUpOriginEnum } from '@novu/shared';
 
 @Injectable()
 export class UserRegister {
@@ -31,7 +32,7 @@ export class UserRegister {
     const user = await this.userRepository.create({
       email,
       firstName: command.firstName.toLowerCase(),
-      lastName: command.lastName.toLowerCase(),
+      lastName: command.lastName?.toLowerCase(),
       password: passwordHash,
     });
 
@@ -49,7 +50,7 @@ export class UserRegister {
 
     this.analyticsService.track('[Authentication] - Signup', user._id, {
       loginType: 'email',
-      origin: SignUpOriginEnum.WEB,
+      origin: command.origin || SignUpOriginEnum.WEB,
     });
 
     return {

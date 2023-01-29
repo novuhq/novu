@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   Navbar,
   Popover,
@@ -12,13 +12,14 @@ import {
 import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from '../../../design-system/icons';
+import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { AuthContext } from '../../../store/authContext';
 import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
+import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -83,6 +84,12 @@ export function SideNav({}: Props) {
       link: '/subscribers',
       label: 'Subscribers',
       testId: 'side-nav-subscribers-link',
+    },
+    {
+      icon: <Brand />,
+      link: '/brand',
+      label: 'Brand',
+      testId: 'side-nav-brand-link',
     },
     { icon: <Activity />, link: '/activities', label: 'Activity Feed', testId: 'side-nav-activities-link' },
     { icon: <Box />, link: '/integrations', label: 'Integrations Store', testId: 'side-nav-integrations-link' },
@@ -162,6 +169,9 @@ export function SideNav({}: Props) {
           </Popover.Dropdown>
         </Popover>
         <NavMenu menuItems={menuItems} />
+      </Navbar.Section>
+      <Navbar.Section mt={15}>
+        <LimitBar withLink={true} label="Novu email credits used" />
       </Navbar.Section>
       <Navbar.Section mt={15}>
         <Navbar.Section>

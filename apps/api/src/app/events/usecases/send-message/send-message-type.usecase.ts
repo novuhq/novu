@@ -46,7 +46,7 @@ export abstract class SendMessageType {
 }
 
 function stringifyObject(error: any): string {
-  if (!error) return;
+  if (!error) return '';
 
   if (typeof error === 'string') {
     return error;
@@ -59,4 +59,6 @@ function stringifyObject(error: any): string {
   if (Object.keys(error)?.length > 0) {
     return JSON.stringify(error);
   }
+
+  return '';
 }

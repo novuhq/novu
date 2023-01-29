@@ -5,7 +5,7 @@ import { useColorScheme } from '@mantine/hooks';
 
 import { mantineConfig } from './config/theme.config';
 import { colors, shadows } from './config';
-import { useLocalThemePreference } from '../hooks/use-localThemePreference';
+import { useLocalThemePreference } from '../hooks/useLocalThemePreference';
 
 const useNotificationStyles = createStyles((theme) => ({
   root: {

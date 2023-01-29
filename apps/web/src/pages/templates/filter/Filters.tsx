@@ -1,7 +1,8 @@
+import { useMemo } from 'react';
 import styled from '@emotion/styled';
 import { useMantineColorScheme } from '@mantine/core';
-import { BuilderFieldOperator } from '@novu/shared';
-import { StepEntity } from '../../../components/templates/use-template-controller.hook';
+import { BuilderFieldOperator, FilterParts } from '@novu/shared';
+import { StepEntity } from '../../../components/templates/useTemplateController';
 import { colors } from '../../../design-system';
 
 export const Filters = ({ step }: { step: StepEntity | null }) => {
@@ -17,7 +18,7 @@ export const Filters = ({ step }: { step: StepEntity | null }) => {
         }
 
         return group.children.map((filter, i) => {
-          const filterKey = filter.field ? `${filter.on}-${filter.field}-field-filter-${i}` : `filter-${i}`;
+          const filterKey = filter.on ? `${filter.on}-field-filter-${i}` : `filter-${i}`;
 
           return <Filter key={filterKey} filter={filter} />;
         });
@@ -26,22 +27,15 @@ export const Filters = ({ step }: { step: StepEntity | null }) => {
   );
 };
 
-interface IFilter {
-  on?: 'payload' | 'subscriber';
-  field?: string;
-  value?: string;
-  operator?: BuilderFieldOperator;
-}
-
-export const Filter = ({ filter }: { filter: IFilter }) => {
+export const Filter = ({ filter }: { filter: FilterParts }) => {
   const { colorScheme } = useMantineColorScheme();
+
+  const filterValue = getFilterValue(filter);
 
   return (
     <FilterItem className="filter-item" dark={colorScheme === 'dark'}>
-      <FilterPosition>
-        {filter.on} {filter.field} {translateOperator(filter.operator)}
-      </FilterPosition>
-      <FilterValue className="filter-item-value">{filter.value}</FilterValue>
+      <FilterPosition>{getFilterLabel(filter)}</FilterPosition>
+      <FilterValue className="filter-item-value">{filterValue}</FilterValue>
     </FilterItem>
   );
 };
@@ -70,6 +64,32 @@ export const translateOperator = (operator?: BuilderFieldOperator) => {
   }
 
   return 'equal';
+};
+
+export const getFilterLabel = (filter: FilterParts): string => {
+  if (filter.on === 'isOnline') {
+    return `is online right now ${translateOperator('EQUAL')}`;
+  }
+  if (filter.on === 'isOnlineInLast') {
+    return `online in the last "X" ${filter.timeOperator}`;
+  }
+
+  return `${filter.on} ${filter.field} ${translateOperator(filter.operator)}`;
+};
+
+const getFilterValue = (filter: FilterParts) => {
+  let value = filter.value;
+
+  if (filter.on === 'isOnline') {
+    if (filter.value === true) {
+      value = 'Yes';
+    }
+    if (filter.value === false) {
+      value = 'No';
+    }
+  }
+
+  return value;
 };
 
 const FilterPosition = styled.span`

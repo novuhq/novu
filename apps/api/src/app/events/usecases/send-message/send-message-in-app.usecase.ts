@@ -6,7 +6,6 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   MessageEntity,
-  IEmailBlock,
   NotificationEntity,
 } from '@novu/dal';
 import {
@@ -14,6 +13,7 @@ import {
   IMessageButton,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IEmailBlock,
   InAppProviderIdEnum,
   ActorTypeEnum,
   IActor,
@@ -22,8 +22,7 @@ import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases';
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
@@ -251,8 +250,7 @@ export class SendMessageInApp extends SendMessageBase {
   ): Promise<string | null> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: content as string,
+        template: content as string,
         data: {
           subscriber,
           step: {

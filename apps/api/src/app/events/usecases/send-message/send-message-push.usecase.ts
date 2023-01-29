@@ -19,8 +19,7 @@ import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases';
 import { PushFactory } from '../../services/push-service/push.factory';
 import { SendMessageCommand } from './send-message.command';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -85,16 +84,14 @@ export class SendMessagePush extends SendMessageBase {
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
-          customTemplate: pushChannel.template?.content as string,
+          template: pushChannel.template?.content as string,
           data,
         })
       );
 
       title = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
-          templateId: 'custom',
-          customTemplate: pushChannel.template?.title as string,
+          template: pushChannel.template?.title as string,
           data,
         })
       );
@@ -111,6 +108,7 @@ export class SendMessagePush extends SendMessageBase {
         channelType: ChannelTypeEnum.PUSH,
         findOne: true,
         active: true,
+        userId: command.userId,
       })
     );
     if (!integration) {

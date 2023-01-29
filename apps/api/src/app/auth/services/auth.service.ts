@@ -11,6 +11,7 @@ import {
   UserRepository,
 } from '@novu/dal';
 import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum, SignUpOriginEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
@@ -18,7 +19,6 @@ import { SwitchEnvironmentCommand } from '../usecases/switch-environment/switch-
 import { SwitchEnvironment } from '../usecases/switch-environment/switch-environment.usecase';
 import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
-import { AnalyticsService } from '../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 import { CacheKeyPrefixEnum } from '../../shared/services/cache';
 import { Cached } from '../../shared/interceptors';

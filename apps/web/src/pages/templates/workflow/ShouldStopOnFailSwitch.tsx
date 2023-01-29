@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Controller } from 'react-hook-form';
 import { Switch } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 
 export const ShouldStopOnFailSwitch = ({ control, index }) => {
   const { readonly } = useEnvController();

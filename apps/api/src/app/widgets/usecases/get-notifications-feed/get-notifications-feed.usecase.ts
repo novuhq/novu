@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ChannelTypeEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
 import { MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';

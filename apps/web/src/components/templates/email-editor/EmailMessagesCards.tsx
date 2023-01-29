@@ -12,7 +12,7 @@ import { WebIcon } from '../../../pages/templates/editor/PreviewSegment/WebIcon'
 import { useHotkeys } from '@mantine/hooks';
 import { VariableManager } from '../VariableManager';
 import { VariablesManagement } from './variables-management/VariablesManagement';
-import { useVariablesManager } from '../../../hooks/use-variables-manager';
+import { useVariablesManager } from '../../../hooks/useVariablesManager';
 
 export enum ViewEnum {
   EDIT = 'Edit',
@@ -26,7 +26,7 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();
   const [modalOpen, setModalOpen] = useState(false);
-  const variablesArray = useVariablesManager(index, ['content', 'htmlContent', 'subject']);
+  const variablesArray = useVariablesManager(index, ['content', 'htmlContent', 'subject', 'preheader']);
 
   useHotkeys([
     [
@@ -85,13 +85,14 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
                     width: '70px',
                   },
                   active: {
-                    background: theme.colorScheme === 'dark' ? colors.white : colors.B98,
+                    background: theme.colorScheme === 'dark' ? colors.B40 : colors.B98,
                     borderRadius: '30px',
                   },
                   labelActive: {
-                    color: `${colors.B40} !important`,
+                    color: `${theme.colorScheme === 'dark' ? colors.white : colors.B40} !important`,
                   },
                 }}
+                radius={'xl'}
                 data={[
                   {
                     value: 'web',
