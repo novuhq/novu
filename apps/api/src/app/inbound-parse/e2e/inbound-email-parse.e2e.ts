@@ -71,13 +71,62 @@ describe('Should handler the new arrived mail', () => {
     expect(payload.notification).to.ok;
     expect(payload.templateIdentifier).to.ok;
   });
-  async function triggerEmail() {
+
+  it('should not send webhook request with missing transactionId', async () => {
+    const message = await triggerEmail();
+
+    const mail = getMailData(message, false);
+
+    const getStub = sandbox.stub(axios, 'post').resolves();
+
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+
+    sinon.assert.notCalled(getStub);
+  });
+
+  it('should not send webhook request with when domain white list', async () => {
+    const message = await triggerEmail(true, false);
+
+    const mail = getMailData(message);
+
+    const getStub = sandbox.stub(axios, 'post').resolves();
+
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+
+    sinon.assert.notCalled(getStub);
+  });
+
+  it('should not send webhook request when missing replay callback url', async () => {
+    const message = await triggerEmail(true, true, true, false);
+
+    const mail = getMailData(message);
+
+    const getStub = sandbox.stub(axios, 'post').resolves();
+
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+
+    sinon.assert.notCalled(getStub);
+  });
+
+  async function triggerEmail(
+    mxRecordConfigured = true,
+    inboundParseDomain = true,
+    replyCallbackActive = true,
+    replyCallbackUrl = true
+  ) {
     await environmentRepository.update(
       { _id: session.environment._id, _organizationId: session.organization._id },
-      { $set: { dns: { mxRecordConfigured: true, inboundParseDomain: USER_MAIL_DOMAIN } } }
+      {
+        $set: {
+          dns: {
+            mxRecordConfigured: mxRecordConfigured,
+            inboundParseDomain: inboundParseDomain ? USER_MAIL_DOMAIN : undefined,
+          },
+        },
+      }
     );
 
-    const template = await createTemplate(session);
+    const template = await createTemplate(session, replyCallbackActive, replyCallbackUrl);
 
     await sendTrigger(session, template, subscriber.subscriberId);
 
@@ -91,20 +140,21 @@ describe('Should handler the new arrived mail', () => {
     });
   }
 
-  function getMailData(message) {
+  function getMailData(message, transactionId = true, environmentId = true) {
     const mail = JSON.parse(mailData) as InboundEmailParseCommand;
-
-    mail.to[0].address = `parse+${message.transactionId}-nv-e=${message._environmentId}@${USER_MAIL_DOMAIN}`;
+    mail.to[0].address = `parse+${transactionId ? message.transactionId : ''}-nv-e=${
+      environmentId ? message._environmentId : ''
+    }@${USER_MAIL_DOMAIN}`;
 
     return mail;
   }
 });
 
-async function createTemplate(session: UserSession) {
+async function createTemplate(session: UserSession, replyCallbackActive = true, replyCallbackUrl = true) {
   const test: Partial<CreateTemplatePayload> = {
     steps: [
       {
-        replyCallback: { active: true, url: USER_PARSE_WEBHOOK },
+        replyCallback: { active: replyCallbackActive, url: replyCallbackUrl ? USER_PARSE_WEBHOOK : '' },
         type: StepTypeEnum.EMAIL,
         name: 'Message Name',
         subject: 'Test email {{nested.subject}}',
@@ -122,4 +172,4 @@ async function createTemplate(session: UserSession) {
 }
 
 const mailData =
-  '{"html":"<b>This is a test email sent to a local SMTP server.</b>","text":"This is a test email sent to a local SMTP server.","headers":{"content-type":"multipart/alternative; boundary=\\"--_NmP-f7fda3731bcaef89-Part_1\\"","from":"sender@example.com","to":"parse+c50420f2-6aef-48f5-9a41-3c9dd1a81ba5-nv-e=63945d20068f12be94e79cb0@local-demo.com","subject":"Test email","message-id":"<705c2187-b2ad-2b1e-e3fc-9f40a840e736@example.com>","date":"Wed, 25 Jan 2023 20:37:24 +0000","mime-version":"1.0"},"subject":"Test email","messageId":"705c2187-b2ad-2b1e-e3fc-9f40a840e736@example.com","priority":"normal","from":[{"address":"sender@example.com","name":""}],"to":[{"address":"parse+c50420f2-6aef-48f5-9a41-3c9dd1a81ba5-nv-e=63945d20068f12be94e79cb0@local-demo.com","name":""}],"date":"2023-01-25T20:37:24.000Z","dkim":"failed","spf":"failed","spamScore":0,"language":"english","cc":[],"connection":{"id":"bb49053e-a142-4492-9459-61d7960b0857","remoteAddress":"127.0.0.1","remotePort":55722,"clientHostname":"[127.0.0.1]","openingCommand":"EHLO","hostNameAppearsAs":"[127.0.0.1]","xClient":{},"xForward":{},"transmissionType":"ESMTPS","tlsOptions":{"name":"TLS_AES_256_GCM_SHA384","standardName":"TLS_AES_256_GCM_SHA384","version":"TLSv1.3"},"envelope":{"mailFrom":{"address":"sender@example.com","args":false},"rcptTo":[{"address":"parse+c50420f2-6aef-48f5-9a41-3c9dd1a81ba5@local-demo.com","args":false}]},"transaction":1,"mailPath":".tmp/bb49053e-a142-4492-9459-61d7960b0857"},"envelopeFrom":{"address":"sender@example.com","args":false},"envelopeTo":[{"address":"parse+c50420f2-6aef-48f5-9a41-3c9dd1a81ba5-nv-e=63945d20068f12be94e79cb0@local-demo.com","args":false}]}\n';
+  '{"html":"<b>This is a test email sent to a local SMTP server.</b>","text":"This is a test email sent to a local SMTP server.","headers":{"content-type":"multipart/alternative; boundary=\\"--_NmP-f7fda3731bcaef89-Part_1\\"","from":"sender@example.com","to":"parse+c50420f2-6aef-48f5-9a41-3c9dd1a81ba5-nv-e=63945d20068f12be94e79cb0@local-demo.com","subject":"Test email","message-id":"<705c2187-b2ad-2b1e-e3fc-9f40a840e736@example.com>","date":"Wed, 25 Jan 2023 20:37:24 +0000","mime-version":"1.0"},"subject":"Test email","messageId":"705c2187-b2ad-2b1e-e3fc-9f40a840e736@example.com","priority":"normal","from":[{"address":"sender@example.com","name":""}],"to":[{"address":"parse+c50420f2-6aef-48f5-9a41-3c9dd1a81ba5-nv-e=63945d20068f12be94e79cb0@local-demo.com","name":""}],"date":"2023-01-25T20:37:24.000Z","dkim":"failed","spf":"failed","spamScore":0,"language":"english","cc":[],"connection":{"id":"bb49053e-a142-4492-9459-61d7960b0857","remoteAddress":"127.0.0.1","remotePort":55722,"clientHostname":"[127.0.0.1]","openingCommand":"HELLO","hostNameAppearsAs":"[127.0.0.1]","xClient":{},"xForward":{},"transmissionType":"ESMTPS","tlsOptions":{"name":"TLS_AES_256_GCM_SHA384","standardName":"TLS_AES_256_GCM_SHA384","version":"TLSv1.3"},"envelope":{"mailFrom":{"address":"sender@example.com","args":false},"rcptTo":[{"address":"parse+c50420f2-6aef-48f5-9a41-3c9dd1a81ba5@local-demo.com","args":false}]},"transaction":1,"mailPath":".tmp/bb49053e-a142-4492-9459-61d7960b0857"},"envelopeFrom":{"address":"sender@example.com","args":false},"envelopeTo":[{"address":"parse+c50420f2-6aef-48f5-9a41-3c9dd1a81ba5-nv-e=63945d20068f12be94e79cb0@local-demo.com","args":false}]}\n';

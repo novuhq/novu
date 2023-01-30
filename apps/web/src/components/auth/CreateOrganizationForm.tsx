@@ -8,8 +8,8 @@ import { IJwtPayload } from '@novu/shared';
 import { Button, Input } from '../../design-system';
 import { api } from '../../api/api.client';
 import { AuthContext } from '../../store/authContext';
-import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
-import { useVercelParams } from '../../hooks/use-vercelParams';
+import { useVercelIntegration } from '../../api/hooks/useVercelIntegration';
+import { useVercelParams } from '../../hooks/useVercelParams';
 
 type Props = {};
 

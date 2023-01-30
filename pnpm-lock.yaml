@@ -1691,7 +1691,7 @@ importers:
       '@types/node': 14.18.12
       codecov: 3.8.3
       cz-conventional-changelog: 3.3.0
-      jest: 27.5.1_ts-node@10.9.1
+      jest: 27.5.1
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       rimraf: 3.0.2
@@ -1749,7 +1749,7 @@ importers:
       rollup-plugin-gzip: ^3.1.0
       rollup-plugin-node-externals: ^5.0.2
       rollup-plugin-peer-deps-external: ^2.2.4
-      rollup-plugin-polyfill-node: ^0.11.0
+      rollup-plugin-polyfill-node: ^0.12.0
       rollup-plugin-terser: ^7.0.2
       socket.io-client: 4.5.4
       ts-jest: ^29.0.3
@@ -1808,7 +1808,7 @@ importers:
       rollup-plugin-gzip: 3.1.0_rollup@3.7.3
       rollup-plugin-node-externals: 5.0.2_rollup@3.7.3
       rollup-plugin-peer-deps-external: 2.2.4_rollup@3.7.3
-      rollup-plugin-polyfill-node: 0.11.0_rollup@3.7.3
+      rollup-plugin-polyfill-node: 0.12.0_rollup@3.7.3
       rollup-plugin-terser: 7.0.2_rollup@3.7.3
       ts-jest: 29.0.3_apl2kovhlf4augjpviu3seobxq
       typescript: 4.6.3
@@ -34965,7 +34965,7 @@ packages:
       mississippi: 3.0.0
       mkdirp: 0.5.6
       move-concurrently: 1.0.1
-      promise-inflight: 1.0.1_bluebird@3.7.2
+      promise-inflight: 1.0.1
       rimraf: 2.7.1
       ssri: 6.0.2
       unique-filename: 1.1.1
@@ -55473,16 +55473,6 @@ packages:
       bluebird:
         optional: true
 
-  /promise-inflight/1.0.1_bluebird@3.7.2:
-    resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
-    peerDependencies:
-      bluebird: '*'
-    peerDependenciesMeta:
-      bluebird:
-        optional: true
-    dependencies:
-      bluebird: 3.7.2
-
   /promise-limit/2.7.0:
     resolution: {integrity: sha512-7nJ6v5lnJsXwGprnGXga4wx6d1POjvi5Qmf1ivTRxTjH4Z/9Czja/UCMLVmB9N93GeWOU93XaFaEt6jbuoagNw==}
     dev: false
@@ -58299,8 +58289,8 @@ packages:
       rollup: 3.7.3
     dev: true
 
-  /rollup-plugin-polyfill-node/0.11.0_rollup@3.7.3:
-    resolution: {integrity: sha512-5t+qhq4LAQKQBgbPOQJEoxxGzU5b+zLfvzpUAGy9u0MCMs8y+mrjUAv8+xrkWdxnwXQwJtjmCMnA9lCflsMzNw==}
+  /rollup-plugin-polyfill-node/0.12.0_rollup@3.7.3:
+    resolution: {integrity: sha512-PWEVfDxLEKt8JX1nZ0NkUAgXpkZMTb85rO/Ru9AQ69wYW8VUCfDgP4CGRXXWYni5wDF0vIeR1UoF3Jmw/Lt3Ug==}
     peerDependencies:
       rollup: ^1.20.0 || ^2.0.0 || ^3.0.0
     dependencies:

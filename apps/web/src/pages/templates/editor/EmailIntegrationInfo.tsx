@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { useIntegrationLimit } from '../../../api/hooks/integrations/use-integration-limit';
+import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AuthContext } from '../../../store/authContext';
 

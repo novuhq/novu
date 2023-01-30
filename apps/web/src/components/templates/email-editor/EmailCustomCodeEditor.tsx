@@ -5,7 +5,7 @@ import { addCompleter } from 'ace-builds/src-noconflict/ext-language_tools';
 import { Card } from '@mantine/core';
 import { SystemVariablesWithTypes, HandlebarHelpers } from '@novu/shared';
 import { colors } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 
 export function EmailCustomCodeEditor({ onChange, value }: { onChange?: (string) => void; value?: string }) {
   const { readonly } = useEnvController();

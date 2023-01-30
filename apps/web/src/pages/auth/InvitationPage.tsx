@@ -10,7 +10,7 @@ import AuthContainer from '../../components/layout/components/AuthContainer';
 import { SignUpForm } from '../../components/auth/SignUpForm';
 import { colors, Text, Button } from '../../design-system';
 import { AuthContext } from '../../store/authContext';
-import { useAcceptInvite } from '../../components/auth/use-accept-invite.hook';
+import { useAcceptInvite } from '../../components/auth/useAcceptInvite';
 import { When } from '../../components/utils/When';
 
 export default function InvitationPage() {
