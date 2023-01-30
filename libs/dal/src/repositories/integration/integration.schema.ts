@@ -37,7 +37,10 @@ const integrationSchema = new Schema(
       projectName: Schema.Types.String,
       serviceAccount: Schema.Types.String,
     },
-
+    limits: {
+      softLimit: Schema.Types.Number,
+      hardLimit: Schema.Types.Number,
+    },
     active: {
       type: Schema.Types.Boolean,
       default: false,

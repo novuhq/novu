@@ -1,5 +1,5 @@
 import { IsDefined } from 'class-validator';
-import { ICredentialsDto } from '@novu/shared';
+import { ICredentialsDto, ILimitsDto } from '@novu/shared';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class UpdateIntegrationCommand extends EnvironmentCommand {
@@ -8,6 +8,9 @@ export class UpdateIntegrationCommand extends EnvironmentCommand {
 
   @IsDefined()
   credentials: ICredentialsDto;
+
+  @IsDefined()
+  limits: ILimitsDto;
 
   @IsDefined()
   active: boolean;

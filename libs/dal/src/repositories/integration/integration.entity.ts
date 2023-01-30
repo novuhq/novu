@@ -23,6 +23,10 @@ export interface ICredentials {
   ipPoolName?: string;
 }
 
+export interface ILimits {
+  softLimit: number;
+  hardLimit: number;
+}
 export class IntegrationEntity {
   _id?: string;
 
@@ -35,6 +39,8 @@ export class IntegrationEntity {
   channel: ChannelTypeEnum;
 
   credentials: ICredentials;
+
+  limits?: ILimits;
 
   active: boolean;
 

@@ -70,3 +70,6 @@ export enum PushProviderIdEnum {
 export enum InAppProviderIdEnum {
   Novu = 'novu',
 }
+
+export const NOVU_START_PROVIDERS: string[] = [InAppProviderIdEnum.Novu, EmailProviderIdEnum.Novu];
+export const NOVU_START_PROVIDERS_LIMITS = { softLimit: 175, hardLimit: 200 };

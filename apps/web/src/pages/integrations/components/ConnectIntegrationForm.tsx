@@ -6,9 +6,16 @@ import { showNotification } from '@mantine/notifications';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
-import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ICredentialsDto,
+  ILimitsDto,
+  IConfigCredentials,
+  NOVU_START_PROVIDERS,
+  NOVU_START_PROVIDERS_LIMITS,
+} from '@novu/shared';
 
-import { Button, colors, Input, Switch, Text } from '../../../design-system';
+import { Button, colors, Input, Switch, Text, Slider } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons/actions/Close';
@@ -70,7 +77,7 @@ const checkIntegrationReducer = (state: typeof checkIntegrationInitialState, act
       return state;
   }
 };
-
+const MAX_HARD_LIMIT = 100000;
 export function ConnectIntegrationForm({
   provider,
   showModal,
@@ -92,6 +99,10 @@ export function ConnectIntegrationForm({
 
   const { colorScheme } = useMantineColorScheme();
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
+  const [hardLimit, setHardLimit] = useState<number>(
+    provider?.limits ? provider?.limits.hardLimit : NOVU_START_PROVIDERS_LIMITS.hardLimit
+  );
+
   const { environment } = useEnvController();
   const { organization } = useAuthController();
   const webhookUrlClipboard = useClipboard({ timeout: 1000 });
@@ -104,6 +115,7 @@ export function ConnectIntegrationForm({
       providerId: string;
       channel: ChannelTypeEnum | null;
       credentials: ICredentialsDto;
+      limits: ILimitsDto;
       active: boolean;
       check: boolean;
     }
@@ -114,7 +126,7 @@ export function ConnectIntegrationForm({
     { error: string; message: string; statusCode: number },
     {
       integrationId: string;
-      data: { credentials: ICredentialsDto; active: boolean; check: boolean };
+      data: { credentials: ICredentialsDto; active: boolean; limits: ILimitsDto; check: boolean };
     }
   >(({ integrationId, data }) => updateIntegration(integrationId, data));
 
@@ -127,7 +139,6 @@ export function ConnectIntegrationForm({
       ),
     }
   );
-
   useEffect(() => {
     if (provider?.credentials) {
       for (const credential of provider.credentials) {
@@ -152,13 +163,19 @@ export function ConnectIntegrationForm({
           providerId: provider?.providerId ? provider?.providerId : '',
           channel: provider?.channel ? provider?.channel : null,
           credentials,
+          limits: { softLimit: hardLimit * 0.9, hardLimit: hardLimit },
           active: isActive,
           check: checkIntegrationState.check,
         });
       } else {
         await updateIntegrationApi({
           integrationId: provider?.integrationId ? provider?.integrationId : '',
-          data: { credentials, active: isActive, check: checkIntegrationState.check },
+          data: {
+            credentials,
+            active: isActive,
+            limits: { softLimit: hardLimit * 0.9, hardLimit: hardLimit },
+            check: checkIntegrationState.check,
+          },
         });
       }
     } catch (e: any) {
@@ -226,6 +243,19 @@ export function ConnectIntegrationForm({
             />
           </InputWrapper>
         ))}
+        <StyledText>
+          Monthly message limits(soft:{hardLimit * 0.9} and hard:{hardLimit})
+        </StyledText>
+        <InputWrapper key="limits">
+          <Slider
+            disabled={!provider || NOVU_START_PROVIDERS.includes(provider.providerId)}
+            max={MAX_HARD_LIMIT}
+            value={hardLimit}
+            onChange={setHardLimit}
+            thumbSize={12}
+            //thumbChildren={['SL', 'HL']}
+          />
+        </InputWrapper>
         {webhookSupportStatus &&
           provider?.channel &&
           [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel) && (
@@ -242,15 +272,10 @@ export function ConnectIntegrationForm({
               />
             </InputWrapper>
           )}
+
         <Stack my={30}>
           <ActiveWrapper active={isActive}>
-            <Controller
-              control={control}
-              name="isActive"
-              render={({ field }) => (
-                <Switch checked={isActive} data-test-id="is_active_id" {...field} onChange={handlerSwitchChange} />
-              )}
-            />
+            <Switch checked={isActive} data-test-id="is_active_id" onChange={handlerSwitchChange} />
             <StyledText data-test-id="connect-integration-form-active-text">
               {isActive ? 'Active' : 'Disabled'}
             </StyledText>

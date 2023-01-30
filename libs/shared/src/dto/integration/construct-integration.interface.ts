@@ -15,8 +15,13 @@ export interface ICredentialsDto {
   senderName?: string;
   projectName?: string;
 }
+
+export interface ILimitsDto {
+  softLimit: number;
+  hardLimit: number;
+}
 export interface IConstructIntegrationDto {
   credentials: ICredentialsDto;
-
+  limits: ILimitsDto;
   active: boolean;
 }

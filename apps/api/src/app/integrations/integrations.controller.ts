@@ -10,7 +10,8 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
@@ -30,9 +31,7 @@ import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
-import { CalculateLimitNovuIntegration } from './usecases/calculate-limit-novu-integration';
-import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit-novu-integration/calculate-limit-novu-integration.command';
-
+import { ProviderUsageLimits, ProviderUsageLimitsCommand } from './usecases/provider-usage-limits';
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
@@ -45,7 +44,7 @@ export class IntegrationsController {
     private createIntegrationUsecase: CreateIntegration,
     private updateIntegrationUsecase: UpdateIntegration,
     private removeIntegrationUsecase: RemoveIntegration,
-    private calculateLimitNovuIntegration: CalculateLimitNovuIntegration
+    private providerUsageLimits: ProviderUsageLimits
   ) {}
 
   @Get('/')
@@ -123,6 +122,7 @@ export class IntegrationsController {
         providerId: body.providerId,
         channel: body.channel,
         credentials: body.credentials,
+        limits: body.limits,
         active: body.active,
         check: body.check,
       })
@@ -149,6 +149,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         integrationId,
         credentials: body.credentials,
+        limits: body.limits,
         active: body.active,
         check: body.check,
       })
@@ -175,24 +176,19 @@ export class IntegrationsController {
       })
     );
   }
-
-  @Get('/:channelType/limit')
-  async getProviderLimit(
+  @Get('/messages/:providerId/count')
+  async getMessagesCount(
     @UserSession() user: IJwtPayload,
-    @Param('channelType') channelType: ChannelTypeEnum
-  ): Promise<{ limit: number; count: number }> {
-    const result = await this.calculateLimitNovuIntegration.execute(
-      CalculateLimitNovuIntegrationCommand.create({
-        channelType,
+    @Param('providerId') providerId: string
+  ): Promise<{ messageCount: number }> {
+    const messageCount = await this.providerUsageLimits.execute(
+      ProviderUsageLimitsCommand.create({
+        providerId,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
       })
     );
 
-    if (!result) {
-      return { limit: 0, count: 0 };
-    }
-
-    return result;
+    return { messageCount: messageCount };
   }
 }

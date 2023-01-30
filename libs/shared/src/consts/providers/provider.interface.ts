@@ -11,6 +11,7 @@ export interface IProviderConfig {
   docReference: string;
   comingSoon?: boolean;
   betaVersion?: boolean;
+  caption?: string;
 }
 
 export interface IConfigCredentials {

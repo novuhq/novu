@@ -31,6 +31,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { ProviderUsageLimits } from '../../../integrations/usecases/provider-usage-limits';
 
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
@@ -43,7 +44,8 @@ export class SendMessagePush extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
+    private providerUsageLimits: ProviderUsageLimits
   ) {
     super(
       messageRepository,
@@ -122,6 +124,7 @@ export class SendMessagePush extends SendMessageBase {
 
       return;
     }
+    await this.providerUsageLimits.ensureLimitNotReached(integration);
 
     const overrides = command.overrides[integration.providerId] || {};
 

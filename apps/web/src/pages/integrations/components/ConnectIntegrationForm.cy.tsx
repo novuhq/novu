@@ -14,6 +14,7 @@ const exampleProvider: IIntegratedProvider = {
   comingSoon: false,
   connected: false,
   credentials: [],
+  limits: { softLimit: 50, hardLimit: 100 },
   displayName: 'Email.js',
   docReference: 'https://www.emailjs.com/docs',
   logoFileName: { light: 'emailjs.svg', dark: 'emailjs.svg' },

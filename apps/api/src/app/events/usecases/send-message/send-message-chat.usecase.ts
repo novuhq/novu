@@ -31,6 +31,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { ProviderUsageLimits } from '../../../integrations/usecases/provider-usage-limits';
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
@@ -43,7 +44,8 @@ export class SendMessageChat extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
+    private providerUsageLimits: ProviderUsageLimits
   ) {
     super(
       messageRepository,
@@ -133,6 +135,21 @@ export class SendMessageChat extends SendMessageBase {
         userId: command.userId,
       })
     );
+    if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
+    await this.providerUsageLimits.ensureLimitNotReached(integration);
 
     const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
 
@@ -163,21 +180,6 @@ export class SendMessageChat extends SendMessageBase {
       providerId: subscriberChannel.providerId,
       _jobId: command.jobId,
     });
-
-    if (!integration) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-
-      return;
-    }
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({

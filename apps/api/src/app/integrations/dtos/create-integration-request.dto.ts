@@ -1,6 +1,6 @@
 import { IsDefined } from 'class-validator';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto } from '@novu/shared';
-import { CredentialsDto } from './credentials.dto';
+import { CredentialsDto, LimitsDto } from './credentials.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
@@ -19,6 +19,9 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   })
   @IsDefined()
   credentials: CredentialsDto;
+
+  @IsDefined()
+  limits: LimitsDto;
 
   @ApiProperty()
   @IsDefined()

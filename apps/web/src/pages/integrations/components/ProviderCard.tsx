@@ -6,6 +6,7 @@ import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { When } from '../../../components/utils/When';
+import { UsageMeter } from './UsageMeter';
 
 export function ProviderCard({
   provider,
@@ -40,18 +41,16 @@ export function ProviderCard({
         }
       }}
     >
-      <When truthy={provider.comingSoon || provider.betaVersion}>
+      <When truthy={provider.comingSoon || provider.betaVersion || provider.caption}>
         <RibbonWrapper>
-          <Ribbon>{provider.comingSoon ? 'COMING SOON' : 'BETA'}</Ribbon>
+          <Ribbon>{provider.comingSoon ? 'COMING SOON' : provider.caption ? provider.caption : 'BETA'}</Ribbon>
         </RibbonWrapper>
       </When>
 
       <StyledGroup position="apart">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
-          {provider.connected && !provider.betaVersion && !provider.novu ? (
-            <Settings data-test-id="provider-card-settings-svg" />
-          ) : null}
+          {provider.connected && !provider.betaVersion ? <Settings data-test-id="provider-card-settings-svg" /> : null}
         </CardHeader>
 
         <CardFooter>
@@ -60,7 +59,10 @@ export function ProviderCard({
               Connect
             </StyledButton>
           ) : (
-            <CardStatusBar active={provider.active} />
+            <>
+              {provider.active && <UsageMeter provider={provider} />}
+              <CardStatusBar active={provider.active} />
+            </>
           )}
         </CardFooter>
       </StyledGroup>

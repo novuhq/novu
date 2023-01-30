@@ -57,6 +57,7 @@
     "@novu/netcore": "^0.11.0",
     "@novu/node": "^0.11.0",
     "@novu/nodemailer": "^0.11.0",
+    "@novu/novu-email": "^0.11.0",
     "@novu/outlook365": "^0.11.0",
     "@novu/plivo": "^0.11.0",
     "@novu/postmark": "^0.11.0",

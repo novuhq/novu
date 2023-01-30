@@ -36,3 +36,10 @@ export class CredentialsDto {
   @ApiPropertyOptional()
   clientId?: string;
 }
+
+export class LimitsDto {
+  @ApiPropertyOptional()
+  softLimit: number;
+  @ApiPropertyOptional()
+  hardLimit: number;
+}

@@ -1,3 +1,4 @@
+export * from './novuemail.handler';
 export * from './sendgrid.handler';
 export * from './mailgun.handler';
 export * from './emailjs.handler';

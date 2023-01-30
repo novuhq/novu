@@ -8,9 +8,7 @@ import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/useEnvController';
 import { useActiveIntegrations } from '../../../api/hooks';
-import { ChannelTypeEnum } from '@novu/shared';
 import { EmailInboxContent } from './EmailInboxContent';
-import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
 
 const EDITOR = 'Editor';
 const CUSTOM_CODE = 'Custom Code';
@@ -30,8 +28,6 @@ export function EmailContentCard({
   const [activeTab, setActiveTab] = useState<string | null>(EDITOR);
   const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
-
-  const { enabled } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
 
   useEffect(() => {
     if (integrations.length === 0) {
@@ -92,11 +88,7 @@ export function EmailContentCard({
       {!isIntegrationActive ? (
         <LackIntegrationError
           channelType="E-Mail"
-          text={
-            enabled
-              ? 'Looks like you haven’t configured your E-Mail provider yet, visit the integrations page to configure.'
-              : undefined
-          }
+          text={'Looks like you haven’t configured your E-Mail provider yet, visit the integrations page to configure.'}
         />
       ) : null}
       <div

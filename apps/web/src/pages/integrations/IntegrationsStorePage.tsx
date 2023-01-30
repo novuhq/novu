@@ -1,14 +1,6 @@
 import { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import {
-  ChannelTypeEnum,
-  IConfigCredentials,
-  ILogoFileName,
-  providers,
-  PushProviderIdEnum,
-  EmailProviderIdEnum,
-  InAppProviderIdEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, IConfigCredentials, ILogoFileName, providers, PushProviderIdEnum } from '@novu/shared';
 import { Modal } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
 import PageMeta from '../../components/layout/components/PageMeta';
@@ -17,9 +9,6 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import { ChannelGroup } from './components/ChannelGroup';
 import { ConnectIntegrationForm } from './components/ConnectIntegrationForm';
 import { useIntegrations } from '../../api/hooks';
-import { When } from '../../components/utils/When';
-import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
-import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
 
 export function IntegrationsStore() {
   const { integrations, loading: isLoading, refetch } = useIntegrations();
@@ -84,47 +73,19 @@ export function IntegrationsStore() {
             opened={isModalOpened}
             onClose={() => setModalIsOpened(false)}
           >
-            <When truthy={!provider?.novu}>
-              <ConnectIntegrationForm
-                onClose={() => setModalIsOpened(false)}
-                provider={provider}
-                showModal={handlerShowModal}
-                createModel={isCreateIntegrationModal}
-              />
-            </When>
-            <When truthy={provider?.providerId === EmailProviderIdEnum.Novu}>
-              <NovuEmailProviderModal onClose={() => setModalIsOpened(false)} />
-            </When>
-            <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
-              <NovuInAppProviderModal onClose={() => setModalIsOpened(false)} />
-            </When>
+            <ConnectIntegrationForm
+              onClose={() => setModalIsOpened(false)}
+              provider={provider}
+              showModal={handlerShowModal}
+              createModel={isCreateIntegrationModal}
+            />
           </Modal>
 
           <ContentWrapper>
-            <ChannelGroup
-              channel={ChannelTypeEnum.EMAIL}
-              providers={emailProviders}
-              title="Email"
-              onProviderClick={handlerVisible}
-            />
-            <ChannelGroup
-              channel={ChannelTypeEnum.SMS}
-              providers={smsProvider}
-              title="SMS"
-              onProviderClick={handlerVisible}
-            />
-            <ChannelGroup
-              channel={ChannelTypeEnum.CHAT}
-              providers={chatProvider}
-              title="Chat"
-              onProviderClick={handlerVisible}
-            />
-            <ChannelGroup
-              channel={ChannelTypeEnum.PUSH}
-              providers={pushProvider}
-              title="Push"
-              onProviderClick={handlerVisible}
-            />
+            <ChannelGroup providers={emailProviders} title="Email" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={smsProvider} title="SMS" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={chatProvider} title="Chat" onProviderClick={handlerVisible} />
+            <ChannelGroup providers={pushProvider} title="Push" onProviderClick={handlerVisible} />
           </ContentWrapper>
         </PageContainer>
       ) : null}
@@ -154,8 +115,10 @@ export interface IIntegratedProvider {
   providerId: string;
   integrationId: string;
   displayName: string;
+  caption?: string;
   channel: ChannelTypeEnum;
   credentials: IConfigCredentials[];
+  limits?: ILimits;
   docReference: string;
   comingSoon: boolean;
   active: boolean;
@@ -186,6 +149,10 @@ export interface ICredentials {
   serviceAccount?: string;
 }
 
+export interface ILimits {
+  softLimit: number;
+  hardLimit: number;
+}
 export interface IntegrationEntity {
   _id?: string;
 
@@ -198,6 +165,8 @@ export interface IntegrationEntity {
   channel: ChannelTypeEnum;
 
   credentials: ICredentials;
+
+  limits: ILimits;
 
   active: boolean;
 
@@ -228,8 +197,10 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
       providerId: providerItem.id,
       integrationId: integration?._id ? integration._id : '',
       displayName: providerItem.displayName,
+      caption: providerItem.caption,
       channel: providerItem.channel,
       credentials: integration?.credentials ? clonedCredentials : providerItem.credentials,
+      limits: integration?.limits,
       docReference: providerItem.docReference,
       comingSoon: !!providerItem.comingSoon,
       betaVersion: !!providerItem.betaVersion,
@@ -239,7 +210,6 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
     };
   });
 }
-
 /*
  * temporary patch before migration script
  */

@@ -24,6 +24,7 @@ const provider = {
       required: true,
     },
   ],
+  limits: { softLimit: 50, hardLimit: 100 },
   docReference: 'providerItem.docReference',
   comingSoon: false,
   betaVersion: false,

@@ -5,8 +5,8 @@ export function getIntegrations() {
   return api.get('/v1/integrations');
 }
 
-export function getIntegrationLimit(type: ChannelTypeEnum): Promise<{ limit: number; count: number }> {
-  return api.get(`/v1/integrations/${type}/limit`);
+export function getIntegrationMessageCount(providerId: string): Promise<{ messageCount: number }> {
+  return api.get(`/v1/integrations/messages/${providerId}/count`);
 }
 
 export function getActiveIntegrations() {

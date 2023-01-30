@@ -12,6 +12,7 @@ import {
   sesConfig,
   outlook365Config,
   infobipEmailConfig,
+  novuEmailConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { EmailProviderIdEnum } from '../provider.enum';
@@ -19,6 +20,15 @@ import { EmailProviderIdEnum } from '../provider.enum';
 import { ChannelTypeEnum } from '../../../types';
 
 export const emailProviders: IProviderConfig[] = [
+  {
+    id: EmailProviderIdEnum.Novu,
+    displayName: 'NovuEmail',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: novuEmailConfig,
+    docReference: 'https://docs.novu.co/channels/email/novuemail',
+    logoFileName: { light: 'novu_email.png', dark: 'novu_email.png' },
+    caption: 'Free Provider',
+  },
   {
     id: EmailProviderIdEnum.EmailJS,
     displayName: 'Email.js',

@@ -25,6 +25,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { ProviderUsageLimits } from '../../../integrations/usecases/provider-usage-limits';
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
@@ -37,7 +38,8 @@ export class SendMessageSms extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     private compileTemplate: CompileTemplate,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
+    private providerUsageLimits: ProviderUsageLimits
   ) {
     super(
       messageRepository,
@@ -62,6 +64,21 @@ export class SendMessageSms extends SendMessageBase {
         userId: command.userId,
       })
     );
+    if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
+    await this.providerUsageLimits.ensureLimitNotReached(integration);
 
     Sentry.addBreadcrumb({
       message: 'Sending SMS',
@@ -103,21 +120,6 @@ export class SendMessageSms extends SendMessageBase {
     }
 
     const phone = command.payload.phone || subscriber.phone;
-
-    if (!integration) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-
-      return;
-    }
 
     const overrides = command.overrides[integration?.providerId] || {};
 

@@ -28,6 +28,16 @@ const smsConfigBase: IConfigCredentials[] = [
 
 const pushConfigBase: IConfigCredentials[] = [];
 
+export const novuEmailConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.SenderName,
+    displayName: 'Sender name',
+    description: 'This is the name displayed to user',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const mailJsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
