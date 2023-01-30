@@ -6,7 +6,7 @@ import { IEmailBlock, TextAlignEnum } from '@novu/shared';
 
 import { DotsHorizontalOutlined, Trash } from '../../../design-system/icons';
 import { Button, colors, Dropdown } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 
 export function ContentRow({
   children,

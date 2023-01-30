@@ -2,7 +2,7 @@ import { IEmailBlock } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { colors } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 
 export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; onTextChange: (text: string) => void }) {
   const { readonly } = useEnvController();
