@@ -46,7 +46,7 @@ importers:
       eslint-plugin-jsx-a11y: ^6.5.1
       eslint-plugin-prettier: ^3.4.1
       eslint-plugin-promise: ^4.3.1
-      eslint-plugin-react: 7.32.1
+      eslint-plugin-react: 7.32.2
       eslint-plugin-react-hooks: ^4.4.0
       eslint-plugin-spellcheck: 0.0.20
       execa: ^6.1.0
@@ -122,7 +122,7 @@ importers:
       eslint-plugin-jsx-a11y: 6.5.1_eslint@7.32.0
       eslint-plugin-prettier: 3.4.1_2n7boyzr6bebiv55d56maw7y34
       eslint-plugin-promise: 4.3.1
-      eslint-plugin-react: 7.32.1_eslint@7.32.0
+      eslint-plugin-react: 7.32.2_eslint@7.32.0
       eslint-plugin-react-hooks: 4.4.0_eslint@7.32.0
       eslint-plugin-spellcheck: 0.0.20_eslint@7.32.0
       execa: 6.1.0
@@ -34965,7 +34965,7 @@ packages:
       mississippi: 3.0.0
       mkdirp: 0.5.6
       move-concurrently: 1.0.1
-      promise-inflight: 1.0.1
+      promise-inflight: 1.0.1_bluebird@3.7.2
       rimraf: 2.7.1
       ssri: 6.0.2
       unique-filename: 1.1.1
@@ -40785,8 +40785,8 @@ packages:
       semver: 6.3.0
       string.prototype.matchall: 4.0.7
 
-  /eslint-plugin-react/7.32.1_eslint@7.32.0:
-    resolution: {integrity: sha512-vOjdgyd0ZHBXNsmvU+785xY8Bfe57EFbTYYk8XrROzWpr9QBvpjITvAXt9xqcE6+8cjR/g1+mfumPToxsl1www==}
+  /eslint-plugin-react/7.32.2_eslint@7.32.0:
+    resolution: {integrity: sha512-t2fBMa+XzonrrNkyVirzKlvn5RXzzPwRHtMvLAtVZrt8oxgnTQaYbU6SXTOO1mwQgp1y5+toMSKInnzGr0Knqg==}
     engines: {node: '>=4'}
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
@@ -55473,6 +55473,16 @@ packages:
       bluebird:
         optional: true
 
+  /promise-inflight/1.0.1_bluebird@3.7.2:
+    resolution: {integrity: sha512-6zWPyEOFaQBJYcGMHBKTKJ3u6TBsnMFOIZSa6ce1e/ZrrsOlnHRHbabMjLiBYKp+n44X9eUI6VUPaukCXHuG4g==}
+    peerDependencies:
+      bluebird: '*'
+    peerDependenciesMeta:
+      bluebird:
+        optional: true
+    dependencies:
+      bluebird: 3.7.2
+
   /promise-limit/2.7.0:
     resolution: {integrity: sha512-7nJ6v5lnJsXwGprnGXga4wx6d1POjvi5Qmf1ivTRxTjH4Z/9Czja/UCMLVmB9N93GeWOU93XaFaEt6jbuoagNw==}
     dev: false
@@ -60260,7 +60270,7 @@ packages:
       es-abstract: 1.21.1
       get-intrinsic: 1.2.0
       has-symbols: 1.0.3
-      internal-slot: 1.0.3
+      internal-slot: 1.0.4
       regexp.prototype.flags: 1.4.3
       side-channel: 1.0.4
     dev: true
