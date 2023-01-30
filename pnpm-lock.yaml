@@ -1263,7 +1263,7 @@ importers:
       rollup-plugin-node-resolve: ^3.4.0
       rollup-plugin-sourcemaps: ^0.4.2
       rollup-plugin-terser: ^7.0.2
-      rollup-plugin-typescript2: ^0.18.0
+      rollup-plugin-typescript2: ^0.34.0
       semantic-release: ^19.0.3
       shelljs: ^0.8.3
       travis-deploy-once: ^5.0.9
@@ -1303,7 +1303,7 @@ importers:
       rollup-plugin-node-resolve: 3.4.0
       rollup-plugin-sourcemaps: 0.4.2_rollup@0.68.2
       rollup-plugin-terser: 7.0.2_rollup@0.68.2
-      rollup-plugin-typescript2: 0.18.1_a3v6d2vuzxz7b3gv6yihseevea
+      rollup-plugin-typescript2: 0.34.1_a3v6d2vuzxz7b3gv6yihseevea
       semantic-release: 19.0.3
       shelljs: 0.8.5
       travis-deploy-once: 5.0.11
@@ -23551,6 +23551,14 @@ packages:
       rollup: 3.7.3
     dev: true
 
+  /@rollup/pluginutils/4.2.1:
+    resolution: {integrity: sha512-iKnFXr7NkdZAIHiIWE+BX5ULi/ucVFYWD6TbAV+rZctiRTY2PL6tsIKhoIOaoskiWAkgu+VsbXgUVDNLHf+InQ==}
+    engines: {node: '>= 8.0.0'}
+    dependencies:
+      estree-walker: 2.0.2
+      picomatch: 2.3.1
+    dev: true
+
   /@rollup/pluginutils/5.0.2_rollup@3.3.0:
     resolution: {integrity: sha512-pTd9rIsP92h+B6wWwFbW8RkZv4hiR/xKsqre4SIuAOaOEQRxi0lqLke9k2/7WegC85GgUs9pjmOjCUi3In4vwA==}
     engines: {node: '>=14.0.0'}
@@ -23779,7 +23787,7 @@ packages:
       read-pkg: 5.2.0
       registry-auth-token: 4.2.1
       semantic-release: 19.0.3
-      semver: 7.3.7
+      semver: 7.3.8
       tempy: 1.0.1
     dev: true
 
@@ -41210,10 +41218,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /estree-walker/0.5.2:
-    resolution: {integrity: sha512-XpCnW/AE10ws/kDAs37cngSkvgIR8aN3G0MS85m7dUpuK2EREo9VJ00uvw6Dg/hXEpfsE1I1TvJOJr+Z+TL+ig==}
-    dev: true
-
   /estree-walker/0.6.1:
     resolution: {integrity: sha512-SqmZANLWS0mnatqbSfRP5g8OXZC12Fgg1IwNtLsyHDzJizORW4khDfjPqJZsemPWBB2uqykUah5YpQ6epsqC/w==}
 
@@ -42938,15 +42942,6 @@ packages:
       graceful-fs: 4.2.10
       jsonfile: 6.1.0
       universalify: 2.0.0
-    dev: true
-
-  /fs-extra/7.0.0:
-    resolution: {integrity: sha512-EglNDLRpmaTWiD/qraZn6HREAEAHJcJOmxNEYwq6xeMKnVMAy3GUcFB+wXt2C6k4CNvB/mP1y/U3dzvKKj5OtQ==}
-    engines: {node: '>=6 <7 || >=8'}
-    dependencies:
-      graceful-fs: 4.2.10
-      jsonfile: 4.0.0
-      universalify: 0.1.2
     dev: true
 
   /fs-extra/7.0.1:
@@ -58108,12 +58103,6 @@ packages:
       path-parse: 1.0.7
     dev: true
 
-  /resolve/1.8.1:
-    resolution: {integrity: sha512-AicPrAC7Qu1JxPCZ9ZgCZlY35QgFnNqc+0LtbRNxnVw4TXvjQ72wnuL9JQcEBgXkI9JM8MsT9kaQoHcpCRJOYA==}
-    dependencies:
-      path-parse: 1.0.7
-    dev: true
-
   /resolve/2.0.0-next.3:
     resolution: {integrity: sha512-W8LucSynKUIDu9ylraa7ueVZ7hc0uAgJBxVsQSKOXOyle8a93qXhcz+XAXZ8bIq2d6i4Ehddn6Evt+0/UwKk6Q==}
     dependencies:
@@ -58382,25 +58371,19 @@ packages:
       terser: 5.12.1
     dev: true
 
-  /rollup-plugin-typescript2/0.18.1_a3v6d2vuzxz7b3gv6yihseevea:
-    resolution: {integrity: sha512-aR2m5NCCAUV/KpcKgCWX6Giy8rTko9z92b5t0NX9eZyjOftCvcdDFa1C9Ze/9yp590hnRymr5hG0O9SAXi1oUg==}
+  /rollup-plugin-typescript2/0.34.1_a3v6d2vuzxz7b3gv6yihseevea:
+    resolution: {integrity: sha512-P4cHLtGikESmqi1CA+tdMDUv8WbQV48mzPYt77TSTOPJpERyZ9TXdDgjSDix8Fkqce6soYz3+fa4lrC93IEkcw==}
     peerDependencies:
-      rollup: '>=0.50.0'
+      rollup: '>=1.26.3'
       typescript: '>=2.4.0'
     dependencies:
-      fs-extra: 7.0.0
-      resolve: 1.8.1
+      '@rollup/pluginutils': 4.2.1
+      find-cache-dir: 3.3.2
+      fs-extra: 10.1.0
       rollup: 0.68.2
-      rollup-pluginutils: 2.3.3
-      tslib: 1.9.3
+      semver: 7.3.8
+      tslib: 2.4.1
       typescript: 4.3.5
-    dev: true
-
-  /rollup-pluginutils/2.3.3:
-    resolution: {integrity: sha512-2XZwja7b6P5q4RZ5FhyX1+f46xi1Z3qBKigLRZ6VTZjwbN0K1IFGMlwm06Uu0Emcre2Z63l77nq/pzn+KxIEoA==}
-    dependencies:
-      estree-walker: 0.5.2
-      micromatch: 2.3.11
     dev: true
 
   /rollup-pluginutils/2.8.2:
@@ -62649,10 +62632,6 @@ packages:
 
   /tslib/1.14.1:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
-
-  /tslib/1.9.3:
-    resolution: {integrity: sha512-4krF8scpejhaOgqzBEcGM7yDIEfi0/8+8zDRZhNZZ2kjmHJ4hv3zCbQWxoJGz1iw5U0Jl0nma13xzHXcncMavQ==}
-    dev: true
 
   /tslib/2.0.3:
     resolution: {integrity: sha512-uZtkfKblCEQtZKBF6EBXVZeQNl82yqtDQdv+eck8u7tdPxjLu2/lp5/uPW+um2tpuxINHWy3GhiccY7QgEaVHQ==}
