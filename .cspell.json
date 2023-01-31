@@ -380,6 +380,8 @@
     "martinbeentjes",
     "varvalue",
     "varname",
+    "EVENT",
+    "TRANSID"
     "testnovu",
     "testapp",
     "novuapp",
