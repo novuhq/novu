@@ -2,10 +2,10 @@ import { Center, Container, Grid, Group } from '@mantine/core';
 import { Button, colors, Switch, Title, Text } from '../../design-system';
 import { ArrowLeft } from '../../design-system/icons';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
-import { useEnvController } from '../../store/use-env-controller';
+import { useEnvController } from '../../store/useEnvController';
 import { When } from '../utils/When';
-import { useStatusChangeControllerHook } from './use-status-change-controller.hook';
-import { useTemplateController } from './use-template-controller.hook';
+import { useStatusChangeControllerHook } from './useStatusChangeController';
+import { useTemplateController } from './useTemplateController';
 
 const Header = ({ activePage, editMode }: { editMode: boolean; activePage: ActivePageEnum }) => {
   if (activePage === ActivePageEnum.SETTINGS) {

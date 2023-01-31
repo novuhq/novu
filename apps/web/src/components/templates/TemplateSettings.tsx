@@ -4,13 +4,13 @@ import { NotificationSettingsForm } from './notification-setting-form/Notificati
 import { TemplatesSideBar } from './TemplatesSideBar';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';
 import styled from '@emotion/styled';
-import { useTemplateController } from './use-template-controller.hook';
+import { useTemplateController } from './useTemplateController';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { Trash } from '../../design-system/icons';
 import { useState } from 'react';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { useNavigate } from 'react-router-dom';
-import { useEnvController } from '../../store/use-env-controller';
+import { useEnvController } from '../../store/useEnvController';
 
 export const TemplateSettings = ({ activePage, setActivePage, showErrors, templateId }) => {
   const { colorScheme } = useMantineColorScheme();

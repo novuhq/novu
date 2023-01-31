@@ -388,36 +388,40 @@ class Mailin extends events.EventEmitter {
     let _session;
 
     function onData(stream, session, onDataCallback) {
-      _session = session;
-      const connection = _.cloneDeep(session);
-      connection.id = uuid.v4();
-      const mailPath = path.join(configuration.tmp, connection.id);
-      connection.mailPath = mailPath;
+      try {
+        _session = session;
+        const connection = _.cloneDeep(session);
+        connection.id = uuid.v4();
+        const mailPath = path.join(configuration.tmp, connection.id);
+        connection.mailPath = mailPath;
 
-      _this.emit('startData', connection);
-      logger.verbose('Connection id ' + connection.id);
-      logger.info(connection.id + ' Receiving message from ' + connection.envelope.mailFrom.address);
+        _this.emit('startData', connection);
+        logger.verbose('Connection id ' + connection.id);
+        logger.info(connection.id + ' Receiving message from ' + connection.envelope.mailFrom.address);
 
-      _this.emit('startMessage', connection);
+        _this.emit('startMessage', connection);
 
-      stream.pipe(fs.createWriteStream(mailPath));
+        stream.pipe(fs.createWriteStream(mailPath));
 
-      stream.on('data', function (chunk) {
-        _this.emit('data', connection, chunk);
-      });
+        stream.on('data', function (chunk) {
+          _this.emit('data', connection, chunk);
+        });
 
-      stream.on('end', function () {
-        dataReady(connection);
-        onDataCallback();
-      });
+        stream.on('end', function () {
+          dataReady(connection);
+          onDataCallback();
+        });
 
-      stream.on('close', function () {
-        _this.emit('close', connection);
-      });
+        stream.on('close', function () {
+          _this.emit('close', connection);
+        });
 
-      stream.on('error', function (error) {
-        _this.emit('error', connection, error);
-      });
+        stream.on('error', function (error) {
+          _this.emit('error', connection, error);
+        });
+      } catch (e) {
+        logger.error('Exception occurred while performing onData callback', e);
+      }
     }
 
     function onAuth(auth, session, streamCallback) {
