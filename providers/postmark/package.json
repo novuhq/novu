@@ -61,7 +61,6 @@
     "open-cli": "^6.0.1",
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
-    "standard-version": "9.3.2",
     "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",
     "typedoc": "^0.19.0",

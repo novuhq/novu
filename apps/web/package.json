@@ -27,6 +27,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.6.2",
     "@babel/plugin-proposal-optional-chaining": "^7.16.5",
+    "@babel/plugin-transform-react-display-name": "^7.18.6",
     "@babel/plugin-transform-runtime": "^7.16.5",
     "@cypress/react": "^7.0.2",
     "@cypress/webpack-dev-server": "^3.1.2",
@@ -135,7 +136,7 @@
     "less-loader": "4.1.0",
     "nodemon": "^2.0.15",
     "react-error-overlay": "6.0.11",
-    "start-server-and-test": "1.11.6",
+    "start-server-and-test": "1.15.3",
     "typescript": "4.6.3",
     "webpack": "^5.74.0"
   },
