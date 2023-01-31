@@ -12,11 +12,13 @@ export function InAppEditorBlock({
   index,
   readonly,
   preview = false,
+  payload = '{}',
 }: {
   control: Control<IForm>;
   index: number;
   readonly: boolean;
   preview?: boolean;
+  payload?: string;
 }) {
   const enableAvatar = useWatch({
     name: `steps.${index}.template.enableAvatar` as any,
@@ -44,7 +46,7 @@ export function InAppEditorBlock({
                 <ContentContainerController control={control} index={index} />
               </When>
               <When truthy={preview}>
-                <ContentRender control={control} index={index} />
+                <ContentRender control={control} payload={payload} index={index} />
               </When>
             </>
           </InAppWidgetPreview>
@@ -54,7 +56,7 @@ export function InAppEditorBlock({
   );
 }
 
-const ContentRender = ({ index, control }) => {
+const ContentRender = ({ index, control, payload }) => {
   const content = useWatch({
     name: `steps.${index}.template.content`,
     control,
@@ -63,8 +65,8 @@ const ContentRender = ({ index, control }) => {
 
   useEffect(() => {
     const template = Handlebars.compile(content);
-    setCompiledContent(template({}));
-  }, [content]);
+    setCompiledContent(template(JSON.parse(payload)));
+  }, [content, payload]);
 
   return <>{compiledContent}</>;
 };
