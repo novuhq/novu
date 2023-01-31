@@ -7,7 +7,6 @@ import { showNotification } from '@mantine/notifications';
 import { IFeedEntity } from '@novu/shared';
 
 import { IForm } from '../useTemplateController';
-import { InAppEditorBlock } from './InAppEditorBlock';
 import { Checkbox, colors, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/useEnvController';
 import { createFeed, getFeeds } from '../../../api/feeds';
@@ -17,6 +16,8 @@ import { FeedItems } from './FeedItems';
 import { VariableManager } from '../VariableManager';
 import { EnableAvatarSwitch } from './EnableAvatarSwitch';
 import { useVariablesManager } from '../../../hooks/useVariablesManager';
+import { EDITOR, InAppContentCard } from './InAppContentCard';
+import { When } from '../../utils/When';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const queryClient = useQueryClient();
@@ -94,10 +95,15 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
       setShowFeed(true);
     }
   }
+  const [activeTab, setActiveTab] = useState<string>(EDITOR);
 
   return (
     <>
-      <Container sx={{ maxWidth: '450px', margin: '0 auto 15px auto' }}>
+      <div
+        style={{
+          margin: '0 25px 15px 25px',
+        }}
+      >
         <Stack spacing={25}>
           <Controller
             name={`steps.${index}.template.cta.data.url` as any}
@@ -115,77 +121,75 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
               />
             )}
           />
-
-          <InAppEditorBlock
-            control={control}
-            index={index}
-            readonly={readonly}
-            contentPlaceholder="Write your notification content here..."
-          />
-          <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} readonly={readonly} />
-          <Divider sx={{ borderTopColor: colors.B40 }} />
-          <Controller
-            name={`steps.${index}.template.feedId` as any}
-            control={control}
-            render={({ field }) => {
-              return (
-                <>
-                  <div
-                    style={{
-                      position: 'relative',
-                    }}
-                  >
-                    <Checkbox
-                      data-test-id={`use-feeds-checkbox`}
-                      checked={showFeed}
-                      disabled={readonly}
-                      onChange={() => {
-                        setShowFeed(!showFeed);
-                        if (showFeed) {
-                          setValue(`steps.${index}.template.feedId`, '', { shouldDirty: true });
+          <InAppContentCard index={index} activeTab={activeTab} setActiveTab={setActiveTab} />
+          <When truthy={activeTab === EDITOR}>
+            <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} readonly={readonly} />
+            <Divider sx={{ borderTopColor: colors.B40 }} />
+            <Controller
+              name={`steps.${index}.template.feedId` as any}
+              control={control}
+              render={({ field }) => {
+                return (
+                  <>
+                    <div
+                      style={{
+                        position: 'relative',
+                      }}
+                    >
+                      <Checkbox
+                        data-test-id={`use-feeds-checkbox`}
+                        checked={showFeed}
+                        disabled={readonly}
+                        onChange={() => {
+                          setShowFeed(!showFeed);
+                          if (showFeed) {
+                            setValue(`steps.${index}.template.feedId`, '', { shouldDirty: true });
+                          }
+                        }}
+                        sx={{
+                          position: 'absolute',
+                          flexDirection: 'row-reverse',
+                          right: '0px',
+                        }}
+                        styles={{
+                          label: {
+                            marginRight: '10px',
+                          },
+                        }}
+                        label="Use Feeds"
+                        labelPosition="left"
+                      />
+                      <Input
+                        data-test-id={`create-feed-input`}
+                        disabled={!showFeed || readonly}
+                        label="Add New Feed (optional)"
+                        placeholder="Name your feed..."
+                        value={newFeed}
+                        onChange={setNewFeed}
+                        description={
+                          // eslint-disable-next-line max-len
+                          'Feeds can be used to display specific notifications in multiple tabs or sections when fetching in-app notifications'
                         }
-                      }}
-                      sx={{
-                        position: 'absolute',
-                        flexDirection: 'row-reverse',
-                        right: '0px',
-                      }}
-                      styles={{
-                        label: {
-                          marginRight: '10px',
-                        },
-                      }}
-                      label="Use Feeds"
-                      labelPosition="left"
-                    />
-                    <Input
-                      data-test-id={`create-feed-input`}
-                      disabled={!showFeed || readonly}
-                      label="Add New Feed (optional)"
-                      placeholder="Name your feed..."
-                      value={newFeed}
-                      onChange={setNewFeed}
-                      description={
-                        // eslint-disable-next-line max-len
-                        'Feeds can be used to display specific notifications in multiple tabs or sections when fetching in-app notifications'
-                      }
-                      rightSection={
-                        <ActionIcon data-test-id={`add-feed-button`} variant="transparent" onClick={addNewFeed}>
-                          <PlusGradient />
-                        </ActionIcon>
-                      }
-                    />
-                  </div>
-                  <FeedItems field={field} index={index} showFeed={showFeed} setValue={setValue} />
-                </>
-              );
-            }}
-          />
+                        rightSection={
+                          <ActionIcon data-test-id={`add-feed-button`} variant="transparent" onClick={addNewFeed}>
+                            <PlusGradient />
+                          </ActionIcon>
+                        }
+                      />
+                    </div>
+                    <FeedItems field={field} index={index} showFeed={showFeed} setValue={setValue} />
+                  </>
+                );
+              }}
+            />
+          </When>
         </Stack>
-      </Container>
-      <Container>
-        <VariableManager index={index} variablesArray={variablesArray} />
-      </Container>
+      </div>
+      <When truthy={activeTab === EDITOR}>
+        <div style={{ margin: '0 25px 0 25px' }}>
+          <VariableManager index={index} variablesArray={variablesArray} />
+        </div>
+      </When>
     </>
   );
 }

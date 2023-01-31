@@ -68,7 +68,7 @@ export class SendMessageInApp extends SendMessageBase {
     const { actor } = command.step.template;
 
     if (actor && actor.type !== ActorTypeEnum.NONE) {
-      actor.data = await this.processAvatar(actor, command, notification);
+      actor.data = await this.processAvatar(actor, command);
     }
 
     try {
@@ -253,11 +253,7 @@ export class SendMessageInApp extends SendMessageBase {
     );
   }
 
-  private async processAvatar(
-    actor: IActor,
-    command: SendMessageCommand,
-    notification: NotificationEntity
-  ): Promise<string | null> {
+  private async processAvatar(actor: IActor, command: SendMessageCommand): Promise<string | null> {
     const actorId = command.job?._actorId;
     if (actor.type === ActorTypeEnum.USER && actorId) {
       const actorSubscriber: SubscriberEntity | null = await this.subscriberRepository.findOne(

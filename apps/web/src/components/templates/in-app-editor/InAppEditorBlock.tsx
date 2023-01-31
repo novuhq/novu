@@ -1,18 +1,22 @@
 import { Control, Controller, useWatch } from 'react-hook-form';
+import { useEffect, useState } from 'react';
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
-import { ContentContainer } from './content/ContentContainer';
 import { IForm } from '../useTemplateController';
+import { EmailCustomCodeEditor } from '../email-editor/EmailCustomCodeEditor';
+import { When } from '../../utils/When';
+// To not make webpack complain about usage of fs, common.js seems to solve this.
+const Handlebars = require('handlebars');
 
 export function InAppEditorBlock({
-  contentPlaceholder,
   control,
   index,
   readonly,
+  preview = false,
 }: {
-  contentPlaceholder: string;
   control: Control<IForm>;
   index: number;
   readonly: boolean;
+  preview?: boolean;
 }) {
   const enableAvatar = useWatch({
     name: `steps.${index}.template.enableAvatar` as any,
@@ -28,13 +32,21 @@ export function InAppEditorBlock({
         const { ref, ...fieldRefs } = field;
 
         return (
-          <InAppWidgetPreview {...fieldRefs} readonly={readonly} enableAvatar={!!enableAvatar} index={index}>
-            <ContentContainerController
-              control={control}
-              index={index}
-              contentPlaceholder={contentPlaceholder}
-              readonly={readonly}
-            />
+          <InAppWidgetPreview
+            {...fieldRefs}
+            preview={preview}
+            readonly={readonly}
+            enableAvatar={!!enableAvatar}
+            index={index}
+          >
+            <>
+              <When truthy={!preview}>
+                <ContentContainerController control={control} index={index} />
+              </When>
+              <When truthy={preview}>
+                <ContentRender control={control} index={index} />
+              </When>
+            </>
           </InAppWidgetPreview>
         );
       }}
@@ -42,28 +54,29 @@ export function InAppEditorBlock({
   );
 }
 
-function ContentContainerController({
-  contentPlaceholder,
-  control,
-  index,
-  readonly,
-}: {
-  contentPlaceholder: string;
-  control: Control<IForm>;
-  index: number;
-  readonly: boolean;
-}) {
+const ContentRender = ({ index, control }) => {
+  const content = useWatch({
+    name: `steps.${index}.template.content`,
+    control,
+  });
+  const [compiledContent, setCompiledContent] = useState('');
+
+  useEffect(() => {
+    const template = Handlebars.compile(content);
+    setCompiledContent(template({}));
+  }, [content]);
+
+  return <>{compiledContent}</>;
+};
+
+function ContentContainerController({ control, index }: { control: Control<IForm>; index: number }) {
   return (
     <Controller
       name={`steps.${index}.template.content` as any}
       data-test-id="in-app-content-form-item"
       control={control}
       render={({ field }) => {
-        const { ref, ...fieldRefs } = field;
-
-        return (
-          <ContentContainer {...fieldRefs} contentPlaceholder={contentPlaceholder} readonly={readonly} index={index} />
-        );
+        return <EmailCustomCodeEditor height="100px" onChange={field.onChange} value={field.value} />;
       }}
     />
   );
