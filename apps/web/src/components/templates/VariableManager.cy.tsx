@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form';
 import { TestWrapper } from '../../testing';
 import { VariableManager } from './VariableManager';
 import { TemplateFormProvider } from './TemplateFormProvider';
-import { useVariablesManager } from '../../hooks/use-variables-manager';
+import { useVariablesManager } from '../../hooks/useVariablesManager';
 
 it('should show available variables - string', function () {
   mount(

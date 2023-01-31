@@ -5,7 +5,20 @@ import {
   ISendMessageSuccessResponse,
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
+  IEmailEventBody,
+  EmailEventStatusEnum,
 } from '@novu/stateless';
+
+export enum NetCoreStatusEnum {
+  OPENED = 'open',
+  SENT = 'send',
+  BOUNCED = 'bounce',
+  INVALID = 'invalid',
+  DROPPED = 'drop',
+  CLICKED = 'click',
+  SPAM = 'spam',
+  UNSUBSCRIBED = 'unsub',
+}
 
 export class NetCoreProvider implements IEmailProvider {
   id = 'netcore';
@@ -57,7 +70,7 @@ export class NetCoreProvider implements IEmailProvider {
     const response = await controller.createGeneratethemailsendrequest(body);
 
     return {
-      id: response?.data?.message_id,
+      id: response?.data?.TRANSID,
       date: new Date().toISOString(),
     };
   }
@@ -70,5 +83,61 @@ export class NetCoreProvider implements IEmailProvider {
       message: 'Integrated successfully!',
       code: CheckIntegrationResponseEnum.SUCCESS,
     };
+  }
+
+  getMessageId(body: any | any[]): string[] {
+    if (Array.isArray(body)) {
+      return body.map((item) => item.TRANSID);
+    }
+
+    return [body.TRANSID];
+  }
+
+  parseEventBody(
+    body: any | any[],
+    identifier: string
+  ): IEmailEventBody | undefined {
+    if (Array.isArray(body)) {
+      body = body.find((item) => item.TRANSID === identifier);
+    }
+
+    if (!body) {
+      return undefined;
+    }
+
+    const status = this.getStatus(body.EVENT);
+
+    if (status === undefined) {
+      return undefined;
+    }
+
+    return {
+      status: status,
+      date: new Date(body.TIMESTAMP).toISOString(),
+      externalId: body.TRANSID,
+      attempts: body.attempt ? parseInt(body.attempt, 10) : 1,
+      response: body.response ?? '',
+      row: body,
+    };
+  }
+
+  private getStatus(event: string): EmailEventStatusEnum | undefined {
+    switch (event) {
+      case NetCoreStatusEnum.OPENED:
+        return EmailEventStatusEnum.OPENED;
+      case NetCoreStatusEnum.INVALID:
+      case NetCoreStatusEnum.BOUNCED:
+        return EmailEventStatusEnum.BOUNCED;
+      case NetCoreStatusEnum.CLICKED:
+        return EmailEventStatusEnum.CLICKED;
+      case NetCoreStatusEnum.SENT:
+        return EmailEventStatusEnum.SENT;
+      case NetCoreStatusEnum.SPAM:
+        return EmailEventStatusEnum.SPAM;
+      case NetCoreStatusEnum.UNSUBSCRIBED:
+        return EmailEventStatusEnum.UNSUBSCRIBED;
+      case NetCoreStatusEnum.DROPPED:
+        return EmailEventStatusEnum.DROPPED;
+    }
   }
 }

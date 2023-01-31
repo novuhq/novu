@@ -1,10 +1,10 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { LackIntegrationError } from './LackIntegrationError';
-import { IForm } from './use-template-controller.hook';
+import { IForm } from './useTemplateController';
 import { Textarea } from '../../design-system';
-import { useEnvController } from '../../store/use-env-controller';
+import { useEnvController } from '../../store/useEnvController';
 import { VariableManager } from './VariableManager';
-import { useVariablesManager } from '../../hooks/use-variables-manager';
+import { useVariablesManager } from '../../hooks/useVariablesManager';
 
 export function TemplatePushEditor({
   control,

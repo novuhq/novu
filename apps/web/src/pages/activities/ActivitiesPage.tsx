@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { useTemplates } from '../../api/hooks/use-templates';
+import { useTemplates } from '../../api/hooks/useTemplates';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageMeta from '../../components/layout/components/PageMeta';
