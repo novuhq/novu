@@ -22,6 +22,8 @@ import { SwitchOrganizationCommand } from '../usecases/switch-organization/switc
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 import { CacheKeyPrefixEnum } from '../../shared/services/cache';
 import { Cached } from '../../shared/interceptors';
+import { CachedEntity } from '../../shared/interceptors/cached-entity.interceptor';
+import { KeyGenerator } from '../../shared/services/cache/keys';
 
 @Injectable()
 export class AuthService {
@@ -238,10 +240,7 @@ export class AuthService {
   }
 
   async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findOne({
-      _environmentId: payload.environmentId,
-      _id: payload._id,
-    });
+    return await this.getSubscriber({ _environmentId: payload.environmentId, subscriberId: payload.subscriberId });
   }
 
   async decodeJwt<T>(token: string) {
@@ -273,5 +272,12 @@ export class AuthService {
      * TODO: Refactor cached decorator to support custom keys
      */
     return await this.environmentRepository.findByApiKey(_id);
+  }
+
+  @CachedEntity({
+    builder: KeyGenerator.subscriber,
+  })
+  private async getSubscriber({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }) {
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 }
