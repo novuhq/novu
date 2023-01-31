@@ -6,11 +6,11 @@ import { Tabs } from '../../../design-system';
 import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { useActiveIntegrations } from '../../../api/hooks';
 import { ChannelTypeEnum } from '@novu/shared';
 import { EmailInboxContent } from './EmailInboxContent';
-import { useIntegrationLimit } from '../../../api/hooks/integrations/use-integration-limit';
+import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
 
 const EDITOR = 'Editor';
 const CUSTOM_CODE = 'Custom Code';

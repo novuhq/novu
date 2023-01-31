@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { Controller, useFormContext } from 'react-hook-form';
 import { colors, Input, Select } from '../../../design-system';
 import { EmailIntegrationInfo } from '../../../pages/templates/editor/EmailIntegrationInfo';
-import { useLayouts } from '../../../api/hooks/use-layouts';
+import { useLayouts } from '../../../api/hooks/useLayouts';
 import { useEffect } from 'react';
 
 export const EmailInboxContent = ({
@@ -118,11 +118,11 @@ export const EmailInboxContent = ({
           return (
             <Select
               {...field}
-              label="Layouts"
+              label="Email Layout"
               data-test-id="templates-layout"
               loading={isLoading}
               disabled={readonly}
-              required
+              required={(layouts || [])?.length > 0}
               error={errors?.steps ? errors?.steps[index]?.template?.layoutId?.message : undefined}
               searchable
               placeholder="Select layout"

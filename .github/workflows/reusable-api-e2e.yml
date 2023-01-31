@@ -14,83 +14,47 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-    - uses: actions/checkout@v2
-    - name: Setup kernel for react native, increase watchers
-      run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-    - uses: actions/setup-node@v2
-      with:
-        node-version: '16.15.1'
+      - uses: actions/checkout@v3
 
-    - name: Start Redis
-      uses: supercharge/redis-github-action@1.2.0
+      - uses: ./.github/actions/setup-project
 
-    - name: Start MongoDB
-      uses: supercharge/mongodb-github-action@1.3.0
-      with:
-        mongodb-version: 4.2.8
+      - uses: mansagroup/nrwl-nx-action@v3
+        with:
+          targets: lint
+          projects: "@novu/api"
 
-    - uses: pnpm/action-setup@v2
-      name: Install pnpm
-      id: pnpm-install
-      with:
-        version: 7.5.0
-        run_install: false
+      - name: Start Local Stack
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+          DEFAULT_REGION: us-east-1
+          AWS_ACCOUNT_ID: '000000000000'
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_EC2_METADATA_DISABLED: true
+        working-directory: docker/local
+        run: |
+          docker-compose -f docker-compose.localstack.yml up -d
+          sleep 10
+          max_retry=30
+          counter=0
+          until $command
+          do
+            sleep 1
+            [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
+            aws --endpoint-url=http://localhost:4566 s3 ls
+            echo "Trying again. Try #$counter"
+            ((counter++))
+          done
+          docker-compose -f docker-compose.localstack.yml logs --tail="all"
+          aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
 
-    - name: Get pnpm store directory
-      id: pnpm-cache
-      shell: bash
-      run: |
-        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+        # Runs a single command using the runners shell
+      - name: Build API
+        run: CI='' pnpm build:api
 
-    - uses: actions/cache@v3
-      name: Setup pnpm cache
-      with:
-        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-pnpm-store-
-
-    - name: Install dependencies
-      run: pnpm install
-
-    - uses: mansagroup/nrwl-nx-action@v3
-      with:
-        targets: lint
-        projects: "@novu/api"
-
-    - name: Start Local Stack
-      env:
-        AWS_DEFAULT_REGION: us-east-1
-        DEFAULT_REGION: us-east-1
-        AWS_ACCOUNT_ID: '000000000000'
-        AWS_ACCESS_KEY_ID: test
-        AWS_SECRET_ACCESS_KEY: test
-        AWS_EC2_METADATA_DISABLED: true
-      working-directory: docker/local
-      run: |
-        docker-compose -f docker-compose.localstack.yml up -d
-        sleep 10
-        max_retry=30
-        counter=0
-        until $command
-        do
-          sleep 1
-          [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
-          aws --endpoint-url=http://localhost:4566 s3 ls
-          echo "Trying again. Try #$counter"
-          ((counter++))
-        done
-        docker-compose -f docker-compose.localstack.yml logs --tail="all"
-        aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
-
-      # Runs a single command using the runners shell
-    - name: Build API
-      run: CI='' pnpm build:api
-
-    # Runs a set of commands using the runners shell
-    - name: Run a test
-      run: |
-        cd apps/api && pnpm test:e2e
-        pnpm test
-
+      # Runs a set of commands using the runners shell
+      - name: Run a test
+        run: |
+          cd apps/api && pnpm test:e2e
+          pnpm test
+  
