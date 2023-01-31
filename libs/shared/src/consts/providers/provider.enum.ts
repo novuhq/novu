@@ -1,5 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
+import { ChannelTypeEnum } from '../..';
+import { ILimitsDto } from '../../dto';
+
 export enum CredentialsKeyEnum {
   ApiKey = 'apiKey',
   User = 'user',
@@ -71,5 +74,11 @@ export enum InAppProviderIdEnum {
   Novu = 'novu',
 }
 
-export const NOVU_START_PROVIDERS: string[] = [InAppProviderIdEnum.Novu, EmailProviderIdEnum.Novu];
-export const NOVU_START_PROVIDERS_LIMITS = { softLimit: 175, hardLimit: 200 };
+type _ChannelNLimit = {
+  channel: ChannelTypeEnum;
+  limits: ILimitsDto;
+};
+
+export const NOVU_START_PROVIDERS = new Map<string, _ChannelNLimit>([
+  [EmailProviderIdEnum.Novu, { channel: ChannelTypeEnum.EMAIL, limits: { softLimit: 175, hardLimit: 200 } }],
+]);

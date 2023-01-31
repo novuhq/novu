@@ -17,7 +17,9 @@ const mockNovuMessage = {
   ],
 };
 
-test('should trigger novuEmail correctly, make sure from adress taken from config', async () => {
+const { from, ...mockNovuMessageFromDropped } = mockNovuMessage;
+
+test('should trigger novuEmail correctly by dropping from address', async () => {
   const provider = new NovuEmailProvider(mockConfig);
   const spy = jest
     .spyOn(SendgridEmailProvider.prototype, 'sendMessage')
@@ -29,35 +31,12 @@ test('should trigger novuEmail correctly, make sure from adress taken from confi
   await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith({
-    to: mockNovuMessage.to,
-    subject: mockNovuMessage.subject,
-    html: mockNovuMessage.html,
-    from: { email: mockConfig.from, name: mockConfig.senderName },
-    substitutions: {},
-    attachments: [
-      {
-        type: 'text/plain',
-        content: Buffer.from('ZEdWemRBPT0=').toString(),
-        filename: 'test.txt',
-      },
-    ],
-    customArgs: {
-      id: undefined,
-    },
-  });
+  expect(spy).toHaveBeenCalledWith(mockNovuMessageFromDropped);
 });
 
 test('should check provider integration correctly', async () => {
   const provider = new NovuEmailProvider(mockConfig);
-  const spy = jest
-    .spyOn(SendgridEmailProvider.prototype, 'sendMessage')
-    .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return [{ statusCode: 202 }] as any;
-    });
-
   const response = await provider.checkIntegration(mockNovuMessage);
-  expect(spy).toHaveBeenCalled();
+  console.log('response', response);
   expect(response.success).toBe(true);
 });

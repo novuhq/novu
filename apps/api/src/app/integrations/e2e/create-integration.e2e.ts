@@ -1,7 +1,8 @@
 import { IntegrationRepository, IntegrationEntity } from '@novu/dal';
+import { NOVU_START_PROVIDERS } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-//Need to add test cases for limits
+
 describe('Create Integration - /integration (POST)', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
@@ -94,6 +95,27 @@ describe('Create Integration - /integration (POST)', function () {
 
     expect(firstIntegration.active).to.equal(false);
     expect(secondIntegration.active).to.equal(true);
+  });
+  it('should create starting/free providers, but ignore passed limits and set default limits', async function () {
+    const startProvider = NOVU_START_PROVIDERS.entries().next().value;
+    const payload = {
+      providerId: startProvider[0],
+      channel: startProvider[1].channel,
+      credentials: { senderName: 'Test sender name' },
+      limits: { softLimit: 9000, hardLimit: 100000 },
+      active: true,
+      check: false,
+    };
+    // create integrations
+    await session.testAgent.post('/v1/integrations').send(payload);
+
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (intr) => intr.providerId === payload.providerId
+    );
+    expect(integration.active).to.equal(true);
+    expect(integration.credentials.senderName).to.equal(payload.credentials.senderName);
+    expect(integration.limits.softLimit).to.equal(startProvider[1].limits.softLimit);
+    expect(integration.limits.hardLimit).to.equal(startProvider[1].limits.hardLimit);
   });
 });
 

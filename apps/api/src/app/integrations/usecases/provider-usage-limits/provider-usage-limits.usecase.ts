@@ -14,8 +14,6 @@ export class ProviderUsageLimits {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
-  static MAX_NOVU_INTEGRATION_MAIL_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_MAIL_REQUESTS || '300', 10);
-
   async execute(command: ProviderUsageLimitsCommand): Promise<number> {
     return this.getMessageCount(command.organizationId, command.environmentId, command.providerId);
   }

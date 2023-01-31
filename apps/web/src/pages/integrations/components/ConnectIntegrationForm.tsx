@@ -6,14 +6,7 @@ import { showNotification } from '@mantine/notifications';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
-import {
-  ChannelTypeEnum,
-  ICredentialsDto,
-  ILimitsDto,
-  IConfigCredentials,
-  NOVU_START_PROVIDERS,
-  NOVU_START_PROVIDERS_LIMITS,
-} from '@novu/shared';
+import { ChannelTypeEnum, ICredentialsDto, ILimitsDto, IConfigCredentials, NOVU_START_PROVIDERS } from '@novu/shared';
 
 import { Button, colors, Input, Switch, Text, Slider } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
@@ -99,9 +92,7 @@ export function ConnectIntegrationForm({
 
   const { colorScheme } = useMantineColorScheme();
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
-  const [hardLimit, setHardLimit] = useState<number>(
-    provider?.limits ? provider?.limits.hardLimit : NOVU_START_PROVIDERS_LIMITS.hardLimit
-  );
+  const [hardLimit, setHardLimit] = useState<number>(provider?.limits ? provider?.limits.hardLimit : 0);
 
   const { environment } = useEnvController();
   const { organization } = useAuthController();
@@ -115,7 +106,7 @@ export function ConnectIntegrationForm({
       providerId: string;
       channel: ChannelTypeEnum | null;
       credentials: ICredentialsDto;
-      limits: ILimitsDto;
+      limits?: ILimitsDto;
       active: boolean;
       check: boolean;
     }
@@ -248,7 +239,7 @@ export function ConnectIntegrationForm({
         </StyledText>
         <InputWrapper key="limits">
           <Slider
-            disabled={!provider || NOVU_START_PROVIDERS.includes(provider.providerId)}
+            disabled={!provider || NOVU_START_PROVIDERS.has(provider.providerId)}
             max={MAX_HARD_LIMIT}
             value={hardLimit}
             onChange={setHardLimit}

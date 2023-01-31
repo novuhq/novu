@@ -166,7 +166,7 @@ export interface IntegrationEntity {
 
   credentials: ICredentials;
 
-  limits: ILimits;
+  limits?: ILimits;
 
   active: boolean;
 

@@ -12,8 +12,8 @@ export class CreateIntegrationCommand extends EnvironmentCommand {
   @IsDefined()
   credentials: ICredentialsDto;
 
-  @IsDefined()
-  limits: ILimitsDto;
+  @IsOptional()
+  limits?: ILimitsDto;
 
   @IsDefined()
   active: boolean;

@@ -22,6 +22,6 @@ export interface ILimitsDto {
 }
 export interface IConstructIntegrationDto {
   credentials: ICredentialsDto;
-  limits: ILimitsDto;
+  limits?: ILimitsDto;
   active: boolean;
 }

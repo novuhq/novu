@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, Inject } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { NOVU_START_PROVIDERS, NOVU_START_PROVIDERS_LIMITS } from '@novu/shared';
+import { NOVU_START_PROVIDERS } from '@novu/shared';
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { encryptCredentials } from '../../../shared/services/encryption';
@@ -21,8 +21,8 @@ export class UpdateIntegration {
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
     const existingIntegration = await this.integrationRepository.findById(command.integrationId);
     if (!existingIntegration) throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
-    if (NOVU_START_PROVIDERS.includes(existingIntegration.providerId)) {
-      command.limits = NOVU_START_PROVIDERS_LIMITS;
+    if (NOVU_START_PROVIDERS.has(existingIntegration.providerId)) {
+      command.limits = NOVU_START_PROVIDERS.get(existingIntegration.providerId).limits;
     }
     this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],

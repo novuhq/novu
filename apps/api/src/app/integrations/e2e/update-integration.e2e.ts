@@ -1,7 +1,7 @@
 import { IntegrationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, NOVU_START_PROVIDERS } from '@novu/shared';
 
 describe('Update Integration - /integrations/:integrationId (PUT)', function () {
   let session: UserSession;
@@ -17,11 +17,10 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       providerId: 'sendgrid',
       channel: ChannelTypeEnum.EMAIL,
       credentials: { apiKey: 'new_key', secretKey: 'new_secret' },
+      limits: { softLimit: 9000, hardLimit: 100000 },
       active: true,
       check: false,
     };
-
-    payload.credentials = { apiKey: 'new_key', secretKey: 'new_secret' };
 
     const integrationId = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
       (integration) => integration.channel === 'email'
@@ -34,6 +33,31 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
 
     expect(integration.credentials.apiKey).to.equal(payload.credentials.apiKey);
     expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
+    expect(integration.limits.softLimit).to.equal(payload.limits.softLimit);
+    expect(integration.limits.hardLimit).to.equal(payload.limits.hardLimit);
+  });
+  it('should update newly created integration with null/undefined limits', async function () {
+    const payload = {
+      providerId: 'sendgrid',
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: { apiKey: 'new_key', secretKey: 'new_secret' },
+      limits: undefined,
+      active: true,
+      check: false,
+    };
+
+    const integrationId = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (integration) => integration.channel === 'email'
+    )._id;
+
+    // update integration
+    await session.testAgent.put(`/v1/integrations/${integrationId}`).send(payload);
+
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data[0];
+
+    expect(integration.credentials.apiKey).to.equal(payload.credentials.apiKey);
+    expect(integration.credentials.secretKey).to.equal(payload.credentials.secretKey);
+    expect(integration.limits).to.be.an('undefined');
   });
 
   it('should deactivate other providers on the same channel', async function () {
@@ -41,6 +65,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       providerId: 'sendgrid',
       channel: 'EMAIL',
       credentials: { apiKey: '123', secretKey: 'abc' },
+      limits: { softLimit: 9000, hardLimit: 100000 },
       active: true,
       check: false,
     };
@@ -78,5 +103,62 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(firstProviderIntegration.active).to.equal(false);
     expect(secondProviderIntegration.active).to.equal(true);
     expect(irrelevantProviderIntegration.active).to.equal(true);
+  });
+
+  it('should not allow changing limits for starting/free providers, always set default limits', async function () {
+    const startProvider = NOVU_START_PROVIDERS.entries().next().value;
+    const payload = {
+      providerId: startProvider[0],
+      channel: startProvider[1].channel,
+      credentials: { senderName: 'Test sender name' },
+      limits: { softLimit: 9000, hardLimit: 100000 },
+      active: true,
+      check: false,
+    };
+    // create integrations
+    await session.testAgent.post('/v1/integrations').send(payload);
+
+    const integrationId = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (integration) => integration.providerId === payload.providerId
+    )._id;
+
+    // update integration
+    await session.testAgent.put(`/v1/integrations/${integrationId}`).send(payload);
+
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (intr) => intr.providerId === payload.providerId
+    );
+    expect(integration.active).to.equal(true);
+    expect(integration.credentials.senderName).to.equal(payload.credentials.senderName);
+    expect(integration.limits.softLimit).to.equal(startProvider[1].limits.softLimit);
+    expect(integration.limits.hardLimit).to.equal(startProvider[1].limits.hardLimit);
+  });
+  //null means no limit..
+  it('should not allow setting null limits for starting/free providers, always set default limits', async function () {
+    const startProvider = NOVU_START_PROVIDERS.entries().next().value;
+    const payload = {
+      providerId: startProvider[0],
+      channel: startProvider[1].channel,
+      credentials: { senderName: 'Test sender name' },
+      limits: null,
+      active: true,
+      check: false,
+    };
+    // create integrations
+    await session.testAgent.post('/v1/integrations').send(payload);
+    const integrationId = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (integration) => integration.providerId === payload.providerId
+    )._id;
+
+    // update integration
+    await session.testAgent.put(`/v1/integrations/${integrationId}`).send(payload);
+
+    const integration = (await session.testAgent.get(`/v1/integrations`)).body.data.find(
+      (intr) => intr.providerId === payload.providerId
+    );
+    expect(integration.active).to.equal(true);
+    expect(integration.credentials.senderName).to.equal(payload.credentials.senderName);
+    expect(integration.limits.softLimit).to.equal(startProvider[1].limits.softLimit);
+    expect(integration.limits.hardLimit).to.equal(startProvider[1].limits.hardLimit);
   });
 });

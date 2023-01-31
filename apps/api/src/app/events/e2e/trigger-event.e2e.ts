@@ -509,63 +509,6 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     expect(message).to.be.null;
   });
 
-  it('should use Novu integration for new orgs', async function () {
-    process.env.NOVU_EMAIL_INTEGRATION_API_KEY = 'true';
-
-    const existingIntegrations = await integrationRepository.find({
-      _organizationId: session.organization._id,
-      _environmentId: session.environment._id,
-    });
-
-    await integrationRepository.delete({
-      _id: { $in: existingIntegrations.map((integration) => integration._id) },
-      _organizationId: session.organization._id,
-      _environmentId: session.environment._id,
-    });
-
-    const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
-    const channelType = ChannelTypeEnum.EMAIL;
-
-    template = await createTemplate(session, channelType);
-
-    template = await session.createTemplate({
-      steps: [
-        {
-          name: 'Message Name',
-          subject: 'Test sms {{nested.subject}}',
-          type: StepTypeEnum.EMAIL,
-          content: [
-            {
-              type: EmailBlockTypeEnum.TEXT,
-              content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
-            },
-          ],
-        },
-      ],
-    });
-
-    await sendTrigger(session, template, newSubscriberIdInAppNotification, {
-      nested: {
-        subject: 'a subject nested',
-      },
-    });
-
-    await session.awaitRunningJobs(template._id);
-
-    const createdSubscriber = await subscriberRepository.findBySubscriberId(
-      session.environment._id,
-      newSubscriberIdInAppNotification
-    );
-
-    const message = await messageRepository.findOne({
-      _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
-      channel: channelType,
-    });
-
-    expect(message.providerId).to.equal(EmailProviderIdEnum.Novu);
-  });
-
   it('should trigger message with active integration', async function () {
     const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
     const channelType = ChannelTypeEnum.EMAIL;

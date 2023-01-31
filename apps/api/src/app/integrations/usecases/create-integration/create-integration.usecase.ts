@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
-import { ChannelTypeEnum, NOVU_START_PROVIDERS, NOVU_START_PROVIDERS_LIMITS } from '@novu/shared';
+import { ChannelTypeEnum, NOVU_START_PROVIDERS } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateIntegrationCommand } from './create-integration.command';
@@ -30,8 +30,8 @@ export class CreateIntegration {
       channel: command.channel,
       _organization: command.organizationId,
     });
-    if (NOVU_START_PROVIDERS.includes(command.providerId)) {
-      command.limits = NOVU_START_PROVIDERS_LIMITS;
+    if (NOVU_START_PROVIDERS.has(command.providerId)) {
+      command.limits = NOVU_START_PROVIDERS.get(command.providerId).limits;
     }
     try {
       if (command.check) {
