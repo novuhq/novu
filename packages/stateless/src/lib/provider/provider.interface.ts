@@ -55,6 +55,8 @@ export interface IPushOptions {
     channelId?: string;
     categoryId?: string;
     mutableContent?: boolean;
+    android?: { [key: string]: { [key: string]: string } };
+    apns?: { payload: { aps: { [key: string]: { [key: string]: string } } } };
   };
 }
 

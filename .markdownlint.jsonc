@@ -39,5 +39,10 @@
       "markdownlint",
       "Node.js"
     ]
+  },
+
+  // MD-46/code-block-style
+  "MD046": {
+    "style": "fenced"
   }
 }
