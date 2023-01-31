@@ -113,6 +113,13 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     );
   }
 
+  async markAllUnseenAsSeenByFeed(subscriberId: string, environmentId: string, feedId: string | null) {
+    return this.update(
+      { _subscriberId: subscriberId, _environmentId: environmentId, seen: false, _feedId: feedId },
+      { $set: { seen: true, lastSeenDate: new Date() } }
+    );
+  }
+
   async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId: string) {
     return this.update(
       { _environmentId: environmentId, _messageTemplateId: messageId },
