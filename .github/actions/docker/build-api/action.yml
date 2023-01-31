@@ -73,6 +73,10 @@ runs:
     - name: Optionally tag docker image
       if: ${{ inputs.tag }}
       shell: bash
+      env:
+        REGISTRY_OWNER: novuhq
+        DOCKER_NAME: novu/api
+        IMAGE_TAG: ${{ github.sha }}
       run: |
         docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:${{ inputs.tag }}
 
