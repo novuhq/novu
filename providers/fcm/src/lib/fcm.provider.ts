@@ -59,8 +59,8 @@ export class FcmPushProvider implements IPushProvider {
       res = await this.messaging.sendMulticast({
         tokens: options.target,
         data: options.payload as { [key: string]: string },
-        android: androidData ?? undefined,
-        apns: apnsData ?? undefined,
+        ...(androidData ? { android: androidData } : {}),
+        ...(apnsData ? { apns: apnsData } : {}),
       });
     } else {
       const { data, ...overrides } = overridesData;
@@ -73,8 +73,8 @@ export class FcmPushProvider implements IPushProvider {
           ...overrides,
         },
         data,
-        android: androidData ?? undefined,
-        apns: apnsData ?? undefined,
+        ...(androidData ? { android: androidData } : {}),
+        ...(apnsData ? { apns: apnsData } : {}),
       });
     }
 

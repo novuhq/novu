@@ -54,6 +54,7 @@ test('should trigger fcm with android override', async () => {
       sound: 'test_sound',
     },
     overrides: {
+      data: { foo: 'bar' },
       android: {
         notification: {
           title: 'Test',
@@ -74,17 +75,14 @@ test('should trigger fcm with android override', async () => {
       body: 'Test push',
     },
     tokens: ['tester'],
-    apns: {
-      payload: {
-        aps: {
-          notification: {
-            title: 'Test',
-            body: 'Test push',
-          },
-          data: {
-            foo: 'bar',
-          },
-        },
+    data: { foo: 'bar' },
+    android: {
+      notification: {
+        title: 'Test',
+        body: 'Test push',
+      },
+      data: {
+        foo: 'bar',
       },
     },
   });
@@ -123,13 +121,17 @@ test('should trigger fcm with apns (ios) override', async () => {
       body: 'Test push',
     },
     tokens: ['tester'],
-    android: {
-      notification: {
-        title: 'Test',
-        body: 'Test push',
-      },
-      data: {
-        foo: 'bar',
+    apns: {
+      payload: {
+        aps: {
+          notification: {
+            title: 'Test',
+            body: 'Test push',
+          },
+          data: {
+            foo: 'bar',
+          },
+        },
       },
     },
   });
