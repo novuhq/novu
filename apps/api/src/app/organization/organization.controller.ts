@@ -159,6 +159,7 @@ export class OrganizationController {
   }
 
   @Put('/')
+  @Roles(MemberRoleEnum.ADMIN)
   async updateOrganization(@UserSession() user: IJwtPayload, @Body() body: { name: string }) {
     return await this.updateOrganizationUsecase.execute(
       UpdateOrganizationCommand.create({
