@@ -12,7 +12,7 @@ describe('Workflow Editor - Main Functionality', function () {
     fillBasicNotificationDetails('Test not reset data when switching channel types');
 
     addAndEditChannel('inApp');
-    cy.getByTestId('in-app-editor-content-input').type('{{firstName}} someone assigned you to {{taskName}}', {
+    cy.getByTestId('custom-code-editor').type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
     });
     goBack();
@@ -27,7 +27,7 @@ describe('Workflow Editor - Main Functionality', function () {
     goBack();
 
     editChannel('inApp');
-    cy.getByTestId('in-app-editor-content-input').contains('someone assigned you to');
+    cy.getByTestId('custom-code-editor').contains('someone assigned you to');
     goBack();
     editChannel('email');
 
@@ -46,9 +46,7 @@ describe('Workflow Editor - Main Functionality', function () {
 
     addAndEditChannel('inApp');
 
-    cy.getByTestId('in-app-editor-content-input')
-      .getByTestId('in-app-editor-content-input')
-      .contains('Test content for {{firstName}}');
+    cy.getByTestId('custom-code-editor').contains('Test content for {{firstName}}');
 
     goBack();
 
@@ -61,7 +59,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('use-feeds-checkbox').click();
     cy.getByTestId('feed-button-1').click({ force: true });
 
-    cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
+    cy.getByTestId('custom-code-editor').clear().type('new content for notification');
     cy.getByTestId('submit-btn').click();
 
     cy.visit('/templates');
@@ -334,7 +332,7 @@ describe('Workflow Editor - Main Functionality', function () {
     fillBasicNotificationDetails('In App CTA Button');
     addAndEditChannel('inApp');
 
-    cy.getByTestId('in-app-editor-content-input').type('Text content');
+    cy.getByTestId('custom-code-editor').type('Text content');
 
     cy.getByTestId('control-add').click();
     cy.getByTestId('template-container-click-area').eq(0).click();

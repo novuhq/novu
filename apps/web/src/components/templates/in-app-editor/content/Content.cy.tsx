@@ -19,7 +19,7 @@ it('should display the button text when passed as children', () => {
     </TestWrapper>
   );
 
-  cy.getByTestId('in-app-editor-content-input').type(' ');
+  cy.getByTestId('custom-code-editor').type(' ');
 
   cy.get('@changeSpy').should(
     'have.been.calledWith',
