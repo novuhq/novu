@@ -17,7 +17,7 @@ describe('Creation functionality', function () {
 
     addAndEditChannel('inApp');
 
-    cy.getByTestId('custom-code-editor').type('{{firstName}} someone assigned you to {{taskName}}', {
+    cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
     });
     cy.getByTestId('inAppRedirect').type('/example/test');
@@ -52,7 +52,8 @@ describe('Creation functionality', function () {
     addAndEditChannel('inApp');
 
     // put the multiline notification message
-    cy.getByTestId('custom-code-editor')
+    cy.get('.ace_text-input')
+      .first()
       .type('{{firstName}} someone assigned you to {{taskName}}', {
         parseSpecialCharSequences: false,
       })

@@ -63,8 +63,10 @@ const ContentRender = ({ index, control, payload }) => {
   const [compiledContent, setCompiledContent] = useState('');
 
   useEffect(() => {
-    const template = Handlebars.compile(content);
-    setCompiledContent(template(JSON.parse(payload)));
+    try {
+      const template = Handlebars.compile(content);
+      setCompiledContent(template(JSON.parse(payload)));
+    } catch (e) {}
   }, [content, payload]);
 
   return <>{compiledContent}</>;
