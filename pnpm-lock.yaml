@@ -56,7 +56,7 @@ importers:
       hygen: ^6.2.0
       inquirer: 8.2.5
       jest: 27.2.3
-      jira-prepare-commit-msg: 1.7.1
+      jira-prepare-commit-msg: 1.7.2
       lerna: 5.6.2
       lint-staged: ^10.5.4
       listr: ^0.14.3
@@ -132,7 +132,7 @@ importers:
       hygen: 6.2.0_2n7boyzr6bebiv55d56maw7y34
       inquirer: 8.2.5
       jest: 27.2.3_ts-node@9.1.1
-      jira-prepare-commit-msg: 1.7.1
+      jira-prepare-commit-msg: 1.7.2
       lerna: 5.6.2
       lint-staged: 10.5.4
       listr: 0.14.3
@@ -1982,7 +1982,7 @@ importers:
       nyc: 15.1.0
       open-cli: 6.0.1
       prettier: 2.7.1
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2026,7 +2026,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2067,7 +2067,7 @@ importers:
       nyc: 15.1.0
       open-cli: 6.0.1
       prettier: 2.7.1
-      ts-jest: 27.1.4_xerqtbejmnw475lu34ngccv2su
+      ts-jest: 27.1.4_dvau5igygwpwxmkc64z6cgm2qe
       ts-node: 9.1.1_typescript@4.8.4
       typedoc: 0.23.24_typescript@4.8.4
 
@@ -2107,7 +2107,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2148,7 +2148,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_umhwpvuqw4p7q7gqrua2jbjayq
+      ts-jest: 27.1.4_mjytj3422l35p4lu22eg53ghni
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2189,7 +2189,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2236,7 +2236,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2367,7 +2367,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2453,7 +2453,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_umhwpvuqw4p7q7gqrua2jbjayq
+      ts-jest: 27.1.4_mjytj3422l35p4lu22eg53ghni
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2496,7 +2496,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_e7edjj3qv32mdmmvbihk7iemnq
+      ts-jest: 27.1.4_vqlr6pm7mnv5rngd46vdqt4eby
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2583,7 +2583,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2625,7 +2625,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_mjytj3422l35p4lu22eg53ghni
+      ts-jest: 27.1.4_umhwpvuqw4p7q7gqrua2jbjayq
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2666,7 +2666,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_e7edjj3qv32mdmmvbihk7iemnq
+      ts-jest: 27.1.4_vqlr6pm7mnv5rngd46vdqt4eby
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2709,7 +2709,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_umhwpvuqw4p7q7gqrua2jbjayq
+      ts-jest: 27.1.4_mjytj3422l35p4lu22eg53ghni
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2750,7 +2750,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2791,7 +2791,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_umhwpvuqw4p7q7gqrua2jbjayq
+      ts-jest: 27.1.4_mjytj3422l35p4lu22eg53ghni
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2832,7 +2832,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_umhwpvuqw4p7q7gqrua2jbjayq
+      ts-jest: 27.1.4_mjytj3422l35p4lu22eg53ghni
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2873,7 +2873,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_umhwpvuqw4p7q7gqrua2jbjayq
+      ts-jest: 27.1.4_mjytj3422l35p4lu22eg53ghni
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -2959,7 +2959,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_gxxm7iira7qywlxitjbf2xjjqa
+      ts-jest: 27.1.4_ahwx3k4a72g2lokpshqlcxbpku
       ts-node: 9.1.1_typescript@4.6.3
       typedoc: 0.23.24_typescript@4.6.3
       typescript: 4.6.3
@@ -3002,7 +3002,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_2zv7k5h6rtkokmofpwrobdeggm
+      ts-jest: 27.1.4_t4ldjoaolo4tjxxklyv3omdwf4
       ts-node: 9.1.1_typescript@4.3.5
       typedoc: 0.23.24_typescript@4.3.5
       typescript: 4.3.5
@@ -3088,7 +3088,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_e7edjj3qv32mdmmvbihk7iemnq
+      ts-jest: 27.1.4_vqlr6pm7mnv5rngd46vdqt4eby
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -3131,7 +3131,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.7.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
+      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -3172,7 +3172,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_pyeptv4an376ndai4k5axbgzye
+      ts-jest: 27.1.4_makj2rl6gt73u7koqro542qsmm
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -3256,7 +3256,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.6.1
       rimraf: 3.0.2
-      ts-jest: 27.1.4_umhwpvuqw4p7q7gqrua2jbjayq
+      ts-jest: 27.1.4_mjytj3422l35p4lu22eg53ghni
       ts-node: 9.1.1_typescript@4.6.2
       typedoc: 0.23.24_typescript@4.6.2
       typescript: 4.6.2
@@ -47962,12 +47962,12 @@ packages:
       - ts-node
     dev: true
 
-  /jira-prepare-commit-msg/1.7.1:
-    resolution: {integrity: sha512-DXqtr++9q2n3OXOrB/iKfjomOvYElbBnuJz72IAev1oLJACUBhsRp+2ZpqZP0o37FZ0RLwA8NjdE2cJyyOOnLQ==}
+  /jira-prepare-commit-msg/1.7.2:
+    resolution: {integrity: sha512-vPmwqPoi5TfMF1rXh9XN6u7TiSG+FwdcbeL01nMBUbRRxTMXvIqQZoJSRoNoprgY1JUpYXplc3HGRSVsV22rLg==}
     engines: {node: '>=14'}
     hasBin: true
     dependencies:
-      cosmiconfig: 7.1.0
+      cosmiconfig: 8.0.0
     dev: true
 
   /jmespath/0.16.0:
@@ -61722,6 +61722,75 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
+  /ts-jest/27.1.4_ahwx3k4a72g2lokpshqlcxbpku:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@types/jest': 27.4.0
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.8
+      typescript: 4.6.3
+      yargs-parser: 20.2.9
+    dev: true
+
+  /ts-jest/27.1.4_dvau5igygwpwxmkc64z6cgm2qe:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@babel/core': 7.20.5
+      '@types/jest': 27.4.1
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.8
+      typescript: 4.8.4
+      yargs-parser: 20.2.9
+    dev: true
+
   /ts-jest/27.1.4_e7edjj3qv32mdmmvbihk7iemnq:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -61754,41 +61823,6 @@ packages:
       make-error: 1.3.6
       semver: 7.3.8
       typescript: 4.6.2
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.4_gxxm7iira7qywlxitjbf2xjjqa:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@babel/core': 7.20.5
-      '@types/jest': 27.4.0
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.8
-      typescript: 4.6.3
       yargs-parser: 20.2.9
     dev: true
 
@@ -61963,6 +61997,41 @@ packages:
       yargs-parser: 20.2.9
     dev: true
 
+  /ts-jest/27.1.4_t4ldjoaolo4tjxxklyv3omdwf4:
+    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@babel/core': 7.20.5
+      '@types/jest': 27.4.1
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@9.1.1
+      jest-util: 27.5.1
+      json5: 2.2.1
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.3.8
+      typescript: 4.3.5
+      yargs-parser: 20.2.9
+    dev: true
+
   /ts-jest/27.1.4_umhwpvuqw4p7q7gqrua2jbjayq:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -62029,40 +62098,6 @@ packages:
       make-error: 1.3.6
       semver: 7.3.8
       typescript: 4.6.2
-      yargs-parser: 20.2.9
-    dev: true
-
-  /ts-jest/27.1.4_xerqtbejmnw475lu34ngccv2su:
-    resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      '@types/jest': 27.4.1
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@9.1.1
-      jest-util: 27.5.1
-      json5: 2.2.1
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.3.8
-      typescript: 4.8.4
       yargs-parser: 20.2.9
     dev: true
 
