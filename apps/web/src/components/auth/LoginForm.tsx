@@ -8,13 +8,11 @@ import { Divider, Button as MantineButton, Center } from '@mantine/core';
 
 import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
-import { getUser } from '../../api/user';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
 import { useVercelParams } from '../../hooks/useVercelParams';
 import { SignUpOriginEnum } from '@novu/shared';
-import LogRocket from 'logrocket';
 
 type Props = {
   token?: string;
@@ -62,12 +60,6 @@ export function LoginForm({ email, token }: Props) {
       const response = await mutateAsync(itemData);
       setToken((response as any).token);
 
-      const user = await getUser();
-
-      LogRocket.identify(user.data._id, {
-        name: user.data.firstName + ' ' + user.data.lastName,
-        email: user.data.email,
-      });
       if (isFromVercel) return;
       if (!token) navigate('/templates');
     } catch (e: any) {

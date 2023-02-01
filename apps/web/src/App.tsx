@@ -38,10 +38,11 @@ import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
+import packageJson from '../package.json';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
-    release: 'v0.11.0',
+    release: packageJson.version,
     rootHostname: 'novu.co',
     console: {
       shouldAggregateConsoleErrors: true,
