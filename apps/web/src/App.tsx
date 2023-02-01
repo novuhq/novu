@@ -40,7 +40,28 @@ import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 
 if (LOGROCKET_ID && window !== undefined) {
-  LogRocket.init(LOGROCKET_ID);
+  LogRocket.init(LOGROCKET_ID, {
+    release: 'v0.11.0',
+    rootHostname: 'novu.co',
+    console: {
+      shouldAggregateConsoleErrors: true,
+    },
+    network: {
+      requestSanitizer: (request) => {
+        // if the url contains token 'ignore' it
+        if (request.url.toLowerCase().indexOf('token') !== -1) {
+          // ignore the request response pair
+          return null;
+        }
+
+        // remove Authorization header from logrocket
+        request.headers.Authorization = undefined;
+
+        // otherwise log the request normally
+        return request;
+      },
+    },
+  });
   setupLogRocketReact(LogRocket);
 }
 
