@@ -1,6 +1,6 @@
 {
   "name": "@novu/nodemailer",
-  "version": "0.10.2",
+  "version": "0.11.0",
   "description": "A nodemailer wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -45,7 +45,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.10.2",
+    "@novu/stateless": "^0.11.0",
     "nodemailer": "^6.6.5"
   },
   "devDependencies": {
@@ -62,10 +62,9 @@
     "open-cli": "^6.0.1",
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
-    "standard-version": "9.3.2",
     "ts-jest": "^27.0.7",
     "ts-node": "^9.0.0",
-    "typedoc": "^0.19.0",
+    "typedoc": "^0.23.0",
     "typescript": "4.6.2"
   },
   "files": [
@@ -98,5 +97,5 @@
       "**/*.spec.js"
     ]
   },
-  "gitHead": "fbbb8b9ad119058862ea8fdc14809eaca5bb9c98"
+  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
 }

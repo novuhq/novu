@@ -12,7 +12,7 @@ import { WebIcon } from '../../../pages/templates/editor/PreviewSegment/WebIcon'
 import { useHotkeys } from '@mantine/hooks';
 import { VariableManager } from '../VariableManager';
 import { VariablesManagement } from './variables-management/VariablesManagement';
-import { useVariablesManager } from '../../../hooks/use-variables-manager';
+import { useVariablesManager } from '../../../hooks/useVariablesManager';
 
 export enum ViewEnum {
   EDIT = 'Edit',

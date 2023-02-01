@@ -8,9 +8,9 @@ import {
   JobStatusEnum,
   NotificationStepEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, LogCodeEnum, LogStatusEnum, InAppProviderIdEnum } from '@novu/shared';
+import { STEP_TYPE_TO_CHANNEL_TYPE, InAppProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
-import { CreateLog, CreateLogCommand } from '../../../logs/usecases';
+import { CreateLog } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
@@ -86,18 +86,7 @@ export class ProcessSubscriber {
     for (const step of steps) {
       if (!step.template) throw new ApiException('Step template was not found');
 
-      const integrations = await this.getDecryptedIntegrations.execute(
-        GetDecryptedIntegrationsCommand.create({
-          channelType: ChannelTypeEnum[step.template.type],
-          active: true,
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-        })
-      );
-
-      const integration = integrations[0];
-
+      const providerId: string | undefined = await this.getProviderId(command, step.template.type);
       jobs.push({
         identifier: command.identifier,
         payload: command.payload,
@@ -113,7 +102,7 @@ export class ProcessSubscriber {
         _templateId: notification._templateId,
         digest: step.metadata,
         type: step.template.type,
-        providerId: integration?.providerId ?? InAppProviderIdEnum.Novu,
+        providerId: providerId,
         ...(actorSubscriber && { _actorId: actorSubscriber._id }),
       });
     }
@@ -121,6 +110,22 @@ export class ProcessSubscriber {
     return jobs;
   }
 
+  private async getProviderId(command: ProcessSubscriberCommand, stepType: StepTypeEnum): Promise<string | undefined> {
+    const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(stepType);
+    if (!channelType) return;
+    const integrations = await this.getDecryptedIntegrations.execute(
+      GetDecryptedIntegrationsCommand.create({
+        channelType: channelType,
+        active: true,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+      })
+    );
+    const integration = integrations[0];
+
+    return integration?.providerId ?? InAppProviderIdEnum.Novu;
+  }
   @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);

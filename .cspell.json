@@ -378,13 +378,17 @@
     "martinbeentjes",
     "varvalue",
     "varname",
+    "EVENT",
+    "TRANSID",
     "testnovu",
     "testapp",
     "novuapp",
     "yahoofs",
     "novutest",
     "nunito",
-    "codesee"
+    "codesee",
+    "ehlo",
+    "logrocket"
   ],
   "flagWords": [],
   "patterns": [

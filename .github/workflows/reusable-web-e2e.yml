@@ -31,52 +31,10 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16.15.1'
+      - uses: actions/checkout@v3
 
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.2.0
-
-      - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.3.0
-        with:
-          mongodb-version: 4.2.8
-
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        id: pnpm-install
-        with:
-          version: 7.5.0
-          run_install: false
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v3
-        name: Setup pnpm cache
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Cache Cypress Binary
-        id: cache-cypress-binary
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cache/Cypress
-          key: cypress-binary-${{ hashFiles('**/pnpm-lock.yaml') }}
-
-      - name: Install dependencies
-        run: pnpm install
+      - uses: ./.github/actions/setup-project
+        id: setup-project
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -119,7 +77,11 @@ jobs:
         working-directory: apps/web
         env:
           REACT_APP_API_URL: http://localhost:1336
+          REACT_APP_WS_URL: http://localhost:1340
         run: pnpm pnpm start:static:build &
+
+      - name: Start WS
+        run: pnpm start:ws:test &
 
       - name: Start API in TEST
         run: cd apps/api && pnpm start:test &
@@ -130,12 +92,15 @@ jobs:
       - name: Wait on API
         run: wait-on --timeout=120000 http://localhost:1336/v1/health-check
 
+      - name: Wait on WS
+        run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
+
       - name: Wait on WEB
         run: wait-on --timeout=120000 http://localhost:4200
 
       # run cypress install only when cache was not hit
       - name: Cypress install
-        if: steps.cache-cypress-binary.outputs.cache-hit != 'true'
+        if: steps.setup-project.outputs.cypress_cache_hit != 'true'
         working-directory: apps/web
         run: pnpm cypress install
 
@@ -169,51 +134,10 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16.15.1'
+      - uses: actions/checkout@v3
 
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.2.0
-
-      - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.3.0
-        with:
-          mongodb-version: 4.2.8
-
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        id: pnpm-install
-        with:
-          version: 7.5.0
-          run_install: false
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v3
-        name: Setup pnpm cache
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Cache Cypress Binary
-        id: cache-cypress-binary
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/.cache/Cypress
-          key: cypress-binary-${{ hashFiles('**/pnpm-lock.yaml') }}
-
-      - name: Install dependencies
-        run: pnpm install
+      - uses: ./.github/actions/setup-project
+        id: setup-project
 
       # Runs a single command using the runners shell
       - name: Build
@@ -221,7 +145,7 @@ jobs:
 
       # run cypress install only when cache was not hit
       - name: Cypress install
-        if: steps.cache-cypress-binary.outputs.cache-hit != 'true'
+        if: steps.setup-project.outputs.cypress_cache_hit != 'true'
         working-directory: apps/web
         run: pnpm cypress install
 

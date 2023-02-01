@@ -4,9 +4,8 @@ import styled from '@emotion/styled';
 import { css } from '@emotion/css';
 
 import { INovuTheme } from '../../../store/novu-theme.context';
-import { useNotifications } from '../../../hooks';
-import { useFeed } from '../../../hooks/use-feed.hook';
 import { useStyles } from '../../../store/styles';
+import { useNotifications } from '../../../hooks';
 
 interface INovuPopoverProps {
   bell: (props: any) => JSX.Element;
@@ -16,29 +15,26 @@ interface INovuPopoverProps {
   position?: PopoverProps['position'];
 }
 
-export function Popover({ children, bell, theme, offset, position = 'bottom-end' }: INovuPopoverProps) {
+export function Popover({ children, bell, theme, offset = 0, position = 'bottom-end' }: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const { cx, classes } = usePopoverStyles(theme.popover?.arrowColor);
-  const { activeTabStoreId } = useFeed();
-  const { markAsSeen, onWidgetClose } = useNotifications({ storeId: activeTabStoreId });
   const [popoverArrowStyles, popoverDropdownStyles] = useStyles(['popover.arrow', 'popover.dropdown']);
   const overrideClasses: Record<'dropdown' | 'arrow', string> = {
     arrow: cx(classes.arrow, css(popoverArrowStyles)),
     dropdown: cx(classes.dropdown, css(popoverDropdownStyles)),
   };
+  const { markAllNotificationsAsSeen } = useNotifications();
 
   function handlerBellClick() {
     if (isVisible) {
-      markAsSeen(null, true);
-      onWidgetClose();
+      markAllNotificationsAsSeen();
     }
     setIsVisible(!isVisible);
   }
 
   function handlerOnClose() {
     setIsVisible(false);
-    markAsSeen(null, true);
-    onWidgetClose();
+    markAllNotificationsAsSeen();
   }
 
   return (

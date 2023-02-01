@@ -4,6 +4,13 @@ export interface IParamObject {
   [key: string]: string | string[] | number | boolean;
 }
 
+export interface IPaginatedResponse<T = unknown> {
+  data: T[];
+  totalCount: number;
+  pageSize: number;
+  page: number;
+}
+
 export class HttpClient {
   private axiosClient: AxiosInstance;
 
@@ -19,6 +26,14 @@ export class HttpClient {
 
   disposeAuthorizationToken() {
     delete this.axiosClient.defaults.headers.common.Authorization;
+  }
+
+  async getFullResponse(url: string, params?: IParamObject) {
+    return await this.axiosClient
+      .get(url, {
+        params,
+      })
+      .then((response) => response.data);
   }
 
   async get(url: string, params?: IParamObject) {
