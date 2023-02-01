@@ -21,7 +21,7 @@ export function EnableAvatarSwitch({
   });
 
   return (
-    <Group position="apart">
+    <Group position="apart" mb={20} mt={20}>
       <Text weight="bold">Add an Avatar</Text>
       <div>
         <Switch checked={value} onChange={onChange} disabled={readonly} />

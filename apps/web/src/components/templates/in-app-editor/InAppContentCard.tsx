@@ -7,23 +7,17 @@ import { VariablesManagement } from '../email-editor/variables-management/Variab
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useState, useEffect } from 'react';
 import { useProcessVariables } from '../../../hooks/useProcessVariables';
+import { AvatarFeedFields } from './AvatarFeedFields';
 
-export const EDITOR = 'Editor';
-export const PREVIEW = 'Preview';
+const EDITOR = 'Editor';
+const PREVIEW = 'Preview';
 
-export function InAppContentCard({
-  index,
-  activeTab,
-  setActiveTab,
-}: {
-  index: number;
-  activeTab: string;
-  setActiveTab: (activeTab: string) => void;
-}) {
+export function InAppContentCard({ index, openVariablesModal }: { index: number; openVariablesModal: () => void }) {
   const { readonly } = useEnvController();
-  const { control } = useFormContext(); // retrieve all hook methods
+  const { control } = useFormContext();
   const theme = useMantineTheme();
   const [payloadValue, setPayloadValue] = useState('{}');
+  const [activeTab, setActiveTab] = useState<string>(EDITOR);
 
   const variables = useWatch({
     name: `steps.${index}.template.variables`,
@@ -50,14 +44,16 @@ export function InAppContentCard({
         <Grid grow>
           <Grid.Col span={9}>
             <InAppEditorBlock control={control as any} index={index} readonly={readonly} />
+            <AvatarFeedFields control={control} index={index} />
           </Grid.Col>
           <Grid.Col
             span={3}
+            mb={20}
             style={{
               maxWidth: '350px',
             }}
           >
-            <VariablesManagement index={index} />
+            <VariablesManagement openVariablesModal={openVariablesModal} index={index} />
           </Grid.Col>
         </Grid>
       ),

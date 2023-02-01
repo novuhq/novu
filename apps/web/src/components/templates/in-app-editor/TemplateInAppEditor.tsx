@@ -1,43 +1,20 @@
-import { useInputState } from '@mantine/hooks';
-import { ActionIcon, Container, Stack, Divider } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useEffect, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { showNotification } from '@mantine/notifications';
-import { IFeedEntity } from '@novu/shared';
 
 import { IForm } from '../useTemplateController';
-import { Checkbox, colors, Input } from '../../../design-system';
+import { Input } from '../../../design-system';
 import { useEnvController } from '../../../store/useEnvController';
-import { createFeed, getFeeds } from '../../../api/feeds';
-import { QueryKeys } from '../../../api/query.keys';
-import { PlusGradient } from '../../../design-system/icons';
-import { FeedItems } from './FeedItems';
-import { VariableManager } from '../VariableManager';
-import { EnableAvatarSwitch } from './EnableAvatarSwitch';
 import { useVariablesManager } from '../../../hooks/useVariablesManager';
-import { EDITOR, InAppContentCard } from './InAppContentCard';
-import { When } from '../../utils/When';
+import { InAppContentCard } from './InAppContentCard';
+import { VariableManagerModal } from '../VariableManagerModal';
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
-  const queryClient = useQueryClient();
   const { readonly } = useEnvController();
-  const [newFeed, setNewFeed] = useInputState('');
   const [variableContents, setVariableContents] = useState<string[]>([]);
-  const { setValue, getValues, watch } = useFormContext();
-  const { data: feeds } = useQuery([QueryKeys.getFeeds], getFeeds);
-  const { mutateAsync: createNewFeed } = useMutation<
-    IFeedEntity,
-    { error: string; message: string; statusCode: number },
-    { name: string }
-  >(createFeed, {
-    onSuccess: (data) => {
-      queryClient.setQueryData([QueryKeys.getFeeds], [...feeds, data]);
-    },
-  });
-
-  const [showFeed, setShowFeed] = useState(true);
+  const { watch } = useFormContext();
   const variablesArray = useVariablesManager(index, variableContents);
+  const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
     const subscription = watch((values) => {
@@ -58,50 +35,11 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
     return () => subscription.unsubscribe();
   }, [watch]);
 
-  useEffect(() => {
-    const feed = getValues(`steps.${index}.template.feedId`);
-    if (feeds?.length && !feed) {
-      selectDefaultFeed();
-      setShowFeed(false);
-    }
-  }, [feeds]);
-
-  function selectDefaultFeed() {
-    setTimeout(() => {
-      setValue(`steps.${index}.template.feedId`, '');
-    }, 0);
-  }
-
-  async function addNewFeed() {
-    if (newFeed) {
-      const exists = feeds.filter((feed) => feed.name === newFeed);
-      if (exists.length) {
-        showNotification({
-          message: 'You already have a feed with this name! ',
-          color: 'red',
-        });
-
-        return;
-      }
-      const response = await createNewFeed({
-        name: newFeed,
-      });
-
-      setNewFeed('');
-
-      setTimeout(() => {
-        setValue(`steps.${index}.template.feedId`, response._id, { shouldDirty: true });
-      }, 0);
-      setShowFeed(true);
-    }
-  }
-  const [activeTab, setActiveTab] = useState<string>(EDITOR);
-
   return (
     <>
       <div
         style={{
-          margin: '0 25px 15px 25px',
+          margin: '0 25px 0 25px',
         }}
       >
         <Stack spacing={25}>
@@ -121,75 +59,15 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
               />
             )}
           />
-          <InAppContentCard index={index} activeTab={activeTab} setActiveTab={setActiveTab} />
-          <When truthy={activeTab === EDITOR}>
-            <EnableAvatarSwitch name={`steps.${index}.template.enableAvatar`} control={control} readonly={readonly} />
-            <Divider sx={{ borderTopColor: colors.B40 }} />
-            <Controller
-              name={`steps.${index}.template.feedId` as any}
-              control={control}
-              render={({ field }) => {
-                return (
-                  <>
-                    <div
-                      style={{
-                        position: 'relative',
-                      }}
-                    >
-                      <Checkbox
-                        data-test-id={`use-feeds-checkbox`}
-                        checked={showFeed}
-                        disabled={readonly}
-                        onChange={() => {
-                          setShowFeed(!showFeed);
-                          if (showFeed) {
-                            setValue(`steps.${index}.template.feedId`, '', { shouldDirty: true });
-                          }
-                        }}
-                        sx={{
-                          position: 'absolute',
-                          flexDirection: 'row-reverse',
-                          right: '0px',
-                        }}
-                        styles={{
-                          label: {
-                            marginRight: '10px',
-                          },
-                        }}
-                        label="Use Feeds"
-                        labelPosition="left"
-                      />
-                      <Input
-                        data-test-id={`create-feed-input`}
-                        disabled={!showFeed || readonly}
-                        label="Add New Feed (optional)"
-                        placeholder="Name your feed..."
-                        value={newFeed}
-                        onChange={setNewFeed}
-                        description={
-                          // eslint-disable-next-line max-len
-                          'Feeds can be used to display specific notifications in multiple tabs or sections when fetching in-app notifications'
-                        }
-                        rightSection={
-                          <ActionIcon data-test-id={`add-feed-button`} variant="transparent" onClick={addNewFeed}>
-                            <PlusGradient />
-                          </ActionIcon>
-                        }
-                      />
-                    </div>
-                    <FeedItems field={field} index={index} showFeed={showFeed} setValue={setValue} />
-                  </>
-                );
-              }}
-            />
-          </When>
+          <InAppContentCard
+            index={index}
+            openVariablesModal={() => {
+              setModalOpen(true);
+            }}
+          />
         </Stack>
       </div>
-      <When truthy={activeTab === EDITOR}>
-        <div style={{ margin: '0 25px 0 25px' }}>
-          <VariableManager index={index} variablesArray={variablesArray} />
-        </div>
-      </When>
+      <VariableManagerModal open={modalOpen} setOpen={setModalOpen} index={index} variablesArray={variablesArray} />
     </>
   );
 }

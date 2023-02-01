@@ -4,8 +4,7 @@ import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
 import { IForm } from '../useTemplateController';
 import { EmailCustomCodeEditor } from '../email-editor/EmailCustomCodeEditor';
 import { When } from '../../utils/When';
-// To not make webpack complain about usage of fs, common.js seems to solve this.
-const Handlebars = require('handlebars');
+import Handlebars from 'handlebars/dist/handlebars';
 
 export function InAppEditorBlock({
   control,
