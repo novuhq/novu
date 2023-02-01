@@ -11,7 +11,7 @@ export const VariableManagerModal = ({
   open: boolean;
   setOpen: (open: boolean) => void;
   index: number;
-  variablesArray: any;
+  variablesArray: Record<string, any>;
 }) => {
   const theme = useMantineTheme();
 
