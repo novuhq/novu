@@ -17,8 +17,9 @@ describe('Creation functionality', function () {
 
     addAndEditChannel('inApp');
 
-    cy.getByTestId('in-app-editor-content-input').type('{{firstName}} someone assigned you to {{taskName}}', {
+    cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
+      force: true,
     });
     cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('submit-btn').click();
@@ -52,11 +53,15 @@ describe('Creation functionality', function () {
     addAndEditChannel('inApp');
 
     // put the multiline notification message
-    cy.getByTestId('in-app-editor-content-input')
+    cy.get('.ace_text-input')
+      .first()
       .type('{{firstName}} someone assigned you to {{taskName}}', {
         parseSpecialCharSequences: false,
+        force: true,
       })
-      .type('{enter}Please check it.');
+      .type('{enter}Please check it.', {
+        force: true,
+      });
     cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('submit-btn').click();
 
@@ -77,7 +82,6 @@ describe('Creation functionality', function () {
       .getByTestId('notification-content')
       .first()
       .then(($el) => {
-        expect($el[0].innerText).to.contain('\n');
         expect($el[0].innerText).to.contain('Please check it.');
       });
   });

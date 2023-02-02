@@ -105,7 +105,7 @@ const AvatarContainer = ({
       >
         <Popover.Target>
           <span>
-            <Tooltip label={<TooltipLabel />} position="left" withinPortal opened={tooltipOpened}>
+            <Tooltip disabled={readonly} label={<TooltipLabel />} position="left" opened={tooltipOpened}>
               <AvatarWrapper onClick={handleAvatarPopover} dark={dark} readonly={readonly}>
                 <RenderAvatar actor={value} />
               </AvatarWrapper>
