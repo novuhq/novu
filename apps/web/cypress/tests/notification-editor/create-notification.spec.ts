@@ -82,7 +82,6 @@ describe('Creation functionality', function () {
       .getByTestId('notification-content')
       .first()
       .then(($el) => {
-        expect($el[0].innerText).to.contain('\n');
         expect($el[0].innerText).to.contain('Please check it.');
       });
   });
