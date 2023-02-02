@@ -805,7 +805,7 @@ importers:
       chroma-js: ^2.4.2
       craco-antd: ^1.19.0
       cross-env: ^7.0.3
-      cypress: 10.11.0
+      cypress: 12.3.0
       cypress-intellij-reporter: ^0.0.7
       cypress-network-idle: ^1.10.0
       eslint-plugin-cypress: ^2.12.1
@@ -876,7 +876,7 @@ importers:
       '@types/react-router-dom': 5.3.3
       craco-antd: 1.19.0_qgdfbn6tdkltko3yijanxrfptq
       cross-env: 7.0.3
-      cypress: 10.11.0
+      cypress: 12.3.0
       cypress-intellij-reporter: 0.0.7
       cypress-network-idle: 1.10.0
       html-webpack-plugin: 5.5.0_webpack@4.44.2
@@ -38013,9 +38013,9 @@ packages:
     resolution: {integrity: sha512-uZ+M8/MqRcpf+FII/UZrU7g1qYZ4aVlHcgyVopnladyoBrpoaMJ4PKZDrdOJ05H5RHbr7s9Tid635X3E+ZLU/Q==}
     dev: true
 
-  /cypress/10.11.0:
-    resolution: {integrity: sha512-lsaE7dprw5DoXM00skni6W5ElVVLGAdRUUdZjX2dYsGjbY/QnpzWZ95Zom1mkGg0hAaO/QVTZoFVS7Jgr/GUPA==}
-    engines: {node: '>=12.0.0'}
+  /cypress/12.3.0:
+    resolution: {integrity: sha512-ZQNebibi6NBt51TRxRMYKeFvIiQZ01t50HSy7z/JMgRVqBUey3cdjog5MYEbzG6Ktti5ckDt1tfcC47lmFwXkw==}
+    engines: {node: ^14.0.0 || ^16.0.0 || >=18.0.0}
     hasBin: true
     requiresBuild: true
     dependencies:
@@ -38051,7 +38051,7 @@ packages:
       listr2: 3.14.0_enquirer@2.3.6
       lodash: 4.17.21
       log-symbols: 4.1.0
-      minimist: 1.2.6
+      minimist: 1.2.7
       ospath: 1.2.2
       pretty-bytes: 5.6.0
       proxy-from-env: 1.0.0
