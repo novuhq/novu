@@ -15,7 +15,6 @@ import { ExecutionDetailsModule } from '../execution-details/execution-details.m
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { TriggerHandlerQueueService } from './services/workflow-queue/trigger-handler-queue.service';
-import { OrganizationModule } from '../organization/organization.module';
 
 @Module({
   imports: [
@@ -30,7 +29,6 @@ import { OrganizationModule } from '../organization/organization.module';
     ExecutionDetailsModule,
     TopicsModule,
     LayoutsModule,
-    OrganizationModule,
   ],
   controllers: [EventsController],
   providers: [...USE_CASES, WorkflowQueueService, StorageHelperService, TriggerHandlerQueueService],

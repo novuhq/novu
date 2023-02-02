@@ -6,6 +6,7 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   MessageEntity,
+  OrganizationRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -31,8 +32,6 @@ import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/serv
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { OrganizationEntity } from '../../../../../../../libs/dal/src/repositories/organization/organization.entity';
-import { GetOrganization } from '../../../organization/usecases/get-organization/get-organization.usecase';
-import { GetOrganizationCommand } from '../../../organization/usecases/get-organization/get-organization.command';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -47,7 +46,7 @@ export class SendMessageInApp extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate,
-    private getOrganization: GetOrganization
+    private organizationRepository: OrganizationRepository
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
   }
@@ -74,12 +73,7 @@ export class SendMessageInApp extends SendMessageBase {
       actor.data = await this.processAvatar(actor, command);
     }
 
-    const organization = await this.getOrganization.execute(
-      GetOrganizationCommand.create({
-        id: command.organizationId,
-        userId: command.userId,
-      })
-    );
+    const organization = await this.organizationRepository.findById(command.organizationId);
 
     try {
       content = await this.compileInAppTemplate(
