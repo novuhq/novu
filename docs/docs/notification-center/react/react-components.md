@@ -105,7 +105,7 @@ Use `position` prop to position the popover relative to the Bell icon
 
 ### Custom UI
 
-If you prefer to build a custom UI, it's possible to use the `useNotification` hook available in our React library.
+If you prefer to build a custom UI, it's possible to use the [useNotification](./api-reference#usenotifications) hook available in our React library.
 Let's see an example on how you can do that:
 
 ```tsx
@@ -113,15 +113,18 @@ import { NovuProvider, useNotifications } from '@novu/notification-center';
 
 function App() {
   return (
-    <NovuProvider subscriberId={'USER_ID'} applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}>
+    <NovuProvider
+      subscriberId={'USER_ID'}
+      applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}
+      initialFetchingStrategy={{ fetchNotifications: true, fetchUserPreferences: true }}
+    >
       <CustomNotificationCenter />
     </NovuProvider>
   );
 }
 
 function CustomNotificationCenter() {
-  const { notifications, fetchNextPage, hasNextPage, fetching, markAsSeen, refetch } =
-    useNotifications();
+  const { notifications, fetchNextPage, hasNextPage, isLoading, isFetching } = useNotifications();
 
   return (
     <ul>
@@ -133,15 +136,21 @@ function CustomNotificationCenter() {
 }
 ```
 
+:::info
+
+By default notifications are not fetched right away, if you would like to change this behaviour you can pass the `initialFetchingStrategy` prop to the `NovuProvider` component. The default value is `{ fetchNotifications: false }`. Read more about the [initialFetchingStrategy prop](./api-reference#novuprovider).
+
+:::
+
 :::tip
 
 If you only wish to modify some parts of the existing Novu component UI, you can easily override the: Header, Footer, and NotificationItem blocks including the notification actions block.
 
 :::
 
-When building your custom UI implementation it might be useful to know, how the notification feed model is structured, so you can customize the notification items during rendering.
+When building your custom UI implementation it might be useful to know how the notification feed model is structured, so you can customize the notification items during rendering.
 
-The notifications array returned by the `useNotifications` hook contains an array of `IMessage` objects, it's structure and properties are described in the [API reference](./api-reference#the-notification-imessage-model).
+The notifications array returned by the `useNotifications` hook contains an array of `IMessage` objects, its structure and properties are described in the [API reference](./api-reference#the-notification-imessage-model).
 
 ### Customize the UI language
 
@@ -281,7 +290,7 @@ Novu uses _en_ as default value for i18n
 
 :::
 
-### Realtime sockets
+## Realtime sockets
 
 Novu provides a real-time socket API for you to consume and get updates about new notifications added to the user's feed. To use the socket connection you can use the `useSocket` hook provided by the `@novu/notification-center` library. Let's see an example of that:
 
@@ -317,7 +326,7 @@ function CustomNotificationCenter() {
 }
 ```
 
-### Notification actions
+## Notification actions
 
 By adding action buttons on the in-app template in the editor you will need to add a matching behaviour on what happens after the user clicks on the action.
 
@@ -326,8 +335,7 @@ Let's look at an example:
 ```tsx
 import {
   NovuProvider,
-  useSocket,
-  useNotifications,
+  useUpdateAction,
   PopoverNotificationCenter,
   NotificationBell,
 } from '@novu/notification-center';
@@ -343,7 +351,7 @@ export function App() {
 }
 
 function PopoverWrapper() {
-  const { updateAction } = useNotifications();
+  const { updateAction } = useUpdateAction();
 
   function handlerOnNotificationClick(message: IMessage) {
     if (message?.cta?.data?.url) {
@@ -381,7 +389,7 @@ function PopoverWrapper() {
 
 Novu manages the state of the actions, so you can actually specify if the user has already performed the actions, so you can know when the actions should be hidden.
 
-### HMAC Encryption
+## HMAC Encryption
 
 When Novu's user adds the notification center to their application they are required to pass a `subscriberId` which identifies the user's end-customer, and the application Identifier which is acted as a public key to communicate with the notification feed API.
 
@@ -389,7 +397,7 @@ A malicious actor can access the user feed by accessing the API and passing anot
 
 HMAC encryption will make sure that a `subscriberId` is encrypted using the secret API key, and those will prevent malicious actors from impersonating users.
 
-#### Enabling HMAC Encryption
+### Enabling HMAC Encryption
 
 In order to enable Hash-Based Message Authentication Codes, you need to visit the admin panel in-app settings page and enable HMAC encryption for your environment.
 
@@ -411,7 +419,7 @@ Then pass the created HMAC to your client side application forward it to the com
 ></NovuProvider>
 ```
 
-### Customizing the notification center theme
+## Customizing the notification center theme
 
 The notification center component can be customized by passing a `theme` prop to the `PopoverNotificationCenter` component. We discourage you to do styling this way, instead, it's recommended to use the `styles` property, check the details [here](./custom-styling).
 
@@ -477,7 +485,7 @@ By specifying only a storeId, without a query, you could get all notifications.
 ```tsx
 import { useNotifications } from '@novu/core';
 
-const { notifications } = useNotifications({ storeId });
+const { notifications } = useNotifications();
 ```
 
 #### Using `tabs` prop on the notification center
