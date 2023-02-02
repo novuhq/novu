@@ -53,14 +53,24 @@ export function HeaderNav({}: Props) {
   if (LOGROCKET_ID) {
     useEffect(() => {
       if (currentUser && currentOrganization) {
-        let email = currentUser?.email;
-        email ??= ' ';
-        LogRocket.identify(currentUser?._id, {
-          name: currentUser?.firstName + ' ' + currentUser?.lastName,
-          email: email,
-          organizationId: currentOrganization._id,
-          organization: currentOrganization.name,
-        });
+        let logrocketTraits;
+
+        if (currentUser?.email !== undefined) {
+          logrocketTraits = {
+            name: currentUser?.firstName + ' ' + currentUser?.lastName,
+            organizationId: currentOrganization._id,
+            organization: currentOrganization.name,
+            email: currentUser?.email ? currentUser?.email : ' ',
+          };
+        } else {
+          logrocketTraits = {
+            name: currentUser?.firstName + ' ' + currentUser?.lastName,
+            organizationId: currentOrganization._id,
+            organization: currentOrganization.name,
+          };
+        }
+
+        LogRocket.identify(currentUser?._id, logrocketTraits);
       }
     }, [currentUser, currentOrganization]);
   }
