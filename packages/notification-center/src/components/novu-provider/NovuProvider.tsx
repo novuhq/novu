@@ -70,20 +70,20 @@ export function NovuProvider({
   const apiService = useMemo(() => {
     queryClient.clear();
     const service = new ApiService(backendUrl);
-    applyToken({ apiService: service });
+    applyToken({ apiService: service, appId: applicationIdentifier });
 
     return service;
-  }, [backendUrl]);
+  }, [backendUrl, applicationIdentifier]);
 
   const { socket, initializeSocket, disconnectSocket } = useInitializeSocket({ socketUrl });
 
   const onSuccessfulSession = useCallback(
     (newSession: ISession) => {
-      applyToken({ apiService, token: newSession.token });
+      applyToken({ apiService, token: newSession.token, appId: applicationIdentifier });
       initializeSocket(newSession);
       setSessionInitialized(true);
     },
-    [apiService, setSessionInitialized, initializeSocket]
+    [apiService, setSessionInitialized, initializeSocket, applicationIdentifier]
   );
 
   const setFetchingStrategy = useCallback(
