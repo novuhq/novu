@@ -344,7 +344,7 @@ describe('Workflow Editor - Main Functionality', function () {
       force: true,
     });
 
-    cy.getByTestId('control-add').click();
+    cy.getByTestId('control-add').first().click();
     cy.getByTestId('template-container-click-area').eq(0).click();
 
     cy.getByTestId('submit-btn').click();
@@ -364,7 +364,7 @@ describe('Workflow Editor - Main Functionality', function () {
 
     editChannel('inApp');
 
-    cy.getByTestId('template-container').find('input').should('have.length', 1);
+    cy.getByTestId('template-container').first().find('input').should('have.length', 1);
 
     cy.getByTestId('remove-button-icon').click();
 
@@ -375,6 +375,6 @@ describe('Workflow Editor - Main Functionality', function () {
 
     editChannel('inApp');
 
-    cy.getByTestId('control-add');
+    cy.getByTestId('control-add').first();
   });
 });
