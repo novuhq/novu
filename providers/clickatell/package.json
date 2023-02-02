@@ -47,10 +47,9 @@
     "nyc": "^15.1.0",
     "open-cli": "^6.0.1",
     "prettier": "^2.1.1",
-    "standard-version": "^9.0.0",
     "ts-jest": "^27.0.5",
     "ts-node": "^9.0.0",
-    "typedoc": "^0.19.0"
+    "typedoc": "^0.23.0"
   },
   "files": [
     "build/main",
