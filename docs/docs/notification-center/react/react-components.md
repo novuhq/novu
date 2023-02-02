@@ -421,7 +421,7 @@ Then pass the created HMAC to your client side application forward it to the com
 
 ## Customizing the notification center theme
 
-The notification center component can be customized by passing a `theme` prop to the `PopoverNotificationCenter` component. We discourage you to do styling this way, instead, it's recommended to use the `styles` property, check the details [here](./custom-styling).
+The notification center component can be customized by passing a `theme` prop to the `PopoverNotificationCenter` component. We discourage you to do styling this way, instead, it's recommended to use the `styles` property, check the details [here](../custom-styling).
 
 A [theme](./api-reference#ithemelayout-properties) prop can be used to customize the notification center's layout, header, popover, notification list item, user preferences, footer, and unseen badge.
 The object can be modified partially or completely, depending on the level of customization you want to achieve.
