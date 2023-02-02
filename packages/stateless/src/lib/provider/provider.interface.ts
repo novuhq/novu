@@ -54,6 +54,8 @@ export interface IPushOptions {
     channelId?: string;
     categoryId?: string;
     mutableContent?: boolean;
+    android?: { [key: string]: { [key: string]: string } };
+    apns?: { payload: { aps: { [key: string]: { [key: string]: string } } } };
   };
 }
 
@@ -91,6 +93,7 @@ export enum SmsEventStatusEnum {
   SENT = 'sent',
   FAILED = 'failed',
   UNDELIVERED = 'undelivered',
+  REJECTED = 'rejected',
 }
 
 export interface IEventBody {

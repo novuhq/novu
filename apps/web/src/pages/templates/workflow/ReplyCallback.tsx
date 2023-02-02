@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Input, Switch, Text } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { When } from '../../../components/utils/When';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -21,7 +21,10 @@ export const ReplyCallback = ({ control, index, errors }) => {
       <ReplyCallbackSwitch index={index} control={control} />
       <When truthy={!domainMxRecordConfigured && replyCallbackActive}>
         <LackConfigurationError
-          text={'Looks like you haven’t configured your domain mx record or routing under email settings yet.'}
+          text={
+            'Looks like you haven’t configured your domain mx record or ' +
+            'added your domain to the allowed domain list under email settings yet.'
+          }
           redirectTo={'/settings'}
         />
       </When>

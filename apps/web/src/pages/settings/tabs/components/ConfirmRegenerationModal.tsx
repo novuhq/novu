@@ -1,6 +1,6 @@
 import { Group, Modal, useMantineTheme } from '@mantine/core';
 import { Button, colors, shadows, Title, Text } from '../../../../design-system';
-import { useEnvController } from '../../../../store/use-env-controller';
+import { useEnvController } from '../../../../store/useEnvController';
 
 export function ConfirmRegenerationModal({
   isOpen,

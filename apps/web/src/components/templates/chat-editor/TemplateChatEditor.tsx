@@ -1,11 +1,11 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
-import { useEnvController } from '../../../store/use-env-controller';
-import { IForm } from '../use-template-controller.hook';
+import { useEnvController } from '../../../store/useEnvController';
+import { IForm } from '../useTemplateController';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { Textarea } from '../../../design-system';
 import { VariableManager } from '../VariableManager';
-import { useVariablesManager } from '../../../hooks/use-variables-manager';
+import { useVariablesManager } from '../../../hooks/useVariablesManager';
 
 export function TemplateChatEditor({
   control,

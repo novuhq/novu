@@ -311,6 +311,12 @@ export const snsConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'AWS region',
+    type: 'string',
+    required: true,
+  },
 ];
 
 export const telnyxConfig: IConfigCredentials[] = [

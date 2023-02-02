@@ -23,7 +23,7 @@ import {
 } from '@novu/notification-center';
 
 function Header() {
-  function onNotificationClick(notification: IMessage) {
+  function onNotificationClick(message: IMessage) {
     // your logic to handle the notification click
     if (message?.cta?.data?.url) {
       window.location.href = message.cta.data.url;
@@ -103,7 +103,7 @@ Use `position` prop to position the popover relative to the Bell icon
 </PopoverNotificationCenter>
 ```
 
-### Custom notification center component
+### Custom UI
 
 If you prefer to build a custom UI, it's possible to use the `useNotification` hook available in our React library.
 Let's see an example on how you can do that:
@@ -275,6 +275,12 @@ The `i18n` prop can accept 2 different types of values
   }}
   ```
 
+:::info
+
+Novu uses _en_ as default value for i18n
+
+:::
+
 ### Realtime sockets
 
 Novu provides a real-time socket API for you to consume and get updates about new notifications added to the user's feed. To use the socket connection you can use the `useSocket` hook provided by the `@novu/notification-center` library. Let's see an example of that:
@@ -401,7 +407,7 @@ Then pass the created HMAC to your client side application forward it to the com
 <NovuProvider
   subscriberId={'PLAIN_TEXT_ID'}
   subscriberHash={'HASHED_SUBSCRIBER_ID'}
-  applicationIdentifier={'APP_ID'}
+  applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}
 ></NovuProvider>
 ```
 

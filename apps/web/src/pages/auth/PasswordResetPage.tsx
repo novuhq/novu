@@ -6,7 +6,7 @@ import AuthContainer from '../../components/layout/components/AuthContainer';
 import { PasswordResetRequestForm } from '../../components/auth/PasswordResetRequestForm';
 import { PasswordResetForm } from '../../components/auth/PasswordResetForm';
 import { Button, Text } from '../../design-system';
-import { useVercelParams } from '../../hooks/use-vercelParams';
+import { useVercelParams } from '../../hooks/useVercelParams';
 
 type Props = {};
 
