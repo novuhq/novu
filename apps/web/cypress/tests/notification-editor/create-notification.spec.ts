@@ -19,6 +19,7 @@ describe('Creation functionality', function () {
 
     cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
+      force: true,
     });
     cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('submit-btn').click();
@@ -56,8 +57,11 @@ describe('Creation functionality', function () {
       .first()
       .type('{{firstName}} someone assigned you to {{taskName}}', {
         parseSpecialCharSequences: false,
+        force: true,
       })
-      .type('{enter}Please check it.');
+      .type('{enter}Please check it.', {
+        force: true,
+      });
     cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('submit-btn').click();
 
