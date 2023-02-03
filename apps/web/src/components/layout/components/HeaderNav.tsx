@@ -50,8 +50,9 @@ export function HeaderNav({}: Props) {
     }, [currentUser, currentOrganization]);
   }
 
-  if (LOGROCKET_ID) {
     useEffect(() => {
+      if (!LOGROCKET_ID) return;
+      
       if (currentUser && currentOrganization) {
         let logrocketTraits;
 
@@ -73,7 +74,6 @@ export function HeaderNav({}: Props) {
         LogRocket.identify(currentUser?._id, logrocketTraits);
       }
     }, [currentUser, currentOrganization]);
-  }
 
   const themeTitle = () => {
     let title = 'Match System Appearance';
