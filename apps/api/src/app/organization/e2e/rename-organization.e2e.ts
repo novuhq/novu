@@ -2,7 +2,7 @@ import { OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Update Organization - /organizations (PUT)', function () {
+describe('Rename Organization - /organizations (PATCH)', function () {
   let session: UserSession;
   const organizationRepository = new OrganizationRepository();
 
@@ -11,15 +11,15 @@ describe('Update Organization - /organizations (PUT)', function () {
     await session.initialize();
   });
 
-  it('should update the organization name', async function () {
+  it('should rename the organization', async function () {
     const payload = {
       name: 'Liberty Powers',
     };
 
-    await session.testAgent.put('/v1/organizations').send(payload);
+    await session.testAgent.patch('/v1/organizations').send(payload);
 
     const organization = await organizationRepository.findById(session.organization._id);
 
-    expect(organization.name).to.equal(payload.name);
+    expect(organization?.name).to.equal(payload.name);
   });
 });

@@ -7,6 +7,7 @@ import {
   Param,
   Post,
   Put,
+  Patch,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -33,8 +34,8 @@ import { IGetOrganizationsDto } from './dtos/get-organizations.dto';
 import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
 import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-organization.command';
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
-import { UpdateOrganizationCommand } from './usecases/update-organization/update-organization-command';
-import { UpdateOrganization } from './usecases/update-organization/update-organization.usecase';
+import { RenameOrganizationCommand } from './usecases/rename-organization/rename-organization-command';
+import { RenameOrganization } from './usecases/rename-organization/rename-organization.usecase';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -50,7 +51,7 @@ export class OrganizationController {
     private updateBrandingDetailsUsecase: UpdateBrandingDetails,
     private getOrganizationsUsecase: GetOrganizations,
     private getMyOrganizationUsecase: GetMyOrganization,
-    private updateOrganizationUsecase: UpdateOrganization
+    private renameOrganizationUsecase: RenameOrganization
   ) {}
 
   @Post('/')
@@ -158,11 +159,11 @@ export class OrganizationController {
     );
   }
 
-  @Put('/')
+  @Patch('/')
   @Roles(MemberRoleEnum.ADMIN)
   async updateOrganization(@UserSession() user: IJwtPayload, @Body() body: { name: string }) {
-    return await this.updateOrganizationUsecase.execute(
-      UpdateOrganizationCommand.create({
+    return await this.renameOrganizationUsecase.execute(
+      RenameOrganizationCommand.create({
         name: body.name,
         userId: user._id,
         id: user.organizationId,

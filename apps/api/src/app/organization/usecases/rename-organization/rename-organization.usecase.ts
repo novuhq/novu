@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { OrganizationRepository } from '@novu/dal';
-import { UpdateOrganizationCommand } from './update-organization-command';
+import { RenameOrganizationCommand } from './rename-organization-command';
 
 @Injectable()
-export class UpdateOrganization {
+export class RenameOrganization {
   constructor(private organizationRepository: OrganizationRepository) {}
 
-  async execute(command: UpdateOrganizationCommand) {
+  async execute(command: RenameOrganizationCommand) {
     const payload = {
       name: command.name,
     };
 
-    await this.organizationRepository.updateOrganization(command.id, payload);
+    await this.organizationRepository.renameOrganization(command.id, payload);
 
     return payload;
   }

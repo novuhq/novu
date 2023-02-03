@@ -35,7 +35,7 @@ export class OrganizationRepository extends BaseRepository<
     );
   }
 
-  async updateOrganization(organizationId: string, payload: { name: string }) {
+  async renameOrganization(organizationId: string, payload: { name: string }) {
     return this.update(
       {
         _id: organizationId,
