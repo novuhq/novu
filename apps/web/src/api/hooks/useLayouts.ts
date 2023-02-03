@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEnvController } from '../../store/use-env-controller';
+import { useEnvController } from '../../store/useEnvController';
 import { QueryKeys } from '../query.keys';
 import { getLayoutsList } from '../layouts';
 import { ILayoutEntity } from '@novu/shared';

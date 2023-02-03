@@ -24,9 +24,9 @@ RUN NODE_ENV=prod pnpm build:inbound-mail
 
 WORKDIR /usr/src/app/apps/inbound-mail
 
-RUN cp src/.env.test dist/.env.test
-RUN cp src/.env.development dist/.env.development
-RUN cp src/.env.production dist/.env.production
+RUN cp src/.env.test dist/src/.env.test
+RUN cp src/.env.development dist/src/.env.development
+RUN cp src/.env.production dist/src/.env.production
 
 RUN cp -r src/python dist/python
 
@@ -64,4 +64,4 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
 RUN chown -R 1000:root .
 
 WORKDIR /usr/src/app/apps/inbound-mail
-CMD [ "pm2-runtime", "dist/main.js" ]
+CMD [ "pm2-runtime", "dist/src/main.js" ]

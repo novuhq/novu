@@ -5,7 +5,7 @@ import { TextInput as MantineInput, Popover, Button as MantineButton, createStyl
 
 import { colors, shadows } from '../../../design-system';
 import { TextAlignment, Wifi } from '../../../design-system/icons';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 
 const usePopoverStyles = createStyles((theme) => ({
   dropdown: {

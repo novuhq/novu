@@ -32,4 +32,4 @@ export const INTERCOM_APP_ID = process.env.REACT_APP_INTERCOM_APP_ID;
 
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WEB);
 
-export const LOGROCKET_ID = process.env.LOGROCKET_ID ?? '';
+export const LOGROCKET_ID = process.env.REACT_APP_LOGROCKET_ID ?? '';

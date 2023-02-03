@@ -7,11 +7,11 @@ import { AuthContext } from '../../store/authContext';
 import { LoginForm } from '../../components/auth/LoginForm';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
-import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
+import { useVercelIntegration } from '../../api/hooks/useVercelIntegration';
 import SetupLoader from '../../components/auth/SetupLoader';
-import { useVercelParams } from '../../hooks/use-vercelParams';
-import { useSegment } from '../../hooks/use-segment';
-import { useAcceptInvite } from '../../components/auth/use-accept-invite.hook';
+import { useVercelParams } from '../../hooks/useVercelParams';
+import { useSegment } from '../../hooks/useSegment';
+import { useAcceptInvite } from '../../components/auth/useAcceptInvite';
 import { useBlueprint } from '../../hooks/useBlueprint';
 
 export default function LoginPage() {

@@ -3,7 +3,7 @@ import { Grid, Input, useMantineColorScheme, InputWrapperProps } from '@mantine/
 import styled from '@emotion/styled';
 import { useFormContext, Controller } from 'react-hook-form';
 
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Checkbox, colors, Switch } from '../../../design-system';
 import { channels } from '../../../pages/templates/shared/channels';

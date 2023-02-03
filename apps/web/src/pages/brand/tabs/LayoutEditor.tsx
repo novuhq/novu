@@ -3,7 +3,7 @@ import { EmailCustomCodeEditor } from '../../../components/templates/email-edito
 import { Center, Grid, Group, Modal, Title, useMantineTheme } from '@mantine/core';
 import { ArrowLeft } from '../../../design-system/icons';
 import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
@@ -13,8 +13,8 @@ import { getTemplateVariables, ITemplateVariable, isReservedVariableName, Layout
 import { QueryKeys } from '../../../api/query.keys';
 import { VariableManager } from '../../../components/templates/VariableManager';
 import { VariablesManagement } from '../../../components/templates/email-editor/variables-management/VariablesManagement';
-import { useLayoutsEditor } from '../../../api/hooks/use-layouts-editor';
-import { usePrompt } from '../../../hooks/use-prompt';
+import { useLayoutsEditor } from '../../../api/hooks/useLayoutsEditor';
+import { usePrompt } from '../../../hooks/usePrompt';
 import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
 
 interface ILayoutForm {

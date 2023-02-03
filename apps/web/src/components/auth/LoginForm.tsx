@@ -11,8 +11,8 @@ import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
 import { IS_DOCKER_HOSTED } from '../../config';
-import { useVercelParams } from '../../hooks/use-vercelParams';
-import { useAcceptInvite } from './use-accept-invite.hook';
+import { useVercelParams } from '../../hooks/useVercelParams';
+import { useAcceptInvite } from './useAcceptInvite';
 import { buildGithubLink, buildVercelGithubLink } from './githubUtils';
 
 type LoginFormProps = {

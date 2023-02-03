@@ -2,7 +2,7 @@ import { Grid, useMantineColorScheme } from '@mantine/core';
 import { TemplatesSideBar } from '../../components/templates/TemplatesSideBar';
 import styled from '@emotion/styled';
 import { colors } from '../../design-system';
-import { useTemplateController } from '../../components/templates/use-template-controller.hook';
+import { useTemplateController } from '../../components/templates/useTemplateController';
 import { TemplatePreference } from '../../components/templates/notification-setting-form/TemplatePreference';
 
 export function UserPreference({ activePage, setActivePage, showErrors, templateId }) {

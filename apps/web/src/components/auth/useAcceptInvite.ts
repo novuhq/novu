@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/react';
 
 import { api } from '../../api/api.client';
 import { AuthContext } from '../../store/authContext';
-import { applyToken } from '../../store/use-auth-controller';
+import { applyToken } from '../../store/useAuthController';
 
 export function useAcceptInvite() {
   const { setToken } = useContext(AuthContext);
