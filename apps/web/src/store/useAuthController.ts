@@ -8,7 +8,7 @@ import type { IJwtPayload, IOrganizationEntity, IUserEntity } from '@novu/shared
 
 import { getUser } from '../api/user';
 import { getOrganizations } from '../api/organization';
-import { useSegment } from '../hooks/use-segment';
+import { useSegment } from '../hooks/useSegment';
 
 export function applyToken(token: string | null) {
   if (token) {

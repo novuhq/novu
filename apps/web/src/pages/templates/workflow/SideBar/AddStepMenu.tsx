@@ -2,7 +2,7 @@ import React from 'react';
 import { Stack } from '@mantine/core';
 import { colors, DragButton, Text, Title } from '../../../../design-system';
 import { channels, NodeTypeEnum } from '../../shared/channels';
-import { useEnvController } from '../../../../store/use-env-controller';
+import { useEnvController } from '../../../../store/useEnvController';
 import { When } from '../../../../components/utils/When';
 import { NavSection } from '../../../../components/templates/TemplatesSideBar';
 import { StyledNav } from '../WorkflowEditorPage';

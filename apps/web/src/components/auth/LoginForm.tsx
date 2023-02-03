@@ -11,7 +11,7 @@ import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
 import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
-import { useVercelParams } from '../../hooks/use-vercelParams';
+import { useVercelParams } from '../../hooks/useVercelParams';
 import { SignUpOriginEnum } from '@novu/shared';
 
 type Props = {

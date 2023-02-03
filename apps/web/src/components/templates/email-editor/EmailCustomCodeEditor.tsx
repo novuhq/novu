@@ -5,9 +5,17 @@ import { addCompleter } from 'ace-builds/src-noconflict/ext-language_tools';
 import { Card } from '@mantine/core';
 import { SystemVariablesWithTypes, HandlebarHelpers } from '@novu/shared';
 import { colors } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 
-export function EmailCustomCodeEditor({ onChange, value }: { onChange?: (string) => void; value?: string }) {
+export function EmailCustomCodeEditor({
+  onChange,
+  value,
+  height = '300px',
+}: {
+  onChange?: (string) => void;
+  value?: string;
+  height?: string;
+}) {
   const { readonly } = useEnvController();
   addCompleter({
     getCompletions: function (editor, session, pos, prefix, callback) {
@@ -44,7 +52,7 @@ export function EmailCustomCodeEditor({ onChange, value }: { onChange?: (string)
         theme="monokai"
         name="codeEditor"
         onChange={onChange}
-        height="300px"
+        height={height}
         fontSize={14}
         showPrintMargin
         showGutter

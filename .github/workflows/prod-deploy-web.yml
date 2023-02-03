@@ -34,26 +34,8 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16.15.1'
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-
-
-      - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 7.5.0
-          run_install: true
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell
       - name: Build
@@ -71,6 +53,7 @@ jobs:
           echo REACT_APP_SENTRY_DSN="https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907" >> .env
           echo REACT_APP_ENVIRONMENT=prod >> .env
           echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
+          echo REACT_APP_LOGROCKET_ID=${{ secrets.LOGROCKET_ID }} >> .env
 
       - name: Envsetup
         working-directory: apps/web
@@ -84,6 +67,7 @@ jobs:
           REACT_APP_WS_URL: https://ws.novu.co
           REACT_APP_WIDGET_EMBED_PATH: https://embed.novu.co/embed.umd.min.js
           REACT_APP_NOVU_APP_ID: ${{ secrets.NOVU_APP_ID }}
+          REACT_APP_LOGROCKET_ID: ${{ secrets.LOGROCKET_ID }}
           REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
           REACT_APP_ENVIRONMENT: prod
         working-directory: apps/web
