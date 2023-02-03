@@ -85,6 +85,7 @@ export function CriticalPreference() {
   return (
     <Controller
       name="critical"
+      defaultValue={false}
       control={control}
       render={({ field }) => {
         return (
