@@ -105,7 +105,7 @@ describe('Shell Embed - Seen Read', function () {
 
     cy.get('#notification-bell').click();
 
-    getNotifications().should('have.length', 0);
+    getNotifications().then('have.length', 0);
 
     clickOnTab('unseen');
 
@@ -115,7 +115,7 @@ describe('Shell Embed - Seen Read', function () {
 
     cy.waitForNetworkIdle(500);
 
-    getNotifications().should('have.length', 5);
+    getNotifications().then('have.length', 5);
   });
 
   it('should display notification as read after been clicked', function () {
