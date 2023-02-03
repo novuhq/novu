@@ -19,7 +19,7 @@ export function AppContent() {
   };
 
   return (
-    <MantineProvider withNormalizeCSS theme={themeConfig}>
+    <MantineProvider theme={themeConfig}>
       <div className={wrapperClassName(primaryColor, fontFamily, dir)}>
         <Layout />
       </div>

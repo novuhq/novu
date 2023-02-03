@@ -388,7 +388,8 @@
     "nunito",
     "codesee",
     "ehlo",
-    "logrocket"
+    "logrocket",
+    "backoff"
   ],
   "flagWords": [],
   "patterns": [
