@@ -39,7 +39,7 @@ import { SegmentProvider } from './store/segment.context';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 
-if (LOGROCKET_ID) {
+if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID);
   setupLogRocketReact(LogRocket);
 }

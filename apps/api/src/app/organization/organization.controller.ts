@@ -161,7 +161,7 @@ export class OrganizationController {
 
   @Patch('/')
   @Roles(MemberRoleEnum.ADMIN)
-  async updateOrganization(@UserSession() user: IJwtPayload, @Body() body: { name: string }) {
+  async renameOrganization(@UserSession() user: IJwtPayload, @Body() body: { name: string }) {
     return await this.renameOrganizationUsecase.execute(
       RenameOrganizationCommand.create({
         name: body.name,
