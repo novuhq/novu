@@ -79,8 +79,7 @@ export function FlowEditor({
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
-  const { template } = useTemplateFetcher(templateId);
-  const { trigger } = useTemplateEditor();
+  const { template, trigger } = useTemplateEditor();
   const methods = useFormContext<IForm>();
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 

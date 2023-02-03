@@ -7,7 +7,6 @@ import { useEnvController } from '../../store/useEnvController';
 import { When } from '../utils/When';
 import { useTemplateEditor } from './TemplateEditorProvider';
 import { useStatusChangeControllerHook } from './useStatusChangeController';
-import { useTemplateFetcher } from './useTemplateFetcher';
 
 const Header = ({ activePage, editMode }: { editMode: boolean; activePage: ActivePageEnum }) => {
   if (activePage === ActivePageEnum.SETTINGS) {
@@ -61,8 +60,7 @@ export const TemplatePageHeader = ({
   setActivePage,
   onTestWorkflowClicked,
 }: Props) => {
-  const { editMode } = useTemplateEditor();
-  const { template } = useTemplateFetcher(templateId);
+  const { template, editMode } = useTemplateEditor();
   const { readonly } = useEnvController();
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(

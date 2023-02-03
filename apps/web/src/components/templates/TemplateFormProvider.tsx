@@ -1,7 +1,6 @@
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { DevTool } from '@hookform/devtools';
 import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
 
 import type { IForm } from './formTypes';
@@ -209,10 +208,5 @@ export const TemplateFormProvider = ({ children }) => {
     defaultValues,
   });
 
-  return (
-    <FormProvider {...methods}>
-      {children}
-      <DevTool placement="top-left" control={methods.control} />
-    </FormProvider>
-  );
+  return <FormProvider {...methods}>{children}</FormProvider>;
 };

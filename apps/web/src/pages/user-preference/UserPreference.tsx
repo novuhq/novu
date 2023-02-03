@@ -9,9 +9,7 @@ import { useTemplateFetcher } from '../../components/templates/useTemplateFetche
 
 export function UserPreference({ activePage, setActivePage, showErrors, templateId }) {
   const { colorScheme } = useMantineColorScheme();
-
-  const { trigger } = useTemplateEditor();
-  const { template } = useTemplateFetcher(templateId);
+  const { template, trigger } = useTemplateEditor();
 
   return (
     <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
