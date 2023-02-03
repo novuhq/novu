@@ -1,8 +1,9 @@
 import { Group } from '@mantine/core';
-import { Button, Title, Text, Modal } from '../../design-system';
-import { IForm } from './useTemplateController';
-import { errorMessage } from '../../utils/notifications';
 import { useFormContext } from 'react-hook-form';
+
+import { Button, Title, Text, Modal } from '../../design-system';
+import type { IForm } from './formTypes';
+import { errorMessage } from '../../utils/notifications';
 
 export function SaveChangesModal({
   isVisible,

@@ -1,12 +1,12 @@
 import { useInputState } from '@mantine/hooks';
 import { ActionIcon, Container, Stack, Divider } from '@mantine/core';
 import { Control, Controller, useFormContext } from 'react-hook-form';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { IFeedEntity } from '@novu/shared';
 
-import { IForm } from '../useTemplateController';
+import type { IForm } from '../formTypes';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Checkbox, colors, Input } from '../../../design-system';
 import { useEnvController } from '../../../store/useEnvController';
@@ -22,7 +22,6 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
   const [newFeed, setNewFeed] = useInputState('');
-  const [variableContents, setVariableContents] = useState<string[]>([]);
   const { setValue, getValues, watch } = useFormContext();
   const { data: feeds } = useQuery([QueryKeys.getFeeds], getFeeds);
   const { mutateAsync: createNewFeed } = useMutation<
@@ -34,28 +33,23 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
       queryClient.setQueryData([QueryKeys.getFeeds], [...feeds, data]);
     },
   });
-
   const [showFeed, setShowFeed] = useState(true);
-  const variablesArray = useVariablesManager(index, variableContents);
+  const template = watch(`steps.${index}.template`);
+  const variableContents = useMemo(() => {
+    const baseContent = ['content'];
 
-  useEffect(() => {
-    const subscription = watch((values) => {
-      const baseContent = ['content'];
-      const template = values.steps[index].template;
+    if (template.cta?.data?.url) {
+      baseContent.push('cta.data.url');
+    }
 
-      if (template.cta?.data?.url) {
-        baseContent.push('cta.data.url');
-      }
-
-      template.cta?.action?.buttons?.forEach((_button, ind) => {
-        baseContent.push(`cta.action.buttons.${ind}.content`);
-      });
-
-      if (JSON.stringify(baseContent) !== JSON.stringify(variableContents)) setVariableContents(baseContent);
+    template.cta?.action?.buttons?.forEach((_button, ind) => {
+      baseContent.push(`cta.action.buttons.${ind}.content`);
     });
 
-    return () => subscription.unsubscribe();
-  }, [watch]);
+    return baseContent;
+  }, [template]);
+
+  const variablesArray = useVariablesManager(index, variableContents);
 
   useEffect(() => {
     const feed = getValues(`steps.${index}.template.feedId`);
@@ -101,6 +95,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
         <Stack spacing={25}>
           <Controller
             name={`steps.${index}.template.cta.data.url` as any}
+            defaultValue=""
             control={control}
             render={({ field, fieldState }) => (
               <Input
@@ -126,6 +121,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
           <Divider sx={{ borderTopColor: colors.B40 }} />
           <Controller
             name={`steps.${index}.template.feedId` as any}
+            defaultValue=""
             control={control}
             render={({ field }) => {
               return (

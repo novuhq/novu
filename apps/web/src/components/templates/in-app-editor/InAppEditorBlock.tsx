@@ -1,7 +1,8 @@
 import { Control, Controller, useWatch } from 'react-hook-form';
+
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
 import { ContentContainer } from './content/ContentContainer';
-import { IForm } from '../useTemplateController';
+import type { IForm } from '../formTypes';
 
 export function InAppEditorBlock({
   contentPlaceholder,
@@ -21,7 +22,8 @@ export function InAppEditorBlock({
 
   return (
     <Controller
-      name={`steps.${index}.template.cta.action` as any}
+      name={`steps.${index}.template.cta.action`}
+      defaultValue=""
       data-test-id="in-app-content-form-item"
       control={control}
       render={({ field }) => {
@@ -56,6 +58,7 @@ function ContentContainerController({
   return (
     <Controller
       name={`steps.${index}.template.content` as any}
+      defaultValue=""
       data-test-id="in-app-content-form-item"
       control={control}
       render={({ field }) => {

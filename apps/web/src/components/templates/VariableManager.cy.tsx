@@ -131,8 +131,10 @@ function FormTester({ content }: { content: string }) {
   return <></>;
 }
 
+const templateFields = ['content'];
+
 function VariableManagerTester() {
-  const variablesArray = useVariablesManager(0, ['content']);
+  const variablesArray = useVariablesManager(0, templateFields);
 
   return <VariableManager index={0} variablesArray={variablesArray} />;
 }
