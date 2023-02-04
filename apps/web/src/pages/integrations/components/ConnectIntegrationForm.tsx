@@ -117,7 +117,7 @@ export function ConnectIntegrationForm({
     { error: string; message: string; statusCode: number },
     {
       integrationId: string;
-      data: { credentials: ICredentialsDto; active: boolean; limits: ILimitsDto; check: boolean };
+      data: { credentials: ICredentialsDto; active: boolean; limits?: ILimitsDto; check: boolean };
     }
   >(({ integrationId, data }) => updateIntegration(integrationId, data));
 
@@ -154,7 +154,7 @@ export function ConnectIntegrationForm({
           providerId: provider?.providerId ? provider?.providerId : '',
           channel: provider?.channel ? provider?.channel : null,
           credentials,
-          limits: { softLimit: hardLimit * 0.9, hardLimit: hardLimit },
+          limits: hardLimit > 0 ? { softLimit: hardLimit * 0.9, hardLimit: hardLimit } : undefined,
           active: isActive,
           check: checkIntegrationState.check,
         });
@@ -164,7 +164,7 @@ export function ConnectIntegrationForm({
           data: {
             credentials,
             active: isActive,
-            limits: { softLimit: hardLimit * 0.9, hardLimit: hardLimit },
+            limits: hardLimit > 0 ? { softLimit: hardLimit * 0.9, hardLimit: hardLimit } : undefined,
             check: checkIntegrationState.check,
           },
         });
@@ -216,7 +216,6 @@ export function ConnectIntegrationForm({
 
       <ColumnDiv>
         <Image style={{ maxWidth: 140 }} radius="md" src={logoSrc} alt={`${provider?.providerId} image`} />
-
         <InlineDiv>
           <span>Read our guide on where to get the credentials </span>
           <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
@@ -234,19 +233,16 @@ export function ConnectIntegrationForm({
             />
           </InputWrapper>
         ))}
-        <StyledText>
-          Monthly message limits(soft:{hardLimit * 0.9} and hard:{hardLimit})
-        </StyledText>
-        <InputWrapper key="limits">
+        <ColumnDiv>Monthly message limit ({hardLimit > 0 ? hardLimit : 'Unlimited'})</ColumnDiv>
+        <SlideWrapper>
           <Slider
             disabled={!provider || NOVU_START_PROVIDERS.has(provider.providerId)}
             max={MAX_HARD_LIMIT}
             value={hardLimit}
             onChange={setHardLimit}
             thumbSize={12}
-            //thumbChildren={['SL', 'HL']}
           />
-        </InputWrapper>
+        </SlideWrapper>
         {webhookSupportStatus &&
           provider?.channel &&
           [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel) && (
@@ -263,7 +259,6 @@ export function ConnectIntegrationForm({
               />
             </InputWrapper>
           )}
-
         <Stack my={30}>
           <ActiveWrapper active={isActive}>
             <Switch checked={isActive} data-test-id="is_active_id" onChange={handlerSwitchChange} />
@@ -295,7 +290,6 @@ export function ConnectIntegrationForm({
             </Alert>
           )}
         </Stack>
-
         <Button submit fullWidth loading={isLoadingUpdate || isLoadingCreate}>
           {createModel ? 'Connect' : 'Update'}
         </Button>
@@ -363,6 +357,10 @@ const InputWrapper = styled.div`
     margin-bottom: 10px;
     font-size: 14px;
   }
+`;
+const SlideWrapper = styled.div`
+  margin-bottom: 15px;
+  padding-right: 10px;
 `;
 
 const Form = styled.form`

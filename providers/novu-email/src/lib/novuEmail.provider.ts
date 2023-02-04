@@ -18,7 +18,7 @@ export class NovuEmailProvider extends SendgridEmailProvider {
   async checkIntegration(
     options: IEmailOptions
   ): Promise<ICheckIntegrationResponse> {
-    return this.config.apiKey
+    return process.env.NOVU_EMAIL_INTEGRATION_API_KEY
       ? {
           success: true,
           message: 'Integration Successful',

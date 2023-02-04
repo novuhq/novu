@@ -25,6 +25,14 @@ export const STEP_TYPE_TO_CHANNEL_TYPE = new Map<StepTypeEnum, ChannelTypeEnum>(
   [StepTypeEnum.PUSH, ChannelTypeEnum.PUSH],
 ]);
 
+export const CHANNEL_TYPE_TO_STEP_TYPE = new Map<ChannelTypeEnum, StepTypeEnum>([
+  [ChannelTypeEnum.IN_APP, StepTypeEnum.IN_APP],
+  [ChannelTypeEnum.EMAIL, StepTypeEnum.EMAIL],
+  [ChannelTypeEnum.SMS, StepTypeEnum.SMS],
+  [ChannelTypeEnum.CHAT, StepTypeEnum.CHAT],
+  [ChannelTypeEnum.PUSH, StepTypeEnum.PUSH],
+]);
+
 export enum ChannelCTATypeEnum {
   REDIRECT = 'redirect',
 }

@@ -78,7 +78,7 @@ export class SendMessageSms extends SendMessageBase {
 
       return;
     }
-    await this.providerUsageLimits.ensureLimitNotReached(integration);
+    await this.providerUsageLimits.ensureLimitNotReached(integration, command.job);
 
     Sentry.addBreadcrumb({
       message: 'Sending SMS',

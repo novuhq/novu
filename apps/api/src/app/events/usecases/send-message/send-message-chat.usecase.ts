@@ -149,7 +149,7 @@ export class SendMessageChat extends SendMessageBase {
 
       return;
     }
-    await this.providerUsageLimits.ensureLimitNotReached(integration);
+    await this.providerUsageLimits.ensureLimitNotReached(integration, command.job);
 
     const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
 

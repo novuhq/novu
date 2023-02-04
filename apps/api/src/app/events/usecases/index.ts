@@ -26,6 +26,7 @@ import { SendTestEmail } from './send-message/test-send-email.usecase';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from './map-trigger-recipients';
 import { MessageMatcher } from './trigger-event/message-matcher.service';
 import { ParseEventRequest } from './parse-event-request/parse-event-request.usecase';
+import { ProviderUsageLimits } from '../../integrations/usecases/provider-usage-limits';
 
 export const USE_CASES = [
   MessageMatcher,
@@ -57,4 +58,5 @@ export const USE_CASES = [
   MapTriggerRecipients,
   MapTriggerRecipientsCommand,
   ParseEventRequest,
+  ProviderUsageLimits,
 ];

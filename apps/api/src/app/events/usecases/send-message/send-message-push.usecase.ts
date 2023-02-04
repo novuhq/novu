@@ -124,7 +124,7 @@ export class SendMessagePush extends SendMessageBase {
 
       return;
     }
-    await this.providerUsageLimits.ensureLimitNotReached(integration);
+    await this.providerUsageLimits.ensureLimitNotReached(integration, command.job);
 
     const overrides = command.overrides[integration.providerId] || {};
 

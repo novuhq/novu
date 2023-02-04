@@ -15,21 +15,19 @@ export const UsageMeter = ({ provider }: { provider: IIntegratedProvider }) => {
   const messageCount = data?.messageCount as number;
   const hardLimit: number = provider?.limits?.hardLimit;
   const usedPerc = (messageCount * 1000) / hardLimit;
-  const hlColor = theme.colorScheme === 'dark' ? colors.B30 : colors.B60;
+  const hlColor = theme.colorScheme === 'dark' ? colors.warning : colors.warning;
   const label = `Used ${messageCount}/${provider?.limits?.hardLimit}`;
 
   return (
     <>
       <Text>{label}</Text>
       <Progress
-        color={colors.horizontal}
         size={12}
         sections={[
-          { value: usedPerc, color: colors.horizontal },
+          { value: usedPerc, color: colors.success },
           { value: 100 - usedPerc, color: hlColor },
         ]}
       />
     </>
   );
 };
-//<MultiMarkSlider />

@@ -63,40 +63,23 @@ export class SendMessageEmail extends SendMessageBase {
 
     let integration: IntegrationEntity | undefined = undefined;
 
-    try {
-      integration = await this.getIntegration(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.EMAIL,
-          findOne: true,
-          active: true,
-          userId: command.userId,
-        })
-      );
-      if (!integration) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-          })
-        );
-
-        return;
-      }
-      await this.providerUsageLimits.ensureLimitNotReached(integration);
-    } catch (e) {
+    integration = await this.getIntegration(
+      GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.EMAIL,
+        findOne: true,
+        active: true,
+        userId: command.userId,
+      })
+    );
+    if (!integration) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
-          raw: JSON.stringify({ message: e.message }),
           isTest: false,
           isRetry: false,
         })
@@ -104,6 +87,9 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
+
+    await this.providerUsageLimits.ensureLimitNotReached(integration, command.job);
+
     const emailChannel: NotificationStepEntity = command.step;
     if (!emailChannel) throw new ApiException('Email channel step not found');
     if (!emailChannel.template) throw new ApiException('Email channel template not found');
@@ -388,6 +374,7 @@ export class SendMessageEmail extends SendMessageBase {
         LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
         error
       );
+      console.log('error ############', error);
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

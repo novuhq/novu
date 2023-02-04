@@ -279,6 +279,7 @@ export class UserSession {
         {
           type: channel,
           content: channel === StepTypeEnum.EMAIL ? EMAIL_BLOCK : 'Test notification content',
+          title: 'Test notification title',
         },
       ],
     });
