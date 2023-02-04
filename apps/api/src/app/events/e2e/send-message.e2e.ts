@@ -91,7 +91,7 @@ describe('Send messages by respecting limit rules', function () {
       expect(message, `message not null check failed for ${channel}`).not.to.be.null;
     }
   });
-  const fakeSend = (options) => new Promise<ISendMessageSuccessResponse>((resolve, reject) => resolve({}));
+  const fakeSend = (options) => Promise.resolve({});
   const createHandlerStub = (channel: ChannelTypeEnum) => {
     switch (channel) {
       case ChannelTypeEnum.EMAIL:
