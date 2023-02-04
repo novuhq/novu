@@ -45,6 +45,12 @@ const checkIntegrationInitialState = {
   errorMsg: '',
 };
 
+const getProviderLimit = (provider) => {
+  if (provider?.limits?.hardLimit) return provider.limits.hardLimit;
+  const limit = NOVU_START_PROVIDERS.get(provider?.providerId)?.limits.hardLimit;
+
+  return limit ? limit : 0;
+};
 const checkIntegrationReducer = (state: typeof checkIntegrationInitialState, action: ActionType) => {
   switch (action.type) {
     case ACTION_TYPE_ENUM.HANDLE_SHOW_SWITCH:
@@ -92,7 +98,7 @@ export function ConnectIntegrationForm({
 
   const { colorScheme } = useMantineColorScheme();
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
-  const [hardLimit, setHardLimit] = useState<number>(provider?.limits ? provider?.limits.hardLimit : 0);
+  const [hardLimit, setHardLimit] = useState<number>(getProviderLimit(provider));
 
   const { environment } = useEnvController();
   const { organization } = useAuthController();

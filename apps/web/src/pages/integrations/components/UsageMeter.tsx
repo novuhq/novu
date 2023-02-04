@@ -5,12 +5,12 @@ import { colors } from '../../../design-system';
 import { useMessageCount } from '../../../api/hooks/integrations/useMessageCount';
 export const UsageMeter = ({ provider }: { provider: IIntegratedProvider }) => {
   const { data, loading } = useMessageCount(provider.providerId);
+  const theme = useMantineTheme();
 
   if (loading) {
     return null;
   }
   if (!provider?.limits?.hardLimit) return null;
-  const theme = useMantineTheme();
 
   const messageCount = data?.messageCount as number;
   const hardLimit: number = provider?.limits?.hardLimit;
