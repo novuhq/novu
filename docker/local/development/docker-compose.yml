@@ -3,7 +3,7 @@ version: '3.1'
 services:
   localstack:
     container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
-    image: "localstack/localstack:0.12.7"
+    image: "localstack/localstack:0.14.5"
     network_mode: bridge
     environment:
       - SERVICES=s3

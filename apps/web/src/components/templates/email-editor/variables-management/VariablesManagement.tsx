@@ -7,6 +7,7 @@ import { UnstyledButton, useMantineTheme } from '@mantine/core';
 import { EditGradient } from '../../../../design-system/icons/gradient/EditGradient';
 import { useProcessVariables } from '../../../../hooks/useProcessVariables';
 import { VarItemTooltip } from './VarItemTooltip';
+import { When } from '../../../utils/When';
 
 export const VariablesManagement = ({
   index,
@@ -15,7 +16,7 @@ export const VariablesManagement = ({
   path,
 }: {
   index: number;
-  openVariablesModal: () => void;
+  openVariablesModal?: () => void;
   control?: any;
   path?: string;
 }) => {
@@ -36,33 +37,37 @@ export const VariablesManagement = ({
         padding: 15,
       }}
     >
-      <div
-        style={{
-          textAlign: 'right',
-          marginBottom: '20px',
-        }}
-      >
-        <Tooltip label="Add defaults or mark as required">
-          <UnstyledButton
-            onClick={() => {
-              openVariablesModal();
-            }}
-            type="button"
-          >
-            <Text gradient>
-              Edit Variables
-              <EditGradient
-                style={{
-                  width: '18px',
-                  height: '18px',
-                  marginBottom: '-4px',
-                  marginLeft: 5,
-                }}
-              />
-            </Text>
-          </UnstyledButton>
-        </Tooltip>
-      </div>
+      <When truthy={openVariablesModal !== undefined}>
+        <div
+          style={{
+            textAlign: 'right',
+            marginBottom: '20px',
+          }}
+        >
+          <Tooltip label="Add defaults or mark as required">
+            <UnstyledButton
+              onClick={() => {
+                if (openVariablesModal) {
+                  openVariablesModal();
+                }
+              }}
+              type="button"
+            >
+              <Text gradient>
+                Edit Variables
+                <EditGradient
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    marginBottom: '-4px',
+                    marginLeft: 5,
+                  }}
+                />
+              </Text>
+            </UnstyledButton>
+          </Tooltip>
+        </div>
+      </When>
       <VarLabel label="System Variables">
         {Object.keys(SystemVariablesWithTypes).map((name, ind) => {
           const type = SystemVariablesWithTypes[name];
