@@ -55,8 +55,8 @@
     "jest": "^27.0.6",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",
-    "typedoc": "^0.19.0",
-    "typescript": "4.1.3"
+    "typedoc": "^0.23.0",
+    "typescript": "4.9.5"
   },
   "prettier": {
     "singleQuote": true
