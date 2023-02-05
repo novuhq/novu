@@ -61,7 +61,6 @@ export class CompileEmailTemplate {
 
     const payload = {
       ...command.payload,
-      subject: command.subject,
       preheader,
       blocks: [],
       branding: {
