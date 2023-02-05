@@ -259,7 +259,7 @@ importers:
       sinon: ^9.2.4
       slugify: ^1.4.6
       swagger-ui-express: ^4.4.0
-      ts-loader: ~9.2.8
+      ts-loader: ~9.4.0
       ts-node: ~10.9.1
       tsconfig-paths: 3.14.1
       twilio: ^3.72.0
@@ -375,7 +375,7 @@ importers:
       mocha: 8.4.0
       nodemon: 2.0.15
       sinon: 9.2.4
-      ts-loader: 9.2.8_hhrrucqyg4eysmfpujvov2ym5u
+      ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
       typescript: 4.9.5
@@ -407,7 +407,7 @@ importers:
       smtp-server: ^1.4.0
       spamc: 0.0.5
       ts-jest: ^27.0.7
-      ts-loader: ~9.2.8
+      ts-loader: ~9.4.0
       ts-node: ~10.9.1
       tsconfig-paths: ^3.9.0
       typescript: 4.9.5
@@ -440,7 +440,7 @@ importers:
       nodemon: 2.0.15
       prettier: 2.7.1
       ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
-      ts-loader: 9.2.8_hhrrucqyg4eysmfpujvov2ym5u
+      ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
       typescript: 4.9.5
@@ -720,7 +720,7 @@ importers:
       socket.io: ^4.5.4
       supertest: ^6.0.0
       ts-jest: ^27.0.7
-      ts-loader: ~9.2.8
+      ts-loader: ~9.4.0
       ts-node: ~10.9.1
       tsconfig-paths: ^3.9.0
       typescript: 4.9.5
@@ -774,7 +774,7 @@ importers:
       sinon: 9.2.4
       supertest: 6.2.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-loader: 9.2.8_hhrrucqyg4eysmfpujvov2ym5u
+      ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
       typescript: 4.9.5
@@ -936,7 +936,7 @@ importers:
       socket.io: ^4.5.4
       supertest: ^6.0.0
       ts-jest: ^27.0.7
-      ts-loader: ~9.2.8
+      ts-loader: ~9.4.0
       ts-node: ~10.9.1
       tsconfig-paths: ^3.9.0
       typescript: 4.9.5
@@ -986,7 +986,7 @@ importers:
       prettier: 2.6.1
       supertest: 6.2.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-loader: 9.2.8_hhrrucqyg4eysmfpujvov2ym5u
+      ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
       typescript: 4.9.5
@@ -1691,7 +1691,7 @@ importers:
       '@types/node': 14.18.12
       codecov: 3.8.3
       cz-conventional-changelog: 3.3.0
-      jest: 27.5.1_ts-node@10.9.1
+      jest: 27.5.1
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       rimraf: 3.0.2
@@ -63449,8 +63449,8 @@ packages:
       yargs-parser: 21.1.1
     dev: true
 
-  /ts-loader/9.2.8_hhrrucqyg4eysmfpujvov2ym5u:
-    resolution: {integrity: sha512-gxSak7IHUuRtwKf3FIPSW1VpZcqF9+MBrHOvBp9cjHh+525SjtCIJKVGjRKIAfxBwDGDGCFF00rTfzB1quxdSw==}
+  /ts-loader/9.4.2_hhrrucqyg4eysmfpujvov2ym5u:
+    resolution: {integrity: sha512-OmlC4WVmFv5I0PpaxYb+qGeGOdm5giHU7HwDDUjw59emP2UYMHy9fFSDcYgSNoH8sXcj4hGCSEhlDZ9ULeDraA==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
       typescript: '*'
