@@ -37,6 +37,7 @@ test('should trigger novuEmail correctly by dropping from address', async () => 
 test('should check provider integration correctly', async () => {
   const provider = new NovuEmailProvider(mockConfig);
   const response = await provider.checkIntegration(mockNovuMessage);
-  console.log('response', response);
-  expect(response.success).toBe(true);
+  process.env.NOVU_EMAIL_INTEGRATION_API_KEY
+    ? expect(response.success).toBe(true)
+    : expect(response.success).toBe(false);
 });
