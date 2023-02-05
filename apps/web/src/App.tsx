@@ -58,7 +58,7 @@ if (SENTRY_DSN) {
     beforeSend(event: Sentry.Event) {
       const logRocketSession = LogRocket.sessionURL;
 
-      if (logRocketSession !== null || event !== '' || event !== undefined) {
+      if (logRocketSession !== null || (event as string) !== '' || event !== undefined) {
         /*
          * Must ignore the next line as this variable could be null but
          * can not be null because of the check in the if statement above.
