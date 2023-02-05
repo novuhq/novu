@@ -14,8 +14,7 @@ export const UsageMeter = ({ provider }: { provider: IIntegratedProvider }) => {
 
   const messageCount = data?.messageCount as number;
   const hardLimit: number = provider?.limits?.hardLimit;
-  const usedPercentage = (messageCount * 1000) / hardLimit;
-  const hlColor = theme.colorScheme === 'dark' ? colors.warning : colors.warning;
+  const usedPercentage = (messageCount * 100) / hardLimit;
   const label = `Used ${messageCount}/${provider?.limits?.hardLimit}`;
 
   return (
@@ -25,7 +24,7 @@ export const UsageMeter = ({ provider }: { provider: IIntegratedProvider }) => {
         size={12}
         sections={[
           { value: usedPercentage, color: colors.success },
-          { value: 100 - usedPercentage, color: hlColor },
+          { value: 100 - usedPercentage, color: colors.warning },
         ]}
       />
     </>
