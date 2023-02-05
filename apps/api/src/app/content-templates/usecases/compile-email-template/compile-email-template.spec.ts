@@ -114,7 +114,7 @@ describe('Compile E-mail Template', function () {
     );
 
     expect(html).to.contain('<!DOCTYPE html');
-    expect(html).to.not.contain('{{name}}');
+    expect(html).to.not.contain('{{subject}}');
     expect(html).to.contain(`<p>${subjectText}</p>`);
 
     expect(subject).to.equal(subjectText);
