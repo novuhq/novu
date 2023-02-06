@@ -38,9 +38,31 @@ import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
+import packageJson from '../package.json';
 
 if (LOGROCKET_ID && window !== undefined) {
-  LogRocket.init(LOGROCKET_ID);
+  LogRocket.init(LOGROCKET_ID, {
+    release: packageJson.version,
+    rootHostname: 'novu.co',
+    console: {
+      shouldAggregateConsoleErrors: true,
+    },
+    network: {
+      requestSanitizer: (request) => {
+        // if the url contains token 'ignore' it
+        if (request.url.toLowerCase().indexOf('token') !== -1) {
+          // ignore the request response pair
+          return null;
+        }
+
+        // remove Authorization header from logrocket
+        request.headers.Authorization = undefined;
+
+        // otherwise log the request normally
+        return request;
+      },
+    },
+  });
   setupLogRocketReact(LogRocket);
 }
 
