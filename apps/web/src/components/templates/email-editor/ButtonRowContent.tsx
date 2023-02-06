@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { showNotification } from '@mantine/notifications';
 import { TextInput as MantineInput, Popover, Button as MantineButton, createStyles } from '@mantine/core';
+import { TextAlignEnum } from '@novu/shared';
 
 import { colors, shadows } from '../../../design-system';
 import { TextAlignment, Wifi } from '../../../design-system/icons';
@@ -56,7 +57,7 @@ export function ButtonRowContent({
   }
 
   return (
-    <div style={{ textAlign: textAlign || 'left' }} data-test-id="button-block-wrapper">
+    <div style={{ textAlign: textAlign || TextAlignEnum.LEFT }} data-test-id="button-block-wrapper">
       <Popover
         classNames={classes}
         opened={dropDownVisible && !readonly}

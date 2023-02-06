@@ -11,14 +11,19 @@ export const useVariablesManager = (index: number, contents: string[]) => {
   const variablesArray = useFieldArray({ control, name: `steps.${index}.template.variables` });
   const variableArray = watch(`steps.${index}.template.variables`, []);
 
-  const getTextContent = useCallback((templateToParse?: ITemplates): string => {
-    return contents
-      .map((con) => con.split('.').reduce((a, b) => a && a[b], templateToParse ?? {}))
-      .map((con) => (Array.isArray(con) ? con.map((innerCon) => innerCon.content).join(' ') : con))
-      .join(' ');
-  }, []);
+  const getTextContent = useCallback(
+    ({ templateToParse, fields }: { templateToParse?: ITemplates; fields: string[] }): string => {
+      return fields
+        .map((con) => con.split('.').reduce((a, b) => a && a[b], templateToParse ?? {}))
+        .map((con) => (Array.isArray(con) ? con.map((innerCon) => innerCon.content).join(' ') : con))
+        .join(' ');
+    },
+    []
+  );
 
-  const [textContent, setTextContent] = useState<string>(() => getTextContent(getValues(`steps.${index}.template`)));
+  const [textContent, setTextContent] = useState<string>(() =>
+    getTextContent({ templateToParse: getValues(`steps.${index}.template`), fields: contents })
+  );
 
   useLayoutEffect(() => {
     const subscription = watch((values) => {
@@ -26,7 +31,7 @@ export const useVariablesManager = (index: number, contents: string[]) => {
       if (!steps.length || !steps[index]) return;
 
       const step = steps[index];
-      setTextContent(getTextContent(step?.template as ITemplates));
+      setTextContent(getTextContent({ templateToParse: step?.template as ITemplates, fields: contents }));
     });
 
     return () => subscription.unsubscribe();

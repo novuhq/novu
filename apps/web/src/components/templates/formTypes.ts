@@ -10,6 +10,8 @@ import type {
 export interface ITemplates extends IMessageTemplate {
   htmlContent?: string;
   enableAvatar?: boolean;
+  feedId?: string;
+  layoutId?: string;
 }
 
 export interface IStepEntity {

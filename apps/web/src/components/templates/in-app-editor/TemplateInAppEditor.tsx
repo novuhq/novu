@@ -2,12 +2,26 @@ import { Stack } from '@mantine/core';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useState, useMemo } from 'react';
 
-import type { IForm } from '../formTypes';
+import type { IForm, ITemplates } from '../formTypes';
 import { Input } from '../../../design-system';
 import { useEnvController } from '../../../store/useEnvController';
 import { useVariablesManager } from '../../../hooks/useVariablesManager';
 import { InAppContentCard } from './InAppContentCard';
 import { VariableManagerModal } from '../VariableManagerModal';
+
+const getVariableContents = (template: ITemplates) => {
+  const baseContent = ['content'];
+
+  if (template.cta?.data?.url) {
+    baseContent.push('cta.data.url');
+  }
+
+  template.cta?.action?.buttons?.forEach((_button, ind) => {
+    baseContent.push(`cta.action.buttons.${ind}.content`);
+  });
+
+  return baseContent;
+};
 
 export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
   const { readonly } = useEnvController();
@@ -15,19 +29,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   const [modalOpen, setModalOpen] = useState(false);
 
   const template = watch(`steps.${index}.template`);
-  const variableContents = useMemo(() => {
-    const baseContent = ['content'];
-
-    if (template.cta?.data?.url) {
-      baseContent.push('cta.data.url');
-    }
-
-    template.cta?.action?.buttons?.forEach((_button, ind) => {
-      baseContent.push(`cta.action.buttons.${ind}.content`);
-    });
-
-    return baseContent;
-  }, [template]);
+  const variableContents = getVariableContents(template);
 
   const variablesArray = useVariablesManager(index, variableContents);
 
