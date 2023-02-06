@@ -80,19 +80,19 @@ describe('Shell Embed - Seen Read', function () {
 
     cy.get('#notification-bell').click();
 
-    getNotifications().should('have.length', 0);
+    getNotifications(0);
 
     clickOnTab('unseen');
 
-    getNotifications().should('have.length', 5);
+    getNotifications(5);
 
     clickOnTab('read');
 
-    getNotifications().should('have.length', 0);
+    getNotifications(0);
 
     clickOnTab('unread');
 
-    getNotifications().should('have.length', 5);
+    getNotifications(5);
   });
 
   it('should display notification under seen after tab change', function () {
@@ -105,17 +105,13 @@ describe('Shell Embed - Seen Read', function () {
 
     cy.get('#notification-bell').click();
 
-    getNotifications().should('have.length', 0);
+    getNotifications(0);
 
     clickOnTab('unseen');
 
-    cy.waitForNetworkIdle(500);
-
     clickOnTab('seen');
 
-    cy.waitForNetworkIdle(500);
-
-    getNotifications().should('have.length', 5);
+    getNotifications(5);
   });
 
   it('should display notification as read after been clicked', function () {
@@ -132,11 +128,11 @@ describe('Shell Embed - Seen Read', function () {
 
     clickOnFirstNotification();
 
-    getNotifications().should('have.length', 4);
+    getNotifications(4);
 
     clickOnTab('read');
 
-    getNotifications().should('have.length', 1);
+    getNotifications(1);
   });
 });
 
@@ -158,13 +154,13 @@ function clickOnFirstNotification() {
     });
 }
 
-function getNotifications() {
+function getNotifications(length: number) {
   return cy
     .get('#novu-iframe-element')
     .its('0.contentDocument.body')
     .should('not.be.empty')
     .then((body) => {
-      cy.wrap(body).find(`[data-test-id="notification-list-item"]`);
+      cy.wrap(body).find(`[data-test-id="notification-list-item"]`).should('have.length', length);
     });
 }
 const initializeSessionSettings = {
