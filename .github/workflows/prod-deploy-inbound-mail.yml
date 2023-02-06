@@ -37,14 +37,12 @@ jobs:
 
       - uses: pnpm/action-setup@v2.2.4
         with:
-          version: 7.26.3
           run_install: false
 
       - uses: pnpm/action-setup@v2
         name: Install pnpm
         id: pnpm-install
         with:
-          version: 7.26.3
           run_install: false
 
       - name: Get pnpm store directory
