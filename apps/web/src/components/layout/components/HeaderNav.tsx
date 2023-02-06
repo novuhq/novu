@@ -50,30 +50,30 @@ export function HeaderNav({}: Props) {
     }, [currentUser, currentOrganization]);
   }
 
-    useEffect(() => {
-      if (!LOGROCKET_ID) return;
-      
-      if (currentUser && currentOrganization) {
-        let logrocketTraits;
+  useEffect(() => {
+    if (!LOGROCKET_ID) return;
 
-        if (currentUser?.email !== undefined) {
-          logrocketTraits = {
-            name: currentUser?.firstName + ' ' + currentUser?.lastName,
-            organizationId: currentOrganization._id,
-            organization: currentOrganization.name,
-            email: currentUser?.email ? currentUser?.email : ' ',
-          };
-        } else {
-          logrocketTraits = {
-            name: currentUser?.firstName + ' ' + currentUser?.lastName,
-            organizationId: currentOrganization._id,
-            organization: currentOrganization.name,
-          };
-        }
+    if (currentUser && currentOrganization) {
+      let logrocketTraits;
 
-        LogRocket.identify(currentUser?._id, logrocketTraits);
+      if (currentUser?.email !== undefined) {
+        logrocketTraits = {
+          name: currentUser?.firstName + ' ' + currentUser?.lastName,
+          organizationId: currentOrganization._id,
+          organization: currentOrganization.name,
+          email: currentUser?.email ? currentUser?.email : ' ',
+        };
+      } else {
+        logrocketTraits = {
+          name: currentUser?.firstName + ' ' + currentUser?.lastName,
+          organizationId: currentOrganization._id,
+          organization: currentOrganization.name,
+        };
       }
-    }, [currentUser, currentOrganization]);
+
+      LogRocket.identify(currentUser?._id, logrocketTraits);
+    }
+  }, [currentUser, currentOrganization]);
 
   const themeTitle = () => {
     let title = 'Match System Appearance';
