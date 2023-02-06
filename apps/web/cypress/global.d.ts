@@ -43,7 +43,7 @@ declare namespace Cypress {
      */
     inviteUser(email: string): Chainable<Response>;
 
-    loginWithGithub(): Chainable<any>;
+    loginWithGitHub(): Chainable<any>;
 
     mount: typeof IMountType;
   }

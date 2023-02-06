@@ -14,13 +14,13 @@ describe('Invites module', function () {
     });
   });
 
-  it('should allow to login with Github if invited existing user', function () {
+  it('should allow to login with GitHub if invited existing user', function () {
     const isCI = Cypress.env('IS_CI');
     if (!isCI) return;
 
-    const githubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
+    const gitHubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
 
-    cy.inviteUser(githubUserEmail).then(() => {
+    cy.inviteUser(gitHubUserEmail).then(() => {
       cy.visit('/auth/invitation/' + this.token);
 
       cy.getByTestId('auth-container-title').contains('Get Started');
@@ -31,21 +31,21 @@ describe('Invites module', function () {
         );
       });
 
-      cy.loginWithGithub();
+      cy.loginWithGitHub();
 
       cy.url().should('include', '/templates');
     });
   });
 
-  it('invite a new user, sign up a new account with Github and then accept an invite', function () {
+  it('invite a new user, sign up a new account with GitHub and then accept an invite', function () {
     const isCI = Cypress.env('IS_CI');
     if (!isCI) return;
 
-    const githubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
+    const gitHubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
 
-    cy.inviteUser(githubUserEmail).then(() => {
+    cy.inviteUser(gitHubUserEmail).then(() => {
       cy.visit('/auth/signup');
-      cy.loginWithGithub();
+      cy.loginWithGitHub();
 
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');

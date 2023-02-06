@@ -41,14 +41,14 @@ describe('User Sign-up and Login', function () {
       cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
     });
 
-    it('should allow to sign-up with Github, logout, and login', function () {
+    it('should allow to sign-up with GitHub, logout, and login', function () {
       const isCI = Cypress.env('IS_CI');
       if (!isCI) return;
 
       cy.intercept('**/organization/**/switch').as('appSwitch');
       cy.visit('/auth/signup');
 
-      cy.loginWithGithub();
+      cy.loginWithGitHub();
 
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');
@@ -67,16 +67,16 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('header-dropdown-username').contains('Johnny Depp');
     });
 
-    it('should allow to sign-up, logout, and login with Github using same email address', function () {
+    it('should allow to sign-up, logout, and login with GitHub using same email address', function () {
       const isCI = Cypress.env('IS_CI');
       if (!isCI) return;
 
-      const githubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
+      const gitHubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
 
       cy.intercept('**/organization/**/switch').as('appSwitch');
       cy.visit('/auth/signup');
       cy.getByTestId('fullName').type('Test User');
-      cy.getByTestId('email').type(githubUserEmail);
+      cy.getByTestId('email').type(gitHubUserEmail);
       cy.getByTestId('password').type('usEr_password_123!');
       cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
@@ -91,7 +91,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('logout-button').click();
 
       cy.location('pathname').should('equal', '/auth/login');
-      cy.loginWithGithub();
+      cy.loginWithGitHub();
 
       cy.location('pathname').should('equal', '/templates');
       cy.getByTestId('header-profile-avatar').click();
@@ -192,8 +192,8 @@ describe('User Sign-up and Login', function () {
       cy.location('pathname').should('equal', '/templates');
 
       // setting current time in future, to simulate expired token
-      const THIRTY_DAYS = 1000 * 60 * 60 * 24 * 30; // iat - exp = 30 days
       const ONE_MINUTE = 1000 * 60; // adding 1 minute to be sure that token is expired
+      const THIRTY_DAYS = ONE_MINUTE * 60 * 24 * 30; // iat - exp = 30 days
       const date = new Date(Date.now() + THIRTY_DAYS + ONE_MINUTE);
       cy.clock(date);
 

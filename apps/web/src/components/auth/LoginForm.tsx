@@ -13,7 +13,7 @@ import { GitHub } from '../../design-system/icons';
 import { IS_DOCKER_HOSTED } from '../../config';
 import { useVercelParams } from '../../hooks/useVercelParams';
 import { useAcceptInvite } from './useAcceptInvite';
-import { buildGithubLink, buildVercelGithubLink } from './githubUtils';
+import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
 
 type LoginFormProps = {
   invitationToken?: string;
@@ -30,13 +30,13 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       email: string;
       password: string;
     }
-  >((data) => api.post(`/v1/auth/login`, data));
+  >((data) => api.post('/v1/auth/login', data));
   const { isLoading: isLoadingAcceptInvite, submitToken } = useAcceptInvite();
 
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
   const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
-  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : `/auth/reset/request`;
+  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : '/auth/reset/request';
   const githubLink = isFromVercel
     ? buildVercelGithubLink({ code, next, configurationId })
     : buildGithubLink({ invitationToken });

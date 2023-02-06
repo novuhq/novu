@@ -132,18 +132,18 @@ Cypress.Commands.add('clearDatabase', () => {
   return cy.task('clearDatabase');
 });
 
-Cypress.Commands.add('loginWithGithub', () => {
-  const githubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
-  const githubPassword = Cypress.env('GITHUB_USER_PASSWORD');
+Cypress.Commands.add('loginWithGitHub', () => {
+  const gitHubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
+  const gitHubPassword = Cypress.env('GITHUB_USER_PASSWORD');
 
   cy.getByTestId('github-button').click();
 
   return cy.origin(
     'https://github.com',
-    { args: { githubUserEmail, githubPassword } },
-    ({ githubUserEmail, githubPassword }) => {
-      cy.get('#login_field').type(githubUserEmail);
-      cy.get('#password').type(githubPassword);
+    { args: { gitHubUserEmail, gitHubPassword } },
+    ({ gitHubUserEmail, gitHubPassword }) => {
+      cy.get('#login_field').type(gitHubUserEmail);
+      cy.get('#password').type(gitHubPassword);
       cy.get('input[type="submit"]').click();
 
       cy.get('body').then(($body) => {

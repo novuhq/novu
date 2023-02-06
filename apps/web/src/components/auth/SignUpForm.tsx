@@ -16,7 +16,7 @@ import { applyToken } from '../../store/useAuthController';
 import { useAcceptInvite } from './useAcceptInvite';
 import { useVercelParams } from '../../hooks/useVercelParams';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
-import { buildGithubLink, buildVercelGithubLink } from './githubUtils';
+import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
 
 type SignUpFormProps = {
   invitationToken?: string;
@@ -50,7 +50,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       email: string;
       password: string;
     }
-  >((data) => api.post(`/v1/auth/register`, data));
+  >((data) => api.post('/v1/auth/register', data));
 
   const onSubmit = async (data) => {
     const itemData = {

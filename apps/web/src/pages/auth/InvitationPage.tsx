@@ -35,6 +35,7 @@ export default function InvitationPage() {
   const organizationName = data?.organization.name || '';
   const existingUser = !!(invitationToken && data?._userId);
   const isLoggedInAsInvitedUser = !!(isLoggedIn && existingUser && currentUser && currentUser._id === data?._userId);
+  const Form = existingUser ? LoginForm : SignUpForm;
 
   const logoutWhenActiveSession = () => {
     logout();
@@ -92,13 +93,13 @@ export default function InvitationPage() {
             inviterFirstName && organizationName ? (
               <Center inline mb={60} mt={20} data-test-id="invitation-description">
                 <Text size="lg" mr={4} color={colors.B60}>
-                  {`You've been invited by `}
+                  {"You've been invited by "}
                 </Text>
                 <Text size="lg" weight="bold" mr={4}>
                   {inviterFirstName[0].toUpperCase() + inviterFirstName.slice(1)}
                 </Text>
                 <Text size="lg" mr={4} color={colors.B60}>
-                  {` to join `}
+                  {' to join '}
                 </Text>
                 <Text size="lg" weight="bold">
                   {organizationName}
@@ -119,13 +120,7 @@ export default function InvitationPage() {
               }}
             />
           ) : (
-            <>
-              {existingUser ? (
-                <LoginForm email={data?.email} invitationToken={invitationToken} />
-              ) : (
-                <SignUpForm email={data?.email} invitationToken={invitationToken} />
-              )}
-            </>
+            <Form email={data?.email} invitationToken={invitationToken} />
           )}
         </AuthContainer>
       )}
