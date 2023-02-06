@@ -133,7 +133,7 @@
     "mocha": "^8.1.1",
     "nodemon": "^2.0.3",
     "sinon": "^9.2.4",
-    "ts-loader": "~9.2.8",
+    "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "3.14.1",
     "typescript": "4.9.5"
