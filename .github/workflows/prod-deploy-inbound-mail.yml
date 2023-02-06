@@ -33,7 +33,7 @@ jobs:
         with:
           node-version: '16.15.1'
       - name: Start Redis
-        uses: supercharge/redis-github-action@1.2.0
+        uses: supercharge/redis-github-action@1.4.0
 
       - uses: pnpm/action-setup@v2.2.4
         with:
