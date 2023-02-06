@@ -51,9 +51,9 @@
     "apollo-boost": "0.4.9",
     "eslint-plugin-prettier": "^3.4.0",
     "nodemon": "^2.0.3",
-    "ts-node": "^9.0.0",
+    "ts-node": "~10.9.1",
     "tsconfig-paths": "^3.9.0",
-    "typescript": "4.3.5"
+    "typescript": "4.9.5"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
