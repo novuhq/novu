@@ -37,7 +37,7 @@ if (process.env.SENTRY_DSN) {
 validateEnv();
 
 export async function bootstrap(expressApp?): Promise<INestApplication> {
-  let app;
+  let app: INestApplication;
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
   } else {

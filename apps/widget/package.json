@@ -50,7 +50,7 @@
     "react-is": "^18.2.0",
     "react-refresh": "^0.11.0",
     "react-router-dom": "^6.2.2",
-    "react-scripts": "4.0.3",
+    "react-scripts": "^5.0.1",
     "rimraf": "^3.0.2",
     "socket.io-client": "4.5.4",
     "web-vitals": "^0.2.4",
