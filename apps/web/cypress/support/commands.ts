@@ -136,6 +136,8 @@ Cypress.Commands.add('loginWithGitHub', () => {
   const gitHubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
   const gitHubPassword = Cypress.env('GITHUB_USER_PASSWORD');
 
+  console.log('loginWithGitHub', { gitHubUserEmail });
+
   cy.getByTestId('github-button').click();
 
   return cy.origin(
