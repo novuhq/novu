@@ -76,6 +76,7 @@ export class EventsController {
       recipients: body.to,
       transactionId,
       userId,
+      actor: mappedActor,
     });
     const mappedTo = await this.mapTriggerRecipients.execute(mapTriggerRecipientsCommand);
 
