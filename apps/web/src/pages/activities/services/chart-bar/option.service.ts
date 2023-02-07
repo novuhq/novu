@@ -154,7 +154,7 @@ function updateToolTipStyles(context, tooltipEl: HTMLElement, tooltipModel) {
 
   /* eslint-disable no-param-reassign */
   tooltipEl.style.opacity = '1';
-  tooltipEl.style.left = `${position.left + window.scrollX + tooltipModel.caretX - tooltipModel.width - 40}px`;
+  tooltipEl.style.left = `${position.left + window.scrollX + tooltipModel.caretX - tooltipModel.width - 30}px`;
   tooltipEl.style.top = `${position.top + window.scrollY + tooltipModel.caretY - tooltipModel.height - 30}px`;
   /* eslint-enable no-param-reassign */
 }
