@@ -1,11 +1,13 @@
-import React, { SetStateAction } from 'react';
+import { SetStateAction } from 'react';
 import styled from '@emotion/styled';
 import { ActionIcon, Divider, Stack } from '@mantine/core';
+import { FieldErrors } from 'react-hook-form';
 import { StepTypeEnum } from '@novu/shared';
+
 import { Button, colors, Text, Title } from '../../../../design-system';
 import { Close } from '../../../../design-system/icons/actions/Close';
 import { getChannel, NodeTypeEnum } from '../../shared/channels';
-import { IForm } from '../../../../components/templates/useTemplateController';
+import type { IForm } from '../../../../components/templates/formTypes';
 import { StepActiveSwitch } from '../StepActiveSwitch';
 import { useEnvController } from '../../../../store/useEnvController';
 import { When } from '../../../../components/utils/When';
@@ -15,7 +17,6 @@ import { DelayMetadata } from '../DelayMetadata';
 import { Filters } from '../../filter/Filters';
 import { ShouldStopOnFailSwitch } from '../ShouldStopOnFailSwitch';
 import { ReplyCallback } from '../ReplyCallback';
-import { FieldErrors } from 'react-hook-form';
 import { NavSection } from '../../../../components/templates/TemplatesSideBar';
 import { StyledNav } from '../WorkflowEditorPage';
 
@@ -32,7 +33,6 @@ export function SelectedStep({
   control,
   errors,
   setFilterOpen,
-  colorScheme,
   isLoading,
   isUpdateLoading,
   loadingEditTemplate,
@@ -48,7 +48,6 @@ export function SelectedStep({
   control: any;
   errors: FieldErrors<IForm>;
   setFilterOpen: (value: ((prevState: boolean) => boolean) | boolean) => void;
-  colorScheme: 'light' | 'dark';
   isLoading: boolean;
   isUpdateLoading: boolean;
   loadingEditTemplate: boolean;
@@ -90,7 +89,7 @@ export function SelectedStep({
               <Divider my={30} />
               {steps.map((i, index) => {
                 return (
-                  <When truthy={index === activeStep}>
+                  <When key={index} truthy={index === activeStep}>
                     <Stack key={index}>
                       <StepActiveSwitch index={activeStep} control={control} />
                       <ShouldStopOnFailSwitch index={activeStep} control={control} />
@@ -119,7 +118,6 @@ export function SelectedStep({
                 onClick={() => {
                   setFilterOpen(true);
                 }}
-                dark={colorScheme === 'dark'}
                 disabled={readonly}
                 data-test-id="add-filter-btn"
               >
@@ -222,11 +220,11 @@ const EditTemplateButton = styled(Button)`
   background-color: transparent;
 `;
 
-const FilterButton = styled(Button)<{ dark: boolean }>`
-  background: ${({ dark }) => (dark ? colors.B20 : colors.white)};
+const FilterButton = styled(Button)`
+  background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : colors.white)};
   box-shadow: 0px 5px 20px rgb(0 0 0 / 20%);
   :hover {
-    background-color: ${({ dark }) => (dark ? colors.B20 : colors.white)};
+    background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : colors.white)};
   }
 `;
 

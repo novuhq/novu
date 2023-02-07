@@ -76,6 +76,7 @@ export const AvatarFeedFields = ({ index, control }) => {
       <Divider sx={{ borderTopColor: colors.B40 }} mb={20} />
       <Controller
         name={`steps.${index}.template.feedId` as any}
+        defaultValue=""
         control={control}
         render={({ field }) => {
           return (
