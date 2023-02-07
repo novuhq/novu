@@ -54,7 +54,6 @@ export class GetNovuIntegration {
         providerId: CalculateLimitNovuIntegration.getProviderId(command.channelType),
         ...limit,
       });
-      // add analytics event.
       throw new Error(`Limit for Novus ${command.channelType.toLowerCase()} provider was reached.`);
     }
 
