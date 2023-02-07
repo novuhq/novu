@@ -21,12 +21,16 @@ export class CalculateLimitNovuIntegration {
       return;
     }
 
-    const messagesCount = await this.messageRepository.count({
-      channel: command.channelType,
-      _organizationId: command.organizationId,
-      providerId,
-      createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
-    });
+    const messagesCount = await this.messageRepository.count(
+      {
+        channel: command.channelType,
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        providerId,
+        createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
+      },
+      CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS
+    );
 
     return {
       limit: CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS,
