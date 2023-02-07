@@ -83,14 +83,11 @@ jobs:
       - name: Start WS
         run: pnpm start:ws:test &
 
-      - name: Fill .env.test variables
-        working-directory: apps/api/src
-        run: |
-          echo GITHUB_OAUTH_CLIENT_ID=${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }} >> .env.test
-          echo GITHUB_OAUTH_CLIENT_SECRET=${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }} >> .env.test
-          echo GITHUB_OAUTH_REDIRECT="http://localhost:3000/v1/auth/github/callback" >> .env.test
-
       - name: Start API in TEST
+        env:
+          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
+          GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
+          GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
         run: cd apps/api && pnpm start:test &
 
       - name: Install wait-on plugin
