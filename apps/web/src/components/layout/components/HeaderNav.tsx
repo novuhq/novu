@@ -10,9 +10,10 @@ import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
 import { useLocalThemePreference } from '../../../hooks/useLocalThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
-import { INTERCOM_APP_ID } from '../../../config';
+import { INTERCOM_APP_ID, LOGROCKET_ID } from '../../../config';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
+import LogRocket from 'logrocket';
 
 type Props = {};
 const menuItem = [
@@ -48,6 +49,31 @@ export function HeaderNav({}: Props) {
       }
     }, [currentUser, currentOrganization]);
   }
+
+  useEffect(() => {
+    if (!LOGROCKET_ID) return;
+
+    if (currentUser && currentOrganization) {
+      let logrocketTraits;
+
+      if (currentUser?.email !== undefined) {
+        logrocketTraits = {
+          name: currentUser?.firstName + ' ' + currentUser?.lastName,
+          organizationId: currentOrganization._id,
+          organization: currentOrganization.name,
+          email: currentUser?.email ? currentUser?.email : ' ',
+        };
+      } else {
+        logrocketTraits = {
+          name: currentUser?.firstName + ' ' + currentUser?.lastName,
+          organizationId: currentOrganization._id,
+          organization: currentOrganization.name,
+        };
+      }
+
+      LogRocket.identify(currentUser?._id, logrocketTraits);
+    }
+  }, [currentUser, currentOrganization]);
 
   const themeTitle = () => {
     let title = 'Match System Appearance';
