@@ -62,6 +62,9 @@ export class GetChanges {
       if (change.type === ChangeEntityTypeEnum.LAYOUT) {
         item = await this.getTemplateDataForLayout(change._entityId, command.environmentId);
       }
+      if (change.type === ChangeEntityTypeEnum.DEFAULT_LAYOUT) {
+        item = await this.getTemplateDataForLayout(change._entityId, command.environmentId);
+      }
 
       list.push({
         ...change,

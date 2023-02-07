@@ -60,6 +60,9 @@ export class PromoteChangeToEnvironment {
       case ChangeEntityTypeEnum.LAYOUT:
         await this.promoteLayoutChange.execute(typeCommand);
         break;
+      case ChangeEntityTypeEnum.DEFAULT_LAYOUT:
+        await this.promoteLayoutChange.execute(typeCommand);
+        break;
       default:
         Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);
     }
