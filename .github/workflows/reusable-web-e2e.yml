@@ -86,9 +86,9 @@ jobs:
       - name: Fill .env.test variables
         working-directory: apps/api/src
         run: |
-          echo GITHUB_OAUTH_CLIENT_ID=${{ secrets.GITHUB_OAUTH_CLIENT_ID }} >> .env.test
-          echo GITHUB_OAUTH_CLIENT_SECRET=${{ secrets.GITHUB_OAUTH_CLIENT_SECRET }} >> .env.test
-          echo GITHUB_OAUTH_REDIRECT=${{ secrets.GITHUB_OAUTH_REDIRECT }} >> .env.test
+          echo GITHUB_OAUTH_CLIENT_ID=${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }} >> .env.test
+          echo GITHUB_OAUTH_CLIENT_SECRET=${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }} >> .env.test
+          echo GITHUB_OAUTH_REDIRECT="http://localhost:3000/v1/auth/github/callback" >> .env.test
 
       - name: Start API in TEST
         run: cd apps/api && pnpm start:test &
@@ -117,8 +117,8 @@ jobs:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
-          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.GITHUB_USER_EMAIL }}
-          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.GITHUB_USER_PASSWORD }}
+          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
+          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
           CYPRESS_IS_CI: true
         with:
           working-directory: apps/web
