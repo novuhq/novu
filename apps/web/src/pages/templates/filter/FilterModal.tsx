@@ -65,6 +65,7 @@ export function FilterModal({
           <Controller
             control={control}
             name={`steps.${stepIndex}.filters.0.value`}
+            defaultValue=""
             render={({ field }) => {
               return (
                 <Select
@@ -114,6 +115,7 @@ export function FilterModal({
                 <Controller
                   control={control}
                   name={`steps.${stepIndex}.filters.0.children.${index}.on`}
+                  defaultValue=""
                   render={({ field }) => {
                     return (
                       <Select
@@ -197,6 +199,7 @@ function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: num
         <Controller
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.webhookUrl`}
+          defaultValue=""
           render={({ field, fieldState }) => {
             return (
               <Input
@@ -234,6 +237,7 @@ function EqualityForm({
         <Controller
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.field`}
+          defaultValue=""
           render={({ field, fieldState }) => {
             return (
               <Input {...field} error={fieldState.error?.message} placeholder="Key" data-test-id="filter-key-input" />
@@ -245,6 +249,7 @@ function EqualityForm({
         <Controller
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.operator`}
+          defaultValue="EQUAL"
           render={({ field }) => {
             return (
               <Select
@@ -270,6 +275,7 @@ function EqualityForm({
         <Controller
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.value`}
+          defaultValue=""
           render={({ field, fieldState }) => {
             return (
               <Input
