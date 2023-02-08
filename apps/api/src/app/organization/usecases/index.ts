@@ -7,8 +7,10 @@ import { ChangeMemberRole } from './membership/change-member-role/change-member-
 import { UpdateBrandingDetails } from './update-branding-details/update-branding-details.usecase';
 import { GetOrganizations } from './get-organizations/get-organizations.usecase';
 import { GetMyOrganization } from './get-my-organization/get-my-organization.usecase';
+import { GetInAppActivated } from './get-In-app-activated/get-In-app-activated.usecase';
 
 export const USE_CASES = [
+  GetInAppActivated,
   AddMember,
   CreateOrganization,
   GetOrganization,
