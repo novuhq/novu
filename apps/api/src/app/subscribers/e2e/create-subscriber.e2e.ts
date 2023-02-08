@@ -24,6 +24,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
         email: 'john@doe.com',
         phone: '+972523333333',
         locale: 'en',
+        data: { test1: 'test1val', test2: 'test2val' },
       },
       {
         headers: {
@@ -41,6 +42,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
     expect(createdSubscriber.email).to.equal('john@doe.com');
     expect(createdSubscriber.phone).to.equal('+972523333333');
     expect(createdSubscriber.locale).to.equal('en');
+    expect(createdSubscriber.data.test1).to.equal('test1val');
   });
 
   it('should update subscriber if already created', async function () {
@@ -50,6 +52,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
         subscriberId: '123',
         firstName: 'John',
         lastName: 'Doe',
+        data: { test1: 'test1val', test2: 'test2val' },
       },
       {
         headers: {
@@ -79,6 +82,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
         lastName: 'Doe',
         email: 'john@doe.com',
         locale: 'en',
+        data: { test1: 'newtest1val', test3: 'test3val' },
       },
       {
         headers: {
@@ -95,5 +99,8 @@ describe('Create Subscriber - /subscribers (POST)', function () {
     expect(createdSubscriber.firstName).to.equal('Mary');
     expect(createdSubscriber.email).to.equal('john@doe.com');
     expect(createdSubscriber.locale).to.equal('en');
+    expect(createdSubscriber.data.test1).to.equal('newtest1val');
+    expect(!createdSubscriber.data.test2).to.equal(true);
+    expect(createdSubscriber.data.test3).to.equal('test3val');
   });
 });

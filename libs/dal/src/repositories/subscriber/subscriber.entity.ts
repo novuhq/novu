@@ -37,6 +37,8 @@ export class SubscriberEntity {
   isOnline?: boolean;
 
   lastOnlineAt?: string;
+
+  data?: { [key: string]: string };
 }
 
 export class IChannelSettings {

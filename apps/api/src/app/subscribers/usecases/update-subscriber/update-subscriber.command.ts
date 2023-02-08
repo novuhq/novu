@@ -29,5 +29,8 @@ export class UpdateSubscriberCommand extends EnvironmentCommand {
   locale?: string;
 
   @IsOptional()
+  data?: { [key: string]: string };
+
+  @IsOptional()
   subscriber?: SubscriberEntity;
 }

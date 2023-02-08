@@ -37,6 +37,7 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
         email: 'changed@mail.com',
         phone: '+972523333333',
         locale: 'sv',
+        data: { test: 'testval' },
       },
       {
         headers: {
@@ -55,6 +56,7 @@ describe('Update Subscriber - /subscribers/:subscriberId (PUT)', function () {
     expect(createdSubscriber.email).to.equal('changed@mail.com');
     expect(createdSubscriber.phone).to.equal('+972523333333');
     expect(createdSubscriber.locale).to.equal('sv');
+    expect(createdSubscriber.data.test).to.equal('testval');
   });
 
   it('should update an existing subscriber credentials', async function () {

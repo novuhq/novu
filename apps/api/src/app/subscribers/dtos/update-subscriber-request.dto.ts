@@ -31,4 +31,8 @@ export class UpdateSubscriberRequestDto {
   @IsLocale()
   @IsOptional()
   locale?: string;
+
+  @ApiProperty()
+  @IsOptional()
+  data?: { [key: string]: string };
 }

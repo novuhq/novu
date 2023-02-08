@@ -41,4 +41,8 @@ export class CreateSubscriberRequestDto {
   @IsLocale()
   @IsOptional()
   locale?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  data?: { [key: string]: string };
 }
