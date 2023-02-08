@@ -7,7 +7,6 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
 import { Button, Text, colors, Tooltip } from '../../../design-system';
-import { testSendEmailMessage } from '../../../api/templates';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { AuthContext } from '../../../store/authContext';
 import { ArrowDown, Check, Copy, Invite } from '../../../design-system/icons';
@@ -16,6 +15,7 @@ import useStyles from '../../../design-system/select/Select.styles';
 import { getOrganizationMembers } from '../../../api/organization';
 import { useProcessVariables } from '../../../hooks/useProcessVariables';
 import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
+import { testSendEmailMessage } from '../../../api/notification-templates';
 
 export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
   const { currentUser } = useContext(AuthContext);

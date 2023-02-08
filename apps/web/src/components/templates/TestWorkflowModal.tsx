@@ -5,18 +5,27 @@ import * as Sentry from '@sentry/react';
 import { INotificationTrigger, IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, Title, Modal } from '../../design-system';
 import { inputStyles } from '../../design-system/config/inputs.styles';
-import { testTrigger } from '../../api/templates';
 import { useContext, useState } from 'react';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { AuthContext } from '../../store/authContext';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
+import { testTrigger } from '../../api/notification-templates';
+import { When } from '../utils/When';
 
 const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
-  const subsVars = getSubscriberValue(
-    subscriberVariables,
-    (variable) =>
-      (currentUser && currentUser[variable.name === 'subscriberId' ? 'id' : variable.name]) || '<REPLACE_WITH_DATA>'
-  );
+  const subsVars = getSubscriberValue(subscriberVariables, (variable) => {
+    if (currentUser) {
+      const test = currentUser[variable.name === 'subscriberId' && !variable.manual ? 'id' : variable.name];
+
+      // eslint-disable-next-line no-console
+      console.log(test);
+    }
+
+    return (
+      (currentUser && currentUser[variable.name === 'subscriberId' && !variable.manual ? 'id' : variable.name]) ||
+      '<REPLACE_WITH_DATA>'
+    );
+  });
 
   return JSON.stringify(subsVars, null, 2);
 };
@@ -25,26 +34,35 @@ const makePayloadValue = (variables: INotificationTriggerVariable[]) => {
   return JSON.stringify(getPayloadValue(variables), null, 2);
 };
 
+function subscriberExist(subscriberVariables: INotificationTriggerVariable[]) {
+  return subscriberVariables?.some((variable) => variable.name === 'subscriberId');
+}
+
 export function TestWorkflowModal({
   isVisible,
   onDismiss,
   trigger,
   setTransactionId,
   openExecutionModal,
+  minimal = false,
 }: {
   isVisible: boolean;
   onDismiss: () => void;
   openExecutionModal: () => void;
   setTransactionId: (id: string) => void;
   trigger: INotificationTrigger;
+  minimal?: boolean;
 }) {
   const { currentUser } = useContext(AuthContext);
   const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
 
-  const subscriberVariables = useMemo(
-    () => [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])],
-    [trigger]
-  );
+  const subscriberVariables = useMemo(() => {
+    if (trigger?.subscriberVariables && subscriberExist(trigger?.subscriberVariables)) {
+      return [...(trigger?.subscriberVariables || [])];
+    }
+
+    return [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
+  }, [trigger]);
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
 
   const overridesTrigger = `{\n\n}`;
@@ -99,30 +117,31 @@ export function TestWorkflowModal({
         mb={15}
         validationError="Invalid JSON"
       />
-      <JsonInput
-        data-test-id="test-trigger-payload-param"
-        formatOnBlur
-        autosize
-        styles={inputStyles}
-        label="Payload"
-        value={payloadValue}
-        onChange={setPayloadValue}
-        minRows={3}
-        validationError="Invalid JSON"
-        mb={15}
-      />
-      <JsonInput
-        data-test-id="test-trigger-overrides-param"
-        formatOnBlur
-        autosize
-        styles={inputStyles}
-        label="Overrides (optional)"
-        value={overridesValue}
-        onChange={setOverridesValue}
-        minRows={3}
-        validationError="Invalid JSON"
-      />
-
+      <When truthy={!minimal}>
+        <JsonInput
+          data-test-id="test-trigger-payload-param"
+          formatOnBlur
+          autosize
+          styles={inputStyles}
+          label="Payload"
+          value={payloadValue}
+          onChange={setPayloadValue}
+          minRows={3}
+          validationError="Invalid JSON"
+          mb={15}
+        />
+        <JsonInput
+          data-test-id="test-trigger-overrides-param"
+          formatOnBlur
+          autosize
+          styles={inputStyles}
+          label="Overrides (optional)"
+          value={overridesValue}
+          onChange={setOverridesValue}
+          minRows={3}
+          validationError="Invalid JSON"
+        />
+      </When>
       <div style={{ alignItems: 'end' }}>
         <Button data-test-id="test-trigger-btn" mt={30} inherit onClick={() => onTrigger()}>
           Trigger

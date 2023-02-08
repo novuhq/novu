@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { INotificationTemplate } from '@novu/shared';
-
-import { getTemplateById } from '../../api/templates';
+import { getTemplateById } from '../../api/notification-templates';
 
 export function useTemplateFetcher(templateId) {
   const {

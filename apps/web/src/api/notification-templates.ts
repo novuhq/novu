@@ -1,6 +1,9 @@
 import { ICreateNotificationTemplateDto } from '@novu/shared';
 import { api } from './api.client';
 
+export function getNotificationsList(page = 0, limit = 10) {
+  return api.getFullResponse(`/v1/notification-templates`, { page, limit });
+}
 export async function createTemplate(data: ICreateNotificationTemplateDto) {
   return api.post(`/v1/notification-templates`, data);
 }

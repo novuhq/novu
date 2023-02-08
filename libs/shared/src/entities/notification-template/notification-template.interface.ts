@@ -36,6 +36,7 @@ export interface INotificationTriggerVariable {
   name: string;
   value?: any;
   type?: TemplateVariableTypeEnum;
+  manual?: boolean;
 }
 
 export interface INotificationTemplateStep {

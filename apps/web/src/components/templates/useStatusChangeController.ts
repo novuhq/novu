@@ -2,9 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { INotificationTemplate } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import { showNotification } from '@mantine/notifications';
-
-import { updateTemplateStatus } from '../../api/templates';
-import { colors } from '../../design-system';
+import { updateTemplateStatus } from '../../api/notification-templates';
 
 export function useStatusChangeControllerHook(templateId: string, template: INotificationTemplate | undefined) {
   const [isTemplateActive, setIsTemplateActive] = useState<boolean>();

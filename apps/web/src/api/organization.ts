@@ -45,3 +45,7 @@ export function removeMember(memberId: string) {
 export function updateBrandingSettings(payload: { color: string | undefined; logo: string | undefined }) {
   return api.put(`/v1/organizations/branding`, payload);
 }
+
+export function getInAppActivated() {
+  return api.get(`/v1/organizations/in-app/activated`);
+}

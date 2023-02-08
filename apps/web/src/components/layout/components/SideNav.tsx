@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Navbar,
   Popover,
@@ -70,11 +70,13 @@ export function SideNav({}: Props) {
     ]);
   }, [environment]);
 
+  const gettingStartedLink = localStorage.getItem('client_location');
+
   const menuItems = [
     {
       condition: !readonly && currentUser?.showOnBoarding,
       icon: <CheckCircleOutlined />,
-      link: '/quickstart',
+      link: gettingStartedLink ?? '/quickstart',
       label: 'Getting Started',
       testId: 'side-nav-quickstart-link',
     },

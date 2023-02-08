@@ -106,6 +106,11 @@ export const getSubscriberValue = (
 ) => {
   const varsObj: Record<string, any> = {};
   variables.forEach((variable) => {
+    // eslint-disable-next-line no-console
+    console.log(variable);
+
+    // eslint-disable-next-line no-console
+    console.log(getValue(variable));
     set(varsObj, variable.name, getValue(variable));
   });
 

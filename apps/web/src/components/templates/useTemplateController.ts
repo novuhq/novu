@@ -19,12 +19,12 @@ import {
   FilterParts,
 } from '@novu/shared';
 
-import { createTemplate, updateTemplate, deleteTemplateById } from '../../api/templates';
 import { useTemplateFetcher } from './useTemplateFetcher';
 import { QueryKeys } from '../../api/query.keys';
 import { useTemplateEditor } from './TemplateEditorProvider';
 import { useFieldArrayContext } from './FieldArrayProvider';
 import { successMessage } from '../../utils/notifications';
+import { createTemplate, deleteTemplateById, updateTemplate } from '../../api/notification-templates';
 
 export function useTemplateController(templateId: string) {
   const {

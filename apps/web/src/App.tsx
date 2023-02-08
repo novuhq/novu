@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
-import { Route, Routes, Navigate, BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter, useLocation } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
@@ -12,7 +12,7 @@ import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import HomePage from './pages/HomePage';
-import TemplateEditorPage, { ActivePageEnum } from './pages/templates/editor/TemplateEditorPage';
+import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
@@ -27,7 +27,15 @@ import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
-import QuickStartPage from './pages/quick-start/QuickStartPage';
+import {
+  DelayedRender,
+  QuickStartDemo,
+  QuickStartCards,
+  QuickStartHeader,
+  ImplementationDescription,
+  welcomeDescription,
+  TroubleshootingDescription,
+} from './pages/quick-start/QuickStart';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
 import { SpotLight } from './components/utils/Spotlight';
@@ -38,6 +46,10 @@ import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
+import { GeneralStarter } from './pages/quick-start/GeneralStarter';
+import { BellGradient } from './design-system/icons';
+import { Troubleshooting } from './pages/quick-start/components/Troubleshooting';
+import { TestNotificationTrigger } from './pages/quick-start/components/TestNotificationTrigger';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID);
@@ -181,11 +193,146 @@ function App() {
                         }
                       />
                       <Route
+                        path="/general-started"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <GeneralStarter />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
                         path="/quickstart"
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartPage />
+                              <QuickStartHeader
+                                title={welcomeDescription}
+                                description={'What would you like to build?'}
+                              >
+                                <QuickStartCards
+                                  cells={[
+                                    {
+                                      navIcon: BellGradient,
+                                      description: 'Notification Center',
+                                      navigateTo: '/quickstart/notification-center',
+                                    },
+                                    {
+                                      navIcon: BellGradient,
+                                      description: 'Other',
+                                      navigateTo: '/general-started',
+                                    },
+                                  ]}
+                                />
+                              </QuickStartHeader>
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/implementation"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <QuickStartHeader title={welcomeDescription} description={<ImplementationDescription />}>
+                                <DelayedRender
+                                  delay={500}
+                                  component={
+                                    <QuickStartCards
+                                      cells={[
+                                        {
+                                          imagePath: `static/images/frameworks/dark/react.png`,
+                                          href: 'https://docs.novu.co/notification-center/react/react-components',
+                                        },
+                                        {
+                                          imagePath: `static/images/frameworks/dark/angular.png`,
+                                          href: 'https://docs.novu.co/notification-center/angular-component',
+                                        },
+                                        {
+                                          imagePath: `static/images/frameworks/dark/vue.png`,
+                                          href: 'https://docs.novu.co/notification-center/vue-component',
+                                        },
+                                      ]}
+                                    />
+                                  }
+                                />
+                              </QuickStartHeader>
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/trouble-shooting"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <QuickStartHeader
+                                title={'Pending Notification Center Initialization'}
+                                description={<TroubleshootingDescription />}
+                              >
+                                <Troubleshooting />
+                              </QuickStartHeader>
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/trigger"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <QuickStartHeader
+                                title={'Now is the time to trigger notification'}
+                                description={'do it! '}
+                              >
+                                <TestNotificationTrigger />
+                              </QuickStartHeader>
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/demo"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <QuickStartHeader title={welcomeDescription}>
+                                <DelayedRender delay={500} component={<QuickStartDemo />} />
+                              </QuickStartHeader>
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <QuickStartHeader
+                                title={welcomeDescription}
+                                description={'Where would you like to start?'}
+                              >
+                                <DelayedRender
+                                  delay={500}
+                                  component={
+                                    <QuickStartCards
+                                      cells={[
+                                        {
+                                          navIcon: BellGradient,
+                                          description: 'I have an app let’s add the to my app',
+                                          navigateTo: '/quickstart/notification-center/implementation',
+                                        },
+                                        {
+                                          navIcon: BellGradient,
+                                          description: 'Let’s just play around with a demo app',
+                                          navigateTo: '/quickstart/notification-center/demo',
+                                        },
+                                      ]}
+                                    />
+                                  }
+                                />
+                              </QuickStartHeader>
                             </SpotLight>
                           </RequiredAuth>
                         }

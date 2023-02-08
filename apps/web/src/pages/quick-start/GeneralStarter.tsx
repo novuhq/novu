@@ -11,7 +11,7 @@ import { updateUserOnBoarding } from '../../api/user';
 import { OnboardingSteps } from './components/OnboardingSteps';
 import { useSegment } from '../../hooks/useSegment';
 
-function QuickStart() {
+export function GeneralStarter() {
   const segment = useSegment();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -69,5 +69,3 @@ function QuickStart() {
     </PageContainer>
   );
 }
-
-export default QuickStart;

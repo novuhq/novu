@@ -3,7 +3,6 @@ import { colors, shadows, Title, Text, Button } from '../../design-system';
 import { Center, Loader } from '@mantine/core';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { createTemplateFromBluePrintId, getBlueprintTemplateById } from '../../api/templates';
 import { When } from '../utils/When';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { errorMessage } from '../../utils/notifications';
@@ -11,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { updateUserOnBoarding } from '../../api/user';
 import { IUserEntity } from '@novu/shared';
 import { useSegment } from '../../hooks/useSegment';
+import { createTemplateFromBluePrintId, getBlueprintTemplateById } from '../../api/notification-templates';
 
 export function BlueprintModal() {
   const theme = useMantineTheme();
