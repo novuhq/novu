@@ -32,7 +32,7 @@ export class ParseEventRequest {
     );
 
     if (!template) {
-      throw new UnprocessableEntityException('TEMPLATE_NOT_FOUND');
+      throw new UnprocessableEntityException('template_not_found');
     }
 
     if (!template.active || template.draft) {

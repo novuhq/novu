@@ -5,6 +5,7 @@ import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, Ap
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  BulkTriggerEventDto,
   TestSendEmailRequestDto,
   TriggerEventRequestDto,
   TriggerEventResponseDto,
@@ -94,6 +95,94 @@ export class EventsController {
     );
 
     return result as unknown as TriggerEventResponseDto;
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/trigger/bulk')
+  @ApiCreatedResponse({
+    type: TriggerEventResponseDto,
+    isArray: true,
+    content: {
+      '200': {
+        example: [
+          {
+            acknowledged: true,
+            status: 'processed',
+            transactionId: 'd2239acb-e879-4bdb-ab6f-365b43278d8f',
+          },
+          {
+            acknowledged: true,
+            status: 'processed',
+            transactionId: 'd2239acb-e879-4bdb-ab6f-115b43278d12',
+          },
+        ],
+      },
+    },
+  })
+  @ApiOperation({
+    summary: 'Bulk trigger event',
+    description: `
+      Using this endpoint you can trigger multiple events at once, to avoid multiple calls to the API.
+      The bulk API is limited to 100 events per request.
+    `,
+  })
+  async triggerBulkEvents(
+    @UserSession() user: IJwtPayload,
+    @Body() body: BulkTriggerEventDto
+  ): Promise<TriggerEventResponseDto[]> {
+    const results: TriggerEventResponseDto[] = [];
+
+    for (const event of body.events) {
+      let result: TriggerEventResponseDto;
+
+      try {
+        const transactionId = event.transactionId || uuidv4();
+
+        const { _id: userId, environmentId, organizationId } = user;
+
+        const mappedActor = this.mapActor(event.actor);
+        const mapTriggerRecipientsCommand = MapTriggerRecipientsCommand.create({
+          environmentId,
+          organizationId,
+          recipients: event.to,
+          transactionId,
+          userId,
+        });
+        const mappedTo = await this.mapTriggerRecipients.execute(mapTriggerRecipientsCommand);
+
+        result = (await this.parseEventRequest.execute(
+          ParseEventRequestCommand.create({
+            userId,
+            environmentId,
+            organizationId,
+            identifier: event.name,
+            payload: event.payload,
+            overrides: event.overrides || {},
+            to: mappedTo,
+            actor: mappedActor,
+            transactionId,
+          })
+        )) as unknown as TriggerEventResponseDto;
+      } catch (e) {
+        let error: string[];
+        if (e.response?.message) {
+          error = Array.isArray(e.response?.message) ? e.response?.message : [e.response?.message];
+        } else {
+          error = [e.message];
+        }
+
+        result = {
+          status: 'error',
+          error: error,
+          acknowledged: true,
+        };
+      }
+
+      results.push(result);
+    }
+
+    return results;
   }
 
   @ExternalApiAccessible()
