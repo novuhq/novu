@@ -1,4 +1,3 @@
-import { AxiosInstance } from 'axios';
 import { WithHttp } from '../novu.interface';
 import {
   IGetSubscriberNotificationFeedParams,

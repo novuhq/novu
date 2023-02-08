@@ -33,7 +33,14 @@ export interface ISubscriberPayload {
   phone?: string;
   avatar?: string;
   locale?: string;
-  [key: string]: string | string[] | boolean | number | undefined;
+  data?: { [key: string]: string };
+  [key: string]:
+    | string
+    | string[]
+    | boolean
+    | number
+    | { [key: string]: string }
+    | undefined;
 }
 
 export interface ISubscribersDefine extends ISubscriberPayload {
