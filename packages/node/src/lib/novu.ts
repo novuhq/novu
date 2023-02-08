@@ -55,6 +55,8 @@ export class Novu extends EventEmitter {
 
   public broadcast: typeof Events.prototype.broadcast;
 
+  public bulkTrigger: typeof Events.prototype.bulkTrigger;
+
   private buildBackendUrl(config?: INovuConfiguration) {
     const novuVersion = 'v1';
 
