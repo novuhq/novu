@@ -16,7 +16,7 @@ import { useBlueprint } from '../../hooks/useBlueprint';
 
 export default function LoginPage() {
   useBlueprint();
-  const { setToken, token } = useContext(AuthContext);
+  const { setToken, token: oldToken } = useContext(AuthContext);
   const segment = useSegment();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -24,25 +24,26 @@ export default function LoginPage() {
   const invitationToken = params.get('invitationToken');
   const source = params.get('source');
   const sourceWidget = params.get('source_widget');
+  const token = queryToken ?? oldToken;
 
   const { startVercelSetup, isLoading } = useVercelIntegration();
   const { code, isFromVercel, next } = useVercelParams();
   const { isLoading: isLoadingAcceptInvite, submitToken } = useAcceptInvite();
 
   useEffect(() => {
-    if (queryToken) {
-      const user = jwtDecode<IJwtPayload>(queryToken);
+    if (token) {
+      const user = jwtDecode<IJwtPayload>(token);
 
       if (!invitationToken && (!user.organizationId || !user.environmentId)) {
         const authApplicationLink = isFromVercel ? `/auth/application?code=${code}&next=${next}` : '/auth/application';
-        setToken(queryToken);
+        setToken(token);
         navigate(authApplicationLink);
 
         return;
       }
 
       if (isFromVercel) {
-        setToken(queryToken);
+        setToken(token);
         startVercelSetup();
 
         return;
@@ -53,22 +54,22 @@ export default function LoginPage() {
           widget: sourceWidget || 'unknown',
           source: 'cli',
         });
-        setToken(queryToken);
+        setToken(token);
         navigate('/quickstart');
 
         return;
       }
 
       if (invitationToken) {
-        submitToken(queryToken, invitationToken);
+        submitToken(token, invitationToken);
 
         return;
       }
 
-      setToken(queryToken);
+      setToken(token);
       navigate('/');
     }
-  }, [queryToken]);
+  }, [token]);
 
   return (
     <AuthLayout>
