@@ -65,7 +65,7 @@ const useStyles = createStyles((theme) => ({
     minWidth: 600,
     backgroundSize: '70% 100%',
     backgroundRepeat: 'no-repeat',
-    backgroundImage: "url({CONTEXT_PATH + '/static/images/signin_bg.png'})",
+    backgroundImage: 'url(' + CONTEXT_PATH + '/static/images/signin_bg.png)',
     '@media (max-width: 1100px)': {
       display: 'none',
     },
