@@ -75,6 +75,7 @@ export type ITriggerOverrideFCM = {
   clickAction?: string;
   titleLocKey?: string;
   titleLocArgs?: string;
+  data?: Record<string, any>;
 };
 
 export type IAPNSAlert = {

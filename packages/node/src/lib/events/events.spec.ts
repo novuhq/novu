@@ -56,6 +56,42 @@ describe('test use of novus node package - Events', () => {
     });
   });
 
+  test('should pass overrides to request', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.events.trigger('test-template', {
+      to: ['test-user', 'test-another-user'],
+      payload: {
+        organizationName: 'Company',
+      },
+      overrides: {
+        fcm: {
+          type: 'notification',
+          data: {
+            test: 'test-data',
+          },
+        },
+      },
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
+      name: 'test-template',
+      to: ['test-user', 'test-another-user'],
+      overrides: {
+        fcm: {
+          type: 'notification',
+          data: {
+            test: 'test-data',
+          },
+        },
+      },
+      payload: {
+        organizationName: 'Company',
+      },
+    });
+  });
+
   test('should trigger correctly for all subscribers definitions ', async () => {
     mockedAxios.post.mockResolvedValue({});
 
