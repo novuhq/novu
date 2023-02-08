@@ -117,3 +117,7 @@ export type ITriggerOverrideAPNS = {
   mdm?: string | Record<string, unknown>;
   urlArgs?: string[];
 };
+
+export interface IBulkEvents extends ITriggerPayloadOptions {
+  name: string;
+}

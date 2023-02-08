@@ -110,4 +110,47 @@ describe('test use of novus node package - Events', () => {
       '/events/trigger/transactionId'
     );
   });
+
+  test('should bulk trigger correctly', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.events.bulkTrigger([
+      {
+        name: 'test-template-1',
+        to: 'test-user',
+        payload: {
+          email: 'test-user@sd.com',
+        },
+      },
+
+      {
+        name: 'test-template-2',
+        to: 'test-user',
+        payload: {
+          email: 'test-user@sd.com',
+        },
+      },
+    ]);
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger/bulk', {
+      events: [
+        {
+          name: 'test-template-1',
+          to: 'test-user',
+          payload: {
+            email: 'test-user@sd.com',
+          },
+        },
+
+        {
+          name: 'test-template-2',
+          to: 'test-user',
+          payload: {
+            email: 'test-user@sd.com',
+          },
+        },
+      ],
+    });
+  });
 });
