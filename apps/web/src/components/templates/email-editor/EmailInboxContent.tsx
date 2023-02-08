@@ -63,7 +63,8 @@ export const EmailInboxContent = ({
         <Grid.Col span={4}>
           <div>
             <Controller
-              name={`steps.${index}.template.subject` as any}
+              name={`steps.${index}.template.subject`}
+              defaultValue=""
               control={control}
               render={({ field }) => {
                 return (
@@ -83,7 +84,8 @@ export const EmailInboxContent = ({
         </Grid.Col>
         <Grid.Col span={4}>
           <Controller
-            name={`steps.${index}.template.preheader` as any}
+            name={`steps.${index}.template.preheader`}
+            defaultValue=""
             control={control}
             render={({ field, fieldState }) => {
               return (
@@ -112,7 +114,8 @@ export const EmailInboxContent = ({
         </Grid.Col>
       </Grid>
       <Controller
-        name={`steps.${index}.template.layoutId` as any}
+        name={`steps.${index}.template.layoutId`}
+        defaultValue=""
         control={control}
         render={({ field }) => {
           return (

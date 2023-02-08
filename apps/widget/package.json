@@ -74,7 +74,7 @@
     "cypress-network-idle": "^1.10.0",
     "html-webpack-plugin": "5.5.0",
     "http-server": "^0.13.0",
-    "jest": "27.0.6",
+    "jest": "27.5.1",
     "less": "^4.1.0",
     "less-loader": "4.1.0",
     "start-server-and-test": "1.15.3",

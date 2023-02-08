@@ -10,6 +10,7 @@ export const StepActiveSwitch = ({ control, index }) => {
     <Controller
       control={control}
       name={`steps.${index}.active`}
+      defaultValue={true}
       render={({ field: { value, ...field } }) => {
         return (
           <StyledSwitch
