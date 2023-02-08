@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
+import styled from '@emotion/styled';
 
 import { useTemplates } from '../../api/hooks/useTemplates';
 import { getActivityList } from '../../api/activity';
@@ -15,6 +16,16 @@ import { ActivityList } from './components/ActivityList';
 import { ExecutionDetailsModal } from '../../components/activity/ExecutionDetailsModal';
 import { IActivityGraphStats } from './interfaces';
 import { useDebounce } from '../../hooks/useDebounce';
+
+const FiltersContainer = styled.div`
+  width: 80%;
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 30px;
+`;
 
 interface IFiltersForm {
   channels: ChannelTypeEnum[];
@@ -96,16 +107,7 @@ export function ActivitiesPage() {
       <ActivityStatistics />
       <ActivityGraph onBarClick={onBarClick} />
       <form>
-        <div
-          style={{
-            width: '80%',
-            display: 'flex',
-            alignItems: 'center',
-            flexDirection: 'row',
-            gap: '15px',
-            padding: '30px',
-          }}
-        >
+        <FiltersContainer>
           <div style={{ minWidth: '250px' }}>
             <Controller
               render={({ field }) => (
@@ -197,7 +199,7 @@ export function ActivitiesPage() {
               Clear
             </Button>
           )}
-        </div>
+        </FiltersContainer>
       </form>
       <ActivityList
         loading={isLoading || isFetching}
