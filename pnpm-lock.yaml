@@ -2933,7 +2933,7 @@ importers:
 
   providers/ses:
     specifiers:
-      '@aws-sdk/client-ses': 3.48.0
+      '@aws-sdk/client-ses': 3.266.1
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@novu/stateless': ^0.11.0
       '@types/jest': 27.5.2
@@ -2953,7 +2953,7 @@ importers:
       typedoc: ^0.23.0
       typescript: ^4.9.5
     dependencies:
-      '@aws-sdk/client-ses': 3.48.0
+      '@aws-sdk/client-ses': 3.266.1
       '@novu/stateless': link:../../packages/stateless
       nodemailer: 6.7.3
     devDependencies:
@@ -4520,7 +4520,7 @@ packages:
     resolution: {integrity: sha512-TvE1r2CUueyXOuHdEigYjIZVesInd9KN+K/TFFNfkkxRThiNxO6i4ZqqAVMoEjAamZZ1AA8WXJkjCz7YShHPQA==}
     dependencies:
       '@aws-crypto/util': 2.0.1
-      '@aws-sdk/types': 3.226.0
+      '@aws-sdk/types': 3.266.1
       tslib: 1.14.1
     dev: false
 
@@ -4528,7 +4528,7 @@ packages:
     resolution: {integrity: sha512-vF0eMdMHx3O3MoOXUfBZry8Y4ZDtcuskjjKgJz8YfIDjLStxTZrYXk+kZqtl6A0uCmmiN/Eb/JbC/CndTV1MHg==}
     dependencies:
       '@aws-crypto/util': 2.0.1
-      '@aws-sdk/types': 3.226.0
+      '@aws-sdk/types': 3.266.1
       tslib: 1.14.1
     dev: false
 
@@ -4538,12 +4538,18 @@ packages:
       tslib: 1.14.1
     dev: false
 
+  /@aws-crypto/ie11-detection/3.0.0:
+    resolution: {integrity: sha512-341lBBkiY1DfDNKai/wXM3aujNBkXR7tq1URPQDL9wi3AUbI80NR74uF1TXHMm7po1AcnFk8iu2S2IeU/+/A+Q==}
+    dependencies:
+      tslib: 1.14.1
+    dev: false
+
   /@aws-crypto/sha1-browser/2.0.0:
     resolution: {integrity: sha512-3fIVRjPFY8EG5HWXR+ZJZMdWNRpwbxGzJ9IH9q93FpbgCH8u8GHRi46mZXp3cYD7gealmyqpm3ThZwLKJjWJhA==}
     dependencies:
       '@aws-crypto/ie11-detection': 2.0.0
       '@aws-crypto/supports-web-crypto': 2.0.0
-      '@aws-sdk/types': 3.226.0
+      '@aws-sdk/types': 3.266.1
       '@aws-sdk/util-locate-window': 3.55.0
       '@aws-sdk/util-utf8-browser': 3.188.0
       tslib: 1.14.1
@@ -4556,7 +4562,20 @@ packages:
       '@aws-crypto/sha256-js': 2.0.0
       '@aws-crypto/supports-web-crypto': 2.0.0
       '@aws-crypto/util': 2.0.1
-      '@aws-sdk/types': 3.226.0
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/util-locate-window': 3.55.0
+      '@aws-sdk/util-utf8-browser': 3.188.0
+      tslib: 1.14.1
+    dev: false
+
+  /@aws-crypto/sha256-browser/3.0.0:
+    resolution: {integrity: sha512-8VLmW2B+gjFbU5uMeqtQM6Nj0/F1bro80xQXCW6CQBWgosFWXTx77aeOF5CAIAmbOK64SdMBJdNr6J41yP5mvQ==}
+    dependencies:
+      '@aws-crypto/ie11-detection': 3.0.0
+      '@aws-crypto/sha256-js': 3.0.0
+      '@aws-crypto/supports-web-crypto': 3.0.0
+      '@aws-crypto/util': 3.0.0
+      '@aws-sdk/types': 3.266.1
       '@aws-sdk/util-locate-window': 3.55.0
       '@aws-sdk/util-utf8-browser': 3.188.0
       tslib: 1.14.1
@@ -4566,7 +4585,15 @@ packages:
     resolution: {integrity: sha512-VZY+mCY4Nmrs5WGfitmNqXzaE873fcIZDu54cbaDaaamsaTOP1DBImV9F4pICc3EHjQXujyE8jig+PFCaew9ig==}
     dependencies:
       '@aws-crypto/util': 2.0.1
-      '@aws-sdk/types': 3.226.0
+      '@aws-sdk/types': 3.266.1
+      tslib: 1.14.1
+    dev: false
+
+  /@aws-crypto/sha256-js/3.0.0:
+    resolution: {integrity: sha512-PnNN7os0+yd1XvXAy23CFOmTbMaDxgxXtTKHybrJ39Y8kGzBATgBFibWJKH6BhytLI/Zyszs87xCOBNyBig6vQ==}
+    dependencies:
+      '@aws-crypto/util': 3.0.0
+      '@aws-sdk/types': 3.266.1
       tslib: 1.14.1
     dev: false
 
@@ -4576,10 +4603,24 @@ packages:
       tslib: 1.14.1
     dev: false
 
+  /@aws-crypto/supports-web-crypto/3.0.0:
+    resolution: {integrity: sha512-06hBdMwUAb2WFTuGG73LSC0wfPu93xWwo5vL2et9eymgmu3Id5vFAHBbajVWiGhPO37qcsdCap/FqXvJGJWPIg==}
+    dependencies:
+      tslib: 1.14.1
+    dev: false
+
   /@aws-crypto/util/2.0.1:
     resolution: {integrity: sha512-JJmFFwvbm08lULw4Nm5QOLg8+lAQeC8aCXK5xrtxntYzYXCGfHwUJ4Is3770Q7HmICsXthGQ+ZsDL7C2uH3yBQ==}
     dependencies:
-      '@aws-sdk/types': 3.226.0
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/util-utf8-browser': 3.188.0
+      tslib: 1.14.1
+    dev: false
+
+  /@aws-crypto/util/3.0.0:
+    resolution: {integrity: sha512-2OJlpeJpCR48CC8r+uKVChzs9Iungj9wkZrl8Z041DWEWvyIHILYKCPNzJghKsivj+S3mLo6BVc7mBNzdxA46w==}
+    dependencies:
+      '@aws-sdk/types': 3.266.1
       '@aws-sdk/util-utf8-browser': 3.188.0
       tslib: 1.14.1
     dev: false
@@ -4592,11 +4633,11 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/abort-controller/3.47.2:
-    resolution: {integrity: sha512-OpxsJ3b2KlpqTQKq6Py6JtLhA7KaAtHthH1JLLWStaFhU5/Js8nFnfPWdJIDRLpuAGyeRTbkjOEUsOkWAI5dAw==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/abort-controller/3.266.1:
+    resolution: {integrity: sha512-6tG6dAgMMKh86U2kgo58J6pyC2pSEAtm1bXnhYOuuXBjFgieNvikwjoj//zzciudmp1qTu5Wh99u8LBLmYofFg==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -4758,46 +4799,49 @@ packages:
       - '@aws-sdk/signature-v4-crt'
     dev: false
 
-  /@aws-sdk/client-ses/3.48.0:
-    resolution: {integrity: sha512-On60FhPY/YFLlrK0qoFZ+tXdjhIa0uhTrYDqQu1ByN4fv12ub8XrwkB8k1Pu4eTz8bglQctJti7CKe+cYV4yPQ==}
-    engines: {node: '>=12.0.0'}
+  /@aws-sdk/client-ses/3.266.1:
+    resolution: {integrity: sha512-irj8zzLVPMZKjlbCxFfGoSelrG/yhC7YGlqa9nxD20mmplagWhZsmLmwu83kvlL/p4vsPm0C2BFzRwpjv9RZjA==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-crypto/sha256-browser': 2.0.0
-      '@aws-crypto/sha256-js': 2.0.0
-      '@aws-sdk/client-sts': 3.48.0
-      '@aws-sdk/config-resolver': 3.47.2
-      '@aws-sdk/credential-provider-node': 3.48.0
-      '@aws-sdk/fetch-http-handler': 3.47.2
-      '@aws-sdk/hash-node': 3.47.2
-      '@aws-sdk/invalid-dependency': 3.47.2
-      '@aws-sdk/middleware-content-length': 3.47.2
-      '@aws-sdk/middleware-host-header': 3.47.2
-      '@aws-sdk/middleware-logger': 3.47.2
-      '@aws-sdk/middleware-retry': 3.47.2
-      '@aws-sdk/middleware-serde': 3.47.2
-      '@aws-sdk/middleware-signing': 3.47.2
-      '@aws-sdk/middleware-stack': 3.47.2
-      '@aws-sdk/middleware-user-agent': 3.47.2
-      '@aws-sdk/node-config-provider': 3.47.2
-      '@aws-sdk/node-http-handler': 3.47.2
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/smithy-client': 3.47.2
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/url-parser': 3.47.2
-      '@aws-sdk/util-base64-browser': 3.47.1
-      '@aws-sdk/util-base64-node': 3.47.2
-      '@aws-sdk/util-body-length-browser': 3.47.1
-      '@aws-sdk/util-body-length-node': 3.47.1
-      '@aws-sdk/util-defaults-mode-browser': 3.47.2
-      '@aws-sdk/util-defaults-mode-node': 3.47.2
-      '@aws-sdk/util-user-agent-browser': 3.47.2
-      '@aws-sdk/util-user-agent-node': 3.47.2
-      '@aws-sdk/util-utf8-browser': 3.47.1
-      '@aws-sdk/util-utf8-node': 3.47.2
-      '@aws-sdk/util-waiter': 3.47.2
-      entities: 2.2.0
-      fast-xml-parser: 3.19.0
-      tslib: 2.3.1
+      '@aws-crypto/sha256-browser': 3.0.0
+      '@aws-crypto/sha256-js': 3.0.0
+      '@aws-sdk/client-sts': 3.266.1
+      '@aws-sdk/config-resolver': 3.266.1
+      '@aws-sdk/credential-provider-node': 3.266.1
+      '@aws-sdk/fetch-http-handler': 3.266.1
+      '@aws-sdk/hash-node': 3.266.1
+      '@aws-sdk/invalid-dependency': 3.266.1
+      '@aws-sdk/middleware-content-length': 3.266.1
+      '@aws-sdk/middleware-endpoint': 3.266.1
+      '@aws-sdk/middleware-host-header': 3.266.1
+      '@aws-sdk/middleware-logger': 3.266.1
+      '@aws-sdk/middleware-recursion-detection': 3.266.1
+      '@aws-sdk/middleware-retry': 3.266.1
+      '@aws-sdk/middleware-serde': 3.266.1
+      '@aws-sdk/middleware-signing': 3.266.1
+      '@aws-sdk/middleware-stack': 3.266.1
+      '@aws-sdk/middleware-user-agent': 3.266.1
+      '@aws-sdk/node-config-provider': 3.266.1
+      '@aws-sdk/node-http-handler': 3.266.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/smithy-client': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/url-parser': 3.266.1
+      '@aws-sdk/util-base64': 3.208.0
+      '@aws-sdk/util-body-length-browser': 3.188.0
+      '@aws-sdk/util-body-length-node': 3.208.0
+      '@aws-sdk/util-defaults-mode-browser': 3.266.1
+      '@aws-sdk/util-defaults-mode-node': 3.266.1
+      '@aws-sdk/util-endpoints': 3.266.1
+      '@aws-sdk/util-retry': 3.266.1
+      '@aws-sdk/util-user-agent-browser': 3.266.1
+      '@aws-sdk/util-user-agent-node': 3.266.1
+      '@aws-sdk/util-utf8': 3.254.0
+      '@aws-sdk/util-waiter': 3.266.1
+      fast-xml-parser: 4.0.11
+      tslib: 2.4.1
+    transitivePeerDependencies:
+      - aws-crt
     dev: false
 
   /@aws-sdk/client-sns/3.58.0:
@@ -4882,6 +4926,46 @@ packages:
       - aws-crt
     dev: false
 
+  /@aws-sdk/client-sso-oidc/3.266.1:
+    resolution: {integrity: sha512-eErpowPr6etcZH25v8JfJNdSPr+jet98cFWhsCN8GSxVNkyZci6aZnx6pBsTQCQn7L/zx8i4QZuOo5LYXdzF6A==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@aws-crypto/sha256-browser': 3.0.0
+      '@aws-crypto/sha256-js': 3.0.0
+      '@aws-sdk/config-resolver': 3.266.1
+      '@aws-sdk/fetch-http-handler': 3.266.1
+      '@aws-sdk/hash-node': 3.266.1
+      '@aws-sdk/invalid-dependency': 3.266.1
+      '@aws-sdk/middleware-content-length': 3.266.1
+      '@aws-sdk/middleware-endpoint': 3.266.1
+      '@aws-sdk/middleware-host-header': 3.266.1
+      '@aws-sdk/middleware-logger': 3.266.1
+      '@aws-sdk/middleware-recursion-detection': 3.266.1
+      '@aws-sdk/middleware-retry': 3.266.1
+      '@aws-sdk/middleware-serde': 3.266.1
+      '@aws-sdk/middleware-stack': 3.266.1
+      '@aws-sdk/middleware-user-agent': 3.266.1
+      '@aws-sdk/node-config-provider': 3.266.1
+      '@aws-sdk/node-http-handler': 3.266.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/smithy-client': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/url-parser': 3.266.1
+      '@aws-sdk/util-base64': 3.208.0
+      '@aws-sdk/util-body-length-browser': 3.188.0
+      '@aws-sdk/util-body-length-node': 3.208.0
+      '@aws-sdk/util-defaults-mode-browser': 3.266.1
+      '@aws-sdk/util-defaults-mode-node': 3.266.1
+      '@aws-sdk/util-endpoints': 3.266.1
+      '@aws-sdk/util-retry': 3.266.1
+      '@aws-sdk/util-user-agent-browser': 3.266.1
+      '@aws-sdk/util-user-agent-node': 3.266.1
+      '@aws-sdk/util-utf8': 3.254.0
+      tslib: 2.4.1
+    transitivePeerDependencies:
+      - aws-crt
+    dev: false
+
   /@aws-sdk/client-sso/3.252.0:
     resolution: {integrity: sha512-VgBqJvvCU4y9zAHJwYj5nOeNGcCxKdCO4edUxWQVHcpLsVWu49maOVtWuteq9MOrHYeWfQi8bVWGt8MPvv9+bA==}
     engines: {node: '>=14.0.0'}
@@ -4923,40 +5007,44 @@ packages:
       - aws-crt
     dev: false
 
-  /@aws-sdk/client-sso/3.48.0:
-    resolution: {integrity: sha512-A9f7B5k+X7bx062OQEcLHIMMIq0H1GlUqdw9xReCLd6W6vcRthbeSK5xbkM7TzHeKHE2/9qQYAy0lyKkxFE6bQ==}
-    engines: {node: '>=12.0.0'}
+  /@aws-sdk/client-sso/3.266.1:
+    resolution: {integrity: sha512-mgrRfNSa7sJyBgAuMvRE5W2izHYl1n0tpxjLZ8rP+AoOp0GrZLpuj9T2XhmVwyR4ibVBNFKdr8nUHWekF4HA+w==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-crypto/sha256-browser': 2.0.0
-      '@aws-crypto/sha256-js': 2.0.0
-      '@aws-sdk/config-resolver': 3.47.2
-      '@aws-sdk/fetch-http-handler': 3.47.2
-      '@aws-sdk/hash-node': 3.47.2
-      '@aws-sdk/invalid-dependency': 3.47.2
-      '@aws-sdk/middleware-content-length': 3.47.2
-      '@aws-sdk/middleware-host-header': 3.47.2
-      '@aws-sdk/middleware-logger': 3.47.2
-      '@aws-sdk/middleware-retry': 3.47.2
-      '@aws-sdk/middleware-serde': 3.47.2
-      '@aws-sdk/middleware-stack': 3.47.2
-      '@aws-sdk/middleware-user-agent': 3.47.2
-      '@aws-sdk/node-config-provider': 3.47.2
-      '@aws-sdk/node-http-handler': 3.47.2
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/smithy-client': 3.47.2
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/url-parser': 3.47.2
-      '@aws-sdk/util-base64-browser': 3.47.1
-      '@aws-sdk/util-base64-node': 3.47.2
-      '@aws-sdk/util-body-length-browser': 3.47.1
-      '@aws-sdk/util-body-length-node': 3.47.1
-      '@aws-sdk/util-defaults-mode-browser': 3.47.2
-      '@aws-sdk/util-defaults-mode-node': 3.47.2
-      '@aws-sdk/util-user-agent-browser': 3.47.2
-      '@aws-sdk/util-user-agent-node': 3.47.2
-      '@aws-sdk/util-utf8-browser': 3.47.1
-      '@aws-sdk/util-utf8-node': 3.47.2
+      '@aws-crypto/sha256-browser': 3.0.0
+      '@aws-crypto/sha256-js': 3.0.0
+      '@aws-sdk/config-resolver': 3.266.1
+      '@aws-sdk/fetch-http-handler': 3.266.1
+      '@aws-sdk/hash-node': 3.266.1
+      '@aws-sdk/invalid-dependency': 3.266.1
+      '@aws-sdk/middleware-content-length': 3.266.1
+      '@aws-sdk/middleware-endpoint': 3.266.1
+      '@aws-sdk/middleware-host-header': 3.266.1
+      '@aws-sdk/middleware-logger': 3.266.1
+      '@aws-sdk/middleware-recursion-detection': 3.266.1
+      '@aws-sdk/middleware-retry': 3.266.1
+      '@aws-sdk/middleware-serde': 3.266.1
+      '@aws-sdk/middleware-stack': 3.266.1
+      '@aws-sdk/middleware-user-agent': 3.266.1
+      '@aws-sdk/node-config-provider': 3.266.1
+      '@aws-sdk/node-http-handler': 3.266.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/smithy-client': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/url-parser': 3.266.1
+      '@aws-sdk/util-base64': 3.208.0
+      '@aws-sdk/util-body-length-browser': 3.188.0
+      '@aws-sdk/util-body-length-node': 3.208.0
+      '@aws-sdk/util-defaults-mode-browser': 3.266.1
+      '@aws-sdk/util-defaults-mode-node': 3.266.1
+      '@aws-sdk/util-endpoints': 3.266.1
+      '@aws-sdk/util-retry': 3.266.1
+      '@aws-sdk/util-user-agent-browser': 3.266.1
+      '@aws-sdk/util-user-agent-node': 3.266.1
+      '@aws-sdk/util-utf8': 3.254.0
       tslib: 2.4.1
+    transitivePeerDependencies:
+      - aws-crt
     dev: false
 
   /@aws-sdk/client-sso/3.58.0:
@@ -5040,45 +5128,48 @@ packages:
       - aws-crt
     dev: false
 
-  /@aws-sdk/client-sts/3.48.0:
-    resolution: {integrity: sha512-vOSIYCHjXB9nztZqwjIjV/jRZCfgej1YHpgqeNlfL8hPNhcrHemaoJaKHRPnhljIuHi+H5yQW7Pm4qJUFtGwKA==}
-    engines: {node: '>=12.0.0'}
+  /@aws-sdk/client-sts/3.266.1:
+    resolution: {integrity: sha512-P1hIyJkzojIG5NHuW2u/oae36KUvTB2q4nSIWuU4BrUPDeBoHg+5+zRRavtfK88aLRohwYDumRdLegT6sQNt0g==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-crypto/sha256-browser': 2.0.0
-      '@aws-crypto/sha256-js': 2.0.0
-      '@aws-sdk/config-resolver': 3.47.2
-      '@aws-sdk/credential-provider-node': 3.48.0
-      '@aws-sdk/fetch-http-handler': 3.47.2
-      '@aws-sdk/hash-node': 3.47.2
-      '@aws-sdk/invalid-dependency': 3.47.2
-      '@aws-sdk/middleware-content-length': 3.47.2
-      '@aws-sdk/middleware-host-header': 3.47.2
-      '@aws-sdk/middleware-logger': 3.47.2
-      '@aws-sdk/middleware-retry': 3.47.2
-      '@aws-sdk/middleware-sdk-sts': 3.47.2
-      '@aws-sdk/middleware-serde': 3.47.2
-      '@aws-sdk/middleware-signing': 3.47.2
-      '@aws-sdk/middleware-stack': 3.47.2
-      '@aws-sdk/middleware-user-agent': 3.47.2
-      '@aws-sdk/node-config-provider': 3.47.2
-      '@aws-sdk/node-http-handler': 3.47.2
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/smithy-client': 3.47.2
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/url-parser': 3.47.2
-      '@aws-sdk/util-base64-browser': 3.47.1
-      '@aws-sdk/util-base64-node': 3.47.2
-      '@aws-sdk/util-body-length-browser': 3.47.1
-      '@aws-sdk/util-body-length-node': 3.47.1
-      '@aws-sdk/util-defaults-mode-browser': 3.47.2
-      '@aws-sdk/util-defaults-mode-node': 3.47.2
-      '@aws-sdk/util-user-agent-browser': 3.47.2
-      '@aws-sdk/util-user-agent-node': 3.47.2
-      '@aws-sdk/util-utf8-browser': 3.47.1
-      '@aws-sdk/util-utf8-node': 3.47.2
-      entities: 2.2.0
-      fast-xml-parser: 3.19.0
+      '@aws-crypto/sha256-browser': 3.0.0
+      '@aws-crypto/sha256-js': 3.0.0
+      '@aws-sdk/config-resolver': 3.266.1
+      '@aws-sdk/credential-provider-node': 3.266.1
+      '@aws-sdk/fetch-http-handler': 3.266.1
+      '@aws-sdk/hash-node': 3.266.1
+      '@aws-sdk/invalid-dependency': 3.266.1
+      '@aws-sdk/middleware-content-length': 3.266.1
+      '@aws-sdk/middleware-endpoint': 3.266.1
+      '@aws-sdk/middleware-host-header': 3.266.1
+      '@aws-sdk/middleware-logger': 3.266.1
+      '@aws-sdk/middleware-recursion-detection': 3.266.1
+      '@aws-sdk/middleware-retry': 3.266.1
+      '@aws-sdk/middleware-sdk-sts': 3.266.1
+      '@aws-sdk/middleware-serde': 3.266.1
+      '@aws-sdk/middleware-signing': 3.266.1
+      '@aws-sdk/middleware-stack': 3.266.1
+      '@aws-sdk/middleware-user-agent': 3.266.1
+      '@aws-sdk/node-config-provider': 3.266.1
+      '@aws-sdk/node-http-handler': 3.266.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/smithy-client': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/url-parser': 3.266.1
+      '@aws-sdk/util-base64': 3.208.0
+      '@aws-sdk/util-body-length-browser': 3.188.0
+      '@aws-sdk/util-body-length-node': 3.208.0
+      '@aws-sdk/util-defaults-mode-browser': 3.266.1
+      '@aws-sdk/util-defaults-mode-node': 3.266.1
+      '@aws-sdk/util-endpoints': 3.266.1
+      '@aws-sdk/util-retry': 3.266.1
+      '@aws-sdk/util-user-agent-browser': 3.266.1
+      '@aws-sdk/util-user-agent-node': 3.266.1
+      '@aws-sdk/util-utf8': 3.254.0
+      fast-xml-parser: 4.0.11
       tslib: 2.4.1
+    transitivePeerDependencies:
+      - aws-crt
     dev: false
 
   /@aws-sdk/client-sts/3.58.0:
@@ -5133,13 +5224,14 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/config-resolver/3.47.2:
-    resolution: {integrity: sha512-uv9U/qDOSqyCPQ71qiwMslqRMxYyt0y0h6X0aQ67GCPq4rbbU/dn8PqnYT0VfX/9Ss+DcbTm7vOTxVKv+8XADA==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/config-resolver/3.266.1:
+    resolution: {integrity: sha512-MqMVki/y40Ot7XWJnziYuO35zqww3JbpH9jzCRCf8vtOE9u6C8VpuiG/OHIR9WQj63Yhcr+7fohmN3kGFnNWFg==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/signature-v4': 3.47.2
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/util-config-provider': 3.47.1
+      '@aws-sdk/signature-v4': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/util-config-provider': 3.208.0
+      '@aws-sdk/util-middleware': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5163,12 +5255,12 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/credential-provider-env/3.47.2:
-    resolution: {integrity: sha512-HQKXY8y51kpTrD7P8fZJNf4MdCdu0+NcdOc+HScrQ21oZJv3BXUwXxKiOWY95Z3jYqyFwSKs1/FFuQ1mV0wjPg==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/credential-provider-env/3.266.1:
+    resolution: {integrity: sha512-RPq9/FV7fOv14P5DxpqpcwuCa7P6ijUrN1vhpiYaWMQNJSsJK8cIsPECI3xQ1z+oPZ5/1qA++0RpTLqIhq/ifg==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5192,14 +5284,14 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/credential-provider-imds/3.47.2:
-    resolution: {integrity: sha512-7fCIofgU5pdKGgbCAYQ8H7sIFluN3oebFyFy7C4eXJyNy/8QKjFHEW3NkNCh0Bkd5sLOqkwYU3nyRx0CbNkEoQ==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/credential-provider-imds/3.266.1:
+    resolution: {integrity: sha512-pTJnJtKaR0JWVqyt9XgHiqlK+3GnZfd3cuKGv9IsYxumVzladm7gNKiNFw0A2KsDj9jhrCRRZwEsH9ooDzZ/Ow==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/node-config-provider': 3.47.2
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/url-parser': 3.47.2
+      '@aws-sdk/node-config-provider': 3.266.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/url-parser': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5231,19 +5323,21 @@ packages:
       - aws-crt
     dev: false
 
-  /@aws-sdk/credential-provider-ini/3.48.0:
-    resolution: {integrity: sha512-PSTfzK8V+3WVJOv+wlS4y09KYZx3iYj4Ad8LMGmGE4aqew8eRf6u2WuTmqrWwuOTxDra9PJ1ObcM5vBc+nZcYA==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/credential-provider-ini/3.266.1:
+    resolution: {integrity: sha512-N52GNeHRJufEx+V0mWfwe5cV3ukHong75uRAB0IeapJwj+kKwxxLH1dKOUaGjd/ALx6/hsISoUE/6jm/Qf/DsA==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/credential-provider-env': 3.47.2
-      '@aws-sdk/credential-provider-imds': 3.47.2
-      '@aws-sdk/credential-provider-sso': 3.48.0
-      '@aws-sdk/credential-provider-web-identity': 3.47.2
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/shared-ini-file-loader': 3.47.1
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/util-credentials': 3.47.2
+      '@aws-sdk/credential-provider-env': 3.266.1
+      '@aws-sdk/credential-provider-imds': 3.266.1
+      '@aws-sdk/credential-provider-process': 3.266.1
+      '@aws-sdk/credential-provider-sso': 3.266.1
+      '@aws-sdk/credential-provider-web-identity': 3.266.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/shared-ini-file-loader': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
+    transitivePeerDependencies:
+      - aws-crt
     dev: false
 
   /@aws-sdk/credential-provider-ini/3.58.0:
@@ -5278,21 +5372,22 @@ packages:
       - aws-crt
     dev: false
 
-  /@aws-sdk/credential-provider-node/3.48.0:
-    resolution: {integrity: sha512-7CrbUT7yEZvYSQNXxZWN5KUx355wD+xrYIafoEST28T7nwcIiu7l2zpBY3JPhPIPNXqryVKfNQJvKV1dP3wF4g==}
-    engines: {node: '>=12.0.0'}
+  /@aws-sdk/credential-provider-node/3.266.1:
+    resolution: {integrity: sha512-6/iTi/zugdvuyQDmEakYn01kiFKUArL+rIYwcMf20YguXNml6G4HVWJGbX2JklY6ovnznU5ENw6+ftzBAiw/PA==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/credential-provider-env': 3.47.2
-      '@aws-sdk/credential-provider-imds': 3.47.2
-      '@aws-sdk/credential-provider-ini': 3.48.0
-      '@aws-sdk/credential-provider-process': 3.47.2
-      '@aws-sdk/credential-provider-sso': 3.48.0
-      '@aws-sdk/credential-provider-web-identity': 3.47.2
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/shared-ini-file-loader': 3.47.1
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/util-credentials': 3.47.2
+      '@aws-sdk/credential-provider-env': 3.266.1
+      '@aws-sdk/credential-provider-imds': 3.266.1
+      '@aws-sdk/credential-provider-ini': 3.266.1
+      '@aws-sdk/credential-provider-process': 3.266.1
+      '@aws-sdk/credential-provider-sso': 3.266.1
+      '@aws-sdk/credential-provider-web-identity': 3.266.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/shared-ini-file-loader': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
+    transitivePeerDependencies:
+      - aws-crt
     dev: false
 
   /@aws-sdk/credential-provider-node/3.58.0:
@@ -5321,14 +5416,13 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/credential-provider-process/3.47.2:
-    resolution: {integrity: sha512-LBuABkVt/tdSoHy8hdGVnInZx5QADhK90dEHc41+HTTP3bCSNsSBIErkZnmhAD/3AGz7m/4qkPmhJOqzFisY/g==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/credential-provider-process/3.266.1:
+    resolution: {integrity: sha512-4V/7zVnaZo1IP4Is09dlwd2CkltlUdgbX4NUIb+QxZ/BlY7Ws47xyCjjyJhVVCe+y184M58bG4+HR5dHnrBfSA==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/shared-ini-file-loader': 3.47.1
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/util-credentials': 3.47.2
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/shared-ini-file-loader': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5356,16 +5450,18 @@ packages:
       - aws-crt
     dev: false
 
-  /@aws-sdk/credential-provider-sso/3.48.0:
-    resolution: {integrity: sha512-31Ill3ZW35dueXb09PpOJ4C8oKdRGypbnycAgLYvvqYlO4LOs9FyQAsw+t2+ExvE6DznM0vkeWTQI3y7HUVYCA==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/credential-provider-sso/3.266.1:
+    resolution: {integrity: sha512-d9hcV7XV1Gh0Dkt8kADsSoB/hZPlbuTp/Vzbj0HMO7hlGxFGcTrGN1UoQc11UAp4kKeF3i2ZQlMsch0d/2gK3w==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/client-sso': 3.48.0
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/shared-ini-file-loader': 3.47.1
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/util-credentials': 3.47.2
+      '@aws-sdk/client-sso': 3.266.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/shared-ini-file-loader': 3.266.1
+      '@aws-sdk/token-providers': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
+    transitivePeerDependencies:
+      - aws-crt
     dev: false
 
   /@aws-sdk/credential-provider-sso/3.58.0:
@@ -5388,12 +5484,12 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/credential-provider-web-identity/3.47.2:
-    resolution: {integrity: sha512-biJo8zJwNk8Dwrd/mkTcu8iLuOlGbsG2Uahta4StkOUhZ733xewOZ4WISLXVLocb/PXLM1lZQgkobwugpFOQRA==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/credential-provider-web-identity/3.266.1:
+    resolution: {integrity: sha512-JIktczlqxIc+Gqc/99e7pPzNSgUjYX23fA2dmLt1bHRPH15p8S1Kv73lvqsgLF5EKP1H/UXDu+jVWDklYM6fVA==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5506,13 +5602,13 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/fetch-http-handler/3.47.2:
-    resolution: {integrity: sha512-MZwwKtJwkWPm3Tzh+F3gcts13v1OuZih0slOO4GJpMxq46+lcW4DoW04lNHULJsyduXs4CziH8g65DDh0Yhq6w==}
+  /@aws-sdk/fetch-http-handler/3.266.1:
+    resolution: {integrity: sha512-tyVMLBrJF1weMUqLU81lhuHES5QtFg7RmSysYM8mndePwBl81iQjLF5D7M8CU3aVzXY3TNU3rZBrm5xEK3xK1w==}
     dependencies:
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/querystring-builder': 3.47.2
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/util-base64-browser': 3.47.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/querystring-builder': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/util-base64': 3.208.0
       tslib: 2.4.1
     dev: false
 
@@ -5553,12 +5649,13 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/hash-node/3.47.2:
-    resolution: {integrity: sha512-OpUCNGvchKI1WoOCtCm36gQtECMz2P5mJoXxAHNZQ5qQ69A5Vk/DZs1V24N94M7tl1u7ZpbLsJbWFdu+P4B27g==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/hash-node/3.266.1:
+    resolution: {integrity: sha512-2DbuY/AmtF4ORJVEAdzHfbM1p8w9ThRlu4BGdI7DXpO6/o1kgRBvNEbZc6MZkg7D2bI7TT6bI83u7AAbbMUMng==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/util-buffer-from': 3.47.2
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/util-buffer-from': 3.208.0
+      '@aws-sdk/util-utf8': 3.254.0
       tslib: 2.4.1
     dev: false
 
@@ -5594,10 +5691,10 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/invalid-dependency/3.47.2:
-    resolution: {integrity: sha512-QLIp0Gv9IbSVXru1kS92M4kF9ZgHmVP7Us8dWSu5UC7LJt6Uxhxjb+e+F0h9qY1Z3Prior12I4r5COgVO3dWxA==}
+  /@aws-sdk/invalid-dependency/3.266.1:
+    resolution: {integrity: sha512-rGc2Bv10eEVQW2Zwrd4/I2QBj5MOhl8qr1NA3UCHJa2501Z97/jn2BGZoX+Cc+iE55so66GKmqMYpibqdtDARw==}
     dependencies:
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5611,13 +5708,6 @@ packages:
   /@aws-sdk/is-array-buffer/3.201.0:
     resolution: {integrity: sha512-UPez5qLh3dNgt0DYnPD/q0mVJY84rA17QE26hVNOW3fAji8W2wrwrxdacWOxyXvlxWsVRcKmr+lay1MDqpAMfg==}
     engines: {node: '>=14.0.0'}
-    dependencies:
-      tslib: 2.4.1
-    dev: false
-
-  /@aws-sdk/is-array-buffer/3.47.1:
-    resolution: {integrity: sha512-HQMvT3dP6DCjmn87WkzYxUF9RqkvuXgKfddLEKj/tg/OgDQJv9xIPjEEry8Fd36ncbBqaBmC/z2ETZhpzHQvXA==}
-    engines: {node: '>= 12.0.0'}
     dependencies:
       tslib: 2.4.1
     dev: false
@@ -5678,12 +5768,12 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/middleware-content-length/3.47.2:
-    resolution: {integrity: sha512-rpLtN6BczAfJnH1fpXyUOMdDFN3xrky3QZ4SULVgTLXNMOvN5zDJnjwUh/QNgEaEQhxd6lroVJSgosG3357kWg==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/middleware-content-length/3.266.1:
+    resolution: {integrity: sha512-Clq14Fr9WkiSg59jnIelL2F5D81HAhdE1MCZIAEEjN1ZK6bEM2kECnNT9CKJjDsuPvhdkrVGv9rjUSANWHLETw==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5707,6 +5797,20 @@ packages:
       '@aws-sdk/url-parser': 3.226.0
       '@aws-sdk/util-config-provider': 3.208.0
       '@aws-sdk/util-middleware': 3.226.0
+      tslib: 2.4.1
+    dev: false
+
+  /@aws-sdk/middleware-endpoint/3.266.1:
+    resolution: {integrity: sha512-EVnzd51U/Jhz9x68jFwqHjU4KPsLIXfuS1PSNV598OT04WLQXerBx/fvZh17Y4Dmmu6hf/JUWI9PI5To+oC3mQ==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@aws-sdk/middleware-serde': 3.266.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/signature-v4': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/url-parser': 3.266.1
+      '@aws-sdk/util-config-provider': 3.208.0
+      '@aws-sdk/util-middleware': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5771,12 +5875,12 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/middleware-host-header/3.47.2:
-    resolution: {integrity: sha512-sDIGydvdO1LC7VQntTDMK+YYLRVCJAhrsCT8SxyAX0Jhu7Ek1BfRZzSZDwapL+idbMyyKsB80NpNoTWuKRrrew==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/middleware-host-header/3.266.1:
+    resolution: {integrity: sha512-3FSD8EkxOGV4O2iKgBnAwvj3PG/lABzcqmX6hABnsIusXAlUV5umh39FteipLcjnMXB04cLgmcgcG2o3cSA3tQ==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5813,11 +5917,11 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/middleware-logger/3.47.2:
-    resolution: {integrity: sha512-Oz14cAaYmtzMYw0/ehlVLvMF4gqQS0qaYWGyyR4a3nONiwEDzxNMEQiEg7i8VgsP4usK7lfYZLXgwSmqo7uCzg==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/middleware-logger/3.266.1:
+    resolution: {integrity: sha512-FbD9Hqt994PyDm7OTG8PbIuB6Mv9vYhqOM2RhqC1UGtprDmk084/cEv9Sp+qY33lFPxjZstKneQK6FhAfozIAQ==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5838,6 +5942,15 @@ packages:
       tslib: 2.4.1
     dev: false
 
+  /@aws-sdk/middleware-recursion-detection/3.266.1:
+    resolution: {integrity: sha512-rgRxdgrLOD20zIFrjFW7Bu3s4MXC1KLDbqJY6sMpc5D8mmQlxfaQiSnCQrjgUxbW0Ni+rXiatlW2q2MwCUAPzw==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      tslib: 2.4.1
+    dev: false
+
   /@aws-sdk/middleware-retry/3.235.0:
     resolution: {integrity: sha512-50WHbJGpD3SNp9763MAlHqIhXil++JdQbKejNpHg7HsJne/ao3ub+fDOfx//mMBjpzBV25BGd5UlfL6blrClSg==}
     engines: {node: '>=14.0.0'}
@@ -5851,13 +5964,15 @@ packages:
       uuid: 8.3.2
     dev: false
 
-  /@aws-sdk/middleware-retry/3.47.2:
-    resolution: {integrity: sha512-qgAE/+hVGXQDkqbVo+uFeb+N7mr7kBi0Oc1Fm490fm3uLQnXuyu3suIix//wxNejoLwIgKQGSLrQNgnXtuvhxw==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/middleware-retry/3.266.1:
+    resolution: {integrity: sha512-xBiKAjAP1j8SbKhF28bk1g2iZoiVMI7XV/x5d0g6igsvI4RiqzywTsiLi2VVsYPCY6bwbn0Zgt93Mej/MFfn5w==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/service-error-classification': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/service-error-classification': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/util-middleware': 3.266.1
+      '@aws-sdk/util-retry': 3.266.1
       tslib: 2.4.1
       uuid: 8.3.2
     dev: false
@@ -5912,15 +6027,15 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/middleware-sdk-sts/3.47.2:
-    resolution: {integrity: sha512-KlO4cYb4Bxf/Jg/uxlxRrFvxUR/DmjMIS+JRZNGqK4XyYA+apYZkfM0XUtMiKc491n/euluf9A0AyTxpMgixxg==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/middleware-sdk-sts/3.266.1:
+    resolution: {integrity: sha512-lM9t+S+PjmJ/xhoP9e/sIUS2bZyuEbobHo6a9WPk0UcdiqDWBIp+8MlTRDafKZtlN36gPDk5+qM9tXcI6P5YCA==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/middleware-signing': 3.47.2
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/signature-v4': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/middleware-signing': 3.266.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/signature-v4': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5944,11 +6059,11 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/middleware-serde/3.47.2:
-    resolution: {integrity: sha512-Gjw+fkG4UvvbP5LrGW1FzUq0IJB6QIBFxStE0gbyjkKNYtcb9c0R3dIwH5CSECtelDZScytwmBKaVe8NGi6wJA==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/middleware-serde/3.266.1:
+    resolution: {integrity: sha512-UFJ4BlRG/MUOJq5afHohkDsMDPAkbuXGCkhTz93MGxbACEOJYoEvsaMjpLft88wu4D11GY1Y2PVFkfxJUYWDXA==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -5972,14 +6087,15 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/middleware-signing/3.47.2:
-    resolution: {integrity: sha512-r6/2gf5gwkVdI7EOa1TdYdfzOdCF3jkhjLi98c3nAxZNxZFGwoycIy7Bd6sCfOdcmk8NyVmR0APpsgD9q+a3nw==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/middleware-signing/3.266.1:
+    resolution: {integrity: sha512-PbVwt7xSP3xlT5x4Xdj7+2T1PgCW00bh5QrCJi2wo3dEN9UowU/IVGzGSv4/OJItLZWe4puGb1WtA+LKeWA40w==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/signature-v4': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/signature-v4': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/util-middleware': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6017,9 +6133,9 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/middleware-stack/3.47.2:
-    resolution: {integrity: sha512-9wedI1L92stvg5fs6Y3CbUXYLZIYdI3Mrdqex+ulNRuepgZNORsk+dnb8rTkf9cO3nuWRrnfKBLc/uiTcA1dww==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/middleware-stack/3.266.1:
+    resolution: {integrity: sha512-liqq541u1eCDe+TCDOSrOcH6kAB6Dn1R8pbtJ23hP3fYM5/8W3V0f6VcywALVL9Pam+mkYmodWeDRQK8ieLEOg==}
+    engines: {node: '>=14.0.0'}
     dependencies:
       tslib: 2.4.1
     dev: false
@@ -6040,12 +6156,12 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/middleware-user-agent/3.47.2:
-    resolution: {integrity: sha512-LF5gOi37lJ3tkuDSqZVKHmqYY8oTIUTEdmPVUbBQtPKsx9xfCNbMNVAP+C+7bnbt6StZIZsvtu0M144yNFXPGQ==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/middleware-user-agent/3.266.1:
+    resolution: {integrity: sha512-yoHQSP3OngZnLWeuqMrYkOifMD8FUZxyXoUO9iHPytxns1Gri/4Gn/1raNWMqdrSIlBKPorKzCEu24DX5klf0w==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6068,13 +6184,13 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/node-config-provider/3.47.2:
-    resolution: {integrity: sha512-POdigo6ZXLRVWhmjE21Y1Q1ziPnM/c3rH0wHgzAtdx0Mfn6/9jS77QHMkZzC8MJ7lzgXVFDWM25evVZqdYrh+g==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/node-config-provider/3.266.1:
+    resolution: {integrity: sha512-cDDuj64nGskZNJQdwglIRqTazfZt0f8pooT1ZJrFoydLfMmR9yi6orizQ7C0i1vMkY02HxgwqJiwXuJ73gmaqA==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/shared-ini-file-loader': 3.47.1
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/shared-ini-file-loader': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6099,14 +6215,14 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/node-http-handler/3.47.2:
-    resolution: {integrity: sha512-X2Y+H2DBoeDnrSe5rsVc63uhext230AuG/+hIFHK2/HkyG9DiiHKNCNj2w8N4FLWEX3l8KDif3C7BqYxj9ZkDg==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/node-http-handler/3.266.1:
+    resolution: {integrity: sha512-oa1cDeD+fwGFg8xMfNUZ95xAE0dxiXaTdJwSqOzCVIBz/auahHrcfXey+Oynw1zUjv8ijOH9z/SXYrqfwlZosw==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/abort-controller': 3.47.2
-      '@aws-sdk/protocol-http': 3.47.2
-      '@aws-sdk/querystring-builder': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/abort-controller': 3.266.1
+      '@aws-sdk/protocol-http': 3.266.1
+      '@aws-sdk/querystring-builder': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6129,11 +6245,11 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/property-provider/3.47.2:
-    resolution: {integrity: sha512-0NiVJ6+JtRC8XOvNb1ofHtsjINrinC1/fDKvl/bDtJDhehC5EcIeiDQmHFUhGsgTyD+VpmuHj7E4AlV6BchNPQ==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/property-provider/3.266.1:
+    resolution: {integrity: sha512-1ZRWqc4sNFGDRZ0Tl4WaukU9jR4ghB84QEQOqc48cJIoDiwOAP9UBJTNBJXCVllmPWGNgx4/lfWJoaFcvwsrzw==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6153,11 +6269,11 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/protocol-http/3.47.2:
-    resolution: {integrity: sha512-XAQFbSigJD0fk61nSR6y6TMv3+o1IjymltWuDmGEtoI25pisC2M3A+3/xO9YHag/41CSgt9nQ+lh1iC4UlKKJw==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/protocol-http/3.266.1:
+    resolution: {integrity: sha512-8Z1Yfkf59of1R9qRSPmDKIHDo0n5YNCh1FrRLmCRqjjiZ4Ed7FJV/W6YYnJ6VbPcVv1WK6FvwzrGPM2gg4P48Q==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6178,12 +6294,12 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/querystring-builder/3.47.2:
-    resolution: {integrity: sha512-rsckQ262jFSDVES6rOuTnSDM9XEbM57zxeBj5BtD6eCnyUD0G4FZa1xZRum4khoxfff6/eJ+i2uncKrEk1v+EQ==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/querystring-builder/3.266.1:
+    resolution: {integrity: sha512-D1LoDv3A+c6YIYq6F2T5m8V0C14vQAarSoT6romVIIYCDuMK4R5BwB1NLFRco1dczyAYmqScxdV2C26+xjXJfw==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/util-uri-escape': 3.47.1
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/util-uri-escape': 3.201.0
       tslib: 2.4.1
     dev: false
 
@@ -6204,11 +6320,11 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/querystring-parser/3.47.2:
-    resolution: {integrity: sha512-28BirdFhZ+Y2pUMuI9r1ATgcQyt4q3cSqqpLSy7ADGb7xHde6oA/ZfRdX/s7OVIHoAfhrjAeI+TbYjwso9F/HA==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/querystring-parser/3.266.1:
+    resolution: {integrity: sha512-Ck8Ahluj+/eK4FcX8IlbO7DA1MNWdnh1rKjc1qx/ZWh71G/FdZ8Sse33N+Ed/z9v7H8W695dprRT6CuRlqyAbw==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6258,9 +6374,9 @@ packages:
     engines: {node: '>=14.0.0'}
     dev: false
 
-  /@aws-sdk/service-error-classification/3.47.2:
-    resolution: {integrity: sha512-oJCJbAPYhTNguJUhD8hlD7ibWIDpkvGrhkcq89gxBcXHPl/2/kjsii0gr302IH452IJlumpVe5wOXoZeqZYjaw==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/service-error-classification/3.266.1:
+    resolution: {integrity: sha512-c2EvUvn9XLaDjKozCcYlO4cbtbJzBgx6EuhW1eLsMGLY3EobVRo1hGT0PtRmWQNnoW0BXv6oi/8NLOV6x37fxA==}
+    engines: {node: '>=14.0.0'}
     dev: false
 
   /@aws-sdk/service-error-classification/3.55.0:
@@ -6276,10 +6392,11 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/shared-ini-file-loader/3.47.1:
-    resolution: {integrity: sha512-f0eVOMYkT4H0gOf1B9lw65/xeTa7rT9hocVB7DbjWk8Ifv46Uvlb4ZyYOLZIBDQyFNFrD/HHvja3BkzfV0MEOA==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/shared-ini-file-loader/3.266.1:
+    resolution: {integrity: sha512-yV8GY1Cgbc6pl0SRRQtx3PPcZpqYvKf/h1pz0FgkMBPHwOhp7zJYUkYmu3yvXulfORNsM5ro7wnKa0kxb5ljmg==}
+    engines: {node: '>=14.0.0'}
     dependencies:
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6318,14 +6435,16 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/signature-v4/3.47.2:
-    resolution: {integrity: sha512-zJIhUY8LLiQldfM9wpgVw525dHbILJovyZm3xmm6Tq/t258cawNaeOvOp9w0I3ycA3gs+nKgMXdeMjLH8QLbWg==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/signature-v4/3.266.1:
+    resolution: {integrity: sha512-kiHHA3voQKz4QYLKbR/3hKkY2n62MuGewYctvtQsh1069U/OI7FVceIE5hZnrlC5XX4jiNoF1lKdyRhXmK5GMQ==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/is-array-buffer': 3.47.1
-      '@aws-sdk/types': 3.47.1
-      '@aws-sdk/util-hex-encoding': 3.47.1
-      '@aws-sdk/util-uri-escape': 3.47.1
+      '@aws-sdk/is-array-buffer': 3.201.0
+      '@aws-sdk/types': 3.266.1
+      '@aws-sdk/util-hex-encoding': 3.201.0
+      '@aws-sdk/util-middleware': 3.266.1
+      '@aws-sdk/util-uri-escape': 3.201.0
+      '@aws-sdk/util-utf8': 3.254.0
       tslib: 2.4.1
     dev: false
 
@@ -6350,12 +6469,12 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/smithy-client/3.47.2:
-    resolution: {integrity: sha512-vCzZodWyKmLzC+N/B1GzDjKD8I5b/ILTwPHaaH7yJdncISq/3jyTMJVW7mZHbDX61a18rL/bADnIxEd524Y2hQ==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/smithy-client/3.266.1:
+    resolution: {integrity: sha512-fg/+JzHeYPS0poVckSiaE/h1eWf5+u2Cs8/zh/4bAvVPqSA3Gg/yBrtvP+HxKLoSo+ObuPb9aXXkeCKPke6ktA==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/middleware-stack': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/middleware-stack': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6381,6 +6500,19 @@ packages:
       - aws-crt
     dev: false
 
+  /@aws-sdk/token-providers/3.266.1:
+    resolution: {integrity: sha512-N+qiLQvPvel9dFdEoffRG4Mcp2p82OMyUvS12P5iYWqPCDuPzU72rYT2PmVFKINmflqEySjsKo8vIaWx7Kl4pQ==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@aws-sdk/client-sso-oidc': 3.266.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/shared-ini-file-loader': 3.266.1
+      '@aws-sdk/types': 3.266.1
+      tslib: 2.4.1
+    transitivePeerDependencies:
+      - aws-crt
+    dev: false
+
   /@aws-sdk/types/3.226.0:
     resolution: {integrity: sha512-MmmNHrWeO4man7wpOwrAhXlevqtOV9ZLcH4RhnG5LmRce0RFOApx24HoKENfFCcOyCm5LQBlsXCqi0dZWDWU0A==}
     engines: {node: '>=14.0.0'}
@@ -6388,9 +6520,11 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/types/3.47.1:
-    resolution: {integrity: sha512-c+lxJJLD5Bq8HkrgaIWQfK8oGH53CYpRRJizyQ5qfRo9aXp/qshUnIVcgnA8t0k7jfzcIfa0Q7jSSBw3EerEbg==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/types/3.266.1:
+    resolution: {integrity: sha512-OVg3CjHKT3/Ws33jx3TUYYkbFOv/CLb9m3P4gZQDvgKPsOagp96LOsG8ZWdcVZCvSorAUqSb5kuc1utsjJxDTw==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      tslib: 2.4.1
     dev: false
 
   /@aws-sdk/types/3.55.0:
@@ -6406,11 +6540,11 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/url-parser/3.47.2:
-    resolution: {integrity: sha512-xapm+8toLY1FJmdGWl/YWCGSbbzPitiKmcg9+NP1DIyZyHjzeG5vBZ2SYejYtGOf+Qn1VKyNN2+Qs049FOsh6w==}
+  /@aws-sdk/url-parser/3.266.1:
+    resolution: {integrity: sha512-7IBZ8TjTWafug26CnNpz6cdrLU0TZ0G7N9LNfqjM/+69KI/Ragvv2Lsm4jhSv2uMx5OEzwlVYIEYaKMnAUiRLQ==}
     dependencies:
-      '@aws-sdk/querystring-parser': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/querystring-parser': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6436,23 +6570,9 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-base64-browser/3.47.1:
-    resolution: {integrity: sha512-asStae2d1xvgs3czWvvVb4JWHfY2iV8yximL4MwF+Lb8XG/b8LH3tG1E5axAFVMBcljdvRB941N7w3rug7V9ig==}
-    dependencies:
-      tslib: 2.4.1
-    dev: false
-
   /@aws-sdk/util-base64-browser/3.58.0:
     resolution: {integrity: sha512-0ebsXIZNpu/fup9OgsFPnRKfCFbuuI9PPRzvP6twzLxUB0c/aix6Co7LGHFKcRKHZdaykoJMXArf8eHj2Nzv1Q==}
     dependencies:
-      tslib: 2.4.1
-    dev: false
-
-  /@aws-sdk/util-base64-node/3.47.2:
-    resolution: {integrity: sha512-0Oml66+9/uERV1dosecA/1tEd0zdiwI3kEobCF5w2f4gJDzUdaEoztcRwtbLcFv6yVT7XoW4evMQbtlcruypcQ==}
-    engines: {node: '>= 12.0.0'}
-    dependencies:
-      '@aws-sdk/util-buffer-from': 3.47.2
       tslib: 2.4.1
     dev: false
 
@@ -6478,12 +6598,6 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-body-length-browser/3.47.1:
-    resolution: {integrity: sha512-qR307MATPC+4JtN7W9sSkchfdB3O4mulLKRpk7rF6Ns6vVwhaPfJstSGe9Qa68zYZXubF9h5WnoWuJz4N0Vqdw==}
-    dependencies:
-      tslib: 2.4.1
-    dev: false
-
   /@aws-sdk/util-body-length-browser/3.55.0:
     resolution: {integrity: sha512-Ei2OCzXQw5N6ZkTMZbamUzc1z+z1R1Ja5tMEagz5BxuX4vWdBObT+uGlSzL8yvTbjoPjnxWA2aXyEqaUP3JS8Q==}
     dependencies:
@@ -6493,13 +6607,6 @@ packages:
   /@aws-sdk/util-body-length-node/3.208.0:
     resolution: {integrity: sha512-3zj50e5g7t/MQf53SsuuSf0hEELzMtD8RX8C76f12OSRo2Bca4FLLYHe0TZbxcfQHom8/hOaeZEyTyMogMglqg==}
     engines: {node: '>=14.0.0'}
-    dependencies:
-      tslib: 2.4.1
-    dev: false
-
-  /@aws-sdk/util-body-length-node/3.47.1:
-    resolution: {integrity: sha512-U2K7+gi3bAQBb3WB1/trvA+4rPC2SKH9w/sRtqBwtxHNOjXjiCiF3oEYnbir7cdSfhzMH4HBYKbfkHZwTAHMfw==}
-    engines: {node: '>= 12.0.0'}
     dependencies:
       tslib: 2.4.1
     dev: false
@@ -6519,14 +6626,6 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-buffer-from/3.47.2:
-    resolution: {integrity: sha512-oLytLGiIeJEk7FcT7bdeQNv7+vvVVPuL5hyXlCjHZwoWuDxepjoDhTaIC9Isq1UyPKfSZaVpk/1nqREe4aYDHw==}
-    engines: {node: '>= 12.0.0'}
-    dependencies:
-      '@aws-sdk/is-array-buffer': 3.47.1
-      tslib: 2.4.1
-    dev: false
-
   /@aws-sdk/util-buffer-from/3.55.0:
     resolution: {integrity: sha512-uVzKG1UgvnV7XX2FPTylBujYMKBPBaq/qFBxfl0LVNfrty7YjpfieQxAe6yRLD+T0Kir/WDQwGvYC+tOYG3IGA==}
     engines: {node: '>= 12.0.0'}
@@ -6538,13 +6637,6 @@ packages:
   /@aws-sdk/util-config-provider/3.208.0:
     resolution: {integrity: sha512-DSRqwrERUsT34ug+anlMBIFooBEGwM8GejC7q00Y/9IPrQy50KnG5PW2NiTjuLKNi7pdEOlwTSEocJE15eDZIg==}
     engines: {node: '>=14.0.0'}
-    dependencies:
-      tslib: 2.4.1
-    dev: false
-
-  /@aws-sdk/util-config-provider/3.47.1:
-    resolution: {integrity: sha512-kBs+YghZaOqChxLZDTR8dw5RQxJ/qF064EjRpC+TdCegLCO2UtZ97RXBvc5mdt94OxXGjGUjDiD/eAlpjjFNXw==}
-    engines: {node: '>= 12.0.0'}
     dependencies:
       tslib: 2.4.1
     dev: false
@@ -6576,14 +6668,6 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-credentials/3.47.2:
-    resolution: {integrity: sha512-C0L8pfZkJyWfuvLVRcM2Ff11t2mkM4lzjNBnQKdL80wuASZWCnAi50oUKBgwbHZdOsRKGV7C4zqAuTLTRaFpCQ==}
-    engines: {node: '>= 12.0.0'}
-    dependencies:
-      '@aws-sdk/shared-ini-file-loader': 3.47.1
-      tslib: 2.4.1
-    dev: false
-
   /@aws-sdk/util-defaults-mode-browser/3.234.0:
     resolution: {integrity: sha512-IHMKXjTbOD8XMz5+2oCOsVP94BYb9YyjXdns0aAXr2NAo7k2+RCzXQ2DebJXppGda1F6opFutoKwyVSN0cmbMw==}
     engines: {node: '>= 10.0.0'}
@@ -6594,12 +6678,12 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-defaults-mode-browser/3.47.2:
-    resolution: {integrity: sha512-ojAF5k/VFbPvJoj6/G6ekVQhbFvabUBvRhRaoQjkmj8LVEahtzcNcOxhu3FmH17mXR2oxWsGwvq6VAw6V3jLBg==}
+  /@aws-sdk/util-defaults-mode-browser/3.266.1:
+    resolution: {integrity: sha512-4arGHXzTwLIPlNb3a2v7i2fpKFBLQfFygUDT1E6VCAbNpvPVJk+/w0foFs0Zc8BQsPQsC+ZKe20pFw0hnHZJGw==}
     engines: {node: '>= 10.0.0'}
     dependencies:
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/types': 3.266.1
       bowser: 2.11.0
       tslib: 2.4.1
     dev: false
@@ -6626,15 +6710,15 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-defaults-mode-node/3.47.2:
-    resolution: {integrity: sha512-O35bXeahlepgPxg72XDN+5cXlbs+jZec5AH+7YYI+ldEVu6WxF0MxeQtMG4Fqpb19bpPIPz0SodHM1D1I53S5w==}
+  /@aws-sdk/util-defaults-mode-node/3.266.1:
+    resolution: {integrity: sha512-EOo2pPtvJUd9vkwRAptBIeF4P5zHeHcvCcCw6ZuP7bLvaUNHxepKAy4iesaB4aqqRgVn6AdV7w489HnTxa8Kpw==}
     engines: {node: '>= 10.0.0'}
     dependencies:
-      '@aws-sdk/config-resolver': 3.47.2
-      '@aws-sdk/credential-provider-imds': 3.47.2
-      '@aws-sdk/node-config-provider': 3.47.2
-      '@aws-sdk/property-provider': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/config-resolver': 3.266.1
+      '@aws-sdk/credential-provider-imds': 3.266.1
+      '@aws-sdk/node-config-provider': 3.266.1
+      '@aws-sdk/property-provider': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6655,6 +6739,14 @@ packages:
     engines: {node: '>=14.0.0'}
     dependencies:
       '@aws-sdk/types': 3.226.0
+      tslib: 2.4.1
+    dev: false
+
+  /@aws-sdk/util-endpoints/3.266.1:
+    resolution: {integrity: sha512-w2VjoAIvfw2gau+cVQ5vahfy5CqQJrNOnSXbH6kjpd8RVQ0wOWBDVKb8tUwF4ROD1zovx0jT9d7bsYdMyo3HJw==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6683,13 +6775,6 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-hex-encoding/3.47.1:
-    resolution: {integrity: sha512-9vBhp1E74s6nImK5xk7BkopQ10w6Vk8UrIinu71U7V/0PdjCEb4Jmnn++MLyim2jTT0QEGmJ6v0VjPZi9ETWaA==}
-    engines: {node: '>= 12.0.0'}
-    dependencies:
-      tslib: 2.4.1
-    dev: false
-
   /@aws-sdk/util-hex-encoding/3.58.0:
     resolution: {integrity: sha512-Rl+jXUzk/FJkOLYfUVYPhKa2aUmTpeobRP31l8IatQltSzDgLyRHO35f6UEs7Ztn5s1jbu/POatLAZ2WjbgVyg==}
     engines: {node: '>= 12.0.0'}
@@ -6711,6 +6796,13 @@ packages:
       tslib: 2.4.1
     dev: false
 
+  /@aws-sdk/util-middleware/3.266.1:
+    resolution: {integrity: sha512-iZq+lq80byWZMsdII4OS7CdhgGeuBXBPd//iFWq4YmGts5W1QI1FLIFcsOuUnZtQMiaAuvLXtEO8ZrfaKTFKgw==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      tslib: 2.4.1
+    dev: false
+
   /@aws-sdk/util-middleware/3.55.0:
     resolution: {integrity: sha512-82fW2XV+rUalv8lkd4VlhpPp6xnXO5n9sckMp1N+TrQ+p8eqxqT0+o8n1/6s9Qsnkw64Y3m6+EfCdc8/uFOY2g==}
     engines: {node: '>= 12.0.0'}
@@ -6723,6 +6815,14 @@ packages:
     engines: {node: '>= 14.0.0'}
     dependencies:
       '@aws-sdk/service-error-classification': 3.229.0
+      tslib: 2.4.1
+    dev: false
+
+  /@aws-sdk/util-retry/3.266.1:
+    resolution: {integrity: sha512-mQZshXR31iM9eV+x50pdmIFuDAjd8wDrxJ/kDnwR0H9NaeIQ3SKcNFTs0PPqtu/JUX0vb4wvm2KjIkUyO2iijg==}
+    engines: {node: '>= 14.0.0'}
+    dependencies:
+      '@aws-sdk/service-error-classification': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6769,13 +6869,6 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-uri-escape/3.47.1:
-    resolution: {integrity: sha512-CGqm+bT07OCJSgDo48/4Fegh9tNPR3kcOMfNWZ/J6lrt+nfAnOdXx5zZB63PjKCt5zJ7LM0thOQgAeOf2WdJzQ==}
-    engines: {node: '>= 12.0.0'}
-    dependencies:
-      tslib: 2.4.1
-    dev: false
-
   /@aws-sdk/util-uri-escape/3.55.0:
     resolution: {integrity: sha512-mmdDLUpFCN2nkfwlLdOM54lTD528GiGSPN1qb8XtGLgZsJUmg3uJSFIN2lPeSbEwJB3NFjVas/rnQC48i7mV8w==}
     engines: {node: '>= 12.0.0'}
@@ -6791,10 +6884,10 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-user-agent-browser/3.47.2:
-    resolution: {integrity: sha512-dstakqLW8hXRMzR/s3uLpfYbMs/qDowG/Fp123cAuln4rUODG29VNFLkMAYRnG6RQ9hf2OtXsCfFGNSm+bnJMg==}
+  /@aws-sdk/util-user-agent-browser/3.266.1:
+    resolution: {integrity: sha512-zT5Sc0rNLOhBC+RhFF0FRE2y+CIf50rJZLkxRXoVRXJeFVSKPyhk3AKqe2Q6FE+yQsTV2FlwSDI98SxgaDORkQ==}
     dependencies:
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/types': 3.266.1
       bowser: 2.11.0
       tslib: 2.4.1
     dev: false
@@ -6821,12 +6914,17 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-user-agent-node/3.47.2:
-    resolution: {integrity: sha512-9wYkGvTrOFWb+9QjziQma+l9M0u1tmHiIdL9r4Btsc9WVMsy1Y9HUUeXacM3dLLIzCpQ5dDbjIlAZWA8Rm3ZOQ==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/util-user-agent-node/3.266.1:
+    resolution: {integrity: sha512-o8uYR38GxaKj95acC0tIxM2K0vANVMpEpgpWcW+QTvVc4Vm4im0SBD7BvgXbQV2VW8X28ZNddVbCK7pHHEJrtg==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      aws-crt: '>=1.0.0'
+    peerDependenciesMeta:
+      aws-crt:
+        optional: true
     dependencies:
-      '@aws-sdk/node-config-provider': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/node-config-provider': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
@@ -6845,12 +6943,6 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-utf8-browser/3.47.1:
-    resolution: {integrity: sha512-PzHEdiBhfnZbHvZ+dIlIPodDbpgrpKDYslHe9A+tH8ZfuAxxmZEqnukp7QEkFr6mBcmq3H2thcPdNT45/5pA7Q==}
-    dependencies:
-      tslib: 2.4.1
-    dev: false
-
   /@aws-sdk/util-utf8-browser/3.55.0:
     resolution: {integrity: sha512-ljzqJcyjfJpEVSIAxwtIS8xMRUly84BdjlBXyp6cu4G8TUufgjNS31LWdhyGhgmW5vYBNr+LTz0Kwf6J+ou7Ug==}
     dependencies:
@@ -6865,19 +6957,19 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-utf8-node/3.47.2:
-    resolution: {integrity: sha512-itgWlytqhbD/pRiGxX7XY7RF8k15ScV816FUlZtOKeRpAphliFT07TGWKmiZcFxEbHpi9r8A5H1FOoPmyU635Q==}
-    engines: {node: '>= 12.0.0'}
-    dependencies:
-      '@aws-sdk/util-buffer-from': 3.47.2
-      tslib: 2.4.1
-    dev: false
-
   /@aws-sdk/util-utf8-node/3.55.0:
     resolution: {integrity: sha512-FsFm7GFaC7j0tlPEm/ri8bU2QCwFW5WKjxUg8lm1oWaxplCpKGUsmcfPJ4sw58GIoyoGu4QXBK60oCWosZYYdQ==}
     engines: {node: '>= 12.0.0'}
     dependencies:
       '@aws-sdk/util-buffer-from': 3.55.0
+      tslib: 2.4.1
+    dev: false
+
+  /@aws-sdk/util-utf8/3.254.0:
+    resolution: {integrity: sha512-14Kso/eIt5/qfIBmhEL9L1IfyUqswjSTqO2mY7KOzUZ9SZbwn3rpxmtkhmATkRjD7XIlLKaxBkI7tU9Zjzj8Kw==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@aws-sdk/util-buffer-from': 3.208.0
       tslib: 2.4.1
     dev: false
 
@@ -6890,12 +6982,12 @@ packages:
       tslib: 2.4.1
     dev: false
 
-  /@aws-sdk/util-waiter/3.47.2:
-    resolution: {integrity: sha512-3zzOEDPRgHJ3o17Ri0vVmCKvqh9tA2lP9WbpXTjOgEAfdI/hsP2XhqJWVrlyN+wQ6FwPbuX3Jsb7lsp1OZP2bg==}
-    engines: {node: '>= 12.0.0'}
+  /@aws-sdk/util-waiter/3.266.1:
+    resolution: {integrity: sha512-g3uzVouAs6LfYU7vZEy4BIEIiCXSAjZnGV4RjTagfxZRpNtAriFn29Zys4nA/cBHxUkOS3XTzbt5eTBwEdK/FA==}
+    engines: {node: '>=14.0.0'}
     dependencies:
-      '@aws-sdk/abort-controller': 3.47.2
-      '@aws-sdk/types': 3.47.1
+      '@aws-sdk/abort-controller': 3.266.1
+      '@aws-sdk/types': 3.266.1
       tslib: 2.4.1
     dev: false
 
