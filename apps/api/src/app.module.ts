@@ -31,6 +31,7 @@ import { MessagesModule } from './app/messages/messages.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
 import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
+import { WinstonModule } from 'nest-winston';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
@@ -91,5 +92,9 @@ if (process.env.NODE_ENV === 'test') {
 export class AppModule {
   constructor(private queueService: QueueService) {
     Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
+
+    setInterval(() => {
+      Logger.log(`BOOTSTRAPPED NEST APPLICATION` + new Date());
+    }, 1000);
   }
 }
