@@ -10,7 +10,7 @@ import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
 import { useLocalThemePreference } from '../../../hooks/useLocalThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
-import { INTERCOM_APP_ID, LOGROCKET_ID } from '../../../config';
+import { CONTEXT_PATH, INTERCOM_APP_ID, LOGROCKET_ID } from '../../../config';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
 import LogRocket from 'logrocket';
@@ -78,9 +78,9 @@ export function HeaderNav({}: Props) {
   const themeTitle = () => {
     let title = 'Match System Appearance';
     if (themeStatus === 'dark') {
-      title = `Dark Theme`;
+      title = 'Dark Theme';
     } else if (themeStatus === 'light') {
-      title = `Light Theme`;
+      title = 'Light Theme';
     }
 
     return title;
@@ -127,7 +127,7 @@ export function HeaderNav({}: Props) {
           })}
           radius="xl"
           size={45}
-          src={currentUser?.profilePicture || '/static/images/avatar.png'}
+          src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}
         />
         <div style={{ flex: 1 }}>
           <Text data-test-id="header-dropdown-username" rows={1}>
@@ -168,7 +168,7 @@ export function HeaderNav({}: Props) {
       >
         <Link to="/">
           <img
-            src={dark ? '/static/images/logo-light.png' : '/static/images/logo.png'}
+            src={dark ? CONTEXT_PATH + '/static/images/logo-light.png' : CONTEXT_PATH + '/static/images/logo.png'}
             alt="logo"
             style={{ maxWidth: 150, maxHeight: 25 }}
           />
@@ -188,7 +188,7 @@ export function HeaderNav({}: Props) {
                   size={35}
                   radius="xl"
                   data-test-id="header-profile-avatar"
-                  src={currentUser?.profilePicture || '/static/images/avatar.png'}
+                  src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}
                 />
               </ActionIcon>
             }
