@@ -59,6 +59,7 @@ export function LoginForm({ email, token }: Props) {
     try {
       const response = await mutateAsync(itemData);
       setToken((response as any).token);
+
       if (isFromVercel) return;
       if (!token) navigate('/templates');
     } catch (e: any) {

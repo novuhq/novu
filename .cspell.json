@@ -389,7 +389,8 @@
     "codesee",
     "ehlo",
     "logrocket",
-    "backoff"
+    "backoff",
+    "isequal"
   ],
   "flagWords": [],
   "patterns": [
