@@ -10,6 +10,14 @@ export function getOptions(this: any, isTriggerSent: boolean, daysCount: number)
       display: false,
     },
 
+    onHover: (event, el) => {
+      if (el.length > 0) {
+        event.native.target.style.cursor = 'pointer';
+      } else {
+        event.native.target.style.cursor = 'default';
+      }
+    },
+
     scales: getScalesConfiguration.call(this, daysCount),
 
     plugins: {
@@ -171,7 +179,7 @@ function getBodyText(body: string[]): string | string[] {
 }
 
 function buildDisplayTitle(title) {
-  const dayMonth = title.split(',')[1].split('/');
+  const dayMonth = title.split(' ')[1].split('/');
   const dateString = `${normalizeDateNumber(dayMonth[1])}-${normalizeDateNumber(dayMonth[0])}`;
   const data = parse(dateString, 'MM-dd', new Date());
 
