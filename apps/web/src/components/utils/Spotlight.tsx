@@ -66,6 +66,13 @@ export const SpotLight = ({ children }) => {
           window?.open('https://discord.com/invite/novu', '_blank')?.focus();
         },
       },
+      {
+        id: 'navigate-share-feedback',
+        title: 'Share Feedback',
+        onTrigger: () => {
+          window?.open('https://github.com/novuhq/novu/issues/new/choose', '_blank')?.focus();
+        },
+      },
     ]);
   }, []);
 
