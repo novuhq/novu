@@ -26,14 +26,7 @@ export class SetDefaultLayoutUseCase {
     );
 
     if (!existingDefaultLayoutId) {
-      await this.createDefaultChange(
-        CreateDefaultLayoutChangeCommand.create({
-          environmentId: command.environmentId,
-          layoutId: command.layoutId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-        })
-      );
+      await this.createDefaultChange(command);
 
       return;
     }
@@ -51,15 +44,10 @@ export class SetDefaultLayoutUseCase {
       await this.createLayoutChangeForPreviousDefault(command, existingDefaultLayoutId, previousDefaultLayoutChangeId);
 
       await this.setIsDefaultForLayout(layout._id as string, command.environmentId, command.organizationId, true);
-      await this.createDefaultChange(
-        CreateDefaultLayoutChangeCommand.create({
-          environmentId: command.environmentId,
-          layoutId: command.layoutId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-          parentChangeId: existingParentChangeId || previousDefaultLayoutChangeId,
-        })
-      );
+      await this.createDefaultChange({
+        ...command,
+        parentChangeId: existingParentChangeId || previousDefaultLayoutChangeId,
+      });
     } catch (error) {
       Logger.error(error);
       // TODO: Rollback through transactions
@@ -71,15 +59,7 @@ export class SetDefaultLayoutUseCase {
     layoutId: LayoutId,
     changeId: string
   ) {
-    const createDefaultChange = CreateDefaultLayoutChangeCommand.create({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      userId: command.userId,
-      layoutId,
-      changeId,
-    });
-
-    await this.createDefaultChange(createDefaultChange);
+    await this.createDefaultChange({ ...command, layoutId, changeId });
   }
 
   private async findExistingDefaultLayoutId(
