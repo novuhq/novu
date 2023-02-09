@@ -69,21 +69,6 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
-    const transactionId = body.transactionId || uuidv4();
-
-    const { _id: userId, environmentId, organizationId } = user;
-
-    const mappedActor = this.mapActor(body.actor);
-    const mapTriggerRecipientsCommand = MapTriggerRecipientsCommand.create({
-      environmentId,
-      organizationId,
-      recipients: body.to,
-      transactionId,
-      userId,
-      actor: mappedActor,
-    });
-    const mappedTo = await this.mapTriggerRecipients.execute(mapTriggerRecipientsCommand);
-
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
         userId: user._id,
