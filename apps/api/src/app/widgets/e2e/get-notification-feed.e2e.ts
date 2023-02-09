@@ -122,6 +122,17 @@ describe('GET /widget/notifications/feed', function () {
     expect(seenUnseenFeed.data.length).to.equal(2);
   });
 
+  it('should include subscriber object', async function () {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+
+    await session.awaitRunningJobs(template._id);
+
+    const feed = await getSubscriberFeed();
+
+    expect(feed.data[0]).to.be.an('object').that.has.any.keys('subscriber');
+  });
+
   async function getSubscriberFeed(query = {}) {
     const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/feed`, {
       params: {
