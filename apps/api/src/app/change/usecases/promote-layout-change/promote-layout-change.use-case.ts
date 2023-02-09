@@ -8,10 +8,15 @@ export class PromoteLayoutChange {
   constructor(private layoutRepository: LayoutRepository) {}
 
   async execute(command: PromoteTypeChangeCommand) {
-    const item = await this.layoutRepository.findOne({
+    let item: LayoutEntity | undefined = await this.layoutRepository.findOne({
       _environmentId: command.environmentId,
       _parentId: command.item._id,
     });
+
+    // For the scenario where the layout is deleted and an active default layout change was pending
+    if (!item) {
+      item = await this.layoutRepository.findDeletedByParentId(command.item._id, command.environmentId);
+    }
 
     const newItem = command.item as LayoutEntity;
 
