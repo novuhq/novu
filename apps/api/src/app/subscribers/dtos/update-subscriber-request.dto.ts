@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsLocale, IsOptional, IsString } from 'class-validator';
+import { SubscriberCustomData } from '@novu/shared';
 
 export class UpdateSubscriberRequestDto {
   @ApiProperty()
@@ -34,5 +35,5 @@ export class UpdateSubscriberRequestDto {
 
   @ApiProperty()
   @IsOptional()
-  data?: { [key: string]: string };
+  data?: SubscriberCustomData;
 }
