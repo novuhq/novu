@@ -36,6 +36,7 @@ import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelPr
 import { useBlueprint } from './hooks/useBlueprint';
 import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
+
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import packageJson from '../package.json';
@@ -77,30 +78,32 @@ if (SENTRY_DSN) {
      * We recommend adjusting this value in production
      */
     tracesSampleRate: 1.0,
-    beforeSend(event: Sentry.Event) {
-      const logRocketSession = LogRocket.sessionURL;
-
-      if (logRocketSession !== null || (event as string) !== '' || event !== undefined) {
-        /*
-         * Must ignore the next line as this variable could be null but
-         * can not be null because of the check in the if statement above.
-         */
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        event.extra.LogRocket = logRocketSession;
-
-        return event;
-      } else {
-        return event;
-      } //else
-    },
+    // beforeSend(event: Sentry.Event) {
+    //   const logRocketSession = LogRocket.sessionURL;
+    //
+    //   if (logRocketSession !== null || (event as string) !== '' || event !== undefined) {
+    //     /*
+    //      * Must ignore the next line as this variable could be null but
+    //      * can not be null because of the check in the if statement above.
+    //      */
+    //     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //     // @ts-ignore
+    //     event.extra.LogRocket = logRocketSession;
+    //
+    //     return event;
+    //   } else {
+    //     return event;
+    //   } //else
+    // },
   });
 
-  LogRocket.getSessionURL((sessionURL) => {
-    Sentry.configureScope((scope) => {
-      scope.setExtra('sessionURL', sessionURL);
-    });
-  });
+  /*
+   * LogRocket.getSessionURL((sessionURL) => {
+   *   Sentry.configureScope((scope) => {
+   *     scope.setExtra('sessionURL', sessionURL);
+   *   });
+   * });
+   */
 }
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {

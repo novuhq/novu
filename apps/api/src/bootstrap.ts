@@ -20,7 +20,8 @@ import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
 import * as winston from 'winston';
-import { WinstonModule } from 'nest-winston';
+import { WinstonModule, WinstonLogger } from 'nest-winston';
+import { format } from 'logform';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 
@@ -45,13 +46,27 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
   } else {
-    const instance = winston.createLogger({
-      // options of Winston
-    });
+    console.log('env is: ' + process.env.NODE_ENV + '.');
+    console.log('log level: ' + process.env.LOGGING_LEVEL + '.');
+
+    const logLevel = process.env.LOGGING_LEVEL === '' ? 'info' : process.env.LOGGING_LEVEL;
+    console.log(logLevel);
+
+    const instance = new WinstonLogger(
+      winston.createLogger({
+        level: logLevel,
+        transports: process.env.NODE_ENV === 'local' ? [new winston.transports.Console()] : [],
+        format: format.combine(
+          format.colorize(),
+          format.timestamp(),
+          format.label({ label: 'novu-api' }),
+          format.json()
+        ),
+      })
+    );
+
     app = await NestFactory.create(AppModule, {
-      logger: WinstonModule.createLogger({
-        instance,
-      }),
+      logger: instance,
     });
   }
 

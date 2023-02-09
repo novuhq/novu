@@ -1,4 +1,4 @@
-import { DynamicModule, HttpException, Module, Logger, Provider } from '@nestjs/common';
+import { DynamicModule, HttpException, Module, Logger, Provider, Inject, LoggerService } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -32,6 +32,9 @@ import { PartnerIntegrationsModule } from './app/partner-integrations/partner-in
 import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { WinstonModule } from 'nest-winston';
+import winston from 'winston';
+
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
@@ -90,11 +93,18 @@ if (process.env.NODE_ENV === 'test') {
   providers,
 })
 export class AppModule {
+  private num = 0;
+
   constructor(private queueService: QueueService) {
     Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
 
     setInterval(() => {
-      Logger.log(`BOOTSTRAPPED NEST APPLICATION` + new Date());
+      Logger.debug('debug');
+      Logger.verbose('verbose');
+      Logger.warn('warn');
+      Logger.log(`BOOTSTRAPPED NEST APPLICATION (black-cat-brown-bird)` + new Date() + ' Num: ' + this.num);
+      Logger.error('error');
+      this.num = this.num + 1;
     }, 1000);
   }
 }

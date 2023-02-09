@@ -241,6 +241,7 @@ importers:
       ioredis: ^5.2.4
       jsonwebtoken: 9.0.0
       lodash: ^4.17.15
+      logform: ^2.5.1
       mocha: ^8.1.1
       nanoid: ^3.1.20
       nest-raven: 8.2.0
@@ -341,6 +342,7 @@ importers:
       ioredis: 5.2.4
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
+      logform: 2.5.1
       nanoid: 3.3.2
       nest-raven: 8.2.0_5a37dcvlmxagvrz6qabro62qru
       nest-winston: 1.8.0_goxiiduvrnx6ksu2hpw7qpvzbu
@@ -28451,6 +28453,10 @@ packages:
   /@types/tough-cookie/4.0.1:
     resolution: {integrity: sha512-Y0K95ThC3esLEYD6ZuqNek29lNX2EM1qxV8y2FTLUB0ff5wWrk7az+mLrnNFUnaXcgKye22+sFBRXOgpPILZNg==}
 
+  /@types/triple-beam/1.3.2:
+    resolution: {integrity: sha512-txGIh+0eDFzKGC25zORnswy+br1Ha7hj5cMVwKIU7+s0U2AxxJru/jZSMU6OC9MJWP6+pc/hc6ZjyZShpsyY2g==}
+    dev: false
+
   /@types/trusted-types/2.0.2:
     resolution: {integrity: sha512-F5DIZ36YVLE+PN+Zwws4kJogq47hNgX3Nx6WyDJ3kcplxyke3XIzB8uK5n/Lpm1HBsbGzd6nmGehL8cPekP+Tg==}
 
@@ -31183,7 +31189,7 @@ packages:
   /axios/0.27.2_debug@4.3.4:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
     dependencies:
-      follow-redirects: 1.14.9_debug@4.3.4
+      follow-redirects: 1.14.9
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
@@ -33724,7 +33730,7 @@ packages:
     resolution: {integrity: sha512-j4dx+Fb0URmzbwwMUrhqWM2BEWHdFGx+qZ9qqASHRPqvTYdqvWnHg0H1hIbcyLnvgnoNAVMlwkepyqM3DaIFUg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -37333,7 +37339,7 @@ packages:
     dependencies:
       confusing-browser-globals: 1.0.11
       eslint: 8.33.0
-      eslint-plugin-import: 2.26.0_ufewo3pl5nnmz6lltvjrdi2hii
+      eslint-plugin-import: 2.26.0_le6bq4wixy3va5oryeliptrdgy
       object.assign: 4.1.4
       object.entries: 1.1.6
       semver: 6.3.0
@@ -37351,7 +37357,7 @@ packages:
       '@typescript-eslint/parser': 5.50.0_4vsywjlpuriuw3tl5oq6zy5a64
       eslint: 8.33.0
       eslint-config-airbnb-base: 15.0.0_ga4sep7loct7ajt7pxcme7xdqu
-      eslint-plugin-import: 2.26.0_ufewo3pl5nnmz6lltvjrdi2hii
+      eslint-plugin-import: 2.26.0_le6bq4wixy3va5oryeliptrdgy
     dev: true
 
   /eslint-config-prettier/8.5.0_eslint@8.30.0:
@@ -39232,18 +39238,6 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
-
-  /follow-redirects/1.14.9_debug@4.3.4:
-    resolution: {integrity: sha512-MQDfihBQYMcyy5dhRDJUHcw7lb2Pv/TuE6xP1vyraLukNDHKbDxDNaOE3NbCAdKQApno+GPRyo1YAp89yCjK4w==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
-    dependencies:
-      debug: 4.3.4
-    dev: true
 
   /follow-redirects/1.15.2:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
@@ -43069,7 +43063,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
+      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -45345,10 +45339,11 @@ packages:
       - supports-color
     dev: true
 
-  /logform/2.4.2:
-    resolution: {integrity: sha512-W4c9himeAwXEdZ05dQNerhFz2XG80P9Oj0loPUMV23VC2it0orMHQhJm4hdnnor3rd1HsGf6a2lPwBM1zeXHGw==}
+  /logform/2.5.1:
+    resolution: {integrity: sha512-9FyqAm9o9NKKfiAKfZoYo9bGXXuwMkxQiQttkT4YjjVtQVIQtK6LmVtlxmCaFswo6N4AfEkHqZTV0taDtPotNg==}
     dependencies:
       '@colors/colors': 1.5.0
+      '@types/triple-beam': 1.3.2
       fecha: 4.2.3
       ms: 2.1.3
       safe-stable-stringify: 2.4.2
@@ -59147,7 +59142,7 @@ packages:
     resolution: {integrity: sha512-YpZzcUzBedhlTAfJg6vJDlyEai/IFMIVcaEZZyl3UXIl4gmqRpU7AE89AHLkbzLUsv0NVmw7ts+iztqKxxPW1Q==}
     engines: {node: '>= 6.4.0'}
     dependencies:
-      logform: 2.4.2
+      logform: 2.5.1
       readable-stream: 3.6.0
       triple-beam: 1.3.0
     dev: false
@@ -59185,7 +59180,7 @@ packages:
       '@dabh/diagnostics': 2.0.3
       async: 3.2.3
       is-stream: 2.0.1
-      logform: 2.4.2
+      logform: 2.5.1
       one-time: 1.0.0
       readable-stream: 3.6.0
       safe-stable-stringify: 2.4.2

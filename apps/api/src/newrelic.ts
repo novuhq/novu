@@ -4,6 +4,8 @@
  * See lib/config/default.js in the agent distribution for a more complete
  * description of configuration variables and their potential values.
  */
+console.log('Newrelic.js file');
+
 exports.config = {
   /**
    * Array of application names.
@@ -29,13 +31,18 @@ exports.config = {
      */
     enabled: true,
   },
+  application_logging: {
+    forwarding: {
+      enabled: true,
+    },
+  },
   logging: {
     /**
      * Level at which to log. 'trace' is most useful to New Relic when diagnosing
      * issues with the agent, 'info' and higher will impose the least overhead on
      * production applications.
      */
-    level: 'info',
+    level: 'trace',
   },
   /**
    * When true, all request headers except for those listed in attributes.exclude
