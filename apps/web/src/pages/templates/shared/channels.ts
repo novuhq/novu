@@ -23,6 +23,7 @@ interface IChannelDefinition {
   testId: string;
   channelType: StepTypeEnum;
   type: NodeTypeEnum;
+  required?: string[];
 }
 
 export const channels: IChannelDefinition[] = [
@@ -34,6 +35,7 @@ export const channels: IChannelDefinition[] = [
     testId: 'inAppSelector',
     channelType: StepTypeEnum.IN_APP,
     type: NodeTypeEnum.CHANNEL,
+    required: ['Content'],
   },
   {
     tabKey: ChannelTypeEnum.EMAIL,
@@ -43,6 +45,7 @@ export const channels: IChannelDefinition[] = [
     testId: 'emailSelector',
     channelType: StepTypeEnum.EMAIL,
     type: NodeTypeEnum.CHANNEL,
+    required: ['Subject'],
   },
   {
     tabKey: ChannelTypeEnum.SMS,
@@ -52,6 +55,7 @@ export const channels: IChannelDefinition[] = [
     testId: 'smsSelector',
     channelType: StepTypeEnum.SMS,
     type: NodeTypeEnum.CHANNEL,
+    required: ['Content'],
   },
   {
     tabKey: StepTypeEnum.DIGEST,
@@ -61,6 +65,7 @@ export const channels: IChannelDefinition[] = [
     testId: 'digestSelector',
     channelType: StepTypeEnum.DIGEST,
     type: NodeTypeEnum.ACTION,
+    required: ['Unit', 'Amount'],
   },
   {
     tabKey: StepTypeEnum.DELAY,
@@ -88,9 +93,16 @@ export const channels: IChannelDefinition[] = [
     testId: 'pushSelector',
     channelType: StepTypeEnum.PUSH,
     type: NodeTypeEnum.CHANNEL,
+    required: ['Title', 'Content'],
   },
 ];
 
 export const getChannel = (channelKey: string): IChannelDefinition | undefined => {
   return channels.find((channel) => channel.tabKey === channelKey);
+};
+
+export const getChannelRequiredErrors = (channelKey: string): string | undefined => {
+  const channel = getChannel(channelKey);
+
+  return `Required - ${channel?.label} ${channel?.required}`;
 };

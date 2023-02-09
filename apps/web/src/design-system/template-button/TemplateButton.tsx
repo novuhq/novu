@@ -118,11 +118,14 @@ export function TemplateButton({
           transitionDuration={250}
           offset={theme.spacing.xs}
           position="right"
+          width={300}
         >
           <Popover.Target>
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
           </Popover.Target>
-          <Popover.Dropdown>{errors || 'Something is missing here'}</Popover.Dropdown>
+          <Popover.Dropdown>
+            <Text rows={1}>{errors || 'Something is missing here'}</Text>
+          </Popover.Dropdown>
         </Popover>
       )}
     </Button>

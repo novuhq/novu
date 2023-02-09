@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { UnstyledButton, Popover, ActionIcon, createStyles, MantineTheme, Menu } from '@mantine/core';
 import styled from '@emotion/styled';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { Text } from '../typography/text/Text';
@@ -12,6 +12,9 @@ import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
 import { useEnvController } from '../../store/useEnvController';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
+
+import { useViewport } from 'react-flow-renderer';
+import { getChannelErrors } from '../../components/workflow/FlowEditor';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -31,6 +34,7 @@ interface ITemplateButtonProps {
   errors?: boolean | string;
   showDots?: boolean;
   id?: string;
+  index?: number;
   onDelete?: (id: string) => void;
   dragging?: boolean;
   setActivePage?: (string) => void;
@@ -91,6 +95,7 @@ export function ChannelButton({
   label,
   Icon,
   tabKey,
+  index,
   testId,
   errors = false,
   showDots = true,
@@ -105,23 +110,42 @@ export function ChannelButton({
   const { classes: menuClasses } = useMenuStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [showDotMenu, setShowDotMenu] = useState(false);
+  const [showErrorsR, setShowErrorsR] = useState(errors);
   const [disabled, setDisabled] = useState(initDisabled);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
   const { classes: popoverClasses } = usePopoverStyles();
+  const { x, y, zoom } = useViewport();
 
-  const { watch } = useFormContext();
+  const {
+    watch,
+    control,
+    formState: { isSubmitted, errors: errorsW },
+  } = useFormContext();
 
+  const enableAvatar = useWatch({
+    name: `steps.${index}.metadata` as any,
+    control,
+  });
+
+  // useLogger('Demo', [{ hello: 'world' }]);
   useEffect(() => {
     const subscription = watch((values) => {
       const thisStep = values.steps.find((step) => step._id === id);
+      const indexB = values.steps.findIndex((item) => item._id === id);
+
       if (thisStep) {
+        if (typeof indexB === 'number') {
+          const temp = getChannelErrors(indexB, errorsW, thisStep, isSubmitted);
+
+          setShowErrorsR(temp || '');
+        }
         setDisabled(!thisStep.active);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [watch]);
+  }, [watch, errorsW]);
 
   useEffect(() => {
     if (showDotMenu && (dragging || !active)) {
@@ -229,22 +253,26 @@ export function ChannelButton({
         </ActionWrapper>
       </ButtonWrapper>
 
-      {errors && (
+      {showErrorsR && (
         <Popover
+          // middlewares={{ flip: true, shift: true, inline: true }}
           withinPortal
           classNames={popoverClasses}
           withArrow
-          opened={popoverOpened}
+          opened={(isSubmitted && Object.keys(showErrorsR).length > 0) || popoverOpened}
           transition="rotate-left"
           transitionDuration={250}
           offset={theme.spacing.xs}
           position="right"
           zIndex={4}
+          positionDependencies={[dragging, x, y, zoom]}
         >
           <Popover.Target>
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
           </Popover.Target>
-          <Popover.Dropdown>{errors.toString() || 'Something is missing here'}</Popover.Dropdown>
+          <Popover.Dropdown>
+            <Text rows={1}>{showErrorsR.toString() || 'Something is missing here'}</Text>
+          </Popover.Dropdown>
         </Popover>
       )}
     </Button>

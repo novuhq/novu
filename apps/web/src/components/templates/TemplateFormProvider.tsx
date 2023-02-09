@@ -4,6 +4,7 @@ import * as z from 'zod';
 import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
 
 import type { IForm } from './formTypes';
+import { getChannel } from '../../pages/templates/shared/channels';
 
 const schema = z
   .object({
@@ -62,7 +63,7 @@ const schema = z
                     minimum: 1,
                     type: 'string',
                     inclusive: true,
-                    message: 'Required - Message Content',
+                    message: `Required - ${getChannel(template.type)?.label} Content`,
                     path: ['content'],
                   });
                 }
@@ -111,7 +112,7 @@ const schema = z
                   minimum: 1,
                   type: 'string',
                   inclusive: true,
-                  message: 'Path required',
+                  message: 'Required - Delay Path',
                   path: ['metadata', 'delayPath'],
                 });
               }
@@ -125,14 +126,14 @@ const schema = z
             if (!amount) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Amount Required',
+                message: `Required - ${getChannel(step.template.type)?.label} Amount`,
                 path: ['metadata', 'amount'],
               });
             }
             if (!unit) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Unit Required',
+                message: `Required - ${getChannel(step.template.type)?.label} Unit`,
                 path: ['metadata', 'unit'],
               });
             }
@@ -167,7 +168,7 @@ const schema = z
             if (!unit) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Backoff Unit Required',
+                message: 'Required - Backoff Unit ',
                 path: ['metadata', 'backoffUnit'],
               });
             }
@@ -175,7 +176,7 @@ const schema = z
             if (!amount) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Backoff Amount Required',
+                message: 'Required - Backoff Amount',
                 path: ['metadata', 'backoffAmount'],
               });
             }

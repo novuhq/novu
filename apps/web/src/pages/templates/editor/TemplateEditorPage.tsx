@@ -24,6 +24,7 @@ import { ExecutionDetailsModalWrapper } from '../../../components/templates/Exec
 import { useSearchParams } from '../../../hooks/useSearchParams';
 import { BlueprintModal } from '../../../components/templates/BlueprintModal';
 import { useTemplateEditor } from '../../../components/templates/TemplateEditorProvider';
+import { errorMessage } from '../../../utils/notifications';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -70,6 +71,10 @@ export default function TemplateEditorPage() {
 
   const isCreateTemplatePage = location.pathname === '/templates/create';
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
+
+  const onInvalid = async (objErrors) => {
+    errorMessage(getExplicitStepsErrors(objErrors));
+  };
 
   const [testWorkflowModalOpened, { close: closeTestWorkflowModal, open: openTestWorkflowModal }] = useDisclosure(
     false,
@@ -139,7 +144,12 @@ export default function TemplateEditorPage() {
     <>
       <PageContainer>
         <PageMeta title={editMode ? template?.name : 'Create Template'} />
-        <form name="template-form" noValidate onSubmit={handleSubmit(onSubmitHandler)} style={{ minHeight: '100%' }}>
+        <form
+          name="template-form"
+          noValidate
+          onSubmit={handleSubmit(onSubmitHandler, onInvalid)}
+          style={{ minHeight: '100%' }}
+        >
           <When truthy={activePage !== ActivePageEnum.WORKFLOW}>
             <TemplatePageHeader
               loading={isCreating || isUpdating}
@@ -225,4 +235,43 @@ export default function TemplateEditorPage() {
       <BlueprintModal />
     </>
   );
+}
+
+export function getExplicitStepsErrors(errors: any) {
+  const errorsArray: string[] = [];
+  if (errors?.name) {
+    errorsArray.push(errors.name?.message);
+  }
+  if (errors?.notificationGroupId) {
+    errorsArray.push(errors.notificationGroupId?.message);
+  }
+  if (errors?.steps) {
+    const errorIndexes = Object.keys(errors?.steps);
+    errorIndexes.forEach((index) => {
+      const stepErrors = errors?.steps[index]?.template;
+      if (stepErrors) {
+        const keys = Object.keys(stepErrors);
+
+        errorsArray.push(...keys.map((key) => stepErrors[key]?.message));
+      }
+      const actionErrors = errors?.steps[index]?.metadata;
+      if (actionErrors) {
+        const keys = Object.keys(actionErrors);
+
+        errorsArray.push(...keys.map((key) => actionErrors[key]?.message));
+      }
+    });
+
+    const requiredArraySec = errorsArray
+      .filter((errMessage) => errMessage.includes('Required - '))
+      .map((errMessage) => errMessage.replace('Required - ', ''))
+      .join(', ');
+
+    const actionArraySec = errorsArray.filter((errMessage) => !errMessage.includes('Required - ')).join(', ');
+
+    return [requiredArraySec && 'Required - ' + requiredArraySec, actionArraySec && actionArraySec].join(', ');
+    // return Array.from(new Set(errorsArray)).join(', ');
+  }
+
+  return 'Something is missing here';
 }

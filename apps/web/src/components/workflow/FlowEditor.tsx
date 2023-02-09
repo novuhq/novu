@@ -22,7 +22,7 @@ import { StepTypeEnum } from '@novu/shared';
 import ChannelNode from './node-types/ChannelNode';
 import { colors } from '../../design-system';
 import TriggerNode from './node-types/TriggerNode';
-import { getChannel } from '../../pages/templates/shared/channels';
+import { getChannel, getChannelRequiredErrors } from '../../pages/templates/shared/channels';
 import type { IForm, IStepEntity } from '../templates/formTypes';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../store/useEnvController';
@@ -394,23 +394,28 @@ const Wrapper = styled.div<{ dark: boolean }>`
   }
 `;
 
-function getChannelErrors(index: number, errors: any, step: any) {
+export function getChannelErrors(index: number, errors: any, step: any, isSubmitted?: boolean) {
   if (errors?.steps) {
     const stepErrors = errors.steps[index]?.template;
+
     if (stepErrors) {
       const keys = Object.keys(stepErrors);
 
-      return keys.map((key) => stepErrors[key]?.message);
+      return keys.map((key) => stepErrors[key]?.message).join(', ');
     }
     const actionErrors = errors.steps[index]?.metadata;
+
     if (actionErrors) {
       const keys = Object.keys(actionErrors);
 
-      return keys.map((key) => actionErrors[key]?.message);
+      return keys.map((key) => actionErrors[key]?.message).join(', ');
     }
   }
+  if (isSubmitted) {
+    return;
+  }
   if (step.template.type === StepTypeEnum.EMAIL && !step.template.subject) {
-    return 'Something is missing here';
+    return getChannelRequiredErrors(step.template.type);
   }
 
   if (
@@ -419,8 +424,21 @@ function getChannelErrors(index: number, errors: any, step: any) {
     step.template.type !== StepTypeEnum.DELAY &&
     step.template.type !== StepTypeEnum.EMAIL
   ) {
-    return 'Something is missing here';
+    return getChannelRequiredErrors(step.template.type);
   }
+
+  if (
+    // step.metadata?.unit.length === 0 &&
+    step.template.type === StepTypeEnum.DIGEST &&
+    !step.metadata?.amount
+  ) {
+    // if (!step.metadata?.unit && !step.metadata?.amount) {
+
+    return getChannelRequiredErrors(step.template.type);
+    // }
+  }
+
+  // return getChannelRequiredErrors(step.template.type);
 }
 
 const reactFlowDefaultProps: ReactFlowProps = {
