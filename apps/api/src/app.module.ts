@@ -93,18 +93,16 @@ if (process.env.NODE_ENV === 'test') {
   providers,
 })
 export class AppModule {
-  private num = 0;
-
   constructor(private queueService: QueueService) {
     Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
 
     setInterval(() => {
-      Logger.debug('debug');
-      Logger.verbose('verbose');
-      Logger.warn('warn');
-      Logger.log(`BOOTSTRAPPED NEST APPLICATION (black-cat-brown-bird)` + new Date() + ' Num: ' + this.num);
-      Logger.error('error');
-      this.num = this.num + 1;
+      Logger.debug('debugm');
+      Logger.verbose('verbosem');
+      Logger.warn('warnm');
+      Logger.log('infom');
+      Logger.error('errorm', 'api.app.module.ts');
+      Logger.log('---m');
     }, 1000);
   }
 }

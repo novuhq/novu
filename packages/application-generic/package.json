@@ -65,7 +65,9 @@
     "analytics-node": "^6.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
-    "node-fetch": "^3.2.10"
+    "nest-winston": "^1.8.0",
+    "node-fetch": "^3.2.10",
+    "winston": "^3.8.2"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

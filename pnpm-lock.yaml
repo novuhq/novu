@@ -1454,6 +1454,7 @@ importers:
       cz-conventional-changelog: ^3.3.0
       gh-pages: ^3.1.0
       jest: ^27.1.0
+      nest-winston: ^1.8.0
       node-fetch: ^3.2.10
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
@@ -1465,6 +1466,7 @@ importers:
       ts-node: ~10.9.1
       typedoc: ^0.23.0
       typescript: 4.9.5
+      winston: ^3.8.2
     dependencies:
       '@nestjs/common': 8.4.3_welcnyot5bzd5wa2aovbkxpi4i
       '@novu/dal': link:../../libs/dal
@@ -1497,7 +1499,9 @@ importers:
       analytics-node: 6.2.0
       class-transformer: 0.5.1
       class-validator: 0.14.0
+      nest-winston: 1.8.0_wif2oqgnbollbzbi5mgtitqbcy
       node-fetch: 3.2.10
+      winston: 3.8.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/analytics-node': 3.1.9
@@ -43063,7 +43067,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
+      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -47009,6 +47013,17 @@ packages:
       winston: ^3.0.0
     dependencies:
       '@nestjs/common': 9.0.2_mgahpprohdkjk6lephiejykozi
+      fast-safe-stringify: 2.1.1
+      winston: 3.8.2
+    dev: false
+
+  /nest-winston/1.8.0_wif2oqgnbollbzbi5mgtitqbcy:
+    resolution: {integrity: sha512-DyoNrly6DXjNG2ZPXSD2+w+pgEE8u0y0iwsaLZsufFLIKB/YNgP7zIXV5JxIqns0e5QzLlxdHhO2hx+1W8dvCw==}
+    peerDependencies:
+      '@nestjs/common': ^5.0.0 || ^6.6.0 || ^7.0.0 || ^8.0.0 || ^9.0.0
+      winston: ^3.0.0
+    dependencies:
+      '@nestjs/common': 8.4.3_welcnyot5bzd5wa2aovbkxpi4i
       fast-safe-stringify: 2.1.1
       winston: 3.8.2
     dev: false
