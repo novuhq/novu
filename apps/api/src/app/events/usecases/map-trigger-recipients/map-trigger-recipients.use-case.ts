@@ -40,19 +40,23 @@ export class MapTriggerRecipients {
   constructor(private createLog: CreateLog, private getTopicSubscribers: GetTopicSubscribersUseCase) {}
 
   async execute(command: MapTriggerRecipientsCommand): Promise<ISubscribersDefine[]> {
-    const { environmentId, organizationId, recipients, transactionId, userId } = command;
+    const { environmentId, organizationId, recipients, transactionId, userId, actor } = command;
 
     const mappedRecipients = Array.isArray(recipients) ? recipients : [recipients];
 
     const simpleSubscribers: ISubscribersDefine[] = this.findSubscribers(mappedRecipients);
 
-    const topicSubscribers: ISubscribersDefine[] = await this.getSubscribersFromAllTopics(
+    let topicSubscribers: ISubscribersDefine[] = await this.getSubscribersFromAllTopics(
       transactionId,
       environmentId,
       organizationId,
       userId,
       mappedRecipients
     );
+
+    if (actor) {
+      topicSubscribers = this.excludeActorFromTopicSubscribers(topicSubscribers, actor);
+    }
 
     return this.deduplicateSubscribers([...simpleSubscribers, ...topicSubscribers]);
   }
@@ -69,6 +73,13 @@ export class MapTriggerRecipients {
 
       return !isDuplicate;
     });
+  }
+
+  private excludeActorFromTopicSubscribers(
+    subscribers: ISubscribersDefine[],
+    actor: ISubscribersDefine
+  ): ISubscribersDefine[] {
+    return subscribers.filter((subscriber) => subscriber.subscriberId !== actor?.subscriberId);
   }
 
   private async getSubscribersFromAllTopics(

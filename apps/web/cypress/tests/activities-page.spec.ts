@@ -54,4 +54,46 @@ describe('Activity Feed Screen', function () {
     cy.get('.mantine-MultiSelect-item').contains('SMS').click();
     cy.getByTestId('email-step').should('have.length', 0);
   });
+
+  it('should show the clear filters button when template is selected', function () {
+    cy.visit('/activities');
+    cy.getByTestId('email-step').should('have.length', 10);
+
+    cy.getByTestId('templates-filter').click();
+    cy.get('.mantine-MultiSelect-item').contains(this.session.templates[0].name).click();
+
+    cy.getByTestId('activities-table')
+      .find('button')
+      .first()
+      .getByTestId('row-template-name')
+      .contains(this.session.templates[0].name);
+
+    cy.getByTestId('clear-filters').should('exist');
+    cy.getByTestId('clear-filters').click();
+
+    cy.getByTestId('templates-filter').find('.mantine-Text-root').should('not.exist');
+    cy.getByTestId('email-step').should('have.length', 10);
+  });
+
+  it('should clear all filters', function () {
+    cy.visit('/activities');
+    cy.getByTestId('email-step').should('have.length', 10);
+
+    cy.getByTestId('activities-filter').click();
+    cy.get('.mantine-MultiSelect-item').contains('Email').click();
+    cy.getByTestId('templates-filter').click();
+    cy.get('.mantine-MultiSelect-item').contains(this.session.templates[0].name).click();
+    cy.getByTestId('transactionId-filter').type('test');
+    cy.getByTestId('search-filter').type('test');
+
+    cy.getByTestId('clear-filters').should('exist');
+    cy.getByTestId('clear-filters').click();
+
+    cy.getByTestId('activities-filter').find('.mantine-Text-root').should('not.exist');
+    cy.getByTestId('templates-filter').find('.mantine-Text-root').should('not.exist');
+    cy.getByTestId('transactionId-filter').should('not.have.value');
+    cy.getByTestId('search-filter').should('not.have.value');
+
+    cy.getByTestId('email-step').should('have.length', 10);
+  });
 });
