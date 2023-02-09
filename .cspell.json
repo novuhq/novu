@@ -390,7 +390,8 @@
     "ehlo",
     "logrocket",
     "backoff",
-    "isequal"
+    "isequal",
+    "Scriptable"
   ],
   "flagWords": [],
   "patterns": [
