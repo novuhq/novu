@@ -114,6 +114,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
           _environmentId: new Types.ObjectId(environmentId),
         },
       },
+      { $unwind: '$channels' },
       {
         $group: {
           _id: {
@@ -122,6 +123,8 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
           count: {
             $sum: 1,
           },
+          templates: { $addToSet: '$_templateId' },
+          channels: { $addToSet: '$channels' },
         },
       },
       { $sort: { _id: -1 } },
