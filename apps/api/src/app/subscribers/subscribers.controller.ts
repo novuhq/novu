@@ -151,6 +151,7 @@ export class SubscribersController {
         phone: body.phone,
         avatar: body.avatar,
         locale: body.locale,
+        data: body.data,
       })
     );
   }
@@ -181,6 +182,7 @@ export class SubscribersController {
         phone: body.phone,
         avatar: body.avatar,
         locale: body.locale,
+        data: body.data,
       })
     );
   }
