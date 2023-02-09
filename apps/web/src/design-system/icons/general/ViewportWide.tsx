@@ -10,11 +10,11 @@ export const ViewportWide = () => {
       width="16"
       height="16"
       viewBox="0 0 24 24"
-      stroke-width="1.5"
+      strokeWidth="1.5"
       stroke="#00abfb"
       fill="none"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
       <path d="M10 12h-7l3 -3m0 6l-3 -3" />
