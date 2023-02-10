@@ -91,6 +91,10 @@ jobs:
         cluster: ${{ env.ecs_cluster }}
         wait-for-service-stability: true
 
+
+    - uses: actions/checkout@v3
+      if: ${{ inputs.deploy_sentry_release }}
+
     - name: get-npm-version
       if: ${{ inputs.deploy_sentry_release }}
       id: package-version
