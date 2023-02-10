@@ -66,15 +66,17 @@ jobs:
 
   deploy_prod_api_eu:
     needs: build_prod_image
-    uses: ./.github/workflows/reusable-api-e2e.yml
+    uses: ./.github/jobs/deploy/app-service-deploy.yml
     with:
       service_name: api
       terraform_workspace: novu-prod-eu
       docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
 
   deploy_prod_api_us:
-    needs: deploy_prod_api_eu
-    uses: ./.github/workflows/reusable-api-e2e.yml
+    needs:
+      - deploy_prod_api_eu
+      - build_prod_image
+    uses: ./.github/jobs/deploy/app-service-deploy.yml
     with:
       service_name: api
       terraform_workspace: novu-prod
