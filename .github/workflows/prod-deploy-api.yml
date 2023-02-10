@@ -3,11 +3,6 @@ name: Deploy PROD API
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    tags:
-      - '**@novu/api@**'
-      - '**@novu/node@**'
-      - '**@novu/shared@**'
   workflow_dispatch:
 
 jobs:
