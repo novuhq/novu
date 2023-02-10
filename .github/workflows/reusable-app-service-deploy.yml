@@ -91,7 +91,6 @@ jobs:
           cluster: ${{ env.ecs_cluster }}
           wait-for-service-stability: true
 
-
       - uses: actions/checkout@v3
         if: ${{ inputs.deploy_sentry_release }}
 
@@ -100,7 +99,7 @@ jobs:
         id: package-version
         uses: martinbeentjes/npm-get-version-action@main
         with:
-          path: apps/api
+          path: apps/${{ inputs.sentry_project }}
 
       - name: Create Sentry release
         if: ${{ inputs.deploy_sentry_release }}
