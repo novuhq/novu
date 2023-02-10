@@ -1,7 +1,7 @@
 {
   "name": "novuhq",
   "private": true,
-  "packageManager": "^pnpm@7.27.0",
+  "packageManager": "pnpm@7.27.0",
   "scripts": {
     "bootstrap": "npm run setup:dev",
     "start": "npm run jarvis",
