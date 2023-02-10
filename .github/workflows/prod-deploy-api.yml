@@ -61,7 +61,7 @@ jobs:
 
   deploy_prod_api_eu:
     needs: build_prod_image
-    uses: ./.github/workflows/jobs/deploy/app-service-deploy.yml
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
     with:
       service_name: api
       terraform_workspace: novu-prod-eu
@@ -71,7 +71,7 @@ jobs:
     needs:
       - deploy_prod_api_eu
       - build_prod_image
-    uses: ./.github/workflows/jobs/deploy/app-service-deploy.yml
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
     with:
       service_name: api
       terraform_workspace: novu-prod
