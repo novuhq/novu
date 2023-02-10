@@ -66,6 +66,10 @@ jobs:
       service_name: api
       terraform_workspace: novu-prod-eu
       docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
+      gh_token: ${{ secrets.GH_PACKAGES }}
+      tf_api_token: ${{ secrets.TF_API_TOKEN }}
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
   deploy_prod_api_us:
     needs:
@@ -78,6 +82,11 @@ jobs:
       docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
       deploy_sentry_release: true
       sentry_project: api
+      gh_token: ${{ secrets.GH_PACKAGES }}
+      tf_api_token: ${{ secrets.TF_API_TOKEN }}
+      aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      sentry_auth_token: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
   deploy_docs:
     needs: deploy_prod_api_us
