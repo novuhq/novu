@@ -395,7 +395,8 @@
     "iife",
     "redlock",
     "axios",
-    "ioredis"
+    "ioredis",
+    "newrelic"
   ],
   "flagWords": [],
   "patterns": [

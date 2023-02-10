@@ -11,7 +11,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { applyLock } from '../../../../services/distributed-lock';
+import { EventsDistributedLockService } from '../../services/distributed-lock-service';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -22,7 +22,11 @@ type AddDigestJobResult = number | undefined;
 
 @Injectable()
 export class AddDigestJob {
-  constructor(private jobRepository: JobRepository, protected createExecutionDetails: CreateExecutionDetails) {}
+  constructor(
+    private distributedLockService: EventsDistributedLockService,
+    private jobRepository: JobRepository,
+    protected createExecutionDetails: CreateExecutionDetails
+  ) {}
 
   public async execute(command: AddDigestJobCommand): Promise<AddDigestJobResult> {
     const { job } = command;
@@ -74,15 +78,17 @@ export class AddDigestJob {
     const resource = `environment:${job._environmentId}:template:${job._templateId}:subscriber:${job._subscriberId}`;
     const TTL = 500;
 
-    const shouldDelayDigestDigestJobOrMerge = async () => this.jobRepository.shouldDelayDigestJobOrMerge(job);
+    const shouldDelayDigestJobOrMerge = async () => this.jobRepository.shouldDelayDigestJobOrMerge(job);
 
-    return await applyLock<IFindAndUpdateResponse>(
+    const result = await this.distributedLockService.applyLock<IFindAndUpdateResponse>(
       {
         resource,
         ttl: TTL,
       },
-      shouldDelayDigestDigestJobOrMerge
+      shouldDelayDigestJobOrMerge
     );
+
+    return result;
   }
 
   private async digestMergedExecutionDetails(job: JobEntity): Promise<void> {
