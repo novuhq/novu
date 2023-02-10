@@ -20,21 +20,7 @@ on:
         required: false
         default: false
         type: boolean
-      gh_token:
-        required: true
-        type: string
-      tf_api_token:
-        required: true
-        type: string
-      aws_access_key_id:
-        required: true
-        type: string
-      aws_secret_access_key:
-        required: true
-        type: string
-      sentry_auth_token:
-        required: true
-        type: string
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   deploy_service:
@@ -51,13 +37,13 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: novuhq/cloud-infra
-          token: ${{ inputs.gh_token }}
+          token: ${{ secrets.GH_PACKAGES }}
           path: cloud-infra
 
       - name: Terraform setup
         uses: hashicorp/setup-terraform@v1
         with:
-          cli_config_credentials_token: ${{ inputs.tf_api_token }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_version: 1.3.4
           terraform_wrapper: false
 
@@ -80,8 +66,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ inputs.aws_access_key_id }}
-          aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.aws_region }}
 
       - name: Download task definition
@@ -120,7 +106,7 @@ jobs:
         if: ${{ inputs.deploy_sentry_release }}
         uses: getsentry/action-release@v1
         env:
-          SENTRY_AUTH_TOKEN: ${{ inputs.sentry_auth_token }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: novu-r9
           SENTRY_PROJECT: ${{ inputs.sentry_project }}
         with:
