@@ -34,10 +34,7 @@ services:
     network_mode: bridge
     ports:
       - "6379:6379"
-    volumes:
-      - "${TMPDIR:-/tmp/redis}:/data"
     healthcheck:
       test: "bash -c 'redis-cli ping'"
       retries: 5 
       interval: 10s
-    

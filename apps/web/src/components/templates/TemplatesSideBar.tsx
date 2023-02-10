@@ -22,7 +22,7 @@ export function TemplatesSideBar({
 }) {
   const { errors } = useFormState<{
     name: string;
-    notificationGroup: string;
+    notificationGroupId: string;
   }>();
 
   const theme = useMantineTheme();
@@ -41,7 +41,7 @@ export function TemplatesSideBar({
               active={activeTab === ActivePageEnum.SETTINGS}
               description={minimalView ? '' : `Configure cross-channel notification settings`}
               label={minimalView ? '' : `Notification Settings`}
-              errors={showErrors && (errors.name?.message || errors.notificationGroup?.message)}
+              errors={showErrors && (errors.name?.message || errors.notificationGroupId?.message)}
             />
           </span>
         </StyledTooltip>
@@ -107,7 +107,7 @@ export function TemplatesSideBar({
   );
 }
 
-function getStepsErrors(errors: FieldErrorsImpl<DeepRequired<{ name: string; notificationGroup: string }>>) {
+function getStepsErrors(errors: FieldErrorsImpl<DeepRequired<{ name: string; notificationGroupId: string }>>) {
   const keys = Object.keys(errors);
   const channelErrors = keys.filter((key) => {
     return key.includes(`steps`);
