@@ -1,23 +1,19 @@
 {
-  "cSpell.userWords": [], // only use words from .cspell.json
+  "cSpell.userWords": [],
   "cSpell.enabled": true,
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
-  "npm.packageManager": "yarn",
   "editor.defaultFormatter": "dbaeumer.vscode-eslint",
   "editor.formatOnSave": true,
   "eslint.format.enable": true,
   "editor.tabSize": 2,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
   "css.validate": false,
   "editor.wordWrap": "wordWrapColumn",
-  "editor.wordWrapColumn": 120
+  "editor.wordWrapColumn": 120,
   "editor.codeActionsOnSave": {
     "source.fixAll": true
   },
-  "cSpell.words": [
-    "mantine"
-  ]
+  "cSpell.words": ["mantine"]
 }

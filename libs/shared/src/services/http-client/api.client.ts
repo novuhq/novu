@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 
+//SubscriberCustomData
 export interface IParamObject {
   [key: string]: string | string[] | number | boolean;
 }

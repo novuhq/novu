@@ -173,27 +173,40 @@ export function SideNav({}: Props) {
         <Navbar.Section>
           <OrganizationSelect />
         </Navbar.Section>
-        <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://discord.novu.co"
-            data-test-id="side-nav-bottom-link-support"
-          >
-            Support
-          </a>
-          <p>
-            <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
-          </p>
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://docs.novu.co"
-            data-test-id="side-nav-bottom-link-documentation"
-          >
-            Documentation
-          </a>
-        </BottomNav>
+        <Navbar.Section>
+          <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://discord.novu.co"
+              data-test-id="side-nav-bottom-link-support"
+            >
+              Support
+            </a>
+            <p>
+              <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+            </p>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://docs.novu.co"
+              data-test-id="side-nav-bottom-link-documentation"
+            >
+              Docs
+            </a>
+            <p>
+              <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+            </p>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://github.com/novuhq/novu/issues/new/choose"
+              data-test-id="side-nav-bottom-link-share-feedback"
+            >
+              Share Feedback
+            </a>
+          </BottomNav>
+        </Navbar.Section>
       </Navbar.Section>
     </Navbar>
   );

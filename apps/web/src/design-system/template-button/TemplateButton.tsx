@@ -75,7 +75,7 @@ export function TemplateButton({
         }
 
         if (tabKey === ActivePageEnum.WORKFLOW) {
-          const valid = await trigger(['name', 'notificationGroup'], { shouldFocus: true });
+          const valid = await trigger(['name', 'notificationGroupId'], { shouldFocus: true });
 
           if (!valid) {
             return;

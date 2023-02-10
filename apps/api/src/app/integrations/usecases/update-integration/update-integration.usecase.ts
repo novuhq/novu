@@ -7,6 +7,7 @@ import { encryptCredentials } from '../../../shared/services/encryption';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { ChannelTypeEnum } from '@novu/shared';
 
 @Injectable()
 export class UpdateIntegration {
@@ -70,7 +71,7 @@ export class UpdateIntegration {
       }
     );
 
-    if (command.active) {
+    if (command.active && ![ChannelTypeEnum.CHAT, ChannelTypeEnum.PUSH].includes(existingIntegration.channel)) {
       await this.deactivateSimilarChannelIntegrations.execute({
         environmentId: command.environmentId,
         organizationId: command.organizationId,

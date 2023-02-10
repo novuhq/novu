@@ -12,7 +12,7 @@ interface NodeData {
   onDelete: (id: string) => void;
   error: string;
   setActivePage: (string) => void;
-  active: boolean;
+  active?: boolean;
 }
 
 export default memo(

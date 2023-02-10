@@ -39,7 +39,7 @@
   "devDependencies": {
     "@babel/preset-env": "^7.13.15",
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@types/jest": "27.4.0",
+    "@types/jest": "27.5.2",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",
@@ -51,9 +51,9 @@
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",
-    "ts-node": "^9.0.0",
+    "ts-node": "~10.9.1",
     "typedoc": "^0.23.0",
-    "typescript": "4.6.2"
+    "typescript": "4.9.5"
   },
   "files": [
     "build/main",

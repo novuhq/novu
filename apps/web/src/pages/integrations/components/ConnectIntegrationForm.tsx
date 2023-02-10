@@ -17,6 +17,7 @@ import { API_ROOT } from '../../../config';
 import { useEnvController } from '../../../store/useEnvController';
 import { useAuthController } from '../../../store/useAuthController';
 import { Check, Copy } from '../../../design-system/icons';
+import { CONTEXT_PATH } from '../../../config';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
@@ -209,7 +210,9 @@ export function ConnectIntegrationForm({
     });
   }
 
-  const logoSrc = provider ? `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}` : '';
+  const logoSrc = provider
+    ? `${CONTEXT_PATH}/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`
+    : '';
 
   // eslint-disable-next-line max-len
   const webhookUrl = `${API_ROOT}/v1/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;

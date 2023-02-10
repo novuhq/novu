@@ -103,7 +103,7 @@ function createNotification() {
 
   cy.getByTestId('emailSubject').type('this is email subject');
 
-  cy.getByTestId('submit-btn').click();
+  cy.getByTestId('notification-template-submit-btn').click();
   cy.waitForNetworkIdle(500);
   cy.getByTestId('trigger-snippet-btn').click();
 }

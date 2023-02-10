@@ -27,6 +27,7 @@ import { MapTriggerRecipients, MapTriggerRecipientsCommand } from './map-trigger
 import { MessageMatcher } from './trigger-event/message-matcher.service';
 import { ParseEventRequest } from './parse-event-request/parse-event-request.usecase';
 import { ProviderUsageLimits } from '../../integrations/usecases/provider-usage-limits';
+import { ProcessBulkTrigger } from './process-bulk-trigger/process-bulk-trigger.usecase';
 
 export const USE_CASES = [
   MessageMatcher,
@@ -59,4 +60,5 @@ export const USE_CASES = [
   MapTriggerRecipientsCommand,
   ParseEventRequest,
   ProviderUsageLimits,
+  ProcessBulkTrigger,
 ];
