@@ -439,7 +439,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.15
       prettier: 2.7.1
-      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
+      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -2343,7 +2343,7 @@ importers:
 
   providers/infobip:
     specifiers:
-      '@infobip-api/sdk': ^0.1.0
+      '@infobip-api/sdk': ^0.2.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
@@ -2362,7 +2362,7 @@ importers:
       typedoc: ^0.23.0
       typescript: 4.9.5
     dependencies:
-      '@infobip-api/sdk': 0.1.0
+      '@infobip-api/sdk': 0.2.0
       '@novu/stateless': link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -4295,6 +4295,7 @@ packages:
   /@apollo/gateway/0.29.1_graphql@15.8.0:
     resolution: {integrity: sha512-FNHqvuvA63MRebqOmkpMjYUbslcozZFnmqAqDW2dRpb3fJ5Rg5H/cHnTmRrs+XDmIOQKuNKhoFA/Kvkz3Ngbjg==}
     engines: {node: '>=12.13.0 <17.0'}
+    deprecated: All v0.x versions of @apollo/gateway are now deprecated (end-of-life September 22, 2023). Apollo recommends upgrading to v2.x or migrating to the Apollo Router as soon as possible. For more details, see our announcement blog post (https://www.apollographql.com/blog/announcement/backend/announcing-the-end-of-life-schedule-for-apollo-gateway-v0-x/) and documentation (https://www.apollographql.com/docs/federation/federation-2/backward-compatibility/#is-official-support-ending-for-apollogateway-v0x).
     requiresBuild: true
     peerDependencies:
       graphql: ^14.5.0 || ^15.0.0
@@ -7393,9 +7394,9 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0
     dependencies:
-      '@babel/compat-data': 7.20.14
+      '@babel/compat-data': 7.17.7
       '@babel/core': 7.17.8
-      '@babel/helper-validator-option': 7.18.6
+      '@babel/helper-validator-option': 7.16.7
       browserslist: 4.21.4
       semver: 6.3.0
 
@@ -7410,6 +7411,19 @@ packages:
       '@babel/helper-validator-option': 7.16.7
       browserslist: 4.21.4
       semver: 6.3.0
+
+  /@babel/helper-compilation-targets/7.18.9_@babel+core@7.17.8:
+    resolution: {integrity: sha512-tzLCyVmqUiFlcFoAPLA/gL9TeYrF61VLNtb+hvkuVaB5SUjW7jcfrglBIX1vUIoT7CLP3bBlIMeyEsIl2eFQNg==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+    dependencies:
+      '@babel/compat-data': 7.20.14
+      '@babel/core': 7.17.8
+      '@babel/helper-validator-option': 7.18.6
+      browserslist: 4.21.4
+      semver: 6.3.0
+    dev: true
 
   /@babel/helper-compilation-targets/7.18.9_@babel+core@7.18.5:
     resolution: {integrity: sha512-tzLCyVmqUiFlcFoAPLA/gL9TeYrF61VLNtb+hvkuVaB5SUjW7jcfrglBIX1vUIoT7CLP3bBlIMeyEsIl2eFQNg==}
@@ -7833,6 +7847,24 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@babel/helper-define-polyfill-provider/0.3.1_@babel+core@7.17.8:
+    resolution: {integrity: sha512-J9hGMpJQmtWmj46B3kBHmL38UhJGhYX7eqkcq+2gsstyYt341HmPeWspihX43yVRA0mS+8GGk2Gckc7bY/HCmA==}
+    peerDependencies:
+      '@babel/core': ^7.4.0-0
+    dependencies:
+      '@babel/core': 7.17.8
+      '@babel/helper-compilation-targets': 7.20.7_@babel+core@7.17.8
+      '@babel/helper-module-imports': 7.18.6
+      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/traverse': 7.20.13
+      debug: 4.3.4
+      lodash.debounce: 4.0.8
+      resolve: 1.22.1
+      semver: 6.3.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /@babel/helper-define-polyfill-provider/0.3.1_@babel+core@7.18.5:
     resolution: {integrity: sha512-J9hGMpJQmtWmj46B3kBHmL38UhJGhYX7eqkcq+2gsstyYt341HmPeWspihX43yVRA0mS+8GGk2Gckc7bY/HCmA==}
     peerDependencies:
@@ -7968,7 +8000,6 @@ packages:
     dependencies:
       '@babel/template': 7.20.7
       '@babel/types': 7.20.7
-    dev: true
 
   /@babel/helper-function-name/7.19.0:
     resolution: {integrity: sha512-WAwHBINyrpqywkUH0nTnNgI5ina5TFn85HKS0pbPDfxFfhyR/aNQEn4hGi1P1JyT//I0t4OgXUlofzWILRvS5w==}
@@ -11274,8 +11305,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-compilation-targets': 7.20.7_@babel+core@7.17.8
-      '@babel/helper-function-name': 7.19.0
+      '@babel/helper-compilation-targets': 7.18.9_@babel+core@7.17.8
+      '@babel/helper-function-name': 7.18.9
       '@babel/helper-plugin-utils': 7.20.2
     dev: true
 
@@ -11286,8 +11317,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.18.5
-      '@babel/helper-compilation-targets': 7.20.7_@babel+core@7.18.5
-      '@babel/helper-function-name': 7.19.0
+      '@babel/helper-compilation-targets': 7.18.9_@babel+core@7.18.5
+      '@babel/helper-function-name': 7.18.9
       '@babel/helper-plugin-utils': 7.20.2
     dev: false
 
@@ -11638,10 +11669,10 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-hoist-variables': 7.18.6
-      '@babel/helper-module-transforms': 7.20.11
+      '@babel/helper-hoist-variables': 7.16.7
+      '@babel/helper-module-transforms': 7.18.9
       '@babel/helper-plugin-utils': 7.20.2
-      '@babel/helper-validator-identifier': 7.19.1
+      '@babel/helper-validator-identifier': 7.16.7
       babel-plugin-dynamic-import-node: 2.3.3
     transitivePeerDependencies:
       - supports-color
@@ -17396,8 +17427,8 @@ packages:
       react: 17.0.2
     dev: false
 
-  /@infobip-api/sdk/0.1.0:
-    resolution: {integrity: sha512-+F4/0eYjOzc+PpfmZpJg6q2QuGA/K2kZBellyaTvKd0UqQ7BNp5rvABNHRnR8vaHxsp0VawAJ/cWohEMVgiKbA==}
+  /@infobip-api/sdk/0.2.0:
+    resolution: {integrity: sha512-I9C+MIMxoW/PProBSt6UIMqDE5cgVODno5o5JOlcjMbbFS2ou490e5zS0V44sH2z5W6BDhOGyT50FQetF8BeUQ==}
     engines: {node: '>=10'}
     dependencies:
       axios: 0.26.1
@@ -17607,7 +17638,7 @@ packages:
     dependencies:
       '@jest/fake-timers': 29.3.1
       '@jest/types': 29.3.1
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       jest-mock: 29.3.1
     dev: true
 
@@ -17644,7 +17675,7 @@ packages:
     dependencies:
       '@jest/types': 29.3.1
       '@sinonjs/fake-timers': 9.1.2
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       jest-message-util: 29.3.1
       jest-mock: 29.3.1
       jest-util: 29.3.1
@@ -27924,7 +27955,7 @@ packages:
   /@types/express-serve-static-core/4.17.28:
     resolution: {integrity: sha512-P1BJAEAW3E2DJUlkgq4tOL3RyMunoWXqbSCygWo5ZIWTjUgN1YnaXWW4VWl/oc8vs/XoYibEGBKP0uZyF4AHig==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
 
@@ -28110,7 +28141,7 @@ packages:
   /@types/jsdom/20.0.1:
     resolution: {integrity: sha512-d0r18sZPmMQr1eG35u12FZfhIXNrnsPU/g5wvRKCUf/tOGilKKwYMYGqh33BNR6ba+2gkHw1EUiHoN3mn7E5IQ==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       '@types/tough-cookie': 4.0.1
       parse5: 7.0.0
     dev: true
@@ -31734,8 +31765,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-define-polyfill-provider': 0.3.3_@babel+core@7.17.8
-      core-js-compat: 3.25.5
+      '@babel/helper-define-polyfill-provider': 0.3.1_@babel+core@7.17.8
+      core-js-compat: 3.23.2
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -31746,8 +31777,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.18.5
-      '@babel/helper-define-polyfill-provider': 0.3.3_@babel+core@7.18.5
-      core-js-compat: 3.25.5
+      '@babel/helper-define-polyfill-provider': 0.3.1_@babel+core@7.18.5
+      core-js-compat: 3.23.2
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -31805,7 +31836,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-define-polyfill-provider': 0.3.3_@babel+core@7.17.8
+      '@babel/helper-define-polyfill-provider': 0.3.1_@babel+core@7.17.8
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -31816,7 +31847,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.18.5
-      '@babel/helper-define-polyfill-provider': 0.3.3_@babel+core@7.18.5
+      '@babel/helper-define-polyfill-provider': 0.3.1_@babel+core@7.18.5
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -43604,7 +43635,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.3.1
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       jest-util: 29.3.1
     dev: true
 
@@ -43963,7 +43994,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@jest/types': 29.3.1
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       chalk: 4.1.2
       ci-info: 3.3.0
       graceful-fs: 4.2.10
@@ -56734,7 +56765,7 @@ packages:
     dependencies:
       tslib: 1.14.1
 
-  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
+  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -56755,6 +56786,7 @@ packages:
       esbuild:
         optional: true
     dependencies:
+      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
