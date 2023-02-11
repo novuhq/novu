@@ -53,7 +53,7 @@ export class DigestFilterStepsBackoff {
 
     const digestKey = step?.metadata?.digestKey;
     if (digestKey) {
-      query['payload.' + digestKey] = command.payload[digestKey];
+      query[`payload.${digestKey}`] = DigestFilterSteps.getNestedValue(command.payload, digestKey);
     }
 
     return this.jobRepository.findOne(query);
@@ -72,7 +72,7 @@ export class DigestFilterStepsBackoff {
 
     const digestKey = step?.metadata?.digestKey;
     if (digestKey) {
-      query['payload.' + digestKey] = command.payload[digestKey];
+      query[`payload.${digestKey}`] = command.payload[digestKey];
     }
 
     const digest = await this.jobRepository.findOne(query);

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
 import { StepTypeEnum, DigestTypeEnum } from '@novu/shared';
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
@@ -45,5 +45,28 @@ export class DigestFilterSteps {
       } as MessageTemplateEntity,
       _templateId: command.templateId,
     };
+  }
+
+  public static getNestedValue<ObjectType>(payload: ObjectType, path?: string) {
+    let result = payload;
+    if (!path) return undefined;
+
+    try {
+      const keys = path.split('.');
+
+      for (const key of keys) {
+        if (!result) {
+          return undefined;
+        }
+
+        result = result[key];
+      }
+
+      return result;
+    } catch (error) {
+      Logger.error('Failure when parsing digest payload nested key');
+
+      return undefined;
+    }
   }
 }

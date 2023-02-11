@@ -4,6 +4,7 @@ import { DigestUnitEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum,
 
 import { AddDigestJobCommand } from './add-digest-job.command';
 import { AddJob } from './add-job.usecase';
+import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 
 import {
   CreateExecutionDetailsCommand,
@@ -51,7 +52,9 @@ export class AddDigestJob {
   }
 
   private async shouldDelayDigestOrMerge(job: JobEntity): Promise<AddDigestJobResult> {
-    const { matched, modified } = await this.shouldDelayDigestOrMergeWithLock(job);
+    const digestKey = DigestFilterSteps.getNestedValue(job.payload, job.step.metadata?.digestKey);
+
+    const { matched, modified } = await this.shouldDelayDigestOrMergeWithLock(job, digestKey);
 
     // We merged the digest job as there was an existing delayed digest job for this subscriber and template in the same time frame
     if (matched > 0 && modified === 0) {
@@ -74,11 +77,11 @@ export class AddDigestJob {
     return undefined;
   }
 
-  private async shouldDelayDigestOrMergeWithLock(job: JobEntity): Promise<IFindAndUpdateResponse> {
+  private async shouldDelayDigestOrMergeWithLock(job: JobEntity, digestKey: string): Promise<IFindAndUpdateResponse> {
     const resource = `environment:${job._environmentId}:template:${job._templateId}:subscriber:${job._subscriberId}`;
     const TTL = 500;
 
-    const shouldDelayDigestJobOrMerge = async () => this.jobRepository.shouldDelayDigestJobOrMerge(job);
+    const shouldDelayDigestJobOrMerge = async () => this.jobRepository.shouldDelayDigestJobOrMerge(job, digestKey);
 
     const result = await this.distributedLockService.applyLock<IFindAndUpdateResponse>(
       {
