@@ -2,7 +2,7 @@ FROM node:16-alpine3.16
 
 WORKDIR /usr/src/app
 
-RUN npm install -g pnpm@7.26.3 --loglevel notice
+RUN npm install -g pnpm@7.27.0 --loglevel notice
 RUN npm i pm2 -g
 
 COPY .npmrc .
