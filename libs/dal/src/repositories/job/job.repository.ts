@@ -154,7 +154,7 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
       environment: EnvironmentEntity;
     }
   > {
-    return Job.findOne(query, select)
+    return this.MongooseModel.findOne(query, select)
       .populate('template', selectTemplate)
       .populate('notification', selectNotification)
       .populate('subscriber', selectSubscriber)

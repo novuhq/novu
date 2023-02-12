@@ -58,9 +58,9 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
       };
     }
 
-    const totalCount = await Notification.countDocuments(requestQuery);
+    const totalCount = await this.MongooseModel.countDocuments(requestQuery);
 
-    const response = await this.populateFeed(Notification.find(requestQuery))
+    const response = await this.populateFeed(this.MongooseModel.find(requestQuery))
       .skip(skip)
       .limit(limit)
       .sort('-createdAt');
@@ -78,7 +78,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
       _organizationId,
     };
 
-    return this.mapEntity(await this.populateFeed(Notification.findOne(requestQuery)));
+    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery)));
   }
 
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>) {
