@@ -399,7 +399,7 @@ importers:
       html-to-text: ^1.3.1
       languagedetect: ^1.1.1
       lodash: ^4.17.15
-      mailparser: ^0.5.1
+      mailparser: ^0.6.0
       node-uuid: ^1.4.3
       nodemon: ^2.0.7
       prettier: ^2.1.2
@@ -426,7 +426,7 @@ importers:
       html-to-text: 1.6.2
       languagedetect: 1.3.0
       lodash: 4.17.21
-      mailparser: 0.5.3
+      mailparser: 0.6.2
       node-uuid: 1.4.8
       rimraf: 3.0.2
       rxjs: 6.6.7
@@ -11601,7 +11601,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-module-transforms': 7.20.11
+      '@babel/helper-module-transforms': 7.18.9
       '@babel/helper-plugin-utils': 7.20.2
       '@babel/helper-simple-access': 7.17.7
       babel-plugin-dynamic-import-node: 2.3.3
@@ -27938,7 +27938,7 @@ packages:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==}
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
 
   /@types/bonjour/3.5.10:
     resolution: {integrity: sha512-p7ienRMiS41Nu2/igbJxxLDWrSZ0WxM8UQgCeO9KhoVF7cOVFkrKsiDr1EsJIla8vV3oEEjGcz11jc5yimhzZw==}
@@ -28077,7 +28077,7 @@ packages:
   /@types/express-serve-static-core/4.17.33:
     resolution: {integrity: sha512-TPBqmR/HRYI3eC2E5hmiivIzv+bidAfXofM+sbonAGvyDhySGw9/PQZFt2BLOrjUUR++4eJVpx6KnLQK1Fk9tA==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
     dev: true
@@ -28613,7 +28613,7 @@ packages:
     resolution: {integrity: sha512-nCkHGI4w7ZgAdNkrEu0bv+4xNV/XDqW+DydknebMOQwkpDGx8G+HTlj7R7ABI8i8nKxVw0wtKPi1D+lPOkh4YQ==}
     dependencies:
       '@types/mime': 1.3.2
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
 
   /@types/sinon/9.0.11:
     resolution: {integrity: sha512-PwP4UY33SeeVKodNE37ZlOsR9cReypbMJOhZ7BVE0lB+Hix3efCOxiJWiE5Ia+yL9Cn2Ch72EjFTRze8RZsNtg==}
@@ -30034,8 +30034,8 @@ packages:
     resolution: {integrity: sha512-aT6camzM4xEA54YVJYSqxz1kv4IHnQZRtThJJHhUMRExaU5spC7jX5ugSwTaTgJliIgs4VhZOk7htClvQ/LmRA==}
     engines: {node: '>= 0.12.0'}
 
-  /addressparser/0.3.2:
-    resolution: {integrity: sha512-fDlslCJpojuY1cnb7tY7COAriA7cdSzDiWyrWNdFn7Cjd+jrEgZavqkOgD/wg+eH765YPnQjqlS88OL/Q0Qtkg==}
+  /addressparser/1.0.1:
+    resolution: {integrity: sha512-aQX7AISOMM7HFE0iZ3+YnD07oIeJqWGVnJ+ZIKaBZAk03ftmVYVqsGas/rbXKR21n4D/hKCSHypvcyOkds/xzg==}
     dev: false
 
   /adjust-sourcemap-loader/4.0.0:
@@ -45824,13 +45824,13 @@ packages:
       - debug
     dev: false
 
-  /mailparser/0.5.3:
-    resolution: {integrity: sha512-wA6/BX7eQZ9gumO5N4g6QV/GQNHLAd72BUrfbfZ6NC63Hh4b1BdHOQ/Ps2hzR+qCE68X2YK3B2HCT8VohZ5qKQ==}
+  /mailparser/0.6.2:
+    resolution: {integrity: sha512-5Z5nv7TYojrdrKHjhCOKKFaYs0Lo7PCja4RnLZ2kFE1Fskqg+rRVwFpG9Oqx3YjosGM2QEItjHo7+Jc9qvxGqw==}
     deprecated: Mailparser versions older than v2.3.0 are deprecated
     dependencies:
       encoding: 0.1.13
       mime: 1.6.0
-      mimelib: 0.2.19
+      mimelib: 0.3.1
       uue: 3.1.2
     dev: false
 
@@ -46420,11 +46420,11 @@ packages:
     engines: {node: '>=10.0.0'}
     hasBin: true
 
-  /mimelib/0.2.19:
-    resolution: {integrity: sha512-f0FEP0iMNT2u4YbAIBK8KZHaOvWGAdrVq+OyLUpIjpCfjO+nVCTtNM9wb+O8tJPm12w6kb4I6okERU94QdA43A==}
+  /mimelib/0.3.1:
+    resolution: {integrity: sha512-ipzNp6TBsNfD3hButGlPVlGmuCgybIM9SBf8YwIG+SYmBgtU0u8wjf+BSrJX0mvqtv59SLmwphw/XiCbkLWv7w==}
     deprecated: This project is unmaintained
     dependencies:
-      addressparser: 0.3.2
+      addressparser: 1.0.1
       encoding: 0.1.13
     dev: false
 
@@ -56894,7 +56894,6 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
