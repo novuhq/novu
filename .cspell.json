@@ -392,7 +392,9 @@
     "backoff",
     "isequal",
     "Scriptable",
-    "iife"
+    "iife",
+    "kannel",
+    "sendsms"
   ],
   "flagWords": [],
   "patterns": [
