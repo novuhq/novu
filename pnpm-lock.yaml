@@ -207,7 +207,7 @@ importers:
       '@novu/testing': ^0.11.0
       '@novu/twilio': ^0.11.0
       '@sendgrid/mail': ^7.6.0
-      '@sentry/hub': 7.22.0
+      '@sentry/hub': 7.37.1
       '@sentry/node': ^7.12.1
       '@sentry/tracing': ^7.12.1
       '@types/bcrypt': ^3.0.0
@@ -316,7 +316,7 @@ importers:
       '@novu/testing': link:../../libs/testing
       '@novu/twilio': link:../../providers/twilio
       '@sendgrid/mail': 7.6.2
-      '@sentry/hub': 7.22.0
+      '@sentry/hub': 7.37.1
       '@sentry/node': 7.12.1
       '@sentry/tracing': 7.12.1
       '@types/handlebars': 4.1.0
@@ -340,7 +340,7 @@ importers:
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       nanoid: 3.3.2
-      nest-raven: 8.2.0_5a37dcvlmxagvrz6qabro62qru
+      nest-raven: 8.2.0_2bov3fekvkhjny3mycsl7zfu4y
       newrelic: 9.7.5
       passport: 0.6.0
       passport-github2: 0.1.12
@@ -6292,7 +6292,7 @@ packages:
     dependencies:
       '@aws-sdk/types': 3.226.0
       '@aws-sdk/util-uri-escape': 3.201.0
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: false
 
   /@aws-sdk/querystring-builder/3.266.1:
@@ -6656,7 +6656,7 @@ packages:
       '@aws-sdk/middleware-stack': 3.226.0
       '@aws-sdk/smithy-client': 3.234.0
       '@aws-sdk/types': 3.226.0
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: false
 
   /@aws-sdk/util-create-request/3.58.0:
@@ -6757,7 +6757,7 @@ packages:
     dependencies:
       '@aws-sdk/querystring-builder': 3.226.0
       '@aws-sdk/types': 3.226.0
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: false
 
   /@aws-sdk/util-format-url/3.58.0:
@@ -6867,7 +6867,7 @@ packages:
     resolution: {integrity: sha512-TeTWbGx4LU2c5rx0obHeDFeO9HvwYwQtMh1yniBz00pQb6Qt6YVOETVQikRZ+XRQwEyCg/dA375UplIpiy54mA==}
     engines: {node: '>=14.0.0'}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: false
 
   /@aws-sdk/util-uri-escape/3.55.0:
@@ -7411,6 +7411,19 @@ packages:
       '@babel/helper-validator-option': 7.16.7
       browserslist: 4.21.4
       semver: 6.3.0
+
+  /@babel/helper-compilation-targets/7.18.9_@babel+core@7.17.8:
+    resolution: {integrity: sha512-tzLCyVmqUiFlcFoAPLA/gL9TeYrF61VLNtb+hvkuVaB5SUjW7jcfrglBIX1vUIoT7CLP3bBlIMeyEsIl2eFQNg==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+    dependencies:
+      '@babel/compat-data': 7.20.14
+      '@babel/core': 7.17.8
+      '@babel/helper-validator-option': 7.18.6
+      browserslist: 4.21.4
+      semver: 6.3.0
+    dev: true
 
   /@babel/helper-compilation-targets/7.18.9_@babel+core@7.18.5:
     resolution: {integrity: sha512-tzLCyVmqUiFlcFoAPLA/gL9TeYrF61VLNtb+hvkuVaB5SUjW7jcfrglBIX1vUIoT7CLP3bBlIMeyEsIl2eFQNg==}
@@ -7987,7 +8000,6 @@ packages:
     dependencies:
       '@babel/template': 7.20.7
       '@babel/types': 7.20.7
-    dev: true
 
   /@babel/helper-function-name/7.19.0:
     resolution: {integrity: sha512-WAwHBINyrpqywkUH0nTnNgI5ina5TFn85HKS0pbPDfxFfhyR/aNQEn4hGi1P1JyT//I0t4OgXUlofzWILRvS5w==}
@@ -11293,8 +11305,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-compilation-targets': 7.20.7_@babel+core@7.17.8
-      '@babel/helper-function-name': 7.19.0
+      '@babel/helper-compilation-targets': 7.18.9_@babel+core@7.17.8
+      '@babel/helper-function-name': 7.18.9
       '@babel/helper-plugin-utils': 7.20.2
     dev: true
 
@@ -11305,8 +11317,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.18.5
-      '@babel/helper-compilation-targets': 7.20.7_@babel+core@7.18.5
-      '@babel/helper-function-name': 7.19.0
+      '@babel/helper-compilation-targets': 7.18.9_@babel+core@7.18.5
+      '@babel/helper-function-name': 7.18.9
       '@babel/helper-plugin-utils': 7.20.2
     dev: false
 
@@ -15189,7 +15201,7 @@ packages:
       serve-handler: 6.1.3
       shelljs: 0.8.5
       terser-webpack-plugin: 5.3.3_webpack@5.75.0
-      tslib: 2.4.1
+      tslib: 2.5.0
       update-notifier: 5.1.0
       url-loader: 4.1.1_p5dl6emkcwslbw72e37w4ug7em
       wait-on: 6.0.1
@@ -15867,7 +15879,7 @@ packages:
       '@docusaurus/utils': 2.1.0_@docusaurus+types@2.1.0
       joi: 17.6.0
       js-yaml: 4.1.0
-      tslib: 2.4.1
+      tslib: 2.5.0
     transitivePeerDependencies:
       - '@docusaurus/types'
       - '@swc/core'
@@ -17998,7 +18010,7 @@ packages:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-reports': 3.0.1
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       '@types/yargs': 15.0.14
       chalk: 4.1.2
 
@@ -22116,7 +22128,7 @@ packages:
     dependencies:
       '@lukeed/uuid': 2.0.0
       dset: 3.1.2
-      tslib: 2.4.1
+      tslib: 2.5.0
     dev: false
 
   /@segment/analytics-next/1.48.0:
@@ -22343,21 +22355,21 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@sentry/core/7.22.0:
-    resolution: {integrity: sha512-qYJiJrL1mfQQln84mNunBRUkXq7xDGQQoNh4Sz9VYP5698va51zmS5BLYRCZ5CkPwRYNuhUqlUXN7bpYGYOOIA==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@sentry/types': 7.22.0
-      '@sentry/utils': 7.22.0
-      tslib: 1.14.1
-    dev: false
-
   /@sentry/core/7.30.0:
     resolution: {integrity: sha512-NeLigkBlpcK63ymM63GoIHurml6V3BUe1Vi+trwm4/qqOTzT7PQhvdJCX+o3+atzRBH+zdb6kd4VWx44Oye3KA==}
     engines: {node: '>=8'}
     dependencies:
       '@sentry/types': 7.30.0
       '@sentry/utils': 7.30.0
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/core/7.37.1:
+    resolution: {integrity: sha512-eS5hoFDjAOl7POZg6K77J0oiypiqR1782oVSB49UkjK+D8tCZzZ5PxPMv0b/O0310p7x4oZ3WGRJaWEN3vY4KQ==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/types': 7.37.1
+      '@sentry/utils': 7.37.1
       tslib: 1.14.1
     dev: false
 
@@ -22379,13 +22391,13 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@sentry/hub/7.22.0:
-    resolution: {integrity: sha512-aaHfzGzhyMbKf7ROrJA3ZBxH3+6VZ99B3HeKgiLxdbsqB/UNRZ4bWIX+5BpOY6pYja00S5ftlmF7cXRd8PtUlw==}
+  /@sentry/hub/7.37.1:
+    resolution: {integrity: sha512-l0JVIAXngLd7LiNgBiasuK9YtTw5SvaOsedyLqNlb6dYFHfJTHZggVzQtu+F4oSzCBE4ld4DHJCCzQUQFEjIrw==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/core': 7.22.0
-      '@sentry/types': 7.22.0
-      '@sentry/utils': 7.22.0
+      '@sentry/core': 7.37.1
+      '@sentry/types': 7.37.1
+      '@sentry/utils': 7.37.1
       tslib: 1.14.1
     dev: false
 
@@ -22491,13 +22503,13 @@ packages:
     engines: {node: '>=8'}
     dev: false
 
-  /@sentry/types/7.22.0:
-    resolution: {integrity: sha512-LhCL+wb1Jch+OesB2CIt6xpfO1Ab6CRvoNYRRzVumWPLns1T3ZJkarYfhbLaOEIb38EIbPgREdxn2AJT560U4Q==}
+  /@sentry/types/7.30.0:
+    resolution: {integrity: sha512-l4A86typvt/SfWh5JffpdxNGkg5EEA8m35BzpIcKmCAQZUDmnb4b478r8jdD2uuOjLmPNmZr1tifdRW4NCLuxQ==}
     engines: {node: '>=8'}
     dev: false
 
-  /@sentry/types/7.30.0:
-    resolution: {integrity: sha512-l4A86typvt/SfWh5JffpdxNGkg5EEA8m35BzpIcKmCAQZUDmnb4b478r8jdD2uuOjLmPNmZr1tifdRW4NCLuxQ==}
+  /@sentry/types/7.37.1:
+    resolution: {integrity: sha512-c2HWyWSgVA0V4+DSW2qVb0yjftrb1X/q2CzCom+ayjGHO72qyWC+9Tc+7ZfotU1mapRjqUWBgkXkbGmao8N8Ug==}
     engines: {node: '>=8'}
     dev: false
 
@@ -22517,19 +22529,19 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@sentry/utils/7.22.0:
-    resolution: {integrity: sha512-1GiNw1opIngxg0nktCTc9wibh4/LV12kclrnB9dAOHrqazZXHXZRAkjqrhQphKcMpT+3By91W6EofjaDt5a/hg==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@sentry/types': 7.22.0
-      tslib: 1.14.1
-    dev: false
-
   /@sentry/utils/7.30.0:
     resolution: {integrity: sha512-tSlBhr5u/LdE2emxIDTDmjmyRr99GnZGIAh5GwRxUgeDQ3VEfNUFlyFodBCbZ6yeYTYd6PWNih5xoHn1+Rf3Sw==}
     engines: {node: '>=8'}
     dependencies:
       '@sentry/types': 7.30.0
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/utils/7.37.1:
+    resolution: {integrity: sha512-/4mJOyDsfysx+5TXyJgSI+Ihw2/0EVJbrHjCyXPDXW5ADwbtU8VdBZ0unOmF0hk4QfftqwM9cyEu3BN4iBJsEA==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/types': 7.37.1
       tslib: 1.14.1
     dev: false
 
@@ -27980,7 +27992,7 @@ packages:
   /@types/engine.io/3.1.7:
     resolution: {integrity: sha512-qNjVXcrp+1sS8YpRUa714r0pgzOwESdW5UjHL7D/2ZFdBX0BXUXtg1LUrp+ylvqbvMcMWUy73YpRoxPN2VoKAQ==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
     dev: true
 
   /@types/eslint-scope/3.7.4:
@@ -28370,7 +28382,7 @@ packages:
   /@types/oauth/0.9.1:
     resolution: {integrity: sha512-a1iY62/a3yhZ7qH7cNUsxoI3U/0Fe9+RnuFrpTKr+0WVOzbKlSLojShCKe20aOD1Sppv+i8Zlq0pLDuTJnwS4A==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
     dev: true
 
   /@types/overlayscrollbars/1.12.1:
@@ -36545,7 +36557,7 @@ packages:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
     dependencies:
       no-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /dot-prop/3.0.0:
     resolution: {integrity: sha1-G3CK8JSknJoOfbyteQq6U52sEXc=}
@@ -44130,7 +44142,7 @@ packages:
     resolution: {integrity: sha512-KWYVV1c4i+jbMpaBC+U++4Va0cp8OisU185o73T1vo99hqi7w8tSJfUXYswwqqrjzwxa6KpRK54WhPvwf5w6PQ==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       merge-stream: 2.0.0
       supports-color: 7.2.0
 
@@ -45648,7 +45660,7 @@ packages:
   /lower-case/2.0.2:
     resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
     dependencies:
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /lowercase-keys/1.0.1:
     resolution: {integrity: sha512-G2Lj61tXDnVFFOi8VZds+SoQjtQC3dgokKdDG2mTm1tx4m50NUHBOZSBwQQHyy0V12A0JTG4icfZQH+xPyh8VA==}
@@ -47165,7 +47177,7 @@ packages:
       - utf-8-validate
     dev: false
 
-  /nest-raven/8.2.0_5a37dcvlmxagvrz6qabro62qru:
+  /nest-raven/8.2.0_2bov3fekvkhjny3mycsl7zfu4y:
     resolution: {integrity: sha512-DGTpdX4Wr9KICtczhy9hLgw+jP0KtmS8ZrAi9U70uMYstTtGPQkCt79cSk71E6lcgwbnNPOPlxPA5UqAupUqQQ==}
     peerDependencies:
       '@nestjs/common': ^8.0.0
@@ -47175,7 +47187,7 @@ packages:
       rxjs: ^7.0.0
     dependencies:
       '@nestjs/common': 9.0.2_mgahpprohdkjk6lephiejykozi
-      '@sentry/hub': 7.22.0
+      '@sentry/hub': 7.37.1
       '@sentry/node': 7.12.1
       reflect-metadata: 0.1.13
       rxjs: 7.5.5
@@ -47356,7 +47368,7 @@ packages:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
     dependencies:
       lower-case: 2.0.2
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /nock/13.2.4:
     resolution: {integrity: sha512-8GPznwxcPNCH/h8B+XZcKjYPXnUV5clOKCjAqyjsiqA++MpNx9E9+t8YPp0MbThO+KauRo7aZJ1WuIZmOrT2Ug==}
@@ -48032,7 +48044,7 @@ packages:
       tar-stream: 2.2.0
       tmp: 0.2.1
       tsconfig-paths: 3.14.1
-      tslib: 2.4.1
+      tslib: 2.5.0
       v8-compile-cache: 2.3.0
       yargs: 17.6.2
       yargs-parser: 21.0.1
@@ -48854,7 +48866,7 @@ packages:
     resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
     dependencies:
       dot-case: 3.0.4
-      tslib: 2.4.1
+      tslib: 2.5.0
 
   /parent-module/1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
