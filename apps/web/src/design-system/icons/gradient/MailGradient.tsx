@@ -1,5 +1,5 @@
 import React from 'react';
-import { IIconProps } from './MobileGradient';
+import { IIconProps } from './SmsGradient';
 /* eslint-disable */
 export function MailGradient({ disabled = false, width = '30px', height = '31px' }: IIconProps) {
   return (

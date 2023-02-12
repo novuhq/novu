@@ -1,9 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Grid, Stack, useMantineColorScheme, Loader } from '@mantine/core';
+import { Grid, Stack, useMantineColorScheme, Stepper } from '@mantine/core';
 import styled from '@emotion/styled';
-import { colors, shadows, Text, Title } from '../../design-system';
+import { colors, shadows, Text } from '../../design-system';
 import { When } from '../../components/utils/When';
+import { Prism } from '../settings/tabs/components/Prism';
+import { demoClone, npmInstall, npmRunCommand, openLocalHost } from './consts';
+import { GoBack } from './components/route/GoBack';
+import { localNavigate } from './components/route/store';
+import { LoaderProceedTernary } from './components/LoaderProceedTernary';
+import { useInAppActivated } from './components/useInAppActivated';
+import PageContainer from '../../components/layout/components/PageContainer';
 export function QuickStartHeader({
   children,
   title,
@@ -13,25 +20,50 @@ export function QuickStartHeader({
   title?: React.ReactNode | string;
   description?: React.ReactNode | string;
 }) {
+  const FIRST_PAGE = '/quickstart';
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    localStorage.setItem('client_location', location.pathname);
+    localNavigate().push(location.pathname);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const lastRoute = localNavigate().peek();
+    if (lastRoute) {
+      navigate(lastRoute);
+    }
   }, []);
 
+  function goBackHandler() {
+    const route = localNavigate().pop()?.at(-1);
+
+    if (route) {
+      navigate(route);
+    }
+  }
+
   return (
-    <Stack
-      align="center"
-      justify="center"
-      sx={(theme) => ({
-        backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
-        height: '100%',
-      })}
-    >
-      <QuickStartTitle>{title}</QuickStartTitle>
-      <QuickStartDescription>{description}</QuickStartDescription>
-      {children}
-    </Stack>
+    <>
+      <PageContainer>
+        <PageWrapper>
+          <GoBack goBackHandler={goBackHandler} display={location.pathname !== FIRST_PAGE} />
+          <Stack
+            align="center"
+            justify="center"
+            sx={(theme) => ({
+              backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
+              height: '100%',
+              background: 'border-box',
+            })}
+          >
+            <QuickStartTitle>{title}</QuickStartTitle>
+            <QuickStartDescription>{description}</QuickStartDescription>
+            {children}
+          </Stack>
+        </PageWrapper>
+      </PageContainer>
+    </>
   );
 }
 
@@ -42,7 +74,7 @@ export function QuickStartCards({ cells }: { cells: ICardCell[] }) {
     <Grid mb={50}>
       {cells.map((cell, index) => (
         <Grid.Col span={spanNumber} key={index}>
-          <NavCard cell={cell} />
+          <NavCard cell={cell} key={index} />
         </Grid.Col>
       ))}
     </Grid>
@@ -94,7 +126,6 @@ export function HelpNeeded() {
 const QuickStartTitle = styled.div`
   font-size: 22px;
   color: ${colors.B60};
-  margin-top: -100px;
 `;
 
 const QuickStartDescription = styled.div`
@@ -107,8 +138,10 @@ function NavCard({ cell }: { cell: ICardCell }) {
   const { colorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
 
-  const NavIcon = cell.navIcon as (props: React.ComponentPropsWithoutRef<'svg'>) => JSX.Element;
-  const cardWithIconAndDescription = cell.description && cell.navIcon;
+  const NavIcon = cell.navIcon
+    ? (cell.navIcon as (props: React.ComponentPropsWithoutRef<'svg'>) => JSX.Element)
+    : undefined;
+  const cardWithIconAndDescription = cell.navIcon;
   const cardWithImage = cell.imagePath;
   const alt = cell.imagePath?.split('/').pop();
 
@@ -116,17 +149,12 @@ function NavCard({ cell }: { cell: ICardCell }) {
     if (cell.navigateTo) {
       navigate(cell.navigateTo);
     }
-
-    if (cell.href) {
-      navigate('/quickstart/notification-center/trouble-shooting');
-      // window.open(cell.href, '_blank');
-    }
   };
 
   return (
     <StyledCard dark={colorScheme === 'dark'} onClick={handleOnClick}>
       <When truthy={cardWithIconAndDescription}>
-        <NavIcon style={{ height: '48px', width: '39px' }} />
+        {NavIcon ? <NavIcon style={{ height: '48px', width: '39px' }} /> : null}
         <Text mt={10} size={'lg'}>
           {cell.description ?? ''}
         </Text>
@@ -162,22 +190,21 @@ const StyledCard = styled.div<{ dark: boolean }>`
             box-shadow: ${shadows.light};
           `};
   }
+
+  opacity: 0;
+  transform: translateY(20px);
+  animation: showUp 0.3s ease-out forwards;
+
+  @keyframes showUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
-export const DelayedRender = ({ component, delay }: { component: JSX.Element; delay: number }) => {
-  const [showComponent, setShowComponent] = useState(false);
-
-  useEffect(() => {
-    setTimeout(() => {
-      setShowComponent(true);
-    }, delay);
-  }, []);
-
-  return showComponent ? <>{component}</> : <WrappedLoader size={100} variant={'bars'} />;
-};
-
-const WrappedLoader = styled(Loader)`
-  height: 265px;
+const PageWrapper = styled.div`
+  padding: 42px 30px;
 `;
 
 interface ICardCell {
@@ -199,8 +226,26 @@ const InlineDiv = styled.div`
   }
 `;
 
-export const welcomeDescription = 'Welcome to Novu, let’s get started';
-
 export function QuickStartDemo() {
-  return <Title>Demo app</Title>;
+  const { initialized } = useInAppActivated();
+
+  return (
+    <>
+      <LoaderProceedTernary appInitialized={initialized} navigatePath={'/quickstart/notification-center/trigger'} />
+
+      <Stepper active={0} onStepClick={() => {}} orientation="vertical">
+        <Stepper.Step
+          label="Clone the project to your local machine"
+          description={<Prism code={`${demoClone}   `} />}
+        />
+        <Stepper.Step label="Run npm install " description={<Prism code={`${npmInstall}   `} />} />
+        <Stepper.Step label="Update .env variable withe the following ones" description="Get full access" />
+        <Stepper.Step label="Run npm run dev " description={<Prism code={`${npmRunCommand}   `} />} />
+        <Stepper.Step
+          label="If the browser did not automatically opened open localhost"
+          description={<Prism code={`${openLocalHost}   `} />}
+        />
+      </Stepper>
+    </>
+  );
 }

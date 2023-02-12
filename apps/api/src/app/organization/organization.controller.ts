@@ -33,8 +33,6 @@ import { IGetOrganizationsDto } from './dtos/get-organizations.dto';
 import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
 import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-organization.command';
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
-import { GetInAppActivated } from './usecases/get-In-app-activated/get-In-app-activated.usecase';
-import { GetInAppActivatedCommand } from './usecases/get-In-app-activated/get-In-app-activated.command';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -49,8 +47,7 @@ export class OrganizationController {
     private changeMemberRoleUsecase: ChangeMemberRole,
     private updateBrandingDetailsUsecase: UpdateBrandingDetails,
     private getOrganizationsUsecase: GetOrganizations,
-    private getMyOrganizationUsecase: GetMyOrganization,
-    private getInAppActivatedUsecase: GetInAppActivated
+    private getMyOrganizationUsecase: GetMyOrganization
   ) {}
 
   @Post('/')
@@ -154,16 +151,6 @@ export class OrganizationController {
         fontColor: body.fontColor,
         fontFamily: body.fontFamily,
         contentBackground: body.contentBackground,
-      })
-    );
-  }
-
-  @Get('/in-app/activated')
-  async getInAppActivated(@UserSession() user: IJwtPayload) {
-    return await this.getInAppActivatedUsecase.execute(
-      GetInAppActivatedCommand.create({
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
       })
     );
   }

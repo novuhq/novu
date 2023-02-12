@@ -4289,6 +4289,7 @@ packages:
   /@apollo/gateway/0.29.1_graphql@15.8.0:
     resolution: {integrity: sha512-FNHqvuvA63MRebqOmkpMjYUbslcozZFnmqAqDW2dRpb3fJ5Rg5H/cHnTmRrs+XDmIOQKuNKhoFA/Kvkz3Ngbjg==}
     engines: {node: '>=12.13.0 <17.0'}
+    deprecated: All v0.x versions of @apollo/gateway are now deprecated (end-of-life September 22, 2023). Apollo recommends upgrading to v2.x or migrating to the Apollo Router as soon as possible. For more details, see our announcement blog post (https://www.apollographql.com/blog/announcement/backend/announcing-the-end-of-life-schedule-for-apollo-gateway-v0-x/) and documentation (https://www.apollographql.com/docs/federation/federation-2/backward-compatibility/#is-official-support-ending-for-apollogateway-v0x).
     requiresBuild: true
     peerDependencies:
       graphql: ^14.5.0 || ^15.0.0

@@ -1,37 +1,33 @@
-import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
-import { getInAppActivated } from '../../../api/organization';
 import { useMutation } from '@tanstack/react-query';
 import { ChannelCTATypeEnum, ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
 import { createTemplate } from '../../../api/notification-templates';
 import { Prism } from '../../settings/tabs/components/Prism';
-import { notificationTemplateName, reactStarterSnippet } from '../consts';
+import { frameworkInstructions, notificationTemplateName } from '../consts';
 import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
 import { useTemplates } from '../../../api/hooks/useTemplates';
-import styled from '@emotion/styled';
-import { Loader } from '@mantine/core';
+import { Stepper } from '@mantine/core';
 import { useEnvController } from '../../../store/useEnvController';
+import { LoaderProceedTernary } from './LoaderProceedTernary';
+import { useInAppActivated } from './useInAppActivated';
+import { useParams } from 'react-router-dom';
 
-export function Troubleshooting() {
-  const [updatedReactStarterSnippet, setUpdatedReactStarterSnippet] = useState<string>(reactStarterSnippet);
+export function SetUp() {
   const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();
+  const { framework } = useParams();
   const { groups } = useNotificationGroup();
-  const navigate = useNavigate();
-  let intervalId: NodeJS.Timer;
   const { templates = [], loading } = useTemplates();
   const { environment } = useEnvController();
+  const { initialized } = useInAppActivated();
+
+  const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
+
   const { mutateAsync: createNotificationTemplate } = useMutation<
     INotificationTemplate,
     { error: string; message: string; statusCode: number },
     ICreateNotificationTemplateDto
   >(createTemplate);
-
-  useEffect(() => {
-    setInit();
-
-    intervalId = setInterval(() => setInit(), 3000);
-  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -40,22 +36,12 @@ export function Troubleshooting() {
       );
 
       if (onboardingNotificationTemplate) {
-        setUpdatedReactStarterSnippet(updateCodeSnipped(onboardingNotificationTemplate, environmentIdentifier));
         setNotificationTemplate(onboardingNotificationTemplate);
       } else {
         createOnBoardingTemplate();
       }
     }
   }, [templates]);
-
-  async function setInit() {
-    const activeRes = await getInAppActivated();
-
-    if (activeRes) {
-      clearInterval(intervalId);
-      navigate('/quickstart/notification-center/trigger');
-    }
-  }
 
   async function createOnBoardingTemplate() {
     const payloadToCreate = {
@@ -79,22 +65,28 @@ export function Troubleshooting() {
     } as ICreateNotificationTemplateDto;
 
     const createdTemplate = await createNotificationTemplate(payloadToCreate);
-    setUpdatedReactStarterSnippet(updateCodeSnipped(createdTemplate, environmentIdentifier));
     setNotificationTemplate(createdTemplate);
   }
 
   return (
     <>
-      <Prism code={updatedReactStarterSnippet || ''} />
-      {/*<WrappedLoader size={100} variant={'bars'} />*/}
+      <LoaderProceedTernary appInitialized={initialized} navigatePath={'/quickstart/notification-center/trigger'} />
+
+      <Stepper active={0} onStepClick={() => {}} orientation="vertical">
+        {instructions.map((instruction, index) => {
+          return (
+            <Stepper.Step
+              label={instruction.instruction}
+              description={<Prism code={`${updateCodeSnipped(instruction.snippet, environmentIdentifier)}   `} />}
+              key={index}
+            />
+          );
+        })}
+      </Stepper>
     </>
   );
 }
 
-function updateCodeSnipped(createdTemplate: INotificationTemplate, environmentIdentifier: string) {
-  return reactStarterSnippet.replace('APP_ID_FROM_ADMIN_PANEL', environmentIdentifier);
+function updateCodeSnipped(codeSnippet: string, environmentIdentifier: string) {
+  return codeSnippet.replace('APPLICATION_IDENTIFIER', environmentIdentifier);
 }
-
-const WrappedLoader = styled(Loader)`
-  height: 265px;
-`;

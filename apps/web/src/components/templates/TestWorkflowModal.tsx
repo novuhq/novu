@@ -14,16 +14,12 @@ import { When } from '../utils/When';
 
 const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
   const subsVars = getSubscriberValue(subscriberVariables, (variable) => {
-    if (currentUser) {
-      const test = currentUser[variable.name === 'subscriberId' && !variable.manual ? 'id' : variable.name];
-
-      // eslint-disable-next-line no-console
-      console.log(test);
+    if (variable.name === 'subscriberId' && variable.manual) {
+      return variable.value;
     }
 
     return (
-      (currentUser && currentUser[variable.name === 'subscriberId' && !variable.manual ? 'id' : variable.name]) ||
-      '<REPLACE_WITH_DATA>'
+      (currentUser && currentUser[variable.name === 'subscriberId' ? 'id' : variable.name]) || '<REPLACE_WITH_DATA>'
     );
   });
 

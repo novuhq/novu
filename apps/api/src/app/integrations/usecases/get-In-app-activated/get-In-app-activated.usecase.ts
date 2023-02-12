@@ -7,12 +7,13 @@ export class GetInAppActivated {
   constructor(private readonly subscriberRepository: SubscriberRepository) {}
 
   async execute(command: GetInAppActivatedCommand): Promise<boolean> {
-    const inAppSubscriberCount = await this.subscriberRepository.find({
+    const inAppSubscriberCount = await this.subscriberRepository.count({
       _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
       isOnline: { $exists: true },
-      subscriberId: { $not: /cli-/ },
+      subscriberId: /on-boarding-subscriber/i,
     });
 
-    return inAppSubscriberCount.length > 0;
+    return inAppSubscriberCount > 0;
   }
 }

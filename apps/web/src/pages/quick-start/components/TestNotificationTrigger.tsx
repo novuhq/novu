@@ -10,7 +10,7 @@ import { Button, Text } from '../../../design-system';
 import { TestWorkflowModal } from '../../../components/templates/TestWorkflowModal';
 import { HelpNeeded } from '../QuickStart';
 import { useTemplates } from '../../../api/hooks/useTemplates';
-import { notificationTemplateName } from '../consts';
+import { notificationTemplateName, onBoardingSubscriberId } from '../consts';
 
 export function TestNotificationTrigger() {
   const [opened, setOpened] = useState<boolean>(false);
@@ -54,7 +54,7 @@ function getNotificationTrigger(templates: any[]): INotificationTrigger {
     identifier: onboardingNotificationTemplate?.triggers[0].identifier ?? '',
     variables: [],
     subscriberVariables: [
-      { name: 'subscriberId', value: '<REPLACE>', type: TemplateVariableTypeEnum.STRING, manual: true },
+      { name: 'subscriberId', value: onBoardingSubscriberId, type: TemplateVariableTypeEnum.STRING, manual: true },
     ] as INotificationTriggerVariable[],
   };
 }

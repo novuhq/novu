@@ -20,6 +20,7 @@ import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
 import { LimitBar } from '../../../pages/integrations/components/LimitBar';
+import { localNavigate } from '../../../pages/quick-start/components/route/store';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -70,13 +71,13 @@ export function SideNav({}: Props) {
     ]);
   }, [environment]);
 
-  const gettingStartedLink = localStorage.getItem('client_location');
+  const lastRoute = localNavigate().peek();
 
   const menuItems = [
     {
       condition: !readonly && currentUser?.showOnBoarding,
       icon: <CheckCircleOutlined />,
-      link: gettingStartedLink ?? '/quickstart',
+      link: lastRoute ?? '/quickstart',
       label: 'Getting Started',
       testId: 'side-nav-quickstart-link',
     },

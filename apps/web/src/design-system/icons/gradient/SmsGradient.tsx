@@ -1,5 +1,10 @@
 import React from 'react';
-import { IIconProps } from './MobileGradient';
+
+export interface IIconProps {
+  disabled?: boolean;
+  width?: string;
+  height?: string;
+}
 
 /* eslint-disable */
 export function SmsGradient({ disabled = false, width = '31px', height = '31px' }: IIconProps) {
@@ -19,7 +24,8 @@ export function SmsGradient({ disabled = false, width = '31px', height = '31px' 
           y1="33.8334"
           x2="20.4998"
           y2="9.83337"
-          gradientUnits="userSpaceOnUse">
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="#FF512F" />
           <stop offset="1" stopColor="#DD2476" />
         </linearGradient>
