@@ -1181,7 +1181,7 @@ importers:
       googleapis: ^60.0.1
       intercom-client: ^2.11.0
       jsonfile: ^6.0.1
-      mixpanel: ^0.13.0
+      mixpanel: ^0.17.0
       mongoose: 6.4.6
       mongoose-delete: ^0.5.4
       ng-intercom: ^8.0.2
@@ -1217,7 +1217,7 @@ importers:
       googleapis: 60.0.1
       intercom-client: 2.11.2
       jsonfile: 6.1.0
-      mixpanel: 0.13.0
+      mixpanel: 0.17.0
       mongoose: 6.4.6
       mongoose-delete: 0.5.4_mongoose@6.4.6
       ng-intercom: 8.0.2
@@ -1328,14 +1328,14 @@ importers:
       axios: ^0.26.1
       class-transformer: 0.5.1
       class-validator: 0.14.0
-      mixpanel: ^0.13.0
+      mixpanel: ^0.17.0
       rimraf: ^3.0.2
       typescript: 4.9.5
     dependencies:
       axios: 0.26.1
       class-transformer: 0.5.1
       class-validator: 0.14.0
-      mixpanel: 0.13.0
+      mixpanel: 0.17.0
     devDependencies:
       '@types/bluebird': 3.5.36
       rimraf: 3.0.2
@@ -22236,7 +22236,7 @@ packages:
       fs-extra: 10.1.0
       globby: 11.1.0
       http-proxy-agent: 5.0.0
-      https-proxy-agent: 5.0.0
+      https-proxy-agent: 5.0.1
       issue-parser: 6.0.0
       lodash: 4.17.21
       mime: 3.0.0
@@ -40111,7 +40111,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       extend: 3.0.2
-      https-proxy-agent: 5.0.0
+      https-proxy-agent: 5.0.1
       is-stream: 2.0.1
       node-fetch: 2.6.7
     transitivePeerDependencies:
@@ -46678,8 +46678,8 @@ packages:
       for-in: 1.0.2
       is-extendable: 1.0.1
 
-  /mixpanel/0.13.0:
-    resolution: {integrity: sha512-YOWmpr/o4+zJ8LPjuLUkWLc2ImFeIkX6hF1t62Wlvq6loC6e8EK8qieYO4gYPTPxxtjAryl7xmIvf/7qnPwjrQ==}
+  /mixpanel/0.17.0:
+    resolution: {integrity: sha512-DY5WeOy/hmkPrNiiZugJpWR0iMuOwuj1a3u0bgwB2eUFRV6oIew/pIahhpawdbNjb+Bye4a8ID3gefeNPvL81g==}
     engines: {node: '>=10.0'}
     dependencies:
       https-proxy-agent: 5.0.0
@@ -56144,7 +56144,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       http-proxy-agent: 5.0.0
-      https-proxy-agent: 5.0.0
+      https-proxy-agent: 5.0.1
       node-fetch: 2.6.7
       stream-events: 1.0.5
       uuid: 8.3.2
