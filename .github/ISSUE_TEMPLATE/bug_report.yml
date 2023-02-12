@@ -43,14 +43,6 @@ body:
       label: "👎 Actual Behavior with Screenshots"
       description: "What did actually happen? Add screenshots, if applicable."
       placeholder: "It actually ..."
-  - type: input
-    id: node-version
-    validations:
-      required: false
-    attributes:
-      label: "🤖 Node Version"
-      description: >
-        What Node version are you using?
   - type: textarea
     id: additional-context
     validations:

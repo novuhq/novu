@@ -41,19 +41,18 @@ export interface ITriggerPayload {
 
 export type ITriggerOverrides = {
   [key in
-    | 'emailjs'
     | 'mailgun'
     | 'nodemailer'
     | 'plivo'
     | 'postmark'
     | 'sendgrid'
-    | 'twilio']: object;
+    | 'twilio']?: object;
 } & {
-  [key in 'fcm']: ITriggerOverrideFCM;
+  [key in 'fcm']?: ITriggerOverrideFCM;
 } & {
-  [key in 'apns']: ITriggerOverrideAPNS;
+  [key in 'apns']?: ITriggerOverrideAPNS;
 } & {
-  [key in 'delay']: ITriggerOverrideDelayAction;
+  [key in 'delay']?: ITriggerOverrideDelayAction;
 };
 
 export type ITriggerOverrideDelayAction = {
@@ -75,6 +74,7 @@ export type ITriggerOverrideFCM = {
   clickAction?: string;
   titleLocKey?: string;
   titleLocArgs?: string;
+  data?: Record<string, any>;
 };
 
 export type IAPNSAlert = {
@@ -117,3 +117,7 @@ export type ITriggerOverrideAPNS = {
   mdm?: string | Record<string, unknown>;
   urlArgs?: string[];
 };
+
+export interface IBulkEvents extends ITriggerPayloadOptions {
+  name: string;
+}

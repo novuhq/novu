@@ -95,6 +95,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       firstName: 'New Test Name',
       lastName: 'New Last of name',
       email: 'newtest@email.novu',
+      locale: 'en',
     };
 
     await triggerEvent(session, template, payload);
@@ -109,6 +110,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     expect(createdSubscriber.firstName).to.equal(payload.firstName);
     expect(createdSubscriber.lastName).to.equal(payload.lastName);
     expect(createdSubscriber.email).to.equal(payload.email);
+    expect(createdSubscriber.locale).to.equal(payload.locale);
   });
 
   it('should send only email trigger second time based on the subscriber preference', async function () {

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
 import { format } from 'date-fns';
-import * as fs from 'fs';
 import { HandlebarHelpersEnum } from '@novu/shared';
 import { CompileTemplateCommand } from './compile-template.command';
 
@@ -38,39 +37,13 @@ Handlebars.registerHelper(HandlebarHelpersEnum.DATEFORMAT, function (date, dateF
   return date;
 });
 
-const cache = new Map();
-
 @Injectable()
 export class CompileTemplate {
   async execute(command: CompileTemplateCommand): Promise<string | null> {
-    let templateContent = cache.get(command.templateId);
-    if (!templateContent) {
-      templateContent = await this.loadTemplateContent('basic.handlebars');
-      cache.set(command.templateId, templateContent);
-    }
-
-    if (command.templateId === 'custom') {
-      templateContent = command.customTemplate;
-    }
+    const templateContent = command.template;
 
     const template = Handlebars.compile(templateContent);
 
     return template(command.data);
-  }
-
-  private async loadTemplateContent(name: string) {
-    return new Promise<string>((resolve, reject) => {
-      let path = '';
-      if (!process.env.E2E_RUNNER) {
-        path = '/src/app/content-templates/usecases/compile-template';
-      }
-      fs.readFile(`${__dirname}${path}/templates/${name}`, (err, content) => {
-        if (err) {
-          return reject(err);
-        }
-
-        return resolve(content.toString());
-      });
-    });
   }
 }

@@ -1,7 +1,8 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsLocale, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { Transform } from 'class-transformer';
 import { SubscriberEntity } from '@novu/dal';
+import { SubscriberCustomData } from '@novu/shared';
 
 export class CreateSubscriberCommand extends EnvironmentCommand {
   @IsString()
@@ -28,6 +29,13 @@ export class CreateSubscriberCommand extends EnvironmentCommand {
   @IsString()
   @IsOptional()
   avatar?: string;
+
+  @IsLocale()
+  @IsOptional()
+  locale?: string;
+
+  @IsOptional()
+  data?: SubscriberCustomData;
 
   @IsOptional()
   subscriber?: SubscriberEntity;

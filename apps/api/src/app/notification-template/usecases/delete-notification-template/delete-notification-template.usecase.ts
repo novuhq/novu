@@ -1,10 +1,9 @@
 // eslint-ignore max-len
 
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateRepository, DalException } from '@novu/dal';
+import { NotificationTemplateRepository, DalException, ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 import { GetNotificationTemplateCommand } from '../get-notification-template/get-notification-template.command';
@@ -13,7 +12,8 @@ import { GetNotificationTemplateCommand } from '../get-notification-template/get
 export class DeleteNotificationTemplate {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private createChange: CreateChange
+    private createChange: CreateChange,
+    private changeRepository: ChangeRepository
   ) {}
 
   async execute(command: GetNotificationTemplateCommand) {
@@ -26,6 +26,13 @@ export class DeleteNotificationTemplate {
         _environmentId: command.environmentId,
         _id: command.templateId,
       });
+
+      const parentChangeId: string = await this.changeRepository.getChangeId(
+        command.environmentId,
+        ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+        command.templateId
+      );
+
       await this.createChange.execute(
         CreateChangeCommand.create({
           organizationId: command.organizationId,
@@ -33,7 +40,7 @@ export class DeleteNotificationTemplate {
           userId: command.userId,
           item: items[0],
           type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-          changeId: NotificationTemplateRepository.createObjectId(),
+          changeId: parentChangeId,
         })
       );
     } catch (e) {

@@ -1,10 +1,13 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
+
 import { LackIntegrationError } from './LackIntegrationError';
-import { IForm } from './use-template-controller.hook';
+import type { IForm } from './formTypes';
 import { Textarea } from '../../design-system';
-import { useEnvController } from '../../store/use-env-controller';
+import { useEnvController } from '../../store/useEnvController';
 import { VariableManager } from './VariableManager';
-import { useVariablesManager } from '../../hooks/use-variables-manager';
+import { useVariablesManager } from '../../hooks/useVariablesManager';
+
+const templateFields = ['content', 'title'];
 
 export function TemplatePushEditor({
   control,
@@ -20,19 +23,20 @@ export function TemplatePushEditor({
   const {
     formState: { errors },
   } = useFormContext();
-  const variablesArray = useVariablesManager(index, ['content', 'title']);
+  const variablesArray = useVariablesManager(index, templateFields);
 
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="Push" /> : null}
       <Controller
         name={`steps.${index}.template.title` as any}
+        defaultValue=""
         control={control}
         render={({ field }) => (
           <Textarea
             {...field}
             data-test-id="pushNotificationTitle"
-            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
+            error={errors?.steps ? errors.steps[index]?.template?.title?.message : undefined}
             disabled={readonly}
             minRows={4}
             value={field.value || ''}
@@ -43,12 +47,13 @@ export function TemplatePushEditor({
       />
       <Controller
         name={`steps.${index}.template.content` as any}
+        defaultValue=""
         control={control}
         render={({ field }) => (
           <Textarea
             {...field}
             data-test-id="pushNotificationContent"
-            error={errors?.steps ? errors.steps[index]?.template?.title?.message : undefined}
+            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
             disabled={readonly}
             minRows={4}
             value={field.value || ''}

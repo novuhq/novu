@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { Input, Select } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { When } from '../../../components/utils/When';
 
 export const DelayMetadata = ({ control, index }) => {
@@ -57,6 +57,7 @@ export const DelayMetadata = ({ control, index }) => {
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.amount`}
+                defaultValue=""
                 render={({ field, fieldState }) => {
                   return (
                     <Input
@@ -78,6 +79,7 @@ export const DelayMetadata = ({ control, index }) => {
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.unit`}
+                defaultValue=""
                 render={({ field }) => {
                   return (
                     <Select
@@ -105,6 +107,7 @@ export const DelayMetadata = ({ control, index }) => {
         <Controller
           control={control}
           name={`steps.${index}.metadata.delayPath`}
+          defaultValue=""
           render={({ field, fieldState }) => {
             return (
               <Input

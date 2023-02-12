@@ -11,7 +11,7 @@ export class CalculateLimitNovuIntegration {
   static MAX_NOVU_INTEGRATION_MAIL_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_MAIL_REQUESTS || '300', 10);
 
   async execute(command: CalculateLimitNovuIntegrationCommand): Promise<{ limit: number; count: number } | undefined> {
-    if (process.env.DOCKER_HOSTED_ENV === 'true') {
+    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY) {
       return;
     }
 
@@ -21,12 +21,16 @@ export class CalculateLimitNovuIntegration {
       return;
     }
 
-    const messagesCount = await this.messageRepository.count({
-      channel: command.channelType,
-      _organizationId: command.organizationId,
-      providerId,
-      createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
-    });
+    const messagesCount = await this.messageRepository.count(
+      {
+        channel: command.channelType,
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        providerId,
+        createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
+      },
+      CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS
+    );
 
     return {
       limit: CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS,

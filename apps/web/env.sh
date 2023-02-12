@@ -17,6 +17,15 @@ do
     varvalue=$(printf '%s\n' "$line" | sed -e 's/^[^=]*=//')
   fi
 
+  # Continue if no value
+  if [ -z "$varvalue" ]; then
+    continue
+  fi
+
+  if [ -z "$varname" ]; then
+    continue
+  fi
+
   # Read value of current variable if exists as Environment variable
   value=$(printf '%s\n' "${!varname}")
   # Otherwise use value from .env file

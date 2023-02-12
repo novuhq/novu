@@ -30,6 +30,7 @@ describe('Update Subscriber', function () {
         organizationId: subscriber._organizationId,
         subscriberId: subscriber.subscriberId,
         lastName: 'Test Last Name',
+        locale: 'sv',
         environmentId: session.environment._id,
       })
     );
@@ -38,5 +39,6 @@ describe('Update Subscriber', function () {
     expect(updatedSubscriber.lastName).to.equal('Test Last Name');
     expect(updatedSubscriber.firstName).to.equal(subscriber.firstName);
     expect(updatedSubscriber.email).to.equal(subscriber.email);
+    expect(updatedSubscriber.locale).to.equal('sv');
   });
 });

@@ -1,9 +1,9 @@
-import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
-import { FieldArrayProvider } from './FieldArrayProvider';
-import { IForm } from './use-template-controller.hook';
+import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
+
+import type { IForm } from './formTypes';
 
 const schema = z
   .object({
@@ -19,11 +19,10 @@ const schema = z
             type: 'string',
             inclusive: true,
             message: 'Required - Notification Name',
-            path: ['name'],
           });
         }
       }),
-    notificationGroup: z
+    notificationGroupId: z
       .string({
         invalid_type_error: 'Required - Notification Group',
       })
@@ -35,7 +34,6 @@ const schema = z
             type: 'string',
             inclusive: true,
             message: 'Required - Notification Group',
-            path: ['notificationGroup'],
           });
         }
       }),
@@ -48,6 +46,7 @@ const schema = z
                 content: z.any(),
                 subject: z.any(),
                 title: z.any(),
+                layoutId: z.any().optional(),
               })
               .passthrough()
               .superRefine((template: any, ctx) => {
@@ -67,15 +66,17 @@ const schema = z
                     path: ['content'],
                   });
                 }
-                if (template.type === ChannelTypeEnum.EMAIL && !template.subject) {
-                  ctx.addIssue({
-                    code: z.ZodIssueCode.too_small,
-                    minimum: 1,
-                    type: 'string',
-                    inclusive: true,
-                    message: 'Required - Email Subject',
-                    path: ['subject'],
-                  });
+                if (template.type === ChannelTypeEnum.EMAIL) {
+                  if (!template.subject) {
+                    ctx.addIssue({
+                      code: z.ZodIssueCode.too_small,
+                      minimum: 1,
+                      type: 'string',
+                      inclusive: true,
+                      message: 'Required - Email Subject',
+                      path: ['subject'],
+                    });
+                  }
                 }
 
                 if (template.type === ChannelTypeEnum.PUSH && !template.title) {
@@ -184,19 +185,28 @@ const schema = z
   })
   .passthrough();
 
+const defaultValues: IForm = {
+  name: '',
+  notificationGroupId: '',
+  description: '',
+  identifier: '',
+  tags: [],
+  critical: false,
+  steps: [],
+  preferenceSettings: {
+    email: true,
+    sms: true,
+    in_app: true,
+    chat: true,
+    push: true,
+  },
+};
+
 export const TemplateFormProvider = ({ children }) => {
   const methods = useForm<IForm>({
     resolver: zodResolver(schema),
+    defaultValues,
   });
 
-  const steps = useFieldArray({
-    control: methods.control,
-    name: 'steps',
-  });
-
-  return (
-    <FormProvider {...methods}>
-      <FieldArrayProvider fieldArrays={{ steps }}>{children}</FieldArrayProvider>
-    </FormProvider>
-  );
+  return <FormProvider {...methods}>{children}</FormProvider>;
 };

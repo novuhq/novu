@@ -5,6 +5,7 @@ export interface IEnvironment {
   _parentId?: string;
   identifier: string;
   widget: IWidgetSettings;
+  dns?: IDnsSettings;
 
   branding?: {
     color: string;
@@ -18,4 +19,9 @@ export interface IEnvironment {
 
 export interface IWidgetSettings {
   notificationCenterEncryption: boolean;
+}
+
+export interface IDnsSettings {
+  mxRecordConfigured: boolean;
+  inboundParseDomain: string;
 }

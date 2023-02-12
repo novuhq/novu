@@ -150,6 +150,8 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
+        locale: body.locale,
+        data: body.data,
       })
     );
   }
@@ -179,6 +181,8 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
+        locale: body.locale,
+        data: body.data,
       })
     );
   }
@@ -299,8 +303,8 @@ export class SubscribersController {
       subscriberId: subscriberId,
       environmentId: user.environmentId,
       templateId: templateId,
-      channel: body.channel,
-      enabled: body.enabled,
+      ...(typeof body.enabled === 'boolean' && { enabled: body.enabled }),
+      ...(body.channel && { channel: body.channel }),
     });
 
     return await this.updatePreferenceUsecase.execute(command);

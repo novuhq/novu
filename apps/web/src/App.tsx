@@ -7,7 +7,7 @@ import { Integrations } from '@sentry/tracing';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
 import { AuthContext } from './store/authContext';
-import { applyToken, getToken, getTokenPayload, useAuthController } from './store/use-auth-controller';
+import { applyToken, getToken, getTokenPayload, useAuthController } from './store/useAuthController';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
@@ -20,12 +20,12 @@ import InvitationPage from './pages/auth/InvitationPage';
 import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { ThemeContext } from './store/themeContext';
-import { useThemeController } from './store/use-theme-controller';
+import { useThemeController } from './store/useThemeController';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
-import { ENV, SENTRY_DSN, CONTEXT_PATH } from './config';
+import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import QuickStartPage from './pages/quick-start/QuickStartPage';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
@@ -34,19 +34,92 @@ import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { useBlueprint } from './hooks/useBlueprint';
+import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
+import LogRocket from 'logrocket';
+import setupLogRocketReact from 'logrocket-react';
+import packageJson from '../package.json';
+
+if (LOGROCKET_ID && window !== undefined) {
+  LogRocket.init(LOGROCKET_ID, {
+    release: packageJson.version,
+    rootHostname: 'novu.co',
+    console: {
+      shouldAggregateConsoleErrors: true,
+    },
+    network: {
+      requestSanitizer: (request) => {
+        // if the url contains token 'ignore' it
+        if (request.url.toLowerCase().indexOf('token') !== -1) {
+          // ignore the request response pair
+          return null;
+        }
+
+        // remove Authorization header from logrocket
+        request.headers.Authorization = undefined;
+
+        // otherwise log the request normally
+        return request;
+      },
+    },
+  });
+  setupLogRocketReact(LogRocket);
+}
 
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
-    integrations: [new Integrations.BrowserTracing()],
+    integrations: [
+      new Integrations.BrowserTracing(),
+      new Sentry.Replay({
+        // Additional SDK configuration goes in here, for example:
+        maskAllText: true,
+        blockAllMedia: true,
+      }),
+    ],
     environment: ENV,
+
+    /*
+     * This sets the sample rate to be 10%. You may want this to be 100% while
+     * in development and sample at a lower rate in production
+     */
+    replaysSessionSampleRate: 0.5,
+
+    /*
+     * If the entire session is not sampled, use the below sample rate to sample
+     * sessions when an error occurs.
+     */
+    replaysOnErrorSampleRate: 1.0,
+
     /*
      * Set tracesSampleRate to 1.0 to capture 100%
      * of transactions for performance monitoring.
      * We recommend adjusting this value in production
      */
     tracesSampleRate: 1.0,
+    beforeSend(event: Sentry.Event) {
+      const logRocketSession = LogRocket.sessionURL;
+
+      if (logRocketSession !== null || (event as string) !== '' || event !== undefined) {
+        /*
+         * Must ignore the next line as this variable could be null but
+         * can not be null because of the check in the if statement above.
+         */
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        event.extra.LogRocket = logRocketSession;
+
+        return event;
+      } else {
+        return event;
+      } //else
+    },
+  });
+
+  LogRocket.getSessionURL((sessionURL) => {
+    Sentry.configureScope((scope) => {
+      scope.setExtra('sessionURL', sessionURL);
+    });
   });
 }
 
@@ -215,6 +288,16 @@ function App() {
                           <RequiredAuth>
                             <SpotLight>
                               <SubscribersList />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/brand"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <BrandPage />
                             </SpotLight>
                           </RequiredAuth>
                         }

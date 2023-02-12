@@ -1,31 +1,32 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
+import { useFormContext, Controller } from 'react-hook-form';
 import { ActionIcon, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { AlignCenterOutlined, AlignLeftOutlined, AlignRightOutlined } from '@ant-design/icons';
-import { IEmailBlock, TextAlignEnum } from '@novu/shared';
+import { TextAlignEnum } from '@novu/shared';
 
 import { DotsHorizontalOutlined, Trash } from '../../../design-system/icons';
 import { Button, colors, Dropdown } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 
 export function ContentRow({
   children,
   onHoverElement,
   onRemove,
   allowRemove,
-  block,
-  onStyleChanged,
+  stepIndex,
+  blockIndex,
 }: {
   children: JSX.Element | JSX.Element[];
   onHoverElement: (data: { top: number; height: number }) => void;
   onRemove: () => void;
   allowRemove: boolean;
-  block: IEmailBlock;
-  onStyleChanged: (data: { textAlign: TextAlignEnum }) => void;
+  stepIndex: number;
+  blockIndex: number;
 }) {
+  const methods = useFormContext();
   const { readonly } = useEnvController();
   const theme = useMantineTheme();
-  const [textAlign, settextAlign] = useState<TextAlignEnum>(block?.styles?.textAlign || TextAlignEnum.LEFT);
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -44,34 +45,36 @@ export function ContentRow({
     });
   }
 
-  useEffect(() => {
-    onStyleChanged({
-      textAlign,
-    });
-  }, [textAlign]);
-
-  const changeRowStyles = (e, dir) => {
-    e.preventDefault();
-    e.stopPropagation();
-    settextAlign(dir);
-  };
-
   const rowStyleMenu = [
     <Dropdown.Label key="alignBtn" sx={{ fontSize: '14px' }}>
       Align Text
     </Dropdown.Label>,
-    <TextAlignmentWrapper key="button-wrapper" colorScheme={theme.colorScheme}>
-      {textAlignments.map(([dir, icon], i) => (
-        <Button
-          key={`align-${dir}-btn`}
-          onClick={(e) => changeRowStyles(e, dir)}
-          data-test-id={`align-${dir}-btn`}
-          variant={dir === textAlign ? 'gradient' : 'outline'}
-        >
-          {icon}
-        </Button>
-      ))}
-    </TextAlignmentWrapper>,
+    <Controller
+      key="button-wrapper"
+      name={`steps.${stepIndex}.template.content.${blockIndex}.styles.textAlign`}
+      defaultValue={TextAlignEnum.LEFT}
+      control={methods.control}
+      render={({ field }) => {
+        return (
+          <TextAlignmentWrapper colorScheme={theme.colorScheme}>
+            {textAlignments.map(([dir, icon], i) => (
+              <Button
+                key={`align-${dir}-btn`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  field.onChange(dir);
+                }}
+                data-test-id={`align-${dir}-btn`}
+                variant={dir === field.value ? 'gradient' : 'outline'}
+              >
+                {icon}
+              </Button>
+            ))}
+          </TextAlignmentWrapper>
+        );
+      }}
+    />,
     <Dropdown.Item
       key="remove-row-btn"
       disabled={!allowRemove}

@@ -1,5 +1,6 @@
-import { ChannelTypeEnum } from '../../entities/message-template';
 import { CredentialsKeyEnum } from './provider.enum';
+
+import { ChannelTypeEnum } from '../../types';
 
 export interface IProviderConfig {
   id: string;

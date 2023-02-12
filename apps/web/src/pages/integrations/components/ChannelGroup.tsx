@@ -1,22 +1,22 @@
 import { Grid } from '@mantine/core';
 import { ProviderCard } from './ProviderCard';
 import { Title } from '../../../design-system';
-import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { IIntegratedProvider } from '../IntegrationsStorePage';
+import { NovuIntegrationCard } from './NovuIntegrationCard';
 import { When } from '../../../components/utils/When';
-import { IS_DOCKER_HOSTED } from '../../../config';
-import { LimitBar } from './LimitBar';
+import { CONTEXT_PATH, IS_DOCKER_HOSTED } from '../../../config';
 
 export function ChannelGroup({
   title,
   providers,
   onProviderClick,
-  type,
+  channel,
 }: {
   providers: IIntegratedProvider[];
   title: string;
   onProviderClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
-  type: ChannelTypeEnum;
+  channel: ChannelTypeEnum;
 }) {
   function handlerOnConnectClick(visible: boolean, create: boolean, provider: IIntegratedProvider) {
     onProviderClick(visible, create, provider);
@@ -27,14 +27,14 @@ export function ChannelGroup({
       <Grid.Col span={12} data-test-id={`integration-group-${title.toLowerCase()}`}>
         <Title size={2}>{title}</Title>
       </Grid.Col>
-      <When truthy={type === ChannelTypeEnum.EMAIL && IS_DOCKER_HOSTED}>
+      <When truthy={channel === ChannelTypeEnum.EMAIL && !IS_DOCKER_HOSTED}>
         <Grid.Col sm={12} xs={6} md={4} lg={3}>
-          <ProviderCard
+          <NovuIntegrationCard
             provider={{
               providerId: EmailProviderIdEnum.Novu,
               integrationId: '',
               displayName: 'Novu Email Provider',
-              channel: type,
+              channel: ChannelTypeEnum.EMAIL,
               credentials: [],
               docReference: '',
               comingSoon: false,
@@ -43,17 +43,14 @@ export function ChannelGroup({
                 0,
               connected: true,
               logoFileName: {
-                light: '/static/images/logo-formerly-light-bg.png',
-                dark: '/static/images/logo-formerly-dark-bg.png',
+                light: CONTEXT_PATH + '/static/images/logo-formerly-light-bg.png',
+                dark: CONTEXT_PATH + '/static/images/logo-formerly-dark-bg.png',
               },
               betaVersion: false,
               novu: true,
             }}
-            ribbonText="Free Trial"
             onConnectClick={handlerOnConnectClick}
-          >
-            <LimitBar />
-          </ProviderCard>
+          />
         </Grid.Col>
       </When>
       {providers.map((provider) => (

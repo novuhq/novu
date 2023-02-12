@@ -52,6 +52,7 @@ function OnlineRightNowForm({ control, stepIndex, index }: { control; stepIndex:
         <Controller
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.value`}
+          defaultValue=""
           render={({ field }) => {
             const value = typeof field.value !== 'undefined' ? `${field.value}` : '';
 
@@ -82,6 +83,7 @@ function OnlineInTheLastForm({ control, stepIndex, index }: { control; stepIndex
         <Controller
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.timeOperator`}
+          defaultValue=""
           render={({ field }) => {
             return (
               <Select
@@ -102,6 +104,7 @@ function OnlineInTheLastForm({ control, stepIndex, index }: { control; stepIndex
         <Controller
           control={control}
           name={`steps.${stepIndex}.filters.0.children.${index}.value`}
+          defaultValue=""
           render={({ field, fieldState }) => {
             return (
               <Input

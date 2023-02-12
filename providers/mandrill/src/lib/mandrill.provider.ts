@@ -41,42 +41,47 @@ export class MandrillProvider implements IEmailProvider {
   }
 
   async sendMessage(
-    options: IEmailOptions
+    emailOptions: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    let to = [];
-
-    if (typeof options.to === 'string') {
-      to = [
-        {
-          email: typeof options.to === 'string' ? options.to : options.to[0],
-          type: 'to',
-        },
-      ];
-    } else {
-      to = options.to.map((item) => ({
-        email: item,
-        type: 'to',
-      }));
-    }
-
-    const response = await this.transporter.messages.send({
+    const mandrillSendOption = {
       message: {
         from_email: this.config.from,
-        subject: options.subject,
-        html: options.html,
-        to,
-        attachments: options.attachments?.map((attachment) => ({
+        subject: emailOptions.subject,
+        html: emailOptions.html,
+        to: this.mapTo(emailOptions),
+        attachments: emailOptions.attachments?.map((attachment) => ({
           content: attachment.file.toString('base64'),
           type: attachment.mime,
           name: attachment?.name,
         })),
       },
-    });
+    };
+
+    const response = await this.transporter.messages.send(mandrillSendOption);
 
     return {
       id: response[0]._id,
       date: new Date().toISOString(),
     };
+  }
+
+  private mapTo(emailOptions: IEmailOptions) {
+    if (typeof emailOptions.to === 'string') {
+      return [
+        {
+          email:
+            typeof emailOptions.to === 'string'
+              ? emailOptions.to
+              : emailOptions.to[0],
+          type: 'to',
+        },
+      ];
+    } else {
+      return emailOptions.to.map((item) => ({
+        email: item,
+        type: 'to',
+      }));
+    }
   }
 
   async checkIntegration(): Promise<ICheckIntegrationResponse> {

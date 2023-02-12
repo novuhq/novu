@@ -5,6 +5,7 @@ import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
 
+import { useTemplates } from '../../api/hooks/useTemplates';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -12,8 +13,8 @@ import { Tag, Button, Table, colors, Text, Input } from '../../design-system';
 import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
-import { useEnvController } from '../../store/use-env-controller';
 import { useFilterTemplates } from '../../api/hooks/use-filter-templates';
+import { useEnvController } from '../../store/useEnvController';
 
 function NotificationList() {
   const { readonly } = useEnvController();

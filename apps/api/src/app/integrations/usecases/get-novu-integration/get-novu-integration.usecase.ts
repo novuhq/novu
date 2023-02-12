@@ -2,8 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, OrganizationEntity, OrganizationRepository } from '@novu/dal';
 import { GetNovuIntegrationCommand } from './get-novu-integration.command';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
-import { CalculateLimitNovuIntegrationCommand } from '../calculate-limit-novu-integration/calculate-limit-novu-integration.command';
+import {
+  CalculateLimitNovuIntegration,
+  CalculateLimitNovuIntegrationCommand,
+} from '../calculate-limit-novu-integration';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { AnalyticsService } from '@novu/application-generic';
 
@@ -17,7 +19,7 @@ export class GetNovuIntegration {
   ) {}
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity | undefined> {
-    if (process.env.DOCKER_HOSTED_ENV === 'true') {
+    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY || !command.channelType) {
       return;
     }
 
@@ -52,7 +54,6 @@ export class GetNovuIntegration {
         providerId: CalculateLimitNovuIntegration.getProviderId(command.channelType),
         ...limit,
       });
-      // add analytics event.
       throw new Error(`Limit for Novus ${command.channelType.toLowerCase()} provider was reached.`);
     }
 
@@ -76,6 +77,7 @@ export class GetNovuIntegration {
       apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
       from: 'no-reply@novu.co',
       senderName: organization !== null ? organization.name : 'Novu',
+      ipPoolName: 'Demo',
     };
 
     return item;

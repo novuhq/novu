@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { isEqual } from 'lodash';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -38,6 +39,14 @@ export class UpdateSubscriber {
       updatePayload.avatar = command.avatar;
     }
 
+    if (command.locale != null) {
+      updatePayload.locale = command.locale;
+    }
+
+    if (command.data != null) {
+      updatePayload.data = command.data;
+    }
+
     if (!subscriberNeedUpdate(foundSubscriber, updatePayload)) {
       return {
         ...foundSubscriber,
@@ -73,6 +82,8 @@ export function subscriberNeedUpdate(
     !!(subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
     !!(subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
     !!(subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
-    !!(subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar)
+    !!(subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar) ||
+    !!(subscriberPayload?.locale && subscriber?.locale !== subscriberPayload?.locale) ||
+    !!(subscriberPayload?.data && !isEqual(subscriber?.data, subscriberPayload?.data))
   );
 }

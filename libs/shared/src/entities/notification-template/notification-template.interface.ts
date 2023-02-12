@@ -1,5 +1,5 @@
-import type { BuilderFieldType, BuilderGroupValues, FilterParts } from '../../types';
-import { IMessageTemplate, TemplateVariableTypeEnum } from '../message-template';
+import type { BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum, FilterParts } from '../../types';
+import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { DigestUnitEnum } from '../step';
 
@@ -46,6 +46,10 @@ export interface INotificationTemplateStep {
   template?: IMessageTemplate;
   active?: boolean;
   shouldStopOnFail?: boolean;
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
   metadata?: {
     amount?: number;
     unit?: DigestUnitEnum;

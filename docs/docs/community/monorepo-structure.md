@@ -95,11 +95,10 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Mailgun](https://github.com/novuhq/novu/tree/main/providers/mailgun)
 - [SES](https://github.com/novuhq/novu/tree/main/providers/ses)
 - [Postmark](https://github.com/novuhq/novu/tree/main/providers/postmark)
-- [NodeMailer](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
+- [Custom SMTP](https://github.com/novuhq/novu/tree/main/providers/nodemailer)
 - [Mailjet](https://github.com/novuhq/novu/tree/main/providers/mailjet)
 - [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
 - [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
-- [EmailJS](https://github.com/novuhq/novu/tree/main/providers/emailjs)
 
 ### 📞 SMS
 

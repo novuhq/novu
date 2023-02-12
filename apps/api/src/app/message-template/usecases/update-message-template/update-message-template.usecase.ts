@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { UpdateChangeCommand } from '../../../change/usecases/update-change/update-change.command';
 import { UpdateChange } from '../../../change/usecases/update-change/update-change';
 
@@ -55,8 +55,13 @@ export class UpdateMessageTemplate {
     if (command.feedId) {
       updatePayload._feedId = command.feedId;
     }
+
     if (!command.feedId && existingTemplate._feedId) {
       updatePayload._feedId = null;
+    }
+
+    if (command.layoutId) {
+      updatePayload._layoutId = command.layoutId;
     }
 
     if (command.subject) {
@@ -123,6 +128,19 @@ export class UpdateMessageTemplate {
         UpdateChangeCommand.create({
           _entityId: command.feedId,
           type: ChangeEntityTypeEnum.FEED,
+          parentChangeId: command.parentChangeId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+        })
+      );
+    }
+
+    if (command.layoutId) {
+      await this.updateChange.execute(
+        UpdateChangeCommand.create({
+          _entityId: command.layoutId,
+          type: ChangeEntityTypeEnum.LAYOUT,
           parentChangeId: command.parentChangeId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,

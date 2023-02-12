@@ -1,6 +1,6 @@
 {
   "name": "@novu/fcm",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "description": "A fcm wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -32,7 +32,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/stateless": "^0.10.2",
+    "@novu/stateless": "^0.11.0",
     "firebase-admin": "^11.0.0"
   },
   "devDependencies": {
@@ -51,11 +51,10 @@
     "open-cli": "^6.0.1",
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
-    "standard-version": "^9.0.0",
     "ts-jest": "^27.0.5",
-    "ts-node": "^9.0.0",
-    "typedoc": "^0.19.0",
-    "typescript": "4.6.2"
+    "ts-node": "~10.9.1",
+    "typedoc": "^0.23.0",
+    "typescript": "4.9.5"
   },
   "files": [
     "build/main",
@@ -87,5 +86,5 @@
       "**/*.spec.js"
     ]
   },
-  "gitHead": "fbbb8b9ad119058862ea8fdc14809eaca5bb9c98"
+  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
 }

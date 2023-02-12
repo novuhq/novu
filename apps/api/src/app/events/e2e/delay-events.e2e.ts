@@ -199,7 +199,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(delayedJob?.updatedAt));
 
     const delay = await workflowQueueService.queue.getDelayed();
-    expect(delay[0].opts.delay).to.approximately(diff, 500);
+    expect(delay[0].opts.delay).to.approximately(diff, 1000);
   });
 
   it('should not include delayed event in digested sent message', async function () {

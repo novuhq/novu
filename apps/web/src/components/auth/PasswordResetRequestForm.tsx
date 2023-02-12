@@ -6,7 +6,7 @@ import { Center } from '@mantine/core';
 
 import { api } from '../../api/api.client';
 import { Button, colors, Input, Text } from '../../design-system';
-import { useVercelParams } from '../../hooks/use-vercelParams';
+import { useVercelParams } from '../../hooks/useVercelParams';
 
 type Props = {
   onSent: () => void;

@@ -1,4 +1,4 @@
-import { isBrowser } from '../utils/utils';
+import { isBrowser } from '../utils';
 import { getContextPath, NovuComponentEnum } from '@novu/shared';
 
 declare global {
@@ -30,3 +30,5 @@ export const IS_DOCKER_HOSTED = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'tru
 export const INTERCOM_APP_ID = process.env.REACT_APP_INTERCOM_APP_ID;
 
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WEB);
+
+export const LOGROCKET_ID = process.env.REACT_APP_LOGROCKET_ID ?? '';

@@ -5,50 +5,80 @@ name: Deploy PROD Widget
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    tags:
-      - '**@novu/widget**'
-      - '**@novu/shared**'
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
     secrets:
       cypress_key: ${{ secrets.CYPRESS_WIDGET_KEY }}
 
-  # This workflow contains a single job called "build"
-  deploy_widget:
+  deploy_widget_eu:
     needs: test_widget
-    # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
     environment: Production
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16.15.1'
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
 
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-
+      # Runs a single command using the runners shell
+      - name: Build
+        run: CI='' pnpm build:widget
 
-      - uses: pnpm/action-setup@v2.0.1
+      - name: Create env file
+        working-directory: apps/widget
+        run: |
+          touch .env
+          echo REACT_APP_API_URL="https://eu.api.novu.co" >> .env
+          echo REACT_APP_SENTRY_DSN="https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116" >> .env
+          echo REACT_APP_WS_URL="https://eu.ws.novu.co" >> .env
+          echo REACT_APP_ENVIRONMENT=prod >> .env
+
+      - name: Envsetup
+        working-directory: apps/widget
+        run: npm run envsetup
+
+      - name: Build PROD
+        env:
+          REACT_APP_API_URL: https://eu.api.novu.co
+          REACT_APP_SENTRY_DSN: https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116
+          REACT_APP_WS_URL: https://eu.ws.novu.co
+          REACT_APP_ENVIRONMENT: prod
+        working-directory: apps/widget
+        run: npm run build
+
+      - name: Deploy WIDGET to PROD
+        uses: scopsy/actions-netlify@develop
         with:
-          version: 7.5.0
-          run_install: true
+          publish-dir: apps/widget/build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: prod
+          production-deploy: true
+          alias: prod
+          github-deployment-environment: Production
+          github-deployment-description: Web Deployment
+          netlify-config-path: apps/widget/netlify.toml
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: 20a64bdd-1934-4284-875f-862410c69a3b
+        timeout-minutes: 1
+
+  # This workflow contains a single job called "build"
+  deploy_widget_us:
+    needs:
+      - test_widget
+      - deploy_widget_eu
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: Production
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell
       - name: Build
@@ -63,7 +93,7 @@ jobs:
           echo REACT_APP_WS_URL="https://ws.novu.co" >> .env
           echo REACT_APP_ENVIRONMENT=prod >> .env
 
-      - name: Envsetup  
+      - name: Envsetup
         working-directory: apps/widget
         run: npm run envsetup
 
@@ -92,6 +122,23 @@ jobs:
           NETLIFY_SITE_ID: 6f927fd4-dcb0-4cf3-8c0b-8c5539d0d034
         timeout-minutes: 1
 
+  deploy_docker:
+    needs:
+      - deploy_widget_us
+      - deploy_widget_eu
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: Production
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+
+      # Runs a single command using the runners shell
+      - name: Build
+        run: CI='' pnpm build:widget
+
       - name: Build, tag, and push image to ghcr.io
         id: build-image
         env:
@@ -109,13 +156,5 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
-
-      - uses: actions/upload-artifact@v1
-        if: failure()
-        with:
-          name: cypress-screenshots
-          path: apps/widget/cypress/screenshots
-
-
 
 

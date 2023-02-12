@@ -21,7 +21,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
   }
 
   async removeMemberById(organizationId: string, memberId: string) {
-    return Member.remove({
+    return this.MongooseModel.remove({
       _id: memberId,
       _organizationId: organizationId,
     });
@@ -44,7 +44,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
       _organizationId: organizationId,
     };
 
-    const members = await Member.find(requestQuery).populate(
+    const members = await this.MongooseModel.find(requestQuery).populate(
       '_userId',
       'firstName lastName email _id profilePicture createdAt'
     );
@@ -70,7 +70,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
       roles: MemberRoleEnum.ADMIN,
     };
 
-    const member = await Member.findOne(requestQuery);
+    const member = await this.MongooseModel.findOne(requestQuery);
 
     return member;
   }
@@ -80,7 +80,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
       _organizationId: organizationId,
     };
 
-    const members = await Member.find(requestQuery).populate('_userId', 'firstName lastName email _id');
+    const members = await this.MongooseModel.find(requestQuery).populate('_userId', 'firstName lastName email _id');
     if (!members) return [];
 
     const membersEntity = this.mapEntities(members);

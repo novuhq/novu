@@ -10,7 +10,7 @@ import { useStyles } from './TemplateButton.styles';
 import { colors, shadows } from '../config';
 import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
-import { useEnvController } from '../../store/use-env-controller';
+import { useEnvController } from '../../store/useEnvController';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
 
 const capitalize = (text: string) => {

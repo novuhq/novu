@@ -11,8 +11,8 @@ export class RemoveSubscribersUseCase {
 
   async execute(command: RemoveSubscribersCommand): Promise<void> {
     await this.topicSubscribersRepository.removeSubscribers(
-      TopicSubscribersRepository.convertStringToObjectId(command.environmentId),
-      TopicSubscribersRepository.convertStringToObjectId(command.organizationId),
+      command.environmentId,
+      command.organizationId,
       command.topicKey,
       command.subscribers
     );

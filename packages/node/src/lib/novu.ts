@@ -4,6 +4,7 @@ import { EventEmitter } from 'events';
 import { Changes } from './changes/changes';
 import { INovuConfiguration } from './novu.interface';
 import { Events } from './events/events';
+import { Layouts } from './layouts/layouts';
 import { NotificationGroups } from './notification-groups/notification-groups';
 import { NotificationTemplates } from './notification-template/notification-template';
 import { Environments } from './environments/environments';
@@ -18,6 +19,7 @@ export class Novu extends EventEmitter {
   readonly environments: Environments;
   readonly events: Events;
   readonly changes: Changes;
+  readonly layouts: Layouts;
   readonly notificationGroups: NotificationGroups;
   readonly notificationTemplates: NotificationTemplates;
   readonly feeds: Feeds;
@@ -41,6 +43,7 @@ export class Novu extends EventEmitter {
     this.trigger = this.events.trigger;
     this.broadcast = this.events.broadcast;
     this.changes = new Changes(this.http);
+    this.layouts = new Layouts(this.http);
     this.notificationGroups = new NotificationGroups(this.http);
     this.notificationTemplates = new NotificationTemplates(this.http);
     this.feeds = new Feeds(this.http);
@@ -51,6 +54,8 @@ export class Novu extends EventEmitter {
   public trigger: typeof Events.prototype.trigger;
 
   public broadcast: typeof Events.prototype.broadcast;
+
+  public bulkTrigger: typeof Events.prototype.bulkTrigger;
 
   private buildBackendUrl(config?: INovuConfiguration) {
     const novuVersion = 'v1';

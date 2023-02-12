@@ -4,7 +4,7 @@ import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useFormContext, useWatch } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { MemberStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
 import { Button, Text, colors, Tooltip } from '../../../design-system';
 import { testSendEmailMessage } from '../../../api/templates';
@@ -14,7 +14,8 @@ import { ArrowDown, Check, Copy, Invite } from '../../../design-system/icons';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import useStyles from '../../../design-system/select/Select.styles';
 import { getOrganizationMembers } from '../../../api/organization';
-import { useProcessVariables } from '../../../hooks/use-process-variables';
+import { useProcessVariables } from '../../../hooks/useProcessVariables';
+import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
 
 export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
   const { currentUser } = useContext(AuthContext);
@@ -28,7 +29,9 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
     name: `steps.${index}.template`,
     control,
   });
+
   const { data: organizationMembers } = useQuery<any[]>(['getOrganizationMembers'], getOrganizationMembers);
+  const { enabled } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
 
   const [sendTo, setSendTo] = useState<string[]>(currentUser?.email ? [currentUser?.email] : []);
   const [membersEmails, setMembersEmails] = useState<string[]>([currentUser?.email || '']);
@@ -53,12 +56,14 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 
   const onTestEmail = async () => {
     const payload = JSON.parse(payloadValue);
+
     try {
       await testSendEmailEvent({
         ...template,
         payload,
         to: sendTo,
         content: template.contentType === 'customHtml' ? (template.htmlContent as string) : template.content,
+        layoutId: template.layoutId,
       });
       successMessage('Test sent successfully!');
     } catch (e: any) {
@@ -127,7 +132,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
           loading={isLoading}
           icon={<Invite />}
           data-test-id="test-send-email-btn"
-          disabled={!isIntegrationActive}
+          disabled={!isIntegrationActive && !enabled}
           onClick={() => onTestEmail()}
         >
           Send Test Email

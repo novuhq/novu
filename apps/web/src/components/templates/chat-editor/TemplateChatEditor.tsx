@@ -1,11 +1,14 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
-import { useEnvController } from '../../../store/use-env-controller';
-import { IForm } from '../use-template-controller.hook';
+
+import { useEnvController } from '../../../store/useEnvController';
+import type { IForm } from '../formTypes';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { Textarea } from '../../../design-system';
 import { VariableManager } from '../VariableManager';
-import { useVariablesManager } from '../../../hooks/use-variables-manager';
+import { useVariablesManager } from '../../../hooks/useVariablesManager';
+
+const templateFields = ['content'];
 
 export function TemplateChatEditor({
   control,
@@ -20,14 +23,15 @@ export function TemplateChatEditor({
   const { readonly } = useEnvController();
   const {
     formState: { errors },
-  } = useFormContext();
-  const variablesArray = useVariablesManager(index, ['content']);
+  } = useFormContext<IForm>();
+  const variablesArray = useVariablesManager(index, templateFields);
 
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType={ChannelTypeEnum.CHAT} /> : null}
       <Controller
-        name={`steps.${index}.template.content` as any}
+        name={`steps.${index}.template.content`}
+        defaultValue=""
         control={control}
         render={({ field }) => (
           <Textarea
@@ -36,7 +40,7 @@ export function TemplateChatEditor({
             error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
             disabled={readonly}
             minRows={4}
-            value={field.value || ''}
+            value={(field.value as string) || ''}
             label="Chat message content"
             placeholder="Add notification content here..."
           />

@@ -1,11 +1,13 @@
-import { IEmailBlock } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 import { showNotification } from '@mantine/notifications';
 import { TextInput as MantineInput, Popover, Button as MantineButton, createStyles } from '@mantine/core';
+import { TextAlignEnum } from '@novu/shared';
 
 import { colors, shadows } from '../../../design-system';
 import { TextAlignment, Wifi } from '../../../design-system/icons';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
+import type { IForm } from '../formTypes';
 
 const usePopoverStyles = createStyles((theme) => ({
   dropdown: {
@@ -25,31 +27,20 @@ const usePopoverStyles = createStyles((theme) => ({
 }));
 
 export function ButtonRowContent({
-  block,
-  onTextChange,
-  onUrlChange,
+  stepIndex,
+  blockIndex,
   brandingColor,
 }: {
-  block: IEmailBlock;
-  onTextChange: (text: string) => void;
-  onUrlChange: (url: string) => void;
+  stepIndex: number;
+  blockIndex: number;
   brandingColor: string | undefined;
 }) {
+  const methods = useFormContext<IForm>();
+  const content = methods.watch(`steps.${stepIndex}.template.content.${blockIndex}.content`);
+  const textAlign = methods.watch(`steps.${stepIndex}.template.content.${blockIndex}.styles.textAlign`);
   const { readonly } = useEnvController();
-  const [url, setUrl] = useState<string>();
-  const [text, setText] = useState<string>();
   const [dropDownVisible, setDropDownVisible] = useState<boolean>(false);
   const { classes } = usePopoverStyles();
-
-  function handleTextChange(e) {
-    setText(e.target.value);
-    onTextChange(e.target.value);
-  }
-
-  function handleUrlChange(e) {
-    setUrl(e.target.value);
-    onUrlChange(e.target.value);
-  }
 
   function handleKeyDown(e) {
     if (e.key === 'Enter') {
@@ -65,16 +56,8 @@ export function ButtonRowContent({
     });
   }
 
-  useEffect(() => {
-    setText(block.content);
-  }, [block.content]);
-
-  useEffect(() => {
-    setUrl(block.url);
-  }, [block.url]);
-
   return (
-    <div style={{ textAlign: block?.styles?.textAlign || 'left' }} data-test-id="button-block-wrapper">
+    <div style={{ textAlign: textAlign || TextAlignEnum.LEFT }} data-test-id="button-block-wrapper">
       <Popover
         classNames={classes}
         opened={dropDownVisible && !readonly}
@@ -95,26 +78,42 @@ export function ButtonRowContent({
             color="red"
             onClick={() => setDropDownVisible((open) => !open)}
           >
-            {block.content}
+            {content}
           </MantineButton>
         </Popover.Target>
         <Popover.Dropdown>
-          <MantineInput
-            data-test-id="button-text-input"
-            icon={<TextAlignment />}
-            variant="unstyled"
-            onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
-            value={text}
-            placeholder="Button Text"
+          <Controller
+            name={`steps.${stepIndex}.template.content.${blockIndex}.content`}
+            defaultValue=""
+            control={methods.control}
+            render={({ field }) => {
+              return (
+                <MantineInput
+                  {...field}
+                  data-test-id="button-text-input"
+                  icon={<TextAlignment />}
+                  variant="unstyled"
+                  onKeyDown={handleKeyDown}
+                  placeholder="Button Text"
+                />
+              );
+            }}
           />
-          <MantineInput
-            icon={<Wifi width={20} height={20} />}
-            variant="unstyled"
-            onChange={handleUrlChange}
-            onKeyDown={handleKeyDown}
-            value={url || ''}
-            placeholder="https://www.yoururl..."
+          <Controller
+            name={`steps.${stepIndex}.template.content.${blockIndex}.url`}
+            defaultValue=""
+            control={methods.control}
+            render={({ field }) => {
+              return (
+                <MantineInput
+                  {...field}
+                  icon={<Wifi width={20} height={20} />}
+                  variant="unstyled"
+                  onKeyDown={handleKeyDown}
+                  placeholder="https://www.yoururl..."
+                />
+              );
+            }}
           />
         </Popover.Dropdown>
       </Popover>
