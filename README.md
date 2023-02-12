@@ -53,7 +53,7 @@ The ultimate service for managing multi-channel notifications with a single API.
 ## ⭐️ Why Novu?
 
 Novu provides a unified API that makes it simple to send notifications through multiple channels, including In-App, Push, Email, SMS, and Chat.
-With Novu, you can create custom workflows and define conditions for each channel, ensuring that your notifications are delivered in the most effective way possible. 
+With Novu, you can create custom workflows and define conditions for each channel, ensuring that your notifications are delivered in the most effective way possible.
 
 ## ✨ Features
 
