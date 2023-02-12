@@ -41,7 +41,6 @@ export interface ITriggerPayload {
 
 export type ITriggerOverrides = {
   [key in
-    | 'emailjs'
     | 'mailgun'
     | 'nodemailer'
     | 'plivo'
