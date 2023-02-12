@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.11.0",
-    "axios": "^0.27.2",
+    "axios": "^0.27.0",
     "qs": "^6.11.0"
   },
   "devDependencies": {

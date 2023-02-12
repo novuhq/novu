@@ -223,7 +223,7 @@ importers:
       '@types/sinon': ^9.0.0
       '@types/supertest': ^2.0.8
       agenda: ^4.2.1
-      axios: ^0.24.0
+      axios: ^0.27.0
       bcrypt: ^5.0.0
       body-parser: ^1.20.0
       bull: ^4.2.1
@@ -324,7 +324,7 @@ importers:
       '@sentry/tracing': 7.12.1
       '@types/handlebars': 4.1.0
       agenda: 4.2.1
-      axios: 0.24.0
+      axios: 0.27.2
       bcrypt: 5.0.1
       body-parser: 1.20.0
       bull: 4.8.1
@@ -391,7 +391,7 @@ importers:
       '@types/express': ^4.17.8
       '@types/node': ^14.14.6
       '@types/smtp-server': ^3.5.7
-      axios: ^0.24.0
+      axios: ^0.27.0
       bluebird: ^2.9.30
       bullmq: ^3.5.8
       cross-env: ^7.0.3
@@ -419,7 +419,7 @@ importers:
     dependencies:
       '@novu/shared': link:../../libs/shared
       '@sentry/node': 7.30.0
-      axios: 0.24.0
+      axios: 0.27.2
       bluebird: 2.11.0
       bullmq: 3.5.9
       dotenv: 8.6.0
@@ -505,7 +505,7 @@ importers:
       ace-builds: ^1.4.12
       antd: ^4.10.0
       autoprefixer: ^9.8.6
-      axios: ^0.21.1
+      axios: ^0.27.0
       babel-plugin-import: ^1.13.3
       chart.js: ^3.7.1
       customize-cra: ^1.0.0
@@ -604,7 +604,7 @@ importers:
       ace-builds: 1.4.14
       antd: 4.19.3_sfoxds7t5ydpegc3knd667wn6m
       autoprefixer: 9.8.8
-      axios: 0.21.4
+      axios: 0.27.2
       babel-plugin-import: 1.13.3
       chart.js: 3.7.1
       customize-cra: 1.0.0
@@ -707,7 +707,7 @@ importers:
       '@types/sinon': ^9.0.0
       '@types/socket.io': ^2.1.13
       '@types/supertest': ^2.0.10
-      axios: ^0.24.0
+      axios: ^0.27.0
       bull: ^4.4.0
       bullmq: ^3.5.8
       chai: ^4.2.0
@@ -749,7 +749,7 @@ importers:
       '@novu/stateless': link:../../packages/stateless
       '@novu/testing': link:../../libs/testing
       '@sentry/node': 6.19.3
-      axios: 0.24.0
+      axios: 0.27.2
       bull: 4.8.1
       bullmq: 3.5.9
       class-transformer: 0.5.1
@@ -812,7 +812,7 @@ importers:
       '@types/react-dom': 17.0.18
       '@types/react-router-dom': ^5.1.7
       antd: ^4.10.0
-      axios: ^0.21.1
+      axios: ^0.27.0
       babel-plugin-import: ^1.13.3
       chroma-js: ^2.4.2
       craco-antd: ^1.19.0
@@ -856,7 +856,7 @@ importers:
       '@testing-library/react': 11.2.7_sfoxds7t5ydpegc3knd667wn6m
       '@testing-library/user-event': 12.8.3_jlger254bgvlyiofkvfke55nxu
       antd: 4.19.3_sfoxds7t5ydpegc3knd667wn6m
-      axios: 0.21.4
+      axios: 0.27.2
       babel-plugin-import: 1.13.3
       chroma-js: 2.4.2
       eslint-plugin-cypress: 2.12.1_eslint@8.33.0
@@ -1327,14 +1327,14 @@ importers:
   libs/shared:
     specifiers:
       '@types/bluebird': ^3.5.24
-      axios: ^0.26.1
+      axios: ^0.27.0
       class-transformer: 0.5.1
       class-validator: 0.14.0
       mixpanel: ^0.17.0
       rimraf: ^3.0.2
       typescript: 4.9.5
     dependencies:
-      axios: 0.26.1
+      axios: 0.27.2
       class-transformer: 0.5.1
       class-validator: 0.14.0
       mixpanel: 0.17.0
@@ -1356,7 +1356,7 @@ importers:
       JSONStream: ^1.3.5
       apollo-boost: 0.4.9
       async: ^3.2.0
-      axios: 0.25.0
+      axios: ^0.27.0
       bcrypt: ~5.0.0
       bullmq: ^3.5.6
       class-transformer: 0.5.1
@@ -1383,7 +1383,7 @@ importers:
       '@novu/shared': link:../shared
       JSONStream: 1.3.5
       async: 3.2.3
-      axios: 0.25.0
+      axios: 0.27.2
       bcrypt: 5.0.1
       bullmq: 3.5.6
       class-transformer: 0.5.1
@@ -1527,7 +1527,7 @@ importers:
       '@types/inquirer': ^8.2.0
       '@types/mocha': 9.1.1
       analytics-node: ^6.2.0
-      axios: ^0.25.0
+      axios: ^0.27.0
       chalk: 4.1.2
       commander: ^9.0.0
       configstore: ^5.0.0
@@ -1546,7 +1546,7 @@ importers:
     dependencies:
       '@novu/shared': link:../../libs/shared
       analytics-node: 6.2.0
-      axios: 0.25.0
+      axios: 0.27.2
       chalk: 4.1.2
       commander: 9.1.0
       configstore: 5.0.1
@@ -1573,7 +1573,7 @@ importers:
       '@novu/shared': ^0.11.0
       '@types/jest': 27.5.2
       '@types/node': ^14.6.0
-      axios: ^0.26.1
+      axios: ^0.27.0
       codecov: ^3.5.0
       jest: ^27.0.6
       rimraf: ^3.0.2
@@ -1582,7 +1582,7 @@ importers:
       typescript: 4.9.5
     dependencies:
       '@novu/shared': link:../../libs/shared
-      axios: 0.26.1
+      axios: 0.27.2
     devDependencies:
       '@types/jest': 27.5.2
       '@types/node': 14.18.12
@@ -1673,7 +1673,7 @@ importers:
       '@types/lodash.get': ^4.4.6
       '@types/lodash.merge': ^4.6.6
       '@types/node': ^14.6.0
-      axios: ^0.26.1
+      axios: ^0.27.0
       codecov: ^3.5.0
       cz-conventional-changelog: ^3.3.0
       handlebars: ^4.7.7
@@ -1689,7 +1689,7 @@ importers:
       typescript: 4.9.5
     dependencies:
       '@novu/shared': link:../../libs/shared
-      axios: 0.26.1
+      axios: 0.27.2
       handlebars: 4.7.7
       lodash.get: 4.4.2
       lodash.merge: 4.6.2
@@ -1742,7 +1742,7 @@ importers:
       '@types/react-dom': ^17.0.0
       acorn: ^8.7.1
       acorn-jsx: ^5.3.2
-      axios: ^0.26.1
+      axios: ^0.27.0
       babel-loader: ^8.2.4
       chroma-js: ^2.4.2
       date-fns: ^2.29.1
@@ -1777,7 +1777,7 @@ importers:
       '@rollup/plugin-babel': 6.0.3_33xvyxcmf5jjujxdnhmxirweba
       '@tanstack/react-query': 4.20.4_sfoxds7t5ydpegc3knd667wn6m
       acorn-jsx: 5.3.2_acorn@8.7.1
-      axios: 0.26.1
+      axios: 0.27.2
       chroma-js: 2.4.2
       date-fns: 2.29.1
       lodash.clonedeep: 4.5.0
@@ -1924,7 +1924,7 @@ importers:
       '@types/lodash.get': ^4.4.6
       '@types/lodash.merge': ^4.6.6
       '@types/node': ^14.6.0
-      axios: ^0.26.1
+      axios: ^0.27.0
       codecov: ^3.5.0
       cz-conventional-changelog: ^3.3.0
       handlebars: ^4.7.7
@@ -1939,7 +1939,7 @@ importers:
       typedoc: ^0.23.0
       typescript: 4.9.5
     dependencies:
-      axios: 0.26.1
+      axios: 0.27.2
       handlebars: 4.7.7
       lodash.get: 4.4.2
       lodash.merge: 4.6.2
@@ -2004,7 +2004,7 @@ importers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
-      axios: ^0.27.2
+      axios: ^0.27.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -2050,7 +2050,7 @@ importers:
       '@novu/stateless': ^0.11.0
       '@types/axios': ^0.14.0
       '@types/jest': ^27.0.1
-      axios: ^0.27.2
+      axios: ^0.27.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -2090,7 +2090,7 @@ importers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
-      axios: ^0.27.2
+      axios: ^0.27.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -2565,7 +2565,7 @@ importers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@novu/stateless': ^0.7.2
       '@types/jest': ^27.0.1
-      axios: ^0.27.2
+      axios: ^0.27.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -3025,7 +3025,7 @@ importers:
       '@novu/node': ^0.11.0
       '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
-      axios: ^0.27.2
+      axios: ^0.27.0
       codecov: ^3.5.0
       cspell: ^4.1.0
       cz-conventional-changelog: ^3.3.0
@@ -4595,7 +4595,7 @@ packages:
     dependencies:
       '@aws-crypto/ie11-detection': 2.0.0
       '@aws-crypto/supports-web-crypto': 2.0.0
-      '@aws-sdk/types': 3.267.0
+      '@aws-sdk/types': 3.226.0
       '@aws-sdk/util-locate-window': 3.55.0
       '@aws-sdk/util-utf8-browser': 3.188.0
       tslib: 1.14.1
@@ -4608,7 +4608,7 @@ packages:
       '@aws-crypto/sha256-js': 2.0.0
       '@aws-crypto/supports-web-crypto': 2.0.0
       '@aws-crypto/util': 2.0.1
-      '@aws-sdk/types': 3.267.0
+      '@aws-sdk/types': 3.226.0
       '@aws-sdk/util-locate-window': 3.55.0
       '@aws-sdk/util-utf8-browser': 3.188.0
       tslib: 1.14.1
@@ -4631,7 +4631,7 @@ packages:
     resolution: {integrity: sha512-VZY+mCY4Nmrs5WGfitmNqXzaE873fcIZDu54cbaDaaamsaTOP1DBImV9F4pICc3EHjQXujyE8jig+PFCaew9ig==}
     dependencies:
       '@aws-crypto/util': 2.0.1
-      '@aws-sdk/types': 3.267.0
+      '@aws-sdk/types': 3.226.0
       tslib: 1.14.1
     dev: false
 
@@ -17234,7 +17234,7 @@ packages:
       fast-deep-equal: 3.1.3
       functional-red-black-tree: 1.0.1
       google-gax: 2.30.5
-      protobufjs: 6.11.3
+      protobufjs: 6.11.2
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -17463,7 +17463,7 @@ packages:
     engines: {node: ^8.13.0 || >=10.10.0}
     dependencies:
       '@grpc/proto-loader': 0.7.4
-      '@types/node': 14.18.12
+      '@types/node': 18.11.13
     dev: false
 
   /@grpc/proto-loader/0.6.13:
@@ -19158,7 +19158,7 @@ packages:
     hasBin: true
     dependencies:
       detect-libc: 2.0.1
-      https-proxy-agent: 5.0.1
+      https-proxy-agent: 5.0.0
       make-dir: 3.1.0
       node-fetch: 2.6.7
       nopt: 5.0.0
@@ -28001,7 +28001,7 @@ packages:
     resolution: {integrity: sha512-KqQnQbdYE54D7oa/UmYVMZKq7CO4l8DEENzOKc4aBRwxCXSlJXGz83flFx5L7AWrOQnmuN3kVsRdt+GZPPjiVQ==}
     deprecated: This is a stub types definition for axios (https://github.com/mzabriskie/axios). axios provides its own type definitions, so you don't need @types/axios installed!
     dependencies:
-      axios: 0.27.2
+      axios: 1.2.1
     transitivePeerDependencies:
       - debug
     dev: true
@@ -28182,7 +28182,7 @@ packages:
   /@types/express-serve-static-core/4.17.33:
     resolution: {integrity: sha512-TPBqmR/HRYI3eC2E5hmiivIzv+bidAfXofM+sbonAGvyDhySGw9/PQZFt2BLOrjUUR++4eJVpx6KnLQK1Fk9tA==}
     dependencies:
-      '@types/node': 14.18.12
+      '@types/node': 18.11.13
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
     dev: true
@@ -28374,7 +28374,7 @@ packages:
   /@types/jsonwebtoken/8.5.8:
     resolution: {integrity: sha512-zm6xBQpFDIDM6o9r6HSgDeIcLy82TKWctCXEPbJJcXb5AKmi5BNNdLXneixK4lplX3PqIVcwLBCGE/kAGnlD4A==}
     dependencies:
-      '@types/node': 14.18.12
+      '@types/node': 18.11.13
 
   /@types/jsonwebtoken/8.5.9:
     resolution: {integrity: sha512-272FMnFGzAVMGtu9tkr29hRL6bZj4Zs1KZNeHLnKqAvp06tAIcarTMwOh8/8bz4FmKRcMxZhZNeUAQsNLoiPhg==}
@@ -28521,7 +28521,7 @@ packages:
   /@types/oauth/0.9.1:
     resolution: {integrity: sha512-a1iY62/a3yhZ7qH7cNUsxoI3U/0Fe9+RnuFrpTKr+0WVOzbKlSLojShCKe20aOD1Sppv+i8Zlq0pLDuTJnwS4A==}
     dependencies:
-      '@types/node': 14.18.12
+      '@types/node': 18.11.13
     dev: true
 
   /@types/overlayscrollbars/1.12.1:
@@ -28784,7 +28784,7 @@ packages:
     resolution: {integrity: sha512-mu/N4uvfDN2zVQQ5AYJI/g4qxn2bHB6521t1UuH09ShNWjebTqN0ZFuYK9uYjcgmI0dTQEs+Owi1EO6U0OkOZQ==}
     dependencies:
       '@types/cookiejar': 2.1.2
-      '@types/node': 14.18.12
+      '@types/node': 18.11.13
     dev: true
 
   /@types/supertest/2.0.12:
@@ -31511,29 +31511,21 @@ packages:
   /axios/0.21.1:
     resolution: {integrity: sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==}
     dependencies:
-      follow-redirects: 1.14.9
+      follow-redirects: 1.15.2
     transitivePeerDependencies:
       - debug
 
   /axios/0.21.4:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.14.9
-    transitivePeerDependencies:
-      - debug
-
-  /axios/0.24.0:
-    resolution: {integrity: sha512-Q6cWsys88HoPgAaFAVUb0WpPk0O8iTeisR9IMqy9G8AbO4NlpVknrnQS03zzF9PGAWgO3cgletO3VjV/P7VztA==}
-    dependencies:
       follow-redirects: 1.15.2
     transitivePeerDependencies:
       - debug
-    dev: false
 
   /axios/0.25.0:
     resolution: {integrity: sha512-cD8FOb0tRH3uuEe6+evtAbgJtfxr7ly3fQjYcMcuPlgkwVS9xboaVIpcDV+cYQe+yGykgwZCs1pzjntcGa6l5g==}
     dependencies:
-      follow-redirects: 1.14.9
+      follow-redirects: 1.15.2
     transitivePeerDependencies:
       - debug
     dev: false
@@ -31552,6 +31544,7 @@ packages:
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
+    dev: false
 
   /axios/0.27.2_debug@4.3.4:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
@@ -32697,6 +32690,13 @@ packages:
     resolution: {integrity: sha512-gQxTNE/GAfIIrmHLUE3oJyp5FO6HRBfhjnw4/wMmA63ZGDJnWBmgY/lyQBpnDUkGmAhbSe39tx2d/iTOAfglwQ==}
     dependencies:
       node-int64: 0.4.0
+
+  /bson/4.6.5:
+    resolution: {integrity: sha512-uqrgcjyOaZsHfz7ea8zLRCLe1u+QGUSzMZmvXqO24CDW7DWoW1qiN9folSwa7hSneTSgM2ykDIzF5kcQQ8cwNw==}
+    engines: {node: '>=6.9.0'}
+    dependencies:
+      buffer: 5.7.1
+    dev: false
 
   /bson/4.7.2:
     resolution: {integrity: sha512-Ry9wCtIZ5kGqkJoi6aD8KjxFZEx78guTQDnpXWiNthsxzrxAK/i8E6pCHAIZTbaEFWcOCvbecMukfK7XUvyLpQ==}
@@ -34111,7 +34111,7 @@ packages:
     resolution: {integrity: sha512-j4dx+Fb0URmzbwwMUrhqWM2BEWHdFGx+qZ9qqASHRPqvTYdqvWnHg0H1hIbcyLnvgnoNAVMlwkepyqM3DaIFUg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
+    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -39628,6 +39628,7 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
+    dev: false
 
   /follow-redirects/1.15.2:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
@@ -40262,7 +40263,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       extend: 3.0.2
-      https-proxy-agent: 5.0.1
+      https-proxy-agent: 5.0.0
       is-stream: 2.0.1
       node-fetch: 2.6.7
     transitivePeerDependencies:
@@ -46982,6 +46983,13 @@ packages:
   /moment/2.29.4:
     resolution: {integrity: sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w==}
 
+  /mongodb-connection-string-url/2.5.2:
+    resolution: {integrity: sha512-tWDyIG8cQlI5k3skB6ywaEA5F9f5OntrKKsT/Lteub2zgwSUlhqEN2inGgBTm8bpYJf8QYBdA/5naz65XDpczA==}
+    dependencies:
+      '@types/whatwg-url': 8.2.1
+      whatwg-url: 11.0.0
+    dev: false
+
   /mongodb-connection-string-url/2.6.0:
     resolution: {integrity: sha512-WvTZlI9ab0QYtTYnuMLgobULWhokRjtC7db9LtcVfJ+Hsnyr5eo6ZtNAt3Ly24XZScGMelOcGtm7lSn0332tPQ==}
     dependencies:
@@ -47007,10 +47015,10 @@ packages:
     resolution: {integrity: sha512-IAD3nFtCR4s22vi5qjqkCBnuyDDrOW8WVSSmgHquOvGaP1iTD+XpC5tr8wAUbZ2EeZkaswwBKQFHDvl4qYcKqQ==}
     engines: {node: '>=12.9.0'}
     dependencies:
-      bson: 4.7.2
+      bson: 4.6.5
       denque: 2.0.1
-      mongodb-connection-string-url: 2.6.0
-      socks: 2.7.1
+      mongodb-connection-string-url: 2.5.2
+      socks: 2.6.2
     optionalDependencies:
       saslprep: 1.0.3
     dev: false
@@ -51160,6 +51168,27 @@ packages:
     dev: false
     optional: true
 
+  /protobufjs/6.11.2:
+    resolution: {integrity: sha512-4BQJoPooKJl2G9j3XftkIXjoC9C0Av2NOrWmbLWT1vH32GcSUHjM0Arra6UfTsVyfMAuFzaLucXn1sadxJydAw==}
+    hasBin: true
+    requiresBuild: true
+    dependencies:
+      '@protobufjs/aspromise': 1.1.2
+      '@protobufjs/base64': 1.1.2
+      '@protobufjs/codegen': 2.0.4
+      '@protobufjs/eventemitter': 1.1.0
+      '@protobufjs/fetch': 1.1.0
+      '@protobufjs/float': 1.0.2
+      '@protobufjs/inquire': 1.1.0
+      '@protobufjs/path': 1.1.2
+      '@protobufjs/pool': 1.1.0
+      '@protobufjs/utf8': 1.1.0
+      '@types/long': 4.0.1
+      '@types/node': 18.11.13
+      long: 4.0.0
+    dev: false
+    optional: true
+
   /protobufjs/6.11.3:
     resolution: {integrity: sha512-xL96WDdCZYdU7Slin569tFX712BxsxslWwAfAhCYjQKGTq7dAU91Lomy6nLLhh/dyGhk/YH4TwTSRxTzhuHyZg==}
     hasBin: true
@@ -55021,6 +55050,14 @@ packages:
       - supports-color
     dev: true
 
+  /socks/2.6.2:
+    resolution: {integrity: sha512-zDZhHhZRY9PxRruRMR7kMhnf3I8hDs4S3f9RecfnGxvcBHQcKcIH/oUcEWffsfl1XxdYlA7nnlGbbTvPz9D8gA==}
+    engines: {node: '>= 10.13.0', npm: '>= 3.0.0'}
+    dependencies:
+      ip: 1.1.5
+      smart-buffer: 4.2.0
+    dev: false
+
   /socks/2.7.1:
     resolution: {integrity: sha512-7maUZy1N7uo6+WVEX6psASxtNlKaNVMlGQKkG/63nEDdLOWNbiUMoLK7X4uYoLhQstau72mLgfEWcXcwsaHbYQ==}
     engines: {node: '>= 10.13.0', npm: '>= 3.0.0'}
@@ -56386,7 +56423,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       http-proxy-agent: 5.0.0
-      https-proxy-agent: 5.0.1
+      https-proxy-agent: 5.0.0
       node-fetch: 2.6.7
       stream-events: 1.0.5
       uuid: 8.3.2
