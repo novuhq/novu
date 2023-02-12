@@ -14,12 +14,9 @@ describe('Initialization', function () {
 });
 
 describe('Initialization with enabled HMAC encryption', function () {
-  beforeEach(function () {
+  it('should initialize encrypted session with the help of HMAC hash', function () {
     cy.intercept('**/widgets/session/initialize**').as('sessionInitialize');
     cy.initializeSession({ hmacEncryption: true });
-  });
-
-  it('should initialize encrypted session with the help of HMAC hash', function () {
     cy.wait('@sessionInitialize');
     cy.window().then((w) => {
       expect(w.localStorage.getItem('widget_user_auth_token')).to.be.ok;
@@ -29,7 +26,7 @@ describe('Initialization with enabled HMAC encryption', function () {
 });
 
 describe('Initialization with enabled HMAC encryption in shell', function () {
-  beforeEach(function () {
+  it('should initialize encrypted session with the help of HMAC hash shell', function () {
     cy.intercept('**/widgets/session/initialize**').as('sessionInitialize');
     cy.initializeSession({ shell: true, hmacEncryption: true })
       .as('session')
@@ -39,9 +36,6 @@ describe('Initialization with enabled HMAC encryption in shell', function () {
         const WidgetURL = `http://localhost:3500/${session.environment.identifier}`;
         return cy.forceVisit(WidgetURL);
       });
-  });
-
-  it('should initialize encrypted session with the help of HMAC hash', function () {
     cy.wait('@sessionInitialize');
 
     cy.window().then((w) => {
