@@ -439,7 +439,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.15
       prettier: 2.7.1
-      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
+      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -1181,7 +1181,6 @@ importers:
       googleapis: ^60.0.1
       intercom-client: ^2.11.0
       jsonfile: ^6.0.1
-      mixpanel: ^0.13.0
       mongoose: 6.4.6
       mongoose-delete: ^0.5.4
       ng-intercom: ^8.0.2
@@ -1217,7 +1216,6 @@ importers:
       googleapis: 60.0.1
       intercom-client: 2.11.2
       jsonfile: 6.1.0
-      mixpanel: 0.13.0
       mongoose: 6.4.6
       mongoose-delete: 0.5.4_mongoose@6.4.6
       ng-intercom: 8.0.2
@@ -1328,14 +1326,14 @@ importers:
       axios: ^0.26.1
       class-transformer: 0.5.1
       class-validator: 0.14.0
-      mixpanel: ^0.13.0
+      mixpanel: ^0.17.0
       rimraf: ^3.0.2
       typescript: 4.9.5
     dependencies:
       axios: 0.26.1
       class-transformer: 0.5.1
       class-validator: 0.14.0
-      mixpanel: 0.13.0
+      mixpanel: 0.17.0
     devDependencies:
       '@types/bluebird': 3.5.36
       rimraf: 3.0.2
@@ -22236,7 +22234,7 @@ packages:
       fs-extra: 10.1.0
       globby: 11.1.0
       http-proxy-agent: 5.0.0
-      https-proxy-agent: 5.0.0
+      https-proxy-agent: 5.0.1
       issue-parser: 6.0.0
       lodash: 4.17.21
       mime: 3.0.0
@@ -28098,7 +28096,7 @@ packages:
   /@types/graceful-fs/4.1.5:
     resolution: {integrity: sha512-anKkLmZZ+xm4p8JWBf4hElkM4XR+EZeA2M9BAkkTldmcyDY4mbdIJnRghDJH3Ov5ooY7/UAoENtmdMSkaAd7Cw==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
 
   /@types/handlebars/4.1.0:
     resolution: {integrity: sha512-gq9YweFKNNB1uFK71eRqsd4niVkXrxHugqWFQkeLRJvGjnxsLr16bYtcsG4tOFwmYi0Bax+wCkbf1reUfdl4kA==}
@@ -28229,7 +28227,7 @@ packages:
   /@types/jsonwebtoken/8.5.0:
     resolution: {integrity: sha512-9bVao7LvyorRGZCw0VmH/dr7Og+NdjYSsKAxB43OQoComFbBgsEpoR9JW6+qSq/ogwVBg8GI2MfAlk4SYI4OLg==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
     dev: false
 
   /@types/jsonwebtoken/8.5.8:
@@ -28672,7 +28670,7 @@ packages:
   /@types/through/0.0.30:
     resolution: {integrity: sha512-FvnCJljyxhPM3gkRgWmxmDZyAQSiBQQWLI0A0VFL0K7W1oRUrPJSqNO0NvTnLkBcotdlp3lKvaT0JrnyRDkzOg==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
     dev: true
 
   /@types/tinycolor2/1.4.3:
@@ -28742,7 +28740,7 @@ packages:
   /@types/whatwg-url/8.2.1:
     resolution: {integrity: sha512-2YubE1sjj5ifxievI5Ge1sckb9k/Er66HyR2c+3+I6VDUUg1TLPdYYTEbQ+DjRkS4nTxMJhgWfSfMRD2sl2EYQ==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       '@types/webidl-conversions': 6.1.1
     dev: false
 
@@ -40111,7 +40109,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       extend: 3.0.2
-      https-proxy-agent: 5.0.0
+      https-proxy-agent: 5.0.1
       is-stream: 2.0.1
       node-fetch: 2.6.7
     transitivePeerDependencies:
@@ -43961,7 +43959,7 @@ packages:
     resolution: {integrity: sha512-jZCyo6iIxO1aqUxpuBlwTDMkzOAJS4a3eYz3YzgxxVQFwLeSA7Jfq5cbqCY+JLvTDrWirgusI/0KwxKMgrdf7w==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       graceful-fs: 4.2.10
 
   /jest-snapshot/27.5.1:
@@ -46678,8 +46676,8 @@ packages:
       for-in: 1.0.2
       is-extendable: 1.0.1
 
-  /mixpanel/0.13.0:
-    resolution: {integrity: sha512-YOWmpr/o4+zJ8LPjuLUkWLc2ImFeIkX6hF1t62Wlvq6loC6e8EK8qieYO4gYPTPxxtjAryl7xmIvf/7qnPwjrQ==}
+  /mixpanel/0.17.0:
+    resolution: {integrity: sha512-DY5WeOy/hmkPrNiiZugJpWR0iMuOwuj1a3u0bgwB2eUFRV6oIew/pIahhpawdbNjb+Bye4a8ID3gefeNPvL81g==}
     engines: {node: '>=10.0'}
     dependencies:
       https-proxy-agent: 5.0.0
@@ -51004,7 +51002,7 @@ packages:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/long': 4.0.1
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       long: 5.2.0
     dev: false
 
@@ -56144,7 +56142,7 @@ packages:
     engines: {node: '>=12'}
     dependencies:
       http-proxy-agent: 5.0.0
-      https-proxy-agent: 5.0.0
+      https-proxy-agent: 5.0.1
       node-fetch: 2.6.7
       stream-events: 1.0.5
       uuid: 8.3.2
@@ -56839,7 +56837,7 @@ packages:
     dependencies:
       tslib: 1.14.1
 
-  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
+  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -56860,7 +56858,6 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
