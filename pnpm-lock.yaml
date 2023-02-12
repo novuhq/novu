@@ -533,7 +533,7 @@ importers:
       react-app-rewired: ^2.2.1
       react-chartjs-2: ^4.0.1
       react-color: ^2.19.3
-      react-css-theme-switcher: ^0.2.2
+      react-css-theme-switcher: ^0.3.0
       react-custom-scrollbars: ^4.2.1
       react-dom: ^17.0.1
       react-editor-js: ^1.9.0
@@ -624,7 +624,7 @@ importers:
       react-app-rewired: 2.2.1_react-scripts@5.0.1
       react-chartjs-2: 4.0.1_f3vhypd63pitpjhosy5yv4kn4a
       react-color: 2.19.3_react@17.0.2
-      react-css-theme-switcher: 0.2.3_react@17.0.2
+      react-css-theme-switcher: 0.3.0_react@17.0.2
       react-custom-scrollbars: 4.2.1_sfoxds7t5ydpegc3knd667wn6m
       react-dom: 17.0.2_react@17.0.2
       react-editor-js: 1.10.0_o3zhoh3axkpu3ti5gc3jir3mr4
@@ -51902,8 +51902,8 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
 
-  /react-css-theme-switcher/0.2.3_react@17.0.2:
-    resolution: {integrity: sha512-sWzbT8IqG8Me7zeLAuoh6q6AU+AQunR7pV4WULNB9oPCCdzYLMCWVhv/I2Burf2DG3HYYcb+XCcyHTQsevQxQw==}
+  /react-css-theme-switcher/0.3.0_react@17.0.2:
+    resolution: {integrity: sha512-RV+fJ6mSbtsLOgIgeL4Q8MEH4Hyl72tQvGpCFBbk3ia6ie3KzXO1gfbKTV2q1ryP3hBpmyy1qrX+6E1f937A1A==}
     engines: {node: '>=10'}
     peerDependencies:
       react: '>=16'
