@@ -43,7 +43,7 @@ export function PolishingBanner() {
         position: 'relative',
       }}
     >
-      We are polishing! This release is dedicated to bug fixes, UI improvements and performance optimizaitons.{' '}
+      We are polishing! This release is dedicated to bug fixes, UI improvements and performance optimizations.{' '}
       <a
         href={'https://novu.co/polishing?utm_source=web&utm_medium=banner&utm_campaign=polishing'}
         onClick={() => {
