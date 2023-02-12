@@ -5,7 +5,6 @@ import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
 
-import { useTemplates } from '../../api/hooks/useTemplates';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -15,6 +14,7 @@ import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { useFilterTemplates } from '../../api/hooks/use-filter-templates';
 import { useEnvController } from '../../store/useEnvController';
+import { useDebounce } from '../../hooks/useDebounce';
 
 function NotificationList() {
   const { readonly } = useEnvController();
@@ -26,6 +26,9 @@ function NotificationList() {
     totalCount: totalTemplatesCount,
     pageSize,
   } = useFilterTemplates(searchQuery, page);
+  const debouncedSearchQuery = useDebounce((query: string) => {
+    setSearchQuery(query);
+  }, 500);
   const theme = useMantineTheme();
   const navigate = useNavigate();
 
@@ -119,9 +122,8 @@ function NotificationList() {
             <StyledInput
               placeholder="Search templates"
               onChange={(event) => {
-                setSearchQuery(event.target.value);
+                debouncedSearchQuery(event.target.value.trimStart());
               }}
-              value={searchQuery}
             />
             <Button
               disabled={readonly}
