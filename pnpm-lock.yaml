@@ -2343,7 +2343,7 @@ importers:
 
   providers/infobip:
     specifiers:
-      '@infobip-api/sdk': ^0.1.0
+      '@infobip-api/sdk': ^0.2.0
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@novu/stateless': ^0.11.0
       '@types/jest': ^27.0.1
@@ -2362,7 +2362,7 @@ importers:
       typedoc: ^0.23.0
       typescript: 4.9.5
     dependencies:
-      '@infobip-api/sdk': 0.1.0
+      '@infobip-api/sdk': 0.2.0
       '@novu/stateless': link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
@@ -7412,6 +7412,19 @@ packages:
       browserslist: 4.21.4
       semver: 6.3.0
 
+  /@babel/helper-compilation-targets/7.18.9_@babel+core@7.17.8:
+    resolution: {integrity: sha512-tzLCyVmqUiFlcFoAPLA/gL9TeYrF61VLNtb+hvkuVaB5SUjW7jcfrglBIX1vUIoT7CLP3bBlIMeyEsIl2eFQNg==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+    dependencies:
+      '@babel/compat-data': 7.20.14
+      '@babel/core': 7.17.8
+      '@babel/helper-validator-option': 7.18.6
+      browserslist: 4.21.4
+      semver: 6.3.0
+    dev: true
+
   /@babel/helper-compilation-targets/7.18.9_@babel+core@7.18.5:
     resolution: {integrity: sha512-tzLCyVmqUiFlcFoAPLA/gL9TeYrF61VLNtb+hvkuVaB5SUjW7jcfrglBIX1vUIoT7CLP3bBlIMeyEsIl2eFQNg==}
     engines: {node: '>=6.9.0'}
@@ -7987,7 +8000,6 @@ packages:
     dependencies:
       '@babel/template': 7.20.7
       '@babel/types': 7.20.7
-    dev: true
 
   /@babel/helper-function-name/7.19.0:
     resolution: {integrity: sha512-WAwHBINyrpqywkUH0nTnNgI5ina5TFn85HKS0pbPDfxFfhyR/aNQEn4hGi1P1JyT//I0t4OgXUlofzWILRvS5w==}
@@ -11293,8 +11305,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-compilation-targets': 7.20.7_@babel+core@7.17.8
-      '@babel/helper-function-name': 7.19.0
+      '@babel/helper-compilation-targets': 7.18.9_@babel+core@7.17.8
+      '@babel/helper-function-name': 7.18.9
       '@babel/helper-plugin-utils': 7.20.2
     dev: true
 
@@ -11305,8 +11317,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.18.5
-      '@babel/helper-compilation-targets': 7.20.7_@babel+core@7.18.5
-      '@babel/helper-function-name': 7.19.0
+      '@babel/helper-compilation-targets': 7.18.9_@babel+core@7.18.5
+      '@babel/helper-function-name': 7.18.9
       '@babel/helper-plugin-utils': 7.20.2
     dev: false
 
@@ -11657,10 +11669,10 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-hoist-variables': 7.18.6
-      '@babel/helper-module-transforms': 7.20.11
+      '@babel/helper-hoist-variables': 7.16.7
+      '@babel/helper-module-transforms': 7.18.9
       '@babel/helper-plugin-utils': 7.20.2
-      '@babel/helper-validator-identifier': 7.19.1
+      '@babel/helper-validator-identifier': 7.16.7
       babel-plugin-dynamic-import-node: 2.3.3
     transitivePeerDependencies:
       - supports-color
@@ -17458,8 +17470,8 @@ packages:
       react: 17.0.2
     dev: false
 
-  /@infobip-api/sdk/0.1.0:
-    resolution: {integrity: sha512-+F4/0eYjOzc+PpfmZpJg6q2QuGA/K2kZBellyaTvKd0UqQ7BNp5rvABNHRnR8vaHxsp0VawAJ/cWohEMVgiKbA==}
+  /@infobip-api/sdk/0.2.0:
+    resolution: {integrity: sha512-I9C+MIMxoW/PProBSt6UIMqDE5cgVODno5o5JOlcjMbbFS2ou490e5zS0V44sH2z5W6BDhOGyT50FQetF8BeUQ==}
     engines: {node: '>=10'}
     dependencies:
       axios: 0.26.1
@@ -28017,7 +28029,7 @@ packages:
   /@types/express-serve-static-core/4.17.28:
     resolution: {integrity: sha512-P1BJAEAW3E2DJUlkgq4tOL3RyMunoWXqbSCygWo5ZIWTjUgN1YnaXWW4VWl/oc8vs/XoYibEGBKP0uZyF4AHig==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
 
