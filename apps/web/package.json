@@ -88,7 +88,7 @@
     "react-app-rewired": "^2.2.1",
     "react-chartjs-2": "^4.0.1",
     "react-color": "^2.19.3",
-    "react-css-theme-switcher": "^0.2.2",
+    "react-css-theme-switcher": "^0.3.0",
     "react-custom-scrollbars": "^4.2.1",
     "react-dom": "^17.0.1",
     "react-editor-js": "^1.9.0",
