@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { Document, Model, Query, Types, ProjectionType } from 'mongoose';
+import { Document, Model, Query, Types, ProjectionType, FilterQuery } from 'mongoose';
 
 export class BaseRepository<T_Query, T_Response> {
   public _model: Model<any & Document>;
@@ -21,8 +21,10 @@ export class BaseRepository<T_Query, T_Response> {
     return new Types.ObjectId(value);
   }
 
-  async count(query: T_Query): Promise<number> {
-    return await this.MongooseModel.countDocuments(query);
+  async count(query: FilterQuery<T_Query>, limit?: number): Promise<number> {
+    return this.MongooseModel.countDocuments(query, {
+      limit,
+    });
   }
 
   async aggregate(query: any[]): Promise<any> {

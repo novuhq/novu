@@ -1,12 +1,9 @@
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import axios from 'axios';
 import { sub } from 'date-fns';
 import { SubscriberEntity } from '@novu/dal';
 
-import { UpdateSubscriberOnlineFlagRequestDto } from '../../subscribers/dtos/update-subscriber-online-flag-request.dto';
-
-const axiosInstance = axios.create();
+import { updateSubscriberOnlineFlag } from './helpers';
 
 describe('Update Subscriber online flag - /subscribers/:subscriberId/online-status (PATCH)', function () {
   let session: UserSession;
@@ -49,15 +46,3 @@ describe('Update Subscriber online flag - /subscribers/:subscriberId/online-stat
     expect(data.data.isOnline).to.equal(true);
   });
 });
-
-async function updateSubscriberOnlineFlag(
-  data: UpdateSubscriberOnlineFlagRequestDto,
-  session: UserSession,
-  subscriberId: string
-) {
-  return await axiosInstance.patch(`${session.serverUrl}/v1/subscribers/${subscriberId}/online-status`, data, {
-    headers: {
-      authorization: `ApiKey ${session.apiKey}`,
-    },
-  });
-}

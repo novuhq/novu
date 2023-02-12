@@ -389,7 +389,10 @@
     "codesee",
     "ehlo",
     "logrocket",
-    "backoff"
+    "backoff",
+    "isequal",
+    "Scriptable",
+    "iife"
   ],
   "flagWords": [],
   "patterns": [

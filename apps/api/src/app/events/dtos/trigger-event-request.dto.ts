@@ -1,4 +1,13 @@
-import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayNotEmpty,
+  IsArray,
+  IsDefined,
+  IsObject,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { TriggerRecipientSubscriber, TriggerRecipients } from '@novu/node';
 import { TopicId, TopicKey, TriggerRecipientsTypeEnum } from '@novu/shared';
@@ -23,6 +32,14 @@ export class TopicPayloadDto {
   topicKey: TopicKey;
   @ApiProperty()
   type: TriggerRecipientsTypeEnum.TOPIC;
+}
+
+export class BulkTriggerEventDto {
+  @ApiProperty()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  events: TriggerEventRequestDto[];
 }
 
 @ApiExtraModels(SubscriberPayloadDto)

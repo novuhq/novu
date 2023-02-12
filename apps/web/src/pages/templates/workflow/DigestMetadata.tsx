@@ -37,6 +37,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             <Controller
               control={control}
               name={`steps.${index}.metadata.amount`}
+              defaultValue=""
               render={({ field, fieldState }) => {
                 return (
                   <Input
@@ -58,6 +59,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             <Controller
               control={control}
               name={`steps.${index}.metadata.unit`}
+              defaultValue=""
               render={({ field }) => {
                 return (
                   <Select
@@ -120,6 +122,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.backoffAmount`}
+                defaultValue=""
                 render={({ field, fieldState }) => {
                   return (
                     <Input
@@ -142,6 +145,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.backoffUnit`}
+                defaultValue=""
                 render={({ field }) => {
                   return (
                     <Select
@@ -174,6 +178,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
           <Controller
             control={control}
             name={`steps.${index}.metadata.updateMode`}
+            defaultValue={false}
             render={({ field: { value, ...field } }) => {
               return (
                 <StyledSwitch
@@ -196,6 +201,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
         <Controller
           control={control}
           name={`steps.${index}.metadata.digestKey`}
+          defaultValue=""
           render={({ field, fieldState }) => {
             return (
               <Input

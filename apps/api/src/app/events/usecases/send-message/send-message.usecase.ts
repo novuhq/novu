@@ -61,6 +61,8 @@ export class SendMessage {
     const shouldRun = await this.filter(command);
     const preferred = await this.filterPreferredChannels(command.job);
 
+    const stepType = command.step?.template?.type;
+
     if (!command.payload?.$on_boarding_trigger) {
       this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
         _template: command.job._templateId,
@@ -85,12 +87,11 @@ export class SendMessage {
       return;
     }
 
-    if (command.step.template.type !== StepTypeEnum.DELAY) {
+    if (stepType !== StepTypeEnum.DELAY) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail:
-            command.step.template.type === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
+          detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,
@@ -99,7 +100,7 @@ export class SendMessage {
       );
     }
 
-    switch (command.step.template.type) {
+    switch (stepType) {
       case StepTypeEnum.SMS:
         return await this.sendMessageSms.execute(command);
       case StepTypeEnum.IN_APP:

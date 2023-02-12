@@ -65,7 +65,7 @@ const { _id: layoutId } = await novu.layouts.create({
 Likewise, the edition of an existing layout can also be done programatically. When updating none of the properties is mandatory and the API will only update the ones passed.
 
 ```typescript
-const layoutId: LayoutId = '<LAYOUT_ID'; // The unique identifier of the layout.
+const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout.
 
 const updatedLayout = await novu.layouts.update(layoutId, {
   name,
@@ -79,7 +79,7 @@ const updatedLayout = await novu.layouts.update(layoutId, {
 And to set a layout as default programmatically it is as easy as to execute:
 
 ```typescript
-const layoutId: LayoutId = '<LAYOUT_ID'; // The unique identifier of the layout to be set as default.
+const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout to be set as default.
 
 await novu.layouts.setDefault(layoutId);
 ```
@@ -104,7 +104,7 @@ Layouts can also be deleted. The condition to be able to delete them is that the
 Programmatically they can be deleted with the package.
 
 ```typescript
-const layoutId: LayoutId = '<LAYOUT_ID'; // The unique identifier of the layout to be deleted.
+const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout to be deleted.
 
 await novu.layouts.delete(layoutId);
 ```
@@ -115,7 +115,7 @@ There are two ways to programmatically find any layout created in the environmen
 One is to retrieve the layout based in its known unique identifier.
 
 ```typescript
-const layoutId: LayoutId = '<LAYOUT_ID'; // The unique identifier of the layout to be found.
+const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout to be found.
 
 const layout = await novu.layouts.get(layoutId);
 ```
@@ -123,7 +123,7 @@ const layout = await novu.layouts.get(layoutId);
 The other one is to list the existing layouts of the environment.
 
 ```typescript
-const layoutId: LayoutId = '<LAYOUT_ID'; // The unique identifier of the layout to be found.
+const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout to be found.
 
 const page: number = 0; // Pagination value of the page for the results. First page will be page = 0.
 const pageSize: number = 100; // Optional. Pagination value of the amount of layouts per page to return.
