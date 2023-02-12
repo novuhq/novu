@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:base"],
-  "prConcurrentLimit": 2,
+  "prConcurrentLimit": 3,
   "ignoreDeps": ["express", "node", "@types/node"],
   "packageRules": [
     {

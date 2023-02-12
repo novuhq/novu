@@ -71,13 +71,13 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
-    const messages = await this.find(requestQuery, '', {
+    const messages = await Message.find(requestQuery, '', {
       limit: options.limit,
       skip: options.skip,
       sort: '-createdAt',
-    });
+    }).populate('subscriber', '_id firstName lastName avatar subscriberId');
 
-    return messages;
+    return this.mapEntities(messages);
   }
 
   async getTotalCount(
