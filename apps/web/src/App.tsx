@@ -28,11 +28,13 @@ import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import {
-  QuickStartDemo,
   QuickStartCards,
-  QuickStartHeader,
   ImplementationDescription,
   TroubleshootingDescription,
+  QuickstartDescription,
+  NcInAppDescription,
+  NcDemoDescription,
+  TriggerDescription,
 } from './pages/quick-start/QuickStart';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
@@ -45,12 +47,13 @@ import { SegmentProvider } from './store/segment.context';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import { GeneralStarter } from './pages/quick-start/GeneralStarter';
-import { BellGradient, MobileGradient } from './design-system/icons';
+import { BellGradient } from './design-system/icons';
 import { SetUp } from './pages/quick-start/components/SetUp';
 import { TestNotificationTrigger } from './pages/quick-start/components/TestNotificationTrigger';
 import { welcomeDescription } from './pages/quick-start/consts';
 import { NestedSquares } from './design-system/icons/gradient/NestedSquares';
 import { Smiley } from './design-system/icons/gradient/Smiley';
+import { QuickStartWrapper } from './pages/quick-start/components/QuickStartWrapper';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID);
@@ -198,9 +201,9 @@ function App() {
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartHeader>
+                              <QuickStartWrapper>
                                 <GeneralStarter />
-                              </QuickStartHeader>
+                              </QuickStartWrapper>
                             </SpotLight>
                           </RequiredAuth>
                         }
@@ -210,9 +213,10 @@ function App() {
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartHeader
+                              <QuickStartWrapper
                                 title={welcomeDescription}
-                                description={'What would you like to build?'}
+                                secondaryTitle={'What would you like to build?'}
+                                description={<QuickstartDescription />}
                               >
                                 <QuickStartCards
                                   cells={[
@@ -223,12 +227,12 @@ function App() {
                                     },
                                     {
                                       navIcon: NestedSquares,
-                                      description: 'Other',
+                                      description: 'Other Channels',
                                       navigateTo: '/general-started',
                                     },
                                   ]}
                                 />
-                              </QuickStartHeader>
+                              </QuickStartWrapper>
                             </SpotLight>
                           </RequiredAuth>
                         }
@@ -238,7 +242,11 @@ function App() {
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartHeader title={welcomeDescription} description={<ImplementationDescription />}>
+                              <QuickStartWrapper
+                                title={welcomeDescription}
+                                secondaryTitle={<ImplementationDescription />}
+                                faq={true}
+                              >
                                 <QuickStartCards
                                   cells={[
                                     {
@@ -255,7 +263,7 @@ function App() {
                                     },
                                   ]}
                                 />
-                              </QuickStartHeader>
+                              </QuickStartWrapper>
                             </SpotLight>
                           </RequiredAuth>
                         }
@@ -265,12 +273,9 @@ function App() {
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartHeader
-                                title={'Pending Notification Center Initialization'}
-                                description={<TroubleshootingDescription />}
-                              >
+                              <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true}>
                                 <SetUp />
-                              </QuickStartHeader>
+                              </QuickStartWrapper>
                             </SpotLight>
                           </RequiredAuth>
                         }
@@ -280,27 +285,14 @@ function App() {
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartHeader
-                                title={'Now is the time to trigger notification'}
-                                description={'do it! '}
+                              <QuickStartWrapper
+                                title={<Smiley style={{ height: '75px', width: '75px', marginTop: '100px' }} />}
+                                secondaryTitle={'Amazing, nearly done!'}
+                                description={<TriggerDescription />}
+                                faq={true}
                               >
                                 <TestNotificationTrigger />
-                              </QuickStartHeader>
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/quickstart/notification-center/demo"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <QuickStartHeader
-                                title={'Great Choice!'}
-                                description={'Let’s start by a quick setup for the app:'}
-                              >
-                                <QuickStartDemo />
-                              </QuickStartHeader>
+                              </QuickStartWrapper>
                             </SpotLight>
                           </RequiredAuth>
                         }
@@ -310,25 +302,20 @@ function App() {
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartHeader
-                                title={welcomeDescription}
-                                description={'Where would you like to start?'}
-                              >
+                              <QuickStartWrapper secondaryTitle={'How would you like to start?'}>
                                 <QuickStartCards
                                   cells={[
                                     {
-                                      navIcon: MobileGradient,
-                                      description: 'I have an app let’s add the to my app',
+                                      description: <NcInAppDescription />,
                                       navigateTo: '/quickstart/notification-center/set-up',
                                     },
                                     {
-                                      navIcon: Smiley,
-                                      description: 'Let’s just play around with a demo app',
-                                      navigateTo: '/quickstart/notification-center/demo',
+                                      description: <NcDemoDescription />,
+                                      navigateTo: '/quickstart/notification-center/set-up/demo',
                                     },
                                   ]}
                                 />
-                              </QuickStartHeader>
+                              </QuickStartWrapper>
                             </SpotLight>
                           </RequiredAuth>
                         }

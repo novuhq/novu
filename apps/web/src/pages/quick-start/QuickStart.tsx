@@ -1,71 +1,13 @@
-import React, { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Grid, Stack, useMantineColorScheme, Stepper } from '@mantine/core';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Center, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
+
 import { colors, shadows, Text } from '../../design-system';
 import { When } from '../../components/utils/When';
-import { Prism } from '../settings/tabs/components/Prism';
-import { demoClone, npmInstall, npmRunCommand, openLocalHost } from './consts';
-import { GoBack } from './components/route/GoBack';
-import { localNavigate } from './components/route/store';
-import { LoaderProceedTernary } from './components/LoaderProceedTernary';
-import { useInAppActivated } from './components/useInAppActivated';
-import PageContainer from '../../components/layout/components/PageContainer';
-export function QuickStartHeader({
-  children,
-  title,
-  description,
-}: {
-  children: React.ReactNode;
-  title?: React.ReactNode | string;
-  description?: React.ReactNode | string;
-}) {
-  const FIRST_PAGE = '/quickstart';
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    localNavigate().push(location.pathname);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    const lastRoute = localNavigate().peek();
-    if (lastRoute) {
-      navigate(lastRoute);
-    }
-  }, []);
-
-  function goBackHandler() {
-    const route = localNavigate().pop()?.at(-1);
-
-    if (route) {
-      navigate(route);
-    }
-  }
-
-  return (
-    <>
-      <PageContainer>
-        <PageWrapper>
-          <GoBack goBackHandler={goBackHandler} display={location.pathname !== FIRST_PAGE} />
-          <Stack
-            align="center"
-            justify="center"
-            sx={(theme) => ({
-              backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
-              height: '100%',
-              background: 'border-box',
-            })}
-          >
-            <QuickStartTitle>{title}</QuickStartTitle>
-            <QuickStartDescription>{description}</QuickStartDescription>
-            {children}
-          </Stack>
-        </PageWrapper>
-      </PageContainer>
-    </>
-  );
-}
+import { Smiley } from '../../design-system/icons/gradient/Smiley';
+import { faqUrl } from './consts';
+import { BellGradient } from '../../design-system/icons';
 
 export function QuickStartCards({ cells }: { cells: ICardCell[] }) {
   const spanNumber = 12 / cells.length;
@@ -81,6 +23,15 @@ export function QuickStartCards({ cells }: { cells: ICardCell[] }) {
   );
 }
 
+export function QuickstartDescription() {
+  return (
+    <Stack align="center" spacing="xs">
+      <span>Novu integrates with all communication channels -</span>
+      <span>Email, SMS, Chat Apps (WhatsApp, Slack...), Push and Notification Center</span>
+    </Stack>
+  );
+}
+
 export function ImplementationDescription() {
   return (
     <Stack align="center">
@@ -90,49 +41,62 @@ export function ImplementationDescription() {
   );
 }
 
+export function Faq() {
+  return (
+    <Center
+      data-test-id="go-back-button"
+      inline
+      style={{
+        cursor: 'pointer',
+        marginTop: '75px',
+      }}
+    >
+      <span style={{ color: colors.B60 }}>Got stuck? </span>
+      <a href={faqUrl} style={{ marginLeft: '5px', color: '#DD2476' }}>
+        Check our FAQ’s
+      </a>
+    </Center>
+  );
+}
+
 export function TroubleshootingDescription() {
   return (
     <Stack align="center">
-      <InlineDiv>
-        <span>To proceed, complete the </span>
-        <a href={'https://docs.novu.co/notification-center/getting-started'} style={{ color: '#DD2476 ' }}>
-          guide
-        </a>
-
-        <span> related to your client framework.</span>
-      </InlineDiv>
-      <HelpNeeded />
+      <span>Follow the installation steps and then sit back while we</span>
+      <span>connect to your application</span>
     </Stack>
   );
 }
 
-export function HelpNeeded() {
+export function NcInAppDescription() {
   return (
-    <InlineDiv>
-      <Text size={'lg'}>
-        If you have any questions or need further assistance, please feel free to reach out to us via our
-      </Text>
-      <a
-        href={'https://docs.novu.co/notification-center/getting-started'}
-        style={{ color: '#DD2476 ', fontSize: '16px', margin: '0 5px' }}
-      >
-        Discord
-      </a>
-      <Text size={'lg'}>server in the support channel.</Text>
-    </InlineDiv>
+    <Stack align="center" spacing="xs">
+      <span>I have an app!</span>
+      <span>let’s add a Notification Center to my app.</span>
+    </Stack>
   );
 }
 
-const QuickStartTitle = styled.div`
-  font-size: 22px;
-  color: ${colors.B60};
-`;
+export function TriggerDescription() {
+  return (
+    <span>
+      Now let's ring the nc in your app
+      <BellGradient style={{ margin: '0px 5px 0', top: '8px', position: 'relative' }} />
+      in your app
+    </span>
+  );
+}
 
-const QuickStartDescription = styled.div`
-  font-size: 30px;
-  font-weight: bold;
-  margin-bottom: 65px;
-`;
+export function NcDemoDescription() {
+  return (
+    <Stack align="center" spacing="xs">
+      <span>I want to quickly start</span>
+      <span>
+        with a demo app <Smiley style={{ height: '16px' }} />
+      </span>
+    </Stack>
+  );
+}
 
 function NavCard({ cell }: { cell: ICardCell }) {
   const { colorScheme } = useMantineColorScheme();
@@ -143,6 +107,7 @@ function NavCard({ cell }: { cell: ICardCell }) {
     : undefined;
   const cardWithIconAndDescription = cell.navIcon;
   const cardWithImage = cell.imagePath;
+  const onlyDescription = !cell.imagePath && !cell.navIcon && cell.description;
   const alt = cell.imagePath?.split('/').pop();
 
   const handleOnClick = () => {
@@ -153,6 +118,12 @@ function NavCard({ cell }: { cell: ICardCell }) {
 
   return (
     <StyledCard dark={colorScheme === 'dark'} onClick={handleOnClick}>
+      <When truthy={onlyDescription}>
+        <Text mt={10} size={'lg'}>
+          {cell.description ?? ''}
+        </Text>
+      </When>
+
       <When truthy={cardWithIconAndDescription}>
         {NavIcon ? <NavIcon style={{ height: '48px', width: '39px' }} /> : null}
         <Text mt={10} size={'lg'}>
@@ -203,49 +174,10 @@ const StyledCard = styled.div<{ dark: boolean }>`
   }
 `;
 
-const PageWrapper = styled.div`
-  padding: 42px 30px;
-`;
-
 interface ICardCell {
   navIcon?: (props: React.ComponentPropsWithoutRef<'svg'>) => JSX.Element;
-  description?: string;
+  description?: React.ReactNode | string;
   navigateTo?: string;
   imagePath?: string;
   href?: string;
-}
-
-const InlineDiv = styled.div`
-  display: flex;
-  flex-direction: row;
-  font-size: 30px;
-  font-weight: bold;
-
-  span {
-    margin: 0 5px;
-  }
-`;
-
-export function QuickStartDemo() {
-  const { initialized } = useInAppActivated();
-
-  return (
-    <>
-      <LoaderProceedTernary appInitialized={initialized} navigatePath={'/quickstart/notification-center/trigger'} />
-
-      <Stepper active={0} onStepClick={() => {}} orientation="vertical">
-        <Stepper.Step
-          label="Clone the project to your local machine"
-          description={<Prism code={`${demoClone}   `} />}
-        />
-        <Stepper.Step label="Run npm install " description={<Prism code={`${npmInstall}   `} />} />
-        <Stepper.Step label="Update .env variable withe the following ones" description="Get full access" />
-        <Stepper.Step label="Run npm run dev " description={<Prism code={`${npmRunCommand}   `} />} />
-        <Stepper.Step
-          label="If the browser did not automatically opened open localhost"
-          description={<Prism code={`${openLocalHost}   `} />}
-        />
-      </Stepper>
-    </>
-  );
 }

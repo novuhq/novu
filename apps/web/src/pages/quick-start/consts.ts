@@ -1,10 +1,11 @@
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
 export const notificationTemplateName = 'On-boarding notification';
-export const demoClone = `git clone git@github.com:pixel-point/nextjs-tailwind-starter.git`;
+export const cloneDemoRepo = `git clone git@github.com:novuhq/notification-center-demo.git`;
 export const npmInstall = `npm install`;
+export const setupProject = `npm run setup:project`;
 export const npmRunCommand = `npm run dev`;
-export const openLocalHost = `http://localhost:3000`;
 export const welcomeDescription = 'Welcome to Novu, let’s get started';
+export const faqUrl = 'https://docs.novu.co/notification-center/react/react-components/#faq';
 
 interface ISnippetInstructions {
   instruction: string;
@@ -148,6 +149,31 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
       {
         instruction: 'Now NotificationCenterComponent could be used like this in the Vue component file:',
         snippet: vueComponentSnippet,
+      },
+    ],
+  },
+  {
+    key: 'demo',
+    value: [
+      {
+        instruction: 'Clone the project to your local machine',
+        snippet: cloneDemoRepo,
+      },
+      {
+        instruction: 'Run npm install',
+        snippet: npmInstall,
+      },
+      {
+        instruction: 'Provider the following application-identifier variable while executing next command',
+        snippet: 'APPLICATION_IDENTIFIER',
+      },
+      {
+        instruction: 'Run setup project command',
+        snippet: setupProject,
+      },
+      {
+        instruction: 'Run npm run dev',
+        snippet: npmRunCommand,
       },
     ],
   },

@@ -1,7 +1,8 @@
-import { Card, Grid, Group } from '@mantine/core';
-import { colors, Text } from '../../../design-system';
 import React from 'react';
+import { Card, Grid, Group } from '@mantine/core';
 import styled from '@emotion/styled';
+
+import { colors, Text } from '../../../design-system';
 
 export const TriggerCard = ({
   name,

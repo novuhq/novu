@@ -1,8 +1,8 @@
-import { Center, Loader } from '@mantine/core';
-import { Button, colors } from '../../../design-system';
-import { CheckCircle } from '../../../design-system/icons';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Center, Loader } from '@mantine/core';
+
+import { Button, colors } from '../../../design-system';
 
 export function LoaderProceedTernary({
   appInitialized,
@@ -20,12 +20,11 @@ export function LoaderProceedTernary({
   return (
     <>
       {!appInitialized ? (
-        <Loader color={colors.B70} size={32} variant={'dots'} />
+        <Loader color={colors.B70} size={32} />
       ) : (
         <Center>
-          <CheckCircle color={colors.success} />
           <Button variant="outline" onClick={() => navigateToTestTrigger()}>
-            Click to continue
+            All set! Click to continue
           </Button>
         </Center>
       )}
