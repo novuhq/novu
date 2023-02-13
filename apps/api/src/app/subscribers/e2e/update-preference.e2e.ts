@@ -35,7 +35,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     } catch (error) {
       expect(error.toJSON()).to.have.include({
         status: 400,
-        name: 'Error',
+        name: 'AxiosError',
         message: 'Request failed with status code 400',
       });
     }
@@ -55,7 +55,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     } catch (error) {
       expect(error.toJSON()).to.have.include({
         status: 400,
-        name: 'Error',
+        name: 'AxiosError',
         message: 'Request failed with status code 400',
       });
     }
