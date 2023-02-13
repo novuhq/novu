@@ -527,7 +527,7 @@ describe('Message filter matcher', function () {
     let requestsCount = gotGetStub.callCount;
 
     expect(requestsCount).to.equal(0);
-    expect(matchedMessage).to.equal(false);
+    expect(matchedMessage.passed).to.equal(false);
 
     //Reorder children order to make sure it is not random
 
@@ -557,7 +557,7 @@ describe('Message filter matcher', function () {
     requestsCount = gotGetStub.callCount;
 
     expect(requestsCount).to.equal(0);
-    expect(matchedMessage).to.equal(false);
+    expect(matchedMessage.passed).to.equal(false);
 
     gotGetStub.restore();
   });
@@ -627,7 +627,7 @@ describe('Message filter matcher', function () {
             payload: {},
           }
         );
-        expect(matchedMessage).to.equal(false);
+        expect(matchedMessage.passed).to.equal(false);
       });
 
       it("doesn't allow to process if the subscriber has no online fields set and filter is false", async () => {
@@ -655,7 +655,7 @@ describe('Message filter matcher', function () {
             payload: {},
           }
         );
-        expect(matchedMessage).to.equal(false);
+        expect(matchedMessage.passed).to.equal(false);
       });
 
       it('allows to process if the subscriber is online', async () => {
@@ -699,7 +699,7 @@ describe('Message filter matcher', function () {
             payload: {},
           }
         );
-        expect(matchedMessage).to.equal(false);
+        expect(matchedMessage.passed).to.equal(false);
       });
     });
 
@@ -761,7 +761,7 @@ describe('Message filter matcher', function () {
             payload: {},
           }
         );
-        expect(matchedMessage).to.equal(false);
+        expect(matchedMessage.passed).to.equal(false);
       });
 
       it('allows to process if the subscriber is still online', async () => {
@@ -836,7 +836,7 @@ describe('Message filter matcher', function () {
             payload: {},
           }
         );
-        expect(matchedMessage).to.equal(false);
+        expect(matchedMessage.passed).to.equal(false);
       });
 
       it('allows to process if the subscriber was online in last 1 hour', async () => {
