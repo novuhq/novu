@@ -1,4 +1,4 @@
-import { ClassSerializerInterceptor, Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
+import { ClassSerializerInterceptor, Controller, Get, UseGuards, UseInterceptors, Logger } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -24,6 +24,8 @@ export class InboundParseController {
   })
   @ExternalApiAccessible()
   async getMxRecordStatus(@UserSession() user: IJwtPayload): Promise<GetMxRecordResponseDto> {
+    Logger.log('Getting MX Record Status');
+
     return await this.getMxRecordUsecase.execute(
       GetMxRecordCommand.create({ environmentId: user.environmentId, organizationId: user.organizationId })
     );

@@ -31,7 +31,7 @@ export class CreateLayoutUseCase {
 
     const dto = this.mapFromEntity(layout);
 
-    if (dto._id && dto.isDefault === true) {
+    if (dto._id && dto.isDefault) {
       const setDefaultLayoutCommand = SetDefaultLayoutCommand.create({
         environmentId: dto._environmentId,
         layoutId: dto._id,

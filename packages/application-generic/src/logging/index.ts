@@ -1,5 +1,8 @@
 import * as winston from 'winston';
 import { WinstonModule } from 'nest-winston';
+import { LoggerService } from '@nestjs/common';
+
+const loggingLevelArr = ['error', 'warn', 'info', 'verbose', 'debug'];
 
 const loggingLevels = {
   error: 0,
@@ -29,24 +32,34 @@ interface ILoggingVariables {
 // TODO: should be moved into a config framework
 function getLoggingVariables(): ILoggingVariables {
   // eslint-disable-next-line no-console
-  console.log('Env is: ' + process.env.NODE_ENV);
+  console.log('Env: ' + process.env.NODE_ENV);
   let env = process.env.NODE_ENV;
   env ??= 'local';
 
   let logLevel = process.env.LOGGING_LEVEL;
   logLevel ??= 'info';
+  if (loggingLevelArr.indexOf(logLevel) === -1) {
+    // eslint-disable-next-line no-console
+    console.log(
+      logLevel +
+        'is not a valid log level of ' +
+        loggingLevelArr +
+        '. Reverting to info.'
+    );
+    logLevel = 'info';
+  }
   // eslint-disable-next-line no-console
-  console.log('Logging is: ' + logLevel);
+  console.log('Log Level: ' + logLevel);
 
   let hostingPlatform = process.env.HOSTING_PLATFORM;
   hostingPlatform ??= 'Docker';
   // eslint-disable-next-line no-console
-  console.log('platform is: ' + hostingPlatform);
+  console.log('Platform: ' + hostingPlatform);
 
   let tenant = process.env.TENANT;
   tenant ??= 'OS';
   // eslint-disable-next-line no-console
-  console.log('tenant is: ' + tenant);
+  console.log('Tenant: ' + tenant);
 
   return {
     env,
@@ -59,6 +72,11 @@ function getLoggingVariables(): ILoggingVariables {
 function createWinstonOptions(settings: ILoggerSettings) {
   const values = getLoggingVariables();
 
+  const transports =
+    values.env === 'local' || values.env === 'test'
+      ? [new winston.transports.Console(loggingFormat)]
+      : [];
+
   return {
     level: values.level,
     levels: loggingLevels,
@@ -68,11 +86,9 @@ function createWinstonOptions(settings: ILoggerSettings) {
       hostingPlatform: values.hostingPlatform,
       tenant: values.tenant,
     },
-    transports:
-      values.env === 'local' || values.env === 'test'
-        ? [new winston.transports.Console(loggingFormat)]
-        : [],
+    transports: transports,
     exitOnError: false,
+    rejectionHandlers: transports,
   };
 }
 

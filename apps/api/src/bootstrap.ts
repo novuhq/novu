@@ -45,11 +45,13 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
   } else {
+    const instance = createNestLogger({
+      serviceName: packageJson.name,
+      version: packageJson.version,
+    });
+
     app = await NestFactory.create(AppModule, {
-      logger: createNestLogger({
-        serviceName: packageJson.name,
-        version: packageJson.version,
-      }),
+      logger: instance,
     });
   }
 

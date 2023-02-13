@@ -95,14 +95,5 @@ if (process.env.NODE_ENV === 'test') {
 export class AppModule {
   constructor(private queueService: QueueService) {
     Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
-
-    setInterval(() => {
-      Logger.debug('debugm');
-      Logger.verbose('verbosem');
-      Logger.warn('warnm');
-      Logger.log('infom');
-      Logger.error('errorm', 'api.app.module.ts');
-      Logger.log('---m');
-    }, 1000);
   }
 }

@@ -9,6 +9,7 @@ import {
   Put,
   UseGuards,
   UseInterceptors,
+  Logger,
 } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
@@ -31,7 +32,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
 import { CalculateLimitNovuIntegration } from './usecases/calculate-limit-novu-integration';
-import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit-novu-integration/calculate-limit-novu-integration.command';
+import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit-novu-integration';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
