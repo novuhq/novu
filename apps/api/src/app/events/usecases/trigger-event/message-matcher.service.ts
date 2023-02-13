@@ -127,6 +127,35 @@ export class MessageMatcher {
     };
   }
 
+  public static sumFilters(
+    summary: {
+      stepFilters: string[];
+      failedFilters: string[];
+      passedFilters: string[];
+    },
+    condition: ICondition
+  ) {
+    let type: string = condition.filter.toLowerCase();
+
+    if (condition.filter === FILTER_TO_LABEL.isOnline || condition.filter === FILTER_TO_LABEL.isOnlineInLast) {
+      type = 'online';
+    }
+
+    if (condition.passed && !summary.passedFilters.includes(type)) {
+      summary.passedFilters.push(type);
+    }
+
+    if (!condition.passed && !summary.failedFilters.includes(type)) {
+      summary.failedFilters.push(type);
+    }
+
+    if (!summary.stepFilters.includes(type)) {
+      summary.stepFilters.push(type);
+    }
+
+    return summary;
+  }
+
   private async handleGroupFilters(
     filter: StepFilter,
     variables: IFilterVariables,

@@ -64,7 +64,7 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     if (!command.payload?.$on_boarding_trigger) {
-      const usedFilters = shouldRun.conditions.reduce(this.sumFilters, {
+      const usedFilters = shouldRun.conditions.reduce(MessageMatcher.sumFilters, {
         stepFilters: [],
         failedFilters: [],
         passedFilters: [],
@@ -221,34 +221,5 @@ export class SendMessage {
     const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
 
     return !channels.find((channel) => channel === job.type);
-  }
-
-  private sumFilters(
-    summary: {
-      stepFilters: string[];
-      failedFilters: string[];
-      passedFilters: string[];
-    },
-    condition: ICondition
-  ) {
-    let type: string = condition.filter.toLowerCase();
-
-    if (condition.filter === FILTER_TO_LABEL.isOnline || condition.filter === FILTER_TO_LABEL.isOnlineInLast) {
-      type = 'online';
-    }
-
-    if (condition.passed && !summary.passedFilters.includes(type)) {
-      summary.passedFilters.push(type);
-    }
-
-    if (!condition.passed && !summary.failedFilters.includes(type)) {
-      summary.failedFilters.push(type);
-    }
-
-    if (!summary.stepFilters.includes(type)) {
-      summary.stepFilters.push(type);
-    }
-
-    return summary;
   }
 }
