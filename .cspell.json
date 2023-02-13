@@ -391,7 +391,8 @@
     "logrocket",
     "backoff",
     "isequal",
-    "Scriptable"
+    "Scriptable",
+    "iife"
   ],
   "flagWords": [],
   "patterns": [

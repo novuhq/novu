@@ -29,7 +29,7 @@
     "axios": "^0.26.1",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.0",
-    "mixpanel": "^0.13.0"
+    "mixpanel": "^0.17.0"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.24",

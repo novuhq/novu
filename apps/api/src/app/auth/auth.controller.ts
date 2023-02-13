@@ -83,10 +83,10 @@ export class AuthController {
   @UseGuards(AuthGuard('github'))
   async githubCallback(@Req() request, @Res() response) {
     if (!request.user || !request.user.token) {
-      return response.redirect(`${process.env.CLIENT_SUCCESS_AUTH_REDIRECT}?error=AuthenticationError`);
+      return response.redirect(`${process.env.FRONT_BASE_URL + '/auth/login'}?error=AuthenticationError`);
     }
 
-    let url = process.env.CLIENT_SUCCESS_AUTH_REDIRECT;
+    let url = process.env.FRONT_BASE_URL + '/auth/login';
     const redirectUrl = JSON.parse(request.query.state).redirectUrl;
 
     /**
