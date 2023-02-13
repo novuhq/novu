@@ -33,7 +33,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
   });
 
   it('should match a message for AND filter group', async function () {
@@ -62,7 +62,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
   });
 
   it('should not match AND group for single bad item', async function () {
@@ -91,7 +91,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(false);
+    expect(matchedMessage.passed).to.equal(false);
   });
 
   it('should match a NOT_EQUAL for EQUAL var', async function () {
@@ -120,7 +120,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
   });
 
   it('should match a EQUAL for a boolean var', async function () {
@@ -142,7 +142,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
   });
 
   it('should fall thru for no filters item', async function () {
@@ -156,7 +156,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
   });
 
   it('should get larger payload var then filter value', async function () {
@@ -178,7 +178,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
   });
 
   it('should get smaller payload var then filter value', async function () {
@@ -200,7 +200,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
   });
 
   it('should get larger or equal payload var then filter value', async function () {
@@ -222,7 +222,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
 
     matchedMessage = await messageMatcher.filter(
       sendMessageCommand({
@@ -242,7 +242,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
   });
 
   it('should get smaller or equal payload var then filter value', async function () {
@@ -264,7 +264,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
 
     matchedMessage = await messageMatcher.filter(
       sendMessageCommand({
@@ -284,7 +284,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
   });
 
   it('should handle now filters', async function () {
@@ -310,7 +310,7 @@ describe('Message filter matcher', function () {
         },
       }
     );
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
 
     matchedMessage = await messageMatcher.filter(
       sendMessageCommand({
@@ -334,7 +334,7 @@ describe('Message filter matcher', function () {
         },
       }
     );
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
     matchedMessage = await messageMatcher.filter(
       sendMessageCommand({
         step: {
@@ -364,7 +364,7 @@ describe('Message filter matcher', function () {
         },
       }
     );
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
     matchedMessage = await messageMatcher.filter(
       sendMessageCommand({
         step: {
@@ -394,7 +394,7 @@ describe('Message filter matcher', function () {
         },
       }
     );
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
   });
 
   it('should handle webhook filter', async function () {
@@ -421,7 +421,7 @@ describe('Message filter matcher', function () {
       }
     );
 
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
 
     gotGetStub.restore();
   });
@@ -459,7 +459,7 @@ describe('Message filter matcher', function () {
     let requestsCount = gotGetStub.callCount;
 
     expect(requestsCount).to.equal(0);
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
 
     //Reorder children order to make sure it is not random
 
@@ -489,7 +489,7 @@ describe('Message filter matcher', function () {
     requestsCount = gotGetStub.callCount;
 
     expect(requestsCount).to.equal(0);
-    expect(matchedMessage).to.equal(true);
+    expect(matchedMessage.passed).to.equal(true);
 
     gotGetStub.restore();
   });
@@ -599,7 +599,7 @@ describe('Message filter matcher', function () {
             payload: { payloadVarField: true },
           }
         );
-        expect(matchedMessage).to.equal(true);
+        expect(matchedMessage.passed).to.equal(true);
       });
 
       it("doesn't allow to process if the subscriber has no online fields set and filter is true", async () => {
@@ -677,7 +677,7 @@ describe('Message filter matcher', function () {
             payload: {},
           }
         );
-        expect(matchedMessage).to.equal(true);
+        expect(matchedMessage.passed).to.equal(true);
       });
 
       it("doesn't allow to process if the subscriber is not online", async () => {
@@ -732,7 +732,7 @@ describe('Message filter matcher', function () {
             payload: { payloadVarField: true },
           }
         );
-        expect(matchedMessage).to.equal(true);
+        expect(matchedMessage.passed).to.equal(true);
       });
 
       it("doesn't allow to process if the subscriber with no online fields set", async () => {
@@ -786,7 +786,7 @@ describe('Message filter matcher', function () {
             payload: {},
           }
         );
-        expect(matchedMessage).to.equal(true);
+        expect(matchedMessage.passed).to.equal(true);
       });
 
       it('allows to process if the subscriber was online in last 5 min', async () => {
@@ -811,7 +811,7 @@ describe('Message filter matcher', function () {
             payload: {},
           }
         );
-        expect(matchedMessage).to.equal(true);
+        expect(matchedMessage.passed).to.equal(true);
       });
 
       it("doesn't allow to process if the subscriber was online more that last 5 min", async () => {
@@ -861,7 +861,7 @@ describe('Message filter matcher', function () {
             payload: {},
           }
         );
-        expect(matchedMessage).to.equal(true);
+        expect(matchedMessage.passed).to.equal(true);
       });
 
       it('allows to process if the subscriber was online in last 1 day', async () => {
@@ -886,7 +886,7 @@ describe('Message filter matcher', function () {
             payload: {},
           }
         );
-        expect(matchedMessage).to.equal(true);
+        expect(matchedMessage.passed).to.equal(true);
       });
     });
   });

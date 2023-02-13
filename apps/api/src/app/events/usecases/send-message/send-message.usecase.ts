@@ -2,6 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FILTER_TO_LABEL,
+  ICondition,
   IPreferenceChannels,
   StepTypeEnum,
 } from '@novu/shared';
@@ -12,7 +14,6 @@ import {
   NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
-  EnvironmentRepository,
 } from '@novu/dal';
 
 import { SendMessageCommand } from './send-message.command';
@@ -52,7 +53,6 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
-    private environmentRepository: EnvironmentRepository,
     private matchMessage: MessageMatcher,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
@@ -64,6 +64,12 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     if (!command.payload?.$on_boarding_trigger) {
+      const usedFilters = shouldRun.conditions.reduce(this.sumFilters, {
+        stepFilters: [],
+        failedFilters: [],
+        passedFilters: [],
+      });
+
       this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
         _template: command.job._templateId,
         _organization: command.organizationId,
@@ -78,10 +84,11 @@ export class SendMessage {
         digestAmount: command.job.digest?.amount,
         filterPassed: shouldRun,
         preferencesPassed: preferred,
+        usedFilters,
       });
     }
 
-    if (!shouldRun || !preferred) {
+    if (!shouldRun.passed || !preferred) {
       await this.jobRepository.updateStatus(command.organizationId, command.jobId, JobStatusEnum.CANCELED);
 
       return;
@@ -123,7 +130,7 @@ export class SendMessage {
 
     const shouldRun = await this.matchMessage.filter(command, data);
 
-    if (!shouldRun) {
+    if (!shouldRun.passed) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -214,5 +221,34 @@ export class SendMessage {
     const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
 
     return !channels.find((channel) => channel === job.type);
+  }
+
+  private sumFilters(
+    summary: {
+      stepFilters: string[];
+      failedFilters: string[];
+      passedFilters: string[];
+    },
+    condition: ICondition
+  ) {
+    let type: string = condition.filter.toLowerCase();
+
+    if (condition.filter === FILTER_TO_LABEL.isOnline || condition.filter === FILTER_TO_LABEL.isOnlineInLast) {
+      type = 'online';
+    }
+
+    if (condition.passed && !summary.passedFilters.includes(type)) {
+      summary.passedFilters.push(type);
+    }
+
+    if (!condition.passed && !summary.failedFilters.includes(type)) {
+      summary.failedFilters.push(type);
+    }
+
+    if (!summary.stepFilters.includes(type)) {
+      summary.stepFilters.push(type);
+    }
+
+    return summary;
   }
 }
