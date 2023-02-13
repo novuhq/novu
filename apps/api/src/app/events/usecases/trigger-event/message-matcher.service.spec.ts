@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import axios from 'axios';
 import { Duration, sub } from 'date-fns';
-import { FilterParts, FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
+import { FilterParts, FilterPartTypeEnum, FILTER_TO_LABEL, StepTypeEnum } from '@novu/shared';
 import { JobEntity, MessageTemplateEntity, NotificationStepEntity, SubscriberRepository } from '@novu/dal';
 
 import { MessageMatcher } from './message-matcher.service';
@@ -888,6 +888,98 @@ describe('Message filter matcher', function () {
         );
         expect(matchedMessage.passed).to.equal(true);
       });
+    });
+  });
+
+  describe('it summarize used filters based on condition', () => {
+    it('should add a passed condition', () => {
+      const result = MessageMatcher.sumFilters(
+        {
+          stepFilters: [],
+          failedFilters: [],
+          passedFilters: ['payload'],
+        },
+        {
+          filter: FILTER_TO_LABEL.payload,
+          field: '',
+          expected: '',
+          actual: '',
+          operator: 'LARGER',
+          passed: true,
+        }
+      );
+
+      expect(result.passedFilters).to.contain('payload');
+      expect(result.passedFilters.length).to.eq(1);
+      expect(result.stepFilters.length).to.eq(1);
+      expect(result.stepFilters).to.contain('payload');
+    });
+
+    it('should add a failed condition', () => {
+      const result = MessageMatcher.sumFilters(
+        {
+          stepFilters: [],
+          failedFilters: [],
+          passedFilters: [],
+        },
+        {
+          filter: FILTER_TO_LABEL.payload,
+          field: '',
+          expected: '',
+          actual: '',
+          operator: 'LARGER',
+          passed: false,
+        }
+      );
+
+      expect(result.failedFilters).to.contain('payload');
+      expect(result.failedFilters.length).to.eq(1);
+      expect(result.stepFilters.length).to.eq(1);
+      expect(result.stepFilters).to.contain('payload');
+    });
+
+    it('should add online for both cases of online', () => {
+      let result = MessageMatcher.sumFilters(
+        {
+          stepFilters: [],
+          failedFilters: [],
+          passedFilters: [],
+        },
+        {
+          filter: FILTER_TO_LABEL.isOnlineInLast,
+          field: '',
+          expected: '',
+          actual: '',
+          operator: 'LARGER',
+          passed: true,
+        }
+      );
+
+      expect(result.passedFilters).to.contain('online');
+      expect(result.passedFilters.length).to.eq(1);
+      expect(result.stepFilters.length).to.eq(1);
+      expect(result.stepFilters).to.contain('online');
+
+      result = MessageMatcher.sumFilters(
+        {
+          stepFilters: [],
+          failedFilters: [],
+          passedFilters: [],
+        },
+        {
+          filter: FILTER_TO_LABEL.isOnline,
+          field: '',
+          expected: '',
+          actual: '',
+          operator: 'LARGER',
+          passed: true,
+        }
+      );
+
+      expect(result.passedFilters).to.contain('online');
+      expect(result.passedFilters.length).to.eq(1);
+      expect(result.stepFilters.length).to.eq(1);
+      expect(result.stepFilters).to.contain('online');
     });
   });
 });

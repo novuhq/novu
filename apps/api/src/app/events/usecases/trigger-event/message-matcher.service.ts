@@ -135,7 +135,7 @@ export class MessageMatcher {
     },
     condition: ICondition
   ) {
-    let type: string = condition.filter.toLowerCase();
+    let type: string = condition.filter?.toLowerCase();
 
     if (condition.filter === FILTER_TO_LABEL.isOnline || condition.filter === FILTER_TO_LABEL.isOnlineInLast) {
       type = 'online';
