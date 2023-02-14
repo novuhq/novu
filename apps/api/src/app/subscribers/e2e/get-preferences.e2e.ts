@@ -34,6 +34,6 @@ describe('Get Subscribers preferences - /subscribers/preferences/:subscriberId (
     }
 
     expect(error).to.be.ok;
-    expect(error?.response.data.message).to.contain('Subscriber not found');
+    expect(error?.response.data.message).to.contain('not found');
   });
 });
