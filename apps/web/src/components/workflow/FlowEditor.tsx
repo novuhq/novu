@@ -216,7 +216,7 @@ export function FlowEditor({
       data: {
         ...getChannel(step.template.type),
         active: step.active,
-        index: nodes.length,
+        index: i,
         error: getChannelErrors(i, errors, step),
         onDelete,
         setActivePage,
@@ -411,9 +411,7 @@ export function getChannelErrors(index: number, errors: any, step: any, isSubmit
       return keys.map((key) => actionErrors[key]?.message).join(', ');
     }
   }
-  if (isSubmitted) {
-    return;
-  }
+
   if (step.template.type === StepTypeEnum.EMAIL && !step.template.subject) {
     return getChannelRequiredErrors(step.template.type);
   }

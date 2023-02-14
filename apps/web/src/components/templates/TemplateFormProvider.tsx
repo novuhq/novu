@@ -168,7 +168,7 @@ const schema = z
             if (!unit) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Required - Backoff Unit ',
+                message: 'Required - Backoff Unit',
                 path: ['metadata', 'backoffUnit'],
               });
             }
@@ -207,6 +207,9 @@ export const TemplateFormProvider = ({ children }) => {
   const methods = useForm<IForm>({
     resolver: zodResolver(schema),
     defaultValues,
+    // mode: 'onBlur',
+
+    // reValidateMode: 'onBlur',
   });
 
   return <FormProvider {...methods}>{children}</FormProvider>;

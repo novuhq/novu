@@ -75,6 +75,7 @@ export const channels: IChannelDefinition[] = [
     testId: 'delaySelector',
     channelType: StepTypeEnum.DELAY,
     type: NodeTypeEnum.ACTION,
+    required: ['Unit', 'Amount'],
   },
   {
     tabKey: ChannelTypeEnum.CHAT,
@@ -84,6 +85,7 @@ export const channels: IChannelDefinition[] = [
     testId: 'chatSelector',
     channelType: StepTypeEnum.CHAT,
     type: NodeTypeEnum.CHANNEL,
+    required: ['Content'],
   },
   {
     tabKey: ChannelTypeEnum.PUSH,
@@ -104,5 +106,5 @@ export const getChannel = (channelKey: string): IChannelDefinition | undefined =
 export const getChannelRequiredErrors = (channelKey: string): string | undefined => {
   const channel = getChannel(channelKey);
 
-  return `Required - ${channel?.label} ${channel?.required}`;
+  return channel?.required?.map((requiredField) => `Required - ${channel?.label} ${requiredField}`).join(', ');
 };

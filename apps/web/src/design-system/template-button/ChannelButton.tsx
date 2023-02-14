@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { UnstyledButton, Popover, ActionIcon, createStyles, MantineTheme, Menu } from '@mantine/core';
 import styled from '@emotion/styled';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext, useFormState, useWatch } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { Text } from '../typography/text/Text';
@@ -120,32 +120,76 @@ export function ChannelButton({
   const {
     watch,
     control,
-    formState: { isSubmitted, errors: errorsW },
+    getValues,
+    trigger,
+    getFieldState,
+    formState: { isSubmitted, errors: errorsW, isValidating },
   } = useFormContext();
 
+  const formState = useFormState();
+
+  const steps = watch('steps');
+
+  // useLogger('Channel', [{ tabKey, errors }]);
   const enableAvatar = useWatch({
-    name: `steps.${index}.metadata` as any,
+    name: `steps.${index}` as any,
     control,
   });
 
+  React.useEffect(() => {
+    const currentErrors = { ...formState.errors };
+    setTimeout(() => {
+      // console.log('currentErrors', currentErrors);
+    }, 1000);
+  }, [formState]);
   // useLogger('Demo', [{ hello: 'world' }]);
   useEffect(() => {
     const subscription = watch((values) => {
       const thisStep = values.steps.find((step) => step._id === id);
+      console.log(id);
       const indexB = values.steps.findIndex((item) => item._id === id);
 
       if (thisStep) {
-        if (typeof indexB === 'number') {
-          const temp = getChannelErrors(indexB, errorsW, thisStep, isSubmitted);
+        if (typeof index === 'number') {
+          // const res = getFieldState(`steps.${index}`);
+
+          // const temp = getChannelErrors(index, { steps: res.error }, thisStep);
+
+          // console.log('temp', temp);
+
+          // setShowErrorsR(temp || '');
+
+          // console.log('res', res);
+
+          /*
+           * const tryErrors = { ...formState.errors };
+           * setTimeout(() => {
+           *   console.log(tryErrors);
+           *   // if (tryErrors?.steps) {
+           *
+           *   const temp = getChannelErrors(index, tryErrors, thisStep);
+           *
+           *   console.log('temp', temp);
+           *
+           *   setShowErrorsR(temp || '');
+           *
+           *   // }
+           * }, 1000);
+           */
+
+          const temp = getChannelErrors(index, formState.errors, thisStep);
+
+          console.log('temp', temp);
 
           setShowErrorsR(temp || '');
+          setPopoverOpened(true);
         }
         setDisabled(!thisStep.active);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, errorsW]);
+  }, [watch, enableAvatar]);
 
   useEffect(() => {
     if (showDotMenu && (dragging || !active)) {
@@ -259,7 +303,8 @@ export function ChannelButton({
           withinPortal
           classNames={popoverClasses}
           withArrow
-          opened={(isSubmitted && Object.keys(showErrorsR).length > 0) || popoverOpened}
+          opened={popoverOpened}
+          // opened={(isSubmitted && Object.keys(showErrorsR).length > 0) || popoverOpened}
           transition="rotate-left"
           transitionDuration={250}
           offset={theme.spacing.xs}

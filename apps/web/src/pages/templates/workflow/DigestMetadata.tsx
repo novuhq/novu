@@ -107,7 +107,8 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
         />
       </div>
 
-      <When truthy={type === DigestTypeEnum.BACKOFF}>
+      {/*<When truthy={type === DigestTypeEnum.BACKOFF}>*/}
+      {type === DigestTypeEnum.BACKOFF && (
         <MantineInput.Wrapper
           label="Backoff Time Interval"
           description="A digest will only be created if a message was previously sent in this time interval"
@@ -128,7 +129,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                     <Input
                       {...field}
                       value={field.value || ''}
-                      error={fieldState.error?.message}
+                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffAmount?.message : undefined}
                       min={0}
                       max={100}
                       type="number"
@@ -168,7 +169,8 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             </Grid.Col>
           </Grid>
         </MantineInput.Wrapper>
-      </When>
+      )}
+      {/*</When>*/}
       <When truthy={false}>
         <div
           style={{
