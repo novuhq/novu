@@ -30,7 +30,7 @@ export class GetSubscriberTemplatePreference {
       command.subscriber ??
       (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
     if (!subscriber) {
-      throw new ApiException('Subscriber not found');
+      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
     }
 
     const subscriberPreference = await this.subscriberPreferenceRepository.findOne({
