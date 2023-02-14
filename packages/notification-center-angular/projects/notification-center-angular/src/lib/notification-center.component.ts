@@ -14,6 +14,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
     [stores]="stores"
     [tabs]="tabs"
     [showUserPreferences]="showUserPreferences"
+    [allowedNotificationActions]="allowedNotificationActions"
     [popover]="popover"
     [theme]="theme"
     [styles]="styles"
@@ -34,6 +35,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
     'stores',
     'tabs',
     'showUserPreferences',
+    'allowedNotificationActions',
     'popover',
     'theme',
     'styles',
@@ -55,6 +57,7 @@ export class NotificationCenterComponent {
   @Input() stores: NotificationCenterComponentProps['stores'];
   @Input() tabs: NotificationCenterComponentProps['tabs'];
   @Input() showUserPreferences: NotificationCenterComponentProps['showUserPreferences'];
+  @Input() allowedNotificationActions: NotificationCenterComponentProps['allowedNotificationActions'];
   @Input() popover: NotificationCenterComponentProps['popover'];
   @Input() theme: NotificationCenterComponentProps['theme'];
   @Input() styles: NotificationCenterComponentProps['styles'];

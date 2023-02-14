@@ -17,6 +17,7 @@ export interface INotificationCenterComponentProps {
   stores?: NotificationCenterContentComponentProps['stores'];
   tabs?: NotificationCenterContentComponentProps['tabs'];
   showUserPreferences?: NotificationCenterContentComponentProps['showUserPreferences'];
+  allowedNotificationActions?: NotificationCenterContentComponentProps['allowedNotificationActions'];
   popover?: {
     offset?: number;
     position?: FloatingPosition;
@@ -110,6 +111,7 @@ watch(computedStyles, (newComputedStyles) => {
         :stores="stores"
         :tabs="tabs"
         :showUserPreferences="showUserPreferences"
+        :allowedNotificationActions="allowedNotificationActions"
         :theme="theme"
         :styles="styles"
         :colorScheme="colorScheme"
