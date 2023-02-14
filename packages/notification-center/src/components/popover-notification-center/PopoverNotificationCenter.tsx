@@ -25,6 +25,7 @@ export interface IPopoverNotificationCenterProps {
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
   showUserPreferences?: boolean;
+  allowedNotificationActions?: boolean;
   onTabClick?: (tab: ITab) => void;
   offset?: number;
   position?: PopoverProps['position'];
@@ -54,6 +55,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         listItem={props.listItem}
         tabs={props.tabs}
         showUserPreferences={props.showUserPreferences}
+        allowedNotificationActions={props.allowedNotificationActions}
         onTabClick={props.onTabClick}
         onUnseenCountChanged={props.onUnseenCountChanged}
       />

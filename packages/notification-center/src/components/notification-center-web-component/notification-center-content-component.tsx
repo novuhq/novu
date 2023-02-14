@@ -18,6 +18,7 @@ export const NOTIFICATION_CENTER_CONTENT_PROPS = [
   'stores',
   'tabs',
   'showUserPreferences',
+  'allowedNotificationActions',
   'theme',
   'styles',
   'colorScheme',
@@ -45,6 +46,7 @@ export const NotificationCenterContentComponent: FunctionComponent<NotificationC
   stores,
   tabs,
   showUserPreferences,
+  allowedNotificationActions,
   theme,
   styles,
   colorScheme = 'dark',
@@ -80,6 +82,7 @@ export const NotificationCenterContentComponent: FunctionComponent<NotificationC
         onActionClick={onActionClick}
         tabs={tabs}
         showUserPreferences={showUserPreferences}
+        allowedNotificationActions={allowedNotificationActions}
         onTabClick={onTabClick}
       />
     </NovuProvider>

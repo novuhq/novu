@@ -73,6 +73,9 @@ interface ITranslationContent {
   readonly markAllAsRead: string;
   readonly poweredBy: string;
   readonly settings: string;
+  readonly removeMessage: string;
+  readonly markAsRead: string;
+  readonly markAsUnRead: string;
 }
 
 interface ITranslationEntry {
@@ -129,12 +132,18 @@ interface NotificationCenterStyles {
       contentLayout?: CSSFunctionOrObject;
       title?: CSSFunctionOrObject;
       timestamp?: CSSFunctionOrObject;
+      dotsButton?: CSSFunctionOrObject;
       buttons?: ObjectWithRoot<{
         primary?: CSSFunctionOrObject;
         secondary?: CSSFunctionOrObject;
       }>;
     };
   }>;
+  actionsMenu?: {
+    arrow?: CSSFunctionOrObject;
+    dropdown?: CSSFunctionOrObject;
+    item?: CSSFunctionOrObject;
+  };
   preferences?: ObjectWithRoot<{
     item?: {
       title?: CSSFunctionOrObject;
@@ -177,25 +186,26 @@ interface IFetchingStrategy {
 
 The floating popover component that appears when clicking on the [NotificationBell](./api-reference#notificationbell) button. It renders the [NotificationCenter](./api-reference#notificationcenter) component inside its content.
 
-| Prop                 | Type                                                           | Description                                                                                                                                                                                                                  |
-| -------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| position             | string (optional)                                              | Position of the popover relative to the bell icon. It is based on the Mantine Popover [position](https://mantine.dev/core/popover/?t=props). The default is set to 'bottom-end'.                                             |
-| offset               | number (optional)                                              | Gap between the Bell icon and Popover in px.                                                                                                                                                                                 |
-| colorScheme          | string                                                         | The UI light or dark mode.                                                                                                                                                                                                   |
-| theme                | [object](./api-reference#the-theme-interface) (optional)       | The theme object allowing you to override light and dark colors of the UI components. **Deprecated for styling**, please use the [styles](./api-reference#styles-interface) prop on the NovuProvider.                        |
-| tabs                 | [object[]](./api-reference#the-tab-interface) (optional)       | Allows to define separate UI tabs for the notifications feed. The array of connection objects between the feed tab and [store](./api-reference#store-interface) (that you define on the `NovuProvider`) and feed identifier. |
-| listItem             | [function](./api-reference#the-list-item-interface) (optional) | The render function allowing you to define the custom element for the notification list item.                                                                                                                                |
-| showUserPreferences  | boolean (optional)                                             | The flag that enables to show/hide the user preferences. By default it is enabled.                                                                                                                                           |
-| onUrlChange          | function (optional)                                            | The function that is called when the notification item has a CTA of type redirect and is clicked.                                                                                                                            |
-| onNotificationClick  | function (optional)                                            | The function that is called when the notification item is clicked.                                                                                                                                                           |
-| onUnseenCountChanged | function (optional)                                            | The function that is called when the unseen notifications count changed.                                                                                                                                                     |
-| children             | function                                                       | The render function that allows you to define the custom bell button. It's called with an argument that has `unseenCount` prop the number of unseen notifications.                                                           |
-| header               | function (optional)                                            | The render function that allows you to define the custom header component.                                                                                                                                                   |
-| footer               | function (optional)                                            | The render function that allows you to define the custom footer component.                                                                                                                                                   |
-| emptyState           | function (optional)                                            | The render function that allows you to define the custom component for the empty notifications list state.                                                                                                                   |
-| onActionClick        | function (optional)                                            | The callback function triggered when the notification button is clicked.                                                                                                                                                     |
-| actionsResultBlock   | function (optional)                                            | The render function that allows you to define the custom component that will be rendered after the notification button is clicked.                                                                                           |
-| onTabClick           | function (optional)                                            | The callback function triggered when the notifications feed tab changes.                                                                                                                                                     |
+| Prop                       | Type                                                           | Description                                                                                                                                                                                                                  |
+| -------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| position                   | string (optional)                                              | Position of the popover relative to the bell icon. It is based on the Mantine Popover [position](https://mantine.dev/core/popover/?t=props). The default is set to 'bottom-end'.                                             |
+| offset                     | number (optional)                                              | Gap between the Bell icon and Popover in px.                                                                                                                                                                                 |
+| colorScheme                | string                                                         | The UI light or dark mode.                                                                                                                                                                                                   |
+| theme                      | [object](./api-reference#the-theme-interface) (optional)       | The theme object allowing you to override light and dark colors of the UI components. **Deprecated for styling**, please use the [styles](./api-reference#styles-interface) prop on the NovuProvider.                        |
+| tabs                       | [object[]](./api-reference#the-tab-interface) (optional)       | Allows to define separate UI tabs for the notifications feed. The array of connection objects between the feed tab and [store](./api-reference#store-interface) (that you define on the `NovuProvider`) and feed identifier. |
+| listItem                   | [function](./api-reference#the-list-item-interface) (optional) | The render function allowing you to define the custom element for the notification list item.                                                                                                                                |
+| showUserPreferences        | boolean (optional)                                             | The flag that enables to show/hide the user preferences. By default it is enabled.                                                                                                                                           |
+| allowedNotificationActions | boolean (optional)                                             | The flag that enables to show/hide the dots menu for actions performed on a notification. By default it is enabled.                                                                                                          |
+| onUrlChange                | function (optional)                                            | The function that is called when the notification item has a CTA of type redirect and is clicked.                                                                                                                            |
+| onNotificationClick        | function (optional)                                            | The function that is called when the notification item is clicked.                                                                                                                                                           |
+| onUnseenCountChanged       | function (optional)                                            | The function that is called when the unseen notifications count changed.                                                                                                                                                     |
+| children                   | function                                                       | The render function that allows you to define the custom bell button. It's called with an argument that has `unseenCount` prop the number of unseen notifications.                                                           |
+| header                     | function (optional)                                            | The render function that allows you to define the custom header component.                                                                                                                                                   |
+| footer                     | function (optional)                                            | The render function that allows you to define the custom footer component.                                                                                                                                                   |
+| emptyState                 | function (optional)                                            | The render function that allows you to define the custom component for the empty notifications list state.                                                                                                                   |
+| onActionClick              | function (optional)                                            | The callback function triggered when the notification button is clicked.                                                                                                                                                     |
+| actionsResultBlock         | function (optional)                                            | The render function that allows you to define the custom component that will be rendered after the notification button is clicked.                                                                                           |
+| onTabClick                 | function (optional)                                            | The callback function triggered when the notifications feed tab changes.                                                                                                                                                     |
 
 ### Props interface
 
@@ -208,6 +218,7 @@ interface IPopoverNotificationCenterProps {
   tabs?: ITab[];
   listItem?: ListItem;
   showUserPreferences?: boolean;
+  allowedNotificationActions?: boolean;
   onUrlChange?: (url: string) => void;
   onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
@@ -246,22 +257,23 @@ type ListItem = (
 
 The component that renders the notifications feed and allows to update the user preferences.
 
-| Prop                 | Type                                                           | Description                                                                                                                                                                                                                  |
-| -------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| colorScheme          | string                                                         | The UI light or dark mode.                                                                                                                                                                                                   |
-| theme                | [object](./api-reference#the-theme-interface) (optional)       | The theme object allowing you to override light and dark colors of the UI components. **Deprecated for styling**, please use the [styles](./api-reference#styles-interface) prop on the NovuProvider.                        |
-| tabs                 | [object[]](./api-reference#the-tab-interface) (optional)       | Allows to define separate UI tabs for the notifications feed. The array of connection objects between the feed tab and [store](./api-reference#store-interface) (that you define on the `NovuProvider`) and feed identifier. |
-| listItem             | [function](./api-reference#the-list-item-interface) (optional) | The render function allowing you to define the custom element for the notification list item.                                                                                                                                |
-| showUserPreferences  | boolean (optional)                                             | The flag that enables to show/hide the user preferences. By default it is enabled.                                                                                                                                           |
-| onUrlChange          | function (optional)                                            | The function that is called when the notification item has a CTA of type redirect and is clicked.                                                                                                                            |
-| onNotificationClick  | function (optional)                                            | The function that is called when the notification item is clicked.                                                                                                                                                           |
-| onUnseenCountChanged | function (optional)                                            | The function that is called when the unseen notifications count changed.                                                                                                                                                     |
-| header               | function (optional)                                            | The render function that allows you to define the custom header component.                                                                                                                                                   |
-| footer               | function (optional)                                            | The render function that allows you to define the custom footer component.                                                                                                                                                   |
-| emptyState           | function (optional)                                            | The render function that allows you to define the custom component for the empty notifications list state.                                                                                                                   |
-| onActionClick        | function (optional)                                            | The callback function triggered when the notification button is clicked.                                                                                                                                                     |
-| actionsResultBlock   | function (optional)                                            | The render function that allows you to define the custom component that will be rendered after the notification button is clicked.                                                                                           |
-| onTabClick           | function (optional)                                            | The callback function triggered when the notifications feed tab changes.                                                                                                                                                     |
+| Prop                       | Type                                                           | Description                                                                                                                                                                                                                  |
+| -------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| colorScheme                | string                                                         | The UI light or dark mode.                                                                                                                                                                                                   |
+| theme                      | [object](./api-reference#the-theme-interface) (optional)       | The theme object allowing you to override light and dark colors of the UI components. **Deprecated for styling**, please use the [styles](./api-reference#styles-interface) prop on the NovuProvider.                        |
+| tabs                       | [object[]](./api-reference#the-tab-interface) (optional)       | Allows to define separate UI tabs for the notifications feed. The array of connection objects between the feed tab and [store](./api-reference#store-interface) (that you define on the `NovuProvider`) and feed identifier. |
+| listItem                   | [function](./api-reference#the-list-item-interface) (optional) | The render function allowing you to define the custom element for the notification list item.                                                                                                                                |
+| showUserPreferences        | boolean (optional)                                             | The flag that enables to show/hide the user preferences. By default it is enabled.                                                                                                                                           |
+| allowedNotificationActions | boolean (optional)                                             | The flag that enables to show/hide the dots menu for actions performed on a notification. By default it is enabled.                                                                                                          |
+| onUrlChange                | function (optional)                                            | The function that is called when the notification item has a CTA of type redirect and is clicked.                                                                                                                            |
+| onNotificationClick        | function (optional)                                            | The function that is called when the notification item is clicked.                                                                                                                                                           |
+| onUnseenCountChanged       | function (optional)                                            | The function that is called when the unseen notifications count changed.                                                                                                                                                     |
+| header                     | function (optional)                                            | The render function that allows you to define the custom header component.                                                                                                                                                   |
+| footer                     | function (optional)                                            | The render function that allows you to define the custom footer component.                                                                                                                                                   |
+| emptyState                 | function (optional)                                            | The render function that allows you to define the custom component for the empty notifications list state.                                                                                                                   |
+| onActionClick              | function (optional)                                            | The callback function triggered when the notification button is clicked.                                                                                                                                                     |
+| actionsResultBlock         | function (optional)                                            | The render function that allows you to define the custom component that will be rendered after the notification button is clicked.                                                                                           |
+| onTabClick                 | function (optional)                                            | The callback function triggered when the notifications feed tab changes.                                                                                                                                                     |
 
 ### The props interface
 
@@ -272,6 +284,7 @@ interface INotificationCenterProps {
   tabs?: ITab[];
   listItem?: ListItem;
   showUserPreferences?: boolean;
+  allowedNotificationActions?: boolean;
   onUrlChange?: (url: string) => void;
   onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
@@ -342,9 +355,11 @@ interface INotificationsContext {
   fetchNextPage: () => void;
   refetch: () => void;
   markNotificationAsRead: (messageId: string) => void;
+  markNotificationAsUnRead: (messageId: string) => void;
   markNotificationAsSeen: (messageId: string) => void;
   markAllNotificationsAsRead: () => void;
   markAllNotificationsAsSeen: () => void;
+  removeMessage: (messageId: string) => void;
 }
 ```
 
@@ -362,9 +377,11 @@ interface INotificationsContext {
 | fetchNextPage              | function                                                    | The function that fires the fetch request for the next notifications page.                                                    |
 | refetch                    | function                                                    | The function that allows to refetch all the notifications, when multiple page requests were made it will refetch all of them. |
 | markNotificationAsRead     | function                                                    | The function takes the notification message id as argument and allows to mark that notification as read.                      |
+| markNotificationAsUnRead   | function                                                    | The function takes the notification message id as argument and allows to mark that notification as unread.                    |
 | markNotificationAsSeen     | function                                                    | The function takes the notification message id as argument and allows to mark that notification as seen.                      |
 | markAllNotificationsAsRead | function                                                    | The function allowing you to mark all the fetched notifications as read.                                                      |
 | markAllNotificationsAsSeen | function                                                    | The function allowing you to mark all the fetched notifications as seen.                                                      |
+| removeMessage              | function                                                    | The function allowing you to delete a notification.                                                                           |
 
 You can find more information about the `IMessage` interface [here](./api-reference#the-notification-imessage-model).
 
@@ -728,6 +745,47 @@ interface IUseMarkNotificationsAsResult {
 }
 ```
 
+## useRemoveNotification
+
+The hook that allows you to remove a message. It will delete the message for the subscriber and will refetch the feed.
+
+```ts
+const onSuccess = (data: IMessage) => {};
+
+const onError = (error: Error) => {};
+
+const { removeNotification, isLoading, isError, error } = useRemoveNotification({
+  onSuccess,
+  onError,
+});
+```
+
+### The hook args interface
+
+```ts
+interface IUseRemoveNotificationArgs {
+  onSuccess?: (data: IMessage) => void;
+  onError?: (error: Error) => void;
+  // ... many more from the react-query useMutation hook
+}
+```
+
+### The hook return interface
+
+```ts
+interface IRemoveNotificationVariables {
+  messageId: IMessageId;
+}
+
+interface IUseRemoveNotificationResult {
+  removeNotification: (args: IRemoveNotificationVariables) => void;
+  isLoading: boolean;
+  isError: boolean;
+  error?: Error;
+  // ... many more from the react-query useMutation hook result
+}
+```
+
 ## useSocket
 
 The hook that allows you to get the reference to socket object.
@@ -814,6 +872,7 @@ interface INovuTheme {
   layout?: IThemeLayout;
   header?: IThemeHeader;
   popover?: IThemePopover;
+  actionsMenu?: IThemeActionsMenu;
   notificationItem?: IThemeNotificationListItem;
   userPreferences?: IThemeUserPreferences;
   footer?: IThemeFooter;
@@ -863,6 +922,15 @@ interface INovuTheme {
 | `buttons.secondary.fontColor`             | `#525266`                                                 | `#FFFFFF`                                                 |
 | `buttons.secondary.removeCircleColor`     | `#525266`                                                 | `#525266`                                                 |
 | `buttons.secondary.fontFamily`            | `Lato`                                                    | `Lato`                                                    |
+
+**`IThemeActionsMenu` customization properties**
+
+| Property          | Default Value - Light Theme | Default Value - Dark Theme |
+| ----------------- | --------------------------- | -------------------------- |
+| `dotsButtonColor` | `#A1A1B2`                   | `#525266`                  |
+| `dropdownColor`   | `#FFFFFF`                   | `#292933`                  |
+| `hoverColor`      | `#F5F8FA`                   | `#3D3D4D`                  |
+| `fontColor`       | `#525266`                   | `#FFFFFF`                  |
 
 **`IThemeUserPreferences` customization properties**
 

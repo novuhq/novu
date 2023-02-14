@@ -29,7 +29,13 @@ interface PopoverAdditionalProps {
 
 type SelectedPopoverProps = Pick<
   IPopoverNotificationCenterProps,
-  'onUnseenCountChanged' | 'onActionClick' | 'onTabClick' | 'theme' | 'tabs' | 'showUserPreferences'
+  | 'onUnseenCountChanged'
+  | 'onActionClick'
+  | 'onTabClick'
+  | 'theme'
+  | 'tabs'
+  | 'showUserPreferences'
+  | 'allowedNotificationActions'
 > & {
   popover?: {
     offset?: IPopoverNotificationCenterProps['offset'];

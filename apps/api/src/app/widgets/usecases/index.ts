@@ -6,6 +6,7 @@ import { GetWidgetSettings } from './get-widget-settings/get-widget-settings.use
 import { UpdateMessageActions } from './mark-action-as-done/update-message-actions.usecase';
 import { MarkAllMessageAsSeen } from './mark-all-message-as-seen/mark-all-message-as-seen.usecase';
 import { GetFeedCount } from './get-feed-count/get-feed-count.usecase';
+import { RemoveMessage } from './remove-message/remove-message.usecase';
 
 export const USE_CASES = [
   GetOrganizationData,
@@ -16,5 +17,6 @@ export const USE_CASES = [
   InitializeSession,
   GetWidgetSettings,
   MarkAllMessageAsSeen,
+  RemoveMessage,
   //
 ];

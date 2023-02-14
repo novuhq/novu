@@ -23,6 +23,7 @@ export interface INovuTheme {
   layout?: IThemeLayout;
   header?: IThemeHeader;
   popover?: IThemePopover;
+  actionsMenu?: IThemeActionsMenu;
   notificationItem?: IThemeNotificationListItem;
   userPreferences?: IThemeUserPreferences;
   footer?: IThemeFooter;
@@ -49,6 +50,13 @@ export interface IThemeHeader {
 export interface IThemePopover {
   arrowColor?: string;
   tabBorderColor?: string;
+}
+
+export interface IThemeActionsMenu {
+  dotsButtonColor?: string;
+  dropdownColor?: string;
+  hoverColor?: string;
+  fontColor?: string;
 }
 
 export interface IThemeNotificationListItem {

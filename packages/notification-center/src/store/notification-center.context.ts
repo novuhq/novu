@@ -15,5 +15,6 @@ export const NotificationCenterContext = React.createContext<INotificationCenter
   actionsResultBlock: null,
   tabs: [],
   showUserPreferences: true,
+  allowedNotificationActions: true,
   onTabClick: (tab: ITab) => {},
 } as any);

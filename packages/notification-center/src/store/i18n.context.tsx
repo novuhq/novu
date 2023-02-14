@@ -7,6 +7,9 @@ export const I18NContext = React.createContext<ITranslationEntry>({
     notifications: '',
     poweredBy: '',
     settings: '',
+    removeMessage: '',
+    markAsRead: '',
+    markAsUnRead: '',
   },
   lang: '',
 });

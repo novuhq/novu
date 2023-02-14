@@ -4,7 +4,7 @@ import type { IMessage } from '@novu/shared';
 
 import { NotificationsContext } from './notifications.context';
 import type { IStore } from '../shared/interfaces';
-import { useFetchNotifications, useUnseenCount } from '../hooks';
+import { useFetchNotifications, useRemoveNotification, useUnseenCount } from '../hooks';
 import { useMarkNotificationsAs } from '../hooks';
 
 const DEFAULT_STORES = [{ storeId: 'default_store' }];
@@ -38,11 +38,18 @@ export function NotificationsProvider({
   } = useFetchNotifications({ query: storeQuery });
   const { data: unseenCountData } = useUnseenCount();
   const { markNotificationsAs } = useMarkNotificationsAs();
+  const { removeNotification } = useRemoveNotification();
 
   const markNotificationAsRead = useCallback(
     (messageId: string) => markNotificationsAs({ messageId, seen: true, read: true }),
     [markNotificationsAs]
   );
+
+  const markNotificationAsUnRead = useCallback(
+    (messageId: string) => markNotificationsAs({ messageId, seen: true, read: false }),
+    [markNotificationsAs]
+  );
+  const removeMessage = useCallback((messageId: string) => removeNotification({ messageId }), [removeNotification]);
 
   const markNotificationAsSeen = useCallback(
     (messageId: string) => markNotificationsAs({ messageId, seen: true, read: false }),
@@ -103,8 +110,10 @@ export function NotificationsProvider({
       refetch,
       markNotificationAsSeen,
       markNotificationAsRead,
+      markNotificationAsUnRead,
       markAllNotificationsAsRead,
       markAllNotificationsAsSeen,
+      removeMessage,
     }),
     [
       storeId,
@@ -120,8 +129,10 @@ export function NotificationsProvider({
       refetch,
       markNotificationAsSeen,
       markNotificationAsRead,
+      markNotificationAsUnRead,
       markAllNotificationsAsRead,
       markAllNotificationsAsSeen,
+      removeMessage,
     ]
   );
 

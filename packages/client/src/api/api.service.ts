@@ -89,6 +89,13 @@ export class ApiService {
     });
   }
 
+  async removeMessage(messageId: string): Promise<any> {
+    return await this.httpClient.delete(
+      `/widgets/messages/remove/${messageId}`,
+      {}
+    );
+  }
+
   async getNotificationsList(
     page: number,
     query: IStoreQuery = {}
