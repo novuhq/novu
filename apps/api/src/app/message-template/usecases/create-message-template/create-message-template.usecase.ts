@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, TemplateVariableTypeEnum } from '@novu/shared';
 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
@@ -20,7 +20,13 @@ export class CreateMessageTemplate {
     let item = await this.messageTemplateRepository.create({
       cta: command.cta,
       name: command.name,
-      variables: command.variables,
+      variables: command.variables?.filter((variable) => {
+        if (variable.defaultValue === '') {
+          return false;
+        }
+
+        return true;
+      }),
       content: command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content,
       contentType: command.contentType,
       subject: command.subject,

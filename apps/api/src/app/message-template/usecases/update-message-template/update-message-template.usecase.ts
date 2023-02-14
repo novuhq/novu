@@ -36,7 +36,13 @@ export class UpdateMessageTemplate {
     }
 
     if (command.variables) {
-      updatePayload.variables = command.variables;
+      updatePayload.variables = command.variables?.filter((item) => {
+        if (item.defaultValue === '') {
+          return false;
+        }
+
+        return true;
+      });
     }
 
     if (command.contentType) {
