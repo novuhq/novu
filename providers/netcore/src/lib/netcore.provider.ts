@@ -59,15 +59,19 @@ export class NetCoreProvider implements IEmailProvider {
 
     if (options.cc) {
       body.personalizations[0].cc = options.cc.map((ccItem, index) => {
-        body.personalizations[0].cc[index] = new netcoreLib.EmailStruct();
-        body.personalizations[0].cc[index].email = ccItem;
+        const email = new netcoreLib.EmailStruct();
+        email.email = ccItem;
+
+        return email;
       });
     }
 
     if (options.bcc) {
       body.personalizations[0].bcc = options.bcc.map((ccItem, index) => {
-        body.personalizations[0].bcc[index] = new netcoreLib.EmailStruct();
-        body.personalizations[0].bcc[index].email = ccItem;
+        const email = new netcoreLib.EmailStruct();
+        email.email = ccItem;
+
+        return email;
       });
     }
 

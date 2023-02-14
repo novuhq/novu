@@ -201,18 +201,17 @@ export class SendMessageEmail extends SendMessageBase {
         }
     );
 
-    const mailData: IEmailOptions = {
-      to: email,
-      subject,
-      html,
-      from:
-        overrides?.email?.from || command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
-      attachments,
-      text: overrides?.email?.text,
-      id: message._id,
-      cc: overrides?.email?.cc || [],
-      bcc: overrides?.email?.bcc || [],
-    };
+    const mailData: IEmailOptions = createMailData(
+      {
+        to: email,
+        subject,
+        html,
+        from: integration?.credentials.from || 'no-reply@novu.co',
+        attachments,
+        id: message._id,
+      },
+      overrides
+    );
 
     if (command.step.replyCallback?.active) {
       const replyTo = await this.getReplyTo(command, message._id);
@@ -419,6 +418,23 @@ export class SendMessageEmail extends SendMessageBase {
     }
   }
 }
+
+export const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
+  const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
+
+  let to = Array.isArray(options.to) ? options.to : [options.to];
+  to = [...to, ...(overrides?.to || [])];
+  to = to.reduce(filterDuplicate, []);
+
+  return {
+    ...options,
+    to,
+    from: overrides?.from || options.from,
+    text: overrides?.text,
+    cc: overrides?.cc || [],
+    bcc: overrides?.bcc || [],
+  };
+};
 
 export function getReplyToAddress(transactionId: string, environmentId: string, inboundParseDomain: string) {
   const userNamePrefix = 'parse';

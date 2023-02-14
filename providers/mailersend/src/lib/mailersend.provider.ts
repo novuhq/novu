@@ -52,11 +52,11 @@ export class MailersendEmailProvider implements IEmailProvider {
       .setText(options.text)
       .setAttachments(attachments);
 
-    if (options.cc) {
+    if (options.cc && Array.isArray(options.cc)) {
       emailParams.setCc(options.cc.map((ccItem) => new Recipient(ccItem)));
     }
 
-    if (options.bcc) {
+    if (options.bcc && Array.isArray(options.bcc)) {
       emailParams.setBcc(options.bcc.map((ccItem) => new Recipient(ccItem)));
     }
 
