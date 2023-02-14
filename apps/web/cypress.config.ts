@@ -1,7 +1,6 @@
 import { defineConfig } from 'cypress';
 const configOverride = require('./config-overrides');
 
-process.env.NODE_ENV = 'development';
 const path = require('path');
 const { babelInclude, override } = require('customize-cra');
 
