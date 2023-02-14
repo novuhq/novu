@@ -61,6 +61,8 @@ export class SESEmailProvider implements IEmailProvider {
     from,
     subject,
     attachments,
+    cc,
+    bcc,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
     const info = await this.sendMail({
       from: from || this.config.from,
@@ -73,6 +75,8 @@ export class SESEmailProvider implements IEmailProvider {
         content: attachment.file,
         contentType: attachment.mime,
       })),
+      cc,
+      bcc,
     });
 
     return {
@@ -90,6 +94,8 @@ export class SESEmailProvider implements IEmailProvider {
         from: this.config.from,
         subject: 'Test SES integration',
         attachments: {},
+        bcc: [],
+        cc: [],
       });
 
       return {
