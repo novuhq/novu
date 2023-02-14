@@ -1,6 +1,5 @@
 import * as winston from 'winston';
 import { WinstonModule } from 'nest-winston';
-import { LoggerService } from '@nestjs/common';
 
 const loggingLevelArr = ['error', 'warn', 'info', 'verbose', 'debug'];
 
