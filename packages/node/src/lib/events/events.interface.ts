@@ -40,7 +40,7 @@ export interface ITriggerPayload {
 }
 
 export interface IEmailOverrides {
-  to: string[];
+  to?: string[];
   from?: string;
   text?: string;
   replyTo?: string;
