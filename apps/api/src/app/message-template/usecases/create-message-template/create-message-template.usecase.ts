@@ -21,7 +21,7 @@ export class CreateMessageTemplate {
     let item = await this.messageTemplateRepository.create({
       cta: command.cta,
       name: command.name,
-      variables: command.variables ? UpdateMessageTemplate.filterVariable(command.variables) : undefined,
+      variables: command.variables ? UpdateMessageTemplate.mapVariables(command.variables) : undefined,
       content: command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content,
       contentType: command.contentType,
       subject: command.subject,

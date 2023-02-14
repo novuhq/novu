@@ -65,7 +65,6 @@ describe('Create Message Template', function () {
     expect(result.name).to.eql('test-message-template');
     expect(result.title).to.eql('test');
     expect(result.content).to.eql(content);
-    expect(result.variables?.length).to.eql(1);
-    expect(result.variables?.at(0)?.defaultValue).to.eql('test');
+    expect(result.variables?.at(0)?.defaultValue).to.eql(undefined);
   });
 });
