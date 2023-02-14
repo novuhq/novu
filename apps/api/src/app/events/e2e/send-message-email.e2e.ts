@@ -5,7 +5,7 @@ import { createMailData } from '../usecases/send-message/send-message-email.usec
 describe('Trigger event - Send message email - /v1/events/trigger (POST)', function () {
   it('should merge mail data', function () {
     const defaultMailData = {
-      to: 'to-reply@novu.co',
+      to: ['to-reply@novu.co'],
       subject: 'subject',
       html: '<html></html>',
       from: 'no-reply@novu.co',
