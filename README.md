@@ -19,7 +19,7 @@
   </a>
 </div>
 
-<h1 align="center">Notification management simplified.</h1>
+<h1 align="center">The open-source notification infrastructure for developers</h1>
 
 <div align="center">
 The ultimate service for managing multi-channel notifications with a single API.
@@ -41,14 +41,23 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
     <a href="https://twitter.com/novuhq">Twitter</a>
   </p>
+  
+  <p align="center">
+  Available in: <a href="https://github.com/novuhq/novu/tree/next/packages/node">Node.js<a/>
+  · <a href="https://github.com/unicodeveloper/novu">PHP</a>
+  · <a href="https://github.com/novuhq/elixir">Elixir</a>
+  · <a href="https://github.com/novuhq/rust">Rust</a>
+  · <a href="https://github.com/novuhq/go-novu">Go</a>
+  </p>
 
 ## ⭐️ Why Novu?
 
-Building a notification system is complicated. At first, it seems like just sending an email, but in reality, it's just the beginning. Users today expect a multi-channel communication experience via email, SMS, push, chat, and other channels. An ever-growing list of providers is popping up daily, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers with the tools to create meaningful communication between the system and its users.
+Novu provides a unified API that makes it simple to send notifications through multiple channels, including In-App, Push, Email, SMS, and Chat.
+With Novu, you can create custom workflows and define conditions for each channel, ensuring that your notifications are delivered in the most effective way possible.
 
 ## ✨ Features
 
-- 🌈 Single API for all messaging providers (Email, SMS, Push, Chat)
+- 🌈 Single API for all messaging providers (In-App, Email, SMS, Push, Chat)
 - 💅 Easily manage notifications over multiple channels
 - 🚀 Equipped with a CMS for advanced layouts and design management
 - 🛡 Built-in protection for missing variables (Coming Soon)
@@ -112,13 +121,19 @@ await novu.trigger('<TRIGGER_NAME>', {
 
 ## Embeddable Notification Center
 
-Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our React component or an iframe embed if you are not using React.
+Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our React / Vue / Angular component or an iframe embed.
 
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif">
 
 Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
 
+<p align="center">
+  <a href="https://docs.novu.co/notification-center/getting-started">React Component</a>
+  · <a href="https://docs.novu.co/notification-center/vue-component">Vue Component</a>
+  · <a href="https://github.com/novuhq/novu/tree/next/packages/notification-center-angular">Angular Component</a>
+  </p>
+  
 </div>
 
 ## Providers
