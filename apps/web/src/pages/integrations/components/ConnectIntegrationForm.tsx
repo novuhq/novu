@@ -350,6 +350,7 @@ const InputWrapper = styled.div`
     margin-bottom: 10px;
     font-size: 14px;
   }
+  padding-right: 30px;
 `;
 
 const Form = styled.form`
