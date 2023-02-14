@@ -30,7 +30,7 @@ jest.mock('pepipost/lib', () => {
 
 const mockNovuMessage = {
   from: 'test@test1.com',
-  to: 'test@test2.com',
+  to: ['test@test2.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
 };

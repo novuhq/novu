@@ -53,9 +53,12 @@ export class NetCoreProvider implements IEmailProvider {
 
     body.personalizations = [];
     body.personalizations[0] = new netcoreLib.Personalizations();
-    body.personalizations[0].to = [];
-    body.personalizations[0].to[0] = new netcoreLib.EmailStruct();
-    body.personalizations[0].to[0].email = options.to;
+    body.personalizations[0].to = options.to.map((email) => {
+      const item = new netcoreLib.EmailStruct();
+      item.email = email;
+
+      return item;
+    });
 
     if (options.cc) {
       body.personalizations[0].cc = options.cc.map((ccItem, index) => {

@@ -210,7 +210,7 @@ export class SendMessageEmail extends SendMessageBase {
         attachments,
         id: message._id,
       },
-      overrides
+      command.overrides?.email || {}
     );
 
     if (command.step.replyCallback?.active) {

@@ -76,28 +76,14 @@ export class MandrillProvider implements IEmailProvider {
       type: 'bcc',
     }));
 
-    if (typeof emailOptions.to === 'string') {
-      return [
-        {
-          email:
-            typeof emailOptions.to === 'string'
-              ? emailOptions.to
-              : emailOptions.to[0],
-          type: 'to',
-        },
-        ...ccs,
-        ...bcc,
-      ];
-    } else {
-      return [
-        ...emailOptions.to.map((item) => ({
-          email: item,
-          type: 'to',
-        })),
-        ...ccs,
-        ...bcc,
-      ];
-    }
+    return [
+      ...emailOptions.to.map((item) => ({
+        email: item,
+        type: 'to',
+      })),
+      ...ccs,
+      ...bcc,
+    ];
   }
 
   async checkIntegration(): Promise<ICheckIntegrationResponse> {

@@ -15,7 +15,7 @@ test('should trigger mandrill correctly', async () => {
       return [{}] as any;
     });
   const mockNovuMessage = {
-    to: 'test2@test.com',
+    to: ['test2@test.com'],
     subject: 'test subject',
     html: '<div> Mail Content </div>',
     attachments: [

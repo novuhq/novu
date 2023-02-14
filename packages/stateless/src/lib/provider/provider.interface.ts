@@ -10,7 +10,7 @@ export interface IProvider {
 }
 
 export interface IEmailOptions {
-  to: string | string[];
+  to: string[];
   subject: string;
   html: string;
   from?: string;

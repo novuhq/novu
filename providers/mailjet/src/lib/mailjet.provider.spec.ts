@@ -53,7 +53,7 @@ const mockConfig = {
   from: 'testFrom@test.com',
 };
 const mockMessageConfig = {
-  to: 'testTo@test2.com',
+  to: ['testTo@test2.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
 };

@@ -20,7 +20,7 @@ test('should trigger ses library correctly', async () => {
   const provider = new SESEmailProvider(mockConfig);
 
   const mockNovuMessage = {
-    to: 'test@test2.com',
+    to: ['test@test2.com'],
     subject: 'test subject',
     html: '<div> Mail Content </div>',
     attachments: [
