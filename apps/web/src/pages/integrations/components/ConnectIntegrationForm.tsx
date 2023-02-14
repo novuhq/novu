@@ -350,7 +350,6 @@ const InputWrapper = styled.div`
     margin-bottom: 10px;
     font-size: 14px;
   }
-  padding-right: 30px;
 `;
 
 const Form = styled.form`
@@ -377,4 +376,5 @@ const CenterDiv = styled.div`
   overflow: auto;
   margin-top: 10px;
   margin-bottom: 10px;
+  padding-right: 30px;
 `;
