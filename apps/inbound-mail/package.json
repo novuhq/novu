@@ -22,7 +22,6 @@
   "dependencies": {
     "@novu/shared": "^0.11.0",
     "@sentry/node": "^7.12.1",
-    "axios": "^0.27.0",
     "bluebird": "^2.9.30",
     "bullmq": "^3.5.8",
     "dotenv": "^8.6.0",

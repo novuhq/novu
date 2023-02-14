@@ -36,7 +36,6 @@
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
     "antd": "^4.10.0",
-    "axios": "^0.27.0",
     "babel-plugin-import": "^1.13.3",
     "chroma-js": "^2.4.2",
     "eslint-plugin-cypress": "^2.12.1",

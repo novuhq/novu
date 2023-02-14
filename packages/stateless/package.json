@@ -43,7 +43,6 @@
     "node": ">=10"
   },
   "dependencies": {
-    "axios": "^0.27.0",
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2"

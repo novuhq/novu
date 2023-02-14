@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "@godaddy/terminus": "^4.3.1",
-    "@nestjs/axios": "0.1.0",
     "@nestjs/common": "^9.2.1",
     "@nestjs/core": "^9.2.1",
     "@nestjs/platform-express": "^9.2.1",
@@ -34,7 +33,7 @@
     "@novu/stateless": "^0.11.0",
     "@novu/testing": "^0.11.0",
     "@sentry/node": "^6.3.3",
-    "axios": "^0.27.0",
+    "axios": "^1.3.3",
     "bull": "^4.4.0",
     "bullmq": "^3.5.8",
     "class-transformer": "^0.5.1",
