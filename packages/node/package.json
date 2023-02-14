@@ -44,7 +44,6 @@
   },
   "dependencies": {
     "@novu/shared": "^0.11.0",
-    "axios": "^1.3.3",
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2"
@@ -55,6 +54,7 @@
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.merge": "^4.6.6",
     "@types/node": "^14.6.0",
+    "axios": "^1.3.3",
     "codecov": "^3.5.0",
     "cz-conventional-changelog": "^3.3.0",
     "jest": "^27.0.6",
@@ -75,6 +75,13 @@
     "LICENSE",
     "README.md"
   ],
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "axios": "axios/dist/node/axios.cjs"
+    }
+  },
   "prettier": {
     "singleQuote": true
   },

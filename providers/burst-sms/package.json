@@ -76,6 +76,13 @@
       "!build/module/**"
     ]
   },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "axios": "axios/dist/node/axios.cjs"
+    }
+  },
   "prettier": {
     "singleQuote": true
   },
