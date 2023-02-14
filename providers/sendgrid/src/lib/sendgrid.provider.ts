@@ -72,6 +72,8 @@ export class SendgridEmailProvider implements IEmailProvider {
       },
       ipPoolName: this.config.ipPoolName,
       to: options.to,
+      cc: options.cc?.map((ccItem) => ({ email: ccItem })),
+      bcc: options.bcc?.map((ccItem) => ({ email: ccItem })),
       html: options.html,
       subject: options.subject,
       substitutions: {},

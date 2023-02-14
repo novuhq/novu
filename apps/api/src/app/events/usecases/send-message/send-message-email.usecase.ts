@@ -119,7 +119,7 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    const overrides = command.overrides[integration?.providerId] || {};
+    const overrides: Record<string, any> = command.overrides[integration?.providerId] || {};
     let html;
     let subject = '';
     let content;
@@ -205,9 +205,13 @@ export class SendMessageEmail extends SendMessageBase {
       to: email,
       subject,
       html,
-      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
+      from:
+        overrides?.email?.from || command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
       attachments,
+      text: overrides?.email?.text,
       id: message._id,
+      cc: overrides?.email?.cc || [],
+      bcc: overrides?.email?.bcc || [],
     };
 
     if (command.step.replyCallback?.active) {
@@ -216,6 +220,10 @@ export class SendMessageEmail extends SendMessageBase {
       if (replyTo) {
         mailData.replyTo = replyTo;
       }
+    }
+
+    if (overrides?.email?.replyTo) {
+      mailData.replyTo = overrides?.email?.replyTo;
     }
 
     if (email && integration) {

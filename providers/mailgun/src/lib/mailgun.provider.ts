@@ -44,6 +44,8 @@ export class MailgunEmailProvider implements IEmailProvider {
       to: emailOptions.to,
       subject: emailOptions.subject,
       html: emailOptions.html,
+      cc: emailOptions.cc ? emailOptions.cc[0] : undefined,
+      bcc: emailOptions.bcc ? emailOptions.bcc[0] : undefined,
       attachment: emailOptions.attachments?.map((attachment) => {
         return {
           data: attachment.file,

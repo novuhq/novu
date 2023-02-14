@@ -18,6 +18,8 @@ export interface IEmailOptions {
   attachments?: IAttachmentOptions[];
   id?: string;
   replyTo?: string;
+  cc?: string[];
+  bcc?: string[];
 }
 
 export interface ISmsOptions {

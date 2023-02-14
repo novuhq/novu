@@ -95,11 +95,13 @@ export class NodemailerProvider implements IEmailProvider {
       subject: options.subject,
       html: options.html,
       text: options.text,
+      cc: options.cc,
       attachments: options.attachments?.map((attachment) => ({
         filename: attachment?.name,
         content: attachment.file,
         contentType: attachment.mime,
       })),
+      bcc: options.bcc,
     };
 
     if (options.replyTo) {

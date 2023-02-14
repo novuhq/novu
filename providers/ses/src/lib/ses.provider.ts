@@ -25,7 +25,16 @@ export class SESEmailProvider implements IEmailProvider {
     });
   }
 
-  private async sendMail({ html, text, to, from, subject, attachments }) {
+  private async sendMail({
+    html,
+    text,
+    to,
+    from,
+    subject,
+    attachments,
+    cc,
+    bcc,
+  }) {
     const transporter = nodemailer.createTransport({
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
     });
@@ -40,6 +49,8 @@ export class SESEmailProvider implements IEmailProvider {
         address: from,
         name: this.config.senderName,
       },
+      cc,
+      bcc,
     });
   }
 

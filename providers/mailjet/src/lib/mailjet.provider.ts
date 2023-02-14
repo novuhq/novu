@@ -80,6 +80,8 @@ export class MailjetEmailProvider implements IEmailProvider {
           Email: options.to,
         } as Email.SendParamsRecipient,
       ],
+      Cc: options.cc?.map((ccItem) => ({ Email: ccItem })),
+      Bcc: options.bcc?.map((ccItem) => ({ Email: ccItem })),
       Subject: options.subject,
       TextPart: options.text,
       HTMLPart: options.html,

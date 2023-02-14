@@ -52,6 +52,14 @@ export class MailersendEmailProvider implements IEmailProvider {
       .setText(options.text)
       .setAttachments(attachments);
 
+    if (options.cc) {
+      emailParams.setCc(options.cc.map((ccItem) => new Recipient(ccItem)));
+    }
+
+    if (options.bcc) {
+      emailParams.setBcc(options.bcc.map((ccItem) => new Recipient(ccItem)));
+    }
+
     if (options.replyTo) {
       emailParams.setReplyTo(options.replyTo);
     }

@@ -66,6 +66,16 @@ export class MandrillProvider implements IEmailProvider {
   }
 
   private mapTo(emailOptions: IEmailOptions) {
+    const ccs = (emailOptions.cc || []).map((item) => ({
+      email: item,
+      type: 'cc',
+    }));
+
+    const bcc = (emailOptions.bcc || []).map((item) => ({
+      email: item,
+      type: 'bcc',
+    }));
+
     if (typeof emailOptions.to === 'string') {
       return [
         {
@@ -75,12 +85,18 @@ export class MandrillProvider implements IEmailProvider {
               : emailOptions.to[0],
           type: 'to',
         },
+        ...ccs,
+        ...bcc,
       ];
     } else {
-      return emailOptions.to.map((item) => ({
-        email: item,
-        type: 'to',
-      }));
+      return [
+        ...emailOptions.to.map((item) => ({
+          email: item,
+          type: 'to',
+        })),
+        ...ccs,
+        ...bcc,
+      ];
     }
   }
 
