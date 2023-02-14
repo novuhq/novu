@@ -36,7 +36,7 @@ export class UpdateMessageTemplate {
     }
 
     if (command.variables) {
-      updatePayload.variables = UpdateMessageTemplate.filterVariable(command.variables);
+      updatePayload.variables = UpdateMessageTemplate.mapVariables(command.variables);
     }
 
     if (command.contentType) {
@@ -152,7 +152,13 @@ export class UpdateMessageTemplate {
     return item;
   }
 
-  public static filterVariable(items: ITemplateVariable[]) {
-    return items.filter((item) => (item.defaultValue === '' ? false : true));
+  public static mapVariables(items: ITemplateVariable[]) {
+    return items.map((item) => {
+      if (item.defaultValue === '') {
+        item.defaultValue = undefined;
+      }
+
+      return item;
+    });
   }
 }
