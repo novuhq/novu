@@ -22,7 +22,7 @@ export class CreateSubscriber {
 
     if (!subscriber) {
       await this.invalidateCache.invalidateByKey({
-        key: KeyGenerator.subscriber({
+        key: KeyGenerator.entity().subscriber({
           subscriberId: command.subscriberId,
           _environmentId: command.environmentId,
         }),
@@ -62,7 +62,7 @@ export class CreateSubscriber {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.subscriber,
+    builder: KeyGenerator.entity().subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

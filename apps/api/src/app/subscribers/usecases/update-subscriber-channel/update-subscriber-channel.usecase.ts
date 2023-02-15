@@ -68,7 +68,7 @@ export class UpdateSubscriberChannel {
     updatePayload.providerId = command.providerId;
 
     await this.invalidateCache.invalidateByKey({
-      key: KeyGenerator.subscriber({
+      key: KeyGenerator.entity().subscriber({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
@@ -97,7 +97,7 @@ export class UpdateSubscriberChannel {
     }
 
     await this.invalidateCache.invalidateByKey({
-      key: KeyGenerator.subscriber({
+      key: KeyGenerator.entity().subscriber({
         subscriberId: foundSubscriber.subscriberId,
         _environmentId: foundSubscriber._environmentId,
       }),

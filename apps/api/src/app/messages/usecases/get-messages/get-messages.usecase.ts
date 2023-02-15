@@ -51,7 +51,7 @@ export class GetMessages {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.subscriber,
+    builder: KeyGenerator.entity().subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

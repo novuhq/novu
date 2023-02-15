@@ -2,8 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FILTER_TO_LABEL,
-  ICondition,
   IPreferenceChannels,
   StepTypeEnum,
 } from '@novu/shared';
@@ -34,7 +32,6 @@ import {
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { MessageMatcher } from '../trigger-event/message-matcher.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -174,7 +171,7 @@ export class SendMessage {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.subscriber,
+    builder: KeyGenerator.entity().subscriber,
   })
   private async getSubscriberBySubscriberId({
     subscriberId,

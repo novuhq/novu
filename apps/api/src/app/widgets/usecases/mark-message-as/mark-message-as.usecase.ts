@@ -3,11 +3,10 @@ import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntit
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
-import { InvalidateCache } from '../../../shared/interceptors';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { KeyGenerator } from '../../../shared/services/cache/keys';
 
@@ -22,10 +21,16 @@ export class MarkMessageAs {
     private memberRepository: MemberRepository
   ) {}
 
-  @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT])
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.invalidateFeed({
+      key: KeyGenerator.query().feed().invalidate({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateQuery({
+      key: KeyGenerator.query().messageCount().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
@@ -90,7 +95,7 @@ export class MarkMessageAs {
     });
   }
   @CachedEntity({
-    builder: KeyGenerator.subscriber,
+    builder: KeyGenerator.entity().subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

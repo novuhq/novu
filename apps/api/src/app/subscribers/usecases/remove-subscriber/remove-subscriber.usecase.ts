@@ -24,7 +24,7 @@ export class RemoveSubscriber {
       });
 
       await this.invalidateCache.invalidateByKey({
-        key: KeyGenerator.subscriber({
+        key: KeyGenerator.entity().subscriber({
           subscriberId: command.subscriberId,
           _environmentId: command.environmentId,
         }),

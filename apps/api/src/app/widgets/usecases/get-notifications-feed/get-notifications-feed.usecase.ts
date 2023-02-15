@@ -18,7 +18,7 @@ export class GetNotificationsFeed {
     private subscriberRepository: SubscriberRepository
   ) {}
 
-  @CachedQuery({ builder: KeyGenerator.feed })
+  @CachedQuery({ builder: KeyGenerator.query().feed().cache })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
     const LIMIT = 10;
 
@@ -72,7 +72,7 @@ export class GetNotificationsFeed {
     };
   }
   @CachedEntity({
-    builder: KeyGenerator.subscriber,
+    builder: KeyGenerator.entity().subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

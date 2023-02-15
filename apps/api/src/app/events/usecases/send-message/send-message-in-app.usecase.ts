@@ -28,7 +28,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { OrganizationEntity } from '@novu/dal';
@@ -139,18 +139,17 @@ export class SendMessageInApp extends SendMessageBase {
     let message: MessageEntity | null = null;
 
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.invalidateFeed({
+      key: KeyGenerator.query().feed().invalidate({
         subscriberId: subscriber.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT],
-      credentials: {
+    await this.invalidateCache.invalidateQuery({
+      key: KeyGenerator.query().messageCount().invalidate({
         subscriberId: subscriber.subscriberId,
-        environmentId: command.environmentId,
-      },
+        _environmentId: command.environmentId,
+      }),
     });
 
     if (!oldMessage) {

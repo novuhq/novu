@@ -2,11 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkAllMessageAsSeenCommand } from './mark-all-message-as-seen.command';
-import { InvalidateCache } from '../../../shared/interceptors';
 import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
@@ -19,10 +18,16 @@ export class MarkAllMessageAsSeen {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
-  @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT])
   async execute(command: MarkAllMessageAsSeenCommand): Promise<number> {
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.invalidateFeed({
+      key: KeyGenerator.query().feed().invalidate({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateQuery({
+      key: KeyGenerator.query().messageCount().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),

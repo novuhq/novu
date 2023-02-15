@@ -151,7 +151,7 @@ export class ProcessSubscriber {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.subscriber,
+    builder: KeyGenerator.entity().subscriber,
   })
   private async fetchSubscriber({
     subscriberId,

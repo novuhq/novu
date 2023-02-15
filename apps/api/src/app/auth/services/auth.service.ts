@@ -21,7 +21,6 @@ import { SwitchOrganization } from '../usecases/switch-organization/switch-organ
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 import { CacheKeyPrefixEnum } from '../../shared/services/cache';
-import { Cached } from '../../shared/interceptors';
 import { CachedEntity } from '../../shared/interceptors/cached-entity.interceptor';
 import { KeyGenerator } from '../../shared/services/cache/keys';
 
@@ -275,7 +274,7 @@ export class AuthService {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.subscriber,
+    builder: KeyGenerator.entity().subscriber,
   })
   private async getSubscriber({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }) {
     return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);

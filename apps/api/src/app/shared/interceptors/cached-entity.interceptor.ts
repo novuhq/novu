@@ -13,6 +13,8 @@ export function CachedEntity({ builder }: { builder: (...args) => string }) {
     descriptor.value = async function (...args: any[]) {
       if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
 
+      const cacheService = this.cacheService as CacheService;
+
       const cacheKey = builder(...args);
 
       if (!cacheKey) {
@@ -20,7 +22,7 @@ export function CachedEntity({ builder }: { builder: (...args) => string }) {
       }
 
       try {
-        const value = await this.cacheService.get(cacheKey);
+        const value = await cacheService.get(cacheKey);
         if (value) {
           return JSON.parse(value);
         }
@@ -32,7 +34,7 @@ export function CachedEntity({ builder }: { builder: (...args) => string }) {
       const response = await originalMethod.apply(this, args);
 
       try {
-        await this.cacheService.set(cacheKey, JSON.stringify(response));
+        await cacheService.set(cacheKey, JSON.stringify(response));
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(

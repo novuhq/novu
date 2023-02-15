@@ -6,7 +6,6 @@ import {
   SubscriberPreferenceRepository,
   SubscriberRepository,
   SubscriberEntity,
-  SubscriberPreferenceEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IPreferenceChannels } from '@novu/shared';
@@ -81,7 +80,7 @@ export class GetSubscriberTemplatePreference {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.subscriber,
+    builder: KeyGenerator.entity().subscriber,
   })
   private async fetchSubscriber({
     subscriberId,
