@@ -480,3 +480,36 @@ export const infobipEmailConfig: IConfigCredentials[] = [
   },
   ...mailConfigBase,
 ];
+
+export const listmonkEmailConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Host,
+    displayName: 'Host',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Port,
+    displayName: 'Port',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Template ID',
+    type: 'number',
+    required: true,
+  },
+];

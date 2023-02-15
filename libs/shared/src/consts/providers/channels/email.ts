@@ -12,6 +12,7 @@ import {
   sesConfig,
   outlook365Config,
   infobipEmailConfig,
+  listmonkEmailConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { EmailProviderIdEnum } from '../provider.enum';
@@ -122,5 +123,13 @@ export const emailProviders: IProviderConfig[] = [
     credentials: infobipEmailConfig,
     docReference: 'https://www.infobip.com/docs',
     logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
+  },
+  {
+    id: EmailProviderIdEnum.ListmonkEmail,
+    displayName: 'ListmonkEmail',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: listmonkEmailConfig,
+    docReference: 'https://listmonk.app/docs/apis/transactional',
+    logoFileName: { light: 'listmonk.svg', dark: 'listmonk.svg' },
   },
 ];
