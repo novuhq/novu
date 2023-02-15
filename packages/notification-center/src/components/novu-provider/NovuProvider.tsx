@@ -9,7 +9,7 @@ import { NovuContext } from '../../store/novu-provider.context';
 import { NovuI18NProvider } from '../../store/i18n.context';
 import type { IStore, ISession, IFetchingStrategy } from '../../shared/interfaces';
 import { INotificationCenterStyles, StylesProvider } from '../../store/styles';
-import { applyToken } from '../../utils/token';
+import { applyToken, removeToken } from '../../utils/token';
 import { useSession } from '../../hooks/useSession';
 import { useInitializeSocket } from '../../hooks/useInitializeSocket';
 import { useFetchOrganization, useNovuContext } from '../../hooks';
@@ -91,6 +91,12 @@ export function NovuProvider({
     [setFetchingStrategyState]
   );
 
+  const logout = useCallback(() => {
+    removeToken(apiService);
+    disconnectSocket();
+    setSessionInitialized(false);
+  }, [removeToken, disconnectSocket, apiService]);
+
   const contextValue = useMemo(
     () => ({
       backendUrl,
@@ -104,6 +110,7 @@ export function NovuProvider({
       fetchingStrategy,
       setFetchingStrategy,
       onLoad,
+      logout,
     }),
     [
       backendUrl,
@@ -117,6 +124,7 @@ export function NovuProvider({
       fetchingStrategy,
       setFetchingStrategy,
       onLoad,
+      logout,
     ]
   );
 

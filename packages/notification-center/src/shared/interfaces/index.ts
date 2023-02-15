@@ -89,6 +89,7 @@ export interface INovuProviderContext {
   fetchingStrategy: IFetchingStrategy;
   setFetchingStrategy: (strategy: Partial<IFetchingStrategy>) => void;
   onLoad: (data: { organization: IOrganizationEntity }) => void;
+  logout: VoidFunction;
 }
 
 export interface INotificationsContext {
