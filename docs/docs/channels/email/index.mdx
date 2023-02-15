@@ -19,14 +19,34 @@ For some email providers including SendGrid you will have to authenticate the **
 The overrides field supports an email property that should have the interface of this:
 
 ```ts
-{
-  to?: string[];
-  from?: string;
-  text?: string;
-  replyTo?: string;
-  cc?: string[];
-  bcc?: string[];
-}
+import { Novu } from 'packages/node/build/main/index';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+novu.trigger('event-name', {
+  to: {
+    subscriberId: '...',
+  },
+  payload: {
+    attachments: [
+      {
+        file: fs.readFileSync(__dirname + '/data/test.jpeg'),
+        name: 'test.jpeg',
+        mime: 'image/jpg',
+      },
+    ],
+  },
+  overrides: {
+    email: {
+      to: ['to@novu.co'],
+      from: 'from@novu.co',
+      text: 'text version of email',
+      replyTo: 'no-reply@novu.co',
+      cc: ['1@novu.co'],
+      bcc: ['2@novu.co'],
+    },
+  },
+});
 ```
 
 ## Sending Email attachments
