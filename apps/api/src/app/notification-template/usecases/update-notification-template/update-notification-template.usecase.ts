@@ -123,7 +123,7 @@ export class UpdateNotificationTemplate {
       for (const message of steps) {
         let stepId = message._id;
         if (message._templateId) {
-          if (!message.template) throw new ApiException("Something un-expected happened, template couldn't be found");
+          if (!message.template) throw new ApiException(`Something un-expected happened, template couldn't be found`);
 
           const template = await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({

@@ -1,9 +1,8 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import axios from 'axios';
 import { NotificationTemplateEntity } from '@novu/dal';
 
-const axiosInstance = axios.create();
+import { getPreference } from './helpers';
 
 describe('Get Subscribers preferences - /subscribers/preferences/:subscriberId (GET)', function () {
   let session: UserSession;
@@ -25,12 +24,16 @@ describe('Get Subscribers preferences - /subscribers/preferences/:subscriberId (
     expect(data.preference.channels.email).to.equal(true);
     expect(data.preference.channels.in_app).to.equal(true);
   });
-});
 
-export async function getPreference(session) {
-  return await axiosInstance.get(`${session.serverUrl}/v1/subscribers/${session.subscriberId}/preferences`, {
-    headers: {
-      authorization: `ApiKey ${session.apiKey}`,
-    },
+  it('should handle un existing subscriberId', async function () {
+    let error;
+    try {
+      await getPreference(session, 'unexisting-subscriber-id');
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).to.be.ok;
+    expect(error?.response.data.message).to.contain('not found');
   });
-}
+});

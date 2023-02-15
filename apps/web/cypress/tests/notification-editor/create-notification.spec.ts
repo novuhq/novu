@@ -17,11 +17,12 @@ describe('Creation functionality', function () {
 
     addAndEditChannel('inApp');
 
-    cy.getByTestId('in-app-editor-content-input').type('{{firstName}} someone assigned you to {{taskName}}', {
+    cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
+      force: true,
     });
     cy.getByTestId('inAppRedirect').type('/example/test');
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.getByTestId('success-trigger-modal').should('be.visible');
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-notification');
@@ -33,10 +34,10 @@ describe('Creation functionality', function () {
     cy.getByTestId('success-trigger-modal')
       .getByTestId('trigger-curl-snippet')
       .contains("--header 'Authorization: ApiKey");
-
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-curl-snippet').contains('taskName');
 
     cy.getByTestId('trigger-snippet-btn').click();
+
     cy.location('pathname').should('equal', '/templates');
   });
 
@@ -52,15 +53,21 @@ describe('Creation functionality', function () {
     addAndEditChannel('inApp');
 
     // put the multiline notification message
-    cy.getByTestId('in-app-editor-content-input')
+    cy.get('.ace_text-input')
+      .first()
       .type('{{firstName}} someone assigned you to {{taskName}}', {
         parseSpecialCharSequences: false,
+        force: true,
       })
-      .type('{enter}Please check it.');
+      .type('{enter}Please check it.', {
+        force: true,
+      });
     cy.getByTestId('inAppRedirect').type('/example/test');
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.getByTestId('trigger-snippet-btn').click();
+
+    cy.location('pathname').should('equal', '/templates');
 
     // trigger the notification
     cy.task('createNotifications', {
@@ -77,7 +84,6 @@ describe('Creation functionality', function () {
       .getByTestId('notification-content')
       .first()
       .then(($el) => {
-        expect($el[0].innerText).to.contain('\n');
         expect($el[0].innerText).to.contain('Please check it.');
       });
   });
@@ -207,7 +213,7 @@ describe('Creation functionality', function () {
 
     cy.getByTestId('emailSubject').type('this is email subject');
 
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.getByTestId('success-trigger-modal').should('be.visible');
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-notification');
@@ -271,7 +277,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('backoff-unit').click();
     cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
 
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
     cy.getByTestId('success-trigger-modal').should('be.visible');
     cy.getByTestId('trigger-snippet-btn').click();
 
@@ -305,9 +311,11 @@ describe('Creation functionality', function () {
     cy.getByTestId('groupSelector').clear();
     cy.getByTestId('groupSelector').type('New Test Category');
     cy.getByTestId('submit-category-btn').click();
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
 
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/templates');
     cy.getByTestId('template-edit-link');

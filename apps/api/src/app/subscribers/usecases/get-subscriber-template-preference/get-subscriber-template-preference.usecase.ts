@@ -15,6 +15,7 @@ import {
   ISubscriberPreferenceResponse,
 } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { KeyGenerator } from '../../../shared/services/cache/keys';
 
@@ -29,7 +30,18 @@ export class GetSubscriberTemplatePreference {
 
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const activeChannels = await this.queryActiveChannels(command);
-    const subscriberPreference = await this.getSubscriberPreference(command);
+    const subscriber =
+      command.subscriber ??
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
+    if (!subscriber) {
+      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
+    }
+
+    const subscriberPreference = await this.subscriberPreferenceRepository.findOne({
+      _environmentId: command.environmentId,
+      _subscriberId: subscriber._id,
+      _templateId: command.template._id,
+    });
 
     const responseTemplate = mapResponseTemplate(command.template);
     const subscriberPreferenceEnabled = subscriberPreference?.enabled ?? true;
@@ -51,31 +63,6 @@ export class GetSubscriberTemplatePreference {
     }
 
     return getNoSettingFallback(responseTemplate, activeChannels);
-  }
-
-  private async getSubscriberPreference(command: GetSubscriberTemplatePreferenceCommand) {
-    let _subscriberId = (command.subscriber as { _subscriberId: string })._subscriberId || undefined;
-
-    if (!_subscriberId) {
-      const subscriber = await this.fetchSubscriber({
-        _environmentId: command.environmentId,
-        subscriberId: (command.subscriber as { subscriberId: string }).subscriberId,
-      });
-
-      _subscriberId = subscriber?._id;
-    }
-
-    let subscriberPreference: SubscriberPreferenceEntity | null = null;
-
-    if (_subscriberId) {
-      subscriberPreference = await this.subscriberPreferenceRepository.findOne({
-        _environmentId: command.environmentId,
-        _subscriberId: _subscriberId,
-        _templateId: command.template._id,
-      });
-    }
-
-    return subscriberPreference;
   }
 
   private async queryActiveChannels(command: GetSubscriberTemplatePreferenceCommand): Promise<ChannelTypeEnum[]> {

@@ -122,7 +122,7 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    const overrides = command.overrides[integration?.providerId] || {};
+    const overrides: Record<string, any> = command.overrides[integration?.providerId] || {};
     let html;
     let subject = '';
     let content;
@@ -204,14 +204,17 @@ export class SendMessageEmail extends SendMessageBase {
         }
     );
 
-    const mailData: IEmailOptions = {
-      to: email,
-      subject,
-      html,
-      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
-      attachments,
-      id: message._id,
-    };
+    const mailData: IEmailOptions = createMailData(
+      {
+        to: email,
+        subject,
+        html,
+        from: integration?.credentials.from || 'no-reply@novu.co',
+        attachments,
+        id: message._id,
+      },
+      command.overrides?.email || {}
+    );
 
     if (command.step.replyCallback?.active) {
       const replyTo = await this.getReplyTo(command, message._id);
@@ -219,6 +222,10 @@ export class SendMessageEmail extends SendMessageBase {
       if (replyTo) {
         mailData.replyTo = replyTo;
       }
+    }
+
+    if (command.overrides?.email?.replyTo) {
+      mailData.replyTo = command.overrides?.email?.replyTo as string;
     }
 
     if (email && integration) {
@@ -414,6 +421,23 @@ export class SendMessageEmail extends SendMessageBase {
     }
   }
 }
+
+export const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
+  const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
+
+  let to = Array.isArray(options.to) ? options.to : [options.to];
+  to = [...to, ...(overrides?.to || [])];
+  to = to.reduce(filterDuplicate, []);
+
+  return {
+    ...options,
+    to,
+    from: overrides?.from || options.from,
+    text: overrides?.text,
+    cc: overrides?.cc || [],
+    bcc: overrides?.bcc || [],
+  };
+};
 
 export function getReplyToAddress(transactionId: string, environmentId: string, inboundParseDomain: string) {
   const userNamePrefix = 'parse';

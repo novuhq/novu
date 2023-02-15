@@ -51,11 +51,10 @@
     "nyc": "^15.1.0",
     "open-cli": "^6.0.1",
     "prettier": "^2.1.1",
-    "standard-version": "^9.0.0",
     "ts-jest": "^27.0.5",
-    "ts-node": "^9.0.0",
+    "ts-node": "~10.9.1",
     "typedoc": "^0.19.0",
-    "typescript": "4.6.2",
+    "typescript": "4.9.5",
     "rimraf": "^3.0.2"
   },
   "files": [

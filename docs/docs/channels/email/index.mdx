@@ -14,6 +14,41 @@ When creating an email provider integration you will be asked to provide additio
 
 For some email providers including SendGrid you will have to authenticate the **From email address** to make sure you will send email messages using an authorized address.
 
+## Sending Email Overrides
+
+The overrides field supports an email property that should have the interface of this:
+
+```ts
+import { Novu } from 'packages/node/build/main/index';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+novu.trigger('event-name', {
+  to: {
+    subscriberId: '...',
+  },
+  payload: {
+    attachments: [
+      {
+        file: fs.readFileSync(__dirname + '/data/test.jpeg'),
+        name: 'test.jpeg',
+        mime: 'image/jpg',
+      },
+    ],
+  },
+  overrides: {
+    email: {
+      to: ['to@novu.co'],
+      from: 'from@novu.co',
+      text: 'text version of email',
+      replyTo: 'no-reply@novu.co',
+      cc: ['1@novu.co'],
+      bcc: ['2@novu.co'],
+    },
+  },
+});
+```
+
 ## Sending Email attachments
 
 You can easily send attachments with the Novu API by passing the attachments array when triggering an Email based notification template.
