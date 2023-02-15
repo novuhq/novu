@@ -10,6 +10,7 @@ import { useContext, useState } from 'react';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { AuthContext } from '../../store/authContext';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
+import { INotificationTemplate } from '@novu/shared';
 
 const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
   const subsVars = getSubscriberValue(
@@ -21,14 +22,14 @@ const makeToValue = (subscriberVariables: INotificationTriggerVariable[], curren
   return JSON.stringify(subsVars, null, 2);
 };
 
-const makePayloadValue = (variables: INotificationTriggerVariable[]) => {
-  return JSON.stringify(getPayloadValue(variables), null, 2);
+const makePayloadValue = (variables: INotificationTriggerVariable[], template: INotificationTemplate) => {
+  return JSON.stringify(getPayloadValue(variables, template), null, 2);
 };
 
 export function TestWorkflowModal({
   isVisible,
   onDismiss,
-  trigger,
+  template,
   setTransactionId,
   openExecutionModal,
 }: {
@@ -36,10 +37,11 @@ export function TestWorkflowModal({
   onDismiss: () => void;
   openExecutionModal: () => void;
   setTransactionId: (id: string) => void;
-  trigger: INotificationTrigger;
+  template: INotificationTemplate;
 }) {
   const { currentUser } = useContext(AuthContext);
   const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
+  const trigger: INotificationTrigger = template.triggers[0];
 
   const subscriberVariables = useMemo(
     () => [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])],
@@ -49,7 +51,7 @@ export function TestWorkflowModal({
 
   const overridesTrigger = `{\n\n}`;
   const [toValue, setToValue] = useState(() => makeToValue(subscriberVariables, currentUser));
-  const [payloadValue, setPayloadValue] = useState(() => makePayloadValue(variables));
+  const [payloadValue, setPayloadValue] = useState(() => makePayloadValue(variables, template));
   const [overridesValue, setOverridesValue] = useState(overridesTrigger);
 
   useEffect(() => {

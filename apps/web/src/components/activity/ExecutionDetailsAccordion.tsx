@@ -34,7 +34,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export const ExecutionDetailsAccordion = ({ identifier, steps, subscriberVariables }) => {
+export const ExecutionDetailsAccordion = ({ identifier, steps, subscriberVariables, template }) => {
   const { classes } = useStyles();
 
   if (!steps || steps.length <= 0) {
@@ -54,6 +54,7 @@ export const ExecutionDetailsAccordion = ({ identifier, steps, subscriberVariabl
               identifier={identifier}
               step={step}
               subscriberVariables={subscriberVariables}
+              template={template}
             />
           </Accordion.Panel>
         </Accordion.Item>

@@ -93,7 +93,7 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
             )}
 
             {template && trigger && activePage === ActivePageEnum.TRIGGER_SNIPPET && (
-              <TriggerSnippetTabs trigger={trigger} />
+              <TriggerSnippetTabs trigger={trigger} template={template} />
             )}
           </div>
         </Grid.Col>

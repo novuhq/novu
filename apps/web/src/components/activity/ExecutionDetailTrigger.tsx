@@ -33,10 +33,10 @@ const buildTrigger = (identifier, subscriberVariables, payload): INotificationTr
   };
 };
 
-export const ExecutionDetailTrigger = ({ identifier, step, subscriberVariables }) => {
+export const ExecutionDetailTrigger = ({ identifier, step, subscriberVariables, template }) => {
   const { payload } = step || {};
   const trigger = buildTrigger(identifier, subscriberVariables, payload);
-  const curlSnippet = getCurlTriggerSnippet(identifier, trigger.variables, trigger.subscriberVariables || []);
+  const curlSnippet = getCurlTriggerSnippet(identifier, trigger.variables, trigger.subscriberVariables || [], template);
 
   return (
     <>

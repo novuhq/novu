@@ -50,18 +50,8 @@ export default function TemplateEditorPage() {
     navigate('/templates');
   };
   const { loading: isIntegrationsLoading } = useActiveIntegrations();
-  const {
-    template,
-    isLoading,
-    isCreating,
-    isUpdating,
-    editMode,
-    createdTemplateId,
-    trigger,
-    onSubmit,
-    addStep,
-    deleteStep,
-  } = useTemplateEditor();
+  const { template, isLoading, isCreating, isUpdating, editMode, createdTemplateId, onSubmit, addStep, deleteStep } =
+    useTemplateEditor();
   const methods = useFormContext<IForm>();
   const {
     formState: { errors, isDirty },
@@ -188,16 +178,16 @@ export default function TemplateEditorPage() {
           {!isLoading && !isIntegrationsLoading ? (
             <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
           ) : null}
-          {trigger && (
+          {template && (
             <TemplateTriggerModal
-              trigger={trigger}
+              template={template}
               onDismiss={onTriggerModalDismiss}
               isVisible={!saveChangesModalOpened && !testWorkflowModalOpened && isTriggerModalVisible}
             />
           )}
-          {trigger && !isDirty && (
+          {template && !isDirty && (
             <TestWorkflowModal
-              trigger={trigger}
+              template={template}
               setTransactionId={setTransactionId}
               onDismiss={closeTestWorkflowModal}
               isVisible={testWorkflowModalOpened}

@@ -82,7 +82,12 @@ export function ExecutionDetailsModal({
         data-test-id="execution-details-modal-loading-overlay"
       />
 
-      <ExecutionDetailsAccordion identifier={identifier} steps={jobs} subscriberVariables={subscriberVariables} />
+      <ExecutionDetailsAccordion
+        identifier={identifier}
+        steps={jobs}
+        subscriberVariables={subscriberVariables}
+        template={template}
+      />
       <When truthy={digestedNotificationId}>
         <Center mt={20}>
           <Text mr={10} size="md" color={colors.B60}>
