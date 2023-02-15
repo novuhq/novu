@@ -7,6 +7,7 @@ import { sanitizeMessageContent } from '../../shared/sanitizer.service';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { UpdateChange } from '../../../change/usecases/update-change/update-change';
 import { UpdateChangeCommand } from '../../../change/usecases/update-change/update-change.command';
+import { UpdateMessageTemplate } from '../update-message-template/update-message-template.usecase';
 
 @Injectable()
 export class CreateMessageTemplate {
@@ -20,7 +21,7 @@ export class CreateMessageTemplate {
     let item = await this.messageTemplateRepository.create({
       cta: command.cta,
       name: command.name,
-      variables: command.variables,
+      variables: command.variables ? UpdateMessageTemplate.mapVariables(command.variables) : undefined,
       content: command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content,
       contentType: command.contentType,
       subject: command.subject,
