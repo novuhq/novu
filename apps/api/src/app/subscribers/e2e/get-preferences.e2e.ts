@@ -24,4 +24,16 @@ describe('Get Subscribers preferences - /subscribers/preferences/:subscriberId (
     expect(data.preference.channels.email).to.equal(true);
     expect(data.preference.channels.in_app).to.equal(true);
   });
+
+  it('should handle un existing subscriberId', async function () {
+    let error;
+    try {
+      await getPreference(session, 'unexisting-subscriber-id');
+    } catch (e) {
+      error = e;
+    }
+
+    expect(error).to.be.ok;
+    expect(error?.response.data.message).to.contain('not found');
+  });
 });

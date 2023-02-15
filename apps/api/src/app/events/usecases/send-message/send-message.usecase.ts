@@ -37,6 +37,7 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { MessageMatcher } from '../trigger-event/message-matcher.service';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class SendMessage {
@@ -174,11 +175,15 @@ export class SendMessage {
       environmentId: job._environmentId,
     });
 
+    const subscriber = await this.subscriberRepository.findById(job._subscriberId);
+    if (!subscriber) throw new ApiException('Subscriber not found with id ' + job._subscriberId);
+
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: job._organizationId,
-      subscriberId: job._subscriberId,
+      subscriberId: subscriber.subscriberId,
       environmentId: job._environmentId,
       template,
+      subscriber,
     });
 
     const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
