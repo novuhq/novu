@@ -362,14 +362,7 @@ export class SendMessageEmail extends SendMessageBase {
   ) {
     const mailFactory = new MailFactory();
     const mailHandler = mailFactory.getHandler(
-      {
-        ...integration,
-        credentials: {
-          ...integration.credentials,
-          senderName: senderName && senderName.length > 0 ? senderName : integration.credentials.senderName,
-        },
-        providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, integration.providerId),
-      },
+      SendMessageEmail.buildFactoryIntegration(integration, senderName),
       mailData.from
     );
 
@@ -428,6 +421,17 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
+  }
+
+  public static buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+    return {
+      ...integration,
+      credentials: {
+        ...integration.credentials,
+        senderName: senderName && senderName.length > 0 ? senderName : integration.credentials.senderName,
+      },
+      providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, integration.providerId),
+    };
   }
 }
 
