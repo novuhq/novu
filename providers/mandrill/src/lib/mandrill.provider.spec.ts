@@ -37,7 +37,7 @@ test('should trigger mandrill correctly', async () => {
       html: mockNovuMessage.html,
       to: [
         {
-          email: mockNovuMessage.to,
+          email: mockNovuMessage.to[0],
           type: 'to',
         },
       ],

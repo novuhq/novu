@@ -71,7 +71,7 @@ test('should trigger mailjet library correctly and return proper response', asyn
         HTMLPart: mockMessageConfig.html,
         Subject: mockMessageConfig.subject,
         TextPart: undefined,
-        To: [{ Email: mockMessageConfig.to }],
+        To: [{ Email: mockMessageConfig.to[0] }],
       },
     ],
   });
