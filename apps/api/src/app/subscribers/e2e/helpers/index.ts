@@ -27,12 +27,15 @@ export async function updateNotificationTemplate(
   });
 }
 
-export async function getPreference(session: UserSession) {
-  return await axiosInstance.get(`${session.serverUrl}/v1/subscribers/${session.subscriberId}/preferences`, {
-    headers: {
-      authorization: `ApiKey ${session.apiKey}`,
-    },
-  });
+export async function getPreference(session: UserSession, subscriberId?: string) {
+  return await axiosInstance.get(
+    `${session.serverUrl}/v1/subscribers/${subscriberId || session.subscriberId}/preferences`,
+    {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    }
+  );
 }
 
 export async function updateSubscriberOnlineFlag(
