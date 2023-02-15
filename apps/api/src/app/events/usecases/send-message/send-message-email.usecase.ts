@@ -226,7 +226,14 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (email && integration) {
-      await this.sendMessage(integration, mailData, message, command, notification);
+      await this.sendMessage(
+        integration,
+        mailData,
+        message,
+        command,
+        notification,
+        emailChannel.template.senderName || overrides?.email?.senderName
+      );
 
       return;
     }
@@ -350,12 +357,17 @@ export class SendMessageEmail extends SendMessageBase {
     mailData: IEmailOptions,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    senderName?: string
   ) {
     const mailFactory = new MailFactory();
     const mailHandler = mailFactory.getHandler(
       {
         ...integration,
+        credentials: {
+          ...integration.credentials,
+          senderName: senderName && senderName.length > 0 ? senderName : integration.credentials.senderName,
+        },
         providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, integration.providerId),
       },
       mailData.from

@@ -50,6 +50,10 @@ export class MessageTemplate {
   preheader?: string;
 
   @IsOptional()
+  @IsString()
+  senderName?: string;
+
+  @IsOptional()
   actor?: {
     type: ActorTypeEnum;
     data: string | null;

@@ -2,7 +2,6 @@ import { Grid, useMantineTheme } from '@mantine/core';
 import { format } from 'date-fns';
 import { Controller, useFormContext } from 'react-hook-form';
 import { colors, Input, Select } from '../../../design-system';
-import { EmailIntegrationInfo } from '../../../pages/templates/editor/EmailIntegrationInfo';
 import { useLayouts } from '../../../api/hooks/useLayouts';
 import { useEffect } from 'react';
 
@@ -49,16 +48,23 @@ export const EmailInboxContent = ({
     >
       <Grid grow justify="center" align="stretch">
         <Grid.Col span={3}>
-          <div
-            style={{
-              padding: '15px',
-              borderRadius: '7px',
-              border: `1px solid ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80}`,
-              margin: '5px 0px',
+          <Controller
+            name={`steps.${index}.template.senderName`}
+            control={control}
+            render={({ field }) => {
+              return (
+                <Input
+                  {...field}
+                  required
+                  error={errors?.steps ? errors.steps[index]?.template?.senderName?.message : undefined}
+                  disabled={readonly}
+                  value={field.value}
+                  placeholder={integration?.credentials?.senderName}
+                  data-test-id="emailSenderName"
+                />
+              );
             }}
-          >
-            <EmailIntegrationInfo integration={integration} field={'from'} />
-          </div>
+          />
         </Grid.Col>
         <Grid.Col span={4}>
           <div>
