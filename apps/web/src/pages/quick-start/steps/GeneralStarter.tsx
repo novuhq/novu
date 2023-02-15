@@ -5,12 +5,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { IUserEntity } from '@novu/shared';
 
-import { colors, Text, Title } from '../../design-system';
-import PageMeta from '../../components/layout/components/PageMeta';
-import PageContainer from '../../components/layout/components/PageContainer';
-import { updateUserOnBoarding } from '../../api/user';
-import { OnboardingSteps } from './components/OnboardingSteps';
-import { useSegment } from '../../hooks/useSegment';
+import { colors, Text, Title } from '../../../design-system';
+import PageMeta from '../../../components/layout/components/PageMeta';
+import PageContainer from '../../../components/layout/components/PageContainer';
+import { updateUserOnBoarding } from '../../../api/user';
+import { OnboardingSteps } from '../components/OnboardingSteps';
+import { useSegment } from '../../../hooks/useSegment';
 
 export function GeneralStarter() {
   const segment = useSegment();

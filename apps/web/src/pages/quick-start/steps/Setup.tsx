@@ -1,23 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import styled from '@emotion/styled';
 import { useMutation } from '@tanstack/react-query';
 import { Stack, Stepper } from '@mantine/core';
 
 import { ChannelCTATypeEnum, ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
 
-import { createTemplate } from '../../../api/notification-templates';
-import { Prism } from '../../settings/tabs/components/Prism';
-import { frameworkInstructions, notificationTemplateName } from '../consts';
+import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
 import { useTemplates } from '../../../api/hooks/useTemplates';
 import { useEnvController } from '../../../store/useEnvController';
-import { LoaderProceedTernary } from './LoaderProceedTernary';
-import { useInAppActivated } from './useInAppActivated';
-import styled from '@emotion/styled';
+import { useInAppActivated } from '../components/useInAppActivated';
+import { frameworkInstructions, notificationTemplateName } from '../consts';
+import { createTemplate } from '../../../api/notification-templates';
+import { LoaderProceedTernary } from '../components/LoaderProceedTernary';
+import { Prism } from '../../settings/tabs/components/Prism';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 
-export function SetUp() {
+export function Setup() {
   const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();
   const { framework } = useParams();
   const { groups } = useNotificationGroup();
@@ -76,11 +77,10 @@ export function SetUp() {
   }
 
   return (
-    <>
+    <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true}>
       <LoaderWrapper>
         <LoaderProceedTernary appInitialized={initialized} navigatePath={'/quickstart/notification-center/trigger'} />
       </LoaderWrapper>
-
       <Stack align="center">
         <Stepper active={0} onStepClick={() => {}} orientation="vertical">
           {instructions.map((instruction, index) => {
@@ -94,8 +94,8 @@ export function SetUp() {
           })}
         </Stepper>
         <When truthy={openBrowser}>{<OpenBrowser />}</When>
-      </Stack>
-    </>
+      </Stack>{' '}
+    </QuickStartWrapper>
   );
 }
 
@@ -113,5 +113,14 @@ export function OpenBrowser() {
     <span style={{ color: colors.B60 }}>
       If your browser did not automatically open, go to localhost at http://localhost:3000
     </span>
+  );
+}
+
+export function TroubleshootingDescription() {
+  return (
+    <Stack align="center">
+      <span>Follow the installation steps and then sit back while we</span>
+      <span>connect to your application</span>
+    </Stack>
   );
 }

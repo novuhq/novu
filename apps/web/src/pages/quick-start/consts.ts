@@ -112,6 +112,25 @@ export default {
 
 <style scoped></style>`;
 
+const embedScript = `<script>
+  (function(n,o,t,i,f) {
+    n[i] = {}; var m = ['init', 'on']; n[i]._c = [];m.forEach(me => n[i][me] = function() {n[i]._c.push([me, arguments])});
+    var elt = o.createElement(f); elt.type = "text/javascript"; elt.async = true; elt.src = t;
+    var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
+  })(window, document, 'http://localhost:4701/embed.umd.min.js', 'novu', 'script');
+
+  novu.init('APPLICATION_IDENTIFIER', '#notification-bell', {
+    subscriberId: "${onBoardingSubscriberId}",
+  });
+</script>`;
+
+const embedBellSelector = `<nav>
+  <div id="notification-bell">
+    <i class="fa fa-bell"></i>
+    <span id="unseen-badge"></span>
+  </div>
+</nav>`;
+
 export const frameworkInstructions: { key: string; value: ISnippetInstructions[] }[] = [
   {
     key: 'react',
@@ -149,6 +168,19 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
       {
         instruction: 'Now NotificationCenterComponent could be used like this in the Vue component file:',
         snippet: vueComponentSnippet,
+      },
+    ],
+  },
+  {
+    key: 'js',
+    value: [
+      {
+        instruction: 'Add the following script into your code.',
+        snippet: embedScript,
+      },
+      {
+        instruction: 'Add the following div that will contain the bell widget',
+        snippet: embedBellSelector,
       },
     ],
   },

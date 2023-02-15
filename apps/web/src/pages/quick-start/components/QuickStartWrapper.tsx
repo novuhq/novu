@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Stack } from '@mantine/core';
+import { Center, Stack } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { localNavigate } from './route/store';
@@ -8,7 +8,7 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import { GoBack } from './route/GoBack';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
-import { Faq } from '../QuickStart';
+import { faqUrl } from '../consts';
 
 export function QuickStartWrapper({
   title,
@@ -89,6 +89,24 @@ export function QuickStartWrapper({
         </PageWrapper>
       </PageContainer>
     </>
+  );
+}
+
+export function Faq() {
+  return (
+    <Center
+      data-test-id="go-back-button"
+      inline
+      style={{
+        cursor: 'pointer',
+        marginTop: '75px',
+      }}
+    >
+      <span style={{ color: colors.B60 }}>Got stuck? </span>
+      <a href={faqUrl} style={{ marginLeft: '5px', color: '#DD2476' }}>
+        Check our FAQ’s
+      </a>
+    </Center>
   );
 }
 

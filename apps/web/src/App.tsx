@@ -27,15 +27,6 @@ import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
-import {
-  QuickStartCards,
-  ImplementationDescription,
-  TroubleshootingDescription,
-  QuickstartDescription,
-  NcInAppDescription,
-  NcDemoDescription,
-  TriggerDescription,
-} from './pages/quick-start/QuickStart';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
 import { SpotLight } from './components/utils/Spotlight';
@@ -46,14 +37,13 @@ import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
-import { GeneralStarter } from './pages/quick-start/GeneralStarter';
-import { BellGradient } from './design-system/icons';
-import { SetUp } from './pages/quick-start/components/SetUp';
-import { TestNotificationTrigger } from './pages/quick-start/components/TestNotificationTrigger';
-import { welcomeDescription } from './pages/quick-start/consts';
-import { NestedSquares } from './design-system/icons/gradient/NestedSquares';
-import { Smiley } from './design-system/icons/gradient/Smiley';
+import { GeneralStarter } from './pages/quick-start/steps/GeneralStarter';
 import { QuickStartWrapper } from './pages/quick-start/components/QuickStartWrapper';
+import { Quickstart } from './pages/quick-start/steps/Quickstart';
+import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
+import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
+import { Setup } from './pages/quick-start/steps/Setup';
+import { Trigger } from './pages/quick-start/steps/Trigger';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID);
@@ -213,86 +203,7 @@ function App() {
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartWrapper
-                                title={welcomeDescription}
-                                secondaryTitle={'What would you like to build?'}
-                                description={<QuickstartDescription />}
-                              >
-                                <QuickStartCards
-                                  cells={[
-                                    {
-                                      navIcon: BellGradient,
-                                      description: 'Notification Center',
-                                      navigateTo: '/quickstart/notification-center',
-                                    },
-                                    {
-                                      navIcon: NestedSquares,
-                                      description: 'Other Channels',
-                                      navigateTo: '/general-started',
-                                    },
-                                  ]}
-                                />
-                              </QuickStartWrapper>
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/quickstart/notification-center/set-up"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <QuickStartWrapper
-                                title={welcomeDescription}
-                                secondaryTitle={<ImplementationDescription />}
-                                faq={true}
-                              >
-                                <QuickStartCards
-                                  cells={[
-                                    {
-                                      imagePath: `/static/images/frameworks/dark/react.png`,
-                                      navigateTo: '/quickstart/notification-center/set-up/react',
-                                    },
-                                    {
-                                      imagePath: `/static/images/frameworks/dark/angular.png`,
-                                      navigateTo: '/quickstart/notification-center/set-up/angular',
-                                    },
-                                    {
-                                      imagePath: `/static/images/frameworks/dark/vue.png`,
-                                      navigateTo: '/quickstart/notification-center/set-up/vue',
-                                    },
-                                  ]}
-                                />
-                              </QuickStartWrapper>
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/quickstart/notification-center/set-up/:framework"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true}>
-                                <SetUp />
-                              </QuickStartWrapper>
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/quickstart/notification-center/trigger"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <QuickStartWrapper
-                                title={<Smiley style={{ height: '75px', width: '75px', marginTop: '100px' }} />}
-                                secondaryTitle={'Amazing, nearly done!'}
-                                description={<TriggerDescription />}
-                                faq={true}
-                              >
-                                <TestNotificationTrigger />
-                              </QuickStartWrapper>
+                              <Quickstart />
                             </SpotLight>
                           </RequiredAuth>
                         }
@@ -302,20 +213,37 @@ function App() {
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartWrapper secondaryTitle={'How would you like to start?'}>
-                                <QuickStartCards
-                                  cells={[
-                                    {
-                                      description: <NcInAppDescription />,
-                                      navigateTo: '/quickstart/notification-center/set-up',
-                                    },
-                                    {
-                                      description: <NcDemoDescription />,
-                                      navigateTo: '/quickstart/notification-center/set-up/demo',
-                                    },
-                                  ]}
-                                />
-                              </QuickStartWrapper>
+                              <NotificationCenter />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/set-up"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <FrameworkSetup />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/set-up/:framework"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <Setup />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/trigger"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <Trigger />
                             </SpotLight>
                           </RequiredAuth>
                         }
