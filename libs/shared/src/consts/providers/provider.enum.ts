@@ -35,6 +35,7 @@ export enum EmailProviderIdEnum {
   SES = 'ses',
   NetCore = 'netcore',
   Infobip = 'infobip-email',
+  Resend = 'resend',
   MailerSend = 'mailersend',
   Clickatell = 'clickatell',
   Outlook365 = 'outlook365',
