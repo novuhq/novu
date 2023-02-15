@@ -916,7 +916,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     await triggerEvent({
       customVar: 'digest key1',
-      nested: { postId: postId },
+      nested: { postId },
     });
     await triggerEvent({
       customVar: 'digest key2',
