@@ -17,15 +17,15 @@ describe('Trigger event - Send message email - /v1/events/trigger (POST)', funct
       to: ['override-to@novu.co'],
       from: 'override-from@novu.co',
       text: 'text',
-      cc: ['cc@nouv.co'],
-      bcc: ['bcc@nouv.co'],
+      cc: ['cc@novu.co'],
+      bcc: ['bcc@novu.co'],
     });
 
     expect(result.to).to.deep.equal(['to-reply@novu.co', 'override-to@novu.co']);
     expect(result.from).to.equal('override-from@novu.co');
     expect(result.text).to.equal('text');
-    expect(result.cc).to.deep.equal(['cc@nouv.co']);
-    expect(result.bcc).to.deep.equal(['bcc@nouv.co']);
+    expect(result.cc).to.deep.equal(['cc@novu.co']);
+    expect(result.bcc).to.deep.equal(['bcc@novu.co']);
 
     result = createMailData(
       {
