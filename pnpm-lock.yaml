@@ -251,6 +251,7 @@ importers:
       passport-jwt: ^4.0.0
       passport-oauth2: ^1.6.1
       recursive-diff: ^1.0.8
+      redlock: 4.2.0
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       rxjs: ^7.5.5
@@ -347,6 +348,7 @@ importers:
       passport-jwt: 4.0.0
       passport-oauth2: 1.6.1
       recursive-diff: 1.0.8
+      redlock: 4.2.0
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
       rxjs: 7.5.5
@@ -53017,6 +53019,13 @@ packages:
     engines: {node: '>=4'}
     dependencies:
       redis-errors: 1.2.0
+    dev: false
+
+  /redlock/4.2.0:
+    resolution: {integrity: sha512-j+oQlG+dOwcetUt2WJWttu4CZVeRzUrcVcISFmEmfyuwCVSJ93rDT7YSgg7H7rnxwoRyk/jU46kycVka5tW7jA==}
+    engines: {node: '>=8.0.0'}
+    dependencies:
+      bluebird: 3.7.2
     dev: false
 
   /reduce-flatten/2.0.0:

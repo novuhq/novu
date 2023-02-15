@@ -104,6 +104,7 @@
     "passport-jwt": "^4.0.0",
     "passport-oauth2": "^1.6.1",
     "recursive-diff": "^1.0.8",
+    "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.5.5",
