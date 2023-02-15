@@ -222,7 +222,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (command.overrides?.email?.replyTo) {
-      mailData.replyTo = overrides?.email?.replyTo;
+      mailData.replyTo = command.overrides?.email?.replyTo as string;
     }
 
     if (email && integration) {
