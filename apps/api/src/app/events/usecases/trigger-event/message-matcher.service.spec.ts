@@ -245,6 +245,58 @@ describe('Message filter matcher', function () {
     expect(matchedMessage.passed).to.equal(true);
   });
 
+  it('should get nested custom subscriber data', async function () {
+    const matchedMessage = await messageMatcher.filter(
+      sendMessageCommand({
+        step: makeStep('Correct Match', 'OR', [
+          {
+            operator: 'EQUAL',
+            value: 'nestedValue',
+            field: 'data.nestedKey.childKey',
+            on: FilterPartTypeEnum.SUBSCRIBER,
+          },
+        ]),
+      }),
+      {
+        subscriber: {
+          data: {
+            nestedKey: {
+              childKey: 'nestedValue',
+            },
+          },
+        },
+      }
+    );
+
+    expect(matchedMessage.passed).to.equal(true);
+  });
+
+  it("should return false with nested data that doesn't exist", async function () {
+    const matchedMessage = await messageMatcher.filter(
+      sendMessageCommand({
+        step: makeStep('Correct Match', 'OR', [
+          {
+            operator: 'EQUAL',
+            value: 'nestedValue',
+            field: 'data.nestedKey.doesNotExist',
+            on: FilterPartTypeEnum.SUBSCRIBER,
+          },
+        ]),
+      }),
+      {
+        subscriber: {
+          data: {
+            nestedKey: {
+              childKey: 'nestedValue',
+            },
+          },
+        },
+      }
+    );
+
+    expect(matchedMessage.passed).to.equal(false);
+  });
+
   it('should get smaller or equal payload var then filter value', async function () {
     let matchedMessage = await messageMatcher.filter(
       sendMessageCommand({
