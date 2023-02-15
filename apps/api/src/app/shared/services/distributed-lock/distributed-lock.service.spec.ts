@@ -47,6 +47,35 @@ describe('Distributed Lock Service', () => {
     });
   });
 
+  describe('Shutdown side effects', () => {
+    it('should not allow the signal to shutdown if not all locks are released', () => {
+      const lockCounter = {
+        lock1: 2,
+        lock2: 0,
+        lock3: undefined,
+      };
+
+      distributedLockService.lockCounter = lockCounter;
+
+      const result = distributedLockService.areAllLocksReleased();
+      expect(result).to.eql(false);
+    });
+
+    it('should allow the signal to shutdown if  all locks are released', () => {
+      const lockCounter = {
+        lock1: 0,
+        lock2: 0,
+        lock3: undefined,
+        lock4: null,
+      };
+
+      distributedLockService.lockCounter = lockCounter;
+
+      const result = distributedLockService.areAllLocksReleased();
+      expect(result).to.eql(true);
+    });
+  });
+
   describe('Functionalities', () => {
     it('should create lock and it should expire after the TTL set', async () => {
       const resource = 'lock-created';

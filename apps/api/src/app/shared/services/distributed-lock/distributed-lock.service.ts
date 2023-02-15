@@ -3,12 +3,19 @@ import * as Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
 import { Logger } from '@nestjs/common';
 
+import { ApiException } from '../../exceptions/api.exception';
+
 const LOG_CONTEXT = 'DistributedLock';
 
-const redisUrl =
-  process.env.REDIS_HOST && process.env.REDIS_PORT
-    ? `${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`
-    : 'localhost:6379';
+const getRedisUrl = () => {
+  if (!process.env.REDIS_HOST || !process.env.REDIS_PORT) {
+    throw new ApiException(
+      'Missing needed environment variables for Redis instance configuration for the distributed lock service'
+    );
+  }
+
+  return `${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
+};
 
 interface ILockOptions {
   resource: string;
@@ -38,7 +45,7 @@ export class DistributedLockService {
     }
 
     // TODO: Implement distributed nodes (at least 3 Redis instances)
-    this.instances = [redisUrl].filter((instance) => !!instance).map((url) => new Redis(url));
+    this.instances = [getRedisUrl()].filter((instance) => !!instance).map((url) => new Redis(url));
 
     this.distributedLock = new Redlock(this.instances, settings);
     Logger.log('Redlock started', LOG_CONTEXT);
@@ -62,12 +69,14 @@ export class DistributedLockService {
     });
   }
 
-  public async shutdown(): Promise<void> {
-    const timeout = async () => setTimeout(250);
+  public areAllLocksReleased(): boolean {
+    return Object.values(this.lockCounter).every((value) => !value);
+  }
 
+  public async shutdown(): Promise<void> {
     if (this.distributedLock) {
-      while (this.lockCounter > 0) {
-        await timeout();
+      while (!this.areAllLocksReleased()) {
+        await setTimeout(250);
       }
 
       if (!this.shuttingDown) {
@@ -84,6 +93,19 @@ export class DistributedLockService {
         }
       }
     }
+  }
+
+  /**
+   * This Nest.js hook allows us to execute logic on termination after signal.
+   * https://docs.nestjs.com/fundamentals/lifecycle-events#application-shutdown
+   *
+   * Enabled by:
+   *   app.enableShutdownHooks();
+   *
+   * in /apps/api/src/bootstrap.ts
+   */
+  public async onApplicationShutdown(signal): Promise<void> {
+    await this.shutdown();
   }
 
   public async applyLock<T>({ resource, ttl }: ILockOptions, handler: () => Promise<T>): Promise<T> {

@@ -4,13 +4,9 @@ import { DistributedLockService } from '../../../shared/services/distributed-loc
 
 @Injectable()
 export class EventsDistributedLockService {
-  private readonly distributedLockService: DistributedLockService;
+  private readonly distributedLockService = new DistributedLockService();
 
-  constructor() {
-    this.distributedLockService = new DistributedLockService();
-  }
-
-  public async applyLock<T>(settings, handler): Promise<T> {
+  public async applyLock<T>(settings, handler: () => Promise<T>): Promise<T> {
     return await this.distributedLockService.applyLock(settings, handler);
   }
 }

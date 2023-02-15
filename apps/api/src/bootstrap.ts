@@ -110,6 +110,9 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 
+  // Starts listening for shutdown hooks
+  app.enableShutdownHooks();
+
   return app;
 }
 
