@@ -46,7 +46,7 @@ export class GetSubscriberPreference {
   async getTemplatePreference(template: NotificationTemplateEntity, command: GetSubscriberPreferenceCommand) {
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: command.organizationId,
-      subscriber: { subscriberId: command.subscriberId },
+      subscriberId: command.subscriberId,
       environmentId: command.environmentId,
       template,
     });
