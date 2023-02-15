@@ -11,3 +11,4 @@ export * from './netcore.handler';
 export * from './infobip.handler';
 export * from './mailersend.handler';
 export * from './outlook365.handler';
+export * from './resend.handler';
