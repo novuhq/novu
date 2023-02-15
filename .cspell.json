@@ -392,7 +392,11 @@
     "backoff",
     "isequal",
     "Scriptable",
-    "iife"
+    "iife",
+    "redlock",
+    "axios",
+    "ioredis",
+    "newrelic"
   ],
   "flagWords": [],
   "patterns": [
