@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Center, Loader } from '@mantine/core';
+import { Center, Loader, useMantineTheme } from '@mantine/core';
 
 import { Button, colors } from '../../../design-system';
 
@@ -12,6 +12,7 @@ export function LoaderProceedTernary({
   navigatePath: string;
 }) {
   const navigate = useNavigate();
+  const { colorScheme } = useMantineTheme();
 
   function navigateToTestTrigger() {
     navigate(navigatePath);
@@ -20,7 +21,7 @@ export function LoaderProceedTernary({
   return (
     <>
       {!appInitialized ? (
-        <Loader color={colors.B70} size={32} />
+        <Loader color={colorScheme === 'dark' ? colors.BGLight : colors.B60} size={50} />
       ) : (
         <Center>
           <Button variant="outline" onClick={() => navigateToTestTrigger()}>

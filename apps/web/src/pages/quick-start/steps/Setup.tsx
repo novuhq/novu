@@ -11,7 +11,7 @@ import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
 import { useTemplates } from '../../../api/hooks/useTemplates';
 import { useEnvController } from '../../../store/useEnvController';
 import { useInAppActivated } from '../components/useInAppActivated';
-import { frameworkInstructions, notificationTemplateName } from '../consts';
+import { APPLICATION_IDENTIFIER, frameworkInstructions, notificationTemplateName } from '../consts';
 import { createTemplate } from '../../../api/notification-templates';
 import { LoaderProceedTernary } from '../components/LoaderProceedTernary';
 import { Prism } from '../../settings/tabs/components/Prism';
@@ -105,7 +105,7 @@ const LoaderWrapper = styled.div`
 `;
 
 function updateCodeSnipped(codeSnippet: string, environmentIdentifier: string) {
-  return codeSnippet.replace('APPLICATION_IDENTIFIER', environmentIdentifier);
+  return codeSnippet.replace(APPLICATION_IDENTIFIER, environmentIdentifier);
 }
 
 export function OpenBrowser() {

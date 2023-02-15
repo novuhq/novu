@@ -1,8 +1,8 @@
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
 export const notificationTemplateName = 'On-boarding notification';
 export const cloneDemoRepo = `git clone git@github.com:novuhq/notification-center-demo.git`;
-export const npmInstall = `npm install`;
-export const setupProject = `npm run setup:project`;
+export const APPLICATION_IDENTIFIER = '<APPLICATION_IDENTIFIER>';
+export const setupProject = `npm run setup:onboarding -- ${APPLICATION_IDENTIFIER}`;
 export const npmRunCommand = `npm run dev`;
 export const welcomeDescription = 'Welcome to Novu, let’s get started';
 export const faqUrl = 'https://docs.novu.co/notification-center/react/react-components/#faq';
@@ -14,29 +14,22 @@ interface ISnippetInstructions {
 
 const installReactNotificationCenter = 'npm install @novu/notification-center';
 
-export const reactStarterSnippet = `import {
+export const reactStarterSnippet = `import React from 'react';
+import {
   NovuProvider,
   PopoverNotificationCenter,
   NotificationBell,
-  IMessage,
 } from '@novu/notification-center';
 
-function Header() {
-  function onNotificationClick(message: IMessage) {
-    // your logic to handle the notification click
-    if (message?.cta?.data?.url) {
-      window.location.href = message.cta.data.url;
-    }
-  }
-
+export const Header = () => {
   return (
-    <NovuProvider subscriberId={'${onBoardingSubscriberId}'} applicationIdentifier={'APPLICATION_IDENTIFIER'}>
-      <PopoverNotificationCenter onNotificationClick={onNotificationClick}>
+    <NovuProvider subscriberId={'${onBoardingSubscriberId}'} applicationIdentifier={'${APPLICATION_IDENTIFIER}'}>
+      <PopoverNotificationCenter colorScheme={'light'}>
         {({ unseenCount }) => <NotificationBell unseenCount={unseenCount} />}
       </PopoverNotificationCenter>
     </NovuProvider>
   );
-}`;
+};`;
 
 export const angularAppSnippet = `import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
@@ -63,7 +56,7 @@ import { environment } from '../environments/environment';
 })
 export class AppComponent {
   subscriberId = '${onBoardingSubscriberId}';
-  applicationIdentifier = 'APPLICATION_IDENTIFIER';
+  applicationIdentifier = '${APPLICATION_IDENTIFIER}';
 
   sessionLoaded = (data: unknown) => {
     console.log('loaded', { data });
@@ -87,7 +80,7 @@ export const vueComponentSnippet = `<script lang="ts">
 export default {
   data() {
     return {
-      applicationIdentifier: 'APPLICATION_IDENTIFIER',
+      applicationIdentifier: '${APPLICATION_IDENTIFIER}',
       subscriberId: '${onBoardingSubscriberId}',
     };
   },
@@ -119,7 +112,7 @@ const embedScript = `<script>
     var before = o.getElementsByTagName(f)[0]; before.parentNode.insertBefore(elt, before);
   })(window, document, 'http://localhost:4701/embed.umd.min.js', 'novu', 'script');
 
-  novu.init('APPLICATION_IDENTIFIER', '#notification-bell', {
+  novu.init('${APPLICATION_IDENTIFIER}', '#notification-bell', {
     subscriberId: "${onBoardingSubscriberId}",
   });
 </script>`;
@@ -190,14 +183,6 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
       {
         instruction: 'Clone the project to your local machine',
         snippet: cloneDemoRepo,
-      },
-      {
-        instruction: 'Run npm install',
-        snippet: npmInstall,
-      },
-      {
-        instruction: 'Provider the following application-identifier variable while executing next command',
-        snippet: 'APPLICATION_IDENTIFIER',
       },
       {
         instruction: 'Run setup project command',

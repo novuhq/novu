@@ -4,11 +4,12 @@ import { getInAppActivated } from '../../../api/integration';
 export function useInAppActivated() {
   const [inAppInitialized, setInAppInitialized] = useState<boolean>(false);
   let intervalId: NodeJS.Timer;
+  const REQUEST_INTERVAL = 3000;
 
   useEffect(() => {
     setInit();
 
-    intervalId = setInterval(() => setInit(), 3000);
+    intervalId = setInterval(() => setInit(), REQUEST_INTERVAL);
   }, []);
 
   async function setInit() {
