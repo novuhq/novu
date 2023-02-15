@@ -25,7 +25,16 @@ export class SESEmailProvider implements IEmailProvider {
     });
   }
 
-  private async sendMail({ html, text, to, from, subject, attachments }) {
+  private async sendMail({
+    html,
+    text,
+    to,
+    from,
+    subject,
+    attachments,
+    cc,
+    bcc,
+  }) {
     const transporter = nodemailer.createTransport({
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
     });
@@ -40,6 +49,8 @@ export class SESEmailProvider implements IEmailProvider {
         address: from,
         name: this.config.senderName,
       },
+      cc,
+      bcc,
     });
   }
 
@@ -50,6 +61,8 @@ export class SESEmailProvider implements IEmailProvider {
     from,
     subject,
     attachments,
+    cc,
+    bcc,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
     const info = await this.sendMail({
       from: from || this.config.from,
@@ -62,6 +75,8 @@ export class SESEmailProvider implements IEmailProvider {
         content: attachment.file,
         contentType: attachment.mime,
       })),
+      cc,
+      bcc,
     });
 
     return {
@@ -79,6 +94,8 @@ export class SESEmailProvider implements IEmailProvider {
         from: this.config.from,
         subject: 'Test SES integration',
         attachments: {},
+        bcc: [],
+        cc: [],
       });
 
       return {

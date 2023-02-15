@@ -30,7 +30,7 @@ jest.mock('pepipost/lib', () => {
 
 const mockNovuMessage = {
   from: 'test@test1.com',
-  to: 'test@test2.com',
+  to: ['test@test2.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
 };
@@ -57,7 +57,7 @@ test('should trigger netcore correctly', async () => {
   expect(args.subject).toBe(mockNovuMessage.subject);
   expect(args.content[0].value).toBe(mockNovuMessage.html);
   expect(args.content[0].type).toBe('html');
-  expect(args.personalizations[0].to[0].email).toBe(mockNovuMessage.to);
+  expect(args.personalizations[0].to[0].email).toBe(mockNovuMessage.to[0]);
   expect(lib.Configuration.apiKey).toBe(apiKey);
   expect(res.id).toBe(id + 1);
 });

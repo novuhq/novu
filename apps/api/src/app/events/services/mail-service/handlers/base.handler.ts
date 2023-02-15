@@ -29,7 +29,7 @@ export abstract class BaseHandler implements IMailHandler {
     const mailData: IEmailOptions = {
       html: '<div>checking integration</div>',
       subject: 'Checking Integration',
-      to: 'no-reply@novu.co',
+      to: ['no-reply@novu.co'],
     };
 
     const { message, success, code } = await this.provider.checkIntegration(mailData);
