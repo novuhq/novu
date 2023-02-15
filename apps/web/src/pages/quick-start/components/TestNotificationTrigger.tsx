@@ -40,7 +40,7 @@ export function TestNotificationTrigger() {
       </Button>
 
       <When truthy={triggerSent}>
-        <Text size={'lg'}>Not that you are all set - let’s move on to create your first notification template:</Text>
+        <Text size={'lg'}>Now that you are all set - let’s move on to create your first notification template:</Text>
 
         <Button variant="outline" onClick={() => navigateToNotificationTemplates()}>
           Create a template!

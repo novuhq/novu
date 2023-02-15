@@ -28,8 +28,8 @@ export function NotificationCenter() {
 export function InAppDescription() {
   return (
     <Stack align="center" spacing="xs">
-      <span>I have an app!</span>
-      <span>let’s add InApp Notification Center</span>
+      <span>I have an existing app!</span>
+      <span>Let’s add an In-App Notification Center</span>
       <BellGradient style={{ marginTop: '12px', width: 'inherit', height: '33px' }} />
     </Stack>
   );

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Stack, Stepper } from '@mantine/core';
 
 import { ChannelCTATypeEnum, ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
@@ -10,13 +10,13 @@ import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
 import { useTemplates } from '../../../api/hooks/useTemplates';
 import { useEnvController } from '../../../store/useEnvController';
-import { useInAppActivated } from '../components/useInAppActivated';
 import { APPLICATION_IDENTIFIER, frameworkInstructions, notificationTemplateName } from '../consts';
 import { createTemplate } from '../../../api/notification-templates';
 import { LoaderProceedTernary } from '../components/LoaderProceedTernary';
 import { Prism } from '../../settings/tabs/components/Prism';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
+import { getInAppActivated } from '../../../api/integration';
 
 export function Setup() {
   const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();
@@ -24,7 +24,11 @@ export function Setup() {
   const { groups } = useNotificationGroup();
   const { templates = [], loading } = useTemplates();
   const { environment } = useEnvController();
-  const { initialized } = useInAppActivated();
+
+  const { data: initialized } = useQuery<boolean>(['inAppActivated'], async () => getInAppActivated(), {
+    refetchInterval: 3000,
+    initialData: false,
+  });
 
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
   const openBrowser = framework === 'demo';
