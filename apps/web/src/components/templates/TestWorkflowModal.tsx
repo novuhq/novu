@@ -124,7 +124,21 @@ export function TestWorkflowModal({
       />
 
       <div style={{ alignItems: 'end' }}>
-        <Button data-test-id="test-trigger-btn" mt={30} inherit onClick={() => onTrigger()}>
+        <Button
+          data-test-id="test-trigger-btn"
+          mt={30}
+          inherit
+          onClick={() => {
+            try {
+              const to = JSON.parse(toValue);
+              const payload = JSON.parse(payloadValue);
+              const overrides = JSON.parse(overridesValue);
+            } catch {
+              return;
+            }
+            onTrigger();
+          }}
+        >
           Trigger
         </Button>
       </div>
