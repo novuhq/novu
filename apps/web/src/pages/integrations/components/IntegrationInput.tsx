@@ -47,8 +47,6 @@ export function IntegrationInput({
   }
 
   if (credential.type === 'switch') {
-    console.log(field);
-
     return (
       <Switch
         styles={() => ({
