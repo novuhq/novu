@@ -16,9 +16,10 @@ export abstract class GetDigestEvents {
     const batchValue = currentJob?.payload
       ? DigestFilterSteps.getNestedValue(currentJob.payload, currentJob?.digest?.digestKey)
       : undefined;
-    jobs = jobs.filter((job) => {
-      return DigestFilterSteps.getNestedValue(job.payload, currentJob.digest.digestKey) === batchValue;
+    const filteredJobs = jobs.filter((job) => {
+      return DigestFilterSteps.getNestedValue(job.payload, currentJob.digest?.digestKey) === batchValue;
     });
+
     const currentTrigger = await this.jobRepository.findOne({
       _environmentId: currentJob._environmentId,
       transactionId: transactionId,
@@ -27,7 +28,7 @@ export abstract class GetDigestEvents {
 
     const events = [
       currentJob.payload,
-      ...jobs.filter((job) => job._id !== currentTrigger._id).map((job) => job.payload),
+      ...filteredJobs.filter((job) => job._id !== currentTrigger._id).map((job) => job.payload),
     ];
 
     this.createExecutionDetails.execute(
