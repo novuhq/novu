@@ -199,7 +199,7 @@ export class IntegrationsController {
     return result;
   }
 
-  @Get('/in-app/activated')
+  @Get('/in-app/status')
   async getInAppActivated(@UserSession() user: IJwtPayload) {
     return await this.getInAppActivatedUsecase.execute(
       GetInAppActivatedCommand.create({

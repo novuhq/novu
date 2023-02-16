@@ -25,9 +25,9 @@ export function Setup() {
   const { templates = [], loading } = useTemplates();
   const { environment } = useEnvController();
 
-  const { data: initialized } = useQuery<boolean>(['inAppActivated'], async () => getInAppActivated(), {
-    refetchInterval: 3000,
-    initialData: false,
+  const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(['inAppActive'], async () => getInAppActivated(), {
+    refetchInterval: (data) => stopIfInAppActive(data),
+    initialData: { active: false },
   });
 
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
@@ -83,7 +83,10 @@ export function Setup() {
   return (
     <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true}>
       <LoaderWrapper>
-        <LoaderProceedTernary appInitialized={initialized} navigatePath={'/quickstart/notification-center/trigger'} />
+        <LoaderProceedTernary
+          appInitialized={inAppData.active}
+          navigatePath={'/quickstart/notification-center/trigger'}
+        />
       </LoaderWrapper>
       <Stack align="center">
         <Stepper active={0} onStepClick={() => {}} orientation="vertical">
@@ -127,4 +130,12 @@ export function TroubleshootingDescription() {
       <span>connect to your application</span>
     </Stack>
   );
+}
+
+interface IGetInAppActivatedResponse {
+  active: boolean;
+}
+
+function stopIfInAppActive(data) {
+  return data?.active ? false : 3000;
 }

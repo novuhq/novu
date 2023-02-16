@@ -21,9 +21,8 @@ export function Trigger() {
 export function TriggerDescription() {
   return (
     <span>
-      Now let's ring the
+      Now let's ring the in your new notification center
       <BellGradient style={{ margin: '0px 5px 0', top: '8px', position: 'relative' }} />
-      in your new notification center
     </span>
   );
 }

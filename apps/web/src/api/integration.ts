@@ -31,5 +31,5 @@ export function getWebhookSupportStatus(providerId: string) {
 }
 
 export function getInAppActivated() {
-  return api.get(`/v1/integrations/in-app/activated`);
+  return api.get(`/v1/integrations/in-app/status`);
 }

@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
 export class GetInAppActivated {
   constructor(private readonly subscriberRepository: SubscriberRepository) {}
 
-  async execute(command: GetInAppActivatedCommand): Promise<boolean> {
+  async execute(command: GetInAppActivatedCommand): Promise<{ active: boolean }> {
     const inAppSubscriberCount = await this.subscriberRepository.count({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
@@ -14,6 +14,6 @@ export class GetInAppActivated {
       subscriberId: /on-boarding-subscriber/i,
     });
 
-    return inAppSubscriberCount > 0;
+    return { active: inAppSubscriberCount > 0 };
   }
 }

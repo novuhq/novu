@@ -10,18 +10,13 @@ import { errorMessage, successMessage } from '../../utils/notifications';
 import { AuthContext } from '../../store/authContext';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
 import { testTrigger } from '../../api/notification-templates';
-import { When } from '../utils/When';
 
 const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
-  const subsVars = getSubscriberValue(subscriberVariables, (variable) => {
-    if (variable.name === 'subscriberId' && variable.manual) {
-      return variable.value;
-    }
-
-    return (
+  const subsVars = getSubscriberValue(
+    subscriberVariables,
+    (variable) =>
       (currentUser && currentUser[variable.name === 'subscriberId' ? 'id' : variable.name]) || '<REPLACE_WITH_DATA>'
-    );
-  });
+  );
 
   return JSON.stringify(subsVars, null, 2);
 };
@@ -40,14 +35,12 @@ export function TestWorkflowModal({
   trigger,
   setTransactionId,
   openExecutionModal,
-  minimal = false,
 }: {
   isVisible: boolean;
   onDismiss: () => void;
   openExecutionModal: () => void;
   setTransactionId: (id: string) => void;
   trigger: INotificationTrigger;
-  minimal?: boolean;
 }) {
   const { currentUser } = useContext(AuthContext);
   const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
@@ -113,31 +106,29 @@ export function TestWorkflowModal({
         mb={15}
         validationError="Invalid JSON"
       />
-      <When truthy={!minimal}>
-        <JsonInput
-          data-test-id="test-trigger-payload-param"
-          formatOnBlur
-          autosize
-          styles={inputStyles}
-          label="Payload"
-          value={payloadValue}
-          onChange={setPayloadValue}
-          minRows={3}
-          validationError="Invalid JSON"
-          mb={15}
-        />
-        <JsonInput
-          data-test-id="test-trigger-overrides-param"
-          formatOnBlur
-          autosize
-          styles={inputStyles}
-          label="Overrides (optional)"
-          value={overridesValue}
-          onChange={setOverridesValue}
-          minRows={3}
-          validationError="Invalid JSON"
-        />
-      </When>
+      <JsonInput
+        data-test-id="test-trigger-payload-param"
+        formatOnBlur
+        autosize
+        styles={inputStyles}
+        label="Payload"
+        value={payloadValue}
+        onChange={setPayloadValue}
+        minRows={3}
+        validationError="Invalid JSON"
+        mb={15}
+      />
+      <JsonInput
+        data-test-id="test-trigger-overrides-param"
+        formatOnBlur
+        autosize
+        styles={inputStyles}
+        label="Overrides (optional)"
+        value={overridesValue}
+        onChange={setOverridesValue}
+        minRows={3}
+        validationError="Invalid JSON"
+      />
       <div style={{ alignItems: 'end' }}>
         <Button data-test-id="test-trigger-btn" mt={30} inherit onClick={() => onTrigger()}>
           Trigger
