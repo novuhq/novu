@@ -72,6 +72,8 @@ export class PostmarkEmailProvider implements IEmailProvider {
       HtmlBody: options.html,
       TextBody: options.html,
       Subject: options.subject,
+      Cc: getFormattedTo(options.cc),
+      Bcc: getFormattedTo(options.bcc),
       Attachments: options.attachments?.map(
         (attachment) =>
           new Models.Attachment(

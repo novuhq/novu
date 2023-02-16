@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationStepEntity } from '@novu/dal';
+import { MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
 import { StepTypeEnum, DigestTypeEnum } from '@novu/shared';
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterStepsBackoff } from './digest-filter-steps-backoff.usecase';
@@ -22,13 +22,13 @@ export class DigestFilterSteps {
 
     const type = digestStep?.metadata?.type;
     if (type === DigestTypeEnum.REGULAR) {
-      return this.filterStepsRegular.execute({
+      return await this.filterStepsRegular.execute({
         ...command,
         steps: matchedSteps,
       });
     }
 
-    return this.filterStepsBackoff.execute({
+    return await this.filterStepsBackoff.execute({
       ...command,
       steps: matchedSteps,
     });
@@ -42,7 +42,7 @@ export class DigestFilterSteps {
         _creatorId: command.userId,
         type: StepTypeEnum.TRIGGER,
         content: '',
-      } as any,
+      } as MessageTemplateEntity,
       _templateId: command.templateId,
     };
   }

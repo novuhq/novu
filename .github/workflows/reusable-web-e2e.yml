@@ -84,6 +84,10 @@ jobs:
         run: pnpm start:ws:test &
 
       - name: Start API in TEST
+        env:
+          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.cypress_github_oauth_client_id }}
+          GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.cypress_github_oauth_client_secret }}
+          GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
         run: cd apps/api && pnpm start:test &
 
       - name: Install wait-on plugin
@@ -110,6 +114,9 @@ jobs:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
+          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.cypress_github_user_email }}
+          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.cypress_github_user_password }}
+          CYPRESS_IS_CI: true
         with:
           working-directory: apps/web
           browser: chrome

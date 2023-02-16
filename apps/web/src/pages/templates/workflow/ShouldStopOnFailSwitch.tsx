@@ -10,6 +10,7 @@ export const ShouldStopOnFailSwitch = ({ control, index }) => {
     <Controller
       control={control}
       name={`steps.${index}.shouldStopOnFail`}
+      defaultValue={false}
       render={({ field: { value, ...field } }) => {
         return (
           <StyledSwitch

@@ -389,7 +389,14 @@
     "codesee",
     "ehlo",
     "logrocket",
-    "backoff"
+    "backoff",
+    "isequal",
+    "Scriptable",
+    "iife",
+    "redlock",
+    "axios",
+    "ioredis",
+    "newrelic"
   ],
   "flagWords": [],
   "patterns": [

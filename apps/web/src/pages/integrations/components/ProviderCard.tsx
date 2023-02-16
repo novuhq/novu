@@ -6,6 +6,7 @@ import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { When } from '../../../components/utils/When';
+import { CONTEXT_PATH } from '../../../config';
 
 export function ProviderCard({
   provider,
@@ -15,7 +16,7 @@ export function ProviderCard({
   onConnectClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
-  const logoSrc = `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
+  const logoSrc = `${CONTEXT_PATH}/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
   const brightCard =
     provider.active ||
     provider.credentials.some((cred: IConfigCredentials) => {
@@ -143,6 +144,9 @@ const StyledCard = styled.div<{ dark: boolean; active: boolean }>`
   }};
 
   &:hover {
+    ${Logo} {
+      opacity: 1;
+    }
     cursor: pointer;
     ${({ dark }) =>
       dark

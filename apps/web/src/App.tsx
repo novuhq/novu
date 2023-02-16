@@ -37,6 +37,7 @@ import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
+import packageJson from '../package.json';
 import { GeneralStarter } from './pages/quick-start/steps/GeneralStarter';
 import { QuickStartWrapper } from './pages/quick-start/components/QuickStartWrapper';
 import { Quickstart } from './pages/quick-start/steps/Quickstart';
@@ -46,15 +47,56 @@ import { Setup } from './pages/quick-start/steps/Setup';
 import { Trigger } from './pages/quick-start/steps/Trigger';
 
 if (LOGROCKET_ID && window !== undefined) {
-  LogRocket.init(LOGROCKET_ID);
+  LogRocket.init(LOGROCKET_ID, {
+    release: packageJson.version,
+    rootHostname: 'novu.co',
+    console: {
+      shouldAggregateConsoleErrors: true,
+    },
+    network: {
+      requestSanitizer: (request) => {
+        // if the url contains token 'ignore' it
+        if (request.url.toLowerCase().indexOf('token') !== -1) {
+          // ignore the request response pair
+          return null;
+        }
+
+        // remove Authorization header from logrocket
+        request.headers.Authorization = undefined;
+
+        // otherwise log the request normally
+        return request;
+      },
+    },
+  });
   setupLogRocketReact(LogRocket);
 }
 
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
-    integrations: [new Integrations.BrowserTracing()],
+    integrations: [
+      new Integrations.BrowserTracing(),
+      new Sentry.Replay({
+        // Additional SDK configuration goes in here, for example:
+        maskAllText: true,
+        blockAllMedia: true,
+      }),
+    ],
     environment: ENV,
+
+    /*
+     * This sets the sample rate to be 10%. You may want this to be 100% while
+     * in development and sample at a lower rate in production
+     */
+    replaysSessionSampleRate: 0.5,
+
+    /*
+     * If the entire session is not sampled, use the below sample rate to sample
+     * sessions when an error occurs.
+     */
+    replaysOnErrorSampleRate: 1.0,
+
     /*
      * Set tracesSampleRate to 1.0 to capture 100%
      * of transactions for performance monitoring.

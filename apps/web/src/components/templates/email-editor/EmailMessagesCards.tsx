@@ -19,6 +19,7 @@ export enum ViewEnum {
   PREVIEW = 'Preview',
   TEST = 'Test',
 }
+const templateFields = ['content', 'htmlContent', 'subject', 'preheader'];
 
 export function EmailMessagesCards({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
   const { currentOrganization } = useContext(AuthContext);
@@ -26,7 +27,7 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();
   const [modalOpen, setModalOpen] = useState(false);
-  const variablesArray = useVariablesManager(index, ['content', 'htmlContent', 'subject', 'preheader']);
+  const variablesArray = useVariablesManager(index, templateFields);
 
   useHotkeys([
     [

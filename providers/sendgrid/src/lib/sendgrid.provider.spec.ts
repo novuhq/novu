@@ -8,7 +8,7 @@ const mockConfig = {
 };
 
 const mockNovuMessage = {
-  to: 'test@test2.com',
+  to: ['test@test2.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
   from: 'test@tet.com',
@@ -30,7 +30,11 @@ test('should trigger sendgrid correctly', async () => {
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
-    to: mockNovuMessage.to,
+    to: [
+      {
+        email: mockNovuMessage.to[0],
+      },
+    ],
     subject: mockNovuMessage.subject,
     html: mockNovuMessage.html,
     from: { email: mockNovuMessage.from, name: mockConfig.senderName },

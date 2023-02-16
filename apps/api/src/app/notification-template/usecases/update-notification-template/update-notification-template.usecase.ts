@@ -123,7 +123,7 @@ export class UpdateNotificationTemplate {
       for (const message of steps) {
         let stepId = message._id;
         if (message._templateId) {
-          if (!message.template) throw new ApiException("Something un-expected happened, template couldn't be found");
+          if (!message.template) throw new ApiException(`Something un-expected happened, template couldn't be found`);
 
           const template = await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
@@ -142,6 +142,7 @@ export class UpdateNotificationTemplate {
               subject: message.template.subject,
               title: message.template.title,
               preheader: message.template.preheader,
+              senderName: message.template.senderName,
               actor: message.template.actor,
               parentChangeId,
             })
@@ -166,6 +167,7 @@ export class UpdateNotificationTemplate {
               subject: message.template.subject,
               title: message.template.title,
               preheader: message.template.preheader,
+              senderName: message.template.senderName,
               parentChangeId,
             })
           );

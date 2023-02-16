@@ -75,10 +75,10 @@ export class AuthController {
   @UseGuards(AuthGuard('github'))
   async githubCallback(@Req() request, @Res() response) {
     if (!request.user || !request.user.token) {
-      return response.redirect(`${process.env.CLIENT_SUCCESS_AUTH_REDIRECT}?error=AuthenticationError`);
+      return response.redirect(`${process.env.FRONT_BASE_URL + '/auth/login'}?error=AuthenticationError`);
     }
 
-    let url = process.env.CLIENT_SUCCESS_AUTH_REDIRECT;
+    let url = process.env.FRONT_BASE_URL + '/auth/login';
     const redirectUrl = JSON.parse(request.query.state).redirectUrl;
 
     /**
@@ -112,6 +112,11 @@ export class AuthController {
     const configurationId = JSON.parse(request.query.state).configurationId;
     if (configurationId) {
       url += `&configurationId=${configurationId}`;
+    }
+
+    const invitationToken = JSON.parse(request.query.state).invitationToken;
+    if (invitationToken) {
+      url += `&invitationToken=${invitationToken}`;
     }
 
     return response.redirect(url);

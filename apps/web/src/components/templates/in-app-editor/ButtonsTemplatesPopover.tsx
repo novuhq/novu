@@ -28,7 +28,6 @@ interface IButtonsTemplatesPopoverProps {
   setTemplateSelected: (boolean) => void;
   children: JSX.Element;
   onChange: (data: any) => void;
-  value: IMessageAction;
 }
 
 export function ButtonsTemplatesPopover({

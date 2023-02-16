@@ -13,20 +13,24 @@ import ReactFlow, {
   useNodesState,
   useReactFlow,
 } from 'react-flow-renderer';
-import ChannelNode from './node-types/ChannelNode';
-import { colors } from '../../design-system';
+import { useFormContext } from 'react-hook-form';
 import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
+import { v4 as uuid4 } from 'uuid';
+import { StepTypeEnum } from '@novu/shared';
+
+import ChannelNode from './node-types/ChannelNode';
+import { colors } from '../../design-system';
 import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
-import { StepEntity, useTemplateController } from '../templates/useTemplateController';
-import { StepTypeEnum } from '@novu/shared';
-import { v4 as uuid4 } from 'uuid';
+import type { IForm, IStepEntity } from '../templates/formTypes';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../store/useEnvController';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
+import { useTemplateFetcher } from '../templates/useTemplateFetcher';
+import { useTemplateEditor } from '../templates/TemplateEditorProvider';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -61,7 +65,7 @@ export function FlowEditor({
   activePage: ActivePageEnum;
   setActivePage: (string) => void;
   onDelete: (id: string) => void;
-  steps: StepEntity[];
+  steps: IStepEntity[];
   setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: StepTypeEnum, id: string, index?: number) => void;
   dragging: boolean;
@@ -75,7 +79,8 @@ export function FlowEditor({
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
-  const { template, trigger, methods } = useTemplateController(templateId);
+  const { template, trigger } = useTemplateEditor();
+  const methods = useFormContext<IForm>();
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
   useEffect(() => {
@@ -155,7 +160,7 @@ export function FlowEditor({
       for (let i = 0; i < steps.length; i++) {
         const step = steps[i];
         const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
-        const newId = step._id || step.id;
+        const newId = (step._id || step.id) as string;
 
         const newNode = buildNewNode(newId, oldNode, parentId, step, i);
 
@@ -200,7 +205,7 @@ export function FlowEditor({
     newId: string,
     oldNode: { position: { x: number; y: number } },
     parentId: string,
-    step: StepEntity,
+    step: IStepEntity,
     i: number
   ): Node {
     return {

@@ -53,7 +53,7 @@ const mockConfig = {
   from: 'testFrom@test.com',
 };
 const mockMessageConfig = {
-  to: 'testTo@test2.com',
+  to: ['testTo@test2.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
 };
@@ -71,7 +71,7 @@ test('should trigger mailjet library correctly and return proper response', asyn
         HTMLPart: mockMessageConfig.html,
         Subject: mockMessageConfig.subject,
         TextPart: undefined,
-        To: [{ Email: mockMessageConfig.to }],
+        To: [{ Email: mockMessageConfig.to[0] }],
       },
     ],
   });

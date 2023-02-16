@@ -86,7 +86,7 @@ export function useAuthController() {
   }, [user, organization]);
 
   const setTokenCallback = useCallback(
-    (newToken: string | null) => {
+    (newToken: string | null, refetch = true) => {
       /**
        * applyToken needs to be called first to avoid a race condition
        */
@@ -94,13 +94,16 @@ export function useAuthController() {
       setToken(newToken);
 
       if (newToken) {
-        queryClient.refetchQueries({
-          predicate: (query) =>
-            // !query.isFetching &&
-            !query.queryKey.includes('/v1/users/me') &&
-            !query.queryKey.includes('/v1/environments') &&
-            !query.queryKey.includes('/v1/organizations'),
-        });
+        if (refetch) {
+          queryClient.refetchQueries({
+            predicate: (query) =>
+              // !query.isFetching &&
+              !query.queryKey.includes('/v1/users/me') &&
+              !query.queryKey.includes('/v1/environments') &&
+              !query.queryKey.includes('/v1/organizations') &&
+              !query.queryKey.includes('getInviteTokenData'),
+          });
+        }
         const payload = jwtDecode<IJwtPayload>(newToken);
         setJwtPayload(payload);
       }
