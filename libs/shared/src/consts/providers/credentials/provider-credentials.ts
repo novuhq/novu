@@ -411,6 +411,19 @@ export const apnsConfig: IConfigCredentials[] = [
     type: 'text',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Bundle ID',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Secure,
+    displayName: 'Production',
+    type: 'switch',
+    required: true,
+  },
+
   ...pushConfigBase,
 ];
 

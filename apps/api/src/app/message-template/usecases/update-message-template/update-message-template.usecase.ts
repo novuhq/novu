@@ -76,6 +76,10 @@ export class UpdateMessageTemplate {
       updatePayload.preheader = command.preheader;
     }
 
+    if (command.senderName !== undefined || command.senderName !== null) {
+      updatePayload.senderName = command.senderName;
+    }
+
     if (command.actor) {
       updatePayload.actor = command.actor;
     }
