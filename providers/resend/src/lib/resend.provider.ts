@@ -25,7 +25,7 @@ export class ResendEmailProvider implements IEmailProvider {
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const resendResponse = await this.resendClient.sendEmail({
+    const response: any = await this.resendClient.sendEmail({
       from: options.from || this.config.from,
       to: options.to,
       subject: options.subject,
@@ -33,7 +33,7 @@ export class ResendEmailProvider implements IEmailProvider {
     });
 
     return {
-      id: resendResponse[0].id,
+      id: response.id,
       date: new Date().toISOString(),
     };
   }
