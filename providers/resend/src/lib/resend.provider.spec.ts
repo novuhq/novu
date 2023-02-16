@@ -36,12 +36,6 @@ test('should trigger resend library correctly', async () => {
     to: mockNovuMessage.to,
     html: mockNovuMessage.html,
     subject: mockNovuMessage.subject,
-    attachments: [
-      {
-        type: 'text/plain',
-        content: Buffer.from('ZEdWemRBPT0=').toString(),
-        filename: 'test.txt',
-      },
-    ],
+    attachments: mockNovuMessage.attachments,
   });
 });
