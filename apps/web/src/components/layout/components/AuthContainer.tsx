@@ -26,7 +26,7 @@ export default function AuthContainer({
     >
       <PageMeta title={title} />
       <div style={{ margin: '30px 0', width: '100%', maxWidth: 550 }}>
-        <Title>{title}</Title>
+        <Title data-test-id="auth-container-title">{title}</Title>
         {customDescription || (
           <Text size="lg" color={colors.B60} mb={60} mt={20}>
             {description}

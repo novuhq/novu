@@ -100,7 +100,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   SwaggerModule.setup('api', app, document);
 
-  console.log('BOOTSTRAPPED SUCCESSFULLY');
+  Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 
   if (expressApp) {
     await app.init();
@@ -109,6 +109,9 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   }
 
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
+
+  // Starts listening for shutdown hooks
+  app.enableShutdownHooks();
 
   return app;
 }

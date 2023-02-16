@@ -13,6 +13,7 @@ import {
   ISubscriberPreferenceResponse,
 } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class GetSubscriberTemplatePreference {
@@ -25,11 +26,16 @@ export class GetSubscriberTemplatePreference {
 
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const activeChannels = await this.queryActiveChannels(command);
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    const subscriber =
+      command.subscriber ??
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
+    if (!subscriber) {
+      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
+    }
 
     const subscriberPreference = await this.subscriberPreferenceRepository.findOne({
       _environmentId: command.environmentId,
-      _subscriberId: subscriber !== null ? subscriber._id : command.subscriberId,
+      _subscriberId: subscriber._id,
       _templateId: command.template._id,
     });
 

@@ -10,16 +10,17 @@ import { AuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
-import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
+import { IS_DOCKER_HOSTED } from '../../config';
 import { useVercelParams } from '../../hooks/useVercelParams';
-import { SignUpOriginEnum } from '@novu/shared';
+import { useAcceptInvite } from './useAcceptInvite';
+import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
 
-type Props = {
-  token?: string;
+type LoginFormProps = {
+  invitationToken?: string;
   email?: string;
 };
 
-export function LoginForm({ email, token }: Props) {
+export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const navigate = useNavigate();
   const { setToken } = useContext(AuthContext);
   const { isLoading, mutateAsync, isError, error } = useMutation<
@@ -29,15 +30,16 @@ export function LoginForm({ email, token }: Props) {
       email: string;
       password: string;
     }
-  >((data) => api.post(`/v1/auth/login`, data));
+  >((data) => api.post('/v1/auth/login', data));
+  const { isLoading: isLoadingAcceptInvite, submitToken } = useAcceptInvite();
 
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
   const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
-  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : `/auth/reset/request`;
+  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : '/auth/reset/request';
   const githubLink = isFromVercel
-    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}&source=${SignUpOriginEnum.VERCEL}`
-    : `${API_ROOT}/v1/auth/github?source=${SignUpOriginEnum.WEB}`;
+    ? buildVercelGithubLink({ code, next, configurationId })
+    : buildGithubLink({ invitationToken });
 
   const {
     register,
@@ -58,10 +60,21 @@ export function LoginForm({ email, token }: Props) {
 
     try {
       const response = await mutateAsync(itemData);
-      setToken((response as any).token);
+      const token = (response as any).token;
+      if (isFromVercel) {
+        setToken(token);
 
-      if (isFromVercel) return;
-      if (!token) navigate('/templates');
+        return;
+      }
+
+      if (invitationToken) {
+        submitToken(token, invitationToken);
+
+        return;
+      }
+
+      setToken(token);
+      navigate('/templates');
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
@@ -92,6 +105,7 @@ export function LoginForm({ email, token }: Props) {
             radius="md"
             leftIcon={<GitHub />}
             sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
+            data-test-id="github-button"
           >
             Sign In with GitHub
           </GitHubButton>
@@ -108,6 +122,7 @@ export function LoginForm({ email, token }: Props) {
           required
           label="Email"
           placeholder="Type your email..."
+          disabled={!!invitationToken}
           data-test-id="email"
           mt={5}
         />
@@ -129,8 +144,15 @@ export function LoginForm({ email, token }: Props) {
           </Text>
         </Link>
 
-        <Button mt={60} inherit loading={isLoading} submit data-test-id="submit-btn">
-          Sign In
+        <Button
+          submit
+          mt={60}
+          inherit
+          loading={isLoading || isLoadingAcceptInvite}
+          disabled={isLoadingAcceptInvite}
+          data-test-id="submit-btn"
+        >
+          {invitationToken ? 'Sign In & Accept' : 'Sign In'}
         </Button>
         <Center mt={20}>
           <Text mr={10} size="md" color={colors.B60}>

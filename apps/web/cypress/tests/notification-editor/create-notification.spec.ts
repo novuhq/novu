@@ -311,6 +311,8 @@ describe('Creation functionality', function () {
     cy.getByTestId('groupSelector').clear();
     cy.getByTestId('groupSelector').type('New Test Category');
     cy.getByTestId('submit-category-btn').click();
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
 
     cy.getByTestId('notification-template-submit-btn').click();

@@ -75,11 +75,11 @@ export class MailjetEmailProvider implements IEmailProvider {
       From: {
         Email: options.from || this.config.from,
       },
-      To: [
-        {
-          Email: options.to,
-        } as Email.SendParamsRecipient,
-      ],
+      To: options.to.map((email) => ({
+        Email: email,
+      })) as Email.SendParamsRecipient[],
+      Cc: options.cc?.map((ccItem) => ({ Email: ccItem })),
+      Bcc: options.bcc?.map((ccItem) => ({ Email: ccItem })),
       Subject: options.subject,
       TextPart: options.text,
       HTMLPart: options.html,

@@ -186,6 +186,16 @@ export const sendgridConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const resendConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const netCoreConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -411,6 +421,19 @@ export const apnsConfig: IConfigCredentials[] = [
     type: 'text',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Bundle ID',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Secure,
+    displayName: 'Production',
+    type: 'switch',
+    required: true,
+  },
+
   ...pushConfigBase,
 ];
 
