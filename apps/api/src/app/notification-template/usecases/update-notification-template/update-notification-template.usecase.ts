@@ -142,6 +142,7 @@ export class UpdateNotificationTemplate {
               subject: message.template.subject,
               title: message.template.title,
               preheader: message.template.preheader,
+              senderName: message.template.senderName,
               actor: message.template.actor,
               parentChangeId,
             })
@@ -166,6 +167,7 @@ export class UpdateNotificationTemplate {
               subject: message.template.subject,
               title: message.template.title,
               preheader: message.template.preheader,
+              senderName: message.template.senderName,
               parentChangeId,
             })
           );

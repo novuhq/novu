@@ -28,6 +28,7 @@ export interface IMessageTemplate {
   _layoutId?: string;
   active?: boolean;
   preheader?: string;
+  senderName?: string;
   actor?: {
     type: ActorTypeEnum;
     data: string | null;

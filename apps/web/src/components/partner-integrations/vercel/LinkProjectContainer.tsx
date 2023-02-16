@@ -14,7 +14,7 @@ import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '../../../design-system';
 import { useAuthController } from '../../../store/useAuthController';
-import VercelSetupLoader from '../../auth/VercelSetupLoader';
+import SetupLoader from '../../auth/SetupLoader';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 
 export type ProjectLinkFormValues = {
@@ -139,7 +139,7 @@ export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
   };
 
   if (isLoading || loading) {
-    return <VercelSetupLoader title={`${type === 'create' ? 'Setting up' : 'Updating'} Vercel integration...`} />;
+    return <SetupLoader title={`${type === 'create' ? 'Setting up' : 'Updating'} Vercel integration...`} />;
   }
 
   return (
