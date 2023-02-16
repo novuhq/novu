@@ -186,6 +186,16 @@ export const sendgridConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const resendConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const netCoreConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,

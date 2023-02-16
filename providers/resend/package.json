@@ -1,21 +1,19 @@
 {
-  "name": "@novu/application-generic",
+  "name": "@novu/resend",
   "version": "0.11.0",
-  "description": "Generic backend code used inside of Novus different services",
+  "description": "A resend wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
   "private": false,
-  "repository": {
-    "url": "https://github.com/novuhq/novu",
-    "directory": "packages/nest"
-  },
+  "repository": "https://github.com/novuhq/novu",
   "license": "MIT",
   "keywords": [],
   "scripts": {
     "prebuild": "rimraf build",
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",
+    "build:module": "tsc -p tsconfig.module.json",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
@@ -24,7 +22,7 @@
     "test:unit": "jest src",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest src --watch",
-    "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
+    "reset-hard": "git clean -dfx && git reset --hard && yarn",
     "prepare-release": "run-s reset-hard test"
   },
   "publishConfig": {
@@ -34,45 +32,12 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@nestjs/common": "^8.2.0",
-    "@novu/dal": "^0.11.0",
-    "@novu/discord": "^0.11.0",
-    "@novu/emailjs": "^0.11.0",
-    "@novu/fcm": "^0.11.0",
-    "@novu/gupshup": "^0.11.0",
-    "@novu/mailersend": "^0.11.0",
-    "@novu/mailgun": "^0.11.0",
-    "@novu/mailjet": "^0.11.0",
-    "@novu/mandrill": "^0.11.0",
-    "@novu/netcore": "^0.11.0",
-    "@novu/node": "^0.11.0",
-    "@novu/nodemailer": "^0.11.0",
-    "@novu/plivo": "^0.11.0",
-    "@novu/postmark": "^0.11.0",
-    "@novu/sendgrid": "^0.11.0",
-    "@novu/resend": "^0.11.0",
-    "@novu/sendinblue": "^0.11.0",
-    "@novu/ses": "^0.11.0",
-    "@novu/shared": "^0.11.0",
-    "@novu/slack": "^0.11.0",
-    "@novu/sms77": "^0.11.0",
-    "@novu/sns": "^0.11.0",
     "@novu/stateless": "^0.11.0",
-    "@novu/telnyx": "^0.11.0",
-    "@novu/termii": "^0.11.0",
-    "@novu/testing": "^0.11.0",
-    "@novu/twilio": "^0.11.0",
-    "@sentry/node": "^7.12.1",
-    "analytics-node": "^6.2.0",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.0",
-    "node-fetch": "^3.2.10"
+    "resend": "^0.11.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@types/analytics-node": "^3.1.9",
-    "@types/jest": "27.5.2",
-    "@types/sinon": "^9.0.0",
+    "@types/jest": "^27.0.1",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",
@@ -83,10 +48,9 @@
     "open-cli": "^6.0.1",
     "prettier": "^2.1.1",
     "rimraf": "^3.0.2",
-    "sinon": "^9.2.4",
     "ts-jest": "^27.0.5",
     "ts-node": "~10.9.1",
-    "typedoc": "^0.23.0",
+    "typedoc": "^0.19.0",
     "typescript": "4.9.5"
   },
   "files": [
@@ -118,6 +82,5 @@
     "exclude": [
       "**/*.spec.js"
     ]
-  },
-  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
+  }
 }
