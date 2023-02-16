@@ -361,10 +361,7 @@ export class SendMessageEmail extends SendMessageBase {
     senderName?: string
   ) {
     const mailFactory = new MailFactory();
-    const mailHandler = mailFactory.getHandler(
-      SendMessageEmail.buildFactoryIntegration(integration, senderName),
-      mailData.from
-    );
+    const mailHandler = mailFactory.getHandler(this.buildFactoryIntegration(integration, senderName), mailData.from);
 
     try {
       const result = await mailHandler.send(mailData);
@@ -423,7 +420,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
   }
 
-  public static buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
     return {
       ...integration,
       credentials: {

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
+import { testServer, UserSession } from '@novu/testing';
 import {
   ChannelCTATypeEnum,
   ChannelTypeEnum,
@@ -331,7 +331,9 @@ describe('Create Notification template - /notification-templates (POST)', async 
   });
 
   it('should build factory integration', () => {
-    let result = SendMessageEmail.buildFactoryIntegration({
+    const instance = testServer.getService(SendMessageEmail);
+
+    let result = instance.buildFactoryIntegration({
       _environmentId: '',
       _organizationId: '',
       providerId: EmailProviderIdEnum.SendGrid,
@@ -347,7 +349,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
 
     expect(result.credentials.senderName).to.equal('credentials');
 
-    result = SendMessageEmail.buildFactoryIntegration(
+    result = instance.buildFactoryIntegration(
       {
         _environmentId: '',
         _organizationId: '',
@@ -365,7 +367,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     );
     expect(result.credentials.senderName).to.equal('credentials');
 
-    result = SendMessageEmail.buildFactoryIntegration(
+    result = instance.buildFactoryIntegration(
       {
         _environmentId: '',
         _organizationId: '',
