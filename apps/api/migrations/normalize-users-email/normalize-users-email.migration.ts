@@ -38,18 +38,17 @@ export async function run() {
           sameEmailUsersIds.push(sameEmailUser._id);
         }
 
-        /*
-         * await userRepository.update(
-         *   {
-         *     _id: user._id,
-         *   },
-         *   {
-         *     $set: {
-         *       email: normalizedEmail,
-         *     },
-         *   }
-         * );
-         */
+        await userRepository.update(
+          {
+            _id: user._id,
+          },
+          {
+            $set: {
+              email: normalizedEmail,
+            },
+          }
+        );
+
         normalizedEmailsCount++;
       }
     }
