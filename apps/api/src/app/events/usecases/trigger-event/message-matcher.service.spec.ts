@@ -252,17 +252,25 @@ describe('Message filter matcher', function () {
           {
             operator: 'EQUAL',
             value: 'nestedValue',
-            field: 'data.nestedKey.childKey',
+            field: 'data.nestedKey',
             on: FilterPartTypeEnum.SUBSCRIBER,
           },
         ]),
       }),
       {
         subscriber: {
+          firstName: '',
+          lastName: '',
+          email: '',
+          subscriberId: '',
+          deleted: false,
+          createdAt: '',
+          updatedAt: '',
+          _id: '',
+          _organizationId: '',
+          _environmentId: '',
           data: {
-            nestedKey: {
-              childKey: 'nestedValue',
-            },
+            nestedKey: 'nestedValue',
           },
         },
       }
@@ -279,12 +287,12 @@ describe('Message filter matcher', function () {
             operator: 'EQUAL',
             value: 'nestedValue',
             field: 'data.nestedKey.doesNotExist',
-            on: FilterPartTypeEnum.SUBSCRIBER,
+            on: FilterPartTypeEnum.PAYLOAD,
           },
         ]),
       }),
       {
-        subscriber: {
+        payload: {
           data: {
             nestedKey: {
               childKey: 'nestedValue',
