@@ -29,7 +29,14 @@ export class ResendEmailProvider implements IEmailProvider {
       from: options.from || this.config.from,
       to: options.to,
       subject: options.subject,
+      text: options.text,
       html: options.html,
+      cc: options.cc,
+      attachments: options.attachments?.map((attachment) => ({
+        filename: attachment?.name,
+        content: attachment.file,
+      })),
+      bcc: options.bcc,
     });
 
     return {
@@ -46,7 +53,14 @@ export class ResendEmailProvider implements IEmailProvider {
         from: options.from || this.config.from,
         to: options.to,
         subject: options.subject,
+        text: options.text,
         html: options.html,
+        cc: options.cc,
+        attachments: options.attachments?.map((attachment) => ({
+          filename: attachment?.name,
+          content: attachment.file,
+        })),
+        bcc: options.bcc,
       });
 
       return {

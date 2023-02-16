@@ -11,6 +11,13 @@ const mockNovuMessage = {
   to: ['test@test.com'],
   html: '<div> Mail Content </div>',
   subject: 'Test subject',
+  attachments: [
+    {
+      mime: 'text/plain',
+      file: Buffer.from('test'),
+      name: 'test.txt',
+    },
+  ],
 };
 
 test('should trigger resend library correctly', async () => {
@@ -30,5 +37,12 @@ test('should trigger resend library correctly', async () => {
     to: mockNovuMessage.to,
     html: mockNovuMessage.html,
     subject: mockNovuMessage.subject,
+    attachments: [
+      {
+        type: 'text/plain',
+        content: Buffer.from('ZEdWemRBPT0=').toString(),
+        filename: 'test.txt',
+      },
+    ],
   });
 });
