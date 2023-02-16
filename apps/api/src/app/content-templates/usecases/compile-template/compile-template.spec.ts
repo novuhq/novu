@@ -73,6 +73,19 @@ describe('Compile Template', function () {
     expect(result).to.equal('<div>Hello World and hello world and HELLO WORLD</div>');
   });
 
+  it('should allow apostrophes to be in data', async function () {
+    const result = await useCase.execute(
+      CompileTemplateCommand.create({
+        data: {
+          message: "hello' world",
+        },
+        template: '<div>{{message}}</div>',
+      })
+    );
+
+    expect(result).to.equal("<div>hello' world</div>");
+  });
+
   describe('Date Formation', function () {
     it('should allow user to format the date', async function () {
       const result = await useCase.execute(
