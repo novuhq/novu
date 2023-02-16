@@ -19,9 +19,9 @@ describe('Get in-app activated - /integrations/in-app/activated (GET)', async ()
   });
 
   it('should get in app activated falsy on organization set up', async () => {
-    const { body } = await session.testAgent.get('/v1/integrations/in-app/activated').expect(200);
+    const { body } = await session.testAgent.get('/v1/integrations/in-app/status').expect(200);
 
-    expect(body.data).to.equal(false);
+    expect(body.data.active).to.equal(false);
   });
 
   it('should get in app activated truthy on in-app set up', async () => {
@@ -33,8 +33,8 @@ describe('Get in-app activated - /integrations/in-app/activated (GET)', async ()
       lastOnlineAt: new Date().toISOString(),
     });
 
-    const { body } = await session.testAgent.get('/v1/integrations/in-app/activated').expect(200);
+    const { body } = await session.testAgent.get('/v1/integrations/in-app/status').expect(200);
 
-    expect(body.data).to.equal(true);
+    expect(body.data.active).to.equal(true);
   });
 });
