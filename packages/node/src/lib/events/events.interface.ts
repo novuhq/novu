@@ -39,9 +39,17 @@ export interface ITriggerPayload {
     | Record<string, unknown>;
 }
 
+export interface IEmailOverrides {
+  to?: string[];
+  from?: string;
+  text?: string;
+  replyTo?: string;
+  cc?: string[];
+  bcc?: string[];
+}
+
 export type ITriggerOverrides = {
   [key in
-    | 'emailjs'
     | 'mailgun'
     | 'nodemailer'
     | 'plivo'
@@ -54,6 +62,8 @@ export type ITriggerOverrides = {
   [key in 'apns']?: ITriggerOverrideAPNS;
 } & {
   [key in 'delay']?: ITriggerOverrideDelayAction;
+} & {
+  [key in 'email']?: IEmailOverrides;
 };
 
 export type ITriggerOverrideDelayAction = {

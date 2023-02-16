@@ -20,14 +20,6 @@ import { ChannelTypeEnum } from '../../../types';
 
 export const emailProviders: IProviderConfig[] = [
   {
-    id: EmailProviderIdEnum.EmailJS,
-    displayName: 'Email.js',
-    channel: ChannelTypeEnum.EMAIL,
-    credentials: mailJsConfig,
-    docReference: 'https://www.emailjs.com/docs/',
-    logoFileName: { light: 'emailjs.svg', dark: 'emailjs.svg' },
-  },
-  {
     id: EmailProviderIdEnum.Mailgun,
     displayName: 'Mailgun',
     channel: ChannelTypeEnum.EMAIL,

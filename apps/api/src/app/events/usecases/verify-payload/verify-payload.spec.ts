@@ -9,6 +9,34 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 describe('Verify Payload Usecase', function () {
   const verifyPayload = new VerifyPayload();
 
+  it('should handle empty and undefiend strings', function () {
+    const template = createTemplate([
+      { name: 'user.firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
+      { name: 'user.hej', type: TemplateVariableTypeEnum.STRING, required: false, defaultValue: '' },
+      { name: 'user.test', type: TemplateVariableTypeEnum.STRING, required: false, defaultValue: undefined },
+    ]);
+
+    const payload = {
+      user: {
+        lastName: 'Doe',
+      },
+    };
+
+    const result = verifyPayload.execute(
+      VerifyPayloadCommand.create({
+        payload,
+        template: template as NotificationTemplateEntity,
+      })
+    );
+
+    const final = merge({}, payload, result);
+
+    expect(final.user.lastName).to.eq('Doe');
+    expect(final.user.firstName).to.eq('John');
+    expect(Object.keys(final.user)).to.not.include('hej');
+    expect(Object.keys(final.user)).to.not.include('test');
+  });
+
   it('should fill and merge as expected', function () {
     const template = createTemplate([
       { name: 'user.firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },

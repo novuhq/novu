@@ -101,6 +101,7 @@ export function Table({
     <div style={{ position: 'relative', minHeight: 500, display: 'flex', flexDirection: 'column' }}>
       <LoadingOverlay
         visible={loading}
+        zIndex={1}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
         loaderProps={{
           color: colors.error,

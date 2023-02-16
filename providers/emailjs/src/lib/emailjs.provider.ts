@@ -35,6 +35,8 @@ export class EmailJsProvider implements IEmailProvider {
       subject: emailOptions.subject,
       text: emailOptions.text,
       attachment: this.mapAttachments(emailOptions),
+      cc: emailOptions.cc,
+      bcc: emailOptions.bcc,
     };
 
     if (emailOptions.replyTo) {
