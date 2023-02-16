@@ -160,6 +160,17 @@ class Novu {
     window.addEventListener('touchstart', handleClick);
   };
 
+  logout = () => {
+    if (!this.iframe) return;
+
+    this.iframe?.contentWindow?.postMessage(
+      {
+        type: EventTypes.LOGOUT,
+      },
+      '*'
+    );
+  };
+
   // PRIVATE METHODS
   ensureMounted = () => {
     if (!document.getElementById(IFRAME_ID)) {
@@ -354,6 +365,7 @@ export default ((window: any) => {
 
   novuApi.init = novu.init;
   novuApi.on = novu.on;
+  novuApi.logout = novu.logout;
 
   if (initCall) {
     // eslint-disable-next-line prefer-spread
@@ -365,12 +377,22 @@ export default ((window: any) => {
         novuApi[onCall[0]].apply(novuApi, onCall[1]);
       }
     }
+
+    const logoutCalls = window.novu._c.filter((call: string[]) => call[0] === 'logout');
+    if (logoutCalls.length) {
+      for (const logoutCall of logoutCalls) {
+        novuApi[logoutCall[0]].apply(novuApi, logoutCall[1]);
+      }
+    }
   } else {
     // eslint-disable-next-line no-param-reassign
     (window as any).novu.init = novu.init;
 
     // eslint-disable-next-line no-param-reassign
     (window as any).novu.on = novu.on;
+
+    // eslint-disable-next-line no-param-reassign
+    (window as any).novu.logout = novu.logout;
   }
 })(window);
 

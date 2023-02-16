@@ -7,3 +7,5 @@ export const SHOW_WIDGET = 'SHOW_WIDGET';
 export const DOMAIN_NOT_ALLOWED = 'DOMAIN_NOT_ALLOWED';
 
 export const BOOTSTRAP_DONE = 'BOOTSTRAP_DONE';
+
+export const LOGOUT = 'LOGOUT';
