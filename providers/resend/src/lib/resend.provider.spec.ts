@@ -1,8 +1,7 @@
 import { ResendEmailProvider } from './resend.provider';
 
 const mockConfig = {
-  apiKey:
-    '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',
+  apiKey: 'xfdfdjdfdjkeys',
   from: 'test@test.com',
 };
 
