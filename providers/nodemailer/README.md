@@ -22,18 +22,21 @@ const provider = new NodemailerProvider({
 To take advantage of the different advanced configurations of TLS options you can set up the following properties with their corresponding environment variable:
 
 - ignoreTls: NODEMAILER_IGNORE_TLS -> Boolean
+
 ```sh
 # .env
 NODEMAILER_IGNORE_TLS=true
 ```
 
 - requireTls: NODEMAILER_REQUIRE_TLS -> Boolean
+
 ```sh
 # .env
 NODEMAILER_REQUIRE_TLS=true
 ```
 
 - tlsOptions: NODEMAILER_TLS_OPTIONS -> JSON
+
 ```sh
 # .env
 NODEMAILER_TLS_OPTIONS={"rejectUnauthorized":false}
