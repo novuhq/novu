@@ -80,7 +80,7 @@
     "@octokit/core": "^3.6.0",
     "@pnpm/filter-workspace-packages": "^4.1.11",
     "@pnpm/logger": "^4.0.0",
-    "@types/inquirer": "8.2.5",
+    "@types/inquirer": "8.2.6",
     "@types/jest": "27.5.2",
     "@types/node": "16.11.7",
     "@typescript-eslint/eslint-plugin": "^5.50.0",
