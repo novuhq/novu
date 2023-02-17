@@ -11,6 +11,7 @@ on:
 jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
+    environment: Production
     secrets:
       cypress_key: ${{ secrets.CYPRESS_WEB_KEY }}
       cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
