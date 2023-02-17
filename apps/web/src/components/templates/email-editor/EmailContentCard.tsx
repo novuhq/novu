@@ -75,14 +75,6 @@ export function EmailContentCard({
           }
         />
       ) : null}
-      <div
-        style={{
-          fontWeight: 'bolder',
-          marginBottom: '10px',
-        }}
-      >
-        Inbox View
-      </div>
       <EmailInboxContent integration={integration} index={index} readonly={readonly} />
 
       <div data-test-id="editor-type-selector">
