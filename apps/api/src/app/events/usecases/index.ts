@@ -7,6 +7,7 @@ import { SendMessageInApp } from './send-message/send-message-in-app.usecase';
 import { SendMessageChat } from './send-message/send-message-chat.usecase';
 import { SendMessagePush } from './send-message/send-message-push.usecase';
 import { QueueNextJob } from './queue-next-job/queue-next-job.usecase';
+import { CreateNotification } from './create-notification/create-notification.usecase';
 import { Digest } from './send-message/digest/digest.usecase';
 import { CancelDelayed } from './cancel-delayed/cancel-delayed.usecase';
 import { TriggerEventToAll } from './trigger-event-to-all/trigger-event-to-all.usecase';
@@ -38,6 +39,7 @@ export const USE_CASES = [
   SendMessageChat,
   SendMessagePush,
   QueueNextJob,
+  CreateNotification,
   Digest,
   CancelDelayed,
   TriggerEventToAll,
