@@ -49,8 +49,8 @@
     "@novu/nodemailer": "^0.11.0",
     "@novu/plivo": "^0.11.0",
     "@novu/postmark": "^0.11.0",
-    "@novu/sendgrid": "^0.11.0",
     "@novu/resend": "^0.11.0",
+    "@novu/sendgrid": "^0.11.0",
     "@novu/sendinblue": "^0.11.0",
     "@novu/ses": "^0.11.0",
     "@novu/shared": "^0.11.0",
@@ -67,7 +67,10 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "nest-winston": "^1.8.0",
+    "nestjs-pino": "^3.1.2",
     "node-fetch": "^3.2.10",
+    "pino-http": "^8.3.3",
+    "rxjs": "^7.5.6",
     "winston": "^3.8.2"
   },
   "devDependencies": {

@@ -48,8 +48,7 @@ export class UsersController {
     Logger.verbose('Getting User', context);
     Logger.debug('User id: ' + user._id);
     Logger.verbose('Creating GetMyProfileCommand');
-
-    throw Error();
+    Logger.log('DIMA_TEST');
 
     const command = GetMyProfileCommand.create({
       userId: user._id,

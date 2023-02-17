@@ -10,6 +10,7 @@ import { SendMessageCommand } from '../send-message/send-message.command';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { RunJobCommand } from './run-job.command';
 import { shouldBackoff } from '../../services/workflow-queue/workflow.queue.service';
+import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class RunJob {
@@ -17,7 +18,8 @@ export class RunJob {
     private jobRepository: JobRepository,
     private sendMessage: SendMessage,
     private queueNextJob: QueueNextJob,
-    private storageHelperService: StorageHelperService
+    private storageHelperService: StorageHelperService,
+    private logger: PinoLogger
   ) {}
 
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {

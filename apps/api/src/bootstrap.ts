@@ -3,7 +3,8 @@ import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
-import { INestApplication, ValidationPipe, Logger } from '@nestjs/common';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
@@ -19,7 +20,6 @@ import { ResponseInterceptor } from './app/shared/framework/response.interceptor
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
-import { createNestLogger, ErrorsInterceptor, LoggerMiddleware } from '@novu/application-generic';
 const packageJson = require('../package.json');
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
@@ -45,15 +45,10 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
   } else {
-    const instance = createNestLogger({
-      serviceName: packageJson.name,
-      version: packageJson.version,
-    });
-
-    app = await NestFactory.create(AppModule, {
-      logger: instance,
-    });
+    app = await NestFactory.create(AppModule, { bufferLogs: true });
   }
+
+  app.useLogger(app.get(PinoLogger));
 
   if (process.env.SENTRY_DSN) {
     app.use(Sentry.Handlers.requestHandler());
@@ -75,8 +70,10 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   );
 
   app.useGlobalInterceptors(new ResponseInterceptor());
-  app.useGlobalInterceptors(new ErrorsInterceptor());
-  app.useGlobalInterceptors(new LoggerMiddleware());
+  /*
+   * app.useGlobalInterceptors(new ErrorsInterceptor());
+   * app.use(new LoggerMiddleware());
+   */
   app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
   app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));
 

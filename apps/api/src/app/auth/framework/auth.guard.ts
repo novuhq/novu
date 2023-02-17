@@ -2,12 +2,14 @@ import { ExecutionContext, forwardRef, Inject, Injectable, UnauthorizedException
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '../services/auth.service';
+import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(
     @Inject(forwardRef(() => AuthService)) private authService: AuthService,
-    private readonly reflector: Reflector
+    private readonly reflector: Reflector,
+    private readonly logger: PinoLogger
   ) {
     super();
   }

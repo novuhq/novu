@@ -13,6 +13,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class TriggerEvent {
@@ -22,10 +23,19 @@ export class TriggerEvent {
     private jobRepository: JobRepository,
     private addJobUsecase: AddJob,
     private notificationRepository: NotificationRepository,
-    protected createExecutionDetails: CreateExecutionDetails
+    protected createExecutionDetails: CreateExecutionDetails,
+    private logger: PinoLogger
   ) {}
 
   async execute(command: TriggerEventCommand) {
+    const child = this.logger.logger.child({
+      transactionId: command.transactionId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
+
+    child.info('Triggering event');
+
     await this.validateTransactionIdProperty(command.transactionId, command.organizationId, command.environmentId);
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(

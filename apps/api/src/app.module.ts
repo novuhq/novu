@@ -31,10 +31,7 @@ import { MessagesModule } from './app/messages/messages.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
 import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
-import { WinstonModule } from 'nest-winston';
-import winston from 'winston';
-
-import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { LoggerModule } from 'nestjs-pino';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
@@ -62,6 +59,13 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   MessagesModule,
   PartnerIntegrationsModule,
   TopicsModule,
+  LoggerModule.forRoot({
+    pinoHttp: {
+      transport:
+        process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'dev' ? { target: 'pino-pretty' } : undefined,
+      autoLogging: false,
+    },
+  }),
 ];
 
 const providers: Provider[] = [];
