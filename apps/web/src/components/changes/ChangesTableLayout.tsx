@@ -74,7 +74,7 @@ export const ChangesTable = ({
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Default Layout Change</Text>
           )}
           {previousDefaultLayout && (
-            <Text data-test-id="change-content" rows={1} mt={5}>
+            <Text data-test-id="previous-default-layout-content" rows={1} mt={5}>
               Previous Default Layout: {previousDefaultLayout}
             </Text>
           )}
