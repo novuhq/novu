@@ -19,12 +19,7 @@ jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
     environment: Development
-    secrets:
-      cypress_key: ${{ secrets.CYPRESS_WEB_KEY }}
-      cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
-      cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
-      cypress_github_user_email: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
-      cypress_github_user_password: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
+    secrets: inherit
 
   # This workflow contains a single job called "build"
   deploy_web:
