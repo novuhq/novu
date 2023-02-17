@@ -12,7 +12,7 @@ import { Trash } from '../../design-system/icons';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { useEnvController } from '../../store/useEnvController';
 import { useTemplateEditor } from './TemplateEditorProvider';
-import { deleteTemplateById } from '../../api/templates';
+import { deleteTemplateById } from '../../api/notification-templates';
 
 export const TemplateSettings = ({ activePage, setActivePage, showErrors, templateId }) => {
   const { colorScheme } = useMantineColorScheme();

@@ -167,7 +167,11 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
       .exec();
   }
 
-  public async shouldDelayDigestJobOrMerge(job: JobEntity): Promise<{ matched: number; modified: number }> {
+  public async shouldDelayDigestJobOrMerge(
+    job: JobEntity,
+    digestKey?: string,
+    digestValue?: string | number
+  ): Promise<{ matched: number; modified: number }> {
     const execution = {
       matched: 0,
       modified: 0,
@@ -179,6 +183,7 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
       _templateId: job._templateId,
       _environmentId: this.convertStringToObjectId(job._environmentId),
       _subscriberId: this.convertStringToObjectId(job._subscriberId),
+      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
     });
 
     const matched = delayedDigestJobs.length;
