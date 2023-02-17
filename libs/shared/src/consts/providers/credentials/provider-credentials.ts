@@ -412,19 +412,19 @@ export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Key ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
   {
     key: CredentialsKeyEnum.ProjectName,
     displayName: 'Team ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
   {
     key: CredentialsKeyEnum.ApplicationId,
     displayName: 'Bundle ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
   {
