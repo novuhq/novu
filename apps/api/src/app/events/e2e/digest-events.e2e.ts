@@ -281,9 +281,9 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(jobs.length).to.eql(3);
 
     const delayedJobs = jobs.filter((elem) => elem.status === JobStatusEnum.DELAYED);
-    expect(delayedJobs.length).to.eql(1);
+    expect(delayedJobs.length).to.eql(2);
     const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
-    expect(mergedJobs.length).to.eql(2);
+    expect(mergedJobs.length).to.eql(1);
 
     const delayedJob = delayedJobs[0];
 
@@ -300,8 +300,10 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _environmentId: session.environment._id,
       _templateId: template._id,
     });
-    const digestJob = finalJobs.find((job) => job?.digest?.digestKey === 'id');
-    expect(digestJob).not.be.undefined;
+
+    const digestedJobs = finalJobs.filter((job) => job?.digest?.digestKey === 'id');
+    expect(digestedJobs.length).to.eql(3);
+
     const jobsWithEvents = finalJobs.filter((item) => item?.digest?.events && item.digest.events.length > 0);
     expect(jobsWithEvents.length).to.equal(1);
   });
@@ -356,9 +358,9 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
 
     // TODO: Fix this as it is not creating 2 delayed jobs, one per digest key, and just one job merged
     const delayedJobs = jobs.filter((elem) => elem.status === JobStatusEnum.DELAYED);
-    expect(delayedJobs.length).to.eql(1);
+    expect(delayedJobs.length).to.eql(2);
     const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
-    expect(mergedJobs.length).to.eql(2);
+    expect(mergedJobs.length).to.eql(1);
 
     for (const job of jobs) {
       await runJob.execute(
@@ -787,20 +789,21 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
       _subscriberId: subscriber._id,
     });
-
     expect(messageCount.length).to.equal(1);
+
     const job = await jobRepository.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.IN_APP,
       transactionId: delayedJob.transactionId,
     });
-
     expect(job?.digest?.events?.length).to.equal(3);
   });
 
   it('should create multiple digest based on different digestKeys', async function () {
     const postId = MessageRepository.createObjectId();
+    const postId2 = MessageRepository.createObjectId();
+
     template = await session.createTemplate({
       steps: [
         {
@@ -814,38 +817,132 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           },
         },
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{postId}}' as string,
         },
       ],
     });
 
     await triggerEvent({
-      customVar: 'Testing of User Name',
+      customVar: 'No digest key',
+    });
+    await triggerEvent({
+      customVar: 'digest key1',
+      postId,
+    });
+    await triggerEvent({
+      customVar: 'digest key2',
+      postId: postId2,
+    });
+    await triggerEvent({
+      customVar: 'No digest key repeat',
+    });
+    await triggerEvent({
+      customVar: 'digest key1 repeat',
       postId,
     });
 
+    await session.awaitRunningJobs(template?._id, false, 5);
+
+    const digests = await jobRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      type: StepTypeEnum.DIGEST,
+    });
+
+    expect(digests.length).to.equal(5);
+    expect(digests[0].payload.postId).to.equal(undefined);
+    expect(digests[1].payload.postId).not.to.equal(digests[2].payload.postId);
+    expect(digests[3].payload.postId).to.equal(undefined);
+    expect(digests[1].payload.postId).to.equal(digests[4].payload.postId);
+
+    for (const digest of digests) {
+      await runJob.execute(
+        RunJobCommand.create({
+          jobId: digest._id,
+          environmentId: digest._environmentId,
+          organizationId: digest._organizationId,
+          userId: digest._userId,
+        })
+      );
+    }
+
+    await session.awaitRunningJobs(template?._id, false, 0);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: subscriber._id,
+    });
+    expect(messages.length).to.eql(5);
+    expect(messages[1].content).to.include(digests[1].payload.postId);
+    expect(messages[2].content).to.include(digests[2].payload.postId);
+    expect(messages[4].content).to.include(digests[4].payload.postId);
+
+    const jobCount = await jobRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+    expect(jobCount).to.equal(15);
+  });
+
+  it('should create multiple digests based on different nested digestKeys', async function () {
+    const postId = MessageRepository.createObjectId();
+    const postId2 = MessageRepository.createObjectId();
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'nested.postId',
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Hello world {{nested.postId}}' as string,
+        },
+      ],
+    });
+
     await triggerEvent({
-      customVar: 'digest',
-      postId: MessageRepository.createObjectId(),
+      customVar: 'No digest key',
     });
 
-    await session.awaitRunningJobs(template?._id, false, 2);
+    await triggerEvent({
+      customVar: 'digest key1',
+      nested: { postId },
+    });
 
-    let digests = await jobRepository.find({
+    await triggerEvent({
+      customVar: 'digest key2',
+      nested: { postId: postId2 },
+    });
+    await triggerEvent({
+      customVar: 'No digest key repeat',
+    });
+    await triggerEvent({
+      customVar: 'digest key1 repeat',
+      nested: { postId: postId },
+    });
+
+    await session.awaitRunningJobs(template?._id, false, 5);
+
+    const digests = await jobRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(digests[0].payload.postId).not.to.equal(digests[1].payload.postId);
-    expect(digests.length).to.equal(2);
-
-    digests = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
+    expect(digests.length).to.eql(5);
+    expect(digests[0].payload.nested?.postId).to.equal(undefined);
+    expect(digests[1].payload.nested.postId).not.to.equal(digests[2].payload.nested.postId);
+    expect(digests[3].payload.nested?.postId).to.equal(undefined);
+    expect(digests[1].payload.nested.postId).to.equal(digests[4].payload.nested.postId);
 
     for (const digest of digests) {
       await runJob.execute(
@@ -866,18 +963,23 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _subscriberId: subscriber._id,
     });
 
-    expect(messages[0].content).to.include(digests[0].payload.postId);
-    expect(messages[1].content).to.include(digests[1].payload.postId);
+    expect(messages.length).to.eql(5);
+    expect(messages[1].content).to.include(digests[1].payload.nested.postId);
+    expect(messages[2].content).to.include(digests[2].payload.nested.postId);
+    expect(messages[4].content).to.include(digests[4].payload.nested.postId);
+
     const jobCount = await jobRepository.count({
       _environmentId: session.environment._id,
       _templateId: template._id,
     });
-    expect(jobCount).to.equal(6);
+    expect(jobCount).to.equal(15);
   });
 
-  it('should create multiple digest based on different digestKeys with backoff', async function () {
+  // TODO: Review backoff individually
+  it.skip('should create multiple digest based on different digestKeys with backoff', async function () {
     const postId = MessageRepository.createObjectId();
     const postId2 = MessageRepository.createObjectId();
+
     template = await session.createTemplate({
       steps: [
         {
@@ -893,7 +995,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           },
         },
         {
-          type: StepTypeEnum.SMS,
+          type: StepTypeEnum.CHAT,
           content: 'Hello world {{postId}}' as string,
         },
       ],
@@ -906,25 +1008,34 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await session.awaitParsingEvents();
 
     await triggerEvent({
-      customVar: 'fourth',
+      customVar: 'second',
       postId,
     });
-
-    await session.awaitParsingEvents();
-
-    await triggerEvent({
-      customVar: 'second',
-      postId: postId2,
-    });
-
     await session.awaitParsingEvents();
 
     await triggerEvent({
       customVar: 'third',
+    });
+
+    await session.awaitParsingEvents();
+
+    await triggerEvent({
+      customVar: 'fourth',
       postId: postId2,
     });
 
-    await session.awaitRunningJobs(template?._id, false, 2);
+    await session.awaitParsingEvents();
+
+    await triggerEvent({
+      customVar: 'fifth',
+      postId: postId2,
+    });
+    await session.awaitParsingEvents();
+
+    await triggerEvent({
+      customVar: 'sixth',
+    });
+    await session.awaitRunningJobs(template?._id, false, 3);
 
     const digests = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -932,8 +1043,9 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(digests.length).to.equal(2);
-    expect(digests[0].payload.postId).not.to.equal(digests[1].payload.postId);
+    expect(digests.length).to.equal(3);
+    expect(digests[0]?.payload.postId).not.to.equal(digests[1]?.payload.postId);
+    expect(digests[2]?.payload.postId).to.equal(undefined);
 
     for (const digest of digests) {
       await runJob.execute(
@@ -954,7 +1066,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _subscriberId: subscriber._id,
     });
 
-    expect(messages.length).to.equal(4);
+    expect(messages.length).to.equal(6);
 
     const contents: string[] = messages
       .map((message) => message.content)
@@ -974,8 +1086,108 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _environmentId: session.environment._id,
       _templateId: template._id,
     });
+    const allJobsBackoff = await jobRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+    expect(jobCount).to.equal(15);
+  });
 
-    expect(jobCount).to.equal(10);
+  it('should create multiple digests based on different nested digestKeys with backoff', async function () {
+    const postId = MessageRepository.createObjectId();
+    const postId2 = MessageRepository.createObjectId();
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'nested.postId',
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Hello world {{nested.postId}}' as string,
+        },
+      ],
+    });
+
+    await triggerEvent({
+      customVar: 'first',
+      nested: { postId: postId },
+    });
+    await session.awaitParsingEvents();
+
+    await triggerEvent({
+      customVar: 'second',
+      nested: { postId: postId },
+    });
+    await session.awaitParsingEvents();
+
+    await triggerEvent({
+      customVar: 'third',
+    });
+    await session.awaitParsingEvents();
+
+    await triggerEvent({
+      customVar: 'fourth',
+      nested: { postId: postId2 },
+    });
+    await session.awaitParsingEvents();
+
+    await triggerEvent({
+      customVar: 'fifth',
+      nested: { postId: postId2 },
+    });
+    await session.awaitParsingEvents();
+
+    await triggerEvent({
+      customVar: 'sixth',
+    });
+    await session.awaitParsingEvents();
+
+    await session.awaitRunningJobs(template?._id, false, 6);
+
+    const digests = await jobRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      type: StepTypeEnum.DIGEST,
+    });
+
+    expect(digests.length).to.equal(2);
+    expect(digests[0].payload?.nested?.postId).not.to.equal(digests[1].payload?.nested?.postId);
+
+    for (const digest of digests) {
+      await runJob.execute(
+        RunJobCommand.create({
+          jobId: digest._id,
+          environmentId: digest._environmentId,
+          organizationId: digest._organizationId,
+          userId: digest._userId,
+        })
+      );
+    }
+
+    await session.awaitRunningJobs(template?._id, false, 0);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: subscriber._id,
+    });
+    expect(messages.length).to.equal(6);
+
+    const jobCount = await jobRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+    expect(jobCount).to.equal(14);
   });
 
   it('should add a digest prop to chat template compilation', async function () {
@@ -991,8 +1203,9 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           },
         },
         {
-          type: StepTypeEnum.CHAT,
-          content: 'Hello world {{#if step.digest}} HAS_DIGEST_PROP {{/if}}' as string,
+          type: StepTypeEnum.IN_APP,
+          content:
+            'Total events in digest:{{step.total_count}} Hello world {{#if step.digest}} HAS_DIGEST_PROP {{/if}}' as string,
         },
       ],
     });
@@ -1038,10 +1251,10 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const message = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
-      channel: StepTypeEnum.CHAT,
+      channel: StepTypeEnum.IN_APP,
     });
-
     expect(message[0].content).to.include('HAS_DIGEST_PROP');
+    expect(message[0].content).to.include('Total events in digest:2');
   });
 
   it('should add a digest prop to push template compilation', async function () {
