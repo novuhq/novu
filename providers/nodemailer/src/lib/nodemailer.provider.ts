@@ -18,7 +18,7 @@ interface INodemailerConfig {
   secure?: boolean;
   user?: string;
   password?: string;
-  dkim?: DKIM.SingleKeyOptions | undefined;
+  dkim?: DKIM.SingleKeyOptions;
   ignoreTls?: boolean;
   requireTls?: boolean;
   tlsOptions?: ConnectionOptions;
