@@ -28,6 +28,7 @@ Resend allows you to authenticate your sender identity using [Domain Authenticat
 - Locate Resend and click on the **Connect** button.
 - Enter your Resend API Key.
 - Fill the `From email address` field using the authenticated email from the previous step.
+  - For testing, you can use `onboarding@resend.dev` if you have not authenticated your sender identity.
 - Fill the `Sender name`.
 - Click on the `Disabled` button and mark as `Active`.
 - Click on the **Connect** button.
