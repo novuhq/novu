@@ -805,7 +805,7 @@ importers:
       '@types/jest': ^26.0.15
       '@types/node': ^12.0.0
       '@types/react': 17.0.53
-      '@types/react-dom': 17.0.18
+      '@types/react-dom': 17.0.19
       '@types/react-router-dom': ^5.1.7
       antd: ^4.10.0
       babel-plugin-import: ^1.13.3
@@ -878,7 +878,7 @@ importers:
       '@types/jest': 26.0.24
       '@types/node': 12.20.47
       '@types/react': 17.0.53
-      '@types/react-dom': 17.0.18
+      '@types/react-dom': 17.0.19
       '@types/react-router-dom': 5.3.3
       craco-antd: 1.19.0_hbvkgpmbh473c2skmhlgaulcva
       cross-env: 7.0.3
@@ -28548,8 +28548,8 @@ packages:
     dependencies:
       '@types/react': 17.0.47
 
-  /@types/react-dom/17.0.18:
-    resolution: {integrity: sha512-rLVtIfbwyur2iFKykP2w0pl/1unw26b5td16d5xMgp7/yjTHomkyxPYChFoCr/FtEX1lN9wY6lFj1qvKdS5kDw==}
+  /@types/react-dom/17.0.19:
+    resolution: {integrity: sha512-PiYG40pnQRdPHnlf7tZnp0aQ6q9tspYr72vD61saO6zFCybLfMqwUCN0va1/P+86DXn18ZWeW30Bk7xlC5eEAQ==}
     dependencies:
       '@types/react': 17.0.53
     dev: true
