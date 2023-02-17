@@ -49,6 +49,8 @@ export class UsersController {
     Logger.debug('User id: ' + user._id);
     Logger.verbose('Creating GetMyProfileCommand');
 
+    throw Error();
+
     const command = GetMyProfileCommand.create({
       userId: user._id,
     });

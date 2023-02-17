@@ -19,7 +19,7 @@ import { ResponseInterceptor } from './app/shared/framework/response.interceptor
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
-import { createNestLogger } from '@novu/application-generic';
+import { createNestLogger, ErrorsInterceptor, LoggerMiddleware } from '@novu/application-generic';
 const packageJson = require('../package.json');
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
@@ -75,6 +75,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   );
 
   app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalInterceptors(new ErrorsInterceptor());
+  app.useGlobalInterceptors(new LoggerMiddleware());
   app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
   app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));
 

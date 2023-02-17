@@ -4,7 +4,6 @@
  * See lib/config/default.js in the agent distribution for a more complete
  * description of configuration variables and their potential values.
  */
-console.log('Newrelic.js file');
 
 exports.config = {
   /**
@@ -42,7 +41,7 @@ exports.config = {
      * issues with the agent, 'info' and higher will impose the least overhead on
      * production applications.
      */
-    level: 'trace',
+    level: 'info',
   },
   /**
    * When true, all request headers except for those listed in attributes.exclude
