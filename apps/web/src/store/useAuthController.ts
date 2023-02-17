@@ -54,11 +54,12 @@ export function useAuthController() {
     enabled: Boolean(isLoggedIn && axios.defaults.headers.common.Authorization),
   });
 
+  const authorization = axios.defaults.headers.common.Authorization as string;
   const { data: organizations } = useQuery<IOrganizationEntity[]>(['/v1/organizations'], getOrganizations, {
     enabled: Boolean(
       isLoggedIn &&
         axios.defaults.headers.common.Authorization &&
-        jwtDecode<IJwtPayload>(axios.defaults.headers.common.Authorization?.split(' ')[1])?.organizationId
+        jwtDecode<IJwtPayload>(authorization?.split(' ')[1])?.organizationId
     ),
   });
 
