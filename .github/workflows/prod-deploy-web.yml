@@ -11,7 +11,6 @@ on:
 jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
-    environment: Production
     secrets: inherit
 
   deploy_web_eu:

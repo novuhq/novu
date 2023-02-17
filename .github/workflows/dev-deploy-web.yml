@@ -18,7 +18,6 @@ on:
 jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
-    environment: Development
     secrets: inherit
 
   # This workflow contains a single job called "build"
