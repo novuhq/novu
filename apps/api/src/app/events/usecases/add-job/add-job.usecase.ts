@@ -1,15 +1,18 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum, DigestUnitEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { WorkflowQueueService } from '../../services/workflow-queue/workflow.queue.service';
+
 import { AddDelayJob } from './add-delay-job.usecase';
+import { AddDigestJobCommand } from './add-digest-job.command';
 import { AddDigestJob } from './add-digest-job.usecase';
 import { AddJobCommand } from './add-job.command';
+
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { WorkflowQueueService } from '../../services/workflow-queue/workflow.queue.service';
 
 @Injectable()
 export class AddJob {
@@ -32,12 +35,15 @@ export class AddJob {
 
       return;
     }
-
     Logger.log('Starting New Job of type: ' + job.type);
 
-    const digestAmount = job.type === StepTypeEnum.DIGEST ? await this.addDigestJob.execute(command) : null;
+    const digestAmount =
+      job.type === StepTypeEnum.DIGEST
+        ? await this.addDigestJob.execute(AddDigestJobCommand.create({ job }))
+        : undefined;
     Logger.debug('digestAmount is: ' + digestAmount);
-    const delayAmount = job.type === StepTypeEnum.DELAY ? await this.addDelayJob.execute(command) : null;
+
+    const delayAmount = job.type === StepTypeEnum.DELAY ? await this.addDelayJob.execute(command) : undefined;
     Logger.debug('delayAmount is: ' + delayAmount);
 
     if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
@@ -46,7 +52,7 @@ export class AddJob {
       return;
     }
 
-    if (digestAmount === undefined && delayAmount == undefined) {
+    if (digestAmount === undefined && delayAmount === undefined) {
       Logger.verbose('updating status as digestAmount and delayAmount is undefined');
       await this.jobRepository.updateStatus(command.organizationId, job._id, JobStatusEnum.QUEUED);
     }

@@ -50,6 +50,7 @@
     "@novu/plivo": "^0.11.0",
     "@novu/postmark": "^0.11.0",
     "@novu/sendgrid": "^0.11.0",
+    "@novu/resend": "^0.11.0",
     "@novu/sendinblue": "^0.11.0",
     "@novu/ses": "^0.11.0",
     "@novu/shared": "^0.11.0",

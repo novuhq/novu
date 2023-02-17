@@ -15,6 +15,7 @@ const mapEmailStep = (item: IStepEntity): IStepEntity => ({
     ...item.template,
     layoutId: item.template._layoutId ?? '',
     preheader: item.template.preheader ?? '',
+    senderName: item.template.senderName ?? '',
     content: item.template.content,
     ...(item.template?.contentType === 'customHtml' && {
       htmlContent: item.template.content as string,

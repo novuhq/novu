@@ -18,8 +18,7 @@ on:
 jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
-    secrets:
-      cypress_key: ${{ secrets.CYPRESS_WEB_KEY }}
+    secrets: inherit
 
   # This workflow contains a single job called "build"
   deploy_web:

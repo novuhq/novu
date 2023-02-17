@@ -52,9 +52,9 @@ export class AddDelayJob {
         throw new ApiException(`Delay date at path ${delayPath} must be a future date`);
       }
 
-      const noiIdenticalDelay = await this.noExistingDelayedJobForDate(data, delayPath, delayDate);
+      const noIdenticalDelay = await this.noExistingDelayedJobForDate(data, delayPath, delayDate);
 
-      if (noiIdenticalDelay) {
+      if (noIdenticalDelay) {
         return delay;
       }
 
@@ -74,8 +74,8 @@ export class AddDelayJob {
    */
   private async noExistingDelayedJobForDate(
     data: JobEntity,
-    currDelayPath: string,
-    currDelayDate: string
+    currentDelayPath: string,
+    currentDelayDate: string
   ): Promise<boolean> {
     return !(await this.jobRepository.findOne({
       status: JobStatusEnum.DELAYED,
@@ -85,8 +85,8 @@ export class AddDelayJob {
       _environmentId: data._environmentId,
       transactionId: { $ne: data.transactionId },
       'step.metadata.type': DelayTypeEnum.SCHEDULED,
-      'step.metadata.delayPath': currDelayPath,
-      [`payload.${currDelayPath}`]: currDelayDate,
+      'step.metadata.delayPath': currentDelayPath,
+      [`payload.${currentDelayPath}`]: currentDelayDate,
     }));
   }
 }

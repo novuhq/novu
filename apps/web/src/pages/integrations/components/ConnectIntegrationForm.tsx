@@ -208,81 +208,81 @@ export function ConnectIntegrationForm({
       <CloseButton data-test-id="connection-integration-form-close" type="button" onClick={onClose}>
         <Close />
       </CloseButton>
+      <Image style={{ maxWidth: 140 }} radius="md" src={logoSrc} alt={`${provider?.providerId} image`} />
 
       <ColumnDiv>
-        <Image style={{ maxWidth: 140 }} radius="md" src={logoSrc} alt={`${provider?.providerId} image`} />
-
-        <InlineDiv>
-          <span>Read our guide on where to get the credentials </span>
-          <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
-            here.
-          </a>
-        </InlineDiv>
-        {provider?.credentials.map((credential: IConfigCredentials) => (
-          <InputWrapper key={credential.key}>
-            <Controller
-              name={credential.key}
-              control={control}
-              render={({ field }) => (
-                <IntegrationInput credential={credential} errors={errors} field={field} register={register} />
-              )}
-            />
-          </InputWrapper>
-        ))}
-        {webhookSupportStatus &&
-          provider?.channel &&
-          [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel) && (
-            <InputWrapper>
-              <Input
-                label="Webhook URL"
-                value={webhookUrl}
-                readOnly
-                rightSection={
-                  <CopyWrapper onClick={() => webhookUrlClipboard.copy(webhookUrl)}>
-                    {webhookUrlClipboard.copied ? <Check /> : <Copy />}
-                  </CopyWrapper>
-                }
-              />
-            </InputWrapper>
-          )}
-        <Stack my={30}>
-          <ActiveWrapper active={isActive}>
-            <Controller
-              control={control}
-              name="isActive"
-              render={({ field }) => (
-                <Switch checked={isActive} data-test-id="is_active_id" {...field} onChange={handlerSwitchChange} />
-              )}
-            />
-            <StyledText data-test-id="connect-integration-form-active-text">
-              {isActive ? 'Active' : 'Disabled'}
-            </StyledText>
-          </ActiveWrapper>
-          {provider?.channel === ChannelTypeEnum.EMAIL && checkIntegrationState.isShowSwitch && (
-            <CheckIntegrationWrapper>
+        <CenterDiv>
+          <InlineDiv>
+            <span>Read our guide on where to get the credentials </span>
+            <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
+              here.
+            </a>
+          </InlineDiv>
+          {provider?.credentials.map((credential: IConfigCredentials) => (
+            <InputWrapper key={credential.key}>
               <Controller
+                name={credential.key}
                 control={control}
-                name="check"
                 render={({ field }) => (
-                  <Switch
-                    checked={checkIntegrationState.check}
-                    data-test-id="is_check_integration_id"
-                    {...field}
-                    onChange={handlerCheckIntegrationChange}
-                  />
+                  <IntegrationInput credential={credential} errors={errors} field={field} register={register} />
                 )}
               />
-              <StyledText>Verify provider credentials</StyledText>
-            </CheckIntegrationWrapper>
-          )}
+            </InputWrapper>
+          ))}
+          {webhookSupportStatus &&
+            provider?.channel &&
+            [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel) && (
+              <InputWrapper>
+                <Input
+                  label="Webhook URL"
+                  value={webhookUrl}
+                  readOnly
+                  rightSection={
+                    <CopyWrapper onClick={() => webhookUrlClipboard.copy(webhookUrl)}>
+                      {webhookUrlClipboard.copied ? <Check /> : <Copy />}
+                    </CopyWrapper>
+                  }
+                />
+              </InputWrapper>
+            )}
+          <Stack my={30}>
+            <ActiveWrapper active={isActive}>
+              <Controller
+                control={control}
+                name="isActive"
+                render={({ field }) => (
+                  <Switch checked={isActive} data-test-id="is_active_id" {...field} onChange={handlerSwitchChange} />
+                )}
+              />
+              <StyledText data-test-id="connect-integration-form-active-text">
+                {isActive ? 'Active' : 'Disabled'}
+              </StyledText>
+            </ActiveWrapper>
+            {provider?.channel === ChannelTypeEnum.EMAIL && checkIntegrationState.isShowSwitch && (
+              <CheckIntegrationWrapper>
+                <Controller
+                  control={control}
+                  name="check"
+                  render={({ field }) => (
+                    <Switch
+                      checked={checkIntegrationState.check}
+                      data-test-id="is_check_integration_id"
+                      {...field}
+                      onChange={handlerCheckIntegrationChange}
+                    />
+                  )}
+                />
+                <StyledText>Verify provider credentials</StyledText>
+              </CheckIntegrationWrapper>
+            )}
 
-          {checkIntegrationState.isShowAlert && (
-            <Alert icon={<WarningOutlined size={16} />} title="An error occurred!" color="red" mb={30}>
-              {checkIntegrationState.errorMsg}
-            </Alert>
-          )}
-        </Stack>
-
+            {checkIntegrationState.isShowAlert && (
+              <Alert icon={<WarningOutlined size={16} />} title="An error occurred!" color="red" mb={30}>
+                {checkIntegrationState.errorMsg}
+              </Alert>
+            )}
+          </Stack>
+        </CenterDiv>
         <Button submit fullWidth loading={isLoadingUpdate || isLoadingCreate}>
           {createModel ? 'Connect' : 'Update'}
         </Button>
@@ -369,4 +369,12 @@ const CopyWrapper = styled.div`
   &:hover {
     opacity: 0.8;
   }
+`;
+
+const CenterDiv = styled.div`
+  max-height: 500px;
+  overflow: auto;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding-right: 30px;
 `;

@@ -6,7 +6,7 @@ const mockConfig = {
 };
 
 const mockNovuMessage = {
-  to: 'test2@test.com',
+  to: ['test2@test.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
   attachments: [
@@ -52,7 +52,7 @@ test('should trigger postmark correctly', async () => {
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     From: mockConfig.from,
-    To: mockNovuMessage.to,
+    To: mockNovuMessage.to[0],
     HtmlBody: mockNovuMessage.html,
     TextBody: mockNovuMessage.html,
     Subject: mockNovuMessage.subject,

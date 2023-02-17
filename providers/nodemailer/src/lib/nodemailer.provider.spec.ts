@@ -27,7 +27,7 @@ const mockConfig = {
 
 const buffer = Buffer.from('test');
 const mockNovuMessage = {
-  to: 'test@test2.com',
+  to: ['test@test2.com'],
   subject: 'test subject',
   html: '<div> Mail Content </div>',
   attachments: [{ mime: 'text/plain', file: buffer, name: 'test.txt' }],
