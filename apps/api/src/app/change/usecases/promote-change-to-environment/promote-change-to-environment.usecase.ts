@@ -58,8 +58,6 @@ export class PromoteChangeToEnvironment {
         await this.promoteFeedChange.execute(typeCommand);
         break;
       case ChangeEntityTypeEnum.LAYOUT:
-        await this.promoteLayoutChange.execute(typeCommand);
-        break;
       case ChangeEntityTypeEnum.DEFAULT_LAYOUT:
         await this.promoteLayoutChange.execute(typeCommand);
         break;
