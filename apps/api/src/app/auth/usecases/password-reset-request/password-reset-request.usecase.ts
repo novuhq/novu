@@ -5,7 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class PasswordResetRequest {
@@ -25,11 +26,10 @@ export class PasswordResetRequest {
       }
       const token = uuidv4();
 
-      this.invalidateCache.clearCache({
-        storeKeyPrefix: [CacheKeyPrefixEnum.USER],
-        credentials: {
+      await this.invalidateCache.invalidateByKey({
+        key: KeyGenerator.entity().user({
           _id: foundUser._id,
-        },
+        }),
       });
 
       const resetTokenCount = this.getUpdatedRequestCount(foundUser);

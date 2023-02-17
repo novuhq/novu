@@ -1,18 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
 import { UpdateOnBoardingCommand } from './update-on-boarding.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class UpdateOnBoardingUsecase {
   constructor(private invalidateCache: InvalidateCacheService, private readonly userRepository: UserRepository) {}
 
   async execute(command: UpdateOnBoardingCommand) {
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.USER],
-      credentials: {
+    await this.invalidateCache.invalidateByKey({
+      key: KeyGenerator.entity().user({
         _id: command.userId,
-      },
+      }),
     });
 
     await this.userRepository.update(

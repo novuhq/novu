@@ -32,7 +32,6 @@ import {
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { MessageMatcher } from '../trigger-event/message-matcher.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
@@ -224,7 +223,9 @@ export class SendMessage {
     return result || template.critical;
   }
 
-  @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
+  @CachedEntity({
+    builder: KeyGenerator.entity().notificationTemplate,
+  })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }

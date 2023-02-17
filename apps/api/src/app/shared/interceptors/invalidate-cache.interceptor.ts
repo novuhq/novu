@@ -5,7 +5,7 @@ import { Inject } from '@nestjs/common';
 const USE_CASE_METHOD = 'execute';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function InvalidateCache(storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[]) {
+function InvalidateCache(storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[]) {
   const injectCache = Inject(InvalidateCacheService);
 
   return (target: any, key: string, descriptor: any) => {

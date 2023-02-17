@@ -3,7 +3,7 @@ import { Inject } from '@nestjs/common';
 import { CacheKeyPrefixEnum, CacheService } from '../services/cache';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
+function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
   const injectCache = Inject(CacheService);
 
   return (target: any, key: string, descriptor: any) => {

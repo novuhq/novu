@@ -2,7 +2,6 @@ import { SendMessageType } from './send-message-type.usecase';
 import { MessageRepository, SubscriberRepository, JobEntity } from '@novu/dal';
 import { CreateLog } from '../../../logs/usecases';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -43,7 +42,9 @@ export abstract class SendMessageBase extends SendMessageType {
     });
   }
 
-  @Cached(CacheKeyPrefixEnum.INTEGRATION)
+  @CachedEntity({
+    builder: KeyGenerator.entity().integration,
+  })
   protected async getIntegration(getDecryptedIntegrationsCommand: GetDecryptedIntegrationsCommand) {
     return (
       await this.getDecryptedIntegrationsUsecase.execute(

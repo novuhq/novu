@@ -11,7 +11,8 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {
@@ -132,12 +133,11 @@ export class PromoteNotificationTemplateChange {
       return;
     }
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
-      credentials: {
+    await this.invalidateCache.invalidateByKey({
+      key: KeyGenerator.entity().notificationTemplate({
         _id: item._id,
-        environmentId: command.environmentId,
-      },
+        _environmentId: command.environmentId,
+      }),
     });
 
     return await this.notificationTemplateRepository.update(

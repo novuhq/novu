@@ -20,7 +20,6 @@ import { SwitchEnvironment } from '../usecases/switch-environment/switch-environ
 import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
-import { CacheKeyPrefixEnum } from '../../shared/services/cache';
 import { CachedEntity } from '../../shared/interceptors/cached-entity.interceptor';
 import { KeyGenerator } from '../../shared/services/cache/keys';
 
@@ -259,12 +258,16 @@ export class AuthService {
     return !!environment._parentId;
   }
 
-  @Cached(CacheKeyPrefixEnum.USER)
+  @CachedEntity({
+    builder: KeyGenerator.entity().user,
+  })
   private async getUser({ _id }: { _id: string }) {
     return await this.userRepository.findById(_id);
   }
 
-  @Cached(CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY)
+  @CachedEntity({
+    builder: KeyGenerator.entity().environmentByApiKey,
+  })
   private async getEnvironment({ _id }: { _id: string }) {
     /**
      * _id is used here because the Cached decorator needs and it.

@@ -14,8 +14,6 @@ import { CreateLog } from '../../../logs/usecases';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 import { DigestFilterStepsCommand } from '../digest-filter-steps/digest-filter-steps.command';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
-import { Cached } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import {
   GetDecryptedIntegrations,
@@ -129,7 +127,9 @@ export class ProcessSubscriber {
 
     return integration?.providerId ?? InAppProviderIdEnum.Novu;
   }
-  @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
+  @CachedEntity({
+    builder: KeyGenerator.entity().notificationTemplate,
+  })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }

@@ -1,12 +1,15 @@
 import { BadRequestException, Injectable, NotFoundException, Inject } from '@nestjs/common';
+
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { encryptCredentials } from '@novu/application-generic';
+import { ChannelTypeEnum } from '@novu/shared';
+
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
-import { encryptCredentials } from '../../../shared/services/encryption';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
-import { ChannelTypeEnum } from '@novu/shared';
+import { InvalidateCacheService } from '../../../shared/services/cache';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class UpdateIntegration {
@@ -22,11 +25,11 @@ export class UpdateIntegration {
     const existingIntegration = await this.integrationRepository.findById(command.integrationId);
     if (!existingIntegration) throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
-      credentials: {
-        environmentId: command.environmentId,
-      },
+    await this.invalidateCache.invalidateByKey({
+      key: KeyGenerator.entity().integration({
+        _id: command.integrationId,
+        _environmentId: command.environmentId,
+      }),
     });
 
     if (command.check) {

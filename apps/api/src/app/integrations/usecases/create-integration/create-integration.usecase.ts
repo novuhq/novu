@@ -1,16 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, DalException } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, encryptCredentials } from '@novu/application-generic';
 
 import { CreateIntegrationCommand } from './create-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
-import { encryptCredentials } from '../../../shared/services/encryption';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
+
 @Injectable()
 export class CreateIntegration {
   @Inject()
@@ -43,13 +43,6 @@ export class CreateIntegration {
           })
         );
       }
-
-      await this.invalidateCache.clearCache({
-        storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
-        credentials: {
-          environmentId: command.environmentId,
-        },
-      });
 
       response = await this.integrationRepository.create({
         _environmentId: command.environmentId,

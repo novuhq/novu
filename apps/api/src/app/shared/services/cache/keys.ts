@@ -1,4 +1,5 @@
 import { GetNotificationsFeedCommand } from '../../../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
+import { GetFeedCountCommand } from '../../../widgets/usecases/get-feed-count/get-feed-count.command';
 
 export enum CacheKeyPrefixEnum {
   MESSAGE_COUNT = 'message_count',
@@ -23,13 +24,13 @@ export class KeyGenerator {
   };
 
   public static entity = () => {
-    return { subscriber };
+    return { subscriber, integration, notificationTemplate, user, environmentByApiKey };
   };
 }
 
 const buildQueryKey = ({
   type,
-  keyPrefix,
+  keyEntity,
   environmentIdPrefix = 'e',
   environmentId,
   identifierPrefix = 'i',
@@ -37,7 +38,7 @@ const buildQueryKey = ({
   query,
 }: {
   type: CacheKeyTypeEnum;
-  keyPrefix: CacheKeyPrefixEnum;
+  keyEntity: CacheKeyPrefixEnum;
   environmentIdPrefix?: string;
   environmentId: string;
   identifierPrefix?: string;
@@ -46,34 +47,18 @@ const buildQueryKey = ({
 }): string =>
   `${buildCommonKey({
     type,
-    keyPrefix,
+    keyEntity,
     environmentIdPrefix,
     environmentId,
     identifierPrefix,
     identifier,
   })}:${QUERY_PREFIX}=${JSON.stringify(query)}`;
 
-const buildCommonKey = ({
-  type,
-  keyPrefix,
-  environmentIdPrefix = 'e',
-  environmentId,
-  identifierPrefix = 'i',
-  identifier,
-}: {
-  type: CacheKeyTypeEnum;
-  keyPrefix: CacheKeyPrefixEnum;
-  environmentIdPrefix?: string;
-  environmentId: string;
-  identifierPrefix?: string;
-  identifier: string;
-}): string => `${type}:${keyPrefix}:${environmentIdPrefix}=${environmentId}:${identifierPrefix}=${identifier}`;
-
 const feed = () => {
   const cache = (command: GetNotificationsFeedCommand): string =>
     buildQueryKey({
       type: CacheKeyTypeEnum.QUERY,
-      keyPrefix: CacheKeyPrefixEnum.FEED,
+      keyEntity: CacheKeyPrefixEnum.FEED,
       environmentId: command.environmentId,
       identifierPrefix: 's',
       identifier: command.subscriberId,
@@ -83,7 +68,7 @@ const feed = () => {
   const invalidate = ({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }): string =>
     buildCommonKey({
       type: CacheKeyTypeEnum.QUERY,
-      keyPrefix: CacheKeyPrefixEnum.FEED,
+      keyEntity: CacheKeyPrefixEnum.FEED,
       environmentId: _environmentId,
       identifierPrefix: 's',
       identifier: subscriberId,
@@ -96,10 +81,10 @@ const feed = () => {
 };
 
 const messageCount = () => {
-  const cache = (command: GetNotificationsFeedCommand): string =>
+  const cache = (command: GetFeedCountCommand): string =>
     buildQueryKey({
       type: CacheKeyTypeEnum.QUERY,
-      keyPrefix: CacheKeyPrefixEnum.MESSAGE_COUNT,
+      keyEntity: CacheKeyPrefixEnum.MESSAGE_COUNT,
       environmentId: command.environmentId,
       identifierPrefix: 's',
       identifier: command.subscriberId,
@@ -109,7 +94,7 @@ const messageCount = () => {
   const invalidate = ({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }): string =>
     buildCommonKey({
       type: CacheKeyTypeEnum.QUERY,
-      keyPrefix: CacheKeyPrefixEnum.MESSAGE_COUNT,
+      keyEntity: CacheKeyPrefixEnum.MESSAGE_COUNT,
       environmentId: _environmentId,
       identifierPrefix: 's',
       identifier: subscriberId,
@@ -124,8 +109,66 @@ const messageCount = () => {
 const subscriber = ({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }): string =>
   buildCommonKey({
     type: CacheKeyTypeEnum.ENTITY,
-    keyPrefix: CacheKeyPrefixEnum.SUBSCRIBER,
+    keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
     environmentId: _environmentId,
     identifierPrefix: 's',
     identifier: subscriberId,
   });
+
+const integration = ({ _id, _environmentId }: { _id: string; _environmentId: string }): string =>
+  buildCommonKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.INTEGRATION,
+    environmentId: _environmentId,
+    identifier: _id,
+  });
+
+const notificationTemplate = ({ _id, _environmentId }: { _id: string; _environmentId: string }): string =>
+  buildCommonKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
+    environmentId: _environmentId,
+    identifier: _id,
+  });
+
+const user = ({ _id }: { _id: string }): string =>
+  buildKeyById({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.USER,
+    identifier: _id,
+  });
+
+const environmentByApiKey = ({ _id }: { _id: string }): string =>
+  buildKeyById({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY,
+    identifier: _id,
+  });
+
+const buildCommonKey = ({
+  type,
+  keyEntity,
+  environmentIdPrefix = 'e',
+  environmentId,
+  identifierPrefix = 'i',
+  identifier,
+}: {
+  type: CacheKeyTypeEnum;
+  keyEntity: CacheKeyPrefixEnum;
+  environmentIdPrefix?: string;
+  environmentId: string;
+  identifierPrefix?: string;
+  identifier: string;
+}): string => `${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}:${identifierPrefix}=${identifier}`;
+
+const buildKeyById = ({
+  type,
+  keyEntity,
+  identifierPrefix = 'i',
+  identifier,
+}: {
+  type: CacheKeyTypeEnum;
+  keyEntity: CacheKeyPrefixEnum;
+  identifierPrefix?: string;
+  identifier: string;
+}): string => `${type}:${keyEntity}:${identifierPrefix}=${identifier}`;

@@ -3,9 +3,10 @@ import { UserRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { UpdateProfileEmailCommand } from './update-profile-email.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { KeyGenerator } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class UpdateProfileEmail {
@@ -31,11 +32,10 @@ export class UpdateProfileEmail {
       }
     );
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.USER],
-      credentials: {
+    await this.invalidateCache.invalidateByKey({
+      key: KeyGenerator.entity().user({
         _id: command.userId,
-      },
+      }),
     });
 
     const updatedUser = await this.userRepository.findById(command.userId);
