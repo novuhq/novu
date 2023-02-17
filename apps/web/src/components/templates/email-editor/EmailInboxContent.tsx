@@ -1,7 +1,7 @@
 import { Grid, useMantineTheme } from '@mantine/core';
 import { format } from 'date-fns';
 import { Controller, useFormContext } from 'react-hook-form';
-import { colors, Input, Select } from '../../../design-system';
+import { colors, Input, Select, Tooltip } from '../../../design-system';
 import { useLayouts } from '../../../api/hooks/useLayouts';
 import { useEffect } from 'react';
 
@@ -56,6 +56,11 @@ export const EmailInboxContent = ({
                 <Input
                   {...field}
                   required
+                  label={
+                    <Tooltip label="leave empty to use sender name from integration">
+                      <span>Sender name</span>
+                    </Tooltip>
+                  }
                   error={errors?.steps ? errors.steps[index]?.template?.senderName?.message : undefined}
                   disabled={readonly}
                   value={field.value}
@@ -76,6 +81,7 @@ export const EmailInboxContent = ({
                 return (
                   <Input
                     {...field}
+                    label="Subject"
                     required
                     error={errors?.steps ? errors.steps[index]?.template?.subject?.message : undefined}
                     disabled={readonly}
@@ -97,6 +103,7 @@ export const EmailInboxContent = ({
               return (
                 <Input
                   {...field}
+                  label="Preheader"
                   error={fieldState.error?.message}
                   disabled={readonly}
                   value={field.value}
@@ -106,17 +113,6 @@ export const EmailInboxContent = ({
               );
             }}
           />
-        </Grid.Col>
-        <Grid.Col
-          span={1}
-          style={{
-            color: colors.B60,
-            fontWeight: 'normal',
-            alignSelf: 'center',
-            justifyContent: 'stretch',
-          }}
-        >
-          {format(new Date(), 'MMM dd')}
         </Grid.Col>
       </Grid>
       <Controller
