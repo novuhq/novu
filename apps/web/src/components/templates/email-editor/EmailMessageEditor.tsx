@@ -12,6 +12,7 @@ import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
 import type { IForm, IStepEntity, ITemplates } from '../formTypes';
+import { ROUTES } from '../../../constants/routes.enum';
 
 interface IStepEntityExtended extends IStepEntity {
   template: ITemplates & {

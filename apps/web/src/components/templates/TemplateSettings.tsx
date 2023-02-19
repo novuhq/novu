@@ -13,6 +13,7 @@ import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { useEnvController } from '../../store/useEnvController';
 import { useTemplateEditor } from './TemplateEditorProvider';
 import { deleteTemplateById } from '../../api/notification-templates';
+import { ROUTES } from '../../constants/routes.enum';
 
 export const TemplateSettings = ({ activePage, setActivePage, templateId }) => {
   const { colorScheme } = useMantineColorScheme();
@@ -30,7 +31,7 @@ export const TemplateSettings = ({ activePage, setActivePage, templateId }) => {
       await deleteTemplateById(templateId);
       setIsDeleting(false);
       setToDelete(false);
-      navigate('/templates');
+      navigate(ROUTES.TEMPLATES);
     } catch (e: any) {
       setIsDeleting(false);
       setIsError(e?.message || 'Unknown error');
