@@ -115,10 +115,11 @@ export function NotificationListItem({
 
   const { classes } = useDropdownStyles({ novuTheme });
 
-  const overrideClasses: Record<'dropdown' | 'arrow' | 'item', string> = {
+  const overrideClasses: Record<'dropdown' | 'arrow' | 'item' | 'itemIcon', string> = {
     arrow: cx(classes.arrow, css(menuArrowStyles)),
     dropdown: cx(classes.dropdown, css(menuDropdownStyles)),
     item: cx(classes.item, css(menuItemStyles)),
+    itemIcon: classes.itemIcon,
   };
 
   function handleNotificationClick() {
@@ -448,5 +449,6 @@ const useDropdownStyles = createStyles((theme: MantineTheme, { novuTheme }: { no
       backgroundColor: novuTheme.actionsMenu?.dropdownColor,
       borderColor: novuTheme.actionsMenu?.dropdownColor,
     },
+    itemIcon: { width: '20px', height: '20px' },
   };
 });
