@@ -207,15 +207,18 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
 ];
 
 export enum OnBoardingAnalyticsEnum {
-  FRAMEWORK_SETUP_VISIT = '<FRAMEWORK> Setup Page Visit',
+  FRAMEWORK_SETUP_VISIT = 'In app frameworks select',
   FRAMEWORKS_SETUP_VISIT = 'Framework Setup Page Visit',
-  OTHER_CHANNELS_VISIT = 'Other Channels Page Visit',
-  NOTIFICATION_CENTER_SETUP_VISIT = 'Notification Center Setup Page Visit',
+  FLOW_SELECTED = 'Quick Start Flow Select',
   QUICK_START_VISIT = 'Quick Start Page Visit',
   TRIGGER_VISIT = 'Trigger Page Visit',
   CLICKED_FAQ = 'Clicked On FAQ',
   CLICKED_CREATE_TEMPLATE = 'Clicked On Create Template',
   CLICKED_TRIGGER_EVENT = 'Clicked On Trigger Event',
-  EXCEPTION = 'Exception was thrown',
-  COPIED_STEP = 'Copied Step <STEP>',
+  COPIED_STEP = 'Copied Snippet',
+}
+
+export enum FlowTypeEnum {
+  IN_APP = 'in_app',
+  OTHER = 'other',
 }

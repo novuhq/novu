@@ -8,6 +8,7 @@ import { notificationTemplateName, OnBoardingAnalyticsEnum, onBoardingSubscriber
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { testTrigger } from '../../../api/notification-templates';
 import { useSegment } from '../../../hooks/useSegment';
+import * as Sentry from '@sentry/react';
 
 export function TestNotificationTrigger() {
   const [loader, setLoader] = useState<boolean>(false);
@@ -44,7 +45,7 @@ export function TestNotificationTrigger() {
       successMessage('Template triggered successfully');
       showTemplateCreation();
     } catch (e: any) {
-      segment.track(OnBoardingAnalyticsEnum.EXCEPTION, e.message || e);
+      Sentry.captureException(e);
       errorMessage(e.message || 'Un-expected error occurred');
     }
   };

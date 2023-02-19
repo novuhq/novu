@@ -47,9 +47,7 @@ export function Setup() {
   >(createTemplate);
 
   useEffect(() => {
-    segment.track(
-      OnBoardingAnalyticsEnum.FRAMEWORK_SETUP_VISIT.replace('<FRAMEWORK>', capitalizeFirstLetter(framework))
-    );
+    segment.track(OnBoardingAnalyticsEnum.FRAMEWORK_SETUP_VISIT, { framework });
   }, []);
 
   useEffect(() => {
@@ -92,8 +90,8 @@ export function Setup() {
   }
 
   function handleOnCopy(copiedStepIndex: number) {
-    const step = (copiedStepIndex + 1).toString();
-    segment.track(OnBoardingAnalyticsEnum.COPIED_STEP.replace('<STEP>', step));
+    const stepNumber = (copiedStepIndex + 1).toString();
+    segment.track(OnBoardingAnalyticsEnum.COPIED_STEP, { step: stepNumber });
   }
 
   return (
@@ -161,8 +159,4 @@ interface IGetInAppActivatedResponse {
 
 function stopIfInAppActive(data) {
   return data?.active ? false : 3000;
-}
-
-function capitalizeFirstLetter(string) {
-  return string.charAt(0).toUpperCase() + string.slice(1);
 }

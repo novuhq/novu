@@ -11,7 +11,7 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import { updateUserOnBoarding } from '../../../api/user';
 import { OnboardingSteps } from '../components/OnboardingSteps';
 import { useSegment } from '../../../hooks/useSegment';
-import { OnBoardingAnalyticsEnum } from '../consts';
+import { FlowTypeEnum, OnBoardingAnalyticsEnum } from '../consts';
 
 export function GeneralStarter() {
   const segment = useSegment();
@@ -19,7 +19,7 @@ export function GeneralStarter() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    segment.track(OnBoardingAnalyticsEnum.OTHER_CHANNELS_VISIT);
+    segment.track(OnBoardingAnalyticsEnum.FLOW_SELECTED, { flow: FlowTypeEnum.OTHER });
   }, []);
 
   const { mutateAsync: updateOnBoardingStatus } = useMutation<
