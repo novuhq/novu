@@ -31,7 +31,9 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
 import { CalculateLimitNovuIntegration } from './usecases/calculate-limit-novu-integration';
-import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit-novu-integration/calculate-limit-novu-integration.command';
+import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit-novu-integration';
+import { GetInAppActivatedCommand } from './usecases/get-In-app-activated/get-In-app-activated.command';
+import { GetInAppActivated } from './usecases/get-In-app-activated/get-In-app-activated.usecase';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -39,6 +41,7 @@ import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit
 @ApiTags('Integrations')
 export class IntegrationsController {
   constructor(
+    private getInAppActivatedUsecase: GetInAppActivated,
     private getIntegrationsUsecase: GetIntegrations,
     private getActiveIntegrationsUsecase: GetActiveIntegrations,
     private getWebhookSupportStatusUsecase: GetWebhookSupportStatus,
@@ -194,5 +197,15 @@ export class IntegrationsController {
     }
 
     return result;
+  }
+
+  @Get('/in-app/status')
+  async getInAppActivated(@UserSession() user: IJwtPayload) {
+    return await this.getInAppActivatedUsecase.execute(
+      GetInAppActivatedCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+      })
+    );
   }
 }

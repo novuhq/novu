@@ -12,6 +12,7 @@ import {
   sesConfig,
   outlook365Config,
   infobipEmailConfig,
+  resendConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { EmailProviderIdEnum } from '../provider.enum';
@@ -114,5 +115,13 @@ export const emailProviders: IProviderConfig[] = [
     credentials: infobipEmailConfig,
     docReference: 'https://www.infobip.com/docs',
     logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
+  },
+  {
+    id: EmailProviderIdEnum.Resend,
+    displayName: 'Resend',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: resendConfig,
+    docReference: 'https://resend.com/docs',
+    logoFileName: { light: 'resend.svg', dark: 'resend.svg' },
   },
 ];

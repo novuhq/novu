@@ -114,6 +114,11 @@ export class AuthController {
       url += `&configurationId=${configurationId}`;
     }
 
+    const invitationToken = JSON.parse(request.query.state).invitationToken;
+    if (invitationToken) {
+      url += `&invitationToken=${invitationToken}`;
+    }
+
     return response.redirect(url);
   }
 

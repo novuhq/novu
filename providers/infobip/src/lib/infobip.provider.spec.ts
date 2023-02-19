@@ -64,7 +64,7 @@ test('should trigger infobip library correctly - E-mail', async () => {
     });
 
   await provider.sendMessage({
-    to: 'example@example.org',
+    to: ['example@example.org'],
     from: 'example@example.org',
     subject: 'Hello World Test',
     text: 'Plain text',
@@ -73,7 +73,7 @@ test('should trigger infobip library correctly - E-mail', async () => {
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
-    to: 'example@example.org',
+    to: ['example@example.org'],
     from: 'example@example.org',
     subject: 'Hello World Test',
     text: 'Plain text',

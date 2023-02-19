@@ -5,9 +5,8 @@ import { TemplatesSideBar } from '../../components/templates/TemplatesSideBar';
 import { colors } from '../../design-system';
 import { TemplatePreference } from '../../components/templates/notification-setting-form/TemplatePreference';
 import { useTemplateEditor } from '../../components/templates/TemplateEditorProvider';
-import { useTemplateFetcher } from '../../components/templates/useTemplateFetcher';
 
-export function UserPreference({ activePage, setActivePage, showErrors, templateId }) {
+export function UserPreference({ activePage, setActivePage }) {
   const { colorScheme } = useMantineColorScheme();
   const { template, trigger } = useTemplateEditor();
 
@@ -20,7 +19,6 @@ export function UserPreference({ activePage, setActivePage, showErrors, template
               activeTab={activePage}
               changeTab={setActivePage}
               showTriggerSection={!!template && !!trigger}
-              showErrors={showErrors}
             />
           </SideBarWrapper>
         </Grid.Col>

@@ -33,6 +33,7 @@ export class CreateMessageTemplate {
       _environmentId: command.environmentId,
       _creatorId: command.userId,
       preheader: command.preheader,
+      senderName: command.senderName,
       actor: command.actor,
     });
 

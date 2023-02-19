@@ -1,8 +1,8 @@
-import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
+import { Inject, Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
+import { IntegrationEntity, IntegrationRepository, MemberRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
-import { IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
+import { AnalyticsService, IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
 
 import { WebhookCommand } from './webhook.command';
 
@@ -20,7 +20,9 @@ export class Webhook {
   constructor(
     private createExecutionDetails: CreateExecutionDetails,
     private integrationRepository: IntegrationRepository,
-    private messageRepository: MessageRepository
+    private memberRepository: MemberRepository,
+    private messageRepository: MessageRepository,
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: WebhookCommand): Promise<IWebhookResult[]> {
@@ -34,6 +36,17 @@ export class Webhook {
       channel,
     });
 
+    const member = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
+
+    if (member) {
+      this.analyticsService.track('[Webhook] - Provider Webhook called', member._userId, {
+        _organization: command.organizationId,
+        _environmentId: command.environmentId,
+        providerId,
+        channel,
+      });
+    }
+
     if (!integration) {
       throw new NotFoundException(`Integration for ${providerId} was not found`);
     }
@@ -44,7 +57,19 @@ export class Webhook {
       throw new NotFoundException(`Provider with ${providerId} can not handle webhooks`);
     }
 
-    return await this.parseEvents(command, channel);
+    const events = await this.parseEvents(command, channel);
+
+    if (member) {
+      this.analyticsService.track('[Webhook] - Provider Webhook events parsed', member._userId, {
+        _organization: command.organizationId,
+        _environmentId: command.environmentId,
+        providerId,
+        channel,
+        events,
+      });
+    }
+
+    return events;
   }
 
   private async parseEvents(command: WebhookCommand, channel: ChannelTypeEnum): Promise<IWebhookResult[]> {

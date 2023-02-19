@@ -5,11 +5,11 @@ import * as Sentry from '@sentry/react';
 import { INotificationTrigger, IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, Title, Modal } from '../../design-system';
 import { inputStyles } from '../../design-system/config/inputs.styles';
-import { testTrigger } from '../../api/templates';
 import { useContext, useState } from 'react';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { AuthContext } from '../../store/authContext';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
+import { testTrigger } from '../../api/notification-templates';
 
 const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
   const subsVars = getSubscriberValue(
@@ -24,6 +24,10 @@ const makeToValue = (subscriberVariables: INotificationTriggerVariable[], curren
 const makePayloadValue = (variables: INotificationTriggerVariable[]) => {
   return JSON.stringify(getPayloadValue(variables), null, 2);
 };
+
+function subscriberExist(subscriberVariables: INotificationTriggerVariable[]) {
+  return subscriberVariables?.some((variable) => variable.name === 'subscriberId');
+}
 
 export function TestWorkflowModal({
   isVisible,
@@ -41,10 +45,13 @@ export function TestWorkflowModal({
   const { currentUser } = useContext(AuthContext);
   const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
 
-  const subscriberVariables = useMemo(
-    () => [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])],
-    [trigger]
-  );
+  const subscriberVariables = useMemo(() => {
+    if (trigger?.subscriberVariables && subscriberExist(trigger?.subscriberVariables)) {
+      return [...(trigger?.subscriberVariables || [])];
+    }
+
+    return [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
+  }, [trigger]);
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
 
   const overridesTrigger = `{\n\n}`;
@@ -122,7 +129,6 @@ export function TestWorkflowModal({
         minRows={3}
         validationError="Invalid JSON"
       />
-
       <div style={{ alignItems: 'end' }}>
         <Button data-test-id="test-trigger-btn" mt={30} inherit onClick={() => onTrigger()}>
           Trigger
