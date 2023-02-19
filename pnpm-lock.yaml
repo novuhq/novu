@@ -1175,7 +1175,7 @@ importers:
       googleapis: ^60.0.1
       intercom-client: ^2.11.0
       jsonfile: ^6.0.1
-      mongoose: 6.9.1
+      mongoose: 6.9.2
       mongoose-delete: ^0.5.4
       ng-intercom: ^8.0.2
       nodemon: ^2.0.3
@@ -1210,8 +1210,8 @@ importers:
       googleapis: 60.0.1
       intercom-client: 2.11.2
       jsonfile: 6.1.0
-      mongoose: 6.9.1
-      mongoose-delete: 0.5.4_mongoose@6.9.1
+      mongoose: 6.9.2
+      mongoose-delete: 0.5.4_mongoose@6.9.2
       ng-intercom: 8.0.2
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
@@ -1355,7 +1355,7 @@ importers:
       event-stream: ^4.0.1
       fs-extra: ^9.0.0
       jsonfile: ^6.0.1
-      mongoose: 6.9.1
+      mongoose: 6.9.2
       ng-intercom: ^8.0.2
       nodemon: ^2.0.3
       reflect-metadata: ^0.1.13
@@ -1381,7 +1381,7 @@ importers:
       event-stream: 4.0.1
       fs-extra: 9.1.0
       jsonfile: 6.1.0
-      mongoose: 6.9.1
+      mongoose: 6.9.2
       ng-intercom: 8.0.2
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
@@ -28867,7 +28867,7 @@ packages:
   /@types/whatwg-url/8.2.1:
     resolution: {integrity: sha512-2YubE1sjj5ifxievI5Ge1sckb9k/Er66HyR2c+3+I6VDUUg1TLPdYYTEbQ+DjRkS4nTxMJhgWfSfMRD2sl2EYQ==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       '@types/webidl-conversions': 6.1.1
     dev: false
 
@@ -29939,7 +29939,7 @@ packages:
   /@wry/context/0.4.4:
     resolution: {integrity: sha512-LrKVLove/zw6h2Md/KZyWxIkFM6AoyKp71OqpH9Hiip1csjPVoD3tPxlbQUNxEnHENks3UGgNpSBCAfq9KWuag==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       tslib: 1.14.1
     dev: true
 
@@ -46950,16 +46950,16 @@ packages:
       saslprep: 1.0.3
     dev: false
 
-  /mongoose-delete/0.5.4_mongoose@6.9.1:
+  /mongoose-delete/0.5.4_mongoose@6.9.2:
     resolution: {integrity: sha512-zKkcWFEwTneVG4Oiy+qJRJPFCiGlqOJToHeU3a3meJybWsHCnWxdHkGEkFWNY5cmYEv5av3WwByOhPlQ6I+FmQ==}
     peerDependencies:
       mongoose: 4.x || 5.x || 6.x
     dependencies:
-      mongoose: 6.9.1
+      mongoose: 6.9.2
     dev: false
 
-  /mongoose/6.9.1:
-    resolution: {integrity: sha512-hOz1ZWV0w6WEVLrj89Wpk7PXDYtDDF6k7/NX79lY5iKqeFtZsceBXW8xW59YFNcW5O3cH32hQ8IbDlhgyBsDMA==}
+  /mongoose/6.9.2:
+    resolution: {integrity: sha512-Yb9rWJhYm+7Yf839QuKx2dXcclbA0GAMxtdDiaedHsOQU+y28cD/8gKYp1wTwwyAjKesqaGfLG4ez7D9lKpwBw==}
     engines: {node: '>=12.0.0'}
     dependencies:
       bson: 4.7.2
