@@ -109,7 +109,13 @@ export function Faq() {
       }}
     >
       <span style={{ color: colors.B60 }}>Got stuck? </span>
-      <a href={faqUrl} style={{ marginLeft: '5px', color: '#DD2476' }} onClick={() => handleOnClick} target="_blank">
+      <a
+        href={faqUrl}
+        style={{ marginLeft: '5px', color: '#DD2476' }}
+        onClick={() => handleOnClick}
+        target="_blank"
+        rel="noreferrer"
+      >
         Check our FAQ’s
       </a>
     </Center>
