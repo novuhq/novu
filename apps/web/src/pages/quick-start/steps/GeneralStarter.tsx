@@ -11,6 +11,7 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import { updateUserOnBoarding } from '../../../api/user';
 import { OnboardingSteps } from '../components/OnboardingSteps';
 import { useSegment } from '../../../hooks/useSegment';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function GeneralStarter() {
   const segment = useSegment();
@@ -34,7 +35,7 @@ export function GeneralStarter() {
   async function onDismissOnboarding() {
     await disableOnboarding();
     await queryClient.refetchQueries(['/v1/users/me']);
-    navigate('/templates');
+    navigate(ROUTES.TEMPLATES);
   }
 
   return (

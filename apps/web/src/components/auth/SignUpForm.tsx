@@ -17,6 +17,7 @@ import { useAcceptInvite } from './useAcceptInvite';
 import { useVercelParams } from '../../hooks/useVercelParams';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
+import { ROUTES } from '../../constants/routes.enum';
 
 type SignUpFormProps = {
   invitationToken?: string;
@@ -36,7 +37,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : '/auth/login';
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : ROUTES.AUTH_LOGIN;
   const githubLink = isFromVercel
     ? buildVercelGithubLink({ code, next, configurationId })
     : buildGithubLink({ invitationToken });
@@ -85,7 +86,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       setToken(token);
     }
 
-    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : '/auth/application');
+    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : ROUTES.AUTH_APPLICATION);
 
     return true;
   };

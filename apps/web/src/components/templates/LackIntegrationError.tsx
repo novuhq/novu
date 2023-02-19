@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { Text } from '../../design-system';
 import { DoubleArrowRight } from '../../design-system/icons/arrows/CircleArrowRight';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../constants/routes.enum';
 
 export function LackIntegrationError({ channelType, text }: { channelType: string; text?: string }) {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ export function LackIntegrationError({ channelType, text }: { channelType: strin
             ? text
             : `Looks like you haven’t configured your ${channelType} provider yet, this channel will be disabled until you configure it.`}
         </Text>
-        <DoubleArrowRight onClick={() => navigate('/integrations')} />
+        <DoubleArrowRight onClick={() => navigate(ROUTES.INTEGRATIONS)} />
       </WarningMessage>
     </>
   );

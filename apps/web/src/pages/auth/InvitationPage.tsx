@@ -12,6 +12,7 @@ import { colors, Text, Button } from '../../design-system';
 import { AuthContext } from '../../store/authContext';
 import { useAcceptInvite } from '../../components/auth/useAcceptInvite';
 import { LoginForm } from '../../components/auth/LoginForm';
+import { ROUTES } from '../../constants/routes.enum';
 
 export default function InvitationPage() {
   const queryClient = useQueryClient();

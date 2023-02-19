@@ -26,6 +26,7 @@ import { BlueprintModal } from '../../../components/templates/BlueprintModal';
 import { useTemplateEditor } from '../../../components/templates/TemplateEditorProvider';
 import { errorMessage } from '../../../utils/notifications';
 import { getExplicitErrors } from '../shared/errors';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -78,7 +79,7 @@ export default function TemplateEditorPage() {
     handleSubmit,
   } = methods;
 
-  const isCreateTemplatePage = location.pathname === '/templates/create';
+  const isCreateTemplatePage = location.pathname === ROUTES.TEMPLATES_CREATE;
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
 
   const onInvalid = async (errors: FieldErrors<IForm>) => {
@@ -137,14 +138,14 @@ export default function TemplateEditorPage() {
         if (template._parentId) {
           navigate(`/templates/edit/${template._parentId}`);
         } else {
-          navigate('/templates');
+          navigate(ROUTES.TEMPLATES);
         }
       }
     }
   }, [environment, template]);
 
   if (environment && environment?.name === 'Production' && isCreateTemplatePage) {
-    navigate('/templates');
+    navigate(ROUTES.TEMPLATES);
   }
 
   if (isCreating) return null;
