@@ -5,7 +5,7 @@ export function addAndEditChannel(channel: Channel) {
   clickWorkflow();
 
   dragAndDrop(channel);
-  editChannel(channel);
+  editChannel(channel, true);
 }
 
 export function dragAndDrop(channel: Channel, dropTestId = 'addNodeButton') {

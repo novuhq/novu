@@ -48,7 +48,7 @@ export function QuickstartDescription() {
 export function OtherChannelsDescription() {
   return (
     <>
-      <Stack align="center" style={{ gap: '3.5px' }}>
+      <Stack align="center" style={{ gap: '3.5px' }} data-test-id={'other-channels-button'}>
         <Text size="lg" weight="bold">
           Other Channels
         </Text>

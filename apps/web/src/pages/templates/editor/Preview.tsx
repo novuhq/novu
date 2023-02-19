@@ -5,7 +5,6 @@ import { useMutation } from '@tanstack/react-query';
 import type { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 
 import { previewEmail } from '../../../api/content-templates';
-import { useActiveIntegrations } from '../../../api/hooks';
 import { When } from '../../../components/utils/When';
 import { Button, colors } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
@@ -13,6 +12,7 @@ import { useProcessVariables } from '../../../hooks/useProcessVariables';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 import { errorMessage } from '../../../utils/notifications';
+import { useActiveIntegrations } from '../../../api/hooks';
 
 export const Preview = ({ activeStep, view }: { activeStep: number; view: string }) => {
   const { control } = useFormContext();

@@ -10,6 +10,7 @@ import { api } from '../../api/api.client';
 import { AuthContext } from '../../store/authContext';
 import { useVercelIntegration } from '../../api/hooks/useVercelIntegration';
 import { useVercelParams } from '../../hooks/useVercelParams';
+import { ROUTES } from '../../constants/routes.enum';
 
 type Props = {};
 
@@ -52,7 +53,7 @@ export function CreateOrganization({}: Props) {
 
           return;
         }
-        navigate('/');
+        navigate(ROUTES.HOME);
       }
     }
   }, []);
@@ -93,7 +94,7 @@ export function CreateOrganization({}: Props) {
 
       return;
     }
-    navigate('/quickstart');
+    navigate(ROUTES.QUICKSTART);
   };
 
   return (

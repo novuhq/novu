@@ -14,6 +14,7 @@ import { IS_DOCKER_HOSTED } from '../../config';
 import { useVercelParams } from '../../hooks/useVercelParams';
 import { useAcceptInvite } from './useAcceptInvite';
 import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
+import { ROUTES } from '../../constants/routes.enum';
 
 type LoginFormProps = {
   invitationToken?: string;
@@ -35,8 +36,8 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
 
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
-  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : '/auth/reset/request';
+  const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : ROUTES.AUTH_SIGNUP;
+  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : ROUTES.AUTH_RESET_REQUEST;
   const githubLink = isFromVercel
     ? buildVercelGithubLink({ code, next, configurationId })
     : buildGithubLink({ invitationToken });
@@ -74,7 +75,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       }
 
       setToken(token);
-      navigate('/templates');
+      navigate(ROUTES.TEMPLATES);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);

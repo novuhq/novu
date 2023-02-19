@@ -13,6 +13,7 @@ import { useVercelParams } from '../../hooks/useVercelParams';
 import { useSegment } from '../../hooks/useSegment';
 import { useAcceptInvite } from '../../components/auth/useAcceptInvite';
 import { useBlueprint } from '../../hooks/useBlueprint';
+import { ROUTES } from '../../constants/routes.enum';
 
 export default function LoginPage() {
   useBlueprint();
@@ -35,7 +36,9 @@ export default function LoginPage() {
       const user = jwtDecode<IJwtPayload>(token);
 
       if (!invitationToken && (!user.organizationId || !user.environmentId)) {
-        const authApplicationLink = isFromVercel ? `/auth/application?code=${code}&next=${next}` : '/auth/application';
+        const authApplicationLink = isFromVercel
+          ? `${ROUTES.AUTH_APPLICATION}?code=${code}&next=${next}`
+          : ROUTES.AUTH_APPLICATION;
         setToken(token);
         navigate(authApplicationLink);
 
@@ -55,7 +58,7 @@ export default function LoginPage() {
           source: 'cli',
         });
         setToken(token);
-        navigate('/quickstart');
+        navigate(ROUTES.QUICKSTART);
 
         return;
       }
