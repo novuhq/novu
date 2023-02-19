@@ -20,7 +20,8 @@
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
-    "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts"
+    "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts",
+    "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/normalize-users-email/normalize-users-email.migration.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.234.0",
@@ -28,7 +29,7 @@
     "@azure/storage-blob": "^12.11.0",
     "@godaddy/terminus": "^4.10.2",
     "@google-cloud/storage": "^6.2.3",
-    "@nestjs/axios": "0.1.1",
+    "@nestjs/axios": "~2.0.0",
     "@nestjs/common": "9.0.2",
     "@nestjs/core": "9.0.2",
     "@nestjs/graphql": "10.2.0",
@@ -62,6 +63,7 @@
     "@novu/postmark": "^0.11.0",
     "@novu/sendgrid": "^0.11.0",
     "@novu/sendinblue": "^0.11.0",
+    "@novu/resend": "^0.11.0",
     "@novu/ses": "^0.11.0",
     "@novu/shared": "^0.11.0",
     "@novu/slack": "^0.11.0",
@@ -78,7 +80,7 @@
     "@sentry/tracing": "^7.12.1",
     "@types/handlebars": "^4.1.0",
     "agenda": "^4.2.1",
-    "axios": "^0.24.0",
+    "axios": "^1.3.3",
     "bcrypt": "^5.0.0",
     "body-parser": "^1.20.0",
     "bull": "^4.2.1",
@@ -104,6 +106,7 @@
     "passport-jwt": "^4.0.0",
     "passport-oauth2": "^1.6.1",
     "recursive-diff": "^1.0.8",
+    "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.5.5",

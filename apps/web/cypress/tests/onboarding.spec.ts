@@ -32,6 +32,7 @@ describe('Getting Started Screen', function () {
   it('should dismiss on-boarding', function () {
     cy.visit('/');
     cy.getByTestId('side-nav-quickstart-link').click({ force: true });
+    cy.getByTestId('other-channels-button').click();
     cy.getByTestId('dismiss-onboarding-btn').click({ force: true });
 
     cy.location('pathname').should('equal', '/templates');

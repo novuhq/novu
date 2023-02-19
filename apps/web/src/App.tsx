@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
-import { Route, Routes, Navigate, BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter, useLocation } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
@@ -12,7 +12,7 @@ import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import HomePage from './pages/HomePage';
-import TemplateEditorPage, { ActivePageEnum } from './pages/templates/editor/TemplateEditorPage';
+import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
@@ -27,7 +27,6 @@ import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
-import QuickStartPage from './pages/quick-start/QuickStartPage';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
 import { SpotLight } from './components/utils/Spotlight';
@@ -39,6 +38,13 @@ import { SegmentProvider } from './store/segment.context';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import packageJson from '../package.json';
+import { GeneralStarter } from './pages/quick-start/steps/GeneralStarter';
+import { QuickStartWrapper } from './pages/quick-start/components/QuickStartWrapper';
+import { Quickstart } from './pages/quick-start/steps/Quickstart';
+import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
+import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
+import { Setup } from './pages/quick-start/steps/Setup';
+import { Trigger } from './pages/quick-start/steps/Trigger';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -83,7 +89,7 @@ if (SENTRY_DSN) {
      * This sets the sample rate to be 10%. You may want this to be 100% while
      * in development and sample at a lower rate in production
      */
-    replaysSessionSampleRate: 0.1,
+    replaysSessionSampleRate: 0.5,
 
     /*
      * If the entire session is not sampled, use the below sample rate to sample
@@ -223,11 +229,63 @@ function App() {
                         }
                       />
                       <Route
+                        path="/general-started"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <QuickStartWrapper>
+                                <GeneralStarter />
+                              </QuickStartWrapper>
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
                         path="/quickstart"
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartPage />
+                              <Quickstart />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <NotificationCenter />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/set-up"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <FrameworkSetup />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/set-up/:framework"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <Setup />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/trigger"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <Trigger />
                             </SpotLight>
                           </RequiredAuth>
                         }

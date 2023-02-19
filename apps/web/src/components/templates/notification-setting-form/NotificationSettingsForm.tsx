@@ -1,16 +1,16 @@
 import { useEffect } from 'react';
 import { ActionIcon, Grid } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useFormContext } from 'react-hook-form';
 import { INotificationTrigger } from '@novu/shared';
 
-import { getNotificationGroups } from '../../../api/notifications';
 import { api } from '../../../api/api.client';
 import { Input, Select, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/useEnvController';
 import type { IForm } from '../formTypes';
+import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
 
 export const NotificationSettingsForm = ({
   editMode,
@@ -29,7 +29,7 @@ export const NotificationSettingsForm = ({
     getValues,
   } = useFormContext<IForm>();
 
-  const { data: groups, isLoading: loadingGroups } = useQuery(['notificationGroups'], getNotificationGroups);
+  const { groups, loading: loadingGroups } = useNotificationGroup();
   const { isLoading: loadingCreateGroup, mutateAsync: createNotificationGroup } = useMutation<
     { name: string; _id: string },
     { error: string; message: string; statusCode: number },

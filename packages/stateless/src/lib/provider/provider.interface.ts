@@ -10,7 +10,7 @@ export interface IProvider {
 }
 
 export interface IEmailOptions {
-  to: string | string[];
+  to: string[];
   subject: string;
   html: string;
   from?: string;
@@ -18,6 +18,8 @@ export interface IEmailOptions {
   attachments?: IAttachmentOptions[];
   id?: string;
   replyTo?: string;
+  cc?: string[];
+  bcc?: string[];
 }
 
 export interface ISmsOptions {

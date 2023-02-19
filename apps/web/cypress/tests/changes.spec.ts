@@ -111,4 +111,5 @@ function createNotification() {
 function promoteNotification() {
   cy.visit('/changes');
   cy.getByTestId('promote-btn').eq(0).click({ force: true });
+  cy.waitForNetworkIdle(500);
 }

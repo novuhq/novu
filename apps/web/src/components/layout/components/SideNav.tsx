@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Navbar,
   Popover,
@@ -20,6 +20,7 @@ import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
 import { LimitBar } from '../../../pages/integrations/components/LimitBar';
+import { localNavigate } from '../../../pages/quick-start/components/route/store';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -70,11 +71,13 @@ export function SideNav({}: Props) {
     ]);
   }, [environment]);
 
+  const lastRoute = localNavigate().peek();
+
   const menuItems = [
     {
       condition: !readonly && currentUser?.showOnBoarding,
       icon: <CheckCircleOutlined />,
-      link: '/quickstart',
+      link: lastRoute ?? '/quickstart',
       label: 'Getting Started',
       testId: 'side-nav-quickstart-link',
     },
