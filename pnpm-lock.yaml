@@ -208,7 +208,7 @@ importers:
       '@novu/testing': ^0.11.0
       '@novu/twilio': ^0.11.0
       '@sendgrid/mail': ^7.6.0
-      '@sentry/hub': 7.37.1
+      '@sentry/hub': 7.37.2
       '@sentry/node': ^7.12.1
       '@sentry/tracing': ^7.12.1
       '@types/bcrypt': ^3.0.0
@@ -319,7 +319,7 @@ importers:
       '@novu/testing': link:../../libs/testing
       '@novu/twilio': link:../../providers/twilio
       '@sendgrid/mail': 7.6.2
-      '@sentry/hub': 7.37.1
+      '@sentry/hub': 7.37.2
       '@sentry/node': 7.12.1
       '@sentry/tracing': 7.12.1
       '@types/handlebars': 4.1.0
@@ -343,7 +343,7 @@ importers:
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       nanoid: 3.3.2
-      nest-raven: 8.2.0_2bov3fekvkhjny3mycsl7zfu4y
+      nest-raven: 8.2.0_3fnxgxgp6goaiahx6kwxdkixgq
       newrelic: 9.10.0
       passport: 0.6.0
       passport-github2: 0.1.12
@@ -441,7 +441,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.15
       prettier: 2.7.1
-      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
+      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -22499,6 +22499,15 @@ packages:
       tslib: 1.14.1
     dev: false
 
+  /@sentry/core/7.37.2:
+    resolution: {integrity: sha512-LjofMDSTyVeBErl9N7TTqlyEVuW1g6U4iuJtdZ75JohnvVxzWdpZfWfddwQ6h7nGWfe9dNg0fGs1wxKtMhY+MA==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/types': 7.37.2
+      '@sentry/utils': 7.37.2
+      tslib: 1.14.1
+    dev: false
+
   /@sentry/hub/6.19.3:
     resolution: {integrity: sha512-iYbkrxEZt6CrHP3U3r54MARVZSs3YHjAMUMOTlC16s/Amz1McwV95XtI3NJaqMhwzl7R5vbGrs3xOtLg1V1Uyw==}
     engines: {node: '>=6'}
@@ -22517,13 +22526,13 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@sentry/hub/7.37.1:
-    resolution: {integrity: sha512-l0JVIAXngLd7LiNgBiasuK9YtTw5SvaOsedyLqNlb6dYFHfJTHZggVzQtu+F4oSzCBE4ld4DHJCCzQUQFEjIrw==}
+  /@sentry/hub/7.37.2:
+    resolution: {integrity: sha512-DxZCMTAVnoliJ+18OeocWUIBuzlVNIZI0hOvugaIxEf5sGPrC2HEfq6vyhJyHz2oNc68xs/f9k0maOgGpWUqmg==}
     engines: {node: '>=8'}
     dependencies:
-      '@sentry/core': 7.37.1
-      '@sentry/types': 7.37.1
-      '@sentry/utils': 7.37.1
+      '@sentry/core': 7.37.2
+      '@sentry/types': 7.37.2
+      '@sentry/utils': 7.37.2
       tslib: 1.14.1
     dev: false
 
@@ -22646,6 +22655,11 @@ packages:
     engines: {node: '>=8'}
     dev: false
 
+  /@sentry/types/7.37.2:
+    resolution: {integrity: sha512-SxKQOCX94ZaQM4C2ysNjHdJsjYapu/NYZCz1cnPyCdDvYfhwiVge1uq6ZHiQ/ARfxAAOmc3R4Mh3VvEz7WUOdw==}
+    engines: {node: '>=8'}
+    dev: false
+
   /@sentry/utils/6.19.3:
     resolution: {integrity: sha512-GdC9B/FK7qd0zItY43135bYbhuVSawE18bIrQDNuno8gTpDJ5OgShpTN9zR53AmMh16/lwKNnV3ZZjlpKcxuNw==}
     engines: {node: '>=6'}
@@ -22675,6 +22689,14 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       '@sentry/types': 7.37.1
+      tslib: 1.14.1
+    dev: false
+
+  /@sentry/utils/7.37.2:
+    resolution: {integrity: sha512-5irN1nN/mtdOoWwsJiwBK0gPgNMkciUubEMbCaaXqJaGyGz8+yfDvXj7L+xGYiU57z+7+QkkSKxKEZ/IcBpjVQ==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@sentry/types': 7.37.2
       tslib: 1.14.1
     dev: false
 
@@ -47304,7 +47326,7 @@ packages:
       - utf-8-validate
     dev: false
 
-  /nest-raven/8.2.0_2bov3fekvkhjny3mycsl7zfu4y:
+  /nest-raven/8.2.0_3fnxgxgp6goaiahx6kwxdkixgq:
     resolution: {integrity: sha512-DGTpdX4Wr9KICtczhy9hLgw+jP0KtmS8ZrAi9U70uMYstTtGPQkCt79cSk71E6lcgwbnNPOPlxPA5UqAupUqQQ==}
     peerDependencies:
       '@nestjs/common': ^8.0.0
@@ -47314,7 +47336,7 @@ packages:
       rxjs: ^7.0.0
     dependencies:
       '@nestjs/common': 9.0.2_mgahpprohdkjk6lephiejykozi
-      '@sentry/hub': 7.37.1
+      '@sentry/hub': 7.37.2
       '@sentry/node': 7.12.1
       reflect-metadata: 0.1.13
       rxjs: 7.5.5
@@ -53750,7 +53772,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.16.1
+      terser: 5.12.1
 
   /rollup-plugin-terser/7.0.2_rollup@3.15.0:
     resolution: {integrity: sha512-w3iIaU4OxcF52UUXiZNsNeuXIMDvFrr+ZXK6bFZ0Q60qyVfq4uLptoS4bbq3paG3x216eQllFZX7zt6TIImguQ==}
@@ -53773,7 +53795,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 3.7.3
       serialize-javascript: 4.0.0
-      terser: 5.16.1
+      terser: 5.12.1
     dev: true
 
   /rollup-plugin-typescript2/0.34.1_xswiuafr57fmdlvfpvse52fe3e:
@@ -56620,7 +56642,6 @@ packages:
       commander: 2.20.3
       source-map: 0.7.4
       source-map-support: 0.5.21
-    dev: true
 
   /terser/5.15.1:
     resolution: {integrity: sha512-K1faMUvpm/FBxjBXud0LWVAGxmvoPbZbfTCYbSgaaYQaIXI3/TdI7a7ZGA73Zrou6Q8Zmz3oeUTsp/dj+ag2Xw==}
@@ -56984,7 +57005,7 @@ packages:
     dependencies:
       tslib: 1.14.1
 
-  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
+  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -57005,6 +57026,7 @@ packages:
       esbuild:
         optional: true
     dependencies:
+      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
