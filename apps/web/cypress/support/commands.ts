@@ -43,10 +43,10 @@ Cypress.Commands.add('waitLoadTemplatePage', (beforeWait: () => void): void => {
 
 Cypress.Commands.add('clickWorkflowNode', (selector: string, last?: boolean) => {
   if (last) {
-    return cy.getByTestId(selector).last().click({ force: true });
+    return cy.awaitAttachedGetByTestId(selector).last().click({ force: true });
   }
 
-  return cy.getByTestId(selector).click({ force: true });
+  return cy.awaitAttachedGetByTestId(selector).first().click({ force: true });
 });
 
 Cypress.Commands.add('awaitAttachedGetByTestId', (selector: string) => {

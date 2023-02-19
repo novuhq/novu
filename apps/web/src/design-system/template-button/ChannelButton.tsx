@@ -122,10 +122,10 @@ export function ChannelButton({
     formState: { errors },
   } = useFormContext();
 
-  let showErrors = initialErrors;
+  let stepErrorContent = initialErrors;
 
   if (typeof index === 'number') {
-    showErrors = getFormattedStepErrors(index, errors);
+    stepErrorContent = getFormattedStepErrors(index, errors);
   }
 
   useEffect(() => {
@@ -246,12 +246,12 @@ export function ChannelButton({
         </ActionWrapper>
       </ButtonWrapper>
 
-      {showErrors && (
+      {stepErrorContent && (
         <Popover
           withinPortal
           classNames={popoverClasses}
           withArrow
-          opened={popoverOpened && Object.keys(showErrors).length > 0}
+          opened={popoverOpened && Object.keys(stepErrorContent).length > 0}
           transition="rotate-left"
           transitionDuration={250}
           offset={theme.spacing.xs}
@@ -264,7 +264,7 @@ export function ChannelButton({
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
           </Popover.Target>
           <Popover.Dropdown>
-            <Text rows={1}>{showErrors || 'Something is missing here'}</Text>
+            <Text rows={1}>{stepErrorContent || 'Something is missing here'}</Text>
           </Popover.Dropdown>
         </Popover>
       )}

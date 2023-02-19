@@ -48,6 +48,8 @@ describe('Workflow Editor - Main Functionality', function () {
 
     addAndEditChannel('inApp');
     cy.getByTestId('notification-template-submit-btn').should('not.be.disabled');
+    goBack();
+    editChannel('inApp');
 
     cy.get('.ace_text-layer').first().contains('Test content for <b>{{firstName}}</b>');
 
@@ -80,8 +82,10 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new', {
       matchCase: false,
     });
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/templates/edit/' + template._id);
+    });
 
-    cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
 
     clickWorkflow();
