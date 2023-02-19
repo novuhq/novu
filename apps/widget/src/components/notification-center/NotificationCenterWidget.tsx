@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import * as WebFont from 'webfontloader';
 import { css, Global } from '@emotion/react';
-import { NotificationCenter, NovuProvider, ITranslationEntry, ITab, IStore } from '@novu/notification-center';
+import {
+  NotificationCenter,
+  NovuProvider,
+  ITranslationEntry,
+  ITab,
+  IStore,
+  useNovuContext,
+} from '@novu/notification-center';
 import type { INovuThemeProvider, INotificationCenterStyles } from '@novu/notification-center';
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
 
@@ -26,6 +33,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [tabs, setTabs] = useState<ITab[]>();
   const [stores, setStores] = useState<IStore[]>();
   const [styles, setStyles] = useState<INotificationCenterStyles>();
+  const [doLogout, setDoLogout] = useState(false);
 
   useEffect(() => {
     WebFont.load({
@@ -38,7 +46,9 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = ({ data }: any) => {
-      if (data && data.type === 'INIT_IFRAME') {
+      if (!data) return;
+
+      if (data.type === 'INIT_IFRAME') {
         setUserDataPayload(data.value.data);
 
         if (data.value.backendUrl) {
@@ -70,6 +80,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
         }
 
         setFrameInitialized(true);
+      }
+
+      if (data.type === 'LOGOUT') {
+        setDoLogout(true);
       }
     };
 
@@ -106,19 +120,41 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           stores={stores}
           styles={styles}
         >
-          <NotificationCenter
-            colorScheme="light"
-            onNotificationClick={props.onNotificationClick}
-            onUrlChange={props.onUrlChange}
-            onUnseenCountChanged={props.onUnseenCountChanged}
-            onActionClick={props.onActionClick}
-            theme={theme}
-            tabs={tabs}
-          />
+          <NovuNotificationCenterWrapper doLogout={doLogout} setDoLogout={setDoLogout}>
+            <NotificationCenter
+              colorScheme="light"
+              onNotificationClick={props.onNotificationClick}
+              onUrlChange={props.onUrlChange}
+              onUnseenCountChanged={props.onUnseenCountChanged}
+              onActionClick={props.onActionClick}
+              theme={theme}
+              tabs={tabs}
+            />
+          </NovuNotificationCenterWrapper>
         </NovuProvider>
       )}
     </>
   );
+}
+
+function NovuNotificationCenterWrapper({
+  children,
+  doLogout,
+  setDoLogout,
+}: {
+  children: ReactNode;
+  doLogout: boolean;
+  setDoLogout: (val: boolean) => void;
+}) {
+  const { logout } = useNovuContext();
+  useEffect(() => {
+    if (doLogout) {
+      logout();
+      setDoLogout(false);
+    }
+  }, [doLogout, setDoLogout]);
+
+  return <>{children}</>;
 }
 
 const globalStyle = (fontFamily: string) => css`

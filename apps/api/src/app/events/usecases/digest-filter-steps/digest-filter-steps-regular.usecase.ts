@@ -48,7 +48,7 @@ export class DigestFilterStepsRegular {
 
     const digestKey = step?.metadata?.digestKey;
     if (digestKey) {
-      where['payload.' + digestKey] = command.payload[digestKey];
+      where['payload.' + digestKey] = DigestFilterSteps.getNestedValue(command.payload, digestKey);
     }
 
     return await this.jobRepository.findOne(where);

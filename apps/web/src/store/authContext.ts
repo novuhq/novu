@@ -6,7 +6,7 @@ export type UserContext = {
   currentUser: IUserEntity | undefined;
   currentOrganization: IOrganizationEntity | undefined;
   organizations: IOrganizationEntity[] | undefined;
-  setToken: (token: string) => void;
+  setToken: (token: string, refetch?: boolean) => void;
   logout: () => void;
   jwtPayload?: IJwtPayload;
 };

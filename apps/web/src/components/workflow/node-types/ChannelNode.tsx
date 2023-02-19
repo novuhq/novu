@@ -34,6 +34,7 @@ export default memo(
           active={selected}
           disabled={!data.active}
           id={id}
+          index={data.index}
           dragging={dragging}
         />
         <Handle type="target" id="b" position={Position.Top} />

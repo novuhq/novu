@@ -6,11 +6,11 @@ import * as Sentry from '@sentry/react';
 import { INotificationTrigger, IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, Title, Modal } from '../../design-system';
 import { inputStyles } from '../../design-system/config/inputs.styles';
-import { testTrigger } from '../../api/templates';
 import { useContext, useState } from 'react';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { AuthContext } from '../../store/authContext';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
+import { testTrigger } from '../../api/notification-templates';
 
 const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
   const subsVars = getSubscriberValue(
@@ -25,6 +25,10 @@ const makeToValue = (subscriberVariables: INotificationTriggerVariable[], curren
 const makePayloadValue = (variables: INotificationTriggerVariable[]) => {
   return JSON.stringify(getPayloadValue(variables), null, 2);
 };
+
+function subscriberExist(subscriberVariables: INotificationTriggerVariable[]) {
+  return subscriberVariables?.some((variable) => variable.name === 'subscriberId');
+}
 
 export function TestWorkflowModal({
   isVisible,
@@ -42,10 +46,13 @@ export function TestWorkflowModal({
   const { currentUser } = useContext(AuthContext);
   const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
 
-  const subscriberVariables = useMemo(
-    () => [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])],
-    [trigger]
-  );
+  const subscriberVariables = useMemo(() => {
+    if (trigger?.subscriberVariables && subscriberExist(trigger?.subscriberVariables)) {
+      return [...(trigger?.subscriberVariables || [])];
+    }
+
+    return [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
+  }, [trigger]);
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
 
   const overridesTrigger = `{\n\n}`;
@@ -107,51 +114,47 @@ export function TestWorkflowModal({
       title={<Title>Test Trigger </Title>}
       data-test-id="test-trigger-modal"
     >
-      <form
-        onSubmit={(e) => {
-          form.onSubmit(onTrigger)(e);
-          e.stopPropagation();
-        }}
-      >
-        <JsonInput
-          data-test-id="test-trigger-to-param"
-          formatOnBlur
-          autosize
-          styles={inputStyles}
-          label="To"
-          {...form.getInputProps('toValue')}
-          minRows={3}
-          mb={15}
-          validationError="Invalid JSON"
-        />
-        <JsonInput
-          data-test-id="test-trigger-payload-param"
-          formatOnBlur
-          autosize
-          styles={inputStyles}
-          label="Payload"
-          {...form.getInputProps('payloadValue')}
-          minRows={3}
-          validationError="Invalid JSON"
-          mb={15}
-        />
-        <JsonInput
-          data-test-id="test-trigger-overrides-param"
-          formatOnBlur
-          autosize
-          styles={inputStyles}
-          label="Overrides (optional)"
-          {...form.getInputProps('overridesValue')}
-          minRows={3}
-          validationError="Invalid JSON"
-        />
+      <JsonInput
+        data-test-id="test-trigger-to-param"
+        formatOnBlur
+        autosize
+        styles={inputStyles}
+        label="To"
+        value={toValue}
+        onChange={setToValue}
+        minRows={3}
+        mb={15}
+        validationError="Invalid JSON"
+      />
+      <JsonInput
+        data-test-id="test-trigger-payload-param"
+        formatOnBlur
+        autosize
+        styles={inputStyles}
+        label="Payload"
+        value={payloadValue}
+        onChange={setPayloadValue}
+        minRows={3}
+        validationError="Invalid JSON"
+        mb={15}
+      />
+      <JsonInput
+        data-test-id="test-trigger-overrides-param"
+        formatOnBlur
+        autosize
+        styles={inputStyles}
+        label="Overrides (optional)"
+        value={overridesValue}
+        onChange={setOverridesValue}
+        minRows={3}
+        validationError="Invalid JSON"
+      />
 
-        <div style={{ alignItems: 'end' }}>
-          <Button data-test-id="test-trigger-btn" mt={30} inherit submit>
-            Trigger
-          </Button>
-        </div>
-      </form>
+      <div style={{ alignItems: 'end' }}>
+        <Button data-test-id="test-trigger-btn" mt={30} inherit onClick={() => onTrigger()}>
+          Trigger
+        </Button>
+      </div>
     </Modal>
   );
 }

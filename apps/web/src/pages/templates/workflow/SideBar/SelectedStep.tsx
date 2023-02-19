@@ -80,16 +80,18 @@ export function SelectedStep({
                 variant="outline"
                 data-test-id="edit-template-channel"
                 fullWidth
-                onClick={() =>
-                  setActivePage(selectedChannel === StepTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel))
-                }
+                onClick={() => {
+                  setActivePage(
+                    selectedChannel === StepTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
+                  );
+                }}
               >
                 {readonly ? 'View' : 'Edit'} Template
               </EditTemplateButton>
               <Divider my={30} />
               {steps.map((i, index) => {
                 return (
-                  <When key={index} truthy={index === activeStep}>
+                  <When key={i._id || i.id} truthy={index === activeStep}>
                     <Stack key={index}>
                       <StepActiveSwitch index={activeStep} control={control} />
                       <ShouldStopOnFailSwitch index={activeStep} control={control} />
@@ -142,7 +144,6 @@ export function SelectedStep({
                   <Close />
                 </ActionIcon>
               </ButtonWrapper>
-
               <Text mr={10} mt={10} size="md" color={colors.B60}>
                 Configure the digest parameters. Read more about the digest engine{' '}
                 <a target={'_blank'} rel="noopener noreferrer" href={'https://docs.novu.co/platform/digest'}>
@@ -155,7 +156,7 @@ export function SelectedStep({
               {steps.map((i, index) => {
                 return index === activeStep ? (
                   <DigestMetadata
-                    key={index}
+                    key={i._id || i.id}
                     control={control}
                     index={index}
                     loading={isLoading || isUpdateLoading}

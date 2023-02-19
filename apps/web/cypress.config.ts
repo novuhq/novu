@@ -41,6 +41,9 @@ export default defineConfig({
   env: {
     NODE_ENV: 'test',
     apiUrl: 'http://localhost:1336',
+    GITHUB_USER_EMAIL: '',
+    GITHUB_USER_PASSWORD: '',
+    IS_CI: false,
     coverage: false,
   },
 
