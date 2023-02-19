@@ -241,7 +241,9 @@ describe('Workflow Editor - Main Functionality', function () {
     fillBasicNotificationDetails('Test show the brand logo on main page');
     addAndEditChannel('email');
 
-    cy.getByTestId('email-editor').getByTestId('brand-logo').should('have.attr', 'src', 'https://novu.co/img/logo.png');
+    cy.getByTestId('email-editor')
+      .getByTestId('brand-logo')
+      .should('have.attr', 'src', 'https://web.novu.co/static/images/logo-light.png');
   });
 
   it('should support RTL text content', function () {

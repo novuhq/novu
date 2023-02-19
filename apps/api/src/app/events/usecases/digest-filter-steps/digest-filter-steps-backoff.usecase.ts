@@ -12,7 +12,7 @@ export class DigestFilterStepsBackoff {
   public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
     const steps = [DigestFilterSteps.createTriggerStep(command)];
     for (const step of command.steps) {
-      if (step?.template?.type !== StepTypeEnum.DIGEST) {
+      if (step.template?.type !== StepTypeEnum.DIGEST) {
         steps.push(step);
         continue;
       }
@@ -32,10 +32,8 @@ export class DigestFilterStepsBackoff {
   }
 
   private getBackoffDate(step: NotificationStepEntity) {
-    const { backoffUnit, backoffAmount } = step?.metadata || {};
-
     return sub(new Date(), {
-      [backoffUnit]: backoffAmount,
+      [step.metadata?.backoffUnit as string]: step.metadata?.backoffAmount,
     });
   }
 
@@ -53,7 +51,7 @@ export class DigestFilterStepsBackoff {
 
     const digestKey = step?.metadata?.digestKey;
     if (digestKey) {
-      query['payload.' + digestKey] = command.payload[digestKey];
+      query['payload.' + digestKey] = DigestFilterSteps.getNestedValue(command.payload, digestKey);
     }
 
     return this.jobRepository.findOne(query);
@@ -70,9 +68,8 @@ export class DigestFilterStepsBackoff {
       _subscriberId: command.subscriberId,
     };
 
-    const digestKey = step?.metadata?.digestKey;
-    if (digestKey) {
-      query['payload.' + digestKey] = command.payload[digestKey];
+    if (step.metadata?.digestKey) {
+      query['payload.' + step.metadata.digestKey] = command.payload[step.metadata.digestKey];
     }
 
     const digest = await this.jobRepository.findOne(query);
