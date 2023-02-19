@@ -11,7 +11,7 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import { updateUserOnBoarding } from '../../../api/user';
 import { OnboardingSteps } from '../components/OnboardingSteps';
 import { useSegment } from '../../../hooks/useSegment';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function GeneralStarter() {
   const segment = useSegment();

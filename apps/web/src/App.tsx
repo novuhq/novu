@@ -206,7 +206,7 @@ function App() {
                         }
                       />
                       <Route
-                        path={ROUTES.TEMPLATES_EDIT__TEMPLATEID}
+                        path={ROUTES.TEMPLATES_EDIT_TEMPLATEID}
                         element={
                           <RequiredAuth>
                             <TemplateFormProvider>
