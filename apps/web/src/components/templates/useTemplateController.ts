@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ICreateNotificationTemplateDto, INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
 
-import { createTemplate, updateTemplate, deleteTemplateById } from '../../api/templates';
 import { useTemplateFetcher } from './useTemplateFetcher';
 import { QueryKeys } from '../../api/query.keys';
 import { successMessage } from '../../utils/notifications';
+import { createTemplate, deleteTemplateById, updateTemplate } from '../../api/notification-templates';
 
 export function useTemplateController(templateId?: string) {
   const { template, refetch, loading: isLoading } = useTemplateFetcher(templateId);
