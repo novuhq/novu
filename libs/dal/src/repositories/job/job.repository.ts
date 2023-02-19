@@ -32,8 +32,12 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     return stored;
   }
 
-  public async updateStatus(organizationId: string, jobId: string, status: JobStatusEnum) {
-    await this.update(
+  public async updateStatus(
+    organizationId: string,
+    jobId: string,
+    status: JobStatusEnum
+  ): Promise<{ matched: number; modified: number }> {
+    return await this.update(
       {
         _organizationId: organizationId,
         _id: jobId,
@@ -161,5 +165,48 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
       .populate('environment', selectEnvironment)
       .lean()
       .exec();
+  }
+
+  public async shouldDelayDigestJobOrMerge(
+    job: JobEntity,
+    digestKey?: string,
+    digestValue?: string | number
+  ): Promise<{ matched: number; modified: number }> {
+    const execution = {
+      matched: 0,
+      modified: 0,
+    };
+
+    const delayedDigestJobs = await this._model.find({
+      status: JobStatusEnum.DELAYED,
+      type: StepTypeEnum.DIGEST,
+      _templateId: job._templateId,
+      _environmentId: this.convertStringToObjectId(job._environmentId),
+      _subscriberId: this.convertStringToObjectId(job._subscriberId),
+      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
+    });
+
+    const matched = delayedDigestJobs.length;
+    execution.matched = matched;
+
+    if (execution.matched === 0) {
+      const updatedDigestJob = await this._model.updateOne(
+        {
+          _environmentId: job._environmentId,
+          _templateId: job._templateId,
+          _subscriberId: job._subscriberId,
+          _id: job._id,
+        },
+        {
+          $set: {
+            status: JobStatusEnum.DELAYED,
+          },
+        }
+      );
+
+      execution.modified = updatedDigestJob.modifiedCount;
+    }
+
+    return execution;
   }
 }

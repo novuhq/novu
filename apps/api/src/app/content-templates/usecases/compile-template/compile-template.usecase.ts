@@ -44,6 +44,8 @@ export class CompileTemplate {
 
     const template = Handlebars.compile(templateContent);
 
-    return template(command.data);
+    const result = template(command.data, {});
+
+    return result.replace(/&#x27;/g, "'");
   }
 }

@@ -13,6 +13,7 @@ import {
   InfobipEmailHandler,
   MailerSendHandler,
   Outlook365Handler,
+  ResendHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -31,6 +32,7 @@ export class MailFactory {
     new InfobipEmailHandler(),
     new MailerSendHandler(),
     new Outlook365Handler(),
+    new ResendHandler(),
   ];
 
   getHandler(

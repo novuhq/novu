@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
-import { Route, Routes, Navigate, BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
+import { Route, Routes, Navigate, BrowserRouter, useLocation } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
@@ -12,7 +12,7 @@ import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import HomePage from './pages/HomePage';
-import TemplateEditorPage, { ActivePageEnum } from './pages/templates/editor/TemplateEditorPage';
+import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
@@ -27,18 +27,25 @@ import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
-import QuickStartPage from './pages/quick-start/QuickStartPage';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
 import { SpotLight } from './components/utils/Spotlight';
 import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
+import { ROUTES } from './constants/routes.enum';
 import { useBlueprint } from './hooks/useBlueprint';
 import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import packageJson from '../package.json';
+import { GeneralStarter } from './pages/quick-start/steps/GeneralStarter';
+import { QuickStartWrapper } from './pages/quick-start/components/QuickStartWrapper';
+import { Quickstart } from './pages/quick-start/steps/Quickstart';
+import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
+import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
+import { Setup } from './pages/quick-start/steps/Setup';
+import { Trigger } from './pages/quick-start/steps/Trigger';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -151,14 +158,14 @@ function App() {
               <ThemeHandlerComponent>
                 <SpotLightProvider>
                   <Routes>
-                    <Route path="/auth/signup" element={<SignUpPage />} />
-                    <Route path="/auth/login" element={<LoginPage />} />
-                    <Route path="/auth/reset/request" element={<PasswordResetPage />} />
-                    <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
-                    <Route path="/auth/invitation/:token" element={<InvitationPage />} />
-                    <Route path="/auth/application" element={<CreateOrganizationPage />} />
+                    <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
+                    <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
+                    <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
+                    <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
+                    <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
+                    <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} />
                     <Route
-                      path="/partner-integrations/vercel/link-projects"
+                      path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
                       element={
                         <RequiredAuth>
                           <LinkVercelProjectPage type="create" />
@@ -166,7 +173,7 @@ function App() {
                       }
                     />
                     <Route
-                      path="/partner-integrations/vercel/link-projects/edit"
+                      path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
                       element={
                         <RequiredAuth>
                           <LinkVercelProjectPage type="edit" />
@@ -175,7 +182,7 @@ function App() {
                     />
                     <Route element={<AppLayout />}>
                       <Route
-                        path="/*"
+                        path={ROUTES.ANY}
                         element={
                           <RequiredAuth>
                             <SpotLight>
@@ -185,7 +192,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="/templates/create"
+                        path={ROUTES.TEMPLATES_CREATE}
                         element={
                           <RequiredAuth>
                             <TemplateFormProvider>
@@ -199,7 +206,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="/templates/edit/:templateId"
+                        path={ROUTES.TEMPLATES_EDIT_TEMPLATEID}
                         element={
                           <RequiredAuth>
                             <TemplateFormProvider>
@@ -213,7 +220,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="/templates"
+                        path={ROUTES.TEMPLATES}
                         element={
                           <RequiredAuth>
                             <SpotLight>
@@ -223,17 +230,69 @@ function App() {
                         }
                       />
                       <Route
-                        path="/quickstart"
+                        path="/general-started"
                         element={
                           <RequiredAuth>
                             <SpotLight>
-                              <QuickStartPage />
+                              <QuickStartWrapper>
+                                <GeneralStarter />
+                              </QuickStartWrapper>
                             </SpotLight>
                           </RequiredAuth>
                         }
                       />
                       <Route
-                        path="/activities"
+                        path={ROUTES.QUICKSTART}
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <Quickstart />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <NotificationCenter />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/set-up"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <FrameworkSetup />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/set-up/:framework"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <Setup />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path="/quickstart/notification-center/trigger"
+                        element={
+                          <RequiredAuth>
+                            <SpotLight>
+                              <Trigger />
+                            </SpotLight>
+                          </RequiredAuth>
+                        }
+                      />
+                      <Route
+                        path={ROUTES.ACTIVITIES}
                         element={
                           <RequiredAuth>
                             <SpotLight>
@@ -243,7 +302,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="/settings"
+                        path={ROUTES.SETTINGS}
                         element={
                           <RequiredAuth>
                             <SpotLight>
@@ -253,7 +312,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="/integrations"
+                        path={ROUTES.INTEGRATIONS}
                         element={
                           <RequiredAuth>
                             <SpotLight>
@@ -263,7 +322,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="/team"
+                        path={ROUTES.TEAM}
                         element={
                           <RequiredAuth>
                             <SpotLight>
@@ -273,7 +332,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="/changes"
+                        path={ROUTES.CHANGES}
                         element={
                           <RequiredAuth>
                             <SpotLight>
@@ -283,7 +342,7 @@ function App() {
                         }
                       />
                       <Route
-                        path="/subscribers"
+                        path={ROUTES.SUBSCRIBERS}
                         element={
                           <RequiredAuth>
                             <SpotLight>
@@ -343,12 +402,12 @@ function RequiredAuth({ children }: any) {
   }
 
   if (!getToken()) {
-    return <Navigate to="/auth/login" replace />;
+    return <Navigate to={ROUTES.AUTH_LOGIN} replace />;
   } else if (
     !jwtHasKey('organizationId') ||
-    (!jwtHasKey('environmentId') && location.pathname !== '/auth/application')
+    (!jwtHasKey('environmentId') && location.pathname !== ROUTES.AUTH_APPLICATION)
   ) {
-    return <Navigate to="/auth/application" replace />;
+    return <Navigate to={ROUTES.AUTH_APPLICATION} replace />;
   } else {
     return children;
   }

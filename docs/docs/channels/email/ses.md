@@ -24,7 +24,8 @@ To use the Amazon SES provider, you will need to create a SES account and add yo
 - Enter previously saved `ACCESS_KEY_ID` and `ACCESS_SECRET_KEY`.
 - Fill the `From email address` field using the authenticated sender email id in previous step.
 - Enter `region` and `Sender name` also.
-- Click on the **Save** button.
+- Click on the `Disabled` button and mark as `Active`.
+- Click on the **Connect** button.
 - You should now be able to send notifications using Amazon SES in Novu.
 
 ## FAQ

@@ -6,6 +6,7 @@ import type {
   BuilderGroupValues,
   FilterParts,
 } from '@novu/shared';
+import { DigestTypeEnum } from '@novu/shared';
 
 export interface ITemplates extends IMessageTemplate {
   htmlContent?: string;
@@ -34,6 +35,7 @@ export interface IStepEntity {
   metadata?: {
     amount?: number;
     unit?: DigestUnitEnum;
+    type?: DigestTypeEnum;
     digestKey?: string;
     delayPath?: string;
   };

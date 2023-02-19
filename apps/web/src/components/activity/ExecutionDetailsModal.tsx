@@ -64,7 +64,7 @@ export function ExecutionDetailsModal({
           paddingInline: '8px',
         },
       }}
-      title={<Title size={2}>Execution details</Title>}
+      title={<Title size={2}>Execution Details for {template?.name ?? ''}</Title>}
       sx={{ backdropFilter: 'blur(10px)' }}
       shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
       radius="md"

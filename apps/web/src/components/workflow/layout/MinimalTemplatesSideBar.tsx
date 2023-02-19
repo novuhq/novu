@@ -9,12 +9,10 @@ export function MinimalTemplatesSideBar({
   activePage,
   setActivePage,
   showTriggerSection,
-  showErrors,
 }: {
   activePage: ActivePageEnum;
   setActivePage: (string) => void;
   showTriggerSection: boolean;
-  showErrors: any;
 }) {
   return (
     <Wrapper>
@@ -22,7 +20,6 @@ export function MinimalTemplatesSideBar({
         activeTab={activePage}
         changeTab={setActivePage}
         showTriggerSection={showTriggerSection}
-        showErrors={showErrors}
         minimalView={true}
       />
     </Wrapper>

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Navbar,
   Popover,
@@ -20,6 +20,8 @@ import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
 import { LimitBar } from '../../../pages/integrations/components/LimitBar';
+import { localNavigate } from '../../../pages/quick-start/components/route/store';
+import { ROUTES } from '../../../constants/routes.enum';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -53,8 +55,8 @@ export function SideNav({}: Props) {
 
   useEffect(() => {
     setOpened(readonly);
-    if (readonly && location.pathname === '/changes') {
-      navigate('/');
+    if (readonly && location.pathname === ROUTES.CHANGES) {
+      navigate(ROUTES.HOME);
     }
   }, [readonly]);
 
@@ -70,18 +72,20 @@ export function SideNav({}: Props) {
     ]);
   }, [environment]);
 
+  const lastRoute = localNavigate().peek();
+
   const menuItems = [
     {
       condition: !readonly && currentUser?.showOnBoarding,
       icon: <CheckCircleOutlined />,
-      link: '/quickstart',
+      link: lastRoute ?? ROUTES.QUICKSTART,
       label: 'Getting Started',
       testId: 'side-nav-quickstart-link',
     },
-    { icon: <Bolt />, link: '/templates', label: 'Notifications', testId: 'side-nav-templates-link' },
+    { icon: <Bolt />, link: ROUTES.TEMPLATES, label: 'Notifications', testId: 'side-nav-templates-link' },
     {
       icon: <Team />,
-      link: '/subscribers',
+      link: ROUTES.SUBSCRIBERS,
       label: 'Subscribers',
       testId: 'side-nav-subscribers-link',
     },
@@ -91,18 +95,18 @@ export function SideNav({}: Props) {
       label: 'Brand',
       testId: 'side-nav-brand-link',
     },
-    { icon: <Activity />, link: '/activities', label: 'Activity Feed', testId: 'side-nav-activities-link' },
-    { icon: <Box />, link: '/integrations', label: 'Integrations Store', testId: 'side-nav-integrations-link' },
-    { icon: <Settings />, link: '/settings', label: 'Settings', testId: 'side-nav-settings-link' },
+    { icon: <Activity />, link: ROUTES.ACTIVITIES, label: 'Activity Feed', testId: 'side-nav-activities-link' },
+    { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
+    { icon: <Settings />, link: ROUTES.SETTINGS, label: 'Settings', testId: 'side-nav-settings-link' },
     {
       icon: <Team />,
-      link: '/team',
+      link: ROUTES.TEAM,
       label: 'Team Members',
       testId: 'side-nav-settings-organization',
     },
     {
       icon: <Repeat />,
-      link: '/changes',
+      link: ROUTES.CHANGES,
       label: 'Changes',
       testId: 'side-nav-changes-link',
       rightSide: <ChangesCountBadge />,
@@ -114,7 +118,7 @@ export function SideNav({}: Props) {
     e.preventDefault();
 
     await setEnvironment('Development');
-    navigate('/changes');
+    navigate(ROUTES.CHANGES);
   }
 
   return (

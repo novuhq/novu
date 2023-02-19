@@ -24,6 +24,9 @@ export const inputStyles = (theme: MantineTheme) => {
       '&::placeholder': {
         color: secondaryColor,
       },
+      '&:focus&:invalid': {
+        borderColor: colors.error,
+      },
     },
     label: {
       color: primaryColor,

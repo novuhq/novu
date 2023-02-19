@@ -394,7 +394,11 @@
     "Scriptable",
     "iife",
     "kannel",
-    "sendsms"
+    "sendsms",
+    "redlock",
+    "axios",
+    "ioredis",
+    "newrelic"
   ],
   "flagWords": [],
   "patterns": [

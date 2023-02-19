@@ -71,7 +71,7 @@ jobs:
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
         with:
           working-directory: apps/widget
           wait-on: http://localhost:3500
