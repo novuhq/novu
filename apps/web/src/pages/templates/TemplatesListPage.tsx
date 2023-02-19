@@ -15,6 +15,7 @@ import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { useEnvController } from '../../store/useEnvController';
 import { ROUTES } from '../../constants/routes.enum';
+import { parseUrl } from '../../utils/routeUtils';
 
 function NotificationList() {
   const { readonly } = useEnvController();
@@ -89,7 +90,7 @@ function NotificationList() {
           <ActionIcon
             variant="transparent"
             component={Link}
-            to={`/templates/edit/${_id}`}
+            to={parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: _id })}
             data-test-id="template-edit-link"
           >
             <Edit color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
@@ -100,7 +101,7 @@ function NotificationList() {
   ];
 
   function onRowClick(row) {
-    navigate(`/templates/edit/${row.values._id}`);
+    navigate(parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: row.values._id }));
   }
 
   return (

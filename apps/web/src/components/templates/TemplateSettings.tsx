@@ -30,6 +30,7 @@ export const TemplateSettings = ({ activePage, setActivePage, templateId }) => {
     try {
       await deleteTemplateById(templateId);
       setIsDeleting(false);
+      setToDelete(false);
       navigate(ROUTES.TEMPLATES);
     } catch (e: any) {
       setIsDeleting(false);

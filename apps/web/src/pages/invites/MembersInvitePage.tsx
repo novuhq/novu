@@ -21,6 +21,8 @@ import { MembersTable } from '../../components/invites/MembersTable';
 import { Button, Input } from '../../design-system';
 import { Invite } from '../../design-system/icons';
 import { AuthContext } from '../../store/authContext';
+import { parseUrl } from '../../utils/routeUtils';
+import { ROUTES } from '../../constants/routes.enum';
 
 export function MembersInvitePage() {
   const [form] = Form.useForm();
@@ -153,7 +155,7 @@ export function MembersInvitePage() {
   };
 
   const generateInviteLink = (memberToken: string) => {
-    return `${window.location.origin.toString()}/auth/invitation/${memberToken}`;
+    return `${window.location.origin.toString()}` + parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: memberToken });
   };
 
   function getInviteMemberByLinkDiv(inviteHref: string, currentMember) {
