@@ -23,7 +23,6 @@ interface IChannelDefinition {
   testId: string;
   channelType: StepTypeEnum;
   type: NodeTypeEnum;
-  required?: string[];
 }
 
 export const channels: IChannelDefinition[] = [

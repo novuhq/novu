@@ -175,7 +175,6 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             </Grid.Col>
           </Grid>
         </MantineInput.Wrapper>
-        {/*)}*/}
       </When>
       <When truthy={false}>
         <div
