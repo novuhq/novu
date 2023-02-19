@@ -202,14 +202,11 @@ const defaultValues: IForm = {
     push: true,
   },
 };
-
 export const TemplateFormProvider = ({ children }) => {
   const methods = useForm<IForm>({
     resolver: zodResolver(schema),
     defaultValues,
-    // mode: 'onBlur',
-
-    // reValidateMode: 'onBlur',
+    mode: 'onChange',
   });
 
   return <FormProvider {...methods}>{children}</FormProvider>;

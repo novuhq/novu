@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { UnstyledButton, Popover, ActionIcon, createStyles, MantineTheme, Menu } from '@mantine/core';
 import styled from '@emotion/styled';
-import { useFormContext, useFormState, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { Text } from '../typography/text/Text';
@@ -14,7 +14,7 @@ import { useEnvController } from '../../store/useEnvController';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
 
 import { useViewport } from 'react-flow-renderer';
-import { getChannelErrors } from '../../components/workflow/FlowEditor';
+import { getFormattedStepErrors } from '../../pages/templates/shared/errors';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -75,6 +75,7 @@ const usePopoverStyles = createStyles(() => ({
     backgroundColor: colors.error,
     color: colors.white,
     border: 'none',
+    maxWidth: 300,
   },
   arrow: {
     backgroundColor: colors.error,
@@ -97,7 +98,7 @@ export function ChannelButton({
   tabKey,
   index,
   testId,
-  errors = false,
+  errors: initialErrors = false,
   showDots = true,
   id = undefined,
   onDelete = () => {},
@@ -110,86 +111,34 @@ export function ChannelButton({
   const { classes: menuClasses } = useMenuStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [showDotMenu, setShowDotMenu] = useState(false);
-  const [showErrorsR, setShowErrorsR] = useState(errors);
   const [disabled, setDisabled] = useState(initDisabled);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
   const { classes: popoverClasses } = usePopoverStyles();
-  const { x, y, zoom } = useViewport();
+  const viewport = useViewport();
 
   const {
     watch,
-    control,
-    getValues,
-    trigger,
-    getFieldState,
-    formState: { isSubmitted, errors: errorsW, isValidating },
+    formState: { errors },
   } = useFormContext();
 
-  const formState = useFormState();
+  let showErrors = initialErrors;
 
-  const steps = watch('steps');
+  if (typeof index === 'number') {
+    showErrors = getFormattedStepErrors(index, errors);
+  }
 
-  // useLogger('Channel', [{ tabKey, errors }]);
-  const enableAvatar = useWatch({
-    name: `steps.${index}` as any,
-    control,
-  });
-
-  React.useEffect(() => {
-    const currentErrors = { ...formState.errors };
-    setTimeout(() => {
-      // console.log('currentErrors', currentErrors);
-    }, 1000);
-  }, [formState]);
-  // useLogger('Demo', [{ hello: 'world' }]);
   useEffect(() => {
     const subscription = watch((values) => {
       const thisStep = values.steps.find((step) => step._id === id);
-      console.log(id);
-      const indexB = values.steps.findIndex((item) => item._id === id);
 
       if (thisStep) {
-        if (typeof index === 'number') {
-          // const res = getFieldState(`steps.${index}`);
-
-          // const temp = getChannelErrors(index, { steps: res.error }, thisStep);
-
-          // console.log('temp', temp);
-
-          // setShowErrorsR(temp || '');
-
-          // console.log('res', res);
-
-          /*
-           * const tryErrors = { ...formState.errors };
-           * setTimeout(() => {
-           *   console.log(tryErrors);
-           *   // if (tryErrors?.steps) {
-           *
-           *   const temp = getChannelErrors(index, tryErrors, thisStep);
-           *
-           *   console.log('temp', temp);
-           *
-           *   setShowErrorsR(temp || '');
-           *
-           *   // }
-           * }, 1000);
-           */
-
-          const temp = getChannelErrors(index, formState.errors, thisStep);
-
-          console.log('temp', temp);
-
-          setShowErrorsR(temp || '');
-          setPopoverOpened(true);
-        }
         setDisabled(!thisStep.active);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [watch, enableAvatar]);
+  }, [watch]);
 
   useEffect(() => {
     if (showDotMenu && (dragging || !active)) {
@@ -297,26 +246,25 @@ export function ChannelButton({
         </ActionWrapper>
       </ButtonWrapper>
 
-      {showErrorsR && (
+      {showErrors && (
         <Popover
-          // middlewares={{ flip: true, shift: true, inline: true }}
           withinPortal
           classNames={popoverClasses}
           withArrow
-          opened={popoverOpened}
-          // opened={(isSubmitted && Object.keys(showErrorsR).length > 0) || popoverOpened}
+          opened={popoverOpened && Object.keys(showErrors).length > 0}
           transition="rotate-left"
           transitionDuration={250}
           offset={theme.spacing.xs}
           position="right"
           zIndex={4}
-          positionDependencies={[dragging, x, y, zoom]}
+          positionDependencies={[dragging, viewport]}
+          clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
         >
           <Popover.Target>
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
           </Popover.Target>
           <Popover.Dropdown>
-            <Text rows={1}>{showErrorsR.toString() || 'Something is missing here'}</Text>
+            <Text rows={1}>{showErrors || 'Something is missing here'}</Text>
           </Popover.Dropdown>
         </Popover>
       )}

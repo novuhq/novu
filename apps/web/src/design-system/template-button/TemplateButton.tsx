@@ -19,6 +19,7 @@ const usePopoverStyles = createStyles(() => ({
     color: colors.white,
     border: 'none',
     marginTop: '1px',
+    maxWidth: 300,
   },
   arrow: {
     backgroundColor: colors.error,
@@ -118,7 +119,6 @@ export function TemplateButton({
           transitionDuration={250}
           offset={theme.spacing.xs}
           position="right"
-          width={300}
         >
           <Popover.Target>
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />

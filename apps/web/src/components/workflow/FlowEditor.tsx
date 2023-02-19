@@ -22,14 +22,14 @@ import { StepTypeEnum } from '@novu/shared';
 import ChannelNode from './node-types/ChannelNode';
 import { colors } from '../../design-system';
 import TriggerNode from './node-types/TriggerNode';
-import { getChannel, getChannelRequiredErrors } from '../../pages/templates/shared/channels';
+import { getChannel } from '../../pages/templates/shared/channels';
 import type { IForm, IStepEntity } from '../templates/formTypes';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../store/useEnvController';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { getFormattedStepErrors } from '../../pages/templates/shared/errors';
 import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
-import { useTemplateFetcher } from '../templates/useTemplateFetcher';
 import { useTemplateEditor } from '../templates/TemplateEditorProvider';
 
 const nodeTypes = {
@@ -80,7 +80,7 @@ export function FlowEditor({
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
   const { template, trigger } = useTemplateEditor();
-  const methods = useFormContext<IForm>();
+  const { trigger: triggerErrors } = useFormContext<IForm>();
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
   useEffect(() => {
@@ -152,7 +152,7 @@ export function FlowEditor({
     [reactFlowInstance, nodes, edges]
   );
 
-  function initializeWorkflowTree() {
+  async function initializeWorkflowTree() {
     let parentId = '1';
     initWorkflowTreeState();
 
@@ -161,6 +161,8 @@ export function FlowEditor({
         const step = steps[i];
         const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
         const newId = (step._id || step.id) as string;
+
+        await triggerErrors('steps');
 
         const newNode = buildNewNode(newId, oldNode, parentId, step, i);
 
@@ -217,7 +219,7 @@ export function FlowEditor({
         ...getChannel(step.template.type),
         active: step.active,
         index: i,
-        error: getChannelErrors(i, errors, step),
+        error: getFormattedStepErrors(i, errors),
         onDelete,
         setActivePage,
       },
@@ -322,7 +324,6 @@ export function FlowEditor({
               activePage={activePage}
               setActivePage={setActivePage}
               showTriggerSection={!!template && !!trigger}
-              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
             />
             <Controls />
             <Background
@@ -393,51 +394,6 @@ const Wrapper = styled.div<{ dark: boolean }>`
     }
   }
 `;
-
-export function getChannelErrors(index: number, errors: any, step: any, isSubmitted?: boolean) {
-  if (errors?.steps) {
-    const stepErrors = errors.steps[index]?.template;
-
-    if (stepErrors) {
-      const keys = Object.keys(stepErrors);
-
-      return keys.map((key) => stepErrors[key]?.message).join(', ');
-    }
-    const actionErrors = errors.steps[index]?.metadata;
-
-    if (actionErrors) {
-      const keys = Object.keys(actionErrors);
-
-      return keys.map((key) => actionErrors[key]?.message).join(', ');
-    }
-  }
-
-  if (step.template.type === StepTypeEnum.EMAIL && !step.template.subject) {
-    return getChannelRequiredErrors(step.template.type);
-  }
-
-  if (
-    step.template.content.length === 0 &&
-    step.template.type !== StepTypeEnum.DIGEST &&
-    step.template.type !== StepTypeEnum.DELAY &&
-    step.template.type !== StepTypeEnum.EMAIL
-  ) {
-    return getChannelRequiredErrors(step.template.type);
-  }
-
-  if (
-    // step.metadata?.unit.length === 0 &&
-    step.template.type === StepTypeEnum.DIGEST &&
-    !step.metadata?.amount
-  ) {
-    // if (!step.metadata?.unit && !step.metadata?.amount) {
-
-    return getChannelRequiredErrors(step.template.type);
-    // }
-  }
-
-  // return getChannelRequiredErrors(step.template.type);
-}
 
 const reactFlowDefaultProps: ReactFlowProps = {
   defaultEdgeOptions: {

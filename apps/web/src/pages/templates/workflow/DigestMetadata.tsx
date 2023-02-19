@@ -16,10 +16,13 @@ const StyledSwitch = styled(Switch)`
 export const DigestMetadata = ({ control, index, loading, disableSubmit, setSelectedChannel }) => {
   const { readonly } = useEnvController();
   const {
-    formState: { errors },
+    formState: { errors, isSubmitted },
     watch,
+    trigger,
   } = useFormContext();
+
   const type = watch(`steps.${index}.metadata.type`);
+  const showErrors = isSubmitted && errors?.steps;
 
   return (
     <>
@@ -43,7 +46,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                   <Input
                     {...field}
                     value={field.value || ''}
-                    error={fieldState.error?.message}
+                    error={showErrors && fieldState.error?.message}
                     min={0}
                     max={100}
                     type="number"
@@ -60,11 +63,11 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
               control={control}
               name={`steps.${index}.metadata.unit`}
               defaultValue=""
-              render={({ field }) => {
+              render={({ field, fieldState }) => {
                 return (
                   <Select
                     disabled={readonly}
-                    error={errors?.steps ? errors.steps[index]?.metadata?.unit?.message : undefined}
+                    error={showErrors && fieldState.error?.message}
                     placeholder="Interval"
                     data={[
                       { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
@@ -93,22 +96,25 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
           render={({ field }) => {
             return (
               <Select
+                {...field}
                 label="Type of digest"
                 disabled={readonly}
                 data={[
                   { value: DigestTypeEnum.REGULAR, label: 'Regular' },
                   { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
                 ]}
+                onChange={async (value) => {
+                  field.onChange(value);
+                  await trigger(`steps.${index}.metadata`);
+                }}
                 data-test-id="digest-type"
-                {...field}
               />
             );
           }}
         />
       </div>
 
-      {/*<When truthy={type === DigestTypeEnum.BACKOFF}>*/}
-      {type === DigestTypeEnum.BACKOFF && (
+      <When truthy={type === DigestTypeEnum.BACKOFF}>
         <MantineInput.Wrapper
           label="Backoff Time Interval"
           description="A digest will only be created if a message was previously sent in this time interval"
@@ -129,7 +135,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                     <Input
                       {...field}
                       value={field.value || ''}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffAmount?.message : undefined}
+                      error={showErrors && fieldState.error?.message}
                       min={0}
                       max={100}
                       type="number"
@@ -147,11 +153,11 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                 control={control}
                 name={`steps.${index}.metadata.backoffUnit`}
                 defaultValue=""
-                render={({ field }) => {
+                render={({ field, fieldState }) => {
                   return (
                     <Select
                       disabled={readonly}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffUnit?.message : undefined}
+                      error={showErrors && fieldState.error?.message}
                       placeholder="Interval"
                       data={[
                         { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
@@ -169,8 +175,8 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             </Grid.Col>
           </Grid>
         </MantineInput.Wrapper>
-      )}
-      {/*</When>*/}
+        {/*)}*/}
+      </When>
       <When truthy={false}>
         <div
           style={{
