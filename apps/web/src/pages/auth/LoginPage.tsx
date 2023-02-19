@@ -36,7 +36,9 @@ export default function LoginPage() {
       const user = jwtDecode<IJwtPayload>(token);
 
       if (!invitationToken && (!user.organizationId || !user.environmentId)) {
-        const authApplicationLink = isFromVercel ? `${ROUTES.AUTH_APPLICATION}?code=${code}&next=${next}` : ROUTES.AUTH_APPLICATION;
+        const authApplicationLink = isFromVercel
+          ? `${ROUTES.AUTH_APPLICATION}?code=${code}&next=${next}`
+          : ROUTES.AUTH_APPLICATION;
         setToken(token);
         navigate(authApplicationLink);
 
