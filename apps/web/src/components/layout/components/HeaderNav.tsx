@@ -14,13 +14,14 @@ import { CONTEXT_PATH, INTERCOM_APP_ID, LOGROCKET_ID } from '../../../config';
 import { SpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
 import LogRocket from 'logrocket';
+import { ROUTES } from '../../../constants/routes.enum';
 
 type Props = {};
 const menuItem = [
   {
     title: 'Invite Members',
     icon: <Mail />,
-    path: '/team',
+    path: ROUTES.TEAM,
   },
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };

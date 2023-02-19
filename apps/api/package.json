@@ -75,7 +75,7 @@
     "@novu/testing": "^0.11.0",
     "@novu/twilio": "^0.11.0",
     "@sendgrid/mail": "^7.6.0",
-    "@sentry/hub": "7.37.1",
+    "@sentry/hub": "7.37.2",
     "@sentry/node": "^7.12.1",
     "@sentry/tracing": "^7.12.1",
     "@types/handlebars": "^4.1.0",

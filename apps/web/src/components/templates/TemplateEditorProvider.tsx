@@ -1,14 +1,14 @@
 import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
-import { INotificationTemplate, INotificationTrigger } from '@novu/shared';
-import { showNotification } from '@mantine/notifications';
+import { DigestTypeEnum, INotificationTemplate, INotificationTrigger } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
 
 import type { IForm, IStepEntity } from './formTypes';
 import { useTemplateController } from './useTemplateController';
 import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } from './templateToFormMappers';
+import { errorMessage } from '../../utils/notifications';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
@@ -41,6 +41,16 @@ const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => ({
   ...(channelType === StepTypeEnum.EMAIL && {
     replyCallback: {
       active: false,
+    },
+  }),
+  ...(channelType === StepTypeEnum.DIGEST && {
+    metadata: {
+      type: DigestTypeEnum.REGULAR,
+    },
+  }),
+  ...(channelType === StepTypeEnum.DELAY && {
+    metadata: {
+      type: DigestTypeEnum.REGULAR,
     },
   }),
 });
@@ -152,10 +162,7 @@ const TemplateEditorProvider = ({ children }) => {
       } catch (e: any) {
         Sentry.captureException(e);
 
-        showNotification({
-          message: e.message || 'Unexpected error occurred',
-          color: 'red',
-        });
+        errorMessage(e.message || 'Unexpected error occurred');
       }
     },
     [

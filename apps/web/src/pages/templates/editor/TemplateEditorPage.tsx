@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useDisclosure } from '@mantine/hooks';
 import { ReactFlowProvider } from 'react-flow-renderer';
-import { useFormContext } from 'react-hook-form';
+import { FieldErrors, useFormContext } from 'react-hook-form';
 
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
@@ -24,6 +24,9 @@ import { ExecutionDetailsModalWrapper } from '../../../components/templates/Exec
 import { useSearchParams } from '../../../hooks/useSearchParams';
 import { BlueprintModal } from '../../../components/templates/BlueprintModal';
 import { useTemplateEditor } from '../../../components/templates/TemplateEditorProvider';
+import { errorMessage } from '../../../utils/notifications';
+import { getExplicitErrors } from '../shared/errors';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export enum ActivePageEnum {
   SETTINGS = 'Settings',
@@ -36,6 +39,14 @@ export enum ActivePageEnum {
   CHAT = 'Chat',
   TRIGGER_SNIPPET = 'TriggerSnippet',
 }
+
+export const EditorPages = [
+  ActivePageEnum.CHAT,
+  ActivePageEnum.SMS,
+  ActivePageEnum.PUSH,
+  ActivePageEnum.EMAIL,
+  ActivePageEnum.IN_APP,
+];
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -64,12 +75,16 @@ export default function TemplateEditorPage() {
   } = useTemplateEditor();
   const methods = useFormContext<IForm>();
   const {
-    formState: { errors, isDirty },
+    formState: { isDirty },
     handleSubmit,
   } = methods;
 
-  const isCreateTemplatePage = location.pathname === '/templates/create';
+  const isCreateTemplatePage = location.pathname === ROUTES.TEMPLATES_CREATE;
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
+
+  const onInvalid = async (errors: FieldErrors<IForm>) => {
+    errorMessage(getExplicitErrors(errors));
+  };
 
   const [testWorkflowModalOpened, { close: closeTestWorkflowModal, open: openTestWorkflowModal }] = useDisclosure(
     false,
@@ -123,14 +138,14 @@ export default function TemplateEditorPage() {
         if (template._parentId) {
           navigate(`/templates/edit/${template._parentId}`);
         } else {
-          navigate('/templates');
+          navigate(ROUTES.TEMPLATES);
         }
       }
     }
   }, [environment, template]);
 
   if (environment && environment?.name === 'Production' && isCreateTemplatePage) {
-    navigate('/templates');
+    navigate(ROUTES.TEMPLATES);
   }
 
   if (isCreating) return null;
@@ -139,7 +154,12 @@ export default function TemplateEditorPage() {
     <>
       <PageContainer>
         <PageMeta title={editMode ? template?.name : 'Create Template'} />
-        <form name="template-form" noValidate onSubmit={handleSubmit(onSubmitHandler)} style={{ minHeight: '100%' }}>
+        <form
+          name="template-form"
+          noValidate
+          onSubmit={handleSubmit(onSubmitHandler, onInvalid)}
+          style={{ minHeight: '100%' }}
+        >
           <When truthy={activePage !== ActivePageEnum.WORKFLOW}>
             <TemplatePageHeader
               loading={isCreating || isUpdating}
@@ -152,12 +172,7 @@ export default function TemplateEditorPage() {
           </When>
 
           {(activePage === ActivePageEnum.SETTINGS || activePage === ActivePageEnum.TRIGGER_SNIPPET) && (
-            <TemplateSettings
-              activePage={activePage}
-              setActivePage={setActivePage}
-              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
-              templateId={templateId}
-            />
+            <TemplateSettings activePage={activePage} setActivePage={setActivePage} templateId={templateId} />
           )}
 
           {activePage === ActivePageEnum.WORKFLOW && (
@@ -178,12 +193,7 @@ export default function TemplateEditorPage() {
           )}
 
           <When truthy={activePage === ActivePageEnum.USER_PREFERENCE}>
-            <UserPreference
-              activePage={activePage}
-              setActivePage={setActivePage}
-              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
-              templateId={templateId}
-            />
+            <UserPreference activePage={activePage} setActivePage={setActivePage} />
           </When>
           {!isLoading && !isIntegrationsLoading ? (
             <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
@@ -211,6 +221,7 @@ export default function TemplateEditorPage() {
         isVisible={saveChangesModalOpened}
         onDismiss={closeSaveChangesModal}
         loading={isCreating || isUpdating}
+        onInvalid={onInvalid}
       />
       <ExecutionDetailsModalWrapper
         transactionId={transactionId}

@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { ChannelTypeEnum } from '@novu/shared';
 import { getIntegrationLimit } from '../../integration';
-import { useActiveIntegrations } from '.';
 import { useMemo } from 'react';
 import { IS_DOCKER_HOSTED } from '../../../config/index';
+import { useActiveIntegrations } from './useActiveIntegrations';
 
 export function useIntegrationLimit(type: ChannelTypeEnum) {
   const { integrations = [] } = useActiveIntegrations();
