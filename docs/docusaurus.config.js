@@ -24,7 +24,7 @@ const codeTheme = require('./src/utils/prism');
             sidebarPath: require.resolve('./sidebars.js'),
             // Please change this to your repo.
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
-            breadcrumbs: false,
+            breadcrumbs: true,
             routeBasePath: '/',
             showLastUpdateAuthor: true,
             showLastUpdateTime: true,

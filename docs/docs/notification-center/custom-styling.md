@@ -102,3 +102,7 @@ export class AppComponent {
   };
 }
 ```
+
+:::note
+Facing issues in using notification center? Check out FAQs [here](./FAQ)
+:::

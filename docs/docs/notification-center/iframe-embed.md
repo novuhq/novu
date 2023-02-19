@@ -184,3 +184,7 @@ The second parameter of `novu.init` can be used to specify the options for the e
 | `position.left`       | `string` \| `number` | Override the left position of the notification center drop down                                                                                                                                                                     |
 | `theme`               | `object`             | Provide a custom theme for the notification center to use (for example see [above](#customizing-the-theme))                                                                                                                         |
 | `styles`              | `object`             | Provide a custom styles for the notification center. Please note that the limitation is that you can't use the style function as a prop to override the component styles. Read more about [styling](./iframe-embed#custom-styling). |
+
+:::note
+Facing issues in using notification center? Check out FAQs [here](./FAQ)
+:::

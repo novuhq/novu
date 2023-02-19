@@ -540,23 +540,6 @@ If you want to hide it, you can use the prop `showUserPreferences` on the `Popov
 
 ![Notification Center with a cog](/img/notification-list-cog.png)
 
-## FAQ
-
-<details>
- <summary> Notification center is not loading properly</summary>
-
-Possible causes for the notification center not loading properly:
-
-- Invalid subscriberId
-- Invalid applicationIdentifier
-- Invalid backendUrl (in case of self hosted)
-- Invalid socketUrl (in case of self hosted)
-
-</details>
-
-<details>
- <summary>There is render error due to Notification center</summary>
-
-Notification center should be wrapped in <code>NovuProvider</code>
-
-</details>
+:::note
+Facing issues in using notification center? Check out FAQs [here](../FAQ)
+:::
