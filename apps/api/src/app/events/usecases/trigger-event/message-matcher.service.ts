@@ -1,5 +1,4 @@
 import * as _ from 'lodash';
-import { createHmac } from 'crypto';
 import axios from 'axios';
 import { Injectable } from '@nestjs/common';
 import { parseISO, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
@@ -25,6 +24,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import type { IFilterVariables } from './types';
 import { FilterProcessingDetails } from './filter-processing-details';
+import { createHash } from '../../../shared/helpers/hmac.service';
 
 const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: 'minutes' | 'hours' | 'days') => {
   if (timeOperator === 'minutes') {
@@ -404,7 +404,7 @@ export class MessageMatcher {
       _organizationId: command.organizationId,
     });
 
-    return createHmac('sha256', environment.apiKeys[0].key).update(command.environmentId).digest('hex');
+    return createHash(environment.apiKeys[0].key, command.environmentId);
   }
 
   private async processFilter(

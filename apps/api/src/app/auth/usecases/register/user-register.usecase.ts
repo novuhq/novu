@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationEntity, UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
-import { createHmac } from 'crypto';
 import { SignUpOriginEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
@@ -12,6 +11,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()
 export class UserRegister {
@@ -30,15 +30,25 @@ export class UserRegister {
     if (existingUser) throw new ApiException('User already exists');
 
     const passwordHash = await bcrypt.hash(command.password, 10);
-    const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
-    const userHashForIntercom = createHmac('sha256', intercomSecretKey).update(email).digest('hex');
     const user = await this.userRepository.create({
       email,
       firstName: command.firstName.toLowerCase(),
       lastName: command.lastName?.toLowerCase(),
       password: passwordHash,
-      userHashForIntercom: userHashForIntercom,
     });
+
+    const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
+    const userHashForIntercom = createHash(intercomSecretKey, user._id);
+    if (userHashForIntercom) {
+      await this.userRepository.update(
+        { _id: user._id },
+        {
+          $set: {
+            userHashForIntercom: userHashForIntercom,
+          },
+        }
+      );
+    }
 
     let organization: OrganizationEntity;
     if (command.organizationName) {

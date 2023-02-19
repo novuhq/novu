@@ -1,4 +1,3 @@
-import { createHmac } from 'crypto';
 import { Inject, Injectable } from '@nestjs/common';
 import { EnvironmentRepository, FeedRepository, MemberRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
@@ -9,7 +8,7 @@ import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/
 import { InitializeSessionCommand } from './initialize-session.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
-
+import { createHash } from '../../../shared/helpers/hmac.service';
 @Injectable()
 export class InitializeSession {
   constructor(
@@ -64,8 +63,7 @@ export class InitializeSession {
 }
 
 function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
-  const hmacHash = createHmac('sha256', environment.apiKeys[0].key).update(command.subscriberId).digest('hex');
-
+  const hmacHash = createHash(environment.apiKeys[0].key, command.subscriberId);
   if (hmacHash !== command.hmacHash) {
     throw new ApiException('Please provide a valid HMAC hash');
   }

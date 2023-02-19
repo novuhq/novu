@@ -3,13 +3,13 @@ import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { differenceInMinutes, parseISO } from 'date-fns';
 import { UserRepository, UserEntity, OrganizationRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
-import { createHmac } from 'crypto';
 
 import { LoginCommand } from './login.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { AuthService } from '../../services/auth.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()
 export class Login {
@@ -65,7 +65,7 @@ export class Login {
 
     if (!user.userHashForIntercom) {
       const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
-      const userHashForIntercom = createHmac('sha256', intercomSecretKey).update(email).digest('hex');
+      const userHashForIntercom = createHash(intercomSecretKey, user._id);
       await this.userRepository.update(
         { _id: user._id },
         {
