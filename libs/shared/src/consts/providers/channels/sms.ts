@@ -11,6 +11,7 @@ import {
   infobipSMSConfig,
   burstSmsConfig,
   clickatellConfig,
+  ringcentralConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -105,6 +106,15 @@ export const smsProviders: IProviderConfig[] = [
     credentials: clickatellConfig,
     betaVersion: true,
     docReference: 'https://docs.clickatell.com/',
+    logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
+  },
+  {
+    id: SmsProviderIdEnum.RingCentral,
+    displayName: 'ringcentral',
+    channel: ChannelTypeEnum.SMS,
+    credentials: ringcentralConfig,
+    betaVersion: true,
+    docReference: 'https://developers.ringcentral.com/guide/messaging/sms/sending-sms',
     logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
   },
 ];

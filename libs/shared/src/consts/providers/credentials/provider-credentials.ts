@@ -503,3 +503,25 @@ export const infobipEmailConfig: IConfigCredentials[] = [
   },
   ...mailConfigBase,
 ];
+
+export const ringcentralConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client Secret',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

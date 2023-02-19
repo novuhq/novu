@@ -1231,7 +1231,7 @@ importers:
       '@types/twilio': 3.19.3
       '@typescript-eslint/parser': 4.33.0_jofidmxrjzhj7l6vknpw5ecvfe
       apollo-boost: 0.4.9_graphql@15.8.0
-      eslint-plugin-prettier: 3.4.1_fqyzhpusvewbsl54pqqbxqaegm
+      eslint-plugin-prettier: 3.4.1_lk2fkjavihlcu7p5a3tdxfycz4
       nodemon: 2.0.15
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -1398,7 +1398,7 @@ importers:
       '@types/node': 14.18.12
       '@typescript-eslint/parser': 4.33.0_jofidmxrjzhj7l6vknpw5ecvfe
       apollo-boost: 0.4.9_graphql@15.8.0
-      eslint-plugin-prettier: 3.4.1_fqyzhpusvewbsl54pqqbxqaegm
+      eslint-plugin-prettier: 3.4.1_lk2fkjavihlcu7p5a3tdxfycz4
       nodemon: 2.0.15
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -2878,6 +2878,37 @@ importers:
       ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.19.2_typescript@4.9.5
+      typescript: 4.9.5
+
+  providers/ringcentral:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ~1.0.1
+      '@novu/stateless': ^0.11.0
+      '@ringcentral/sdk': ^4.7.4
+      '@types/jest': ~27.5.2
+      cspell: ~6.19.2
+      cz-conventional-changelog: ~3.3.0
+      jest: ~27.5.1
+      nyc: ~15.1.0
+      prettier: ~2.6.2
+      rimraf: ~3.0.2
+      ts-jest: ~27.1.5
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@novu/stateless': link:../../packages/stateless
+      '@ringcentral/sdk': 4.7.4
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.5.2
+      cspell: 6.19.2
+      cz-conventional-changelog: 3.3.0
+      jest: 27.5.1_ts-node@10.9.1
+      nyc: 15.1.0
+      prettier: 2.6.2
+      rimraf: 3.0.2
+      ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typescript: 4.9.5
 
   providers/sendgrid:
@@ -21885,6 +21916,17 @@ packages:
       react-dom: 18.2.0_react@18.2.0
     dev: false
 
+  /@ringcentral/sdk/4.7.4:
+    resolution: {integrity: sha512-7DpNn57v0+2FCpw08Dd3yS4c4ww9IOIA2SC4fGshCkqU8T5AkmGeAcc/Mastkhh7bnBgI3hsi9ulAtUMwU09wg==}
+    engines: {node: '>=4'}
+    dependencies:
+      dom-storage: 2.1.0
+      is-plain-object: 2.0.4
+      node-fetch: 2.6.9
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
   /@rollup/plugin-babel/5.3.1_3dsfpkpoyvuuxyfgdbpn4j4uzm:
     resolution: {integrity: sha512-WFfdLWU/xVWKeRQnKmIAQULUI7Il0gZnBIH/ZFO069wYIfPu+8zrfp/KMW0atmELoRDq8FbiP3VCss9MhCut7Q==}
     engines: {node: '>= 10.0.0'}
@@ -36559,6 +36601,10 @@ packages:
       entities: 4.4.0
     dev: false
 
+  /dom-storage/2.1.0:
+    resolution: {integrity: sha512-g6RpyWXzl0RR6OTElHKBl7nwnK87GUyZMYC7JWsB/IA73vpqK2K6LT39x4VepLxlSsWBFrPVLnsSR5Jyty0+2Q==}
+    dev: false
+
   /dom-walk/0.1.2:
     resolution: {integrity: sha512-6QvTW9mrGeIegrFXdtQi9pk7O/nSK6lSdXW2eqUspN5LWD7UTji2Fqw5V2YLjBpHEoU9Xl/eUWNpDeZvoyOv2w==}
 
@@ -38034,7 +38080,7 @@ packages:
       prettier-linter-helpers: 1.0.0
     dev: true
 
-  /eslint-plugin-prettier/3.4.1_fqyzhpusvewbsl54pqqbxqaegm:
+  /eslint-plugin-prettier/3.4.1_lk2fkjavihlcu7p5a3tdxfycz4:
     resolution: {integrity: sha512-htg25EUYUeIhKHXjOinK4BgCcDwtLHjqaxCDsMy5nbnUMkKFvIhMVCp+5GFUXQ4Nr8lBsPqtGAqBenbpFqAA2g==}
     engines: {node: '>=6.0.0'}
     peerDependencies:
@@ -38046,7 +38092,7 @@ packages:
         optional: true
     dependencies:
       eslint: 7.32.0
-      prettier: 2.7.1
+      prettier: 2.6.2
       prettier-linter-helpers: 1.0.0
     dev: true
 
@@ -43410,7 +43456,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
     transitivePeerDependencies:
       - bufferutil
       - canvas

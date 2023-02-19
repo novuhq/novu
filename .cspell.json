@@ -396,7 +396,8 @@
     "redlock",
     "axios",
     "ioredis",
-    "newrelic"
+    "newrelic",
+    "ringcentral"
   ],
   "flagWords": [],
   "patterns": [

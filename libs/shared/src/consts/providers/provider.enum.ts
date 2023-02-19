@@ -54,6 +54,7 @@ export enum SmsProviderIdEnum {
   Infobip = 'infobip-sms',
   BurstSms = 'burst-sms',
   Clickatell = 'clickatell',
+  RingCentral = 'ringcentral',
 }
 
 export enum ChatProviderIdEnum {
