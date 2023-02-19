@@ -10,16 +10,16 @@ export class UserResponseDto {
   resetTokenDate?: string;
 
   @ApiProperty()
-  firstName: string;
+  firstName?: string | null;
 
   @ApiProperty()
-  lastName: string;
+  lastName?: string | null;
 
   @ApiProperty()
-  email: string;
+  email?: string | null;
 
   @ApiProperty()
-  profilePicture: string;
+  profilePicture?: string | null;
 
   @ApiProperty()
   createdAt: string;

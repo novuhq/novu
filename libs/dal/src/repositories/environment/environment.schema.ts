@@ -33,7 +33,14 @@ const environmentSchema = new Schema(
         default: false,
       },
     },
-
+    dns: {
+      mxRecordConfigured: {
+        type: Schema.Types.Boolean,
+      },
+      inboundParseDomain: {
+        type: Schema.Types.String,
+      },
+    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

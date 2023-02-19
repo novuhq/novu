@@ -14,9 +14,9 @@ export class Outlook365Handler extends BaseHandler {
       senderName: string;
       password: string;
     } = {
-      from: credentials.from,
-      senderName: credentials.senderName,
-      password: credentials.password,
+      from: credentials.from as string,
+      senderName: credentials.senderName as string,
+      password: credentials.password as string,
     };
     this.provider = new Outlook365Provider(config);
   }

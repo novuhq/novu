@@ -20,6 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
 
 import {
   AddSubscribersRequestDto,
@@ -46,14 +47,12 @@ import {
   RenameTopicCommand,
   RenameTopicUseCase,
 } from './use-cases';
-
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
 
-@Controller('topics')
+@Controller('/topics')
 @ApiTags('Topics')
 @UseGuards(JwtAuthGuard)
 export class TopicsController {
@@ -67,12 +66,12 @@ export class TopicsController {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
+  @Post('')
   @ExternalApiAccessible()
   @ApiCreatedResponse({
     type: CreateTopicResponseDto,
   })
-  @Post('')
-  @ApiOperation({ description: 'Create a topic' })
+  @ApiOperation({ summary: 'Topic creation', description: 'Create a topic' })
   async createTopic(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateTopicRequestDto
@@ -92,11 +91,11 @@ export class TopicsController {
     };
   }
 
+  @Post('/:topicKey/subscribers')
   @ExternalApiAccessible()
   @ApiNoContentResponse()
-  @Post(':topicKey/subscribers')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ description: 'Add subscribers to a topic by key' })
+  @ApiOperation({ summary: 'Subscribers addition', description: 'Add subscribers to a topic by key' })
   async addSubscribers(
     @UserSession() user: IJwtPayload,
     @Param('topicKey') topicKey: TopicKey,
@@ -126,11 +125,11 @@ export class TopicsController {
     };
   }
 
+  @Post('/:topicKey/subscribers/removal')
   @ExternalApiAccessible()
   @ApiNoContentResponse()
-  @Post(':topicKey/subscribers/removal')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ description: 'Remove subscribers from a topic' })
+  @ApiOperation({ summary: 'Subscribers removal', description: 'Remove subscribers from a topic' })
   async removeSubscribers(
     @UserSession() user: IJwtPayload,
     @Param('topicKey') topicKey: TopicKey,
@@ -146,6 +145,7 @@ export class TopicsController {
     );
   }
 
+  @Get('')
   @ExternalApiAccessible()
   @ApiQuery({
     name: 'key',
@@ -168,8 +168,11 @@ export class TopicsController {
   @ApiOkResponse({
     type: FilterTopicsResponseDto,
   })
-  @Get('')
-  @ApiOperation({ description: 'Filter topic resources' })
+  @ApiOperation({
+    summary: 'Filter topics',
+    description:
+      'Returns a list of topics that can be paginated using the `page` query parameter and filtered by the topic key with the `key` query parameter',
+  })
   async filterTopics(
     @UserSession() user: IJwtPayload,
     @Query() query?: FilterTopicsRequestDto
@@ -185,12 +188,12 @@ export class TopicsController {
     );
   }
 
+  @Get('/:topicKey')
   @ExternalApiAccessible()
   @ApiOkResponse({
     type: GetTopicResponseDto,
   })
-  @Get('/:topicKey')
-  @ApiOperation({ description: 'Get a topic by its topic key' })
+  @ApiOperation({ summary: 'Get topic', description: 'Get a topic by its topic key' })
   async getTopic(
     @UserSession() user: IJwtPayload,
     @Param('topicKey') topicKey: TopicKey
@@ -204,12 +207,12 @@ export class TopicsController {
     );
   }
 
+  @Patch('/:topicKey')
   @ExternalApiAccessible()
   @ApiOkResponse({
     type: RenameTopicResponseDto,
   })
-  @Patch(':topicKey')
-  @ApiOperation({ description: 'Rename a topic' })
+  @ApiOperation({ summary: 'Rename a topic', description: 'Rename a topic by providing a new name' })
   async renameTopic(
     @UserSession() user: IJwtPayload,
     @Param('topicKey') topicKey: TopicKey,

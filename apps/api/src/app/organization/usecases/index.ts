@@ -7,6 +7,7 @@ import { ChangeMemberRole } from './membership/change-member-role/change-member-
 import { UpdateBrandingDetails } from './update-branding-details/update-branding-details.usecase';
 import { GetOrganizations } from './get-organizations/get-organizations.usecase';
 import { GetMyOrganization } from './get-my-organization/get-my-organization.usecase';
+import { RenameOrganization } from './rename-organization/rename-organization.usecase';
 
 export const USE_CASES = [
   AddMember,
@@ -18,4 +19,5 @@ export const USE_CASES = [
   UpdateBrandingDetails,
   GetOrganizations,
   GetMyOrganization,
+  RenameOrganization,
 ];

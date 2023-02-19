@@ -9,6 +9,7 @@ describe('Organization Switch', function () {
     cy.visit('/templates');
 
     cy.getByTestId('organization-switch')
+      .scrollIntoView()
       .should('be.visible')
       .should('have.value', capitalize(this.session.organization.name));
   });

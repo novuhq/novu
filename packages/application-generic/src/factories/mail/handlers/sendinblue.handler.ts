@@ -9,9 +9,9 @@ export class SendinblueHandler extends BaseHandler {
   }
   buildProvider(credentials: ICredentials, from?: string) {
     const config: { apiKey: string; senderName: string; from: string } = {
-      apiKey: credentials.apiKey,
-      senderName: credentials.senderName,
-      from: from,
+      apiKey: credentials.apiKey as string,
+      senderName: credentials.senderName as string,
+      from: from as string,
     };
 
     this.provider = new SendinblueEmailProvider(config);

@@ -17,11 +17,12 @@ export class SetVercelConfiguration {
   async execute(command: SetVercelConfigurationCommand): Promise<SetupVercelConfigurationResponseDto> {
     try {
       const tokenData = await this.getVercelToken(command.vercelIntegrationCode);
+      if (!tokenData) throw new ApiException('No token data found');
 
       const saveConfigurationData = {
         accessToken: tokenData.accessToken,
         configurationId: command.configurationId,
-        teamId: tokenData.teamId,
+        teamId: tokenData.teamId as string,
         partnerType: PartnerTypeEnum.VERCEL,
       };
 
@@ -44,9 +45,9 @@ export class SetVercelConfiguration {
   }> {
     const postData = new URLSearchParams({
       code,
-      client_id: process.env.VERCEL_CLIENT_ID,
-      client_secret: process.env.VERCEL_CLIENT_SECRET,
-      redirect_uri: process.env.VERCEL_REDIRECT_URI,
+      client_id: process.env.VERCEL_CLIENT_ID as string,
+      client_secret: process.env.VERCEL_CLIENT_SECRET as string,
+      redirect_uri: process.env.VERCEL_REDIRECT_URI as string,
     });
 
     const response = await lastValueFrom(

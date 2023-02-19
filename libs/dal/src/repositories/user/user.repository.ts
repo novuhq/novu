@@ -9,7 +9,7 @@ export class UserRepository extends BaseRepository<FilterQuery<UserEntity & Docu
     super(User, UserEntity);
   }
 
-  async findByEmail(email: string): Promise<UserEntity> {
+  async findByEmail(email: string): Promise<UserEntity | null> {
     return this.findOne({
       email,
     });
@@ -36,7 +36,7 @@ export class UserRepository extends BaseRepository<FilterQuery<UserEntity & Docu
     );
   }
 
-  async findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity> {
+  async findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity | null> {
     return this.findOne({
       'tokens.providerId': profileId,
       'tokens.provider': provider,

@@ -2,6 +2,7 @@ import { forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/c
 import { MemberRepository, OrganizationRepository, UserRepository, EnvironmentRepository } from '@novu/dal';
 import { SwitchOrganizationCommand } from './switch-organization.command';
 import { AuthService } from '../../services/auth.service';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class SwitchOrganization {
@@ -23,7 +24,11 @@ export class SwitchOrganization {
     }
 
     const member = await this.memberRepository.findMemberByUserId(command.newOrganizationId, command.userId);
+    if (!member) throw new ApiException('Member not found');
+
     const user = await this.userRepository.findById(command.userId);
+    if (!user) throw new ApiException(`User ${command.userId} not found`);
+
     const environment = await this.environmentRepository.findOne({
       _organizationId: command.newOrganizationId,
       _parentId: { $exists: false },

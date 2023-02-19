@@ -1,6 +1,6 @@
 {
   "name": "@novu/webhook",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "",
   "author": "",
   "private": true,
@@ -16,43 +16,43 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "cross-env TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
-    "test:e2e": "cross-env TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts"
+    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
+    "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts"
   },
   "dependencies": {
     "@godaddy/terminus": "^4.3.1",
-    "@nestjs/common": "^7.6.17",
-    "@nestjs/core": "^7.6.17",
-    "@nestjs/platform-express": "^7.6.17",
-    "@nestjs/platform-socket.io": "^7.6.17",
-    "@nestjs/swagger": "^4.8.0",
-    "@nestjs/terminus": "^7.2.0",
-    "@novu/application-generic": "^0.10.0",
-    "@novu/dal": "^0.10.0",
-    "@novu/shared": "^0.10.0",
-    "@novu/stateless": "^0.10.0",
-    "@novu/testing": "^0.10.0",
+    "@nestjs/common": "^9.2.1",
+    "@nestjs/core": "^9.2.1",
+    "@nestjs/platform-express": "^9.2.1",
+    "@nestjs/platform-socket.io": "^9.2.1",
+    "@nestjs/swagger": "^6.1.4",
+    "@nestjs/terminus": "^9.1.4",
+    "@novu/application-generic": "^0.11.0",
+    "@novu/dal": "^0.11.0",
+    "@novu/shared": "^0.11.0",
+    "@novu/stateless": "^0.11.0",
+    "@novu/testing": "^0.11.0",
     "@sentry/node": "^6.3.3",
-    "axios": "^0.24.0",
+    "axios": "^1.3.3",
     "bull": "^4.4.0",
+    "bullmq": "^3.5.8",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.13.2",
+    "class-validator": "^0.14.0",
     "dotenv": "^8.2.0",
     "envalid": "^7.1.0",
-    "jsonwebtoken": "8.5.1",
+    "jsonwebtoken": "9.0.0",
     "lodash": "^4.17.15",
     "nest-raven": "^7.2.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^6.5.5",
-    "socket.io": "^4.0.0",
-    "socket.io-redis": "^5.4.0"
+    "rxjs": "^7.5.5",
+    "socket.io": "^4.5.4"
   },
   "devDependencies": {
     "@nestjs/cli": "^7.6.0",
-    "@nestjs/schematics": "^7.3.1",
-    "@nestjs/testing": "^7.6.17",
-    "@types/chai": "^4.2.11",
+    "@nestjs/schematics": "^9.0.4",
+    "@nestjs/testing": "^9.2.1",
+    "@types/chai": "^4.3.4",
     "@types/express": "^4.17.8",
     "@types/jest": "^27.0.2",
     "@types/mocha": "^8.0.1",
@@ -69,15 +69,9 @@
     "sinon": "^9.2.4",
     "supertest": "^6.0.0",
     "ts-jest": "^27.0.7",
-    "ts-loader": "^8.0.8",
-    "ts-node": "^9.0.0",
+    "ts-loader": "~9.4.0",
+    "ts-node": "~10.9.1",
     "tsconfig-paths": "^3.9.0",
-    "typescript": "4.3.5"
-  },
-  "workspaces": {
-    "nohoist": [
-      "@nestjs/platform-socket.io",
-      "@nestjs/platform-socket.io/**"
-    ]
+    "typescript": "4.9.5"
   }
 }

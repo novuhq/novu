@@ -1,9 +1,9 @@
 export class OrganizationEntity {
-  _id?: string;
+  _id: string;
 
   name: string;
 
-  logo: string;
+  logo?: string;
 
   branding: {
     fontFamily?: string;

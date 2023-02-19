@@ -3,79 +3,29 @@ name: Deploy PROD API
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    tags:
-      - '**@novu/api@**'
-      - '**@novu/node@**'
-      - '**@novu/shared@**'
   workflow_dispatch:
 
 jobs:
   test_api:
     uses: ./.github/workflows/reusable-api-e2e.yml
 
-  deploy_prod_api:
+  build_prod_image:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     needs: test_api
     timeout-minutes: 80
     environment: Production
+    outputs:
+      docker_image: ${{ steps.build-image.outputs.IMAGE }}
     permissions:
       contents: read
       packages: write
       deployments: write
       id-token: write
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16.15.1'
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.2.0
-
-      - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.3.0
-        with:
-          mongodb-version: 4.2.8
-
-      - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 7.5.0
-          run_install: false
-
-      - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 7.5.0
-          run_install: false
-
-
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        id: pnpm-install
-        with:
-          version: 7.5.0
-          run_install: false
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - uses: actions/cache@v3
-        name: Setup pnpm cache
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        run: pnpm install
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
 
       - name: build api
         run: pnpm build:api
@@ -109,86 +59,35 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
-      - name: Checkout cloud infra
-        uses: actions/checkout@master
-        with:
-          repository: novuhq/cloud-infra
-          token: ${{ secrets.GH_PACKAGES }}
-          path: cloud-infra
+  deploy_prod_api_eu:
+    needs: build_prod_image
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    secrets: inherit
+    with:
+      service_name: api
+      terraform_workspace: novu-prod-eu
+      docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+  deploy_prod_api_us:
+    needs:
+      - deploy_prod_api_eu
+      - build_prod_image
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    secrets: inherit
+    with:
+      service_name: api
+      terraform_workspace: novu-prod
+      docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
+      deploy_sentry_release: true
+      sentry_project: api
 
-      - name: Terraform setup
-        uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: 1.1.7
-          terraform_wrapper: false
-
-      - name: Terraform Init
-        working-directory: cloud-infra/terraform
-        run: terraform init
-
-      - name: Terraform Change Workspace
-        working-directory: cloud-infra/terraform
-        run: terraform workspace select prod
-
-      - name: Terraform get output
-        working-directory: cloud-infra/terraform
-        id: terraform
-        run: |
-          echo "api_ecs_container_name=$(terraform output -json api_ecs_container_name | jq -r .)" >> $GITHUB_ENV
-          echo "api_ecs_service=$(terraform output -json api_ecs_service | jq -r .)" >> $GITHUB_ENV
-          echo "api_ecs_cluster=$(terraform output -json api_ecs_cluster | jq -r .)" >> $GITHUB_ENV
-          echo "api_task_name=$(terraform output -json api_task_name | jq -r .)" >> $GITHUB_ENV
-
-      - name: Download task definition
-        run: |
-          aws ecs describe-task-definition --task-definition ${{ env.api_task_name }} \
-          --query taskDefinition > task-definition.json
-
-      - name: Render Amazon ECS task definition
-        id: render-web-container
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: ${{ env.api_ecs_container_name }}
-          image: ${{ steps.build-image.outputs.IMAGE }}
-
-      - name: Deploy to Amazon ECS service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
-          service: ${{ env.api_ecs_service }}
-          cluster: ${{ env.api_ecs_cluster }}
-          wait-for-service-stability: true
-
+  deploy_docs:
+    needs: deploy_prod_api_us
+    runs-on: ubuntu-latest
+    environment: Production
+    steps:
       - name: Deploy API Documentation
         uses: fjogeleit/http-request-action@v1
         with:
           url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
           method: 'POST'
-
-      - name: get-npm-version
-        id: package-version
-        uses: martinbeentjes/npm-get-version-action@main
-        with:
-          path: apps/api
-
-      - name: Create Sentry release
-        uses: getsentry/action-release@v1
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: novu-r9
-          SENTRY_PROJECT: api
-        with:
-          version: ${{ steps.package-version.outputs.current-version}}
-          version_prefix: v
-          environment: prod
-          sourcemaps: apps/api/dist
-          ignore_empty: true
-          ignore_missing: true

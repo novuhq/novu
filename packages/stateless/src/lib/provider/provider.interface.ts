@@ -10,13 +10,16 @@ export interface IProvider {
 }
 
 export interface IEmailOptions {
-  to: string | string[];
+  to: string[];
   subject: string;
   html: string;
   from?: string;
   text?: string;
   attachments?: IAttachmentOptions[];
   id?: string;
+  replyTo?: string;
+  cc?: string[];
+  bcc?: string[];
 }
 
 export interface ISmsOptions {
@@ -32,6 +35,8 @@ export interface IPushOptions {
   content: string;
   payload: object;
   overrides?: {
+    type?: 'notification' | 'data';
+    data?: { [key: string]: string };
     tag?: string;
     body?: string;
     icon?: string;
@@ -51,6 +56,8 @@ export interface IPushOptions {
     channelId?: string;
     categoryId?: string;
     mutableContent?: boolean;
+    android?: { [key: string]: { [key: string]: string } };
+    apns?: { payload: { aps: { [key: string]: { [key: string]: string } } } };
   };
 }
 
@@ -88,6 +95,7 @@ export enum SmsEventStatusEnum {
   SENT = 'sent',
   FAILED = 'failed',
   UNDELIVERED = 'undelivered',
+  REJECTED = 'rejected',
 }
 
 export interface IEventBody {

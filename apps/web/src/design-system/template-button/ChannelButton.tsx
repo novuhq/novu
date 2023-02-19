@@ -10,8 +10,11 @@ import { useStyles } from './TemplateButton.styles';
 import { colors, shadows } from '../config';
 import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
-import { useEnvController } from '../../store/use-env-controller';
+import { useEnvController } from '../../store/useEnvController';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
+
+import { useViewport } from 'react-flow-renderer';
+import { getFormattedStepErrors } from '../../pages/templates/shared/errors';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -31,6 +34,7 @@ interface ITemplateButtonProps {
   errors?: boolean | string;
   showDots?: boolean;
   id?: string;
+  index?: number;
   onDelete?: (id: string) => void;
   dragging?: boolean;
   setActivePage?: (string) => void;
@@ -71,6 +75,7 @@ const usePopoverStyles = createStyles(() => ({
     backgroundColor: colors.error,
     color: colors.white,
     border: 'none',
+    maxWidth: 300,
   },
   arrow: {
     backgroundColor: colors.error,
@@ -91,8 +96,9 @@ export function ChannelButton({
   label,
   Icon,
   tabKey,
+  index,
   testId,
-  errors = false,
+  errors: initialErrors = false,
   showDots = true,
   id = undefined,
   onDelete = () => {},
@@ -109,12 +115,23 @@ export function ChannelButton({
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
   const { classes: popoverClasses } = usePopoverStyles();
+  const viewport = useViewport();
 
-  const { watch } = useFormContext();
+  const {
+    watch,
+    formState: { errors },
+  } = useFormContext();
+
+  let stepErrorContent = initialErrors;
+
+  if (typeof index === 'number') {
+    stepErrorContent = getFormattedStepErrors(index, errors);
+  }
 
   useEffect(() => {
     const subscription = watch((values) => {
       const thisStep = values.steps.find((step) => step._id === id);
+
       if (thisStep) {
         setDisabled(!thisStep.active);
       }
@@ -229,22 +246,26 @@ export function ChannelButton({
         </ActionWrapper>
       </ButtonWrapper>
 
-      {errors && (
+      {stepErrorContent && (
         <Popover
           withinPortal
           classNames={popoverClasses}
           withArrow
-          opened={popoverOpened}
+          opened={popoverOpened && Object.keys(stepErrorContent).length > 0}
           transition="rotate-left"
           transitionDuration={250}
           offset={theme.spacing.xs}
           position="right"
           zIndex={4}
+          positionDependencies={[dragging, viewport]}
+          clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
         >
           <Popover.Target>
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
           </Popover.Target>
-          <Popover.Dropdown>{errors.toString() || 'Something is missing here'}</Popover.Dropdown>
+          <Popover.Dropdown>
+            <Text rows={1}>{stepErrorContent || 'Something is missing here'}</Text>
+          </Popover.Dropdown>
         </Popover>
       )}
     </Button>

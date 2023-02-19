@@ -66,7 +66,7 @@ export class EnvironmentRepository extends BaseRepository<
       },
       'apiKeys'
     );
-    if (!environment) return null;
+    if (!environment) return [];
 
     return environment.apiKeys;
   }

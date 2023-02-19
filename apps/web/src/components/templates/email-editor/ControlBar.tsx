@@ -1,14 +1,15 @@
 import { ActionIcon, Divider } from '@mantine/core';
 import { DoubleArrowRight, PlusCircleOutlined, TextAlignment } from '../../../design-system/icons';
 import { colors, Dropdown } from '../../../design-system';
+import { EmailBlockTypeEnum } from '@novu/shared';
 
-export function ControlBar({ top, onBlockAdd }: { top: number; onBlockAdd: (type: 'button' | 'text') => void }) {
+export function ControlBar({ top, onBlockAdd }: { top: number; onBlockAdd: (type: EmailBlockTypeEnum) => void }) {
   const actionsMenu = [
     <Dropdown.Item
       key="control-bar-add"
       data-test-id="add-btn-block"
       icon={<DoubleArrowRight />}
-      onClick={() => onBlockAdd('button')}
+      onClick={() => onBlockAdd(EmailBlockTypeEnum.BUTTON)}
     >
       Add Button
     </Dropdown.Item>,
@@ -16,7 +17,7 @@ export function ControlBar({ top, onBlockAdd }: { top: number; onBlockAdd: (type
       key="add-text-button"
       data-test-id="add-text-block"
       icon={<TextAlignment />}
-      onClick={() => onBlockAdd('text')}
+      onClick={() => onBlockAdd(EmailBlockTypeEnum.TEXT)}
     >
       Add Text
     </Dropdown.Item>,

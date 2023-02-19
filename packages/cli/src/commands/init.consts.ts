@@ -1,12 +1,30 @@
 import { ListQuestionOptions } from 'inquirer';
 import * as chalk from 'chalk';
 import * as gradient from 'gradient-string';
+import { passwordConstraints } from '@novu/shared';
 
 export const introQuestions: ListQuestionOptions[] = [
   {
     name: 'environmentName',
-    message: 'What is your application name?',
-    default: 'Acme App.',
+    message: 'What is your organization or project name?',
+    validate(input: any, answers?): boolean | string | Promise<boolean | string> {
+      if (
+        ['test', 'testnovu', 'testapp', 'novutest'].includes(
+          input
+            ?.trim()
+            .toLowerCase()
+            .replace(/[^\w\s]/gi, '')
+        )
+      ) {
+        return `Cache invalidation and naming things... \n
+We recommend writing your project or company name ;) If you're just curious about Novu, type 'curious'
+        `;
+      } else if (!input?.trim().length) {
+        return `Please enter a valid name. If you're just curious about Novu, type 'curious' ;)`;
+      }
+
+      return true;
+    },
   },
 ];
 
@@ -37,11 +55,11 @@ export const environmentQuestions: ListQuestionOptions[] = [
     message: `Now lets setup your environment. How would you like to proceed?`,
     choices: [
       {
-        name: `Create a free cloud account ${chalk.bold.green(`(Recommended)`)}`,
+        name: `Try on a free cloud account ${chalk.bold.green(`(Quickest)`)}`,
         value: 'cloud',
       },
       {
-        name: 'Run manually using docker',
+        name: 'Self-hosting - Manual Setup',
         value: 'self-hosted-docker',
       },
     ],
@@ -55,15 +73,86 @@ export const registerMethodQuestions: ListQuestionOptions[] = [
     message: `Create your account with:`,
     choices: [
       {
-        name: `Sign-in with GitHub`,
+        name: `Sign-up with GitHub`,
         value: 'github',
       },
       {
         name: 'With Email & Password',
-        value: 'in-cli',
-        disabled: 'Coming soon',
+        value: 'email',
       },
     ],
+  },
+];
+
+export const privateDomainQuestions: (email: string) => ListQuestionOptions[] = (email: string) => [
+  {
+    name: 'domain',
+    type: 'list',
+    message: `We recommend to use you work e-mail, so important updates won't reach your personal e-mail.`,
+    choices: [
+      {
+        name: `Update to work e-mail`,
+        value: 'updateEmail',
+      },
+      {
+        name: `Keep current e-mail ${chalk.grey('(' + email + ')')}`,
+        value: 'keepCurrent',
+      },
+    ],
+  },
+];
+
+export const fullNameQuestion: ListQuestionOptions[] = [
+  {
+    type: 'text',
+    name: 'fullName',
+    message: 'Your Full Name',
+    validate: (input) => {
+      if (!input || input.length < 3) return 'Please write your full name';
+
+      return true;
+    },
+  },
+];
+
+export const proceedSignupQuestions: ListQuestionOptions[] = [
+  {
+    type: 'list',
+    name: 'proceedSignup',
+    message: `${chalk.red('Error:')} This account already exists, how do you want to proceed?`,
+    choices: [
+      {
+        name: `Reset Password`,
+        value: 'resetPassword',
+      },
+      {
+        name: 'Use a different email',
+        value: 'differentEmail',
+      },
+    ],
+  },
+];
+
+export const passwordQuestion: ListQuestionOptions[] = [
+  {
+    type: 'password',
+    name: 'password',
+    message: 'Password',
+    validate: (input) => {
+      const match = input.match(passwordConstraints.pattern);
+
+      return match
+        ? true
+        : 'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-';
+    },
+  },
+];
+
+export const emailQuestion: ListQuestionOptions[] = [
+  {
+    type: 'text',
+    name: 'email',
+    message: 'E-mail address',
   },
 ];
 

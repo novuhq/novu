@@ -2,11 +2,12 @@ import { HttpService } from '@nestjs/axios';
 import { Inject, Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { EnvironmentRepository, EnvironmentEntity, OrganizationRepository } from '@novu/dal';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
 import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 interface ISetEnvironment {
   token: string;

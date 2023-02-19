@@ -29,7 +29,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       'triggers.identifier': identifier,
     };
 
-    const item = await NotificationTemplate.findOne(requestQuery).populate('steps.template');
+    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
 
     return this.mapEntity(item);
   }
@@ -40,9 +40,41 @@ export class NotificationTemplateRepository extends BaseRepository<
       _environmentId: environmentId,
     };
 
-    const item = await NotificationTemplate.findOne(requestQuery).populate('steps.template');
+    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
 
     return this.mapEntity(item);
+  }
+
+  async findBlueprint(id: string) {
+    const requestQuery: EnforceEnvironmentQuery = {
+      _id: id,
+      isBlueprint: true,
+      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId() as string,
+    };
+
+    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
+
+    return this.mapEntity(item);
+  }
+
+  async getBlueprintList(skip = 0, limit = 10) {
+    if (!NotificationTemplateRepository.getBlueprintOrganizationId()) {
+      return { totalCount: 0, data: [] };
+    }
+
+    const requestQuery: EnforceEnvironmentQuery = {
+      isBlueprint: true,
+      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId() as string,
+    };
+
+    const totalItemsCount = await this.count(requestQuery);
+    const items = await this.MongooseModel.find(requestQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate({ path: 'notificationGroup' });
+
+    return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
 
   async getList(organizationId: string, environmentId: string, skip = 0, limit = 10) {
@@ -53,7 +85,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       _organizationId: organizationId,
     };
 
-    const items = await NotificationTemplate.find(requestQuery)
+    const items = await this.MongooseModel.find(requestQuery)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -69,7 +101,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       active: active,
     };
 
-    const items = await NotificationTemplate.find(requestQuery).populate('notificationGroup');
+    const items = await this.MongooseModel.find(requestQuery).populate('notificationGroup');
 
     return this.mapEntities(items);
   }
@@ -84,5 +116,9 @@ export class NotificationTemplateRepository extends BaseRepository<
     const res = await this.notificationTemplate.findDeleted(query);
 
     return this.mapEntity(res);
+  }
+
+  public static getBlueprintOrganizationId(): string | undefined {
+    return process.env.BLUEPRINT_CREATOR;
   }
 }

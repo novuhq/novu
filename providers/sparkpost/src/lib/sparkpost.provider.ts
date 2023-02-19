@@ -35,15 +35,9 @@ export class SparkPostEmailProvider implements IEmailProvider {
     html,
     attachments,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
-    let recipients: { address: string }[];
-    if (typeof to === 'string') {
-      recipients = [{ address: to }];
-    } else {
-      recipients = [];
-      to.forEach((recipient) => {
-        recipients.push({ address: recipient });
-      });
-    }
+    const recipients: { address: string }[] = to.map((recipient) => {
+      return { address: recipient };
+    });
 
     const files: Array<{ name: string; type: string; data: string }> = [];
 
@@ -76,7 +70,7 @@ export class SparkPostEmailProvider implements IEmailProvider {
   ): Promise<ICheckIntegrationResponse> {
     try {
       await this.sendMessage({
-        to: 'no-reply@novu.co',
+        to: ['no-reply@novu.co'],
         from: this.config.from || options.from,
         subject: options.subject,
         text: options.text,

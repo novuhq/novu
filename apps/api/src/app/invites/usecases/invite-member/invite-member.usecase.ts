@@ -2,11 +2,12 @@ import { Inject, Injectable, Scope } from '@nestjs/common';
 import { OrganizationRepository, UserRepository, MemberRepository, IAddMemberData } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InviteMemberCommand } from './invite-member.command';
 import { capitalize, createGuid } from '../../../shared/services/helper/helper.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 
 @Injectable({
@@ -31,8 +32,6 @@ export class InviteMember {
     const inviterUser = await this.userRepository.findById(command.userId);
 
     const token = createGuid();
-
-    const existingUser = await this.userRepository.findByEmail(normalizeEmail(command.email));
 
     if (process.env.NOVU_API_KEY && (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod')) {
       const novu = new Novu(process.env.NOVU_API_KEY);
@@ -64,10 +63,6 @@ export class InviteMember {
         invitationDate: new Date(),
       },
     };
-
-    if (existingUser) {
-      memberPayload._userId = existingUser._id;
-    }
 
     this.analyticsService.track('Invite Organization Member', command.userId, {
       _organization: command.organizationId,

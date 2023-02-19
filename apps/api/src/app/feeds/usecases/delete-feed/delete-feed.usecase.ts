@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { FeedRepository, DalException } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
+
 import { DeleteFeedCommand } from './delete-feed.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 
 @Injectable()
 export class DeleteFeed {

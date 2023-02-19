@@ -1,14 +1,14 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { PreviewEmail } from './usecases/parse-preview/preview-email.usecase';
-import { PreviewEmailCommand } from './usecases/parse-preview/preview-email.command';
 import { IEmailBlock, IJwtPayload, MessageTemplateContentType } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { CompileEmailTemplate } from './usecases/compile-email-template/compile-email-template.usecase';
+import { CompileEmailTemplateCommand } from './usecases/compile-email-template/compile-email-template.command';
 
 @Controller('/content-templates')
 @ApiExcludeController()
 export class ContentTemplatesController {
-  constructor(private previewEmailUsecase: PreviewEmail) {}
+  constructor(private compileEmailTemplateUsecase: CompileEmailTemplate) {}
 
   @Post('/preview/email')
   public previewEmail(
@@ -16,10 +16,11 @@ export class ContentTemplatesController {
     @Body('content') content: string | IEmailBlock[],
     @Body('contentType') contentType: MessageTemplateContentType,
     @Body('payload') payload: any,
-    @Body('subject') subject: string
+    @Body('subject') subject: string,
+    @Body('layoutId') layoutId: string
   ) {
-    return this.previewEmailUsecase.execute(
-      PreviewEmailCommand.create({
+    return this.compileEmailTemplateUsecase.execute(
+      CompileEmailTemplateCommand.create({
         userId: user._id,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
@@ -27,6 +28,7 @@ export class ContentTemplatesController {
         contentType,
         payload,
         subject,
+        layoutId,
       })
     );
   }

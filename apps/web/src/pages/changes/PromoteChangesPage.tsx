@@ -6,7 +6,7 @@ import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Button, Tabs } from '../../design-system';
 import PageMeta from '../../components/layout/components/PageMeta';
-import { usePromotedChanges, useUnPromotedChanges } from '../../api/hooks/use-environment-changes';
+import { usePromotedChanges, useUnPromotedChanges } from '../../api/hooks/useEnvironmentChanges';
 import { ChangesTable } from '../../components/changes/ChangesTableLayout';
 import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';

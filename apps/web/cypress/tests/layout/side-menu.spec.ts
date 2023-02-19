@@ -12,11 +12,15 @@ describe('Side Menu', function () {
     cy.getByTestId('side-nav-settings-link').should('have.attr', 'href').should('include', '/settings');
   });
 
-  it('should show bottom support and docs', function () {
-    cy.getByTestId('side-nav-bottom-links').should('be.visible');
+  it('should show bottom support, docs and share feedback', function () {
+    cy.getByTestId('side-nav-bottom-links').scrollIntoView().should('be.visible');
     cy.getByTestId('side-nav-bottom-link-support').should('have.attr', 'href').should('eq', 'https://discord.novu.co');
     cy.getByTestId('side-nav-bottom-link-documentation')
       .should('have.attr', 'href')
       .should('eq', 'https://docs.novu.co');
+
+    cy.getByTestId('side-nav-bottom-link-share-feedback')
+      .should('have.attr', 'href')
+      .should('eq', 'https://github.com/novuhq/novu/issues/new/choose');
   });
 });

@@ -12,20 +12,14 @@ import {
   sesConfig,
   outlook365Config,
   infobipEmailConfig,
+  resendConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
-import { ChannelTypeEnum } from '../../../entities/message-template';
 import { EmailProviderIdEnum } from '../provider.enum';
 
+import { ChannelTypeEnum } from '../../../types';
+
 export const emailProviders: IProviderConfig[] = [
-  {
-    id: EmailProviderIdEnum.EmailJS,
-    displayName: 'Email.js',
-    channel: ChannelTypeEnum.EMAIL,
-    credentials: mailJsConfig,
-    docReference: 'https://www.emailjs.com/docs/',
-    logoFileName: { light: 'emailjs.svg', dark: 'emailjs.svg' },
-  },
   {
     id: EmailProviderIdEnum.Mailgun,
     displayName: 'Mailgun',
@@ -121,5 +115,13 @@ export const emailProviders: IProviderConfig[] = [
     credentials: infobipEmailConfig,
     docReference: 'https://www.infobip.com/docs',
     logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
+  },
+  {
+    id: EmailProviderIdEnum.Resend,
+    displayName: 'Resend',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: resendConfig,
+    docReference: 'https://resend.com/docs',
+    logoFileName: { light: 'resend.svg', dark: 'resend.svg' },
   },
 ];

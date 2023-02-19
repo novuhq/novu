@@ -1,9 +1,6 @@
 name: Deploy PROD Notification Center Web Component
 
 on:
-  push:
-    tags:
-      - '**@novu/notification-center@**'
   workflow_dispatch:
 
 jobs:

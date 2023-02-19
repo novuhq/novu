@@ -1,6 +1,6 @@
 import { SendMessageType } from './send-message-type.usecase';
-import { MessageRepository, SubscriberRepository } from '@novu/dal';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { MessageRepository, SubscriberRepository, JobEntity } from '@novu/dal';
+import { CreateLog } from '../../../logs/usecases';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
@@ -8,7 +8,11 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -40,5 +44,19 @@ export abstract class SendMessageBase extends SendMessageType {
   }
   protected storeContent(): boolean {
     return this.channelType === ChannelTypeEnum.IN_APP || process.env.STORE_NOTIFICATION_CONTENT === 'true';
+  }
+
+  protected async sendErrorHandlebars(job: JobEntity, error: string) {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.FAILED,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({ error }),
+      })
+    );
   }
 }

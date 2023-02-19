@@ -2,12 +2,12 @@ import * as bcrypt from 'bcrypt';
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { differenceInMinutes, parseISO } from 'date-fns';
 import { UserRepository, UserEntity, OrganizationRepository } from '@novu/dal';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { LoginCommand } from './login.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { AuthService } from '../../services/auth.service';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
@@ -38,7 +38,7 @@ export class Login {
       throw new UnauthorizedException('Incorrect email or password provided.');
     }
 
-    if (this.isAccountBlocked(user)) {
+    if (this.isAccountBlocked(user) && user.failedLogin) {
       const blockedMinutesLeft = this.getBlockedMinutesLeft(user.failedLogin.lastFailedAttempt);
       throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
     }
@@ -50,7 +50,7 @@ export class Login {
       const failedAttempts = await this.updateFailedAttempts(user);
       const remainingAttempts = this.MAX_LOGIN_ATTEMPTS - failedAttempts;
 
-      if (remainingAttempts === 0) {
+      if (remainingAttempts === 0 && user.failedLogin) {
         const blockedMinutesLeft = this.getBlockedMinutesLeft(user.failedLogin.lastFailedAttempt);
         throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
       }
@@ -71,7 +71,7 @@ export class Login {
         userActiveOrganizations && userActiveOrganizations[0] ? userActiveOrganizations[0]?._id : undefined,
     });
 
-    if (user?.failedLogin?.times > 0) {
+    if (user?.failedLogin && user?.failedLogin?.times > 0) {
       await this.resetFailedAttempts(user);
     }
 
@@ -86,7 +86,9 @@ export class Login {
 
     const diff = this.getTimeDiffForAttempt(lastFailedAttempt);
 
-    return user?.failedLogin?.times >= this.MAX_LOGIN_ATTEMPTS && diff < this.BLOCKED_PERIOD_IN_MINUTES;
+    return (
+      user?.failedLogin && user?.failedLogin?.times >= this.MAX_LOGIN_ATTEMPTS && diff < this.BLOCKED_PERIOD_IN_MINUTES
+    );
   }
 
   private async updateFailedAttempts(user: UserEntity) {

@@ -1,6 +1,7 @@
 import { IsDefined, IsString, IsOptional } from 'class-validator';
 import { ISubscribersDefine } from '@novu/node';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { NotificationTemplateEntity } from '@novu/dal';
 
 export class ProcessSubscriberCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -24,5 +25,8 @@ export class ProcessSubscriberCommand extends EnvironmentWithUserCommand {
   templateId: string;
 
   @IsOptional()
-  actor: ISubscribersDefine;
+  actor?: ISubscribersDefine | null;
+
+  @IsOptional()
+  template?: NotificationTemplateEntity;
 }

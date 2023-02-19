@@ -4,9 +4,9 @@ import { BaseCommand } from '../../../shared/commands/base.command';
 export class CreateUserCommand extends BaseCommand {
   email: string;
 
-  firstName: string;
+  firstName?: string | null;
 
-  lastName: string;
+  lastName?: string | null;
 
   picture?: string;
 

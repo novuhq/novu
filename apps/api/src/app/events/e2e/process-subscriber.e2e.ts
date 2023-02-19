@@ -23,8 +23,8 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
   const invalidateCache = new InvalidateCacheService(
     new CacheService({
-      host: process.env.REDIS_CACHE_HOST,
-      port: process.env.REDIS_CACHE_PORT,
+      host: process.env.REDIS_CACHE_SERVICE_HOST,
+      port: process.env.REDIS_CACHE_SERVICE_PORT,
     })
   );
 
@@ -95,9 +95,12 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       firstName: 'New Test Name',
       lastName: 'New Last of name',
       email: 'newtest@email.novu',
+      locale: 'en',
     };
 
     await triggerEvent(session, template, payload);
+
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
@@ -107,6 +110,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     expect(createdSubscriber.firstName).to.equal(payload.firstName);
     expect(createdSubscriber.lastName).to.equal(payload.lastName);
     expect(createdSubscriber.email).to.equal(payload.email);
+    expect(createdSubscriber.locale).to.equal(payload.locale);
   });
 
   it('should send only email trigger second time based on the subscriber preference', async function () {

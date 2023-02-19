@@ -12,12 +12,15 @@ import {
 import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from '../../../design-system/icons';
+import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { AuthContext } from '../../../store/authContext';
 import OrganizationSelect from './OrganizationSelect';
 import { SpotlightContext } from '../../../store/spotlightContext';
+import { HEADER_HEIGHT } from '../constants';
+import { LimitBar } from '../../../pages/integrations/components/LimitBar';
+import { localNavigate } from '../../../pages/quick-start/components/route/store';
 import { ROUTES } from '../../../constants/routes.enum';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
@@ -69,11 +72,13 @@ export function SideNav({}: Props) {
     ]);
   }, [environment]);
 
+  const lastRoute = localNavigate().peek();
+
   const menuItems = [
     {
       condition: !readonly && currentUser?.showOnBoarding,
       icon: <CheckCircleOutlined />,
-      link: ROUTES.QUICKSTART,
+      link: lastRoute ?? ROUTES.QUICKSTART,
       label: 'Getting Started',
       testId: 'side-nav-quickstart-link',
     },
@@ -83,6 +88,12 @@ export function SideNav({}: Props) {
       link: ROUTES.SUBSCRIBERS,
       label: 'Subscribers',
       testId: 'side-nav-subscribers-link',
+    },
+    {
+      icon: <Brand />,
+      link: '/brand',
+      label: 'Brand',
+      testId: 'side-nav-brand-link',
     },
     { icon: <Activity />, link: ROUTES.ACTIVITIES, label: 'Activity Feed', testId: 'side-nav-activities-link' },
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
@@ -114,17 +125,20 @@ export function SideNav({}: Props) {
     <Navbar
       p={30}
       sx={{
-        position: 'static',
+        position: 'sticky',
+        top: HEADER_HEIGHT,
+        zIndex: 'auto',
         backgroundColor: 'transparent',
         borderRight: 'none',
         paddingRight: 0,
         width: '300px',
+        height: 'max-content',
         '@media (max-width: 768px)': {
           width: '100%',
         },
       }}
     >
-      <Navbar.Section grow>
+      <Navbar.Section>
         <Popover
           classNames={classes}
           withArrow
@@ -161,30 +175,46 @@ export function SideNav({}: Props) {
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
       <Navbar.Section mt={15}>
+        <LimitBar withLink={true} label="Novu email credits used" />
+      </Navbar.Section>
+      <Navbar.Section mt={15}>
         <Navbar.Section>
           <OrganizationSelect />
         </Navbar.Section>
-        <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://discord.novu.co"
-            data-test-id="side-nav-bottom-link-support"
-          >
-            Support
-          </a>
-          <p>
-            <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
-          </p>
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://docs.novu.co"
-            data-test-id="side-nav-bottom-link-documentation"
-          >
-            Documentation
-          </a>
-        </BottomNav>
+        <Navbar.Section>
+          <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://discord.novu.co"
+              data-test-id="side-nav-bottom-link-support"
+            >
+              Support
+            </a>
+            <p>
+              <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+            </p>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://docs.novu.co"
+              data-test-id="side-nav-bottom-link-documentation"
+            >
+              Docs
+            </a>
+            <p>
+              <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+            </p>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://github.com/novuhq/novu/issues/new/choose"
+              data-test-id="side-nav-bottom-link-share-feedback"
+            >
+              Share Feedback
+            </a>
+          </BottomNav>
+        </Navbar.Section>
       </Navbar.Section>
     </Navbar>
   );
@@ -204,11 +234,6 @@ const StyledLink = styled.a`
   &:hover {
     cursor: pointer;
   }
-`;
-
-const BottomNavWrapper = styled.div`
-  margin-top: auto;
-  padding-top: 30px;
 `;
 
 const BottomNav = styled.div<{ dark: boolean }>`

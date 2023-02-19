@@ -1,9 +1,9 @@
 import { SpotlightProvider } from '@mantine/spotlight';
 import { useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../constants/routes.enum';
-import { Activity, Bolt, Box, Settings, Repeat, Team } from '../../design-system/icons';
+import { Activity, Bolt, Box, Settings, Repeat, Team, Brand, Chat } from '../../design-system/icons';
 import { SpotlightContext } from '../../store/spotlightContext';
+import { ROUTES } from '../../constants/routes.enum';
 
 export const SpotLight = ({ children }) => {
   const navigate = useNavigate();
@@ -48,6 +48,12 @@ export const SpotLight = ({ children }) => {
         icon: <Team />,
       },
       {
+        id: 'navigate-brand',
+        title: 'Go to Brand',
+        onTrigger: () => navigate('/brand'),
+        icon: <Brand />,
+      },
+      {
         id: 'navigate-docs',
         title: 'Go to Documentation',
         onTrigger: () => {
@@ -60,6 +66,14 @@ export const SpotLight = ({ children }) => {
         onTrigger: () => {
           window?.open('https://discord.com/invite/novu', '_blank')?.focus();
         },
+      },
+      {
+        id: 'navigate-share-feedback',
+        title: 'Share Feedback',
+        onTrigger: () => {
+          window?.open('https://github.com/novuhq/novu/issues/new/choose', '_blank')?.focus();
+        },
+        icon: <Chat />,
       },
     ]);
   }, []);

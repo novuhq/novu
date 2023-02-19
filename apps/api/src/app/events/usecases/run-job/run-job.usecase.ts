@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository, JobStatusEnum, UserRepository } from '@novu/dal';
+import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -9,6 +9,7 @@ import { QueueNextJob } from '../queue-next-job/queue-next-job.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { RunJobCommand } from './run-job.command';
+import { shouldBackoff } from '../../services/workflow-queue/workflow.queue.service';
 
 @Injectable()
 export class RunJob {
@@ -27,6 +28,8 @@ export class RunJob {
     });
 
     const job = await this.jobRepository.findById(command.jobId);
+    if (!job) throw new ApiException(`Job with id ${command.jobId} not found`);
+
     const canceled = await this.delayedEventIsCanceled(job);
     if (canceled) {
       return;
@@ -51,14 +54,14 @@ export class RunJob {
           userId: job._userId,
           subscriberId: job._subscriberId,
           jobId: job._id,
-          events: job.digest.events,
+          events: job.digest?.events,
           job,
         })
       );
 
       await this.storageHelperService.deleteAttachments(job.payload?.attachments);
     } catch (error) {
-      if (job.step.shouldStopOnFail) {
+      if (job.step.shouldStopOnFail || shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
       throw new ApiException(error);

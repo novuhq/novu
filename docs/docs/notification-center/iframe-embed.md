@@ -70,7 +70,7 @@ Optionally, the embedded init script receives a position object, you can use thi
 ## Customizing the theme
 
 The notification center component can be customized by passing a `theme` to the init script.
-More information on all possible theme properties can be found [here](/notification-center/react-components#customizing-the-notification-center-theme).
+More information on all possible theme properties can be found [here](/notification-center/react/react-components#customizing-the-notification-center-theme).
 
 ```html
 <script>
@@ -99,7 +99,7 @@ More information on all possible theme properties can be found [here](/notificat
 ## Customizing the UI language
 
 The language of the UI can be customized by passing an `i18n` component to the init script.
-More information on all possible properties for it can be found [here](/notification-center/react-components#customize-the-ui-language).
+More information on all possible properties for it can be found [here](/notification-center/react/react-components#customize-the-ui-language).
 
 ```html
 <script>
@@ -174,13 +174,13 @@ novu.init(
 
 The second parameter of `novu.init` can be used to specify the options for the embed script. Here is a list of all the available options:
 
-| Parameter             | Type                 | Description                                                                                                                                                                                                           |
-| --------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bellSelector`        | `string`             | A `class` or `id` of the notification bell in your UI. We will attach an event listener for it.                                                                                                                       |
-| `unseenBadgeSelector` | `string`             | A selector to the unseen count badge (the red dot) which Novu can use to populate in case unseen notifications exist                                                                                                  |
-| `backendUrl`          | `string`             | Custom API location in case of self-hosted version of Novu                                                                                                                                                            |
-| `socketUrl`           | `string`             | Custom WebSocket Service location in case of self-hosted version of Novu                                                                                                                                              |
-| `position.top`        | `string` \| `number` | Override the top position of the notification center drop down                                                                                                                                                        |
-| `position.left`       | `string` \| `number` | Override the left position of the notification center drop down                                                                                                                                                       |
-| `theme`               | `object`             | Provide a custom theme for the notification center to use (for example see [above](#customizing-the-theme))                                                                                                           |
-| `styles`              | `object`             | Provide a custom styles for the notification center. Please note that the limitation is that you can't use the style function as a prop to override the component styles. Read more about [styling](#custom-styling). |
+| Parameter             | Type                 | Description                                                                                                                                                                                                                         |
+| --------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bellSelector`        | `string`             | A `class` or `id` of the notification bell in your UI. We will attach an event listener for it.                                                                                                                                     |
+| `unseenBadgeSelector` | `string`             | A selector to the unseen count badge (the red dot) which Novu can use to populate in case unseen notifications exist                                                                                                                |
+| `backendUrl`          | `string`             | Custom API location in case of self-hosted version of Novu                                                                                                                                                                          |
+| `socketUrl`           | `string`             | Custom WebSocket Service location in case of self-hosted version of Novu                                                                                                                                                            |
+| `position.top`        | `string` \| `number` | Override the top position of the notification center drop down                                                                                                                                                                      |
+| `position.left`       | `string` \| `number` | Override the left position of the notification center drop down                                                                                                                                                                     |
+| `theme`               | `object`             | Provide a custom theme for the notification center to use (for example see [above](#customizing-the-theme))                                                                                                                         |
+| `styles`              | `object`             | Provide a custom styles for the notification center. Please note that the limitation is that you can't use the style function as a prop to override the component styles. Read more about [styling](./iframe-embed#custom-styling). |

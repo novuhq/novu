@@ -1,4 +1,5 @@
 export { Activity } from './general/Activity';
+export { Brand } from './general/Brand';
 export { Team } from './general/Team';
 export { Settings } from './general/Settings';
 export { Bolt } from './general/Bolt';

@@ -12,6 +12,10 @@ The `@novu/notification-center-vue` package provides a Vue component wrapper ove
 npm install @novu/notification-center-vue
 ```
 
+:::note
+Novu supports only Vue 3.
+:::
+
 ## The plugin
 
 The Notification Center Vue plugin can be used to register the `NotificationCenterComponent` as a global component. This is the recommended way to use the component.

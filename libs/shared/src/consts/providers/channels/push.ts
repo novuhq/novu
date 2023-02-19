@@ -1,7 +1,8 @@
-import { ChannelTypeEnum } from '../../../entities/message-template';
 import { apnsConfig, fcmConfig, expoConfig } from '../credentials';
 import { PushProviderIdEnum } from '../provider.enum';
 import { IProviderConfig } from '../provider.interface';
+
+import { ChannelTypeEnum } from '../../../types';
 
 export const pushProviders: IProviderConfig[] = [
   {

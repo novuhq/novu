@@ -1,4 +1,8 @@
-import { ChannelTypeEnum, IChannelCredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  IChannelCredentials,
+  SubscriberCustomData,
+} from '@novu/shared';
 
 export interface ISubscribers {
   list(page: number);
@@ -32,7 +36,15 @@ export interface ISubscriberPayload {
   email?: string;
   phone?: string;
   avatar?: string;
-  [key: string]: string | string[] | boolean | number | undefined;
+  locale?: string;
+  data?: SubscriberCustomData;
+  [key: string]:
+    | string
+    | string[]
+    | boolean
+    | number
+    | SubscriberCustomData
+    | undefined;
 }
 
 export interface ISubscribersDefine extends ISubscriberPayload {

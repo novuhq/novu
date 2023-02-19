@@ -1,195 +1,129 @@
-import React, { useState } from 'react';
-import { useApi } from '../hooks';
-import { ButtonTypeEnum, IMessage, MessageActionStatusEnum } from '@novu/shared';
+import React, { useState, useCallback, useMemo } from 'react';
+import type { IStoreQuery } from '@novu/client';
+import type { IMessage } from '@novu/shared';
+
 import { NotificationsContext } from './notifications.context';
-import { useFeed } from '../hooks/use-feed.hook';
+import type { IStore } from '../shared/interfaces';
+import { useFetchNotifications, useUnseenCount } from '../hooks';
+import { useMarkNotificationsAs } from '../hooks';
 
-export function NotificationsProvider({ children }: { children: React.ReactNode }) {
-  const { api } = useApi();
-  const { stores } = useFeed();
-  const [notifications, setNotifications] = useState<Record<string, IMessage[]>>({ default_store: [] });
-  const [page, setPage] = useState<Map<string, number>>(new Map<string, number>([['default_store', 0]]));
-  const [hasNextPage, setHasNextPage] = useState<Record<string, boolean>>({ default_store: true });
-  const [fetching, setFetching] = useState<boolean>(false);
-  const [refetchTimeout, setRefetchTimeout] = useState<Map<string, NodeJS.Timeout>>(new Map());
+const DEFAULT_STORES = [{ storeId: 'default_store' }];
 
-  async function fetchPage(pageToFetch: number, isRefetch = false, storeId = 'default_store') {
-    setFetching(true);
-
-    const newNotifications = await api.getNotificationsList(pageToFetch, getStoreQuery(storeId));
-
-    if (newNotifications?.length < 10) {
-      hasNextPage[storeId] = false;
-      setHasNextPage(hasNextPage);
-    } else {
-      hasNextPage[storeId] = true;
-      setHasNextPage(hasNextPage);
-    }
-
-    if (!page.has(storeId)) {
-      setPage(page.set(storeId, 0));
-    }
-
-    if (isRefetch) {
-      notifications[storeId] = newNotifications;
-      setNotifications(Object.assign({}, notifications));
-    } else {
-      notifications[storeId] = [...(notifications[storeId] || []), ...newNotifications];
-      setNotifications(Object.assign({}, notifications));
-    }
-
-    setFetching(false);
-  }
-
-  async function fetchNextPage(storeId = 'default_store') {
-    if (!hasNextPage[storeId]) return;
-
-    const nextPage = page.get(storeId) + 1;
-    setPage(page.set(storeId, nextPage));
-
-    await fetchPage(nextPage, false, storeId);
-  }
-
-  async function markAsRead(messageId: string, storeId = 'default_store'): Promise<IMessage> {
-    notifications[storeId] = notifications[storeId].map((message) => {
-      if (message._id === messageId) {
-        message.read = true;
-        message.seen = true;
-      }
-
-      return message;
-    });
-
-    setNotifications(Object.assign({}, notifications));
-
-    return await api.markMessageAs(messageId, { seen: true, read: true });
-  }
-
-  async function markAllAsRead(storeId = 'default_store'): Promise<number> {
-    notifications[storeId] = notifications[storeId].map((message) => {
-      message.read = true;
-      message.seen = true;
-
-      return message;
-    });
-
-    setNotifications(Object.assign({}, notifications));
-
-    const messageIds = notifications[storeId].map((message) => {
-      return message._id;
-    });
-
-    return await api.markMessageAs(messageIds, { seen: true, read: true });
-  }
-
-  async function updateAction(
-    messageId: string,
-    actionButtonType: ButtonTypeEnum,
-    status: MessageActionStatusEnum,
-    payload?: Record<string, unknown>
-  ) {
-    await api.updateAction(messageId, actionButtonType, status, payload);
-
-    for (const storeId in notifications) {
-      notifications[storeId] = notifications[storeId].map((message) => {
-        if (message._id === messageId) {
-          message.cta.action.status = MessageActionStatusEnum.DONE;
-        }
-
-        return message;
-      });
-    }
-
-    setNotifications(Object.assign({}, notifications));
-  }
-
-  async function refetch(storeId = 'default_store') {
-    setFetching(true);
-
-    if (refetchTimeout.get(storeId)) {
-      clearTimeout(refetchTimeout.get(storeId));
-      setRefetchTimeout(refetchTimeout.set(storeId, null));
-    }
-
-    setRefetchTimeout(
-      refetchTimeout.set(
-        storeId,
-        setTimeout(async () => {
-          await fetchPage(0, true, storeId);
-        }, 250)
-      )
-    );
-  }
-
-  function getStoreQuery(storeId: string) {
-    return stores?.find((store) => store.storeId === storeId)?.query || {};
-  }
-
-  async function markAsSeen(
-    messageId?: string,
-    readExist?: boolean,
-    messages?: IMessage | IMessage[],
-    storeId = 'default_store'
-  ) {
-    if (messageId) {
-      await api.markMessageAsSeen(messageId);
-    }
-
-    const notificationsToMark = getNotificationsToMark(messages, notifications, storeId);
-
-    if (notificationsToMark.length) {
-      const notificationsToUpdate = filterReadNotifications(readExist, notificationsToMark);
-
-      const messagesIdsToMark = notificationsToUpdate.map((notification) => notification._id);
-      await api.markMessageAs(messagesIdsToMark, { seen: true });
-    }
-  }
-
-  function onWidgetClose() {
-    resetPageState();
-  }
-
-  function onTabChange(storeId = 'default_store') {
-    setPage(page.set(storeId, 0));
-  }
-
-  function resetPageState() {
-    setPage(new Map<string, number>([['default_store', 0]]));
-  }
-
-  return (
-    <NotificationsContext.Provider
-      value={{
-        notifications,
-        fetchNextPage,
-        hasNextPage,
-        fetching,
-        markAsRead,
-        updateAction,
-        refetch,
-        markAsSeen,
-        onWidgetClose,
-        onTabChange,
-        markAllAsRead,
-      }}
-    >
-      {children}
-    </NotificationsContext.Provider>
+export function NotificationsProvider({
+  children,
+  stores = DEFAULT_STORES,
+}: {
+  children: React.ReactNode;
+  stores?: IStore[];
+}) {
+  const firstStore = stores[0];
+  const [storeQuery, setStoreQuery] = useState<IStoreQuery>(() => firstStore.query ?? {});
+  const [storeId, setStoreId] = useState(firstStore.storeId ?? 'default_store');
+  const setStore = useCallback(
+    (newStoreId: string) => {
+      const foundQuery = stores?.find((store) => store.storeId === newStoreId)?.query || {};
+      setStoreId(newStoreId);
+      setStoreQuery(foundQuery);
+    },
+    [stores, setStoreId, setStoreQuery]
   );
-}
+  const {
+    data: notificationsPages,
+    hasNextPage,
+    isLoading,
+    isFetching,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch,
+  } = useFetchNotifications({ query: storeQuery });
+  const { data: unseenCountData } = useUnseenCount();
+  const { markNotificationsAs } = useMarkNotificationsAs();
 
-function getNotificationsToMark(
-  messagesToMark?: IMessage | IMessage[],
-  notifications?: Record<string, IMessage[]>,
-  storeId?: string
-) {
-  if (messagesToMark) {
-    return Array.isArray(messagesToMark) ? messagesToMark : [messagesToMark];
-  } else {
-    return notifications[storeId].filter((notification) => !notification.seen);
-  }
-}
+  const markNotificationAsRead = useCallback(
+    (messageId: string) => markNotificationsAs({ messageId, seen: true, read: true }),
+    [markNotificationsAs]
+  );
 
-function filterReadNotifications(readExist: boolean | undefined, notificationsToMark) {
-  return readExist ? notificationsToMark.filter((msg) => typeof msg?.read !== 'undefined') : notificationsToMark;
+  const markNotificationAsSeen = useCallback(
+    (messageId: string) => markNotificationsAs({ messageId, seen: true, read: false }),
+    [markNotificationsAs]
+  );
+
+  const markAllNotificationsAsRead = useCallback(() => {
+    if (!notificationsPages) {
+      return;
+    }
+
+    const messageIds = notificationsPages.pages.reduce<string[]>((acc, paginatedResponse) => {
+      const pageMessageIds = paginatedResponse.data.filter((message) => !message.read).map((message) => message._id);
+
+      return [...acc, ...pageMessageIds];
+    }, []);
+
+    if (messageIds.length > 0) {
+      markNotificationsAs({ messageId: messageIds, seen: true, read: true });
+    }
+  }, [markNotificationsAs, notificationsPages]);
+
+  const markAllNotificationsAsSeen = useCallback(() => {
+    if (!notificationsPages) {
+      return;
+    }
+
+    const messageIds = notificationsPages.pages.reduce<string[]>((acc, paginatedResponse) => {
+      const pageMessagesIds = paginatedResponse.data
+        .filter((message) => !message.seen && !message.read)
+        .map((message) => message._id);
+
+      return [...acc, ...pageMessagesIds];
+    }, []);
+
+    if (messageIds.length > 0) {
+      markNotificationsAs({ messageId: messageIds, seen: true, read: false });
+    }
+  }, [markNotificationsAs, notificationsPages]);
+
+  const notifications = useMemo<IMessage[]>(
+    () => notificationsPages?.pages.reduce((acc, paginatedResponse) => [...acc, ...paginatedResponse.data], []),
+    [notificationsPages]
+  );
+
+  const contextValue = useMemo(
+    () => ({
+      storeId,
+      stores,
+      unseenCount: unseenCountData?.count ?? 0,
+      notifications,
+      hasNextPage,
+      isLoading,
+      isFetching,
+      isFetchingNextPage,
+      setStore,
+      fetchNextPage,
+      refetch,
+      markNotificationAsSeen,
+      markNotificationAsRead,
+      markAllNotificationsAsRead,
+      markAllNotificationsAsSeen,
+    }),
+    [
+      storeId,
+      stores,
+      unseenCountData?.count,
+      notifications,
+      hasNextPage,
+      isLoading,
+      isFetching,
+      isFetchingNextPage,
+      setStore,
+      fetchNextPage,
+      refetch,
+      markNotificationAsSeen,
+      markNotificationAsRead,
+      markAllNotificationsAsRead,
+      markAllNotificationsAsSeen,
+    ]
+  );
+
+  return <NotificationsContext.Provider value={contextValue}>{children}</NotificationsContext.Provider>;
 }

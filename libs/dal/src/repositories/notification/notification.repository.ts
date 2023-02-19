@@ -46,7 +46,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
       };
     }
 
-    if (query.subscriberIds.length > 0) {
+    if (query.subscriberIds && query.subscriberIds.length > 0) {
       requestQuery._subscriberId = {
         $in: query.subscriberIds,
       };
@@ -58,9 +58,9 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
       };
     }
 
-    const totalCount = await Notification.countDocuments(requestQuery);
+    const totalCount = await this.MongooseModel.countDocuments(requestQuery);
 
-    const response = await this.populateFeed(Notification.find(requestQuery))
+    const response = await this.populateFeed(this.MongooseModel.find(requestQuery))
       .skip(skip)
       .limit(limit)
       .sort('-createdAt');
@@ -78,7 +78,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
       _organizationId,
     };
 
-    return this.mapEntity(await this.populateFeed(Notification.findOne(requestQuery)));
+    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery)));
   }
 
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>) {
@@ -114,6 +114,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
           _environmentId: new Types.ObjectId(environmentId),
         },
       },
+      { $unwind: '$channels' },
       {
         $group: {
           _id: {
@@ -122,6 +123,8 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
           count: {
             $sum: 1,
           },
+          templates: { $addToSet: '$_templateId' },
+          channels: { $addToSet: '$channels' },
         },
       },
       { $sort: { _id: -1 } },

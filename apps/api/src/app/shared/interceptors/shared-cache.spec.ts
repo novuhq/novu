@@ -201,6 +201,18 @@ describe('shared cache', function () {
   });
 
   describe('buildKey', function () {
+    it('should build cache key with only id for environment query by api', function () {
+      const interceptorType = CacheInterceptorTypeEnum.CACHED;
+      let prefixKey: CacheKeyPrefixEnum;
+      let keyConfig: Record<string, unknown>;
+      let res: string;
+
+      prefixKey = CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY;
+      keyConfig = { _id: '123' };
+      res = buildKey(prefixKey, keyConfig, interceptorType);
+      expect(res).to.be.equal('environment_by_api_key:i=123');
+    });
+
     it('should build cache key from prefix with config', async function () {
       const interceptorType = CacheInterceptorTypeEnum.CACHED;
       let prefixKey: CacheKeyPrefixEnum;

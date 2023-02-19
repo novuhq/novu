@@ -3,10 +3,7 @@ import { BaseCommand } from '../../../shared/commands/base.command';
 
 export class CompileTemplateCommand extends BaseCommand {
   @IsDefined()
-  templateId: 'basic' | 'custom';
-
-  @IsOptional()
-  customTemplate?: string;
+  template: string;
 
   @IsObject()
   data: any; // eslint-disable-line @typescript-eslint/no-explicit-any

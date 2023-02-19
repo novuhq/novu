@@ -14,7 +14,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
+import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { IJwtPayload } from '@novu/shared';
@@ -75,10 +75,10 @@ export class AuthController {
   @UseGuards(AuthGuard('github'))
   async githubCallback(@Req() request, @Res() response) {
     if (!request.user || !request.user.token) {
-      return response.redirect(`${process.env.CLIENT_SUCCESS_AUTH_REDIRECT}?error=AuthenticationError`);
+      return response.redirect(`${process.env.FRONT_BASE_URL + '/auth/login'}?error=AuthenticationError`);
     }
 
-    let url = process.env.CLIENT_SUCCESS_AUTH_REDIRECT;
+    let url = process.env.FRONT_BASE_URL + '/auth/login';
     const redirectUrl = JSON.parse(request.query.state).redirectUrl;
 
     /**
@@ -114,6 +114,11 @@ export class AuthController {
       url += `&configurationId=${configurationId}`;
     }
 
+    const invitationToken = JSON.parse(request.query.state).invitationToken;
+    if (invitationToken) {
+      url += `&invitationToken=${invitationToken}`;
+    }
+
     return response.redirect(url);
   }
 
@@ -134,6 +139,7 @@ export class AuthController {
         firstName: body.firstName,
         lastName: body.lastName,
         organizationName: body.organizationName,
+        origin: body.origin,
       })
     );
   }
@@ -213,6 +219,6 @@ export class AuthController {
 
     const member = organizationId ? await this.memberRepository.findMemberByUserId(organizationId, user._id) : null;
 
-    return await this.authService.getSignedToken(user, organizationId, member, environmentId);
+    return await this.authService.getSignedToken(user, organizationId, member as MemberEntity, environmentId);
   }
 }

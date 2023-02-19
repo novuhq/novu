@@ -1,4 +1,4 @@
-# Nodejs Nodemailer Provider
+# Nodejs Custom SMTP Provider
 
 A nodemailer email provider library for [@novu/stateless](https://github.com/novuhq/novu)
 

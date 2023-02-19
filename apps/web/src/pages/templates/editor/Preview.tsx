@@ -9,9 +9,10 @@ import { useActiveIntegrations } from '../../../api/hooks';
 import { When } from '../../../components/utils/When';
 import { Button, colors } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { useProcessVariables } from '../../../hooks/use-process-variables';
+import { useProcessVariables } from '../../../hooks/useProcessVariables';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
+import { errorMessage } from '../../../utils/notifications';
 
 export const Preview = ({ activeStep, view }: { activeStep: number; view: string }) => {
   const { control } = useFormContext();
@@ -37,6 +38,10 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     name: `steps.${activeStep}.template.variables`,
     control,
   });
+  const layoutId = useWatch({
+    name: `steps.${activeStep}.template.layoutId`,
+    control,
+  });
 
   const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
@@ -54,16 +59,22 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     contentType: MessageTemplateContentType;
     content: string | IEmailBlock[];
     payload: any;
+    layoutId: string;
   }) => {
     mutateAsync({
       ...args,
+      payload: JSON.parse(args.payload),
       subject: subject ? subject : '',
-    }).then((result: { html: string; subject: string }) => {
-      setContent(result.html);
-      setParsedSubject(result.subject);
+    })
+      .then((result: { html: string; subject: string }) => {
+        setContent(result.html);
+        setParsedSubject(result.subject);
 
-      return result;
-    });
+        return result;
+      })
+      .catch((e: any) => {
+        errorMessage(e?.message || 'Un-expected error occurred');
+      });
   };
 
   useEffect(() => {
@@ -71,6 +82,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
       contentType,
       content: contentType === 'editor' ? editorContent : htmlContent,
       payload: processedVariables,
+      layoutId,
     });
   }, [contentType, htmlContent, editorContent, processedVariables]);
   const theme = useMantineTheme();
@@ -131,6 +143,7 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
                   contentType,
                   content: contentType === 'editor' ? editorContent : htmlContent,
                   payload: payloadValue,
+                  layoutId,
                 });
               }}
               variant="outline"

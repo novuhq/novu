@@ -258,6 +258,7 @@ const NotificationItemContainer = styled.div`
 
 const TextContent = styled.div`
   line-height: 16px;
+  overflow-wrap: anywhere;
 `;
 
 const SettingsActionWrapper = styled.div<{ novuTheme: INovuTheme }>`

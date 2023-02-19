@@ -186,6 +186,16 @@ export const sendgridConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const resendConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const netCoreConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -311,6 +321,12 @@ export const snsConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'AWS region',
+    type: 'string',
+    required: true,
+  },
 ];
 
 export const telnyxConfig: IConfigCredentials[] = [
@@ -396,15 +412,28 @@ export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Key ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
   {
     key: CredentialsKeyEnum.ProjectName,
     displayName: 'Team ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Bundle ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Secure,
+    displayName: 'Production',
+    type: 'switch',
+    required: true,
+  },
+
   ...pushConfigBase,
 ];
 

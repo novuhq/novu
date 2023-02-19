@@ -1,10 +1,10 @@
 # Postmark
 
-Is it possible to use [Postmark](https://postmarkapp.com/) as a provider to send transactional emails to the customers using the Novu Platform with a single API.
+It is possible to use [Postmark](https://postmarkapp.com/) as a provider to send transactional emails to the customers using the Novu Platform with a single API.
 
 ## Getting Started
 
-The first step to use the Postmark channel is to create a Postmark account and add the personal API key to the Postmark integration on the Novu platform.
+The first step to use the Postmark provider is to create a Postmark account and add the personal API key to the Postmark integration on the Novu platform.
 
 ## Find the API Key
 
@@ -27,5 +27,6 @@ Postmark allows the authentication of the sender identity using one of the follo
 - Locate Postmark and click on the **Connect** button.
 - Enter the Postmark API key.
 - Fill the `From email address` field using the authenticated email from the previous step.
-- Click on the **Save** button.
+- Click on the `Disabled` button and mark as `Active`.
+- Click on the **Connect** button.
 - Now is possible to send notifications using Postmark in Novu.

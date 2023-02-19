@@ -71,13 +71,13 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
-    const messages = await this.find(requestQuery, '', {
+    const messages = await this.MongooseModel.find(requestQuery, '', {
       limit: options.limit,
       skip: options.skip,
       sort: '-createdAt',
-    });
+    }).populate('subscriber', '_id firstName lastName avatar subscriberId');
 
-    return messages;
+    return this.mapEntities(messages);
   }
 
   async getTotalCount(
@@ -204,7 +204,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     }
 
     const totalCount = await this.count(requestQuery);
-    const response = await Message.find(requestQuery)
+    const response = await this.MongooseModel.find(requestQuery)
       .populate('subscriber', 'firstName _id lastName email')
       .populate('template', 'name _id')
       .skip(skip)
@@ -270,8 +270,10 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     return this.mapEntity(res);
   }
 
-  async findSubscriberById(query: { _id: string; _environmentId: string }): Promise<MessageEntity> {
-    const res = await Message.findOne({ _id: query._id, _environmentId: query._environmentId }).populate('subscriber');
+  async findMessageById(query: { _id: string; _environmentId: string }): Promise<MessageEntity | null> {
+    const res = await this.MongooseModel.findOne({ _id: query._id, _environmentId: query._environmentId }).populate(
+      'subscriber'
+    );
 
     return this.mapEntity(res);
   }

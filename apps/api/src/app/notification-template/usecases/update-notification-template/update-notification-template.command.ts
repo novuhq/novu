@@ -10,23 +10,23 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
 
   @IsArray()
   @IsOptional()
-  tags: string[];
+  tags?: string[];
 
   @IsString()
   @IsOptional()
-  name: string;
+  name?: string;
 
   @IsString()
   @IsOptional()
-  description: string;
+  description?: string;
 
   @IsString()
   @IsOptional()
-  identifier: string;
+  identifier?: string;
 
   @IsBoolean()
   @IsOptional()
-  critical: boolean;
+  critical?: boolean;
 
   @IsOptional()
   preferenceSettings?: IPreferenceChannels;
@@ -40,5 +40,12 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsArray()
   @ValidateNested()
   @IsOptional()
-  steps: NotificationStep[];
+  steps?: NotificationStep[];
+
+  @ValidateNested()
+  @IsOptional()
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
 }

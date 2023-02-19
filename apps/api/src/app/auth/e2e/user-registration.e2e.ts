@@ -23,7 +23,6 @@ describe('User registration - /auth/register (POST)', async () => {
     expect(body.message.find((i) => i.includes('email'))).to.be.ok;
     expect(body.message.find((i) => i.includes('password'))).to.be.ok;
     expect(body.message.find((i) => i.includes('firstName'))).to.be.ok;
-    expect(body.message.find((i) => i.includes('lastName'))).to.be.ok;
   });
 
   it('should throw error if user signup is disabled', async () => {

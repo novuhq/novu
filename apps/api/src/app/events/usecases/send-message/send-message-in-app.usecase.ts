@@ -6,27 +6,23 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   MessageEntity,
-  IEmailBlock,
-  NotificationEntity,
+  OrganizationRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  LogCodeEnum,
-  LogStatusEnum,
   IMessageButton,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IEmailBlock,
   InAppProviderIdEnum,
   ActorTypeEnum,
   IActor,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
@@ -34,6 +30,8 @@ import {
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { OrganizationEntity } from '../../../../../../../libs/dal/src/repositories/organization/organization.entity';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -47,71 +45,75 @@ export class SendMessageInApp extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private organizationRepository: OrganizationRepository
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
   }
 
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    if (!subscriber) throw new ApiException('Subscriber not found');
+    if (!command.step.template) throw new ApiException('Template not found');
 
     Sentry.addBreadcrumb({
       message: 'Sending In App',
     });
     const notification = await this.notificationRepository.findById(command.notificationId);
+    if (!notification) throw new ApiException('Notification not found');
+
     const inAppChannel: NotificationStepEntity = command.step;
+    if (!inAppChannel.template) throw new ApiException('Template not found');
+
     let content = '';
 
     const { actor } = command.step.template;
 
     if (actor && actor.type !== ActorTypeEnum.NONE) {
-      actor.data = await this.processAvatar(actor, command, notification);
+      actor.data = await this.processAvatar(actor, command);
     }
+
+    const organization = await this.organizationRepository.findById(command.organizationId);
 
     try {
-      content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
-    } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            subscriber: subscriber,
-            step: {
-              digest: !!command.events.length,
-              events: command.events,
-              total_count: command.events.length,
-            },
-            ...command.payload,
-          }),
-        })
-      );
-
-      return;
-    }
-
-    if (inAppChannel.template.cta?.data?.url) {
-      inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
-        inAppChannel.template.cta?.data?.url,
+      content = await this.compileInAppTemplate(
+        inAppChannel.template.content,
         command.payload,
         subscriber,
-        command
+        command,
+        organization
       );
-    }
 
-    if (inAppChannel.template.cta?.action?.buttons) {
-      const ctaButtons: IMessageButton[] = [];
-
-      for (const action of inAppChannel.template.cta.action.buttons) {
-        const buttonContent = await this.compileInAppTemplate(action.content, command.payload, subscriber, command);
-        ctaButtons.push({ type: action.type, content: buttonContent });
+      if (inAppChannel.template.cta?.data?.url) {
+        inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
+          inAppChannel.template.cta?.data?.url,
+          command.payload,
+          subscriber,
+          command,
+          organization
+        );
       }
 
-      inAppChannel.template.cta.action.buttons = ctaButtons;
+      if (inAppChannel.template.cta?.action?.buttons) {
+        const ctaButtons: IMessageButton[] = [];
+
+        for (const action of inAppChannel.template.cta.action.buttons) {
+          const buttonContent = await this.compileInAppTemplate(
+            action.content,
+            command.payload,
+            subscriber,
+            command,
+            organization
+          );
+          ctaButtons.push({ type: action.type, content: buttonContent });
+        }
+
+        inAppChannel.template.cta.action.buttons = ctaButtons;
+      }
+    } catch (e) {
+      await this.sendErrorHandlebars(command.job, e.message);
+
+      return;
     }
 
     const messagePayload = Object.assign({}, command.payload);
@@ -126,13 +128,11 @@ export class SendMessageInApp extends SendMessageBase {
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
-      content,
       providerId: 'novu',
-      payload: messagePayload,
       _feedId: inAppChannel.template._feedId,
     });
 
-    let message: MessageEntity;
+    let message: MessageEntity | null = null;
 
     this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
@@ -181,6 +181,8 @@ export class SendMessageInApp extends SendMessageBase {
       message = await this.messageRepository.findById(oldMessage._id);
     }
 
+    if (!message) throw new ApiException('Message not found');
+
     await this.queueService.wsSocketQueue.add({
       event: 'notification_received',
       userId: command.subscriberId,
@@ -213,28 +215,6 @@ export class SendMessageInApp extends SendMessageBase {
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
-      })
-    );
-
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.SUCCESS,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        notificationId: notification._id,
-        messageId: message._id,
-        text: 'In App message created',
-        userId: command.userId,
-        subscriberId: command.subscriberId,
-        code: LogCodeEnum.IN_APP_MESSAGE_CREATED,
-        templateId: notification._templateId,
-        raw: this.storeContent()
-          ? {
-              payload: command.payload,
-              triggerIdentifier: command.identifier,
-            }
-          : null,
       })
     );
 
@@ -272,18 +252,22 @@ export class SendMessageInApp extends SendMessageBase {
     content: string | IEmailBlock[],
     payload: any,
     subscriber: SubscriberEntity,
-    command: SendMessageCommand
-  ): Promise<string> {
+    command: SendMessageCommand,
+    organization: OrganizationEntity | null
+  ): Promise<string | null> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: content as string,
+        template: content as string,
         data: {
           subscriber,
           step: {
-            digest: !!command.events.length,
+            digest: !!command.events?.length,
             events: command.events,
-            total_count: command.events.length,
+            total_count: command.events?.length,
+          },
+          branding: {
+            logo: organization?.branding?.logo,
+            color: organization?.branding?.color || '#f47373',
           },
           ...payload,
         },
@@ -291,45 +275,18 @@ export class SendMessageInApp extends SendMessageBase {
     );
   }
 
-  private async processAvatar(
-    actor: IActor,
-    command: SendMessageCommand,
-    notification: NotificationEntity
-  ): Promise<string | null> {
+  private async processAvatar(actor: IActor, command: SendMessageCommand): Promise<string | null> {
     const actorId = command.job?._actorId;
     if (actor.type === ActorTypeEnum.USER && actorId) {
-      try {
-        const actorSubscriber: SubscriberEntity = await this.subscriberRepository.findOne(
-          {
-            _environmentId: command.environmentId,
-            _id: actorId,
-          },
-          'avatar'
-        );
+      const actorSubscriber: SubscriberEntity | null = await this.subscriberRepository.findOne(
+        {
+          _environmentId: command.environmentId,
+          _id: actorId,
+        },
+        'avatar'
+      );
 
-        return actorSubscriber?.avatar || null;
-      } catch (error) {
-        await this.createLogUsecase.execute(
-          CreateLogCommand.create({
-            transactionId: command.transactionId,
-            status: LogStatusEnum.ERROR,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            notificationId: notification._id,
-            text: "Couldn't get Avatar actor details",
-            userId: command.userId,
-            subscriberId: command.subscriberId,
-            code: LogCodeEnum.AVATAR_ACTOR_ERROR,
-            templateId: notification._templateId,
-            raw: {
-              payload: command.payload,
-              triggerIdentifier: command.identifier,
-            },
-          })
-        );
-
-        return null;
-      }
+      return actorSubscriber?.avatar || null;
     }
 
     return actor.data || null;

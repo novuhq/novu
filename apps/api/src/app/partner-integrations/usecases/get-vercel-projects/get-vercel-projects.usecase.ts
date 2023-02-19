@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
 import { OrganizationRepository } from '@novu/dal';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetVercelProjectsCommand } from './get-vercel-projects.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 interface IGetVercelConfiguration {
   userId: string;
@@ -15,18 +15,22 @@ export class GetVercelProjects {
   constructor(private httpService: HttpService, private organizationRepository: OrganizationRepository) {}
 
   async execute(command: GetVercelProjectsCommand) {
-    const configuration = await this.getVercelConfiguration(command.environmentId, {
-      configurationId: command.configurationId,
-      userId: command.userId,
-    });
+    try {
+      const configuration = await this.getVercelConfiguration(command.environmentId, {
+        configurationId: command.configurationId,
+        userId: command.userId,
+      });
 
-    if (!configuration.accessToken) {
-      throw new ApiException();
+      if (!configuration || !configuration.accessToken) {
+        throw new UnauthorizedException();
+      }
+
+      const projects = await this.getVercelProjects(configuration.accessToken, configuration.teamId, command.nextPage);
+
+      return projects;
+    } catch (error) {
+      throw new ApiException(error.message);
     }
-
-    const projects = await this.getVercelProjects(configuration.accessToken, configuration.teamId, command.nextPage);
-
-    return projects;
   }
 
   async getVercelConfiguration(environmentId: string, payload: IGetVercelConfiguration) {
@@ -36,9 +40,13 @@ export class GetVercelProjects {
       payload.configurationId
     );
 
+    if (!organization || !organization.length || !organization[0].partnerConfigurations?.length) {
+      throw new Error('No configuration found for vercel');
+    }
+
     return {
-      accessToken: organization[0].partnerConfigurations[0].accessToken,
-      teamId: organization[0].partnerConfigurations[0].teamId,
+      accessToken: organization[0].partnerConfigurations[0].accessToken as string,
+      teamId: organization[0].partnerConfigurations[0].teamId as string,
     };
   }
 

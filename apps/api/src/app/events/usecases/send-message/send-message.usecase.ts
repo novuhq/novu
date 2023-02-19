@@ -2,17 +2,12 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FILTER_TO_LABEL,
+  ICondition,
   IPreferenceChannels,
   StepTypeEnum,
 } from '@novu/shared';
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageEmail } from './send-message-email.usecase';
-import { SendMessageSms } from './send-message-sms.usecase';
-import { SendMessageInApp } from './send-message-in-app.usecase';
-import { SendMessageChat } from './send-message-chat.usecase';
-import { SendMessagePush } from './send-message-push.usecase';
-import { Digest } from './digest/digest.usecase';
-import { matchMessageWithFilters } from '../trigger-event/message-filter.matcher';
+import { AnalyticsService } from '@novu/application-generic';
 import {
   JobEntity,
   SubscriberRepository,
@@ -20,6 +15,14 @@ import {
   JobRepository,
   JobStatusEnum,
 } from '@novu/dal';
+
+import { SendMessageCommand } from './send-message.command';
+import { SendMessageEmail } from './send-message-email.usecase';
+import { SendMessageSms } from './send-message-sms.usecase';
+import { SendMessageInApp } from './send-message-in-app.usecase';
+import { SendMessageChat } from './send-message-chat.usecase';
+import { SendMessagePush } from './send-message-push.usecase';
+import { Digest } from './digest/digest.usecase';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { SendMessageDelay } from './send-message-delay.usecase';
 import {
@@ -30,10 +33,11 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { MessageMatcher } from '../trigger-event/message-matcher.service';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class SendMessage {
@@ -50,6 +54,7 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
+    private matchMessage: MessageMatcher,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -57,18 +62,44 @@ export class SendMessage {
     const shouldRun = await this.filter(command);
     const preferred = await this.filterPreferredChannels(command.job);
 
-    if (!shouldRun || !preferred) {
+    const stepType = command.step?.template?.type;
+
+    if (!command.payload?.$on_boarding_trigger) {
+      const usedFilters = shouldRun.conditions.reduce(MessageMatcher.sumFilters, {
+        stepFilters: [],
+        failedFilters: [],
+        passedFilters: [],
+      });
+
+      this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
+        _template: command.job._templateId,
+        _organization: command.organizationId,
+        _environment: command.environmentId,
+        _subscriber: command.job?._subscriberId,
+        provider: command.job?.providerId,
+        delay: command.job?.delay,
+        jobType: command.job?.type,
+        digestType: command.job.digest?.type,
+        digestEventsCount: command.job.digest?.events?.length,
+        digestUnit: command.job.digest?.unit,
+        digestAmount: command.job.digest?.amount,
+        filterPassed: shouldRun,
+        preferencesPassed: preferred,
+        usedFilters,
+      });
+    }
+
+    if (!shouldRun.passed || !preferred) {
       await this.jobRepository.updateStatus(command.organizationId, command.jobId, JobStatusEnum.CANCELED);
 
       return;
     }
 
-    if (command.step.template.type !== StepTypeEnum.DELAY) {
+    if (stepType !== StepTypeEnum.DELAY) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail:
-            command.step.template.type === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
+          detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,
@@ -77,20 +108,7 @@ export class SendMessage {
       );
     }
 
-    this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
-      _template: command.job._templateId,
-      _organization: command.organizationId,
-      _subscriber: command.job?._subscriberId,
-      provider: command.job?.providerId,
-      delay: command.job?.delay,
-      jobType: command.job?.type,
-      digestType: command.job.digest?.type,
-      digestEventsCount: command.job.digest?.events?.length,
-      digestUnit: command.job.digest?.unit,
-      digestAmount: command.job.digest?.amount,
-    });
-
-    switch (command.step.template.type) {
+    switch (stepType) {
       case StepTypeEnum.SMS:
         return await this.sendMessageSms.execute(command);
       case StepTypeEnum.IN_APP:
@@ -111,9 +129,9 @@ export class SendMessage {
   private async filter(command: SendMessageCommand) {
     const data = await this.getFilterData(command);
 
-    const shouldRun = matchMessageWithFilters(command.step, data);
+    const shouldRun = await this.matchMessage.filter(command, data);
 
-    if (!shouldRun) {
+    if (!shouldRun.passed) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -157,11 +175,15 @@ export class SendMessage {
       environmentId: job._environmentId,
     });
 
+    const subscriber = await this.subscriberRepository.findById(job._subscriberId);
+    if (!subscriber) throw new ApiException('Subscriber not found with id ' + job._subscriberId);
+
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: job._organizationId,
-      subscriberId: job._subscriberId,
+      subscriberId: subscriber.subscriberId,
       environmentId: job._environmentId,
       template,
+      subscriber,
     });
 
     const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);

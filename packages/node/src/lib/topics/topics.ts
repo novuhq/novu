@@ -33,11 +33,7 @@ export class Topics extends WithHttp implements ITopics {
   }
 
   async get(topicKey: TopicKey) {
-    return await this.http.get(`/topics`, {
-      params: {
-        key: topicKey,
-      },
-    });
+    return await this.http.get(`/topics/${topicKey}`);
   }
 
   async rename(topicKey: TopicKey, newName: TopicName) {

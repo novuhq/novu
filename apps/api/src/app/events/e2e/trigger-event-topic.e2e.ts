@@ -40,7 +40,6 @@ describe('Topic Trigger Event', () => {
     let triggerEndpointUrl: string;
     const notificationRepository = new NotificationRepository();
     const messageRepository = new MessageRepository();
-    const logRepository = new LogRepository();
 
     beforeEach(async () => {
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
@@ -64,31 +63,6 @@ describe('Topic Trigger Event', () => {
 
     afterEach(() => {
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
-    });
-
-    it('should generate logs for the notification for a topic with 2 subscribers', async () => {
-      await axiosInstance.post(
-        triggerEndpointUrl,
-        buildTriggerRequestPayload(template, to),
-        buildTriggerRequestHeaders(session)
-      );
-
-      await session.awaitRunningJobs(template._id);
-
-      const logs = await logRepository.find({
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-      });
-
-      expect(logs.length).to.be.eql(5);
-      expect(logs.find((log) => log.text === 'Request processed' && log._subscriberId === firstSubscriber._id)).to
-        .exist;
-      expect(logs.find((log) => log.text === 'Request processed' && log._subscriberId === secondSubscriber._id)).to
-        .exist;
-      expect(logs.find((log) => log.text === 'In App message created' && log._subscriberId === firstSubscriber._id)).to
-        .exist;
-      expect(logs.find((log) => log.text === 'In App message created' && log._subscriberId === secondSubscriber._id)).to
-        .exist;
     });
 
     it('should trigger an event successfully', async () => {
@@ -127,6 +101,117 @@ describe('Topic Trigger Event', () => {
       await session.awaitRunningJobs(template._id);
 
       expect(subscribers.length).to.be.greaterThan(0);
+
+      for (const subscriber of subscribers) {
+        const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
+
+        expect(notifications.length).to.equal(1);
+
+        const notification = notifications[0];
+
+        expect(notification._organizationId).to.equal(session.organization._id);
+        expect(notification._templateId).to.equal(template._id);
+
+        const messages = await messageRepository.findBySubscriberChannel(
+          session.environment._id,
+          subscriber._id,
+          ChannelTypeEnum.IN_APP
+        );
+
+        expect(messages.length).to.equal(1);
+        const message = messages[0];
+
+        expect(message.channel).to.equal(ChannelTypeEnum.IN_APP);
+        expect(message.content as string).to.equal('Test content for <b>Testing of User Name</b>');
+        expect(message.seen).to.equal(false);
+        expect(message.cta.data.url).to.equal('/cypress/test-shell/example/test?test-param=true');
+        expect(message.lastSeenDate).to.be.not.ok;
+        expect(message.payload.firstName).to.equal('Testing of User Name');
+        expect(message.payload.urlVariable).to.equal('/test/url/path');
+        expect(message.payload.attachments).to.be.not.ok;
+
+        const emails = await messageRepository.findBySubscriberChannel(
+          session.environment._id,
+          subscriber._id,
+          ChannelTypeEnum.EMAIL
+        );
+
+        expect(emails.length).to.equal(1);
+        const email = emails[0];
+
+        expect(email.channel).to.equal(ChannelTypeEnum.EMAIL);
+        expect(Array.isArray(email.content)).to.be.ok;
+        expect((email.content[0] as IEmailBlock).type).to.equal('text');
+        expect((email.content[0] as IEmailBlock).content).to.equal(
+          'This are the text contents of the template for Testing of User Name'
+        );
+      }
+    });
+
+    it('should exclude actor from topic events trigger', async () => {
+      const actor = firstSubscriber;
+      const { data: body } = await axiosInstance.post(
+        triggerEndpointUrl,
+        { ...buildTriggerRequestPayload(template, to), actor: { subscriberId: actor.subscriberId } },
+        buildTriggerRequestHeaders(session)
+      );
+
+      await session.awaitRunningJobs(template._id);
+
+      const actorNotifications = await notificationRepository.findBySubscriberId(session.environment._id, actor._id);
+      expect(actorNotifications.length).to.equal(0);
+
+      const actorMessages = await messageRepository.findBySubscriberChannel(
+        session.environment._id,
+        actor._id,
+        ChannelTypeEnum.IN_APP
+      );
+
+      expect(actorMessages.length).to.equal(0);
+
+      const actorEmails = await messageRepository.findBySubscriberChannel(
+        session.environment._id,
+        actor._id,
+        ChannelTypeEnum.EMAIL
+      );
+      expect(actorEmails.length).to.equal(0);
+
+      const secondSubscriberNotifications = await notificationRepository.findBySubscriberId(
+        session.environment._id,
+        secondSubscriber._id
+      );
+
+      expect(secondSubscriberNotifications.length).to.equal(1);
+
+      const secondSubscriberMessages = await messageRepository.findBySubscriberChannel(
+        session.environment._id,
+        secondSubscriber._id,
+        ChannelTypeEnum.IN_APP
+      );
+
+      expect(secondSubscriberMessages.length).to.equal(1);
+
+      const secondSubscriberEmails = await messageRepository.findBySubscriberChannel(
+        session.environment._id,
+        secondSubscriber._id,
+        ChannelTypeEnum.EMAIL
+      );
+
+      expect(secondSubscriberEmails.length).to.equal(1);
+    });
+
+    it('should only exclude actor from topic, should send event if actor explicitly included', async () => {
+      const actor = firstSubscriber;
+      const { data: body } = await axiosInstance.post(
+        triggerEndpointUrl,
+        {
+          ...buildTriggerRequestPayload(template, [...to, actor.subscriberId]),
+          actor: { subscriberId: actor.subscriberId },
+        },
+        buildTriggerRequestHeaders(session)
+      );
+
+      await session.awaitRunningJobs(template._id);
 
       for (const subscriber of subscribers) {
         const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
@@ -282,28 +367,6 @@ describe('Topic Trigger Event', () => {
 
     afterEach(() => {
       process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
-    });
-
-    it('should generate logs for the notification for 2 topics with 2 subscribers and 2 individual subscribers', async () => {
-      await axiosInstance.post(
-        triggerEndpointUrl,
-        buildTriggerRequestPayload(template, to),
-        buildTriggerRequestHeaders(session)
-      );
-
-      await session.awaitRunningJobs(template._id);
-
-      const logs = await logRepository.find({
-        _environmentId: session.environment._id,
-        _organizationId: session.organization._id,
-      });
-
-      expect(logs.length).to.be.eql(13);
-      expect(subscribers.length).to.be.greaterThan(0);
-      for (const subscriber of subscribers) {
-        expect(logs.find((log) => log.text === 'Request processed' && log._subscriberId === subscriber._id)).to.exist;
-        expect(logs.find((log) => log.text === 'Request processed' && log._subscriberId === subscriber._id)).to.exist;
-      }
     });
 
     it('should trigger an event successfully', async () => {

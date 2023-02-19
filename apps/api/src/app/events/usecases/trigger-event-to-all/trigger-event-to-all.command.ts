@@ -19,5 +19,5 @@ export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
   overrides: Record<string, Record<string, unknown>>;
 
   @IsOptional()
-  actor?: ISubscribersDefine;
+  actor?: ISubscribersDefine | null;
 }

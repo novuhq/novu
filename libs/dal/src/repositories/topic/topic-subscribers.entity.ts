@@ -9,7 +9,7 @@ import {
 } from './types';
 
 export class TopicSubscribersEntity {
-  _id?: TopicSubscriberId;
+  _id: TopicSubscriberId;
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;
   _subscriberId: SubscriberId;
@@ -17,3 +17,5 @@ export class TopicSubscribersEntity {
   topicKey: TopicKey;
   externalSubscriberId: ExternalSubscriberId;
 }
+
+export type CreateTopicSubscribersEntity = Omit<TopicSubscribersEntity, '_id'>;

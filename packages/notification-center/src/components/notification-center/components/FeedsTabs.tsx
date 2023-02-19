@@ -1,30 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useLayoutEffect } from 'react';
 import { Tabs as MantineTabs } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { NotificationsListTab } from './NotificationsListTab';
 import { UnseenBadge } from './UnseenBadge';
 import { Tabs } from './layout/tabs/Tabs';
-import { useApi, useNotificationCenter, useNotifications, useUnseenCount } from '../../../hooks';
-import { useFeed } from '../../../hooks/use-feed.hook';
-import { IStore } from '../../../shared/interfaces';
+import { useNotificationCenter, useNotifications, useFeedUnseenCount, useNovuContext } from '../../../hooks';
 
 export function FeedsTabs() {
   const { tabs, onTabClick } = useNotificationCenter();
-  const { activeTabStoreId, setActiveTabStoreId } = useFeed();
-  const { markAsSeen, refetch, onTabChange } = useNotifications({ storeId: activeTabStoreId });
+  const { storeId, setStore, markAllNotificationsAsSeen } = useNotifications();
+  const { setFetchingStrategy } = useNovuContext();
 
-  async function handleOnTabChange(storeId: string) {
-    markAsSeen(null, true);
-    refetch();
-    onTabChange();
-    setActiveTabStoreId(storeId);
+  async function handleOnTabChange(newStoreId: string) {
+    markAllNotificationsAsSeen();
+    setStore(newStoreId);
   }
+
+  useLayoutEffect(() => {
+    setFetchingStrategy({ fetchNotifications: true });
+  }, [setFetchingStrategy]);
 
   return (
     <>
       {tabs?.length ? (
-        <Tabs value={tabs[0].storeId} onTabChange={handleOnTabChange}>
+        <Tabs value={storeId} onTabChange={handleOnTabChange}>
           <MantineTabs.List>
             {tabs.map((tab, index) => (
               <MantineTabs.Tab
@@ -44,7 +44,7 @@ export function FeedsTabs() {
           </MantineTabs.List>
           {tabs.map((tab, index) => (
             <MantineTabs.Panel value={tab.storeId} key={index}>
-              <NotificationsListTab tab={tab} />
+              <NotificationsListTab />
             </MantineTabs.Panel>
           ))}
         </Tabs>
@@ -62,34 +62,14 @@ const TabLabelWrapper = styled.div`
 `;
 
 function UnseenBadgeContainer({ storeId }: { storeId: string }) {
-  const { api } = useApi();
-  const { stores } = useFeed();
-  const { unseenCount: generalUnseenCount } = useUnseenCount();
+  const { stores } = useNotifications();
+  const query = useMemo(() => {
+    const foundQuery = stores?.find((i) => i.storeId === storeId)?.query || {};
 
-  const [unseenCount, setUnseenCount] = useState<number>();
-
-  useEffect(() => {
-    setCount(stores, storeId, api, setUnseenCount);
-  }, [generalUnseenCount]);
+    return Object.assign({}, foundQuery, { seen: false });
+  }, [stores]);
+  const { data } = useFeedUnseenCount({ query });
+  const unseenCount = query.seen ? 0 : data?.count ?? 0;
 
   return <UnseenBadge unseenCount={unseenCount} />;
-}
-
-async function setCount(
-  stores: IStore[],
-  storeId: string,
-  api,
-  setCountBadge: (value: ((prevState: number) => number) | number) => void
-) {
-  const query = stores?.find((i) => i.storeId === storeId)?.query || {};
-
-  const unseenQuery = Object.assign({}, query, { seen: false });
-
-  const { count } = await getTabCount(query, api, unseenQuery);
-
-  setCountBadge(count);
-}
-
-async function getTabCount(query, api, unseenQuery: { seen: boolean }) {
-  return query.seen ? 0 : await api.getTabCount(unseenQuery);
 }

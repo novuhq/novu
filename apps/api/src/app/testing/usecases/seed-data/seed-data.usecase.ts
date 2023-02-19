@@ -4,6 +4,7 @@ import { SeedDataCommand } from './seed-data.command';
 import { AuthService } from '../../../auth/services/auth.service';
 import { UserRegister } from '../../../auth/usecases/register/user-register.usecase';
 import { UserRegisterCommand } from '../../../auth/usecases/register/user-register.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class SeedData {
@@ -21,6 +22,7 @@ export class SeedData {
     const userRegisterCommand = UserRegisterCommand.create(data);
 
     const { user } = await this.userRegister.execute(userRegisterCommand);
+    if (!user) throw new ApiException(`Failed to create user`);
 
     return {
       password_user: user,

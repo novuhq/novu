@@ -11,7 +11,7 @@ export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'g
     super({
       clientID: process.env.GITHUB_OAUTH_CLIENT_ID,
       clientSecret: process.env.GITHUB_OAUTH_CLIENT_SECRET,
-      callbackURL: process.env.GITHUB_OAUTH_REDIRECT,
+      callbackURL: process.env.API_ROOT_URL + '/v1/auth/github/callback',
       scope: ['user:email'],
       passReqToCallback: true,
       store: {
@@ -28,12 +28,15 @@ export class GitHubStrategy extends PassportStrategy(githubPassport.Strategy, 'g
   async validate(req, accessToken: string, refreshToken: string, githubProfile, done: (err, data) => void) {
     try {
       const profile = { ...githubProfile._json, email: githubProfile.emails[0].value };
+      const parsedState = this.parseState(req);
+
       const response = await this.authService.authenticate(
         AuthProviderEnum.GITHUB,
         accessToken,
         refreshToken,
         profile,
-        this.parseState(req)?.distinctId
+        parsedState?.distinctId,
+        parsedState?.source
       );
 
       done(null, {

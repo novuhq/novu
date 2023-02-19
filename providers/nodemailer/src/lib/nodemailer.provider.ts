@@ -21,9 +21,9 @@ export class NodemailerProvider implements IEmailProvider {
       from: string;
       host: string;
       port: number;
-      secure: boolean;
-      user: string;
-      password: string;
+      secure?: boolean;
+      user?: string;
+      password?: string;
       dkim?: DKIM.SingleKeyOptions | undefined;
     }
   ) {
@@ -89,17 +89,25 @@ export class NodemailerProvider implements IEmailProvider {
   }
 
   private createMailData(options: IEmailOptions): SendMailOptions {
-    return {
+    const sendMailOptions: SendMailOptions = {
       from: options.from || this.config.from,
       to: options.to,
       subject: options.subject,
       html: options.html,
       text: options.text,
+      cc: options.cc,
       attachments: options.attachments?.map((attachment) => ({
         filename: attachment?.name,
         content: attachment.file,
         contentType: attachment.mime,
       })),
+      bcc: options.bcc,
     };
+
+    if (options.replyTo) {
+      sendMailOptions.replyTo = options.replyTo;
+    }
+
+    return sendMailOptions;
   }
 }

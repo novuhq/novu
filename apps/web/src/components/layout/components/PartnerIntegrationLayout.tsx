@@ -1,14 +1,18 @@
-import { useEffect } from 'react';
-import { useMantineColorScheme } from '@mantine/core';
+import { Box, useMantineColorScheme } from '@mantine/core';
+import { CONTEXT_PATH } from '../../../config';
 
 export function PartnerIntegrationLayout({ children }: { children: React.ReactNode }) {
-  const { toggleColorScheme, colorScheme } = useMantineColorScheme();
+  const { colorScheme } = useMantineColorScheme();
 
-  useEffect(() => {
-    if (colorScheme === 'light') {
-      toggleColorScheme('dark');
-    }
-  }, [colorScheme, toggleColorScheme]);
+  const isDark = colorScheme === 'dark';
+  const logoUrl = isDark ? CONTEXT_PATH + '/static/images/logo-light.png' : CONTEXT_PATH + '/static/images/logo.png';
 
-  return <div>{children}</div>;
+  return (
+    <div>
+      <Box>
+        <img src={logoUrl} alt="logo" style={{ maxWidth: 150, marginTop: 10, marginLeft: 10 }} />
+      </Box>
+      {children}
+    </div>
+  );
 }

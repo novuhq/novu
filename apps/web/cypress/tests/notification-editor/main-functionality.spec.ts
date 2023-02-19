@@ -12,8 +12,9 @@ describe('Workflow Editor - Main Functionality', function () {
     fillBasicNotificationDetails('Test not reset data when switching channel types');
 
     addAndEditChannel('inApp');
-    cy.getByTestId('in-app-editor-content-input').type('{{firstName}} someone assigned you to {{taskName}}', {
+    cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
+      force: true,
     });
     goBack();
 
@@ -27,7 +28,7 @@ describe('Workflow Editor - Main Functionality', function () {
     goBack();
 
     editChannel('inApp');
-    cy.getByTestId('in-app-editor-content-input').contains('someone assigned you to');
+    cy.get('.ace_text-layer').first().contains('{{firstName}} someone assigned you to {{taskName}}');
     goBack();
     editChannel('email');
 
@@ -36,19 +37,21 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('emailPreheader').should('have.value', 'this is email preheader');
   });
 
-  it('should edit notification', function () {
+  it('should edit in-app notification', function () {
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
 
+    cy.getByTestId('notification-template-submit-btn').should('be.disabled');
     cy.getByTestId('title').should('have.value', template.name);
 
     addAndEditChannel('inApp');
+    cy.getByTestId('notification-template-submit-btn').should('not.be.disabled');
+    goBack();
+    editChannel('inApp');
 
-    cy.getByTestId('in-app-editor-content-input')
-      .getByTestId('in-app-editor-content-input')
-      .contains('Test content for {{firstName}}');
+    cy.get('.ace_text-layer').first().contains('Test content for <b>{{firstName}}</b>');
 
     goBack();
 
@@ -61,8 +64,16 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('use-feeds-checkbox').click();
     cy.getByTestId('feed-button-1').click({ force: true });
 
-    cy.getByTestId('in-app-editor-content-input').clear().type('new content for notification');
-    cy.getByTestId('submit-btn').click();
+    cy.get('.ace_text-input')
+      .first()
+      .clear({
+        force: true,
+      })
+      .type('new content for notification', {
+        force: true,
+      });
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').should('be.disabled');
 
     cy.visit('/templates');
     cy.waitForNetworkIdle(500);
@@ -71,18 +82,44 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('notifications-template').get('tbody tr td').contains('This is the new', {
       matchCase: false,
     });
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/templates/edit/' + template._id);
+    });
 
-    cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
 
     clickWorkflow();
 
     editChannel('inApp', true);
 
+    cy.getByTestId('notification-template-submit-btn').should('be.disabled');
     cy.getByTestId('feed-button-1-checked');
     cy.getByTestId('create-feed-input').type('test4');
     cy.getByTestId('add-feed-button').click();
     cy.getByTestId('feed-button-2-checked');
+    cy.getByTestId('notification-template-submit-btn').should('not.be.disabled');
+  });
+
+  it('should edit email notification', function () {
+    const template = this.session.templates[0];
+
+    cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
+
+    // edit email step
+    cy.getByTestId('notification-template-submit-btn').should('be.disabled');
+    clickWorkflow();
+    editChannel('email');
+    cy.getByTestId('notification-template-submit-btn').should('be.disabled');
+
+    // edit email editor content
+    cy.getByTestId('email-editor').getByTestId('editor-row').first().click().type('{selectall}{backspace}Hello world!');
+    cy.getByTestId('notification-template-submit-btn').should('not.be.disabled');
+
+    // go back and update
+    goBack();
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').should('be.disabled');
   });
 
   it('should update notification active status', function () {
@@ -138,13 +175,13 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('description').type('this is a notification template description');
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
     cy.getByTestId('title').should('have.class', 'mantine-TextInput-invalid');
     fillBasicNotificationDetails('Test SMS Notification Title');
     clickWorkflow();
     dragAndDrop('inApp');
 
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
     cy.getByTestId('workflowButton').getByTestId('error-circle').should('be.visible');
     cy.getByTestId('settingsButton').getByTestId('error-circle').should('be.visible');
   });
@@ -156,7 +193,7 @@ describe('Workflow Editor - Main Functionality', function () {
     fillBasicNotificationDetails();
     clickWorkflow();
     dragAndDrop('email');
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
     cy.getByTestId('node-emailSelector').getByTestId('error-circle').should('be.visible');
     editChannel('email');
     cy.getByTestId('emailSubject').should('have.class', 'mantine-TextInput-invalid');
@@ -198,7 +235,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('upload-image-button').click();
 
     cy.get('.mantine-Modal-modal button').contains('Yes').click();
-    cy.location('pathname').should('equal', '/settings');
+    cy.location('pathname').should('equal', '/brand');
   });
 
   it('should show the brand logo on main page', function () {
@@ -208,7 +245,9 @@ describe('Workflow Editor - Main Functionality', function () {
     fillBasicNotificationDetails('Test show the brand logo on main page');
     addAndEditChannel('email');
 
-    cy.getByTestId('email-editor').getByTestId('brand-logo').should('have.attr', 'src', 'https://novu.co/img/logo.png');
+    cy.getByTestId('email-editor')
+      .getByTestId('brand-logo')
+      .should('have.attr', 'src', 'https://web.novu.co/static/images/logo-light.png');
   });
 
   it('should support RTL text content', function () {
@@ -236,7 +275,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('smsNotificationContent').type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
     });
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.getByTestId('success-trigger-modal').should('be.visible');
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-sms-notification');
@@ -268,7 +307,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.get('#codeEditor').type('Hello world code {{name}} <div>Test', { parseSpecialCharSequences: false });
 
     cy.intercept('GET', '/v1/notification-templates?page=0&limit=10').as('notification-templates');
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
     cy.getByTestId('trigger-snippet-btn').click();
 
     cy.wait('@notification-templates', { timeout: 60000 });
@@ -287,7 +326,7 @@ describe('Workflow Editor - Main Functionality', function () {
     });
 
     fillBasicNotificationDetails();
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.wait('@createTemplate').then((res) => {
       cy.getByTestId('trigger-snippet-btn').click();
@@ -325,5 +364,52 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('environment-switch').find(`input[value="Production"] ~ label`).click();
 
     cy.location('pathname').should('equal', `/templates`);
+  });
+
+  it('should save Cta buttons state in inApp channel', function () {
+    cy.visit('/templates/create');
+    cy.waitForNetworkIdle(500);
+
+    fillBasicNotificationDetails('In App CTA Button');
+    addAndEditChannel('inApp');
+
+    cy.get('.ace_text-input').first().type('Text content', {
+      force: true,
+    });
+
+    cy.getByTestId('control-add').first().click();
+    cy.getByTestId('template-container-click-area').eq(0).click();
+
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').should('be.disabled');
+
+    cy.visit('/templates');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('notifications-template')
+      .get('tbody tr td')
+      .contains('In App CTA Button', {
+        matchCase: false,
+      })
+      .click();
+
+    cy.waitForNetworkIdle(500);
+    clickWorkflow();
+
+    editChannel('inApp');
+
+    cy.getByTestId('notification-template-submit-btn').should('be.disabled');
+    cy.getByTestId('template-container').first().find('input').should('have.length', 1);
+
+    cy.getByTestId('remove-button-icon').click();
+
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').should('be.disabled');
+
+    goBack();
+
+    editChannel('inApp');
+
+    cy.getByTestId('control-add').first();
   });
 });

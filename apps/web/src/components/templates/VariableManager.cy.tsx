@@ -1,16 +1,17 @@
+import { useLayoutEffect } from 'react';
 import { mount } from 'cypress/react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import { TestWrapper } from '../../testing';
 import { VariableManager } from './VariableManager';
 import { TemplateFormProvider } from './TemplateFormProvider';
-import { useVariablesManager } from '../../hooks/use-variables-manager';
+import { useVariablesManager } from '../../hooks/useVariablesManager';
 
 it('should show available variables - string', function () {
   mount(
     <TestWrapper>
       <TemplateFormProvider>
-        <VariableManagerTester />
         <FormTester content={'Hello, {{ name }}'} />
+        <VariableManagerTester />
       </TemplateFormProvider>
     </TestWrapper>
   );
@@ -124,15 +125,23 @@ it('should show reserved variables', function () {
 });
 
 function FormTester({ content }: { content: string }) {
-  const { setValue } = useFormContext();
+  const { control } = useFormContext();
+  const steps = useFieldArray({
+    control,
+    name: 'steps',
+  });
 
-  setValue('steps.0.template.content', content);
+  useLayoutEffect(() => {
+    steps.append({ template: { content } });
+  }, []);
 
   return <></>;
 }
 
+const templateFields = ['content'];
+
 function VariableManagerTester() {
-  const variablesArray = useVariablesManager(0, ['content']);
+  const variablesArray = useVariablesManager(0, templateFields);
 
   return <VariableManager index={0} variablesArray={variablesArray} />;
 }

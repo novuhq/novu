@@ -20,7 +20,7 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     this.subscriber = Subscriber;
   }
 
-  async findBySubscriberId(environmentId: string, subscriberId: string): Promise<SubscriberEntity> {
+  async findBySubscriberId(environmentId: string, subscriberId: string): Promise<SubscriberEntity | null> {
     return await this.findOne({
       _environmentId: environmentId,
       subscriberId,

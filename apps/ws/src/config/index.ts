@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv';
 import * as envalid from 'envalid';
-import { str, port } from 'envalid';
+import { json, str, port } from 'envalid';
 import { getContextPath, NovuComponentEnum } from '@novu/shared';
 
 dotenv.config();
@@ -39,6 +39,9 @@ envalid.cleanEnv(process.env, {
   PORT: port(),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
+  REDIS_TLS: json({
+    default: undefined,
+  }),
   JWT_SECRET: str(),
 });
 

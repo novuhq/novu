@@ -1,6 +1,9 @@
 import { TestWrapper } from '../../../testing';
 import { PreviewMobile } from './PreviewMobile';
 import { format } from 'date-fns';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({});
 
 describe('Preview mobile', () => {
   it('should render without content', () => {
@@ -11,15 +14,17 @@ describe('Preview mobile', () => {
     });
     cy.mount(
       <TestWrapper>
-        <PreviewMobile
-          subject="Subject"
-          content=""
-          integration={{
-            credentials: {
-              from: 'novu@novu',
-            },
-          }}
-        />
+        <QueryClientProvider client={queryClient}>
+          <PreviewMobile
+            subject="Subject"
+            content=""
+            integration={{
+              credentials: {
+                from: 'novu@novu',
+              },
+            }}
+          />
+        </QueryClientProvider>
       </TestWrapper>
     );
 
@@ -36,15 +41,17 @@ describe('Preview mobile', () => {
 
     cy.mount(
       <TestWrapper>
-        <PreviewMobile
-          subject="Subject"
-          content={content}
-          integration={{
-            credentials: {
-              from: 'novu@novu',
-            },
-          }}
-        />
+        <QueryClientProvider client={queryClient}>
+          <PreviewMobile
+            subject="Subject"
+            content={content}
+            integration={{
+              credentials: {
+                from: 'novu@novu',
+              },
+            }}
+          />
+        </QueryClientProvider>
       </TestWrapper>
     );
 

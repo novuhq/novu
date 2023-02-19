@@ -18,6 +18,7 @@ export const colors = {
   gradientStart,
   gradientEnd,
   success: '#4D9980',
+  warning: '#FF8000',
   error: '#E54545',
   vertical: `linear-gradient(0deg, ${gradientStart} 0%, ${gradientEnd} 100%)`,
   horizontal: `linear-gradient(99deg, ${gradientEnd} 0% 0%, ${gradientStart} 100% 100%)`,

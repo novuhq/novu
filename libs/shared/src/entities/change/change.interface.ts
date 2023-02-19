@@ -1,6 +1,7 @@
 export enum ChangeEntityTypeEnum {
-  NOTIFICATION_TEMPLATE = 'NotificationTemplate',
+  FEED = 'Feed',
   MESSAGE_TEMPLATE = 'MessageTemplate',
+  LAYOUT = 'Layout',
+  NOTIFICATION_TEMPLATE = 'NotificationTemplate',
   NOTIFICATION_GROUP = 'NotificationGroup',
-  FEED = 'FEED',
 }

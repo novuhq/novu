@@ -20,6 +20,7 @@ export interface ICredentials {
   projectName?: string;
   serviceAccount?: string;
   baseUrl?: string;
+  ipPoolName?: string;
 }
 
 export class IntegrationEntity {

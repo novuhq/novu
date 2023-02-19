@@ -1,4 +1,5 @@
 import './config';
+import 'newrelic';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
 import { RedisIoAdapter } from './shared/framework/redis.adapter';
@@ -6,6 +7,7 @@ import { version } from '../package.json';
 
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
+import helmet from 'helmet';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -21,6 +23,8 @@ export async function bootstrap() {
 
   app.setGlobalPrefix(CONTEXT_PATH);
 
+  app.use(helmet());
+
   app.enableCors({
     origin: '*',
     preflightContinue: false,
@@ -30,5 +34,5 @@ export async function bootstrap() {
 
   app.useWebSocketAdapter(redisIoAdapter);
 
-  await app.listen(process.env.PORT);
+  await app.listen(process.env.PORT as string);
 }

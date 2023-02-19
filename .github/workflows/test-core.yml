@@ -3,30 +3,19 @@ on:
   push:
     paths:
       - "packages/node/**"
+  workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "14"
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
 
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
+      - uses: mansagroup/nrwl-nx-action@v3
         with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-
-
-      - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 7.5.0
-          run_install: true
-
-      - name: Build
-        run: pnpm run build
+          targets: build
+          projects: "@novu/node"
+          nxCloud: true
 
       - name: Test
         working-directory: "packages/node"

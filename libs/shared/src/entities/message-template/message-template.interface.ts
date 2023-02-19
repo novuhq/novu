@@ -1,22 +1,13 @@
-import { ActorTypeEnum, ChannelCTATypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from './channel.enum';
+import {
+  ActorTypeEnum,
+  ChannelCTATypeEnum,
+  IEmailBlock,
+  ITemplateVariable,
+  StepTypeEnum,
+  TemplateVariableTypeEnum,
+} from '../../types';
 
 export type MessageTemplateContentType = 'editor' | 'customHtml';
-
-export interface IEmailBlock {
-  type: 'text' | 'button';
-  content: string;
-  url?: string;
-  styles?: {
-    textAlign?: 'left' | 'right' | 'center';
-  };
-}
-
-export class ITemplateVariable {
-  type: TemplateVariableTypeEnum;
-  name: string;
-  required: boolean;
-  defaultValue?: string | boolean;
-}
 
 export interface IMessageTemplate {
   _id?: string;
@@ -30,10 +21,14 @@ export interface IMessageTemplate {
     type: ChannelCTATypeEnum;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    action?: any;
   };
   _feedId?: string;
+  _layoutId?: string;
   active?: boolean;
   preheader?: string;
+  senderName?: string;
   actor?: {
     type: ActorTypeEnum;
     data: string | null;
@@ -51,6 +46,7 @@ export const SystemVariablesWithTypes = {
     email: 'string',
     phone: 'string',
     avatar: 'string',
+    locale: 'string',
     subscriberId: 'string',
   },
   step: {

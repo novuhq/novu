@@ -2,16 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
 import { CreateSubscriberCommand } from './create-subscriber.command';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
-import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class CreateSubscriber {
   constructor(private subscriberRepository: SubscriberRepository, private updateSubscriber: UpdateSubscriber) {}
 
-  @InvalidateCache(CacheKeyPrefixEnum.SUBSCRIBER)
   async execute(command: CreateSubscriberCommand) {
-    let subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    let subscriber =
+      command.subscriber ??
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
 
     if (!subscriber) {
       subscriber = await this.subscriberRepository.create({
@@ -23,6 +22,8 @@ export class CreateSubscriber {
         email: command.email,
         phone: command.phone,
         avatar: command.avatar,
+        locale: command.locale,
+        data: command.data,
       });
     } else {
       subscriber = await this.updateSubscriber.execute(
@@ -35,6 +36,9 @@ export class CreateSubscriber {
           email: command.email,
           phone: command.phone,
           avatar: command.avatar,
+          locale: command.locale,
+          data: command.data,
+          subscriber,
         })
       );
     }

@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "strictNullChecks": false,
     "module": "commonjs",
     "allowSyntheticDefaultImports": true,
     "types": ["node", "mocha", "chai", "sinon"],

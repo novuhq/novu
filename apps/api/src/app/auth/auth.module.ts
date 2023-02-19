@@ -1,6 +1,6 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, Provider, RequestMethod } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
+import { PassportModule, PassportStrategy } from '@nestjs/passport';
 import * as passport from 'passport';
 import { RolesGuard } from './framework/roles.guard';
 import { JwtStrategy } from './services/passport/jwt.strategy';
@@ -16,7 +16,7 @@ import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strate
 import { JwtAuthGuard } from './framework/auth.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 
-const AUTH_STRATEGIES = [];
+const AUTH_STRATEGIES: Provider[] = [];
 
 if (process.env.GITHUB_OAUTH_CLIENT_ID) {
   AUTH_STRATEGIES.push(GitHubStrategy);

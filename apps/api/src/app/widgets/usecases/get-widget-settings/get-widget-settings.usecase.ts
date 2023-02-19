@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import { GetWidgetSettingsCommand } from './get-widget-settings.command';
 
@@ -11,6 +11,9 @@ export class GetWidgetSettings {
     _organizationId: string;
   }> {
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.identifier);
+    if (!environment) {
+      throw new NotFoundException(`Environment with identifier ${command.identifier} not found`);
+    }
 
     return {
       _id: environment._id,

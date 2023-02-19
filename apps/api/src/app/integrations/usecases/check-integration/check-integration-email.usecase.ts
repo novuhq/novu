@@ -4,10 +4,9 @@ import { CheckIntegrationCommand } from './check-integration.command';
 
 @Injectable()
 export class CheckIntegrationEMail {
-  private mailFactory = new MailFactory();
-
   public async execute(command: CheckIntegrationCommand) {
-    const mailHandler = this.mailFactory.getHandler(
+    const mailFactory = new MailFactory();
+    const mailHandler = mailFactory.getHandler(
       {
         channel: command.channel,
         credentials: command.credentials,

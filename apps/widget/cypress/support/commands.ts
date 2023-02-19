@@ -62,45 +62,42 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('initializeSession', function (settings = {} as IInitializeSessionSetting, templateOverride?) {
-  return cy
-    .initializeOrganization({}, templateOverride)
-    .then(function (session: any) {
-      cy.log('Session created');
-      cy.log(`Organization id: ${session.organization._id}`);
-      cy.log(`App id: ${session.environment.identifier}`);
-      cy.log(`Widget initialized: ${session.subscriberId}`);
-    })
-    .then((session: any) => {
-      let encryptedHmacHash: string | undefined;
+  return cy.initializeOrganization({}, templateOverride).then(function (session: any) {
+    cy.log('Session created');
+    cy.log(`Organization id: ${session.organization._id}`);
+    cy.log(`App id: ${session.environment.identifier}`);
+    cy.log(`Widget initialized: ${session.subscriberId}`);
 
-      if (settings.hmacEncryption) {
-        cy.task('enableEnvironmentHmac', {
-          environment: session.environment,
-        });
+    let encryptedHmacHash: string | undefined;
 
-        encryptedHmacHash = createHmacHash(session);
-      }
+    if (settings.hmacEncryption) {
+      cy.task('enableEnvironmentHmac', {
+        environment: session.environment,
+      });
 
-      return settings?.shell
-        ? cy
-            .initializeShellSession({
-              subscriberId: session.subscriberId,
-              identifier: session.environment.identifier,
-              encryptedHmacHash: encryptedHmacHash,
-              tabs: settings.tabs,
-              stores: settings.stores,
-            })
-            .then((subscriber) => ({
-              ...session,
-              subscriber,
-            }))
-        : cy.initializeWidget({
-            session: session,
+      encryptedHmacHash = createHmacHash(session);
+    }
+
+    return settings?.shell
+      ? cy
+          .initializeShellSession({
+            subscriberId: session.subscriberId,
+            identifier: session.environment.identifier,
             encryptedHmacHash: encryptedHmacHash,
-            theme: settings.theme,
-            i18n: settings.i18n,
-          });
-    });
+            tabs: settings.tabs,
+            stores: settings.stores,
+          })
+          .then((subscriber) => ({
+            ...session,
+            subscriber,
+          }))
+      : cy.initializeWidget({
+          session: session,
+          encryptedHmacHash: encryptedHmacHash,
+          theme: settings.theme,
+          i18n: settings.i18n,
+        });
+  });
 });
 
 Cypress.Commands.add('initializeWidget', ({ session, encryptedHmacHash, theme, i18n }) => {

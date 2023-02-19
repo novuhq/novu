@@ -40,7 +40,7 @@ export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, Ch
       enabled: false,
     });
 
-    if (change) {
+    if (change?._id) {
       return change._id;
     }
 
@@ -55,7 +55,7 @@ export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, Ch
       _parentId: { $exists: false, $eq: null },
     });
 
-    const items = await Change.find({
+    const items = await this.MongooseModel.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
       enabled,

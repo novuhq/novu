@@ -1,8 +1,12 @@
 import { Divider, Grid, Group, Modal, useMantineTheme } from '@mantine/core';
-import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
 import { Controller, useFieldArray } from 'react-hook-form';
-import styled from '@emotion/styled';
+import { FILTER_TO_LABEL, FilterPartTypeEnum } from '@novu/shared';
+
+import { When } from '../../../components/utils/When';
+import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
 import { Trash } from '../../../design-system/icons';
+import { DeleteStepButton, FilterButton } from './FilterModal.styles';
+import { OnlineFiltersForms } from './OnlineFiltersForms';
 
 export function FilterModal({
   isOpen,
@@ -19,10 +23,17 @@ export function FilterModal({
 }) {
   const theme = useMantineTheme();
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, append, update, remove } = useFieldArray({
     control,
     name: `steps.${stepIndex}.filters.0.children`,
   });
+
+  function handleOnChildOnChange(index: number) {
+    return (data) => {
+      const newField = Object.assign({}, fields[index], { on: data });
+      update(index, newField);
+    };
+  }
 
   return (
     <Modal
@@ -54,6 +65,7 @@ export function FilterModal({
           <Controller
             control={control}
             name={`steps.${stepIndex}.filters.0.value`}
+            defaultValue=""
             render={({ field }) => {
               return (
                 <Select
@@ -63,6 +75,7 @@ export function FilterModal({
                     { value: 'OR', label: 'Or' },
                   ]}
                   {...field}
+                  data-test-id="group-rules-dropdown"
                 />
               );
             }}
@@ -80,6 +93,7 @@ export function FilterModal({
                 on: 'payload',
               });
             }}
+            data-test-id="create-rule-btn"
           >
             Create rule
           </FilterButton>
@@ -92,81 +106,76 @@ export function FilterModal({
         }}
       />
       {fields.map((item, index) => {
+        const filterFieldOn = (fields[index] as any).on;
+
         return (
-          <Grid columns={10} key={item.id} align="center" gutter="xs">
-            <Grid.Col span={3}>
-              <Controller
-                control={control}
-                name={`steps.${stepIndex}.filters.0.children.${index}.on`}
-                render={({ field }) => {
-                  return (
-                    <Select
-                      placeholder="On"
-                      data={[
-                        { value: 'payload', label: 'Payload' },
-                        { value: 'subscriber', label: 'Subscriber' },
-                      ]}
-                      {...field}
-                    />
-                  );
-                }}
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <Controller
-                control={control}
-                name={`steps.${stepIndex}.filters.0.children.${index}.field`}
-                render={({ field, fieldState }) => {
-                  return <Input {...field} error={fieldState.error?.message} placeholder="Label" />;
-                }}
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <Controller
-                control={control}
-                name={`steps.${stepIndex}.filters.0.children.${index}.operator`}
-                render={({ field }) => {
-                  return (
-                    <Select
-                      placeholder="Operator"
-                      data={[
-                        { value: 'EQUAL', label: 'Equal' },
-                        { value: 'NOT_EQUAL', label: 'Not equal' },
-                        { value: 'LARGER', label: 'Larger' },
-                        { value: 'SMALLER', label: 'Smaller' },
-                        { value: 'LARGER_EQUAL', label: 'Larger or equal' },
-                        { value: 'SMALLER_EQUAL', label: 'Smaller or equal' },
-                        { value: 'IN', label: 'Contains' },
-                        { value: 'NOT_IN', label: 'Not contains' },
-                      ]}
-                      {...field}
-                    />
-                  );
-                }}
-              />
-            </Grid.Col>
-            <Grid.Col span={2}>
-              <Controller
-                control={control}
-                name={`steps.${stepIndex}.filters.0.children.${index}.value`}
-                render={({ field, fieldState }) => {
-                  return <Input {...field} error={fieldState.error?.message} placeholder="Value" />;
-                }}
-              />
-            </Grid.Col>
-            <Grid.Col span={1}>
-              <DeleteStepButton
-                variant="outline"
-                size="md"
-                mt={30}
-                onClick={() => {
-                  remove(index);
-                }}
-              >
-                <Trash />
-              </DeleteStepButton>
-            </Grid.Col>
-          </Grid>
+          <div key={index}>
+            <Grid columns={10} key={item.id} align="center" gutter="xs">
+              <Grid.Col span={3}>
+                <Controller
+                  control={control}
+                  name={`steps.${stepIndex}.filters.0.children.${index}.on`}
+                  defaultValue=""
+                  render={({ field }) => {
+                    return (
+                      <Select
+                        placeholder="On"
+                        data={[
+                          { value: FilterPartTypeEnum.PAYLOAD, label: FILTER_TO_LABEL[FilterPartTypeEnum.PAYLOAD] },
+                          {
+                            value: FilterPartTypeEnum.SUBSCRIBER,
+                            label: FILTER_TO_LABEL[FilterPartTypeEnum.SUBSCRIBER],
+                          },
+                          { value: FilterPartTypeEnum.WEBHOOK, label: FILTER_TO_LABEL[FilterPartTypeEnum.WEBHOOK] },
+                          { value: FilterPartTypeEnum.IS_ONLINE, label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE] },
+                          {
+                            value: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
+                            label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE_IN_LAST],
+                          },
+                        ]}
+                        {...field}
+                        onChange={handleOnChildOnChange(index)}
+                        data-test-id="filter-on-dropdown"
+                      />
+                    );
+                  }}
+                />
+              </Grid.Col>
+
+              <When truthy={filterFieldOn === 'webhook'}>
+                <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} />
+                <EqualityForm
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
+              </When>
+
+              <When truthy={filterFieldOn === 'isOnline' || filterFieldOn === 'isOnlineInLast'}>
+                <OnlineFiltersForms
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
+              </When>
+              <When truthy={filterFieldOn === 'payload' || filterFieldOn === 'subscriber'}>
+                <EqualityForm
+                  fieldOn={filterFieldOn}
+                  control={control}
+                  stepIndex={stepIndex}
+                  index={index}
+                  remove={remove}
+                />
+              </When>
+            </Grid>
+            <When truthy={fields.length > index + 1}>
+              <Divider style={{ margin: 5 }} />
+            </When>
+          </div>
         );
       })}
       <div>
@@ -174,7 +183,7 @@ export function FilterModal({
           <Button variant="outline" size="md" mt={30} onClick={() => cancel()}>
             Cancel
           </Button>
-          <Button mt={30} size="md" onClick={() => confirm()}>
+          <Button mt={30} size="md" onClick={() => confirm()} data-test-id="filter-confirm-btn">
             Add
           </Button>
         </Group>
@@ -183,16 +192,115 @@ export function FilterModal({
   );
 }
 
-const FilterButton = styled(Button)`
-  margin-top: 0px;
-`;
+function WebHookUrlForm({ control, stepIndex, index }: { control; stepIndex: number; index: number }) {
+  return (
+    <>
+      <Grid.Col span={6}>
+        <Controller
+          control={control}
+          name={`steps.${stepIndex}.filters.0.children.${index}.webhookUrl`}
+          defaultValue=""
+          render={({ field, fieldState }) => {
+            return (
+              <Input
+                {...field}
+                error={fieldState.error?.message}
+                placeholder="Url"
+                data-test-id="webhook-filter-url-input"
+              />
+            );
+          }}
+        />
+      </Grid.Col>
+    </>
+  );
+}
 
-const DeleteStepButton = styled(Button)`
-  background: rgba(229, 69, 69, 0.15);
-  color: ${colors.error};
-  box-shadow: none;
-  :hover {
-    background: rgba(229, 69, 69, 0.15);
-  }
-  margin-top: 0px;
-`;
+function EqualityForm({
+  fieldOn,
+  control,
+  stepIndex,
+  index,
+  remove,
+}: {
+  fieldOn: string;
+  control;
+  stepIndex: number;
+  index: number;
+  remove: (index?: number | number[]) => void;
+}) {
+  const spaSize = fieldOn === 'webhook' ? 3 : 2;
+
+  return (
+    <>
+      <Grid.Col span={spaSize}>
+        <Controller
+          control={control}
+          name={`steps.${stepIndex}.filters.0.children.${index}.field`}
+          defaultValue=""
+          render={({ field, fieldState }) => {
+            return (
+              <Input {...field} error={fieldState.error?.message} placeholder="Key" data-test-id="filter-key-input" />
+            );
+          }}
+        />
+      </Grid.Col>
+      <Grid.Col span={spaSize}>
+        <Controller
+          control={control}
+          name={`steps.${stepIndex}.filters.0.children.${index}.operator`}
+          defaultValue="EQUAL"
+          render={({ field }) => {
+            return (
+              <Select
+                placeholder="Operator"
+                data={[
+                  { value: 'EQUAL', label: 'Equal' },
+                  { value: 'NOT_EQUAL', label: 'Not equal' },
+                  { value: 'LARGER', label: 'Larger' },
+                  { value: 'SMALLER', label: 'Smaller' },
+                  { value: 'LARGER_EQUAL', label: 'Larger or equal' },
+                  { value: 'SMALLER_EQUAL', label: 'Smaller or equal' },
+                  { value: 'IN', label: 'Contains' },
+                  { value: 'NOT_IN', label: 'Not contains' },
+                ]}
+                {...field}
+                data-test-id="filter-operator-dropdown"
+              />
+            );
+          }}
+        />
+      </Grid.Col>
+      <Grid.Col span={spaSize}>
+        <Controller
+          control={control}
+          name={`steps.${stepIndex}.filters.0.children.${index}.value`}
+          defaultValue=""
+          render={({ field, fieldState }) => {
+            return (
+              <Input
+                {...field}
+                error={fieldState.error?.message}
+                placeholder="Value"
+                data-test-id="filter-value-input"
+              />
+            );
+          }}
+        />
+      </Grid.Col>
+      <Grid.Col span={1}>
+        <DeleteStepButton
+          variant="outline"
+          size="md"
+          mt={30}
+          onClick={() => {
+            remove(index);
+          }}
+          data-test-id="filter-remove-btn"
+        >
+          <Trash />
+        </DeleteStepButton>
+      </Grid.Col>
+    </>
+  );
+}
