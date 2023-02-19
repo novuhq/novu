@@ -144,6 +144,9 @@ const StyledCard = styled.div<{ dark: boolean; active: boolean }>`
   }};
 
   &:hover {
+    ${Logo} {
+      opacity: 1;
+    }
     cursor: pointer;
     ${({ dark }) =>
       dark

@@ -47,6 +47,7 @@ const schema = z
                 subject: z.any(),
                 title: z.any(),
                 layoutId: z.any().optional(),
+                senderName: z.any().optional(),
               })
               .passthrough()
               .superRefine((template: any, ctx) => {

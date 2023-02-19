@@ -11,6 +11,7 @@ import {
   IOnlineInLastFilterPart,
   FILTER_TO_LABEL,
   FilterPartTypeEnum,
+  ICondition,
 } from '@novu/shared';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { SubscriberEntity, EnvironmentRepository, SubscriberRepository, StepFilter } from '@novu/dal';
@@ -45,12 +46,23 @@ export class MessageMatcher {
     private environmentRepository: EnvironmentRepository
   ) {}
 
-  public async filter(command: SendMessageCommand, variables: IFilterVariables): Promise<boolean> {
+  public async filter(
+    command: SendMessageCommand,
+    variables: IFilterVariables
+  ): Promise<{
+    passed: boolean;
+    conditions: ICondition[];
+  }> {
     const { step } = command;
     if (!step?.filters || !Array.isArray(step?.filters)) {
-      return true;
+      return {
+        passed: true,
+        conditions: [],
+      };
     }
     if (step.filters?.length) {
+      const details: FilterProcessingDetails[] = [];
+
       const foundFilter = await findAsync(step.filters, async (filter) => {
         const filterProcessingDetails = new FilterProcessingDetails();
         filterProcessingDetails.addFilter(filter, variables);
@@ -76,6 +88,8 @@ export class MessageMatcher {
             })
           );
 
+          details.push(filterProcessingDetails);
+
           return result;
         }
 
@@ -92,13 +106,54 @@ export class MessageMatcher {
           })
         );
 
+        details.push(filterProcessingDetails);
+
         return result;
       });
 
-      return !!foundFilter;
+      const conditions = details
+        .map((detail) => detail.toObject().conditions)
+        .reduce((conditionsArray, collection) => [...collection, ...conditionsArray], []);
+
+      return {
+        passed: !!foundFilter,
+        conditions: conditions,
+      };
     }
 
-    return true;
+    return {
+      passed: true,
+      conditions: [],
+    };
+  }
+
+  public static sumFilters(
+    summary: {
+      stepFilters: string[];
+      failedFilters: string[];
+      passedFilters: string[];
+    },
+    condition: ICondition
+  ) {
+    let type: string = condition.filter?.toLowerCase();
+
+    if (condition.filter === FILTER_TO_LABEL.isOnline || condition.filter === FILTER_TO_LABEL.isOnlineInLast) {
+      type = 'online';
+    }
+
+    if (condition.passed && !summary.passedFilters.includes(type)) {
+      summary.passedFilters.push(type);
+    }
+
+    if (!condition.passed && !summary.failedFilters.includes(type)) {
+      summary.failedFilters.push(type);
+    }
+
+    if (!summary.stepFilters.includes(type)) {
+      summary.stepFilters.push(type);
+    }
+
+    return summary;
   }
 
   private async handleGroupFilters(

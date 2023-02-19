@@ -4,7 +4,8 @@ import { colors, Text } from '../../design-system';
 type Props = {
   title: string;
 };
-const VercelSetupLoader = ({ title }: Props) => {
+
+const SetupLoader = ({ title }: Props) => {
   return (
     <Paper
       sx={{
@@ -21,9 +22,9 @@ const VercelSetupLoader = ({ title }: Props) => {
       }}
     >
       <Loader color={colors.error} size={32} />
-      <Text>{title}.</Text>
+      <Text>{title}</Text>
     </Paper>
   );
 };
 
-export default VercelSetupLoader;
+export default SetupLoader;

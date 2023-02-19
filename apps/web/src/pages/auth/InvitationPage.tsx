@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { useContext, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useContext, useEffect, useRef } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
 import { IGetInviteResponseDto } from '@novu/shared';
 
@@ -11,34 +11,31 @@ import { SignUpForm } from '../../components/auth/SignUpForm';
 import { colors, Text, Button } from '../../design-system';
 import { AuthContext } from '../../store/authContext';
 import { useAcceptInvite } from '../../components/auth/useAcceptInvite';
-import { When } from '../../components/utils/When';
+import { LoginForm } from '../../components/auth/LoginForm';
 
 export default function InvitationPage() {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { token, logout, currentUser } = useContext(AuthContext);
   const location = useLocation();
   const isLoggedIn = !!token;
-  const { token: tokenParam } = useParams<{ token: string }>();
-  const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
+  const { token: invitationToken } = useParams<{ token: string }>();
+  const tokensRef = useRef({ token, invitationToken });
+  tokensRef.current = { token, invitationToken };
+  const { isLoading: isAcceptingInvite, submitToken } = useAcceptInvite();
   const { data, isInitialLoading } = useQuery<IGetInviteResponseDto, IGetInviteResponseDto>(
     ['getInviteTokenData'],
-    () => getInviteTokenData(tokenParam || ''),
+    () => getInviteTokenData(invitationToken || ''),
     {
-      enabled: !!tokenParam,
+      enabled: !!invitationToken,
+      refetchOnWindowFocus: false,
     }
   );
   const inviterFirstName = data?.inviter?.firstName || '';
   const organizationName = data?.organization.name || '';
-
-  const existingUser = tokenParam && data?._userId;
-  const invalidCurrentUser = existingUser && currentUser && currentUser._id !== data?._userId;
-
-  const acceptToken = async () => {
-    if (existingUser && currentUser && currentUser._id === data?._userId && isLoggedIn) {
-      const result = await submitToken(tokenParam as string, true);
-      if (result) navigate('/templates');
-    }
-  };
+  const existingUser = !!(invitationToken && data?._userId);
+  const isLoggedInAsInvitedUser = !!(isLoggedIn && existingUser && currentUser && currentUser._id === data?._userId);
+  const Form = existingUser ? LoginForm : SignUpForm;
 
   const logoutWhenActiveSession = () => {
     logout();
@@ -46,8 +43,17 @@ export default function InvitationPage() {
   };
 
   useEffect(() => {
-    acceptToken();
-  }, [tokenParam, data, currentUser]);
+    // auto accept invitation when logged in as invited user
+    if (isLoggedInAsInvitedUser) {
+      submitToken(tokensRef.current.token as string, tokensRef.current.invitationToken as string, true);
+    }
+  }, [isLoggedInAsInvitedUser]);
+
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries(['getInviteTokenData']);
+    };
+  }, []);
 
   return (
     <AuthLayout>
@@ -57,18 +63,11 @@ export default function InvitationPage() {
           customDescription={
             <Center inline mb={40} mt={20}>
               <Text size="lg" color={colors.B60}>
-                <When truthy={invalidCurrentUser && !loadingAcceptInvite}>
-                  <p>The invite is not valid for the current user. Please log in with the right user.</p>
-                </When>
-
-                <When truthy={!invalidCurrentUser && !loadingAcceptInvite}>
-                  <p>Your session is currently active, use another browser or switch to incognito mode.</p>
-                  <p>Log out instead?</p>
-                </When>
-
-                <When truthy={loadingAcceptInvite}>
+                {isAcceptingInvite || isLoggedInAsInvitedUser ? (
                   <p>Accepting invite...</p>
-                </When>
+                ) : (
+                  <p>The invite is not valid for the current user. Please log in with the right user.</p>
+                )}
               </Text>
             </Center>
           }
@@ -89,18 +88,18 @@ export default function InvitationPage() {
 
       {!isLoggedIn && (
         <AuthContainer
-          title="Get Started"
+          title={existingUser ? 'Sign In & Accept Invite' : 'Get Started'}
           customDescription={
             inviterFirstName && organizationName ? (
-              <Center inline mb={60} mt={20}>
+              <Center inline mb={60} mt={20} data-test-id="invitation-description">
                 <Text size="lg" mr={4} color={colors.B60}>
-                  You've been invited by
+                  {"You've been invited by "}
                 </Text>
                 <Text size="lg" weight="bold" mr={4}>
                   {inviterFirstName[0].toUpperCase() + inviterFirstName.slice(1)}
                 </Text>
                 <Text size="lg" mr={4} color={colors.B60}>
-                  to join
+                  {' to join '}
                 </Text>
                 <Text size="lg" weight="bold">
                   {organizationName}
@@ -112,14 +111,17 @@ export default function InvitationPage() {
             ) : undefined
           }
         >
-          <LoadingOverlay
-            visible={isInitialLoading}
-            overlayColor={colors.B30}
-            loaderProps={{
-              color: colors.error,
-            }}
-          />
-          {!isInitialLoading && <SignUpForm email={data?.email} token={tokenParam} />}
+          {isInitialLoading ? (
+            <LoadingOverlay
+              visible
+              overlayColor={colors.B30}
+              loaderProps={{
+                color: colors.error,
+              }}
+            />
+          ) : (
+            <Form email={data?.email} invitationToken={invitationToken} />
+          )}
         </AuthContainer>
       )}
     </AuthLayout>

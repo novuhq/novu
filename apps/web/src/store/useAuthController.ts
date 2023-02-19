@@ -54,11 +54,12 @@ export function useAuthController() {
     enabled: Boolean(isLoggedIn && axios.defaults.headers.common.Authorization),
   });
 
+  const authorization = axios.defaults.headers.common.Authorization as string;
   const { data: organizations } = useQuery<IOrganizationEntity[]>(['/v1/organizations'], getOrganizations, {
     enabled: Boolean(
       isLoggedIn &&
         axios.defaults.headers.common.Authorization &&
-        jwtDecode<IJwtPayload>(axios.defaults.headers.common.Authorization?.split(' ')[1])?.organizationId
+        jwtDecode<IJwtPayload>(authorization?.split(' ')[1])?.organizationId
     ),
   });
 
@@ -86,7 +87,7 @@ export function useAuthController() {
   }, [user, organization]);
 
   const setTokenCallback = useCallback(
-    (newToken: string | null) => {
+    (newToken: string | null, refetch = true) => {
       /**
        * applyToken needs to be called first to avoid a race condition
        */
@@ -94,13 +95,16 @@ export function useAuthController() {
       setToken(newToken);
 
       if (newToken) {
-        queryClient.refetchQueries({
-          predicate: (query) =>
-            // !query.isFetching &&
-            !query.queryKey.includes('/v1/users/me') &&
-            !query.queryKey.includes('/v1/environments') &&
-            !query.queryKey.includes('/v1/organizations'),
-        });
+        if (refetch) {
+          queryClient.refetchQueries({
+            predicate: (query) =>
+              // !query.isFetching &&
+              !query.queryKey.includes('/v1/users/me') &&
+              !query.queryKey.includes('/v1/environments') &&
+              !query.queryKey.includes('/v1/organizations') &&
+              !query.queryKey.includes('getInviteTokenData'),
+          });
+        }
         const payload = jwtDecode<IJwtPayload>(newToken);
         setJwtPayload(payload);
       }

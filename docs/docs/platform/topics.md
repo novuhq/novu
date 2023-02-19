@@ -114,7 +114,7 @@ To trigger a notification to all the subscribers of a topic, Novu's API allows i
 const topicKey = 'posts:comment:12345';
 
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
-  to: [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicKey }],
+  to: [{ type: 'Topic', topicKey: topicKey }],
   payload: {},
 });
 ```
@@ -127,8 +127,8 @@ const topicKey = '<TOPIC-KEY-DEFINED-BY-THE-USER>';
 
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
   to: [
-    { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicKey },
-    { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: 'Another Topic Key' },
+    { type: 'Topic', topicKey: topicKey },
+    { type: 'Topic', topicKey: 'Another Topic Key' },
   ],
   payload: {},
 });
@@ -142,7 +142,7 @@ To exclude the actor responsible for the action of a triggered topic event, you 
 const topicKey = 'posts:comment:12345';
 
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
-  to: [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicKey }],
+  to: [{ type: 'Topic', topicKey: topicKey }],
   payload: {},
   actor: { subscriberId: '<SUBSCRIBER_ID_OF_ACTOR>' },
 });
