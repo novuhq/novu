@@ -61,9 +61,8 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   TopicsModule,
   LoggerModule.forRoot({
     pinoHttp: {
-      transport:
-        process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'dev' ? { target: 'pino-pretty' } : undefined,
-      autoLogging: false,
+      transport: ['local', 'test'].includes(process.env.NODE_ENV) ? { target: 'pino-pretty' } : undefined,
+      autoLogging: ['local', 'test'].includes(process.env.NODE_ENV) ? false : true,
     },
   }),
 ];
@@ -77,7 +76,7 @@ if (process.env.SENTRY_DSN) {
     useValue: new RavenInterceptor({
       filters: [
         /*
-         * Filter exceptions of type HttpException. Ignore those that
+         * Filter exceptions to type HttpException. Ignore those that
          * have status code of less than 500
          */
         { type: HttpException, filter: (exception: HttpException) => exception.getStatus() < 500 },
