@@ -28,13 +28,11 @@ export class TriggerEvent {
   ) {}
 
   async execute(command: TriggerEventCommand) {
-    const child = this.logger.logger.child({
+    this.logger.assign({
       transactionId: command.transactionId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
     });
-
-    child.info('Triggering event');
 
     await this.validateTransactionIdProperty(command.transactionId, command.organizationId, command.environmentId);
 
@@ -42,6 +40,10 @@ export class TriggerEvent {
       command.environmentId,
       command.identifier
     );
+
+    this.logger.assign({
+      templateId: template._id,
+    });
 
     Sentry.addBreadcrumb({
       message: 'Sending trigger',
