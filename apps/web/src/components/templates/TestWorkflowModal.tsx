@@ -114,47 +114,50 @@ export function TestWorkflowModal({
       title={<Title>Test Trigger </Title>}
       data-test-id="test-trigger-modal"
     >
-      <JsonInput
-        data-test-id="test-trigger-to-param"
-        formatOnBlur
-        autosize
-        styles={inputStyles}
-        label="To"
-        value={toValue}
-        onChange={setToValue}
-        minRows={3}
-        mb={15}
-        validationError="Invalid JSON"
-      />
-      <JsonInput
-        data-test-id="test-trigger-payload-param"
-        formatOnBlur
-        autosize
-        styles={inputStyles}
-        label="Payload"
-        value={payloadValue}
-        onChange={setPayloadValue}
-        minRows={3}
-        validationError="Invalid JSON"
-        mb={15}
-      />
-      <JsonInput
-        data-test-id="test-trigger-overrides-param"
-        formatOnBlur
-        autosize
-        styles={inputStyles}
-        label="Overrides (optional)"
-        value={overridesValue}
-        onChange={setOverridesValue}
-        minRows={3}
-        validationError="Invalid JSON"
-      />
-
-      <div style={{ alignItems: 'end' }}>
-        <Button data-test-id="test-trigger-btn" mt={30} inherit onClick={() => onTrigger()}>
-          Trigger
-        </Button>
-      </div>
+      <form
+        onSubmit={(e) => {
+          form.onSubmit(onTrigger)(e);
+          e.stopPropagation();
+        }}
+      >
+        <JsonInput
+          data-test-id="test-trigger-to-param"
+          formatOnBlur
+          autosize
+          styles={inputStyles}
+          label="To"
+          {...form.getInputProps('toValue')}
+          minRows={3}
+          mb={15}
+          validationError="Invalid JSON"
+        />
+        <JsonInput
+          data-test-id="test-trigger-payload-param"
+          formatOnBlur
+          autosize
+          styles={inputStyles}
+          label="Payload"
+          {...form.getInputProps('payloadValue')}
+          minRows={3}
+          validationError="Invalid JSON"
+          mb={15}
+        />
+        <JsonInput
+          data-test-id="test-trigger-overrides-param"
+          formatOnBlur
+          autosize
+          styles={inputStyles}
+          label="Overrides (optional)"
+          {...form.getInputProps('overridesValue')}
+          minRows={3}
+          validationError="Invalid JSON"
+        />
+        <div style={{ alignItems: 'end' }}>
+          <Button data-test-id="test-trigger-btn" mt={30} inherit submit>
+            Trigger
+          </Button>
+        </div>
+      </form>
     </Modal>
   );
 }
