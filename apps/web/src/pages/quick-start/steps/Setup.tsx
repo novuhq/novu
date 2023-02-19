@@ -10,13 +10,19 @@ import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
 import { useTemplates } from '../../../api/hooks/useTemplates';
 import { useEnvController } from '../../../store/useEnvController';
-import { APPLICATION_IDENTIFIER, frameworkInstructions, notificationTemplateName } from '../consts';
+import {
+  APPLICATION_IDENTIFIER,
+  frameworkInstructions,
+  notificationTemplateName,
+  OnBoardingAnalyticsEnum,
+} from '../consts';
 import { createTemplate } from '../../../api/notification-templates';
 import { LoaderProceedTernary } from '../components/LoaderProceedTernary';
-import { Prism } from '../../settings/tabs/components/Prism';
+import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { getInAppActivated } from '../../../api/integration';
+import { useSegment } from '../../../hooks/useSegment';
 
 export function Setup() {
   const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();
@@ -24,6 +30,7 @@ export function Setup() {
   const { groups } = useNotificationGroup();
   const { templates = [], loading } = useTemplates();
   const { environment } = useEnvController();
+  const segment = useSegment();
 
   const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(['inAppActive'], async () => getInAppActivated(), {
     refetchInterval: (data) => stopIfInAppActive(data),
@@ -31,8 +38,6 @@ export function Setup() {
   });
 
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
-  const openBrowser = framework === 'demo';
-
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
 
   const { mutateAsync: createNotificationTemplate } = useMutation<
@@ -40,6 +45,12 @@ export function Setup() {
     { error: string; message: string; statusCode: number },
     ICreateNotificationTemplateDto
   >(createTemplate);
+
+  useEffect(() => {
+    segment.track(
+      OnBoardingAnalyticsEnum.FRAMEWORK_SETUP_VISIT.replace('<FRAMEWORK>', capitalizeFirstLetter(framework))
+    );
+  }, []);
 
   useEffect(() => {
     if (!loading) {
@@ -80,6 +91,11 @@ export function Setup() {
     setNotificationTemplate(createdTemplate);
   }
 
+  function handleOnCopy(copiedStepIndex: number) {
+    const step = (copiedStepIndex + 1).toString();
+    segment.track(OnBoardingAnalyticsEnum.COPIED_STEP.replace('<STEP>', step));
+  }
+
   return (
     <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true}>
       <LoaderWrapper>
@@ -93,14 +109,21 @@ export function Setup() {
           {instructions.map((instruction, index) => {
             return (
               <Stepper.Step
-                label={instruction.instruction}
-                description={<Prism code={`${updateCodeSnipped(instruction.snippet, environmentIdentifier)}   `} />}
                 key={index}
+                label={<div>{instruction.instruction}</div>}
+                style={{ cursor: 'default' }}
+                description={
+                  <PrismOnCopy
+                    index={index}
+                    code={`${updateCodeSnipped(instruction.snippet, environmentIdentifier)}   `}
+                    onCopy={handleOnCopy}
+                  />
+                }
               />
             );
           })}
         </Stepper>
-        <When truthy={openBrowser}>{<OpenBrowser />}</When>
+        <When truthy={framework === 'demo'}>{<OpenBrowser />}</When>
       </Stack>{' '}
     </QuickStartWrapper>
   );
@@ -138,4 +161,8 @@ interface IGetInAppActivatedResponse {
 
 function stopIfInAppActive(data) {
   return data?.active ? false : 3000;
+}
+
+function capitalizeFirstLetter(string) {
+  return string.charAt(0).toUpperCase() + string.slice(1);
 }

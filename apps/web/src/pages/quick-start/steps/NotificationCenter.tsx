@@ -1,12 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { Cards } from '../components/Cards';
 import { Stack } from '@mantine/core';
 import { BellGradient } from '../../../design-system/icons';
 import { Smiley } from '../../../design-system/icons/gradient/Smiley';
+import { useSegment } from '../../../hooks/useSegment';
+import { OnBoardingAnalyticsEnum } from '../consts';
 
 export function NotificationCenter() {
+  const segment = useSegment();
+
+  useEffect(() => {
+    segment.track(OnBoardingAnalyticsEnum.NOTIFICATION_CENTER_SETUP_VISIT);
+  }, []);
+
   return (
     <QuickStartWrapper secondaryTitle={'How would you like to start?'}>
       <Cards

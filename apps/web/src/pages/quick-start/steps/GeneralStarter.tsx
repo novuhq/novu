@@ -11,6 +11,7 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import { updateUserOnBoarding } from '../../../api/user';
 import { OnboardingSteps } from '../components/OnboardingSteps';
 import { useSegment } from '../../../hooks/useSegment';
+import { OnBoardingAnalyticsEnum } from '../consts';
 
 export function GeneralStarter() {
   const segment = useSegment();
@@ -18,7 +19,7 @@ export function GeneralStarter() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    segment.track('Quick Start Page Visit');
+    segment.track(OnBoardingAnalyticsEnum.OTHER_CHANNELS_VISIT);
   }, []);
 
   const { mutateAsync: updateOnBoardingStatus } = useMutation<
