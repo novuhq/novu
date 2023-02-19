@@ -6,6 +6,7 @@ export interface IUserEntity {
   profilePicture?: string;
   createdAt: string;
   showOnBoarding?: boolean;
+  userHashForIntercom?: string;
 }
 
 export interface IJwtPayload {

@@ -47,4 +47,6 @@ export class UserEntity {
     times: number;
     lastFailedAttempt: string;
   };
+
+  userHashForIntercom?: string;
 }

@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationEntity, UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
+import { createHmac } from 'crypto';
 import { SignUpOriginEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
@@ -29,11 +30,14 @@ export class UserRegister {
     if (existingUser) throw new ApiException('User already exists');
 
     const passwordHash = await bcrypt.hash(command.password, 10);
+    const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
+    const userHashForIntercom = createHmac('sha256', intercomSecretKey).update(email).digest('hex');
     const user = await this.userRepository.create({
       email,
       firstName: command.firstName.toLowerCase(),
       lastName: command.lastName?.toLowerCase(),
       password: passwordHash,
+      userHashForIntercom: userHashForIntercom,
     });
 
     let organization: OrganizationEntity;

@@ -26,4 +26,7 @@ export class UserResponseDto {
 
   @ApiPropertyOptional()
   showOnBoarding?: boolean;
+
+  @ApiProperty()
+  userHashForIntercom?: string;
 }
