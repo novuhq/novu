@@ -391,7 +391,12 @@
     "logrocket",
     "backoff",
     "isequal",
-    "Scriptable"
+    "Scriptable",
+    "iife",
+    "redlock",
+    "axios",
+    "ioredis",
+    "newrelic"
   ],
   "flagWords": [],
   "patterns": [

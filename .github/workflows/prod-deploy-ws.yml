@@ -3,65 +3,23 @@ name: Deploy PROD WS
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    tags:
-      - '**@novu/ws**'
   workflow_dispatch:
-env:
-  TF_WORKSPACE: novu-prod
 
 jobs:
   # This workflow contains a single job called "build"
-  deploy_ws:
+  build_prod_image:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
     environment: Production
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+    outputs:
+      docker_image: ${{ steps.build-image.outputs.IMAGE }}
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Checkout cloud infra
-        uses: actions/checkout@master
-        with:
-          repository: novuhq/cloud-infra
-          token: ${{ secrets.GH_PACKAGES }}
-          path: cloud-infra
-
-      - name: Terraform setup
-        uses: hashicorp/setup-terraform@v1
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          terraform_version: 1.3.4
-          terraform_wrapper: false
-
-      - name: Terraform Init
-        working-directory: cloud-infra/terraform
-        run: terraform init
-
-      - name: Terraform get output
-        working-directory: cloud-infra/terraform
-        id: terraform
-        run: |
-          echo "ws_ecs_container_name=$(terraform output -json ws_ecs_container_name | jq -r .)" >> $GITHUB_ENV
-          echo "ws_ecs_service=$(terraform output -json ws_ecs_service | jq -r .)" >> $GITHUB_ENV
-          echo "ws_ecs_cluster=$(terraform output -json ws_ecs_cluster | jq -r .)" >> $GITHUB_ENV
-          echo "ws_task_name=$(terraform output -json ws_task_name | jq -r .)" >> $GITHUB_ENV
-
-      - name: Download task definition
-        run: |
-          aws ecs describe-task-definition --task-definition ${{ env.ws_task_name }} \
-          --query taskDefinition > task-definition.json
+      - name: build api
+        run: pnpm build:ws
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -83,19 +41,29 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
-      - name: Render Amazon ECS task definition
-        id: render-container
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: ${{ env.ws_ecs_container_name }}
-          image: ${{ steps.build-image.outputs.IMAGE }}
+  deploy_prod_ws_eu:
+    needs:
+      - build_prod_image
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    secrets: inherit
+    with:
+      service_name: ws
+      terraform_workspace: novu-prod-eu
+      docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
+      deploy_sentry_release: true
+      sentry_project: ws
 
-      - name: Deploy to Amazon ECS service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.render-container.outputs.task-definition }}
-          service: ${{ env.ws_ecs_service }}
-          cluster: ${{ env.ws_ecs_cluster }}
-          wait-for-service-stability: true
+  deploy_prod_ws_us:
+    needs:
+      - deploy_prod_ws_eu
+      - build_prod_image
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    secrets: inherit
+    with:
+      service_name: ws
+      terraform_workspace: novu-prod
+      docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
+      deploy_sentry_release: true
+      sentry_project: ws
+
 

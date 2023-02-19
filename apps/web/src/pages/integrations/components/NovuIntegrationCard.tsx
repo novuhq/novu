@@ -128,6 +128,9 @@ const StyledCard = styled.div<{ dark: boolean; active: boolean; clickable: boole
   }};
 
   &:hover {
+    ${Logo} {
+      opacity: 1;
+    }
     cursor: ${({ clickable }) => (clickable ? 'pointer' : undefined)};
     ${({ dark, clickable }) =>
       clickable

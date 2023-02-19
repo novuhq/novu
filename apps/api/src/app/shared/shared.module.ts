@@ -23,7 +23,9 @@ import {
   TopicSubscribersRepository,
 } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
+import { ConnectionOptions } from 'tls';
 
+import { DistributedLockService } from './services/distributed-lock';
 import { QueueService } from './services/queue';
 import {
   AzureBlobStorageService,
@@ -32,7 +34,6 @@ import {
   StorageService,
 } from './services/storage/storage.service';
 import { CacheService, InvalidateCacheService } from './services/cache';
-import { ConnectionOptions } from 'tls';
 
 const DAL_MODELS = [
   UserRepository,
@@ -90,6 +91,12 @@ const cacheService = {
 };
 
 const PROVIDERS = [
+  {
+    provide: DistributedLockService,
+    useFactory: () => {
+      return new DistributedLockService();
+    },
+  },
   {
     provide: QueueService,
     useFactory: () => {

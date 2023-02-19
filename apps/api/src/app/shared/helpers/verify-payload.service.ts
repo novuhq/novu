@@ -54,7 +54,9 @@ export class VerifyPayloadService {
 
   private setNestedKey(obj, path, value) {
     if (path.length === 1) {
-      obj[path[0]] = value;
+      if (value !== '') {
+        obj[path[0]] = value;
+      }
 
       return;
     }

@@ -46,6 +46,7 @@ export class TestSendMessageCommand extends EnvironmentWithUserCommand {
   @IsString()
   subject: string;
   preheader?: string;
+  senderName?: string;
   @IsDefined()
   content: string | IEmailBlock[];
   @IsDefined()

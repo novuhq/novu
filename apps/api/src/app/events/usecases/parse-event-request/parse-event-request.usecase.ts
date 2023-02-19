@@ -38,6 +38,7 @@ export class ParseEventRequest {
         recipients: command.to,
         transactionId,
         userId: command.userId,
+        actor: mappedActor,
       })
     );
 

@@ -93,10 +93,6 @@
       "path": "providers/discord"
     },
     {
-      "name": "🔔 @novu/emailjs",
-      "path": "providers/emailjs"
-    },
-    {
       "name": "🔔 @novu/fcm",
       "path": "providers/fcm"
     },

@@ -52,5 +52,9 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   preheader?: string;
 
   @IsOptional()
+  @IsString()
+  senderName?: string;
+
+  @IsOptional()
   actor?: IActor;
 }
