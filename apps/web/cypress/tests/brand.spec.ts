@@ -6,6 +6,8 @@ describe('Brand Screen', function () {
   });
 
   it('should update logo', function () {
+    cy.intercept('*/storage/upload-url*').as('uploadLogo');
+
     cy.fixture('test-logo.png', {}).then((contents) => {
       cy.getByTestId('upload-image-button')
         .find('input')
@@ -18,6 +20,18 @@ describe('Brand Screen', function () {
           { force: true }
         );
     });
+
+    cy.wait('@uploadLogo').then((response) => {
+      const doc = window.parent.document;
+      const pEl = doc.createElement('p');
+      pEl.innerText = JSON.stringify(response);
+      doc.body.prepend(pEl);
+
+      console.log(doc);
+
+      return response;
+    });
+
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
 
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', this.session.organization._id);

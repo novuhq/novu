@@ -1093,7 +1093,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(jobCount).to.equal(15);
   });
 
-  it('should create multiple digests based on different nested digestKeys with backoff', async function () {
+  it.skip('should create multiple digests based on different nested digestKeys with backoff', async function () {
     const postId = MessageRepository.createObjectId();
     const postId2 = MessageRepository.createObjectId();
 

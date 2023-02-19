@@ -288,7 +288,7 @@ export class MessageMatcher {
     fieldFilter: IBaseFieldFilterPart,
     filterProcessingDetails: FilterProcessingDetails
   ): boolean {
-    const actualValue = _.get(variables, [fieldFilter.on, fieldFilter.field]);
+    const actualValue = _.get(variables, `${fieldFilter.on}.${fieldFilter.field}`);
     const filterValue = this.parseValue(actualValue, fieldFilter.value);
     let result = false;
 
