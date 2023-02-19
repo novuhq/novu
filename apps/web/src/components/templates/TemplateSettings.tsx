@@ -14,7 +14,7 @@ import { useEnvController } from '../../store/useEnvController';
 import { useTemplateEditor } from './TemplateEditorProvider';
 import { deleteTemplateById } from '../../api/notification-templates';
 
-export const TemplateSettings = ({ activePage, setActivePage, showErrors, templateId }) => {
+export const TemplateSettings = ({ activePage, setActivePage, templateId }) => {
   const { colorScheme } = useMantineColorScheme();
   const { readonly } = useEnvController();
   const { template, editMode, trigger } = useTemplateEditor();
@@ -56,7 +56,6 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
               activeTab={activePage}
               changeTab={setActivePage}
               showTriggerSection={!!template && !!trigger}
-              showErrors={showErrors}
             />
           </SideBarWrapper>
         </Grid.Col>

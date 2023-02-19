@@ -2,7 +2,7 @@ import { Center, Container, Grid, Group } from '@mantine/core';
 
 import { Button, colors, Switch, Title, Text } from '../../design-system';
 import { ArrowLeft } from '../../design-system/icons';
-import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { ActivePageEnum, EditorPages } from '../../pages/templates/editor/TemplateEditorPage';
 import { useEnvController } from '../../store/useEnvController';
 import { When } from '../utils/When';
 import { useTemplateEditor } from './TemplateEditorProvider';
@@ -75,14 +75,7 @@ export const TemplatePageHeader = ({
           <Title>
             <Header editMode={editMode} activePage={activePage} />
           </Title>
-          <When
-            truthy={
-              activePage !== ActivePageEnum.SETTINGS &&
-              activePage !== ActivePageEnum.USER_PREFERENCE &&
-              activePage !== ActivePageEnum.WORKFLOW &&
-              activePage !== ActivePageEnum.TRIGGER_SNIPPET
-            }
-          >
+          <When truthy={EditorPages.includes(activePage)}>
             <Center
               mt={10}
               data-test-id="go-back-button"
@@ -103,14 +96,7 @@ export const TemplatePageHeader = ({
         </div>
         <div>
           <Grid align="center" gutter={50}>
-            <When
-              truthy={[
-                ActivePageEnum.SETTINGS,
-                ActivePageEnum.USER_PREFERENCE,
-                ActivePageEnum.WORKFLOW,
-                ActivePageEnum.TRIGGER_SNIPPET,
-              ].includes(activePage)}
-            >
+            <When truthy={!EditorPages.includes(activePage)}>
               {editMode && (
                 <Grid.Col span={4}>
                   <Switch

@@ -28,8 +28,8 @@ import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../store/useEnvController';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
+import { getFormattedStepErrors } from '../../pages/templates/shared/errors';
 import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
-import { useTemplateFetcher } from '../templates/useTemplateFetcher';
 import { useTemplateEditor } from '../templates/TemplateEditorProvider';
 
 const nodeTypes = {
@@ -80,7 +80,7 @@ export function FlowEditor({
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
   const { template, trigger } = useTemplateEditor();
-  const methods = useFormContext<IForm>();
+  const { trigger: triggerErrors } = useFormContext<IForm>();
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
   useEffect(() => {
@@ -152,7 +152,7 @@ export function FlowEditor({
     [reactFlowInstance, nodes, edges]
   );
 
-  function initializeWorkflowTree() {
+  async function initializeWorkflowTree() {
     let parentId = '1';
     initWorkflowTreeState();
 
@@ -161,6 +161,8 @@ export function FlowEditor({
         const step = steps[i];
         const oldNode = nodes[i + 1] || { position: { x: 0, y: 120 } };
         const newId = (step._id || step.id) as string;
+
+        await triggerErrors('steps');
 
         const newNode = buildNewNode(newId, oldNode, parentId, step, i);
 
@@ -216,8 +218,8 @@ export function FlowEditor({
       data: {
         ...getChannel(step.template.type),
         active: step.active,
-        index: nodes.length,
-        error: getChannelErrors(i, errors, step),
+        index: i,
+        error: getFormattedStepErrors(i, errors),
         onDelete,
         setActivePage,
       },
@@ -322,7 +324,6 @@ export function FlowEditor({
               activePage={activePage}
               setActivePage={setActivePage}
               showTriggerSection={!!template && !!trigger}
-              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
             />
             <Controls />
             <Background
@@ -393,35 +394,6 @@ const Wrapper = styled.div<{ dark: boolean }>`
     }
   }
 `;
-
-function getChannelErrors(index: number, errors: any, step: any) {
-  if (errors?.steps) {
-    const stepErrors = errors.steps[index]?.template;
-    if (stepErrors) {
-      const keys = Object.keys(stepErrors);
-
-      return keys.map((key) => stepErrors[key]?.message);
-    }
-    const actionErrors = errors.steps[index]?.metadata;
-    if (actionErrors) {
-      const keys = Object.keys(actionErrors);
-
-      return keys.map((key) => actionErrors[key]?.message);
-    }
-  }
-  if (step.template.type === StepTypeEnum.EMAIL && !step.template.subject) {
-    return 'Something is missing here';
-  }
-
-  if (
-    step.template.content.length === 0 &&
-    step.template.type !== StepTypeEnum.DIGEST &&
-    step.template.type !== StepTypeEnum.DELAY &&
-    step.template.type !== StepTypeEnum.EMAIL
-  ) {
-    return 'Something is missing here';
-  }
-}
 
 const reactFlowDefaultProps: ReactFlowProps = {
   defaultEdgeOptions: {
