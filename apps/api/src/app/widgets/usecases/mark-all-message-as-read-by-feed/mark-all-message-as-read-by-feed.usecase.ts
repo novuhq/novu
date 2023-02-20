@@ -37,7 +37,7 @@ export class MarkAllMessageAsReadByFeed {
 
     this.queueService.wsSocketQueue.add({
       event: 'unseen_count_changed',
-      userId: command.subscriberId,
+      userId: subscriber._id,
       payload: {
         unseenCount: 0,
       },
@@ -45,7 +45,7 @@ export class MarkAllMessageAsReadByFeed {
 
     await this.queueService.wsSocketQueue.add({
       event: 'unread_count_changed',
-      userId: command.subscriberId,
+      userId: subscriber._id,
       payload: {
         unreadCount: 0,
       },
