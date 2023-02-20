@@ -8,6 +8,6 @@ module.exports = [
   {
     type: 'input',
     name: 'name',
-    message: 'Write the provider name camelCased:',
+    message: 'Write the provider name `kebab-cased` (e.g. proton-mail, outlook365, yahoo-mail):',
   },
 ];

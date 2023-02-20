@@ -5,7 +5,7 @@
 
 {
   "name": "@novu/<%= name %>",
-  "version": "",
+  "version": "^0.11.0",
   "description": "A <%= name %> wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -34,28 +34,24 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=10"
+    "node": ">=13.0.0 <17.0.0",
+    "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "@novu/stateless": "^0.9.0"
+    "@novu/stateless": "^0.11.0"
   },
   "devDependencies": {
-    "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@types/jest": "^27.0.1",
-    "codecov": "^3.5.0",
-    "cspell": "^4.1.0",
-    "cz-conventional-changelog": "^3.3.0",
-    "gh-pages": "^3.1.0",
-    "jest": "^27.1.0",
-    "npm-run-all": "^4.1.5",
-    "nyc": "^15.1.0",
-    "open-cli": "^6.0.1",
-    "prettier": "^2.1.1",
-    "ts-jest": "^27.0.5",
+    "@istanbuljs/nyc-config-typescript": "~1.0.1",
+    "@types/jest": "~27.5.2",
+    "cspell": "~6.19.2",
+    "cz-conventional-changelog": "~3.3.0",
+    "jest": "~27.5.1",
+    "nyc": "~15.1.0",
+    "prettier": "~2.6.2",
+    "rimraf": "~3.0.2",
+    "ts-jest": "~27.1.5",
     "ts-node": "~10.9.1",
-    "typedoc": "^0.19.0",
-    "typescript": "4.9.5",
-    "rimraf": "^3.0.2"
+    "typescript": "4.9.5"
   },
   "files": [
     "build/main",

@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { GetInviteCommand } from './get-invite.command';
 
 @Injectable({
@@ -15,13 +17,11 @@ export class GetInvite {
   ) {}
 
   async execute(command: GetInviteCommand) {
-    const member = await this.memberRepository.findByInviteToken(command.token);
-    if (!member) throw new ApiException('No invite found');
+    const invitedMember = await this.memberRepository.findByInviteToken(command.token);
+    if (!invitedMember) throw new ApiException('No invite found');
 
-    const organization = await this.organizationRepository.findById(member._organizationId);
+    const organization = await this.organizationRepository.findById(invitedMember._organizationId);
     if (!organization) throw new NotFoundException('Organization not found');
-
-    const invitedMember = member;
 
     if (invitedMember.memberStatus !== MemberStatusEnum.INVITED) {
       throw new ApiException('Invite token expired');
@@ -31,6 +31,8 @@ export class GetInvite {
 
     const user = await this.userRepository.findById(invitedMember.invite._inviterId);
     if (!user) throw new NotFoundException('User not found');
+
+    const invitedUser = await this.userRepository.findByEmail(normalizeEmail(invitedMember.invite.email));
 
     return {
       inviter: {
@@ -44,8 +46,8 @@ export class GetInvite {
         name: organization.name,
         logo: organization.logo,
       },
-      email: member.invite.email,
-      _userId: member._userId,
+      email: invitedMember.invite.email,
+      _userId: invitedUser ? invitedUser._id : undefined,
     };
   }
 }

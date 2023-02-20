@@ -19,12 +19,12 @@ import {
   EmailBlockTypeEnum,
   StepTypeEnum,
   IEmailBlock,
+  ISubscribersDefine,
   TemplateVariableTypeEnum,
   EmailProviderIdEnum,
   SmsProviderIdEnum,
   FilterPartTypeEnum,
 } from '@novu/shared';
-import { ISubscribersDefine } from '@novu/node';
 
 const axiosInstance = axios.create();
 
@@ -103,11 +103,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     await session.awaitRunningJobs();
     const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
-    expect(createdSubscriber.subscriberId).to.equal(subscriberId);
-    expect(createdSubscriber.firstName).to.equal(payload.firstName);
-    expect(createdSubscriber.lastName).to.equal(payload.lastName);
-    expect(createdSubscriber.email).to.equal(payload.email);
-    expect(createdSubscriber.locale).to.equal(payload.locale);
+    expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
+    expect(createdSubscriber?.firstName).to.equal(payload.firstName);
+    expect(createdSubscriber?.lastName).to.equal(payload.lastName);
+    expect(createdSubscriber?.email).to.equal(payload.email);
+    expect(createdSubscriber?.locale).to.equal(payload.locale);
   });
 
   it('should override subscriber email based on event data', async function () {
@@ -156,7 +156,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const messages2 = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      createdSubscriber._id,
+      createdSubscriber?._id as string,
       ChannelTypeEnum.EMAIL
     );
 
@@ -314,7 +314,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const message2 = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: ChannelTypeEnum.SMS,
     });
 
@@ -376,7 +376,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -400,7 +400,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -444,7 +444,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -502,7 +502,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -559,7 +559,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -598,7 +598,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     let messages = await messageRepository.find({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -625,7 +625,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     messages = await messageRepository.find({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -757,13 +757,36 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
     const block = message.content[0] as IEmailBlock;
 
     expect(block.content).to.equal('Hello John Doe, Welcome to Umbrella Corp');
+  });
+
+  it('should throw an error when workflow identifier provided is not in the database', async () => {
+    const response = await session.testAgent
+      .post(`/v1/events/trigger`)
+      .send({
+        name: 'non-existent-template-identifier',
+        to: subscriber.subscriberId,
+        payload: {
+          myUser: {
+            lastName: 'Test',
+          },
+        },
+      })
+      .expect(422);
+
+    const { body } = response;
+
+    expect(body).to.eql({
+      statusCode: 422,
+      message: 'template_not_found',
+      error: 'Unprocessable Entity',
+    });
   });
 
   it('should handle empty workflow scenario', async function () {

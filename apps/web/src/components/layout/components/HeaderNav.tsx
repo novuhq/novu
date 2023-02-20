@@ -1,36 +1,37 @@
 import { Avatar, useMantineColorScheme, ActionIcon, Header, Group, Container } from '@mantine/core';
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
 
-import { AuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
 import { useLocalThemePreference } from '../../../hooks/useLocalThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
 import { CONTEXT_PATH, INTERCOM_APP_ID, LOGROCKET_ID } from '../../../config';
-import { SpotlightContext } from '../../../store/spotlightContext';
+import { useSpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
 import LogRocket from 'logrocket';
+import { ROUTES } from '../../../constants/routes.enum';
 
 type Props = {};
 const menuItem = [
   {
     title: 'Invite Members',
     icon: <Mail />,
-    path: '/team',
+    path: ROUTES.TEAM,
   },
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export function HeaderNav({}: Props) {
-  const { currentOrganization, currentUser, logout } = useContext(AuthContext);
+  const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
-  const { addItem } = useContext(SpotlightContext);
+  const { addItem } = useSpotlightContext();
 
   if (INTERCOM_APP_ID) {
     const { boot } = useIntercom();

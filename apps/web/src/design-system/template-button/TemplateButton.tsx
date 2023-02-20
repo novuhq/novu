@@ -19,6 +19,7 @@ const usePopoverStyles = createStyles(() => ({
     color: colors.white,
     border: 'none',
     marginTop: '1px',
+    maxWidth: 300,
   },
   arrow: {
     backgroundColor: colors.error,
@@ -122,7 +123,11 @@ export function TemplateButton({
           <Popover.Target>
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
           </Popover.Target>
-          <Popover.Dropdown>{errors || 'Something is missing here'}</Popover.Dropdown>
+          <Popover.Dropdown>
+            <Text color={colors.white} rows={1}>
+              {errors || 'Something is missing here'}
+            </Text>
+          </Popover.Dropdown>
         </Popover>
       )}
     </Button>

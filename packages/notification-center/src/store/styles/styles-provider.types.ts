@@ -34,6 +34,7 @@ export type StylesPaths =
   | 'notifications.listItem.contentLayout'
   | 'notifications.listItem.title'
   | 'notifications.listItem.timestamp'
+  | 'notifications.listItem.dotsButton'
   | 'notifications.listItem.buttons.root'
   | 'notifications.listItem.buttons.primary'
   | 'notifications.listItem.buttons.secondary'
@@ -43,7 +44,10 @@ export type StylesPaths =
   | 'preferences.item.divider'
   | 'preferences.item.content.icon'
   | 'preferences.item.content.channelLabel'
-  | 'preferences.item.content.success';
+  | 'preferences.item.content.success'
+  | 'actionsMenu.dropdown'
+  | 'actionsMenu.arrow'
+  | 'actionsMenu.item';
 
 export interface INotificationCenterStyles {
   bellButton?: ObjectWithRoot<{
@@ -90,12 +94,18 @@ export interface INotificationCenterStyles {
       contentLayout?: CSSFunctionOrObject;
       title?: CSSFunctionOrObject;
       timestamp?: CSSFunctionOrObject;
+      dotsButton?: CSSFunctionOrObject;
       buttons?: ObjectWithRoot<{
         primary?: CSSFunctionOrObject;
         secondary?: CSSFunctionOrObject;
       }>;
     };
   }>;
+  actionsMenu?: {
+    arrow?: CSSFunctionOrObject;
+    dropdown?: CSSFunctionOrObject;
+    item?: CSSFunctionOrObject;
+  };
   preferences?: ObjectWithRoot<{
     item?: {
       title?: CSSFunctionOrObject;

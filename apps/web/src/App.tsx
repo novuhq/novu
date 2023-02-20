@@ -1,44 +1,44 @@
-import React, { useContext, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
-import { Route, Routes, Navigate, BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
+import { Route, Routes, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
-import decode from 'jwt-decode';
-import { IJwtPayload } from '@novu/shared';
-import { AuthContext } from './store/authContext';
-import { applyToken, getToken, getTokenPayload, useAuthController } from './store/useAuthController';
+import { AuthProvider } from './store/authContext';
+import { applyToken, getToken } from './store/useAuthController';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
 import HomePage from './pages/HomePage';
-import TemplateEditorPage, { ActivePageEnum } from './pages/templates/editor/TemplateEditorPage';
+import TemplateEditorPage from './pages/templates/editor/TemplateEditorPage';
 import NotificationList from './pages/templates/TemplatesListPage';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import InvitationPage from './pages/auth/InvitationPage';
 import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
-import { ThemeContext } from './store/themeContext';
-import { useThemeController } from './store/useThemeController';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
 import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
-import QuickStartPage from './pages/quick-start/QuickStartPage';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
-import { SpotLight } from './components/utils/Spotlight';
-import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
-import { useBlueprint } from './hooks/useBlueprint';
+import { ROUTES } from './constants/routes.enum';
 import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './store/segment.context';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import packageJson from '../package.json';
+import { GeneralStarter } from './pages/quick-start/steps/GeneralStarter';
+import { QuickStartWrapper } from './pages/quick-start/components/QuickStartWrapper';
+import { Quickstart } from './pages/quick-start/steps/Quickstart';
+import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
+import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
+import { Setup } from './pages/quick-start/steps/Setup';
+import { Trigger } from './pages/quick-start/steps/Trigger';
+import { RequiredAuth } from './components/layout/RequiredAuth';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -147,268 +147,81 @@ function App() {
       <HelmetProvider>
         <BrowserRouter basename={CONTEXT_PATH}>
           <QueryClientProvider client={queryClient}>
-            <AuthHandlerComponent>
-              <ThemeHandlerComponent>
-                <SpotLightProvider>
-                  <Routes>
-                    <Route path="/auth/signup" element={<SignUpPage />} />
-                    <Route path="/auth/login" element={<LoginPage />} />
-                    <Route path="/auth/reset/request" element={<PasswordResetPage />} />
-                    <Route path="/auth/reset/:token" element={<PasswordResetPage />} />
-                    <Route path="/auth/invitation/:token" element={<InvitationPage />} />
-                    <Route path="/auth/application" element={<CreateOrganizationPage />} />
-                    <Route
-                      path="/partner-integrations/vercel/link-projects"
-                      element={
-                        <RequiredAuth>
-                          <LinkVercelProjectPage type="create" />
-                        </RequiredAuth>
-                      }
-                    />
-                    <Route
-                      path="/partner-integrations/vercel/link-projects/edit"
-                      element={
-                        <RequiredAuth>
-                          <LinkVercelProjectPage type="edit" />
-                        </RequiredAuth>
-                      }
-                    />
-                    <Route element={<AppLayout />}>
-                      <Route
-                        path="/*"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <HomePage />
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/templates/create"
-                        element={
-                          <RequiredAuth>
-                            <TemplateFormProvider>
-                              <TemplateEditorProvider>
-                                <SpotLight>
-                                  <TemplateEditorPage />
-                                </SpotLight>
-                              </TemplateEditorProvider>
-                            </TemplateFormProvider>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/templates/edit/:templateId"
-                        element={
-                          <RequiredAuth>
-                            <TemplateFormProvider>
-                              <TemplateEditorProvider>
-                                <SpotLight>
-                                  <TemplateEditorPage />
-                                </SpotLight>
-                              </TemplateEditorProvider>
-                            </TemplateFormProvider>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/templates"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <NotificationList />
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/quickstart"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <QuickStartPage />
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/activities"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <ActivitiesPage />
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/settings"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <SettingsPage />
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/integrations"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <IntegrationsStore />
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/team"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <MembersInvitePage />
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/changes"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <PromoteChangesPage />
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/subscribers"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <SubscribersList />
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                      <Route
-                        path="/brand"
-                        element={
-                          <RequiredAuth>
-                            <SpotLight>
-                              <BrandPage />
-                            </SpotLight>
-                          </RequiredAuth>
-                        }
-                      />
-                    </Route>
-                  </Routes>
-                </SpotLightProvider>
-              </ThemeHandlerComponent>
-            </AuthHandlerComponent>
+            <AuthProvider>
+              <Routes>
+                <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
+                <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
+                <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
+                <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
+                <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
+                <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} />
+                <Route
+                  path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
+                  element={
+                    <RequiredAuth>
+                      <LinkVercelProjectPage type="create" />
+                    </RequiredAuth>
+                  }
+                />
+                <Route
+                  path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
+                  element={
+                    <RequiredAuth>
+                      <LinkVercelProjectPage type="edit" />
+                    </RequiredAuth>
+                  }
+                />
+                <Route element={<AppLayout />}>
+                  <Route path={ROUTES.ANY} element={<HomePage />} />
+                  <Route
+                    path={ROUTES.TEMPLATES_CREATE}
+                    element={
+                      <TemplateFormProvider>
+                        <TemplateEditorProvider>
+                          <TemplateEditorPage />
+                        </TemplateEditorProvider>
+                      </TemplateFormProvider>
+                    }
+                  />
+                  <Route
+                    path={ROUTES.TEMPLATES_EDIT_TEMPLATEID}
+                    element={
+                      <TemplateFormProvider>
+                        <TemplateEditorProvider>
+                          <TemplateEditorPage />
+                        </TemplateEditorProvider>
+                      </TemplateFormProvider>
+                    }
+                  />
+                  <Route path={ROUTES.TEMPLATES} element={<NotificationList />} />
+                  <Route
+                    path="/general-started"
+                    element={
+                      <QuickStartWrapper>
+                        <GeneralStarter />
+                      </QuickStartWrapper>
+                    }
+                  />
+                  <Route path={ROUTES.QUICKSTART} element={<Quickstart />} />
+                  <Route path="/quickstart/notification-center" element={<NotificationCenter />} />
+                  <Route path="/quickstart/notification-center/set-up" element={<FrameworkSetup />} />
+                  <Route path="/quickstart/notification-center/set-up/:framework" element={<Setup />} />
+                  <Route path="/quickstart/notification-center/trigger" element={<Trigger />} />
+                  <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
+                  <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
+                  <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsStore />} />
+                  <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
+                  <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
+                  <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
+                  <Route path="/brand" element={<BrandPage />} />
+                </Route>
+              </Routes>
+            </AuthProvider>
           </QueryClientProvider>
         </BrowserRouter>
       </HelmetProvider>
     </SegmentProvider>
   );
-}
-
-function jwtHasKey(key: string) {
-  const token = getToken();
-
-  if (!token) return false;
-  const jwt = decode<IJwtPayload>(token);
-
-  return jwt && jwt[key];
-}
-
-function RequiredAuth({ children }: any) {
-  useBlueprint();
-  const { logout } = useContext(AuthContext);
-  const location = useLocation();
-
-  // TODO: remove after env migration
-  const payload = getTokenPayload();
-  if (payload && (payload as any).applicationId) {
-    logout();
-    window.location.reload();
-  }
-
-  // Logout if token.exp is in the past (expired)
-  if (payload && payload.exp && payload.exp <= Date.now() / 1000) {
-    logout();
-
-    return null;
-  }
-
-  if (!getToken()) {
-    return <Navigate to="/auth/login" replace />;
-  } else if (
-    !jwtHasKey('organizationId') ||
-    (!jwtHasKey('environmentId') && location.pathname !== '/auth/application')
-  ) {
-    return <Navigate to="/auth/application" replace />;
-  } else {
-    return children;
-  }
-}
-
-function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {
-  const { setCurrentTheme, currentTheme, toggleTheme } = useThemeController();
-
-  return (
-    <ThemeContext.Provider
-      value={{
-        theme: currentTheme,
-        setTheme: setCurrentTheme,
-        toggleTheme,
-      }}
-    >
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-
-function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
-  const { token, setToken, user, organization, logout, jwtPayload, organizations } = useAuthController();
-
-  return (
-    <AuthContext.Provider
-      value={{
-        currentUser: user,
-        currentOrganization: organization,
-        organizations,
-        token,
-        logout,
-        setToken,
-        jwtPayload,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-function SpotLightProvider({ children }) {
-  const [items, setItems] = useState<SpotlightItem[]>([]);
-
-  const addItem = (item: SpotlightItem | SpotlightItem[]) => {
-    if (!Array.isArray(item)) {
-      item = [item];
-    }
-
-    const newItems = [...items, ...item];
-    newItems.sort((a, b) => (b.order || 0) - (a.order || 0));
-
-    setItems(newItems);
-  };
-
-  const removeItem = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
-  };
-
-  return <SpotlightContext.Provider value={{ items, addItem, removeItem }}>{children}</SpotlightContext.Provider>;
 }
 
 export default Sentry.withProfiler(App);

@@ -8,8 +8,6 @@ const queryClient = new QueryClient();
 
 describe('TestWorkflowModal Component', function () {
   it('should display subscriberId and empty json values when there are no variables', function () {
-    const trigger = { variables: [], type: TriggerTypeEnum.EVENT, identifier: '1234', subscriberVariables: [] };
-
     cy.mount(
       <QueryClientProvider client={queryClient}>
         <TestWrapper>
@@ -18,24 +16,7 @@ describe('TestWorkflowModal Component', function () {
             onDismiss={() => {}}
             setTransactionId={() => {}}
             openExecutionModal={() => {}}
-            template={{
-              name: '1234',
-              _notificationGroupId: '',
-              _environmentId: '',
-              tags: [],
-              draft: false,
-              active: true,
-              critical: false,
-              preferenceSettings: {},
-              steps: [
-                {
-                  metadata: {
-                    delayPath: 'sendAt',
-                  },
-                },
-              ],
-              triggers: [trigger],
-            }}
+            trigger={{ variables: [], type: TriggerTypeEnum.EVENT, identifier: '1234', subscriberVariables: [] }}
           />
         </TestWrapper>
       </QueryClientProvider>
@@ -47,13 +28,6 @@ describe('TestWorkflowModal Component', function () {
   });
 
   it('should add variables and subscriber variables to input fields', function () {
-    const trigger = {
-      variables: [{ name: 'firstVariable' }, { name: 'secondVariable' }],
-      type: TriggerTypeEnum.EVENT,
-      identifier: '1234',
-      subscriberVariables: [{ name: 'email' }],
-    };
-
     cy.mount(
       <QueryClientProvider client={queryClient}>
         <TestWrapper>
@@ -62,23 +36,11 @@ describe('TestWorkflowModal Component', function () {
             onDismiss={() => {}}
             openExecutionModal={() => {}}
             setTransactionId={() => {}}
-            template={{
-              name: '1234',
-              _notificationGroupId: '',
-              _environmentId: '',
-              tags: [],
-              draft: false,
-              active: true,
-              critical: false,
-              preferenceSettings: {},
-              steps: [
-                {
-                  metadata: {
-                    delayPath: 'sendAt',
-                  },
-                },
-              ],
-              triggers: [trigger],
+            trigger={{
+              variables: [{ name: 'firstVariable' }, { name: 'secondVariable' }],
+              type: TriggerTypeEnum.EVENT,
+              identifier: '1234',
+              subscriberVariables: [{ name: 'email' }],
             }}
           />
         </TestWrapper>

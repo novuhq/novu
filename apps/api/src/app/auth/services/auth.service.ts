@@ -22,6 +22,7 @@ import { SwitchOrganizationCommand } from '../usecases/switch-organization/switc
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 import { CacheKeyPrefixEnum } from '../../shared/services/cache';
 import { Cached } from '../../shared/interceptors';
+import { normalizeEmail } from '../../shared/helpers/email-normalization.service';
 
 @Injectable()
 export class AuthService {
@@ -46,14 +47,15 @@ export class AuthService {
     distinctId: string,
     origin?: SignUpOriginEnum
   ) {
-    let user = await this.userRepository.findByLoginProvider(profile.id, authProvider);
+    const email = normalizeEmail(profile.email);
+    let user = await this.userRepository.findByEmail(email);
     let newUser = false;
 
     if (!user) {
       user = await this.createUserUsecase.execute(
         CreateUserCommand.create({
           picture: profile.avatar_url,
-          email: profile.email,
+          email,
           lastName: profile.name ? profile.name.split(' ').slice(-1).join(' ') : null,
           firstName: profile.name ? profile.name.split(' ').slice(0, -1).join(' ') : profile.login,
           auth: {

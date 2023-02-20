@@ -1,4 +1,4 @@
-import { INotificationTemplate, INotificationTrigger } from '@novu/shared';
+import { INotificationTrigger } from '@novu/shared';
 import { Modal, useMantineTheme } from '@mantine/core';
 import { Button, colors, shadows, Title } from '../../design-system';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';
@@ -6,15 +6,14 @@ import { TriggerSnippetTabs } from './TriggerSnippetTabs';
 export function TemplateTriggerModal({
   isVisible,
   onDismiss,
-  template,
+  trigger,
 }: {
   isVisible: boolean;
   onDismiss: () => void;
-  template: INotificationTemplate;
+  trigger: INotificationTrigger;
 }) {
   const theme = useMantineTheme();
   const dark = theme.colorScheme === 'dark';
-  const trigger: INotificationTrigger = template.triggers[0];
 
   return (
     <Modal
@@ -40,7 +39,7 @@ export function TemplateTriggerModal({
       radius="md"
       size="xl"
     >
-      <TriggerSnippetTabs trigger={trigger} template={template} />
+      <TriggerSnippetTabs trigger={trigger} />
       <div style={{ alignItems: 'end' }}>
         <Button data-test-id="trigger-snippet-btn" mt={30} onClick={onDismiss} inherit>
           Got it

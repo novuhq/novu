@@ -1,6 +1,6 @@
 import { Prism } from '@mantine/prism';
 import {
-  INotificationTemplate,
+  INotificationTemplateStep,
   INotificationTrigger,
   INotificationTriggerVariable,
   TemplateVariableTypeEnum,
@@ -10,17 +10,15 @@ import { API_ROOT } from '../../config';
 import { colors, Tabs } from '../../design-system';
 import * as set from 'lodash.set';
 import * as get from 'lodash.get';
+import { useFormContext } from 'react-hook-form';
 
 const NODE_JS = 'Node.js';
 const CURL = 'Curl';
 
-export function TriggerSnippetTabs({
-  trigger,
-  template,
-}: {
-  trigger: INotificationTrigger;
-  template: INotificationTemplate;
-}) {
+export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
+  const { getValues } = useFormContext();
+  const steps = getValues('steps');
+
   const { subscriberVariables: triggerSubscriberVariables = [] } = trigger || {};
   const isPassingSubscriberId = triggerSubscriberVariables?.find((el) => el.name === 'subscriberId');
   const subscriberVariables = isPassingSubscriberId
@@ -30,11 +28,11 @@ export function TriggerSnippetTabs({
   const prismTabs = [
     {
       value: NODE_JS,
-      content: getNodeTriggerSnippet(trigger.identifier, trigger.variables, subscriberVariables, template),
+      content: getNodeTriggerSnippet(trigger.identifier, trigger.variables, subscriberVariables, steps),
     },
     {
       value: CURL,
-      content: getCurlTriggerSnippet(trigger.identifier, trigger.variables, subscriberVariables, template),
+      content: getCurlTriggerSnippet(trigger.identifier, trigger.variables, subscriberVariables, steps),
     },
   ];
 
@@ -45,7 +43,7 @@ export const getNodeTriggerSnippet = (
   identifier: string,
   variables: INotificationTriggerVariable[],
   subscriberVariables: INotificationTriggerVariable[],
-  template: INotificationTemplate
+  steps: INotificationTemplateStep[]
 ) => {
   const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
@@ -54,7 +52,7 @@ const novu = new Novu('<API_KEY>');
 novu.trigger('${identifier}', ${JSON.stringify(
     {
       to: { ...getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>') },
-      payload: { ...getPayloadValue(variables, template) },
+      payload: { ...getPayloadValue(variables, steps) },
     },
     null,
     2
@@ -75,7 +73,7 @@ export const getCurlTriggerSnippet = (
   identifier: string,
   variables: INotificationTriggerVariable[],
   subscriberVariables: INotificationTriggerVariable[],
-  template: INotificationTemplate
+  steps: INotificationTemplateStep[]
 ) => {
   const curlSnippet = `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
      --header 'Authorization: ApiKey <REPLACE_WITH_API_KEY>' \\
@@ -84,7 +82,7 @@ export const getCurlTriggerSnippet = (
        {
          name: identifier,
          to: { ...getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>') },
-         payload: { ...getPayloadValue(variables, template) },
+         payload: { ...getPayloadValue(variables, steps) },
        },
        null,
        2
@@ -98,7 +96,7 @@ export const getCurlTriggerSnippet = (
   );
 };
 
-export const getPayloadValue = (variables: INotificationTriggerVariable[], template: INotificationTemplate) => {
+export const getPayloadValue = (variables: INotificationTriggerVariable[], steps: INotificationTemplateStep[]) => {
   const varsObj: Record<string, any> = {};
   variables
     .filter((variable) => variable?.type !== TemplateVariableTypeEnum.ARRAY)
@@ -111,7 +109,7 @@ export const getPayloadValue = (variables: INotificationTriggerVariable[], templ
       set(varsObj, variable.name, [get(varsObj, variable.name, '<REPLACE_WITH_DATA>')]);
     });
 
-  template.steps
+  steps
     .filter((step) => step?.metadata?.delayPath)
     .forEach((step) => {
       set(varsObj, step?.metadata?.delayPath, '<REPLACE_WITH_DATA>');

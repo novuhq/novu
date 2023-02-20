@@ -1,13 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import {
-  ISubscribersDefine,
-  ITopic,
-  TriggerRecipientSubscriber,
-  TriggerRecipientTopics,
-  TriggerRecipients,
-} from '@novu/node';
+import { ITopic, TriggerRecipientSubscriber, TriggerRecipientTopics, TriggerRecipients } from '@novu/node';
 import {
   EnvironmentId,
+  ISubscribersDefine,
   LogCodeEnum,
   LogStatusEnum,
   OrganizationId,
