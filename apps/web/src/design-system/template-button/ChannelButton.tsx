@@ -264,7 +264,9 @@ export function ChannelButton({
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
           </Popover.Target>
           <Popover.Dropdown>
-            <Text rows={1}>{stepErrorContent || 'Something is missing here'}</Text>
+            <Text rows={1} color={colors.white}>
+              {stepErrorContent || 'Something is missing here'}
+            </Text>
           </Popover.Dropdown>
         </Popover>
       )}

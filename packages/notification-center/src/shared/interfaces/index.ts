@@ -62,6 +62,7 @@ export interface INotificationCenterContext {
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
   showUserPreferences?: boolean;
+  allowedNotificationActions?: boolean;
   onTabClick?: (tab: ITab) => void;
 }
 
@@ -105,7 +106,9 @@ export interface INotificationsContext {
   fetchNextPage: () => void;
   refetch: () => void;
   markNotificationAsRead: (messageId: string) => void;
+  markNotificationAsUnRead: (messageId: string) => void;
   markNotificationAsSeen: (messageId: string) => void;
+  removeMessage: (messageId: string) => void;
   markAllNotificationsAsRead: () => void;
   markAllNotificationsAsSeen: () => void;
 }

@@ -67,4 +67,26 @@ export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, Ch
 
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
+
+  public async getParentId(
+    environmentId: string,
+    entityType: ChangeEntityTypeEnum,
+    entityId: string
+  ): Promise<string | null> {
+    const change = await this.findOne(
+      {
+        _environmentId: environmentId,
+        _entityId: entityId,
+        type: entityType,
+        enabled: false,
+        _parentId: { $exists: true },
+      },
+      '_parentId'
+    );
+    if (change?._parentId) {
+      return change._parentId;
+    }
+
+    return null;
+  }
 }
