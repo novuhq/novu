@@ -16,11 +16,7 @@ export function Quickstart() {
   }, []);
 
   return (
-    <QuickStartWrapper
-      title={welcomeDescription}
-      secondaryTitle={'What would you like to build?'}
-      description={<QuickstartDescription />}
-    >
+    <QuickStartWrapper title={welcomeDescription} secondaryTitle={'What would you like to build?'}>
       <Cards
         cells={[
           {
@@ -44,12 +40,7 @@ export function Quickstart() {
 }
 
 export function QuickstartDescription() {
-  return (
-    <Stack align="center" spacing="xs">
-      <span>Novu integrates with all communication channels -</span>
-      <span>Email, SMS, Chat Apps (WhatsApp, Slack...), Push and Notification Center</span>
-    </Stack>
-  );
+  return null;
 }
 
 export function OtherChannelsDescription() {

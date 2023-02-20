@@ -13,6 +13,7 @@ export const faqUrl = 'https://docs.novu.co/notification-center/react/react-comp
 interface ISnippetInstructions {
   instruction: React.ReactNode | string;
   snippet: string;
+  language?: string;
 }
 
 const installReactNotificationCenter = 'npm install @novu/notification-center';
@@ -140,7 +141,11 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
   {
     key: 'react',
     value: [
-      { instruction: 'First you have to install the package:', snippet: installReactNotificationCenter },
+      {
+        instruction: 'First you have to install the package:',
+        snippet: installReactNotificationCenter,
+        language: 'bash',
+      },
       { instruction: 'Then import and render the components:', snippet: reactStarterSnippet },
     ],
   },
@@ -180,10 +185,12 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
       {
         instruction: 'Add the following script into your code.',
         snippet: embedScript,
+        language: 'html',
       },
       {
         instruction: 'Add the following div that will contain the bell widget',
         snippet: embedBellSelector,
+        language: 'html',
       },
     ],
   },
@@ -193,14 +200,17 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
       {
         instruction: 'Clone the project to your local machine',
         snippet: cloneDemoRepo,
+        language: 'bash',
       },
       {
         instruction: 'Run setup project command',
         snippet: setupProject,
+        language: 'bash',
       },
       {
         instruction: 'Run npm run dev',
         snippet: npmRunCommand,
+        language: 'bash',
       },
     ],
   },

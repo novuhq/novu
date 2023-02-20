@@ -79,7 +79,7 @@ export function QuickStartWrapper({
               <Description>{description}</Description>
             </When>
 
-            <div style={{ marginBottom: '30px' }} />
+            <div style={{ marginBottom: '20px' }} />
 
             {children}
           </Stack>

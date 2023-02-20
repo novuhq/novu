@@ -1,7 +1,5 @@
-import { colors, Tooltip } from '../../../../design-system';
+import { colors } from '../../../../design-system';
 import { Prism as MantinePrism } from '@mantine/prism';
-import { ActionIcon } from '@mantine/core';
-import { Check, Copy } from '../../../../design-system/icons';
 import React from 'react';
 import { useClipboard } from '@mantine/hooks';
 
@@ -32,9 +30,10 @@ type Props = {
   code: string;
   index?: number;
   onCopy?: (index: number) => void;
+  language?: string;
 };
 
-export function PrismOnCopy({ index, code, onCopy }: Props) {
+export function PrismOnCopy({ index, code, onCopy, language }: Props) {
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
 
   function handleOnClick(copyIndex: number | undefined, copyCode: string) {
@@ -47,11 +46,8 @@ export function PrismOnCopy({ index, code, onCopy }: Props) {
 
   return (
     <div
-      style={{
-        position: 'relative',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
+      onClick={() => {
+        handleOnClick(index, code);
       }}
     >
       <MantinePrism
@@ -67,19 +63,11 @@ export function PrismOnCopy({ index, code, onCopy }: Props) {
             backgroundColor: 'transparent !important',
           },
         })}
-        language="javascript"
+        language={(language as any) || 'javascript'}
         data-test-id="embed-code-snippet"
-        noCopy={true}
       >
         {code}
       </MantinePrism>
-      <div style={{ position: 'absolute', top: 0, right: 0, padding: '17px' }}>
-        <Tooltip label={clipboardEnvironmentIdentifier.copied ? 'Copied!' : 'Copy'}>
-          <ActionIcon variant="transparent" onClick={() => handleOnClick(index, code)}>
-            {clipboardEnvironmentIdentifier.copied ? <Check /> : <Copy />}
-          </ActionIcon>
-        </Tooltip>
-      </div>
     </div>
   );
 }
