@@ -70,7 +70,7 @@ export class Login {
         { _id: user._id },
         {
           $set: {
-            servicesHashes: { intercom: userHashForIntercom },
+            'servicesHashes.intercom': userHashForIntercom,
           },
         }
       );
