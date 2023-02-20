@@ -1,4 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class ServicesHashesDto {
+  @ApiProperty()
+  intercom?: string;
+}
+
 export class UserResponseDto {
   @ApiProperty()
   _id: string;
@@ -28,5 +34,5 @@ export class UserResponseDto {
   showOnBoarding?: boolean;
 
   @ApiProperty()
-  userHashForIntercom?: string;
+  servicesHashes?: ServicesHashesDto;
 }

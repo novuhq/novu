@@ -63,14 +63,14 @@ export class Login {
       throw new UnauthorizedException(`Incorrect email or password provided.`);
     }
 
-    if (process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY && !user.userHashForIntercom) {
+    if (process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY && !user.servicesHashes?.intercom) {
       const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
       const userHashForIntercom = createHash(intercomSecretKey, user._id);
       await this.userRepository.update(
         { _id: user._id },
         {
           $set: {
-            userHashForIntercom: userHashForIntercom,
+            servicesHashes: { intercom: userHashForIntercom },
           },
         }
       );

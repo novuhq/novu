@@ -44,7 +44,9 @@ export class UserRegister {
         { _id: user._id },
         {
           $set: {
-            userHashForIntercom: userHashForIntercom,
+            servicesHashes: {
+              intercom: userHashForIntercom,
+            },
           },
         }
       );

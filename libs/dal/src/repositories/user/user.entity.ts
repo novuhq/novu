@@ -48,5 +48,5 @@ export class UserEntity {
     lastFailedAttempt: string;
   };
 
-  userHashForIntercom?: string;
+  servicesHashes?: { intercom?: string };
 }

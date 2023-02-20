@@ -1,3 +1,6 @@
+export interface IServicesHashes {
+  intercom?: string;
+}
 export interface IUserEntity {
   _id: string;
   firstName?: string;
@@ -6,7 +9,7 @@ export interface IUserEntity {
   profilePicture?: string;
   createdAt: string;
   showOnBoarding?: boolean;
-  userHashForIntercom?: string;
+  servicesHashes?: IServicesHashes;
 }
 
 export interface IJwtPayload {
