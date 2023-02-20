@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -7,7 +7,7 @@ import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
 
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
@@ -33,7 +33,7 @@ export type SignUpFormInputType = {
 export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const navigate = useNavigate();
 
-  const { setToken } = useContext(AuthContext);
+  const { setToken } = useAuthContext();
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;

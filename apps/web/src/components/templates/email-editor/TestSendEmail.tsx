@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { JsonInput, MultiSelect, Group, ActionIcon } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -8,7 +8,7 @@ import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
 import { Button, Text, colors, Tooltip } from '../../../design-system';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { AuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../../store/authContext';
 import { ArrowDown, Check, Copy, Invite } from '../../../design-system/icons';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import useStyles from '../../../design-system/select/Select.styles';
@@ -18,7 +18,7 @@ import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrat
 import { testSendEmailMessage } from '../../../api/notification-templates';
 
 export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser } = useAuthContext();
   const { control } = useFormContext();
 
   const clipboardJson = useClipboard({ timeout: 1000 });
