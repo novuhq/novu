@@ -107,7 +107,7 @@ function CriticalDescription({ field }) {
 
   return (
     <DescriptionWrapper>
-      {"When on, the template will not show in the user preferences , meaning they wouldn't be able to opt out."}
+      {"When on, the template will not show in the user preferences, meaning they wouldn't be able to opt out."}
       <Switch {...field} checked={field.value || false} disabled={readonly} data-test-id="critical" />
     </DescriptionWrapper>
   );
