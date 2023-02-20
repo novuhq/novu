@@ -5,14 +5,24 @@ import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterStepsBackoff } from './digest-filter-steps-backoff.usecase';
 import { DigestFilterStepsRegular } from './digest-filter-steps-regular.usecase';
 
+import { EventsPerformanceService } from '../../services/performance-service';
+
 @Injectable()
 export class DigestFilterSteps {
   constructor(
     private filterStepsBackoff: DigestFilterStepsBackoff,
-    private filterStepsRegular: DigestFilterStepsRegular
+    private filterStepsRegular: DigestFilterStepsRegular,
+    protected performanceService: EventsPerformanceService
   ) {}
 
   public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
+    const mark = this.performanceService.buildDigestFilterStepsMark(
+      command.transactionId,
+      command.templateId,
+      command.notificationId,
+      command.subscriberId
+    );
+
     const matchedSteps = command.steps.filter((step) => step.active === true);
     const digestStep = matchedSteps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
 
@@ -21,17 +31,25 @@ export class DigestFilterSteps {
     }
 
     const type = digestStep?.metadata?.type;
-    if (type === DigestTypeEnum.REGULAR) {
-      return await this.filterStepsRegular.execute({
-        ...command,
-        steps: matchedSteps,
-      });
+
+    const actions = {
+      [DigestTypeEnum.BACKOFF]: this.filterStepsBackoff,
+      [DigestTypeEnum.REGULAR]: this.filterStepsRegular,
+    };
+
+    const action = type ? actions[type] : undefined;
+    if (!action) {
+      return [];
     }
 
-    return await this.filterStepsBackoff.execute({
+    const steps = await action.execute({
       ...command,
       steps: matchedSteps,
     });
+
+    this.performanceService.setEnd(mark);
+
+    return steps;
   }
 
   public static createTriggerStep(command: DigestFilterStepsCommand): NotificationStepEntity {
