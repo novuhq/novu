@@ -39,6 +39,7 @@ export class RemoveMessage {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _id: command.messageId,
+        _subscriberId: command.subscriberId,
       });
       const item = await this.messageRepository.findDeleted({
         _environmentId: command.environmentId,
@@ -47,6 +48,7 @@ export class RemoveMessage {
       });
 
       deletedMessage = item[0];
+
       if (!deletedMessage.read) {
         await this.updateServices(command, subscriber, deletedMessage, MarkEnum.READ);
       }

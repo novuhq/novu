@@ -232,7 +232,7 @@ export class WidgetsController {
     summary: 'Remove a subscriber feed message',
   })
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Delete('/messages/remove/:messageId')
+  @Delete('/messages/:messageId')
   async removeMessage(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('messageId') messageId: string

@@ -90,10 +90,7 @@ export class ApiService {
   }
 
   async removeMessage(messageId: string): Promise<any> {
-    return await this.httpClient.delete(
-      `/widgets/messages/remove/${messageId}`,
-      {}
-    );
+    return await this.httpClient.delete(`/widgets/messages/${messageId}`, {});
   }
 
   async getNotificationsList(

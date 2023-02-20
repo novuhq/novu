@@ -1,5 +1,6 @@
 import React from 'react';
 import { Avatar as MAvatar, ActionIcon, Menu, createStyles, MantineTheme } from '@mantine/core';
+import { useHover } from '@mantine/hooks';
 import { css, cx } from '@emotion/css';
 import styled from '@emotion/styled';
 import { formatDistanceToNow } from 'date-fns';
@@ -19,6 +20,7 @@ import { ActionContainer } from './ActionContainer';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { When } from '../../../../shared/utils/When';
 import { ColorScheme } from '../../../../shared/config/colors';
+import { shadows } from '../../../../shared/config/shadows';
 import {
   DotsHorizontal,
   ErrorIcon,
@@ -34,8 +36,6 @@ import {
 } from '../../../../shared/icons';
 import { colors } from '../../../../shared/config/colors';
 import { useStyles } from '../../../../store/styles';
-import { shadows } from '../../../../shared/config/shadows';
-import { useHover } from '@mantine/hooks';
 
 const avatarSystemIcons = [
   {
