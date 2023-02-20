@@ -61,7 +61,7 @@ export function NotificationCenter({
         isLoading: !applicationIdentifier,
         header: header,
         footer: footer,
-        emptyState: () => emptyState,
+        emptyState: emptyState,
         listItem: listItem,
         actionsResultBlock: actionsResultBlock,
         tabs: tabs,
