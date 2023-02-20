@@ -1,6 +1,7 @@
 import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { providers } from '@novu/shared';
+import { CONTEXT_PATH } from '../../../config';
 
 export const ProviderImage = ({ providerId }: { providerId: string | undefined }) => {
   const { colorScheme } = useMantineColorScheme();
@@ -15,7 +16,7 @@ export const ProviderImage = ({ providerId }: { providerId: string | undefined }
 
   return (
     <Logo
-      src={`/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`}
+      src={CONTEXT_PATH + `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`}
       alt={provider.displayName}
     />
   );

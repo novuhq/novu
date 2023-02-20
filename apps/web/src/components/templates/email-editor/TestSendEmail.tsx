@@ -1,23 +1,24 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { JsonInput, MultiSelect, Group, ActionIcon } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useFormContext, useWatch } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { MemberStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
 import { Button, Text, colors, Tooltip } from '../../../design-system';
-import { testSendEmailMessage } from '../../../api/templates';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { AuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../../store/authContext';
 import { ArrowDown, Check, Copy, Invite } from '../../../design-system/icons';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import useStyles from '../../../design-system/select/Select.styles';
 import { getOrganizationMembers } from '../../../api/organization';
-import { useProcessVariables } from '../../../hooks/use-process-variables';
+import { useProcessVariables } from '../../../hooks/useProcessVariables';
+import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
+import { testSendEmailMessage } from '../../../api/notification-templates';
 
 export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser } = useAuthContext();
   const { control } = useFormContext();
 
   const clipboardJson = useClipboard({ timeout: 1000 });
@@ -30,6 +31,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
   });
 
   const { data: organizationMembers } = useQuery<any[]>(['getOrganizationMembers'], getOrganizationMembers);
+  const { enabled } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
 
   const [sendTo, setSendTo] = useState<string[]>(currentUser?.email ? [currentUser?.email] : []);
   const [membersEmails, setMembersEmails] = useState<string[]>([currentUser?.email || '']);
@@ -130,7 +132,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
           loading={isLoading}
           icon={<Invite />}
           data-test-id="test-send-email-btn"
-          disabled={!isIntegrationActive}
+          disabled={!isIntegrationActive && !enabled}
           onClick={() => onTestEmail()}
         >
           Send Test Email

@@ -27,10 +27,11 @@ await novu.subscribers.identify(user.id, {
   phone: user.phone,
   avatar: user.profile_avatar,
   locale: user.locale,
+  data: { custom1: 'customval1', custom2: 'customval2' },
 });
 ```
 
-Novu will create a subscriber if one does not exist, and will update existing subscribers based on the `identify` payload. You can call this function during registration or signup to make sure the subscriber data is up-to-date.
+Novu will create a subscriber if one does not exist, and will update existing subscribers based on the `identify` payload. You can call this function during registration or signup to make sure the subscriber data is up-to-date, if you wish to save aditional attributes with subscriber, you can pass aditional custom data as **data** property.
 
 ### Subscriber identifier
 

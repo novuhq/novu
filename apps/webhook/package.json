@@ -1,6 +1,6 @@
 {
   "name": "@novu/webhook",
-  "version": "0.10.3",
+  "version": "0.11.0",
   "description": "",
   "author": "",
   "private": true,
@@ -21,20 +21,19 @@
   },
   "dependencies": {
     "@godaddy/terminus": "^4.3.1",
-    "@nestjs/axios": "0.1.0",
     "@nestjs/common": "^9.2.1",
     "@nestjs/core": "^9.2.1",
     "@nestjs/platform-express": "^9.2.1",
     "@nestjs/platform-socket.io": "^9.2.1",
     "@nestjs/swagger": "^6.1.4",
     "@nestjs/terminus": "^9.1.4",
-    "@novu/application-generic": "^0.10.3",
-    "@novu/dal": "^0.10.3",
-    "@novu/shared": "^0.10.2",
-    "@novu/stateless": "^0.10.2",
-    "@novu/testing": "^0.10.3",
+    "@novu/application-generic": "^0.11.0",
+    "@novu/dal": "^0.11.0",
+    "@novu/shared": "^0.11.0",
+    "@novu/stateless": "^0.11.0",
+    "@novu/testing": "^0.11.0",
     "@sentry/node": "^6.3.3",
-    "axios": "^0.24.0",
+    "axios": "^1.3.3",
     "bull": "^4.4.0",
     "bullmq": "^3.5.8",
     "class-transformer": "^0.5.1",
@@ -70,9 +69,9 @@
     "sinon": "^9.2.4",
     "supertest": "^6.0.0",
     "ts-jest": "^27.0.7",
-    "ts-loader": "^8.0.8",
-    "ts-node": "^9.0.0",
+    "ts-loader": "~9.4.0",
+    "ts-node": "~10.9.1",
     "tsconfig-paths": "^3.9.0",
-    "typescript": "4.3.5"
+    "typescript": "4.9.5"
   }
 }

@@ -17,6 +17,7 @@ const defaultStep = {
     content: '',
   },
   active: true,
+  shouldStopOnFail: false,
 };
 
 describe('Filters Component', function () {

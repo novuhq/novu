@@ -1,32 +1,33 @@
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { EmailContentCard } from './EmailContentCard';
-import { AuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../../store/authContext';
 import { When } from '../../utils/When';
 import { Preview } from '../../../pages/templates/editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
-import { Grid, Group, Modal, SegmentedControl, Title, useMantineTheme } from '@mantine/core';
+import { Grid, SegmentedControl, useMantineTheme } from '@mantine/core';
 import { TestSendEmail } from './TestSendEmail';
-import { Button, colors, shadows } from '../../../design-system';
+import { colors } from '../../../design-system';
 import { MobileIcon } from '../../../pages/templates/editor/PreviewSegment/MobileIcon';
 import { WebIcon } from '../../../pages/templates/editor/PreviewSegment/WebIcon';
 import { useHotkeys } from '@mantine/hooks';
-import { VariableManager } from '../VariableManager';
 import { VariablesManagement } from './variables-management/VariablesManagement';
-import { useVariablesManager } from '../../../hooks/use-variables-manager';
+import { useVariablesManager } from '../../../hooks/useVariablesManager';
+import { VariableManagerModal } from '../VariableManagerModal';
 
 export enum ViewEnum {
   EDIT = 'Edit',
   PREVIEW = 'Preview',
   TEST = 'Test',
 }
+const templateFields = ['content', 'htmlContent', 'subject', 'preheader'];
 
 export function EmailMessagesCards({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
-  const { currentOrganization } = useContext(AuthContext);
+  const { currentOrganization } = useAuthContext();
   const [view, setView] = useState<ViewEnum>(ViewEnum.EDIT);
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();
   const [modalOpen, setModalOpen] = useState(false);
-  const variablesArray = useVariablesManager(index, ['content', 'htmlContent', 'subject', 'preheader']);
+  const variablesArray = useVariablesManager(index, templateFields);
 
   useHotkeys([
     [
@@ -144,44 +145,7 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
           </Grid.Col>
         </Grid>
       </When>
-      <Modal
-        opened={modalOpen}
-        overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
-        overlayOpacity={0.7}
-        styles={{
-          modal: {
-            backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
-            width: '90%',
-          },
-          body: {
-            paddingTop: '5px',
-            paddingInline: '8px',
-          },
-        }}
-        title={<Title>Variables</Title>}
-        sx={{ backdropFilter: 'blur(10px)' }}
-        shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
-        radius="md"
-        size="lg"
-        onClose={() => {
-          setModalOpen(false);
-        }}
-        centered
-        overflow="inside"
-      >
-        <VariableManager hideLabel={true} index={index} variablesArray={variablesArray} />
-        <Group position="right">
-          <Button
-            data-test-id="close-var-manager-modal"
-            mt={30}
-            onClick={() => {
-              setModalOpen(false);
-            }}
-          >
-            Close
-          </Button>
-        </Group>
-      </Modal>
+      <VariableManagerModal index={index} setOpen={setModalOpen} open={modalOpen} variablesArray={variablesArray} />
     </>
   );
 }

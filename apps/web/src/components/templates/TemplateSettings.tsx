@@ -1,36 +1,37 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Grid, useMantineColorScheme } from '@mantine/core';
+import styled from '@emotion/styled';
+
 import { Button, colors } from '../../design-system';
 import { NotificationSettingsForm } from './notification-setting-form/NotificationSettingsForm';
 import { TemplatesSideBar } from './TemplatesSideBar';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';
-import styled from '@emotion/styled';
-import { useTemplateController } from './use-template-controller.hook';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { Trash } from '../../design-system/icons';
-import { useState } from 'react';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
-import { useNavigate } from 'react-router-dom';
-import { useEnvController } from '../../store/use-env-controller';
+import { useEnvController } from '../../store/useEnvController';
+import { useTemplateEditor } from './TemplateEditorProvider';
+import { deleteTemplateById } from '../../api/notification-templates';
+import { ROUTES } from '../../constants/routes.enum';
 
-export const TemplateSettings = ({ activePage, setActivePage, showErrors, templateId }) => {
+export const TemplateSettings = ({ activePage, setActivePage, templateId }) => {
   const { colorScheme } = useMantineColorScheme();
   const { readonly } = useEnvController();
-
-  const { editMode, template, trigger, deleteTemplate } = useTemplateController(templateId);
+  const { template, editMode, trigger } = useTemplateEditor();
   const [toDelete, setToDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isError, setIsError] = useState<string | undefined>(undefined);
-
   const navigate = useNavigate();
 
   const confirmDelete = async () => {
     setIsDeleting(true);
     setIsError(undefined);
     try {
-      await deleteTemplate();
+      await deleteTemplateById(templateId);
       setIsDeleting(false);
       setToDelete(false);
-      navigate('/templates');
+      navigate(ROUTES.TEMPLATES);
     } catch (e: any) {
       setIsDeleting(false);
       setIsError(e?.message || 'Unknown error');
@@ -56,7 +57,6 @@ export const TemplateSettings = ({ activePage, setActivePage, showErrors, templa
               activeTab={activePage}
               changeTab={setActivePage}
               showTriggerSection={!!template && !!trigger}
-              showErrors={showErrors}
             />
           </SideBarWrapper>
         </Grid.Col>

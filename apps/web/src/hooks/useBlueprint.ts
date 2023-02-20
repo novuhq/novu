@@ -2,8 +2,8 @@ import { ActivePageEnum } from '../pages/templates/editor/TemplateEditorPage';
 import { useSearchParams } from './useSearchParams';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import { getToken } from '../store/use-auth-controller';
-import { useSegment } from './use-segment';
+import { getToken } from '../store/useAuthController';
+import { useSegment } from './useSegment';
 
 export const useBlueprint = () => {
   const searchParams = useSearchParams();

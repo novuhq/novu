@@ -1,9 +1,10 @@
-import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
-import { FieldArrayProvider } from './FieldArrayProvider';
-import { IForm } from './use-template-controller.hook';
+import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
+
+import type { IForm } from './formTypes';
+import { getChannel } from '../../pages/templates/shared/channels';
 
 const schema = z
   .object({
@@ -19,11 +20,10 @@ const schema = z
             type: 'string',
             inclusive: true,
             message: 'Required - Notification Name',
-            path: ['name'],
           });
         }
       }),
-    notificationGroup: z
+    notificationGroupId: z
       .string({
         invalid_type_error: 'Required - Notification Group',
       })
@@ -35,7 +35,6 @@ const schema = z
             type: 'string',
             inclusive: true,
             message: 'Required - Notification Group',
-            path: ['notificationGroup'],
           });
         }
       }),
@@ -48,7 +47,8 @@ const schema = z
                 content: z.any(),
                 subject: z.any(),
                 title: z.any(),
-                layoutId: z.any(),
+                layoutId: z.any().optional(),
+                senderName: z.any().optional(),
               })
               .passthrough()
               .superRefine((template: any, ctx) => {
@@ -64,7 +64,7 @@ const schema = z
                     minimum: 1,
                     type: 'string',
                     inclusive: true,
-                    message: 'Required - Message Content',
+                    message: `Required - ${getChannel(template.type)?.label} Content`,
                     path: ['content'],
                   });
                 }
@@ -77,13 +77,6 @@ const schema = z
                       inclusive: true,
                       message: 'Required - Email Subject',
                       path: ['subject'],
-                    });
-                  }
-                  if (!template.layoutId) {
-                    ctx.addIssue({
-                      code: z.ZodIssueCode.custom,
-                      message: 'Required - Layout',
-                      path: ['layoutId'],
                     });
                   }
                 }
@@ -120,7 +113,7 @@ const schema = z
                   minimum: 1,
                   type: 'string',
                   inclusive: true,
-                  message: 'Path required',
+                  message: 'Required - Delay Path',
                   path: ['metadata', 'delayPath'],
                 });
               }
@@ -134,14 +127,14 @@ const schema = z
             if (!amount) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Amount Required',
+                message: `Required - ${getChannel(step.template.type)?.label} Amount`,
                 path: ['metadata', 'amount'],
               });
             }
             if (!unit) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Unit Required',
+                message: `Required - ${getChannel(step.template.type)?.label} Unit`,
                 path: ['metadata', 'unit'],
               });
             }
@@ -176,7 +169,7 @@ const schema = z
             if (!unit) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Backoff Unit Required',
+                message: 'Required - Backoff Unit',
                 path: ['metadata', 'backoffUnit'],
               });
             }
@@ -184,7 +177,7 @@ const schema = z
             if (!amount) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: 'Backoff Amount Required',
+                message: 'Required - Backoff Amount',
                 path: ['metadata', 'backoffAmount'],
               });
             }
@@ -194,19 +187,28 @@ const schema = z
   })
   .passthrough();
 
+const defaultValues: IForm = {
+  name: '',
+  notificationGroupId: '',
+  description: '',
+  identifier: '',
+  tags: [],
+  critical: false,
+  steps: [],
+  preferenceSettings: {
+    email: true,
+    sms: true,
+    in_app: true,
+    chat: true,
+    push: true,
+  },
+};
 export const TemplateFormProvider = ({ children }) => {
   const methods = useForm<IForm>({
     resolver: zodResolver(schema),
+    defaultValues,
+    mode: 'onChange',
   });
 
-  const steps = useFieldArray({
-    control: methods.control,
-    name: 'steps',
-  });
-
-  return (
-    <FormProvider {...methods}>
-      <FieldArrayProvider fieldArrays={{ steps }}>{children}</FieldArrayProvider>
-    </FormProvider>
-  );
+  return <FormProvider {...methods}>{children}</FormProvider>;
 };

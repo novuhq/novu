@@ -1,6 +1,8 @@
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 
 export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubscriber {
   template: NotificationTemplateEntity;
+
+  subscriber?: SubscriberEntity;
 }

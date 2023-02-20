@@ -27,5 +27,6 @@ Postmark allows the authentication of the sender identity using one of the follo
 - Locate Postmark and click on the **Connect** button.
 - Enter the Postmark API key.
 - Fill the `From email address` field using the authenticated email from the previous step.
-- Click on the **Save** button.
+- Click on the `Disabled` button and mark as `Active`.
+- Click on the **Connect** button.
 - Now is possible to send notifications using Postmark in Novu.

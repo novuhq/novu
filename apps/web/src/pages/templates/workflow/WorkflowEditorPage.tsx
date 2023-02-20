@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Grid, useMantineColorScheme } from '@mantine/core';
 import { StepTypeEnum } from '@novu/shared';
+
 import FlowEditor from '../../../components/workflow/FlowEditor';
 import { colors } from '../../../design-system';
 import { getChannel, NodeTypeEnum } from '../shared/channels';
-import { useTemplateController } from '../../../components/templates/use-template-controller.hook';
-import { useEnvController } from '../../../store/use-env-controller';
+import type { IForm } from '../../../components/templates/formTypes';
+import { useEnvController } from '../../../store/useEnvController';
 import { When } from '../../../components/utils/When';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
-import { ActivePageEnum } from '../editor/TemplateEditorPage';
+import { ActivePageEnum, EditorPages } from '../editor/TemplateEditorPage';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
 import { FilterModal } from '../filter/FilterModal';
 import { SelectedStep } from './SideBar/SelectedStep';
 import { AddStepMenu } from './SideBar/AddStepMenu';
+import { useTemplateFetcher } from '../../../components/templates/useTemplateFetcher';
 
 const WorkflowEditorPage = ({
   setActivePage,
@@ -22,6 +25,10 @@ const WorkflowEditorPage = ({
   activePage,
   activeStep,
   onTestWorkflowClicked,
+  isCreatingTemplate,
+  isUpdatingTemplate,
+  addStep,
+  deleteStep,
 }: {
   setActivePage: (string) => void;
   setActiveStep: any;
@@ -29,6 +36,10 @@ const WorkflowEditorPage = ({
   activePage: ActivePageEnum;
   activeStep: number;
   onTestWorkflowClicked: () => void;
+  isCreatingTemplate: boolean;
+  isUpdatingTemplate: boolean;
+  addStep: (channelType: StepTypeEnum, id: string, index?: number) => void;
+  deleteStep: (index: number) => void;
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const [selectedChannel, setSelectedChannel] = useState<StepTypeEnum | null>(null);
@@ -39,8 +50,14 @@ const WorkflowEditorPage = ({
     event.dataTransfer.setData('application/reactflow', nodeType);
     event.dataTransfer.effectAllowed = 'move';
   };
-  const { addStep, deleteStep, control, watch, errors } = useTemplateController(templateId);
-  const { isLoading, isUpdateLoading, loadingEditTemplate, isDirty } = useTemplateController(templateId);
+  const {
+    control,
+    watch,
+    clearErrors,
+    formState: { errors, isDirty: isDirtyForm, isSubmitted },
+  } = useFormContext<IForm>();
+  const { loading: loadingEditTemplate } = useTemplateFetcher(templateId);
+
   const [filterOpen, setFilterOpen] = useState(false);
   const steps = watch('steps');
 
@@ -61,6 +78,13 @@ const WorkflowEditorPage = ({
     setSelectedChannel(step.template.type);
     setActiveStep(index);
   }, [selectedNodeId]);
+
+  const setActivePageWrapper = (page: ActivePageEnum) => {
+    if (!isSubmitted && EditorPages.includes(page)) {
+      clearErrors('steps');
+    }
+    setActivePage(page);
+  };
 
   const confirmDelete = () => {
     const index = steps.findIndex((item) => item._id === toDelete);
@@ -90,8 +114,8 @@ const WorkflowEditorPage = ({
           }}
         >
           <TemplatePageHeader
-            loading={isLoading || isUpdateLoading}
-            disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+            loading={isCreatingTemplate || isUpdatingTemplate}
+            disableSubmit={readonly || loadingEditTemplate || isCreatingTemplate || !isDirtyForm}
             templateId={templateId}
             setActivePage={setActivePage}
             activePage={activePage}
@@ -100,7 +124,7 @@ const WorkflowEditorPage = ({
           <FlowEditor
             activePage={activePage}
             onDelete={onDelete}
-            setActivePage={setActivePage}
+            setActivePage={setActivePageWrapper}
             dragging={dragging}
             templateId={templateId}
             errors={errors}
@@ -109,9 +133,9 @@ const WorkflowEditorPage = ({
             setSelectedNodeId={setSelectedNodeId}
           />
           <When truthy={selectedChannel !== null && getChannel(selectedChannel)?.type !== NodeTypeEnum.ACTION}>
-            {steps.map((i, index) => {
+            {steps.map((step, index) => {
               return (
-                <When truthy={index === activeStep}>
+                <When key={step._id || step.id} truthy={index === activeStep}>
                   <FilterModal
                     key={index}
                     isOpen={filterOpen}
@@ -135,17 +159,16 @@ const WorkflowEditorPage = ({
               <SelectedStep
                 selectedChannel={selectedChannel}
                 setSelectedChannel={setSelectedChannel}
-                setActivePage={setActivePage}
+                setActivePage={setActivePageWrapper}
                 steps={steps}
                 activeStep={activeStep}
                 control={control}
                 errors={errors}
                 setFilterOpen={setFilterOpen}
-                colorScheme={colorScheme}
-                isLoading={isLoading}
-                isUpdateLoading={isUpdateLoading}
+                isLoading={isCreatingTemplate}
+                isUpdateLoading={isUpdatingTemplate}
                 loadingEditTemplate={loadingEditTemplate}
-                isDirty={isDirty}
+                isDirty={isDirtyForm}
                 onDelete={onDelete}
                 selectedNodeId={selectedNodeId}
               />

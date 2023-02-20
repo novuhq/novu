@@ -42,6 +42,14 @@ export class NotificationTemplateService {
             url: '/cypress/test-shell/example/test?test-param=true',
           },
         },
+        variables: [
+          {
+            defaultValue: '',
+            name: 'firstName',
+            required: false,
+            type: 'String',
+          },
+        ],
       },
       {
         type: ChannelTypeEnum.EMAIL,
@@ -55,6 +63,14 @@ export class NotificationTemplateService {
             type: 'button',
             content: 'SIGN UP',
             url: 'https://url-of-app.com/{{urlVariable}}',
+          },
+        ],
+        variables: [
+          {
+            defaultValue: '',
+            name: 'firstName',
+            required: false,
+            type: 'String',
           },
         ],
       },

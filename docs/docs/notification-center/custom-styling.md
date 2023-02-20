@@ -4,92 +4,7 @@ sidebar_position: 6
 
 # Custom styling
 
-The Notification Center Component allows you to customize the look of the component. You can do that by using the `styles` property, but depending on the wrapper UI library we support, the styles prop will be applied to different components, check the [examples](#example-usage).
-
-## Styles interface
-
-The `styles` property accepts an object with the following interface:
-
-```typescript
-interface NotificationCenterStyles {
-  bellButton?: ObjectWithRoot<{
-    dot?: CSSFunctionOrObject;
-  }>;
-  unseenBadge?: CSSFunctionOrObject;
-  popover?: {
-    arrow?: CSSFunctionOrObject;
-    dropdown?: CSSFunctionOrObject;
-  };
-  loader?: ObjectWithRoot;
-  layout?: ObjectWithRoot;
-  header?: ObjectWithRoot<{
-    title?: CSSFunctionOrObject;
-    markAsRead?: CSSFunctionOrObject;
-    cog?: CSSFunctionOrObject;
-    backButton?: CSSFunctionOrObject;
-  }>;
-  tabs?: {
-    tabsList?: CSSFunctionOrObject;
-    tab?: CSSFunctionOrObject;
-    tabLabel?: CSSFunctionOrObject;
-    tabIcon?: CSSFunctionOrObject;
-  };
-  accordion?: {
-    item?: CSSFunctionOrObject;
-    content?: CSSFunctionOrObject;
-    control?: CSSFunctionOrObject;
-    chevron?: CSSFunctionOrObject;
-  };
-  switch?: ObjectWithRoot<{
-    input?: CSSFunctionOrObject;
-    track?: CSSFunctionOrObject;
-    thumb?: CSSFunctionOrObject;
-  }>;
-  footer?: ObjectWithRoot<{
-    title?: CSSFunctionOrObject;
-  }>;
-  notifications?: ObjectWithRoot<{
-    listItem?: {
-      read?: CSSFunctionOrObject;
-      unread?: CSSFunctionOrObject;
-      layout?: CSSFunctionOrObject;
-      contentLayout?: CSSFunctionOrObject;
-      title?: CSSFunctionOrObject;
-      timestamp?: CSSFunctionOrObject;
-      buttons?: ObjectWithRoot<{
-        primary?: CSSFunctionOrObject;
-        secondary?: CSSFunctionOrObject;
-      }>;
-    };
-  }>;
-  preferences?: ObjectWithRoot<{
-    item?: {
-      title?: CSSFunctionOrObject;
-      channels?: CSSFunctionOrObject;
-      divider?: CSSFunctionOrObject;
-      content?: {
-        icon?: CSSFunctionOrObject;
-        channelLabel?: CSSFunctionOrObject;
-        success?: CSSFunctionOrObject;
-      };
-    };
-  }>;
-}
-
-type CSSFunctionInterpolation = (args: {
-  theme: INovuTheme;
-  common: ICommonTheme;
-  colorScheme: ColorScheme;
-}) => CSSInterpolation;
-
-type CSSFunctionOrObject = CSSFunctionInterpolation | CSSInterpolation;
-
-type ObjectWithRoot<T = {}> = T & {
-  root: CSSFunctionOrObject;
-};
-```
-
-The `CSSInterpolation` is the object type from the `@emotion/css` package, you can find more details about it [here](https://emotion.sh/docs/@emotion/css#object-styles).
+The Notification Center Component allows you to customize the look of the component. You can do that by using the `styles` property, but depending on the wrapper UI library we support, the styles prop will be applied to different components, check the [examples](#example-usage). The styles object interface and all the props can be found [here](./react/api-reference#styles-interface).
 
 The styles object can be defined like this:
 
@@ -110,8 +25,6 @@ const styles = {
   ...
 };
 ```
-
-To learn more about the `INovuTheme` and `ICommonTheme` interfaces, check the [theming](./react-components/#customizing-the-notification-center-theme) page.
 
 ## Example usage
 

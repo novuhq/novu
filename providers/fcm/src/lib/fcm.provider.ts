@@ -5,7 +5,12 @@ import {
   IPushProvider,
 } from '@novu/stateless';
 import { initializeApp, cert, deleteApp, getApp } from 'firebase-admin/app';
-import { getMessaging, Messaging } from 'firebase-admin/messaging';
+import {
+  AndroidConfig,
+  ApnsConfig,
+  getMessaging,
+  Messaging,
+} from 'firebase-admin/messaging';
 import crypto from 'crypto';
 
 export class FcmPushProvider implements IPushProvider {
@@ -42,6 +47,10 @@ export class FcmPushProvider implements IPushProvider {
     delete (options.overrides as { deviceTokens?: string[] })?.deviceTokens;
 
     const overridesData = options.overrides || ({} as any);
+    const androidData: AndroidConfig = overridesData.android;
+    const apnsData: ApnsConfig = overridesData.apns;
+    delete overridesData.android;
+    delete overridesData.apns;
 
     let res;
 
@@ -50,6 +59,8 @@ export class FcmPushProvider implements IPushProvider {
       res = await this.messaging.sendMulticast({
         tokens: options.target,
         data: options.payload as { [key: string]: string },
+        ...(androidData ? { android: androidData } : {}),
+        ...(apnsData ? { apns: apnsData } : {}),
       });
     } else {
       const { data, ...overrides } = overridesData;
@@ -62,6 +73,8 @@ export class FcmPushProvider implements IPushProvider {
           ...overrides,
         },
         data,
+        ...(androidData ? { android: androidData } : {}),
+        ...(apnsData ? { apns: apnsData } : {}),
       });
     }
 

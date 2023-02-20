@@ -1,6 +1,6 @@
 {
   "name": "@novu/docs",
-  "version": "0.0.0",
+  "version": "0.11.0",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
@@ -37,7 +37,7 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "sass": "^1.51.0",
-    "sharp": "^0.30.6",
+    "sharp": "^0.31.0",
     "styled-components": "5.3.6",
     "stylelint-config-css-modules": "^4.1.0",
     "url-loader": "^4.1.1"
@@ -61,7 +61,7 @@
     "stylelint-config-standard": "^25.0.0",
     "stylelint-order": "^5.0.0",
     "stylelint-scss": "^4.2.0",
-    "typescript": "^4.6.4"
+    "typescript": "4.9.5"
   },
   "browserslist": {
     "production": [

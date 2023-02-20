@@ -1,5 +1,7 @@
 import { IsDefined, IsString, IsOptional } from 'class-validator';
-import { ISubscribersDefine } from '@novu/node';
+import { TriggerRecipients, TriggerRecipientSubscriber } from '@novu/node';
+import { ISubscribersDefine } from '@novu/shared';
+
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
@@ -14,12 +16,12 @@ export class ParseEventRequestCommand extends EnvironmentWithUserCommand {
   overrides: Record<string, Record<string, unknown>>;
 
   @IsDefined()
-  to: ISubscribersDefine[];
+  to: TriggerRecipients;
 
   @IsString()
-  @IsDefined()
-  transactionId: string;
+  @IsOptional()
+  transactionId?: string;
 
   @IsOptional()
-  actor?: ISubscribersDefine | null;
+  actor?: TriggerRecipientSubscriber | null;
 }

@@ -19,7 +19,7 @@ export class GetNovuIntegration {
   ) {}
 
   async execute(command: GetNovuIntegrationCommand): Promise<IntegrationEntity | undefined> {
-    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY) {
+    if (!process.env.NOVU_EMAIL_INTEGRATION_API_KEY || !command.channelType) {
       return;
     }
 
@@ -54,7 +54,6 @@ export class GetNovuIntegration {
         providerId: CalculateLimitNovuIntegration.getProviderId(command.channelType),
         ...limit,
       });
-      // add analytics event.
       throw new Error(`Limit for Novus ${command.channelType.toLowerCase()} provider was reached.`);
     }
 
@@ -78,6 +77,7 @@ export class GetNovuIntegration {
       apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
       from: 'no-reply@novu.co',
       senderName: organization !== null ? organization.name : 'Novu',
+      ipPoolName: 'Demo',
     };
 
     return item;

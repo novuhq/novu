@@ -7,7 +7,7 @@ import { colors, Text, Input, Tooltip, Button } from '../../../design-system';
 import { Check, CheckCircle, Copy } from '../../../design-system/icons';
 import React, { useEffect } from 'react';
 import { Control, Controller, useForm } from 'react-hook-form';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { useMutation } from '@tanstack/react-query';
 import { updateDnsSettings } from '../../../api/environment';
 import { showNotification } from '@mantine/notifications';
@@ -108,11 +108,10 @@ export const EmailSettings = () => {
                 data-test-id="inbound-parse-domain"
                 disabled={readonly}
                 value={field.value || ''}
-                label={'Domain routing'}
+                label={'Allowed Domain'}
                 description={
-                  'In order to ensure proper routing and delivery of correspondence, we kindly request that you ' +
-                  'provide us with your domain. Once received, it will be added to our whitelist and the email will ' +
-                  'be directed to our mail server accordingly.'
+                  'To ensure proper delivery of correspondence, we request that you provide us with your domain so ' +
+                  'that it can be added to our allowed domains list'
                 }
                 placeholder="Domain goes here..."
               />
@@ -130,9 +129,9 @@ export const EmailSettings = () => {
 function DescriptionText() {
   return (
     <Text>
-      This is an optional step, but configuring an MX record with your domain host to direct mail to our server with a
-      priority of 10 will ensure that the subscriber sees your domain in the 'reply-to' field of their email client
-      instead of Novu's default.
+      To configure email routing for your domain, set up an MX record with your domain host with a priority of 10 to
+      direct mail to Novu`s inbound mail server. This ensures that subscriber's email will be properly directed to the
+      correct server.
     </Text>
   );
 }

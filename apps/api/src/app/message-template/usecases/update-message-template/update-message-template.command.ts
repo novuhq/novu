@@ -53,5 +53,8 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   preheader?: string;
 
   @IsOptional()
+  senderName?: string;
+
+  @IsOptional()
   actor?: IActor;
 }

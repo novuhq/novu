@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -7,18 +7,20 @@ import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
 
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
-import { API_ROOT, IS_DOCKER_HOSTED } from '../../config';
-import { applyToken } from '../../store/use-auth-controller';
-import { useAcceptInvite } from './use-accept-invite.hook';
-import { useVercelParams } from '../../hooks/use-vercelParams';
+import { IS_DOCKER_HOSTED } from '../../config';
+import { applyToken } from '../../store/useAuthController';
+import { useAcceptInvite } from './useAcceptInvite';
+import { useVercelParams } from '../../hooks/useVercelParams';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
+import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
+import { ROUTES } from '../../constants/routes.enum';
 
-type Props = {
-  token?: string;
+type SignUpFormProps = {
+  invitationToken?: string;
   email?: string;
 };
 
@@ -28,17 +30,17 @@ export type SignUpFormInputType = {
   fullName: string;
 };
 
-export function SignUpForm({ token, email }: Props) {
+export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const navigate = useNavigate();
 
-  const { setToken } = useContext(AuthContext);
+  const { setToken } = useAuthContext();
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : '/auth/login';
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : ROUTES.AUTH_LOGIN;
   const githubLink = isFromVercel
-    ? `${API_ROOT}/v1/auth/github?partnerCode=${code}&next=${next}&configurationId=${configurationId}`
-    : `${API_ROOT}/v1/auth/github`;
+    ? buildVercelGithubLink({ code, next, configurationId })
+    : buildGithubLink({ invitationToken });
 
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
@@ -49,7 +51,7 @@ export function SignUpForm({ token, email }: Props) {
       email: string;
       password: string;
     }
-  >((data) => api.post(`/v1/auth/register`, data));
+  >((data) => api.post('/v1/auth/register', data));
 
   const onSubmit = async (data) => {
     const itemData = {
@@ -73,20 +75,18 @@ export function SignUpForm({ token, email }: Props) {
      * We need to call the applyToken to avoid a race condition for accept invite
      * To get the correct token when sending the request
      */
-    applyToken((response as any).token);
+    const token = (response as any).token;
+    applyToken(token);
 
-    if (token) {
-      const result = await submitToken(token);
-      if (!result) return;
-
-      navigate('/templates');
+    if (invitationToken) {
+      submitToken(token, invitationToken);
 
       return true;
     } else {
-      setToken((response as any).token);
+      setToken(token);
     }
 
-    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : '/auth/application');
+    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : ROUTES.AUTH_APPLICATION);
 
     return true;
   };
@@ -126,7 +126,7 @@ export function SignUpForm({ token, email }: Props) {
 
   return (
     <>
-      {!IS_DOCKER_HOSTED && !token && (
+      {!IS_DOCKER_HOSTED && (
         <>
           <GitHubButton
             my={30}
@@ -137,6 +137,7 @@ export function SignUpForm({ token, email }: Props) {
             radius="md"
             leftIcon={<GitHub />}
             sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
+            data-test-id="github-button"
           >
             Sign Up with GitHub
           </GitHubButton>
@@ -216,7 +217,7 @@ export function SignUpForm({ token, email }: Props) {
           submit
           data-test-id="submitButton"
         >
-          Sign Up {token ? '& Accept Invite' : null}
+          Sign Up {invitationToken ? '& Accept Invite' : null}
         </Button>
         <Center mt={20}>
           <Text mr={10} size="md" color={colors.B60}>

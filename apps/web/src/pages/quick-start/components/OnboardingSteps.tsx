@@ -8,9 +8,10 @@ import useStyles, { ActiveWrapper, StyledDescription, StyledTitle } from './Onbo
 import { Button, colors, Text } from '../../../design-system';
 import { CheckCircle } from '../../../design-system/icons';
 import { TriggerCard } from './TriggerCard';
-import { useTemplates } from '../../../api/hooks/use-templates';
-import { useIntegrations } from '../../../api/hooks';
+import { useTemplates } from '../../../api/hooks/useTemplates';
 import { getActivityStats } from '../../../api/activity';
+import { ROUTES } from '../../../constants/routes.enum';
+import { useIntegrations } from '../../../api/hooks';
 
 export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }) => {
   const navigate = useNavigate();
@@ -50,7 +51,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
             description="You can choose to connect any of our available delivery providers and manage them from a single place"
           />
           {!providerConfigured ? (
-            <Button mt={20} onClick={() => navigate('/integrations')}>
+            <Button mt={20} onClick={() => navigate(ROUTES.INTEGRATIONS)}>
               Configure Now
             </Button>
           ) : (
@@ -70,7 +71,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
             description="To start sending notifications you need to create your a template with some channels"
           />
           {!templateCreated ? (
-            <Button data-test-id="create-template-btn" mt={20} onClick={() => navigate('/templates/create')}>
+            <Button data-test-id="create-template-btn" mt={20} onClick={() => navigate(ROUTES.TEMPLATES_CREATE)}>
               Create Now
             </Button>
           ) : (

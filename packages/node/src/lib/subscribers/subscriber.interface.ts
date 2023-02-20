@@ -1,4 +1,11 @@
-import { ChannelTypeEnum, IChannelCredentials } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  IChannelCredentials,
+  ISubscriberPayload,
+  SubscriberCustomData,
+} from '@novu/shared';
+
+export { ISubscriberPayload };
 
 export interface ISubscribers {
   list(page: number);
@@ -24,20 +31,6 @@ export interface ISubscribers {
   getUnseenCount(subscriberId: string, seen: boolean);
   markMessageSeen(subscriberId: string, messageId: string);
   markMessageActionSeen(subscriberId: string, messageId: string, type: string);
-}
-
-export interface ISubscriberPayload {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  avatar?: string;
-  locale?: string;
-  [key: string]: string | string[] | boolean | number | undefined;
-}
-
-export interface ISubscribersDefine extends ISubscriberPayload {
-  subscriberId: string;
 }
 
 export interface IUpdateSubscriberPreferencePayload {

@@ -92,7 +92,7 @@ When using the IFrame embed to attach the notification center rather than the Re
 
 ### Using React Component with custom installation
 
-See [Use your own backend and socket URL](https://docs.novu.co/notification-center/react-components#use-your-own-backend-and-socket-url).
+See [Use your own backend and socket URL](https://docs.novu.co/notification-center/react/react-components#use-your-own-backend-and-socket-url).
 
 ### Caching
 

@@ -1,6 +1,6 @@
 {
-  "version": "0.1",
-  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/master/cspell.schema.json",
+  "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
+  "version": "0.2",
   "language": "en",
   "words": [
     "verifyspf",
@@ -378,6 +378,8 @@
     "martinbeentjes",
     "varvalue",
     "varname",
+    "EVENT",
+    "TRANSID",
     "testnovu",
     "testapp",
     "novuapp",
@@ -386,7 +388,18 @@
     "nunito",
     "codesee",
     "ehlo",
-    "logrocket"
+    "logrocket",
+    "backoff",
+    "isequal",
+    "Scriptable",
+    "iife",
+    "redlock",
+    "axios",
+    "ioredis",
+    "newrelic",
+    "nodemailer",
+    "emailjs",
+    "typeof"
   ],
   "flagWords": [],
   "patterns": [

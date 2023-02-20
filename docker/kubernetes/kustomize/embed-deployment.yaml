@@ -24,7 +24,7 @@ spec:
         - envFrom:
             - configMapRef:
                 name: novu-env
-          image: ghcr.io/novuhq/novu/embed:0.10.1
+          image: ghcr.io/novuhq/novu/embed:0.11.0
           name: embed
           ports:
             - containerPort: 4701

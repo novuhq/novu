@@ -3,7 +3,7 @@ version: '3.1'
 services:
   localstack:
     container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
-    image: "localstack/localstack:0.12.7"
+    image: "localstack/localstack:0.14.5"
     network_mode: bridge
     environment:
       - SERVICES=s3
@@ -34,10 +34,7 @@ services:
     network_mode: bridge
     ports:
       - "6379:6379"
-    volumes:
-      - "${TMPDIR:-/tmp/redis}:/data"
     healthcheck:
       test: "bash -c 'redis-cli ping'"
       retries: 5 
       interval: 10s
-    

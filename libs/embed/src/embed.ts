@@ -6,7 +6,7 @@ import iFrameResize from 'iframe-resizer';
 import * as EventTypes from './shared/eventTypes';
 import { UnmountedError, DomainVerificationError } from './shared/errors';
 import { IFRAME_URL } from './shared/resources';
-import type { IStore, ITab, INotificationCenterStyles } from '@novu/notification-center';
+import type { IStore, ITab, INotificationCenterStyles, ColorScheme } from '@novu/notification-center';
 
 const WEASL_WRAPPER_ID = 'novu-container';
 const IFRAME_ID = 'novu-iframe-element';
@@ -19,6 +19,8 @@ class Novu {
   private socketUrl?: string = '';
 
   private theme?: Record<string, unknown>;
+
+  private colorScheme?: ColorScheme;
 
   private styles?: INotificationCenterStyles;
 
@@ -76,6 +78,7 @@ class Novu {
       this.i18n = selectorOrOptions.i18n;
       this.tabs = selectorOrOptions.tabs;
       this.stores = selectorOrOptions.stores;
+      this.colorScheme = selectorOrOptions.colorScheme;
     }
 
     this.clientId = clientId;
@@ -160,6 +163,17 @@ class Novu {
     window.addEventListener('touchstart', handleClick);
   };
 
+  logout = () => {
+    if (!this.iframe) return;
+
+    this.iframe?.contentWindow?.postMessage(
+      {
+        type: EventTypes.LOGOUT,
+      },
+      '*'
+    );
+  };
+
   // PRIVATE METHODS
   ensureMounted = () => {
     if (!document.getElementById(IFRAME_ID)) {
@@ -230,6 +244,7 @@ class Novu {
                 data: options,
                 tabs: this.tabs,
                 stores: this.stores,
+                colorScheme: this.colorScheme,
               },
             },
             '*'
@@ -354,6 +369,7 @@ export default ((window: any) => {
 
   novuApi.init = novu.init;
   novuApi.on = novu.on;
+  novuApi.logout = novu.logout;
 
   if (initCall) {
     // eslint-disable-next-line prefer-spread
@@ -365,12 +381,22 @@ export default ((window: any) => {
         novuApi[onCall[0]].apply(novuApi, onCall[1]);
       }
     }
+
+    const logoutCalls = window.novu._c.filter((call: string[]) => call[0] === 'logout');
+    if (logoutCalls.length) {
+      for (const logoutCall of logoutCalls) {
+        novuApi[logoutCall[0]].apply(novuApi, logoutCall[1]);
+      }
+    }
   } else {
     // eslint-disable-next-line no-param-reassign
     (window as any).novu.init = novu.init;
 
     // eslint-disable-next-line no-param-reassign
     (window as any).novu.on = novu.on;
+
+    // eslint-disable-next-line no-param-reassign
+    (window as any).novu.logout = novu.logout;
   }
 })(window);
 
@@ -395,4 +421,5 @@ interface IOptions {
   };
   tabs: ITab[];
   stores: IStore[];
+  colorScheme?: ColorScheme;
 }

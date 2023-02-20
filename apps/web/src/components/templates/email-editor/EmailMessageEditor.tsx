@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMantineTheme, Group, Container, Card } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
-import { EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
+import { useFormContext, useFieldArray } from 'react-hook-form';
+import { EmailBlockTypeEnum, IEmailBlock } from '@novu/shared';
 
 import { Upload } from '../../../design-system/icons';
 import { colors, Text } from '../../../design-system';
@@ -10,59 +11,38 @@ import { ContentRow } from './ContentRow';
 import { ControlBar } from './ControlBar';
 import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
-import { useIsMounted } from '../../../hooks/use-is-mounted';
+import type { IForm, IStepEntity, ITemplates } from '../formTypes';
+import { ROUTES } from '../../../constants/routes.enum';
+
+interface IStepEntityExtended extends IStepEntity {
+  template: ITemplates & {
+    content: IEmailBlock[];
+  };
+}
+
+interface IFormExtended extends IForm {
+  steps: IStepEntityExtended[];
+}
 
 export function EmailMessageEditor({
-  onChange,
-  value,
   branding,
   readonly,
+  stepIndex,
 }: {
-  onChange?: (blocks: IEmailBlock[]) => void;
-  value?: IEmailBlock[];
   branding: { color: string; logo: string } | undefined;
   readonly: boolean;
+  stepIndex: number;
 }) {
+  const methods = useFormContext<IFormExtended>();
+  const contentBlocks = useFieldArray({
+    control: methods.control,
+    name: `steps.${stepIndex}.template.content`,
+  });
   const theme = useMantineTheme();
   const navigate = useNavigate();
 
-  const emailBlock: IEmailBlock[] = [
-    {
-      type: EmailBlockTypeEnum.TEXT,
-      content: '',
-    },
-  ];
-
-  const [blocks, setBlocks] = useState<IEmailBlock[]>(value?.length ? value : emailBlock);
-
-  const isMounted = useIsMounted();
-
   const [top, setTop] = useState<number>(0);
   const [controlBarVisible, setActionBarVisible] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (onChange && isMounted) {
-      onChange(blocks);
-    }
-  }, [blocks, isMounted]);
-
-  function onBlockStyleChanged(blockIndex: number, styles: { textAlign: TextAlignEnum }) {
-    blocks[blockIndex].styles = {
-      ...styles,
-    };
-
-    setBlocks([...blocks]);
-  }
-
-  function onBlockTextChanged(blockIndex: number, content: string) {
-    blocks[blockIndex].content = content;
-    setBlocks([...blocks]);
-  }
-
-  function onBlockUrlChanged(blockIndex: number, url: string) {
-    blocks[blockIndex].url = url;
-    setBlocks([...blocks]);
-  }
 
   function onHoverElement(e) {
     setTop(e.top + e.height);
@@ -81,33 +61,26 @@ export function EmailMessageEditor({
   }
 
   function onBlockAdd(type: EmailBlockTypeEnum) {
-    const modifiedBlocks = [...blocks];
-
     if (type === 'button') {
-      modifiedBlocks.push({
+      contentBlocks.append({
         type: EmailBlockTypeEnum.BUTTON,
         content: 'Button text',
       });
     }
 
     if (type === 'text') {
-      modifiedBlocks.push({
+      contentBlocks.append({
         type: EmailBlockTypeEnum.TEXT,
         content: '',
       });
     }
-
-    setBlocks(modifiedBlocks);
   }
 
   function removeBlock(index: number) {
-    const modified = [...blocks];
-
-    modified.splice(index, 1);
-    setBlocks(modified);
+    contentBlocks.remove(index);
   }
 
-  if (!Array.isArray(blocks)) {
+  if (!Array.isArray(contentBlocks.fields)) {
     return null;
   }
 
@@ -176,40 +149,21 @@ export function EmailMessageEditor({
         onMouseLeave={() => setActionBarVisible(false)}
       >
         <div style={{ position: 'relative' }} data-test-id="email-editor">
-          {blocks.map((block, index) => {
+          {contentBlocks.fields.map((block, blockIndex) => {
             return (
               <ContentRow
-                onStyleChanged={(data) => onBlockStyleChanged(index, data)}
-                key={index}
-                block={block}
+                key={blockIndex}
                 onHoverElement={onHoverElement}
-                onRemove={() => removeBlock(index)}
-                allowRemove={blocks?.length > 1}
+                onRemove={() => removeBlock(blockIndex)}
+                allowRemove={contentBlocks.fields?.length > 1}
+                stepIndex={stepIndex}
+                blockIndex={blockIndex}
               >
-                {[block.type].map((type, blockIndex) => {
-                  if (type === 'text') {
-                    return (
-                      <TextRowContent
-                        key={blockIndex}
-                        block={block}
-                        onTextChange={(text) => onBlockTextChanged(index, text)}
-                      />
-                    );
-                  }
-                  if (type === 'button') {
-                    return (
-                      <ButtonRowContent
-                        key={blockIndex}
-                        block={block}
-                        brandingColor={branding?.color}
-                        onUrlChange={(url) => onBlockUrlChanged(index, url)}
-                        onTextChange={(text) => onBlockTextChanged(index, text)}
-                      />
-                    );
-                  }
-
-                  return <></>;
-                })}
+                {block.type === 'text' ? (
+                  <TextRowContent stepIndex={stepIndex} blockIndex={blockIndex} />
+                ) : (
+                  <ButtonRowContent brandingColor={branding?.color} stepIndex={stepIndex} blockIndex={blockIndex} />
+                )}
               </ContentRow>
             );
           })}

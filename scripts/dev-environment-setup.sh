@@ -107,7 +107,7 @@ install_xcode () {
     if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
 	installing_dependency "Xcode"
 	xcode-select --install &
-	PID=$! 
+	PID=$!
 	wait $PID
 	sudo xcode-select --switch /Library/Developer/CommandLineTools
 	sudo xcodebuild -license accept
@@ -124,7 +124,7 @@ install_xcode () {
         if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
 	    updating_dependency "Xcode"
             softwareupdate --install --verbose Xcode &
-	    PID=$! 
+	    PID=$!
 	    wait $PID
 	    success_message "Xcode"
         fi
@@ -173,19 +173,19 @@ install_homebrew () {
     if [[ -z "$TEST_BREW_CMD" ]] || [[ "$TEST_BREW_CMD" == "zsh: command not found: brew" ]]; then
         installing_dependency "Homebrew"
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
- 
+
 	APPLE_CHIP_BREW_BIN="/opt/homebrew/bin"
         BREW_BIN="/usr/local/bin"
         ENTRY="export PATH=$BREW_BIN:$APPLE_CHIP_BREW_BIN:\$PATH"
 	PARAM_TO_CMD="grep -R $ENTRY $ZPROFILE"
-	
+
 	CMD=$(execute_command_without_error_print "$PARAM_TO_CMD")
 
         if [[ -z $CMD ]]; then
 	    # Add the Brew paths to the shell profile
             echo "$ENTRY" | sudo tee -a "$ZPROFILE"
 
-            # As executing `tee` as sudo changes ownership and permissions we roll them back appropriately 
+            # As executing `tee` as sudo changes ownership and permissions we roll them back appropriately
 	    set_user_permissions "$ZPROFILE"
 	    source "$ZPROFILE"
         fi
@@ -235,10 +235,10 @@ install_ohmyzsh () {
 
     if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
         OHMYZSH_DIR="$HOME/.oh-my-zsh"
-   
+
         if [[ ! -d $OHMYZSH_DIR ]]; then
             installing_dependency "Oh My Zsh!"
-            curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh | $SHELL 
+            curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh | $SHELL
             if [[ ! -d $OHMYZSH_DIR ]]; then
                 error_message "Oh My Zsh!"
             else
@@ -272,7 +272,7 @@ install_node () {
 
             nvm install $NODE_JS_VERSION
 	    TEST_NODE_CMD=$(execute_command_without_error_print "node --version")
-	    
+
             if [[ -z "$TEST_NODE_CMD" ]] || [[ "$TEST_NODE_CMD" == "zsh: command not found: node" ]]; then
                 error_message "Node.js"
 	    else
@@ -304,7 +304,7 @@ install_nvm () {
 	# Loads NVM
 	source "$NVM_DIR/nvm.sh"
 	#source $ZSHRC
-	
+
         AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "nvm --version")
         if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == "zsh: command not found: nvm" ]]; then
 	    error_message "NVM"
@@ -313,12 +313,12 @@ install_nvm () {
         fi
     else
         already_installed_message "NVM"
-    fi 
+    fi
 }
 
 # PNPM is the package manager used in Novu's monorepo
 install_pnpm () {
-    PNPM_VERSION="7.5.0"
+    PNPM_VERSION="7.27.0"
     TEST_PNPM_CMD=$(execute_command_without_error_print "pnpm --version")
     if [[ -z "$TEST_PNPM_CMD" ]] || [[ "$TEST_PNPM_CMD" == "zsh: command not found: pnpm" ]]; then
          installing_dependency "PNPM $PNPM_VERSION"
@@ -352,7 +352,7 @@ install_docker () {
             fi
         else
             already_installed_message "Docker"
-        fi 
+        fi
     else
         skip_message "Docker"
         echo "$SKIP"
@@ -367,7 +367,7 @@ install_aws_cli () {
         installing_dependency "AWS CLI"
         curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "$FILE_DESTINATION"
         sudo installer -pkg "$FILE_DESTINATION" -target /
-    	
+
         AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "aws --version")
     	if [[ -z "$AFTER_INSTALL_TEST_CMD" ]] || [[ "$AFTER_INSTALL_TEST_CMD" == "zsh: command not found: aws" ]]; then
             error_message "AWS CLI"
@@ -376,7 +376,7 @@ install_aws_cli () {
         fi
     else
         already_installed_message "AWS CLI"
-    fi 
+    fi
 
     if [[ -f $FILE_DESTINATION ]]; then
         rm "$FILE_DESTINATION"
@@ -427,7 +427,7 @@ create_local_dev_domain () {
     HOST="local.novu.co"
     IP="127.0.0.1"
     ENTRY="$IP\t$HOST"
-    
+
     CMD=$(execute_command_without_error_print "grep -R $HOST $FILENAME")
 
     if [[ -z $CMD ]]; then

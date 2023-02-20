@@ -1,11 +1,12 @@
 import { Center, Container, Grid, Group } from '@mantine/core';
+
 import { Button, colors, Switch, Title, Text } from '../../design-system';
 import { ArrowLeft } from '../../design-system/icons';
-import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
-import { useEnvController } from '../../store/use-env-controller';
+import { ActivePageEnum, EditorPages } from '../../pages/templates/editor/TemplateEditorPage';
+import { useEnvController } from '../../store/useEnvController';
 import { When } from '../utils/When';
-import { useStatusChangeControllerHook } from './use-status-change-controller.hook';
-import { useTemplateController } from './use-template-controller.hook';
+import { useTemplateEditor } from './TemplateEditorProvider';
+import { useStatusChangeControllerHook } from './useStatusChangeController';
 
 const Header = ({ activePage, editMode }: { editMode: boolean; activePage: ActivePageEnum }) => {
   if (activePage === ActivePageEnum.SETTINGS) {
@@ -59,7 +60,7 @@ export const TemplatePageHeader = ({
   setActivePage,
   onTestWorkflowClicked,
 }: Props) => {
-  const { editMode, template } = useTemplateController(templateId);
+  const { template, editMode } = useTemplateEditor();
   const { readonly } = useEnvController();
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
@@ -74,14 +75,7 @@ export const TemplatePageHeader = ({
           <Title>
             <Header editMode={editMode} activePage={activePage} />
           </Title>
-          <When
-            truthy={
-              activePage !== ActivePageEnum.SETTINGS &&
-              activePage !== ActivePageEnum.USER_PREFERENCE &&
-              activePage !== ActivePageEnum.WORKFLOW &&
-              activePage !== ActivePageEnum.TRIGGER_SNIPPET
-            }
-          >
+          <When truthy={EditorPages.includes(activePage)}>
             <Center
               mt={10}
               data-test-id="go-back-button"
@@ -102,14 +96,7 @@ export const TemplatePageHeader = ({
         </div>
         <div>
           <Grid align="center" gutter={50}>
-            <When
-              truthy={[
-                ActivePageEnum.SETTINGS,
-                ActivePageEnum.USER_PREFERENCE,
-                ActivePageEnum.WORKFLOW,
-                ActivePageEnum.TRIGGER_SNIPPET,
-              ].includes(activePage)}
-            >
+            <When truthy={!EditorPages.includes(activePage)}>
               {editMode && (
                 <Grid.Col span={4}>
                   <Switch
@@ -131,7 +118,13 @@ export const TemplatePageHeader = ({
             </When>
 
             <Grid.Col span={editMode ? 4 : 6}>
-              <Button mr={20} data-test-id="submit-btn" loading={loading} disabled={disableSubmit} submit>
+              <Button
+                mr={20}
+                data-test-id="notification-template-submit-btn"
+                loading={loading}
+                disabled={disableSubmit}
+                submit
+              >
                 {editMode ? 'Update' : 'Create'}
               </Button>
             </Grid.Col>

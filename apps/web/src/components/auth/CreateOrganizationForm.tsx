@@ -1,5 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import decode from 'jwt-decode';
@@ -7,9 +7,10 @@ import { IJwtPayload } from '@novu/shared';
 
 import { Button, Input } from '../../design-system';
 import { api } from '../../api/api.client';
-import { AuthContext } from '../../store/authContext';
-import { useVercelIntegration } from '../../api/hooks/use-vercel-integration';
-import { useVercelParams } from '../../hooks/use-vercelParams';
+import { useAuthContext } from '../../store/authContext';
+import { useVercelIntegration } from '../../api/hooks/useVercelIntegration';
+import { useVercelParams } from '../../hooks/useVercelParams';
+import { ROUTES } from '../../constants/routes.enum';
 
 type Props = {};
 
@@ -21,7 +22,7 @@ export function CreateOrganization({}: Props) {
   } = useForm({});
 
   const navigate = useNavigate();
-  const { setToken, token } = useContext(AuthContext);
+  const { setToken, token } = useAuthContext();
   const [loading, setLoading] = useState<boolean>();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
@@ -52,7 +53,7 @@ export function CreateOrganization({}: Props) {
 
           return;
         }
-        navigate('/');
+        navigate(ROUTES.HOME);
       }
     }
   }, []);
@@ -93,7 +94,7 @@ export function CreateOrganization({}: Props) {
 
       return;
     }
-    navigate('/quickstart');
+    navigate(ROUTES.QUICKSTART);
   };
 
   return (

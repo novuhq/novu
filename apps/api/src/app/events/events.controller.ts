@@ -1,10 +1,11 @@
-import { IJwtPayload } from '@novu/shared';
-import { ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/node';
+import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
+import { TriggerRecipientSubscriber } from '@novu/node';
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  BulkTriggerEventDto,
   TestSendEmailRequestDto,
   TriggerEventRequestDto,
   TriggerEventResponseDto,
@@ -16,13 +17,15 @@ import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigge
 import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
 import { SendTestEmail } from './usecases/send-message/test-send-email.usecase';
 import { TestSendMessageCommand } from './usecases/send-message/send-message.command';
-import { MapTriggerRecipients, MapTriggerRecipientsCommand } from './usecases/map-trigger-recipients';
+import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ParseEventRequest } from './usecases/parse-event-request/parse-event-request.usecase';
 import { ParseEventRequestCommand } from './usecases/parse-event-request/parse-event-request.command';
+import { ProcessBulkTrigger } from './usecases/process-bulk-trigger/process-bulk-trigger.usecase';
+import { ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger/process-bulk-trigger.command';
 
 @Controller({
   path: 'events',
@@ -35,7 +38,8 @@ export class EventsController {
     private cancelDelayedUsecase: CancelDelayed,
     private triggerEventToAll: TriggerEventToAll,
     private sendTestEmail: SendTestEmail,
-    private parseEventRequest: ParseEventRequest
+    private parseEventRequest: ParseEventRequest,
+    private processBulkTriggerUsecase: ProcessBulkTrigger
   ) {}
 
   @ExternalApiAccessible()
@@ -65,35 +69,65 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
-    const transactionId = body.transactionId || uuidv4();
-
-    const { _id: userId, environmentId, organizationId } = user;
-
-    const mappedActor = this.mapActor(body.actor);
-    const mapTriggerRecipientsCommand = MapTriggerRecipientsCommand.create({
-      environmentId,
-      organizationId,
-      recipients: body.to,
-      transactionId,
-      userId,
-    });
-    const mappedTo = await this.mapTriggerRecipients.execute(mapTriggerRecipientsCommand);
-
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
-        userId,
-        environmentId,
-        organizationId,
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
         overrides: body.overrides || {},
-        to: mappedTo,
-        actor: mappedActor,
-        transactionId,
+        to: body.to,
+        actor: body.actor,
+        transactionId: body.transactionId,
       })
     );
 
     return result as unknown as TriggerEventResponseDto;
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/trigger/bulk')
+  @ApiCreatedResponse({
+    type: TriggerEventResponseDto,
+    isArray: true,
+    content: {
+      '200': {
+        example: [
+          {
+            acknowledged: true,
+            status: 'processed',
+            transactionId: 'd2239acb-e879-4bdb-ab6f-365b43278d8f',
+          },
+          {
+            acknowledged: true,
+            status: 'processed',
+            transactionId: 'd2239acb-e879-4bdb-ab6f-115b43278d12',
+          },
+        ],
+      },
+    },
+  })
+  @ApiOperation({
+    summary: 'Bulk trigger event',
+    description: `
+      Using this endpoint you can trigger multiple events at once, to avoid multiple calls to the API.
+      The bulk API is limited to 100 events per request.
+    `,
+  })
+  async triggerBulkEvents(
+    @UserSession() user: IJwtPayload,
+    @Body() body: BulkTriggerEventDto
+  ): Promise<TriggerEventResponseDto[]> {
+    return this.processBulkTriggerUsecase.execute(
+      ProcessBulkTriggerCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        events: body.events,
+      })
+    );
   }
 
   @ExternalApiAccessible()

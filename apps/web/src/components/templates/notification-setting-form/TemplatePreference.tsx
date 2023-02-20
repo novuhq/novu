@@ -3,10 +3,11 @@ import { Grid, Input, useMantineColorScheme, InputWrapperProps } from '@mantine/
 import styled from '@emotion/styled';
 import { useFormContext, Controller } from 'react-hook-form';
 
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Checkbox, colors, Switch } from '../../../design-system';
 import { channels } from '../../../pages/templates/shared/channels';
+import type { IForm } from '../formTypes';
 
 export function TemplatePreference() {
   return (
@@ -35,12 +36,10 @@ export function ChannelPreference() {
       render={({ field }) => {
         const { readonly } = useEnvController();
 
-        const preferences = field.value;
-        const mock = { email: true, sms: true, in_app: true, chat: true, push: true };
-        const data = Object.assign({}, mock, preferences);
+        const preferences: IForm['preferenceSettings'] = field.value;
 
         function handleCheckboxChange(e, channelType) {
-          const newData = Object.assign({}, preferences);
+          const newData = { ...preferences };
           newData[channelType] = e.currentTarget.checked;
           field.onChange(newData);
         }
@@ -53,9 +52,9 @@ export function ChannelPreference() {
             styles={inputStyles}
           >
             <Grid pt={8.5}>
-              {Object.keys(data).map((key) => {
+              {Object.keys(preferences).map((key) => {
                 const label = channels.find((channel) => channel.tabKey === key)?.label;
-                const checked = data[key] || false;
+                const checked = preferences[key] || false;
 
                 return (
                   <Grid.Col key={key} md={6} lg={4}>
@@ -86,6 +85,7 @@ export function CriticalPreference() {
   return (
     <Controller
       name="critical"
+      defaultValue={false}
       control={control}
       render={({ field }) => {
         return (
@@ -107,9 +107,7 @@ function CriticalDescription({ field }) {
 
   return (
     <DescriptionWrapper>
-      {field.value
-        ? 'Users will get your messages no matter what.'
-        : 'Users will be able to unsubscribe from channels.'}
+      {"When on, the template will not show in the user preferences, meaning they wouldn't be able to opt out."}
       <Switch {...field} checked={field.value || false} disabled={readonly} data-test-id="critical" />
     </DescriptionWrapper>
   );

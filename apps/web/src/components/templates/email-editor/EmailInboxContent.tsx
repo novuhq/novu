@@ -1,9 +1,8 @@
 import { Grid, useMantineTheme } from '@mantine/core';
 import { format } from 'date-fns';
 import { Controller, useFormContext } from 'react-hook-form';
-import { colors, Input, Select } from '../../../design-system';
-import { EmailIntegrationInfo } from '../../../pages/templates/editor/EmailIntegrationInfo';
-import { useLayouts } from '../../../api/hooks/use-layouts';
+import { colors, Input, Select, Tooltip } from '../../../design-system';
+import { useLayouts } from '../../../api/hooks/useLayouts';
 import { useEffect } from 'react';
 
 export const EmailInboxContent = ({
@@ -49,26 +48,40 @@ export const EmailInboxContent = ({
     >
       <Grid grow justify="center" align="stretch">
         <Grid.Col span={3}>
-          <div
-            style={{
-              padding: '15px',
-              borderRadius: '7px',
-              border: `1px solid ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80}`,
-              margin: '5px 0px',
+          <Controller
+            name={`steps.${index}.template.senderName`}
+            control={control}
+            render={({ field }) => {
+              return (
+                <Input
+                  {...field}
+                  required
+                  label={
+                    <Tooltip label="leave empty to use sender name from integration">
+                      <span>Sender name</span>
+                    </Tooltip>
+                  }
+                  error={errors?.steps ? errors.steps[index]?.template?.senderName?.message : undefined}
+                  disabled={readonly}
+                  value={field.value}
+                  placeholder={integration?.credentials?.senderName}
+                  data-test-id="emailSenderName"
+                />
+              );
             }}
-          >
-            <EmailIntegrationInfo integration={integration} field={'from'} />
-          </div>
+          />
         </Grid.Col>
         <Grid.Col span={4}>
           <div>
             <Controller
-              name={`steps.${index}.template.subject` as any}
+              name={`steps.${index}.template.subject`}
+              defaultValue=""
               control={control}
               render={({ field }) => {
                 return (
                   <Input
                     {...field}
+                    label="Subject"
                     required
                     error={errors?.steps ? errors.steps[index]?.template?.subject?.message : undefined}
                     disabled={readonly}
@@ -83,12 +96,14 @@ export const EmailInboxContent = ({
         </Grid.Col>
         <Grid.Col span={4}>
           <Controller
-            name={`steps.${index}.template.preheader` as any}
+            name={`steps.${index}.template.preheader`}
+            defaultValue=""
             control={control}
             render={({ field, fieldState }) => {
               return (
                 <Input
                   {...field}
+                  label="Preheader"
                   error={fieldState.error?.message}
                   disabled={readonly}
                   value={field.value}
@@ -99,30 +114,20 @@ export const EmailInboxContent = ({
             }}
           />
         </Grid.Col>
-        <Grid.Col
-          span={1}
-          style={{
-            color: colors.B60,
-            fontWeight: 'normal',
-            alignSelf: 'center',
-            justifyContent: 'stretch',
-          }}
-        >
-          {format(new Date(), 'MMM dd')}
-        </Grid.Col>
       </Grid>
       <Controller
-        name={`steps.${index}.template.layoutId` as any}
+        name={`steps.${index}.template.layoutId`}
+        defaultValue=""
         control={control}
         render={({ field }) => {
           return (
             <Select
               {...field}
-              label="Layouts"
+              label="Email Layout"
               data-test-id="templates-layout"
               loading={isLoading}
               disabled={readonly}
-              required
+              required={(layouts || [])?.length > 0}
               error={errors?.steps ? errors?.steps[index]?.template?.layoutId?.message : undefined}
               searchable
               placeholder="Select layout"

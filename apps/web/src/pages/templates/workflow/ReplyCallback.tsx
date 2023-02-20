@@ -1,17 +1,17 @@
 import styled from '@emotion/styled';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Input, Switch, Text } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
-import { When } from '../../../components/utils/When';
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DoubleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 import { Grid } from '@mantine/core';
+
+import { Input, Switch, Text } from '../../../design-system';
+import { useEnvController } from '../../../store/useEnvController';
+import { When } from '../../../components/utils/When';
+import { DoubleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 
 export const ReplyCallback = ({ control, index, errors }) => {
   const { environment } = useEnvController();
-  const { getValues } = useFormContext();
-  const replyCallbackActive = getValues(`steps.${index}.replyCallback.active`);
+  const { watch } = useFormContext();
+  const replyCallbackActive = watch(`steps.${index}.replyCallback.active`);
 
   const domainMxRecordConfigured =
     environment?.dns?.inboundParseDomain && environment?.dns?.mxRecordConfigured === true;
@@ -21,7 +21,10 @@ export const ReplyCallback = ({ control, index, errors }) => {
       <ReplyCallbackSwitch index={index} control={control} />
       <When truthy={!domainMxRecordConfigured && replyCallbackActive}>
         <LackConfigurationError
-          text={'Looks like you haven’t configured your domain mx record or routing under email settings yet.'}
+          text={
+            'Looks like you haven’t configured your domain mx record or ' +
+            'added your domain to the allowed domain list under email settings yet.'
+          }
           redirectTo={'/settings'}
         />
       </When>
@@ -32,16 +35,17 @@ export const ReplyCallback = ({ control, index, errors }) => {
 
 export const ReplyCallbackUrlInput = ({ control, index }) => {
   const { readonly } = useEnvController();
-  const { getValues } = useFormContext();
-  const replyCallbackActive = getValues(`steps.${index}.replyCallback.active`);
+  const { watch } = useFormContext();
+  const replyCallbackActive = watch(`steps.${index}.replyCallback.active`);
 
   return (
-    <Controller
-      control={control}
-      name={`steps.${index}.replyCallback.url`}
-      render={({ field: { value, ...field } }) => {
-        return (
-          <When truthy={replyCallbackActive}>
+    <When truthy={replyCallbackActive}>
+      <Controller
+        control={control}
+        name={`steps.${index}.replyCallback.url`}
+        defaultValue=""
+        render={({ field: { value, ...field } }) => {
+          return (
             <Input
               {...field}
               data-test-id="reply-callback-url-input"
@@ -52,10 +56,10 @@ export const ReplyCallbackUrlInput = ({ control, index }) => {
               label="Replay callback URL"
               placeholder="e.g. www.user-domain.com/reply"
             />
-          </When>
-        );
-      }}
-    />
+          );
+        }}
+      />
+    </When>
   );
 };
 
@@ -67,12 +71,13 @@ export const ReplyCallbackSwitch = ({ control, index }) => {
       <Controller
         control={control}
         name={`steps.${index}.replyCallback.active`}
+        defaultValue={false}
         render={({ field: { value, ...field } }) => {
           return (
             <StyledSwitch
               {...field}
               disabled={readonly}
-              checked={value ?? false}
+              checked={value}
               label="Enable reply callbacks"
               data-test-id="step-replay-callbacks-switch"
             />

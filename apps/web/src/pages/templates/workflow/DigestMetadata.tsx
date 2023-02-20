@@ -6,7 +6,7 @@ import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';
 import { Input, Select, Switch, Button } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../store/useEnvController';
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;
@@ -16,10 +16,13 @@ const StyledSwitch = styled(Switch)`
 export const DigestMetadata = ({ control, index, loading, disableSubmit, setSelectedChannel }) => {
   const { readonly } = useEnvController();
   const {
-    formState: { errors },
+    formState: { errors, isSubmitted },
     watch,
+    trigger,
   } = useFormContext();
+
   const type = watch(`steps.${index}.metadata.type`);
+  const showErrors = isSubmitted && errors?.steps;
 
   return (
     <>
@@ -37,12 +40,13 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             <Controller
               control={control}
               name={`steps.${index}.metadata.amount`}
+              defaultValue=""
               render={({ field, fieldState }) => {
                 return (
                   <Input
                     {...field}
                     value={field.value || ''}
-                    error={fieldState.error?.message}
+                    error={showErrors && fieldState.error?.message}
                     min={0}
                     max={100}
                     type="number"
@@ -58,11 +62,12 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             <Controller
               control={control}
               name={`steps.${index}.metadata.unit`}
-              render={({ field }) => {
+              defaultValue=""
+              render={({ field, fieldState }) => {
                 return (
                   <Select
                     disabled={readonly}
-                    error={errors?.steps ? errors.steps[index]?.metadata?.unit?.message : undefined}
+                    error={showErrors && fieldState.error?.message}
                     placeholder="Interval"
                     data={[
                       { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
@@ -91,14 +96,18 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
           render={({ field }) => {
             return (
               <Select
+                {...field}
                 label="Type of digest"
                 disabled={readonly}
                 data={[
                   { value: DigestTypeEnum.REGULAR, label: 'Regular' },
                   { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
                 ]}
+                onChange={async (value) => {
+                  field.onChange(value);
+                  await trigger(`steps.${index}.metadata`);
+                }}
                 data-test-id="digest-type"
-                {...field}
               />
             );
           }}
@@ -120,12 +129,13 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.backoffAmount`}
+                defaultValue=""
                 render={({ field, fieldState }) => {
                   return (
                     <Input
                       {...field}
                       value={field.value || ''}
-                      error={fieldState.error?.message}
+                      error={showErrors && fieldState.error?.message}
                       min={0}
                       max={100}
                       type="number"
@@ -142,11 +152,12 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.backoffUnit`}
-                render={({ field }) => {
+                defaultValue=""
+                render={({ field, fieldState }) => {
                   return (
                     <Select
                       disabled={readonly}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffUnit?.message : undefined}
+                      error={showErrors && fieldState.error?.message}
                       placeholder="Interval"
                       data={[
                         { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
@@ -174,6 +185,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
           <Controller
             control={control}
             name={`steps.${index}.metadata.updateMode`}
+            defaultValue={false}
             render={({ field: { value, ...field } }) => {
               return (
                 <StyledSwitch
@@ -196,6 +208,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
         <Controller
           control={control}
           name={`steps.${index}.metadata.digestKey`}
+          defaultValue=""
           render={({ field, fieldState }) => {
             return (
               <Input

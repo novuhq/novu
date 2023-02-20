@@ -26,7 +26,7 @@ import {
 } from '@novu/notification-center';
 
 function Header() {
-  function onNotificationClick(notification: IMessage) {
+  function onNotificationClick(message: IMessage) {
     // your logic to handle the notification click
     if (message?.cta?.data?.url) {
       window.location.href = message.cta.data.url;

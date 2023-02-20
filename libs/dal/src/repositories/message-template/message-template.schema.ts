@@ -39,6 +39,7 @@ const messageTemplateSchema = new Schema(
       action: Schema.Types.Mixed,
     },
     preheader: Schema.Types.String,
+    senderName: Schema.Types.String,
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

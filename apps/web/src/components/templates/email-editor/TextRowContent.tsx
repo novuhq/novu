@@ -1,20 +1,26 @@
-import { IEmailBlock } from '@novu/shared';
 import { useEffect, useRef, useState } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { colors } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { TextAlignEnum } from '@novu/shared';
 
-export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; onTextChange: (text: string) => void }) {
+import { colors } from '../../../design-system';
+import { useEnvController } from '../../../store/useEnvController';
+import type { IForm } from '../formTypes';
+
+export function TextRowContent({ stepIndex, blockIndex }: { stepIndex: number; blockIndex: number }) {
+  const methods = useFormContext<IForm>();
+  const content = methods.watch(`steps.${stepIndex}.template.content.${blockIndex}.content`);
+  const textAlign = methods.watch(`steps.${stepIndex}.template.content.${blockIndex}.styles.textAlign`);
   const { readonly } = useEnvController();
   const ref = useRef<HTMLDivElement>(null);
-  const [text, setText] = useState<string>(block.content);
-  const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!block.content);
+  const [text, setText] = useState<string>(content);
+  const [visiblePlaceholder, setVisiblePlaceholder] = useState(!!content);
 
   useEffect(() => {
     ref.current?.focus();
   }, [ref]);
 
-  function checkPlaceholderVisibility(data = block.content) {
+  function checkPlaceholderVisibility(data = content) {
     let showPlaceHolder = !data;
 
     if (data === '<br>') showPlaceHolder = true;
@@ -22,38 +28,46 @@ export function TextRowContent({ block, onTextChange }: { block: IEmailBlock; on
     setVisiblePlaceholder(showPlaceHolder);
   }
 
-  function handleTextChange(data: string) {
-    onTextChange(data);
-    checkPlaceholderVisibility(data);
-  }
-
   useEffect(() => {
-    if (block.content !== ref.current?.innerHTML) {
-      setText(block.content);
+    if (content !== ref.current?.innerHTML) {
+      setText(content);
     }
-  }, [block.content]);
+  }, [content]);
 
   useEffect(() => {
     checkPlaceholderVisibility();
-  }, [block.content, text]);
+  }, [content, text]);
 
   return (
     <div style={{ position: 'relative' }}>
-      <div
-        ref={ref}
-        data-test-id="editable-text-content"
-        role="textbox"
-        dangerouslySetInnerHTML={{
-          __html: text,
-        }}
-        contentEditable={!readonly}
-        suppressContentEditableWarning
-        onKeyUp={(e: any) => handleTextChange(e.target.innerHTML)}
-        style={{
-          outline: 'none',
-          width: '100%',
-          backgroundColor: 'transparent',
-          textAlign: block.styles?.textAlign || 'left',
+      <Controller
+        name={`steps.${stepIndex}.template.content.${blockIndex}.content`}
+        defaultValue=""
+        control={methods.control}
+        render={({ field }) => {
+          return (
+            <div
+              ref={ref}
+              data-test-id="editable-text-content"
+              role="textbox"
+              dangerouslySetInnerHTML={{
+                __html: text,
+              }}
+              contentEditable={!readonly}
+              suppressContentEditableWarning
+              onKeyUp={(e: any) => {
+                const html = e.target.innerHTML;
+                field.onChange(html);
+                checkPlaceholderVisibility(html);
+              }}
+              style={{
+                outline: 'none',
+                width: '100%',
+                backgroundColor: 'transparent',
+                textAlign: textAlign || TextAlignEnum.LEFT,
+              }}
+            />
+          );
         }}
       />
       <PlaceHolder color={colors.B60} show={visiblePlaceholder}>
