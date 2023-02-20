@@ -41,6 +41,7 @@
     "@hookform/resolvers": "^2.9.1",
     "@mantine/core": "^5.7.1",
     "@mantine/dropzone": "^5.9.2",
+    "@mantine/form": "^5.10.4",
     "@mantine/hooks": "^5.7.1",
     "@mantine/notifications": "^5.7.1",
     "@mantine/prism": "^5.7.1",

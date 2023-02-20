@@ -1,15 +1,15 @@
-import { useContext, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { showNotification } from '@mantine/notifications';
 import * as Sentry from '@sentry/react';
 
 import { api } from '../../api/api.client';
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../store/authContext';
 import { applyToken } from '../../store/useAuthController';
 
 export function useAcceptInvite() {
-  const { setToken } = useContext(AuthContext);
+  const { setToken } = useAuthContext();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 

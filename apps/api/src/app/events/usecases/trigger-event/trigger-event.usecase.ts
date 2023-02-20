@@ -1,33 +1,48 @@
 import { JobEntity, JobRepository, NotificationTemplateRepository, NotificationRepository } from '@novu/dal';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { StepTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 
 import { TriggerEventCommand } from './trigger-event.command';
-import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
-import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+
 import { AddJob } from '../add-job/add-job.usecase';
+import { CreateNotificationJobsCommand, CreateNotificationJobs } from '../create-notification-jobs';
+import { ProcessSubscriber, ProcessSubscriberCommand } from '../process-subscriber';
+
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+
+const LOG_CONTEXT = 'TriggerEventUseCase';
 import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class TriggerEvent {
   constructor(
-    private notificationTemplateRepository: NotificationTemplateRepository,
+    private addJobUsecase: AddJob,
+    private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
-    private addJobUsecase: AddJob,
     private notificationRepository: NotificationRepository,
+    private notificationTemplateRepository: NotificationTemplateRepository,
     protected createExecutionDetails: CreateExecutionDetails,
     private logger: PinoLogger
   ) {}
 
   async execute(command: TriggerEventCommand) {
+    const { actor, environmentId, identifier, organizationId, to, userId } = command;
+
+    await this.validateTransactionIdProperty(command.transactionId, organizationId, environmentId);
+
+    Sentry.addBreadcrumb({
+      message: 'Sending trigger',
+      data: {
+        triggerIdentifier: identifier,
+      },
+    });
     this.logger.assign({
       transactionId: command.transactionId,
       environmentId: command.environmentId,
@@ -41,37 +56,61 @@ export class TriggerEvent {
       command.identifier
     );
 
-    this.logger.assign({
-      templateId: template._id,
-    });
-
-    Sentry.addBreadcrumb({
-      message: 'Sending trigger',
-      data: {
-        triggerIdentifier: command.identifier,
-      },
-    });
+    /*
+     * Makes no sense to execute anything if template doesn't exist
+     * TODO: Send a 404?
+     */
+    if (!template) {
+      const message = 'Notification template could not be found';
+      Logger.error(message, LOG_CONTEXT);
+      throw new ApiException(message);
+    }
 
     const jobs: Omit<JobEntity, '_id'>[][] = [];
 
-    for (const subscriberToTrigger of command.to) {
-      jobs.push(
-        await this.processSubscriber.execute(
-          ProcessSubscriberCommand.create({
-            identifier: command.identifier,
-            payload: command.payload,
-            overrides: command.overrides,
-            to: subscriberToTrigger,
-            transactionId: command.transactionId,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.organizationId,
-            templateId: template._id,
-            actor: command.actor,
-            template,
-          })
-        )
+    // We might have a single actor for every trigger so we only need to check for it once
+    let actorProcessed;
+    if (actor) {
+      actorProcessed = await this.processSubscriber.execute(
+        ProcessSubscriberCommand.create({
+          environmentId,
+          organizationId,
+          userId,
+          subscriber: actor,
+        })
       );
+    }
+
+    for (const subscriber of to) {
+      const subscriberProcessed = await this.processSubscriber.execute(
+        ProcessSubscriberCommand.create({
+          environmentId,
+          organizationId,
+          userId,
+          subscriber,
+        })
+      );
+
+      // If no subscriber makes no sense to try to create notification
+      if (subscriberProcessed) {
+        const createNotificationJobsCommand = CreateNotificationJobsCommand.create({
+          environmentId,
+          identifier,
+          organizationId,
+          overrides: command.overrides,
+          payload: command.payload,
+          subscriber: subscriberProcessed,
+          template,
+          to: subscriber,
+          transactionId: command.transactionId,
+          userId,
+          ...(actor && actorProcessed && { actor: actorProcessed }),
+        });
+
+        const notificationJobs = await this.createNotificationJobs.execute(createNotificationJobsCommand);
+
+        jobs.push(notificationJobs);
+      }
     }
 
     for (const job of jobs) {
@@ -93,7 +132,7 @@ export class TriggerEvent {
       }, []);
 
     for (const job of storedJobs) {
-      this.createExecutionDetails.execute(
+      await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_CREATED,
@@ -128,11 +167,11 @@ export class TriggerEvent {
     });
   }
 
-  public async validateTransactionIdProperty(
+  private async validateTransactionIdProperty(
     transactionId: string,
     organizationId: string,
     environmentId: string
-  ): Promise<boolean> {
+  ): Promise<void> {
     const found = await this.jobRepository.count({
       transactionId,
       _organizationId: organizationId,
@@ -144,7 +183,5 @@ export class TriggerEvent {
         'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );
     }
-
-    return true;
   }
 }

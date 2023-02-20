@@ -1,6 +1,6 @@
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { EmailContentCard } from './EmailContentCard';
-import { AuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../../store/authContext';
 import { When } from '../../utils/When';
 import { Preview } from '../../../pages/templates/editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
@@ -22,7 +22,7 @@ export enum ViewEnum {
 const templateFields = ['content', 'htmlContent', 'subject', 'preheader'];
 
 export function EmailMessagesCards({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
-  const { currentOrganization } = useContext(AuthContext);
+  const { currentOrganization } = useAuthContext();
   const [view, setView] = useState<ViewEnum>(ViewEnum.EDIT);
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();

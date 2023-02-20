@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AnalyticsService } from '@novu/application-generic';
 import {
   DalService,
   UserRepository,
@@ -40,6 +41,16 @@ const PROVIDERS = [
     },
   },
   ...DAL_MODELS,
+  {
+    provide: AnalyticsService,
+    useFactory: async () => {
+      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
+
+      await analyticsService.initialize();
+
+      return analyticsService;
+    },
+  },
 ];
 
 @Module({

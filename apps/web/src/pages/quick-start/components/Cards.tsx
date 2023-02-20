@@ -28,12 +28,6 @@ export function Cards({ cells }: { cells: ICardCell[] }) {
   );
 }
 
-function getFrameworkName(alt) {
-  const framework = alt?.replace('.png', '');
-
-  return framework === 'js' ? 'JS' : framework;
-}
-
 function Card({ cell }: { cell: ICardCell }) {
   const { colorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
@@ -76,6 +70,12 @@ function Card({ cell }: { cell: ICardCell }) {
       </When>
     </StyledCard>
   );
+}
+
+function getFrameworkName(alt) {
+  const framework = alt?.replace('.png', '');
+
+  return framework === 'js' ? 'JS' : framework;
 }
 
 const StyledCard = styled.div<{ dark: boolean }>`

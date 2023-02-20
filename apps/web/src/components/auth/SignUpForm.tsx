@@ -1,4 +1,4 @@
-import { useContext, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -7,7 +7,7 @@ import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
 
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
@@ -17,6 +17,7 @@ import { useAcceptInvite } from './useAcceptInvite';
 import { useVercelParams } from '../../hooks/useVercelParams';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
+import { ROUTES } from '../../constants/routes.enum';
 
 type SignUpFormProps = {
   invitationToken?: string;
@@ -32,11 +33,11 @@ export type SignUpFormInputType = {
 export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const navigate = useNavigate();
 
-  const { setToken } = useContext(AuthContext);
+  const { setToken } = useAuthContext();
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : '/auth/login';
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : ROUTES.AUTH_LOGIN;
   const githubLink = isFromVercel
     ? buildVercelGithubLink({ code, next, configurationId })
     : buildGithubLink({ invitationToken });
@@ -85,7 +86,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       setToken(token);
     }
 
-    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : '/auth/application');
+    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : ROUTES.AUTH_APPLICATION);
 
     return true;
   };

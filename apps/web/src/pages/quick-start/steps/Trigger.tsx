@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { CheckCircleBroken } from '../../../design-system/icons/gradient/CheckCircleBroken';
 import { TestNotificationTrigger } from '../components/TestNotificationTrigger';
 import { BellGradient } from '../../../design-system/icons';
+import { useSegment } from '../../../hooks/useSegment';
+import { OnBoardingAnalyticsEnum } from '../consts';
 
 export function Trigger() {
+  const segment = useSegment();
+
+  useEffect(() => {
+    segment.track(OnBoardingAnalyticsEnum.TRIGGER_VISIT);
+  }, []);
+
   return (
     <QuickStartWrapper
       title={<CheckCircleBroken style={{ height: '75px', width: '75px', marginTop: '100px' }} />}

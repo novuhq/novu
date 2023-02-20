@@ -397,6 +397,10 @@
     "axios",
     "ioredis",
     "newrelic",
+    "nodemailer",
+    "emailjs",
+    "typeof"
+    "newrelic",
     "pino"
   ],
   "flagWords": [],

@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "stabilityDays": 3,
   "extends": ["config:base"],
   "prConcurrentLimit": 3,
   "ignoreDeps": ["express", "node", "@types/node"],
