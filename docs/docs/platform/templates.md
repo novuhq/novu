@@ -138,3 +138,10 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
   },
 });
 ```
+
+## FAQ
+
+<details>
+ <summary>How to send dynamic HTML content as value of variable?</summary>
+ Use triple curly braces variable like <code>&#123;&#123;&#123;htmlVariable&#125;&#125;&#125;</code> .
+</details>

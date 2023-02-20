@@ -50,6 +50,7 @@ export function PolishingBanner() {
           segment.track('Polishing Banner Clicked');
         }}
         target={'_blank'}
+        rel="noreferrer"
         style={{ textDecoration: 'underline', display: 'inline-block', marginLeft: 5 }}
       >
         Learn More.
