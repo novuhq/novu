@@ -21,6 +21,9 @@ export enum CredentialsKeyEnum {
   ServiceAccount = 'serviceAccount',
   BaseUrl = 'baseUrl',
   WebhookUrl = 'webhookUrl',
+  RequireTls = 'requireTls',
+  IgnoreTls = 'ignoreTls',
+  TlsOptions = 'tlsOptions',
 }
 
 export enum EmailProviderIdEnum {
