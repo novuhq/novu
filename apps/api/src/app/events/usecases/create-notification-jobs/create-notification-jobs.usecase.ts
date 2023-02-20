@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobStatusEnum, NotificationRepository, NotificationStepEntity } from '@novu/dal';
 import { STEP_TYPE_TO_CHANNEL_TYPE, InAppProviderIdEnum, StepTypeEnum } from '@novu/shared';
 
-import { CreateNotificationCommand } from './create-notification.command';
+import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
 import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 
@@ -17,14 +17,14 @@ const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id'>;
 
 @Injectable()
-export class CreateNotification {
+export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private getDecryptedIntegrations: GetDecryptedIntegrations,
     private notificationRepository: NotificationRepository
   ) {}
 
-  public async execute(command: CreateNotificationCommand): Promise<NotificationJob[]> {
+  public async execute(command: CreateNotificationJobsCommand): Promise<NotificationJob[]> {
     const notification = await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,

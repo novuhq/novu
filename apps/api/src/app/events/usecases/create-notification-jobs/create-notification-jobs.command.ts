@@ -5,7 +5,7 @@ import { IsDefined, IsString, IsOptional } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
-export class CreateNotificationCommand extends EnvironmentWithUserCommand {
+export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsString()
   identifier: string;

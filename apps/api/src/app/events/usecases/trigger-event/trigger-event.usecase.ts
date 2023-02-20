@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/node';
 import { TriggerEventCommand } from './trigger-event.command';
 
 import { AddJob } from '../add-job/add-job.usecase';
-import { CreateNotificationCommand, CreateNotification } from '../create-notification';
+import { CreateNotificationJobsCommand, CreateNotificationJobs } from '../create-notification-jobs';
 import { ProcessSubscriber, ProcessSubscriberCommand } from '../process-subscriber';
 
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
@@ -22,7 +22,7 @@ const LOG_CONTEXT = 'TriggerEventUseCase';
 export class TriggerEvent {
   constructor(
     private addJobUsecase: AddJob,
-    private createNotification: CreateNotification,
+    private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
     private notificationRepository: NotificationRepository,
@@ -84,7 +84,7 @@ export class TriggerEvent {
 
       // If no subscriber makes no sense to try to create notification
       if (subscriberProcessed) {
-        const createNotificationCommand = CreateNotificationCommand.create({
+        const createNotificationJobsCommand = CreateNotificationJobsCommand.create({
           environmentId,
           identifier,
           organizationId,
@@ -98,9 +98,9 @@ export class TriggerEvent {
           ...(actor && actorProcessed && { actor: actorProcessed }),
         });
 
-        const job = await this.createNotification.execute(createNotificationCommand);
+        const notificationJobs = await this.createNotificationJobs.execute(createNotificationJobsCommand);
 
-        jobs.push(job);
+        jobs.push(notificationJobs);
       }
     }
 
@@ -158,7 +158,7 @@ export class TriggerEvent {
     });
   }
 
-  public async validateTransactionIdProperty(
+  private async validateTransactionIdProperty(
     transactionId: string,
     organizationId: string,
     environmentId: string
