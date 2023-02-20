@@ -1,13 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Center, Stack } from '@mantine/core';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
-import { welcomeDescription } from '../consts';
+import { OnBoardingAnalyticsEnum, welcomeDescription } from '../consts';
 import { Cards } from '../components/Cards';
 import { BellGradient, ChatGradient, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 import { colors, Text } from '../../../design-system';
+import { useSegment } from '../../../hooks/useSegment';
 
 export function Quickstart() {
+  const segment = useSegment();
+
+  useEffect(() => {
+    segment.track(OnBoardingAnalyticsEnum.QUICK_START_VISIT);
+  }, []);
+
   return (
     <QuickStartWrapper
       title={welcomeDescription}
