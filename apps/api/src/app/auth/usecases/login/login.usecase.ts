@@ -63,7 +63,7 @@ export class Login {
       throw new UnauthorizedException(`Incorrect email or password provided.`);
     }
 
-    if (!user.userHashForIntercom) {
+    if (process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY && !user.userHashForIntercom) {
       const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
       const userHashForIntercom = createHash(intercomSecretKey, user._id);
       await this.userRepository.update(

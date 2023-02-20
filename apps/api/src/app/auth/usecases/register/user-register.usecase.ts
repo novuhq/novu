@@ -37,9 +37,9 @@ export class UserRegister {
       password: passwordHash,
     });
 
-    const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
-    const userHashForIntercom = createHash(intercomSecretKey, user._id);
-    if (userHashForIntercom) {
+    if (process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY) {
+      const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
+      const userHashForIntercom = createHash(intercomSecretKey, user._id);
       await this.userRepository.update(
         { _id: user._id },
         {
