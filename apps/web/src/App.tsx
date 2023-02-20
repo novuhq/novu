@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React from 'react';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
@@ -6,8 +6,8 @@ import { Route, Routes, Navigate, BrowserRouter, useLocation } from 'react-route
 import { Integrations } from '@sentry/tracing';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
-import { AuthContext } from './store/authContext';
-import { applyToken, getToken, getTokenPayload, useAuthController } from './store/useAuthController';
+import { AuthProvider, useAuthContext } from './store/authContext';
+import { applyToken, getToken, getTokenPayload } from './store/useAuthController';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
@@ -30,7 +30,7 @@ import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
 import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
 import { SpotLight } from './components/utils/Spotlight';
-import { SpotlightContext, SpotlightItem } from './store/spotlightContext';
+import { SpotLightProvider } from './store/spotlightContext';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { ROUTES } from './constants/routes.enum';
 import { useBlueprint } from './hooks/useBlueprint';
@@ -154,7 +154,7 @@ function App() {
       <HelmetProvider>
         <BrowserRouter basename={CONTEXT_PATH}>
           <QueryClientProvider client={queryClient}>
-            <AuthHandlerComponent>
+            <AuthProvider>
               <ThemeHandlerComponent>
                 <SpotLightProvider>
                   <Routes>
@@ -365,7 +365,7 @@ function App() {
                   </Routes>
                 </SpotLightProvider>
               </ThemeHandlerComponent>
-            </AuthHandlerComponent>
+            </AuthProvider>
           </QueryClientProvider>
         </BrowserRouter>
       </HelmetProvider>
@@ -384,7 +384,7 @@ function jwtHasKey(key: string) {
 
 function RequiredAuth({ children }: any) {
   useBlueprint();
-  const { logout } = useContext(AuthContext);
+  const { logout } = useAuthContext();
   const location = useLocation();
 
   // TODO: remove after env migration
@@ -427,47 +427,6 @@ function ThemeHandlerComponent({ children }: { children: React.ReactNode }) {
       {children}
     </ThemeContext.Provider>
   );
-}
-
-function AuthHandlerComponent({ children }: { children: React.ReactNode }) {
-  const { token, setToken, user, organization, logout, jwtPayload, organizations } = useAuthController();
-
-  return (
-    <AuthContext.Provider
-      value={{
-        currentUser: user,
-        currentOrganization: organization,
-        organizations,
-        token,
-        logout,
-        setToken,
-        jwtPayload,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-function SpotLightProvider({ children }) {
-  const [items, setItems] = useState<SpotlightItem[]>([]);
-
-  const addItem = (item: SpotlightItem | SpotlightItem[]) => {
-    if (!Array.isArray(item)) {
-      item = [item];
-    }
-
-    const newItems = [...items, ...item];
-    newItems.sort((a, b) => (b.order || 0) - (a.order || 0));
-
-    setItems(newItems);
-  };
-
-  const removeItem = (id: string) => {
-    setItems(items.filter((item) => item.id !== id));
-  };
-
-  return <SpotlightContext.Provider value={{ items, addItem, removeItem }}>{children}</SpotlightContext.Provider>;
 }
 
 export default Sentry.withProfiler(App);
