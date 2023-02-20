@@ -194,23 +194,25 @@ async function handleOnboardingFlow(config: ConfigService) {
     }
 
     spinner.start();
-    analytics.identify(user);
-    analytics.alias({ previousId: anonymousId, userId: user._id });
 
     analytics.track({
-      identity: { userId: user._id },
+      identity: { anonymousId },
       event: AnalyticsEventEnum.ACCOUNT_CREATED,
       data: {
         method: regMethod.value,
       },
     });
 
+    const redirectUrl = `${CLIENT_LOGIN_URL}/?token=${config.getToken()}`;
+
     spinner.succeed(`Your account has been successfully created. 
     
     To help you get started quickly, 
-    we've developed a quick start that will guide you through setting up and testing Novu notifications with ease.`);
-
-    const redirectUrl = `${CLIENT_LOGIN_URL}/?token=${config.getToken()}`;
+    we've developed a quick start that will guide you through setting up and testing Novu notifications with ease.
+    
+    In case the browser haven't opened automatically, you can access the quick start here:
+    ${chalk.blue(redirectUrl)}
+    `);
 
     httpServer.redirectSuccessDashboard(redirectUrl);
 
