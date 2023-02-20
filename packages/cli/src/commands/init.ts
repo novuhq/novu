@@ -161,7 +161,6 @@ async function handleOnboardingFlow(config: ConfigService) {
     spinner = ora('Setting up your new account').start();
 
     await createOrganizationHandler(config, answers);
-    await createEnvironmentHandler(config, answers);
 
     const user = config.getDecodedToken();
 
