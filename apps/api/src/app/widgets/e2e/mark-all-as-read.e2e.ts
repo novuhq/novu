@@ -40,7 +40,7 @@ describe('Mark all as read - /widgets/messages/seen (POST)', function () {
     subscriberProfile = profile;
   });
 
-  it('should mark all as read', async function () {
+  it('should mark all as seen', async function () {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
@@ -64,11 +64,49 @@ describe('Mark all as read - /widgets/messages/seen (POST)', function () {
     expect(unseenMessagesAfter.data.count).to.equal(0);
   });
 
+  it('should mark all as read', async function () {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+
+    await session.awaitRunningJobs(template._id);
+
+    const unseenMessagesBefore = await getNotificationCount('read=false');
+
+    expect(unseenMessagesBefore.data.count).to.equal(3);
+
+    await axios.post(
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/feed/markAsRead`,
+      {
+        feedId: '',
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${subscriberToken}`,
+        },
+      }
+    );
+
+    const unseenMessagesAfter = await getNotificationCount('read=false');
+
+    expect(unseenMessagesAfter.data.count).to.equal(0);
+  });
+
   async function getFeedCount(query = {}) {
     const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/unseen`, {
       params: {
         ...query,
       },
+      headers: {
+        Authorization: `Bearer ${subscriberToken}`,
+      },
+    });
+
+    return response.data;
+  }
+
+  async function getNotificationCount(query: string) {
+    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/count?${query}`, {
       headers: {
         Authorization: `Bearer ${subscriberToken}`,
       },

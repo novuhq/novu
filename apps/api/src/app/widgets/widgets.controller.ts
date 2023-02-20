@@ -66,6 +66,7 @@ export class WidgetsController {
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
     private updateSubscriberPreferenceUsecase: UpdateSubscriberPreference,
+    private markAllMessageAsReadByFeedUsecase: MarkAllMessageAsReadByFeed,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 

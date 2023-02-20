@@ -113,10 +113,35 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     );
   }
 
-  async markAllUnseenAsSeenByFeed(subscriberId: string, environmentId: string, feedId: string | null) {
-    return this.update(
-      { _subscriberId: subscriberId, _environmentId: environmentId, seen: false, _feedId: feedId },
-      { $set: { seen: true, lastSeenDate: new Date() } }
+  async markAllUnreadAsReadByFeed(subscriberId: string, environmentId: string, feedIdentifiers: string[] | null) {
+    let feedQuery;
+
+    if (feedIdentifiers) {
+      const feeds = await this.feedRepository.find(
+        {
+          _environmentId: environmentId,
+          identifier: {
+            $in: feedIdentifiers,
+          },
+        },
+        '_id'
+      );
+
+      feedQuery = {
+        $in: feeds.map((feed) => feed._id),
+      };
+    } else {
+      feedQuery = null;
+    }
+
+    return await this.update(
+      {
+        _subscriberId: subscriberId,
+        _environmentId: environmentId,
+        read: false,
+        _feedId: feedQuery,
+      },
+      { $set: { seen: true, read: true, lastSeenDate: new Date() } }
     );
   }
 

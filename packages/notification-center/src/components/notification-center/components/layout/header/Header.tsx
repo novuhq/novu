@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { ActionIcon } from '@mantine/core';
 import styled from '@emotion/styled';
 import { css, cx } from '@emotion/css';
@@ -13,7 +13,7 @@ import { INovuTheme } from '../../../../../store/novu-theme.context';
 
 export function Header({ onCogClick }: { onCogClick?: () => void }) {
   const [allRead, setAllRead] = useState<boolean>(true);
-  const { markAllNotificationsAsRead, notifications, unseenCount } = useNotifications();
+  const { markAllNotificationsAsReadByFeed, notifications, unseenCount, storeId } = useNotifications();
   const { theme } = useNovuTheme();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { t } = useTranslations();
@@ -30,6 +30,10 @@ export function Header({ onCogClick }: { onCogClick?: () => void }) {
       setAllRead(read);
     }
   }, [notifications]);
+
+  const markTabAsRead = useCallback(() => {
+    markAllNotificationsAsReadByFeed(storeId);
+  }, [storeId, markAllNotificationsAsReadByFeed]);
 
   return (
     <div className={cx('nc-header', headerClassName, css(headerStyles))}>
@@ -49,7 +53,7 @@ export function Header({ onCogClick }: { onCogClick?: () => void }) {
             markAsReadClassName(!allRead, theme.header?.markAllAsReadButtonColor),
             css(headerMarkAsReadStyles)
           )}
-          onClick={markAllNotificationsAsRead}
+          onClick={markTabAsRead}
           role="button"
           tabIndex={0}
         >
