@@ -1,3 +1,4 @@
+import { CreateDefaultLayoutChangeUseCase } from './create-default-layout-change/create-default-layout-change.usecase';
 import { CheckLayoutIsUsedUseCase } from './check-layout-is-used/check-layout-is-used.use-case';
 import { CreateLayoutUseCase } from './create-layout/create-layout.use-case';
 import { CreateLayoutChangeUseCase } from './create-layout-change/create-layout-change.use-case';
@@ -22,6 +23,7 @@ export * from './set-default-layout';
 export * from './update-layout';
 
 export const USE_CASES = [
+  CreateDefaultLayoutChangeUseCase,
   CheckLayoutIsUsedUseCase,
   CreateDefaultLayout,
   CreateLayoutChangeUseCase,

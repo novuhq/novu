@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import styled from '@emotion/styled';
@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
 
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
@@ -14,6 +14,7 @@ import { IS_DOCKER_HOSTED } from '../../config';
 import { useVercelParams } from '../../hooks/useVercelParams';
 import { useAcceptInvite } from './useAcceptInvite';
 import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
+import { ROUTES } from '../../constants/routes.enum';
 
 type LoginFormProps = {
   invitationToken?: string;
@@ -22,7 +23,7 @@ type LoginFormProps = {
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const navigate = useNavigate();
-  const { setToken } = useContext(AuthContext);
+  const { setToken } = useAuthContext();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
     { error: string; message: string; statusCode: number },
@@ -35,8 +36,8 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
 
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : '/auth/signup';
-  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : '/auth/reset/request';
+  const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : ROUTES.AUTH_SIGNUP;
+  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : ROUTES.AUTH_RESET_REQUEST;
   const githubLink = isFromVercel
     ? buildVercelGithubLink({ code, next, configurationId })
     : buildGithubLink({ invitationToken });
@@ -74,7 +75,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       }
 
       setToken(token);
-      navigate('/templates');
+      navigate(ROUTES.TEMPLATES);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);

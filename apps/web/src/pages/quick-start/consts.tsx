@@ -1,3 +1,6 @@
+import React from 'react';
+import { Stack } from '@mantine/core';
+
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
 export const notificationTemplateName = 'On-boarding notification';
 export const cloneDemoRepo = `git clone git@github.com:novuhq/notification-center-demo.git`;
@@ -8,7 +11,7 @@ export const welcomeDescription = 'Welcome to Novu, let’s get started';
 export const faqUrl = 'https://docs.novu.co/notification-center/react/react-components/#faq';
 
 interface ISnippetInstructions {
-  instruction: string;
+  instruction: React.ReactNode | string;
   snippet: string;
 }
 
@@ -30,6 +33,15 @@ export const Header = () => {
     </NovuProvider>
   );
 };`;
+
+const angularInteractions = (
+  <div>
+    <Stack spacing={1}>
+      <span>In the app.module.ts file import the NotificationCenterModule, and set the schemas:</span>
+      <span>[CUSTOM_ELEMENTS_SCHEMA]</span>
+    </Stack>
+  </div>
+);
 
 export const angularAppSnippet = `import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
@@ -136,9 +148,7 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     key: 'angular',
     value: [
       {
-        instruction:
-          'In the app.module.ts file import the NotificationCenterModule, and set the schemas: ' +
-          '[CUSTOM_ELEMENTS_SCHEMA]:',
+        instruction: angularInteractions,
         snippet: angularAppSnippet,
       },
       {
@@ -195,3 +205,20 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     ],
   },
 ];
+
+export enum OnBoardingAnalyticsEnum {
+  FRAMEWORK_SETUP_VISIT = 'In app frameworks select',
+  FRAMEWORKS_SETUP_VISIT = 'Framework Setup Page Visit',
+  FLOW_SELECTED = 'Quick Start Flow Select',
+  QUICK_START_VISIT = 'Quick Start Page Visit',
+  TRIGGER_VISIT = 'Trigger Page Visit',
+  CLICKED_FAQ = 'Clicked On FAQ',
+  CLICKED_CREATE_TEMPLATE = 'Clicked On Create Template',
+  CLICKED_TRIGGER_EVENT = 'Clicked On Trigger Event',
+  COPIED_STEP = 'Copied Snippet',
+}
+
+export enum FlowTypeEnum {
+  IN_APP = 'in_app',
+  OTHER = 'other',
+}

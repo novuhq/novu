@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
-import { welcomeDescription } from '../consts';
+import { OnBoardingAnalyticsEnum, welcomeDescription } from '../consts';
 import { Stack } from '@mantine/core';
 import { Cards } from '../components/Cards';
+import { useSegment } from '../../../hooks/useSegment';
 
 export function FrameworkSetup() {
+  const segment = useSegment();
+
+  useEffect(() => {
+    segment.track(OnBoardingAnalyticsEnum.FRAMEWORKS_SETUP_VISIT);
+  }, []);
+
   return (
     <QuickStartWrapper title={welcomeDescription} secondaryTitle={<ImplementationDescription />} faq={true}>
       <Cards

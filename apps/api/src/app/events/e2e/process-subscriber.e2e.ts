@@ -8,8 +8,7 @@ import {
 import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import axios from 'axios';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { ISubscribersDefine } from '@novu/node';
+import { ChannelTypeEnum, ISubscribersDefine, StepTypeEnum } from '@novu/shared';
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
 import { CacheKeyPrefixEnum, CacheService, InvalidateCacheService } from '../../shared/services/cache';
 
@@ -23,8 +22,8 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
   const invalidateCache = new InvalidateCacheService(
     new CacheService({
-      host: process.env.REDIS_CACHE_SERVICE_HOST,
-      port: process.env.REDIS_CACHE_SERVICE_PORT,
+      host: process.env.REDIS_CACHE_SERVICE_HOST as string,
+      port: process.env.REDIS_CACHE_SERVICE_PORT as string,
     })
   );
 
@@ -107,10 +106,10 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       subscriber.subscriberId
     );
 
-    expect(createdSubscriber.firstName).to.equal(payload.firstName);
-    expect(createdSubscriber.lastName).to.equal(payload.lastName);
-    expect(createdSubscriber.email).to.equal(payload.email);
-    expect(createdSubscriber.locale).to.equal(payload.locale);
+    expect(createdSubscriber?.firstName).to.equal(payload.firstName);
+    expect(createdSubscriber?.lastName).to.equal(payload.lastName);
+    expect(createdSubscriber?.email).to.equal(payload.email);
+    expect(createdSubscriber?.locale).to.equal(payload.locale);
   });
 
   it('should send only email trigger second time based on the subscriber preference', async function () {
@@ -133,7 +132,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     let message = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
-      _subscriberId: widgetSubscriber._id,
+      _subscriberId: widgetSubscriber?._id,
     });
 
     expect(message.length).to.equal(2);
@@ -154,7 +153,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     message = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
-      _subscriberId: widgetSubscriber._id,
+      _subscriberId: widgetSubscriber?._id,
     });
 
     expect(message.length).to.equal(3);
@@ -180,7 +179,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     let message = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
-      _subscriberId: widgetSubscriber._id,
+      _subscriberId: widgetSubscriber?._id,
     });
 
     expect(message.length).to.equal(2);
@@ -219,7 +218,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     message = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
-      _subscriberId: widgetSubscriber._id,
+      _subscriberId: widgetSubscriber?._id,
     });
 
     expect(message.length).to.equal(4);

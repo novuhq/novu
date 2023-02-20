@@ -21,6 +21,9 @@ export interface ICredentials {
   serviceAccount?: string;
   baseUrl?: string;
   ipPoolName?: string;
+  requireTls?: boolean;
+  ignoreTls?: boolean;
+  tlsOptions?: Record<string, unknown>;
 }
 
 export class IntegrationEntity {

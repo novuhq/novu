@@ -1,5 +1,5 @@
-import { IJwtPayload } from '@novu/shared';
-import { ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/node';
+import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
+import { TriggerRecipientSubscriber } from '@novu/node';
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
