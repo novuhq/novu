@@ -1,5 +1,5 @@
 import { Form } from 'antd';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 import { showNotification } from '@mantine/notifications';
@@ -20,7 +20,7 @@ import {
 import { MembersTable } from '../../components/invites/MembersTable';
 import { Button, Input } from '../../design-system';
 import { Invite } from '../../design-system/icons';
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../store/authContext';
 import { parseUrl } from '../../utils/routeUtils';
 import { ROUTES } from '../../constants/routes.enum';
 
@@ -29,7 +29,7 @@ export function MembersInvitePage() {
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
   const [invitedMemberEmail, setInvitedMemberEmail] = useState<string>('');
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
-  const { currentOrganization, currentUser } = useContext(AuthContext);
+  const { currentOrganization, currentUser } = useAuthContext();
 
   const {
     data: members,

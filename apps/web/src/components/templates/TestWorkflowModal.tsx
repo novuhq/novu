@@ -6,9 +6,9 @@ import * as Sentry from '@sentry/react';
 import { INotificationTrigger, IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, Title, Modal } from '../../design-system';
 import { inputStyles } from '../../design-system/config/inputs.styles';
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import { errorMessage, successMessage } from '../../utils/notifications';
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../store/authContext';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
 import { testTrigger } from '../../api/notification-templates';
 
@@ -43,7 +43,7 @@ export function TestWorkflowModal({
   setTransactionId: (id: string) => void;
   trigger: INotificationTrigger;
 }) {
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser } = useAuthContext();
   const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
 
   const subscriberVariables = useMemo(() => {
