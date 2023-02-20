@@ -374,11 +374,9 @@ async function signUp(config: ConfigService) {
 
       storeToken(config, response.token);
 
-      await open(`${CLIENT_LOGIN_URL}?&token=${response.token}`);
-
       errorInSignup = false;
     } catch (e) {
-      const error = e.response.data;
+      const error = e?.response?.data;
 
       if (error?.message === 'User already exists') {
         const { proceedSignup } = await prompt(proceedSignupQuestions);
