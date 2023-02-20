@@ -40,15 +40,6 @@ export const useMarkNotificationsAsReadByFeed = ({
             };
           }
         );
-        queryClient.refetchQueries(INFINITE_NOTIFICATIONS_QUERY_KEY, {
-          exact: false,
-        });
-        queryClient.refetchQueries(FEED_UNSEEN_COUNT_QUERY_KEY, {
-          exact: false,
-        });
-        queryClient.refetchQueries(UNSEEN_COUNT_QUERY_KEY, {
-          exact: false,
-        });
         onSuccess?.(responseData, variables, context);
       },
     }
