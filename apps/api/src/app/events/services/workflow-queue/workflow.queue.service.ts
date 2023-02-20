@@ -14,6 +14,7 @@ import { QueueNextJobCommand } from '../../usecases/queue-next-job/queue-next-jo
 import { QueueNextJob } from '../../usecases/queue-next-job/queue-next-job.usecase';
 import { ConnectionOptions } from 'tls';
 import { PinoLogger } from 'nestjs-pino';
+import { storage, Store } from 'nestjs-pino/storage';
 
 @Injectable()
 export class WorkflowQueueService {
@@ -82,14 +83,21 @@ export class WorkflowQueueService {
 
   public getWorkerProcessor() {
     return async ({ data }: { data: JobEntity }) => {
-      return await this.runJob.execute(
-        RunJobCommand.create({
-          jobId: data._id,
-          environmentId: data._environmentId,
-          organizationId: data._organizationId,
-          userId: data._userId,
-        })
-      );
+      return await new Promise(async (resolve, reject) => {
+        storage.run(new Store(PinoLogger.root), () => {
+          return this.runJob
+            .execute(
+              RunJobCommand.create({
+                jobId: data._id,
+                environmentId: data._environmentId,
+                organizationId: data._organizationId,
+                userId: data._userId,
+              })
+            )
+            .then(resolve)
+            .catch(reject);
+        });
+      });
     };
   }
 

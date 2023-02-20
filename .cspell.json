@@ -396,7 +396,8 @@
     "redlock",
     "axios",
     "ioredis",
-    "newrelic"
+    "newrelic",
+    "pino"
   ],
   "flagWords": [],
   "patterns": [
