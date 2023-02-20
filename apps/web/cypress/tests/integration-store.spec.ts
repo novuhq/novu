@@ -72,8 +72,9 @@ describe('Integration store page', function () {
 
       getFirstIntegrationCard().getByTestId('provider-card-settings-svg').click();
 
-      cy.getByTestId('apiKey').should('have.value', '123');
-      cy.getByTestId('from').should('have.value', 'cypress');
+      cy.getByTestId('from').should('have.value', 'cypress-nodemailer');
+      cy.getByTestId('senderName').should('have.value', 'cypress-novu');
+      cy.getByTestId('host').should('have.value', 'localhost.novu.co');
     });
   });
 });
@@ -103,8 +104,8 @@ function interceptNodemailerIntegration(isActive: boolean) {
         providerId: 'nodemailer',
         active: isActive,
         credentials: {
-          from: 'cypress',
-          senderName: 'Novu',
+          from: 'cypress-nodemailer',
+          senderName: 'cypress-novu',
           host: 'localhost.novu.co',
           port: 587,
           secure: true,
