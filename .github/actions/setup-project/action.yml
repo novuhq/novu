@@ -26,7 +26,7 @@ runs:
         node-version: '16.15.1'
 
     - name: 💵 Start Redis
-      uses: supercharge/redis-github-action@1.4.0
+      uses: supercharge/redis-github-action@1.5.0
 
     - name: 📚 Start MongoDB
       uses: supercharge/mongodb-github-action@v1.8.0
