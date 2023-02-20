@@ -1,4 +1,4 @@
-import { AppShell } from '@mantine/core';
+import { AppShell, useMantineTheme } from '@mantine/core';
 import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
