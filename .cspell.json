@@ -398,7 +398,8 @@
     "ioredis",
     "newrelic",
     "nodemailer",
-    "emailjs"
+    "emailjs",
+    "typeof"
   ],
   "flagWords": [],
   "patterns": [
