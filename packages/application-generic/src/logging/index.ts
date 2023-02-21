@@ -1,15 +1,4 @@
-import { LoggerErrorInterceptor, LoggerModule, PinoLogger } from 'nestjs-pino';
-import { DynamicModule, RequestMethod } from '@nestjs/common';
-
 const loggingLevelArr = ['error', 'warn', 'info', 'verbose', 'debug'];
-
-const loggingLevels = {
-  error: 0,
-  warn: 1,
-  info: 2,
-  verbose: 3,
-  debug: 4,
-};
 
 interface ILoggingVariables {
   env: string;
@@ -23,11 +12,9 @@ interface ILoggingVariables {
 function getLoggingVariables(): ILoggingVariables {
   // eslint-disable-next-line no-console
   console.log('Env: ' + process.env.NODE_ENV);
-  let env = process.env.NODE_ENV;
-  env ??= 'local';
+  const env = process.env.NODE_ENV ?? 'local';
+  let logLevel = process.env.LOGGING_LEVEL ?? 'info';
 
-  let logLevel = process.env.LOGGING_LEVEL;
-  logLevel ??= 'info';
   if (loggingLevelArr.indexOf(logLevel) === -1) {
     // eslint-disable-next-line no-console
     console.log(
@@ -36,18 +23,20 @@ function getLoggingVariables(): ILoggingVariables {
         loggingLevelArr +
         '. Reverting to info.'
     );
+
     logLevel = 'info';
   }
+
   // eslint-disable-next-line no-console
   console.log('Log Level: ' + logLevel);
 
-  let hostingPlatform = process.env.HOSTING_PLATFORM;
-  hostingPlatform ??= 'Docker';
+  const hostingPlatform = process.env.HOSTING_PLATFORM ?? 'Docker';
+
   // eslint-disable-next-line no-console
   console.log('Platform: ' + hostingPlatform);
 
-  let tenant = process.env.TENANT;
-  tenant ??= 'OS';
+  const tenant = process.env.TENANT ?? 'OS';
+
   // eslint-disable-next-line no-console
   console.log('Tenant: ' + tenant);
 

@@ -9,6 +9,7 @@ import { CONTEXT_PATH } from './config';
 import helmet from 'helmet';
 import { version, name } from '../package.json';
 import { LoggerErrorInterceptor, PinoLogger } from 'nestjs-pino';
+import { LoggerService } from '@nestjs/common';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -22,8 +23,8 @@ export async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const redisIoAdapter = new RedisIoAdapter(app);
 
-  app.useLogger(app.get(PinoLogger));
-  app.flushLogs();
+  const logger: LoggerService = app.get(PinoLogger);
+  app.useLogger(logger);
 
   app.useGlobalInterceptors(new LoggerErrorInterceptor());
 

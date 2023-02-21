@@ -1,4 +1,4 @@
-import { Module, OnModuleInit } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
@@ -10,11 +10,10 @@ import { createNestLoggingModuleOptions } from '@novu/application-generic';
 import { LoggerModule } from 'nestjs-pino';
 const packageJson = require('../package.json');
 
-const modules = [SharedModule, HealthModule, SocketModule];
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const providers: any[] = [
-  AppService,
+const modules = [
+  SharedModule,
+  HealthModule,
+  SocketModule,
   LoggerModule.forRoot(
     createNestLoggingModuleOptions({
       serviceName: packageJson.name,
@@ -22,6 +21,9 @@ const providers: any[] = [
     })
   ),
 ];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const providers: any[] = [AppService];
 
 if (process.env.SENTRY_DSN) {
   modules.push(RavenModule);
