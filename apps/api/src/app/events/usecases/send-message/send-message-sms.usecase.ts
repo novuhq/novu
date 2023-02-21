@@ -287,7 +287,6 @@ export class SendMessageSms extends SendMessageBase {
         }
       );
     } catch (e) {
-      console.log('error in sms', e);
       await this.sendErrorStatus(
         message,
         'error',

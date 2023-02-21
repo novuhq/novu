@@ -47,7 +47,6 @@ export class WorkflowQueue {
     this.worker.on('completed', onCompleted);
     this.worker.on('failed', onFailed);
     this.queueScheduler = new QueueScheduler('standard', this.bullConfig);
-    console.log('WorkflowQueue initialised');
   }
   backoffStrategies = {
     [this.WEBHOOK_FILTER_BACKOFF]: async (attemptsMade) => Math.round(Math.random() * Math.pow(2, attemptsMade) * 1000),

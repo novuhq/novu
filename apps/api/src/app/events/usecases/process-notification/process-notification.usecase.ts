@@ -16,7 +16,6 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
-  EmailProviderIdEnum,
 } from '@novu/shared';
 import { ProcessNotificationCommand } from './process-notification.command';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
@@ -70,9 +69,6 @@ export class ProcessNotification {
     }
     jobs[0].status = JobStatusEnum.QUEUED; //first job to be queued
     const storedJobs = await this.storeJobs(jobs);
-    if (jobs[0].providerId == EmailProviderIdEnum.Mailgun) {
-      console.log('storedJobs', storedJobs);
-    }
     await this.addFirstJob(storedJobs[0]);
   }
 
@@ -139,9 +135,6 @@ export class ProcessNotification {
     const { delay = 0, ...step } = stepWithDelay;
     if (!step.template) throw new ApiException('Step template was not found');
     const providerId: string | undefined = await this.getProviderId(command, step.template.type);
-    if (providerId == EmailProviderIdEnum.Mailgun) {
-      console.log('notification', notification);
-    }
 
     return {
       identifier: command.identifier,

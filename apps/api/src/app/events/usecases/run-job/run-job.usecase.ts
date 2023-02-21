@@ -7,8 +7,6 @@ import { SendMessageCommand } from '../send-message/send-message.command';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { DigestService } from '../../services/digest/digest-service';
 import { MinimalJob } from '../../services/workflow-queue/workflow-queue';
-import { SmsProviderIdEnum } from '@novu/shared';
-import { EmailProviderIdEnum } from '@novu/shared';
 
 @Injectable()
 export class RunJob {
@@ -33,9 +31,6 @@ export class RunJob {
 
       await this.jobRepository.updateStatus(command._organizationId, job._id, JobStatusEnum.RUNNING);
       const payload = await this.digestService.getPayload(job);
-      if (job.providerId == EmailProviderIdEnum.Mailgun) {
-        console.log('mailgun job... ', job);
-      }
       await this.storageHelperService.getAttachments(job.payload?.attachments);
       await this.sendMessage.execute(
         SendMessageCommand.create({
@@ -55,7 +50,6 @@ export class RunJob {
       );
       await this.storageHelperService.deleteAttachments(job.payload?.attachments);
     } catch (error) {
-      console.log('errorin runjob', error);
       throw new ApiException(error);
     }
 
