@@ -64,11 +64,11 @@ export class AuthController {
   githubAuth(context: ExecutionContext) {
     Logger.verbose('Checking Github Auth');
     Logger.debug('Context: ' + context);
+
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
       const err = new ApiException(
         'GitHub auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
       );
-      Logger.error(err);
       throw err;
     }
 

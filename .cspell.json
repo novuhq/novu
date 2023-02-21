@@ -399,7 +399,7 @@
     "newrelic",
     "nodemailer",
     "emailjs",
-    "typeof"
+    "typeof",
     "newrelic",
     "pino"
   ],

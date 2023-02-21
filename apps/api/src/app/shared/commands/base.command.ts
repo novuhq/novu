@@ -23,9 +23,7 @@ export abstract class BaseCommand {
         data: mappedErrors,
       });
 
-      const err = new BadRequestException(mappedErrors);
-      Logger.error(err);
-      throw err;
+      throw new BadRequestException(mappedErrors);
     }
 
     return convertedObject;

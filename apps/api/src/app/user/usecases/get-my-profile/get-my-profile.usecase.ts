@@ -12,10 +12,9 @@ export class GetMyProfileUsecase {
     const profile = await this.userRepository.findById(command.userId);
 
     if (!profile) {
-      const err = new NotFoundException('User not found');
-      Logger.error(err);
-      throw err;
+      throw new NotFoundException('User not found');
     }
+
     Logger.verbose('Found User');
 
     return profile;
