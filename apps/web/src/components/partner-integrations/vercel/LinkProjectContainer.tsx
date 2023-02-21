@@ -13,7 +13,7 @@ import { useVercelParams } from '../../../hooks/useVercelParams';
 import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '../../../design-system';
-import { useAuthController } from '../../../store/useAuthController';
+import { useAuthController } from '../../../hooks/useAuthController';
 import SetupLoader from '../../auth/SetupLoader';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 

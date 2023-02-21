@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import { TextAlignEnum } from '@novu/shared';
 
 import { colors } from '../../../design-system';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 import type { IForm } from '../formTypes';
 
 export function TextRowContent({ stepIndex, blockIndex }: { stepIndex: number; blockIndex: number }) {

@@ -8,7 +8,7 @@ import type { IForm } from './formTypes';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
-import { useActiveIntegrations } from '../../api/hooks';
+import { useActiveIntegrations } from '../../hooks';
 
 export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
   const { integrations } = useActiveIntegrations();

@@ -9,7 +9,7 @@ import { GoBack } from './route/GoBack';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { faqUrl, OnBoardingAnalyticsEnum } from '../consts';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function QuickStartWrapper({
   title,

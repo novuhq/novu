@@ -7,9 +7,9 @@ import { Stack, Stepper, Timeline } from '@mantine/core';
 import { ChannelCTATypeEnum, ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
-import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
-import { useTemplates } from '../../../api/hooks/useTemplates';
-import { useEnvController } from '../../../store/useEnvController';
+import { useNotificationGroup } from '../../../hooks/useNotificationGroup';
+import { useTemplates } from '../../../hooks/useTemplates';
+import { useEnvController } from '../../../hooks/useEnvController';
 import {
   APPLICATION_IDENTIFIER,
   frameworkInstructions,
@@ -22,7 +22,7 @@ import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { getInAppActivated } from '../../../api/integration';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function Setup() {
   const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();

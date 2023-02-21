@@ -10,7 +10,7 @@ import PageMeta from '../../../components/layout/components/PageMeta';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import { updateUserOnBoarding } from '../../../api/user';
 import { OnboardingSteps } from '../components/OnboardingSteps';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes.enum';
 import { FlowTypeEnum, OnBoardingAnalyticsEnum } from '../consts';
 

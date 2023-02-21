@@ -6,7 +6,7 @@ import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';
 import { Input, Select, Switch, Button } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;
