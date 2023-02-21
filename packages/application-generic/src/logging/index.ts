@@ -1,3 +1,13 @@
+import { LoggerErrorInterceptor, Logger as PinoLogger } from 'nestjs-pino';
+
+export function getErrorInterceptor() {
+  return new LoggerErrorInterceptor();
+}
+
+export function getLogger() {
+  return PinoLogger;
+}
+
 const loggingLevelArr = ['error', 'warn', 'info', 'verbose', 'debug'];
 
 interface ILoggingVariables {

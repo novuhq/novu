@@ -3,8 +3,7 @@ import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
-import { INestApplication, Logger, LoggerService, ValidationPipe } from '@nestjs/common';
-import { LoggerErrorInterceptor, PinoLogger } from 'nestjs-pino';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
@@ -19,6 +18,7 @@ import { ResponseInterceptor } from './app/shared/framework/response.interceptor
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
+import { getLogger, getErrorInterceptor } from '@novu/application-generic';
 const packageJson = require('../package.json');
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
@@ -47,9 +47,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     app = await NestFactory.create(AppModule, { bufferLogs: true });
   }
 
-  const aLget: LoggerService = app.get(PinoLogger);
-
-  app.useLogger(aLget);
+  app.useLogger(app.get(getLogger()));
   app.flushLogs();
 
   if (process.env.SENTRY_DSN) {
@@ -72,7 +70,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   );
 
   app.useGlobalInterceptors(new ResponseInterceptor());
-  app.useGlobalInterceptors(new LoggerErrorInterceptor());
+  app.useGlobalInterceptors(getErrorInterceptor());
 
   app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
   app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));

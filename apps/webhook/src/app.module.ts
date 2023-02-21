@@ -11,11 +11,10 @@ import { createNestLoggingModuleOptions } from '@novu/application-generic';
 import { LoggerModule } from 'nestjs-pino';
 const packageJson = require('../package.json');
 
-const modules = [SharedModule, HealthModule, WebhooksModule];
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const providers: any[] = [
-  AppService,
+const modules = [
+  SharedModule,
+  HealthModule,
+  WebhooksModule,
   LoggerModule.forRoot(
     createNestLoggingModuleOptions({
       serviceName: packageJson.name,
@@ -23,6 +22,9 @@ const providers: any[] = [
     })
   ),
 ];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const providers: any[] = [AppService];
 
 if (process.env.SENTRY_DSN) {
   modules.push(RavenModule);
