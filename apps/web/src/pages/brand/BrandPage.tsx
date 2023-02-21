@@ -4,7 +4,7 @@ import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
-import { useAuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../components/providers/AuthProvider';
 import { BrandingForm, LayoutsListPage } from './tabs';
 
 const BRANDING = 'Assets';

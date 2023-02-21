@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { IOrganizationEntity, IUserEntity, IJwtPayload } from '@novu/shared';
-import { useAuthController } from '../hooks/useAuthController';
+import { useAuthController } from '../../hooks/useAuthController';
 
 type UserContext = {
   token: string | null;

@@ -3,7 +3,7 @@ import { useSearchParams } from './useSearchParams';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { getToken } from './useAuthController';
-import { useSegment } from './useSegment';
+import { useSegment } from '../components/providers/SegmentProvider';
 
 export const useBlueprint = () => {
   const searchParams = useSearchParams();

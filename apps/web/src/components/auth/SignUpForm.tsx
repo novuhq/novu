@@ -7,7 +7,7 @@ import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
 
-import { useAuthContext } from '../../store/authContext';
+import { useAuthContext } from '../providers/AuthProvider';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
 import { GitHub } from '../../design-system/icons';

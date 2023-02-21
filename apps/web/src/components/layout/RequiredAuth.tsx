@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes.enum';
 import { useBlueprint } from '../../hooks/useBlueprint';
-import { useAuthContext } from '../../store/authContext';
+import { useAuthContext } from '../providers/AuthProvider';
 import { getToken, getTokenPayload } from '../../hooks/useAuthController';
 import decode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';

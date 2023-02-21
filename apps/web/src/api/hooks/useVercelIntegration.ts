@@ -3,10 +3,10 @@ import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
-import { useVercelParams } from './useVercelParams';
-import { useAuthContext } from '../components/providers/AuthProvider';
-import { errorMessage } from '../utils/notifications';
-import { vercelIntegrationSetup } from '../api/vercel-integration';
+import { useVercelParams } from '../../hooks/useVercelParams';
+import { useAuthContext } from '../../components/providers/AuthProvider';
+import { errorMessage } from '../../utils/notifications';
+import { vercelIntegrationSetup } from '../vercel-integration';
 
 export function useVercelIntegration() {
   const { token } = useAuthContext();

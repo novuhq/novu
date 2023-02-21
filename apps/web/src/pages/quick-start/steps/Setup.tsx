@@ -22,7 +22,7 @@ import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { getInAppActivated } from '../../../api/integration';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function Setup() {
   const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();

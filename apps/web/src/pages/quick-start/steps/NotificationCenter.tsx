@@ -5,7 +5,7 @@ import { Cards } from '../components/Cards';
 import { Stack } from '@mantine/core';
 import { BellGradient } from '../../../design-system/icons';
 import { Smiley } from '../../../design-system/icons/gradient/Smiley';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import { FlowTypeEnum, OnBoardingAnalyticsEnum } from '../consts';
 
 export function NotificationCenter() {

@@ -6,7 +6,7 @@ import { OnBoardingAnalyticsEnum, welcomeDescription } from '../consts';
 import { Cards } from '../components/Cards';
 import { BellGradient, ChatGradient, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 import { colors, Text } from '../../../design-system';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function Quickstart() {
   const segment = useSegment();

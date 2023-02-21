@@ -7,7 +7,7 @@ import { useTemplates } from '../../../hooks/useTemplates';
 import { notificationTemplateName, OnBoardingAnalyticsEnum, onBoardingSubscriberId } from '../consts';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { testTrigger } from '../../../api/notification-templates';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import * as Sentry from '@sentry/react';
 
 export function TestNotificationTrigger() {

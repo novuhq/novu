@@ -8,7 +8,7 @@ import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
 import { Button, Text, colors, Tooltip } from '../../../design-system';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { useAuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../providers/AuthProvider';
 import { ArrowDown, Check, Copy, Invite } from '../../../design-system/icons';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import useStyles from '../../../design-system/select/Select.styles';

@@ -1,6 +1,6 @@
 import { useIntegrationLimit } from '../../../hooks/integrations/useIntegrationLimit';
 import { ChannelTypeEnum } from '@novu/shared';
-import { useAuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../../components/providers/AuthProvider';
 
 export const EmailIntegrationInfo = ({
   integration,
