@@ -10,7 +10,7 @@ import { TriggerSnippetTabs } from './TriggerSnippetTabs';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { Trash } from '../../design-system/icons';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
-import { useEnvController } from '../../store/useEnvController';
+import { useEnvController } from '../../hooks/useEnvController';
 import { useTemplateEditor } from './TemplateEditorProvider';
 import { deleteTemplateById } from '../../api/notification-templates';
 import { ROUTES } from '../../constants/routes.enum';

@@ -4,7 +4,7 @@ import { IEnvironment } from '@novu/shared';
 
 import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
 import { api } from '../api/api.client';
-import { useAuthContext } from './authContext';
+import { useAuthContext } from '../store/authContext';
 import { QueryKeys } from '../api/query.keys';
 
 export type EnvironmentContext = {

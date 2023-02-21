@@ -9,7 +9,7 @@ import { ChannelCTATypeEnum, ICreateNotificationTemplateDto, INotificationTempla
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { useNotificationGroup } from '../../../hooks/useNotificationGroup';
 import { useTemplates } from '../../../hooks/useTemplates';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 import {
   APPLICATION_IDENTIFIER,
   frameworkInstructions,

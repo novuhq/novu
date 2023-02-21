@@ -1,7 +1,7 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 import type { IForm } from '../formTypes';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { Textarea } from '../../../design-system';

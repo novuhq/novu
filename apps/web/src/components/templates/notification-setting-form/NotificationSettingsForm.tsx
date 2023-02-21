@@ -8,7 +8,7 @@ import { INotificationTrigger } from '@novu/shared';
 import { api } from '../../../api/api.client';
 import { Input, Select, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 import type { IForm } from '../formTypes';
 import { useNotificationGroup } from '../../../hooks/useNotificationGroup';
 

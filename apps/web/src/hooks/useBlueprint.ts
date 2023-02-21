@@ -2,7 +2,7 @@ import { ActivePageEnum } from '../pages/templates/editor/TemplateEditorPage';
 import { useSearchParams } from './useSearchParams';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import { getToken } from '../store/useAuthController';
+import { getToken } from './useAuthController';
 import { useSegment } from './useSegment';
 
 export const useBlueprint = () => {

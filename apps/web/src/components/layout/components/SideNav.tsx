@@ -14,7 +14,7 @@ import styled from '@emotion/styled';
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
 import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 import { useAuthContext } from '../../../store/authContext';
 import OrganizationSelect from './OrganizationSelect';
 import { useSpotlightContext } from '../../../store/spotlightContext';

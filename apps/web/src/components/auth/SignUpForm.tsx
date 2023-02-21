@@ -12,7 +12,7 @@ import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
 import { IS_DOCKER_HOSTED } from '../../config';
-import { applyToken } from '../../store/useAuthController';
+import { applyToken } from '../../hooks/useAuthController';
 import { useAcceptInvite } from './useAcceptInvite';
 import { useVercelParams } from '../../hooks/useVercelParams';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';

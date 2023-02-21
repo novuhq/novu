@@ -3,7 +3,7 @@ import { Center, Container, Grid, Group } from '@mantine/core';
 import { Button, colors, Switch, Title, Text } from '../../design-system';
 import { ArrowLeft } from '../../design-system/icons';
 import { ActivePageEnum, EditorPages } from '../../pages/templates/editor/TemplateEditorPage';
-import { useEnvController } from '../../store/useEnvController';
+import { useEnvController } from '../../hooks/useEnvController';
 import { When } from '../utils/When';
 import { useTemplateEditor } from './TemplateEditorProvider';
 import { useStatusChangeControllerHook } from './useStatusChangeController';

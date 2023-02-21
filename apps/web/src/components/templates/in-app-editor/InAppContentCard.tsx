@@ -1,6 +1,6 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { colors, Tabs } from '../../../design-system';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Grid, useMantineTheme, JsonInput } from '@mantine/core';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';

@@ -4,7 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Route, Routes, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthProvider } from './store/authContext';
-import { applyToken, getToken } from './store/useAuthController';
+import { applyToken, getToken } from './hooks/useAuthController';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';

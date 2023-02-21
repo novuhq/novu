@@ -13,7 +13,7 @@ import { Tag, Button, Table, colors, Text } from '../../design-system';
 import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
-import { useEnvController } from '../../store/useEnvController';
+import { useEnvController } from '../../hooks/useEnvController';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
 

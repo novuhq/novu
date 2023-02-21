@@ -8,7 +8,7 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
 import type { IForm } from '../../../components/templates/formTypes';
 import { useActiveIntegrations } from '../../../hooks';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
 import { TemplateEditor } from '../../../components/templates/TemplateEditor';
 import { TemplateSettings } from '../../../components/templates/TemplateSettings';

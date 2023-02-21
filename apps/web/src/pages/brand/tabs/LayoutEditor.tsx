@@ -3,7 +3,7 @@ import { EmailCustomCodeEditor } from '../../../components/templates/email-edito
 import { Center, Grid, Group, Modal, Title, useMantineTheme } from '@mantine/core';
 import { ArrowLeft } from '../../../design-system/icons';
 import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows } from '../../../design-system';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
