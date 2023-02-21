@@ -38,7 +38,7 @@ function getLoggingVariables(): ILoggingVariables {
   }
 
   // eslint-disable-next-line no-console
-  console.log('Log Level: ' + logLevel);
+  console.log('Logging Level: ' + logLevel);
 
   const hostingPlatform = process.env.HOSTING_PLATFORM ?? 'Docker';
 
@@ -60,7 +60,6 @@ function getLoggingVariables(): ILoggingVariables {
 
 export function createNestLoggingModuleOptions(settings: ILoggerSettings) {
   const values = getLoggingVariables();
-  console.log('get options');
 
   return {
     pinoHttp: {

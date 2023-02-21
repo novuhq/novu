@@ -8,6 +8,7 @@ import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
 import helmet from 'helmet';
 import { version } from '../package.json';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import { getLogger, getErrorInterceptor } from '@novu/application-generic';
 
 if (process.env.SENTRY_DSN) {
@@ -22,7 +23,7 @@ export async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const redisIoAdapter = new RedisIoAdapter(app);
 
-  app.useLogger(app.get(getLogger()));
+  app.useLogger(app.get(PinoLogger));
   app.flushLogs();
 
   app.useGlobalInterceptors(getErrorInterceptor());

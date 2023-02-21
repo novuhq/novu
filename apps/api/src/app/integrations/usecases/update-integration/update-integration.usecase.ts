@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException, Inject, Logger } fr
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
-import { encryptCredentials, throwAndLog } from '@novu/application-generic';
+import { encryptCredentials } from '@novu/application-generic';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
@@ -24,7 +24,7 @@ export class UpdateIntegration {
 
     const existingIntegration = await this.integrationRepository.findById(command.integrationId);
     if (!existingIntegration) {
-      throwAndLog(new NotFoundException(`Entity with id ${command.integrationId} not found`), Logger);
+      throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
     }
 
     await this.invalidateCache.clearCache({
