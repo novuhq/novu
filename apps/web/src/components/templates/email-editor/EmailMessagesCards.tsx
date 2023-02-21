@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EmailContentCard } from './EmailContentCard';
-import { useAuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../providers/AuthProvider';
 import { When } from '../../utils/When';
 import { Preview } from '../../../pages/templates/editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';

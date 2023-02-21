@@ -124,7 +124,9 @@ export function TemplateButton({
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
           </Popover.Target>
           <Popover.Dropdown>
-            <Text rows={1}>{errors || 'Something is missing here'}</Text>
+            <Text color={colors.white} rows={1}>
+              {errors || 'Something is missing here'}
+            </Text>
           </Popover.Dropdown>
         </Popover>
       )}

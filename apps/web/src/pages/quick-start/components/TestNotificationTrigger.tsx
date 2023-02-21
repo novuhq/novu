@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { LoadingOverlay, Stack, useMantineTheme } from '@mantine/core';
 
 import { Button, colors, Text } from '../../../design-system';
-import { useTemplates } from '../../../api/hooks/useTemplates';
+import { useTemplates } from '../../../hooks/useTemplates';
 import { notificationTemplateName, OnBoardingAnalyticsEnum, onBoardingSubscriberId } from '../consts';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { testTrigger } from '../../../api/notification-templates';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import * as Sentry from '@sentry/react';
 
 export function TestNotificationTrigger() {

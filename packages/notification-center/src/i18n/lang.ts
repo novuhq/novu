@@ -42,9 +42,9 @@ import { LV } from './languages/lv';
 import { ML } from './languages/ml';
 import { MR } from './languages/mr';
 import { MS } from './languages/ms';
+import { NB } from './languages/nb';
 import { NE } from './languages/ne';
 import { NL } from './languages/nl';
-import { NO } from './languages/no';
 import { OR } from './languages/or';
 import { PA } from './languages/pa';
 import { PL } from './languages/pl';
@@ -132,7 +132,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ms: MS,
   ne: NE,
   nl: NL,
-  no: NO,
+  nb: NB,
   or: OR,
   pa: PA,
   pl: PL,
@@ -216,9 +216,9 @@ export type I18NLanguage =
   | 'ml'
   | 'mr'
   | 'ms'
+  | 'nb'
   | 'ne'
   | 'nl'
-  | 'no'
   | 'or'
   | 'pa'
   | 'pl'

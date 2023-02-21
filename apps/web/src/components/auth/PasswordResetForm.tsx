@@ -5,7 +5,7 @@ import * as Sentry from '@sentry/react';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
 
-import { useAuthContext } from '../../store/authContext';
+import { useAuthContext } from '../providers/AuthProvider';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Text } from '../../design-system';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';

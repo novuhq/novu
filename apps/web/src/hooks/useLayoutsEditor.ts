@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { QueryKeys } from '../query.keys';
-import { createLayout, getLayoutById, updateLayoutById } from '../layouts';
+import { QueryKeys } from '../api/query.keys';
+import { createLayout, getLayoutById, updateLayoutById } from '../api/layouts';
 import { ILayoutEntity } from '@novu/shared';
 
 export function useLayoutsEditor(id: string) {

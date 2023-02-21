@@ -145,9 +145,10 @@ cd apps/web && npm run cypress:open
 ### Different ports used by the services the project spins up
 
 - **3000** - API
-- **3002** - WebSocket service
+- **3002** - WebSocket Service
 - **4200** - Web Management UI
-- **4500** - Iframe embed for notification center
+- **4701** - Iframe embed for notification center
+- **4500** - Widget Service
 
 ### Testing providers
 

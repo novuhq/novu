@@ -8,7 +8,7 @@ import { Button, Title, Modal } from '../../design-system';
 import { inputStyles } from '../../design-system/config/inputs.styles';
 import { useState } from 'react';
 import { errorMessage, successMessage } from '../../utils/notifications';
-import { useAuthContext } from '../../store/authContext';
+import { useAuthContext } from '../providers/AuthProvider';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
 import { testTrigger } from '../../api/notification-templates';
 

@@ -7,7 +7,7 @@ import { showNotification } from '@mantine/notifications';
 import { IFeedEntity } from '@novu/shared';
 
 import { Checkbox, colors, Input } from '../../../design-system';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 import { createFeed, getFeeds } from '../../../api/feeds';
 import { QueryKeys } from '../../../api/query.keys';
 import { PlusGradient } from '../../../design-system/icons';

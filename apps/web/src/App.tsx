@@ -3,8 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Route, Routes, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
-import { AuthProvider } from './store/authContext';
-import { applyToken, getToken } from './store/useAuthController';
+import { AuthProvider } from './components/providers/AuthProvider';
+import { applyToken, getToken } from './hooks/useAuthController';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
@@ -27,8 +27,7 @@ import { TemplateFormProvider } from './components/templates/TemplateFormProvide
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { ROUTES } from './constants/routes.enum';
 import { BrandPage } from './pages/brand/BrandPage';
-import { SegmentProvider } from './store/segment.context';
-
+import { SegmentProvider } from './components/providers/SegmentProvider';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import packageJson from '../package.json';

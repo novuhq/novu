@@ -12,7 +12,7 @@ import { useProcessVariables } from '../../../hooks/useProcessVariables';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 import { errorMessage } from '../../../utils/notifications';
-import { useActiveIntegrations } from '../../../api/hooks';
+import { useActiveIntegrations } from '../../../hooks';
 
 export const Preview = ({ activeStep, view }: { activeStep: number; view: string }) => {
   const { control } = useFormContext();

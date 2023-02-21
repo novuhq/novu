@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
 
-import { useAuthContext } from '../../store/authContext';
+import { useAuthContext } from '../providers/AuthProvider';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
