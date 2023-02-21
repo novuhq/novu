@@ -68,11 +68,6 @@ export class SendMessagePush extends SendMessageBase {
 
     const data = {
       subscriber: subscriber,
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
       ...command.payload,
     };
     let content = '';

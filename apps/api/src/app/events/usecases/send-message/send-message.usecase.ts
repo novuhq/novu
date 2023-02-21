@@ -2,8 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FILTER_TO_LABEL,
-  ICondition,
   IPreferenceChannels,
   StepTypeEnum,
 } from '@novu/shared';
@@ -24,7 +22,6 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { SendMessageDelay } from './send-message-delay.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
@@ -53,7 +50,6 @@ export class SendMessage {
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
-    private sendMessageDelay: SendMessageDelay,
     private matchMessage: MessageMatcher,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
@@ -63,7 +59,6 @@ export class SendMessage {
     const preferred = await this.filterPreferredChannels(command.job);
 
     const stepType = command.step?.template?.type;
-
     if (!command.payload?.$on_boarding_trigger) {
       const usedFilters = shouldRun.conditions.reduce(MessageMatcher.sumFilters, {
         stepFilters: [],
@@ -80,7 +75,7 @@ export class SendMessage {
         delay: command.job?.delay,
         jobType: command.job?.type,
         digestType: command.job.digest?.type,
-        digestEventsCount: command.job.digest?.events?.length,
+        digestEventsCount: command.job.digestedNotificationIds?.length,
         digestUnit: command.job.digest?.unit,
         digestAmount: command.job.digest?.amount,
         filterPassed: shouldRun,
@@ -93,19 +88,6 @@ export class SendMessage {
       await this.jobRepository.updateStatus(command.organizationId, command.jobId, JobStatusEnum.CANCELED);
 
       return;
-    }
-
-    if (stepType !== StepTypeEnum.DELAY) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: false,
-        })
-      );
     }
 
     switch (stepType) {
@@ -121,8 +103,6 @@ export class SendMessage {
         return await this.sendMessagePush.execute(command);
       case StepTypeEnum.DIGEST:
         return await this.digest.execute(command);
-      case StepTypeEnum.DELAY:
-        return await this.sendMessageDelay.execute(command);
     }
   }
 

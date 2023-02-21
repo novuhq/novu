@@ -87,11 +87,6 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
       .populate('template', '_id name triggers')
       .populate({
         path: 'jobs',
-        match: {
-          type: {
-            $nin: [StepTypeEnum.TRIGGER],
-          },
-        },
         select: 'createdAt digest payload providerId step status type updatedAt',
         populate: [
           {

@@ -1,7 +1,6 @@
 import { BaseRepository, Omit } from '../base-repository';
 import { JobEntity, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { Document, FilterQuery, ProjectionType } from 'mongoose';
 import { NotificationTemplateEntity } from '../notification-template';
 import { SubscriberEntity } from '../subscriber';
@@ -11,7 +10,7 @@ import { EnvironmentEntity } from '../environment';
 class PartialJobEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
 
 type EnforceEnvironmentQuery = FilterQuery<PartialJobEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
+  ({ _id: string } | { _environmentId: string } | { _organizationId: string });
 
 export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEntity> {
   constructor() {
@@ -64,78 +63,6 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     );
   }
 
-  public async findInAppsForDigest(organizationId: string, transactionId: string, subscriberId: string) {
-    return await this.find({
-      _organizationId: organizationId,
-      type: ChannelTypeEnum.IN_APP,
-      _subscriberId: subscriberId,
-      transactionId,
-    });
-  }
-
-  public async findJobsToDigest(from: Date, templateId: string, environmentId: string, subscriberId: string) {
-    /**
-     * Remove digest jobs that have been completed and currently delayed jobs that have a digest pending.
-     */
-    const digests = await this.find({
-      updatedAt: {
-        $gte: from,
-      },
-      _templateId: templateId,
-      $or: [
-        { status: JobStatusEnum.COMPLETED, type: StepTypeEnum.DIGEST },
-        { status: JobStatusEnum.DELAYED, type: StepTypeEnum.DELAY },
-      ],
-      _environmentId: environmentId,
-      _subscriberId: subscriberId,
-    });
-    const transactionIds = digests.map((job) => job.transactionId);
-
-    const result = await this.find({
-      updatedAt: {
-        $gte: from,
-      },
-      _templateId: templateId,
-      status: JobStatusEnum.COMPLETED,
-      type: StepTypeEnum.TRIGGER,
-      _environmentId: environmentId,
-      _subscriberId: subscriberId,
-      transactionId: {
-        $nin: transactionIds,
-      },
-    });
-
-    const transactionIdsTriggers = result.map((job) => job.transactionId);
-
-    /**
-     * Update events that have been digested (events that have been sent) to be of status completed.
-     * To avoid cases of same events being sent multiple times.
-     * Happens in cases of delay followed by digest
-     */
-    await this.update(
-      {
-        updatedAt: {
-          $gte: from,
-        },
-        _templateId: templateId,
-        status: JobStatusEnum.PENDING,
-        type: StepTypeEnum.DIGEST,
-        _environmentId: environmentId,
-        _subscriberId: subscriberId,
-        transactionId: {
-          $in: transactionIdsTriggers,
-        },
-      },
-      {
-        $set: {
-          status: JobStatusEnum.COMPLETED,
-        },
-      }
-    );
-
-    return result;
-  }
-
   public async findOnePopulate({
     query,
     select = '',
@@ -166,47 +93,11 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
       .lean()
       .exec();
   }
-
-  public async shouldDelayDigestJobOrMerge(
-    job: JobEntity,
-    digestKey?: string,
-    digestValue?: string | number
-  ): Promise<{ matched: number; modified: number }> {
-    const execution = {
-      matched: 0,
-      modified: 0,
-    };
-
-    const delayedDigestJobs = await this._model.find({
-      status: JobStatusEnum.DELAYED,
-      type: StepTypeEnum.DIGEST,
-      _templateId: job._templateId,
-      _environmentId: this.convertStringToObjectId(job._environmentId),
-      _subscriberId: this.convertStringToObjectId(job._subscriberId),
-      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
-    });
-
-    const matched = delayedDigestJobs.length;
-    execution.matched = matched;
-
-    if (execution.matched === 0) {
-      const updatedDigestJob = await this._model.updateOne(
-        {
-          _environmentId: job._environmentId,
-          _templateId: job._templateId,
-          _subscriberId: job._subscriberId,
-          _id: job._id,
-        },
-        {
-          $set: {
-            status: JobStatusEnum.DELAYED,
-          },
-        }
-      );
-
-      execution.modified = updatedDigestJob.modifiedCount;
-    }
-
-    return execution;
-  }
+  /*
+   *base command not liking this, messing up data completely, it is randomly changing data
+   *not sure if this is known issue, wasted lot of time.. need to do more research
+   *public async findByIdPayloadPopulated(id: string, select?: string) {
+   *  return Job.findById(id, select).populate('digestedPayload', 'payload').lean().exec();
+   *}
+   */
 }

@@ -13,7 +13,6 @@ export enum StepTypeEnum {
   CHAT = 'chat',
   PUSH = 'push',
   DIGEST = 'digest',
-  TRIGGER = 'trigger',
   DELAY = 'delay',
 }
 

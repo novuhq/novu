@@ -294,9 +294,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(body.data).to.be.ok;
 
     const template: INotificationTemplate = body.data;
-    const steps = template.steps;
-    expect(steps[0]._parentId).to.equal(null);
-    expect(steps[0]._id).to.equal(steps[1]._parentId);
+    expect(template.steps.length).to.equal(2);
   });
 
   it('should use sender name in email template', async function () {

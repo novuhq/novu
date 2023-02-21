@@ -74,7 +74,6 @@ export class SendMessageInApp extends SendMessageBase {
     }
 
     const organization = await this.organizationRepository.findById(command.organizationId);
-
     try {
       content = await this.compileInAppTemplate(
         inAppChannel.template.content,
@@ -260,11 +259,6 @@ export class SendMessageInApp extends SendMessageBase {
         template: content as string,
         data: {
           subscriber,
-          step: {
-            digest: !!command.events?.length,
-            events: command.events,
-            total_count: command.events?.length,
-          },
           branding: {
             logo: organization?.branding?.logo,
             color: organization?.branding?.color || '#f47373',

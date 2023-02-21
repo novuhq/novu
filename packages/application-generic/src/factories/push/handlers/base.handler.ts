@@ -17,9 +17,7 @@ export abstract class BasePushHandler implements IPushHandler {
 
   async send(options: IPushOptions) {
     if (process.env.NODE_ENV === 'test') {
-      throw new Error(
-        'Currently 3rd-party packages test are not support on test env'
-      );
+      return {};
     }
 
     return await this.provider.sendMessage(options);

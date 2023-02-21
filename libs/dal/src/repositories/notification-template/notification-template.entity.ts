@@ -40,8 +40,6 @@ export class NotificationTemplateEntity {
 
   _notificationGroupId: string;
 
-  _parentId?: string;
-
   deleted: boolean;
 
   deletedAt: string;

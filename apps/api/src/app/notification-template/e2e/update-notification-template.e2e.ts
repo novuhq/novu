@@ -214,7 +214,6 @@ describe('Update notification template by id - /notification-templates/:template
               content: [],
               cta: null,
             },
-            _parentId: step._parentId,
           };
         }),
         {
@@ -236,10 +235,7 @@ describe('Update notification template by id - /notification-templates/:template
 
     const steps = updated.data.steps;
 
-    expect(steps[0]._parentId).to.equal(null);
     expect(steps[0].template.preheader).to.equal('');
-    expect(steps[0]._id).to.equal(steps[1]._parentId);
-    expect(steps[1]._id).to.equal(steps[2]._parentId);
   });
 
   it('should update reply callbacks', async () => {

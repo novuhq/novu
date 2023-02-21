@@ -25,8 +25,8 @@ export class JobEntity {
   createdAt?: string;
   updatedAt?: string;
   _templateId: string;
+  digestedNotificationIds?: [string];
   digest?: {
-    events?: any[];
     amount?: number;
     unit?: DigestUnitEnum;
     digestKey?: string;

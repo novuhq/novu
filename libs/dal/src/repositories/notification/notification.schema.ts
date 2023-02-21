@@ -33,9 +33,6 @@ const notificationSchema = new Schema(
         type: Schema.Types.String,
       },
     ],
-    _digestedNotificationId: {
-      type: Schema.Types.String,
-    },
     to: {
       type: Schema.Types.Mixed,
     },

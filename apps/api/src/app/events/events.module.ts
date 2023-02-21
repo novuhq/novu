@@ -14,10 +14,10 @@ import { ExecutionDetailsModule } from '../execution-details/execution-details.m
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 
-import { EventsDistributedLockService } from './services/distributed-lock-service';
 import { StorageHelperService } from './services/storage-helper-service/storage-helper.service';
 import { TriggerHandlerQueueService } from './services/workflow-queue/trigger-handler-queue.service';
 import { WorkflowQueueService } from './services/workflow-queue/workflow.queue.service';
+import { DigestService } from './services/digest/digest-service';
 
 @Module({
   imports: [
@@ -34,12 +34,6 @@ import { WorkflowQueueService } from './services/workflow-queue/workflow.queue.s
     LayoutsModule,
   ],
   controllers: [EventsController],
-  providers: [
-    ...USE_CASES,
-    WorkflowQueueService,
-    StorageHelperService,
-    TriggerHandlerQueueService,
-    EventsDistributedLockService,
-  ],
+  providers: [...USE_CASES, WorkflowQueueService, StorageHelperService, TriggerHandlerQueueService, DigestService],
 })
 export class EventsModule {}

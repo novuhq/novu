@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { Document, Model, Query, Types, ProjectionType, FilterQuery } from 'mongoose';
+import { Document, Model, Query, Types, ProjectionType, QueryOptions, FilterQuery } from 'mongoose';
 
 export class BaseRepository<T_Query, T_Response> {
   public _model: Model<any & Document>;
@@ -40,6 +40,13 @@ export class BaseRepository<T_Query, T_Response> {
 
   async findOne(query: T_Query, select?: ProjectionType<T_Response>) {
     const data = await this.MongooseModel.findOne(query, select);
+    if (!data) return null;
+
+    return this.mapEntity(data.toObject());
+  }
+
+  async findOneAndUpdate(query: T_Query, updateBody: any, options?: QueryOptions<T_Response>) {
+    const data = await this.MongooseModel.findOneAndUpdate(query, updateBody, options);
     if (!data) return null;
 
     return this.mapEntity(data.toObject());

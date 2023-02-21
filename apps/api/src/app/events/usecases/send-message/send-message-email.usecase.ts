@@ -132,11 +132,6 @@ export class SendMessageEmail extends SendMessageBase {
       contentType: emailChannel.template.contentType ? emailChannel.template.contentType : 'editor',
       payload: {
         ...command.payload,
-        step: {
-          digest: !!command.events?.length,
-          events: command.events,
-          total_count: command.events?.length,
-        },
         subscriber,
       },
     };
@@ -308,7 +303,6 @@ export class SendMessageEmail extends SendMessageBase {
         notification,
         LogCodeEnum.SUBSCRIBER_MISSING_EMAIL
       );
-
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -392,6 +386,7 @@ export class SendMessageEmail extends SendMessageBase {
         }
       );
     } catch (error) {
+      console.log('error in email', error);
       await this.sendErrorStatus(
         message,
         'error',

@@ -13,7 +13,7 @@ export const useNotificationStatus = (notification: any): JobStatusEnum => {
         if (prev === JobStatusEnum.FAILED) {
           return prev;
         }
-        if ([JobStatusEnum.PENDING, JobStatusEnum.DELAYED].includes(prev)) {
+        if ([JobStatusEnum.PENDING, JobStatusEnum.QUEUED].includes(prev)) {
           return prev;
         }
 

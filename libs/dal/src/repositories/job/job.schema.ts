@@ -65,8 +65,9 @@ const jobSchema = new Schema(
     error: {
       type: Schema.Types.Mixed,
     },
+    digestedNotificationIds: [{ type: Schema.Types.ObjectId, ref: 'Notification' }],
+
     digest: {
-      events: [Schema.Types.Mixed],
       amount: {
         type: Schema.Types.Number,
       },
@@ -136,6 +137,12 @@ jobSchema.virtual('environment', {
   localField: '_environmentId',
   foreignField: '_id',
   justOne: true,
+});
+jobSchema.virtual('digestedPayload', {
+  ref: 'Notification',
+  localField: 'digestedNotificationIds',
+  foreignField: '_id',
+  justOne: false,
 });
 
 interface IJobDocument extends JobEntity, Document {

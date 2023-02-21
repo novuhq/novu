@@ -1,144 +1,93 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { JobsOptions, Queue, QueueBaseOptions, QueueScheduler, Worker } from 'bullmq';
+import { WorkflowQueue, MinimalJob } from './workflow-queue';
+import { Injectable, Inject } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { RunJob } from '../../usecases/run-job/run-job.usecase';
-import { RunJobCommand } from '../../usecases/run-job/run-job.command';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
-import { QueueNextJobCommand } from '../../usecases/queue-next-job/queue-next-job.command';
-import { QueueNextJob } from '../../usecases/queue-next-job/queue-next-job.usecase';
-import { ConnectionOptions } from 'tls';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class WorkflowQueueService {
-  private bullConfig: QueueBaseOptions = {
-    connection: {
-      db: Number(process.env.REDIS_DB_INDEX),
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST,
-      password: process.env.REDIS_PASSWORD,
-      connectTimeout: 50000,
-      keepAlive: 30000,
-      family: 4,
-      keyPrefix: getRedisPrefix(),
-      tls: process.env.REDIS_TLS as ConnectionOptions,
-    },
-  };
-  public readonly queue: Queue;
-  public readonly worker: Worker;
-  @Inject()
-  private jobRepository: JobRepository;
+  private readonly workflowQueue: WorkflowQueue;
   @Inject()
   private runJob: RunJob;
-  private readonly queueScheduler: QueueScheduler;
-  readonly DEFAULT_ATTEMPTS = 3;
 
-  constructor(private createExecutionDetails: CreateExecutionDetails, private queueNextJob: QueueNextJob) {
-    this.queue = new Queue('standard', {
-      ...this.bullConfig,
-      defaultJobOptions: {
-        removeOnComplete: true,
+  constructor(private jobRepository: JobRepository, private createExecutionDetails: CreateExecutionDetails) {
+    this.workflowQueue = new WorkflowQueue(this.workerProcessor, this.onCompleted, this.onFailed);
+  }
+  private async processNextJob({ data }, currentJobStatus: JobStatusEnum) {
+    if (currentJobStatus === JobStatusEnum.CANCELED) return;
+    await this.jobRepository.updateStatus(data._organizationId, data._id, currentJobStatus);
+    if (currentJobStatus === JobStatusEnum.COMPLETED || !data?.step?.shouldStopOnFail) {
+      await this.addChildJob(data);
+    }
+  }
+
+  private async addChildJob(currentJob: JobEntity) {
+    const nextJob = await this.jobRepository.findOneAndUpdate(
+      {
+        _environmentId: currentJob._environmentId,
+        _organizationId: currentJob._organizationId,
+        _parentId: currentJob._id,
+        status: JobStatusEnum.PENDING,
       },
-    });
-
-    this.worker = new Worker('standard', this.getWorkerProcessor(), this.getWorkerOpts());
-
-    this.worker.on('completed', async (job) => {
-      await this.jobRepository.updateStatus(job.data._organizationId, job.data._id, JobStatusEnum.COMPLETED);
-    });
-
-    this.worker.on('failed', async (job, e) => {
-      if (!shouldBackoff(e)) {
-        await this.jobRepository.updateStatus(job.data._organizationId, job.data._id, JobStatusEnum.FAILED);
-        await this.jobRepository.setError(job.data._organizationId, job.data._id, e);
-      }
-
-      const lastWebhookFilterRetry = job.attemptsMade === this.DEFAULT_ATTEMPTS && shouldBackoff(e);
-
-      if (lastWebhookFilterRetry) {
-        await this.handleLastFailedWebhookFilter(job, e);
-      }
-    });
-
-    this.queueScheduler = new QueueScheduler('standard', this.bullConfig);
-  }
-
-  private getWorkerOpts() {
-    return {
-      ...this.bullConfig,
-      lockDuration: 90000,
-      concurrency: 50,
-      settings: {
-        backoffStrategies: this.getBackoffStrategies(),
+      {
+        status: JobStatusEnum.QUEUED,
       },
-    };
-  }
-
-  public getWorkerProcessor() {
-    return async ({ data }: { data: JobEntity }) => {
-      return await this.runJob.execute(
-        RunJobCommand.create({
-          jobId: data._id,
-          environmentId: data._environmentId,
-          organizationId: data._organizationId,
-          userId: data._userId,
-        })
-      );
-    };
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async handleLastFailedWebhookFilter(job: any, e: Error) {
-    await this.jobRepository.updateStatus(job.data._organizationId, job.data._id, JobStatusEnum.FAILED);
-    await this.jobRepository.setError(job.data._organizationId, job.data._id, e);
-
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job.data),
-        detail: DetailEnum.WEBHOOK_FILTER_FAILED_LAST_RETRY,
-        source: ExecutionDetailsSourceEnum.WEBHOOK,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: true,
-        raw: JSON.stringify({ message: JSON.parse(e.message).message }),
-      })
+      {
+        new: true,
+      }
     );
 
-    if (!job?.data?.step?.shouldStopOnFail) {
-      await this.queueNextJob.execute(
-        QueueNextJobCommand.create({
-          parentId: job?.data._id,
-          environmentId: job?.data._environmentId,
-          organizationId: job?.data._organizationId,
-          userId: job?.data._userId,
-        })
-      );
-    }
+    if (!nextJob) return;
+
+    await this.addJob(nextJob);
   }
 
-  public async addToQueue(id: string, data: JobEntity, delay?: number | undefined) {
-    const options: JobsOptions = {
-      removeOnComplete: true,
-      removeOnFail: true,
-      delay,
-    };
+  public async addJob(job: JobEntity) {
+    if (job?.status !== JobStatusEnum.QUEUED) throw new ApiException(`Job status must be ${JobStatusEnum.QUEUED}`);
+    this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: job.delay && job.delay > 0 ? DetailEnum.STEP_QUEUED_WITH_DELAY : DetailEnum.STEP_QUEUED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+      })
+    );
+    const backoffType = this.stepContainsFilter(job, 'webhook') ? this.workflowQueue.WEBHOOK_FILTER_BACKOFF : undefined;
 
-    const stepContainsWebhookFilter = this.stepContainsFilter(data, 'webhook');
-
-    if (stepContainsWebhookFilter) {
-      options.backoff = {
-        type: 'webhookFilterBackoff',
-      };
-      options.attempts = this.DEFAULT_ATTEMPTS;
-    }
-
-    await this.queue.add(id, data, options);
+    await this.workflowQueue.addToQueue(job.identifier, job, backoffType);
   }
+
+  public async getJob(jobId: string) {
+    return await this.workflowQueue.getJob(jobId);
+  }
+
+  public async promoteJob(jobId: string) {
+    return await this.workflowQueue.promoteJob(jobId);
+  }
+
+  public async removeJob(jobId: string) {
+    return await this.workflowQueue.removeJob(jobId);
+  }
+
+  onCompleted = async (job, returnvalue) => await this.processNextJob(job, returnvalue);
+
+  onFailed = async (job) => {
+    await this.updateFailedJob(job);
+    if (job.opts.attempts && job.attemptsMade < job.opts.attempts) return;
+    await this.processNextJob(job, JobStatusEnum.FAILED);
+  };
+
+  workerProcessor = async ({ data }: { data: MinimalJob }): Promise<JobStatusEnum> => {
+    return await this.runJob.execute(data);
+  };
 
   private stepContainsFilter(data: JobEntity, onFilter: string) {
     return data.step.filters?.some((filter) => {
@@ -148,27 +97,28 @@ export class WorkflowQueueService {
     });
   }
 
-  private getBackoffStrategies = () => {
-    return {
-      webhookFilterBackoff: async (attemptsMade, err, job) => {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(job.data),
-            detail: DetailEnum.WEBHOOK_FILTER_FAILED_RETRY,
-            source: ExecutionDetailsSourceEnum.WEBHOOK,
-            status: ExecutionDetailsStatusEnum.PENDING,
-            isTest: false,
-            isRetry: true,
-            raw: JSON.stringify({ message: JSON.parse(err.message).message, attempt: attemptsMade }),
-          })
-        );
-
-        return Math.round(Math.random() * Math.pow(2, attemptsMade) * 1000);
-      },
-    };
-  };
-}
-
-export function shouldBackoff(err) {
-  return err.message.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
+  private async updateFailedJob(queuedJob) {
+    const { opts, data, failedReason }: { opts: any; data: MinimalJob; failedReason: any } = queuedJob;
+    const dbJob: any = await this.jobRepository.findById(data._id);
+    const retry = opts.attempts && queuedJob.attemptsMade < queuedJob.opts.attempts;
+    if (!retry) await this.jobRepository.setError(data._organizationId, data._id, failedReason);
+    const stepHasWebhook = opts?.backoff?.type === this.workflowQueue.WEBHOOK_FILTER_BACKOFF;
+    const detail = stepHasWebhook
+      ? retry
+        ? DetailEnum.WEBHOOK_FILTER_FAILED_RETRY
+        : DetailEnum.WEBHOOK_FILTER_FAILED_LAST_RETRY
+      : DetailEnum.JOB_FAILED;
+    const source = stepHasWebhook ? ExecutionDetailsSourceEnum.WEBHOOK : ExecutionDetailsSourceEnum.INTERNAL;
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(dbJob),
+        detail: detail,
+        source: source,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: true,
+        raw: JSON.stringify({ message: failedReason, attempt: queuedJob.attemptsMade }),
+      })
+    );
+  }
 }

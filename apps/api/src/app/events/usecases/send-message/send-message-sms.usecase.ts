@@ -75,11 +75,6 @@ export class SendMessageSms extends SendMessageBase {
 
     const payload = {
       subscriber: subscriber,
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
       ...command.payload,
     };
 
@@ -292,6 +287,7 @@ export class SendMessageSms extends SendMessageBase {
         }
       );
     } catch (e) {
+      console.log('error in sms', e);
       await this.sendErrorStatus(
         message,
         'error',

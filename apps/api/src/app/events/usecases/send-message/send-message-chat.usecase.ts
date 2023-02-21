@@ -69,14 +69,8 @@ export class SendMessageChat extends SendMessageBase {
     let content = '';
     const data = {
       subscriber: subscriber,
-      step: {
-        digest: !!command.events?.length,
-        events: command.events,
-        total_count: command.events?.length,
-      },
       ...command.payload,
     };
-
     try {
       content = await this.compileTemplate.execute(
         CompileTemplateCommand.create({
@@ -288,6 +282,7 @@ export class SendMessageChat extends SendMessageBase {
         })
       );
     } catch (e) {
+      console.log('Exception in chat', e);
       await this.sendErrorStatus(
         message,
         'error',

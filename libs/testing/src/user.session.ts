@@ -345,7 +345,7 @@ export class UserSession {
       runningJobs = await this.jobRepository.count({
         _organizationId: this.organization._id,
         type: {
-          $nin: [delay ? StepTypeEnum.DELAY : StepTypeEnum.DIGEST],
+          $nin: [StepTypeEnum.DIGEST],
         },
         _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId,
         status: {
@@ -353,6 +353,19 @@ export class UserSession {
         },
       });
     } while (parsedEvents > 0 || waitingCount > 0 || runningJobs > unfinishedJobs);
+  }
+
+  public async awaitAndPromote(workFlowQueue: any, id: string) {
+    do {
+      const delayedJobs = await workFlowQueue.getDelayed();
+      for (const job of delayedJobs) {
+        if (job.data._id === id) {
+          console.log('Got the added job back', id, job);
+
+          return;
+        }
+      }
+    } while (true);
   }
 
   public async applyChanges(where: Partial<ChangeEntity> = {}) {

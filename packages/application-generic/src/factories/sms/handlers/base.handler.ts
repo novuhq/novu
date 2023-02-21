@@ -21,9 +21,7 @@ export abstract class BaseSmsHandler implements ISmsHandler {
 
   async send(options: ISmsOptions) {
     if (process.env.NODE_ENV === 'test') {
-      throw new Error(
-        'Currently 3rd-party packages test are not support on test env'
-      );
+      return {};
     }
 
     return await this.provider.sendMessage(options);

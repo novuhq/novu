@@ -25,7 +25,6 @@ import {
 import { AnalyticsService } from '@novu/application-generic';
 import { ConnectionOptions } from 'tls';
 
-import { DistributedLockService } from './services/distributed-lock';
 import { QueueService } from './services/queue';
 import {
   AzureBlobStorageService,
@@ -91,12 +90,6 @@ const cacheService = {
 };
 
 const PROVIDERS = [
-  {
-    provide: DistributedLockService,
-    useFactory: () => {
-      return new DistributedLockService();
-    },
-  },
   {
     provide: QueueService,
     useFactory: () => {
