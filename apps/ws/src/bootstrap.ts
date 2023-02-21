@@ -8,7 +8,7 @@ import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
 import helmet from 'helmet';
 import { version, name } from '../package.json';
-import { createNestLogger } from '@novu/application-generic';
+import { LoggerErrorInterceptor, PinoLogger } from 'nestjs-pino';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -19,13 +19,13 @@ if (process.env.SENTRY_DSN) {
 }
 
 export async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: createNestLogger({
-      serviceName: name,
-      version,
-    }),
-  });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const redisIoAdapter = new RedisIoAdapter(app);
+
+  app.useLogger(app.get(PinoLogger));
+  app.flushLogs();
+
+  app.useGlobalInterceptors(new LoggerErrorInterceptor());
 
   app.setGlobalPrefix(CONTEXT_PATH);
 

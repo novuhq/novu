@@ -2,8 +2,8 @@ import './config';
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
-import { version, name } from '../package.json';
-import { createNestLogger } from '@novu/application-generic';
+import { version } from '../package.json';
+import { LoggerErrorInterceptor, PinoLogger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
 
@@ -16,12 +16,12 @@ if (process.env.SENTRY_DSN) {
 }
 
 export async function bootstrap(): Promise<INestApplication> {
-  const app = await NestFactory.create(AppModule, {
-    logger: createNestLogger({
-      serviceName: name,
-      version,
-    }),
-  });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  app.useLogger(app.get(PinoLogger));
+  app.flushLogs();
+
+  app.useGlobalInterceptors(new LoggerErrorInterceptor());
 
   app.enableCors({
     origin: '*',

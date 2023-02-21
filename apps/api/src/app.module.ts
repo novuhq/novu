@@ -1,4 +1,4 @@
-import { DynamicModule, HttpException, Module, Logger, Provider, Inject, LoggerService } from '@nestjs/common';
+import { DynamicModule, HttpException, Module, Logger, Provider } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
@@ -32,6 +32,8 @@ import { PartnerIntegrationsModule } from './app/partner-integrations/partner-in
 import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { LoggerModule } from 'nestjs-pino';
+import { createNestLoggingModuleOptions } from '@novu/application-generic';
+const packageJson = require('../package.json');
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
@@ -59,12 +61,12 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   MessagesModule,
   PartnerIntegrationsModule,
   TopicsModule,
-  LoggerModule.forRoot({
-    pinoHttp: {
-      transport: ['local', 'test'].includes(process.env.NODE_ENV) ? { target: 'pino-pretty' } : undefined,
-      autoLogging: ['local', 'test'].includes(process.env.NODE_ENV) ? false : true,
-    },
-  }),
+  LoggerModule.forRoot(
+    createNestLoggingModuleOptions({
+      serviceName: packageJson.name,
+      version: packageJson.version,
+    })
+  ),
 ];
 
 const providers: Provider[] = [];

@@ -84,7 +84,8 @@ export class WorkflowQueueService {
   public getWorkerProcessor() {
     return async ({ data }: { data: JobEntity }) => {
       return await new Promise(async (resolve, reject) => {
-        storage.run(new Store(PinoLogger.root), () => {
+        //Todo
+        await storage.run(new Store(PinoLogger.root), () => {
           return this.runJob
             .execute(
               RunJobCommand.create({

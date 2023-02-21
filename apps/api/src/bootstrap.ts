@@ -4,7 +4,7 @@ import '@sentry/tracing';
 
 import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
-import { Logger as PinoLogger } from 'nestjs-pino';
+import { LoggerErrorInterceptor, PinoLogger } from 'nestjs-pino';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
@@ -14,7 +14,6 @@ import * as Sentry from '@sentry/node';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { version } from '../package.json';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { RolesGuard } from './app/auth/framework/roles.guard';
@@ -28,7 +27,7 @@ if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
-    release: `v${version}`,
+    release: `v${packageJson.version}`,
     ignoreErrors: ['Non-Error exception captured'],
     integrations: [
       // enable HTTP calls tracing
@@ -49,6 +48,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   }
 
   app.useLogger(app.get(PinoLogger));
+  app.flushLogs();
 
   if (process.env.SENTRY_DSN) {
     app.use(Sentry.Handlers.requestHandler());
@@ -70,10 +70,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   );
 
   app.useGlobalInterceptors(new ResponseInterceptor());
-  /*
-   * app.useGlobalInterceptors(new ErrorsInterceptor());
-   * app.use(new LoggerMiddleware());
-   */
+  app.useGlobalInterceptors(new LoggerErrorInterceptor());
+
   app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
   app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));
 
