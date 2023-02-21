@@ -6,8 +6,8 @@ import { IOrganizationEntity } from '@novu/shared';
 
 import { Select } from '../../../design-system';
 import { addOrganization, switchOrganization } from '../../../api/organization';
-import { useAuthContext } from '../../../store/authContext';
-import { useSpotlightContext } from '../../../store/spotlightContext';
+import { useAuthContext } from '../../providers/AuthProvider';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
 
 export default function OrganizationSelect() {
   const [value, setValue] = useState<string>('');

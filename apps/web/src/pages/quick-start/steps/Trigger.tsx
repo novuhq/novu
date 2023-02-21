@@ -4,7 +4,7 @@ import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { CheckCircleBroken } from '../../../design-system/icons/gradient/CheckCircleBroken';
 import { TestNotificationTrigger } from '../components/TestNotificationTrigger';
 import { BellGradient } from '../../../design-system/icons';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import { OnBoardingAnalyticsEnum } from '../consts';
 
 export function Trigger() {

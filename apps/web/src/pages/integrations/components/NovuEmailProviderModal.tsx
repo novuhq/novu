@@ -3,7 +3,7 @@ import { Center, Title, Text } from '@mantine/core';
 import { colors } from '../../../design-system';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { LimitBar } from './LimitBar';
-import { useAuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../../components/providers/AuthProvider';
 
 export function NovuEmailProviderModal({ onClose }: { onClose: () => void }) {
   const { currentOrganization } = useAuthContext();

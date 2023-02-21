@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
+import { SegmentProvider } from '../components/providers/SegmentProvider';
 import { ThemeProvider } from '../design-system/ThemeProvider';
-import { SegmentProvider } from '../store/segment.context';
 
 export function TestWrapper({ children }) {
   return (

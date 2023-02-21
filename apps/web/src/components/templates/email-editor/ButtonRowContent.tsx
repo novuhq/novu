@@ -6,7 +6,7 @@ import { TextAlignEnum } from '@novu/shared';
 
 import { colors, shadows } from '../../../design-system';
 import { TextAlignment, Wifi } from '../../../design-system/icons';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 import type { IForm } from '../formTypes';
 
 const usePopoverStyles = createStyles((theme) => ({

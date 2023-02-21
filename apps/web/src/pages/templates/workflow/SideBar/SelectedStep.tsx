@@ -9,7 +9,7 @@ import { Close } from '../../../../design-system/icons/actions/Close';
 import { getChannel, NodeTypeEnum } from '../../shared/channels';
 import type { IForm } from '../../../../components/templates/formTypes';
 import { StepActiveSwitch } from '../StepActiveSwitch';
-import { useEnvController } from '../../../../store/useEnvController';
+import { useEnvController } from '../../../../hooks/useEnvController';
 import { When } from '../../../../components/utils/When';
 import { PlusCircle, Trash } from '../../../../design-system/icons';
 import { DigestMetadata } from '../DigestMetadata';

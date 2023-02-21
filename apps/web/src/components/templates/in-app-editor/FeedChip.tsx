@@ -5,7 +5,7 @@ import { IFeedEntity } from '@novu/shared';
 
 import { colors, shadows } from '../../../design-system';
 import { DotsHorizontal } from '../../../design-system/icons';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks/useEnvController';
 
 interface IFeedItemProps {
   showFeed: boolean;

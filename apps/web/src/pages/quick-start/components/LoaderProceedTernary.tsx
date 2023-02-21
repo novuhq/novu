@@ -20,14 +20,16 @@ export function LoaderProceedTernary({
 
   return (
     <>
-      {!appInitialized ? (
-        <Loader color={colorScheme === 'dark' ? colors.BGLight : colors.B60} size={50} />
-      ) : (
-        <Center>
-          <Button variant="outline" onClick={() => navigateToTestTrigger()}>
-            All set! Click to continue
-          </Button>
-        </Center>
+      <Button variant="outline" onClick={() => navigateToTestTrigger()} disabled={!appInitialized}>
+        Continue
+      </Button>
+      {!appInitialized && (
+        <Loader
+          style={{ marginLeft: 15 }}
+          color={colorScheme === 'dark' ? colors.BGLight : colors.B60}
+          variant={'dots'}
+          size={40}
+        />
       )}
     </>
   );

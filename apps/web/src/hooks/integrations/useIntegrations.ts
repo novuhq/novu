@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { getIntegrations } from '../../integration';
+import { getIntegrations } from '../../api/integration';
 
 export function useIntegrations() {
   const { data, isLoading, refetch } = useQuery(['integrationsList'], getIntegrations);

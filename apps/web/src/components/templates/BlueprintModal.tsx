@@ -9,7 +9,7 @@ import { errorMessage } from '../../utils/notifications';
 import { useEffect, useState } from 'react';
 import { updateUserOnBoarding } from '../../api/user';
 import { IUserEntity } from '@novu/shared';
-import { useSegment } from '../../hooks/useSegment';
+import { useSegment } from '../providers/SegmentProvider';
 import { createTemplateFromBluePrintId, getBlueprintTemplateById } from '../../api/notification-templates';
 
 export function BlueprintModal() {
