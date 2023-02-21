@@ -3,7 +3,7 @@ import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
-import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
+import { INestApplication, Logger, LoggerService, ValidationPipe } from '@nestjs/common';
 import { LoggerErrorInterceptor, PinoLogger } from 'nestjs-pino';
 import * as passport from 'passport';
 import * as compression from 'compression';
@@ -47,7 +47,9 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     app = await NestFactory.create(AppModule, { bufferLogs: true });
   }
 
-  app.useLogger(app.get(PinoLogger));
+  const aLget: LoggerService = app.get(PinoLogger);
+
+  app.useLogger(aLget);
   app.flushLogs();
 
   if (process.env.SENTRY_DSN) {

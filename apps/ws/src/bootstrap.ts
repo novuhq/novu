@@ -7,9 +7,8 @@ import { RedisIoAdapter } from './shared/framework/redis.adapter';
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
 import helmet from 'helmet';
-import { version, name } from '../package.json';
-import { LoggerErrorInterceptor, PinoLogger } from 'nestjs-pino';
-import { LoggerService } from '@nestjs/common';
+import { version } from '../package.json';
+import { LoggerErrorInterceptor, PinoLogger, Logger } from 'nestjs-pino';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -23,8 +22,14 @@ export async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const redisIoAdapter = new RedisIoAdapter(app);
 
-  const logger: LoggerService = app.get(PinoLogger);
-  app.useLogger(logger);
+  try {
+    const plogger = PinoLogger;
+    const log: Logger = app.get(plogger);
+    app.useLogger(log);
+  } catch (e) {
+    console.log(e);
+  }
+  app.flushLogs();
 
   app.useGlobalInterceptors(new LoggerErrorInterceptor());
 
