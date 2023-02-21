@@ -1,4 +1,4 @@
-import { useContext, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import styled from '@emotion/styled';
@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Divider, Button as MantineButton, Center } from '@mantine/core';
 
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
@@ -23,7 +23,7 @@ type LoginFormProps = {
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const navigate = useNavigate();
-  const { setToken } = useContext(AuthContext);
+  const { setToken } = useAuthContext();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
     { error: string; message: string; statusCode: number },

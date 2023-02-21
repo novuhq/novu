@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -48,6 +49,8 @@ import { StoreQuery } from './queries/store.query';
 import { GetFeedCountCommand } from './usecases/get-feed-count/get-feed-count.command';
 import { GetFeedCount } from './usecases/get-feed-count/get-feed-count.usecase';
 import { GetCountQuery } from './queries/get-count.query';
+import { RemoveMessageCommand } from './usecases/remove-message/remove-message.command';
+import { RemoveMessage } from './usecases/remove-message/remove-message.usecase';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -57,6 +60,7 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
+    private removeMessageUsecase: RemoveMessage,
     private markAllMessageAsSeenUseCase: MarkAllMessageAsSeen,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
@@ -222,6 +226,27 @@ export class WidgetsController {
     });
 
     return await this.markMessageAsUsecase.execute(command);
+  }
+
+  @ApiOperation({
+    summary: 'Remove a subscriber feed message',
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Delete('/messages/:messageId')
+  async removeMessage(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('messageId') messageId: string
+  ): Promise<MessageEntity> {
+    if (!messageId) throw new BadRequestException('messageId is required');
+
+    const command = RemoveMessageCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      messageId: messageId,
+    });
+
+    return await this.removeMessageUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

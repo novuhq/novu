@@ -397,7 +397,10 @@
     "axios",
     "ioredis",
     "newrelic",
-    "ringcentral"
+    "ringcentral",
+    "nodemailer",
+    "emailjs",
+    "typeof"
   ],
   "flagWords": [],
   "patterns": [

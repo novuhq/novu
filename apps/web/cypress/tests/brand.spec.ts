@@ -21,16 +21,7 @@ describe('Brand Screen', function () {
         );
     });
 
-    cy.wait('@uploadLogo').then((response) => {
-      const doc = window.parent.document;
-      const pEl = doc.createElement('p');
-      pEl.innerText = JSON.stringify(response);
-      doc.body.prepend(pEl);
-
-      console.log(doc);
-
-      return response;
-    });
+    cy.wait('@uploadLogo');
 
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
 

@@ -8,6 +8,7 @@ import {
   ITab,
   IStore,
   useNovuContext,
+  ColorScheme,
 } from '@novu/notification-center';
 import type { INovuThemeProvider, INotificationCenterStyles } from '@novu/notification-center';
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
@@ -33,6 +34,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [tabs, setTabs] = useState<ITab[]>();
   const [stores, setStores] = useState<IStore[]>();
   const [styles, setStyles] = useState<INotificationCenterStyles>();
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
   const [doLogout, setDoLogout] = useState(false);
 
   useEffect(() => {
@@ -79,6 +81,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           setStyles(data.value.styles);
         }
 
+        if (data.value.colorScheme) {
+          setColorScheme(data.value.colorScheme);
+        }
+
         setFrameInitialized(true);
       }
 
@@ -122,7 +128,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
         >
           <NovuNotificationCenterWrapper doLogout={doLogout} setDoLogout={setDoLogout}>
             <NotificationCenter
-              colorScheme="light"
+              colorScheme={colorScheme}
               onNotificationClick={props.onNotificationClick}
               onUrlChange={props.onUrlChange}
               onUnseenCountChanged={props.onUnseenCountChanged}

@@ -1,11 +1,11 @@
 import { ITranslationEntry } from '../lang';
 
-export const NO: ITranslationEntry = {
+export const NB: ITranslationEntry = {
   translations: {
     notifications: 'Varsler',
     markAllAsRead: 'Marker alle som lest',
     poweredBy: 'Drevet av',
     settings: 'Innstillinger',
   },
-  lang: 'no',
+  lang: 'nb',
 };

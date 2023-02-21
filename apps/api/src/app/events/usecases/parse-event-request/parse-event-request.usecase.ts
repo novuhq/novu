@@ -4,6 +4,7 @@ import * as hat from 'hat';
 import { merge } from 'lodash';
 import { AnalyticsService } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
+import { ISubscribersDefine } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
@@ -14,7 +15,6 @@ import { StorageHelperService } from '../../services/storage-helper-service/stor
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
-import { ISubscribersDefine } from '@novu/node';
 
 @Injectable()
 export class ParseEventRequest {

@@ -5,11 +5,12 @@ import {
   NotificationTemplateEntity,
   SubscriberEntity,
 } from '@novu/dal';
-import { ISubscribersDefine, ITopic, TriggerRecipients } from '@novu/node';
+import { ITopic, TriggerRecipients } from '@novu/node';
 import {
   ChannelTypeEnum,
   StepTypeEnum,
   IEmailBlock,
+  ISubscribersDefine,
   TopicId,
   TopicKey,
   TopicName,
