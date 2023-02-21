@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEnvController } from '../../store/useEnvController';
-import { QueryKeys } from '../query.keys';
-import { getLayoutsList } from '../layouts';
+import { useEnvController } from '../store/useEnvController';
+import { QueryKeys } from '../api/query.keys';
+import { getLayoutsList } from '../api/layouts';
 import { ILayoutEntity } from '@novu/shared';
 
 export function useLayouts(page = 0, pageSize = 10) {

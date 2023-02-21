@@ -13,7 +13,7 @@ import { getTemplateVariables, ITemplateVariable, isReservedVariableName, Layout
 import { QueryKeys } from '../../../api/query.keys';
 import { VariableManager } from '../../../components/templates/VariableManager';
 import { VariablesManagement } from '../../../components/templates/email-editor/variables-management/VariablesManagement';
-import { useLayoutsEditor } from '../../../api/hooks/useLayoutsEditor';
+import { useLayoutsEditor } from '../../../hooks/useLayoutsEditor';
 import { usePrompt } from '../../../hooks/usePrompt';
 import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
 

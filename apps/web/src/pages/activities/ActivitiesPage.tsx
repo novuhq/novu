@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 import styled from '@emotion/styled';
 
-import { useTemplates } from '../../api/hooks/useTemplates';
+import { useTemplates } from '../../hooks/useTemplates';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageMeta from '../../components/layout/components/PageMeta';

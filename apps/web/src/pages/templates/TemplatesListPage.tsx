@@ -5,7 +5,7 @@ import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
 
-import { useTemplates } from '../../api/hooks/useTemplates';
+import { useTemplates } from '../../hooks/useTemplates';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';

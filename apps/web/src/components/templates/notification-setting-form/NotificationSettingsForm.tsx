@@ -10,7 +10,7 @@ import { Input, Select, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/useEnvController';
 import type { IForm } from '../formTypes';
-import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
+import { useNotificationGroup } from '../../../hooks/useNotificationGroup';
 
 export const NotificationSettingsForm = ({
   editMode,

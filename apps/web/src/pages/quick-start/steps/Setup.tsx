@@ -7,8 +7,8 @@ import { Stack, Stepper, Timeline } from '@mantine/core';
 import { ChannelCTATypeEnum, ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
-import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
-import { useTemplates } from '../../../api/hooks/useTemplates';
+import { useNotificationGroup } from '../../../hooks/useNotificationGroup';
+import { useTemplates } from '../../../hooks/useTemplates';
 import { useEnvController } from '../../../store/useEnvController';
 import {
   APPLICATION_IDENTIFIER,

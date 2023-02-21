@@ -9,7 +9,7 @@ import { useState } from 'react';
 import { LayoutEditor } from './LayoutEditor';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
 import { When } from '../../../components/utils/When';
-import { useLayouts } from '../../../api/hooks/useLayouts';
+import { useLayouts } from '../../../hooks/useLayouts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteLayoutById } from '../../../api/layouts';
 import { errorMessage, successMessage } from '../../../utils/notifications';

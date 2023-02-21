@@ -7,7 +7,7 @@ import { useAuthContext } from '../../store/authContext';
 import { LoginForm } from '../../components/auth/LoginForm';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
-import { useVercelIntegration } from '../../api/hooks/useVercelIntegration';
+import { useVercelIntegration } from '../../hooks/useVercelIntegration';
 import SetupLoader from '../../components/auth/SetupLoader';
 import { useVercelParams } from '../../hooks/useVercelParams';
 import { useSegment } from '../../hooks/useSegment';

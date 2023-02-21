@@ -14,7 +14,7 @@ import { inputStyles } from '../../../design-system/config/inputs.styles';
 import useStyles from '../../../design-system/select/Select.styles';
 import { getOrganizationMembers } from '../../../api/organization';
 import { useProcessVariables } from '../../../hooks/useProcessVariables';
-import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
+import { useIntegrationLimit } from '../../../hooks/integrations/useIntegrationLimit';
 import { testSendEmailMessage } from '../../../api/notification-templates';
 
 export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {

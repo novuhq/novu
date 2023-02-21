@@ -7,7 +7,7 @@ import { FieldErrors, useFormContext } from 'react-hook-form';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
 import type { IForm } from '../../../components/templates/formTypes';
-import { useActiveIntegrations } from '../../../api/hooks';
+import { useActiveIntegrations } from '../../../hooks';
 import { useEnvController } from '../../../store/useEnvController';
 import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
 import { TemplateEditor } from '../../../components/templates/TemplateEditor';

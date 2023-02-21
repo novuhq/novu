@@ -7,9 +7,9 @@ import { EmailMessageEditor } from './EmailMessageEditor';
 import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { LackIntegrationError } from '../LackIntegrationError';
 import { useEnvController } from '../../../store/useEnvController';
-import { useActiveIntegrations } from '../../../api/hooks';
+import { useActiveIntegrations } from '../../../hooks';
 import { EmailInboxContent } from './EmailInboxContent';
-import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
+import { useIntegrationLimit } from '../../../hooks/integrations/useIntegrationLimit';
 
 const EDITOR = 'Editor';
 const CUSTOM_CODE = 'Custom Code';

@@ -1,4 +1,4 @@
-import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
+import { useIntegrationLimit } from '../../../hooks/integrations/useIntegrationLimit';
 import { ChannelTypeEnum } from '@novu/shared';
 import { useAuthContext } from '../../../store/authContext';
 
