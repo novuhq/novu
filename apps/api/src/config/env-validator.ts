@@ -42,7 +42,12 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: '',
   }),
   FF_IS_TOPIC_NOTIFICATION_ENABLED: bool({
-    desc: 'This is the environment variables used to enable the feature to send notifications to a topic',
+    desc: 'This is the environment variable used to enable the feature to send notifications to a topic',
+    default: true,
+    choices: [false, true],
+  }),
+  FF_IS_DISTRIBUTED_LOCK_LOGGING_ENABLED: bool({
+    desc: 'This is the environment variable used to enable the logging for the distributed lock',
     default: true,
     choices: [false, true],
   }),
