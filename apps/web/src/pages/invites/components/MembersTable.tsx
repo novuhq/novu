@@ -4,14 +4,13 @@ import * as capitalize from 'lodash.capitalize';
 import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
-import { DotsHorizontal, Mail, Trash } from '../../design-system/icons';
-import { colors, Dropdown, Tag } from '../../design-system';
-import useStyles from '../../design-system/config/text.styles';
+import { DotsHorizontal, Mail, Trash } from '../../../design-system/icons';
+import { colors, Dropdown, Tag } from '../../../design-system';
+import useStyles from '../../../design-system/config/text.styles';
 import { MemberRole } from './MemberRole';
-import { When } from '../utils/When';
-import { parseUrl } from '../../utils/routeUtils';
-import { ROUTES } from '../../constants/routes.enum';
-import { CONTEXT_PATH } from '../../config';
+import { When } from '../../../components/utils/When';
+import { parseUrl } from '../../../utils/routeUtils';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function MembersTable({
   members,

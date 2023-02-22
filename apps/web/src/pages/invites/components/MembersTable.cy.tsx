@@ -1,5 +1,5 @@
 import { MembersTable } from './MembersTable';
-import { TestWrapper } from '../../testing';
+import { TestWrapper } from '../../../testing';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { SinonSpy } from 'cypress/types/sinon';
 
