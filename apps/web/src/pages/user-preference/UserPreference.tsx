@@ -1,10 +1,10 @@
 import { Grid, useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 
-import { TemplatesSideBar } from '../../components/templates/TemplatesSideBar';
 import { colors } from '../../design-system';
-import { TemplatePreference } from '../../components/templates/notification-setting-form/TemplatePreference';
-import { useTemplateEditor } from '../../components/templates/TemplateEditorProvider';
+import { useTemplateEditor } from '../templates/components/TemplateEditorProvider';
+import { TemplatesSideBar } from '../templates/components/TemplatesSideBar';
+import { TemplatePreference } from '../templates/components/notification-setting-form/TemplatePreference';
 
 export function UserPreference({ activePage, setActivePage }) {
   const { colorScheme } = useMantineColorScheme();

@@ -23,14 +23,14 @@ import ChannelNode from './node-types/ChannelNode';
 import { colors } from '../../../../design-system';
 import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../shared/channels';
-import type { IForm, IStepEntity } from '../../../../components/templates/formTypes';
+import type { IForm, IStepEntity } from '../../components/formTypes';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../../../hooks';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
 import { ActivePageEnum } from '../../editor/TemplateEditorPage';
 import { getFormattedStepErrors } from '../../shared/errors';
 import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
-import { useTemplateEditor } from '../../../../components/templates/TemplateEditorProvider';
+import { useTemplateEditor } from '../../components/TemplateEditorProvider';
 
 const nodeTypes = {
   channelNode: ChannelNode,

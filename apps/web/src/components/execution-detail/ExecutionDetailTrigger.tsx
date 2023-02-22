@@ -2,7 +2,7 @@ import { INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import styled from '@emotion/styled';
 
 import { Text } from '../../design-system';
-import { getCurlTriggerSnippet } from '../templates/TriggerSnippetTabs';
+import { getCurlTriggerSnippet } from '../../pages/templates/components/TriggerSnippetTabs';
 
 const TriggerTitle = styled(Text)`
   font-size: 14px;

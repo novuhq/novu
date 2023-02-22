@@ -1,5 +1,4 @@
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
-import { EmailCustomCodeEditor } from '../../../components/templates/email-editor/EmailCustomCodeEditor';
 import { Center, Grid, Group, Modal, Title, useMantineTheme } from '@mantine/core';
 import { ArrowLeft } from '../../../design-system/icons';
 import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows } from '../../../design-system';
@@ -11,9 +10,10 @@ import { parse } from '@handlebars/parser';
 import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
 
 import { QueryKeys } from '../../../api/query.keys';
-import { VariableManager } from '../../../components/templates/VariableManager';
-import { VariablesManagement } from '../../../components/templates/email-editor/variables-management/VariablesManagement';
-import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
+import { VariablesManagement } from '../../templates/components/email-editor/variables-management/VariablesManagement';
+import { UnsavedChangesModal } from '../../templates/components/UnsavedChangesModal';
+import { VariableManager } from '../../templates/components/VariableManager';
+import { EmailCustomCodeEditor } from '../../templates/components/email-editor/EmailCustomCodeEditor';
 
 interface ILayoutForm {
   content: string;
