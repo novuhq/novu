@@ -3,7 +3,7 @@ import { IUserEntity, IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '
 import { NotificationBell, NovuProvider, PopoverNotificationCenter, useUpdateAction } from '@novu/notification-center';
 
 import { API_ROOT, WS_URL } from '../../config';
-import { useEnvController } from '../../hooks/useEnvController';
+import { useEnvController } from '../../hooks';
 
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {
   const { environment } = useEnvController();

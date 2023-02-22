@@ -4,8 +4,7 @@ import { useState, useMemo } from 'react';
 
 import type { IForm, ITemplates } from '../formTypes';
 import { Input } from '../../../design-system';
-import { useEnvController } from '../../../hooks/useEnvController';
-import { useVariablesManager } from '../../../hooks/useVariablesManager';
+import { useEnvController, useVariablesManager } from '../../../hooks';
 import { InAppContentCard } from './InAppContentCard';
 import { VariableManagerModal } from '../VariableManagerModal';
 

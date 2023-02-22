@@ -1,12 +1,11 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { colors, Tabs } from '../../../design-system';
-import { useEnvController } from '../../../hooks/useEnvController';
+import { useEnvController, useProcessVariables } from '../../../hooks';
 import { InAppEditorBlock } from './InAppEditorBlock';
 import { Grid, useMantineTheme, JsonInput } from '@mantine/core';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useState, useEffect } from 'react';
-import { useProcessVariables } from '../../../hooks/useProcessVariables';
 import { AvatarFeedFields } from './AvatarFeedFields';
 
 const EDITOR = 'Editor';

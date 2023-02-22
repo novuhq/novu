@@ -25,7 +25,7 @@ import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../pages/templates/shared/channels';
 import type { IForm, IStepEntity } from '../templates/formTypes';
 import AddNode from './node-types/AddNode';
-import { useEnvController } from '../../hooks/useEnvController';
+import { useEnvController } from '../../hooks';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { getFormattedStepErrors } from '../../pages/templates/shared/errors';
