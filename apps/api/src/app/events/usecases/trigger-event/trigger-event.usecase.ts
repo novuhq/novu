@@ -17,7 +17,8 @@ import {
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
-import { PinoLogger } from 'nestjs-pino';
+//import { PinoLogger } from 'nestjs-pino';
+import { PinoLogger } from '@novu/application-generic';
 
 @Injectable()
 export class TriggerEvent {
@@ -43,6 +44,7 @@ export class TriggerEvent {
         triggerIdentifier: identifier,
       },
     });
+
     this.logger.assign({
       transactionId: command.transactionId,
       environmentId: command.environmentId,

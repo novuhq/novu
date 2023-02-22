@@ -13,8 +13,7 @@ import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
 import { QueueNextJobCommand } from '../../usecases/queue-next-job/queue-next-job.command';
 import { QueueNextJob } from '../../usecases/queue-next-job/queue-next-job.usecase';
 import { ConnectionOptions } from 'tls';
-import { PinoLogger } from 'nestjs-pino';
-import { storage, Store } from 'nestjs-pino/storage';
+import { PinoLogger, storage, Store } from '@novu/application-generic';
 
 @Injectable()
 export class WorkflowQueueService {

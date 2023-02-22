@@ -1,12 +1,15 @@
-import { LoggerErrorInterceptor, Logger as PinoLogger } from 'nestjs-pino';
+import {
+  LoggerErrorInterceptor,
+  Logger,
+  LoggerModule,
+  PinoLogger,
+} from 'nestjs-pino';
+import { storage, Store } from 'nestjs-pino/storage';
 
 export function getErrorInterceptor() {
   return new LoggerErrorInterceptor();
 }
-
-export function getLogger() {
-  return PinoLogger;
-}
+export { Logger, LoggerModule, PinoLogger, storage, Store };
 
 const loggingLevelArr = ['error', 'warn', 'info', 'verbose', 'debug'];
 

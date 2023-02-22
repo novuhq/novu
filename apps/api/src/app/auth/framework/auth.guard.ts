@@ -2,7 +2,7 @@ import { ExecutionContext, forwardRef, Inject, Injectable, UnauthorizedException
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '../services/auth.service';
-import { PinoLogger } from 'nestjs-pino';
+import { PinoLogger } from '@novu/application-generic';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {

@@ -18,7 +18,7 @@ import { ResponseInterceptor } from './app/shared/framework/response.interceptor
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
-import { getLogger, getErrorInterceptor } from '@novu/application-generic';
+import { getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 const packageJson = require('../package.json');
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
@@ -47,7 +47,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     app = await NestFactory.create(AppModule, { bufferLogs: true });
   }
 
-  app.useLogger(app.get(getLogger()));
+  app.useLogger(app.get(PinoLogger));
   app.flushLogs();
 
   if (process.env.SENTRY_DSN) {

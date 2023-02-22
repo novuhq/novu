@@ -10,7 +10,7 @@ import { SendMessageCommand } from '../send-message/send-message.command';
 import { SendMessage } from '../send-message/send-message.usecase';
 import { RunJobCommand } from './run-job.command';
 import { shouldBackoff } from '../../services/workflow-queue/workflow.queue.service';
-import { PinoLogger } from 'nestjs-pino';
+import { PinoLogger } from '@novu/application-generic';
 
 @Injectable()
 export class RunJob {

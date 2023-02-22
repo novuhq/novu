@@ -6,8 +6,7 @@ import { AppService } from './app.service';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
 import { SocketModule } from './socket/socket.module';
-import { createNestLoggingModuleOptions } from '@novu/application-generic';
-import { LoggerModule } from 'nestjs-pino';
+import { createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
 const packageJson = require('../package.json');
 
 const modules = [

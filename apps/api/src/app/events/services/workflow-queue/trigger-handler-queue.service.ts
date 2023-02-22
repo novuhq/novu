@@ -3,8 +3,7 @@ import { Queue, QueueBaseOptions, Worker } from 'bullmq';
 import { getRedisPrefix } from '@novu/shared';
 import { TriggerEvent, TriggerEventCommand } from '../../usecases/trigger-event';
 import { ConnectionOptions } from 'tls';
-import { storage, Store } from 'nestjs-pino/storage';
-import { PinoLogger } from 'nestjs-pino';
+import { PinoLogger, storage, Store } from '@novu/application-generic';
 
 @Injectable()
 export class TriggerHandlerQueueService {

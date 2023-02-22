@@ -245,7 +245,6 @@ importers:
       mocha: ^8.1.1
       nanoid: ^3.1.20
       nest-raven: 8.2.0
-      nestjs-pino: ^3.1.2
       newrelic: 9.10.1
       nodemon: ^2.0.3
       passport: 0.6.0
@@ -348,7 +347,6 @@ importers:
       lodash: 4.17.21
       nanoid: 3.3.2
       nest-raven: 8.2.0_ylle5uczysdq7cdcbzyhwzxhuq
-      nestjs-pino: 3.1.2_usyrmmparn2g4hrazlgao4sghm
       newrelic: 9.10.1
       passport: 0.6.0
       passport-github2: 0.1.12
@@ -728,7 +726,6 @@ importers:
       lodash: ^4.17.15
       mocha: ^8.1.1
       nest-raven: ^9.1.0
-      nestjs-pino: ^3.1.2
       newrelic: 9.7.5
       nodemon: ^2.0.7
       prettier: ^2.1.2
@@ -767,7 +764,6 @@ importers:
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       nest-raven: 9.1.0_wmotrx5dnqti43uucffhb3zazi
-      nestjs-pino: 3.1.2_usyrmmparn2g4hrazlgao4sghm
       newrelic: 9.7.5
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
@@ -943,7 +939,6 @@ importers:
       jsonwebtoken: 9.0.0
       lodash: ^4.17.15
       nest-raven: ^9.1.0
-      nestjs-pino: ^3.1.2
       newrelic: 9.10.1
       nodemon: ^2.0.7
       pino: ^8.10.0
@@ -984,7 +979,6 @@ importers:
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       nest-raven: 9.1.0_g7k3glzhxurgffo4m2qilhx7by
-      nestjs-pino: 3.1.2_atacoy3e24brwbzjtinj7jrj3e
       newrelic: 9.10.1
       pino: 8.10.0
       pino-http: 8.3.3
@@ -47074,18 +47068,6 @@ packages:
 
   /nested-error-stacks/2.1.1:
     resolution: {integrity: sha512-9iN1ka/9zmX1ZvLV9ewJYEk9h7RyRRtqdK0woXcqohu8EWIerfPUjYJPg0ULy0UqP7cslmdGc8xKDJcojlKiaw==}
-
-  /nestjs-pino/3.1.2_atacoy3e24brwbzjtinj7jrj3e:
-    resolution: {integrity: sha512-Rxt9v/OlHwurE2GPyBlHVjzCLCnxIPxGa+Esligij412zEcqqB6kka5MhKAk3l61u1jyTLx3Mzol+HQrR6/f9w==}
-    engines: {node: '>= 14'}
-    requiresBuild: true
-    peerDependencies:
-      '@nestjs/common': ^8.0.0 || ^9.0.0
-      pino-http: ^6.4.0 || ^7.0.0 || ^8.0.0
-    dependencies:
-      '@nestjs/common': 9.3.9_aniaiezvefq2fqnommj6u5l4zi
-      pino-http: 8.3.3
-    dev: false
 
   /nestjs-pino/3.1.2_usyrmmparn2g4hrazlgao4sghm:
     resolution: {integrity: sha512-Rxt9v/OlHwurE2GPyBlHVjzCLCnxIPxGa+Esligij412zEcqqB6kka5MhKAk3l61u1jyTLx3Mzol+HQrR6/f9w==}
