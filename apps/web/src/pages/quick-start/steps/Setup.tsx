@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Stack, Timeline } from '@mantine/core';
 
-import { ChannelCTATypeEnum, ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
+import { ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { useNotificationGroup, useTemplates, useEnvController } from '../../../hooks';
@@ -78,12 +78,7 @@ export function Setup() {
         {
           template: {
             type: StepTypeEnum.IN_APP,
-            content:
-              'Welcome to Novu! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
-            cta: {
-              type: ChannelCTATypeEnum.REDIRECT,
-              data: { url: `/templates/edit/${notificationTemplate?._id}` },
-            },
+            content: 'Welcome to Novu! <b>visit the cloud admin panel</b> managing this message',
           },
         },
       ],
