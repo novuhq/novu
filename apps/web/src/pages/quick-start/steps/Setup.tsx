@@ -11,7 +11,8 @@ import { useNotificationGroup, useTemplates, useEnvController } from '../../../h
 import {
   API_KEY,
   APPLICATION_IDENTIFIER,
-  ENVIRONMENT,
+  BACKEND_API_URL,
+  BACKEND_SOCKET_URL,
   frameworkInstructions,
   notificationTemplateName,
   OnBoardingAnalyticsEnum,
@@ -148,10 +149,13 @@ const LoaderWrapper = styled.div`
 `;
 
 function updateCodeSnipped(codeSnippet: string, environmentIdentifier: string, apiKey: string) {
+  const concatUrls = process.env.REACT_APP_ENVIRONMENT !== 'prod' || !!process.env.REACT_APP_DOCKER_HOSTED_ENV;
+
   return codeSnippet
     .replace(APPLICATION_IDENTIFIER, environmentIdentifier)
     .replace(API_KEY, apiKey ?? '')
-    .replace(ENVIRONMENT, process.env.REACT_APP_API_URL === 'https://api.novu.co' ? '' : 'dev');
+    .replace(BACKEND_API_URL, concatUrls ? process.env.REACT_APP_API_URL || 'http://localhost:3000' : '')
+    .replace(BACKEND_SOCKET_URL, concatUrls ? process.env.REACT_APP_WS_URL || 'http://localhost:3002' : '');
 }
 
 export function OpenBrowser() {
