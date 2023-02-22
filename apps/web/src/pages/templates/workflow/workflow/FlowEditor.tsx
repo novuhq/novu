@@ -20,17 +20,17 @@ import { v4 as uuid4 } from 'uuid';
 import { StepTypeEnum } from '@novu/shared';
 
 import ChannelNode from './node-types/ChannelNode';
-import { colors } from '../../design-system';
+import { colors } from '../../../../design-system';
 import TriggerNode from './node-types/TriggerNode';
-import { getChannel } from '../../pages/templates/shared/channels';
-import type { IForm, IStepEntity } from '../templates/formTypes';
+import { getChannel } from '../../shared/channels';
+import type { IForm, IStepEntity } from '../../../../components/templates/formTypes';
 import AddNode from './node-types/AddNode';
-import { useEnvController } from '../../hooks';
+import { useEnvController } from '../../../../hooks';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
-import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
-import { getFormattedStepErrors } from '../../pages/templates/shared/errors';
+import { ActivePageEnum } from '../../editor/TemplateEditorPage';
+import { getFormattedStepErrors } from '../../shared/errors';
 import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
-import { useTemplateEditor } from '../templates/TemplateEditorProvider';
+import { useTemplateEditor } from '../../../../components/templates/TemplateEditorProvider';
 
 const nodeTypes = {
   channelNode: ChannelNode,

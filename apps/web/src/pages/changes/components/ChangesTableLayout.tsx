@@ -7,10 +7,10 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { showNotification } from '@mantine/notifications';
 
-import { Data, Table } from '../../design-system/table/Table';
-import { Button, colors, Text } from '../../design-system';
-import { promoteChange } from '../../api/changes';
-import { QueryKeys } from '../../api/query.keys';
+import { Data, Table } from '../../../design-system/table/Table';
+import { Button, colors, Text } from '../../../design-system';
+import { promoteChange } from '../../../api/changes';
+import { QueryKeys } from '../../../api/query.keys';
 
 export const ChangesTable = ({
   changes,

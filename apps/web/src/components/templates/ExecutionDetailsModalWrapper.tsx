@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { LoadingOverlay, useMantineTheme } from '@mantine/core';
 
 import { getActivityList } from '../../api/activity';
-import { ExecutionDetailsModal } from '../activity/ExecutionDetailsModal';
+import { ExecutionDetailsModal } from '../execution-detail/ExecutionDetailsModal';
 import { colors } from '../../design-system';
 
 interface Props {
