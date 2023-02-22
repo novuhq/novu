@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import { Grid, useMantineColorScheme } from '@mantine/core';
 import { StepTypeEnum } from '@novu/shared';
 
-import FlowEditor from '../../../components/workflow/FlowEditor';
+import FlowEditor from './workflow/FlowEditor';
 import { colors } from '../../../design-system';
 import { getChannel, NodeTypeEnum } from '../shared/channels';
 import type { IForm } from '../../../components/templates/formTypes';

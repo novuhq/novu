@@ -13,7 +13,7 @@ import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
-import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
+import { ChangesCountBadge } from './ChangesCountBadge';
 import { useEnvController } from '../../../hooks';
 import { useAuthContext } from '../../providers/AuthProvider';
 import OrganizationSelect from './OrganizationSelect';

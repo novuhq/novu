@@ -13,7 +13,7 @@ import { Select, Input, Button } from '../../design-system';
 import { ActivityStatistics } from './components/ActivityStatistics';
 import { ActivityGraph } from './components/ActivityGraph';
 import { ActivityList } from './components/ActivityList';
-import { ExecutionDetailsModal } from '../../components/activity/ExecutionDetailsModal';
+import { ExecutionDetailsModal } from '../../components/execution-detail/ExecutionDetailsModal';
 import { IActivityGraphStats } from './interfaces';
 
 const FiltersContainer = styled.div`

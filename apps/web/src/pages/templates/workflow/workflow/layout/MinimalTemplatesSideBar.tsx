@@ -1,9 +1,9 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { NavSection, TemplatesSideBar } from '../../templates/TemplatesSideBar';
-import { ActivePageEnum } from '../../../pages/templates/editor/TemplateEditorPage';
-import { WrapperButton } from '../../../design-system/template-button/Button';
-import { IconWrapper } from '../../../design-system/template-button/IconWrapper';
+import { NavSection, TemplatesSideBar } from '../../../../../components/templates/TemplatesSideBar';
+import { ActivePageEnum } from '../../../editor/TemplateEditorPage';
+import { WrapperButton } from '../../../../../design-system/template-button/Button';
+import { IconWrapper } from '../../../../../design-system/template-button/IconWrapper';
 
 export function MinimalTemplatesSideBar({
   activePage,
