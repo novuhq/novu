@@ -6,7 +6,7 @@ import {
   JobStatusEnum,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-
+import { Logger } from '@nestjs/common';
 import { expect } from 'chai';
 import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
 import axios from 'axios';
@@ -17,6 +17,7 @@ import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { RunJobCommand } from '../usecases/run-job/run-job.command';
 import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
+import { PinoLogger } from '@novu/application-generic';
 
 const axiosInstance = axios.create();
 

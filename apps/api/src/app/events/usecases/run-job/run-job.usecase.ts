@@ -19,7 +19,7 @@ export class RunJob {
     private sendMessage: SendMessage,
     private queueNextJob: QueueNextJob,
     private storageHelperService: StorageHelperService,
-    private logger: PinoLogger
+    private logger?: PinoLogger
   ) {}
 
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
@@ -32,7 +32,7 @@ export class RunJob {
     const job = await this.jobRepository.findById(command.jobId);
     if (!job) throw new ApiException(`Job with id ${command.jobId} not found`);
 
-    this.logger.assign({
+    this.logger?.assign({
       transactionId: job.transactionId,
       environmentId: job._environmentId,
       organizationId: job._organizationId,
