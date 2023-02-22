@@ -1,6 +1,6 @@
 import { Stack } from '@mantine/core';
 import { PartnerIntegrationLayout } from '../../components/layout/components/PartnerIntegrationLayout';
-import { LinkProjectContainer } from '../../components/partner-integrations/vercel/LinkProjectContainer';
+import { LinkProjectContainer } from './components//LinkProjectContainer';
 import { Container, Text, Title } from '../../design-system';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 

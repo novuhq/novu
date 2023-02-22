@@ -17,7 +17,7 @@ import {
   removeMember,
   resendInviteMember,
 } from '../../api/organization';
-import { MembersTable } from '../../components/invites/MembersTable';
+import { MembersTable } from './components/MembersTable';
 import { Button, Input } from '../../design-system';
 import { Invite } from '../../design-system/icons';
 import { useAuthContext } from '../../components/providers/AuthProvider';

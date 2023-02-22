@@ -1,6 +1,6 @@
 import { SignUpOriginEnum } from '@novu/shared';
 
-import { API_ROOT } from '../../config';
+import { API_ROOT } from '../../../config';
 
 export const buildGithubLink = ({ invitationToken }: { invitationToken?: string }) => {
   const queryParams = new URLSearchParams();
