@@ -1,8 +1,11 @@
 import { Grid } from '@mantine/core';
+import { TimeOperatorEnum } from '@novu/shared';
 import { Controller } from 'react-hook-form';
+
+import { DeleteStepButton } from './FilterModal.styles';
+
 import { Input, Select } from '../../../design-system';
 import { Trash } from '../../../design-system/icons';
-import { DeleteStepButton } from './FilterModal.styles';
 
 const spanSize = 3;
 
@@ -89,9 +92,9 @@ function OnlineInTheLastForm({ control, stepIndex, index }: { control; stepIndex
               <Select
                 placeholder="time period"
                 data={[
-                  { value: 'minutes', label: 'Minutes' },
-                  { value: 'hours', label: 'Hours' },
-                  { value: 'days', label: 'Days' },
+                  { value: TimeOperatorEnum.MINUTES, label: 'Minutes' },
+                  { value: TimeOperatorEnum.HOURS, label: 'Hours' },
+                  { value: TimeOperatorEnum.DAYS, label: 'Days' },
                 ]}
                 {...field}
                 data-test-id="online-in-last-operator-dropdown"
