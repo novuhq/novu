@@ -13,8 +13,8 @@ import { useVercelParams, useAuthController } from '../../../hooks';
 import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '../../../design-system';
-import SetupLoader from '../../auth/SetupLoader';
 import { errorMessage, successMessage } from '../../../utils/notifications';
+import SetupLoader from '../../../pages/auth/components/SetupLoader';
 
 export type ProjectLinkFormValues = {
   projectLinkState: {

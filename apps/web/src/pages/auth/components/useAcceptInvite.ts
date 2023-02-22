@@ -4,9 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { showNotification } from '@mantine/notifications';
 import * as Sentry from '@sentry/react';
 
-import { api } from '../../api/api.client';
-import { useAuthContext } from '../providers/AuthProvider';
-import { applyToken } from '../../hooks';
+import { api } from '../../../api/api.client';
+import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { applyToken } from '../../../hooks';
 
 export function useAcceptInvite() {
   const { setToken } = useAuthContext();

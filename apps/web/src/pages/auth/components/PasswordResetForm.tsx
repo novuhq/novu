@@ -5,11 +5,11 @@ import * as Sentry from '@sentry/react';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
 
-import { useAuthContext } from '../providers/AuthProvider';
-import { api } from '../../api/api.client';
-import { PasswordInput, Button, colors, Text } from '../../design-system';
+import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { api } from '../../../api/api.client';
+import { PasswordInput, Button, colors, Text } from '../../../design-system';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes.enum';
 
 type Props = {
   token: string;

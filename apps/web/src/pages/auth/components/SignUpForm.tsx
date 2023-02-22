@@ -7,16 +7,16 @@ import { Divider, Button as MantineButton, Center } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
 
-import { useAuthContext } from '../providers/AuthProvider';
-import { api } from '../../api/api.client';
-import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../design-system';
-import { GitHub } from '../../design-system/icons';
-import { IS_DOCKER_HOSTED } from '../../config';
-import { applyToken, useVercelParams } from '../../hooks';
+import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { api } from '../../../api/api.client';
+import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../../design-system';
+import { GitHub } from '../../../design-system/icons';
+import { IS_DOCKER_HOSTED } from '../../../config';
+import { applyToken, useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes.enum';
 
 type SignUpFormProps = {
   invitationToken?: string;
