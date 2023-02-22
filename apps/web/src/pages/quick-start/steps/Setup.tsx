@@ -2,14 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Stack, Stepper, Timeline } from '@mantine/core';
+import { Stack, Timeline } from '@mantine/core';
 
 import { ChannelCTATypeEnum, ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { useNotificationGroup, useTemplates, useEnvController } from '../../../hooks';
 import {
+  API_KEY,
   APPLICATION_IDENTIFIER,
+  ENVIRONMENT,
   frameworkInstructions,
   notificationTemplateName,
   OnBoardingAnalyticsEnum,
@@ -21,6 +23,7 @@ import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { getInAppActivated } from '../../../api/integration';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { getApiKeys } from '../../../api/environment';
 
 export function Setup() {
   const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();
@@ -28,6 +31,9 @@ export function Setup() {
   const { groups } = useNotificationGroup();
   const { templates = [], loading } = useTemplates();
   const { environment } = useEnvController();
+  const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
+  const apiKey = apiKeys?.length ? apiKeys[0].key : '';
+
   const segment = useSegment();
 
   const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(['inAppActive'], async () => getInAppActivated(), {
@@ -117,7 +123,7 @@ export function Setup() {
                     <PrismOnCopy
                       language={instruction.language}
                       index={index}
-                      code={`${updateCodeSnipped(instruction.snippet, environmentIdentifier)}   `}
+                      code={`${updateCodeSnipped(instruction.snippet, environmentIdentifier, apiKey)}   `}
                       onCopy={handleOnCopy}
                     />
                   </div>
@@ -146,8 +152,11 @@ const LoaderWrapper = styled.div`
   margin-top: 10px;
 `;
 
-function updateCodeSnipped(codeSnippet: string, environmentIdentifier: string) {
-  return codeSnippet.replace(APPLICATION_IDENTIFIER, environmentIdentifier);
+function updateCodeSnipped(codeSnippet: string, environmentIdentifier: string, apiKey: string) {
+  return codeSnippet
+    .replace(APPLICATION_IDENTIFIER, environmentIdentifier)
+    .replace(API_KEY, apiKey ?? '')
+    .replace(ENVIRONMENT, process.env.REACT_APP_API_URL === 'https://api.novu.co' ? '' : 'dev');
 }
 
 export function OpenBrowser() {
