@@ -7,7 +7,7 @@ import { StepTypeEnum } from '@novu/shared';
 import { Button, colors, Text, Title } from '../../../../design-system';
 import { Close } from '../../../../design-system/icons/actions/Close';
 import { getChannel, NodeTypeEnum } from '../../shared/channels';
-import type { IForm } from '../../../../components/templates/formTypes';
+import type { IForm } from '../../components/formTypes';
 import { StepActiveSwitch } from '../StepActiveSwitch';
 import { useEnvController } from '../../../../hooks';
 import { When } from '../../../../components/utils/When';
@@ -17,7 +17,7 @@ import { DelayMetadata } from '../DelayMetadata';
 import { Filters } from '../../filter/Filters';
 import { ShouldStopOnFailSwitch } from '../ShouldStopOnFailSwitch';
 import { ReplyCallback } from '../ReplyCallback';
-import { NavSection } from '../../../../components/templates/TemplatesSideBar';
+import { NavSection } from '../../components/TemplatesSideBar';
 import { StyledNav } from '../WorkflowEditorPage';
 
 const capitalize = (text: string) => {

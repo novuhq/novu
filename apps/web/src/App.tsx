@@ -22,8 +22,6 @@ import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
-import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
-import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { ROUTES } from './constants/routes.enum';
 import { BrandPage } from './pages/brand/BrandPage';
@@ -39,6 +37,8 @@ import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
 import { Setup } from './pages/quick-start/steps/Setup';
 import { Trigger } from './pages/quick-start/steps/Trigger';
 import { RequiredAuth } from './components/layout/RequiredAuth';
+import { TemplateFormProvider } from './pages/templates/components/TemplateFormProvider';
+import { TemplateEditorProvider } from './pages/templates/components/TemplateEditorProvider';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
