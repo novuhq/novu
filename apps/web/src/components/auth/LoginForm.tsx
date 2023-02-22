@@ -11,7 +11,7 @@ import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Input, Text } from '../../design-system';
 import { GitHub } from '../../design-system/icons';
 import { IS_DOCKER_HOSTED } from '../../config';
-import { useVercelParams } from '../../hooks/useVercelParams';
+import { useVercelParams } from '../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
 import { ROUTES } from '../../constants/routes.enum';

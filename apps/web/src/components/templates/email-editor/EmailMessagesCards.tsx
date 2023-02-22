@@ -11,7 +11,7 @@ import { MobileIcon } from '../../../pages/templates/editor/PreviewSegment/Mobil
 import { WebIcon } from '../../../pages/templates/editor/PreviewSegment/WebIcon';
 import { useHotkeys } from '@mantine/hooks';
 import { VariablesManagement } from './variables-management/VariablesManagement';
-import { useVariablesManager } from '../../../hooks/useVariablesManager';
+import { useVariablesManager } from '../../../hooks';
 import { VariableManagerModal } from '../VariableManagerModal';
 
 export enum ViewEnum {

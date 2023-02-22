@@ -8,7 +8,7 @@ import useStyles, { ActiveWrapper, StyledDescription, StyledTitle } from './Onbo
 import { Button, colors, Text } from '../../../design-system';
 import { CheckCircle } from '../../../design-system/icons';
 import { TriggerCard } from './TriggerCard';
-import { useTemplates } from '../../../hooks/useTemplates';
+import { useTemplates } from '../../../hooks';
 import { getActivityStats } from '../../../api/activity';
 import { ROUTES } from '../../../constants/routes.enum';
 import { useIntegrations } from '../../../hooks';

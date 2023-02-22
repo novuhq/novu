@@ -9,11 +9,10 @@ import {
   getVercelProjects,
   updateVercelIntegration,
 } from '../../../api/vercel-integration';
-import { useVercelParams } from '../../../hooks/useVercelParams';
+import { useVercelParams, useAuthController } from '../../../hooks';
 import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '../../../design-system';
-import { useAuthController } from '../../../hooks/useAuthController';
 import SetupLoader from '../../auth/SetupLoader';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 

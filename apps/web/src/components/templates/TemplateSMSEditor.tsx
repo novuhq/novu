@@ -3,9 +3,8 @@ import { Control, Controller, useFormContext } from 'react-hook-form';
 import { LackIntegrationError } from './LackIntegrationError';
 import type { IForm } from './formTypes';
 import { Textarea } from '../../design-system';
-import { useEnvController } from '../../hooks/useEnvController';
+import { useEnvController, useVariablesManager } from '../../hooks';
 import { VariableManager } from './VariableManager';
-import { useVariablesManager } from '../../hooks/useVariablesManager';
 
 const templateFields = ['content'];
 

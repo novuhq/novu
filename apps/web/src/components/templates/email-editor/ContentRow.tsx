@@ -7,7 +7,7 @@ import { TextAlignEnum } from '@novu/shared';
 
 import { DotsHorizontalOutlined, Trash } from '../../../design-system/icons';
 import { Button, colors, Dropdown } from '../../../design-system';
-import { useEnvController } from '../../../hooks/useEnvController';
+import { useEnvController } from '../../../hooks';
 
 export function ContentRow({
   children,
