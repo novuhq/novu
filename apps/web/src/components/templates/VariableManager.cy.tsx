@@ -4,7 +4,7 @@ import { useFormContext, useFieldArray } from 'react-hook-form';
 import { TestWrapper } from '../../testing';
 import { VariableManager } from './VariableManager';
 import { TemplateFormProvider } from './TemplateFormProvider';
-import { useVariablesManager } from '../../hooks/useVariablesManager';
+import { useVariablesManager } from '../../hooks';
 
 it('should show available variables - string', function () {
   mount(

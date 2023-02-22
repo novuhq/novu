@@ -9,11 +9,10 @@ import { useState } from 'react';
 import { LayoutEditor } from './LayoutEditor';
 import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
 import { When } from '../../../components/utils/When';
-import { useLayouts } from '../../../hooks/useLayouts';
+import { useLayouts, useEnvController } from '../../../hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteLayoutById } from '../../../api/layouts';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { useEnvController } from '../../../hooks/useEnvController';
 import { QueryKeys } from '../../../api/query.keys';
 
 const enum ActivePageEnum {

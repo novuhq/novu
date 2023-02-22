@@ -7,7 +7,7 @@ import { PasswordResetRequestForm } from '../../components/auth/PasswordResetReq
 import { PasswordResetForm } from '../../components/auth/PasswordResetForm';
 import { Button, Text } from '../../design-system';
 import { ROUTES } from '../../constants/routes.enum';
-import { useVercelParams } from '../../hooks/useVercelParams';
+import { useVercelParams } from '../../hooks';
 
 type Props = {};
 

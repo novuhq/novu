@@ -5,7 +5,7 @@ import { VarItemsDropdown } from './VarItemsDropdown';
 import { VarLabel } from './VarLabel';
 import { UnstyledButton, useMantineTheme } from '@mantine/core';
 import { EditGradient } from '../../../../design-system/icons/gradient/EditGradient';
-import { useProcessVariables } from '../../../../hooks/useProcessVariables';
+import { useProcessVariables } from '../../../../hooks';
 import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../utils/When';
 

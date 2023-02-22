@@ -8,7 +8,7 @@ import FlowEditor from '../../../components/workflow/FlowEditor';
 import { colors } from '../../../design-system';
 import { getChannel, NodeTypeEnum } from '../shared/channels';
 import type { IForm } from '../../../components/templates/formTypes';
-import { useEnvController } from '../../../hooks/useEnvController';
+import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
 import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
 import { ActivePageEnum, EditorPages } from '../editor/TemplateEditorPage';
