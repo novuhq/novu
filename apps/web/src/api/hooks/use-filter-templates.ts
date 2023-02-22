@@ -1,49 +1,42 @@
-import { useQuery } from '@tanstack/react-query';
-import { INotificationTemplate } from '@novu/shared';
+import { useMemo } from 'react';
 
-import { getNotificationsList } from '../notifications';
-import { useEnvController } from '../../store/useEnvController';
+import { useTemplates } from './useTemplates';
 
 export function useFilterTemplates(searchQuery = '', page = 0) {
-  const { environment } = useEnvController();
-  const { data: tempData, isLoading: isTempLoading } = useQuery<{
-    data: INotificationTemplate[];
-    totalCount: number;
-    pageSize: number;
-  }>(['notificationsList', environment?._id, page], () => getNotificationsList(page), {
-    keepPreviousData: true,
-  });
+  const {
+    templates: tempData,
+    loading: isTempLoading,
+    totalCount: tempTotalCount,
+    pageSize: tempPageSize,
+  } = useTemplates(page);
 
-  const { data, isLoading } = useQuery<{
-    data: INotificationTemplate[];
-    totalCount: number;
-    pageSize: number;
-  }>(
-    ['notificationsList', environment?._id, 0, isTempLoading ? 10 : tempData?.totalCount],
-    () => getNotificationsList(0, isTempLoading ? 10 : tempData?.totalCount),
-    {
-      keepPreviousData: true,
-    }
-  );
+  const {
+    templates: data,
+    loading: isLoading,
+    totalCount,
+    pageSize,
+  } = useTemplates(0, isTempLoading ? 10 : tempTotalCount);
 
-  const filteredData = data?.data
-    .filter((template) => template.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const filteredData = useMemo(() => {
+    return data
+      ?.filter((template) => template.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [data, searchQuery]);
 
   const paginatedData = filteredData?.slice(page * 10, (page + 1) * 10);
 
   if (searchQuery === '' || isTempLoading)
     return {
-      templates: tempData?.data,
+      templates: tempData,
       loading: isTempLoading,
-      totalCount: tempData?.totalCount,
-      pageSize: tempData?.pageSize,
+      totalCount: tempTotalCount,
+      pageSize: tempPageSize,
     };
 
   return {
     templates: paginatedData,
     loading: isLoading && isTempLoading,
-    totalCount: data?.totalCount,
-    pageSize: data?.pageSize,
+    totalCount: totalCount,
+    pageSize: pageSize,
   };
 }

@@ -186,7 +186,7 @@ const StyledInput = styled(Input)`
   input {
     min-height: auto;
     height: 42px;
+    margin-bottom: 5px;
   }
   position: relative;
-  top: -2px;
 `;
