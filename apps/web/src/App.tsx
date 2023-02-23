@@ -4,7 +4,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { Route, Routes, BrowserRouter } from 'react-router-dom';
 import { Integrations } from '@sentry/tracing';
 import { AuthProvider } from './components/providers/AuthProvider';
-import { applyToken, getToken } from './hooks/useAuthController';
+import { applyToken, getToken } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import LoginPage from './pages/auth/LoginPage';
 import SignUpPage from './pages/auth/SignUpPage';
@@ -22,8 +22,6 @@ import { IntegrationsStore } from './pages/integrations/IntegrationsStorePage';
 import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
 import { ENV, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
-import { TemplateEditorProvider } from './components/templates/TemplateEditorProvider';
-import { TemplateFormProvider } from './components/templates/TemplateFormProvider';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { ROUTES } from './constants/routes.enum';
 import { BrandPage } from './pages/brand/BrandPage';
@@ -39,6 +37,8 @@ import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
 import { Setup } from './pages/quick-start/steps/Setup';
 import { Trigger } from './pages/quick-start/steps/Trigger';
 import { RequiredAuth } from './components/layout/RequiredAuth';
+import { TemplateFormProvider } from './pages/templates/components/TemplateFormProvider';
+import { TemplateEditorProvider } from './pages/templates/components/TemplateEditorProvider';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {

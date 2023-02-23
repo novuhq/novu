@@ -4,19 +4,19 @@ import styled from '@emotion/styled';
 import { Grid, useMantineColorScheme } from '@mantine/core';
 import { StepTypeEnum } from '@novu/shared';
 
-import FlowEditor from '../../../components/workflow/FlowEditor';
+import FlowEditor from './workflow/FlowEditor';
 import { colors } from '../../../design-system';
 import { getChannel, NodeTypeEnum } from '../shared/channels';
-import type { IForm } from '../../../components/templates/formTypes';
-import { useEnvController } from '../../../hooks/useEnvController';
+import type { IForm } from '../components/formTypes';
+import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
-import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
+import { TemplatePageHeader } from '../components/TemplatePageHeader';
 import { ActivePageEnum, EditorPages } from '../editor/TemplateEditorPage';
-import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { FilterModal } from '../filter/FilterModal';
 import { SelectedStep } from './SideBar/SelectedStep';
 import { AddStepMenu } from './SideBar/AddStepMenu';
-import { useTemplateFetcher } from '../../../components/templates/useTemplateFetcher';
+import { useTemplateFetcher } from '../components/useTemplateFetcher';
 
 const WorkflowEditorPage = ({
   setActivePage,

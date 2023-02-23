@@ -5,6 +5,7 @@ import {
   IWebhookFilterPart,
   IFieldFilterPart,
   FilterPartTypeEnum,
+  TimeOperatorEnum,
 } from '@novu/shared';
 import { TestWrapper } from '../../../testing';
 import { Filters, translateOperator, getFilterLabel } from './Filters';
@@ -118,7 +119,7 @@ describe('Filters Component', function () {
     const onlineRightNowFilter: IRealtimeOnlineFilterPart = { on: FilterPartTypeEnum.IS_ONLINE, value: true };
     const onlineInLastFilter: IOnlineInLastFilterPart = {
       on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
-      timeOperator: 'hours',
+      timeOperator: TimeOperatorEnum.HOURS,
       value: 5,
     };
     const webhookFilter: IWebhookFilterPart = {

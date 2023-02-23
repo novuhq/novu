@@ -1,4 +1,4 @@
-import { ProcessSubscriber } from './process-subscriber/process-subscriber.usecase';
+import { ProcessSubscriber } from './process-subscriber';
 import { TriggerEvent } from './trigger-event';
 import { SendMessage } from './send-message/send-message.usecase';
 import { SendMessageSms } from './send-message/send-message-sms.usecase';
@@ -11,9 +11,9 @@ import { CancelDelayed } from './cancel-delayed/cancel-delayed.usecase';
 import { TriggerEventToAll } from './trigger-event-to-all/trigger-event-to-all.usecase';
 import { VerifyPayload } from './verify-payload/verify-payload.usecase';
 import { RunJob } from './run-job/run-job.usecase';
-import { SendTestEmail } from './send-message/test-send-email.usecase';
+import { SendTestEmail } from './send-message/';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from './map-trigger-recipients';
-import { MessageMatcher } from './trigger-event/message-matcher.service';
+import { MessageMatcher } from './message-matcher';
 import { ParseEventRequest } from './parse-event-request/parse-event-request.usecase';
 import { ProcessBulkTrigger } from './process-bulk-trigger/process-bulk-trigger.usecase';
 import { ProcessNotification } from './process-notification/process-notification.usecase';
@@ -35,7 +35,6 @@ export const USE_CASES = [
   RunJob,
   SendTestEmail,
   MapTriggerRecipients,
-  MapTriggerRecipientsCommand,
   ParseEventRequest,
   ProcessBulkTrigger,
   ProcessSubscriber,

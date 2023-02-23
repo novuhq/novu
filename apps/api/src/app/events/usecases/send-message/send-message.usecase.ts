@@ -21,6 +21,9 @@ import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
+
+import { MessageMatcher } from '../message-matcher';
+
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
@@ -33,7 +36,6 @@ import {
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
-import { MessageMatcher } from '../trigger-event/message-matcher.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
@@ -80,7 +82,7 @@ export class SendMessage {
         digestAmount: command.job.digest?.amount,
         filterPassed: shouldRun,
         preferencesPassed: preferred,
-        usedFilters,
+        ...(usedFilters || {}),
       });
     }
 
