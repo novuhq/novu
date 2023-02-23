@@ -6,17 +6,28 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 export class SendTestEmailCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   contentType: 'customHtml' | 'editor';
+
   @IsDefined()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
   @IsDefined()
   @IsString()
   subject: string;
+
+  @IsOptional()
+  @IsString()
   preheader?: string;
+
+  @IsOptional()
+  @IsString()
   senderName?: string;
+
   @IsDefined()
   content: string | IEmailBlock[];
+
   @IsDefined()
   to: string | string[];
+
   @IsOptional()
   @IsString()
   layoutId?: string | null;
