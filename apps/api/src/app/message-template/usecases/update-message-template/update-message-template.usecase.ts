@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, ITemplateVariable } from '@novu/shared';
 
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
@@ -36,7 +36,7 @@ export class UpdateMessageTemplate {
     }
 
     if (command.variables) {
-      updatePayload.variables = command.variables;
+      updatePayload.variables = UpdateMessageTemplate.mapVariables(command.variables);
     }
 
     if (command.contentType) {
@@ -74,6 +74,10 @@ export class UpdateMessageTemplate {
 
     if (command.preheader !== undefined || command.preheader !== null) {
       updatePayload.preheader = command.preheader;
+    }
+
+    if (command.senderName !== undefined || command.senderName !== null) {
+      updatePayload.senderName = command.senderName;
     }
 
     if (command.actor) {
@@ -150,5 +154,15 @@ export class UpdateMessageTemplate {
     }
 
     return item;
+  }
+
+  public static mapVariables(items: ITemplateVariable[]) {
+    return items.map((item) => {
+      if (item.defaultValue === '') {
+        item.defaultValue = undefined;
+      }
+
+      return item;
+    });
   }
 }

@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
 import { MessageTemplateRepository } from '@novu/dal';
-import { EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
+import { EmailBlockTypeEnum, StepTypeEnum, TemplateVariableTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 import { CreateMessageTemplate } from './create-message-template.usecase';
@@ -36,7 +36,15 @@ describe('Create Message Template', function () {
       type: StepTypeEnum.PUSH,
       name: 'test-message-template',
       title: 'test',
-      variables: [],
+      variables: [
+        {
+          type: TemplateVariableTypeEnum.STRING,
+          name: 'test',
+          required: false,
+          defaultValue: '',
+        },
+        { type: TemplateVariableTypeEnum.STRING, name: 'test', required: false, defaultValue: 'test' },
+      ],
       content,
       parentChangeId,
     });
@@ -57,6 +65,6 @@ describe('Create Message Template', function () {
     expect(result.name).to.eql('test-message-template');
     expect(result.title).to.eql('test');
     expect(result.content).to.eql(content);
-    expect(result.variables).to.eql([]);
+    expect(result.variables?.at(0)?.defaultValue).to.eql(undefined);
   });
 });

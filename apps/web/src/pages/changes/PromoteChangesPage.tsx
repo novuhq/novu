@@ -43,6 +43,7 @@ export function PromoteChangesPage() {
       value: PENDING,
       content: (
         <ChangesTable
+          key={page}
           loading={isLoadingChanges}
           changes={changes}
           handleTableChange={handleTableChange}
@@ -57,6 +58,7 @@ export function PromoteChangesPage() {
       value: HISTORY,
       content: (
         <ChangesTable
+          key={page}
           loading={isLoadingHistory}
           changes={history}
           handleTableChange={handleTableChange}
@@ -88,7 +90,7 @@ export function PromoteChangesPage() {
         }
       />
       <StyledTabs>
-        <Tabs menuTabs={menuTabs} defaultValue={PENDING} />
+        <Tabs menuTabs={menuTabs} defaultValue={PENDING} onTabChange={() => setPage(0)} />
       </StyledTabs>
     </PageContainer>
   );

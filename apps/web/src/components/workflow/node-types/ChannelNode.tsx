@@ -12,7 +12,7 @@ interface NodeData {
   onDelete: (id: string) => void;
   error: string;
   setActivePage: (string) => void;
-  active: boolean;
+  active?: boolean;
 }
 
 export default memo(
@@ -34,6 +34,7 @@ export default memo(
           active={selected}
           disabled={!data.active}
           id={id}
+          index={data.index}
           dragging={dragging}
         />
         <Handle type="target" id="b" position={Position.Top} />

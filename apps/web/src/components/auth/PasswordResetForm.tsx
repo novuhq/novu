@@ -1,4 +1,3 @@
-import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -6,17 +5,18 @@ import * as Sentry from '@sentry/react';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
 
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../store/authContext';
 import { api } from '../../api/api.client';
 import { PasswordInput, Button, colors, Text } from '../../design-system';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
+import { ROUTES } from '../../constants/routes.enum';
 
 type Props = {
   token: string;
 };
 
 export function PasswordResetForm({ token }: Props) {
-  const { setToken } = useContext(AuthContext);
+  const { setToken } = useAuthContext();
 
   const navigate = useNavigate();
   const { isLoading, mutateAsync, isError, error } = useMutation<
@@ -50,7 +50,7 @@ export function PasswordResetForm({ token }: Props) {
         message: 'Password was changed successfully',
         color: 'green',
       });
-      navigate('/templates');
+      navigate(ROUTES.TEMPLATES);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);

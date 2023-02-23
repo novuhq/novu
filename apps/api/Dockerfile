@@ -1,7 +1,7 @@
 FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as dev_base
 
 RUN npm i pm2 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@7.5.0
+RUN npm --no-update-notifier --no-fund --global install pnpm@7.27.0
 RUN pnpm --version
 
 WORKDIR /usr/src/app

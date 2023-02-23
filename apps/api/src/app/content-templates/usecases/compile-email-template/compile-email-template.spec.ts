@@ -92,6 +92,34 @@ describe('Compile E-mail Template', function () {
     expect(subject).to.equal('A title for Header Test');
   });
 
+  it('should apply subject variable if provided', async function () {
+    const subjectText = 'Novu Test';
+    const { html, subject } = await useCase.execute(
+      CompileEmailTemplateCommand.create({
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+        layoutId: null,
+        preheader: null,
+        content: [
+          {
+            content: '<p>{{subject}}</p>',
+            type: EmailBlockTypeEnum.TEXT,
+          },
+        ],
+        payload: { subject: subjectText },
+        userId: session.user._id,
+        contentType: 'editor',
+        subject: '{{subject}}',
+      })
+    );
+
+    expect(html).to.contain('<!DOCTYPE html');
+    expect(html).to.not.contain('{{subject}}');
+    expect(html).to.contain(`<p>${subjectText}</p>`);
+
+    expect(subject).to.equal(subjectText);
+  });
+
   describe('Backwards compatability', function () {
     it('should compile e-mail template for custom html without layouts attached for backwards compatability', async function () {
       const { html, subject } = await useCase.execute(

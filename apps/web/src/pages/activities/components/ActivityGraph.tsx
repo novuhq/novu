@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from 'chart.js';
-import { Bar } from 'react-chartjs-2';
-import { useEffect, useState } from 'react';
+import { Bar, getElementAtEvent } from 'react-chartjs-2';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useMantineTheme } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
 import { differenceInDays, format, isSameDay, subDays } from 'date-fns';
@@ -15,7 +15,8 @@ import { getOptions, getChartData } from '../services';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-export function ActivityGraph() {
+export function ActivityGraph({ onBarClick }: { onBarClick: (item: IActivityGraphStats) => void }) {
+  const chartRef = useRef();
   const [isTriggerSent, setIsTriggerSent] = useState<boolean>(false);
   const [graphState, setGraphState] = useState<IActivityGraphStats[]>([]);
   const { data: activityGraphStats, isLoading: loadingActivityStats } = useQuery<IActivityGraphStats[]>(
@@ -35,17 +36,30 @@ export function ActivityGraph() {
 
   const activityGraphStatsLength = graphState?.length ? graphState?.length : 0;
 
+  const options = useMemo(
+    () => getOptions(isTriggerSent, activityGraphStatsLength),
+    [isTriggerSent, activityGraphStatsLength]
+  );
+
+  const data = useMemo(() => getChartData(graphState, isDark), [graphState, isDark]);
+
+  const onClick = (event) => {
+    const [barItem] = getElementAtEvent(chartRef.current as any, event);
+    if (barItem) {
+      const { datasetIndex } = barItem;
+      const item = data.datasets[datasetIndex].data[barItem.index];
+
+      onBarClick(item);
+    }
+  };
+
   return (
     <Wrapper>
       <ActivityGraphGlobalStyles isTriggerSent={isTriggerSent} isDark={isDark} />
 
       {!isTriggerSent && !loadingActivityStats ? <MessageContainer isDark={isDark} /> : null}
 
-      <Bar
-        id="chart-bar-styles"
-        options={getOptions(isTriggerSent, activityGraphStatsLength)}
-        data={getChartData(graphState, isDark)}
-      />
+      <Bar ref={chartRef} id="chart-bar-styles" options={options} data={data} onClick={onClick} />
     </Wrapper>
   );
 }
@@ -78,8 +92,10 @@ function fillDateGaps(data: IActivityGraphStats[]): IActivityGraphStats[] {
         const daysBetween = differenceInDays(currentDate, new Date(nextModel._id));
         const fillerDates = Array.from({ length: daysBetween - 1 }, (_value, dayIndex) => {
           return {
-            count: 0,
             _id: format(subDays(currentDate, dayIndex + 1), 'yyyy-MM-dd'),
+            count: 0,
+            templates: [],
+            channels: [],
           };
         });
 
@@ -101,7 +117,7 @@ function unshiftCurrentDay(data: IActivityGraphStats[]): IActivityGraphStats[] {
   if (isContainsCurrentDate) return data;
 
   const clonedDate = cloneDeep(data);
-  clonedDate.unshift({ _id: currentDate, count: 0 });
+  clonedDate.unshift({ _id: currentDate, count: 0, templates: [], channels: [] });
 
   return clonedDate;
 }

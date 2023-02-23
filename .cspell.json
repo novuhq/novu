@@ -388,7 +388,18 @@
     "nunito",
     "codesee",
     "ehlo",
-    "logrocket"
+    "logrocket",
+    "backoff",
+    "isequal",
+    "Scriptable",
+    "iife",
+    "redlock",
+    "axios",
+    "ioredis",
+    "newrelic",
+    "nodemailer",
+    "emailjs",
+    "typeof"
   ],
   "flagWords": [],
   "patterns": [

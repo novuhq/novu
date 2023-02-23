@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDefined, IsEmail, IsLocale, IsOptional, IsString } from 'class-validator';
+import { SubscriberCustomData } from '@novu/shared';
 
 export class CreateSubscriberRequestDto {
   @ApiProperty({
@@ -41,4 +42,8 @@ export class CreateSubscriberRequestDto {
   @IsLocale()
   @IsOptional()
   locale?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  data?: SubscriberCustomData;
 }

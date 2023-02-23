@@ -18,8 +18,10 @@ export function InAppWidgetPreview({
   onChange,
   index,
   enableAvatar,
+  preview = false,
 }: {
   readonly: boolean;
+  preview?: boolean;
   children: JSX.Element;
   value: IMessageAction;
   onChange: (data: any) => void;
@@ -39,7 +41,83 @@ export function InAppWidgetPreview({
 
   function onRemoveTemplate() {
     setIsButtonsTemplateSelected(false);
-    onChange({});
+    onChange('');
+  }
+
+  const editableContent = (
+    <ButtonsTemplatesPopover
+      isVisible={isButtonsTemplateVisible}
+      setIsPopoverVisible={setIsButtonsTemplateVisible}
+      setTemplateSelected={setIsButtonsTemplateSelected}
+      onChange={onChange}
+    >
+      <Container
+        fluid
+        sx={{
+          position: 'relative',
+          padding: '15px 25px 0px',
+          borderRadius: '7px',
+          backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
+          boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
+          width: preview ? undefined : '100%',
+
+          '&:before': {
+            content: '""',
+            position: 'absolute',
+            left: '0',
+            top: '0',
+            right: '0',
+            bottom: '0',
+            width: '5px',
+            borderRadius: ' 7px 0 0 7px',
+            background: colors.vertical,
+          },
+
+          ...(readonly && !preview
+            ? {
+                backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
+                color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70,
+                opacity: 0.6,
+              }
+            : {}),
+          ...(avatarContainerOpened && { opacity: 0.4 }),
+        }}
+      >
+        <Group position="apart">
+          <div style={{ width: '100%' }}>
+            <Group position="left" spacing={10} noWrap>
+              {enableAvatar && (
+                <AvatarContainer
+                  index={index}
+                  opened={avatarContainerOpened}
+                  setOpened={setAvatarContainerOpened}
+                  readonly={readonly}
+                />
+              )}
+
+              <div style={{ flexGrow: 1 }}>
+                <Text weight="bold">{children}</Text>
+                <Text mt={5} color={colors.B60}>
+                  {minutesAgo(5)}
+                </Text>
+              </div>
+            </Group>
+            <ActionBlockContainer
+              value={value}
+              onChange={onChange}
+              onButtonAddClickHandle={onButtonAddClickHandle}
+              onRemoveTemplate={onRemoveTemplate}
+              isButtonsTemplateSelected={isButtonsTemplateSelected}
+              readonly={readonly}
+            />
+          </div>
+        </Group>
+      </Container>
+    </ButtonsTemplatesPopover>
+  );
+
+  if (!preview) {
+    return editableContent;
   }
 
   return (
@@ -69,76 +147,7 @@ export function InAppWidgetPreview({
         </Group>
       </Card.Section>
       <Card.Section sx={{ padding: '15px' }}>
-        <ButtonsTemplatesPopover
-          isVisible={isButtonsTemplateVisible}
-          setIsPopoverVisible={setIsButtonsTemplateVisible}
-          setTemplateSelected={setIsButtonsTemplateSelected}
-          value={value}
-          onChange={onChange}
-        >
-          <Container
-            fluid
-            sx={{
-              position: 'relative',
-              padding: '15px 25px 0px',
-              borderRadius: '7px',
-              backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.white,
-              boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
-
-              '&:before': {
-                content: '""',
-                position: 'absolute',
-                left: '0',
-                top: '0',
-                right: '0',
-                bottom: '0',
-                width: '5px',
-                borderRadius: ' 7px 0 0 7px',
-                background: colors.vertical,
-              },
-
-              ...(readonly
-                ? {
-                    backgroundColor: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
-                    color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70,
-                    opacity: 0.6,
-                  }
-                : {}),
-              ...(avatarContainerOpened && { opacity: 0.4 }),
-            }}
-          >
-            <Group position="apart">
-              <div style={{ width: '100%' }}>
-                <Group position="left" spacing={10} noWrap>
-                  {enableAvatar && (
-                    <AvatarContainer
-                      index={index}
-                      opened={avatarContainerOpened}
-                      setOpened={setAvatarContainerOpened}
-                      readonly={readonly}
-                    />
-                  )}
-
-                  <div style={{ flexGrow: 1 }}>
-                    <Text weight="bold">{children}</Text>
-                    <Text mt={5} color={colors.B60}>
-                      {minutesAgo(5)}
-                    </Text>
-                  </div>
-                </Group>
-                <ActionBlockContainer
-                  value={value}
-                  onChange={onChange}
-                  onButtonAddClickHandle={onButtonAddClickHandle}
-                  onRemoveTemplate={onRemoveTemplate}
-                  isButtonsTemplateSelected={isButtonsTemplateSelected}
-                  readonly={readonly}
-                />
-              </div>
-            </Group>
-          </Container>
-        </ButtonsTemplatesPopover>
-
+        {editableContent}
         <Container
           mt={10}
           fluid

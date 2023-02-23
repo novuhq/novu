@@ -23,6 +23,7 @@ export class CreateSubscriber {
         phone: command.phone,
         avatar: command.avatar,
         locale: command.locale,
+        data: command.data,
       });
     } else {
       subscriber = await this.updateSubscriber.execute(
@@ -36,6 +37,7 @@ export class CreateSubscriber {
           phone: command.phone,
           avatar: command.avatar,
           locale: command.locale,
+          data: command.data,
           subscriber,
         })
       );

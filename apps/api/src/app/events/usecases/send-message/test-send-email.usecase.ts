@@ -66,7 +66,7 @@ export class SendTestEmail {
     );
 
     const mailData: IEmailOptions = {
-      to: email,
+      to: Array.isArray(email) ? email : [email],
       subject,
       html: html as string,
       from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',

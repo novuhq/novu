@@ -1,5 +1,6 @@
 import React from 'react';
-import { Avatar as MAvatar } from '@mantine/core';
+import { Avatar as MAvatar, ActionIcon, Menu, createStyles, MantineTheme } from '@mantine/core';
+import { useHover } from '@mantine/hooks';
 import { css, cx } from '@emotion/css';
 import styled from '@emotion/styled';
 import { formatDistanceToNow } from 'date-fns';
@@ -13,12 +14,13 @@ import {
   IActor,
 } from '@novu/shared';
 
-import { useNovuTheme, useNotificationCenter, useTranslations } from '../../../../hooks';
+import { useNovuTheme, useNotificationCenter, useTranslations, useNotifications } from '../../../../hooks';
 import { getDefaultBellColors } from '../../../../utils/defaultTheme';
 import { ActionContainer } from './ActionContainer';
 import { INovuTheme } from '../../../../store/novu-theme.context';
 import { When } from '../../../../shared/utils/When';
 import { ColorScheme } from '../../../../shared/config/colors';
+import { shadows } from '../../../../shared/config/shadows';
 import {
   DotsHorizontal,
   ErrorIcon,
@@ -29,6 +31,8 @@ import {
   Up,
   Question,
   GradientDot,
+  Trash,
+  Read,
 } from '../../../../shared/icons';
 import { colors } from '../../../../shared/config/colors';
 import { useStyles } from '../../../../store/styles';
@@ -80,8 +84,10 @@ export function NotificationListItem({
   onClick: (notification: IMessage, actionButtonType?: ButtonTypeEnum) => void;
 }) {
   const { theme: novuTheme, colorScheme } = useNovuTheme();
-  const { onActionClick, listItem } = useNotificationCenter();
-  const { dateFnsLocale } = useTranslations();
+  const { onActionClick, listItem, allowedNotificationActions } = useNotificationCenter();
+  const { removeMessage, markNotificationAsRead, markNotificationAsUnRead } = useNotifications();
+  const { dateFnsLocale, t } = useTranslations();
+  const { hovered, ref } = useHover();
   const unread = readSupportAdded(notification) ? !notification.read : !notification.seen;
   const [
     listItemReadStyles,
@@ -90,6 +96,10 @@ export function NotificationListItem({
     listItemContentLayoutStyles,
     listItemTitleStyles,
     listItemTimestampStyles,
+    menuDotsButtonStyles,
+    menuDropdownStyles,
+    menuArrowStyles,
+    menuItemStyles,
   ] = useStyles([
     'notifications.listItem.read',
     'notifications.listItem.unread',
@@ -97,7 +107,20 @@ export function NotificationListItem({
     'notifications.listItem.contentLayout',
     'notifications.listItem.title',
     'notifications.listItem.timestamp',
+    'notifications.listItem.dotsButton',
+    'actionsMenu.dropdown',
+    'actionsMenu.arrow',
+    'actionsMenu.item',
   ]);
+
+  const { classes } = useDropdownStyles({ novuTheme });
+
+  const overrideClasses: Record<'dropdown' | 'arrow' | 'item' | 'itemIcon', string> = {
+    arrow: cx(classes.arrow, css(menuArrowStyles)),
+    dropdown: cx(classes.dropdown, css(menuDropdownStyles)),
+    item: cx(classes.item, css(menuItemStyles)),
+    itemIcon: classes.itemIcon,
+  };
 
   function handleNotificationClick() {
     onClick(notification);
@@ -105,6 +128,19 @@ export function NotificationListItem({
 
   async function handleActionButtonClick(actionButtonType: ButtonTypeEnum) {
     onActionClick(notification.templateIdentifier, actionButtonType, notification);
+  }
+
+  function handleRemoveMessage(e) {
+    e.stopPropagation();
+    removeMessage(notification._id);
+  }
+  function handleToggleReadMessage(e) {
+    e.stopPropagation();
+    if (unread) {
+      markNotificationAsRead(notification._id);
+    } else {
+      markNotificationAsUnRead(notification._id);
+    }
   }
 
   if (listItem) {
@@ -123,6 +159,7 @@ export function NotificationListItem({
       data-test-id="notification-list-item"
       role="button"
       tabIndex={0}
+      ref={ref}
     >
       <NotificationItemContainer className={cx('nc-notifications-list-item-layout', css(listItemLayoutStyles))}>
         <NotificationContentContainer>
@@ -159,11 +196,41 @@ export function NotificationListItem({
           handleActionButtonClick={handleActionButtonClick}
         />
       </NotificationItemContainer>
-      <SettingsActionWrapper style={{ display: 'none' }} novuTheme={novuTheme}>
-        <DotsHorizontal />
+      <SettingsActionWrapper
+        style={{ display: allowedNotificationActions ? 'block' : 'none', opacity: hovered ? 1 : 0 }}
+        novuTheme={novuTheme}
+      >
+        <Menu
+          radius={7}
+          shadow={colorScheme === 'dark' ? shadows.dark : shadows.light}
+          withArrow
+          classNames={overrideClasses}
+        >
+          <Menu.Target>
+            <ActionIcon onClick={(e) => e.stopPropagation()} variant="transparent">
+              <DotsHorizontal
+                className={cx(
+                  'nc-notifications-list-item-dots-button',
+                  dotsClassName(novuTheme),
+                  css(menuDotsButtonStyles)
+                )}
+              />
+            </ActionIcon>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item icon={<Read />} onClick={handleToggleReadMessage}>
+              {unread ? t('markAsRead') : t('markAsUnRead')}
+            </Menu.Item>
+            <Menu.Item icon={<Trash />} onClick={handleRemoveMessage}>
+              {t('removeMessage')}
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
       </SettingsActionWrapper>
       <When truthy={readSupportAdded(notification)}>
-        {!notification.seen && <GradientDotWrapper colorScheme={colorScheme} />}
+        <div style={{ opacity: !allowedNotificationActions || !hovered ? 1 : 0 }}>
+          {!notification.seen && <GradientDotWrapper colorScheme={colorScheme} />}
+        </div>
       </When>
     </div>
   );
@@ -358,3 +425,30 @@ const SystemIconWrapper = styled.div<{ containerBgColor: string; iconColor: stri
     height: 20px;
   }
 `;
+
+const dotsClassName = (theme: INovuTheme) => css`
+  color: ${theme?.actionsMenu?.dotsButtonColor};
+`;
+
+const useDropdownStyles = createStyles((theme: MantineTheme, { novuTheme }: { novuTheme: INovuTheme }) => {
+  return {
+    dropdown: {
+      backgroundColor: novuTheme.actionsMenu?.dropdownColor,
+      border: 'none',
+    },
+    item: {
+      borerRadius: '5px',
+      color: novuTheme.actionsMenu?.fontColor,
+      fontWeight: 400,
+      fontSize: '14px',
+      '&:hover': {
+        background: novuTheme.actionsMenu?.hoverColor,
+      },
+    },
+    arrow: {
+      backgroundColor: novuTheme.actionsMenu?.dropdownColor,
+      borderColor: novuTheme.actionsMenu?.dropdownColor,
+    },
+    itemIcon: { width: '20px', height: '20px' },
+  };
+});

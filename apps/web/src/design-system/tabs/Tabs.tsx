@@ -18,6 +18,7 @@ interface ITabsProp extends SpacingProps {
   onTabChange?: (value: TabsValue) => void;
   withIcon?: boolean;
   loading?: boolean;
+  keepMounted?: boolean;
 }
 
 export const Tabs = React.forwardRef<HTMLDivElement, ITabsProp>(
@@ -30,6 +31,7 @@ export const Tabs = React.forwardRef<HTMLDivElement, ITabsProp>(
       orientation = 'horizontal',
       withIcon = false,
       loading = false,
+      keepMounted = true,
     }: ITabsProp,
     ref
   ) => {
@@ -52,6 +54,7 @@ export const Tabs = React.forwardRef<HTMLDivElement, ITabsProp>(
           onTabChange={onTabChange}
           variant="default"
           classNames={classes}
+          keepMounted={keepMounted}
         >
           <MantineTabs.List>
             {menuTabs.map((menuTab, i) =>

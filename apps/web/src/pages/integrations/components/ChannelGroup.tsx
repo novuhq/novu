@@ -5,7 +5,7 @@ import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { NovuIntegrationCard } from './NovuIntegrationCard';
 import { When } from '../../../components/utils/When';
-import { IS_DOCKER_HOSTED } from '../../../config';
+import { CONTEXT_PATH, IS_DOCKER_HOSTED } from '../../../config';
 
 export function ChannelGroup({
   title,
@@ -43,8 +43,8 @@ export function ChannelGroup({
                 0,
               connected: true,
               logoFileName: {
-                light: '/static/images/logo-formerly-light-bg.png',
-                dark: '/static/images/logo-formerly-dark-bg.png',
+                light: CONTEXT_PATH + '/static/images/logo-formerly-light-bg.png',
+                dark: CONTEXT_PATH + '/static/images/logo-formerly-dark-bg.png',
               },
               betaVersion: false,
               novu: true,

@@ -146,6 +146,24 @@ export const nodemailerConfig: IConfigCredentials[] = [
     required: false,
   },
   {
+    key: CredentialsKeyEnum.RequireTls,
+    displayName: 'Require TLS',
+    type: 'boolean',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.IgnoreTls,
+    displayName: 'Ignore TLS',
+    type: 'boolean',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.TlsOptions,
+    displayName: 'TLS options',
+    type: 'object',
+    required: false,
+  },
+  {
     key: CredentialsKeyEnum.Domain,
     displayName: 'DKIM: Domain name',
     type: 'string',
@@ -177,6 +195,16 @@ export const postmarkConfig: IConfigCredentials[] = [
 ];
 
 export const sendgridConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
+export const resendConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -402,15 +430,28 @@ export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Key ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
   {
     key: CredentialsKeyEnum.ProjectName,
     displayName: 'Team ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Bundle ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Secure,
+    displayName: 'Production',
+    type: 'switch',
+    required: true,
+  },
+
   ...pushConfigBase,
 ];
 

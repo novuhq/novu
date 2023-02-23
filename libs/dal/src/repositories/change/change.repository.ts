@@ -55,7 +55,7 @@ export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, Ch
       _parentId: { $exists: false, $eq: null },
     });
 
-    const items = await Change.find({
+    const items = await this.MongooseModel.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
       enabled,
@@ -66,5 +66,27 @@ export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, Ch
       .populate('user');
 
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
+  }
+
+  public async getParentId(
+    environmentId: string,
+    entityType: ChangeEntityTypeEnum,
+    entityId: string
+  ): Promise<string | null> {
+    const change = await this.findOne(
+      {
+        _environmentId: environmentId,
+        _entityId: entityId,
+        type: entityType,
+        enabled: false,
+        _parentId: { $exists: true },
+      },
+      '_parentId'
+    );
+    if (change?._parentId) {
+      return change._parentId;
+    }
+
+    return null;
   }
 }

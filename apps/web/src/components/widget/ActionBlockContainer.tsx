@@ -11,6 +11,7 @@ import { ColorScheme, TextInput, useMantineColorScheme, useMantineTheme } from '
 import { RemoveCircle } from '../../design-system/icons/general/RemoveCircle';
 import styled from '@emotion/styled';
 import { Button, colors } from '../../design-system';
+import { When } from '../utils/When';
 
 export function ActionBlockContainer({
   onButtonAddClickHandle,
@@ -91,9 +92,11 @@ function SelectedButtonTemplate(props: ISelectedButtonTemplateProps) {
               </NotificationButton>
             );
           })}
-          <DeleteIcon buttonStyle={buttonStyle[lastButtonType]}>
-            <RemoveCircle onClick={props.onRemoveTemplate} data-test-id="remove-button-icon" />
-          </DeleteIcon>
+          <When truthy={!props.readonly}>
+            <DeleteIcon buttonStyle={buttonStyle[lastButtonType]}>
+              <RemoveCircle onClick={props.onRemoveTemplate} data-test-id="remove-button-icon" />
+            </DeleteIcon>
+          </When>
         </TemplateContainer>
       </TemplateContainerWrap>
     </>

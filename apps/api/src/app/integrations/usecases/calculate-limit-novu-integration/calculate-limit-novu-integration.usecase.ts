@@ -29,7 +29,7 @@ export class CalculateLimitNovuIntegration {
         providerId,
         createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
       },
-      CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS + 1
+      CalculateLimitNovuIntegration.MAX_NOVU_INTEGRATION_MAIL_REQUESTS
     );
 
     return {

@@ -26,10 +26,10 @@ runs:
         node-version: '16.15.1'
 
     - name: 💵 Start Redis
-      uses: supercharge/redis-github-action@1.2.0
+      uses: supercharge/redis-github-action@1.5.0
 
     - name: 📚 Start MongoDB
-      uses: supercharge/mongodb-github-action@1.3.0
+      uses: supercharge/mongodb-github-action@v1.8.0
       with:
         mongodb-version: 4.2.8
 
@@ -37,7 +37,6 @@ runs:
       name: 🛟 Install pnpm
       id: pnpm-install
       with:
-        version: 7.5.0
         run_install: false
 
     - name: ⛏️ Get pnpm store directory

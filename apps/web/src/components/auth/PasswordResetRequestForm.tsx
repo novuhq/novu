@@ -7,6 +7,7 @@ import { Center } from '@mantine/core';
 import { api } from '../../api/api.client';
 import { Button, colors, Input, Text } from '../../design-system';
 import { useVercelParams } from '../../hooks/useVercelParams';
+import { ROUTES } from '../../constants/routes.enum';
 
 type Props = {
   onSent: () => void;
@@ -24,7 +25,7 @@ export function PasswordResetRequestForm({ onSent }: Props) {
   const { isFromVercel, code, next, configurationId } = useVercelParams();
 
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : '/auth/login';
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : ROUTES.AUTH_LOGIN;
 
   const onForgotPassword = async (data) => {
     const itemData = {

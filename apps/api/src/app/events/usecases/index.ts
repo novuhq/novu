@@ -7,6 +7,7 @@ import { SendMessageInApp } from './send-message/send-message-in-app.usecase';
 import { SendMessageChat } from './send-message/send-message-chat.usecase';
 import { SendMessagePush } from './send-message/send-message-push.usecase';
 import { QueueNextJob } from './queue-next-job/queue-next-job.usecase';
+import { CreateNotificationJobs } from './create-notification-jobs/create-notification-jobs.usecase';
 import { Digest } from './send-message/digest/digest.usecase';
 import { CancelDelayed } from './cancel-delayed/cancel-delayed.usecase';
 import { TriggerEventToAll } from './trigger-event-to-all/trigger-event-to-all.usecase';
@@ -20,12 +21,12 @@ import { RunJob } from './run-job/run-job.usecase';
 import { AddJob } from './add-job/add-job.usecase';
 import { AddDigestJob } from './add-job/add-digest-job.usecase';
 import { AddDelayJob } from './add-job/add-delay-job.usecase';
-import { ShouldAddDigestJob } from './add-job/should-add-digest-job.usecase';
 import { SendMessageDelay } from './send-message/send-message-delay.usecase';
 import { SendTestEmail } from './send-message/test-send-email.usecase';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from './map-trigger-recipients';
 import { MessageMatcher } from './trigger-event/message-matcher.service';
 import { ParseEventRequest } from './parse-event-request/parse-event-request.usecase';
+import { ProcessBulkTrigger } from './process-bulk-trigger/process-bulk-trigger.usecase';
 
 export const USE_CASES = [
   MessageMatcher,
@@ -38,6 +39,7 @@ export const USE_CASES = [
   SendMessageChat,
   SendMessagePush,
   QueueNextJob,
+  CreateNotificationJobs,
   Digest,
   CancelDelayed,
   TriggerEventToAll,
@@ -51,10 +53,10 @@ export const USE_CASES = [
   AddJob,
   AddDigestJob,
   AddDelayJob,
-  ShouldAddDigestJob,
   SendMessageDelay,
   SendTestEmail,
   MapTriggerRecipients,
   MapTriggerRecipientsCommand,
   ParseEventRequest,
+  ProcessBulkTrigger,
 ];
