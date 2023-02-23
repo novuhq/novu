@@ -407,8 +407,14 @@ export const firetextConfig: IConfigCredentials[] = [
 
 export const bulksmsConfig: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.AuthKey,
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'Auth Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Sender',
     type: 'string',
     required: true,
   },
@@ -423,6 +429,5 @@ export const bulksmsConfig: IConfigCredentials[] = [
     displayName: 'DLT Entity Id',
     type: 'string',
     required: false,
-  },
-  ...smsConfigBase,
+  }
 ];

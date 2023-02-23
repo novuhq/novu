@@ -12,11 +12,12 @@ export class BulkSmsSmsHandler extends BaseSmsHandler {
       authKey?: string;
       sender?: string;
       route?: string;
-      //dltEntity?: string;
+      dltEntity?: string;
     } = {
-      authKey: credentials.authKey,
+      authKey: credentials.apiKey,
       sender: credentials.from,
       route: credentials.route,
+      dltEntity: credentials.dltEntity,
     };
 
     this.provider = new BulkSmsSmsProvider(config);
