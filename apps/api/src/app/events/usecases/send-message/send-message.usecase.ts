@@ -85,7 +85,7 @@ export class SendMessage {
         digestAmount: command.job.digest?.amount,
         filterPassed: shouldRun,
         preferencesPassed: preferred,
-        usedFilters,
+        ...(usedFilters || {}),
       });
     }
 
