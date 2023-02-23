@@ -441,7 +441,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.15
       prettier: 2.7.1
-      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
+      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -835,7 +835,7 @@ importers:
       react-router-dom: ^6.2.2
       react-scripts: ^5.0.1
       rimraf: ^3.0.2
-      socket.io-client: 4.5.4
+      socket.io-client: 4.6.1
       typescript: 4.9.5
       web-vitals: ^0.2.4
       webfontloader: ^1.6.28
@@ -867,7 +867,7 @@ importers:
       react-router-dom: 6.2.2_sfoxds7t5ydpegc3knd667wn6m
       react-scripts: 5.0.1_24tr2icexdfuforc5mk7qedlwq
       rimraf: 3.0.2
-      socket.io-client: 4.5.4
+      socket.io-client: 4.6.1
       web-vitals: 0.2.4
       webfontloader: 1.6.28
     devDependencies:
@@ -1596,7 +1596,7 @@ importers:
       '@types/node': ^14.6.0
       jest: ^29.3.1
       jest-environment-jsdom: ^29.3.1
-      socket.io-client: 4.5.4
+      socket.io-client: 4.6.1
       ts-jest: ^29.0.3
       typedoc: ^0.23.0
       typescript: 4.9.5
@@ -1604,7 +1604,7 @@ importers:
       '@novu/client': link:../client
       '@novu/shared': link:../../libs/shared
       '@tanstack/query-core': 4.15.1
-      socket.io-client: 4.5.4
+      socket.io-client: 4.6.1
     devDependencies:
       '@babel/preset-env': 7.19.4_@babel+core@7.20.12
       '@babel/preset-typescript': 7.18.6_@babel+core@7.20.12
@@ -1753,7 +1753,7 @@ importers:
       rollup-plugin-peer-deps-external: ^2.2.4
       rollup-plugin-polyfill-node: ^0.12.0
       rollup-plugin-terser: ^7.0.2
-      socket.io-client: 4.5.4
+      socket.io-client: 4.6.1
       ts-jest: ^29.0.3
       tslib: ^2.3.1
       typescript: 4.9.5
@@ -1775,7 +1775,7 @@ importers:
       lodash.clonedeep: 4.5.0
       lodash.merge: 4.6.2
       react-infinite-scroll-component: 6.1.0_react@17.0.2
-      socket.io-client: 4.5.4
+      socket.io-client: 4.6.1
       tslib: 2.3.1
       webfontloader: 1.6.28
     devDependencies:
@@ -37496,13 +37496,13 @@ packages:
       fast-json-parse: 1.0.3
       objectorarray: 1.0.5
 
-  /engine.io-client/6.2.3:
-    resolution: {integrity: sha512-aXPtgF1JS3RuuKcpSrBtimSjYvrbhKW9froICH4s0F3XQWLxsKNxqzG39nnvQZQnva4CMvUK63T7shevxRyYHw==}
+  /engine.io-client/6.4.0:
+    resolution: {integrity: sha512-GyKPDyoEha+XZ7iEqam49vz6auPnNJ9ZBfy89f+rMMas8AuiMWOZ9PVzu8xb9ZC6rafUqiGHSCfu22ih66E+1g==}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
       debug: 4.3.4
       engine.io-parser: 5.0.3
-      ws: 8.2.3
+      ws: 8.11.0
       xmlhttprequest-ssl: 2.0.0
     transitivePeerDependencies:
       - bufferutil
@@ -44008,7 +44008,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
+      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -55439,13 +55439,13 @@ packages:
   /socket.io-adapter/2.4.0:
     resolution: {integrity: sha512-W4N+o69rkMEGVuk2D/cvca3uYsvGlMwsySWV447y99gUPghxq42BxqLNMndb+a1mm/5/7NeXVQS7RLa2XyXvYg==}
 
-  /socket.io-client/4.5.4:
-    resolution: {integrity: sha512-ZpKteoA06RzkD32IbqILZ+Cnst4xewU7ZYK12aS1mzHftFFjpoMz69IuhP/nL25pJfao/amoPI527KnuhFm01g==}
+  /socket.io-client/4.6.1:
+    resolution: {integrity: sha512-5UswCV6hpaRsNg5kkEHVcbBIXEYoVbMQaHJBXJCyEQ+CiFPV1NIOY0XOFWG4XR4GZcB8Kn6AsRs/9cy9TbqVMQ==}
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
       debug: 4.3.4
-      engine.io-client: 6.2.3
+      engine.io-client: 6.4.0
       socket.io-parser: 4.2.1
     transitivePeerDependencies:
       - bufferutil
@@ -57580,7 +57580,7 @@ packages:
     dependencies:
       tslib: 1.14.1
 
-  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
+  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -57601,6 +57601,7 @@ packages:
       esbuild:
         optional: true
     dependencies:
+      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
@@ -60432,6 +60433,19 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+
+  /ws/8.11.0:
+    resolution: {integrity: sha512-HPG3wQd9sNQoT9xHyNCXoDUa+Xw/VevmY9FoHyQ+g+rrMn4j6FB4np7Z0OhdTgjx6MgQLK7jwSy1YecU1+4Asg==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+    dev: false
 
   /ws/8.12.0:
     resolution: {integrity: sha512-kU62emKIdKVeEIOIKVegvqpXMSTAMLJozpHZaJNDYqBjzlSYXQGviYwN1osDLJ9av68qHd4a2oSjd7yD4pacig==}
