@@ -174,7 +174,7 @@ export async function run(): Promise<void> {
     for (const notificationTemplate of notificationTemplates) {
       const found = await notificationTemplateRepository.findOne({
         _parentId: notificationTemplate._id,
-        _environmentId: notificationTemplate._environmentId.toString(),
+        _environmentId: notificationTemplate._environmentId,
       });
       if (!found) {
         console.log(`Migrating notification template ${notificationTemplate._id}`);
@@ -183,8 +183,8 @@ export async function run(): Promise<void> {
             item: notificationTemplate,
             type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
             changeId: ChangeRepository.createObjectId(),
-            environmentId: notificationTemplate._environmentId.toString(),
-            organizationId: notificationTemplate._organizationId.toString(),
+            environmentId: notificationTemplate._environmentId,
+            organizationId: notificationTemplate._organizationId,
             userId: member._userId,
           })
         );
@@ -192,8 +192,8 @@ export async function run(): Promise<void> {
         await applyChange.execute(
           ApplyChangeCommand.create({
             changeId: change._id,
-            environmentId: notificationTemplate._environmentId.toString(),
-            organizationId: notificationTemplate._organizationId.toString(),
+            environmentId: notificationTemplate._environmentId,
+            organizationId: notificationTemplate._organizationId,
             userId: member._userId,
           })
         );
