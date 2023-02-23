@@ -1,14 +1,7 @@
-import { BaseRepository, Omit } from '../base-repository';
-import { NotificationGroupEntity } from './notification-group.entity';
+import { BaseRepository } from '../base-repository';
+import { NotificationGroupEntity, NotificationGroupDBModel } from './notification-group.entity';
 import { NotificationGroup } from './notification-group.schema';
-import { Document, FilterQuery } from 'mongoose';
-
-class PartialNotificationGroupEntity extends Omit(NotificationGroupEntity, ['_environmentId', '_organizationId']) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialNotificationGroupEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class NotificationGroupRepository extends BaseRepository<EnforceEnvironmentQuery, NotificationGroupEntity> {
+export class NotificationGroupRepository extends BaseRepository<NotificationGroupDBModel, NotificationGroupEntity> {
   constructor() {
     super(NotificationGroup, NotificationGroupEntity);
   }

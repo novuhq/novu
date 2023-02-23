@@ -32,6 +32,7 @@ import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/serv
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { OrganizationEntity } from '../../../../../../../libs/dal/src/repositories/organization/organization.entity';
+import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -46,9 +47,16 @@ export class SendMessageInApp extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate,
-    private organizationRepository: OrganizationRepository
+    private organizationRepository: OrganizationRepository,
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {

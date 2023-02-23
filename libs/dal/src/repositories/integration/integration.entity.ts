@@ -1,4 +1,8 @@
+import { Types } from 'mongoose';
 import { ChannelTypeEnum } from '@novu/shared';
+
+import type { EnvironmentId } from '../environment';
+import type { OrganizationId } from '../organization';
 
 export interface ICredentials {
   apiKey?: string;
@@ -29,9 +33,9 @@ export interface ICredentials {
 export class IntegrationEntity {
   _id?: string;
 
-  _environmentId: string;
+  _environmentId: EnvironmentId;
 
-  _organizationId: string;
+  _organizationId: OrganizationId;
 
   providerId: string;
 
@@ -47,3 +51,9 @@ export class IntegrationEntity {
 
   deletedBy: string;
 }
+
+export type IntegrationDBModel = Omit<IntegrationEntity, '_environmentId' | '_organizationId'> & {
+  _environmentId: Types.ObjectId;
+
+  _organizationId: Types.ObjectId;
+};

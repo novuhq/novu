@@ -1,19 +1,22 @@
-import { BaseRepository, Omit } from '../base-repository';
-import { JobEntity, JobStatusEnum } from './job.entity';
-import { Job } from './job.schema';
+import { FilterQuery, ProjectionType } from 'mongoose';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Document, FilterQuery, ProjectionType } from 'mongoose';
+
+import { BaseRepository } from '../base-repository';
+import { JobEntity, JobDBModel, JobStatusEnum } from './job.entity';
+import { Job } from './job.schema';
 import { NotificationTemplateEntity } from '../notification-template';
 import { SubscriberEntity } from '../subscriber';
 import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
 
-class PartialJobEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
+type JobEntityPopulated = JobEntity & {
+  template: NotificationTemplateEntity;
+  notification: NotificationEntity;
+  subscriber: SubscriberEntity;
+  environment: EnvironmentEntity;
+};
 
-type EnforceEnvironmentQuery = FilterQuery<PartialJobEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEntity> {
+export class JobRepository extends BaseRepository<JobDBModel, JobEntity> {
   constructor() {
     super(Job, JobEntity);
   }
@@ -150,21 +153,16 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     selectNotification?: ProjectionType<NotificationEntity>;
     selectSubscriber?: ProjectionType<SubscriberEntity>;
     selectEnvironment?: ProjectionType<EnvironmentEntity>;
-  }): Promise<
-    JobEntity & {
-      template: NotificationTemplateEntity;
-      notification: NotificationEntity;
-      subscriber: SubscriberEntity;
-      environment: EnvironmentEntity;
-    }
-  > {
-    return this.MongooseModel.findOne(query, select)
+  }) {
+    const job = this.MongooseModel.findOne(query, select)
       .populate('template', selectTemplate)
       .populate('notification', selectNotification)
       .populate('subscriber', selectSubscriber)
       .populate('environment', selectEnvironment)
       .lean()
       .exec();
+
+    return this.mapEntity(job) as JobEntityPopulated;
   }
 
   public async shouldDelayDigestJobOrMerge(

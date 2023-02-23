@@ -1,3 +1,5 @@
+import { Types } from 'mongoose';
+
 import { EnvironmentId, OrganizationId, TopicId, TopicKey, TopicName } from './types';
 
 export class TopicEntity {
@@ -7,3 +9,9 @@ export class TopicEntity {
   key: TopicKey;
   name: TopicName;
 }
+
+export type TopicDBModel = Omit<TopicEntity, '_environmentId' | '_organizationId'> & {
+  _environmentId: Types.ObjectId;
+
+  _organizationId: Types.ObjectId;
+};

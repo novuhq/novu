@@ -1,5 +1,8 @@
+import { Types } from 'mongoose';
 import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+
 import { UserEntity } from '../user';
+import type { OrganizationId } from '../organization';
 
 export class MemberEntity {
   _id: string;
@@ -14,5 +17,15 @@ export class MemberEntity {
 
   memberStatus: MemberStatusEnum;
 
-  _organizationId: string;
+  _organizationId: OrganizationId;
 }
+
+export type MemberDBModel = Omit<MemberEntity, '_userId' | 'invite' | '_organizationId'> & {
+  _userId: Types.ObjectId;
+
+  invite?: IMemberInvite & {
+    _inviterId: Types.ObjectId;
+  };
+
+  _organizationId: Types.ObjectId;
+};

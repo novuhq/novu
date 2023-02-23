@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import {
   EnvironmentId,
   ExternalSubscriberId,
@@ -17,5 +18,18 @@ export class TopicSubscribersEntity {
   topicKey: TopicKey;
   externalSubscriberId: ExternalSubscriberId;
 }
+
+export type TopicSubscribersDBModel = Omit<
+  TopicSubscribersEntity,
+  '_environmentId' | '_organizationId' | '_subscriberId' | '_topicId'
+> & {
+  _environmentId: Types.ObjectId;
+
+  _organizationId: Types.ObjectId;
+
+  _subscriberId: Types.ObjectId;
+
+  _topicId: Types.ObjectId;
+};
 
 export type CreateTopicSubscribersEntity = Omit<TopicSubscribersEntity, '_id'>;

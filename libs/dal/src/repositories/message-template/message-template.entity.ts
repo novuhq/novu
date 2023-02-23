@@ -1,13 +1,16 @@
-import { StepTypeEnum, IMessageCTA, TemplateVariableTypeEnum, IActor } from '@novu/shared';
+import { Types } from 'mongoose';
+import { StepTypeEnum, IMessageCTA, IActor } from '@novu/shared';
 
 import { IEmailBlock, ITemplateVariable } from './types';
+import type { OrganizationId } from '../organization';
+import type { EnvironmentId } from '../environment';
 
 export class MessageTemplateEntity {
   _id: string;
 
-  _environmentId: string;
+  _environmentId: EnvironmentId;
 
-  _organizationId: string;
+  _organizationId: OrganizationId;
 
   _creatorId: string;
 
@@ -42,3 +45,20 @@ export class MessageTemplateEntity {
 
   actor?: IActor;
 }
+
+export type MessageTemplateDBModel = Omit<
+  MessageTemplateEntity,
+  '_environmentId' | '_organizationId' | '_creatorId' | '_layoutId' | '_feedId' | '_parentId'
+> & {
+  _environmentId: Types.ObjectId;
+
+  _organizationId: Types.ObjectId;
+
+  _creatorId: Types.ObjectId;
+
+  _layoutId: Types.ObjectId;
+
+  _feedId: Types.ObjectId;
+
+  _parentId: Types.ObjectId;
+};

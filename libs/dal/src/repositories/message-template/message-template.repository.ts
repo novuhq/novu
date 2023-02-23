@@ -1,14 +1,7 @@
-import { BaseRepository, Omit } from '../base-repository';
+import { BaseRepository } from '../base-repository';
 import { MessageTemplate } from './message-template.schema';
-import { MessageTemplateEntity } from './message-template.entity';
-import { Document, FilterQuery } from 'mongoose';
-
-class PartialMessageTemplateEntity extends Omit(MessageTemplateEntity, ['_environmentId', '_organizationId']) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialMessageTemplateEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class MessageTemplateRepository extends BaseRepository<EnforceEnvironmentQuery, MessageTemplateEntity> {
+import { MessageTemplateEntity, MessageTemplateDBModel } from './message-template.entity';
+export class MessageTemplateRepository extends BaseRepository<MessageTemplateDBModel, MessageTemplateEntity> {
   constructor() {
     super(MessageTemplate, MessageTemplateEntity);
   }

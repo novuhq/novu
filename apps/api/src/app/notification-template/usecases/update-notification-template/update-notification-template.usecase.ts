@@ -1,5 +1,6 @@
 // eslint-ignore max-len
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { AnyKeys } from 'mongoose';
 import {
   ChangeRepository,
   NotificationStepEntity,
@@ -39,7 +40,7 @@ export class UpdateNotificationTemplate {
     const existingTemplate = await this.notificationTemplateRepository.findById(command.id, command.environmentId);
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
-    const updatePayload: Partial<NotificationTemplateEntity> = {};
+    const updatePayload: AnyKeys<NotificationTemplateEntity> = {};
     if (command.name) {
       updatePayload.name = command.name;
     }

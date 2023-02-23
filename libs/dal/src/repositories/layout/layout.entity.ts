@@ -1,11 +1,13 @@
+import { Types } from 'mongoose';
+
 import {
   ChannelTypeEnum,
   EnvironmentId,
   ITemplateVariable,
-  OrganizationId,
   LayoutDescription,
   LayoutId,
   LayoutName,
+  OrganizationId,
   UserId,
 } from './types';
 
@@ -26,3 +28,13 @@ export class LayoutEntity {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export type LayoutDBModel = Omit<LayoutEntity, '_environmentId' | '_organizationId' | '_creatorId' | '_parentId'> & {
+  _environmentId: Types.ObjectId;
+
+  _organizationId: Types.ObjectId;
+
+  _creatorId: Types.ObjectId;
+
+  _parentId: Types.ObjectId;
+};

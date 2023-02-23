@@ -1,15 +1,11 @@
+import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Document, FilterQuery, QueryWithHelpers, Types } from 'mongoose';
-import { BaseRepository, Omit } from '../base-repository';
-import { NotificationEntity } from './notification.entity';
+
+import { BaseRepository } from '../base-repository';
+import { NotificationEntity, NotificationDBModel } from './notification.entity';
 import { Notification } from './notification.schema';
 
-class PartialNotificationEntity extends Omit(NotificationEntity, ['_environmentId', '_organizationId']) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialNotificationEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class NotificationRepository extends BaseRepository<EnforceEnvironmentQuery, NotificationEntity> {
+export class NotificationRepository extends BaseRepository<NotificationDBModel, NotificationEntity> {
   constructor() {
     super(Notification, NotificationEntity);
   }
@@ -32,7 +28,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
     skip = 0,
     limit = 10
   ) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: FilterQuery<NotificationDBModel> = {
       _environmentId: environmentId,
     };
 
@@ -72,7 +68,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
   }
 
   public async getFeedItem(notificationId: string, _environmentId: string, _organizationId: string) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: FilterQuery<NotificationDBModel> = {
       _id: notificationId,
       _environmentId,
       _organizationId,
