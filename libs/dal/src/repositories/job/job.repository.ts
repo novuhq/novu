@@ -162,7 +162,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity> {
       .lean()
       .exec();
 
-    return this.mapEntity(job) as JobEntityPopulated;
+    return job as unknown as JobEntityPopulated;
   }
 
   public async shouldDelayDigestJobOrMerge(
