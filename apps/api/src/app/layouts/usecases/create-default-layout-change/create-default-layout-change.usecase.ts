@@ -21,7 +21,7 @@ export class CreateDefaultLayoutChangeUseCase {
   ) {}
 
   async execute(command: CreateDefaultLayoutChangeCommand): Promise<void> {
-    let item: LayoutEntity | LayoutDto = await this.layoutRepository.findOne({
+    let item: LayoutEntity | LayoutDto | null = await this.layoutRepository.findOne({
       _id: command.layoutId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,

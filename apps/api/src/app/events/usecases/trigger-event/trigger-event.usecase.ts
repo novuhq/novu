@@ -57,7 +57,7 @@ export class TriggerEvent {
       throw new ApiException(message);
     }
 
-    const jobs: Omit<JobEntity, '_id'>[][] = [];
+    const jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[][] = [];
 
     // We might have a single actor for every trigger so we only need to check for it once
     let actorProcessed;
@@ -109,7 +109,7 @@ export class TriggerEvent {
     }
   }
 
-  private async storeAndAddJob(jobs: Omit<JobEntity, '_id'>[]) {
+  private async storeAndAddJob(jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[]) {
     const storedJobs = await this.jobRepository.storeJobs(jobs);
     const channels = storedJobs
       .map((item) => item.type as StepTypeEnum)

@@ -207,6 +207,9 @@ export class UpdateNotificationTemplate {
       command.id,
       command.environmentId
     );
+    if (!notificationTemplateWithStepTemplate) {
+      throw new NotFoundException(`Notification template ${command.id} is not found`);
+    }
 
     const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);
 
@@ -261,7 +264,7 @@ export class UpdateNotificationTemplate {
     return partialNotificationStep;
   }
 
-  private cleanNotificationTemplate(notificationTemplateWithStepTemplate) {
+  private cleanNotificationTemplate(notificationTemplateWithStepTemplate: NotificationTemplateEntity) {
     const notificationTemplate = Object.assign({}, notificationTemplateWithStepTemplate);
 
     notificationTemplate.steps = notificationTemplateWithStepTemplate.steps.map((step) => {

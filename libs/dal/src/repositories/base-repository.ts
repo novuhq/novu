@@ -77,7 +77,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity> {
       })
       .batchSize(batchSize)
       .cursor()) {
-      yield this.mapEntities(doc);
+      yield this.mapEntity(doc);
     }
   }
 

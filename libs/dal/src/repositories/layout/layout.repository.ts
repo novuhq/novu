@@ -66,27 +66,27 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
     return await this.findOne({ _environmentId, _organizationId, isDefault: true });
   }
 
-  async findDeleted(id: LayoutId, environmentId: EnvironmentId): Promise<LayoutEntity | undefined> {
+  async findDeleted(id: LayoutId, environmentId: EnvironmentId): Promise<LayoutEntity | null> {
     const deletedLayout: LayoutEntity = await this.layout.findOneDeleted({
       _id: this.convertStringToObjectId(id),
       _environmentId: this.convertStringToObjectId(environmentId),
     });
 
     if (!deletedLayout?._id) {
-      return undefined;
+      return null;
     }
 
     return this.mapEntity(deletedLayout);
   }
 
-  async findDeletedByParentId(parentId: LayoutId, environmentId: EnvironmentId): Promise<LayoutEntity | undefined> {
+  async findDeletedByParentId(parentId: LayoutId, environmentId: EnvironmentId): Promise<LayoutEntity | null> {
     const deletedLayout: LayoutEntity = await this.layout.findOneDeleted({
       _parentId: this.convertStringToObjectId(parentId),
       _environmentId: this.convertStringToObjectId(environmentId),
     });
 
     if (!deletedLayout?._id) {
-      return undefined;
+      return null;
     }
 
     return this.mapEntity(deletedLayout);

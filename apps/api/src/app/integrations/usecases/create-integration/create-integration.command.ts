@@ -19,5 +19,5 @@ export class CreateIntegrationCommand extends EnvironmentCommand {
   check: boolean;
 
   @IsOptional()
-  userId?: string;
+  userId: string;
 }

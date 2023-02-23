@@ -31,7 +31,7 @@ export interface ICredentials {
 }
 
 export class IntegrationEntity {
-  _id?: string;
+  _id: string;
 
   _environmentId: EnvironmentId;
 
