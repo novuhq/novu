@@ -32,4 +32,4 @@ jobs:
       - uses: ./.github/actions/docker/build-api
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-
+          fork: ${{ github.event.pull_request.head.repo.fork }}
