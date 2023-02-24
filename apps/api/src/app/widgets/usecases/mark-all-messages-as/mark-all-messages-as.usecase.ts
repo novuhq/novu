@@ -1,17 +1,15 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-
 import { InvalidateCache } from '../../../shared/interceptors';
-import { MarkAllMessageAsReadByFeedCommand } from './mark-all-message-as-read-by-feed.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { MarkAllMessagesAsCommand } from './mark-all-messages-as.command';
 
 @Injectable()
-export class MarkAllMessageAsReadByFeed {
+export class MarkAllMessagesAs {
   constructor(
     private messageRepository: MessageRepository,
     private queueService: QueueService,
@@ -20,19 +18,20 @@ export class MarkAllMessageAsReadByFeed {
   ) {}
 
   @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED])
-  async execute(command: MarkAllMessageAsReadByFeedCommand): Promise<number> {
-    const feedId = command.feedId ? [command.feedId] : null;
+  async execute(command: MarkAllMessagesAsCommand): Promise<number> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) {
-      throw new ApiException(
+      throw new NotFoundException(
         `Subscriber ${command.subscriberId} does not exist in environment ${command.environmentId}, ` +
           `please provide a valid subscriber identifier`
       );
     }
-    const response = await this.messageRepository.markAllUnreadAsReadByFeed(
+
+    const response = await this.messageRepository.markAllMessagesAs(
       subscriber._id,
       command.environmentId,
-      feedId
+      command.markAs,
+      command.feedIds
     );
 
     this.queueService.wsSocketQueue.add({
@@ -51,11 +50,16 @@ export class MarkAllMessageAsReadByFeed {
       },
     });
 
-    this.analyticsService.track('Mark all message as read by Feed - [Notification Center]', command.organizationId, {
-      _organization: command.organizationId,
-      _subscriberId: subscriber._id,
-      feedId,
-    });
+    this.analyticsService.track(
+      `Mark all messages as ${command.markAs}- [Notification Center]`,
+      command.organizationId,
+      {
+        _organization: command.organizationId,
+        _subscriberId: subscriber._id,
+        feedIds: command.feedIds,
+        markAs: command.markAs,
+      }
+    );
 
     return response.modified;
   }

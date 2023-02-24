@@ -1,19 +1,19 @@
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { ActionIcon } from '@mantine/core';
-import styled from '@emotion/styled';
+import React, { useContext, useEffect, useState } from 'react';
 import { css, cx } from '@emotion/css';
+import styled from '@emotion/styled';
+import { ActionIcon } from '@mantine/core';
 
 import { useNotifications, useNovuTheme, useTranslations } from '../../../../../hooks';
+import { Cogs } from '../../../../../shared/icons';
 import { INotificationCenterContext } from '../../../../../shared/interfaces';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
-import { Cogs } from '../../../../../shared/icons';
-import { UnseenBadge } from '../../UnseenBadge';
-import { useStyles } from '../../../../../store/styles';
 import { INovuTheme } from '../../../../../store/novu-theme.context';
+import { useStyles } from '../../../../../store/styles';
+import { UnseenBadge } from '../../UnseenBadge';
 
 export function Header({ onCogClick }: { onCogClick?: () => void }) {
   const [allRead, setAllRead] = useState<boolean>(true);
-  const { markAllNotificationsAsReadByFeed, notifications, unseenCount, storeId } = useNotifications();
+  const { markAllNotificationsAsReadByFeed, notifications, unseenCount } = useNotifications();
   const { theme } = useNovuTheme();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
   const { t } = useTranslations();
@@ -30,10 +30,6 @@ export function Header({ onCogClick }: { onCogClick?: () => void }) {
       setAllRead(read);
     }
   }, [notifications]);
-
-  const markTabAsRead = useCallback(() => {
-    markAllNotificationsAsReadByFeed(storeId);
-  }, [storeId, markAllNotificationsAsReadByFeed]);
 
   return (
     <div className={cx('nc-header', headerClassName, css(headerStyles))}>
@@ -53,7 +49,7 @@ export function Header({ onCogClick }: { onCogClick?: () => void }) {
             markAsReadClassName(!allRead, theme.header?.markAllAsReadButtonColor),
             css(headerMarkAsReadStyles)
           )}
-          onClick={markTabAsRead}
+          onClick={markAllNotificationsAsReadByFeed}
           role="button"
           tabIndex={0}
         >

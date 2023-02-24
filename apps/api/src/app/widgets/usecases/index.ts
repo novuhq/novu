@@ -1,16 +1,14 @@
-import { MarkAllMessageAsReadByFeed } from './mark-all-message-as-read-by-feed/mark-all-message-as-read-by-feed.usecase';
 import { GetOrganizationData } from './get-organization-data/get-organization-data.usecase';
 import { MarkMessageAs } from './mark-message-as/mark-message-as.usecase';
 import { GetNotificationsFeed } from './get-notifications-feed/get-notifications-feed.usecase';
 import { InitializeSession } from './initialize-session/initialize-session.usecase';
 import { GetWidgetSettings } from './get-widget-settings/get-widget-settings.usecase';
 import { UpdateMessageActions } from './mark-action-as-done/update-message-actions.usecase';
-import { MarkAllMessageAsSeen } from './mark-all-message-as-seen/mark-all-message-as-seen.usecase';
 import { GetFeedCount } from './get-feed-count/get-feed-count.usecase';
 import { RemoveMessage } from './remove-message/remove-message.usecase';
+import { MarkAllMessagesAs } from './mark-all-messages-as/mark-all-messages-as.usecase';
 
 export const USE_CASES = [
-  MarkAllMessageAsReadByFeed,
   GetOrganizationData,
   UpdateMessageActions,
   MarkMessageAs,
@@ -18,7 +16,7 @@ export const USE_CASES = [
   GetNotificationsFeed,
   InitializeSession,
   GetWidgetSettings,
-  MarkAllMessageAsSeen,
   RemoveMessage,
+  MarkAllMessagesAs,
   //
 ];

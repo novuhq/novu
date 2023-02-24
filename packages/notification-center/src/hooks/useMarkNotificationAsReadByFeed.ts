@@ -5,7 +5,7 @@ import { useNovuContext } from './useNovuContext';
 import { INFINITE_NOTIFICATIONS_QUERY_KEY, FEED_UNSEEN_COUNT_QUERY_KEY, UNSEEN_COUNT_QUERY_KEY } from './queryKeys';
 
 interface IMarkNotificationsAsReadVariables {
-  feedId: string;
+  feedId?: string | string[];
 }
 
 export const useMarkNotificationsAsReadByFeed = ({
@@ -16,7 +16,7 @@ export const useMarkNotificationsAsReadByFeed = ({
   const { apiService } = useNovuContext();
 
   const { mutate, ...result } = useMutation<IMessage[], Error, IMarkNotificationsAsReadVariables>(
-    ({ feedId }) => apiService.markAllMessageAsRead(feedId),
+    ({ feedId }) => apiService.markAllMessagesAsRead(feedId),
     {
       ...options,
       onSuccess: (responseData, variables, context) => {
