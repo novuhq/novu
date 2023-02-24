@@ -76,10 +76,8 @@ describe('Mark all as read - /widgets/messages/seen (POST)', function () {
     expect(unseenMessagesBefore.data.count).to.equal(3);
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/feed/markAsRead`,
-      {
-        feedId: '',
-      },
+      `http://localhost:${process.env.PORT}/v1/widgets/messages/read`,
+      {},
       {
         headers: {
           Authorization: `Bearer ${subscriberToken}`,
