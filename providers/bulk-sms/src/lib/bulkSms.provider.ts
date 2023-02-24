@@ -34,7 +34,7 @@ export class BulkSmsSmsProvider implements ISmsProvider {
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
     const baseMessage = {
-      apiKey: this.config.authKey,
+      authKey: this.config.authKey,
       to: options.to,
       sender: this.config.sender,
       route: this.config.route,
@@ -44,7 +44,7 @@ export class BulkSmsSmsProvider implements ISmsProvider {
     const url =
       this.BASE_URL +
       'authkey=' +
-      baseMessage.apiKey +
+      baseMessage.authKey +
       '&mobiles=' +
       baseMessage.to +
       '&message=' +
