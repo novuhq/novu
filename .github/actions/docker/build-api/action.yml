@@ -13,6 +13,10 @@ inputs:
   github_token:
     description: 'The token to use for logging into ghcr.io'
     required: true
+  fork:
+    description: 'Whether this is being triggered from a forked repo'
+    required: false
+    default: 'false'
 
 outputs:
   image:
@@ -43,7 +47,7 @@ runs:
         echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
     - name: Build with Depot, tag, and test
-      if: "!github.event.pull_request.head.repo.fork" # Don't run image builds for forks as forks can't access secrets
+      if: ${{ inputs.fork == 'false' }} # Don't run image builds for forks as forks can't access secrets
       shell: bash
       env:
         REGISTRY_OWNER: novuhq
@@ -57,7 +61,7 @@ runs:
         cd apps/api && pnpm run docker:build:depot
 
     - name: Build with Buildx, tag, and test
-      if: "github.event.pull_request.head.repo.fork" # Use buildx for forks as they can't access secrets
+      if: ${{ inputs.fork == 'true' }} # Use buildx for forks as they can't access secrets
       shell: bash
       env:
         REGISTRY_OWNER: novuhq
