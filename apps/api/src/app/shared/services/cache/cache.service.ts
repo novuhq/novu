@@ -124,7 +124,7 @@ export class CacheService implements ICacheService {
 }
 
 export interface ICacheServiceConfig {
-  host: string;
+  host?: string;
   port: string;
   ttl?: string;
   password?: string;

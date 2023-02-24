@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Injectable } from '@nestjs/common';
 import { sub } from 'date-fns';
-import { DigestUnitEnum } from '@novu/shared';
 
 import { ApiException } from '../../../../shared/exceptions/api.exception';
 import { SendMessageCommand } from '../send-message.command';
@@ -18,9 +18,11 @@ export class GetDigestEventsRegular extends GetDigestEvents {
     const amount =
       typeof currentJob.digest?.amount === 'number'
         ? currentJob.digest.amount
-        : parseInt(currentJob.digest?.amount ?? '0', 10);
+        : // @ts-ignore
+          parseInt(currentJob.digest?.amount, 10);
     const earliest = sub(new Date(currentJob.createdAt), {
-      [currentJob.digest?.unit ?? DigestUnitEnum.MINUTES]: amount,
+      // @ts-ignore
+      [currentJob.digest?.unit]: amount,
     });
 
     const jobs = await this.jobRepository.findJobsToDigest(

@@ -16,7 +16,6 @@ export class CreateLog {
       }
     }
 
-    //
     return await this.logRepository.create({
       _environmentId: command.environmentId,
       transactionId: command.transactionId,

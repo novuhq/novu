@@ -1,4 +1,3 @@
-import { AnyKeys } from 'mongoose';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum, ITemplateVariable } from '@novu/shared';
@@ -23,7 +22,7 @@ export class UpdateMessageTemplate {
     const existingTemplate = await this.messageTemplateRepository.findById(command.templateId);
     if (!existingTemplate) throw new NotFoundException(`Message template with id ${command.templateId} not found`);
 
-    const updatePayload: AnyKeys<MessageTemplateEntity> = {};
+    const updatePayload: Partial<MessageTemplateEntity> = {};
 
     const unsetPayload: Partial<Record<keyof MessageTemplateEntity, string>> = {};
 
