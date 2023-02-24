@@ -1,4 +1,10 @@
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues, FilterPartTypeEnum } from '@novu/shared';
+import {
+  BuilderFieldOperator,
+  BuilderFieldType,
+  BuilderGroupValues,
+  FilterPartTypeEnum,
+  TimeOperatorEnum,
+} from '@novu/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class BaseFilterPart {
@@ -67,9 +73,9 @@ class OnlineInLastFilterPart extends BaseFilterPart {
   on: FilterPartTypeEnum.IS_ONLINE_IN_LAST;
 
   @ApiProperty({
-    enum: ['minutes', 'hours', 'days'],
+    enum: TimeOperatorEnum,
   })
-  timeOperator: 'minutes' | 'hours' | 'days';
+  timeOperator: TimeOperatorEnum;
 
   @ApiProperty()
   value: number;

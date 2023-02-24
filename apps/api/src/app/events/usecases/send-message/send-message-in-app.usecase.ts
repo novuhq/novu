@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -7,6 +8,7 @@ import {
   SubscriberEntity,
   MessageEntity,
   OrganizationRepository,
+  OrganizationEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -18,7 +20,7 @@ import {
   ActorTypeEnum,
   IActor,
 } from '@novu/shared';
-import * as Sentry from '@sentry/node';
+
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
@@ -31,7 +33,6 @@ import {
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { OrganizationEntity } from '../../../../../../../libs/dal/src/repositories/organization/organization.entity';
 import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
 
 @Injectable()

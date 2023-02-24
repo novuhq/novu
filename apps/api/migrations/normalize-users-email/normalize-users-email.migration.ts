@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import '../../src/config';
 
-import { UserRepository } from '@novu/dal';
+import { UserRepository, SubscriberRepository, MemberRepository } from '@novu/dal';
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from '../../src/app.module';
@@ -14,7 +14,8 @@ export async function run() {
     logger: false,
   });
   const userRepository = app.get(UserRepository);
-
+  const subscriberRepository = app.get(SubscriberRepository);
+  const memberRepository = app.get(MemberRepository);
   const users = await userRepository.find({});
   const sameEmailUsersIds: string[] = [];
   let normalizedEmailsCount = 0;
@@ -60,6 +61,20 @@ export async function run() {
   console.log(`Users with the same emails count: ${sameEmailUsersCount}`);
   console.log(`Their ids: ${JSON.stringify(sameEmailUsersIds)}`);
   console.log('---------------------\n');
+
+  for (const userId of sameEmailUsersIds) {
+    const members = await memberRepository.findUserActiveMembers(userId);
+
+    if (members.length > 1) {
+      console.log(`User ${userId} has more than one active member`);
+    } else {
+      const subscribersCount = await subscriberRepository.count({
+        _organizationId: members[0]._organizationId,
+      });
+
+      console.log(`User ${userId} has ${subscribersCount} subscribers`);
+    }
+  }
 
   app.close();
   process.exit(0);

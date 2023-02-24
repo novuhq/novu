@@ -12,9 +12,13 @@ import {
   FILTER_TO_LABEL,
   FilterPartTypeEnum,
   ICondition,
+  TimeOperatorEnum,
 } from '@novu/shared';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { SubscriberEntity, EnvironmentRepository, SubscriberRepository, StepFilter } from '@novu/dal';
+
+import { IFilterVariables } from './types';
+import { FilterProcessingDetails } from './filter-processing-details';
 
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { SendMessageCommand } from '../send-message/send-message.command';
@@ -23,16 +27,14 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import type { IFilterVariables } from './types';
-import { FilterProcessingDetails } from './filter-processing-details';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
-const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: 'minutes' | 'hours' | 'days') => {
-  if (timeOperator === 'minutes') {
+const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: TimeOperatorEnum) => {
+  if (timeOperator === TimeOperatorEnum.MINUTES) {
     return differenceInMinutes(currentDate, lastDate);
   }
 
-  if (timeOperator === 'hours') {
+  if (timeOperator === TimeOperatorEnum.HOURS) {
     return differenceInHours(currentDate, lastDate);
   }
 
@@ -246,7 +248,7 @@ export class MessageMatcher {
         field: 'isOnline',
         expected: `${filter.value}`,
         actual: `${filter.on === FilterPartTypeEnum.IS_ONLINE ? isOnlineString : lastOnlineAtString}`,
-        operator: `${filter.on === FilterPartTypeEnum.IS_ONLINE ? 'EQUAL' : filter.timeOperator}`,
+        operator: filter.on === FilterPartTypeEnum.IS_ONLINE ? 'EQUAL' : filter.timeOperator,
         passed: false,
       });
 
@@ -277,7 +279,7 @@ export class MessageMatcher {
       field: subscriber?.isOnline ? 'isOnline' : 'lastOnlineAt',
       expected: subscriber?.isOnline ? 'true' : `${filter.value}`,
       actual: `${subscriber?.isOnline ? 'true' : diff}`,
-      operator: `${filter.timeOperator}`,
+      operator: filter.timeOperator,
       passed: result,
     });
 
@@ -460,7 +462,7 @@ async function findAsync<T>(array: T[], predicate: (t: T) => Promise<boolean>): 
 }
 
 async function filterAsync<T>(arr: T[], callback: (item: T) => Promise<boolean>): Promise<T[]> {
-  const fail = Symbol();
+  const fail = Symbol('Filter Async failure');
 
   return (await Promise.all(arr.map(async (item) => ((await callback(item)) ? item : fail)))).filter(
     (i) => i !== fail

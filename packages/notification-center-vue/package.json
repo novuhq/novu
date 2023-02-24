@@ -1,7 +1,7 @@
 {
   "name": "@novu/notification-center-vue",
   "sideEffects": false,
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "Vue specific wrapper for notification-center",
   "repository": {
     "type": "git",
@@ -20,7 +20,7 @@
   ],
   "dependencies": {
     "@emotion/css": "^11.10.5",
-    "@novu/notification-center": "^0.11.0",
+    "@novu/notification-center": "^0.12.0",
     "floating-vue": "https://github.com/LetItRock/floating-vue/raw/main/packages/floating-vue/floating-vue-2.0.0-beta.21.tgz",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
