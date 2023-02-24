@@ -47,7 +47,7 @@ runs:
         echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
     - name: Build with Depot, tag, and test
-      if: ${{ inputs.fork == 'false' }} # Don't run image builds for forks as forks can't access secrets
+      if: ${{ inputs.fork == 'false' }} # Don't run image builds with Depot for forks as forks can't access secrets
       shell: bash
       env:
         REGISTRY_OWNER: novuhq
