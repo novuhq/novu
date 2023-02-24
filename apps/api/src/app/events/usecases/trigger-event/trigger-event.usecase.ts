@@ -1,6 +1,19 @@
-import { JobEntity, JobRepository, NotificationTemplateRepository, NotificationRepository } from '@novu/dal';
+import {
+  JobEntity,
+  JobRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  NotificationRepository,
+} from '@novu/dal';
 import { Injectable, Logger } from '@nestjs/common';
-import { StepTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  InAppProviderIdEnum,
+  StepTypeEnum,
+  STEP_TYPE_TO_CHANNEL_TYPE,
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 
 import { TriggerEventCommand } from './trigger-event.command';
@@ -14,6 +27,10 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
@@ -27,6 +44,7 @@ export class TriggerEvent {
     private jobRepository: JobRepository,
     private notificationRepository: NotificationRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private getDecryptedIntegrations: GetDecryptedIntegrations,
     protected createExecutionDetails: CreateExecutionDetails
   ) {}
 
@@ -56,6 +74,13 @@ export class TriggerEvent {
       Logger.error(message, LOG_CONTEXT);
       throw new ApiException(message);
     }
+
+    const templateProviderIds = await this.getProviderIdsForTemplate(
+      command.userId,
+      command.organizationId,
+      command.environmentId,
+      template
+    );
 
     const jobs: Omit<JobEntity, '_id'>[][] = [];
 
@@ -92,6 +117,7 @@ export class TriggerEvent {
           payload: command.payload,
           subscriber: subscriberProcessed,
           template,
+          templateProviderIds,
           to: subscriber,
           transactionId: command.transactionId,
           userId,
@@ -174,5 +200,53 @@ export class TriggerEvent {
         'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );
     }
+  }
+
+  private async getProviderIdsForTemplate(
+    userId: string,
+    organizationId: string,
+    environmentId: string,
+    template: NotificationTemplateEntity
+  ): Promise<Map<ChannelTypeEnum, string>> {
+    const providers = new Map<ChannelTypeEnum, string>();
+
+    for (const step of template?.steps) {
+      const type = step.template?.type;
+      if (type) {
+        const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
+
+        if (channelType) {
+          const provider = await this.getProviderId(userId, organizationId, environmentId, channelType);
+          if (provider) {
+            providers.set(channelType, provider);
+          } else {
+            providers.set(channelType, InAppProviderIdEnum.Novu);
+          }
+        }
+      }
+    }
+
+    return providers;
+  }
+
+  private async getProviderId(
+    userId: string,
+    organizationId: string,
+    environmentId: string,
+    channelType: ChannelTypeEnum
+  ): Promise<string> {
+    const integrations = await this.getDecryptedIntegrations.execute(
+      GetDecryptedIntegrationsCommand.create({
+        channelType,
+        active: true,
+        organizationId,
+        environmentId,
+        userId,
+      })
+    );
+
+    const integration = integrations[0];
+
+    return integration?.providerId;
   }
 }
