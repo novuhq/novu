@@ -795,8 +795,8 @@ importers:
       '@emotion/react': ^11.7.1
       '@emotion/styled': ^11.6.0
       '@faker-js/faker': ^6.0.0
-      '@mantine/core': 4.1.0
-      '@mantine/hooks': 4.1.0
+      '@mantine/core': 4.2.12
+      '@mantine/hooks': 4.2.12
       '@novu/dal': ^0.12.0
       '@novu/notification-center': ^0.12.0
       '@novu/shared': ^0.12.0
@@ -844,8 +844,8 @@ importers:
       '@ant-design/icons': 4.7.0_sfoxds7t5ydpegc3knd667wn6m
       '@emotion/react': 11.10.5_mk6db2egckiugg7v365a42dwcm
       '@emotion/styled': 11.8.1_6pyqqf3gsgk64dc57nzribe7em
-      '@mantine/core': 4.1.0_n3u4m3zikqrlgvnttxvs7tpocy
-      '@mantine/hooks': 4.1.0_react@17.0.2
+      '@mantine/core': 4.2.12_6aqvxcqqowxet6rvya3xgxya3e
+      '@mantine/hooks': 4.2.12_react@17.0.2
       '@novu/notification-center': link:../../packages/notification-center
       '@novu/shared': link:../../libs/shared
       '@testing-library/jest-dom': 5.16.3
@@ -12689,6 +12689,26 @@ packages:
       '@babel/core': 7.20.12
       '@babel/helper-plugin-utils': 7.20.2
 
+  /@babel/plugin-transform-react-jsx-development/7.16.7_@babel+core@7.17.8:
+    resolution: {integrity: sha512-RMvQWvpla+xy6MlBpPlrKZCMRs2AGiHOGHY3xRwl0pEeim348dDyxeH4xBsMPbIMhujeq7ihE702eM2Ew0Wo+A==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/core': 7.17.8
+      '@babel/plugin-transform-react-jsx': 7.19.0_@babel+core@7.17.8
+    dev: true
+
+  /@babel/plugin-transform-react-jsx-development/7.16.7_@babel+core@7.18.5:
+    resolution: {integrity: sha512-RMvQWvpla+xy6MlBpPlrKZCMRs2AGiHOGHY3xRwl0pEeim348dDyxeH4xBsMPbIMhujeq7ihE702eM2Ew0Wo+A==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/core': 7.18.5
+      '@babel/plugin-transform-react-jsx': 7.19.0_@babel+core@7.18.5
+    dev: false
+
   /@babel/plugin-transform-react-jsx-development/7.16.7_@babel+core@7.20.12:
     resolution: {integrity: sha512-RMvQWvpla+xy6MlBpPlrKZCMRs2AGiHOGHY3xRwl0pEeim348dDyxeH4xBsMPbIMhujeq7ihE702eM2Ew0Wo+A==}
     engines: {node: '>=6.9.0'}
@@ -12698,26 +12718,6 @@ packages:
       '@babel/core': 7.20.12
       '@babel/plugin-transform-react-jsx': 7.19.0_@babel+core@7.20.12
 
-  /@babel/plugin-transform-react-jsx-development/7.18.6_@babel+core@7.17.8:
-    resolution: {integrity: sha512-SA6HEjwYFKF7WDjWcMcMGUimmw/nhNRDWxr+KaLSCrkD/LMDBvWRmHAYgE1HDeF8KUuI8OAu+RT6EOtKxSW2qA==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-    dependencies:
-      '@babel/core': 7.17.8
-      '@babel/plugin-transform-react-jsx': 7.19.0_@babel+core@7.17.8
-    dev: true
-
-  /@babel/plugin-transform-react-jsx-development/7.18.6_@babel+core@7.18.5:
-    resolution: {integrity: sha512-SA6HEjwYFKF7WDjWcMcMGUimmw/nhNRDWxr+KaLSCrkD/LMDBvWRmHAYgE1HDeF8KUuI8OAu+RT6EOtKxSW2qA==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-    dependencies:
-      '@babel/core': 7.18.5
-      '@babel/plugin-transform-react-jsx': 7.19.0_@babel+core@7.18.5
-    dev: false
-
   /@babel/plugin-transform-react-jsx-development/7.18.6_@babel+core@7.20.12:
     resolution: {integrity: sha512-SA6HEjwYFKF7WDjWcMcMGUimmw/nhNRDWxr+KaLSCrkD/LMDBvWRmHAYgE1HDeF8KUuI8OAu+RT6EOtKxSW2qA==}
     engines: {node: '>=6.9.0'}
@@ -12726,6 +12726,34 @@ packages:
     dependencies:
       '@babel/core': 7.20.12
       '@babel/plugin-transform-react-jsx': 7.19.0_@babel+core@7.20.12
+
+  /@babel/plugin-transform-react-jsx/7.17.3_@babel+core@7.17.8:
+    resolution: {integrity: sha512-9tjBm4O07f7mzKSIlEmPdiE6ub7kfIe6Cd+w+oQebpATfTQMAgW+YOuWxogbKVTulA+MEO7byMeIUtQ1z+z+ZQ==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/core': 7.17.8
+      '@babel/helper-annotate-as-pure': 7.18.6
+      '@babel/helper-module-imports': 7.18.6
+      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/plugin-syntax-jsx': 7.18.6_@babel+core@7.17.8
+      '@babel/types': 7.20.7
+    dev: true
+
+  /@babel/plugin-transform-react-jsx/7.17.3_@babel+core@7.18.5:
+    resolution: {integrity: sha512-9tjBm4O07f7mzKSIlEmPdiE6ub7kfIe6Cd+w+oQebpATfTQMAgW+YOuWxogbKVTulA+MEO7byMeIUtQ1z+z+ZQ==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/core': 7.18.5
+      '@babel/helper-annotate-as-pure': 7.18.6
+      '@babel/helper-module-imports': 7.18.6
+      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/plugin-syntax-jsx': 7.18.6_@babel+core@7.18.5
+      '@babel/types': 7.20.7
+    dev: false
 
   /@babel/plugin-transform-react-jsx/7.17.3_@babel+core@7.20.12:
     resolution: {integrity: sha512-9tjBm4O07f7mzKSIlEmPdiE6ub7kfIe6Cd+w+oQebpATfTQMAgW+YOuWxogbKVTulA+MEO7byMeIUtQ1z+z+ZQ==}
@@ -12781,18 +12809,8 @@ packages:
       '@babel/plugin-syntax-jsx': 7.18.6_@babel+core@7.20.12
       '@babel/types': 7.20.7
 
-  /@babel/plugin-transform-react-pure-annotations/7.16.7_@babel+core@7.20.12:
+  /@babel/plugin-transform-react-pure-annotations/7.16.7_@babel+core@7.17.8:
     resolution: {integrity: sha512-hs71ToC97k3QWxswh2ElzMFABXHvGiJ01IB1TbYQDGeWRKWz/MPUTh5jGExdHvosYKpnJW5Pm3S4+TA3FyX+GA==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-    dependencies:
-      '@babel/core': 7.20.12
-      '@babel/helper-annotate-as-pure': 7.18.6
-      '@babel/helper-plugin-utils': 7.20.2
-
-  /@babel/plugin-transform-react-pure-annotations/7.18.6_@babel+core@7.17.8:
-    resolution: {integrity: sha512-I8VfEPg9r2TRDdvnHgPepTKvuRomzA8+u+nhY7qSI1fR2hRNebasZEETLyM5mAUr0Ku56OkXJ0I7NHJnO6cJiQ==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -12802,8 +12820,8 @@ packages:
       '@babel/helper-plugin-utils': 7.20.2
     dev: true
 
-  /@babel/plugin-transform-react-pure-annotations/7.18.6_@babel+core@7.18.5:
-    resolution: {integrity: sha512-I8VfEPg9r2TRDdvnHgPepTKvuRomzA8+u+nhY7qSI1fR2hRNebasZEETLyM5mAUr0Ku56OkXJ0I7NHJnO6cJiQ==}
+  /@babel/plugin-transform-react-pure-annotations/7.16.7_@babel+core@7.18.5:
+    resolution: {integrity: sha512-hs71ToC97k3QWxswh2ElzMFABXHvGiJ01IB1TbYQDGeWRKWz/MPUTh5jGExdHvosYKpnJW5Pm3S4+TA3FyX+GA==}
     engines: {node: '>=6.9.0'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
@@ -12812,6 +12830,16 @@ packages:
       '@babel/helper-annotate-as-pure': 7.18.6
       '@babel/helper-plugin-utils': 7.20.2
     dev: false
+
+  /@babel/plugin-transform-react-pure-annotations/7.16.7_@babel+core@7.20.12:
+    resolution: {integrity: sha512-hs71ToC97k3QWxswh2ElzMFABXHvGiJ01IB1TbYQDGeWRKWz/MPUTh5jGExdHvosYKpnJW5Pm3S4+TA3FyX+GA==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/core': 7.20.12
+      '@babel/helper-annotate-as-pure': 7.18.6
+      '@babel/helper-plugin-utils': 7.20.2
 
   /@babel/plugin-transform-react-pure-annotations/7.18.6_@babel+core@7.20.12:
     resolution: {integrity: sha512-I8VfEPg9r2TRDdvnHgPepTKvuRomzA8+u+nhY7qSI1fR2hRNebasZEETLyM5mAUr0Ku56OkXJ0I7NHJnO6cJiQ==}
@@ -14165,12 +14193,12 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-plugin-utils': 7.20.2
-      '@babel/helper-validator-option': 7.18.6
+      '@babel/helper-plugin-utils': 7.16.7
+      '@babel/helper-validator-option': 7.16.7
       '@babel/plugin-transform-react-display-name': 7.18.6_@babel+core@7.17.8
-      '@babel/plugin-transform-react-jsx': 7.19.0_@babel+core@7.17.8
-      '@babel/plugin-transform-react-jsx-development': 7.18.6_@babel+core@7.17.8
-      '@babel/plugin-transform-react-pure-annotations': 7.18.6_@babel+core@7.17.8
+      '@babel/plugin-transform-react-jsx': 7.17.3_@babel+core@7.17.8
+      '@babel/plugin-transform-react-jsx-development': 7.16.7_@babel+core@7.17.8
+      '@babel/plugin-transform-react-pure-annotations': 7.16.7_@babel+core@7.17.8
     dev: true
 
   /@babel/preset-react/7.16.7_@babel+core@7.18.5:
@@ -14180,12 +14208,12 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.18.5
-      '@babel/helper-plugin-utils': 7.20.2
-      '@babel/helper-validator-option': 7.18.6
+      '@babel/helper-plugin-utils': 7.16.7
+      '@babel/helper-validator-option': 7.16.7
       '@babel/plugin-transform-react-display-name': 7.18.6_@babel+core@7.18.5
-      '@babel/plugin-transform-react-jsx': 7.19.0_@babel+core@7.18.5
-      '@babel/plugin-transform-react-jsx-development': 7.18.6_@babel+core@7.18.5
-      '@babel/plugin-transform-react-pure-annotations': 7.18.6_@babel+core@7.18.5
+      '@babel/plugin-transform-react-jsx': 7.17.3_@babel+core@7.18.5
+      '@babel/plugin-transform-react-jsx-development': 7.16.7_@babel+core@7.18.5
+      '@babel/plugin-transform-react-pure-annotations': 7.16.7_@babel+core@7.18.5
     dev: false
 
   /@babel/preset-react/7.16.7_@babel+core@7.20.12:
@@ -16980,6 +17008,30 @@ packages:
       react: 17.0.2
     dev: false
 
+  /@emotion/react/11.7.1_mk6db2egckiugg7v365a42dwcm:
+    resolution: {integrity: sha512-DV2Xe3yhkF1yT4uAUoJcYL1AmrnO5SVsdfvu+fBuS7IbByDeTVx9+wFmvx9Idzv7/78+9Mgx2Hcmr7Fex3tIyw==}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+      '@types/react': '*'
+      react: '>=16.8.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/react':
+        optional: true
+    dependencies:
+      '@babel/core': 7.20.12
+      '@babel/runtime': 7.20.13
+      '@emotion/cache': 11.10.5
+      '@emotion/serialize': 1.1.1
+      '@emotion/sheet': 1.2.1
+      '@emotion/utils': 1.2.0
+      '@emotion/weak-memoize': 0.2.5
+      '@types/react': 17.0.53
+      hoist-non-react-statics: 3.3.2
+      react: 17.0.2
+    dev: false
+
   /@emotion/react/11.8.2_uxyt6yxd7k52w2brmbg65a2dw4:
     resolution: {integrity: sha512-+1bcHBaNJv5nkIIgnGKVsie3otS0wF9f1T1hteF3WeVvMNQEtfZ4YyFpnphGoot3ilU/wWMgP2SgIDuHLE/wAA==}
     peerDependencies:
@@ -17182,6 +17234,10 @@ packages:
 
   /@emotion/utils/0.11.3:
     resolution: {integrity: sha512-0o4l6pZC+hI88+bzuaX/6BgOvQVhbt2PfmxauVaYOGgbsAw14wdKyvMCZXnsnsHys94iadcF+RG/wZyx6+ZZBw==}
+
+  /@emotion/utils/1.0.0:
+    resolution: {integrity: sha512-mQC2b3XLDs6QCW+pDQDiyO/EdGZYOygE8s5N5rrzjSI4M3IejPE/JPndCBwRT9z982aqQNi6beWs1UeayrQxxA==}
+    dev: false
 
   /@emotion/utils/1.1.0:
     resolution: {integrity: sha512-iRLa/Y4Rs5H/f2nimczYmS5kFJEbpiVvgN3XVfZ022IYhuNA1IRSHEizcof88LtCTXtl9S2Cxt32KgaXEu72JQ==}
@@ -19573,18 +19629,17 @@ packages:
       - debug
     dev: false
 
-  /@mantine/core/4.1.0_n3u4m3zikqrlgvnttxvs7tpocy:
-    resolution: {integrity: sha512-uEHGssKveDgGHhbBrgVqp8o12m0oQGLBKH3D8bkrca1GB905ZHuj8CG+i/ojBhqdalfUwqcYGRpwwALtD+XfJg==}
+  /@mantine/core/4.2.12_6aqvxcqqowxet6rvya3xgxya3e:
+    resolution: {integrity: sha512-PZcVUvcSZiZmLR1moKBJFdFIh6a4C+TE2ao91kzTAlH5Qb8t/V3ONbfPk3swHoYr7OSLJQM8vZ7UD5sFDiq0/g==}
     peerDependencies:
-      '@mantine/hooks': 4.1.0
+      '@mantine/hooks': 4.2.12
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
     dependencies:
-      '@mantine/hooks': 4.1.0_react@17.0.2
-      '@mantine/styles': 4.1.0_ttjdmxhtyfhxbpfkd56ldyjbni
+      '@mantine/hooks': 4.2.12_react@17.0.2
+      '@mantine/styles': 4.2.12_ttjdmxhtyfhxbpfkd56ldyjbni
       '@popperjs/core': 2.11.4
       '@radix-ui/react-scroll-area': 0.1.4_react@17.0.2
-      clsx: 1.1.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       react-popper: 2.2.5_f2o5qdn5jx3hkjcnqvzjhvgfwa
@@ -19660,8 +19715,8 @@ packages:
       react: 17.0.2
     dev: false
 
-  /@mantine/hooks/4.1.0_react@17.0.2:
-    resolution: {integrity: sha512-bvVvHDDfYqdIxl7n+lBBwSIkcqInv6kK+fxvEfFBOUEzN6KbpJaPdaYXP788x64uFbA7AODQjdtOhk3tMyQA8Q==}
+  /@mantine/hooks/4.2.12_react@17.0.2:
+    resolution: {integrity: sha512-/2GOsgv1tAUFBXOUV0YBZdDZHj3pHN82Sv1oI/hJMjfIT3ZkGeeiJO8Cw9cBcn76t6caP6Czi3hcuKhjz71O+A==}
     peerDependencies:
       react: '>=16.8.0'
     dependencies:
@@ -19723,18 +19778,18 @@ packages:
       react-dom: 17.0.2_react@17.0.2
     dev: false
 
-  /@mantine/styles/4.1.0_ttjdmxhtyfhxbpfkd56ldyjbni:
-    resolution: {integrity: sha512-mWFNSE5DqE/5C9TDYIkQVbTef8QyWnW8a8MADHl6S52K0iGU8nqw4jnyozB+6y9JEIxdl+sp0o16L2JnAsq7bA==}
+  /@mantine/styles/4.2.12_ttjdmxhtyfhxbpfkd56ldyjbni:
+    resolution: {integrity: sha512-9q1DzW0UNW/ORMGLHfN2XABOSEm0ZQebhNlLD757R6OQouoLuUf9elUwgGOXSyogMlsAYoy84XbJ3ZbbTm4YCA==}
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
     dependencies:
       '@emotion/cache': 11.7.1
-      '@emotion/react': 11.10.5_mk6db2egckiugg7v365a42dwcm
-      '@emotion/serialize': 1.1.1
-      '@emotion/utils': 1.1.0
-      clsx: 1.1.1
-      csstype: 3.1.1
+      '@emotion/react': 11.7.1_mk6db2egckiugg7v365a42dwcm
+      '@emotion/serialize': 1.0.2
+      '@emotion/utils': 1.0.0
+      clsx: 1.2.1
+      csstype: 3.0.9
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     transitivePeerDependencies:
