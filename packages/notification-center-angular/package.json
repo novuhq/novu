@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center-angular",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -36,7 +36,7 @@
     "@angular/core": "~15.1.0",
     "@angular/platform-browser": "~15.1.0",
     "@angular/platform-browser-dynamic": "~15.1.0",
-    "@novu/notification-center": "^0.11.0",
+    "@novu/notification-center": "^0.12.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "tslib": "^2.3.0",

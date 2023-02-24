@@ -5,6 +5,8 @@ import { Logger } from '@nestjs/common';
 
 import { ApiException } from '../../exceptions/api.exception';
 
+const shouldLog = process.env.FF_IS_DISTRIBUTED_LOCK_LOGGING_ENABLED === 'true';
+
 const LOG_CONTEXT = 'DistributedLock';
 
 const getRedisUrl = () => {
@@ -112,30 +114,31 @@ export class DistributedLockService {
     const releaseLock = await this.lock(resource, ttl);
 
     try {
-      Logger.log(`Lock ${resource} for ${handler.name}`, LOG_CONTEXT);
+      shouldLog && Logger.log(`Lock ${resource} for ${handler.name}`, LOG_CONTEXT);
 
       const result = await handler();
 
       return result;
     } finally {
       await releaseLock();
-      Logger.log(`Lock ${resource} released for ${handler.name}`, LOG_CONTEXT);
+      shouldLog && Logger.log(`Lock ${resource} released for ${handler.name}`, LOG_CONTEXT);
     }
   }
 
   private async lock(resource: string, ttl: number): Promise<() => Promise<void>> {
     if (!this.distributedLock) {
-      Logger.log(`Redlock was not started. Starting after calling lock ${resource} for ${ttl} ms`, LOG_CONTEXT);
+      shouldLog &&
+        Logger.log(`Redlock was not started. Starting after calling lock ${resource} for ${ttl} ms`, LOG_CONTEXT);
       this.startup();
     }
 
     try {
       const acquiredLock = await this.distributedLock.acquire([resource], ttl);
-      Logger.log(`Lock ${resource} acquired for ${ttl} ms`, LOG_CONTEXT);
+      shouldLog && Logger.log(`Lock ${resource} acquired for ${ttl} ms`, LOG_CONTEXT);
 
       return this.createLockRelease(resource, acquiredLock);
     } catch (error) {
-      Logger.error(`Lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
+      shouldLog && Logger.error(`Lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
       throw error;
     }
   }
@@ -145,11 +148,10 @@ export class DistributedLockService {
 
     return async (): Promise<void> => {
       try {
-        // TODO: Hide or move to trace.
-        Logger.debug(`Lock ${resource} counter at ${this.lockCounter[resource]}`, LOG_CONTEXT);
+        shouldLog && Logger.debug(`Lock ${resource} counter at ${this.lockCounter[resource]}`, LOG_CONTEXT);
         await lock.unlock();
       } catch (error) {
-        Logger.error(`Releasing lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
+        shouldLog && Logger.error(`Releasing lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
       } finally {
         this.decreaseLockCounter(resource);
       }

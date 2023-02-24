@@ -8,7 +8,7 @@ import { previewEmail } from '../../../api/content-templates';
 import { When } from '../../../components/utils/When';
 import { Button, colors } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { useProcessVariables } from '../../../hooks/useProcessVariables';
+import { useProcessVariables } from '../../../hooks';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 import { errorMessage } from '../../../utils/notifications';

@@ -7,11 +7,11 @@ import { IGetInviteResponseDto } from '@novu/shared';
 import { getInviteTokenData } from '../../api/invitation';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
-import { SignUpForm } from '../../components/auth/SignUpForm';
+import { SignUpForm } from './components/SignUpForm';
 import { colors, Text, Button } from '../../design-system';
 import { useAuthContext } from '../../components/providers/AuthProvider';
-import { useAcceptInvite } from '../../components/auth/useAcceptInvite';
-import { LoginForm } from '../../components/auth/LoginForm';
+import { useAcceptInvite } from './components/useAcceptInvite';
+import { LoginForm } from './components/LoginForm';
 
 export default function InvitationPage() {
   const queryClient = useQueryClient();
