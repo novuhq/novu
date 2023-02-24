@@ -30,27 +30,17 @@ export class EventsPerformanceService {
   }
 
   private publishMeasures(showLogs: boolean): void {
-    const createNotificationJobsMeasures: number[] = [];
-    const digestFilterStepsMeasures: number[] = [];
-    const endpointTriggerEventMeasures: number[] = [];
-    const triggerEventMeasures: number[] = [];
+    const measures: Record<string, number[]> = {};
 
-    this.performanceService.measures.map((measure) => {
-      if (measure.name.startsWith(MarkFunctionNameEnum.ENDPOINT_TRIGGER_EVENT)) {
-        endpointTriggerEventMeasures.push(measure.duration);
+    this.performanceService.measures.forEach((measure) => {
+      const functionName = measure.name.split(':')[0];
+      if (!measures[functionName]) {
+        measures[functionName] = [measure.duration];
+
+        return;
       }
 
-      if (measure.name.startsWith(MarkFunctionNameEnum.CREATE_NOTIFICATION_JOBS)) {
-        createNotificationJobsMeasures.push(measure.duration);
-      }
-
-      if (measure.name.startsWith(MarkFunctionNameEnum.DIGEST_FILTER_STEPS)) {
-        digestFilterStepsMeasures.push(measure.duration);
-      }
-
-      if (measure.name.startsWith(MarkFunctionNameEnum.TRIGGER_EVENT)) {
-        triggerEventMeasures.push(measure.duration);
-      }
+      measures[functionName].push(measure.duration);
 
       if (showLogs) {
         Logger.debug(
@@ -60,13 +50,9 @@ export class EventsPerformanceService {
       }
     });
 
-    this.performanceService.calculateAverage(MarkFunctionNameEnum.ENDPOINT_TRIGGER_EVENT, endpointTriggerEventMeasures);
-    this.performanceService.calculateAverage(MarkFunctionNameEnum.TRIGGER_EVENT, triggerEventMeasures);
-    this.performanceService.calculateAverage(
-      MarkFunctionNameEnum.CREATE_NOTIFICATION_JOBS,
-      createNotificationJobsMeasures
-    );
-    this.performanceService.calculateAverage(MarkFunctionNameEnum.DIGEST_FILTER_STEPS, digestFilterStepsMeasures);
+    Object.keys(measures).forEach((key) => {
+      this.performanceService.calculateAverage(MarkFunctionNameEnum.ENDPOINT_TRIGGER_EVENT, measures[key]);
+    });
   }
 
   public setEnd(mark: IMark): void {
