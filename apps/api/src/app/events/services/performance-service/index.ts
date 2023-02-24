@@ -19,12 +19,7 @@ export class EventsPerformanceService {
 
   private publishMarks(showLogs: boolean): void {
     if (showLogs) {
-      const eventsMarks = [
-        MarkFunctionNameEnum.CREATE_NOTIFICATION_JOBS,
-        MarkFunctionNameEnum.DIGEST_FILTER_STEPS,
-        MarkFunctionNameEnum.ENDPOINT_TRIGGER_EVENT,
-        MarkFunctionNameEnum.TRIGGER_EVENT,
-      ];
+      const eventsMarks = Object.values(MarkFunctionNameEnum);
 
       this.performanceService.marks.map((mark) => {
         if (this.performanceService.filterMarks(mark, eventsMarks)) {
