@@ -88,15 +88,15 @@ export class SendTestEmail {
     integration: IntegrationEntity,
     mailData: IEmailOptions,
     mailFactory: MailFactory,
-    command: TestSendMessageCommand
+    command: SendTestEmailCommand
   ) {
     const { providerId } = integration;
-    const mailHandler = mailFactory.getHandler(
-      { ...integration, providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, providerId) },
-      mailData.from
-    );
 
     try {
+      const mailHandler = mailFactory.getHandler(
+        { ...integration, providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, providerId) },
+        mailData.from
+      );
       await mailHandler.send(mailData);
       this.analyticsService.track('Test Email Sent - [Events]', command.userId, {
         _organization: command.organizationId,

@@ -99,7 +99,7 @@ describe('Events - Test email - /v1/events/test/email (POST)', function () {
     try {
       await sendTestEmail(requestDto);
     } catch (e) {
-      expect(e.response.status).to.equal(400);
+      expect(e.response.status).to.equal(409);
     }
   });
 });

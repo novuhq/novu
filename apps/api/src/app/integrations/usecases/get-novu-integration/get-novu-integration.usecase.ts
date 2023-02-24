@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository, OrganizationEntity, OrganizationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
@@ -9,7 +9,6 @@ import {
   CalculateLimitNovuIntegrationCommand,
 } from '../calculate-limit-novu-integration';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class GetNovuIntegration {
@@ -56,7 +55,7 @@ export class GetNovuIntegration {
         providerId: CalculateLimitNovuIntegration.getProviderId(command.channelType),
         ...limit,
       });
-      throw new ApiException(`Limit for Novus ${command.channelType.toLowerCase()} provider was reached.`);
+      throw new ConflictException(`Limit for Novus ${command.channelType.toLowerCase()} provider was reached.`);
     }
 
     const organization = await this.organizationRepository.findById(command.organizationId);
