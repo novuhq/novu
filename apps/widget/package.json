@@ -51,7 +51,7 @@
     "react-router-dom": "^6.2.2",
     "react-scripts": "^5.0.1",
     "rimraf": "^3.0.2",
-    "socket.io-client": "4.5.4",
+    "socket.io-client": "4.6.1",
     "web-vitals": "^0.2.4",
     "webfontloader": "^1.6.28"
   },
