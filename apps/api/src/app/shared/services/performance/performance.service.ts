@@ -142,7 +142,7 @@ export class PerformanceService {
   }
 
   private publishMarks(): void {
-    this.marks.map((mark) => Logger.debug(mark, PerformanceContextEnum.CONTEXT_MARK));
+    this.marks.forEach((mark) => Logger.debug(mark, PerformanceContextEnum.CONTEXT_MARK));
   }
 
   public calculateAverage(markFunctionName: string, durations: number[]): void {

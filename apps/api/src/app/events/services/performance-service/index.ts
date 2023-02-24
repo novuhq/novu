@@ -21,7 +21,7 @@ export class EventsPerformanceService {
     if (showLogs) {
       const eventsMarks = Object.values(MarkFunctionNameEnum);
 
-      this.performanceService.marks.map((mark) => {
+      this.performanceService.marks.forEach((mark) => {
         if (this.performanceService.filterMarks(mark, eventsMarks)) {
           Logger.debug(mark, PerformanceContextEnum.CONTEXT_MARK);
         }
