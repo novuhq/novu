@@ -51,8 +51,14 @@ export class SendinblueEmailProvider implements IEmailProvider {
       content: attachment?.file.toString('base64'),
       contentType: attachment.mime,
     }));
-    email.cc = options.cc?.map((ccItem) => ({ email: ccItem }));
-    email.bcc = options.bcc?.map((ccItem) => ({ email: ccItem }));
+
+    if (options.cc) {
+      email.cc = options.cc?.map((ccItem) => ({ email: ccItem }));
+    }
+
+    if (options.bcc) {
+      email.bcc = options.bcc?.map((bccItem) => ({ email: bccItem }));
+    }
 
     if (options.replyTo) {
       email.replyTo.email = options.replyTo;
