@@ -245,7 +245,7 @@ importers:
       mocha: ^8.1.1
       nanoid: ^3.1.20
       nest-raven: 8.2.0
-      newrelic: 9.10.1
+      newrelic: 9.10.2
       nodemon: ^2.0.3
       passport: 0.6.0
       passport-github2: ^0.1.12
@@ -344,7 +344,7 @@ importers:
       lodash: 4.17.21
       nanoid: 3.3.2
       nest-raven: 8.2.0_qudn52k3obk2mdtx6hcslpyjla
-      newrelic: 9.10.1
+      newrelic: 9.10.2
       passport: 0.6.0
       passport-github2: 0.1.12
       passport-jwt: 4.0.0
@@ -931,7 +931,7 @@ importers:
       jsonwebtoken: 9.0.0
       lodash: ^4.17.15
       nest-raven: ^9.1.0
-      newrelic: 9.10.1
+      newrelic: 9.10.2
       nodemon: ^2.0.7
       prettier: ^2.1.2
       reflect-metadata: ^0.1.13
@@ -969,7 +969,7 @@ importers:
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       nest-raven: 9.1.0_hcod3bfv3sd2i6itozrngbkgla
-      newrelic: 9.10.1
+      newrelic: 9.10.2
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
       rxjs: 6.6.7
@@ -13320,6 +13320,34 @@ packages:
       '@babel/helper-plugin-utils': 7.20.2
     dev: true
 
+  /@babel/plugin-transform-typescript/7.16.8_@babel+core@7.17.8:
+    resolution: {integrity: sha512-bHdQ9k7YpBDO2d0NVfkj51DpQcvwIzIusJ7mEUaMlbZq3Kt/U47j24inXZHQ5MDiYpCs+oZiwnXyKedE8+q7AQ==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/core': 7.17.8
+      '@babel/helper-create-class-features-plugin': 7.20.2_@babel+core@7.17.8
+      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/plugin-syntax-typescript': 7.20.0_@babel+core@7.17.8
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
+  /@babel/plugin-transform-typescript/7.16.8_@babel+core@7.18.5:
+    resolution: {integrity: sha512-bHdQ9k7YpBDO2d0NVfkj51DpQcvwIzIusJ7mEUaMlbZq3Kt/U47j24inXZHQ5MDiYpCs+oZiwnXyKedE8+q7AQ==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/core': 7.18.5
+      '@babel/helper-create-class-features-plugin': 7.20.2_@babel+core@7.18.5
+      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/plugin-syntax-typescript': 7.20.0_@babel+core@7.18.5
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@babel/plugin-transform-typescript/7.16.8_@babel+core@7.20.12:
     resolution: {integrity: sha512-bHdQ9k7YpBDO2d0NVfkj51DpQcvwIzIusJ7mEUaMlbZq3Kt/U47j24inXZHQ5MDiYpCs+oZiwnXyKedE8+q7AQ==}
     engines: {node: '>=6.9.0'}
@@ -13346,34 +13374,6 @@ packages:
       '@babel/plugin-syntax-typescript': 7.18.6_@babel+core@7.20.12
     transitivePeerDependencies:
       - supports-color
-
-  /@babel/plugin-transform-typescript/7.20.2_@babel+core@7.17.8:
-    resolution: {integrity: sha512-jvS+ngBfrnTUBfOQq8NfGnSbF9BrqlR6hjJ2yVxMkmO5nL/cdifNbI30EfjRlN4g5wYWNnMPyj5Sa6R1pbLeag==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-    dependencies:
-      '@babel/core': 7.17.8
-      '@babel/helper-create-class-features-plugin': 7.20.2_@babel+core@7.17.8
-      '@babel/helper-plugin-utils': 7.20.2
-      '@babel/plugin-syntax-typescript': 7.20.0_@babel+core@7.17.8
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /@babel/plugin-transform-typescript/7.20.2_@babel+core@7.18.5:
-    resolution: {integrity: sha512-jvS+ngBfrnTUBfOQq8NfGnSbF9BrqlR6hjJ2yVxMkmO5nL/cdifNbI30EfjRlN4g5wYWNnMPyj5Sa6R1pbLeag==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-    dependencies:
-      '@babel/core': 7.18.5
-      '@babel/helper-create-class-features-plugin': 7.20.2_@babel+core@7.18.5
-      '@babel/helper-plugin-utils': 7.20.2
-      '@babel/plugin-syntax-typescript': 7.20.0_@babel+core@7.18.5
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
 
   /@babel/plugin-transform-typescript/7.20.2_@babel+core@7.20.2:
     resolution: {integrity: sha512-jvS+ngBfrnTUBfOQq8NfGnSbF9BrqlR6hjJ2yVxMkmO5nL/cdifNbI30EfjRlN4g5wYWNnMPyj5Sa6R1pbLeag==}
@@ -14252,9 +14252,9 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-plugin-utils': 7.20.2
-      '@babel/helper-validator-option': 7.18.6
-      '@babel/plugin-transform-typescript': 7.20.2_@babel+core@7.17.8
+      '@babel/helper-plugin-utils': 7.16.7
+      '@babel/helper-validator-option': 7.16.7
+      '@babel/plugin-transform-typescript': 7.16.8_@babel+core@7.17.8
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -14266,9 +14266,9 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.18.5
-      '@babel/helper-plugin-utils': 7.20.2
-      '@babel/helper-validator-option': 7.18.6
-      '@babel/plugin-transform-typescript': 7.20.2_@babel+core@7.18.5
+      '@babel/helper-plugin-utils': 7.16.7
+      '@babel/helper-validator-option': 7.16.7
+      '@babel/plugin-transform-typescript': 7.16.8_@babel+core@7.18.5
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -18146,8 +18146,8 @@ packages:
     dev: false
     optional: true
 
-  /@grpc/grpc-js/1.8.4:
-    resolution: {integrity: sha512-oaETBotls7FTBpySg5dhyUCyXSxSeCMmkBBXHXG1iw57MiNoB6D7VRhkrXYbwyHM3Q3Afjp4KlsBX0Zb+ELZXw==}
+  /@grpc/grpc-js/1.8.11:
+    resolution: {integrity: sha512-f/xC+6Z2QKsRJ+VSSFlt4hA5KSRm+PKvMWV8kMPkMgGlFidR6PeIkXrOasIY2roe+WROM6GFQLlgDKfeEZo2YQ==}
     engines: {node: ^8.13.0 || >=10.10.0}
     dependencies:
       '@grpc/proto-loader': 0.7.4
@@ -21073,22 +21073,22 @@ packages:
       rxjs: 7.5.6
       tslib: 2.4.1
 
-  /@newrelic/aws-sdk/5.0.2_newrelic@9.10.1:
+  /@newrelic/aws-sdk/5.0.2_newrelic@9.10.2:
     resolution: {integrity: sha512-vn5Aj0ZznjzqqxR69mHIWi7QUjBeab9f0Dfra/UOPZlyLy3Q/HbK4/sYV9/q/Ifmx85B3kJI4ca7mytCx073VQ==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       newrelic: '>=8.7.0'
     dependencies:
-      newrelic: 9.10.1
+      newrelic: 9.10.2
     dev: false
 
-  /@newrelic/koa/7.1.1_newrelic@9.10.1:
+  /@newrelic/koa/7.1.1_newrelic@9.10.2:
     resolution: {integrity: sha512-QvO6Wmz+wws0vtrpqsZz3KVMbDySY7VbdIu99f9fuWd775yNCTz2n2VfQhdkBxWlSQSlR4gO0Uh8RWa4HUzb3g==}
     engines: {node: '>=14.0.0'}
     peerDependencies:
       newrelic: '>=6.11.0'
     dependencies:
-      newrelic: 9.10.1
+      newrelic: 9.10.2
     dev: false
 
   /@newrelic/native-metrics/9.0.0:
@@ -21104,13 +21104,13 @@ packages:
     dev: false
     optional: true
 
-  /@newrelic/superagent/6.0.0_newrelic@9.10.1:
+  /@newrelic/superagent/6.0.0_newrelic@9.10.2:
     resolution: {integrity: sha512-5nClQp9ACd4BvLusAgFHjjKLDgAaC+dKmIsRNOPC82LOLFaoOgxxtbecnDIJ0NWCKQS+WOdmXdgYutwH+e5dsA==}
     engines: {node: '>=14.0'}
     peerDependencies:
       newrelic: '>=6.11.0'
     dependencies:
-      newrelic: 9.10.1
+      newrelic: 9.10.2
     dev: false
 
   /@ngtools/webpack/15.0.0_2qp4owkmcvpl4vfm27b26llswm:
@@ -47683,16 +47683,16 @@ packages:
       '@segment/isodate': 1.0.3
     dev: false
 
-  /newrelic/9.10.1:
-    resolution: {integrity: sha512-G23/RlcdkgApBCQJXvRIt7bgW4KgR8mQLE+sndAT9ooIYsrxw7+9iVJzm6WE4sc3o41SIIjZ1OlVo6pUCLxIZQ==}
+  /newrelic/9.10.2:
+    resolution: {integrity: sha512-kVRLwlT3/TK1B/zWAHaaJngubPeEEOhKyGXhBTrOjhQ8X44Trz/XsndlgyY30FtvM3upxCSDuOdbqOHd7DOEVg==}
     engines: {node: '>=14', npm: '>=6.0.0'}
     hasBin: true
     dependencies:
-      '@grpc/grpc-js': 1.8.4
+      '@grpc/grpc-js': 1.8.11
       '@grpc/proto-loader': 0.7.4
-      '@newrelic/aws-sdk': 5.0.2_newrelic@9.10.1
-      '@newrelic/koa': 7.1.1_newrelic@9.10.1
-      '@newrelic/superagent': 6.0.0_newrelic@9.10.1
+      '@newrelic/aws-sdk': 5.0.2_newrelic@9.10.2
+      '@newrelic/koa': 7.1.1_newrelic@9.10.2
+      '@newrelic/superagent': 6.0.0_newrelic@9.10.2
       '@tyriar/fibonacci-heap': 2.0.9
       concat-stream: 2.0.0
       https-proxy-agent: 5.0.1
@@ -53623,7 +53623,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.12.1
+      terser: 5.16.1
 
   /rollup-plugin-terser/7.0.2_rollup@3.15.0:
     resolution: {integrity: sha512-w3iIaU4OxcF52UUXiZNsNeuXIMDvFrr+ZXK6bFZ0Q60qyVfq4uLptoS4bbq3paG3x216eQllFZX7zt6TIImguQ==}
@@ -53646,7 +53646,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 3.7.3
       serialize-javascript: 4.0.0
-      terser: 5.12.1
+      terser: 5.16.1
     dev: true
 
   /rollup-plugin-typescript2/0.34.1_xswiuafr57fmdlvfpvse52fe3e:
@@ -56427,6 +56427,7 @@ packages:
       commander: 2.20.3
       source-map: 0.7.4
       source-map-support: 0.5.21
+    dev: true
 
   /terser/5.15.1:
     resolution: {integrity: sha512-K1faMUvpm/FBxjBXud0LWVAGxmvoPbZbfTCYbSgaaYQaIXI3/TdI7a7ZGA73Zrou6Q8Zmz3oeUTsp/dj+ag2Xw==}

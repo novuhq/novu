@@ -47,7 +47,7 @@
     "jsonwebtoken": "9.0.0",
     "lodash": "^4.17.15",
     "nest-raven": "^9.1.0",
-    "newrelic": "9.10.1",
+    "newrelic": "9.10.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^6.5.5",
