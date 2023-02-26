@@ -114,6 +114,9 @@ export class ContentService {
         }
       } else if (message.template?.type === StepTypeEnum.SMS) {
         yield message.template.content as string;
+      } else if (message.template?.type === StepTypeEnum.PUSH) {
+        yield message.template.content as string;
+        yield message.template.title as string;
       } else if (Array.isArray(message.template?.content)) {
         yield message.template.subject || '';
 
