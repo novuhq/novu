@@ -1,4 +1,5 @@
-import { ICondition } from '@novu/shared';
+import { ICondition, TimeOperatorEnum } from '@novu/shared';
+
 import { TestWrapper } from '../../testing';
 import { ExecutionDetailsConditions } from './ExecutionDetailsConditions';
 
@@ -24,7 +25,7 @@ const conditions: ICondition[] = [
     field: 'isOnline',
     expected: 'true',
     actual: 'true',
-    operator: 'minutes',
+    operator: TimeOperatorEnum.MINUTES,
     passed: true,
   },
   {

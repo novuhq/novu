@@ -10,8 +10,7 @@ on:
 jobs:
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
-    secrets:
-      cypress_key: ${{ secrets.CYPRESS_WIDGET_KEY }}
+    secrets: inherit
 
   deploy_widget_eu:
     needs: test_widget

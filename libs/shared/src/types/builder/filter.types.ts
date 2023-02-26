@@ -1,5 +1,11 @@
 import type { BuilderFieldOperator } from './builder.types';
 
+export enum TimeOperatorEnum {
+  DAYS = 'days',
+  HOURS = 'hours',
+  MINUTES = 'minutes',
+}
+
 export enum FilterPartTypeEnum {
   PAYLOAD = 'payload',
   SUBSCRIBER = 'subscriber',
@@ -32,21 +38,21 @@ export interface IRealtimeOnlineFilterPart extends IBaseFilterPart {
   value: boolean;
 }
 
-export type OnlineTimeOperator = 'minutes' | 'hours' | 'days';
-
 export interface IOnlineInLastFilterPart extends IBaseFilterPart {
   on: FilterPartTypeEnum.IS_ONLINE_IN_LAST;
-  timeOperator: OnlineTimeOperator;
+  timeOperator: TimeOperatorEnum;
   value: number;
 }
 
 export type FilterParts = IFieldFilterPart | IWebhookFilterPart | IRealtimeOnlineFilterPart | IOnlineInLastFilterPart;
+
+export type Operator = BuilderFieldOperator | TimeOperatorEnum;
 
 export interface ICondition {
   filter: string;
   field: string;
   expected: string;
   actual: string;
-  operator: BuilderFieldOperator | OnlineTimeOperator;
+  operator: Operator;
   passed: boolean;
 }
