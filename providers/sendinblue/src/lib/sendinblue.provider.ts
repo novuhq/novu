@@ -52,12 +52,12 @@ export class SendinblueEmailProvider implements IEmailProvider {
       contentType: attachment.mime,
     }));
 
-    if (options.cc) {
+    if (options.cc?.length) {
       email.cc = options.cc?.map((ccItem) => ({ email: ccItem }));
     }
 
-    if (options.bcc) {
-      email.bcc = options.bcc?.map((bccItem) => ({ email: bccItem }));
+    if (options?.bcc?.length) {
+      email.bcc = options.bcc?.map((ccItem) => ({ email: ccItem }));
     }
 
     if (options.replyTo) {
