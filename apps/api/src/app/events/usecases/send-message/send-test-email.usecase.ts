@@ -1,11 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
 import { OrganizationRepository, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import * as Sentry from '@sentry/node';
 import { IEmailOptions } from '@novu/stateless';
+import { AnalyticsService } from '@novu/application-generic';
 
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { SendTestEmailCommand } from './send-test-email.command';
-
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import {
   GetDecryptedIntegrations,
@@ -14,13 +15,15 @@ import {
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CompileEmailTemplate } from '../../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
 import { CompileEmailTemplateCommand } from '../../../content-templates/usecases/compile-email-template/compile-email-template.command';
+import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration';
 
 @Injectable()
 export class SendTestEmail {
   constructor(
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     private organizationRepository: OrganizationRepository,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   public async execute(command: SendTestEmailCommand) {
@@ -67,25 +70,40 @@ export class SendTestEmail {
       })
     );
 
-    const mailData: IEmailOptions = {
-      to: Array.isArray(email) ? email : [email],
-      subject,
-      html: html as string,
-      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
-    };
-
     if (email && integration) {
-      await this.sendMessage(integration, mailData, mailFactory);
+      const mailData: IEmailOptions = {
+        to: Array.isArray(email) ? email : [email],
+        subject,
+        html: html as string,
+        from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
+      };
+
+      await this.sendMessage(integration, mailData, mailFactory, command);
 
       return;
     }
   }
 
-  private async sendMessage(integration: IntegrationEntity, mailData: IEmailOptions, mailFactory: MailFactory) {
-    const mailHandler = mailFactory.getHandler(integration, mailData.from);
+  private async sendMessage(
+    integration: IntegrationEntity,
+    mailData: IEmailOptions,
+    mailFactory: MailFactory,
+    command: SendTestEmailCommand
+  ) {
+    const { providerId } = integration;
 
     try {
+      const mailHandler = mailFactory.getHandler(
+        { ...integration, providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, providerId) },
+        mailData.from
+      );
       await mailHandler.send(mailData);
+      this.analyticsService.track('Test Email Sent - [Events]', command.userId, {
+        _organization: command.organizationId,
+        _environment: command.environmentId,
+        channel: ChannelTypeEnum.EMAIL,
+        providerId,
+      });
     } catch (error) {
       throw new ApiException(`Unexpected provider error`);
     }
