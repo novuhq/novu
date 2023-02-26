@@ -4,6 +4,10 @@ import {
   getTemplateVariables,
   IMustacheVariable,
   TemplateSystemVariables,
+  TemplateVariableTypeEnum,
+  DelayTypeEnum,
+  IFieldFilterPart,
+  FilterPartTypeEnum,
 } from '@novu/shared';
 import Handlebars from 'handlebars';
 import { ApiException } from '../exceptions/api.exception';
@@ -41,11 +45,45 @@ export class ContentService {
       variables.push(...extractedVariables);
     }
 
+    variables.push(...this.extractStepVariables(messages));
+
     return [
       ...new Map(
         variables.filter((item) => !this.isSystemVariable(item.name)).map((item) => [item.name, item])
       ).values(),
     ];
+  }
+
+  extractStepVariables(messages: INotificationTemplateStep[]): IMustacheVariable[] {
+    const variables: IMustacheVariable[] = [];
+
+    for (const message of messages) {
+      if (message.filters) {
+        const filterVariables = message.filters.flatMap((filter) =>
+          filter.children
+            .filter((item) => item.on === FilterPartTypeEnum.PAYLOAD)
+            .map((item: IFieldFilterPart) => {
+              return {
+                name: item.field,
+                type: TemplateVariableTypeEnum.STRING,
+              };
+            })
+        );
+        variables.push(...filterVariables);
+      }
+
+      if (message.metadata?.type === DelayTypeEnum.SCHEDULED && message.metadata.delayPath) {
+        variables.push({ name: message.metadata.delayPath, type: TemplateVariableTypeEnum.STRING });
+      }
+
+      if (message.template?.type === StepTypeEnum.DIGEST) {
+        if (message.metadata?.digestKey) {
+          variables.push({ name: message.metadata.digestKey, type: TemplateVariableTypeEnum.STRING });
+        }
+      }
+    }
+
+    return variables;
   }
 
   extractSubscriberMessageVariables(messages: INotificationTemplateStep[]): string[] {
@@ -76,6 +114,9 @@ export class ContentService {
         }
       } else if (message.template?.type === StepTypeEnum.SMS) {
         yield message.template.content as string;
+      } else if (message.template?.type === StepTypeEnum.PUSH) {
+        yield message.template.content as string;
+        yield message.template.title as string;
       } else if (Array.isArray(message.template?.content)) {
         yield message.template.subject || '';
 
