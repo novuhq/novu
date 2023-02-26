@@ -13,6 +13,7 @@ import {
   ISubscriberPreferenceResponse,
 } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class GetSubscriberTemplatePreference {
@@ -25,11 +26,16 @@ export class GetSubscriberTemplatePreference {
 
   async execute(command: GetSubscriberTemplatePreferenceCommand): Promise<ISubscriberPreferenceResponse> {
     const activeChannels = await this.queryActiveChannels(command);
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    const subscriber =
+      command.subscriber ??
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
+    if (!subscriber) {
+      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
+    }
 
     const subscriberPreference = await this.subscriberPreferenceRepository.findOne({
       _environmentId: command.environmentId,
-      _subscriberId: subscriber !== null ? subscriber._id : command.subscriberId,
+      _subscriberId: subscriber._id,
       _templateId: command.template._id,
     });
 
@@ -37,7 +43,7 @@ export class GetSubscriberTemplatePreference {
     const subscriberPreferenceEnabled = subscriberPreference?.enabled ?? true;
 
     if (subscriberPreferenceIsWhole(subscriberPreference?.channels, activeChannels)) {
-      return getResponse(responseTemplate, subscriberPreferenceEnabled, subscriberPreference.channels, activeChannels);
+      return getResponse(responseTemplate, subscriberPreferenceEnabled, subscriberPreference?.channels, activeChannels);
     }
 
     const templatePreference = command.template.preferenceSettings;
@@ -71,7 +77,10 @@ export class GetSubscriberTemplatePreference {
   }
 }
 
-function filterActiveChannels(activeChannels: ChannelTypeEnum[], preference: IPreferenceChannels): IPreferenceChannels {
+function filterActiveChannels(
+  activeChannels: ChannelTypeEnum[],
+  preference?: IPreferenceChannels
+): IPreferenceChannels {
   const filteredChannels = Object.assign({}, preference);
   for (const key in preference) {
     if (!activeChannels.some((channel) => channel === key)) {
@@ -108,7 +117,10 @@ function mapResponseTemplate(template: NotificationTemplateEntity): IGetSubscrib
   };
 }
 
-function subscriberPreferenceIsWhole(preference: IPreferenceChannels, activeChannels: ChannelTypeEnum[]): boolean {
+function subscriberPreferenceIsWhole(
+  preference?: IPreferenceChannels | null,
+  activeChannels?: ChannelTypeEnum[] | null
+): boolean {
   if (!preference || !activeChannels) return false;
 
   return Object.keys(preference).length === activeChannels.length;
@@ -117,7 +129,7 @@ function subscriberPreferenceIsWhole(preference: IPreferenceChannels, activeChan
 function getResponse(
   responseTemplate: IGetSubscriberPreferenceTemplateResponse,
   subscriberPreferenceEnabled: boolean,
-  subscriberPreferenceChannels: IPreferenceChannels,
+  subscriberPreferenceChannels: IPreferenceChannels | undefined,
   activeChannels: ChannelTypeEnum[]
 ): ISubscriberPreferenceResponse {
   return {

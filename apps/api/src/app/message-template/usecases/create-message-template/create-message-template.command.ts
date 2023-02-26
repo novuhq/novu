@@ -1,5 +1,12 @@
 import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { StepTypeEnum, IEmailBlock, IMessageCTA, ITemplateVariable, IActor } from '@novu/shared';
+import {
+  StepTypeEnum,
+  IEmailBlock,
+  IMessageCTA,
+  ITemplateVariable,
+  IActor,
+  MessageTemplateContentType,
+} from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
@@ -23,18 +30,30 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   content: string | IEmailBlock[];
 
   @IsOptional()
-  contentType: 'editor' | 'customHtml';
+  contentType?: MessageTemplateContentType;
 
   @IsOptional()
   @ValidateNested()
-  cta: IMessageCTA;
+  cta?: IMessageCTA;
 
   @IsOptional()
   @IsString()
-  feedId: string;
+  feedId?: string;
+
+  @IsOptional()
+  @IsString()
+  layoutId?: string | null;
 
   @IsMongoId()
   parentChangeId: string;
+
+  @IsOptional()
+  @IsString()
+  preheader?: string;
+
+  @IsOptional()
+  @IsString()
+  senderName?: string;
 
   @IsOptional()
   actor?: IActor;

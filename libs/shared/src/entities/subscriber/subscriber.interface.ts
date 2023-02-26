@@ -7,6 +7,7 @@ export interface ISubscriber {
   email: string;
   phone?: string;
   avatar?: string;
+  locale?: string;
   subscriberId: string;
   channels?: IChannelSettings[];
   _organizationId: string;
@@ -14,6 +15,7 @@ export interface ISubscriber {
   deleted: boolean;
   createdAt: string;
   updatedAt: string;
+  data?: SubscriberCustomData;
   __v?: number;
 }
 
@@ -27,3 +29,5 @@ export interface IChannelCredentials {
   webhookUrl?: string;
   deviceTokens?: string[];
 }
+
+export type SubscriberCustomData = { [key: string]: string | string[] | boolean | number | undefined };

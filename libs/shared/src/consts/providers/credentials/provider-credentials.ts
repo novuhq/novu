@@ -146,6 +146,24 @@ export const nodemailerConfig: IConfigCredentials[] = [
     required: false,
   },
   {
+    key: CredentialsKeyEnum.RequireTls,
+    displayName: 'Require TLS',
+    type: 'boolean',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.IgnoreTls,
+    displayName: 'Ignore TLS',
+    type: 'boolean',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.TlsOptions,
+    displayName: 'TLS options',
+    type: 'object',
+    required: false,
+  },
+  {
     key: CredentialsKeyEnum.Domain,
     displayName: 'DKIM: Domain name',
     type: 'string',
@@ -184,12 +202,16 @@ export const sendgridConfig: IConfigCredentials[] = [
     required: true,
   },
   ...mailConfigBase,
+];
+
+export const resendConfig: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.WebhookUrl,
-    displayName: 'Webhook url',
-    type: 'url',
-    required: false,
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
   },
+  ...mailConfigBase,
 ];
 
 export const netCoreConfig: IConfigCredentials[] = [
@@ -234,6 +256,16 @@ export const sesConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const mailerSendConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
 export const plivoConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.AccountSid,
@@ -270,6 +302,30 @@ export const termiiConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const burstSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'API Secret',
+    type: 'string',
+    required: true,
+  },
+];
+
+export const clickatellConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const snsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -280,6 +336,12 @@ export const snsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Secret access key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'AWS region',
     type: 'string',
     required: true,
   },
@@ -368,15 +430,28 @@ export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Key ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
   {
     key: CredentialsKeyEnum.ProjectName,
     displayName: 'Team ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Bundle ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Secure,
+    displayName: 'Production',
+    type: 'switch',
+    required: true,
+  },
+
   ...pushConfigBase,
 ];
 
@@ -429,5 +504,47 @@ export const bulksmsConfig: IConfigCredentials[] = [
     displayName: 'DLT Entity Id',
     type: 'string',
     required: false,
-  }
+  },
+];
+
+export const outlook365Config: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
+export const infobipSMSConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const infobipEmailConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
 ];

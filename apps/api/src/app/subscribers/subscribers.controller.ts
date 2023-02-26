@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
 import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -32,10 +44,16 @@ import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-
 import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
 import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
 import { MarkMessageAs } from '../widgets/usecases/mark-message-as/mark-message-as.usecase';
-import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecause';
-import { StoreQuery } from '../widgets/querys/store.query';
+import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecase';
+import { StoreQuery } from '../widgets/queries/store.query';
 import { GetFeedCount } from '../widgets/usecases/get-feed-count/get-feed-count.usecase';
 import { GetFeedCountCommand } from '../widgets/usecases/get-feed-count/get-feed-count.command';
+import { UpdateSubscriberOnlineFlagRequestDto } from './dtos/update-subscriber-online-flag-request.dto';
+import {
+  UpdateSubscriberOnlineFlag,
+  UpdateSubscriberOnlineFlagCommand,
+} from './usecases/update-subscriber-online-flag';
+import { MarkMessageAsRequestDto } from '../widgets/dtos/mark-message-as-request.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -52,7 +70,8 @@ export class SubscribersController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private genFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
-    private updateMessageActionsUsecase: UpdateMessageActions
+    private updateMessageActionsUsecase: UpdateMessageActions,
+    private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag
   ) {}
 
   @Get('')
@@ -131,6 +150,8 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
+        locale: body.locale,
+        data: body.data,
       })
     );
   }
@@ -160,6 +181,8 @@ export class SubscribersController {
         email: body.email,
         phone: body.phone,
         avatar: body.avatar,
+        locale: body.locale,
+        data: body.data,
       })
     );
   }
@@ -186,6 +209,31 @@ export class SubscribersController {
         subscriberId,
         providerId: body.providerId,
         credentials: body.credentials,
+      })
+    );
+  }
+
+  @Patch('/:subscriberId/online-status')
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({
+    type: SubscriberResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Update subscriber online status',
+    description: 'Used to update the subscriber isOnline flag.',
+  })
+  async updateSubscriberOnlineFlag(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateSubscriberOnlineFlagRequestDto
+  ): Promise<SubscriberResponseDto> {
+    return await this.updateSubscriberOnlineFlagUsecase.execute(
+      UpdateSubscriberOnlineFlagCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        isOnline: body.isOnline,
       })
     );
   }
@@ -255,8 +303,8 @@ export class SubscribersController {
       subscriberId: subscriberId,
       environmentId: user.environmentId,
       templateId: templateId,
-      channel: body.channel,
-      enabled: body.enabled,
+      ...(typeof body.enabled === 'boolean' && { enabled: body.enabled }),
+      ...(body.channel && { channel: body.channel }),
     });
 
     return await this.updatePreferenceUsecase.execute(command);
@@ -286,9 +334,9 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Query('page') page?: string,
     @Query('feedIdentifier') feedId?: string,
-    @Query() query?: StoreQuery
+    @Query() query: StoreQuery = {}
   ) {
-    let feedsQuery: string[];
+    let feedsQuery: string[] | undefined;
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
     }
@@ -320,7 +368,7 @@ export class SubscribersController {
     @Query('seen') seen: boolean,
     @Param('subscriberId') subscriberId: string
   ): Promise<UnseenCountResponse> {
-    let feedsQuery: string[];
+    let feedsQuery: string[] | undefined;
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
     }
@@ -349,10 +397,11 @@ export class SubscribersController {
   })
   async markMessageAsSeen(
     @UserSession() user: IJwtPayload,
-    @Param('messageId') messageId: string | string[],
+    @Param('messageId') messageId: string,
     @Param('subscriberId') subscriberId: string
-  ): Promise<MessageEntity[]> {
+  ): Promise<MessageEntity> {
     const messageIds = this.toArray(messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: user.organizationId,
@@ -362,7 +411,7 @@ export class SubscribersController {
       mark: { [MarkEnum.SEEN]: true },
     });
 
-    return await this.markMessageAsUsecase.execute(command);
+    return (await this.markMessageAsUsecase.execute(command))[0];
   }
 
   @ExternalApiAccessible()
@@ -377,9 +426,12 @@ export class SubscribersController {
   async markMessageAs(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Body() body: { messageId: string | string[]; mark: { seen?: boolean; read?: boolean } }
+    @Body() body: MarkMessageAsRequestDto
   ): Promise<MessageEntity[]> {
+    if (!body.messageId) throw new BadRequestException('messageId is required');
+
     const messageIds = this.toArray(body.messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: user.organizationId,
@@ -420,12 +472,13 @@ export class SubscribersController {
       })
     );
   }
-  private toArray(param: string[] | string): string[] {
-    let paramArray: string[];
+
+  private toArray(param: string[] | string): string[] | undefined {
+    let paramArray: string[] | undefined;
     if (param) {
       paramArray = Array.isArray(param) ? param : param.split(',');
     }
 
-    return paramArray;
+    return paramArray as string[];
   }
 }

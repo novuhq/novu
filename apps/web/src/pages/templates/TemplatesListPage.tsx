@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
-import { useTemplates } from '../../api/hooks/use-templates';
+
+import { useTemplates, useEnvController } from '../../hooks';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -12,7 +13,8 @@ import { Tag, Button, Table, colors, Text } from '../../design-system';
 import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
-import { useEnvController } from '../../store/use-env-controller';
+import { ROUTES } from '../../constants/routes.enum';
+import { parseUrl } from '../../utils/routeUtils';
 
 function NotificationList() {
   const { readonly } = useEnvController();
@@ -24,6 +26,10 @@ function NotificationList() {
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
   }
+
+  const handleRedirectToCreateTemplate = () => {
+    navigate(ROUTES.TEMPLATES_CREATE);
+  };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
     {
@@ -83,7 +89,7 @@ function NotificationList() {
           <ActionIcon
             variant="transparent"
             component={Link}
-            to={`/templates/edit/${_id}`}
+            to={parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: _id })}
             data-test-id="template-edit-link"
           >
             <Edit color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
@@ -94,7 +100,7 @@ function NotificationList() {
   ];
 
   function onRowClick(row) {
-    navigate(`/templates/edit/${row.values._id}`);
+    navigate(parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: row.values._id }));
   }
 
   return (
@@ -103,11 +109,14 @@ function NotificationList() {
       <PageHeader
         title="Notification Template"
         actions={
-          <Link to="/templates/create" data-test-id="create-template-btn">
-            <Button disabled={readonly} icon={<PlusCircle />}>
-              New
-            </Button>
-          </Link>
+          <Button
+            disabled={readonly}
+            onClick={handleRedirectToCreateTemplate}
+            icon={<PlusCircle />}
+            data-test-id="create-template-btn"
+          >
+            New
+          </Button>
         }
       />
       <TemplateListTableWrapper>

@@ -1,25 +1,57 @@
 import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
+import { testServer, UserSession } from '@novu/testing';
 import {
   ChannelCTATypeEnum,
   ChannelTypeEnum,
+  EmailBlockTypeEnum,
   StepTypeEnum,
   INotificationTemplate,
   TriggerTypeEnum,
+  IFieldFilterPart,
+  FilterPartTypeEnum,
+  EmailProviderIdEnum,
 } from '@novu/shared';
-import { ChangeRepository, NotificationTemplateRepository, MessageTemplateRepository } from '@novu/dal';
+import {
+  ChangeRepository,
+  NotificationTemplateRepository,
+  MessageTemplateRepository,
+  EnvironmentRepository,
+} from '@novu/dal';
 import { isSameDay } from 'date-fns';
 import { CreateNotificationTemplateRequestDto } from '../dto';
+
+import axios from 'axios';
+import { SendMessageEmail } from '../../events/usecases/send-message/send-message-email.usecase';
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
   let session: UserSession;
   const changeRepository: ChangeRepository = new ChangeRepository();
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
+  const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
+  const axiosInstance = axios.create();
 
   before(async () => {
     session = new UserSession();
     await session.initialize();
+  });
+
+  it('should be able to create a notification with the API Key', async function () {
+    const templateBody: Partial<CreateNotificationTemplateRequestDto> = {
+      name: 'test api template',
+      description: 'This is a test description',
+      tags: ['test-tag-api'],
+      notificationGroupId: session.notificationGroups[0]._id,
+      steps: [],
+    };
+
+    const response = await axiosInstance.post(`${session.serverUrl}/v1/notification-templates`, templateBody, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    });
+
+    expect(response.data.data.name).to.equal(templateBody.name);
   });
 
   it('should create email template', async function () {
@@ -35,7 +67,8 @@ describe('Create Notification template - /notification-templates (POST)', async 
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            preheader: 'Test email preheader',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -45,6 +78,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
               value: 'AND',
               children: [
                 {
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -67,15 +101,15 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(message.template.name).to.equal(`${testTemplate.steps[0].template.name}`);
     expect(message.template.active).to.equal(defaultMessageIsActive);
     expect(message.template.subject).to.equal(`${testTemplate.steps[0].template.subject}`);
+    expect(message.template.preheader).to.equal(`${testTemplate.steps[0].template.preheader}`);
     expect(message.filters[0].type).to.equal(testTemplate.steps[0].filters[0].type);
     expect(message.filters[0].children.length).to.equal(testTemplate.steps[0].filters[0].children.length);
-
     expect(message.filters[0].children[0].value).to.equal(testTemplate.steps[0].filters[0].children[0].value);
-
-    expect(message.filters[0].children[0].operator).to.equal(testTemplate.steps[0].filters[0].children[0].operator);
-
-    expect(message.template.type).to.equal(ChannelTypeEnum.EMAIL);
+    expect((message.filters[0].children[0] as IFieldFilterPart).operator).to.equal(
+      (testTemplate.steps[0].filters[0].children[0] as IFieldFilterPart).operator
+    );
     expect(template.tags[0]).to.equal('test-tag');
+
     if (Array.isArray(message.template.content) && Array.isArray(testTemplate.steps[0].template.content)) {
       expect(message.template.content[0].type).to.equal(testTemplate.steps[0].template.content[0].type);
     } else {
@@ -83,16 +117,18 @@ describe('Create Notification template - /notification-templates (POST)', async 
     }
 
     let change = await changeRepository.findOne({
+      _environmentId: session.environment._id,
       _entityId: message._templateId,
     });
     await session.testAgent.post(`/v1/changes/${change._id}/apply`);
 
-    change = await changeRepository.findOne({
-      _entityId: template._id,
-    });
+    change = await changeRepository.findOne({ _environmentId: session.environment._id, _entityId: template._id });
     await session.testAgent.post(`/v1/changes/${change._id}/apply`);
 
+    const prodEnv = await getProductionEnvironment();
+
     const prodVersionNotification = await notificationTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
       _parentId: template._id,
     });
 
@@ -106,6 +142,7 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(prodVersionNotification.description).to.equal(template.description);
 
     const prodVersionMessage = await messageTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
       _parentId: message._templateId,
     });
 
@@ -261,4 +298,98 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(steps[0]._parentId).to.equal(null);
     expect(steps[0]._id).to.equal(steps[1]._parentId);
   });
+
+  it('should use sender name in email template', async function () {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      name: 'test email template',
+      description: 'This is a test description',
+      tags: ['test-tag'],
+      notificationGroupId: session.notificationGroups[0]._id,
+      steps: [
+        {
+          template: {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            preheader: 'Test email preheader',
+            senderName: 'test',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+          },
+          filters: [],
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+
+    expect(body.data).to.be.ok;
+    const template: INotificationTemplate = body.data;
+
+    expect(template._notificationGroupId).to.equal(testTemplate.notificationGroupId);
+    const message = template.steps[0];
+    expect(message.template?.senderName).to.equal('test');
+  });
+
+  it('should build factory integration', () => {
+    const instance = testServer.getService(SendMessageEmail);
+
+    let result = instance.buildFactoryIntegration({
+      _environmentId: '',
+      _organizationId: '',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: {
+        senderName: 'credentials',
+      },
+      active: false,
+      deleted: false,
+      deletedAt: '',
+      deletedBy: '',
+    });
+
+    expect(result.credentials.senderName).to.equal('credentials');
+
+    result = instance.buildFactoryIntegration(
+      {
+        _environmentId: '',
+        _organizationId: '',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: {
+          senderName: 'credentials',
+        },
+        active: false,
+        deleted: false,
+        deletedAt: '',
+        deletedBy: '',
+      },
+      ''
+    );
+    expect(result.credentials.senderName).to.equal('credentials');
+
+    result = instance.buildFactoryIntegration(
+      {
+        _environmentId: '',
+        _organizationId: '',
+        providerId: EmailProviderIdEnum.SendGrid,
+        channel: ChannelTypeEnum.EMAIL,
+        credentials: {
+          senderName: 'credentials',
+        },
+        active: false,
+        deleted: false,
+        deletedAt: '',
+        deletedBy: '',
+      },
+      'senderName'
+    );
+
+    expect(result.credentials.senderName).to.equal('senderName');
+  });
+
+  async function getProductionEnvironment() {
+    return await environmentRepository.findOne({
+      _parentId: session.environment._id,
+    });
+  }
 });

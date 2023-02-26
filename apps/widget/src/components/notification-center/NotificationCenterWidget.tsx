@@ -1,10 +1,19 @@
-import { NotificationCenter, NovuProvider, ITranslationEntry, ITab, IStore } from '@novu/notification-center';
-import { INovuThemeProvider } from '@novu/notification-center';
-import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import * as WebFont from 'webfontloader';
+import { css, Global } from '@emotion/react';
+import {
+  NotificationCenter,
+  NovuProvider,
+  ITranslationEntry,
+  ITab,
+  IStore,
+  useNovuContext,
+  ColorScheme,
+} from '@novu/notification-center';
+import type { INovuThemeProvider, INotificationCenterStyles } from '@novu/notification-center';
+import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
+
 import { API_URL, WS_URL } from '../../config';
-import { createGlobalStyle } from 'styled-components';
 
 interface INotificationCenterWidgetProps {
   onUrlChange: (url: string) => void;
@@ -24,6 +33,9 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [i18n, setI18n] = useState<ITranslationEntry>();
   const [tabs, setTabs] = useState<ITab[]>();
   const [stores, setStores] = useState<IStore[]>();
+  const [styles, setStyles] = useState<INotificationCenterStyles>();
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
+  const [doLogout, setDoLogout] = useState(false);
 
   useEffect(() => {
     WebFont.load({
@@ -36,7 +48,9 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handler = ({ data }: any) => {
-      if (data && data.type === 'INIT_IFRAME') {
+      if (!data) return;
+
+      if (data.type === 'INIT_IFRAME') {
         setUserDataPayload(data.value.data);
 
         if (data.value.backendUrl) {
@@ -63,7 +77,19 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           setStores(data.value.stores);
         }
 
+        if (data.value.styles) {
+          setStyles(data.value.styles);
+        }
+
+        if (data.value.colorScheme) {
+          setColorScheme(data.value.colorScheme);
+        }
+
         setFrameInitialized(true);
+      }
+
+      if (data.type === 'LOGOUT') {
+        setDoLogout(true);
       }
     };
 
@@ -87,7 +113,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
   return (
     <>
-      <GlobalStyle fontFamily={fontFamily} />
+      <Global styles={globalStyle(fontFamily)} />
       {frameInitialized && (
         <NovuProvider
           backendUrl={backendUrl}
@@ -98,26 +124,49 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
           subscriberHash={userDataPayload.subscriberHash}
           i18n={i18n}
           stores={stores}
+          styles={styles}
         >
-          <NotificationCenter
-            colorScheme="light"
-            onNotificationClick={props.onNotificationClick}
-            onUrlChange={props.onUrlChange}
-            onUnseenCountChanged={props.onUnseenCountChanged}
-            onActionClick={props.onActionClick}
-            theme={theme}
-            tabs={tabs}
-          />
+          <NovuNotificationCenterWrapper doLogout={doLogout} setDoLogout={setDoLogout}>
+            <NotificationCenter
+              colorScheme={colorScheme}
+              onNotificationClick={props.onNotificationClick}
+              onUrlChange={props.onUrlChange}
+              onUnseenCountChanged={props.onUnseenCountChanged}
+              onActionClick={props.onActionClick}
+              theme={theme}
+              tabs={tabs}
+            />
+          </NovuNotificationCenterWrapper>
         </NovuProvider>
       )}
     </>
   );
 }
 
-const GlobalStyle = createGlobalStyle<{ fontFamily: string }>`
+function NovuNotificationCenterWrapper({
+  children,
+  doLogout,
+  setDoLogout,
+}: {
+  children: ReactNode;
+  doLogout: boolean;
+  setDoLogout: (val: boolean) => void;
+}) {
+  const { logout } = useNovuContext();
+  useEffect(() => {
+    if (doLogout) {
+      logout();
+      setDoLogout(false);
+    }
+  }, [doLogout, setDoLogout]);
+
+  return <>{children}</>;
+}
+
+const globalStyle = (fontFamily: string) => css`
   body {
     margin: 0;
-    font-family: ${({ fontFamily }) => fontFamily}, Helvetica, sans-serif;
+    font-family: ${fontFamily}, Helvetica, sans-serif;
     color: #333737;
   }
 `;

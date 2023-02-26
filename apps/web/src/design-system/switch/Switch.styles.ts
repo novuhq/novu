@@ -1,5 +1,7 @@
 import { createStyles, MantineTheme } from '@mantine/core';
 
+import { colors } from '../config';
+
 export default createStyles((theme: MantineTheme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';
   const label = getRef('label');
@@ -8,11 +10,13 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
     root: {
       width: '100%',
       maxWidth: '70px',
+      display: 'flex',
+      alignItems: 'center',
     },
     input: {
       backgroundColor: dark ? theme.colors.dark[5] : theme.colors.gray[5],
-      width: '40px',
-      height: '24px',
+      width: '1px',
+      height: '1px',
       border: 'transparent',
       cursor: 'pointer',
       '&::before': {
@@ -20,13 +24,16 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
         width: '20px',
         height: '20px',
       },
-      '&:checked': {
-        backgroundImage: theme.colors.gradient[8],
-        [`& + .${label}`]: {
-          backgroundImage: theme.colors.gradient[8],
-          backgroundClip: 'text',
-          color: 'transparent',
-        },
+      '&:not(checked) ~ label': {
+        backgroundColor: dark ? 'rgb(61, 61, 77)' : theme.colors.gray[5],
+      },
+      '&:checked ~ label': {
+        backgroundImage: colors.horizontal,
+      },
+      [`&:checked ~ div > .${label}`]: {
+        backgroundImage: colors.horizontal,
+        backgroundClip: 'text',
+        color: 'transparent',
       },
       '&:disabled': {
         opacity: 0.75,
@@ -38,6 +45,14 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       backgroundImage: 'none',
       color: dark ? theme.colors.dark[6] : theme.colors.gray[6],
       cursor: 'pointer',
+    },
+    track: {
+      width: '46px',
+      height: '24px',
+      border: 'none',
+    },
+    thumb: {
+      border: 'none',
     },
   };
 });

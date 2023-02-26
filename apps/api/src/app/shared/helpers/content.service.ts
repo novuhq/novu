@@ -1,5 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { StepTypeEnum, INotificationTemplateStep } from '@novu/shared';
+import {
+  StepTypeEnum,
+  INotificationTemplateStep,
+  getTemplateVariables,
+  IMustacheVariable,
+  TemplateSystemVariables,
+} from '@novu/shared';
+import Handlebars from 'handlebars';
+import { ApiException } from '../exceptions/api.exception';
 
 export class ContentService {
   replaceVariables(content: string, variables: { [key: string]: string }) {
@@ -14,45 +21,42 @@ export class ContentService {
     return modifiedContent;
   }
 
-  extractVariables(content: string): string[] {
+  extractVariables(content: string): IMustacheVariable[] {
     if (!content) return [];
 
-    const regExp = /{{([a-zA-Z_][a-zA-Z0-9_-]*?)}}/gm;
-    const matchedItems = content.match(regExp);
+    try {
+      const ast: hbs.AST.Program = Handlebars.parseWithoutProcessing(content);
 
-    const result = [];
-    if (!matchedItems || !Array.isArray(matchedItems)) {
-      return result;
+      return getTemplateVariables(ast.body);
+    } catch (e) {
+      throw new ApiException('Failed to extract variables');
     }
-
-    for (const item of matchedItems) {
-      result.push(item.replace('{{', '').replace('}}', ''));
-    }
-
-    return result;
   }
 
-  extractMessageVariables(messages: INotificationTemplateStep[]): string[] {
-    const variables = [];
+  extractMessageVariables(messages: INotificationTemplateStep[]): IMustacheVariable[] {
+    const variables: IMustacheVariable[] = [];
 
     for (const text of this.messagesTextIterator(messages)) {
       const extractedVariables = this.extractVariables(text);
-
       variables.push(...extractedVariables);
     }
 
-    return Array.from(new Set(variables));
+    return [
+      ...new Map(
+        variables.filter((item) => !this.isSystemVariable(item.name)).map((item) => [item.name, item])
+      ).values(),
+    ];
   }
 
   extractSubscriberMessageVariables(messages: INotificationTemplateStep[]): string[] {
-    const variables = [];
+    const variables: string[] = [];
 
-    const hasSmsMessage = !!messages.find((i) => i.template.type === StepTypeEnum.SMS);
+    const hasSmsMessage = !!messages.find((i) => i.template?.type === StepTypeEnum.SMS);
     if (hasSmsMessage) {
       variables.push('phone');
     }
 
-    const hasEmailMessage = !!messages.find((i) => i.template.type === StepTypeEnum.EMAIL);
+    const hasEmailMessage = !!messages.find((i) => i.template?.type === StepTypeEnum.EMAIL);
     if (hasEmailMessage) {
       variables.push('email');
     }
@@ -62,25 +66,31 @@ export class ContentService {
 
   private *messagesTextIterator(messages: INotificationTemplateStep[]): Generator<string> {
     for (const message of messages) {
-      if (message.template.type === StepTypeEnum.IN_APP) {
+      if (!message.template) continue;
+
+      if (message.template?.type === StepTypeEnum.IN_APP) {
         yield message.template.content as string;
 
         if (message?.template.cta?.data?.url) {
           yield message.template.cta.data.url;
         }
-      } else if (message.template.type === StepTypeEnum.SMS) {
+      } else if (message.template?.type === StepTypeEnum.SMS) {
         yield message.template.content as string;
-      } else if (Array.isArray(message.template.content)) {
-        yield message.template.subject;
+      } else if (Array.isArray(message.template?.content)) {
+        yield message.template.subject || '';
 
         for (const block of message.template.content) {
-          yield block.url;
+          yield block.url || '';
           yield block.content;
         }
       } else if (typeof message.template.content === 'string') {
         yield message.template.content;
       }
     }
+  }
+
+  private isSystemVariable(variableName: string): boolean {
+    return TemplateSystemVariables.includes(variableName.includes('.') ? variableName.split('.')[0] : variableName);
   }
 
   private escapeForRegExp(content: string) {
@@ -100,7 +110,7 @@ export class ContentService {
   ): { [key: string]: any } {
     const newMessageVariables: { [key: string]: any } = { ...messageVariables };
 
-    Object.keys(subscriberPayload).map(function (key) {
+    Object.keys(subscriberPayload).forEach(function (key) {
       const newKey = subscriberString === '' ? key : `${subscriberString}.${key}`;
       newMessageVariables[newKey] = subscriberPayload[key];
     });

@@ -1,10 +1,16 @@
-import { NotificationTemplateEntity, SubscriberEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import {
+  NotificationTemplateEntity,
+  SubscriberEntity,
+  MessageRepository,
+  SubscriberRepository,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import axios from 'axios';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { ISubscribersDefine } from '@novu/node';
+import { ChannelTypeEnum, ISubscribersDefine, StepTypeEnum } from '@novu/shared';
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
+import { CacheKeyPrefixEnum, CacheService, InvalidateCacheService } from '../../shared/services/cache';
 
 const axiosInstance = axios.create();
 
@@ -14,8 +20,16 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
+  const invalidateCache = new InvalidateCacheService(
+    new CacheService({
+      host: process.env.REDIS_CACHE_SERVICE_HOST as string,
+      port: process.env.REDIS_CACHE_SERVICE_PORT as string,
+    })
+  );
+
   const subscriberRepository = new SubscriberRepository();
   const messageRepository = new MessageRepository();
+  const notificationTemplateRepository = new NotificationTemplateRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -64,7 +78,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await session.awaitRunningJobs(newTemplate._id);
 
-    const message = await messageRepository._model.find({
+    const message = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: newTemplate._id,
       _subscriberId: subscriber._id,
@@ -80,18 +94,22 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
       firstName: 'New Test Name',
       lastName: 'New Last of name',
       email: 'newtest@email.novu',
+      locale: 'en',
     };
 
     await triggerEvent(session, template, payload);
+
+    await session.awaitRunningJobs(template._id);
 
     const createdSubscriber = await subscriberRepository.findBySubscriberId(
       session.environment._id,
       subscriber.subscriberId
     );
 
-    expect(createdSubscriber.firstName).to.equal(payload.firstName);
-    expect(createdSubscriber.lastName).to.equal(payload.lastName);
-    expect(createdSubscriber.email).to.equal(payload.email);
+    expect(createdSubscriber?.firstName).to.equal(payload.firstName);
+    expect(createdSubscriber?.lastName).to.equal(payload.lastName);
+    expect(createdSubscriber?.email).to.equal(payload.email);
+    expect(createdSubscriber?.locale).to.equal(payload.locale);
   });
 
   it('should send only email trigger second time based on the subscriber preference', async function () {
@@ -114,7 +132,7 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     let message = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
-      _subscriberId: widgetSubscriber._id,
+      _subscriberId: widgetSubscriber?._id,
     });
 
     expect(message.length).to.equal(2);
@@ -135,10 +153,75 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
     message = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
-      _subscriberId: widgetSubscriber._id,
+      _subscriberId: widgetSubscriber?._id,
     });
 
     expect(message.length).to.equal(3);
+  });
+
+  it('should ignore subscriber preference and send all triggers for system critical template', async function () {
+    const payload: ISubscribersDefine = {
+      subscriberId: session.subscriberId,
+      firstName: 'New Test Name',
+      lastName: 'New Last of name',
+      email: 'newtest@email.novu',
+    };
+
+    await triggerEvent(session, template, payload);
+
+    await session.awaitRunningJobs(template._id);
+
+    const widgetSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      session.subscriberId
+    );
+
+    let message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: widgetSubscriber?._id,
+    });
+
+    expect(message.length).to.equal(2);
+
+    const updateData = {
+      channel: {
+        type: ChannelTypeEnum.IN_APP,
+        enabled: false,
+      },
+    };
+
+    await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
+
+    await invalidateCache.clearCache({
+      storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
+      credentials: {
+        _id: template._id,
+        environmentId: session.environment._id,
+      },
+    });
+
+    await notificationTemplateRepository.update(
+      {
+        _id: template._id,
+        _environmentId: session.environment._id,
+      },
+      {
+        critical: true,
+      }
+    );
+
+    await triggerEvent(session, template, payload);
+
+    await session.awaitRunningJobs(template._id);
+
+    message = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      _subscriberId: widgetSubscriber?._id,
+    });
+
+    expect(message.length).to.equal(4);
   });
 });
 

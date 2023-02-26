@@ -31,6 +31,9 @@ export class MessageTemplate {
   feedId?: string;
 
   @IsOptional()
+  layoutId?: string | null;
+
+  @IsOptional()
   @IsString()
   name?: string;
 
@@ -42,6 +45,15 @@ export class MessageTemplate {
   @IsString()
   title?: string;
 
+  @IsOptional()
+  @IsString()
+  preheader?: string;
+
+  @IsOptional()
+  @IsString()
+  senderName?: string;
+
+  @IsOptional()
   actor?: {
     type: ActorTypeEnum;
     data: string | null;

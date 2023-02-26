@@ -68,6 +68,26 @@ However, if you want to test certain parts of Novu or run it in production mode,
 </details>
 
 <details>
+    <summary>Web client</summary>
+    <div>
+      <ul>
+        <li><code>REACT_APP_ENVIRONMENT</code> <br />The environment of the app. Possible values are: dev, test, prod, ci, local</li>
+        <li><code>REACT_APP_API_URL</code> <br />The base url on which your API backend would be accessible</li>
+        <li><code>REACT_APP_WS_URL</code> <br />The base url on which your WebSocket service would be accessible</li>
+        <li><code>SKIP_PREFLIGHT_CHECK</code> (default: true)<br />Solves a problem with React App dependency tree.</li>
+      </ul>
+    </div>
+
+:::warning
+
+When configuring different than default values for the API and WebSocket URLs, in order for the Web app to apply the changes done to the `./env` file, it is needed to run the script `pnpm envsetup`.
+This will generate a file called `env-config.js` that will be copied inside of the `public` folder of the application. Its purpose is to inject in the `window._env_` object the chosen environment variables that manage the URLs the Web client will call to access to the API backend and the WebSocket service.
+
+:::
+
+</details>
+
+<details>
     <summary>WebSocket Service</summary>
     <div>
       <ul>
@@ -125,9 +145,10 @@ cd apps/web && npm run cypress:open
 ### Different ports used by the services the project spins up
 
 - **3000** - API
-- **3002** - WebSocket service
+- **3002** - WebSocket Service
 - **4200** - Web Management UI
-- **4500** - Iframe embed for notification center
+- **4701** - Iframe embed for notification center
+- **4500** - Widget Service
 
 ### Testing providers
 
@@ -159,7 +180,7 @@ The script can be run on its own without any previously dependency installed, as
 - Will create a local development domain `local.novu.co` in your local machine
 - Will clone Novu repository in your local machine (skippable step) to a selected folder `$HOME/Dev`
 
-:::warn
+:::warning
 
 This script has only been thoroughly tested in MacOSx. Little testing has been run in GNU Linux.
 

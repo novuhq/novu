@@ -1,17 +1,18 @@
 import {
-  BuilderFieldOperator,
+  FilterParts,
   BuilderFieldType,
   BuilderGroupValues,
   DigestUnitEnum,
   DigestTypeEnum,
   IPreferenceChannels,
   DelayTypeEnum,
+  TemplateVariableTypeEnum,
 } from '@novu/shared';
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 
 export class NotificationTemplateEntity {
-  _id?: string;
+  _id: string;
 
   name: string;
 
@@ -52,6 +53,10 @@ export class NotificationTemplateEntity {
   updatedAt?: string;
 
   readonly notificationGroup?: NotificationGroupEntity;
+
+  isBlueprint: boolean;
+
+  blueprintId?: string;
 }
 
 export class NotificationTriggerEntity {
@@ -61,6 +66,7 @@ export class NotificationTriggerEntity {
 
   variables: {
     name: string;
+    type: TemplateVariableTypeEnum;
   }[];
 
   subscriberVariables?: {
@@ -75,11 +81,16 @@ export class NotificationStepEntity {
 
   active?: boolean;
 
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
+
   template?: MessageTemplateEntity;
 
   filters?: StepFilter[];
 
-  _parentId?: string;
+  _parentId?: string | null;
 
   metadata?: {
     amount?: number;
@@ -91,6 +102,8 @@ export class NotificationStepEntity {
     backoffAmount?: number;
     updateMode?: boolean;
   };
+
+  shouldStopOnFail?: boolean;
 }
 
 export class StepFilter {
@@ -100,10 +113,5 @@ export class StepFilter {
 
   value: BuilderGroupValues;
 
-  children: {
-    field: string;
-    value: string;
-    operator: BuilderFieldOperator;
-    on?: 'payload' | 'subscriber';
-  }[];
+  children: FilterParts[];
 }

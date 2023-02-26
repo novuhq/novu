@@ -17,6 +17,8 @@ export class MailersendEmailProvider implements IEmailProvider {
   constructor(
     private config: {
       apiKey: string;
+      from?: string;
+      senderName?: string;
     }
   ) {
     this.mailerSend = new MailerSend({ api_key: this.config.apiKey });
@@ -42,12 +44,25 @@ export class MailersendEmailProvider implements IEmailProvider {
     const attachments = this.getAttachments(options.attachments);
 
     const emailParams = new EmailParams()
-      .setFrom(options.from)
+      .setFrom(options.from ?? this.config.from)
+      .setFromName(this.config.senderName)
       .setRecipients(recipients)
       .setSubject(options.subject)
       .setHtml(options.html)
       .setText(options.text)
       .setAttachments(attachments);
+
+    if (options.cc && Array.isArray(options.cc)) {
+      emailParams.setCc(options.cc.map((ccItem) => new Recipient(ccItem)));
+    }
+
+    if (options.bcc && Array.isArray(options.bcc)) {
+      emailParams.setBcc(options.bcc.map((ccItem) => new Recipient(ccItem)));
+    }
+
+    if (options.replyTo) {
+      emailParams.setReplyTo(options.replyTo);
+    }
 
     return emailParams;
   }

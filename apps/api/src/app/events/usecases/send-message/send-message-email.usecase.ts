@@ -1,32 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import {
-  IEmailBlock,
   MessageRepository,
-  NotificationStepEntity,
-  NotificationRepository,
-  SubscriberEntity,
-  SubscriberRepository,
-  OrganizationRepository,
-  MessageEntity,
   NotificationEntity,
+  NotificationRepository,
+  NotificationStepEntity,
   OrganizationEntity,
+  OrganizationRepository,
+  SubscriberRepository,
+  EnvironmentRepository,
   IntegrationEntity,
+  MessageEntity,
 } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  LogCodeEnum,
-  StepTypeEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CompileTemplate } from '../../../content-templates/usecases/compile-template/compile-template.usecase';
-import { CompileTemplateCommand } from '../../../content-templates/usecases/compile-template/compile-template.command';
+import { CreateLog } from '../../../logs/usecases';
 import { MailFactory } from '../../services/mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
-import { SendMessageType } from './send-message-type.usecase';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -36,50 +26,83 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { SendMessageBase } from './send-message.base';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration';
+import { CompileEmailTemplate } from '../../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
+import { CompileEmailTemplateCommand } from '../../../content-templates/usecases/compile-email-template/compile-email-template.command';
 
 @Injectable()
-export class SendMessageEmail extends SendMessageType {
-  private mailFactory = new MailFactory();
+export class SendMessageEmail extends SendMessageBase {
+  channelType = ChannelTypeEnum.EMAIL;
 
   constructor(
-    private subscriberRepository: SubscriberRepository,
+    protected environmentRepository: EnvironmentRepository,
+    protected subscriberRepository: SubscriberRepository,
     private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
-    private compileTemplate: CompileTemplate,
     private organizationRepository: OrganizationRepository,
-    private getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
+    private compileEmailTemplateUsecase: CompileEmailTemplate,
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {
-    const emailChannel: NotificationStepEntity = command.step;
-    const notification = await this.notificationRepository.findById(command.notificationId);
-    const subscriber: SubscriberEntity = await this.subscriberRepository.findOne({
-      _environmentId: command.environmentId,
-      _id: command.subscriberId,
-    });
-    const organization: OrganizationEntity = await this.organizationRepository.findById(command.organizationId);
-    const email = command.payload.email || subscriber.email;
+    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    if (!subscriber) throw new ApiException(`Subscriber ${command.subscriberId} not found`);
 
-    Sentry.addBreadcrumb({
-      message: 'Sending Email',
-    });
-    const isEditorMode = !emailChannel.template.contentType || emailChannel.template.contentType === 'editor';
+    let integration: IntegrationEntity | undefined = undefined;
 
-    const integration = (
-      await this.getDecryptedIntegrationsUsecase.execute(
+    try {
+      integration = await this.getIntegration(
         GetDecryptedIntegrationsCommand.create({
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           channelType: ChannelTypeEnum.EMAIL,
           findOne: true,
           active: true,
+          userId: command.userId,
         })
-      )
-    )[0];
+      );
+    } catch (e) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          raw: JSON.stringify({ message: e.message }),
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return;
+    }
+    const emailChannel: NotificationStepEntity = command.step;
+    if (!emailChannel) throw new ApiException('Email channel step not found');
+    if (!emailChannel.template) throw new ApiException('Email channel template not found');
+
+    const notification = await this.notificationRepository.findById(command.notificationId);
+    if (!notification) throw new ApiException(`Notification ${command.notificationId} not found`);
+
+    const organization: OrganizationEntity | null = await this.organizationRepository.findById(command.organizationId);
+    if (!organization) throw new ApiException(`Organization ${command.organizationId} not found`);
+
+    const email = command.payload.email || subscriber.email;
+
+    Sentry.addBreadcrumb({
+      message: 'Sending Email',
+    });
 
     if (!integration) {
       await this.createExecutionDetails.execute(
@@ -95,48 +118,40 @@ export class SendMessageEmail extends SendMessageType {
 
       return;
     }
-    const overrides = command.overrides[integration?.providerId] || {};
+
+    const overrides: Record<string, any> = command.overrides[integration?.providerId] || {};
+    let html;
     let subject = '';
-    let content: string | IEmailBlock[] = '';
+    let content;
 
     const payload = {
-      subject: emailChannel.template.subject,
-      branding: {
-        logo: organization.branding?.logo,
-        color: organization.branding?.color || '#f47373',
+      subject: emailChannel.template.subject || '',
+      preheader: emailChannel.template.preheader,
+      content: emailChannel.template.content,
+      layoutId: emailChannel.template._layoutId,
+      contentType: emailChannel.template.contentType ? emailChannel.template.contentType : 'editor',
+      payload: {
+        ...command.payload,
+        step: {
+          digest: !!command.events?.length,
+          events: command.events,
+          total_count: command.events?.length,
+        },
+        subscriber,
       },
-      blocks: [],
-      step: {
-        digest: !!command.events.length,
-        events: command.events,
-        total_count: command.events.length,
-      },
-      subscriber,
-      ...command.payload,
     };
 
     try {
-      subject = await this.renderContent(
-        emailChannel.template.subject,
-        emailChannel.template.subject,
-        organization,
-        subscriber,
-        command
-      );
-
-      content = await this.getContent(isEditorMode, emailChannel, command, subscriber, subject, organization);
-    } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify(payload),
+      ({ html, content, subject } = await this.compileEmailTemplateUsecase.execute(
+        CompileEmailTemplateCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          ...payload,
         })
-      );
+      ));
+    } catch (e) {
+      await this.sendErrorHandlebars(command.job, e.message);
 
       return;
     }
@@ -151,7 +166,7 @@ export class SendMessageEmail extends SendMessageType {
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
-      content,
+      content: this.storeContent() ? content : null,
       subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
@@ -172,28 +187,7 @@ export class SendMessageEmail extends SendMessageType {
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(payload),
-      })
-    );
-
-    const html = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: isEditorMode ? 'basic' : 'custom',
-        customTemplate: emailChannel.template.contentType === 'customHtml' ? (content as string) : undefined,
-        data: {
-          subject,
-          branding: {
-            logo: organization.branding?.logo,
-            color: organization.branding?.color || '#f47373',
-          },
-          blocks: isEditorMode ? content : [],
-          step: {
-            digest: !!command.events.length,
-            events: command.events,
-            total_count: command.events.length,
-          },
-          ...command.payload,
-        },
+        raw: this.storeContent() ? JSON.stringify(payload) : null,
       })
     );
 
@@ -207,21 +201,88 @@ export class SendMessageEmail extends SendMessageType {
         }
     );
 
-    const mailData: IEmailOptions = {
-      to: email,
-      subject,
-      html,
-      from: command.payload.$sender_email || integration?.credentials.from || 'no-reply@novu.co',
-      attachments,
-      id: message._id,
-    };
+    const mailData: IEmailOptions = createMailData(
+      {
+        to: email,
+        subject,
+        html,
+        from: integration?.credentials.from || 'no-reply@novu.co',
+        attachments,
+        id: message._id,
+      },
+      command.overrides?.email || {}
+    );
+
+    if (command.step.replyCallback?.active) {
+      const replyTo = await this.getReplyTo(command, message._id);
+
+      if (replyTo) {
+        mailData.replyTo = replyTo;
+      }
+    }
+
+    if (command.overrides?.email?.replyTo) {
+      mailData.replyTo = command.overrides?.email?.replyTo as string;
+    }
 
     if (email && integration) {
-      await this.sendMessage(integration, mailData, message, command, notification);
+      await this.sendMessage(
+        integration,
+        mailData,
+        message,
+        command,
+        notification,
+        emailChannel.template.senderName || overrides?.email?.senderName
+      );
 
       return;
     }
     await this.sendErrors(email, integration, message, command, notification);
+  }
+
+  private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
+    if (!command.step.replyCallback?.url) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: messageId,
+          detail: DetailEnum.REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.WARNING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return null;
+    }
+
+    const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+
+    if (environment.dns?.mxRecordConfigured && environment.dns?.inboundParseDomain) {
+      return getReplyToAddress(command.transactionId, environment._id, environment?.dns?.inboundParseDomain);
+    } else {
+      const detailEnum =
+        !environment.dns?.mxRecordConfigured && !environment.dns?.inboundParseDomain
+          ? DetailEnum.REPLY_CALLBACK_NOT_CONFIGURATION
+          : !environment.dns?.mxRecordConfigured
+          ? DetailEnum.REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION
+          : DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION;
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          messageId: messageId,
+          detail: detailEnum,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.WARNING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return null;
+    }
   }
 
   private async sendErrors(
@@ -296,9 +357,11 @@ export class SendMessageEmail extends SendMessageType {
     mailData: IEmailOptions,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    senderName?: string
   ) {
-    const mailHandler = this.mailFactory.getHandler(integration, mailData.from);
+    const mailFactory = new MailFactory();
+    const mailHandler = mailFactory.getHandler(this.buildFactoryIntegration(integration, senderName), mailData.from);
 
     try {
       const result = await mailHandler.send(mailData);
@@ -321,9 +384,7 @@ export class SendMessageEmail extends SendMessageType {
       }
 
       await this.messageRepository.update(
-        {
-          _id: message._id,
-        },
+        { _environmentId: command.environmentId, _id: message._id },
         {
           $set: {
             identifier: result.id,
@@ -359,59 +420,38 @@ export class SendMessageEmail extends SendMessageType {
     }
   }
 
-  private async getContent(
-    isEditorMode,
-    emailChannel,
-    command: SendMessageCommand,
-    subscriber: SubscriberEntity,
-    subject,
-    organization: OrganizationEntity
-  ): Promise<string | IEmailBlock[]> {
-    if (isEditorMode) {
-      const content: IEmailBlock[] = [...emailChannel.template.content] as IEmailBlock[];
-      for (const block of content) {
-        /*
-         * We need to trim the content in order to avoid mail provider like GMail
-         * to display the mail with `[Message clipped]` footer.
-         */
-        block.content = await this.renderContent(block.content, subject, organization, subscriber, command);
-        block.content = block.content.trim();
-        block.url = await this.renderContent(block.url || '', subject, organization, subscriber, command);
-      }
-
-      return content;
-    }
-
-    return emailChannel.template.content;
+  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+    return {
+      ...integration,
+      credentials: {
+        ...integration.credentials,
+        senderName: senderName && senderName.length > 0 ? senderName : integration.credentials.senderName,
+      },
+      providerId: GetNovuIntegration.mapProviders(ChannelTypeEnum.EMAIL, integration.providerId),
+    };
   }
+}
 
-  private async renderContent(
-    content: string,
-    subject,
-    organization: OrganizationEntity,
-    subscriber,
-    command: SendMessageCommand
-  ) {
-    return await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        templateId: 'custom',
-        customTemplate: content as string,
-        data: {
-          subject,
-          branding: {
-            logo: organization.branding?.logo,
-            color: organization.branding?.color || '#f47373',
-          },
-          blocks: [],
-          step: {
-            digest: !!command.events.length,
-            events: command.events,
-            total_count: command.events.length,
-          },
-          subscriber,
-          ...command.payload,
-        },
-      })
-    );
-  }
+export const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
+  const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
+
+  let to = Array.isArray(options.to) ? options.to : [options.to];
+  to = [...to, ...(overrides?.to || [])];
+  to = to.reduce(filterDuplicate, []);
+
+  return {
+    ...options,
+    to,
+    from: overrides?.from || options.from,
+    text: overrides?.text,
+    cc: overrides?.cc || [],
+    bcc: overrides?.bcc || [],
+  };
+};
+
+export function getReplyToAddress(transactionId: string, environmentId: string, inboundParseDomain: string) {
+  const userNamePrefix = 'parse';
+  const userNameDelimiter = '-nv-e=';
+
+  return `${userNamePrefix}+${transactionId}${userNameDelimiter}${environmentId}@${inboundParseDomain}`;
 }

@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { Switch as MantineSwitch, SwitchProps } from '@mantine/core';
+import { Switch as MantineSwitch } from '@mantine/core';
 import useStyles from './Switch.styles';
 
 interface ISwitchProps {
@@ -17,8 +17,17 @@ interface ISwitchProps {
 export const Switch = React.forwardRef<HTMLInputElement, ISwitchProps>(
   ({ onChange, loading = false, disabled = false, ...props }, ref) => {
     const { classes } = useStyles();
-    const defaultDesign = { radius: 'xl', size: 'md', classNames: classes } as SwitchProps;
 
-    return <MantineSwitch ref={ref} disabled={disabled} onChange={onChange} {...defaultDesign} {...props} />;
+    return (
+      <MantineSwitch
+        ref={ref}
+        disabled={disabled}
+        onChange={onChange}
+        radius="xl"
+        size="md"
+        classNames={classes}
+        {...props}
+      />
+    );
   }
 );

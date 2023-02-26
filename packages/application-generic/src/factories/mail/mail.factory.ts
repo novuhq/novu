@@ -10,6 +10,8 @@ import {
   SendinblueHandler,
   SESHandler,
   NetCoreHandler,
+  MailerSendHandler,
+  ResendHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -25,6 +27,8 @@ export class MailFactory {
     new PostmarkHandler(),
     new SendinblueHandler(),
     new SESHandler(),
+    new MailerSendHandler(),
+    new ResendHandler(),
   ];
 
   getHandler(integration: IntegrationEntity, from?: string): IMailHandler {
@@ -34,7 +38,9 @@ export class MailFactory {
           handlerItem.canHandle(integration.providerId, integration.channel)
         ) ?? null;
 
-      if (!handler) return null;
+      if (!handler) {
+        throw new Error('Handler for provider was not found');
+      }
 
       handler.buildProvider(integration.credentials, from);
 

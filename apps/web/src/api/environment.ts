@@ -16,6 +16,10 @@ export function regenerateApiKeys() {
   return api.post(`/v1/environments/api-keys/regenerate`, {});
 }
 
+export function updateDnsSettings(payload: { inboundParseDomain: string | undefined }, environmentId: string) {
+  return api.put(`/v1/environments/${environmentId}`, { dns: payload });
+}
+
 export function updateEmailSettings(payload: { senderEmail: string; senderName: string }) {
   return api.put(`/v1/channels/email/settings`, payload);
 }

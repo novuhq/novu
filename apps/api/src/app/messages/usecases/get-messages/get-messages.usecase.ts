@@ -13,7 +13,7 @@ export class GetMessages {
       throw new BadRequestException('Limit can not be larger then 1000');
     }
 
-    const query: Partial<MessageEntity> = {
+    const query: Partial<MessageEntity> & { _environmentId: string } = {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     };

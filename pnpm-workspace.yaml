@@ -3,6 +3,7 @@ packages:
   - 'providers/*'
   - 'packages/*'
   - 'apps/*'
+  - 'examples/*'
   - 'libs/*'
   - 'docs'
   # exclude packages that are inside test directories

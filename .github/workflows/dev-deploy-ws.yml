@@ -7,8 +7,11 @@ on:
   push:
     branches:
       - next
+      - main
     paths:
       - 'apps/ws/**'
+env:
+  TF_WORKSPACE: novu-dev
 
 jobs:
   # This workflow contains a single job called "build"
@@ -21,27 +24,15 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16.15.1'
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.2.0
-
-      - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.3.0
-        with:
-          mongodb-version: 4.2.8
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
+          aws-region: eu-west-2
 
       - name: Checkout cloud infra
         uses: actions/checkout@master
@@ -53,15 +44,13 @@ jobs:
       - name: Terraform setup
         uses: hashicorp/setup-terraform@v1
         with:
-          terraform_version: 0.14.4
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_version: 1.3.4
           terraform_wrapper: false
       - name: Terraform Init
         working-directory: cloud-infra/terraform
         run: terraform init
 
-      - name: Terraform Change Workspace
-        working-directory: cloud-infra/terraform
-        run: terraform workspace select dev
 
       - name: Terraform get output
         working-directory: cloud-infra/terraform
@@ -80,20 +69,20 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
-          REGISTERY_OWNER: novuhq
+          REGISTRY_OWNER: novuhq
           DOCKER_NAME: novu/ws
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          docker build -t ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/ws/Dockerfile .
-          docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/ws/Dockerfile .
+          docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1340/v1/health-check | grep 'ok'
-          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:dev
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
       - name: Render Amazon ECS task definition
         id: render-container

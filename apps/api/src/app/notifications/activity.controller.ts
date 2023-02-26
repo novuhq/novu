@@ -11,7 +11,7 @@ import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-stat
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
 import { ActivitiesResponseDto } from './dtos/activities-response.dto';
-import { ActivityGraphqStatesResponse } from './dtos/activity-graph-states-response.dto';
+import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
 import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
@@ -92,7 +92,7 @@ export class ActivityController {
   @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
   @ApiOkResponse({
-    type: [ActivityGraphqStatesResponse],
+    type: [ActivityGraphStatesResponse],
   })
   @ApiOperation({
     deprecated: true,
@@ -106,7 +106,7 @@ export class ActivityController {
   getActivityGraphStats(
     @UserSession() user: IJwtPayload,
     @Query('days') days = 32
-  ): Promise<ActivityGraphqStatesResponse[]> {
+  ): Promise<ActivityGraphStatesResponse[]> {
     return this.getActivityGraphStatsUsecase.execute(
       GetActivityGraphStatsCommand.create({
         days: days ? Number(days) : 32,

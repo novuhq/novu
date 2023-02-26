@@ -121,6 +121,7 @@ export class EnvironmentsController {
         name: payload.name,
         identifier: payload.identifier,
         _parentId: payload.parentId,
+        dns: payload.dns,
       })
     );
   }

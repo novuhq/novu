@@ -5,145 +5,141 @@ import {
   NotificationTemplateRepository,
   NotificationRepository,
 } from '@novu/dal';
-import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
-  StepTypeEnum,
-  LogCodeEnum,
-  LogStatusEnum,
+  ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  InAppProviderIdEnum,
+  StepTypeEnum,
+  STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import * as hat from 'hat';
-import { merge } from 'lodash';
+
 import { TriggerEventCommand } from './trigger-event.command';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
-import { CreateLogCommand } from '../../../logs/usecases/create-log/create-log.command';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
-import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
-import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { ApiException } from '../../../shared/exceptions/api.exception';
-import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
-import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
-import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
+
 import { AddJob } from '../add-job/add-job.usecase';
+import { CreateNotificationJobsCommand, CreateNotificationJobs } from '../create-notification-jobs';
+import { ProcessSubscriber, ProcessSubscriberCommand } from '../process-subscriber';
+
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+
+const LOG_CONTEXT = 'TriggerEventUseCase';
 
 @Injectable()
 export class TriggerEvent {
   constructor(
-    private notificationTemplateRepository: NotificationTemplateRepository,
-    private createLogUsecase: CreateLog,
+    private addJobUsecase: AddJob,
+    private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private jobRepository: JobRepository,
-    private verifyPayload: VerifyPayload,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    private addJobUsecase: AddJob,
     private notificationRepository: NotificationRepository,
-    private storageHelperService: StorageHelperService,
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private getDecryptedIntegrations: GetDecryptedIntegrations,
     protected createExecutionDetails: CreateExecutionDetails
   ) {}
 
   async execute(command: TriggerEventCommand) {
+    const { actor, environmentId, identifier, organizationId, to, userId } = command;
+
+    await this.validateTransactionIdProperty(command.transactionId, organizationId, environmentId);
+
     Sentry.addBreadcrumb({
       message: 'Sending trigger',
       data: {
-        triggerIdentifier: command.identifier,
+        triggerIdentifier: identifier,
       },
     });
-
-    await this.validateSubscriberIdProperty(command);
-
-    this.logEventTriggered(command);
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
       command.identifier
     );
 
+    /*
+     * Makes no sense to execute anything if template doesn't exist
+     * TODO: Send a 404?
+     */
     if (!template) {
-      return this.logTemplateNotFound(command);
+      const message = 'Notification template could not be found';
+      Logger.error(message, LOG_CONTEXT);
+      throw new ApiException(message);
     }
 
-    if (!template.active || template.draft) {
-      return this.logTemplateNotActive(command, template);
-    }
-
-    // Modify Attachment Key Name, Upload attachments to Storage Provider and Remove file from payload
-    if (command.payload && Array.isArray(command.payload.attachments)) {
-      this.modifyAttachments(command);
-      await this.storageHelperService.uploadAttachments(command.payload.attachments);
-      command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
-    }
-
-    const defaultPayload = this.verifyPayload.execute(
-      VerifyPayloadCommand.create({
-        payload: command.payload,
-        template,
-      })
+    const templateProviderIds = await this.getProviderIdsForTemplate(
+      command.userId,
+      command.organizationId,
+      command.environmentId,
+      template
     );
 
-    command.payload = merge({}, defaultPayload, command.payload);
+    const jobs: Omit<JobEntity, '_id'>[][] = [];
 
-    const jobs: JobEntity[][] = [];
-
-    for (const subscriberToTrigger of command.to) {
-      jobs.push(
-        await this.processSubscriber.execute(
-          ProcessSubscriberCommand.create({
-            identifier: command.identifier,
-            payload: command.payload,
-            overrides: command.overrides,
-            to: subscriberToTrigger,
-            transactionId: command.transactionId,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.organizationId,
-            templateId: template._id,
-            actor: command.actor,
-          })
-        )
+    // We might have a single actor for every trigger so we only need to check for it once
+    let actorProcessed;
+    if (actor) {
+      actorProcessed = await this.processSubscriber.execute(
+        ProcessSubscriberCommand.create({
+          environmentId,
+          organizationId,
+          userId,
+          subscriber: actor,
+        })
       );
     }
 
-    const steps = template.steps;
+    for (const subscriber of to) {
+      const subscriberProcessed = await this.processSubscriber.execute(
+        ProcessSubscriberCommand.create({
+          environmentId,
+          organizationId,
+          userId,
+          subscriber,
+        })
+      );
 
-    this.analyticsService.track('Notification event trigger - [Triggers]', command.userId, {
-      _template: template._id,
-      _organization: command.organizationId,
-      channels: steps.map((step) => step.template?.type),
-      smsChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.SMS)?.length,
-      emailChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.EMAIL)?.length,
-      inAppChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.IN_APP)?.length,
-      chatChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.CHAT)?.length,
-      pushChannel: !!steps.filter((step) => step.template.type === StepTypeEnum.PUSH)?.length,
-    });
+      // If no subscriber makes no sense to try to create notification
+      if (subscriberProcessed) {
+        const createNotificationJobsCommand = CreateNotificationJobsCommand.create({
+          environmentId,
+          identifier,
+          organizationId,
+          overrides: command.overrides,
+          payload: command.payload,
+          subscriber: subscriberProcessed,
+          template,
+          templateProviderIds,
+          to: subscriber,
+          transactionId: command.transactionId,
+          userId,
+          ...(actor && actorProcessed && { actor: actorProcessed }),
+        });
+
+        const notificationJobs = await this.createNotificationJobs.execute(createNotificationJobsCommand);
+
+        jobs.push(notificationJobs);
+      }
+    }
 
     for (const job of jobs) {
       await this.storeAndAddJob(job);
     }
-
-    if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
-      return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
-    }
-
-    return {
-      acknowledged: true,
-      status: 'processed',
-      transactionId: command.transactionId,
-    };
   }
 
-  private async storeAndAddJob(jobs: JobEntity[]) {
+  private async storeAndAddJob(jobs: Omit<JobEntity, '_id'>[]) {
     const storedJobs = await this.jobRepository.storeJobs(jobs);
     const channels = storedJobs
-      .map((item) => item.type)
-      .reduce((list, channel) => {
+      .map((item) => item.type as StepTypeEnum)
+      .reduce<StepTypeEnum[]>((list, channel) => {
         if (list.includes(channel) || channel === StepTypeEnum.TRIGGER) {
           return list;
         }
@@ -153,7 +149,7 @@ export class TriggerEvent {
       }, []);
 
     for (const job of storedJobs) {
-      await this.createExecutionDetails.execute(
+      this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_CREATED,
@@ -169,6 +165,7 @@ export class TriggerEvent {
 
     await this.notificationRepository.update(
       {
+        _organizationId: firstJob._organizationId,
         _id: firstJob._notificationId,
       },
       {
@@ -183,139 +180,73 @@ export class TriggerEvent {
       environmentId: firstJob._environmentId,
       organizationId: firstJob._organizationId,
       jobId: firstJob._id,
+      job: firstJob,
     });
   }
 
-  private async logTemplateNotActive(command: TriggerEventCommand, template: NotificationTemplateEntity) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'Template not active',
-        userId: command.userId,
-        code: LogCodeEnum.TEMPLATE_NOT_ACTIVE,
-        templateId: template._id,
-        raw: {
-          payload: command.payload,
-          triggerIdentifier: command.identifier,
-        },
-      })
-    );
-
-    return {
-      acknowledged: true,
-      status: 'trigger_not_active',
-    };
-  }
-
-  private async logTemplateNotFound(command: TriggerEventCommand) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'Template not found',
-        userId: command.userId,
-        code: LogCodeEnum.TEMPLATE_NOT_FOUND,
-        raw: {
-          triggerIdentifier: command.identifier,
-        },
-      })
-    );
-    throw new UnprocessableEntityException('TEMPLATE_NOT_FOUND');
-  }
-
-  private logEventTriggered(command: TriggerEventCommand) {
-    this.createLogUsecase
-      .execute(
-        CreateLogCommand.create({
-          transactionId: command.transactionId,
-          status: LogStatusEnum.INFO,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          text: 'Trigger request received',
-          userId: command.userId,
-          code: LogCodeEnum.TRIGGER_RECEIVED,
-          raw: {
-            subscribers: command.to,
-            payload: command.payload,
-          },
-        })
-      )
-      // eslint-disable-next-line no-console
-      .catch((e) => console.error(e));
-  }
-
-  private async validateSubscriberIdProperty(command: TriggerEventCommand): Promise<boolean> {
-    for (const subscriber of command.to) {
-      const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
-
-      if (!subscriberIdExists) {
-        this.logSubscriberIdMissing(command);
-
-        throw new ApiException(
-          'subscriberId under property to is not configured, please make sure all the subscriber contains subscriberId property'
-        );
-      }
-    }
-
-    return true;
-  }
-
-  public async validateTransactionIdProperty(
+  private async validateTransactionIdProperty(
     transactionId: string,
     organizationId: string,
     environmentId: string
-  ): Promise<boolean> {
-    const found = await this.jobRepository.findOne(
-      {
-        transactionId,
-        _organizationId: organizationId,
-        _environmentId: environmentId,
-      },
-      '_id'
-    );
+  ): Promise<void> {
+    const found = await this.jobRepository.count({
+      transactionId,
+      _organizationId: organizationId,
+      _environmentId: environmentId,
+    });
 
     if (found) {
       throw new ApiException(
         'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );
     }
-
-    return true;
   }
 
-  private async logSubscriberIdMissing(command: TriggerEventCommand) {
-    await this.createLogUsecase.execute(
-      CreateLogCommand.create({
-        transactionId: command.transactionId,
-        status: LogStatusEnum.ERROR,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        text: 'SubscriberId missing in to property',
-        userId: command.userId,
-        code: LogCodeEnum.SUBSCRIBER_ID_MISSING,
-        raw: {
-          triggerIdentifier: command.identifier,
-        },
+  private async getProviderIdsForTemplate(
+    userId: string,
+    organizationId: string,
+    environmentId: string,
+    template: NotificationTemplateEntity
+  ): Promise<Map<ChannelTypeEnum, string>> {
+    const providers = new Map<ChannelTypeEnum, string>();
+
+    for (const step of template?.steps) {
+      const type = step.template?.type;
+      if (type) {
+        const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
+
+        if (channelType) {
+          const provider = await this.getProviderId(userId, organizationId, environmentId, channelType);
+          if (provider) {
+            providers.set(channelType, provider);
+          } else {
+            providers.set(channelType, InAppProviderIdEnum.Novu);
+          }
+        }
+      }
+    }
+
+    return providers;
+  }
+
+  private async getProviderId(
+    userId: string,
+    organizationId: string,
+    environmentId: string,
+    channelType: ChannelTypeEnum
+  ): Promise<string> {
+    const integrations = await this.getDecryptedIntegrations.execute(
+      GetDecryptedIntegrationsCommand.create({
+        channelType,
+        active: true,
+        organizationId,
+        environmentId,
+        userId,
       })
     );
 
-    return {
-      acknowledged: true,
-      status: 'subscriber_id_missing',
-    };
-  }
+    const integration = integrations[0];
 
-  private modifyAttachments(command: TriggerEventCommand) {
-    command.payload.attachments = command.payload.attachments.map((attachment) => ({
-      ...attachment,
-      name: attachment.name,
-      file: Buffer.from(attachment.file, 'base64'),
-      storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
-    }));
+    return integration?.providerId;
   }
 }

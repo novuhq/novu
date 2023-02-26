@@ -4,7 +4,7 @@
     "module": "commonjs",
     "target": "es6",
     "declaration": true,
-    "outDir": "./dist",
+    "outDir": "./dist/cjs",
     "rootDir": "./src",
     "types": ["node"]
   },

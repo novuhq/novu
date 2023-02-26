@@ -1,11 +1,22 @@
 import { Document, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
-import { BaseRepository } from '../base-repository';
+import { BaseRepository, Omit } from '../base-repository';
 import { NotificationTemplate } from './notification-template.schema';
 import { NotificationTemplateEntity } from './notification-template.entity';
 import { DalException } from '../../shared';
 
-export class NotificationTemplateRepository extends BaseRepository<NotificationTemplateEntity> {
+class PartialNotificationTemplateEntity extends Omit(NotificationTemplateEntity, [
+  '_environmentId',
+  '_organizationId',
+]) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialNotificationTemplateEntity & Document> &
+  ({ _environmentId: string } | { _organizationId: string });
+
+export class NotificationTemplateRepository extends BaseRepository<
+  EnforceEnvironmentQuery,
+  NotificationTemplateEntity
+> {
   private notificationTemplate: SoftDeleteModel;
   constructor() {
     super(NotificationTemplate, NotificationTemplateEntity);
@@ -13,29 +24,68 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
   }
 
   async findByTriggerIdentifier(environmentId: string, identifier: string) {
-    const item = await NotificationTemplate.findOne({
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: environmentId,
       'triggers.identifier': identifier,
-    }).populate('steps.template');
+    };
+
+    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
 
     return this.mapEntity(item);
   }
 
-  async findById(id: string, organizationId: string) {
-    const item = await NotificationTemplate.findOne({
+  async findById(id: string, environmentId: string) {
+    const requestQuery: EnforceEnvironmentQuery = {
       _id: id,
-      _organizationId: organizationId,
-    }).populate('steps.template');
+      _environmentId: environmentId,
+    };
+
+    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
 
     return this.mapEntity(item);
+  }
+
+  async findBlueprint(id: string) {
+    const requestQuery: EnforceEnvironmentQuery = {
+      _id: id,
+      isBlueprint: true,
+      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId() as string,
+    };
+
+    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
+
+    return this.mapEntity(item);
+  }
+
+  async getBlueprintList(skip = 0, limit = 10) {
+    if (!NotificationTemplateRepository.getBlueprintOrganizationId()) {
+      return { totalCount: 0, data: [] };
+    }
+
+    const requestQuery: EnforceEnvironmentQuery = {
+      isBlueprint: true,
+      _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId() as string,
+    };
+
+    const totalItemsCount = await this.count(requestQuery);
+    const items = await this.MongooseModel.find(requestQuery)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate({ path: 'notificationGroup' });
+
+    return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
 
   async getList(organizationId: string, environmentId: string, skip = 0, limit = 10) {
     const totalItemsCount = await this.count({ _environmentId: environmentId });
-    const items = await NotificationTemplate.find({
+
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
-    })
+    };
+
+    const items = await this.MongooseModel.find(requestQuery)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -45,24 +95,30 @@ export class NotificationTemplateRepository extends BaseRepository<NotificationT
   }
 
   async getActiveList(organizationId: string, environmentId: string, active?: boolean) {
-    const items = await NotificationTemplate.find({
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
       active: active,
-    }).populate('notificationGroup');
+    };
+
+    const items = await this.MongooseModel.find(requestQuery).populate('notificationGroup');
 
     return this.mapEntities(items);
   }
 
-  async delete(query: FilterQuery<NotificationTemplateEntity & Document>) {
-    const item = await this.findOne({ _id: query._id });
+  async delete(query: EnforceEnvironmentQuery) {
+    const item = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
     if (!item) throw new DalException(`Could not find notification template with id ${query._id}`);
     await this.notificationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
   }
 
-  async findDeleted(query: FilterQuery<NotificationTemplateEntity & Document>): Promise<NotificationTemplateEntity> {
+  async findDeleted(query: EnforceEnvironmentQuery): Promise<NotificationTemplateEntity> {
     const res = await this.notificationTemplate.findDeleted(query);
 
     return this.mapEntity(res);
+  }
+
+  public static getBlueprintOrganizationId(): string | undefined {
+    return process.env.BLUEPRINT_CREATOR;
   }
 }

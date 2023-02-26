@@ -13,64 +13,61 @@ export default createStyles(
     const tabIcon = getRef('tabIcon');
 
     return {
-      tabsListWrapper: {
-        borderBottom: '1px solid ' + (colorScheme === 'dark' ? colors.B20 : colors.B98),
-      },
       tabsList: {
         gap: '30px',
         padding: '15px',
         paddingBottom: 0,
+        borderBottom: `1px solid ${colorScheme === 'dark' ? colors.B20 : colors.B98}`,
       },
 
-      tabControl: {
+      tab: {
+        display: 'block',
+        cursor: 'pointer',
+        borderBottom: 'none',
         marginBottom: '0',
         padding: '0px',
         height: '36px',
         [`.mantine-Badge-root`]: {
           background: 'transparent',
-          border: '1px solid ' + colors.B60,
+          border: `1px solid ${colors.B60}`,
           color: colors.B60,
         },
-      },
-
-      tabActive: {
-        width: 'auto',
-        [`.mantine-Badge-root`]: {
-          background: novuTheme.header?.badgeColor,
-          border: 'none',
-          color: novuTheme.header?.badgeTextColor,
-        },
-        [`& .${tabLabel}`]: {
-          color: novuTheme.header?.fontColor,
-
-          '&::after': {
-            content: '""',
-            display: 'block',
-            height: '2px',
-            background: novuTheme?.popover?.tabBorderColor || novuTheme.header?.badgeColor,
-            borderRadius: '10px',
-          },
-        },
-
-        [`& .${tabIcon}`]: {
-          color: 'red',
-          background: novuTheme.header?.badgeColor,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-        },
-      },
-
-      tabInner: {
-        display: 'block',
-        cursor: 'pointer',
 
         '&:hover': {
+          background: 'none',
+
           [`& .${tabIcon}`]: {
             color: novuTheme.header?.fontColor,
           },
 
           [`& .${tabLabel}`]: {
             color: novuTheme.header?.fontColor,
+          },
+        },
+        ['&[data-active]']: {
+          width: 'auto',
+          [`.mantine-Badge-root`]: {
+            background: novuTheme.header?.badgeColor,
+            border: 'none',
+            color: novuTheme.header?.badgeTextColor,
+          },
+          [`& .${tabLabel}`]: {
+            color: novuTheme.header?.fontColor,
+
+            '&::after': {
+              content: '""',
+              display: 'block',
+              height: '2px',
+              background: novuTheme?.header?.tabBorderColor || novuTheme.header?.badgeColor,
+              borderRadius: '10px',
+            },
+          },
+
+          [`& .${tabIcon}`]: {
+            color: 'red',
+            background: novuTheme.header?.badgeColor,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
           },
         },
       },

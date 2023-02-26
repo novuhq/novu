@@ -1,0 +1,17 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.web.json",
+  "include": ["*.d.ts", "src/*", "src/**/*", "src/**/*.vue"],
+  "exclude": ["node_modules", "**/node_modules", "**/dist", "**/*.stories.*"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@novu/notification-center": ["./src/noop.d.ts"]
+    }
+  },
+  "references": [
+    {
+      "path": "./tsconfig.config.json"
+    }
+  ]
+}

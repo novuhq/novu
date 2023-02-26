@@ -1,13 +1,16 @@
 import styled from '@emotion/styled';
+import { SegmentProvider } from '../components/providers/SegmentProvider';
 import { ThemeProvider } from '../design-system/ThemeProvider';
 
 export function TestWrapper({ children }) {
   return (
-    <Wrapper>
-      <Frame>
-        <ThemeProvider>{children}</ThemeProvider>
-      </Frame>
-    </Wrapper>
+    <SegmentProvider>
+      <Wrapper>
+        <Frame>
+          <ThemeProvider>{children}</ThemeProvider>
+        </Frame>
+      </Wrapper>
+    </SegmentProvider>
   );
 }
 

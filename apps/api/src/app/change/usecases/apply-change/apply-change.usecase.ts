@@ -18,17 +18,17 @@ export class ApplyChange {
       _organizationId: command.organizationId,
     });
 
+    if (!parentChange) throw new NotFoundException('Parent Change not found');
+
     const changes = await this.changeRepository.find(
-      {
-        _parentId: parentChange._id,
-      },
+      { _environmentId: parentChange._environmentId, _parentId: parentChange._id },
       '',
       {
         sort: { createdAt: 1 },
       }
     );
 
-    const items = [];
+    const items: ChangeEntity[] = [];
     for (const change of [...changes, parentChange]) {
       const item = await this.applyChange(change, command);
       items.push(item);

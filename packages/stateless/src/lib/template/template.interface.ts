@@ -50,11 +50,11 @@ export interface ITriggerPayload {
 
 export interface IAttachmentOptions {
   mime: string;
-  file: Buffer;
+  file: Buffer | null;
   name?: string;
   channels?: ChannelTypeEnum[];
 }
 
 export interface IAttachmentOptionsExtended extends IAttachmentOptions {
-  storagePath?: string;
+  storagePath: string;
 }

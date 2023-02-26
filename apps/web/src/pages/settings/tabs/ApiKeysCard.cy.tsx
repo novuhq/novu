@@ -1,7 +1,8 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { IEnvironment } from '@novu/shared';
+
 import { ApiKeysCard } from '.';
 import { TestWrapper } from '../../../testing';
-import { QueryClient, QueryClientProvider } from 'react-query';
-import { IEnvironment } from '@novu/shared';
 
 const myEnvironments: IEnvironment = {
   _id: '633a68831c6bf8ce582c923e',
@@ -84,11 +85,11 @@ describe('Input Component', () => {
 
       return;
     });
-    cy.get("[data-test-id='api-key-tooltip']").click();
+    cy.get("[data-test-id='api-key-copy']").click();
     cy.get('@copy').should('be.calledWithExactly', apiKeys[0].key);
 
     cy.wait('@currentEnvironment');
-    cy.get("[data-test-id='application-identifier-tooltip']").click();
+    cy.get("[data-test-id='application-identifier-copy']").click();
     cy.get('@copy').should('be.calledWithExactly', currentEnvironment.identifier);
   });
 });

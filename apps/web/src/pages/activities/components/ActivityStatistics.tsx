@@ -1,6 +1,7 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 import { Skeleton, useMantineTheme } from '@mantine/core';
+
 import { getActivityStats } from '../../../api/activity';
 import { formatNumber } from '../../../utils';
 import { colors } from '../../../design-system';
@@ -10,7 +11,7 @@ export function ActivityStatistics() {
     yearlySent: number;
     monthlySent: number;
     weeklySent: number;
-  }>('activityStats', getActivityStats);
+  }>(['activityStats'], getActivityStats);
   const isDark = useMantineTheme().colorScheme === 'dark';
   const weekCount = typeof activityStats?.weeklySent == 'number' ? formatNumber(activityStats.weeklySent, 0) : null;
   const monthCount = typeof activityStats?.monthlySent == 'number' ? formatNumber(activityStats.monthlySent, 0) : null;

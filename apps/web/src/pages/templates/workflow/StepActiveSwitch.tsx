@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Controller } from 'react-hook-form';
 import { Switch } from '../../../design-system';
-import { useEnvController } from '../../../store/use-env-controller';
+import { useEnvController } from '../../../hooks';
 
 export const StepActiveSwitch = ({ control, index }) => {
   const { readonly } = useEnvController();
@@ -10,6 +10,7 @@ export const StepActiveSwitch = ({ control, index }) => {
     <Controller
       control={control}
       name={`steps.${index}.active`}
+      defaultValue={true}
       render={({ field: { value, ...field } }) => {
         return (
           <StyledSwitch
@@ -17,6 +18,7 @@ export const StepActiveSwitch = ({ control, index }) => {
             disabled={readonly}
             checked={value}
             label={`Step is ${value ? 'active' : 'not active'}`}
+            data-test-id="step-active-switch"
           />
         );
       }}

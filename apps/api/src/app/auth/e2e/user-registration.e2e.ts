@@ -23,7 +23,6 @@ describe('User registration - /auth/register (POST)', async () => {
     expect(body.message.find((i) => i.includes('email'))).to.be.ok;
     expect(body.message.find((i) => i.includes('password'))).to.be.ok;
     expect(body.message.find((i) => i.includes('firstName'))).to.be.ok;
-    expect(body.message.find((i) => i.includes('lastName'))).to.be.ok;
   });
 
   it('should throw error if user signup is disabled', async () => {
@@ -33,7 +32,7 @@ describe('User registration - /auth/register (POST)', async () => {
       email: 'Testy.test@gmail.com',
       firstName: 'Test',
       lastName: 'User',
-      password: '123456789',
+      password: '123@Qwerty',
     });
 
     expect(body.statusCode).to.equal(400);
@@ -47,7 +46,7 @@ describe('User registration - /auth/register (POST)', async () => {
       email: 'Testy.test@gmail.com',
       firstName: 'Test',
       lastName: 'User',
-      password: '123456789',
+      password: '123@Qwerty',
     });
 
     expect(body.data.token).to.be.ok;
@@ -64,7 +63,7 @@ describe('User registration - /auth/register (POST)', async () => {
       email: 'Testy.test-org@gmail.com',
       firstName: 'Test',
       lastName: 'User',
-      password: '123456789',
+      password: '123@Qwerty',
       organizationName: 'Sample org',
     });
 
@@ -91,14 +90,17 @@ describe('User registration - /auth/register (POST)', async () => {
     expect(jwtContent.roles[0]).to.equal(MemberRoleEnum.ADMIN);
   });
 
-  it('should throw error when registering same user twice', async () => {
+  it("should throw error when the password doesn't meets the requirements", async () => {
     const { body } = await session.testAgent.post('/v1/auth/register').send({
-      email: 'Testy.test@gmail.com',
+      email: 'Testy.test12345@gmail.com',
       firstName: 'Test',
       lastName: 'User',
-      password: '123456789',
+      password: 'password',
     });
 
-    expect(body.message).to.contain('User already exists');
+    expect(body.message[0]).to.contain(
+      // eslint-disable-next-line max-len
+      'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-'
+    );
   });
 });

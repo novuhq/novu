@@ -5,15 +5,11 @@ name: Deploy PROD EMBED
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    tags:
-      - '**@novu/embed@**'
   workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  deploy_embed:
+  deploy_embed_eu:
     environment: Production
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -21,25 +17,8 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16.15.1'
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-
-
-      - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 7.5.0
-          run_install: true
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell
       - name: Build
@@ -47,6 +26,43 @@ jobs:
 
       - name: Build
         working-directory: libs/embed
+        env:
+          WIDGET_URL: https://eu.widget.novu.co
+        run: CI='' npm run build:prod
+
+      - name: Deploy EMBED to PROD
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: libs/embed/dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: prod
+          production-deploy: true
+          alias: Prod
+          github-deployment-environment: Production
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: 0c830b50-df83-480b-ba36-a7f3176efcc8
+        timeout-minutes: 1
+
+  # This workflow contains a single job called "build"
+  deploy_embed_us:
+    environment: Production
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    needs: deploy_embed_eu
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+
+      # Runs a single command using the runners shell
+      - name: Build
+        run: CI='' npm run build:embed
+
+      - name: Build
+        working-directory: libs/embed
+        env:
+          WIDGET_URL: https://widget.novu.co
         run: CI='' npm run build:prod
 
       - name: Deploy EMBED to PROD
@@ -63,20 +79,43 @@ jobs:
           NETLIFY_SITE_ID: 0689c015-fca0-4940-a26d-3e33f561bc48
         timeout-minutes: 1
 
+  deploy_embed:
+    environment: Production
+    runs-on: ubuntu-latest
+    needs:
+      - deploy_embed_us
+      - deploy_embed_eu
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+
+      # Runs a single command using the runners shell
+      - name: Build
+        run: CI='' npm run build:embed
+
+      - name: Build
+        working-directory: libs/embed
+        run: CI='' npm run build:prod
+
+      - name: Remove build outputs
+        working-directory: libs/embed
+        run: rm -rf dist
+
       - name: Build, tag, and push image to ghcr.io
         id: build-image
         env:
-          REGISTERY_OWNER: novuhq
+          REGISTRY_OWNER: novuhq
           DOCKER_NAME: novu/embed
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          docker build -t ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f libs/embed/Dockerfile .
-          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
-          docker tag ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:prod
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:latest
-          docker push ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          echo "::set-output name=IMAGE::ghcr.io/$REGISTERY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          docker build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f libs/embed/Dockerfile .
+          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
+          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"

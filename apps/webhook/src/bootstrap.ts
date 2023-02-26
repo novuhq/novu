@@ -1,4 +1,5 @@
 import './config';
+import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
 import { version } from '../package.json';
@@ -13,7 +14,7 @@ if (process.env.SENTRY_DSN) {
   });
 }
 
-export async function bootstrap() {
+export async function bootstrap(): Promise<INestApplication> {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({

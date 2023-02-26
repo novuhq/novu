@@ -4,6 +4,7 @@ import {
   ButtonTypeEnum,
   MessageActionStatusEnum,
   IParamObject,
+  IPaginatedResponse,
 } from '@novu/shared';
 import {
   ITabCountQuery,
@@ -53,8 +54,10 @@ export class ApiService {
    * @deprecated The method should not be used - Use markMessageAs instead.
    */
   async markMessageAsSeen(messageId: string | string[]): Promise<any> {
+    const messageIdString = messageId ? messageId.toString() : '';
+
     return await this.httpClient.post(
-      `/widgets/messages/${messageId}/seen`,
+      `/widgets/messages/${messageIdString}/seen`,
       {}
     );
   }
@@ -63,8 +66,10 @@ export class ApiService {
    * @deprecated The method should not be used - Use markMessageAs instead.
    */
   async markMessageAsRead(messageId: string | string[]): Promise<any> {
+    const messageIdString = messageId ? messageId.toString() : '';
+
     return await this.httpClient.post(
-      `/widgets/messages/${messageId}/read`,
+      `/widgets/messages/${messageIdString}/read`,
       {}
     );
   }
@@ -84,14 +89,21 @@ export class ApiService {
     });
   }
 
+  async removeMessage(messageId: string): Promise<any> {
+    return await this.httpClient.delete(`/widgets/messages/${messageId}`, {});
+  }
+
   async getNotificationsList(
     page: number,
     query: IStoreQuery = {}
-  ): Promise<IMessage[]> {
-    return await this.httpClient.get(`/widgets/notifications/feed`, {
-      page,
-      ...query,
-    });
+  ): Promise<IPaginatedResponse<IMessage>> {
+    return await this.httpClient.getFullResponse(
+      `/widgets/notifications/feed`,
+      {
+        page,
+        ...query,
+      }
+    );
   }
 
   async initializeSession(

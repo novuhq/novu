@@ -1,0 +1,11 @@
+{
+  "name": "@novu/notification-center-angular",
+  "version": "0.9.2",
+  "peerDependencies": {
+    "@angular/common": "^15.0.0",
+    "@angular/core": "^15.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}

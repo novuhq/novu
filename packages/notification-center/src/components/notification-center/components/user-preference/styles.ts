@@ -1,4 +1,6 @@
-import styled from 'styled-components';
+import React from 'react';
+import styled from '@emotion/styled';
+
 import { IThemeUserPreferences } from '../../../../store/novu-theme.context';
 
 export const accordionStyles = (baseTheme: IThemeUserPreferences, font: string) => {
@@ -22,7 +24,7 @@ export const accordionStyles = (baseTheme: IThemeUserPreferences, font: string) 
         borderRadius: '7px',
       },
     },
-    icon: {
+    chevron: {
       color: baseTheme.accordion?.arrowColor,
     },
   };
@@ -30,31 +32,48 @@ export const accordionStyles = (baseTheme: IThemeUserPreferences, font: string) 
 
 export const switchStyles = (baseTheme: IThemeUserPreferences) => {
   return {
+    root: {
+      width: '100%',
+      maxWidth: '70px',
+      display: 'flex',
+      alignItems: 'center',
+    },
     input: {
       background: baseTheme.accordionItem?.switch?.backgroundUnchecked,
-      width: '41px',
-      height: '24px',
+      width: '1px',
+      height: '1px',
       border: 'transparent',
+      cursor: 'pointer',
       '&::before': {
         border: 'transparent',
         width: '20px',
         height: '20px',
       },
+      '&:checked ~ label': {
+        background: baseTheme.accordionItem?.switch?.backgroundChecked,
+      },
+      '&:not(checked) ~ label': {
+        background: baseTheme.accordionItem?.switch?.backgroundUnchecked,
+      },
+      '&:disabled:not(:checked) ~ label': {
+        background: baseTheme.accordionItem?.switch?.backgroundUnchecked,
+      },
       '&:disabled': {
         opacity: 0.3,
       },
-      '&:disabled:not(:checked)': {
-        background: baseTheme.accordionItem?.switch?.backgroundUnchecked,
-      },
-      '&:checked': {
-        background: baseTheme.accordionItem?.switch?.backgroundChecked,
-      },
+    },
+    track: {
+      width: '46px',
+      height: '24px',
+      border: 'none',
+    },
+    thumb: {
+      border: 'none',
     },
   };
 };
 
-export const Text = styled.div<{ color: string; size: 'sm' | 'md' | 'lg' }>`
-  color: ${({ color }) => color};
+export const Text = styled.div<{ size: 'sm' | 'md' | 'lg' }>`
   font-size: ${({ size }) => (size === 'sm' ? '12px' : '14px')};
   font-style: normal;
   align-items: center;

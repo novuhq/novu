@@ -1,6 +1,7 @@
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientsTypeSingle } from '@novu/node';
+import { TriggerRecipientSubscriber } from '@novu/node';
+
 import { SubscriberPayloadDto } from './trigger-event-request.dto';
 
 export class TriggerEventToAllRequestDto {
@@ -46,7 +47,7 @@ export class TriggerEventToAllRequestDto {
 
   @ApiProperty({
     description: `It is used to display the Avatar of the provided actor's subscriber id or actor object.
-    If a new actor object is provided, we will create a new subsciber in our system
+    If a new actor object is provided, we will create a new subscriber in our system
     `,
     oneOf: [
       { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
@@ -54,5 +55,5 @@ export class TriggerEventToAllRequestDto {
     ],
   })
   @IsOptional()
-  actor?: TriggerRecipientsTypeSingle;
+  actor?: TriggerRecipientSubscriber;
 }

@@ -72,6 +72,9 @@ const executionDetailsSchema = new Schema(
     raw: {
       type: Schema.Types.String,
     },
+    webhookStatus: {
+      type: Schema.Types.String,
+    },
   },
   schemaOptions
 );

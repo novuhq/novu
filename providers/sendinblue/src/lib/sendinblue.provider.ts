@@ -23,6 +23,8 @@ export class SendinblueEmailProvider implements IEmailProvider {
   constructor(
     private config: {
       apiKey: string;
+      from: string;
+      senderName: string;
     }
   ) {
     this.transactionalEmailsApi = new TransactionalEmailsApi();
@@ -36,16 +38,25 @@ export class SendinblueEmailProvider implements IEmailProvider {
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
     const email = new SendSmtpEmail();
-    email.sender = { email: options.from || options.from };
+    email.sender = {
+      email: options.from || this.config.from,
+      name: this.config.senderName,
+    };
     email.to = getFormattedTo(options.to);
     email.subject = options.subject;
     email.htmlContent = options.html;
     email.textContent = options.text;
     email.attachment = options.attachments?.map((attachment) => ({
       name: attachment?.name,
-      content: attachment?.file?.toString(),
+      content: attachment?.file.toString('base64'),
       contentType: attachment.mime,
     }));
+    email.cc = options.cc?.map((ccItem) => ({ email: ccItem }));
+    email.bcc = options.bcc?.map((ccItem) => ({ email: ccItem }));
+
+    if (options.replyTo) {
+      email.replyTo.email = options.replyTo;
+    }
 
     const { response, body } =
       await this.transactionalEmailsApi.sendTransacEmail(email);

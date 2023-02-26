@@ -10,7 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
@@ -28,6 +28,12 @@ import { GetActiveIntegrations } from './usecases/get-active-integration/get-act
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
+import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
+import { CalculateLimitNovuIntegration } from './usecases/calculate-limit-novu-integration';
+import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit-novu-integration';
+import { GetInAppActivatedCommand } from './usecases/get-In-app-activated/get-In-app-activated.command';
+import { GetInAppActivated } from './usecases/get-In-app-activated/get-In-app-activated.usecase';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -35,11 +41,14 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 @ApiTags('Integrations')
 export class IntegrationsController {
   constructor(
+    private getInAppActivatedUsecase: GetInAppActivated,
     private getIntegrationsUsecase: GetIntegrations,
     private getActiveIntegrationsUsecase: GetActiveIntegrations,
+    private getWebhookSupportStatusUsecase: GetWebhookSupportStatus,
     private createIntegrationUsecase: CreateIntegration,
     private updateIntegrationUsecase: UpdateIntegration,
-    private removeIntegrationUsecase: RemoveIntegration
+    private removeIntegrationUsecase: RemoveIntegration,
+    private calculateLimitNovuIntegration: CalculateLimitNovuIntegration
   ) {}
 
   @Get('/')
@@ -52,7 +61,11 @@ export class IntegrationsController {
   @ExternalApiAccessible()
   async getIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationResponseDto[]> {
     return await this.getIntegrationsUsecase.execute(
-      GetIntegrationsCommand.create({ environmentId: user.environmentId, organizationId: user.organizationId })
+      GetIntegrationsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+      })
     );
   }
 
@@ -66,7 +79,30 @@ export class IntegrationsController {
   @ExternalApiAccessible()
   async getActiveIntegrations(@UserSession() user: IJwtPayload): Promise<IntegrationResponseDto[]> {
     return await this.getActiveIntegrationsUsecase.execute(
-      GetIntegrationsCommand.create({ environmentId: user.environmentId, organizationId: user.organizationId })
+      GetIntegrationsCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+      })
+    );
+  }
+
+  @Get('/webhook/provider/:providerId/status')
+  @ApiOperation({
+    summary: 'Get webhook support status for provider',
+  })
+  @ExternalApiAccessible()
+  async getWebhookSupportStatus(
+    @UserSession() user: IJwtPayload,
+    @Param('providerId') providerId: string
+  ): Promise<boolean> {
+    return await this.getWebhookSupportStatusUsecase.execute(
+      GetWebhookSupportStatusCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        providerId: providerId,
+        userId: user._id,
+      })
     );
   }
 
@@ -84,6 +120,7 @@ export class IntegrationsController {
   ): Promise<IntegrationResponseDto> {
     return await this.createIntegrationUsecase.execute(
       CreateIntegrationCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         providerId: body.providerId,
@@ -138,6 +175,36 @@ export class IntegrationsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
+      })
+    );
+  }
+
+  @Get('/:channelType/limit')
+  async getProviderLimit(
+    @UserSession() user: IJwtPayload,
+    @Param('channelType') channelType: ChannelTypeEnum
+  ): Promise<{ limit: number; count: number }> {
+    const result = await this.calculateLimitNovuIntegration.execute(
+      CalculateLimitNovuIntegrationCommand.create({
+        channelType,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+      })
+    );
+
+    if (!result) {
+      return { limit: 0, count: 0 };
+    }
+
+    return result;
+  }
+
+  @Get('/in-app/status')
+  async getInAppActivated(@UserSession() user: IJwtPayload) {
+    return await this.getInAppActivatedUsecase.execute(
+      GetInAppActivatedCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
       })
     );
   }

@@ -1,8 +1,9 @@
+import { darkButtonStyle, lightButtonStyle } from '@novu/shared';
+
 import { colors } from './colors';
 import { shadows } from './shadows';
 import { INotificationBellColors, INovuTheme } from '../../store/novu-theme.context';
 import { ICommonTheme } from '../../store/novu-theme-provider.context';
-import { darkButtonStyle, lightButtonStyle } from '@novu/shared';
 
 const defaultLightTheme: INovuTheme = {
   layout: {
@@ -19,6 +20,12 @@ const defaultLightTheme: INovuTheme = {
     markAllAsReadButtonColor: colors.B60,
   },
   popover: { arrowColor: colors.white },
+  actionsMenu: {
+    dropdownColor: colors.white,
+    hoverColor: colors.B98,
+    fontColor: colors.B40,
+    dotsButtonColor: colors.B70,
+  },
   notificationItem: {
     read: { background: colors.B98, fontColor: colors.B60, timeMarkFontColor: colors.B80 },
     unread: {
@@ -68,6 +75,12 @@ const defaultDarkTheme: INovuTheme = {
     markAllAsReadButtonColor: colors.B60,
   },
   popover: { arrowColor: colors.B15 },
+  actionsMenu: {
+    dropdownColor: colors.B20,
+    hoverColor: colors.B30,
+    fontColor: colors.white,
+    dotsButtonColor: colors.B40,
+  },
   notificationItem: {
     read: { background: colors.B17, fontColor: colors.white, timeMarkFontColor: colors.B40 },
     unread: {
@@ -115,12 +128,6 @@ const defaultNotificationBellDarkTheme: INotificationBellColors = {
   unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
   unseenBadgeBackgroundColor: colors.B15,
 };
-
-Object.freeze(defaultLightTheme);
-Object.freeze(defaultDarkTheme);
-Object.freeze(defaultCommonTheme);
-Object.freeze(defaultNotificationBellLightTheme);
-Object.freeze(defaultNotificationBellDarkTheme);
 
 export {
   defaultLightTheme,

@@ -1,15 +1,19 @@
 import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import styled from '@emotion/styled';
+
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Button, colors, Tabs } from '../../design-system';
+import { Button, Tabs } from '../../design-system';
 import PageMeta from '../../components/layout/components/PageMeta';
-import styled from '@emotion/styled';
-import { usePromotedChanges, useUnPromotedChanges } from '../../api/hooks/use-environment-changes';
-import { ChangesTable } from '../../components/changes/ChangesTableLayout';
-import { useMutation, useQueryClient } from 'react-query';
+import { usePromotedChanges, useUnPromotedChanges } from '../../hooks';
+import { ChangesTable } from './components/ChangesTableLayout';
 import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
-import { successMessage } from '../../utils/notifications';
+import { errorMessage, successMessage } from '../../utils/notifications';
+
+const PENDING = 'Pending';
+const HISTORY = 'History';
 
 export function PromoteChangesPage() {
   const [page, setPage] = useState<number>(0);
@@ -25,6 +29,9 @@ export function PromoteChangesPage() {
       queryClient.refetchQueries([QueryKeys.changesCount]);
       successMessage('All changes were promoted');
     },
+    onError: (err: any) => {
+      errorMessage(err?.message || 'Something went wrong! Failed to promote changes');
+    },
   });
 
   function handleTableChange(pageIndex) {
@@ -33,28 +40,32 @@ export function PromoteChangesPage() {
 
   const menuTabs = [
     {
-      label: 'Pending',
+      value: PENDING,
       content: (
         <ChangesTable
+          key={page}
           loading={isLoadingChanges}
           changes={changes}
           handleTableChange={handleTableChange}
           page={page}
           pageSize={changesPageSize}
           totalCount={totalChangesCount}
+          dataTestId="pending-changes-table"
         />
       ),
     },
     {
-      label: 'History',
+      value: HISTORY,
       content: (
         <ChangesTable
+          key={page}
           loading={isLoadingHistory}
           changes={history}
           handleTableChange={handleTableChange}
           page={page}
           pageSize={historyPageSize}
           totalCount={totalHistoryCount}
+          dataTestId="history-changes-table"
         />
       ),
     },
@@ -79,14 +90,14 @@ export function PromoteChangesPage() {
         }
       />
       <StyledTabs>
-        <Tabs menuTabs={menuTabs} />
+        <Tabs menuTabs={menuTabs} defaultValue={PENDING} onTabChange={() => setPage(0)} />
       </StyledTabs>
     </PageContainer>
   );
 }
 
 const StyledTabs = styled.div`
-  .mantine-Tabs-tabsListWrapper {
+  .mantine-Tabs-tabsList {
     margin-left: 30px;
     margin-top: 15px;
   }

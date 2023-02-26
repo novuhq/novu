@@ -12,6 +12,7 @@ export class GetVercelConfiguration {
 
   private async getConfigurationDetails(command: GetVercelConfigurationCommand) {
     const details = await this.organizationRepository.findPartnerConfigurationDetails(
+      command.organizationId,
       command.userId,
       command.configurationId
     );
@@ -20,7 +21,8 @@ export class GetVercelConfiguration {
       if (
         curr.partnerConfigurations &&
         curr.partnerConfigurations.length >= 1 &&
-        curr.partnerConfigurations[0].projectIds?.length >= 1
+        curr.partnerConfigurations[0].projectIds &&
+        curr.partnerConfigurations[0].projectIds.length >= 1
       ) {
         acc.push({
           organizationId: curr._id,

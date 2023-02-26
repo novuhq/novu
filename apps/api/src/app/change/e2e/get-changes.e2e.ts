@@ -1,7 +1,8 @@
-import { ChangeRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
-import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { ChangeRepository } from '@novu/dal';
+import { EmailBlockTypeEnum, StepTypeEnum, FilterPartTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+
 import {
   CreateNotificationTemplateRequestDto,
   UpdateNotificationTemplateRequestDto,
@@ -27,7 +28,7 @@ describe('Get changes', () => {
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
-            content: [{ type: 'text', content: 'This is a sample text block' }],
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
           filters: [
@@ -37,6 +38,7 @@ describe('Get changes', () => {
               value: 'AND',
               children: [
                 {
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
                   operator: 'EQUAL',
@@ -69,6 +71,7 @@ describe('Get changes', () => {
     } = await session.testAgent.get(`/v1/changes?promoted=true`);
 
     const changes = await changeRepository.find({
+      _environmentId: session.environment._id,
       enabled: true,
       _parentId: { $exists: false, $eq: null },
     });

@@ -1,6 +1,22 @@
-import { Body, Controller, Get, Inject, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
+import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { SessionInitializeRequestDto } from './dtos/session-initialize-request.dto';
 import { InitializeSessionCommand } from './usecases/initialize-session/initialize-session.command';
 import { InitializeSession } from './usecases/initialize-session/initialize-session.usecase';
@@ -9,12 +25,9 @@ import { GetNotificationsFeedCommand } from './usecases/get-notifications-feed/g
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import { GetOrganizationData } from './usecases/get-organization-data/get-organization-data.usecase';
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
-import { AnalyticsService } from '../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
-import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
-import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecause';
+import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecase';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
-import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
 import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
 import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
@@ -32,10 +45,12 @@ import { MarkAllMessageAsSeen } from './usecases/mark-all-message-as-seen/mark-a
 import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
 import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
 import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
-import { StoreQuery } from './querys/store.query';
+import { StoreQuery } from './queries/store.query';
 import { GetFeedCountCommand } from './usecases/get-feed-count/get-feed-count.command';
 import { GetFeedCount } from './usecases/get-feed-count/get-feed-count.usecase';
-import { GetCountQuery } from './querys/get-count.query';
+import { GetCountQuery } from './queries/get-count.query';
+import { RemoveMessageCommand } from './usecases/remove-message/remove-message.command';
+import { RemoveMessage } from './usecases/remove-message/remove-message.usecase';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -45,6 +60,7 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
+    private removeMessageUsecase: RemoveMessage,
     private markAllMessageAsSeenUseCase: MarkAllMessageAsSeen,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
@@ -148,9 +164,10 @@ export class WidgetsController {
   @Post('/messages/:messageId/seen')
   async markMessageAsSeen(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Param('messageId') messageId: string | string[]
-  ): Promise<MessageEntity[]> {
+    @Param('messageId') messageId: string
+  ): Promise<MessageEntity> {
     const messageIds = this.toArray(messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -160,7 +177,7 @@ export class WidgetsController {
       mark: { [MarkEnum.SEEN]: true },
     });
 
-    return await this.markMessageAsUsecase.execute(command);
+    return (await this.markMessageAsUsecase.execute(command))[0];
   }
 
   @ApiOperation({
@@ -175,6 +192,7 @@ export class WidgetsController {
     @Param('messageId') messageId: string | string[]
   ): Promise<MessageEntity[]> {
     const messageIds = this.toArray(messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -197,6 +215,7 @@ export class WidgetsController {
     @Body() body: { messageId: string | string[]; mark: { seen?: boolean; read?: boolean } }
   ): Promise<MessageEntity[]> {
     const messageIds = this.toArray(body.messageId);
+    if (!messageIds) throw new BadRequestException('messageId is required');
 
     const command = MarkMessageAsCommand.create({
       organizationId: subscriberSession._organizationId,
@@ -209,12 +228,34 @@ export class WidgetsController {
     return await this.markMessageAsUsecase.execute(command);
   }
 
+  @ApiOperation({
+    summary: 'Remove a subscriber feed message',
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Delete('/messages/:messageId')
+  async removeMessage(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('messageId') messageId: string
+  ): Promise<MessageEntity> {
+    if (!messageId) throw new BadRequestException('messageId is required');
+
+    const command = RemoveMessageCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      messageId: messageId,
+    });
+
+    return await this.removeMessageUsecase.execute(command);
+  }
+
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/messages/seen')
   async markAllUnseenAsSeen(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<number> {
     const command = MarkAllMessageAsSeenCommand.create({
       organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession._id,
+      _subscriberId: subscriberSession._id,
+      subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
     });
 
@@ -303,27 +344,13 @@ export class WidgetsController {
     };
   }
 
-  private toArray(param: string[] | string): string[] {
-    let paramArray: string[];
+  private toArray(param: string[] | string | undefined): string[] | undefined {
+    let paramArray: string[] | undefined = undefined;
 
     if (param) {
       paramArray = Array.isArray(param) ? param : param.split(',');
     }
 
-    return paramArray;
+    return paramArray as string[];
   }
-}
-
-/*
- * ValidationPipe convert boolean undefined params default (false)
- * Therefore we need to get string and convert it to boolean
- */
-export function initializeSeenParam(seen: string): boolean | null {
-  let isSeen: boolean = null;
-
-  if (seen) {
-    isSeen = seen == 'true';
-  }
-
-  return isSeen;
 }

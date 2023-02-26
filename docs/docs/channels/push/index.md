@@ -10,3 +10,7 @@ To read a provider specific documentation:
 
 - [Expo Push](/channels/push/expo)
 - [Firebase Cloud Messages](/channels/push/fcm)
+
+:::info
+Novu supports multiple active providers for push channel.
+:::

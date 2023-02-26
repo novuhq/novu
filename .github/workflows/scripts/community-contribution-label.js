@@ -1,23 +1,10 @@
 const { Octokit } = require('@octokit/action');
+const { isCommunityContributor } = require('./is-community-contributor');
 
 const octokit = new Octokit();
 
 const getAuthor = (payload) => {
   return payload?.issue?.user?.login || payload?.pull_request?.user?.login || null;
-};
-
-const isCommunityContributor = async (owner, repo, username) => {
-  if (!username) return false;
-
-  const {
-    data: { permission },
-  } = await octokit.rest.repos.getCollaboratorPermissionLevel({
-    owner,
-    repo,
-    username,
-  });
-
-  return permission === 'read' || permission === 'none';
 };
 
 const addLabel = async (label, owner, repo, issueNumber) => {

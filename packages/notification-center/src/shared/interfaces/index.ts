@@ -1,12 +1,22 @@
-import {
-  ButtonTypeEnum,
+import { ButtonTypeEnum, IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
+import type { ApiService, IStoreQuery } from '@novu/client';
+
+export {
   IMessage,
+  IMessageAction,
   IOrganizationEntity,
   ISubscriberJwt,
-  MessageActionStatusEnum,
-  IMessageAction,
+  IPreferenceChannels,
+  IMessageCTA,
+  IActor,
+  ActorTypeEnum,
+  IMessageButton,
 } from '@novu/shared';
-import { IStoreQuery } from '@novu/client';
+
+export enum ScreensEnum {
+  NOTIFICATIONS = 'notifications',
+  SETTINGS = 'settings',
+}
 
 export interface IAuthContext {
   applyToken: (token: string | null) => void;
@@ -43,16 +53,16 @@ export type ListItem = (
 export interface INotificationCenterContext {
   onUrlChange: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
-  onUnseenCountChanged: (unseenCount: number) => void;
   onActionClick: (identifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   isLoading: boolean;
-  header: () => JSX.Element;
+  header: ({ setScreen }: { setScreen: (screen: ScreensEnum) => void }) => JSX.Element;
   footer: () => JSX.Element;
   emptyState: () => JSX.Element;
   listItem: ListItem;
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
   showUserPreferences?: boolean;
+  allowedNotificationActions?: boolean;
   onTabClick?: (tab: ITab) => void;
 }
 
@@ -61,37 +71,66 @@ export interface IStore {
   query?: IStoreQuery;
 }
 
+export interface IFetchingStrategy {
+  fetchUnseenCount: boolean;
+  fetchOrganization: boolean;
+  fetchNotifications: boolean;
+  fetchUserPreferences: boolean;
+}
+
 export interface INovuProviderContext {
   backendUrl?: string;
   subscriberId?: string;
   applicationIdentifier?: string;
-  initialized: boolean;
+  isSessionInitialized: boolean;
   socketUrl?: string;
-  onLoad: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash: string;
+  apiService: ApiService;
+  socket?: ISocket;
+  fetchingStrategy: IFetchingStrategy;
+  setFetchingStrategy: (strategy: Partial<IFetchingStrategy>) => void;
+  onLoad: (data: { organization: IOrganizationEntity }) => void;
+  logout: VoidFunction;
 }
 
 export interface INotificationsContext {
-  notifications?: Record<string, IMessage[]>;
-  fetchNextPage?: (storeId?: string) => void;
-  hasNextPage?: Record<string, boolean>;
-  fetching?: boolean;
-  markAsRead?: (messageId: string, storeId?: string) => void;
-  markAllAsRead?: (storeId?: string) => Promise<number>;
-  updateAction?: (
-    messageId: string,
-    actionButtonType: ButtonTypeEnum,
-    status: MessageActionStatusEnum,
-    payload?: Record<string, unknown>,
-    storeId?: string
-  ) => void;
-  refetch?: (storeId?: string, query?: IStoreQuery) => void;
-  markAsSeen?: (messageId?: string, readExist?: boolean, messages?: IMessage | IMessage[], storeId?: string) => void;
-  onWidgetClose?: () => void;
-  onTabChange?: (storeId?: string) => void;
+  storeId: string;
+  stores: IStore[];
+  unseenCount: number;
+  notifications: IMessage[];
+  hasNextPage: boolean;
+  isLoading: boolean;
+  isFetching: boolean;
+  isFetchingNextPage: boolean;
+  setStore: (storeId?: string) => void;
+  fetchNextPage: () => void;
+  refetch: () => void;
+  markNotificationAsRead: (messageId: string) => void;
+  markNotificationAsUnRead: (messageId: string) => void;
+  markNotificationAsSeen: (messageId: string) => void;
+  removeMessage: (messageId: string) => void;
+  markAllNotificationsAsRead: () => void;
+  markAllNotificationsAsSeen: () => void;
 }
 
 export interface ITab {
   name: string;
   storeId: string;
 }
+
+export type Socket = {
+  on: (event: string, listener: (data?: unknown) => void) => void;
+  off: (event: string) => void;
+  disconnect: () => void;
+};
+
+export interface ISession {
+  token: string;
+  profile: ISubscriberJwt;
+}
+
+export interface ICountData {
+  count: number;
+}
+
+export type IMessageId = string | string[];

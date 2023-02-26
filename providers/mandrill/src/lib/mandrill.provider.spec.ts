@@ -15,11 +15,15 @@ test('should trigger mandrill correctly', async () => {
       return [{}] as any;
     });
   const mockNovuMessage = {
-    to: 'test2@test.com',
+    to: ['test2@test.com'],
     subject: 'test subject',
     html: '<div> Mail Content </div>',
     attachments: [
-      { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
+      {
+        mime: 'text/plain',
+        file: Buffer.from('test'),
+        name: 'test.txt',
+      },
     ],
   };
 
@@ -33,13 +37,13 @@ test('should trigger mandrill correctly', async () => {
       html: mockNovuMessage.html,
       to: [
         {
-          email: mockNovuMessage.to,
+          email: mockNovuMessage.to[0],
           type: 'to',
         },
       ],
       attachments: [
         {
-          content: 'test',
+          content: Buffer.from('test').toString('base64'),
           type: 'text/plain',
           name: 'test.txt',
         },

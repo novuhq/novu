@@ -1,15 +1,17 @@
 import { Center, Grid, Timeline } from '@mantine/core';
+import { Prism } from '@mantine/prism';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+
+import useStyles, { ActiveWrapper, StyledDescription, StyledTitle } from './OnboardingSteps.styles';
 import { Button, colors, Text } from '../../../design-system';
 import { CheckCircle } from '../../../design-system/icons';
 import { TriggerCard } from './TriggerCard';
-import { Prism } from '@mantine/prism';
-import React, { useEffect, useState } from 'react';
-import useStyles, { ActiveWrapper, StyledDescription, StyledTitle } from './OnboardingSteps.styles';
-import { useNavigate } from 'react-router-dom';
-import { useTemplates } from '../../../api/hooks/use-templates';
-import { useIntegrations } from '../../../api/hooks';
-import { useQuery } from 'react-query';
+import { useTemplates } from '../../../hooks';
 import { getActivityStats } from '../../../api/activity';
+import { ROUTES } from '../../../constants/routes.enum';
+import { useIntegrations } from '../../../hooks';
 
 export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }) => {
   const navigate = useNavigate();
@@ -18,7 +20,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
   const { integrations = [] } = useIntegrations();
   const { data: activityStats } = useQuery<{
     yearlySent: number;
-  }>('activityStats', getActivityStats);
+  }>(['activityStats'], getActivityStats);
 
   const [showTriggerExample, setShowTriggerExample] = useState(false);
   const [showGoLangTriggerExample, setShowGolangTriggerExample] = useState(false);
@@ -49,7 +51,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
             description="You can choose to connect any of our available delivery providers and manage them from a single place"
           />
           {!providerConfigured ? (
-            <Button mt={20} onClick={() => navigate('/integrations')}>
+            <Button mt={20} onClick={() => navigate(ROUTES.INTEGRATIONS)}>
               Configure Now
             </Button>
           ) : (
@@ -69,7 +71,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
             description="To start sending notifications you need to create your a template with some channels"
           />
           {!templateCreated ? (
-            <Button data-test-id="create-template-btn" mt={20} onClick={() => navigate('/templates/create')}>
+            <Button data-test-id="create-template-btn" mt={20} onClick={() => navigate(ROUTES.TEMPLATES_CREATE)}>
               Create Now
             </Button>
           ) : (
@@ -135,7 +137,7 @@ export const OnboardingSteps = ({ onFinishedAll }: { onFinishedAll: () => void }
           title="Embed a notification center in your app (Optional)"
           description="Use our embeddable widget to add a notification center in minutes"
         />
-        <a href="https://docs.novu.co/notification-center/iframe-embed" target="_blank">
+        <a href="https://docs.novu.co/notification-center/iframe-embed" target="_blank" rel="noopener noreferrer">
           <Button mt={20}> Embed Now</Button>
         </a>
       </Timeline.Item>

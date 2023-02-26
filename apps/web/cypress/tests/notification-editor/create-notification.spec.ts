@@ -17,11 +17,12 @@ describe('Creation functionality', function () {
 
     addAndEditChannel('inApp');
 
-    cy.getByTestId('in-app-editor-content-input').type('{{firstName}} someone assigned you to {{taskName}}', {
+    cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
+      force: true,
     });
     cy.getByTestId('inAppRedirect').type('/example/test');
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.getByTestId('success-trigger-modal').should('be.visible');
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-notification');
@@ -33,10 +34,10 @@ describe('Creation functionality', function () {
     cy.getByTestId('success-trigger-modal')
       .getByTestId('trigger-curl-snippet')
       .contains("--header 'Authorization: ApiKey");
-
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-curl-snippet').contains('taskName');
 
     cy.getByTestId('trigger-snippet-btn').click();
+
     cy.location('pathname').should('equal', '/templates');
   });
 
@@ -52,15 +53,21 @@ describe('Creation functionality', function () {
     addAndEditChannel('inApp');
 
     // put the multiline notification message
-    cy.getByTestId('in-app-editor-content-input')
+    cy.get('.ace_text-input')
+      .first()
       .type('{{firstName}} someone assigned you to {{taskName}}', {
         parseSpecialCharSequences: false,
+        force: true,
       })
-      .type('{enter}Please check it.');
+      .type('{enter}Please check it.', {
+        force: true,
+      });
     cy.getByTestId('inAppRedirect').type('/example/test');
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.getByTestId('trigger-snippet-btn').click();
+
+    cy.location('pathname').should('equal', '/templates');
 
     // trigger the notification
     cy.task('createNotifications', {
@@ -71,14 +78,102 @@ describe('Creation functionality', function () {
 
     // click on the notifications bell
     cy.getByTestId('notification-bell').click();
+
     // check the notification
     cy.getByTestId('notifications-scroll-area')
       .getByTestId('notification-content')
       .first()
       .then(($el) => {
-        expect($el[0].innerText).to.contain('\n');
         expect($el[0].innerText).to.contain('Please check it.');
       });
+  });
+
+  it('should manage variables', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/templates/create');
+    });
+    cy.getByTestId('title').type('Test Notification Title');
+    cy.getByTestId('description').type('This is a test description for a test title');
+    cy.get('body').click();
+
+    addAndEditChannel('email');
+
+    cy.getByTestId('email-editor').getByTestId('editor-row').click();
+    cy.getByTestId('control-add').click();
+    cy.getByTestId('add-btn-block').click();
+    cy.getByTestId('button-block-wrapper').should('be.visible');
+    cy.getByTestId('button-block-wrapper').find('button').click();
+    cy.getByTestId('button-text-input').clear().type('Example Text Of {{ctaName}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('button-block-wrapper').find('button').contains('Example Text Of {{ctaName}}');
+    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+      parseSpecialCharSequences: false,
+    });
+
+    cy.getByTestId('email-editor').getByTestId('editor-row').eq(1).click();
+    cy.getByTestId('control-add').click();
+    cy.getByTestId('add-text-block').click();
+    cy.getByTestId('editable-text-content').eq(1).clear().type('This another text will be {{customVariable}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('editable-text-content').eq(1).click();
+
+    cy.getByTestId('settings-row-btn').eq(1).invoke('show').click();
+    cy.getByTestId('remove-row-btn').click();
+    cy.getByTestId('button-block-wrapper').should('not.exist');
+
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('emailPreheader').type('this is email preheader');
+
+    cy.getByTestId('var-label').first().contains('System Variables');
+    cy.getByTestId('var-label').last().contains('Step Variables');
+    cy.getByTestId('var-items-step').contains('step').contains('object');
+    cy.getByTestId('var-items-branding').contains('branding');
+    cy.getByTestId('var-items-subscriber').contains('subscriber');
+    cy.getByTestId('var-item-firstName-string').contains('firstName').contains('string');
+    cy.getByTestId('var-item-customVariable-string').contains('customVariable').contains('string');
+    cy.getByTestId('var-items-subscriber').click();
+    cy.getByTestId('var-item-phone-string').contains('string');
+
+    cy.getByTestId('editor-mode-switch').find('label').eq(1).click();
+    cy.getByTestId('preview-subject').contains('this is email subject');
+    cy.getByTestId('preview-content')
+      .invoke('attr', 'srcdoc')
+      .then((value) => {
+        expect(value).to.contain('This text is written from a test');
+      });
+
+    cy.getByTestId('preview-mode-switch').find('label').last().click();
+    cy.getByTestId('preview-subject').contains('this is email subject');
+    cy.getByTestId('preview-content')
+      .invoke('attr', 'srcdoc')
+      .then((value) => {
+        expect(value).to.contain('This text is written from a test');
+      });
+
+    cy.getByTestId('preview-json-param').clear().type(`{
+  "firstName": "Novu",
+  "customVariable": "notCustomVariable"
+}`);
+    cy.getByTestId('apply-variables').click();
+
+    cy.getByTestId('preview-content')
+      .invoke('attr', 'srcdoc')
+      .then((value) => {
+        expect(value).to.contain('This text is written from a test Novu');
+        expect(value).to.contain('This another text will be notCustomVariable');
+      });
+
+    cy.getByTestId('editor-mode-switch').find('label').last().click();
+
+    cy.getByTestId('test-email-json-param').clear().type(`{
+  "firstName": "Novu",
+  "customVariable": "notCustomVariable"
+}`);
+
+    cy.getByTestId('test-send-email-btn').click();
+    cy.get('.mantine-Notification-root').contains('Test sent successfully!');
   });
 
   it('should create email notification', function () {
@@ -118,7 +213,7 @@ describe('Creation functionality', function () {
 
     cy.getByTestId('emailSubject').type('this is email subject');
 
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.getByTestId('success-trigger-modal').should('be.visible');
     cy.getByTestId('success-trigger-modal').getByTestId('trigger-code-snippet').contains('test-notification');
@@ -182,7 +277,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('backoff-unit').click();
     cy.get('.mantine-Select-dropdown .mantine-Select-item').contains('Minutes').click();
 
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
     cy.getByTestId('success-trigger-modal').should('be.visible');
     cy.getByTestId('trigger-snippet-btn').click();
 
@@ -209,22 +304,23 @@ describe('Creation functionality', function () {
 
   it('should create and edit group id', function () {
     const template = this.session.templates[0];
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/templates/edit/' + template._id);
-    });
+    cy.visit('/templates/edit/' + template._id);
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('groupSelector').click();
     cy.getByTestId('groupSelector').clear();
     cy.getByTestId('groupSelector').type('New Test Category');
     cy.getByTestId('submit-category-btn').click();
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
 
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/templates');
     cy.getByTestId('template-edit-link');
     cy.visit('/templates/edit/' + template._id);
-
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
   });
 });

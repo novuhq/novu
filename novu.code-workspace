@@ -45,6 +45,10 @@
       "path": "packages/client"
     },
     {
+      "name": "📦 @novu/headless",
+      "path": "packages/headless"
+    },
+    {
       "name": "📦 @novu/shared",
       "path": "libs/shared"
     },
@@ -65,6 +69,14 @@
       "path": "packages/notification-center"
     },
     {
+      "name": "📦 @novu/notification-center-vue",
+      "path": "packages/notification-center-vue"
+    },
+    {
+      "name": "📦 @novu/notification-center-angular",
+      "path": "packages/notification-center-angular"
+    },
+    {
       "name": "📦 @novu/react-native",
       "path": "packages/react-native"
     },
@@ -79,10 +91,6 @@
     {
       "name": "🔔 @novu/discord",
       "path": "providers/discord"
-    },
-    {
-      "name": "🔔 @novu/emailjs",
-      "path": "providers/emailjs"
     },
     {
       "name": "🔔 @novu/fcm",
@@ -171,10 +179,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "cSpell.words": [
-      "Chainable",
-      "usecases"
-    ]
+    "cSpell.words": ["Chainable", "usecases"]
   },
   "extensions": {
     "recommendations": [

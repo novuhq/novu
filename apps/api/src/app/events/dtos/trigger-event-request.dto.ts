@@ -1,6 +1,16 @@
-import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayNotEmpty,
+  IsArray,
+  IsDefined,
+  IsObject,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { TriggerRecipientsType, TriggerRecipientsTypeSingle } from '@novu/node';
+import { TriggerRecipientSubscriber, TriggerRecipients } from '@novu/node';
+import { TopicId, TopicKey, TriggerRecipientsTypeEnum } from '@novu/shared';
 
 export class SubscriberPayloadDto {
   @ApiProperty()
@@ -13,9 +23,27 @@ export class SubscriberPayloadDto {
   phone?: string;
   @ApiProperty()
   avatar?: string;
+  @ApiProperty()
+  locale?: string;
+}
+
+export class TopicPayloadDto {
+  @ApiProperty()
+  topicKey: TopicKey;
+  @ApiProperty()
+  type: TriggerRecipientsTypeEnum.TOPIC;
+}
+
+export class BulkTriggerEventDto {
+  @ApiProperty()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  events: TriggerEventRequestDto[];
 }
 
 @ApiExtraModels(SubscriberPayloadDto)
+@ApiExtraModels(TopicPayloadDto)
 export class TriggerEventRequestDto {
   @ApiProperty({
     description:
@@ -53,7 +81,7 @@ export class TriggerEventRequestDto {
   overrides?: Record<string, Record<string, unknown>>;
 
   @ApiProperty({
-    description: 'The recipients list of people who will receive the notification',
+    description: 'The recipients list of people who will receive the notification.',
     oneOf: [
       {
         $ref: getSchemaPath(SubscriberPayloadDto),
@@ -67,10 +95,17 @@ export class TriggerEventRequestDto {
         type: '[string]',
         description: 'List of subscriber identifiers',
       },
+      {
+        $ref: getSchemaPath(TopicPayloadDto),
+      },
+      {
+        type: '[TopicPayloadDto]',
+        description: 'List of topics',
+      },
     ],
   })
   @IsDefined()
-  to: TriggerRecipientsType;
+  to: TriggerRecipients;
 
   @ApiProperty({
     description: 'A unique identifier for this transaction, we will generated a UUID if not provided.',
@@ -81,7 +116,7 @@ export class TriggerEventRequestDto {
 
   @ApiProperty({
     description: `It is used to display the Avatar of the provided actor's subscriber id or actor object.
-    If a new actor object is provided, we will create a new subsciber in our system
+    If a new actor object is provided, we will create a new subscriber in our system
     `,
     oneOf: [
       { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
@@ -89,5 +124,5 @@ export class TriggerEventRequestDto {
     ],
   })
   @IsOptional()
-  actor?: TriggerRecipientsTypeSingle;
+  actor?: TriggerRecipientSubscriber;
 }

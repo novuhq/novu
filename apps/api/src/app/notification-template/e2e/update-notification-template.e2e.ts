@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 import { StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
-import { CreateNotificationTemplateRequestDto } from '../dto/create-notification-template.request.dto';
-import { UpdateNotificationTemplateRequestDto } from '../dto/update-notification-template-request.dto';
+import { CreateNotificationTemplateRequestDto, UpdateNotificationTemplateRequestDto } from '../dto';
+import { NotificationTemplateResponse } from '../dto/notification-template-response.dto';
 
 describe('Update notification template by id - /notification-templates/:templateId (PUT)', async () => {
   let session: UserSession;
@@ -42,6 +42,7 @@ describe('Update notification template by id - /notification-templates/:template
     expect(foundTemplate.steps[0].template.content).to.equal(update.steps[0].template.content);
 
     const change = await changeRepository.findOne({
+      _environmentId: session.environment._id,
       _entityId: foundTemplate._id,
     });
     expect(change._entityId).to.eq(foundTemplate._id);
@@ -90,6 +91,7 @@ describe('Update notification template by id - /notification-templates/:template
     expect(foundTemplate.triggers[0].identifier).to.equal(newIdentifier);
 
     const change = await changeRepository.findOne({
+      _environmentId: session.environment._id,
       _entityId: foundTemplate._id,
     });
     expect(change._entityId).to.eq(foundTemplate._id);
@@ -176,6 +178,7 @@ describe('Update notification template by id - /notification-templates/:template
           template: {
             name: 'Message Name',
             subject: 'Test email subject',
+            preheader: 'Test email preheader',
             type: StepTypeEnum.EMAIL,
             content: [],
           },
@@ -193,7 +196,7 @@ describe('Update notification template by id - /notification-templates/:template
 
     const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
 
-    let template: INotificationTemplate = body.data;
+    const template: INotificationTemplate = body.data;
 
     const updateData: UpdateNotificationTemplateRequestDto = {
       name: testTemplate.name,
@@ -206,6 +209,7 @@ describe('Update notification template by id - /notification-templates/:template
             template: {
               name: 'Message Name',
               subject: 'Test email subject',
+              preheader: '',
               type: StepTypeEnum.EMAIL,
               content: [],
               cta: null,
@@ -230,11 +234,65 @@ describe('Update notification template by id - /notification-templates/:template
       .put(`/v1/notification-templates/${template._id}`)
       .send(updateData);
 
-    template = updated.data;
-    const steps = template.steps;
+    const steps = updated.data.steps;
 
     expect(steps[0]._parentId).to.equal(null);
+    expect(steps[0].template.preheader).to.equal('');
     expect(steps[0]._id).to.equal(steps[1]._parentId);
     expect(steps[1]._id).to.equal(steps[2]._parentId);
+  });
+
+  it('should update reply callbacks', async () => {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      name: 'test email template',
+      description: 'This is a test description',
+      tags: ['test-tag'],
+      notificationGroupId: session.notificationGroups[0]._id,
+      steps: [
+        {
+          template: {
+            name: 'Message Name',
+            type: StepTypeEnum.EMAIL,
+            content: [],
+          },
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+
+    const createdTemplate: NotificationTemplateResponse = body.data;
+
+    expect(createdTemplate.name).to.equal(testTemplate.name);
+    expect(createdTemplate.steps[0].replyCallback).to.equal(undefined);
+
+    const template: INotificationTemplate = body.data;
+
+    const updateData: UpdateNotificationTemplateRequestDto = {
+      name: '',
+      tags: [''],
+      description: '',
+      steps: [
+        {
+          template: {
+            name: 'Message Name',
+            type: StepTypeEnum.EMAIL,
+            content: [],
+          },
+          replyCallback: { active: true, url: 'acme-corp.com/webhook' },
+        },
+      ],
+      notificationGroupId: session.notificationGroups[0]._id,
+    };
+
+    const { body: updated } = await session.testAgent
+      .put(`/v1/notification-templates/${template._id}`)
+      .send(updateData);
+
+    const updatedTemplate: NotificationTemplateResponse = updated.data;
+
+    expect(updatedTemplate.name).to.equal(testTemplate.name);
+    expect(updatedTemplate.steps[0].replyCallback?.active).to.equal(true);
+    expect(updatedTemplate.steps[0].replyCallback?.url).to.equal('acme-corp.com/webhook');
   });
 });

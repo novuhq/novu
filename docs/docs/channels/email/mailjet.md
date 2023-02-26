@@ -6,10 +6,15 @@ You can use the [Mailjet](https://mailjet.com/) provider to send transactional e
 
 To use the Mailjet channel, you will need to create a Mailjet account and add your API key to the Mailjet integration on the Novu platform.
 
-## Find the API Key
+## Generate API Key
 
-To find your Mailjet API key, log into your Mailjet account and navigate to the [API Keys](https://app.mailjet.com/account/apikeys) page.
-It is suggested that you create a new API key for use with Novu. To successfully send emails, you will need to add the following permissions to your API key:
+To generate a new API key in Mailjet, you can follow these steps:
+
+- Log in to your Mailjet account.
+- Click on the **Settings** in the top-right corner of the screen, and then click **API KEYS & TRACKING** from the drop-down menu.
+- On the API Keys page, click the **Create an API Key** button.
+- Give the API key a name and choose the access level **Write and Read**
+- Click the **Generate Key** button to create the new key. Once generated you can see the key but it will be hidden after refresh
 
 ## Authenticate your sender identity
 
@@ -26,5 +31,6 @@ Mailjet allows you to authenticate your sender identity using one of the followi
 - Locate Mailjet and click on the **Connect** button.
 - Enter your Mailjet API key.
 - Fill the `From email address` field using the authenticated email from the previous step.
-- Click on the **Save** button.
+- Click on the `Disabled` button and mark as `Active`.
+- Click on the **Connect** button.
 - You should now be able to send notifications using Mailjet in Novu.

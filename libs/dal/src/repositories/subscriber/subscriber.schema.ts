@@ -22,12 +22,18 @@ const subscriberSchema = new Schema(
     subscriberId: Schema.Types.String,
     email: Schema.Types.String,
     avatar: Schema.Types.String,
+    locale: Schema.Types.String,
     channels: [Schema.Types.Mixed],
+    isOnline: {
+      type: Schema.Types.Boolean,
+      required: false,
+    },
+    lastOnlineAt: Schema.Types.Date,
+    data: Schema.Types.Mixed,
   },
   schemaOptions
 );
 
-subscriberSchema.index({ _environmentId: 1, userId: 1 });
 subscriberSchema.index({ _environmentId: 1, subscriberId: 1 });
 
 subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });

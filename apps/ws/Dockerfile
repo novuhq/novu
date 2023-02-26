@@ -1,13 +1,14 @@
-FROM node:16-buster-slim
+FROM node:16-alpine3.16
 
 WORKDIR /usr/src/app
 
-RUN npm install -g pnpm@7.5.0 --loglevel notice
+RUN npm install -g pnpm@7.27.0 --loglevel notice
 RUN npm i pm2 -g
 
 COPY .npmrc .
 COPY package.json .
 
+COPY providers ./providers
 COPY apps/ws ./apps/ws
 COPY libs/dal ./libs/dal
 COPY libs/shared ./libs/shared
@@ -15,19 +16,15 @@ COPY libs/testing ./libs/testing
 COPY packages/client ./packages/client
 COPY packages/stateless ./packages/stateless
 COPY packages/node ./packages/node
+COPY packages/application-generic ./packages/application-generic
 
-COPY tsconfig.json .
-COPY tsconfig.base.json .
+COPY ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
 
-COPY nx.json .
-COPY pnpm-workspace.yaml .
-COPY pnpm-lock.yaml .
-COPY .npmrc .
-
-RUN pnpm install
+RUN pnpm install --reporter=silent
 RUN pnpm build:ws
 
 WORKDIR /usr/src/app/apps/ws
+
 RUN cp src/.example.env dist/src/.env
 RUN cp src/.env.test dist/src/.env.test
 RUN cp src/.env.development dist/src/.env.development

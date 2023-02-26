@@ -1,7 +1,9 @@
-import { Card, Grid, Group } from '@mantine/core';
-import { colors, Text } from '../../../design-system';
 import React from 'react';
+import { Card, Grid, Group } from '@mantine/core';
 import styled from '@emotion/styled';
+import { CONTEXT_PATH } from '../../../config';
+
+import { colors, Text } from '../../../design-system';
 
 export const TriggerCard = ({
   name,
@@ -31,7 +33,7 @@ export const TriggerCard = ({
             borderColor: theme.colorScheme === 'dark' ? darkBorderColor : lightBorderColor,
             ...(exist && {
               cursor: 'pointer',
-              [`&:hover`]: {
+              ['&:hover']: {
                 borderColor: theme.colorScheme === 'dark' ? colors.white : colors.B40,
               },
             }),
@@ -44,7 +46,7 @@ export const TriggerCard = ({
           </RibbonWrapper>
         )}
         <StyledCardContent>
-          <Logo src={`/static/images/triggers/${name}.svg`} alt={name} />
+          <Logo src={CONTEXT_PATH + `/static/images/triggers/${name}.svg`} alt={name} />
           <Text color={colors.B60}>{title}</Text>
         </StyledCardContent>
       </Card>
@@ -57,15 +59,13 @@ const StyledCardContent = ({ children }: { children: React.ReactNode }) => {
     <Group
       align="center"
       spacing={7}
-      direction="column"
-      styles={{
-        root: {
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          marginRight: '-50%',
-          transform: 'translate(-50%, -50%)',
-        },
+      style={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        marginRight: '-50%',
+        transform: 'translate(-50%, -50%)',
+        flexDirection: 'column',
       }}
     >
       {children}

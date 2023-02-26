@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
-
 import { UpdateEnvironmentCommand } from './update-environment.command';
 
 @Injectable()
@@ -19,6 +18,10 @@ export class UpdateEnvironment {
 
     if (command.identifier && command.name !== '') {
       updatePayload.identifier = command.identifier;
+    }
+
+    if (command.dns && command.dns.inboundParseDomain !== '') {
+      updatePayload[`dns.inboundParseDomain`] = command.dns.inboundParseDomain;
     }
 
     return await this.environmentRepository.update(

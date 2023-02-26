@@ -1,37 +1,28 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { ActionIcon } from '@mantine/core';
-import styled from 'styled-components';
-import {
-  useNotificationCenter,
-  useNotifications,
-  useNovuTheme,
-  useScreens,
-  useTranslations,
-  useUnseenCount,
-} from '../../../../../hooks';
+import styled from '@emotion/styled';
+import { css, cx } from '@emotion/css';
+
+import { useNotifications, useNovuTheme, useTranslations } from '../../../../../hooks';
 import { INotificationCenterContext } from '../../../../../shared/interfaces';
 import { NotificationCenterContext } from '../../../../../store/notification-center.context';
-import { ScreensEnum } from '../../../../../shared/enums/screens.enum';
 import { Cogs } from '../../../../../shared/icons';
 import { UnseenBadge } from '../../UnseenBadge';
-import { useFeed } from '../../../../../hooks/use-feed.hook';
+import { useStyles } from '../../../../../store/styles';
+import { INovuTheme } from '../../../../../store/novu-theme.context';
 
-export function Header() {
+export function Header({ onCogClick }: { onCogClick?: () => void }) {
   const [allRead, setAllRead] = useState<boolean>(true);
-  const { onUnseenCountChanged } = useNotificationCenter();
-  const { unseenCount } = useUnseenCount();
+  const { markAllNotificationsAsRead, notifications, unseenCount } = useNotifications();
   const { theme } = useNovuTheme();
-  const { setScreen } = useScreens();
   const { tabs, showUserPreferences } = useContext<INotificationCenterContext>(NotificationCenterContext);
-  const { activeTabStoreId } = useFeed();
-  const { markAllAsRead, notifications } = useNotifications({ storeId: activeTabStoreId });
   const { t } = useTranslations();
-
-  useEffect(() => {
-    if (onUnseenCountChanged) {
-      onUnseenCountChanged(unseenCount);
-    }
-  }, [unseenCount, (window as any).parentIFrame]);
+  const [headerStyles, headerTitleStyles, headerMarkAsReadStyles, headerCogStyles] = useStyles([
+    'header.root',
+    'header.title',
+    'header.markAsRead',
+    'header.cog',
+  ]);
 
   useEffect(() => {
     if (notifications) {
@@ -41,32 +32,40 @@ export function Header() {
   }, [notifications]);
 
   return (
-    <HeaderWrapper>
+    <div className={cx('nc-header', headerClassName, css(headerStyles))}>
       <div style={{ display: 'flex', flexDirection: 'row', gap: '10px', alignItems: 'center' }}>
-        <Text fontColor={theme.header.fontColor} data-test-id="notifications-header-title">
+        <div
+          className={cx('nc-header-title', titleClassName(theme.header.fontColor), css(headerTitleStyles))}
+          data-test-id="notifications-header-title"
+        >
           {t('notifications')}
-        </Text>
+        </div>
         {!tabs && <UnseenBadge unseenCount={unseenCount} />}
       </div>
       <ActionItems>
-        <MarkReadAction disabled={!allRead} fontColor={theme.header?.markAllAsReadButtonColor} onClick={markAllAsRead}>
+        <div
+          className={cx(
+            'nc-header-mark-as-read',
+            markAsReadClassName(!allRead, theme.header?.markAllAsReadButtonColor),
+            css(headerMarkAsReadStyles)
+          )}
+          onClick={markAllNotificationsAsRead}
+          role="button"
+          tabIndex={0}
+        >
           {t('markAllAsRead')}
-        </MarkReadAction>
+        </div>
         <div style={{ display: showUserPreferences ? 'inline-block' : 'none' }}>
-          <ActionIcon
-            data-test-id="user-preference-cog"
-            variant="transparent"
-            onClick={() => setScreen(ScreensEnum.SETTINGS)}
-          >
-            <Cogs style={{ color: theme?.userPreferences?.settingsButtonColor }} />
+          <ActionIcon data-test-id="user-preference-cog" variant="transparent" onClick={onCogClick}>
+            <Cogs className={cx('nc-header-cog', cogClassName(theme), css(headerCogStyles))} />
           </ActionIcon>
         </div>
       </ActionItems>
-    </HeaderWrapper>
+    </div>
   );
 }
 
-const HeaderWrapper = styled.div`
+const headerClassName = css`
   padding: 5px 15px;
   display: flex;
   justify-content: space-between;
@@ -79,8 +78,12 @@ const ActionItems = styled.div`
   align-items: center;
 `;
 
-const Text = styled.div<{ fontColor: string }>`
-  color: ${({ fontColor }) => fontColor};
+const cogClassName = (theme: INovuTheme) => css`
+  color: ${theme?.userPreferences?.settingsButtonColor};
+`;
+
+const titleClassName = (fontColor: string) => css`
+  color: ${fontColor};
   font-size: 20px;
   font-style: normal;
   font-weight: 700;
@@ -88,14 +91,14 @@ const Text = styled.div<{ fontColor: string }>`
   text-align: center;
 `;
 
-const MarkReadAction = styled.div<{ disabled: boolean; fontColor: string }>`
+const markAsReadClassName = (disabled: boolean, fontColor: string) => css`
   margin-right: 10px;
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
   line-height: 17px;
-  color: ${({ fontColor }) => fontColor};
+  color: ${fontColor};
   cursor: pointer;
-  pointer-events: ${({ disabled }) => (disabled ? 'none' : 'auto')};
-  opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
+  pointer-events: ${disabled ? 'none' : 'auto'};
+  opacity: ${disabled ? 0.5 : 1};
 `;

@@ -9,6 +9,7 @@ export class UpdateChange {
   async execute(command: UpdateChangeCommand) {
     await this.changeRepository.update(
       {
+        _environmentId: command.environmentId,
         _entityId: command._entityId,
         type: command.type,
         enabled: false,

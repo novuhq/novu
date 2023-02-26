@@ -1,14 +1,18 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { SoftDeleteModel } from 'mongoose-delete';
-import { FilterQuery, Types } from 'mongoose';
-import { BaseRepository } from '../base-repository';
+import { Document, FilterQuery, Types } from 'mongoose';
+import { BaseRepository, Omit } from '../base-repository';
 import { MessageEntity } from './message.entity';
 import { Message } from './message.schema';
-import { NotificationTemplateEntity } from '../notification-template';
 import { FeedRepository } from '../feed';
 import { DalException } from '../../shared';
 
-export class MessageRepository extends BaseRepository<MessageEntity> {
+class PartialMessageEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialMessageEntity & Document> &
+  ({ _environmentId: string } | { _organizationId: string });
+
+export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, MessageEntity> {
   private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
   constructor() {
@@ -22,8 +26,8 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     channel: ChannelTypeEnum,
     query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
-  ): Promise<FilterQuery<MessageEntity>> {
-    const requestQuery: FilterQuery<MessageEntity> = {
+  ): Promise<EnforceEnvironmentQuery> {
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
@@ -67,13 +71,13 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
-    const messages = await this.find(requestQuery, '', {
+    const messages = await this.MongooseModel.find(requestQuery, '', {
       limit: options.limit,
       skip: options.skip,
       sort: '-createdAt',
-    });
+    }).populate('subscriber', '_id firstName lastName avatar subscriberId');
 
-    return messages;
+    return this.mapEntities(messages);
   }
 
   async getTotalCount(
@@ -109,11 +113,9 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     );
   }
 
-  async updateFeedByMessageTemplateId(messageId: string, feedId: string) {
+  async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId: string) {
     return this.update(
-      {
-        _messageTemplateId: messageId,
-      },
+      { _environmentId: environmentId, _messageTemplateId: messageId },
       {
         $set: {
           _feedId: feedId,
@@ -122,16 +124,8 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     );
   }
 
-  async getBulkMessagesByNotificationIds(environmentId: string, notificationIds: string[]) {
-    return this.find({
-      _environmentId: environmentId,
-      _notificationId: {
-        $in: notificationIds,
-      },
-    });
-  }
-
   async updateMessageStatus(
+    environmentId: string,
     id: string,
     status: 'error' | 'sent' | 'warning',
     // eslint-disable-next-line
@@ -141,6 +135,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
   ) {
     return await this.update(
       {
+        _environmentId: environmentId,
         _id: id,
       },
       {
@@ -153,6 +148,7 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       }
     );
   }
+
   async getActivityGraphStats(date: Date, environmentId: string) {
     return await this.aggregate([
       {
@@ -177,11 +173,11 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
 
   async getFeed(
     environmentId: string,
-    query: { channels?: ChannelTypeEnum[]; templates?: string[]; emails?: string[]; subscriberId?: string } = {},
+    query: { channels?: ChannelTypeEnum[]; templates?: string[]; emails?: string[]; _subscriberId?: string } = {},
     skip = 0,
     limit = 10
   ) {
-    const requestQuery: FilterQuery<NotificationTemplateEntity> = {
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: environmentId,
     };
 
@@ -203,12 +199,12 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
       };
     }
 
-    if (query?.subscriberId) {
-      requestQuery._subscriberId = query?.subscriberId;
+    if (query?._subscriberId) {
+      requestQuery._subscriberId = query?._subscriberId;
     }
 
     const totalCount = await this.count(requestQuery);
-    const response = await Message.find(requestQuery)
+    const response = await this.MongooseModel.find(requestQuery)
       .populate('subscriber', 'firstName _id lastName email')
       .populate('template', 'name _id')
       .skip(skip)
@@ -255,16 +251,29 @@ export class MessageRepository extends BaseRepository<MessageEntity> {
     );
   }
 
-  async delete(query: FilterQuery<MessageEntity & Document>) {
-    const message = await this.findOne({ _id: query._id });
+  async delete(query: EnforceEnvironmentQuery) {
+    const message = await this.findOne({
+      _id: query._id,
+      _environmentId: query._environmentId,
+    });
+
     if (!message) {
       throw new DalException(`Could not find a message with id ${query._id}`);
     }
+
     await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
   }
 
-  async findDeleted(query: FilterQuery<MessageEntity & Document>): Promise<MessageEntity> {
+  async findDeleted(query: EnforceEnvironmentQuery): Promise<MessageEntity> {
     const res = await this.message.findDeleted(query);
+
+    return this.mapEntity(res);
+  }
+
+  async findMessageById(query: { _id: string; _environmentId: string }): Promise<MessageEntity | null> {
+    const res = await this.MongooseModel.findOne({ _id: query._id, _environmentId: query._environmentId }).populate(
+      'subscriber'
+    );
 
     return this.mapEntity(res);
   }

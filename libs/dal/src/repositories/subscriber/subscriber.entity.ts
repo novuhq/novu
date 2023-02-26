@@ -1,7 +1,11 @@
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
+import { ExternalSubscriberId } from './types';
+import { SubscriberCustomData } from '@novu/shared';
+
 export class SubscriberEntity {
-  _id?: string;
+  // TODO: Use SubscriberId. Means lot of changes across whole codebase. Cool down.
+  _id: string;
 
   firstName: string;
 
@@ -13,7 +17,9 @@ export class SubscriberEntity {
 
   avatar?: string;
 
-  subscriberId: string;
+  locale?: string;
+
+  subscriberId: ExternalSubscriberId;
 
   channels?: IChannelSettings[];
 
@@ -28,6 +34,12 @@ export class SubscriberEntity {
   updatedAt: string;
 
   __v?: number;
+
+  isOnline?: boolean;
+
+  lastOnlineAt?: string;
+
+  data?: SubscriberCustomData;
 }
 
 export class IChannelSettings {

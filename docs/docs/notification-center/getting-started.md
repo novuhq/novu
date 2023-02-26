@@ -1,5 +1,5 @@
 ---
-position: 1
+sidebar_position: 1
 ---
 
 # Getting Started
@@ -26,8 +26,11 @@ import {
 } from '@novu/notification-center';
 
 function Header() {
-  function onNotificationClick(notification: IMessage) {
-    navigate(notification.cta.data.url);
+  function onNotificationClick(message: IMessage) {
+    // your logic to handle the notification click
+    if (message?.cta?.data?.url) {
+      window.location.href = message.cta.data.url;
+    }
   }
 
   return (
@@ -42,4 +45,11 @@ function Header() {
 
 That's it! Now you're ready to send your first notification using Novu.
 
-Not using React? Checkout the [iFrame Embed docs](/notification-center/iframe-embed)
+## Not using React?
+
+We do provide a few other ways to integrate the notification center into your application:
+
+- [Web Component](/notification-center/web-component)
+- [Vue Component](/notification-center/vue-component)
+- [Angular Component](/notification-center/angular-component)
+- [iFrame Embed](/notification-center/iframe-embed)

@@ -18,6 +18,6 @@ it('should display loading state of a button', function () {
     </TestWrapper>
   );
 
-  cy.get('button').should('have.attr', 'disabled');
-  cy.get('button').should('have.class', 'mantine-Button-loading');
+  cy.get('button').should('have.css', 'pointer-events', 'none');
+  cy.get('button').should('have.attr', 'data-loading');
 });

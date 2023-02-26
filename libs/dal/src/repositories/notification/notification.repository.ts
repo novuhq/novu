@@ -1,10 +1,15 @@
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
-import { BaseRepository } from '../base-repository';
+import { Document, FilterQuery, QueryWithHelpers, Types } from 'mongoose';
+import { BaseRepository, Omit } from '../base-repository';
 import { NotificationEntity } from './notification.entity';
 import { Notification } from './notification.schema';
 
-export class NotificationRepository extends BaseRepository<NotificationEntity> {
+class PartialNotificationEntity extends Omit(NotificationEntity, ['_environmentId', '_organizationId']) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialNotificationEntity & Document> &
+  ({ _environmentId: string } | { _organizationId: string });
+
+export class NotificationRepository extends BaseRepository<EnforceEnvironmentQuery, NotificationEntity> {
   constructor() {
     super(Notification, NotificationEntity);
   }
@@ -27,7 +32,7 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
     skip = 0,
     limit = 10
   ) {
-    const requestQuery: FilterQuery<NotificationEntity> = {
+    const requestQuery: EnforceEnvironmentQuery = {
       _environmentId: environmentId,
     };
 
@@ -41,7 +46,7 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
       };
     }
 
-    if (query.subscriberIds.length > 0) {
+    if (query.subscriberIds && query.subscriberIds.length > 0) {
       requestQuery._subscriberId = {
         $in: query.subscriberIds,
       };
@@ -53,9 +58,9 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
       };
     }
 
-    const totalCount = await Notification.countDocuments(requestQuery);
+    const totalCount = await this.MongooseModel.countDocuments(requestQuery);
 
-    const response = await this.populateFeed(Notification.find(requestQuery))
+    const response = await this.populateFeed(this.MongooseModel.find(requestQuery))
       .skip(skip)
       .limit(limit)
       .sort('-createdAt');
@@ -67,15 +72,13 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
   }
 
   public async getFeedItem(notificationId: string, _environmentId: string, _organizationId: string) {
-    return this.mapEntity(
-      await this.populateFeed(
-        Notification.findOne({
-          _id: notificationId,
-          _environmentId,
-          _organizationId,
-        })
-      )
-    );
+    const requestQuery: EnforceEnvironmentQuery = {
+      _id: notificationId,
+      _environmentId,
+      _organizationId,
+    };
+
+    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery)));
   }
 
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>) {
@@ -93,7 +96,7 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
         populate: [
           {
             path: 'executionDetails',
-            select: 'createdAt detail isRetry isTest providerId raw source status updatedAt',
+            select: 'createdAt detail isRetry isTest providerId raw source status updatedAt webhookStatus',
           },
           {
             path: 'step',
@@ -111,6 +114,7 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
           _environmentId: new Types.ObjectId(environmentId),
         },
       },
+      { $unwind: '$channels' },
       {
         $group: {
           _id: {
@@ -119,6 +123,8 @@ export class NotificationRepository extends BaseRepository<NotificationEntity> {
           count: {
             $sum: 1,
           },
+          templates: { $addToSet: '$_templateId' },
+          channels: { $addToSet: '$channels' },
         },
       },
       { $sort: { _id: -1 } },

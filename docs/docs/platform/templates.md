@@ -18,7 +18,7 @@ The name will be used to identify the notification template when triggering it. 
 
 ### Notification Group
 
-The notification group is used to group multiple notification templates into a single group, currently only used behind the scenes for organisational purposes. But, in the upcoming subscriber preferences management, it will be used to group multiple notifications for the subscriber.
+The notification group is used to group multiple notification templates into a single group, currently only used behind the scenes for organizational purposes. But, in the upcoming subscriber preferences management, it will be used to group multiple notifications for the subscriber.
 
 ## Template steps
 
@@ -138,3 +138,10 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
   },
 });
 ```
+
+## FAQ
+
+<details>
+ <summary>How to send dynamic HTML content as value of variable?</summary>
+ Use triple curly braces variable like <code>&#123;&#123;&#123;htmlVariable&#125;&#125;&#125;</code> .
+</details>

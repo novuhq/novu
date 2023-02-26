@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { ChangeRepository, FeedRepository } from '@novu/dal';
+import { FeedRepository } from '@novu/dal';
 
 describe('Delete A Feed - /feeds (POST)', async () => {
   let session: UserSession;
@@ -48,7 +48,9 @@ describe('Delete A Feed - /feeds (POST)', async () => {
 
     expect(deletedBody.data).to.be.ok;
     expect(deletedBody.data.length).to.equal(2);
-    const deletedFeed = (await feedRepository.findDeleted({ _id: newFeedId }))[0];
+    const deletedFeed = (
+      await feedRepository.findDeleted({ _environmentId: session.environment._id, _id: newFeedId })
+    )[0];
 
     expect(deletedFeed.deleted).to.equal(true);
   });
@@ -73,6 +75,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
     });
 
     const feeds = await feedRepository.find({
+      _environmentId: session.environment._id,
       name: feed.name,
     });
     expect(feeds.length).to.equal(0);

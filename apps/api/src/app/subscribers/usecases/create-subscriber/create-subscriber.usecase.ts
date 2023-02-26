@@ -8,7 +8,9 @@ export class CreateSubscriber {
   constructor(private subscriberRepository: SubscriberRepository, private updateSubscriber: UpdateSubscriber) {}
 
   async execute(command: CreateSubscriberCommand) {
-    let subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    let subscriber =
+      command.subscriber ??
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
 
     if (!subscriber) {
       subscriber = await this.subscriberRepository.create({
@@ -20,6 +22,8 @@ export class CreateSubscriber {
         email: command.email,
         phone: command.phone,
         avatar: command.avatar,
+        locale: command.locale,
+        data: command.data,
       });
     } else {
       subscriber = await this.updateSubscriber.execute(
@@ -32,6 +36,9 @@ export class CreateSubscriber {
           email: command.email,
           phone: command.phone,
           avatar: command.avatar,
+          locale: command.locale,
+          data: command.data,
+          subscriber,
         })
       );
     }

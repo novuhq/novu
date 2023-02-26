@@ -28,6 +28,15 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       top: '5px',
       margin: '2.5px 0px',
       lineHeight: '20px',
+      ['&[data-selected]']: {
+        color: dark ? theme.white : theme.colors.gray[8],
+        backgroundColor: dark
+          ? theme.fn.lighten(theme.colors.dark[5], 0.1)
+          : theme.fn.darken(theme.colors.gray[2], 0.1),
+      },
+      '&[data-hovered]:not([data-selected])': {
+        backgroundColor: dark ? theme.colors.dark[5] : theme.colors.gray[2],
+      },
     },
     values: {
       height: 'auto',
@@ -39,12 +48,6 @@ export default createStyles((theme: MantineTheme, _params, getRef) => {
       padding: '15px 7px 15px 10px',
       margin: '0px 5px',
       fontWeight: 400,
-    },
-    selected: {
-      backgroundColor: dark ? theme.fn.lighten(theme.colors.dark[5], 0.1) : theme.fn.darken(theme.colors.gray[2], 0.1),
-    },
-    hovered: {
-      backgroundColor: dark ? theme.colors.dark[5] : theme.colors.gray[2],
     },
     disabled: {
       [`& + .${rightSection}`]: {

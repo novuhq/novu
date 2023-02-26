@@ -5,7 +5,7 @@ import { SubscriberEntity } from '../subscriber';
 import { NotificationTemplateEntity } from '../notification-template';
 
 export class MessageEntity {
-  _id?: string;
+  _id: string;
 
   _templateId: string;
 
@@ -17,7 +17,7 @@ export class MessageEntity {
 
   _notificationId: string;
 
-  _jobId?: string;
+  _jobId: string;
 
   _subscriberId: string;
 

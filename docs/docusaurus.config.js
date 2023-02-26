@@ -113,6 +113,10 @@ const codeTheme = require('./src/utils/prism');
             {
               items: [
                 {
+                  label: 'Home',
+                  href: 'https://novu.co',
+                },
+                {
                   label: 'Documentation',
                   to: '/',
                 },

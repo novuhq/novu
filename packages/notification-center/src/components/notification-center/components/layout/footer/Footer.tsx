@@ -1,16 +1,19 @@
 /* eslint-disable max-len */
 import React from 'react';
-import styled from 'styled-components';
+import { css, cx } from '@emotion/css';
+
 import { useNovuTheme, useTranslations } from '../../../../../hooks';
 import { INovuTheme } from '../../../../../store/novu-theme.context';
+import { useStyles } from '../../../../../store/styles';
 
 export function Footer() {
   const { theme } = useNovuTheme();
   const { t } = useTranslations();
+  const [footerStyles, footerTitleStyles] = useStyles(['footer.root', 'footer.title']);
 
   return (
-    <FooterWrapper>
-      <Text theme={theme}>{t('poweredBy')} </Text>
+    <div className={cx('nc-footer', footerClassName, css(footerStyles))}>
+      <span className={cx(footerPoweredByClassName(theme), css(footerTitleStyles))}>{t('poweredBy')} </span>
       <a
         rel="noreferrer"
         target="_blank"
@@ -55,15 +58,16 @@ export function Footer() {
           </defs>
         </svg>
       </a>
-    </FooterWrapper>
+    </div>
   );
 }
-const Text = styled.div<{ theme: INovuTheme }>`
-  color: ${({ theme }) => theme.footer.logoPrefixFontColor};
+const footerPoweredByClassName = (novuTheme: INovuTheme) => css`
+  color: ${novuTheme.footer.logoPrefixFontColor};
   font-size: 10px;
   font-weight: 400;
 `;
-const FooterWrapper = styled.div`
+
+const footerClassName = css`
   text-align: center;
   border-radius: 7px;
   margin-top: 10px;

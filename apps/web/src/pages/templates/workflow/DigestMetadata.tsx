@@ -1,11 +1,12 @@
-import { Grid, InputWrapper } from '@mantine/core';
-import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { Grid, Input as MantineInput } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
+import styled from '@emotion/styled';
+import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+
 import { When } from '../../../components/utils/When';
 import { Input, Select, Switch, Button } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { useEnvController } from '../../../store/use-env-controller';
-import styled from '@emotion/styled';
+import { useEnvController } from '../../../hooks';
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;
@@ -15,14 +16,17 @@ const StyledSwitch = styled(Switch)`
 export const DigestMetadata = ({ control, index, loading, disableSubmit, setSelectedChannel }) => {
   const { readonly } = useEnvController();
   const {
-    formState: { errors },
+    formState: { errors, isSubmitted },
     watch,
+    trigger,
   } = useFormContext();
+
   const type = watch(`steps.${index}.metadata.type`);
+  const showErrors = isSubmitted && errors?.steps;
 
   return (
     <>
-      <InputWrapper
+      <MantineInput.Wrapper
         label="Time Interval"
         description="Once triggered, for how long the digest should collect events"
         styles={inputStyles}
@@ -36,17 +40,19 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             <Controller
               control={control}
               name={`steps.${index}.metadata.amount`}
+              defaultValue=""
               render={({ field, fieldState }) => {
                 return (
                   <Input
                     {...field}
                     value={field.value || ''}
-                    error={fieldState.error?.message}
+                    error={showErrors && fieldState.error?.message}
                     min={0}
                     max={100}
                     type="number"
                     data-test-id="time-amount"
                     placeholder="0"
+                    disabled={readonly}
                   />
                 );
               }}
@@ -56,11 +62,12 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             <Controller
               control={control}
               name={`steps.${index}.metadata.unit`}
-              render={({ field }) => {
+              defaultValue=""
+              render={({ field, fieldState }) => {
                 return (
                   <Select
                     disabled={readonly}
-                    error={errors?.steps ? errors.steps[index]?.metadata?.unit?.message : undefined}
+                    error={showErrors && fieldState.error?.message}
                     placeholder="Interval"
                     data={[
                       { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
@@ -76,7 +83,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
             />
           </Grid.Col>
         </Grid>
-      </InputWrapper>
+      </MantineInput.Wrapper>
       <div
         style={{
           marginBottom: '15px',
@@ -89,14 +96,18 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
           render={({ field }) => {
             return (
               <Select
+                {...field}
                 label="Type of digest"
                 disabled={readonly}
                 data={[
                   { value: DigestTypeEnum.REGULAR, label: 'Regular' },
                   { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
                 ]}
+                onChange={async (value) => {
+                  field.onChange(value);
+                  await trigger(`steps.${index}.metadata`);
+                }}
                 data-test-id="digest-type"
-                {...field}
               />
             );
           }}
@@ -104,7 +115,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
       </div>
 
       <When truthy={type === DigestTypeEnum.BACKOFF}>
-        <InputWrapper
+        <MantineInput.Wrapper
           label="Backoff Time Interval"
           description="A digest will only be created if a message was previously sent in this time interval"
           styles={inputStyles}
@@ -118,18 +129,20 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.backoffAmount`}
+                defaultValue=""
                 render={({ field, fieldState }) => {
                   return (
                     <Input
                       {...field}
                       value={field.value || ''}
-                      error={fieldState.error?.message}
+                      error={showErrors && fieldState.error?.message}
                       min={0}
                       max={100}
                       type="number"
                       data-test-id="backoff-amount"
                       placeholder="0"
                       required
+                      disabled={readonly}
                     />
                   );
                 }}
@@ -139,11 +152,12 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.backoffUnit`}
-                render={({ field }) => {
+                defaultValue=""
+                render={({ field, fieldState }) => {
                   return (
                     <Select
                       disabled={readonly}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffUnit?.message : undefined}
+                      error={showErrors && fieldState.error?.message}
                       placeholder="Interval"
                       data={[
                         { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
@@ -160,7 +174,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
               />
             </Grid.Col>
           </Grid>
-        </InputWrapper>
+        </MantineInput.Wrapper>
       </When>
       <When truthy={false}>
         <div
@@ -171,6 +185,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
           <Controller
             control={control}
             name={`steps.${index}.metadata.updateMode`}
+            defaultValue={false}
             render={({ field: { value, ...field } }) => {
               return (
                 <StyledSwitch
@@ -193,6 +208,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
         <Controller
           control={control}
           name={`steps.${index}.metadata.digestKey`}
+          defaultValue=""
           render={({ field, fieldState }) => {
             return (
               <Input
@@ -204,6 +220,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                 error={fieldState.error?.message}
                 type="text"
                 data-test-id="batch-key"
+                disabled={readonly}
               />
             );
           }}

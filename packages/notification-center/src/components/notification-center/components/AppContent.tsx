@@ -1,65 +1,45 @@
 import React from 'react';
-import { useQuery } from 'react-query';
-import styled, { ThemeProvider } from 'styled-components';
-import { IOrganizationEntity } from '@novu/shared';
+import { MantineProvider, MantineThemeOverride } from '@mantine/core';
+import { css } from '@emotion/css';
+
 import { Layout } from './layout/Layout';
-import { Main } from './Main';
-import { useAuth, useApi, useNovuTheme } from '../../../hooks';
-import { ScreenProvider } from '../../../store/screens-provider.context';
+import { useNovuTheme } from '../../../hooks';
+import { useFetchOrganization } from '../../../hooks';
 
 export function AppContent() {
-  const { api } = useApi();
-  const { isLoggedIn } = useAuth();
   const { theme, common } = useNovuTheme();
-  const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
-    'organization',
-    () => api.getOrganization(),
-    {
-      enabled: isLoggedIn && api.isAuthenticated,
-    }
-  );
+  const { data: organization } = useFetchOrganization();
 
-  const themeConfig = {
-    colors: {
-      main: theme.loaderColor || organization?.branding?.color,
-      secondaryFontColor: theme.layout?.wrapper.secondaryFontColor,
-    },
-    fontFamily: common.fontFamily || organization?.branding?.fontFamily,
-    layout: {
-      direction: (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl',
-    },
+  const primaryColor = organization?.branding?.color ?? theme.loaderColor;
+  const fontFamily = common.fontFamily || organization?.branding?.fontFamily;
+  const dir = (organization?.branding?.direction === 'rtl' ? 'rtl' : 'ltr') as 'ltr' | 'rtl';
+  const themeConfig: MantineThemeOverride = {
+    fontFamily,
+    dir,
   };
 
   return (
-    <ThemeProvider theme={themeConfig}>
-      <ScreenProvider>
-        <Wrap
-          fontFamily={themeConfig.fontFamily}
-          layoutDirection={themeConfig.layout.direction}
-          brandColor={themeConfig.colors.main}
-        >
-          <Layout>
-            <Main />
-          </Layout>
-        </Wrap>
-      </ScreenProvider>
-    </ThemeProvider>
+    <MantineProvider theme={themeConfig}>
+      <div className={wrapperClassName(primaryColor, fontFamily, dir)}>
+        <Layout />
+      </div>
+    </MantineProvider>
   );
 }
 
-const Wrap = styled.div<{ fontFamily: string; layoutDirection: 'ltr' | 'rtl'; brandColor: string }>`
+const wrapperClassName = (primaryColor: string, fontFamily: string, dir: string) => css`
   margin: 0;
-  font-family: ${({ fontFamily }) => fontFamily}, Helvetica, sans-serif;
+  font-family: ${fontFamily}, Helvetica, sans-serif;
   color: #333737;
-  direction: ${({ layoutDirection }) => layoutDirection};
+  direction: ${dir};
   width: 420px;
   z-index: 999;
 
   ::-moz-selection {
-    background: ${({ brandColor }) => brandColor};
+    background: ${primaryColor};
   }
 
   *::selection {
-    background: ${({ brandColor }) => brandColor};
+    background: ${primaryColor};
   }
 `;

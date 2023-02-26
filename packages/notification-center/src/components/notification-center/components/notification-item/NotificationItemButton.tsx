@@ -1,39 +1,40 @@
 import React from 'react';
 import { Button } from '@mantine/core';
-import styled from 'styled-components';
+import { css, cx } from '@emotion/css';
 import { IButtonStyles, ButtonTypeEnum, IMessageAction } from '@novu/shared';
+
 import { useNovuTheme } from '../../../../hooks';
 
 interface NotificationButtonProps {
   messageAction: IMessageAction;
   onActionClick: (actionButtonType: ButtonTypeEnum) => void;
   buttonIndex: number;
+  className?: string;
 }
-export function NotificationButton(props: NotificationButtonProps) {
+export function NotificationButton({ className, messageAction, buttonIndex, onActionClick }: NotificationButtonProps) {
   const { theme } = useNovuTheme();
-  const button = props.messageAction.buttons[props.buttonIndex];
+  const button = messageAction.buttons[buttonIndex];
   const buttonStyle = theme.notificationItem.buttons[button.type];
-
   const buttonText = button?.content ? button.content : '';
 
   function handleOnclick(e) {
     e.stopPropagation();
-    props.onActionClick(button.type);
+    onActionClick(button.type);
   }
 
   return (
     <>
-      <ActionButton onClick={(e) => handleOnclick(e)} buttonStyle={buttonStyle}>
+      <Button onClick={(e) => handleOnclick(e)} className={cx(actionButtonStyles(buttonStyle), className)} fullWidth>
         {buttonText}
-      </ActionButton>
+      </Button>
     </>
   );
 }
 
-export const ActionButton = styled(MantineButton)<{ buttonStyle: IButtonStyles }>`
-  background: ${({ buttonStyle }) => buttonStyle.backGroundColor};
-  color: ${({ buttonStyle }) => buttonStyle.fontColor};
-  font-family: ${({ buttonStyle }) => buttonStyle.fontFamily};
+export const actionButtonStyles = (buttonStyle: IButtonStyles) => css`
+  background: ${buttonStyle.backGroundColor};
+  color: ${buttonStyle.fontColor};
+  font-family: ${buttonStyle.fontFamily};
   box-shadow: none;
   display: flex;
   justify-content: center;
@@ -44,20 +45,8 @@ export const ActionButton = styled(MantineButton)<{ buttonStyle: IButtonStyles }
   font-size: 12px;
   border-radius: 7px;
   border: 0;
-`;
 
-export function MantineButton({ buttonStyle, ...props }) {
-  return (
-    <Button
-      styles={{
-        filled: {
-          '&:hover': {
-            backgroundColor: buttonStyle.backGroundColor,
-          },
-        },
-      }}
-      fullWidth
-      {...props}
-    />
-  );
-}
+  &:hover {
+    background: ${buttonStyle.backGroundColor};
+  }
+`;

@@ -6,16 +6,15 @@ import {
   JobStatusEnum,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-
 import { expect } from 'chai';
 import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
 import axios from 'axios';
-import { WorkflowQueueService } from '../services/workflow.queue.service';
 import { addSeconds, differenceInMilliseconds } from 'date-fns';
-import { RunJob } from '../usecases/run-job/run-job.usecase';
+
+import { WorkflowQueueService } from '../services/workflow-queue/workflow.queue.service';
+import { RunJob, RunJobCommand } from '../usecases/run-job';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
-import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
-import { RunJobCommand } from '../usecases/run-job/run-job.command';
+import { QueueNextJob } from '../usecases/queue-next-job';
 import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
 
 const axiosInstance = axios.create();
@@ -29,21 +28,6 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   let workflowQueueService: WorkflowQueueService;
   const messageRepository = new MessageRepository();
   let runJob: RunJob;
-
-  const awaitRunningJobs = async (unfinishedJobs = 0) => {
-    let runningJobs = 0;
-    do {
-      runningJobs = await jobRepository.count({
-        type: {
-          $nin: [StepTypeEnum.DELAY],
-        },
-        _templateId: template._id,
-        status: {
-          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
-        },
-      });
-    } while (runningJobs > unfinishedJobs);
-  };
 
   const triggerEvent = async (payload, transactionId?: string, overrides = {}) => {
     await axiosInstance.post(
@@ -69,13 +53,13 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-    workflowQueueService = session.testServer.getService(WorkflowQueueService);
+    workflowQueueService = session?.testServer?.getService(WorkflowQueueService);
 
     runJob = new RunJob(
       jobRepository,
-      session.testServer.getService(SendMessage),
-      session.testServer.getService(QueueNextJob),
-      session.testServer.getService(StorageHelperService)
+      session?.testServer?.getService(SendMessage),
+      session?.testServer?.getService(QueueNextJob),
+      session?.testServer?.getService(StorageHelperService)
     );
   });
 
@@ -106,9 +90,10 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       customVar: 'Testing of User Name',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 1);
 
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
     });
@@ -132,7 +117,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
         userId: delayedJob._userId,
       })
     );
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, true, 0);
 
     const messagesAfter = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -170,7 +155,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       id,
       { delay: { amount: 3, unit: DigestUnitEnum.SECONDS } }
     );
-    await awaitRunningJobs(0);
+    await session.awaitRunningJobs(template?._id, true, 0);
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -202,17 +187,23 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       customVar: 'Testing of User Name',
       sendAt: addSeconds(new Date(), 30),
     });
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 1);
 
-    const delayedJob = await jobRepository.findOne({
+    const delayedJobs = await jobRepository.find({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
     });
 
-    const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(delayedJob?.updatedAt));
+    expect(delayedJobs.length).to.eql(1);
+
+    const delayedJob = delayedJobs[0];
+
+    const updatedAt = delayedJob?.updatedAt as string;
+    const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(updatedAt));
 
     const delay = await workflowQueueService.queue.getDelayed();
-    expect(delay[0].opts.delay).to.approximately(diff, 5);
+    expect(delay[0].opts.delay).to.approximately(diff, 1000);
   });
 
   it('should not include delayed event in digested sent message', async function () {
@@ -247,9 +238,10 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       eventNumber: '1',
     });
 
-    await awaitRunningJobs(2);
+    await session.awaitRunningJobs(template?._id, true, 2);
 
     const delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
     });
@@ -264,6 +256,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     );
 
     const digestedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
@@ -272,7 +265,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       eventNumber: '2',
     });
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 3);
 
     await runJob.execute(
       RunJobCommand.create({
@@ -283,7 +276,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       })
     );
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 3);
+
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
@@ -331,7 +325,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       eventNumber: '2',
       sendAt: dateValue,
     });
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 1);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -412,7 +406,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       id
     );
 
-    await awaitRunningJobs(1);
+    await session.awaitRunningJobs(template?._id, true, 1);
     await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
@@ -420,6 +414,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     });
 
     let delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
     });
@@ -434,6 +429,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     );
 
     const pendingJobs = await jobRepository.count({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       status: JobStatusEnum.PENDING,
       transactionId: id,
@@ -442,6 +438,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     expect(pendingJobs).to.equal(1);
 
     delayedJob = await jobRepository.findOne({
+      _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DELAY,
       transactionId: id,

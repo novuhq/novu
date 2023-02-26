@@ -1,12 +1,11 @@
 type Channel = 'inApp' | 'email' | 'sms' | 'digest';
 
 export function addAndEditChannel(channel: Channel) {
-  cy.waitLoadEnv(() => {
-    clickWorkflow();
+  cy.waitForNetworkIdle(500);
+  clickWorkflow();
 
-    dragAndDrop(channel);
-    editChannel(channel);
-  });
+  dragAndDrop(channel);
+  editChannel(channel, true);
 }
 
 export function dragAndDrop(channel: Channel, dropTestId = 'addNodeButton') {

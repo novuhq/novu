@@ -1,7 +1,7 @@
 import React from 'react';
 import { INovuPopoverTheme, INovuTheme, ThemeContext } from './novu-theme.context';
 import { ColorScheme } from '../index';
-import { useDefaultTheme } from '../hooks';
+import { getDefaultTheme } from '../utils/defaultTheme';
 
 export interface INovuThemePopoverProvider {
   light?: INovuPopoverTheme;
@@ -26,7 +26,7 @@ interface INovuThemeProviderProps {
 }
 
 export function NovuThemeProvider(props: INovuThemeProviderProps) {
-  const { theme, common } = useDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
+  const { theme, common } = getDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
 
   return (
     <ThemeContext.Provider value={{ colorScheme: props.colorScheme, theme: { ...theme }, common: { ...common } }}>

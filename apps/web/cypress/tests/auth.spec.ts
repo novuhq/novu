@@ -1,3 +1,5 @@
+import * as capitalize from 'lodash.capitalize';
+
 describe('User Sign-up and Login', function () {
   describe('Sign up', function () {
     beforeEach(function () {
@@ -10,8 +12,8 @@ describe('User Sign-up and Login', function () {
       cy.visit('/auth/signup');
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('example@example.com');
-      cy.getByTestId('password').type('usEr_password_123');
-      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('password').type('usEr_password_123!');
+      cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');
@@ -23,8 +25,8 @@ describe('User Sign-up and Login', function () {
       cy.visit('/auth/signup');
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('test-user-1@example.com');
-      cy.getByTestId('password').type('usEr_password_123');
-      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('password').type('usEr_password_123!');
+      cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
       cy.get('.mantine-TextInput-error').contains('An account with this email already exists');
     });
@@ -33,10 +35,67 @@ describe('User Sign-up and Login', function () {
       cy.visit('/auth/signup');
       cy.getByTestId('fullName').type('Test User');
       cy.getByTestId('email').type('test-user-1@example.c');
-      cy.getByTestId('password').type('usEr_password_123');
-      cy.getByTestId('accept-cb').click();
+      cy.getByTestId('password').type('usEr_password_123!');
+      cy.getByTestId('accept-cb').click({ force: true });
       cy.getByTestId('submitButton').click();
       cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
+    });
+
+    it.skip('should allow to sign-up with GitHub, logout, and login', function () {
+      const isCI = Cypress.env('IS_CI');
+      if (!isCI) return;
+
+      cy.intercept('**/organization/**/switch').as('appSwitch');
+      cy.visit('/auth/signup');
+
+      cy.loginWithGitHub();
+
+      cy.location('pathname').should('equal', '/auth/application');
+      cy.getByTestId('app-creation').type('Organization Name');
+      cy.getByTestId('submit-btn').click();
+
+      cy.location('pathname').should('equal', '/quickstart');
+      cy.getByTestId('header-profile-avatar').click();
+      cy.getByTestId('header-dropdown-organization-name').contains(capitalize('Organization Name'.split(' ')[0]));
+      cy.getByTestId('header-dropdown-username').contains('Johnny Depp');
+
+      cy.getByTestId('logout-button').click();
+      cy.getByTestId('github-button').click();
+
+      cy.location('pathname').should('equal', '/templates');
+      cy.getByTestId('header-profile-avatar').click();
+      cy.getByTestId('header-dropdown-username').contains('Johnny Depp');
+    });
+
+    it.skip('should allow to sign-up, logout, and login with GitHub using same email address', function () {
+      const isCI = Cypress.env('IS_CI');
+      if (!isCI) return;
+
+      const gitHubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
+
+      cy.intercept('**/organization/**/switch').as('appSwitch');
+      cy.visit('/auth/signup');
+      cy.getByTestId('fullName').type('Test User');
+      cy.getByTestId('email').type(gitHubUserEmail);
+      cy.getByTestId('password').type('usEr_password_123!');
+      cy.getByTestId('accept-cb').click({ force: true });
+      cy.getByTestId('submitButton').click();
+
+      cy.location('pathname').should('equal', '/auth/application');
+      cy.getByTestId('app-creation').type('Organization Name');
+      cy.getByTestId('submit-btn').click();
+
+      cy.location('pathname').should('equal', '/quickstart');
+      cy.getByTestId('header-profile-avatar').click();
+      cy.getByTestId('header-dropdown-username').contains('Test User');
+      cy.getByTestId('logout-button').click();
+
+      cy.location('pathname').should('equal', '/auth/login');
+      cy.loginWithGitHub();
+
+      cy.location('pathname').should('equal', '/templates');
+      cy.getByTestId('header-profile-avatar').click();
+      cy.getByTestId('header-dropdown-username').contains('Test User');
     });
   });
 
@@ -55,8 +114,8 @@ describe('User Sign-up and Login', function () {
       cy.task('passwordResetToken', this.session.user._id).then((token) => {
         cy.visit('/auth/reset/' + token);
       });
-      cy.getByTestId('password').type('123e3e3e3');
-      cy.getByTestId('password-repeat').type('123e3e3e3');
+      cy.getByTestId('password').type('A123e3e3e3!');
+      cy.getByTestId('password-repeat').focus().type('A123e3e3e3!');
 
       cy.getByTestId('submit-btn').click();
     });
@@ -89,13 +148,13 @@ describe('User Sign-up and Login', function () {
       cy.location('pathname').should('equal', '/templates');
     });
 
-    it('should show bad password error when authenticating with bad credentials', function () {
+    it('should show incorrect email or password error when authenticating with bad credentials', function () {
       cy.visit('/auth/login');
 
       cy.getByTestId('email').type('test-user-1@example.com');
       cy.getByTestId('password').type('123456');
       cy.getByTestId('submit-btn').click();
-      cy.get('.mantine-PasswordInput-error').contains('Invalid password');
+      cy.getByTestId('error-alert-banner').contains('Incorrect email or password provided');
     });
 
     it('should show invalid email error when authenticating with invalid email', function () {
@@ -107,13 +166,13 @@ describe('User Sign-up and Login', function () {
       cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
     });
 
-    it('should show invalid email error when authenticating with invalid email', function () {
+    it('should show incorrect email or password error when authenticating with non-existing email', function () {
       cy.visit('/auth/login');
 
       cy.getByTestId('email').type('test-user-1@example.de');
       cy.getByTestId('password').type('123456');
       cy.getByTestId('submit-btn').click();
-      cy.get('.mantine-TextInput-error').contains('Account does not exist');
+      cy.getByTestId('error-alert-banner').contains('Incorrect email or password provided');
     });
   });
 
@@ -130,12 +189,15 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('password').type('123qwe!@#');
       cy.getByTestId('submit-btn').click();
 
-      // setting current time in future, to simulate expired token
-      var todaysDate = new Date();
-      todaysDate.setDate(todaysDate.getDate() + 30); // iat - exp = 30 days
-      cy.clock(todaysDate);
+      cy.location('pathname').should('equal', '/templates');
 
-      cy.visit('/templates');
+      // setting current time in future, to simulate expired token
+      const ONE_MINUTE = 1000 * 60; // adding 1 minute to be sure that token is expired
+      const THIRTY_DAYS = ONE_MINUTE * 60 * 24 * 30; // iat - exp = 30 days
+      const date = new Date(Date.now() + THIRTY_DAYS + ONE_MINUTE);
+      cy.clock(date);
+
+      cy.visit('/subscribers');
 
       // checking if token is removed from local storage
       cy.getLocalStorage('auth_token').should('be.null');

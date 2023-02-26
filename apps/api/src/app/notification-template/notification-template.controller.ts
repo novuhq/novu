@@ -13,7 +13,6 @@ import {
 } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { Roles } from '../auth/framework/roles.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
@@ -36,6 +35,10 @@ import { NotificationTemplateResponse } from './dto/notification-template-respon
 import { NotificationTemplatesResponseDto } from './dto/notification-templates.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { NotificationTemplatesRequestDto } from './dto/notification-templates-request.dto';
+import { Roles } from '../auth/framework/roles.decorator';
+import { GetBlueprintNotificationTemplate } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.usecase';
+import { GetBlueprintNotificationTemplateCommand } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.command';
+import { CreateBlueprintNotificationTemplate } from './usecases/create-blueprint-notification-template/create-blueprint-notification-template.usecase';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -48,7 +51,9 @@ export class NotificationTemplateController {
     private getNotificationTemplateUsecase: GetNotificationTemplate,
     private updateTemplateByIdUsecase: UpdateNotificationTemplate,
     private deleteTemplateByIdUsecase: DeleteNotificationTemplate,
-    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus
+    private changeTemplateActiveStatusUsecase: ChangeTemplateActiveStatus,
+    private getBlueprintNotificationTemplate: GetBlueprintNotificationTemplate,
+    private createBlueprintNotificationTemplate: CreateBlueprintNotificationTemplate
   ) {}
 
   @Get('')
@@ -92,7 +97,7 @@ export class NotificationTemplateController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        templateId,
+        id: templateId,
         name: body.name,
         tags: body.tags,
         description: body.description,
@@ -148,16 +153,46 @@ export class NotificationTemplateController {
     );
   }
 
+  @Get('/:templateId/blueprint')
+  getNotificationTemplateBlueprintById(
+    @UserSession() user: IJwtPayload,
+    @Param('templateId') templateId: string
+  ): Promise<NotificationTemplateResponse> {
+    return this.getBlueprintNotificationTemplate.execute(
+      GetBlueprintNotificationTemplateCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        templateId,
+      })
+    );
+  }
+
+  @Post('/:templateId/blueprint')
+  createNotificationTemplateFromBlueprintById(
+    @UserSession() user: IJwtPayload,
+    @Param('templateId') templateId: string
+  ): Promise<NotificationTemplateResponse> {
+    return this.createBlueprintNotificationTemplate.execute(
+      GetBlueprintNotificationTemplateCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        templateId,
+      })
+    );
+  }
+
   @Post('')
+  @ExternalApiAccessible()
   @UseGuards(RootEnvironmentGuard)
-  @Roles(MemberRoleEnum.ADMIN)
   @ApiCreatedResponse({
     type: NotificationTemplateResponse,
   })
   @ApiOperation({
     summary: 'Create notification template',
   })
-  @ExternalApiAccessible()
+  @Roles(MemberRoleEnum.ADMIN)
   createNotificationTemplates(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateNotificationTemplateRequestDto

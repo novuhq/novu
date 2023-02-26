@@ -1,47 +1,50 @@
-import { useContext, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Container } from '@mantine/core';
+
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
-import { BrandingForm, ApiKeysCard, InAppCenterCard } from './tabs';
-import { AuthContext } from '../../store/authContext';
+import { ApiKeysCard, InAppCenterCard } from './tabs';
+import { useAuthContext } from '../../components/providers/AuthProvider';
+import { EmailSettings } from './tabs/EmailSettings';
+
+enum MenuTitleEnum {
+  IN_APP_CENTER = 'In App Center',
+  API_KEYS = 'API Keys',
+  EMAIL_SETTINGS = 'Email Settings',
+}
 
 export function SettingsPage() {
-  const location = useLocation();
-  const { currentOrganization } = useContext(AuthContext);
-  const [activeTab, setActiveTab] = useState(0);
+  const { currentOrganization } = useAuthContext();
+  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-
-    if (params.get('screen') && params.get('screen') === 'sms') {
-      setActiveTab(3);
-    }
-  }, [location]);
-
-  const menuTabs = [
+  let menuTabs = [
     {
-      label: 'Branding',
-      content: <BrandingForm isLoading={!currentOrganization} organization={currentOrganization} />,
-    },
-    {
-      label: 'In App Center',
+      value: MenuTitleEnum.IN_APP_CENTER,
       content: <InAppCenterCard />,
     },
     {
-      label: 'API Keys',
+      value: MenuTitleEnum.API_KEYS,
       content: <ApiKeysCard />,
     },
   ];
+
+  if (!selfHosted) {
+    menuTabs = [
+      ...menuTabs,
+      {
+        value: MenuTitleEnum.EMAIL_SETTINGS,
+        content: <EmailSettings />,
+      },
+    ];
+  }
 
   return (
     <PageContainer>
       <PageMeta title="Settings" />
       <PageHeader title="Settings" />
       <Container fluid mt={15} ml={5}>
-        <Tabs loading={!currentOrganization} active={activeTab} onTabChange={setActiveTab} menuTabs={menuTabs} />
+        <Tabs loading={!currentOrganization} menuTabs={menuTabs} defaultValue={MenuTitleEnum.IN_APP_CENTER} />
       </Container>
     </PageContainer>
   );

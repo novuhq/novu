@@ -15,7 +15,7 @@ After creating your cloud or self-hosted account, the next steps to sending your
 - Connect your providers
 - Create a notification template
 - Send a trigger
-- Integrate the Notification Center within your app _(optional)_
+- Integrate the [Notification Center](../notification-center/getting-started.md) within your app _(optional)_
 
 ## Connect providers
 
@@ -98,6 +98,7 @@ await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
     email,
     phone,
     avatar,
+    locale,
   },
   payload: {},
 });

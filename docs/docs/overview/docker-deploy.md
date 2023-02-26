@@ -23,11 +23,10 @@ git clone --depth 1 https://github.com/novuhq/novu
 cd novu/docker
 
 # Copy the example env file
-cp .env.example .env
+cp .env.example ./local/deployment/.env
 
-# Start
-docker-compose up
-
+# Start Novu
+docker-compose -f ./local/deployment/docker-compose.yml up
 ```
 
 Now visit [http://localhost:4200](http://localhost:4200/) to start using Novu.
@@ -47,7 +46,7 @@ Update the `.env` file with your own secrets. In particular, these are required:
 To keep the setup simple, we made some choices that may not be optimal for production:
 
 - the database is in the same machine as the servers
-- the storage uses the filesystem backend instead of S3
+- the storage uses localstack instead of S3
 
 We strongly recommend that you decouple your database before deploying.
 
@@ -93,7 +92,19 @@ When using the IFrame embed to attach the notification center rather than the Re
 
 ### Using React Component with custom installation
 
-See [Use your own backend and socket URL](https://docs.novu.co/notification-center/react-components#use-your-own-backend-and-socket-url).
+See [Use your own backend and socket URL](https://docs.novu.co/notification-center/react/react-components#use-your-own-backend-and-socket-url).
+
+### Caching
+
+We are introducing the first stage of caching in our system to improve performance and efficiency. Caching is turned off by default, but can easily be activated by setting the following environment variables:
+
+- REDIS_CACHE_SERVICE_HOST
+- REDIS_CACHE_SERVICE_PORT
+
+Currently, we are caching data in the most heavily loaded areas of the system:
+the widget requests such as feed and unseen count, as well as common DAL requests during the execution of trigger event flow.
+These are the most heavily used areas of our system, and we hope that by implementing caching in these areas,
+we can improve performance in the near future.
 
 ## Next steps
 

@@ -1,8 +1,20 @@
-import { BaseRepository } from '../base-repository';
+import { BaseRepository, Omit } from '../base-repository';
 import { SubscriberPreferenceEntity } from './subscriber-preference.entity';
 import { SubscriberPreference } from './subscriber-preference.schema';
+import { Document, FilterQuery } from 'mongoose';
 
-export class SubscriberPreferenceRepository extends BaseRepository<SubscriberPreferenceEntity> {
+class PartialSubscriberPreferenceEntity extends Omit(SubscriberPreferenceEntity, [
+  '_environmentId',
+  '_organizationId',
+]) {}
+
+type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberPreferenceEntity & Document> &
+  ({ _environmentId: string } | { _organizationId: string });
+
+export class SubscriberPreferenceRepository extends BaseRepository<
+  EnforceEnvironmentQuery,
+  SubscriberPreferenceEntity
+> {
   constructor() {
     super(SubscriberPreference, SubscriberPreferenceEntity);
   }
@@ -13,6 +25,7 @@ export class SubscriberPreferenceRepository extends BaseRepository<SubscriberPre
     templatesIds: string[]
   ): Promise<SubscriberPreferenceEntity[]> {
     return await this.find({
+      _environmentId: environmentId,
       _subscriberId: subscriberId,
       _templateId: {
         $in: templatesIds,

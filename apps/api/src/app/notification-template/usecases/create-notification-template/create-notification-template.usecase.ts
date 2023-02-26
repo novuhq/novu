@@ -1,16 +1,18 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { NotificationTemplateRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
+
+import { NotificationTemplateRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum, INotificationTemplateStep, INotificationTrigger, TriggerTypeEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { CreateNotificationTemplateCommand } from './create-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class CreateNotificationTemplate {
@@ -39,7 +41,8 @@ export class CreateNotificationTemplate {
       identifier: `${triggerIdentifier}${!templateCheckIdentifier ? '' : '-' + shortid.generate()}`,
       variables: variables.map((i) => {
         return {
-          name: i,
+          name: i.name,
+          type: i.type,
         };
       }),
       subscriberVariables: subscriberVariables.map((i) => {
@@ -50,10 +53,12 @@ export class CreateNotificationTemplate {
     };
 
     const parentChangeId: string = NotificationTemplateRepository.createObjectId();
-    const templateSteps = [];
+    const templateSteps: INotificationTemplateStep[] = [];
     let parentStepId: string | null = null;
 
     for (const message of command.steps) {
+      if (!message.template) throw new ApiException(`Unexpected error: message template is missing`);
+
       const template = await this.createMessageTemplate.execute(
         CreateMessageTemplateCommand.create({
           type: message.template.type,
@@ -67,6 +72,9 @@ export class CreateNotificationTemplate {
           subject: message.template.subject,
           title: message.template.title,
           feedId: message.template.feedId,
+          layoutId: message.template.layoutId,
+          preheader: message.template.preheader,
+          senderName: message.template.senderName,
           parentChangeId,
           actor: message.template.actor,
         })
@@ -79,6 +87,9 @@ export class CreateNotificationTemplate {
         filters: message.filters,
         _parentId: parentStepId,
         metadata: message.metadata,
+        active: message.active,
+        shouldStopOnFail: message.shouldStopOnFail,
+        replyCallback: message.replyCallback,
       });
       parentStepId = stepId;
     }
@@ -97,9 +108,10 @@ export class CreateNotificationTemplate {
       steps: templateSteps,
       triggers: [trigger],
       _notificationGroupId: command.notificationGroupId,
+      blueprintId: command.blueprintId,
     });
 
-    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.organizationId);
+    const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);
 
     await this.createChange.execute(
       CreateChangeCommand.create({
@@ -112,11 +124,13 @@ export class CreateNotificationTemplate {
       })
     );
 
-    this.analyticsService.track('Create Notification Template - [Platform]', command.userId, {
-      _organization: command.organizationId,
-      steps: command.steps?.length,
-      channels: command.steps?.map((i) => i.template.type),
-    });
+    if (command.name !== 'On-boarding notification') {
+      this.analyticsService.track('Create Notification Template - [Platform]', command.userId, {
+        _organization: command.organizationId,
+        steps: command.steps?.length,
+        channels: command.steps?.map((i) => i.template?.type),
+      });
+    }
 
     return item;
   }

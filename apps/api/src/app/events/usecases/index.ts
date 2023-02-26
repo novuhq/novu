@@ -1,29 +1,33 @@
-import { ProcessSubscriber } from './process-subscriber/process-subscriber.usecase';
+import { ProcessSubscriber } from './process-subscriber';
 import { TriggerEvent } from './trigger-event';
-import { SendMessage } from './send-message/send-message.usecase';
-import { SendMessageSms } from './send-message/send-message-sms.usecase';
-import { SendMessageEmail } from './send-message/send-message-email.usecase';
-import { SendMessageInApp } from './send-message/send-message-in-app.usecase';
-import { SendMessageChat } from './send-message/send-message-chat.usecase';
-import { SendMessagePush } from './send-message/send-message-push.usecase';
-import { QueueNextJob } from './queue-next-job/queue-next-job.usecase';
+import {
+  SendMessage,
+  SendMessageChat,
+  SendMessageDelay,
+  SendMessageEmail,
+  SendMessageInApp,
+  SendMessagePush,
+  SendMessageSms,
+  SendTestEmail,
+} from './send-message';
 import { Digest } from './send-message/digest/digest.usecase';
-import { CancelDelayed } from './cancel-delayed/cancel-delayed.usecase';
-import { TriggerEventToAll } from './trigger-event-to-all/trigger-event-to-all.usecase';
-import { DigestFilterSteps } from './digest-filter-steps/digest-filter-steps.usecase';
-import { DigestFilterStepsBackoff } from './digest-filter-steps/digest-filter-steps-backoff.usecase';
-import { DigestFilterStepsRegular } from './digest-filter-steps/digest-filter-steps-regular.usecase';
 import { GetDigestEventsRegular } from './send-message/digest/get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './send-message/digest/get-digest-events-backoff.usecase';
-import { VerifyPayload } from './verify-payload/verify-payload.usecase';
-import { RunJob } from './run-job/run-job.usecase';
-import { AddJob } from './add-job/add-job.usecase';
-import { AddDigestJob } from './add-job/add-digest-job.usecase';
-import { AddDelayJob } from './add-job/add-delay-job.usecase';
-import { ShouldAddDigestJob } from './add-job/should-add-digest-job.usecase';
-import { SendMessageDelay } from './send-message/send-message-delay.usecase';
+import { QueueNextJob } from './queue-next-job';
+import { CreateNotificationJobs } from './create-notification-jobs';
+import { CancelDelayed } from './cancel-delayed';
+import { TriggerEventToAll } from './trigger-event-to-all';
+import { DigestFilterSteps, DigestFilterStepsBackoff, DigestFilterStepsRegular } from './digest-filter-steps';
+import { VerifyPayload } from './verify-payload';
+import { RunJob } from './run-job';
+import { AddDelayJob, AddDigestJob, AddJob } from './add-job';
+import { MapTriggerRecipients } from './map-trigger-recipients';
+import { MessageMatcher } from './message-matcher';
+import { ParseEventRequest } from './parse-event-request';
+import { ProcessBulkTrigger } from './process-bulk-trigger';
 
 export const USE_CASES = [
+  MessageMatcher,
   TriggerEvent,
   ProcessSubscriber,
   SendMessage,
@@ -33,6 +37,7 @@ export const USE_CASES = [
   SendMessageChat,
   SendMessagePush,
   QueueNextJob,
+  CreateNotificationJobs,
   Digest,
   CancelDelayed,
   TriggerEventToAll,
@@ -46,6 +51,9 @@ export const USE_CASES = [
   AddJob,
   AddDigestJob,
   AddDelayJob,
-  ShouldAddDigestJob,
   SendMessageDelay,
+  SendTestEmail,
+  MapTriggerRecipients,
+  ParseEventRequest,
+  ProcessBulkTrigger,
 ];

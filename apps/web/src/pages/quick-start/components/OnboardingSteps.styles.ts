@@ -6,17 +6,19 @@ export default createStyles((theme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';
 
   return {
-    itemBulletWithChild: {
-      ref: getRef('itemBulletWithChild'),
-      color: colors.B60,
-      fontSize: '20px',
-      fontWeight: 700,
-    },
     itemBullet: {
       ref: getRef('itemBullet'),
       backgroundColor: `${dark ? colors.B17 : colors.B98} !important`,
       borderRadius: '40px',
       border: 'none',
+      ['&[data-with-child]']: {
+        color: colors.B60,
+        fontSize: '20px',
+        fontWeight: 700,
+      },
+      ['&[data-active][data-with-child]']: {
+        color: 'inherit',
+      },
     },
     itemBody: {
       ref: getRef('itemBody'),
@@ -24,17 +26,19 @@ export default createStyles((theme, _params, getRef) => {
       backgroundColor: `${dark ? colors.B17 : colors.B98} !important`,
       borderRadius: '7px',
     },
-    itemActive: {
-      [`& .${getRef('itemBullet')}`]: {
-        backgroundColor: `${dark ? colors.B20 : colors.BGLight} !important`,
-        boxShadow: dark ? shadows.dark : shadows.medium,
-      },
-      [`& .${getRef('itemBody')}`]: {
-        backgroundColor: `${dark ? colors.B20 : colors.BGLight} !important`,
-        boxShadow: dark ? shadows.dark : shadows.medium,
-      },
-      [`& .${getRef('itemBulletWithChild')}`]: {
-        color: dark ? colors.white : colors.B40,
+    item: {
+      ['&[data-active]']: {
+        [`& .${getRef('itemBullet')}`]: {
+          backgroundColor: `${dark ? colors.B20 : colors.BGLight} !important`,
+          boxShadow: dark ? shadows.dark : shadows.medium,
+        },
+        [`& .${getRef('itemBody')}`]: {
+          backgroundColor: `${dark ? colors.B20 : colors.BGLight} !important`,
+          boxShadow: dark ? shadows.dark : shadows.medium,
+        },
+        [`& .${getRef('itemBulletWithChild')}`]: {
+          color: dark ? colors.white : colors.B40,
+        },
       },
     },
   };

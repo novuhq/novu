@@ -4,9 +4,10 @@ module.exports = {
     'airbnb-typescript',
     'plugin:import/typescript',
     'plugin:@typescript-eslint/recommended',
-    'prettier/@typescript-eslint',
+    'prettier',
     'plugin:prettier/recommended',
     'plugin:promise/recommended',
+    'plugin:@cspell/recommended',
   ],
   ignorePatterns: ['.eslintrc.js', '*.json', 'jest.config.js'],
   plugins: ['import', 'promise', '@typescript-eslint', 'prettier'],
@@ -63,7 +64,14 @@ module.exports = {
     'no-restricted-imports': [
       'error',
       {
-        patterns: ['@novu/shared/*', '@novu/dal/*', '!import2/good'],
+        patterns: [
+          '@novu/shared/*',
+          '@novu/dal/*',
+          '!import2/good',
+          '*../libs/dal/*',
+          '*../libs/shared/*',
+          '*../libs/stateless/*',
+        ],
       },
     ],
     'padding-line-between-statements': [

@@ -16,27 +16,27 @@ export const Default = Template.bind({});
 Default.args = {
   menuTabs: [
     {
-      label: 'Branding',
+      value: 'Branding',
       content: 'Branding',
     },
 
     {
-      label: 'In App Center',
+      value: 'In App Center',
       content: 'In App Center',
     },
 
     {
-      label: 'Email Settings',
+      value: 'Email Settings',
       content: 'Email Settings',
     },
 
     {
-      label: 'SMS',
+      value: 'SMS',
       content: 'SMS',
     },
 
     {
-      label: 'Api Keys',
+      value: 'Api Keys',
       content: 'Api Keys',
     },
   ],
@@ -53,31 +53,31 @@ export const HorizontalTabMenuWithIcon = Template.bind({});
 HorizontalTabMenuWithIcon.args = {
   menuTabs: [
     {
-      label: 'Branding',
+      value: 'Branding',
       content: 'Branding',
       icon: '46',
     },
 
     {
-      label: 'In App Center',
+      value: 'In App Center',
       content: 'In App Center',
       icon: '45',
     },
 
     {
-      label: 'Email Settings',
+      value: 'Email Settings',
       content: 'Email Settings',
       icon: '44',
     },
 
     {
-      label: 'SMS',
+      value: 'SMS',
       content: 'SMS',
       icon: '43',
     },
 
     {
-      label: 'Api Keys',
+      value: 'Api Keys',
       content: 'Api Keys',
       icon: '42',
     },

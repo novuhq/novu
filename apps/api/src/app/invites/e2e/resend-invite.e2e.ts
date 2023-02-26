@@ -55,7 +55,10 @@ describe('Resend invite - /invites/resend (POST)', async () => {
 
     it('should reject if member already active', async () => {
       expect(invitee.memberStatus).to.eq(MemberStatusEnum.INVITED);
-      await memberRepository.update({ _id: invitee._id }, { memberStatus: MemberStatusEnum.ACTIVE });
+      await memberRepository.update(
+        { _organizationId: session.organization._id, _id: invitee._id },
+        { memberStatus: MemberStatusEnum.ACTIVE }
+      );
 
       const { body } = await session.testAgent.post('/v1/invites/resend').send({ memberId: invitee._id }).expect(400);
 

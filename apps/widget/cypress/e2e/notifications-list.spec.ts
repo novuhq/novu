@@ -15,7 +15,9 @@ describe('Notifications List', function () {
   });
 
   it('should show list of current notifications', function () {
-    cy.getByTestId('notification-list-item').should('have.length', 5);
+    cy.getByTestId('notification-list-item', {
+      timeout: 10000,
+    }).should('have.length', 5);
     cy.getByTestId('notification-list-item')
       .first()
       .getByTestId('notification-content')
@@ -84,7 +86,7 @@ describe('Notifications List', function () {
     cy.getByTestId('unseen-count-label').contains('4');
   });
 
-  it.only('count seen-unseen notification', function () {
+  it('count seen-unseen notification', function () {
     cy.getByTestId('unseen-count-label').contains('5');
     cy.intercept('**/notifications/feed?page=0').as('getNotifications');
     cy.getByTestId('notification-list-item').should('have.length', 5);

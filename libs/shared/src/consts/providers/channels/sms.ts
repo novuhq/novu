@@ -1,5 +1,4 @@
 import { IProviderConfig } from '../provider.interface';
-import { ChannelTypeEnum } from '../../../entities/message-template';
 import {
   gupshupConfig,
   nexmoConfig,
@@ -9,9 +8,14 @@ import {
   telnyxConfig,
   twilioConfig,
   firetextConfig,
+  infobipSMSConfig,
+  burstSmsConfig,
+  clickatellConfig,
   bulksmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
+
+import { ChannelTypeEnum } from '../../../types';
 
 export const smsProviders: IProviderConfig[] = [
   {
@@ -78,6 +82,31 @@ export const smsProviders: IProviderConfig[] = [
     credentials: firetextConfig,
     docReference: 'https://www.firetext.co.uk/docs',
     logoFileName: { light: 'firetext.svg', dark: 'firetext.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.Infobip,
+    displayName: 'Infobip',
+    channel: ChannelTypeEnum.SMS,
+    credentials: infobipSMSConfig,
+    docReference: 'https://www.infobip.com/docs',
+    logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
+  },
+  {
+    id: SmsProviderIdEnum.BurstSms,
+    displayName: 'BurstSMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: burstSmsConfig,
+    docReference: 'https://developer.transmitsms.com/',
+    logoFileName: { light: 'burst-sms.svg', dark: 'burst-sms.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.Clickatell,
+    displayName: 'clickatell',
+    channel: ChannelTypeEnum.SMS,
+    credentials: clickatellConfig,
+    betaVersion: true,
+    docReference: 'https://docs.clickatell.com/',
+    logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
   },
   {
     id: SmsProviderIdEnum.BulkSMS,

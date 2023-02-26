@@ -5,6 +5,8 @@ interface IQueryKeys {
   myEnvironments: string;
   currentEnvironment: string;
   getFeeds: string;
+  getLayoutsList: string;
+  getLayoutById: string;
 }
 
 export const QueryKeys: IQueryKeys = Object.freeze({
@@ -14,4 +16,6 @@ export const QueryKeys: IQueryKeys = Object.freeze({
   myEnvironments: 'myEnvironments',
   currentEnvironment: 'currentEnvironment',
   getFeeds: 'getFeeds',
+  getLayoutsList: 'getLayoutsList',
+  getLayoutById: 'getLayoutById',
 });

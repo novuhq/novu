@@ -10,6 +10,10 @@ import {
   SendinblueHandler,
   SESHandler,
   NetCoreHandler,
+  InfobipEmailHandler,
+  MailerSendHandler,
+  Outlook365Handler,
+  ResendHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -25,6 +29,10 @@ export class MailFactory {
     new PostmarkHandler(),
     new SendinblueHandler(),
     new SESHandler(),
+    new InfobipEmailHandler(),
+    new MailerSendHandler(),
+    new Outlook365Handler(),
+    new ResendHandler(),
   ];
 
   getHandler(
@@ -35,7 +43,7 @@ export class MailFactory {
       const handler =
         this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
 
-      if (!handler) return null;
+      if (!handler) throw new Error('Handler for provider was not found');
 
       handler.buildProvider(integration.credentials, from);
 

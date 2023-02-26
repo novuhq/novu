@@ -24,7 +24,10 @@ export enum CredentialsKeyEnum {
   ProjectName = 'projectName',
   ServiceAccount = 'serviceAccount',
   BaseUrl = 'baseUrl',
-  WebhookUrl = 'webhoohUrl',
+  WebhookUrl = 'webhookUrl',
+  RequireTls = 'requireTls',
+  IgnoreTls = 'ignoreTls',
+  TlsOptions = 'tlsOptions',
 }
 
 export enum EmailProviderIdEnum {
@@ -32,12 +35,18 @@ export enum EmailProviderIdEnum {
   Mailgun = 'mailgun',
   Mailjet = 'mailjet',
   Mandrill = 'mandrill',
-  Nodemailer = 'nodemailer',
+  CustomSMTP = 'nodemailer',
   Postmark = 'postmark',
   SendGrid = 'sendgrid',
   Sendinblue = 'sendinblue',
   SES = 'ses',
   NetCore = 'netcore',
+  Infobip = 'infobip-email',
+  Resend = 'resend',
+  MailerSend = 'mailersend',
+  Clickatell = 'clickatell',
+  Outlook365 = 'outlook365',
+  Novu = 'novu-email',
 }
 
 export enum SmsProviderIdEnum {
@@ -49,6 +58,9 @@ export enum SmsProviderIdEnum {
   Twilio = 'twilio',
   Gupshup = 'gupshup',
   Firetext = 'firetext',
+  Infobip = 'infobip-sms',
+  BurstSms = 'burst-sms',
+  Clickatell = 'clickatell',
   BulkSMS = 'bulksms',
 }
 

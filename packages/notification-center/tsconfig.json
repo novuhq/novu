@@ -8,9 +8,12 @@
     "typeRoots": ["./node_modules/@types"],
     "jsx": "react",
     "module": "ESNext",
-    "declarationDir": "types",
+    "lib": ["ESNext", "dom"],
+    "declaration": false,
+    "declarationMap": false,
     "sourceMap": true,
     "outDir": "dist",
-    "emitDeclarationOnly": true,
-  }
+    "baseUrl": "."
+  },
+  "exclude": ["src/**/*.test.*", "src/*.test.*"]
 }

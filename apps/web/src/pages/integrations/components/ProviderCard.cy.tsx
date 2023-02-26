@@ -3,10 +3,10 @@ import { ProviderCard } from './ProviderCard';
 import { ChannelTypeEnum, CredentialsKeyEnum } from '@novu/shared';
 import { ColorSchemeProvider } from '@mantine/core';
 
-const providerCardTestId = 'integration-provider-card';
+const providerCardTestId = 'integration-provider-card-sendgrid';
 
 const provider = {
-  providerId: 'providerItem.id',
+  providerId: 'sendgrid',
   integrationId: 'integration.id',
   displayName: 'providerItem.displayName',
   channel: ChannelTypeEnum.EMAIL,

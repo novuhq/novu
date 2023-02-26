@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { SubscriberRepository } from '@novu/dal';
+import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 export class SubscribersService {
@@ -7,7 +7,7 @@ export class SubscribersService {
 
   constructor(private _organizationId: string, private _environmentId: string) {}
 
-  async createSubscriber() {
+  async createSubscriber(fields: Partial<SubscriberEntity> = {}) {
     return await this.subscriberRepository.create({
       lastName: faker.name.lastName(),
       firstName: faker.name.firstName(),
@@ -28,6 +28,7 @@ export class SubscribersService {
           credentials: { deviceTokens: ['identifier'] },
         },
       ],
+      ...fields,
     });
   }
 }

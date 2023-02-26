@@ -1,16 +1,17 @@
-import { forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
-  UserEntity,
-  UserRepository,
-  MemberEntity,
-  OrganizationRepository,
   EnvironmentRepository,
+  MemberEntity,
+  MemberRepository,
+  OrganizationRepository,
   SubscriberEntity,
   SubscriberRepository,
-  MemberRepository,
+  UserEntity,
+  UserRepository,
 } from '@novu/dal';
-import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum } from '@novu/shared';
+import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum, SignUpOriginEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
@@ -18,9 +19,10 @@ import { SwitchEnvironmentCommand } from '../usecases/switch-environment/switch-
 import { SwitchEnvironment } from '../usecases/switch-environment/switch-environment.usecase';
 import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
-import { QueueService } from '../../shared/services/queue';
-import { AnalyticsService } from '../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
+import { CacheKeyPrefixEnum } from '../../shared/services/cache';
+import { Cached } from '../../shared/interceptors';
+import { normalizeEmail } from '../../shared/helpers/email-normalization.service';
 
 @Injectable()
 export class AuthService {
@@ -29,7 +31,6 @@ export class AuthService {
     private subscriberRepository: SubscriberRepository,
     private createUserUsecase: CreateUser,
     private jwtService: JwtService,
-    private queueService: QueueService,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
@@ -43,16 +44,18 @@ export class AuthService {
     accessToken: string,
     refreshToken: string,
     profile: { name: string; login: string; email: string; avatar_url: string; id: string },
-    distinctId: string
+    distinctId: string,
+    origin?: SignUpOriginEnum
   ) {
-    let user = await this.userRepository.findByLoginProvider(profile.id, authProvider);
+    const email = normalizeEmail(profile.email);
+    let user = await this.userRepository.findByEmail(email);
     let newUser = false;
 
     if (!user) {
       user = await this.createUserUsecase.execute(
         CreateUserCommand.create({
           picture: profile.avatar_url,
-          email: profile.email,
+          email,
           lastName: profile.name ? profile.name.split(' ').slice(-1).join(' ') : null,
           firstName: profile.name ? profile.name.split(' ').slice(0, -1).join(' ') : profile.login,
           auth: {
@@ -65,11 +68,16 @@ export class AuthService {
       );
       newUser = true;
 
-      this.analyticsService.upsertUser(user, distinctId || user._id);
-
       if (distinctId) {
         this.analyticsService.alias(distinctId, user._id);
       }
+
+      this.analyticsService.upsertUser(user, user._id);
+
+      this.analyticsService.track('[Authentication] - Signup', user._id, {
+        loginType: authProvider,
+        origin: origin,
+      });
     } else {
       this.analyticsService.track('[Authentication] - Login', user._id, {
         loginType: authProvider,
@@ -83,7 +91,8 @@ export class AuthService {
   }
 
   async refreshToken(userId: string) {
-    const user = await this.userRepository.findById(userId);
+    const user = await this.getUser({ _id: userId });
+    if (!user) throw new UnauthorizedException('User not found');
 
     return this.getSignedToken(user);
   }
@@ -93,11 +102,14 @@ export class AuthService {
   }
 
   async apiKeyAuthenticate(apiKey: string) {
-    const environment = await this.environmentRepository.findByApiKey(apiKey);
+    const environment = await this.getEnvironment({ _id: apiKey });
     if (!environment) throw new UnauthorizedException('API Key not found');
 
     const key = environment.apiKeys.find((i) => i.key === apiKey);
-    const user = await this.userRepository.findById(key._userId);
+    if (!key) throw new UnauthorizedException('API Key not found');
+
+    const user = await this.getUser({ _id: key._userId });
+    if (!user) throw new UnauthorizedException('User not found');
 
     return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
   }
@@ -192,7 +204,7 @@ export class AuthService {
     member?: MemberEntity,
     environmentId?: string
   ): Promise<string> {
-    const roles = [];
+    const roles: MemberRoleEnum[] = [];
     if (member && member.roles) {
       roles.push(...member.roles);
     }
@@ -216,7 +228,9 @@ export class AuthService {
   }
 
   async validateUser(payload: IJwtPayload): Promise<UserEntity> {
-    const user = await this.userRepository.findById(payload._id);
+    const user = await this.getUser({ _id: payload._id });
+    if (!user) throw new UnauthorizedException('User not found');
+
     if (payload.organizationId) {
       const isMember = await this.isAuthenticatedForOrganization(payload._id, payload.organizationId);
       if (!isMember) throw new UnauthorizedException(`No authorized for organization ${payload.organizationId}`);
@@ -225,9 +239,9 @@ export class AuthService {
     return user;
   }
 
-  async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity> {
-    const subscriber = await this.subscriberRepository.findOne({
-      _environmentId: payload.environmentId,
+  async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity | null> {
+    const subscriber = await this.getSubscriber({
+      environmentId: payload.environmentId,
       _id: payload._id,
     });
 
@@ -246,7 +260,32 @@ export class AuthService {
     const environment = await this.environmentRepository.findOne({
       _id: payload.environmentId,
     });
+    if (!environment) throw new NotFoundException('Environment not found');
 
     return !!environment._parentId;
+  }
+
+  @Cached(CacheKeyPrefixEnum.SUBSCRIBER)
+  private async getSubscriber({ _id, environmentId }: { _id: string; environmentId: string }) {
+    const subscriber = await this.subscriberRepository.findOne({
+      _environmentId: environmentId,
+      _id: _id,
+    });
+
+    return subscriber;
+  }
+
+  @Cached(CacheKeyPrefixEnum.USER)
+  private async getUser({ _id }: { _id: string }) {
+    return await this.userRepository.findById(_id);
+  }
+
+  @Cached(CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY)
+  private async getEnvironment({ _id }: { _id: string }) {
+    /**
+     * _id is used here because the Cached decorator needs and it.
+     * TODO: Refactor cached decorator to support custom keys
+     */
+    return await this.environmentRepository.findByApiKey(_id);
   }
 }

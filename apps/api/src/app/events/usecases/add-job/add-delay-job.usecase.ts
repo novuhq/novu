@@ -12,13 +12,15 @@ export class AddDelayJob {
 
   public async execute(command: AddJobCommand): Promise<number | undefined> {
     const data = await this.jobRepository.findById(command.jobId);
+    if (!data) throw new ApiException(`Job with id ${command.jobId} not found`);
+
     const isDelayStep = data.type === StepTypeEnum.DELAY;
 
     if (!data || !isDelayStep) {
       return undefined;
     }
 
-    await this.jobRepository.updateStatus(data._id, JobStatusEnum.DELAYED);
+    await this.jobRepository.updateStatus(command.organizationId, data._id, JobStatusEnum.DELAYED);
 
     return await this.calculateDelayAmount(data);
   }
@@ -36,8 +38,12 @@ export class AddDelayJob {
   }
 
   private async calculateDelayAmount(data: JobEntity): Promise<number> {
+    if (!data.step.metadata) throw new ApiException(`Step metadata not found`);
+
     if (data.step.metadata.type === DelayTypeEnum.SCHEDULED) {
       const delayPath = data.step.metadata.delayPath;
+      if (!delayPath) throw new ApiException(`Delay path not found`);
+
       const delayDate = data.payload[delayPath];
 
       const delay = differenceInMilliseconds(new Date(delayDate), new Date());
@@ -46,9 +52,9 @@ export class AddDelayJob {
         throw new ApiException(`Delay date at path ${delayPath} must be a future date`);
       }
 
-      const noiIdenticalDelay = await this.noExistingDelayedJobForDate(data, delayPath, delayDate);
+      const noIdenticalDelay = await this.noExistingDelayedJobForDate(data, delayPath, delayDate);
 
-      if (noiIdenticalDelay) {
+      if (noIdenticalDelay) {
         return delay;
       }
 
@@ -59,7 +65,7 @@ export class AddDelayJob {
       return AddJob.toMilliseconds(data.overrides.delay.amount as number, data.overrides.delay.unit as DigestUnitEnum);
     }
 
-    return AddJob.toMilliseconds(data.step.metadata.amount, data.step.metadata.unit);
+    return AddJob.toMilliseconds(data.step.metadata.amount as number, data.step.metadata.unit as DigestUnitEnum);
   }
 
   /**
@@ -68,8 +74,8 @@ export class AddDelayJob {
    */
   private async noExistingDelayedJobForDate(
     data: JobEntity,
-    currDelayPath: string,
-    currDelayDate: string
+    currentDelayPath: string,
+    currentDelayDate: string
   ): Promise<boolean> {
     return !(await this.jobRepository.findOne({
       status: JobStatusEnum.DELAYED,
@@ -79,8 +85,8 @@ export class AddDelayJob {
       _environmentId: data._environmentId,
       transactionId: { $ne: data.transactionId },
       'step.metadata.type': DelayTypeEnum.SCHEDULED,
-      'step.metadata.delayPath': currDelayPath,
-      [`payload.${currDelayPath}`]: currDelayDate,
+      'step.metadata.delayPath': currentDelayPath,
+      [`payload.${currentDelayPath}`]: currentDelayDate,
     }));
   }
 }
