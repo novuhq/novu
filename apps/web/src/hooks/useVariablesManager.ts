@@ -3,8 +3,7 @@ import { useFieldArray, useFormContext } from 'react-hook-form';
 import { parse } from '@handlebars/parser';
 import isEqual from 'lodash.isequal';
 import { getTemplateVariables } from '@novu/shared';
-
-import type { IForm, ITemplates } from '../components/templates/formTypes';
+import { IForm, ITemplates } from '../pages/templates/components/formTypes';
 
 export const useVariablesManager = (index: number, contents: string[]) => {
   const { watch, control, getValues } = useFormContext<IForm>();

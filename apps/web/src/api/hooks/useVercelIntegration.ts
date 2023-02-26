@@ -3,8 +3,8 @@ import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
-import { useVercelParams } from '../../hooks/useVercelParams';
-import { useAuthContext } from '../../store/authContext';
+import { useVercelParams } from '../../hooks';
+import { useAuthContext } from '../../components/providers/AuthProvider';
 import { errorMessage } from '../../utils/notifications';
 import { vercelIntegrationSetup } from '../vercel-integration';
 

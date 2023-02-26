@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Grid } from '@mantine/core';
 
 import { Input, Switch, Text } from '../../../design-system';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
 import { DoubleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 

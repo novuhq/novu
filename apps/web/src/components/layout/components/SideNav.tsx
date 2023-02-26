@@ -13,11 +13,11 @@ import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
-import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
-import { useEnvController } from '../../../store/useEnvController';
-import { useAuthContext } from '../../../store/authContext';
+import { ChangesCountBadge } from './ChangesCountBadge';
+import { useEnvController } from '../../../hooks';
+import { useAuthContext } from '../../providers/AuthProvider';
 import OrganizationSelect from './OrganizationSelect';
-import { useSpotlightContext } from '../../../store/spotlightContext';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
 import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 import { localNavigate } from '../../../pages/quick-start/components/route/store';

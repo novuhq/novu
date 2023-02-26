@@ -4,7 +4,7 @@ import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { OnBoardingAnalyticsEnum, welcomeDescription } from '../consts';
 import { Stack } from '@mantine/core';
 import { Cards } from '../components/Cards';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function FrameworkSetup() {
   const segment = useSegment();

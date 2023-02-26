@@ -1,16 +1,4 @@
 <div align="center">
-  <a href="https://novu.co/polishing" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/100117126/216938999-e49784fc-f5a9-43d3-8430-f33c1be1a38a.jpeg">
-    <img width="100%" src="https://user-images.githubusercontent.com/100117126/216939116-d5f8f4d2-6c7c-4165-a509-0844909dd9eb.jpeg" width="280" alt="Bar"/>
-  </picture>
-  </a>
-</div>
-
-</br>
-</br>
-
-<div align="center">
   <a href="https://novu.co" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">

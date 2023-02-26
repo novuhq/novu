@@ -1,5 +1,5 @@
 import { FieldErrors } from 'react-hook-form';
-import { IForm } from '../../../components/templates/formTypes';
+import { IForm } from '../components/formTypes';
 
 export function getExplicitErrors(errors: FieldErrors<IForm>, mode: 'settings' | 'steps' | 'all' = 'all'): string {
   const errorsArray: string[] = [];

@@ -1,11 +1,10 @@
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
-import { IsBoolean, IsDefined, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsDefined, IsMongoId, IsOptional, ValidateNested } from 'class-validator';
 import { ChannelPreference } from '../../../shared/dtos/channel-preference';
 
 export class UpdateSubscriberPreferenceCommand extends EnvironmentWithSubscriber {
   @IsDefined()
-  @IsNotEmpty()
-  @IsString()
+  @IsMongoId()
   templateId: string;
 
   @IsBoolean()

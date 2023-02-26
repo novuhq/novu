@@ -1,15 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JobEntity, JobStatusEnum, NotificationRepository, NotificationStepEntity } from '@novu/dal';
-import { STEP_TYPE_TO_CHANNEL_TYPE, InAppProviderIdEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
 import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../../../integrations/usecases/get-decrypted-integrations';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
@@ -18,11 +14,7 @@ type NotificationJob = Omit<JobEntity, '_id'>;
 
 @Injectable()
 export class CreateNotificationJobs {
-  constructor(
-    private digestFilterSteps: DigestFilterSteps,
-    private getDecryptedIntegrations: GetDecryptedIntegrations,
-    private notificationRepository: NotificationRepository
-  ) {}
+  constructor(private digestFilterSteps: DigestFilterSteps, private notificationRepository: NotificationRepository) {}
 
   public async execute(command: CreateNotificationJobsCommand): Promise<NotificationJob[]> {
     const notification = await this.notificationRepository.create({
@@ -59,11 +51,8 @@ export class CreateNotificationJobs {
     for (const step of steps) {
       if (!step.template) throw new ApiException('Step template was not found');
 
-      const providerId = await this.getProviderId(
-        command.userId,
-        command.organizationId,
-        command.environmentId,
-        step.template.type
+      const providerId = command.templateProviderIds.get(
+        STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type) as ChannelTypeEnum
       );
 
       const job = {
@@ -89,29 +78,5 @@ export class CreateNotificationJobs {
     }
 
     return jobs;
-  }
-
-  private async getProviderId(
-    userId: string,
-    organizationId: string,
-    environmentId: string,
-    stepType: StepTypeEnum
-  ): Promise<string | undefined> {
-    const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(stepType);
-
-    if (!channelType) return;
-
-    const integrations = await this.getDecryptedIntegrations.execute(
-      GetDecryptedIntegrationsCommand.create({
-        channelType: channelType,
-        active: true,
-        organizationId,
-        environmentId,
-        userId,
-      })
-    );
-    const integration = integrations[0];
-
-    return integration?.providerId ?? InAppProviderIdEnum.Novu;
   }
 }

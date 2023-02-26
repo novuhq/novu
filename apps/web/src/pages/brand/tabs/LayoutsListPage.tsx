@@ -7,14 +7,13 @@ import { Edit, Trash } from '../../../design-system/icons';
 import styled from '@emotion/styled';
 import { useState } from 'react';
 import { LayoutEditor } from './LayoutEditor';
-import { DeleteConfirmModal } from '../../../components/templates/DeleteConfirmModal';
 import { When } from '../../../components/utils/When';
-import { useLayouts } from '../../../api/hooks/useLayouts';
+import { useLayouts, useEnvController } from '../../../hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteLayoutById } from '../../../api/layouts';
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { useEnvController } from '../../../store/useEnvController';
 import { QueryKeys } from '../../../api/query.keys';
+import { DeleteConfirmModal } from '../../templates/components/DeleteConfirmModal';
 
 const enum ActivePageEnum {
   LAYOUTS_LIST = 'layouts_list',

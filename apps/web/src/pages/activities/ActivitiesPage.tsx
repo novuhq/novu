@@ -4,7 +4,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
 import styled from '@emotion/styled';
 
-import { useTemplates } from '../../api/hooks/useTemplates';
+import { useTemplates, useDebounce } from '../../hooks';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageMeta from '../../components/layout/components/PageMeta';
@@ -13,9 +13,8 @@ import { Select, Input, Button } from '../../design-system';
 import { ActivityStatistics } from './components/ActivityStatistics';
 import { ActivityGraph } from './components/ActivityGraph';
 import { ActivityList } from './components/ActivityList';
-import { ExecutionDetailsModal } from '../../components/activity/ExecutionDetailsModal';
+import { ExecutionDetailsModal } from '../../components/execution-detail/ExecutionDetailsModal';
 import { IActivityGraphStats } from './interfaces';
-import { useDebounce } from '../../hooks/useDebounce';
 
 const FiltersContainer = styled.div`
   width: 80%;
