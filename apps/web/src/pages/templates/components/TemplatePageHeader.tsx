@@ -8,12 +8,20 @@ import { When } from '../../../components/utils/When';
 import { useTemplateEditor } from './TemplateEditorProvider';
 import { useStatusChangeControllerHook } from './useStatusChangeController';
 
-const Header = ({ activePage, editMode }: { editMode: boolean; activePage: ActivePageEnum }) => {
+const Header = ({
+  activePage,
+  editMode,
+  name = 'Workflow Editor',
+}: {
+  editMode: boolean;
+  activePage: ActivePageEnum;
+  name?: string;
+}) => {
   if (activePage === ActivePageEnum.SETTINGS) {
     return <>{editMode ? 'Edit Template' : 'Create new template'}</>;
   }
   if (activePage === ActivePageEnum.WORKFLOW) {
-    return <>{'Workflow Editor'}</>;
+    return <>{name}</>;
   }
 
   if (activePage === ActivePageEnum.USER_PREFERENCE) {
@@ -73,7 +81,7 @@ export const TemplatePageHeader = ({
       <Group position="apart">
         <div>
           <Title>
-            <Header editMode={editMode} activePage={activePage} />
+            <Header editMode={editMode} activePage={activePage} name={template?.name} />
           </Title>
           <When truthy={EditorPages.includes(activePage)}>
             <Center
