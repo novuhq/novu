@@ -25,9 +25,9 @@
     "prepare": "cd .. && husky install docs/.husky"
   },
   "dependencies": {
-    "@docusaurus/core": "2.0.0-beta.20",
+    "@docusaurus/core": "2.3.1",
     "@docusaurus/plugin-google-gtag": "^2.1.0",
-    "@docusaurus/preset-classic": "2.0.0-beta.20",
+    "@docusaurus/preset-classic": "2.3.1",
     "@mdx-js/react": "^1.6.21",
     "@svgr/webpack": "^6.2.1",
     "clsx": "^1.1.1",
@@ -43,7 +43,7 @@
     "url-loader": "^4.1.1"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "2.0.0-beta.20",
+    "@docusaurus/module-type-aliases": "2.3.1",
     "@tsconfig/docusaurus": "^1.0.5",
     "@types/react": "^17.0.14",
     "@types/react-helmet": "6.1.6",

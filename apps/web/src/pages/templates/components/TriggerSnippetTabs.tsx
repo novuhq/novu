@@ -16,14 +16,17 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
     ? [...triggerSubscriberVariables]
     : [{ name: 'subscriberId' }, ...triggerSubscriberVariables];
 
+  const toValue = getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>');
+  const payloadValue = getPayloadValue(trigger.variables);
+
   const prismTabs = [
     {
       value: NODE_JS,
-      content: getNodeTriggerSnippet(trigger.identifier, trigger.variables, subscriberVariables),
+      content: getNodeTriggerSnippet(trigger.identifier, toValue, payloadValue),
     },
     {
       value: CURL,
-      content: getCurlTriggerSnippet(trigger.identifier, trigger.variables, subscriberVariables),
+      content: getCurlTriggerSnippet(trigger.identifier, toValue, payloadValue),
     },
   ];
 
@@ -32,8 +35,9 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
 
 export const getNodeTriggerSnippet = (
   identifier: string,
-  variables: INotificationTriggerVariable[],
-  subscriberVariables: INotificationTriggerVariable[]
+  to: Record<string, unknown>,
+  payload: Record<string, unknown>,
+  overrides?: Record<string, unknown>
 ) => {
   const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
 
@@ -41,8 +45,9 @@ const novu = new Novu('<API_KEY>');
 
 novu.trigger('${identifier}', ${JSON.stringify(
     {
-      to: { ...getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>') },
-      payload: { ...getPayloadValue(variables) },
+      to,
+      payload,
+      overrides,
     },
     null,
     2
@@ -61,8 +66,9 @@ novu.trigger('${identifier}', ${JSON.stringify(
 
 export const getCurlTriggerSnippet = (
   identifier: string,
-  variables: INotificationTriggerVariable[],
-  subscriberVariables: INotificationTriggerVariable[]
+  to: Record<string, any>,
+  payload: Record<string, any>,
+  overrides?: Record<string, any>
 ) => {
   const curlSnippet = `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
      --header 'Authorization: ApiKey <REPLACE_WITH_API_KEY>' \\
@@ -70,8 +76,9 @@ export const getCurlTriggerSnippet = (
      --data-raw '${JSON.stringify(
        {
          name: identifier,
-         to: { ...getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>') },
-         payload: { ...getPayloadValue(variables) },
+         to,
+         payload,
+         overrides,
        },
        null,
        2

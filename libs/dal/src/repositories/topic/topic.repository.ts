@@ -4,6 +4,7 @@ import { TopicEntity, TopicDBModel } from './topic.entity';
 import { Topic } from './topic.schema';
 import { EnvironmentId, ExternalSubscriberId, OrganizationId, TopicId, TopicKey, TopicName } from './types';
 import { BaseRepository } from '../base-repository';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 const TOPIC_SUBSCRIBERS_COLLECTION = 'topicsubscribers';
 
@@ -27,7 +28,7 @@ const lookup = {
   },
 };
 
-export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity> {
+export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Topic, TopicEntity);
   }

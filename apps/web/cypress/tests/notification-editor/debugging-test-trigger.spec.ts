@@ -69,7 +69,8 @@ describe('Debugging - test trigger', function () {
 
     cy.getByTestId('test-trigger-modal').should('be.visible');
     cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-to-param').type('{backspace}');
-    cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-btn').click();
+    cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-payload-param').click();
+    cy.getByTestId('test-trigger-modal').getByTestId('test-trigger-btn').should('be.disabled');
     cy.getByTestId('test-trigger-modal').should('be.visible');
     cy.getByTestId('test-trigger-modal')
       .getByTestId('test-trigger-to-param')

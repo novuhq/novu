@@ -6,10 +6,11 @@ import { Layout } from './layout.schema';
 import { EnvironmentId, OrderDirectionEnum, OrganizationId, LayoutId } from './types';
 import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
+import { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-type LayoutQuery = FilterQuery<LayoutDBModel>;
+type LayoutQuery = FilterQuery<LayoutDBModel> & EnforceEnvOrOrgIds;
 
-export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity> {
+export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity, EnforceEnvOrOrgIds> {
   private layout: SoftDeleteModel;
 
   constructor() {

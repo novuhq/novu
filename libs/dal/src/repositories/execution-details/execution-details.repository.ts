@@ -3,11 +3,16 @@ import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { ExecutionDetailsEntity, ExecutionDetailsDBModel } from './execution-details.entity';
 import { ExecutionDetails } from './execution-details.schema';
 import { BaseRepository } from '../base-repository';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 /**
  * Execution details is meant to be read only almost exclusively as a log history of the Jobs executions.
  */
-export class ExecutionDetailsRepository extends BaseRepository<ExecutionDetailsDBModel, ExecutionDetailsEntity> {
+export class ExecutionDetailsRepository extends BaseRepository<
+  ExecutionDetailsDBModel,
+  ExecutionDetailsEntity,
+  EnforceEnvOrOrgIds
+> {
   constructor() {
     super(ExecutionDetails, ExecutionDetailsEntity);
   }

@@ -6,8 +6,9 @@ import { FeedDBModel, FeedEntity } from './feed.entity';
 import { Feed } from './feed.schema';
 import { DalException } from '../../shared';
 import { MessageTemplateRepository } from '../message-template';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-export class FeedRepository extends BaseRepository<FeedDBModel, FeedEntity> {
+export class FeedRepository extends BaseRepository<FeedDBModel, FeedEntity, EnforceEnvOrOrgIds> {
   private feed: SoftDeleteModel;
   private messageTemplateRepository = new MessageTemplateRepository();
   constructor() {

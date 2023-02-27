@@ -58,7 +58,9 @@ export class UpdateSubscriberPreference {
     }
 
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
-    if (!template) throw new NotFoundException(`Template ${command.templateId} is not found`);
+    if (!template) {
+      throw new NotFoundException(`Template with id ${command.templateId} is not found`);
+    }
 
     const getSubscriberPreferenceCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: command.organizationId,

@@ -6,10 +6,11 @@ import { Subscriber } from './subscriber.schema';
 import { IExternalSubscribersEntity } from './types';
 import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-type SubscriberQuery = FilterQuery<SubscriberDBModel>;
+type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
 
-export class SubscriberRepository extends BaseRepository<SubscriberDBModel, SubscriberEntity> {
+export class SubscriberRepository extends BaseRepository<SubscriberDBModel, SubscriberEntity, EnforceEnvOrOrgIds> {
   private subscriber: SoftDeleteModel;
   constructor() {
     super(Subscriber, SubscriberEntity);
