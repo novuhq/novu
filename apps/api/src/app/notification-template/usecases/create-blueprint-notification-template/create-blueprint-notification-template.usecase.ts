@@ -139,7 +139,7 @@ export class CreateBlueprintNotificationTemplate {
     return group;
   }
 
-  private getBlueprintOrganizationId() {
-    return NotificationTemplateRepository.getBlueprintOrganizationId();
+  private getBlueprintOrganizationId(): string {
+    return NotificationTemplateRepository.getBlueprintOrganizationId() as string;
   }
 }
