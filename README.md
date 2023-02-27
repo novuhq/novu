@@ -205,3 +205,4 @@ Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 <a href="https://novu.co/contributors">
   <img src="https://contributors-img.web.app/image?repo=novuhq/novu" />
 </a>
+
