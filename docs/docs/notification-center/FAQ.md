@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 8
 ---
 
 # FAQs
@@ -17,14 +17,14 @@ Possible causes for the notification center not loading properly:
 </details>
 
 <details>
- <summary>There is render error due to notification center in react.</summary>
+ <summary>There is a render error due to notification center in react.</summary>
 
-Notification center should be wrapped in <code>NovuProvider</code>.
+Notification center should be wrapped in <b>NovuProvider</b>.
 
 </details>
 
 <details>
- <summary>What socket events are supported in useSocket hook?</summary>
+ <summary>What socket events are supported in <b>useSocket</b> hook?</summary>
 
 There are two events. <b>unread_count_changed</b> and <b>unseen_count_changed</b>.
 
@@ -47,6 +47,6 @@ Add a in-app step in template workflow. Click on this step and then click on edi
 <details>
  <summary>How to customize notification center?</summary>
 
-Everything can be customized in Novu. useNotification hook in react component provides few functions to customize. Header, Footer, Bell etc can also be customized. Read more about customization [here](./react/react-components#custom-ui)
+Everything can be customized in Novu. <b>useNotification</b> hook in react component provides few functions to customize. <b>Header</b>, <b>Footer</b>, <b>Bell</b> etc can also be customized. Read more about customization [here](./react/react-components#custom-ui)
 
 </details>
