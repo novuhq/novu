@@ -8,54 +8,61 @@ import { colors } from '../../design-system';
 import { IntercomProvider } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../config';
 import { HEADER_HEIGHT } from './constants';
-import { PolishingBanner } from './components/PolishingBanner';
+import { RequiredAuth } from './RequiredAuth';
+import { SpotLight } from '../utils/Spotlight';
+import { SpotLightProvider } from '../../store/spotlightContext';
 
 export function AppLayout() {
   return (
-    <ThemeProvider>
-      <SupportChatProvider>
-        <AppShell
-          padding="lg"
-          navbar={<SideNav />}
-          header={<HeaderNav />}
-          styles={(theme) => ({
-            root: { minHeight: '100vh', position: 'relative', zIndex: 1 },
-            body: {
-              minHeight: `calc(100vh - ${HEADER_HEIGHT})`,
-              '@media (max-width: 768px)': {
-                flexDirection: 'column',
-                height: 'auto',
-              },
-            },
-            main: {
-              backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
-              minHeight: 'auto',
-              padding: '30px',
-            },
-          })}
-        >
-          <Sentry.ErrorBoundary
-            fallback={({ error, resetError, eventId }) => (
-              <>
-                Sorry, but something went wrong. <br />
-                Our team been notified about it and we will look at it asap.
-                <br />
-                <code>
-                  <small style={{ color: 'lightGrey' }}>
-                    Event Id: {eventId}.
+    <RequiredAuth>
+      <SpotLightProvider>
+        <ThemeProvider>
+          <SupportChatProvider>
+            <AppShell
+              padding="lg"
+              navbar={<SideNav />}
+              header={<HeaderNav />}
+              styles={(theme) => ({
+                root: { minHeight: '100vh', position: 'relative', zIndex: 1 },
+                body: {
+                  minHeight: `calc(100vh - ${HEADER_HEIGHT})`,
+                  '@media (max-width: 768px)': {
+                    flexDirection: 'column',
+                    height: 'auto',
+                  },
+                },
+                main: {
+                  backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
+                  minHeight: 'auto',
+                  padding: '30px',
+                },
+              })}
+            >
+              <Sentry.ErrorBoundary
+                fallback={({ error, resetError, eventId }) => (
+                  <>
+                    Sorry, but something went wrong. <br />
+                    Our team been notified about it and we will look at it asap.
                     <br />
-                    {error.toString()}
-                  </small>
-                </code>
-              </>
-            )}
-          >
-            <PolishingBanner />
-            <Outlet />
-          </Sentry.ErrorBoundary>
-        </AppShell>
-      </SupportChatProvider>
-    </ThemeProvider>
+                    <code>
+                      <small style={{ color: 'lightGrey' }}>
+                        Event Id: {eventId}.
+                        <br />
+                        {error.toString()}
+                      </small>
+                    </code>
+                  </>
+                )}
+              >
+                <SpotLight>
+                  <Outlet />
+                </SpotLight>
+              </Sentry.ErrorBoundary>
+            </AppShell>
+          </SupportChatProvider>
+        </ThemeProvider>
+      </SpotLightProvider>
+    </RequiredAuth>
   );
 }
 

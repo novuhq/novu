@@ -24,6 +24,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
         email: 'john@doe.com',
         phone: '+972523333333',
         locale: 'en',
+        data: { test1: 'test value1', test2: 'test value2' },
       },
       {
         headers: {
@@ -37,10 +38,11 @@ describe('Create Subscriber - /subscribers (POST)', function () {
     expect(body.data).to.be.ok;
     const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
 
-    expect(createdSubscriber.firstName).to.equal('John');
-    expect(createdSubscriber.email).to.equal('john@doe.com');
-    expect(createdSubscriber.phone).to.equal('+972523333333');
-    expect(createdSubscriber.locale).to.equal('en');
+    expect(createdSubscriber?.firstName).to.equal('John');
+    expect(createdSubscriber?.email).to.equal('john@doe.com');
+    expect(createdSubscriber?.phone).to.equal('+972523333333');
+    expect(createdSubscriber?.locale).to.equal('en');
+    expect(createdSubscriber?.data?.test1).to.equal('test value1');
   });
 
   it('should update subscriber if already created', async function () {
@@ -50,6 +52,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
         subscriberId: '123',
         firstName: 'John',
         lastName: 'Doe',
+        data: { test1: 'test value1', test2: 'test value2' },
       },
       {
         headers: {
@@ -79,6 +82,7 @@ describe('Create Subscriber - /subscribers (POST)', function () {
         lastName: 'Doe',
         email: 'john@doe.com',
         locale: 'en',
+        data: { test1: 'new test value1', test3: 'test value3' },
       },
       {
         headers: {
@@ -92,8 +96,11 @@ describe('Create Subscriber - /subscribers (POST)', function () {
     expect(body.data).to.be.ok;
     const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, '123');
 
-    expect(createdSubscriber.firstName).to.equal('Mary');
-    expect(createdSubscriber.email).to.equal('john@doe.com');
-    expect(createdSubscriber.locale).to.equal('en');
+    expect(createdSubscriber?.firstName).to.equal('Mary');
+    expect(createdSubscriber?.email).to.equal('john@doe.com');
+    expect(createdSubscriber?.locale).to.equal('en');
+    expect(createdSubscriber?.data?.test1).to.equal('new test value1');
+    expect(!createdSubscriber?.data?.test2).to.equal(true);
+    expect(createdSubscriber?.data?.test3).to.equal('test value3');
   });
 });

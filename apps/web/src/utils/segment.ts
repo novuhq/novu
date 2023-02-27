@@ -18,14 +18,7 @@ export class SegmentService {
       return;
     }
 
-    this._segment?.identify({
-      userId: user._id,
-      traits: {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-      },
-    });
+    this._segment?.identify(user?._id);
   }
 
   track(event: string, data?: Record<string, unknown>) {

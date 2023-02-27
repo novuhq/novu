@@ -35,6 +35,19 @@ export class OrganizationRepository extends BaseRepository<
     );
   }
 
+  async renameOrganization(organizationId: string, payload: { name: string }) {
+    return this.update(
+      {
+        _id: organizationId,
+      },
+      {
+        $set: {
+          name: payload.name,
+        },
+      }
+    );
+  }
+
   async findPartnerConfigurationDetails(organizationId: string, userId: string, configurationId: string) {
     const members = await this.memberRepository.findUserActiveMembers(userId);
 

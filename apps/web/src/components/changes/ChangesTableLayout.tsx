@@ -53,7 +53,7 @@ export const ChangesTable = ({
     {
       accessor: 'change',
       Header: 'Change',
-      Cell: ({ type, templateName, messageType }: any) => (
+      Cell: ({ type, templateName, messageType, previousDefaultLayout }: any) => (
         <div data-test-id="change-type">
           {type === ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE && (
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Template Change</Text>
@@ -69,6 +69,14 @@ export const ChangesTable = ({
           )}
           {type === ChangeEntityTypeEnum.LAYOUT && (
             <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Layout Change</Text>
+          )}
+          {type === ChangeEntityTypeEnum.DEFAULT_LAYOUT && (
+            <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Default Layout Change</Text>
+          )}
+          {previousDefaultLayout && (
+            <Text data-test-id="previous-default-layout-content" rows={1} mt={5}>
+              Previous Default Layout: {previousDefaultLayout}
+            </Text>
           )}
           <Text data-test-id="change-content" rows={1} mt={5}>
             {templateName}

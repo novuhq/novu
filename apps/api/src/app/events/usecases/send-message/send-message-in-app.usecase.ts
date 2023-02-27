@@ -6,7 +6,7 @@ import {
   SubscriberRepository,
   SubscriberEntity,
   MessageEntity,
-  NotificationEntity,
+  OrganizationRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -31,6 +31,7 @@ import {
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { OrganizationEntity } from '../../../../../../../libs/dal/src/repositories/organization/organization.entity';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -44,7 +45,8 @@ export class SendMessageInApp extends SendMessageBase {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private organizationRepository: OrganizationRepository
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
   }
@@ -68,18 +70,27 @@ export class SendMessageInApp extends SendMessageBase {
     const { actor } = command.step.template;
 
     if (actor && actor.type !== ActorTypeEnum.NONE) {
-      actor.data = await this.processAvatar(actor, command, notification);
+      actor.data = await this.processAvatar(actor, command);
     }
 
+    const organization = await this.organizationRepository.findById(command.organizationId);
+
     try {
-      content = await this.compileInAppTemplate(inAppChannel.template.content, command.payload, subscriber, command);
+      content = await this.compileInAppTemplate(
+        inAppChannel.template.content,
+        command.payload,
+        subscriber,
+        command,
+        organization
+      );
 
       if (inAppChannel.template.cta?.data?.url) {
         inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
           inAppChannel.template.cta?.data?.url,
           command.payload,
           subscriber,
-          command
+          command,
+          organization
         );
       }
 
@@ -87,7 +98,13 @@ export class SendMessageInApp extends SendMessageBase {
         const ctaButtons: IMessageButton[] = [];
 
         for (const action of inAppChannel.template.cta.action.buttons) {
-          const buttonContent = await this.compileInAppTemplate(action.content, command.payload, subscriber, command);
+          const buttonContent = await this.compileInAppTemplate(
+            action.content,
+            command.payload,
+            subscriber,
+            command,
+            organization
+          );
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
 
@@ -235,7 +252,8 @@ export class SendMessageInApp extends SendMessageBase {
     content: string | IEmailBlock[],
     payload: any,
     subscriber: SubscriberEntity,
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    organization: OrganizationEntity | null
   ): Promise<string | null> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
@@ -247,17 +265,17 @@ export class SendMessageInApp extends SendMessageBase {
             events: command.events,
             total_count: command.events?.length,
           },
+          branding: {
+            logo: organization?.branding?.logo,
+            color: organization?.branding?.color || '#f47373',
+          },
           ...payload,
         },
       })
     );
   }
 
-  private async processAvatar(
-    actor: IActor,
-    command: SendMessageCommand,
-    notification: NotificationEntity
-  ): Promise<string | null> {
+  private async processAvatar(actor: IActor, command: SendMessageCommand): Promise<string | null> {
     const actorId = command.job?._actorId;
     if (actor.type === ActorTypeEnum.USER && actorId) {
       const actorSubscriber: SubscriberEntity | null = await this.subscriberRepository.findOne(

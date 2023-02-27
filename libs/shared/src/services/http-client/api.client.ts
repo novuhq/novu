@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 
+//SubscriberCustomData
 export interface IParamObject {
   [key: string]: string | string[] | number | boolean;
 }
@@ -50,5 +51,9 @@ export class HttpClient {
 
   async patch(url: string, body = {}) {
     return await this.axiosClient.patch(url, body).then((response) => response.data.data);
+  }
+
+  async delete(url: string, body = {}) {
+    return await this.axiosClient.delete(url, body).then((response) => response.data.data);
   }
 }

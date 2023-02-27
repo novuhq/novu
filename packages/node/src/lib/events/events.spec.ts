@@ -56,6 +56,42 @@ describe('test use of novus node package - Events', () => {
     });
   });
 
+  test('should pass overrides to request', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.events.trigger('test-template', {
+      to: ['test-user', 'test-another-user'],
+      payload: {
+        organizationName: 'Company',
+      },
+      overrides: {
+        fcm: {
+          type: 'notification',
+          data: {
+            test: 'test-data',
+          },
+        },
+      },
+    });
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger', {
+      name: 'test-template',
+      to: ['test-user', 'test-another-user'],
+      overrides: {
+        fcm: {
+          type: 'notification',
+          data: {
+            test: 'test-data',
+          },
+        },
+      },
+      payload: {
+        organizationName: 'Company',
+      },
+    });
+  });
+
   test('should trigger correctly for all subscribers definitions ', async () => {
     mockedAxios.post.mockResolvedValue({});
 
@@ -109,5 +145,48 @@ describe('test use of novus node package - Events', () => {
     expect(mockedAxios.delete).toHaveBeenCalledWith(
       '/events/trigger/transactionId'
     );
+  });
+
+  test('should bulk trigger correctly', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.events.bulkTrigger([
+      {
+        name: 'test-template-1',
+        to: 'test-user',
+        payload: {
+          email: 'test-user@sd.com',
+        },
+      },
+
+      {
+        name: 'test-template-2',
+        to: 'test-user',
+        payload: {
+          email: 'test-user@sd.com',
+        },
+      },
+    ]);
+
+    expect(mockedAxios.post).toHaveBeenCalled();
+    expect(mockedAxios.post).toHaveBeenCalledWith('/events/trigger/bulk', {
+      events: [
+        {
+          name: 'test-template-1',
+          to: 'test-user',
+          payload: {
+            email: 'test-user@sd.com',
+          },
+        },
+
+        {
+          name: 'test-template-2',
+          to: 'test-user',
+          payload: {
+            email: 'test-user@sd.com',
+          },
+        },
+      ],
+    });
   });
 });

@@ -1,28 +1,27 @@
 import React from 'react';
 import { useMantineTheme } from '@mantine/core';
-import { DeepRequired, FieldErrorsImpl, useFormState } from 'react-hook-form';
+import { useFormState } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { colors, TemplateButton, Text, Tooltip } from '../../design-system';
 import { BellGradient, ConnectGradient, LevelsGradient, TapeGradient } from '../../design-system/icons';
 import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { When } from '../utils/When';
+import { getExplicitErrors } from '../../pages/templates/shared/errors';
 
 export function TemplatesSideBar({
   activeTab,
   changeTab,
   showTriggerSection = false,
-  showErrors,
   minimalView = false,
 }: {
   activeTab: string;
   changeTab: (string) => void;
   showTriggerSection: boolean;
-  showErrors: boolean;
   minimalView?: boolean;
 }) {
   const { errors } = useFormState<{
     name: string;
-    notificationGroup: string;
+    notificationGroupId: string;
   }>();
 
   const theme = useMantineTheme();
@@ -41,7 +40,7 @@ export function TemplatesSideBar({
               active={activeTab === ActivePageEnum.SETTINGS}
               description={minimalView ? '' : `Configure cross-channel notification settings`}
               label={minimalView ? '' : `Notification Settings`}
-              errors={showErrors && (errors.name?.message || errors.notificationGroup?.message)}
+              errors={getExplicitErrors(errors, 'settings')}
             />
           </span>
         </StyledTooltip>
@@ -58,7 +57,7 @@ export function TemplatesSideBar({
               active={activeTab === ActivePageEnum.WORKFLOW}
               description={minimalView ? '' : `Create multi-step workflows`}
               label={minimalView ? '' : `Workflow Editor`}
-              errors={showErrors && getStepsErrors(errors)}
+              errors={getExplicitErrors(errors, 'steps')}
             />
           </span>
         </StyledTooltip>
@@ -105,15 +104,6 @@ export function TemplatesSideBar({
       )}
     </>
   );
-}
-
-function getStepsErrors(errors: FieldErrorsImpl<DeepRequired<{ name: string; notificationGroup: string }>>) {
-  const keys = Object.keys(errors);
-  const channelErrors = keys.filter((key) => {
-    return key.includes(`steps`);
-  });
-
-  return channelErrors.length > 0 && 'Something is missing here';
 }
 
 export const NavSection = styled.div``;

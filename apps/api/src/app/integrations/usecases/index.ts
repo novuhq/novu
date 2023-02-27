@@ -5,13 +5,15 @@ import { UpdateIntegration } from './update-integration/update-integration.useca
 import { RemoveIntegration } from './remove-integration/remove-integration.usecase';
 import { DeactivateSimilarChannelIntegrations } from './deactivate-integration/deactivate-integration.usecase';
 import { GetActiveIntegrations } from './get-active-integration/get-active-integration.usecase';
-import { GetDecryptedIntegrations } from './get-decrypted-integrations/get-decrypted-integrations.usecase';
+import { GetDecryptedIntegrations } from './get-decrypted-integrations';
 import { CheckIntegration } from './check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
 import { GetNovuIntegration } from './get-novu-integration';
 import { CalculateLimitNovuIntegration } from './calculate-limit-novu-integration';
+import { GetInAppActivated } from './get-In-app-activated/get-In-app-activated.usecase';
 
 export const USE_CASES = [
+  GetInAppActivated,
   GetWebhookSupportStatus,
   CreateIntegration,
   GetIntegrations,

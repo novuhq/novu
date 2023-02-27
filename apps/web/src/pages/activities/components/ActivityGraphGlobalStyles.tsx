@@ -14,7 +14,6 @@ function chartStyles(isTriggerSent: boolean, isDark: boolean) {
     }
 
     #chartjs-tooltip {
-      width: 190px;
       display: flex;
       justify-content: center;
       box-shadow: 0 5px 15px rgba(38, 68, 128, 0.05);
@@ -23,6 +22,7 @@ function chartStyles(isTriggerSent: boolean, isDark: boolean) {
       padding: 12px 15px 14px 15px;
       pointer-events: none;
       position: absolute;
+      z-index: 1;
 
       &:after {
         display: inline-block;
