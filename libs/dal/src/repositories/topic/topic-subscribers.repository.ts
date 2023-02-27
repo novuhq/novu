@@ -8,7 +8,13 @@ import {
 import { TopicSubscribers } from './topic-subscribers.schema';
 import { EnvironmentId, OrganizationId, TopicId, TopicKey } from './types';
 import { BaseRepository } from '../base-repository';
-export class TopicSubscribersRepository extends BaseRepository<TopicSubscribersDBModel, TopicSubscribersEntity> {
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+
+export class TopicSubscribersRepository extends BaseRepository<
+  TopicSubscribersDBModel,
+  TopicSubscribersEntity,
+  EnforceEnvOrOrgIds
+> {
   constructor() {
     super(TopicSubscribers, TopicSubscribersEntity);
   }

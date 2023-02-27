@@ -4,6 +4,7 @@ import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { MemberEntity, MemberDBModel } from './member.entity';
 import { BaseRepository } from '../base-repository';
 import { Member } from './member.schema';
+import type { EnforceOrgId } from '../../types/enforce';
 
 export interface IAddMemberData {
   _userId?: string;
@@ -12,9 +13,9 @@ export interface IAddMemberData {
   memberStatus: MemberStatusEnum;
 }
 
-type MemberQuery = FilterQuery<MemberDBModel>;
+type MemberQuery = FilterQuery<MemberDBModel> & EnforceOrgId;
 
-export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity> {
+export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity, EnforceOrgId> {
   constructor() {
     super(Member, MemberEntity);
   }

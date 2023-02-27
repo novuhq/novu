@@ -4,8 +4,13 @@ import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { BaseRepository } from '../base-repository';
 import { NotificationEntity, NotificationDBModel } from './notification.entity';
 import { Notification } from './notification.schema';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-export class NotificationRepository extends BaseRepository<NotificationDBModel, NotificationEntity> {
+export class NotificationRepository extends BaseRepository<
+  NotificationDBModel,
+  NotificationEntity,
+  EnforceEnvOrOrgIds
+> {
   constructor() {
     super(Notification, NotificationEntity);
   }

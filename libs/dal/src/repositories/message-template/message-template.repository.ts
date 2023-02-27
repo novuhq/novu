@@ -1,7 +1,13 @@
 import { BaseRepository } from '../base-repository';
 import { MessageTemplate } from './message-template.schema';
 import { MessageTemplateEntity, MessageTemplateDBModel } from './message-template.entity';
-export class MessageTemplateRepository extends BaseRepository<MessageTemplateDBModel, MessageTemplateEntity> {
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+
+export class MessageTemplateRepository extends BaseRepository<
+  MessageTemplateDBModel,
+  MessageTemplateEntity,
+  EnforceEnvOrOrgIds
+> {
   constructor() {
     super(MessageTemplate, MessageTemplateEntity);
   }

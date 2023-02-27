@@ -5,10 +5,11 @@ import { BaseRepository } from '../base-repository';
 import { IntegrationEntity, IntegrationDBModel } from './integration.entity';
 import { Integration } from './integration.schema';
 import { DalException } from '../../shared';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-type IntegrationQuery = FilterQuery<IntegrationDBModel>;
+type IntegrationQuery = FilterQuery<IntegrationDBModel> & EnforceEnvOrOrgIds;
 
-export class IntegrationRepository extends BaseRepository<IntegrationDBModel, IntegrationEntity> {
+export class IntegrationRepository extends BaseRepository<IntegrationDBModel, IntegrationEntity, EnforceEnvOrOrgIds> {
   private integration: SoftDeleteModel;
   constructor() {
     super(Integration, IntegrationEntity);

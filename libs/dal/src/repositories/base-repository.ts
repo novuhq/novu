@@ -2,7 +2,7 @@
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery } from 'mongoose';
 
-export class BaseRepository<T_DBModel, T_MappedEntity> {
+export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   public _model: Model<T_DBModel>;
 
   constructor(protected MongooseModel: Model<T_DBModel>, protected entity: ClassConstructor<T_MappedEntity>) {
@@ -21,7 +21,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity> {
     return new Types.ObjectId(value);
   }
 
-  async count(query: FilterQuery<T_DBModel>, limit?: number): Promise<number> {
+  async count(query: FilterQuery<T_DBModel> & T_Enforcement, limit?: number): Promise<number> {
     return this.MongooseModel.countDocuments(query, {
       limit,
     });
@@ -38,19 +38,19 @@ export class BaseRepository<T_DBModel, T_MappedEntity> {
     return this.mapEntity(data.toObject());
   }
 
-  async findOne(query: FilterQuery<T_DBModel>, select?: ProjectionType<T_MappedEntity>) {
+  async findOne(query: FilterQuery<T_DBModel> & T_Enforcement, select?: ProjectionType<T_MappedEntity>) {
     const data = await this.MongooseModel.findOne(query, select);
     if (!data) return null;
 
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: FilterQuery<T_DBModel>): Promise<void> {
+  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<void> {
     return await this.MongooseModel.remove(query);
   }
 
   async find(
-    query: FilterQuery<T_DBModel>,
+    query: FilterQuery<T_DBModel> & T_Enforcement,
     select: ProjectionType<T_MappedEntity> = '',
     options: { limit?: number; sort?: any; skip?: number } = {}
   ): Promise<T_MappedEntity[]> {
@@ -66,7 +66,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity> {
   }
 
   async *findBatch(
-    query: FilterQuery<T_DBModel>,
+    query: FilterQuery<T_DBModel> & T_Enforcement,
     select = '',
     options: { limit?: number; sort?: any; skip?: number } = {},
     batchSize = 500
@@ -81,7 +81,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity> {
     }
   }
 
-  async create(data: FilterQuery<T_DBModel>): Promise<T_MappedEntity> {
+  async create(data: FilterQuery<T_DBModel> & T_Enforcement): Promise<T_MappedEntity> {
     const newEntity = new this.MongooseModel(data);
     const saved = await newEntity.save();
 
@@ -89,7 +89,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity> {
   }
 
   async update(
-    query: FilterQuery<T_DBModel>,
+    query: FilterQuery<T_DBModel> & T_Enforcement,
     updateBody: UpdateQuery<T_DBModel>
   ): Promise<{
     matched: number;
@@ -105,7 +105,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity> {
     };
   }
 
-  async upsertMany(data: FilterQuery<T_DBModel>[]) {
+  async upsertMany(data: (FilterQuery<T_DBModel> & T_Enforcement)[]) {
     const promises = data.map((entry) => this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true }));
 
     return await Promise.all(promises);

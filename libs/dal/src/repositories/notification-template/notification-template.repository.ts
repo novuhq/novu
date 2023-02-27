@@ -5,12 +5,14 @@ import { BaseRepository } from '../base-repository';
 import { NotificationTemplate } from './notification-template.schema';
 import { NotificationTemplateEntity, NotificationTemplateDBModel } from './notification-template.entity';
 import { DalException } from '../../shared';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-type NotificationTemplateQuery = FilterQuery<NotificationTemplateDBModel>;
+type NotificationTemplateQuery = FilterQuery<NotificationTemplateDBModel> & EnforceEnvOrOrgIds;
 
 export class NotificationTemplateRepository extends BaseRepository<
   NotificationTemplateDBModel,
-  NotificationTemplateEntity
+  NotificationTemplateEntity,
+  EnforceEnvOrOrgIds
 > {
   private notificationTemplate: SoftDeleteModel;
   constructor() {

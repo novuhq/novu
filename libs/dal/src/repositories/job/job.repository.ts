@@ -1,4 +1,4 @@
-import { FilterQuery, ProjectionType } from 'mongoose';
+import { ProjectionType } from 'mongoose';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { BaseRepository } from '../base-repository';
@@ -8,6 +8,7 @@ import { NotificationTemplateEntity } from '../notification-template';
 import { SubscriberEntity } from '../subscriber';
 import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 type JobEntityPopulated = JobEntity & {
   template: NotificationTemplateEntity;
@@ -16,7 +17,7 @@ type JobEntityPopulated = JobEntity & {
   environment: EnvironmentEntity;
 };
 
-export class JobRepository extends BaseRepository<JobDBModel, JobEntity> {
+export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Job, JobEntity);
   }
