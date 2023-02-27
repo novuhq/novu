@@ -38,7 +38,7 @@ export class TopicSubscribersRepository extends BaseRepository<TopicSubscribersD
     await this.delete({
       _environmentId,
       _organizationId,
-      key: topicKey,
+      topicKey,
       externalSubscriberId: {
         $in: externalSubscriberIds,
       },
