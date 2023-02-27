@@ -1,35 +1,37 @@
 import { Avatar, useMantineColorScheme, ActionIcon, Header, Group, Container } from '@mantine/core';
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import * as capitalize from 'lodash.capitalize';
 import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
 
-import { AuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../../store/authContext';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
 import { useLocalThemePreference } from '../../../hooks/useLocalThemePreference';
 import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
-import { INTERCOM_APP_ID } from '../../../config';
-import { SpotlightContext } from '../../../store/spotlightContext';
+import { CONTEXT_PATH, INTERCOM_APP_ID, LOGROCKET_ID } from '../../../config';
+import { useSpotlightContext } from '../../../store/spotlightContext';
 import { HEADER_HEIGHT } from '../constants';
+import LogRocket from 'logrocket';
+import { ROUTES } from '../../../constants/routes.enum';
 
 type Props = {};
 const menuItem = [
   {
     title: 'Invite Members',
     icon: <Mail />,
-    path: '/team',
+    path: ROUTES.TEAM,
   },
 ];
 const headerIconsSettings = { color: colors.B60, width: 30, height: 30 };
 
 export function HeaderNav({}: Props) {
-  const { currentOrganization, currentUser, logout } = useContext(AuthContext);
+  const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const dark = colorScheme === 'dark';
-  const { addItem } = useContext(SpotlightContext);
+  const { addItem } = useSpotlightContext();
 
   if (INTERCOM_APP_ID) {
     const { boot } = useIntercom();
@@ -49,12 +51,37 @@ export function HeaderNav({}: Props) {
     }, [currentUser, currentOrganization]);
   }
 
+  useEffect(() => {
+    if (!LOGROCKET_ID) return;
+
+    if (currentUser && currentOrganization) {
+      let logrocketTraits;
+
+      if (currentUser?.email !== undefined) {
+        logrocketTraits = {
+          name: currentUser?.firstName + ' ' + currentUser?.lastName,
+          organizationId: currentOrganization._id,
+          organization: currentOrganization.name,
+          email: currentUser?.email ? currentUser?.email : ' ',
+        };
+      } else {
+        logrocketTraits = {
+          name: currentUser?.firstName + ' ' + currentUser?.lastName,
+          organizationId: currentOrganization._id,
+          organization: currentOrganization.name,
+        };
+      }
+
+      LogRocket.identify(currentUser?._id, logrocketTraits);
+    }
+  }, [currentUser, currentOrganization]);
+
   const themeTitle = () => {
     let title = 'Match System Appearance';
     if (themeStatus === 'dark') {
-      title = `Dark Theme`;
+      title = 'Dark Theme';
     } else if (themeStatus === 'light') {
-      title = `Light Theme`;
+      title = 'Light Theme';
     }
 
     return title;
@@ -101,7 +128,7 @@ export function HeaderNav({}: Props) {
           })}
           radius="xl"
           size={45}
-          src={currentUser?.profilePicture || '/static/images/avatar.png'}
+          src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}
         />
         <div style={{ flex: 1 }}>
           <Text data-test-id="header-dropdown-username" rows={1}>
@@ -142,7 +169,7 @@ export function HeaderNav({}: Props) {
       >
         <Link to="/">
           <img
-            src={dark ? '/static/images/logo-light.png' : '/static/images/logo.png'}
+            src={dark ? CONTEXT_PATH + '/static/images/logo-light.png' : CONTEXT_PATH + '/static/images/logo.png'}
             alt="logo"
             style={{ maxWidth: 150, maxHeight: 25 }}
           />
@@ -162,7 +189,7 @@ export function HeaderNav({}: Props) {
                   size={35}
                   radius="xl"
                   data-test-id="header-profile-avatar"
-                  src={currentUser?.profilePicture || '/static/images/avatar.png'}
+                  src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}
                 />
               </ActionIcon>
             }

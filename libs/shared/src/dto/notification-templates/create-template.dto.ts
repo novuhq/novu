@@ -6,7 +6,7 @@ export interface ICreateNotificationTemplateDto {
 
   tags: string[];
 
-  description: string;
+  description?: string;
 
   steps: NotificationStepDto[];
 

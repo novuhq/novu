@@ -29,6 +29,7 @@ const subscriberSchema = new Schema(
       required: false,
     },
     lastOnlineAt: Schema.Types.Date,
+    data: Schema.Types.Mixed,
   },
   schemaOptions
 );

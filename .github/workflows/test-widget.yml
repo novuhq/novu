@@ -22,5 +22,4 @@ jobs:
   # This workflow contains a single job called "build"
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
-    secrets:
-      cypress_key: ${{ secrets.CYPRESS_WIDGET_KEY }}
+    secrets: inherit

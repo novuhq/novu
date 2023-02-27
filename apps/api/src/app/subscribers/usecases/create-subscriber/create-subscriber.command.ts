@@ -2,6 +2,7 @@ import { IsEmail, IsLocale, IsNotEmpty, IsOptional, IsString } from 'class-valid
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { Transform } from 'class-transformer';
 import { SubscriberEntity } from '@novu/dal';
+import { SubscriberCustomData } from '@novu/shared';
 
 export class CreateSubscriberCommand extends EnvironmentCommand {
   @IsString()
@@ -32,6 +33,9 @@ export class CreateSubscriberCommand extends EnvironmentCommand {
   @IsLocale()
   @IsOptional()
   locale?: string;
+
+  @IsOptional()
+  data?: SubscriberCustomData;
 
   @IsOptional()
   subscriber?: SubscriberEntity;

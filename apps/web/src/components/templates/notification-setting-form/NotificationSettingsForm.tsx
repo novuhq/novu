@@ -1,15 +1,16 @@
 import { useEffect } from 'react';
 import { ActionIcon, Grid } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useFormContext } from 'react-hook-form';
 import { INotificationTrigger } from '@novu/shared';
 
-import { getNotificationGroups } from '../../../api/notifications';
 import { api } from '../../../api/api.client';
 import { Input, Select, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { useEnvController } from '../../../store/useEnvController';
+import type { IForm } from '../formTypes';
+import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
 
 export const NotificationSettingsForm = ({
   editMode,
@@ -26,9 +27,9 @@ export const NotificationSettingsForm = ({
     setValue,
     control,
     getValues,
-  } = useFormContext();
+  } = useFormContext<IForm>();
 
-  const { data: groups, isLoading: loadingGroups } = useQuery(['notificationGroups'], getNotificationGroups);
+  const { groups, loading: loadingGroups } = useNotificationGroup();
   const { isLoading: loadingCreateGroup, mutateAsync: createNotificationGroup } = useMutation<
     { name: string; _id: string },
     { error: string; message: string; statusCode: number },
@@ -42,7 +43,7 @@ export const NotificationSettingsForm = ({
   });
 
   useEffect(() => {
-    const group = getValues('notificationGroup');
+    const group = getValues('notificationGroupId');
     if (groups?.length && !editMode && !group) {
       selectFirstGroupByDefault();
     }
@@ -50,7 +51,7 @@ export const NotificationSettingsForm = ({
 
   function selectFirstGroupByDefault() {
     setTimeout(() => {
-      setValue('notificationGroup', groups[0]._id);
+      setValue('notificationGroupId', groups[0]._id);
     }, 500);
   }
 
@@ -60,7 +61,7 @@ export const NotificationSettingsForm = ({
         name: newGroup,
       }).then((response) => {
         setTimeout(() => {
-          setValue('notificationGroup', response._id);
+          setValue('notificationGroupId', response._id);
         }, 0);
 
         return;
@@ -77,6 +78,7 @@ export const NotificationSettingsForm = ({
           <Controller
             control={control}
             name="name"
+            defaultValue=""
             render={({ field }) => (
               <Input
                 {...field}
@@ -94,6 +96,7 @@ export const NotificationSettingsForm = ({
           />
           <Controller
             name="description"
+            defaultValue=""
             control={control}
             render={({ field, fieldState }) => (
               <Input
@@ -114,6 +117,7 @@ export const NotificationSettingsForm = ({
           {trigger && (
             <Controller
               name="identifier"
+              defaultValue=""
               control={control}
               render={({ field, fieldState }) => (
                 <Input
@@ -137,7 +141,8 @@ export const NotificationSettingsForm = ({
             />
           )}
           <Controller
-            name="notificationGroup"
+            name="notificationGroupId"
+            defaultValue=""
             control={control}
             render={({ field }) => {
               return (
@@ -152,7 +157,7 @@ export const NotificationSettingsForm = ({
                     searchable
                     required={!editMode}
                     description="Categorize notifications into groups for unified settings control"
-                    error={errors.notificationGroup?.message}
+                    error={errors.notificationGroupId?.message}
                     getCreateLabel={(newGroup) => (
                       <div data-test-id="submit-category-btn">+ Create Group {newGroup}</div>
                     )}

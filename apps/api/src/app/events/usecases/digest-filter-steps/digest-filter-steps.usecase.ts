@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { NotificationStepEntity } from '@novu/dal';
+import { Injectable, Logger } from '@nestjs/common';
+import { MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
 import { StepTypeEnum, DigestTypeEnum } from '@novu/shared';
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterStepsBackoff } from './digest-filter-steps-backoff.usecase';
@@ -22,13 +22,13 @@ export class DigestFilterSteps {
 
     const type = digestStep?.metadata?.type;
     if (type === DigestTypeEnum.REGULAR) {
-      return this.filterStepsRegular.execute({
+      return await this.filterStepsRegular.execute({
         ...command,
         steps: matchedSteps,
       });
     }
 
-    return this.filterStepsBackoff.execute({
+    return await this.filterStepsBackoff.execute({
       ...command,
       steps: matchedSteps,
     });
@@ -42,8 +42,29 @@ export class DigestFilterSteps {
         _creatorId: command.userId,
         type: StepTypeEnum.TRIGGER,
         content: '',
-      } as any,
+      } as MessageTemplateEntity,
       _templateId: command.templateId,
     };
+  }
+
+  public static getNestedValue<ObjectType>(payload: ObjectType, path?: string) {
+    if (!path || !payload) {
+      return undefined;
+    }
+
+    try {
+      let result;
+      const keys = path.split('.');
+
+      for (const key of keys) {
+        result = payload[key];
+      }
+
+      return result;
+    } catch (error) {
+      Logger.error('Failure when parsing digest payload nested key');
+
+      return undefined;
+    }
   }
 }

@@ -19,7 +19,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
     cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'Email');
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
@@ -59,7 +59,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     editChannel('sms');
     cy.getByTestId('smsNotificationContent').type('new content for sms');
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
@@ -90,7 +90,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-active-switch`).get('label').contains('Step is active');
     cy.getByTestId(`step-active-switch`).click({ force: true });
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-active-switch`).get('label').contains('Step is not active');
@@ -108,7 +108,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-should-stop-on-fail-switch`).get('label').contains('Stop workflow if this step fails?');
     cy.getByTestId(`step-should-stop-on-fail-switch`).click({ force: true });
-    cy.getByTestId('submit-btn').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-should-stop-on-fail-switch`).should('be.checked');

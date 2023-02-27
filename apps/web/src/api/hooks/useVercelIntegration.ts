@@ -1,15 +1,15 @@
 import axios from 'axios';
-import { useContext, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import { useVercelParams } from '../../hooks/useVercelParams';
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../store/authContext';
 import { errorMessage } from '../../utils/notifications';
 import { vercelIntegrationSetup } from '../vercel-integration';
 
 export function useVercelIntegration() {
-  const { token } = useContext(AuthContext);
+  const { token } = useAuthContext();
   const isLoggedIn = !!token;
   const isAxiosAuthorized = axios.defaults.headers.common.Authorization;
 

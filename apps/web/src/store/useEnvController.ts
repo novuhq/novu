@@ -1,10 +1,10 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { IEnvironment } from '@novu/shared';
 
 import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
 import { api } from '../api/api.client';
-import { AuthContext } from './authContext';
+import { useAuthContext } from './authContext';
 import { QueryKeys } from '../api/query.keys';
 
 export type EnvironmentContext = {
@@ -17,7 +17,7 @@ export type EnvironmentContext = {
 
 export const useEnvController = (): EnvironmentContext => {
   const queryClient = useQueryClient();
-  const { setToken } = useContext(AuthContext);
+  const { setToken } = useAuthContext();
   const [readonly, setReadonly] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
   const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
