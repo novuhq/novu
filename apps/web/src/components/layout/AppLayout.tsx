@@ -35,6 +35,7 @@ export function AppLayout() {
                   backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
                   minHeight: 'auto',
                   padding: '30px',
+                  overflowX: 'hidden',
                 },
               })}
             >
