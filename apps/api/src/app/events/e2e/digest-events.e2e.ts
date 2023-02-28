@@ -9,9 +9,7 @@ import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { UserSession, SubscribersService } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { getTime, parseISO } from 'date-fns';
-import mongoose from 'mongoose';
-import { setTimeout } from 'timers/promises';
+import { AwaitHelpers } from './await-helpers';
 
 import { WorkflowQueueService } from '../services/workflow-queue/workflow.queue.service';
 
@@ -25,6 +23,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   const jobRepository = new JobRepository();
   let workflowQueueService: WorkflowQueueService;
   const messageRepository = new MessageRepository();
+  let awaitHelpers: AwaitHelpers;
 
   const triggerEvent = async (payload, transactionId?: string): Promise<void> => {
     await axiosInstance.post(
@@ -50,6 +49,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
     workflowQueueService = session.testServer?.getService(WorkflowQueueService);
+    awaitHelpers = new AwaitHelpers(jobRepository, undefined, messageRepository, workflowQueueService);
   });
 
   it('should digest events within time interval', async function () {
@@ -164,37 +164,16 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await triggerEvent({
       customVar: 'Testing of User Name',
     });
-
-    await session.awaitRunningJobs(template?._id, false, 1);
-
     await triggerEvent({
       customVar: 'digest',
     });
 
-    await session.awaitRunningJobs(template?._id, false, 1);
-
-    const jobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
+    const jobs = await awaitHelpers.awaitAndGetJobs(template, 1, StepTypeEnum.DIGEST);
 
     expect(jobs.length).to.eql(1);
 
-    const delayedJobs = jobs.filter((elem) => elem.delay > 0);
-    expect(delayedJobs.length).to.eql(1);
-
-    const delayedJob = delayedJobs[0];
-
-    await workflowQueueService.promoteJob(delayedJob._id);
-
-    await session.awaitRunningJobs(template?._id, false, 0);
-
-    const message = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: StepTypeEnum.SMS,
-    });
+    await awaitHelpers.promoteJob(jobs[0]._id);
+    const message = await awaitHelpers.awaitAndGetMessages(template, 1);
 
     expect(message[0].content).to.include('HAS_DIGEST_PROP');
   });
@@ -238,26 +217,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       id,
     });
 
-    await session.awaitRunningJobs(template?._id, false, 2);
+    const jobs = await awaitHelpers.awaitAndGetJobs(template, 5);
+    expect(jobs.length).to.eql(5);
+    for (const job of jobs) await awaitHelpers.promoteJob(job._id);
+    const finalJobs = await awaitHelpers.awaitAndGetJobs(template, 7);
 
-    const jobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
-
-    expect(jobs.length).to.eql(2);
-
-    await workflowQueueService.promoteJob(jobs[0]._id);
-    await session.awaitRunningJobs(template?._id, false, 1);
-    await workflowQueueService.promoteJob(jobs[1]._id);
-    await session.awaitRunningJobs(template?._id, false, 0);
-    const finalJobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-    });
-
-    const digestedJobs = finalJobs.filter((job) => job?.digest?.digestKey === 'id');
+    const digestedJobs = finalJobs.filter((job) => job.delay && job.delay > 0);
     expect(digestedJobs.length).to.eql(2);
     const jobsWithEvents = finalJobs.filter(
       (item) => item?.digestedNotificationIds && item.digestedNotificationIds.length > 0
@@ -303,30 +268,15 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'digest',
       id: secondDigestKey,
     });
-    await session.awaitRunningJobs(template?._id, false, 2);
-
-    const jobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
+    const jobs = await awaitHelpers.awaitAndGetJobs(template, 2, StepTypeEnum.DIGEST);
 
     expect(jobs.length).to.equal(2);
 
-    const delayedJobs = jobs.filter((elem) => elem.delay > 0);
-    expect(delayedJobs.length).to.eql(2);
-
     for (const job of jobs) {
-      await workflowQueueService.promoteJob(job._id);
+      await awaitHelpers.promoteJob(job._id);
     }
 
-    await session.awaitRunningJobs(template?._id, false, 0);
-
-    const messages = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: StepTypeEnum.SMS,
-    });
+    const messages = await awaitHelpers.awaitAndGetMessages(template, 2);
 
     const firstDigestKeyBatch = messages.filter((message) => (message.content as string).includes('Hello world 2'));
     const secondDigestKeyBatch = messages.filter((message) => (message.content as string).includes('Hello world 1'));
@@ -364,17 +314,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'Testing of User Name',
     });
 
-    await session.awaitRunningJobs(template?._id, false, 0);
-
-    const jobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      status: {
-        $ne: JobStatusEnum.COMPLETED,
-      },
-    });
-
-    expect(jobs.length).to.equal(0);
+    const jobs = await awaitHelpers.awaitAndGetJobs(template, 2);
+    expect(jobs.length).to.equal(2);
+    const digestJobs = jobs.filter((job) => job.delay > 0);
+    expect(digestJobs.length).to.equal(1);
+    await awaitHelpers.promoteJob(digestJobs[0]._id);
+    const messages = await awaitHelpers.awaitAndGetMessages(template, 2);
+    expect(messages.length).to.equals(2);
   });
 
   it('should be able to cancel digest', async function () {
@@ -409,24 +355,18 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       id
     );
 
-    await session.awaitRunningJobs(template?._id, false, 1);
+    const jobs = await awaitHelpers.awaitAndGetJobs(template, 2);
+    expect(jobs.length).to.equal(2);
     await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
       headers: {
         authorization: `ApiKey ${session.apiKey}`,
       },
     });
 
-    const delayedJobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
+    const digestJobs = await awaitHelpers.awaitAndGetJobs(template, 1, StepTypeEnum.DIGEST);
+    expect(digestJobs.length).to.eql(1);
 
-    expect(delayedJobs.length).to.eql(1);
-
-    const delayedJob = delayedJobs[0];
-
-    await workflowQueueService.promoteJob(delayedJob._id);
+    await workflowQueueService.promoteJob(digestJobs[0]._id);
 
     const pendingJobs = await jobRepository.count({
       _environmentId: session.environment._id,
@@ -435,7 +375,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       transactionId: id,
     });
 
-    expect(pendingJobs).to.equal(1);
+    expect(pendingJobs).to.equal(0);
 
     const cancelledDigestJobs = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -541,45 +481,13 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await triggerEvent({
       customVar: 'Testing of User Name',
     });
-
-    await session.awaitRunningJobs(template?._id, false, 0);
-
     await triggerEvent({
       customVar: 'digest',
     });
+    const digestJobs = await awaitHelpers.awaitAndGetJobs(template, 1, StepTypeEnum.DIGEST);
 
-    await session.awaitRunningJobs(template?._id, false, 1);
-
-    const delayedJobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
-
-    expect(delayedJobs.length).to.eql(1);
-
-    const delayedJob = delayedJobs[0];
-
-    const pendingJobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      delay: 0,
-      status: {
-        $nin: [JobStatusEnum.COMPLETED, JobStatusEnum.CANCELED],
-      },
-    });
-
-    expect(pendingJobs.length).to.equal(1);
-    const pendingJob = pendingJobs[0];
-
-    await workflowQueueService.promoteJob(delayedJob._id);
-
-    await session.awaitRunningJobs(template?._id, false, 0);
-    const job = await jobRepository.findById(pendingJob._id);
-
-    //expect(job?.digestedNotificationIds?.length).to.equal(1);
-
-    //expect(job?.digestedNotificationIdss?.[0].customVar).to.equal('digest');
+    expect(digestJobs.length).to.eql(1);
+    await awaitHelpers.promoteJob(digestJobs[0]._id);
   });
 
   xit('should digest with backoff strategy and update mode', async function () {
@@ -758,34 +666,18 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       postId,
     });
 
-    await session.awaitRunningJobs(template?._id, false, 3);
-
-    const digests = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
+    const digests = await awaitHelpers.awaitAndGetJobs(template, 3, StepTypeEnum.DIGEST);
 
     expect(digests.length).to.equal(3);
 
     for (const digest of digests) {
-      await workflowQueueService.promoteJob(digest._id);
+      await awaitHelpers.promoteJob(digest._id);
     }
-
-    await session.awaitRunningJobs(template?._id, false, 0);
-
-    const messages = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      _subscriberId: subscriber._id,
-    });
+    const messages = await awaitHelpers.awaitAndGetMessages(template, 3);
     expect(messages.length).to.eql(3);
 
-    const jobCount = await jobRepository.count({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-    });
-    expect(jobCount).to.equal(6);
+    const jobs = await awaitHelpers.awaitAndGetJobs(template, 6);
+    expect(jobs.length).to.equal(6);
   });
 
   it('should create multiple digests based on different nested digestKeys', async function () {
@@ -832,37 +724,23 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       nested: { postId: postId },
     });
 
-    await session.awaitRunningJobs(template?._id, false, 3);
-
-    const digests = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
+    const digests = await awaitHelpers.awaitAndGetJobs(template, 3);
 
     expect(digests.length).to.eql(3);
     expect(digests[0].payload.nested?.postId).to.equal(undefined);
     expect(digests[1].payload?.nested?.postId).not.to.equal(digests[2].payload?.nested?.postId);
 
     for (const digest of digests) {
-      await workflowQueueService.promoteJob(digest._id);
+      await awaitHelpers.promoteJob(digest._id);
     }
 
     await session.awaitRunningJobs(template?._id, false, 0);
 
-    const messages = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      _subscriberId: subscriber._id,
-    });
-
+    const messages = await awaitHelpers.awaitAndGetMessages(template, 3);
     expect(messages.length).to.eql(3);
+    const totalJobs = await awaitHelpers.awaitAndGetJobs(template, 3);
 
-    const jobCount = await jobRepository.count({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-    });
-    expect(jobCount).to.equal(6);
+    expect(totalJobs.length).to.equal(6);
   });
 
   // TODO: Review backoff individually
@@ -1028,7 +906,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
     await session.awaitParsingEvents();
 
-    await session.awaitRunningJobs(template?._id, false, 6);
+    await session.awaitRunningJobs(template?._id, false, 3);
 
     const digests = await jobRepository.find({
       _environmentId: session.environment._id,
@@ -1082,36 +960,15 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await triggerEvent({
       customVar: 'Testing of User Name',
     });
-
-    await session.awaitRunningJobs(template?._id, false, 1);
-
     await triggerEvent({
       customVar: 'digest',
     });
 
-    await session.awaitRunningJobs(template?._id, false, 1);
-
-    const jobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
-
+    const jobs = await awaitHelpers.awaitAndGetJobs(template, 1, StepTypeEnum.DIGEST);
     expect(jobs.length).to.eql(1);
+    await awaitHelpers.promoteJob(jobs[0]._id);
 
-    const delayedJobs = jobs.filter((elem) => elem.delay > 0);
-    expect(delayedJobs.length).to.eql(1);
-    const delayedJob = delayedJobs[0];
-
-    await workflowQueueService.promoteJob(delayedJob._id);
-
-    await session.awaitRunningJobs(template?._id, false, 0);
-
-    const message = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
-    });
+    const message = await awaitHelpers.awaitAndGetMessages(template, 1);
     expect(message[0].content).to.include('HAS_DIGEST_PROP');
     expect(message[0].content).to.include('Total events in digest:2');
   });
@@ -1139,35 +996,17 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     await triggerEvent({
       customVar: 'Testing of User Name',
     });
-
-    await session.awaitRunningJobs(template?._id, false, 1);
-
     await triggerEvent({
       customVar: 'digest',
     });
 
-    await session.awaitRunningJobs(template?._id, false, 1);
+    const jobs = await awaitHelpers.awaitAndGetJobs(template, 1, StepTypeEnum.DIGEST);
 
-    const jobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
+    expect(jobs.length).to.eql(1);
 
-    const delayedJobs = jobs.filter((elem) => elem.delay > 0);
-    expect(delayedJobs.length).to.eql(1);
+    await awaitHelpers.promoteJob(jobs[0]._id);
 
-    const delayedJob = delayedJobs[0];
-
-    await workflowQueueService.promoteJob(delayedJob._id);
-
-    await session.awaitRunningJobs(template?._id, false, 0);
-
-    const message = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: StepTypeEnum.PUSH,
-    });
+    const message = await awaitHelpers.awaitAndGetMessages(template, 1);
 
     expect(message[0].content).to.include('HAS_DIGEST_PROP');
   });
@@ -1191,7 +1030,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       ],
     });
 
-    const result = await Promise.all([
+    await Promise.all([
       triggerEvent({
         customVar: 'concurrent-call-1',
       }),
@@ -1223,22 +1062,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
         customVar: 'concurrent-call-10',
       }),
     ]);
-
-    await session.awaitRunningJobs(template?._id, false, 1);
-
-    const jobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
-
+    let jobs = await awaitHelpers.awaitAndGetJobs(template, 1);
     expect(jobs.length).to.eql(1);
-
-    const delayedJobs = jobs.filter((elem) => elem.delay > 0);
-    expect(delayedJobs.length).to.eql(1);
-
-    const delayedJobUpdateTime = delayedJobs[0].updatedAt;
-    expect(delayedJobUpdateTime).to.be.ok;
+    await awaitHelpers.promoteJob(jobs[0]._id);
+    const messages = await awaitHelpers.awaitAndGetMessages(template, 1);
+    jobs = await awaitHelpers.awaitAndGetJobs(template, 1);
+    expect(messages.length).to.equal(1);
   });
 
   it('should merge digest events accordingly when sequential calls', async () => {

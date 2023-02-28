@@ -9,9 +9,10 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
 import axios from 'axios';
-import { addSeconds, differenceInMilliseconds } from 'date-fns';
+import { addSeconds } from 'date-fns';
 
 import { WorkflowQueueService } from '../services/workflow-queue/workflow.queue.service';
+import { AwaitHelpers } from './await-helpers';
 
 const axiosInstance = axios.create();
 
@@ -23,7 +24,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   const jobRepository = new JobRepository();
   let workflowQueueService: WorkflowQueueService;
   const messageRepository = new MessageRepository();
-
+  let awaitHelpers: AwaitHelpers;
   const triggerEvent = async (payload, transactionId?: string, overrides = {}) => {
     await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
@@ -49,6 +50,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
     workflowQueueService = session?.testServer?.getService(WorkflowQueueService);
+    awaitHelpers = new AwaitHelpers(jobRepository, undefined, messageRepository, workflowQueueService);
   });
 
   it('should delay event for time interval', async function () {
@@ -226,8 +228,9 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       eventNumber: '2',
     });
     await session.awaitRunningJobs(template?._id, false, 1);
-    await workflowQueueService.promoteJob(digestedJob._id);
-    await session.awaitRunningJobs(template?._id, false, 1);
+    await awaitHelpers.promoteJob(digestedJob._id);
+    awaitHelpers.awaitAndGetJobs(template, 2);
+    await awaitHelpers.processAllDelayJobs(template);
     const chatDBJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
@@ -274,20 +277,14 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       eventNumber: '2',
       sendAt: dateValue,
     });
-    await session.awaitRunningJobs(template?._id, false, 1);
+    await session.awaitRunningJobs(template?._id, false, 0);
     const digestedJob = await jobRepository.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
     });
-    await workflowQueueService.promoteJob(digestedJob._id);
-    await session.awaitRunningJobs(template?._id, false, 0);
-
-    const messages = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: StepTypeEnum.SMS,
-    });
+    await awaitHelpers.promoteJob(digestedJob._id);
+    const messages = await awaitHelpers.awaitAndGetMessages(template, 1);
     expect(messages.length).to.equal(1);
     expect(messages[0].content).to.include('Digested Events 2');
   });

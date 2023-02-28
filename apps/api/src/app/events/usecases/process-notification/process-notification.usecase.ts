@@ -1,25 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import {
   NotificationRepository,
-  NotificationTemplateRepository,
   JobRepository,
   SubscriberEntity,
   JobEntity,
   JobStatusEnum,
   NotificationEntity,
-  NotificationStepEntity,
 } from '@novu/dal';
-import {
-  StepTypeEnum,
-  DigestTypeEnum,
-  InAppProviderIdEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  STEP_TYPE_TO_CHANNEL_TYPE,
-} from '@novu/shared';
+import { StepTypeEnum, DigestTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { ProcessNotificationCommand } from './process-notification.command';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
-import { Cached } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { WorkflowQueueService } from '../../services/workflow-queue/workflow.queue.service';
@@ -27,11 +16,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../../../integrations/usecases/get-decrypted-integrations';
-import { constructActiveDAG, getBackoffDate, StepWithDelay } from '../../helpers/helpers';
+import { constructActiveDAG, StepWithDelay } from '../../helpers/helpers';
 
 import { DigestService } from '../../services/digest/digest-service';
 
@@ -39,20 +24,18 @@ import { DigestService } from '../../services/digest/digest-service';
 export class ProcessNotification {
   constructor(
     private notificationRepository: NotificationRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     protected createExecutionDetails: CreateExecutionDetails,
     private workflowQueueService: WorkflowQueueService,
-    protected digestService: DigestService,
-    private getDecryptedIntegrations: GetDecryptedIntegrations
+    protected digestService: DigestService
   ) {}
 
   public async execute(command: ProcessNotificationCommand): Promise<void> {
-    const template = await this.getNotificationTemplate(command.environmentId, command.identifier);
+    const template = await this.digestService.getNotificationTemplate(command.environmentId, command.identifier);
     const channels: StepTypeEnum[] = template.steps.map((step) => step.template.type);
     const notification = await this.createNotification(command, template._id, command.subscriber, channels);
-
     const dag = constructActiveDAG(template.steps, command.payload, command.overrides) || [];
+
     for (const steps of dag) {
       if (steps[0].template?.type === StepTypeEnum.DIGEST) await this.processDigestChain(command, notification, steps);
       else await this.processJobs(command, notification, steps);
@@ -67,9 +50,7 @@ export class ProcessNotification {
     for (const step of steps) {
       jobs.push(await this.prepareJob(command, notification, step));
     }
-    jobs[0].status = JobStatusEnum.QUEUED; //first job to be queued
-    const storedJobs = await this.storeJobs(jobs);
-    await this.addFirstJob(storedJobs[0]);
+    await this.storeAndAddJobs(jobs);
   }
 
   private async processDigestChain(
@@ -77,35 +58,25 @@ export class ProcessNotification {
     notification: NotificationEntity,
     steps: StepWithDelay[]
   ) {
-    if (steps.length == 1) return; //Just digest node, so skip it
-    let digestJob: JobEntity;
+    if (steps.length == 1) return; //Just digest step, so skip it
     if (
-      steps[0]?.metadata?.type !== DigestTypeEnum.BACKOFF ||
-      !(await this.needToBackoff(notification, steps[0], steps[1]))
+      steps[0]?.metadata?.type === DigestTypeEnum.BACKOFF &&
+      (await this.digestService.needToBackoff(notification, steps[0], steps[1]))
     ) {
-      digestJob = await this.digestService.findOneAndUpdateDigest(notification, steps[0]);
-      if (digestJob.digestedNotificationIds[0] !== notification._id) return; //old
-    }
-    let jobs: Omit<JobEntity, '_id'>[] = [];
-    for (const step of steps) {
-      jobs.push(await this.prepareJob(command, notification, step));
-    }
-    if (digestJob) {
-      jobs[0].status = JobStatusEnum.QUEUED;
-      digestJob = await this.jobRepository.findOneAndUpdate({ _id: digestJob._id }, { ...jobs[0] }, { new: true });
-      jobs[1]._parentId = digestJob._id;
-    } else {
-      //backoff flow
-      jobs[1].status = JobStatusEnum.QUEUED; //first job to be queued
-    }
-    jobs = jobs.slice(1); //skip digest job
+      steps = steps.slice(1); //backoff flow, skip digest step
 
-    const storedJobs = await this.storeJobs(jobs);
-    const jobToQueue = digestJob ? digestJob : storedJobs[0];
-    await this.addFirstJob(jobToQueue);
+      return await this.processJobs(command, notification, steps);
+    }
+    let digestJob = await this.digestService.findOneAndUpdateDigest(notification, steps[0]);
+    if (digestJob.digestedNotificationIds?.[0] !== notification._id) return; //old
+    const preparedJob = await this.prepareJob(command, notification, steps[0]);
+    preparedJob.status = JobStatusEnum.QUEUED;
+    digestJob = await this.jobRepository.findOneAndUpdate({ _id: digestJob._id }, { ...preparedJob }, { new: true });
+    await this.addFirstJob(digestJob);
   }
 
-  private async storeJobs(jobs: Omit<JobEntity, '_id'>[]): Promise<JobEntity[]> {
+  private async storeAndAddJobs(jobs: Omit<JobEntity, '_id'>[]) {
+    jobs[0].status = JobStatusEnum.QUEUED; //first job to be queued
     const storedJobs = await this.jobRepository.storeJobs(jobs);
     for (const job of storedJobs) {
       await this.createExecutionDetails.execute(
@@ -119,8 +90,7 @@ export class ProcessNotification {
         })
       );
     }
-
-    return storedJobs;
+    await this.addFirstJob(storedJobs[0]);
   }
 
   private async addFirstJob(job: JobEntity): Promise<void> {
@@ -134,7 +104,12 @@ export class ProcessNotification {
   ): Promise<Omit<JobEntity, '_id'>> {
     const { delay = 0, ...step } = stepWithDelay;
     if (!step.template) throw new ApiException('Step template was not found');
-    const providerId: string | undefined = await this.getProviderId(command, step.template.type);
+    const providerId = await this.digestService.getProviderId(
+      notification._environmentId,
+      notification._organizationId,
+      command.userId,
+      step.template.type
+    );
 
     return {
       identifier: command.identifier,
@@ -175,33 +150,6 @@ export class ProcessNotification {
     });
   }
 
-  @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
-  private async getNotificationTemplate(environmentId: string, identifier: string) {
-    return await this.notificationTemplateRepository.findByTriggerIdentifier(environmentId, identifier);
-  }
-
-  private async needToBackoff(
-    notification: NotificationEntity,
-    digestStep: NotificationStepEntity,
-    nextStep: NotificationStepEntity
-  ) {
-    const query = {
-      updatedAt: {
-        $gte: getBackoffDate(digestStep),
-      },
-      'step._templateId': nextStep._templateId,
-
-      _templateId: notification._templateId,
-      _environmentId: notification._environmentId,
-      _subscriberId: notification._subscriberId,
-    };
-    if (digestStep.metadata?.digestKey) {
-      query['payload.' + digestStep.metadata.digestKey] = notification.payload[digestStep.metadata.digestKey];
-    }
-
-    return !(await this.jobRepository.findOne(query));
-  }
-
   public async validateTransactionIdProperty(
     transactionId: string,
     organizationId: string,
@@ -217,25 +165,5 @@ export class ProcessNotification {
         'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );
     }
-  }
-
-  private async getProviderId(
-    command: ProcessNotificationCommand,
-    stepType: StepTypeEnum
-  ): Promise<string | undefined> {
-    const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(stepType);
-    if (!channelType) return;
-    const integrations = await this.getDecryptedIntegrations.execute(
-      GetDecryptedIntegrationsCommand.create({
-        channelType: channelType,
-        active: true,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-      })
-    );
-    const integration = integrations[0];
-
-    return integration?.providerId ?? InAppProviderIdEnum.Novu;
   }
 }

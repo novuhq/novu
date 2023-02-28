@@ -1,31 +1,44 @@
 import { Injectable } from '@nestjs/common';
 import {
   NotificationRepository,
+  NotificationTemplateRepository,
   JobRepository,
   NotificationEntity,
   NotificationStepEntity,
   JobStatusEnum,
   JobEntity,
 } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE, InAppProviderIdEnum } from '@novu/shared';
 import { get } from 'lodash';
+import { constructActiveDAG, getBackoffDate, StepWithDelay } from '../../helpers/helpers';
+import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { Cached } from '../../../shared/interceptors';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import {
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
 
 @Injectable()
 export class DigestService {
-  constructor(private notificationRepository: NotificationRepository, private jobRepository: JobRepository) {}
+  constructor(
+    private notificationRepository: NotificationRepository,
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private jobRepository: JobRepository,
+    private getDecryptedIntegrations: GetDecryptedIntegrations
+  ) {}
 
   public async findOneAndUpdateDigest(notification: NotificationEntity, step: NotificationStepEntity) {
-    const query: any = {
+    const query = {
       status: JobStatusEnum.QUEUED,
       type: StepTypeEnum.DIGEST,
       _subscriberId: notification._subscriberId,
       _templateId: notification._templateId,
       _environmentId: notification._environmentId,
       _organizationId: notification._organizationId,
+      'step._templateId': step._templateId,
     };
-    if (step.metadata?.digestKey) {
-      query['payload.' + step.metadata.digestKey] = get(notification.payload, step.metadata.digestKey);
-    }
+    this.setDigestCondition(query, step, notification.payload);
 
     return await this.jobRepository.findOneAndUpdate(
       query,
@@ -35,34 +48,35 @@ export class DigestService {
         },
       },
       {
-        projection: {
-          _id: 1,
-          digestedNotificationIds: { $slice: 1 },
-        },
+        projection: { _id: 1, digestedNotificationIds: { $slice: 1 } },
         upsert: true,
         new: true,
       }
     );
   }
 
-  public async getJobsToUpdate(digestJob: JobEntity) {
-    const nextJobs = await this.jobRepository.find({
-      _environmentId: digestJob._environmentId,
-      transactionId: digestJob.transactionId,
-      _id: {
-        $ne: digestJob._id,
+  public async needToBackoff(
+    notification: NotificationEntity,
+    digestStep: NotificationStepEntity,
+    nextStep: NotificationStepEntity
+  ) {
+    const query = {
+      updatedAt: {
+        $gte: getBackoffDate(digestStep),
       },
-    });
+      'step._templateId': nextStep._templateId,
+      _templateId: notification._templateId,
+      _environmentId: notification._environmentId,
+      _subscriberId: notification._subscriberId,
+    };
+    this.setDigestCondition(query, digestStep, notification.payload);
 
-    return nextJobs.filter((job) => {
-      if (job.type === StepTypeEnum.IN_APP && job.status === JobStatusEnum.COMPLETED) {
-        return true;
-      }
-
-      return job.status !== JobStatusEnum.COMPLETED && job.status !== JobStatusEnum.FAILED;
-    });
-
-    return nextJobs;
+    return !(await this.jobRepository.findOne(query));
+  }
+  private setDigestCondition(query, digestStep: NotificationStepEntity, payload) {
+    if (digestStep.metadata?.digestKey) {
+      query['payload.' + digestStep.metadata.digestKey] = get(payload, digestStep.metadata.digestKey);
+    }
   }
 
   private async getDigestedPayload(job: JobEntity) {
@@ -92,38 +106,72 @@ export class DigestService {
     return payload;
   }
 
-  //this may happen very rarely.mostly we donot need this
-  private async findAndMergeDupes(digestJob: JobEntity) {
-    const matchedJobs = await this.jobRepository.find({
-      _environmentId: digestJob._environmentId,
-      _templateId: digestJob._templateId,
-      type: StepTypeEnum.DIGEST,
-      status: JobStatusEnum.QUEUED,
-      _id: {
-        $ne: digestJob._id,
-      },
-    });
-    console.log('matchedJobs', matchedJobs);
-    if (matchedJobs.length == 0) return;
-    await this.jobRepository.update(
-      {
-        _environmentId: digestJob._environmentId,
-        transactionId: {
-          $in: matchedJobs.map((job) => job.transactionId),
-        },
-      },
-      {
-        $set: {
-          status: JobStatusEnum.CANCELED,
-        },
-      }
-    );
-    for (const matchedJob of matchedJobs) {
-      digestJob.digestedNotificationIds.concat(matchedJob.digestedNotificationIds); //need to check dupes
+  public async createDigestChildJobs(digestJob: JobEntity) {
+    const template = await this.getNotificationTemplate(digestJob._environmentId, digestJob.identifier);
+    const dag = constructActiveDAG(template.steps, digestJob.payload, digestJob.overrides) || [];
+    let digestBranch = dag.find((branch) => branch[0]._templateId === digestJob.step?._templateId);
+    digestBranch = digestBranch?.slice(1);
+    if (!digestBranch) return;
+    const jobs: Omit<JobEntity, '_id'>[] = [];
+    for (const step of digestBranch) {
+      jobs.push(await this.prepareChildJob(digestJob, step));
     }
-    await this.jobRepository.findOneAndUpdate(
-      { _id: digestJob._id },
-      { digestedNotificationIds: digestJob.digestedNotificationIds }
+    jobs[0]._parentId = digestJob._id;
+
+    return await this.jobRepository.storeJobs(jobs);
+  }
+
+  private async prepareChildJob(parentJob: JobEntity, stepWithDelay: StepWithDelay): Promise<Omit<JobEntity, '_id'>> {
+    const { delay = 0, ...step } = stepWithDelay;
+    if (!step.template) throw new ApiException('Step template was not found');
+    const providerId: string | undefined = await this.getProviderId(
+      parentJob._environmentId,
+      parentJob._organizationId,
+      parentJob._userId,
+      step.template.type
     );
+
+    return {
+      identifier: parentJob.identifier,
+      overrides: parentJob.overrides,
+      _userId: parentJob._userId,
+      transactionId: parentJob.transactionId,
+      payload: parentJob.payload,
+      _notificationId: parentJob._notificationId,
+      _environmentId: parentJob._environmentId,
+      _organizationId: parentJob._organizationId,
+      _subscriberId: parentJob._subscriberId,
+      status: JobStatusEnum.PENDING,
+      _templateId: parentJob._templateId,
+      providerId,
+      step,
+      digest: step.metadata,
+      digestedNotificationIds: parentJob.digestedNotificationIds,
+      type: step.template?.type,
+      delay: delay,
+      ...(parentJob._actorId && { _actorId: parentJob._actorId }),
+    };
+  }
+
+  //for now keep it here
+  public async getProviderId(
+    environmentId: string,
+    organizationId: string,
+    userId: string,
+    stepType: StepTypeEnum
+  ): Promise<string | undefined> {
+    const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(stepType);
+    if (!channelType) return;
+    const integrations = await this.getDecryptedIntegrations.execute(
+      GetDecryptedIntegrationsCommand.create({ channelType, active: true, organizationId, environmentId, userId })
+    );
+    const integration = integrations[0];
+
+    return integration?.providerId ?? InAppProviderIdEnum.Novu;
+  }
+
+  @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
+  public async getNotificationTemplate(environmentId: string, identifier: string) {
+    return await this.notificationTemplateRepository.findByTriggerIdentifier(environmentId, identifier);
   }
 }

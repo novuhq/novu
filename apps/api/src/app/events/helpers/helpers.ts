@@ -6,23 +6,34 @@ import { get } from 'lodash';
 
 export type StepWithDelay = NotificationStepEntity & { delay: number };
 
-//digest and delay with delayPath always on top of DAG, delays are added to next active node and removed delay nodes
-export function constructActiveDAG(steps: NotificationStepEntity[], payload, overrides): StepWithDelay[][] {
-  const allBranches = steps.reduce((dag, step, i) => {
+//digest and delay with delayPath always on top of dag, delays are added to next active node and removed delay nodes
+export function constructActiveDAG(steps: NotificationStepEntity[], payload = {}, overrides = {}): StepWithDelay[][] {
+  const dag = constructBasicDAG(steps);
+
+  return overrideDelaysAndRemoveDelaySteps(dag, payload, overrides);
+}
+
+function constructBasicDAG(steps: NotificationStepEntity[]): StepWithDelay[][] {
+  const resultDag = steps.reduce((dag, step, i) => {
     if (step.template?.type === StepTypeEnum.DIGEST || step.metadata?.delayPath || dag.length == 0) dag.push([]);
-    dag[dag.length - 1].push({ ...step, delay: 0 });
+    dag[dag.length - 1].push({ ...step, delay: getMetaDelay(step) });
 
     return dag;
   }, [] as StepWithDelay[][]);
 
-  return allBranches
+  return resultDag.map((branch) => {
+    const inactiveIndex = branch.findIndex((step) => !step.active);
+
+    return inactiveIndex === -1 ? branch : branch.slice(0, inactiveIndex);
+  });
+}
+
+function overrideDelaysAndRemoveDelaySteps(dag: StepWithDelay[][], payload, overrides) {
+  return dag
     .map((branch) => {
-      const inactiveIndex = branch.findIndex((step) => !step.active);
-      branch = inactiveIndex === -1 ? branch : branch.slice(0, inactiveIndex);
-      if (branch[0]?.template?.type === StepTypeEnum.DIGEST) branch[0].delay = getDigestDelay(branch[0]);
       branch.forEach((step, index) => {
         if (step.template?.type === StepTypeEnum.DELAY) {
-          const delay = calculateDelay(step, payload, overrides);
+          const delay = getDelayFromPayloadAndOverrides(step, payload, overrides);
           if (index + 1 < branch.length && delay > 0) {
             branch[index + 1].delay += delay;
           }
@@ -49,23 +60,28 @@ export function toMilliseconds(amount: number, unit: DigestUnitEnum): number {
   return delay;
 }
 
-export function calculateDelay(step, payload, overrides) {
+function getDelayFromPayloadAndOverrides(step, payload, overrides) {
   if (!step.metadata) throw new ApiException(`Step metadata not found`);
+  let delay = 0;
   if (step.metadata.type === DelayTypeEnum.SCHEDULED) {
     if (!step.metadata.delayPath) throw new ApiException(`Delay path not found`);
     const delayDate = get(payload, step.metadata.delayPath);
-    if (delayDate) return differenceInMilliseconds(new Date(delayDate), new Date()) + 1000;
+    if (delayDate) delay = differenceInMilliseconds(new Date(delayDate), new Date()) + 1000;
   }
-  const delayAmount = overrides.delay?.amount ? overrides.delay.amount : step.metadata.amount;
-  const delayUnits = overrides.delay?.unit ? overrides.delay.unit : step.metadata.unit;
+  if (delay <= 0 && overrides?.delay?.amount && overrides?.delay?.unit)
+    delay = toMilliseconds(overrides.delay?.amount as number, overrides.delay.unit as DigestUnitEnum);
 
-  return toMilliseconds(delayAmount as number, delayUnits as DigestUnitEnum);
+  return delay > 0 ? delay : step.delay;
 }
 
-function getDigestDelay(step: NotificationStepEntity) {
-  if (!step.metadata?.amount || !step.metadata.unit) throw new ApiException('Invalid digest amount or unit');
-
-  return toMilliseconds(step.metadata.amount, step.metadata.unit);
+function getMetaDelay(step: NotificationStepEntity) {
+  if (!step.metadata?.amount || !step.metadata?.unit) {
+    if (step?.template?.type === StepTypeEnum.DIGEST) throw new ApiException('Invalid digest amount or unit');
+    else return 0;
+  }
+  const delay = toMilliseconds(step.metadata.amount, step.metadata.unit);
+  if (delay >= 0) return delay;
+  throw new ApiException('Negative delay specified in metadata');
 }
 
 export function getBackoffDate(step: NotificationStepEntity) {
