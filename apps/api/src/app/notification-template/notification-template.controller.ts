@@ -39,11 +39,13 @@ import { Roles } from '../auth/framework/roles.decorator';
 import { GetBlueprintNotificationTemplate } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.usecase';
 import { GetBlueprintNotificationTemplateCommand } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.command';
 import { CreateBlueprintNotificationTemplate } from './usecases/create-blueprint-notification-template/create-blueprint-notification-template.usecase';
+import { logDecorator } from '@novu/application-generic';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Notification templates')
+@logDecorator()
 export class NotificationTemplateController {
   constructor(
     private getNotificationTemplatesUsecase: GetNotificationTemplates,

@@ -10,9 +10,11 @@ import { ActivitiesResponseDto } from '../notifications/dtos/activities-response
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
 import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
 import { DeleteMessageParams } from './params/delete-message.param';
+import { logDecorator } from '@novu/application-generic';
 
 @Controller('/messages')
 @ApiTags('Messages')
+@logDecorator()
 export class MessagesController {
   constructor(private removeMessage: RemoveMessage, private getMessagesUsecase: GetMessages) {}
 

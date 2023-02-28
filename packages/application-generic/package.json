@@ -69,8 +69,10 @@
     "analytics-node": "^6.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
-    "node-fetch": "^3.2.10",
+    "decorate-all": "^1.2.1",
+    "maskdata": "^1.2.0",
     "nestjs-pino": "^3.1.2",
+    "node-fetch": "^3.2.10",
     "pino-http": "^8.3.3"
   },
   "devDependencies": {

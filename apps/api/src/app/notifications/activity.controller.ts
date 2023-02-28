@@ -14,9 +14,11 @@ import { ActivitiesResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
 import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { logDecorator } from '@novu/application-generic';
 
 @Controller('/activity')
 @ApiTags('Activity')
+@logDecorator()
 export class ActivityController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,

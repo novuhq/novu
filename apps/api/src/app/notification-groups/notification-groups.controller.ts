@@ -11,11 +11,13 @@ import { GetNotificationGroupsCommand } from './usecases/get-notification-groups
 import { ApiCreatedResponse, ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationGroupResponseDto } from './dtos/notification-group-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { logDecorator } from '@novu/application-generic';
 
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Notification groups')
+@logDecorator()
 export class NotificationGroupsController {
   constructor(
     private createNotificationGroupUsecase: CreateNotificationGroup,

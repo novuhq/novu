@@ -31,11 +31,13 @@ import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
+import { logDecorator } from '@novu/application-generic';
 
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Environments')
+@logDecorator()
 export class EnvironmentsController {
   constructor(
     private createEnvironmentUsecase: CreateEnvironment,

@@ -7,9 +7,11 @@ import { SeedDataCommand } from './usecases/seed-data/seed-data.command';
 import { CreateSession } from './usecases/create-session/create-session.usecase';
 import { CreateSessionCommand } from './usecases/create-session/create-session.command';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { logDecorator } from '@novu/application-generic';
 
 @Controller('/testing')
 @ApiExcludeController()
+@logDecorator()
 export class TestingController {
   constructor(
     private seedDataUsecase: SeedData,

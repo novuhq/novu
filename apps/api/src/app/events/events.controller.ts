@@ -26,12 +26,14 @@ import { ParseEventRequest } from './usecases/parse-event-request/parse-event-re
 import { ParseEventRequestCommand } from './usecases/parse-event-request/parse-event-request.command';
 import { ProcessBulkTrigger } from './usecases/process-bulk-trigger/process-bulk-trigger.usecase';
 import { ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger/process-bulk-trigger.command';
+import { logDecorator } from '@novu/application-generic';
 
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
 })
 @ApiTags('Events')
+@logDecorator()
 export class EventsController {
   constructor(
     private mapTriggerRecipients: MapTriggerRecipients,

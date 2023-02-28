@@ -36,12 +36,14 @@ import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
 import { RenameOrganizationCommand } from './usecases/rename-organization/rename-organization-command';
 import { RenameOrganization } from './usecases/rename-organization/rename-organization.usecase';
+import { logDecorator } from '@novu/application-generic';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Organizations')
 @ApiExcludeController()
+@logDecorator()
 export class OrganizationController {
   constructor(
     private createOrganizationUsecase: CreateOrganization,

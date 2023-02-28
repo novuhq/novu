@@ -40,11 +40,13 @@ import { PasswordReset } from './usecases/password-reset/password-reset.usecase'
 import { ApiException } from '../shared/exceptions/api.exception';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { PasswordResetBodyDto } from './dtos/password-reset.dto';
+import { logDecorator } from '@novu/application-generic';
 
 @Controller('/auth')
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('Auth')
 @ApiExcludeController()
+@logDecorator()
 export class AuthController {
   constructor(
     private userRepository: UserRepository,
@@ -66,10 +68,9 @@ export class AuthController {
     Logger.debug('Context: ' + context);
 
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
-      const err = new ApiException(
+      throw new ApiException(
         'GitHub auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
       );
-      throw err;
     }
 
     Logger.log('Github Auth has all variables.');
