@@ -13,9 +13,19 @@ import {
   FilterPartTypeEnum,
   ICondition,
   TimeOperatorEnum,
+  ChannelTypeEnum,
+  IFieldFilterPart,
+  IPreviousStepFilterPart,
 } from '@novu/shared';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { SubscriberEntity, EnvironmentRepository, SubscriberRepository, StepFilter } from '@novu/dal';
+import {
+  SubscriberEntity,
+  EnvironmentRepository,
+  SubscriberRepository,
+  StepFilter,
+  ExecutionDetailsRepository,
+  MessageRepository,
+} from '@novu/dal';
 
 import { IFilterVariables } from './types';
 import { FilterProcessingDetails } from './filter-processing-details';
@@ -27,6 +37,7 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { EmailEventStatusEnum } from '@novu/stateless';
 
 const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: TimeOperatorEnum) => {
   if (timeOperator === TimeOperatorEnum.MINUTES) {
@@ -45,7 +56,9 @@ export class MessageMatcher {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private createExecutionDetails: CreateExecutionDetails,
-    private environmentRepository: EnvironmentRepository
+    private environmentRepository: EnvironmentRepository,
+    private executionDetailsRepository: ExecutionDetailsRepository,
+    private messageRepository: MessageRepository
   ) {}
 
   public async filter(
@@ -223,6 +236,115 @@ export class MessageMatcher {
     return !!(await findAsync(webhookFilters, (i) =>
       this.processFilter(variables, i, command, filterProcessingDetails)
     ));
+  }
+
+  private async processHaveSeen(
+    filter: IPreviousStepFilterPart,
+    command: SendMessageCommand,
+    filterProcessingDetails: FilterProcessingDetails
+  ) {
+    const previousJobId = command.job._parentId;
+
+    if (!previousJobId) {
+      return true;
+    }
+    const message = await this.messageRepository.findOne({
+      _jobId: previousJobId,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    if (!message) {
+      return true;
+    }
+    if (message?.channel === ChannelTypeEnum.IN_APP) {
+      filterProcessingDetails.addCondition({
+        filter: FILTER_TO_LABEL[filter.on],
+        field: 'read',
+        expected: 'true',
+        actual: `${message.seen}`,
+        operator: 'EQUAL',
+        passed: message.seen,
+      });
+
+      return message.seen;
+    }
+
+    const count = await this.executionDetailsRepository.count({
+      _jobId: previousJobId,
+      _messageId: message._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      webhookStatus: {
+        $in: [EmailEventStatusEnum.OPENED],
+      },
+    });
+
+    filterProcessingDetails.addCondition({
+      filter: FILTER_TO_LABEL[filter.on],
+      field: 'read',
+      expected: 'true',
+      actual: `${count > 0}`,
+      operator: 'EQUAL',
+      passed: count > 0,
+    });
+
+    return count > 0;
+  }
+
+  private async processHaveRead(
+    filter: IPreviousStepFilterPart,
+    command: SendMessageCommand,
+    filterProcessingDetails: FilterProcessingDetails
+  ) {
+    const previousJobId = command.job._parentId;
+
+    if (!previousJobId) {
+      return true;
+    }
+
+    const message = await this.messageRepository.findOne({
+      _jobId: previousJobId,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    if (!message) {
+      return true;
+    }
+    if (message?.channel === ChannelTypeEnum.IN_APP) {
+      filterProcessingDetails.addCondition({
+        filter: FILTER_TO_LABEL[filter.on],
+        field: 'read',
+        expected: 'true',
+        actual: `${message.read}`,
+        operator: 'EQUAL',
+        passed: message.read,
+      });
+
+      return message.read;
+    }
+
+    const count = await this.executionDetailsRepository.count({
+      _jobId: previousJobId,
+      _messageId: message._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      webhookStatus: {
+        $in: [EmailEventStatusEnum.OPENED],
+      },
+    });
+
+    filterProcessingDetails.addCondition({
+      filter: FILTER_TO_LABEL[filter.on],
+      field: 'read',
+      expected: 'true',
+      actual: `${count > 0}`,
+      operator: 'EQUAL',
+      passed: count > 0,
+    });
+
+    return count > 0;
   }
 
   private async processIsOnline(
@@ -428,6 +550,11 @@ export class MessageMatcher {
 
     if (child.on === FilterPartTypeEnum.IS_ONLINE || child.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {
       passed = await this.processIsOnline(child, command, filterProcessingDetails);
+    }
+
+    if (child.on === FilterPartTypeEnum.PREVIOUS_STEP) {
+      passed = await this.processHaveRead(child, command, filterProcessingDetails);
+      passed = await this.processHaveSeen(child, command, filterProcessingDetails);
     }
 
     return passed;

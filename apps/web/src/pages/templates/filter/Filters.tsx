@@ -74,10 +74,18 @@ export const getFilterLabel = (filter: FilterParts): string => {
     return `online in the last "X" ${filter.timeOperator}`;
   }
 
+  if (filter.on === 'previousStep') {
+    return '';
+  }
+
   return `${filter.on} ${filter.field} ${translateOperator(filter.operator)}`;
 };
 
 const getFilterValue = (filter: FilterParts) => {
+  if (filter.on === 'previousStep') {
+    return filter.type;
+  }
+
   let value = filter.value;
 
   if (filter.on === 'isOnline') {

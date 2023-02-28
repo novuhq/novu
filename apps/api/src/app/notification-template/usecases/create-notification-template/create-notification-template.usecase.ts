@@ -90,6 +90,7 @@ export class CreateNotificationTemplate {
         active: message.active,
         shouldStopOnFail: message.shouldStopOnFail,
         replyCallback: message.replyCallback,
+        uuid: message.uuid,
       });
       parentStepId = stepId;
     }

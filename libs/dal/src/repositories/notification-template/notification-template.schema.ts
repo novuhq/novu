@@ -67,6 +67,7 @@ const notificationTemplateSchema = new Schema(
           type: Schema.Types.Boolean,
           default: false,
         },
+        uuid: Schema.Types.String,
         filters: [
           {
             isNegated: Schema.Types.Boolean,

@@ -12,6 +12,14 @@ export enum FilterPartTypeEnum {
   WEBHOOK = 'webhook',
   IS_ONLINE = 'isOnline',
   IS_ONLINE_IN_LAST = 'isOnlineInLast',
+  PREVIOUS_STEP = 'previousStep',
+}
+
+export enum PreviousStepTypeEnum {
+  READ = 'read',
+  UNREAD = 'unread',
+  SEEN = 'seen',
+  UNSEEN = 'unseen',
 }
 
 export interface IBaseFilterPart {
@@ -26,6 +34,12 @@ export interface IBaseFieldFilterPart extends IBaseFilterPart {
 
 export interface IFieldFilterPart extends IBaseFieldFilterPart {
   on: FilterPartTypeEnum.SUBSCRIBER | FilterPartTypeEnum.PAYLOAD;
+}
+
+export interface IPreviousStepFilterPart extends IBaseFilterPart {
+  on: FilterPartTypeEnum.PREVIOUS_STEP;
+  step: string;
+  type: PreviousStepTypeEnum;
 }
 
 export interface IWebhookFilterPart extends IBaseFieldFilterPart {
@@ -44,7 +58,12 @@ export interface IOnlineInLastFilterPart extends IBaseFilterPart {
   value: number;
 }
 
-export type FilterParts = IFieldFilterPart | IWebhookFilterPart | IRealtimeOnlineFilterPart | IOnlineInLastFilterPart;
+export type FilterParts =
+  | IFieldFilterPart
+  | IWebhookFilterPart
+  | IRealtimeOnlineFilterPart
+  | IOnlineInLastFilterPart
+  | IPreviousStepFilterPart;
 
 export type Operator = BuilderFieldOperator | TimeOperatorEnum;
 
