@@ -405,7 +405,8 @@
     "occurance",
     "apikey",
     "typeof",
-    "nbsp"
+    "nbsp",
+    "maskdata"
   ],
   "flagWords": [],
   "patterns": [
