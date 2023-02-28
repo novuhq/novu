@@ -25,6 +25,7 @@ import { colors } from '../../../design-system';
 import { getInAppActivated } from '../../../api/integration';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { getApiKeys } from '../../../api/environment';
+import { API_ROOT, WS_URL } from '../../../config';
 
 export function Setup() {
   const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();
@@ -119,7 +120,7 @@ export function Setup() {
                     <PrismOnCopy
                       language={instruction.language}
                       index={index}
-                      code={`${updateCodeSnipped(instruction.snippet, environmentIdentifier, apiKey)}   `}
+                      code={`${updateCodeSnippet(instruction.snippet, environmentIdentifier, apiKey)}   `}
                       onCopy={handleOnCopy}
                     />
                   </div>
@@ -148,14 +149,14 @@ const LoaderWrapper = styled.div`
   margin-top: 10px;
 `;
 
-function updateCodeSnipped(codeSnippet: string, environmentIdentifier: string, apiKey: string) {
+function updateCodeSnippet(codeSnippet: string, environmentIdentifier: string, apiKey: string) {
   const concatUrls = process.env.REACT_APP_ENVIRONMENT !== 'prod' || !!process.env.REACT_APP_DOCKER_HOSTED_ENV;
 
   return codeSnippet
     .replace(APPLICATION_IDENTIFIER, environmentIdentifier)
     .replace(API_KEY, apiKey ?? '')
-    .replace(BACKEND_API_URL, concatUrls ? process.env.REACT_APP_API_URL || 'http://localhost:3000' : '')
-    .replace(BACKEND_SOCKET_URL, concatUrls ? process.env.REACT_APP_WS_URL || 'http://localhost:3002' : '');
+    .replace(BACKEND_API_URL, concatUrls ? API_ROOT : '')
+    .replace(BACKEND_SOCKET_URL, concatUrls ? WS_URL : '');
 }
 
 export function OpenBrowser() {
