@@ -1,9 +1,9 @@
-import { Types } from 'mongoose';
 import { SubscriberCustomData, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 
 import { ExternalSubscriberId } from './types';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class SubscriberEntity {
   // TODO: Use SubscriberId. Means lot of changes across whole codebase. Cool down.
@@ -44,11 +44,7 @@ export class SubscriberEntity {
   data?: SubscriberCustomData;
 }
 
-export type SubscriberDBModel = Omit<SubscriberEntity, '_environmentId' | '_organizationId'> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-};
+export type SubscriberDBModel = ChangePropsValueType<SubscriberEntity, '_environmentId' | '_organizationId'>;
 
 export class IChannelSettings {
   _integrationId: string;

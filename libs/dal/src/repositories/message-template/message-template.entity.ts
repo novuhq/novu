@@ -1,9 +1,9 @@
-import { Types } from 'mongoose';
 import { StepTypeEnum, IMessageCTA, IActor } from '@novu/shared';
 
 import { IEmailBlock, ITemplateVariable } from './types';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class MessageTemplateEntity {
   _id: string;
@@ -46,19 +46,7 @@ export class MessageTemplateEntity {
   actor?: IActor;
 }
 
-export type MessageTemplateDBModel = Omit<
+export type MessageTemplateDBModel = ChangePropsValueType<
   MessageTemplateEntity,
   '_environmentId' | '_organizationId' | '_creatorId' | '_layoutId' | '_feedId' | '_parentId'
-> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-
-  _creatorId: Types.ObjectId;
-
-  _layoutId: Types.ObjectId;
-
-  _feedId: Types.ObjectId;
-
-  _parentId: Types.ObjectId;
-};
+>;

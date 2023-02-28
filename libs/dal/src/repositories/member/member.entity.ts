@@ -3,6 +3,7 @@ import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
 import { UserEntity } from '../user';
 import type { OrganizationId } from '../organization';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class MemberEntity {
   _id: string;
@@ -20,12 +21,8 @@ export class MemberEntity {
   _organizationId: OrganizationId;
 }
 
-export type MemberDBModel = Omit<MemberEntity, '_userId' | 'invite' | '_organizationId'> & {
-  _userId: Types.ObjectId;
-
+export type MemberDBModel = ChangePropsValueType<Omit<MemberEntity, 'invite'>, '_userId' | '_organizationId'> & {
   invite?: IMemberInvite & {
     _inviterId: Types.ObjectId;
   };
-
-  _organizationId: Types.ObjectId;
 };

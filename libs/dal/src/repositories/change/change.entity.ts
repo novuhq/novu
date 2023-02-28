@@ -3,6 +3,7 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class ChangeEntity {
   _id: string;
@@ -27,17 +28,9 @@ export class ChangeEntity {
   _parentId?: string;
 }
 
-export type ChangeDBModel = Omit<
-  ChangeEntity,
-  '_creatorId' | '_environmentId' | '_organizationId' | '_entityId' | '_parentId'
+export type ChangeDBModel = ChangePropsValueType<
+  Omit<ChangeEntity, '_parentId'>,
+  '_creatorId' | '_environmentId' | '_organizationId' | '_entityId'
 > & {
-  _creatorId: Types.ObjectId;
-
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-
-  _entityId: Types.ObjectId;
-
   _parentId?: Types.ObjectId;
 };

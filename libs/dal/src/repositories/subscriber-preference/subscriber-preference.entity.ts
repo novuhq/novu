@@ -1,8 +1,8 @@
-import { Types } from 'mongoose';
 import { IPreferenceChannels } from '@novu/shared';
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class SubscriberPreferenceEntity {
   _id: string;
@@ -20,15 +20,7 @@ export class SubscriberPreferenceEntity {
   channels: IPreferenceChannels;
 }
 
-export type SubscriberPreferenceDBModel = Omit<
+export type SubscriberPreferenceDBModel = ChangePropsValueType<
   SubscriberPreferenceEntity,
-  '_environmentId' | '_organizationId' | '_subscriberId' | '_templateId' | '_parentId'
-> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-
-  _subscriberId: Types.ObjectId;
-
-  _templateId: Types.ObjectId;
-};
+  '_environmentId' | '_organizationId' | '_subscriberId' | '_templateId'
+>;
