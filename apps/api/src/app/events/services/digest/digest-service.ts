@@ -18,6 +18,7 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
+import { v5 as uuidv5 } from 'uuid';
 
 @Injectable()
 export class DigestService {
@@ -28,17 +29,14 @@ export class DigestService {
     private getDecryptedIntegrations: GetDecryptedIntegrations
   ) {}
 
-  public async findOneAndUpdateDigest(notification: NotificationEntity, step: NotificationStepEntity) {
+  private async findOneAndUpdate(notification: NotificationEntity, step: NotificationStepEntity, upsert = true) {
+    const digestRunKey = this.createDigestRunKey(notification, step);
     const query = {
+      _environmentId: notification._environmentId,
+      digestRunKey,
       status: JobStatusEnum.QUEUED,
       type: StepTypeEnum.DIGEST,
-      _subscriberId: notification._subscriberId,
-      _templateId: notification._templateId,
-      _environmentId: notification._environmentId,
-      _organizationId: notification._organizationId,
-      'step._templateId': step._templateId,
     };
-    this.setDigestCondition(query, step, notification.payload);
 
     return await this.jobRepository.findOneAndUpdate(
       query,
@@ -49,10 +47,29 @@ export class DigestService {
       },
       {
         projection: { _id: 1, digestedNotificationIds: { $slice: 1 } },
-        upsert: true,
+        upsert,
         new: true,
       }
     );
+  }
+  public async findOneAndUpdateDigest(notification: NotificationEntity, step: NotificationStepEntity) {
+    try {
+      return this.findOneAndUpdate(notification, step);
+    } catch (error) {
+      console.log('error in digest key', error.message);
+
+      return this.findOneAndUpdate(notification, step, false);
+    }
+  }
+
+  private createDigestRunKey(notification: NotificationEntity, step: NotificationStepEntity) {
+    const { _environmentId, _subscriberId, _templateId, payload } = notification;
+    let plainKey = `${_environmentId}${_subscriberId}${_templateId}${step._templateId}`;
+    if (step.metadata?.digestKey) {
+      plainKey += step.metadata?.digestKey + get(payload, step.metadata?.digestKey);
+    }
+
+    return uuidv5(plainKey, uuidv5.URL);
   }
 
   public async needToBackoff(

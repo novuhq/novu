@@ -1,7 +1,7 @@
 import * as mongoose from 'mongoose';
 import { Schema, Document } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
-import { JobEntity } from './job.entity';
+import { JobEntity, JobStatusEnum } from './job.entity';
 
 const jobSchema = new Schema(
   {
@@ -101,8 +101,19 @@ const jobSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
     },
+    digestRunKey: {
+      type: Schema.Types.String,
+    },
   },
   schemaOptions
+);
+
+jobSchema.index(
+  { digestRunKey: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { digestRunKey: { $exists: true }, status: JobStatusEnum.QUEUED },
+  }
 );
 
 jobSchema.virtual('executionDetails', {
