@@ -4,15 +4,13 @@ import jwtDecode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
 
 import { useAuthContext } from '../../components/providers/AuthProvider';
-import { LoginForm } from '../../components/auth/LoginForm';
+import { LoginForm } from './components/LoginForm';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
-import { useVercelIntegration } from '../../hooks/useVercelIntegration';
-import SetupLoader from '../../components/auth/SetupLoader';
-import { useVercelParams } from '../../hooks/useVercelParams';
+import { useVercelIntegration, useBlueprint, useVercelParams } from '../../hooks';
+import SetupLoader from './components/SetupLoader';
 import { useSegment } from '../../components/providers/SegmentProvider';
-import { useAcceptInvite } from '../../components/auth/useAcceptInvite';
-import { useBlueprint } from '../../hooks/useBlueprint';
+import { useAcceptInvite } from './components/useAcceptInvite';
 import { ROUTES } from '../../constants/routes.enum';
 
 export default function LoginPage() {

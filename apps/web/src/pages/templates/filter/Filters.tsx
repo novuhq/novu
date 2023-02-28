@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { useMantineColorScheme } from '@mantine/core';
 import { BuilderFieldOperator, FilterParts } from '@novu/shared';
 
-import type { IStepEntity } from '../../../components/templates/formTypes';
+import type { IStepEntity } from '../components/formTypes';
 import { colors } from '../../../design-system';
 
 export const Filters = ({ step }: { step: IStepEntity | null }) => {

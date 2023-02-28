@@ -13,6 +13,7 @@ export interface IMessageTemplate {
   _id?: string;
   subject?: string;
   name?: string;
+  title?: string;
   type: StepTypeEnum;
   contentType?: MessageTemplateContentType;
   content: string | IEmailBlock[];

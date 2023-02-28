@@ -403,7 +403,9 @@
     "newrelic",
     "pino",
     "occurance",
-    "apikey"
+    "apikey",
+    "typeof",
+    "nbsp"
   ],
   "flagWords": [],
   "patterns": [
