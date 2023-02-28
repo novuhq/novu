@@ -4,9 +4,6 @@ name: Test E2E WIDGET
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
-    secrets:
-      cypress_key:
-        required: false
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -71,7 +68,7 @@ jobs:
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WIDGET_KEY }}
         with:
           working-directory: apps/widget
           wait-on: http://localhost:3500

@@ -399,7 +399,8 @@
     "newrelic",
     "nodemailer",
     "emailjs",
-    "typeof"
+    "typeof",
+    "nbsp"
   ],
   "flagWords": [],
   "patterns": [

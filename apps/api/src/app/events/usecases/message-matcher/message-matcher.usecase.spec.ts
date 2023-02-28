@@ -2,10 +2,10 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 import axios from 'axios';
 import { Duration, sub } from 'date-fns';
-import { FilterParts, FilterPartTypeEnum, FILTER_TO_LABEL, StepTypeEnum } from '@novu/shared';
+import { FilterParts, FilterPartTypeEnum, FILTER_TO_LABEL, StepTypeEnum, TimeOperatorEnum } from '@novu/shared';
 import { JobEntity, MessageTemplateEntity, NotificationStepEntity, SubscriberRepository } from '@novu/dal';
 
-import { MessageMatcher } from './message-matcher.service';
+import { MessageMatcher } from './message-matcher.usecase';
 import type { SendMessageCommand } from '../send-message/send-message.command';
 
 describe('Message filter matcher', function () {
@@ -778,7 +778,7 @@ describe('Message filter matcher', function () {
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
-                timeOperator: 'minutes',
+                timeOperator: TimeOperatorEnum.MINUTES,
               },
               {
                 operator: 'EQUAL',
@@ -813,7 +813,7 @@ describe('Message filter matcher', function () {
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
-                timeOperator: 'minutes',
+                timeOperator: TimeOperatorEnum.MINUTES,
               },
             ]),
           }),
@@ -838,7 +838,7 @@ describe('Message filter matcher', function () {
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
-                timeOperator: 'minutes',
+                timeOperator: TimeOperatorEnum.MINUTES,
               },
             ]),
           }),
@@ -863,7 +863,7 @@ describe('Message filter matcher', function () {
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
-                timeOperator: 'minutes',
+                timeOperator: TimeOperatorEnum.MINUTES,
               },
             ]),
           }),
@@ -888,7 +888,7 @@ describe('Message filter matcher', function () {
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 5,
-                timeOperator: 'minutes',
+                timeOperator: TimeOperatorEnum.MINUTES,
               },
             ]),
           }),
@@ -913,7 +913,7 @@ describe('Message filter matcher', function () {
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 1,
-                timeOperator: 'hours',
+                timeOperator: TimeOperatorEnum.HOURS,
               },
             ]),
           }),
@@ -938,7 +938,7 @@ describe('Message filter matcher', function () {
               {
                 on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
                 value: 1,
-                timeOperator: 'days',
+                timeOperator: TimeOperatorEnum.DAYS,
               },
             ]),
           }),

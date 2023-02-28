@@ -42,7 +42,7 @@ export class TopicSubscribersRepository extends BaseRepository<EnforceEnvironmen
     await this.delete({
       _environmentId,
       _organizationId,
-      key: topicKey,
+      topicKey,
       externalSubscriberId: {
         $in: externalSubscriberIds,
       },

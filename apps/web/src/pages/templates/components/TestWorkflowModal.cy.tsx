@@ -23,7 +23,7 @@ describe('TestWorkflowModal Component', function () {
     );
 
     cy.getByTestId('test-trigger-to-param').contains(`"subscriberId": "<REPLACE_WITH_DATA>"`);
-    cy.getByTestId('test-trigger-payload-param').contains(`{}`);
+    cy.getByTestId('test-trigger-payload-param').contains(`{ }`);
     cy.getByTestId('test-trigger-overrides-param').contains(`{ }`);
   });
 
