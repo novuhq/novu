@@ -67,3 +67,7 @@ The `notification-center-component` accepts the same set of props as the [Web Co
 :::info
 May need to add "allowSyntheticDefaultImports": true in tsconfig.json and <i>@types/react</i> as dev dependency for the angular component to work properly
 :::
+
+:::note
+Facing issues in using notification center? Check out FAQs [here](./FAQ)
+:::
