@@ -10,6 +10,7 @@ import {
   ErrorIcon,
   InApp,
   Mail,
+  Mobile,
   Read,
   Received,
   Seen,
@@ -71,6 +72,10 @@ export const getLogoByType = (
 
   if (type === StepTypeEnum.CHAT) {
     return Chat;
+  }
+
+  if (type === StepTypeEnum.PUSH) {
+    return Mobile;
   }
 
   return null;

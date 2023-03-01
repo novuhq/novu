@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "scripts": {
@@ -71,8 +71,8 @@
     "@emotion/styled": "^11.6.0",
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
-    "@novu/client": "^0.11.0",
-    "@novu/shared": "^0.11.0",
+    "@novu/client": "^0.12.0",
+    "@novu/shared": "^0.12.0",
     "@rollup/plugin-babel": "^6.0.3",
     "@tanstack/react-query": "^4.20.4",
     "acorn-jsx": "^5.3.2",
@@ -82,7 +82,7 @@
     "lodash.clonedeep": "^4.5.0",
     "lodash.merge": "^4.6.2",
     "react-infinite-scroll-component": "^6.0.0",
-    "socket.io-client": "4.5.4",
+    "socket.io-client": "4.6.1",
     "tslib": "^2.3.1",
     "webfontloader": "^1.6.28"
   },

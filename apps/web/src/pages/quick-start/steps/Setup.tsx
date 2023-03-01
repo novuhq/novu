@@ -93,7 +93,7 @@ export function Setup() {
 
   return (
     <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true}>
-      <Stack align="center">
+      <Stack align="center" sx={{ width: '100%' }}>
         <TimelineWrapper>
           <Timeline
             active={instructions?.length + 1}
@@ -165,7 +165,7 @@ export function OpenBrowser() {
 
 export function TroubleshootingDescription() {
   return (
-    <Stack align="center">
+    <Stack align="center" sx={{ gap: '20px' }}>
       <span>Follow the installation steps and then sit back while we</span>
       <span>connect to your application</span>
     </Stack>
@@ -181,6 +181,8 @@ function stopIfInAppActive(data) {
 }
 
 const TimelineWrapper = styled.div`
+  width: 100%;
+
   .mantine-Timeline-itemBullet {
     background-color: ${colors.B30};
     color: white;
