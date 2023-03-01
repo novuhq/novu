@@ -102,6 +102,7 @@ export function ContentRow({
                   </ActionIcon>
                 </SettingsButton>
               }
+              position="top"
             >
               {rowStyleMenu}
             </Dropdown>
