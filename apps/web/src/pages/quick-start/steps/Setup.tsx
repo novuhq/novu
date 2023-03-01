@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -28,7 +28,6 @@ import { getApiKeys } from '../../../api/environment';
 import { API_ROOT, WS_URL } from '../../../config';
 
 export function Setup() {
-  const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();
   const { framework } = useParams();
   const { groups, loading: notificationGroupLoading } = useNotificationGroup();
   const { templates = [], loading: templatesLoading } = useTemplates();
@@ -62,9 +61,7 @@ export function Setup() {
         template.name.includes(notificationTemplateName)
       );
 
-      if (onboardingNotificationTemplate) {
-        setNotificationTemplate(onboardingNotificationTemplate);
-      } else {
+      if (!onboardingNotificationTemplate) {
         createOnBoardingTemplate();
       }
     }
@@ -86,8 +83,7 @@ export function Setup() {
       ],
     } as ICreateNotificationTemplateDto;
 
-    const createdTemplate = await createNotificationTemplate(payloadToCreate);
-    setNotificationTemplate(createdTemplate);
+    await createNotificationTemplate(payloadToCreate);
   }
 
   function handleOnCopy(copiedStepIndex: number) {
