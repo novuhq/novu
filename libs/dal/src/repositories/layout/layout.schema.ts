@@ -2,11 +2,10 @@ import * as mongoose from 'mongoose';
 import * as mongooseDelete from 'mongoose-delete';
 import { Schema } from 'mongoose';
 
-import { LayoutEntity } from './layout.entity';
-
+import { LayoutDBModel } from './layout.entity';
 import { schemaOptions } from '../schema-default.options';
 
-const layoutSchema = new Schema(
+const layoutSchema = new Schema<LayoutDBModel>(
   {
     _environmentId: {
       type: Schema.Types.ObjectId,
@@ -55,4 +54,5 @@ const layoutSchema = new Schema(
 layoutSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const Layout = mongoose.models.Layout || mongoose.model<LayoutEntity>('Layout', layoutSchema);
+export const Layout =
+  (mongoose.models.Layout as mongoose.Model<LayoutDBModel>) || mongoose.model<LayoutDBModel>('Layout', layoutSchema);

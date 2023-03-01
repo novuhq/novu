@@ -1,11 +1,12 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
+import { Schema } from 'mongoose';
 import * as mongooseDelete from 'mongoose-delete';
 import { ActorTypeEnum } from '@novu/shared';
-import { schemaOptions } from '../schema-default.options';
-import { MessageEntity } from './message.entity';
 
-const messageSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { MessageDBModel } from './message.entity';
+
+const messageSchema = new Schema<MessageDBModel>(
   {
     _templateId: {
       type: Schema.Types.ObjectId,
@@ -131,9 +132,7 @@ messageSchema.virtual('template', {
 
 messageSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-interface IMessageDocument extends MessageEntity, Document {
-  _id: never;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const Message = mongoose.models.Message || mongoose.model<IMessageDocument>('Message', messageSchema);
+export const Message =
+  (mongoose.models.Message as mongoose.Model<MessageDBModel>) ||
+  mongoose.model<MessageDBModel>('Message', messageSchema);

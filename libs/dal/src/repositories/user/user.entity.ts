@@ -48,3 +48,5 @@ export class UserEntity {
     lastFailedAttempt: string;
   };
 }
+
+export type UserDBModel = UserEntity;

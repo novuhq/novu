@@ -17,6 +17,8 @@ export class OrganizationEntity {
   partnerConfigurations?: IPartnerConfiguration[];
 }
 
+export type OrganizationDBModel = OrganizationEntity;
+
 export interface IPartnerConfiguration {
   accessToken: string;
   configurationId: string;
