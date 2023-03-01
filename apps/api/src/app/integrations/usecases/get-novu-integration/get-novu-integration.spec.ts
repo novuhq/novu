@@ -134,6 +134,7 @@ describe('Get Novu Integration', function () {
     sinon.assert.calledWith(stub, {
       channel: ChannelTypeEnum.EMAIL,
       _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
       providerId: EmailProviderIdEnum.Novu,
       createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },
     });

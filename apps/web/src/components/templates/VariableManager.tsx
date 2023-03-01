@@ -1,9 +1,9 @@
 import { TemplateVariableTypeEnum, TemplateSystemVariables } from '@novu/shared';
-import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { Controller, useWatch } from 'react-hook-form';
 import { Code, Space, Table } from '@mantine/core';
 import styled from '@emotion/styled';
+
 import { colors, Input, Switch, Text } from '../../design-system';
-import { FieldArrayProvider } from './FieldArrayProvider';
 import { When } from '../utils/When';
 
 interface VariableManagerProps {
@@ -68,6 +68,7 @@ export const VariableComponent = ({ index, template, control, path }: VariableCo
         {variableType === TemplateVariableTypeEnum.STRING && !isSystemVariable && (
           <Controller
             name={`${formPrefix}.defaultValue`}
+            defaultValue=""
             control={control}
             render={({ field, fieldState }) => {
               return (
@@ -85,6 +86,7 @@ export const VariableComponent = ({ index, template, control, path }: VariableCo
         {variableType === TemplateVariableTypeEnum.BOOLEAN && !isSystemVariable && (
           <Controller
             name={`${formPrefix}.defaultValue`}
+            defaultValue=""
             control={control}
             render={({ field }) => {
               return (
@@ -106,6 +108,7 @@ export const VariableComponent = ({ index, template, control, path }: VariableCo
       <td className="required-td">
         <Controller
           name={`${formPrefix}.required`}
+          defaultValue={false}
           control={control}
           render={({ field }) => {
             return (
@@ -144,17 +147,15 @@ export function VariableManager({ variablesArray, index, hideLabel = false, path
           </tr>
         </thead>
         <tbody>
-          <FieldArrayProvider fieldArrays={{ variablesArray }}>
-            {variablesArray.fields.map((field, ind) => (
-              <VariableComponent
-                key={field.id}
-                index={ind}
-                path={''}
-                template={path ?? `steps.${index}.template`}
-                control={control}
-              />
-            ))}
-          </FieldArrayProvider>
+          {variablesArray.fields.map((field, ind) => (
+            <VariableComponent
+              key={field.id}
+              index={ind}
+              path={''}
+              template={path ?? `steps.${index}.template`}
+              control={control}
+            />
+          ))}
         </tbody>
       </Table>
 

@@ -50,6 +50,7 @@
     "@novu/plivo": "^0.11.0",
     "@novu/postmark": "^0.11.0",
     "@novu/sendgrid": "^0.11.0",
+    "@novu/resend": "^0.11.0",
     "@novu/sendinblue": "^0.11.0",
     "@novu/ses": "^0.11.0",
     "@novu/shared": "^0.11.0",
@@ -70,7 +71,7 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/analytics-node": "^3.1.9",
-    "@types/jest": "27.4.0",
+    "@types/jest": "27.5.2",
     "@types/sinon": "^9.0.0",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",

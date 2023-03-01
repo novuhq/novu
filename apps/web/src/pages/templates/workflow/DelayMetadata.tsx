@@ -10,10 +10,12 @@ import { When } from '../../../components/utils/When';
 export const DelayMetadata = ({ control, index }) => {
   const { readonly } = useEnvController();
   const {
-    formState: { errors },
+    formState: { errors, isSubmitted },
     watch,
+    trigger,
   } = useFormContext();
   const type = watch(`steps.${index}.metadata.type`);
+  const showErrors = isSubmitted && errors?.steps;
 
   return (
     <>
@@ -29,6 +31,7 @@ export const DelayMetadata = ({ control, index }) => {
           render={({ field }) => {
             return (
               <Select
+                {...field}
                 label="Delay Type"
                 disabled={readonly}
                 data={[
@@ -36,7 +39,10 @@ export const DelayMetadata = ({ control, index }) => {
                   { value: DelayTypeEnum.SCHEDULED, label: 'Scheduled' },
                 ]}
                 data-test-id="delay-type"
-                {...field}
+                onChange={async (value) => {
+                  field.onChange(value);
+                  await trigger(`steps.${index}.metadata`);
+                }}
               />
             );
           }}
@@ -57,12 +63,13 @@ export const DelayMetadata = ({ control, index }) => {
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.amount`}
+                defaultValue=""
                 render={({ field, fieldState }) => {
                   return (
                     <Input
                       {...field}
                       value={field.value || ''}
-                      error={fieldState.error?.message}
+                      error={showErrors && fieldState.error?.message}
                       min={0}
                       max={100}
                       type="number"
@@ -78,11 +85,12 @@ export const DelayMetadata = ({ control, index }) => {
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.unit`}
-                render={({ field }) => {
+                defaultValue=""
+                render={({ field, fieldState }) => {
                   return (
                     <Select
                       disabled={readonly}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.unit?.message : undefined}
+                      error={showErrors && fieldState.error?.message}
                       placeholder="Interval"
                       data={[
                         { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
@@ -105,6 +113,7 @@ export const DelayMetadata = ({ control, index }) => {
         <Controller
           control={control}
           name={`steps.${index}.metadata.delayPath`}
+          defaultValue=""
           render={({ field, fieldState }) => {
             return (
               <Input
@@ -114,7 +123,7 @@ export const DelayMetadata = ({ control, index }) => {
                 label="Path for scheduled date"
                 placeholder="For example: sendAt"
                 description="The path in payload for the scheduled delay date"
-                error={fieldState.error?.message}
+                error={showErrors && fieldState.error?.message}
                 type="text"
                 data-test-id="batch-key"
               />

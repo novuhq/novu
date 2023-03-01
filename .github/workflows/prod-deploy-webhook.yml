@@ -3,26 +3,19 @@ name: Deploy PROD WEBHOOK
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    tags:
-      - '**@novu/webhook@**'
-      - '**@novu/node@**'
-      - '**@novu/shared@**'
   workflow_dispatch:
-env:
-  TF_WORKSPACE: novu-prod
 
 jobs:
   test_webhook:
     uses: ./.github/workflows/reusable-webhook-e2e.yml
 
-  deploy_prod_webhook:
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
-    # The type of runner that the job will run on
+  build_prod_image:
     runs-on: ubuntu-latest
     needs: test_webhook
     timeout-minutes: 80
     environment: Production
+    outputs:
+      docker_image: ${{ steps.build-image.outputs.IMAGE }}
     permissions:
       contents: read
       packages: write
@@ -30,6 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
+
+      - name: build webhook
+        run: pnpm build:webhook
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -54,57 +50,23 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
-      - name: Checkout cloud infra
-        uses: actions/checkout@master
-        with:
-          repository: novuhq/cloud-infra
-          token: ${{ secrets.GH_PACKAGES }}
-          path: cloud-infra
+  deploy_prod_webhook_eu:
+    needs:
+      - build_prod_image
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    secrets: inherit
+    with:
+      service_name: webhook
+      terraform_workspace: novu-prod-eu
+      docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Terraform setup
-        uses: hashicorp/setup-terraform@v1
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          terraform_version: 1.3.4
-          terraform_wrapper: false
-
-      - name: Terraform Init
-        working-directory: cloud-infra/terraform
-        run: terraform init
-
-      - name: Terraform get output
-        working-directory: cloud-infra/terraform
-        id: terraform
-        run: |
-          echo "webhook_ecs_container_name=$(terraform output -json webhook_ecs_container_name | jq -r .)" >> $GITHUB_ENV
-          echo "webhook_ecs_service=$(terraform output -json webhook_ecs_service | jq -r .)" >> $GITHUB_ENV
-          echo "webhook_ecs_cluster=$(terraform output -json webhook_ecs_cluster | jq -r .)" >> $GITHUB_ENV
-          echo "webhook_task_name=$(terraform output -json webhook_task_name | jq -r .)" >> $GITHUB_ENV
-
-      - name: Download task definition
-        run: |
-          aws ecs describe-task-definition --task-definition ${{ env.webhook_task_name }} \
-          --query taskDefinition > task-definition.json
-
-      - name: Render Amazon ECS task definition
-        id: render-web-container
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: ${{ env.webhook_ecs_container_name }}
-          image: ${{ steps.build-image.outputs.IMAGE }}
-
-      - name: Deploy to Amazon ECS service
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
-          service: ${{ env.webhook_ecs_service }}
-          cluster: ${{ env.webhook_ecs_cluster }}
-          wait-for-service-stability: true
+  deploy_prod_webhook_us:
+    needs:
+      - deploy_prod_webhook_eu
+      - build_prod_image
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    secrets: inherit
+    with:
+      service_name: webhook
+      terraform_workspace: novu-prod
+      docker_image: ${{ needs.build_prod_image.outputs.docker_image }}

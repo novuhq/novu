@@ -32,13 +32,13 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@aws-sdk/client-ses": "3.48.0",
+    "@aws-sdk/client-ses": "3.267.0",
     "@novu/stateless": "^0.11.0",
     "nodemailer": "^6.6.5"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@types/jest": "27.4.0",
+    "@types/jest": "27.5.2",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",
     "cz-conventional-changelog": "^3.3.0",

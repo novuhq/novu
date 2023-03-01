@@ -239,7 +239,7 @@ export class UserSession {
       .put('/v1/organizations/branding')
       .send({
         color: '#2a9d8f',
-        logo: 'https://novu.co/img/logo.png',
+        logo: 'https://web.novu.co/static/images/logo-light.png',
         fontColor: '#214e49',
         contentBackground: '#c2cbd2',
         fontFamily: 'Montserrat',

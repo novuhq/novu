@@ -9,7 +9,7 @@ interface ITitleProps extends JSX.ElementChildrenAttribute, SpacingProps {
  * Use Title to create headers.
  *
  */
-export function Title({ size = 1, children }: ITitleProps) {
+export function Title({ size = 1, children, ...rest }: ITitleProps) {
   return (
     <MantineTitle
       sx={(theme) => ({
@@ -17,6 +17,7 @@ export function Title({ size = 1, children }: ITitleProps) {
         color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
       })}
       order={size}
+      {...rest}
     >
       {children}
     </MantineTitle>

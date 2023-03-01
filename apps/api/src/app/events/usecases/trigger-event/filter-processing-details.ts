@@ -17,11 +17,15 @@ export class FilterProcessingDetails {
     this.conditions.push(condition);
   }
 
-  toString() {
-    return JSON.stringify({
+  toObject() {
+    return {
       payload: this.variables,
       filter: this.filter,
       conditions: this.conditions,
-    });
+    };
+  }
+
+  toString() {
+    return JSON.stringify(this.toObject());
   }
 }

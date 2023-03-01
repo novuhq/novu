@@ -44,6 +44,7 @@ export class PromoteMessageTemplateChange {
         title: newItem.title,
         cta: newItem.cta,
         active: newItem.active,
+        actor: newItem.actor,
         _parentId: newItem._id,
         _feedId: feed?._id,
         _layoutId: layout?._id,
@@ -67,6 +68,7 @@ export class PromoteMessageTemplateChange {
         title: newItem.title,
         cta: newItem.cta,
         active: newItem.active,
+        actor: newItem.actor,
         _feedId: feed?._id,
         _layoutId: layout?._id,
       }

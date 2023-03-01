@@ -6,8 +6,8 @@ export function getActivityList(page = 0, filters) {
     page,
     channels: filters?.channels,
     templates: filters?.templates,
-    search: filters?.search,
-    transactionId: filters?.transactionId,
+    search: filters?.search !== '' ? filters?.search : undefined,
+    transactionId: filters?.transactionId !== '' ? filters?.transactionId : undefined,
   });
 }
 

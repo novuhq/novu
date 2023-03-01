@@ -43,14 +43,13 @@
     "node": ">=10"
   },
   "dependencies": {
-    "axios": "^0.26.1",
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2"
   },
   "devDependencies": {
     "@sendgrid/mail": "^7.4.6",
-    "@types/jest": "27.4.0",
+    "@types/jest": "27.5.2",
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.merge": "^4.6.6",
     "@types/node": "^14.6.0",

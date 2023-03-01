@@ -10,14 +10,11 @@ export class DigestFilterStepsRegular {
 
   public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
     const steps = [DigestFilterSteps.createTriggerStep(command)];
-    let delayedDigests: JobEntity = null;
-    for (const step of command.steps) {
-      if (step.template.type === StepTypeEnum.DIGEST) {
-        delayedDigests = await this.getDigest(command, step);
-      }
+    let delayedDigests;
 
-      if (delayedDigests) {
-        continue;
+    for (const step of command.steps) {
+      if (step?.template?.type === StepTypeEnum.DIGEST) {
+        delayedDigests = await this.getDigest(command, step);
       }
 
       steps.push(step);
@@ -41,7 +38,7 @@ export class DigestFilterStepsRegular {
   }
 
   private async getDigest(command: DigestFilterStepsCommand, step: NotificationStepEntity) {
-    const where: any = {
+    const where = {
       status: JobStatusEnum.DELAYED,
       type: StepTypeEnum.DIGEST,
       _subscriberId: command.subscriberId,
@@ -49,8 +46,9 @@ export class DigestFilterStepsRegular {
       _environmentId: command.environmentId,
     };
 
-    if (step.metadata.digestKey) {
-      where['payload.' + step.metadata.digestKey] = command.payload[step.metadata.digestKey];
+    const digestKey = step?.metadata?.digestKey;
+    if (digestKey) {
+      where['payload.' + digestKey] = DigestFilterSteps.getNestedValue(command.payload, digestKey);
     }
 
     return await this.jobRepository.findOne(where);

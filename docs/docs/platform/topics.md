@@ -13,9 +13,7 @@ Users can also assign a name to a topic. This name doesn't need to be unique and
 
 A topic would get assigned different subscribers that will receive a notification every time a notification is sent to the topic.
 
-## How to use topics
-
-### Create a topic
+## Create a topic
 
 In order to be able to send a notification to a topic, first the user needs to create one. It can be done like this:
 
@@ -59,7 +57,7 @@ const result = await novu.topics.rename(topicKey, topicName);
 
 This will return the whole Topic information, including the subscribers if having any.
 
-### Subscribers management in a topic
+## Subscribers management in a topic
 
 In [Subscribers](/platform/subscribers), it is explained how to create subscribers using Novu API.
 Once created the subscribers that the user wants to assign to the topic, it can be done using the subscriber identifier given to any subscriber. Check the entry [Subscriber identifier](/platform/subscribers#subscriber-identifier) for more information.
@@ -106,7 +104,7 @@ const response = await novu.topics.removeSubscribers(topicKey, {
 
 Where `subscribers` will be an array of the subscriber identifiers we want to unassign from the topic. If successful an empty response will be returned.
 
-### Sending a notification to a topic
+## Sending a notification to a topic
 
 In the section [Quick Start](/overview/quick-start#trigger-the-notification) it is explained how to trigger a notification for a single subscriber either by passing the subscribers identifier or by passing the full subscriber information if user wants to skip the identify step.
 Thanks to the topics feature, now it is possible to trigger a notification to all the subscribers assigned to a topic, which helps to have to avoid to list all the subscriber identifiers in the `to` field of the notification trigger.
@@ -116,7 +114,7 @@ To trigger a notification to all the subscribers of a topic, Novu's API allows i
 const topicKey = 'posts:comment:12345';
 
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
-  to: [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicKey }],
+  to: [{ type: 'Topic', topicKey: topicKey }],
   payload: {},
 });
 ```
@@ -129,9 +127,29 @@ const topicKey = '<TOPIC-KEY-DEFINED-BY-THE-USER>';
 
 await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
   to: [
-    { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: topicKey },
-    { type: TriggerRecipientsTypeEnum.TOPIC, topicKey: 'Another Topic Key' },
+    { type: 'Topic', topicKey: topicKey },
+    { type: 'Topic', topicKey: 'Another Topic Key' },
   ],
   payload: {},
 });
 ```
+
+## Exclude actor from topic trigger event
+
+To exclude the actor responsible for the action of a triggered topic event, you must add the subscriberId of that actor when triggering that event.
+
+```typescript
+const topicKey = 'posts:comment:12345';
+
+await novu.trigger('<REPLACE_WITH_EVENT_NAME_FROM_ADMIN_PANEL>', {
+  to: [{ type: 'Topic', topicKey: topicKey }],
+  payload: {},
+  actor: { subscriberId: '<SUBSCRIBER_ID_OF_ACTOR>' },
+});
+```
+
+### Usecase Example
+
+User X makes a comment, other users (A, B) who've already commented before should get a notification.
+So, when triggering the notification on that topic, you would usually want to exclude User X from receiving a notification about their own comment.
+To do that - you would need to add User X's subscriberId to the trigger event.

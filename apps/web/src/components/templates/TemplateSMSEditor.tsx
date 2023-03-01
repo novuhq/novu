@@ -1,10 +1,13 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
+
 import { LackIntegrationError } from './LackIntegrationError';
-import { IForm } from './useTemplateController';
+import type { IForm } from './formTypes';
 import { Textarea } from '../../design-system';
 import { useEnvController } from '../../store/useEnvController';
 import { VariableManager } from './VariableManager';
 import { useVariablesManager } from '../../hooks/useVariablesManager';
+
+const templateFields = ['content'];
 
 export function TemplateSMSEditor({
   control,
@@ -20,13 +23,14 @@ export function TemplateSMSEditor({
   const {
     formState: { errors },
   } = useFormContext();
-  const variablesArray = useVariablesManager(index, ['content']);
+  const variablesArray = useVariablesManager(index, templateFields);
 
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channelType="SMS" /> : null}
       <Controller
         name={`steps.${index}.template.content` as any}
+        defaultValue=""
         control={control}
         render={({ field }) => (
           <Textarea

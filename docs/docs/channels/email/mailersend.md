@@ -12,5 +12,6 @@ To generate the API token go visit the [MailerSend API Tokens](https://www.maile
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate MailerSend and click on the **Connect** button.
 - Enter API key.
-- Click on the **Save** button.
+- Click on the `Disabled` button and mark as `Active`.
+- Click on the **Connect** button.
 - You should now be able to send notifications using MailerSend in Novu.

@@ -1,7 +1,8 @@
 import { Control, Controller, useWatch } from 'react-hook-form';
-import { useEffect, useState } from 'react';
+
 import { InAppWidgetPreview } from '../../widget/InAppWidgetPreview';
-import { IForm } from '../useTemplateController';
+import type { IForm } from '../formTypes';
+import { useEffect, useState } from 'react';
 import { EmailCustomCodeEditor } from '../email-editor/EmailCustomCodeEditor';
 import { When } from '../../utils/When';
 import Handlebars from 'handlebars/dist/handlebars';
@@ -26,7 +27,8 @@ export function InAppEditorBlock({
 
   return (
     <Controller
-      name={`steps.${index}.template.cta.action` as any}
+      name={`steps.${index}.template.cta.action`}
+      defaultValue=""
       data-test-id="in-app-content-form-item"
       control={control}
       render={({ field }) => {
@@ -76,6 +78,7 @@ function ContentContainerController({ control, index }: { control: Control<IForm
   return (
     <Controller
       name={`steps.${index}.template.content` as any}
+      defaultValue=""
       data-test-id="in-app-content-form-item"
       control={control}
       render={({ field }) => {
