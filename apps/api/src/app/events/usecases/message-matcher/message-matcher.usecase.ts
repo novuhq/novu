@@ -14,7 +14,6 @@ import {
   ICondition,
   TimeOperatorEnum,
   ChannelTypeEnum,
-  IFieldFilterPart,
   IPreviousStepFilterPart,
   PreviousStepTypeEnum,
 } from '@novu/shared';
@@ -246,7 +245,7 @@ export class MessageMatcher {
     filter: IPreviousStepFilterPart,
     command: SendMessageCommand,
     filterProcessingDetails: FilterProcessingDetails
-  ) {
+  ): Promise<boolean> {
     const job = await this.jobRepository.findOne({
       transactionId: command.transactionId,
       _subscriberId: command.subscriberId,

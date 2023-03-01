@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { useMantineColorScheme } from '@mantine/core';
-import { BuilderFieldOperator, FilterParts } from '@novu/shared';
+import { BuilderFieldOperator, FilterParts, FilterPartTypeEnum } from '@novu/shared';
 
 import type { IStepEntity } from '../components/formTypes';
 import { colors } from '../../../design-system';
@@ -67,14 +67,14 @@ export const translateOperator = (operator?: BuilderFieldOperator) => {
 };
 
 export const getFilterLabel = (filter: FilterParts): string => {
-  if (filter.on === 'isOnline') {
+  if (filter.on === FilterPartTypeEnum.IS_ONLINE) {
     return `is online right now ${translateOperator('EQUAL')}`;
   }
-  if (filter.on === 'isOnlineInLast') {
+  if (filter.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {
     return `online in the last "X" ${filter.timeOperator}`;
   }
 
-  if (filter.on === 'previousStep') {
+  if (filter.on === FilterPartTypeEnum.PREVIOUS_STEP) {
     return '';
   }
 
@@ -82,13 +82,13 @@ export const getFilterLabel = (filter: FilterParts): string => {
 };
 
 const getFilterValue = (filter: FilterParts) => {
-  if (filter.on === 'previousStep') {
+  if (filter.on === FilterPartTypeEnum.PREVIOUS_STEP) {
     return filter.type;
   }
 
   let value = filter.value;
 
-  if (filter.on === 'isOnline') {
+  if (filter.on === FilterPartTypeEnum.IS_ONLINE) {
     if (filter.value === true) {
       value = 'Yes';
     }

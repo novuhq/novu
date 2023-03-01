@@ -98,16 +98,16 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(template._notificationGroupId).to.equal(testTemplate.notificationGroupId);
     const message = template.steps[0];
 
+    const children: IFieldFilterPart = testTemplate.steps[0].filters[0].children[0] as IFieldFilterPart;
+
     expect(message.template.name).to.equal(`${testTemplate.steps[0].template.name}`);
     expect(message.template.active).to.equal(defaultMessageIsActive);
     expect(message.template.subject).to.equal(`${testTemplate.steps[0].template.subject}`);
     expect(message.template.preheader).to.equal(`${testTemplate.steps[0].template.preheader}`);
     expect(message.filters[0].type).to.equal(testTemplate.steps[0].filters[0].type);
     expect(message.filters[0].children.length).to.equal(testTemplate.steps[0].filters[0].children.length);
-    expect(message.filters[0].children[0].value).to.equal(testTemplate.steps[0].filters[0].children[0].value);
-    expect((message.filters[0].children[0] as IFieldFilterPart).operator).to.equal(
-      (testTemplate.steps[0].filters[0].children[0] as IFieldFilterPart).operator
-    );
+    expect(children.value).to.equal(children.value);
+    expect(children.operator).to.equal(children.operator);
     expect(template.tags[0]).to.equal('test-tag');
 
     if (Array.isArray(message.template.content) && Array.isArray(testTemplate.steps[0].template.content)) {
