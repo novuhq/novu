@@ -1,9 +1,10 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
-import { schemaOptions } from '../schema-default.options';
-import { LogEntity } from './log.entity';
+import { Schema } from 'mongoose';
 
-const logSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { LogDBModel } from './log.entity';
+
+const logSchema = new Schema<LogDBModel>(
   {
     transactionId: {
       type: Schema.Types.String,
@@ -49,9 +50,5 @@ const logSchema = new Schema(
 
 logSchema.index({ _environmentId: 1, createdAt: -1 });
 
-interface ILogDocument extends LogEntity, Document {
-  _id: never;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const Log = mongoose.models.Log || mongoose.model<ILogDocument>('Log', logSchema);
+export const Log = (mongoose.models.Log as mongoose.Model<LogDBModel>) || mongoose.model<LogDBModel>('Log', logSchema);

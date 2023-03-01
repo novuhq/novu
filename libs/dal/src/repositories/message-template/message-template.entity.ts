@@ -1,13 +1,16 @@
-import { StepTypeEnum, IMessageCTA, TemplateVariableTypeEnum, IActor } from '@novu/shared';
+import { StepTypeEnum, IMessageCTA, IActor } from '@novu/shared';
 
 import { IEmailBlock, ITemplateVariable } from './types';
+import type { OrganizationId } from '../organization';
+import type { EnvironmentId } from '../environment';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class MessageTemplateEntity {
   _id: string;
 
-  _environmentId: string;
+  _environmentId: EnvironmentId;
 
-  _organizationId: string;
+  _organizationId: OrganizationId;
 
   _creatorId: string;
 
@@ -42,3 +45,8 @@ export class MessageTemplateEntity {
 
   actor?: IActor;
 }
+
+export type MessageTemplateDBModel = ChangePropsValueType<
+  MessageTemplateEntity,
+  '_environmentId' | '_organizationId' | '_creatorId' | '_layoutId' | '_feedId' | '_parentId'
+>;

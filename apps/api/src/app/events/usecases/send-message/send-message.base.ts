@@ -21,7 +21,7 @@ export abstract class SendMessageBase extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    protected getDecryptedIntegrationsUsecase?: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }

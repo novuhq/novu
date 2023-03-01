@@ -1,19 +1,12 @@
-import { BaseRepository, Omit } from '../base-repository';
-import { SubscriberPreferenceEntity } from './subscriber-preference.entity';
+import { BaseRepository } from '../base-repository';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { SubscriberPreferenceEntity, SubscriberPreferenceDBModel } from './subscriber-preference.entity';
 import { SubscriberPreference } from './subscriber-preference.schema';
-import { Document, FilterQuery } from 'mongoose';
-
-class PartialSubscriberPreferenceEntity extends Omit(SubscriberPreferenceEntity, [
-  '_environmentId',
-  '_organizationId',
-]) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberPreferenceEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
 
 export class SubscriberPreferenceRepository extends BaseRepository<
-  EnforceEnvironmentQuery,
-  SubscriberPreferenceEntity
+  SubscriberPreferenceDBModel,
+  SubscriberPreferenceEntity,
+  EnforceEnvOrOrgIds
 > {
   constructor() {
     super(SubscriberPreference, SubscriberPreferenceEntity);
