@@ -1,7 +1,8 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { NotificationTemplateRepository } from '@novu/dal';
-import { CreateNotificationTemplateRequestDto } from '../../../src/app/notification-template/dto/create-notification-template.request.dto';
+
+import { CreateNotificationTemplateRequestDto } from '../../notification-template/dto/create-notification-template.request.dto';
 
 describe('Environment - Check Root Environment Guard', async () => {
   let session: UserSession;
