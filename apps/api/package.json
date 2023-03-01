@@ -72,7 +72,7 @@
     "@novu/termii": "^0.11.0",
     "@novu/testing": "^0.11.0",
     "@novu/twilio": "^0.11.0",
-    "@novu/kannel": "^0.11.0",
+    "@novu/kannel": "^0.12.0",
     "@sendgrid/mail": "^7.6.0",
     "@sentry/hub": "7.22.0",
     "@sentry/node": "^7.12.1",
