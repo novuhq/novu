@@ -263,7 +263,7 @@ importers:
       swagger-ui-express: ^4.4.0
       ts-loader: ~9.4.0
       ts-node: ~10.9.1
-      tsconfig-paths: 3.14.1
+      tsconfig-paths: 3.14.2
       twilio: ^3.72.0
       typescript: 4.9.5
       uuid: ^8.3.2
@@ -381,7 +381,7 @@ importers:
       sinon: 9.2.4
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
-      tsconfig-paths: 3.14.1
+      tsconfig-paths: 3.14.2
       typescript: 4.9.5
 
   apps/inbound-mail:
@@ -38446,7 +38446,7 @@ packages:
       minimatch: 3.1.2
       object.values: 1.1.5
       resolve: 1.22.1
-      tsconfig-paths: 3.14.1
+      tsconfig-paths: 3.14.2
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
@@ -44908,6 +44908,12 @@ packages:
     dependencies:
       minimist: 1.2.7
 
+  /json5/1.0.2:
+    resolution: {integrity: sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA==}
+    hasBin: true
+    dependencies:
+      minimist: 1.2.7
+
   /json5/2.2.1:
     resolution: {integrity: sha512-1hqLFMSrGHRHxav9q9gNjJ5EXznIxGVO09xQRrwplcS8qs28pZ8s8hupZAmqDwZUmVZ2Qb2jnyPOWcDH8m8dlA==}
     engines: {node: '>=6'}
@@ -45687,7 +45693,7 @@ packages:
     dependencies:
       big.js: 5.2.2
       emojis-list: 3.0.0
-      json5: 1.0.1
+      json5: 1.0.2
 
   /loader-utils/2.0.0:
     resolution: {integrity: sha512-rP4F0h2RaWSvPEkD7BLDFQnvSf+nK+wr3ESUjNTyAGobqrijmW92zc+SO6d4p4B1wh7+B/Jg1mkQe5NYUEHtHQ==}
@@ -48440,7 +48446,7 @@ packages:
       semver: 7.3.4
       tar-stream: 2.2.0
       tmp: 0.2.1
-      tsconfig-paths: 3.14.1
+      tsconfig-paths: 3.14.2
       tslib: 2.5.0
       v8-compile-cache: 2.3.0
       yargs: 17.6.2
@@ -53715,7 +53721,7 @@ packages:
     dependencies:
       deep-extend: 0.6.0
       ini: 3.0.1
-      minimist: 1.2.6
+      minimist: 1.2.7
       strip-json-comments: 3.1.1
     dev: true
 
@@ -57156,7 +57162,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       enhanced-resolve: 5.10.0
-      tsconfig-paths: 3.14.1
+      tsconfig-paths: 3.14.2
     dev: true
 
   /tsconfig-paths-webpack-plugin/3.5.2:
@@ -57164,7 +57170,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       enhanced-resolve: 5.10.0
-      tsconfig-paths: 3.14.1
+      tsconfig-paths: 3.14.2
     dev: true
 
   /tsconfig-paths/3.14.1:
@@ -57175,11 +57181,19 @@ packages:
       minimist: 1.2.7
       strip-bom: 3.0.0
 
+  /tsconfig-paths/3.14.2:
+    resolution: {integrity: sha512-o/9iXgCYc5L/JxCHPe3Hvh8Q/2xm5Z+p18PESBU6Ff33695QnCHBEjcytY2q19ua7Mbl/DavtBOLq+oG0RCL+g==}
+    dependencies:
+      '@types/json5': 0.0.29
+      json5: 1.0.2
+      minimist: 1.2.7
+      strip-bom: 3.0.0
+
   /tsconfig-paths/3.9.0:
     resolution: {integrity: sha512-dRcuzokWhajtZWkQsDVKbWyY+jgcLC5sqJhg2PSgf4ZkH2aHPvaOY8YWGhmjb68b5qqTfasSsDO9k7RUiEmZAw==}
     dependencies:
       '@types/json5': 0.0.29
-      json5: 1.0.1
+      json5: 1.0.2
       minimist: 1.2.7
       strip-bom: 3.0.0
     dev: true
