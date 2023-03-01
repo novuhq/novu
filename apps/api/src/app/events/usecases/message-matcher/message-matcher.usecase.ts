@@ -16,6 +16,7 @@ import {
   ChannelTypeEnum,
   IFieldFilterPart,
   IPreviousStepFilterPart,
+  PreviousStepTypeEnum,
 } from '@novu/shared';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
@@ -25,6 +26,8 @@ import {
   StepFilter,
   ExecutionDetailsRepository,
   MessageRepository,
+  JobRepository,
+  MessageEntity,
 } from '@novu/dal';
 
 import { IFilterVariables } from './types';
@@ -58,7 +61,8 @@ export class MessageMatcher {
     private createExecutionDetails: CreateExecutionDetails,
     private environmentRepository: EnvironmentRepository,
     private executionDetailsRepository: ExecutionDetailsRepository,
-    private messageRepository: MessageRepository
+    private messageRepository: MessageRepository,
+    private jobRepository: JobRepository
   ) {}
 
   public async filter(
@@ -238,113 +242,82 @@ export class MessageMatcher {
     ));
   }
 
-  private async processHaveSeen(
+  private async processPreviousStep(
     filter: IPreviousStepFilterPart,
     command: SendMessageCommand,
     filterProcessingDetails: FilterProcessingDetails
   ) {
-    const previousJobId = command.job._parentId;
+    const job = await this.jobRepository.findOne({
+      transactionId: command.transactionId,
+      _subscriberId: command.subscriberId,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      'step.uuid': filter.step,
+    });
 
-    if (!previousJobId) {
+    if (!job) {
       return true;
     }
+
     const message = await this.messageRepository.findOne({
-      _jobId: previousJobId,
-      _organizationId: command.organizationId,
+      _jobId: job._id,
       _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      _subscriberId: command.subscriberId,
+      transactionId: command.transactionId,
     });
 
     if (!message) {
       return true;
     }
-    if (message?.channel === ChannelTypeEnum.IN_APP) {
-      filterProcessingDetails.addCondition({
-        filter: FILTER_TO_LABEL[filter.on],
-        field: 'read',
-        expected: 'true',
-        actual: `${message.seen}`,
-        operator: 'EQUAL',
-        passed: message.seen,
+
+    const label = FILTER_TO_LABEL[filter.on];
+    const field = filter.type;
+    const expected = 'true';
+    const operator = 'EQUAL';
+
+    if (message?.channel === ChannelTypeEnum.EMAIL) {
+      const count = await this.executionDetailsRepository.count({
+        _jobId: command.job._parentId,
+        _messageId: message._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        webhookStatus: EmailEventStatusEnum.OPENED,
       });
 
-      return message.seen;
-    }
+      const passed = [PreviousStepTypeEnum.UNREAD, PreviousStepTypeEnum.UNSEEN].includes(filter.type)
+        ? count === 0
+        : count > 0;
 
-    const count = await this.executionDetailsRepository.count({
-      _jobId: previousJobId,
-      _messageId: message._id,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      webhookStatus: {
-        $in: [EmailEventStatusEnum.OPENED],
-      },
-    });
-
-    filterProcessingDetails.addCondition({
-      filter: FILTER_TO_LABEL[filter.on],
-      field: 'read',
-      expected: 'true',
-      actual: `${count > 0}`,
-      operator: 'EQUAL',
-      passed: count > 0,
-    });
-
-    return count > 0;
-  }
-
-  private async processHaveRead(
-    filter: IPreviousStepFilterPart,
-    command: SendMessageCommand,
-    filterProcessingDetails: FilterProcessingDetails
-  ) {
-    const previousJobId = command.job._parentId;
-
-    if (!previousJobId) {
-      return true;
-    }
-
-    const message = await this.messageRepository.findOne({
-      _jobId: previousJobId,
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-    });
-
-    if (!message) {
-      return true;
-    }
-    if (message?.channel === ChannelTypeEnum.IN_APP) {
       filterProcessingDetails.addCondition({
-        filter: FILTER_TO_LABEL[filter.on],
-        field: 'read',
-        expected: 'true',
-        actual: `${message.read}`,
-        operator: 'EQUAL',
-        passed: message.read,
+        filter: label,
+        field,
+        expected,
+        actual: `${passed}`,
+        operator,
+        passed: passed,
       });
 
-      return message.read;
+      return passed;
     }
 
-    const count = await this.executionDetailsRepository.count({
-      _jobId: previousJobId,
-      _messageId: message._id,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      webhookStatus: {
-        $in: [EmailEventStatusEnum.OPENED],
-      },
-    });
+    const value = [PreviousStepTypeEnum.SEEN, PreviousStepTypeEnum.UNSEEN].includes(filter.type)
+      ? message.seen
+      : message.read;
+    const passed = [PreviousStepTypeEnum.UNREAD, PreviousStepTypeEnum.UNSEEN].includes(filter.type)
+      ? value === false
+      : value;
 
     filterProcessingDetails.addCondition({
-      filter: FILTER_TO_LABEL[filter.on],
-      field: 'read',
-      expected: 'true',
-      actual: `${count > 0}`,
-      operator: 'EQUAL',
-      passed: count > 0,
+      filter: label,
+      field,
+      expected,
+      actual: `${passed}`,
+      operator,
+      passed: passed,
     });
 
-    return count > 0;
+    return passed;
   }
 
   private async processIsOnline(
@@ -553,8 +526,7 @@ export class MessageMatcher {
     }
 
     if (child.on === FilterPartTypeEnum.PREVIOUS_STEP) {
-      passed = await this.processHaveRead(child, command, filterProcessingDetails);
-      passed = await this.processHaveSeen(child, command, filterProcessingDetails);
+      passed = await this.processPreviousStep(child, command, filterProcessingDetails);
     }
 
     return passed;
