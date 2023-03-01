@@ -10,7 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | docker buildx build --build-arg PACKAGE_PATH=apps/api - -t novu-api",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | docker buildx build -t novu-api --build-arg PACKAGE_PATH=apps/api",
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api - -t novu-api --load",
     "start": "pnpm start:dev",
     "start:dev": "cross-env TZ=UTC nest start --watch",
@@ -138,7 +138,7 @@
     "sinon": "^9.2.4",
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
-    "tsconfig-paths": "3.14.1",
+    "tsconfig-paths": "3.14.2",
     "typescript": "4.9.5"
   },
   "lint-staged": {

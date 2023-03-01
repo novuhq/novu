@@ -18,9 +18,9 @@ export function Cards({ cells }: { cells: ICardCell[] }) {
   const spanNumber = 12 / cells.length;
 
   return (
-    <Grid mb={50}>
+    <Grid mb={50} sx={{ justifyContent: 'center' }}>
       {cells.map((cell, index) => (
-        <Grid.Col span={spanNumber} key={index}>
+        <Grid.Col span={spanNumber} key={index} sx={{ maxWidth: 'initial' }}>
           <Card cell={cell} key={index} />
         </Grid.Col>
       ))}

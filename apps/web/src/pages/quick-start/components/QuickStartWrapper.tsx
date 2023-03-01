@@ -134,6 +134,7 @@ const Title = styled.div`
 const SecondaryTitle = styled.div<{ onlySecondary: boolean }>`
   font-size: 30px;
   font-weight: bold;
+  line-height: 1;
 
   margin-top: ${({ onlySecondary }) => {
     return onlySecondary ? '127px' : '0';
