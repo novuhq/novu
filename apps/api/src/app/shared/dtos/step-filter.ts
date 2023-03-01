@@ -42,9 +42,9 @@ class BaseFieldFilterPart extends BaseFilterPart {
 
 class FieldFilterPart extends BaseFieldFilterPart {
   @ApiProperty({
-    enum: [FilterPartTypeEnum.SUBSCRIBER, FilterPartTypeEnum.PAYLOAD, FilterPartTypeEnum.PREVIOUS_STEP],
+    enum: [FilterPartTypeEnum.SUBSCRIBER, FilterPartTypeEnum.PAYLOAD],
   })
-  on: FilterPartTypeEnum.SUBSCRIBER | FilterPartTypeEnum.PAYLOAD | FilterPartTypeEnum.PREVIOUS_STEP;
+  on: FilterPartTypeEnum.SUBSCRIBER | FilterPartTypeEnum.PAYLOAD;
 }
 
 class WebhookFilterPart extends BaseFieldFilterPart {
