@@ -50,3 +50,5 @@ export class UserEntity {
 
   servicesHashes?: { intercom?: string };
 }
+
+export type UserDBModel = UserEntity;

@@ -1,17 +1,12 @@
 import { FilterQuery } from 'mongoose';
 
-import { TopicEntity } from './topic.entity';
+import { TopicEntity, TopicDBModel } from './topic.entity';
 import { Topic } from './topic.schema';
 import { EnvironmentId, ExternalSubscriberId, OrganizationId, TopicId, TopicKey, TopicName } from './types';
-
-import { BaseRepository, Omit } from '../base-repository';
+import { BaseRepository } from '../base-repository';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 const TOPIC_SUBSCRIBERS_COLLECTION = 'topicsubscribers';
-
-class PartialIntegrationEntity extends Omit(TopicEntity, ['_environmentId', '_organizationId']) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity> &
-  ({ _environmentId: EnvironmentId } | { _organizationId: OrganizationId });
 
 const topicWithSubscribersProjection = {
   $project: {
@@ -33,7 +28,7 @@ const lookup = {
   },
 };
 
-export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, TopicEntity> {
+export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Topic, TopicEntity);
   }
@@ -50,7 +45,7 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
   }
 
   async filterTopics(
-    query: EnforceEnvironmentQuery,
+    query: FilterQuery<TopicDBModel>,
     pagination: { limit: number; skip: number }
   ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }[]> {
     const parsedQuery = { ...query };

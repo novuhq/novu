@@ -1,19 +1,16 @@
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
-import { LayoutEntity } from './layout.entity';
+import { LayoutEntity, LayoutDBModel } from './layout.entity';
 import { Layout } from './layout.schema';
 import { EnvironmentId, OrderDirectionEnum, OrganizationId, LayoutId } from './types';
-
-import { BaseRepository, Omit } from '../base-repository';
+import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
+import { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-class PartialIntegrationEntity extends Omit(LayoutEntity, ['_environmentId', '_organizationId']) {}
+type LayoutQuery = FilterQuery<LayoutDBModel> & EnforceEnvOrOrgIds;
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity> &
-  ({ _environmentId: EnvironmentId } | { _organizationId: OrganizationId });
-
-export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, LayoutEntity> {
+export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity, EnforceEnvOrOrgIds> {
   private layout: SoftDeleteModel;
 
   constructor() {
@@ -51,7 +48,7 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
   }
 
   async deleteLayout(_id: LayoutId, _environmentId: EnvironmentId, _organizationId: OrganizationId): Promise<void> {
-    const deleteQuery: EnforceEnvironmentQuery = {
+    const deleteQuery: LayoutQuery = {
       _id,
       _environmentId,
       _organizationId,
@@ -71,7 +68,7 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
   }
 
   async findDeleted(id: LayoutId, environmentId: EnvironmentId): Promise<LayoutEntity | undefined> {
-    const deletedLayout = await this.layout.findOneDeleted({
+    const deletedLayout: LayoutEntity = await this.layout.findOneDeleted({
       _id: this.convertStringToObjectId(id),
       _environmentId: this.convertStringToObjectId(environmentId),
     });
@@ -84,7 +81,7 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
   }
 
   async findDeletedByParentId(parentId: LayoutId, environmentId: EnvironmentId): Promise<LayoutEntity | undefined> {
-    const deletedLayout = await this.layout.findOneDeleted({
+    const deletedLayout: LayoutEntity = await this.layout.findOneDeleted({
       _parentId: this.convertStringToObjectId(parentId),
       _environmentId: this.convertStringToObjectId(environmentId),
     });
@@ -97,7 +94,7 @@ export class LayoutRepository extends BaseRepository<EnforceEnvironmentQuery, La
   }
 
   async filterLayouts(
-    query: EnforceEnvironmentQuery,
+    query: LayoutQuery,
     pagination: { limit: number; skip: number; sortBy?: string; orderBy?: OrderDirectionEnum }
   ): Promise<LayoutEntity[]> {
     const order = pagination.orderBy ?? OrderDirectionEnum.DESC;
