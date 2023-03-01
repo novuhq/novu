@@ -1,5 +1,5 @@
 import { useRef, useCallback } from 'react';
-import { io } from 'socket.io-client';
+import { Manager } from 'socket.io-client';
 
 import type { Socket, ISession } from '../shared/interfaces';
 
@@ -26,7 +26,8 @@ export const useInitializeSocket: IUseInitializeSocket = ({ socketUrl }) => {
       }
 
       if (token) {
-        socketRef.current = io(socketUrl, {
+        const manager = new Manager(socketUrl);
+        socketRef.current = manager.socket('/', {
           reconnectionDelayMax: 10000,
           transports: ['websocket'],
           auth: {
