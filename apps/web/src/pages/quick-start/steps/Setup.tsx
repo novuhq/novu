@@ -30,8 +30,8 @@ import { API_ROOT, WS_URL } from '../../../config';
 export function Setup() {
   const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();
   const { framework } = useParams();
-  const { groups } = useNotificationGroup();
-  const { templates = [], loading } = useTemplates();
+  const { groups, loading: notificationGroupLoading } = useNotificationGroup();
+  const { templates = [], loading: templatesLoading } = useTemplates();
   const { environment } = useEnvController();
   const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
@@ -46,7 +46,7 @@ export function Setup() {
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
 
-  const { mutateAsync: createNotificationTemplate } = useMutation<
+  const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
     INotificationTemplate,
     { error: string; message: string; statusCode: number },
     ICreateNotificationTemplateDto
@@ -57,7 +57,7 @@ export function Setup() {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading) {
       const onboardingNotificationTemplate = templates.find((template) =>
         template.name.includes(notificationTemplateName)
       );
