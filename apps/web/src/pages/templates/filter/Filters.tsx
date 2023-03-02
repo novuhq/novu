@@ -36,17 +36,11 @@ export const Filter = ({ filter }: { filter: FilterParts }) => {
     name: 'steps',
   });
 
-  const filterValue = useMemo(() => {
-    return getFilterValue(filter);
-  }, [filter]);
-
-  const filterLabel = useMemo(() => {
-    return getFilterLabel(filter, steps);
-  }, [filter, steps]);
+  const filterValue = getFilterValue(filter);
 
   return (
     <FilterItem className="filter-item" dark={colorScheme === 'dark'}>
-      <FilterPosition>{filterLabel}</FilterPosition>
+      <FilterPosition>{getFilterLabel(filter, steps)}</FilterPosition>
       <FilterValue className="filter-item-value">{filterValue}</FilterValue>
     </FilterItem>
   );
