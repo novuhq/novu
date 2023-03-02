@@ -71,7 +71,11 @@ export class ProcessNotification {
     if (digestJob.digestedNotificationIds?.[0] !== notification._id) return; //old
     const preparedJob = await this.prepareJob(command, notification, steps[0]);
     preparedJob.status = JobStatusEnum.QUEUED;
-    digestJob = await this.jobRepository.findOneAndUpdate({ _id: digestJob._id }, { ...preparedJob }, { new: true });
+    digestJob = await this.jobRepository.findOneAndUpdate(
+      { _id: digestJob._id, _environmentId: digestJob._environmentId },
+      { ...preparedJob },
+      { new: true }
+    );
     await this.addFirstJob(digestJob);
   }
 

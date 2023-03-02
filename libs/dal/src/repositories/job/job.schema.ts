@@ -1,16 +1,17 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
-import { schemaOptions } from '../schema-default.options';
-import { JobEntity, JobStatusEnum } from './job.entity';
+import { Schema } from 'mongoose';
 
-const jobSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { JobDBModel, JobStatusEnum } from './job.entity';
+
+const jobSchema = new Schema<JobDBModel>(
   {
     identifier: {
       type: Schema.Types.String,
     },
     status: {
       type: Schema.Types.String,
-      default: 'pending',
+      default: JobStatusEnum.PENDING,
     },
     payload: {
       type: Schema.Types.Mixed,
@@ -156,9 +157,5 @@ jobSchema.virtual('digestedPayload', {
   justOne: false,
 });
 
-interface IJobDocument extends JobEntity, Document {
-  _id: never;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const Job = mongoose.models.Job || mongoose.model<IJobDocument>('Job', jobSchema);
+export const Job = (mongoose.models.Job as mongoose.Model<JobDBModel>) || mongoose.model<JobDBModel>('Job', jobSchema);

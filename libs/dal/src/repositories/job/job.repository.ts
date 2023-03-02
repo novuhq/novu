@@ -1,18 +1,22 @@
-import { BaseRepository, Omit } from '../base-repository';
-import { JobEntity, JobStatusEnum } from './job.entity';
+import { ProjectionType } from 'mongoose';
+
+import { BaseRepository } from '../base-repository';
+import { JobEntity, JobDBModel, JobStatusEnum } from './job.entity';
 import { Job } from './job.schema';
-import { Document, FilterQuery, ProjectionType } from 'mongoose';
 import { NotificationTemplateEntity } from '../notification-template';
 import { SubscriberEntity } from '../subscriber';
 import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-class PartialJobEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
+type JobEntityPopulated = JobEntity & {
+  template: NotificationTemplateEntity;
+  notification: NotificationEntity;
+  subscriber: SubscriberEntity;
+  environment: EnvironmentEntity;
+};
 
-type EnforceEnvironmentQuery = FilterQuery<PartialJobEntity & Document> &
-  ({ _id: string } | { _environmentId: string } | { _organizationId: string });
-
-export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEntity> {
+export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Job, JobEntity);
   }
@@ -77,22 +81,18 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     selectNotification?: ProjectionType<NotificationEntity>;
     selectSubscriber?: ProjectionType<SubscriberEntity>;
     selectEnvironment?: ProjectionType<EnvironmentEntity>;
-  }): Promise<
-    JobEntity & {
-      template: NotificationTemplateEntity;
-      notification: NotificationEntity;
-      subscriber: SubscriberEntity;
-      environment: EnvironmentEntity;
-    }
-  > {
-    return this.MongooseModel.findOne(query, select)
+  }) {
+    const job = this.MongooseModel.findOne(query, select)
       .populate('template', selectTemplate)
       .populate('notification', selectNotification)
       .populate('subscriber', selectSubscriber)
       .populate('environment', selectEnvironment)
       .lean()
       .exec();
+
+    return job as unknown as JobEntityPopulated;
   }
+
   /*
    *base command not liking this, messing up data completely, it is randomly changing data
    *not sure if this is known issue, wasted lot of time.. need to do more research

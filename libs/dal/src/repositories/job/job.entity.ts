@@ -1,5 +1,10 @@
 import { StepTypeEnum, DigestUnitEnum, DigestTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
+import { Types } from 'mongoose';
+
 import { NotificationStepEntity } from '../notification-template';
+import type { EnvironmentId } from '../environment';
+import type { OrganizationId } from '../organization';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export { JobStatusEnum };
 export class JobEntity {
@@ -13,12 +18,12 @@ export class JobEntity {
   transactionId: string;
   _notificationId: string;
   _subscriberId: string;
-  _environmentId: string;
-  _organizationId: string;
+  _environmentId: EnvironmentId;
+  _organizationId: OrganizationId;
   providerId?: string;
   _userId: string;
   delay?: number;
-  _parentId?: string | null;
+  _parentId?: string;
   status: JobStatusEnum;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error?: any;
@@ -39,3 +44,12 @@ export class JobEntity {
   _actorId?: string;
   digestRunKey?: string;
 }
+
+export type JobDBModel = ChangePropsValueType<
+  Omit<JobEntity, '_parentId' | '_actorId'>,
+  '_notificationId' | '_subscriberId' | '_environmentId' | '_organizationId' | '_userId'
+> & {
+  _parentId?: Types.ObjectId;
+
+  _actorId?: Types.ObjectId;
+};
