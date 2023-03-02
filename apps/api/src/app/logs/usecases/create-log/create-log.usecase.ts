@@ -7,7 +7,7 @@ export class CreateLog {
   constructor(private logRepository: LogRepository) {}
 
   async execute(command: CreateLogCommand): Promise<LogEntity> {
-    let rawData: string | null = null;
+    let rawData: string | undefined;
     if (command.raw) {
       try {
         rawData = JSON.stringify(command.raw);
