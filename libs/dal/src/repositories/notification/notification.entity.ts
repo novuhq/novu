@@ -1,9 +1,9 @@
-import { Types } from 'mongoose';
 import { StepTypeEnum } from '@novu/shared';
 
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class NotificationEntity {
   _id: string;
@@ -31,15 +31,7 @@ export class NotificationEntity {
   payload?: any;
 }
 
-export type NotificationDBModel = Omit<
+export type NotificationDBModel = ChangePropsValueType<
   NotificationEntity,
   '_environmentId' | '_organizationId' | '_templateId' | '_subscriberId'
-> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-
-  _templateId: Types.ObjectId;
-
-  _subscriberId: Types.ObjectId;
-};
+>;

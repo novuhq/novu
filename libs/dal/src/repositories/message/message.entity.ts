@@ -1,5 +1,4 @@
 import { Exclude } from 'class-transformer';
-import { Types } from 'mongoose';
 import { ChannelTypeEnum, IMessageCTA, IActor } from '@novu/shared';
 
 import { IEmailBlock } from '../message-template';
@@ -7,6 +6,7 @@ import { SubscriberEntity } from '../subscriber';
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
 import type { EnvironmentId } from '../environment';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class MessageEntity {
   _id: string;
@@ -85,8 +85,8 @@ export class MessageEntity {
   actor?: IActor;
 }
 
-export type MessageDBModel = Omit<
-  MessageEntity,
+export type MessageDBModel = ChangePropsValueType<
+  Omit<MessageEntity, 'createdAt'>,
   | '_templateId'
   | '_environmentId'
   | '_messageTemplateId'
@@ -94,24 +94,7 @@ export type MessageDBModel = Omit<
   | '_notificationId'
   | '_jobId'
   | '_subscriberId'
-  | 'createdAt'
   | '_feedId'
 > & {
-  _templateId: Types.ObjectId;
-
-  _environmentId: Types.ObjectId;
-
-  _messageTemplateId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-
-  _notificationId: Types.ObjectId;
-
-  _jobId: Types.ObjectId;
-
-  _subscriberId: Types.ObjectId;
-
   createdAt?: Date;
-
-  _feedId: Types.ObjectId;
 };

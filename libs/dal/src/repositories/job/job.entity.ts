@@ -4,6 +4,7 @@ import { Types } from 'mongoose';
 import { NotificationStepEntity } from '../notification-template';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export { JobStatusEnum };
 export class JobEntity {
@@ -43,20 +44,10 @@ export class JobEntity {
   _actorId?: string;
 }
 
-export type JobDBModel = Omit<
-  JobEntity,
-  '_notificationId' | '_subscriberId' | '_environmentId' | '_organizationId' | '_userId' | '_parentId' | '_actorId'
+export type JobDBModel = ChangePropsValueType<
+  Omit<JobEntity, '_parentId' | '_actorId'>,
+  '_notificationId' | '_subscriberId' | '_environmentId' | '_organizationId' | '_userId'
 > & {
-  _notificationId: Types.ObjectId;
-
-  _subscriberId: Types.ObjectId;
-
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-
-  _userId: Types.ObjectId;
-
   _parentId?: Types.ObjectId;
 
   _actorId?: Types.ObjectId;

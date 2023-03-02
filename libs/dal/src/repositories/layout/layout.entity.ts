@@ -1,5 +1,3 @@
-import { Types } from 'mongoose';
-
 import {
   ChannelTypeEnum,
   EnvironmentId,
@@ -10,6 +8,7 @@ import {
   OrganizationId,
   UserId,
 } from './types';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class LayoutEntity {
   _id: LayoutId;
@@ -29,12 +28,7 @@ export class LayoutEntity {
   updatedAt?: string;
 }
 
-export type LayoutDBModel = Omit<LayoutEntity, '_environmentId' | '_organizationId' | '_creatorId' | '_parentId'> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-
-  _creatorId: Types.ObjectId;
-
-  _parentId: Types.ObjectId;
-};
+export type LayoutDBModel = ChangePropsValueType<
+  LayoutEntity,
+  '_environmentId' | '_organizationId' | '_creatorId' | '_parentId'
+>;

@@ -1,7 +1,6 @@
-import { Types } from 'mongoose';
-
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class FeedEntity {
   _id: string;
@@ -15,8 +14,4 @@ export class FeedEntity {
   _organizationId: OrganizationId;
 }
 
-export type FeedDBModel = Omit<FeedEntity, '_environmentId' | '_organizationId'> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-};
+export type FeedDBModel = ChangePropsValueType<FeedEntity, '_environmentId' | '_organizationId'>;

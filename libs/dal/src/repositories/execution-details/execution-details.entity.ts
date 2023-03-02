@@ -1,8 +1,8 @@
-import { Types } from 'mongoose';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class ExecutionDetailsEntity {
   _id: string;
@@ -26,17 +26,7 @@ export class ExecutionDetailsEntity {
   webhookStatus?: string;
 }
 
-export type ExecutionDetailsDBModel = Omit<
+export type ExecutionDetailsDBModel = ChangePropsValueType<
   ExecutionDetailsEntity,
   '_environmentId' | '_organizationId' | '_notificationId' | '_notificationTemplateId' | '_subscriberId'
-> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-
-  _notificationId: Types.ObjectId;
-
-  _notificationTemplateId: Types.ObjectId;
-
-  _subscriberId: Types.ObjectId;
-};
+>;

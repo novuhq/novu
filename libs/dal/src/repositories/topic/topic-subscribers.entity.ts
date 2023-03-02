@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import type { ChangePropsValueType } from '../../types/helpers';
 import {
   EnvironmentId,
   ExternalSubscriberId,
@@ -19,17 +19,9 @@ export class TopicSubscribersEntity {
   externalSubscriberId: ExternalSubscriberId;
 }
 
-export type TopicSubscribersDBModel = Omit<
+export type TopicSubscribersDBModel = ChangePropsValueType<
   TopicSubscribersEntity,
   '_environmentId' | '_organizationId' | '_subscriberId' | '_topicId'
-> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-
-  _subscriberId: Types.ObjectId;
-
-  _topicId: Types.ObjectId;
-};
+>;
 
 export type CreateTopicSubscribersEntity = Omit<TopicSubscribersEntity, '_id'>;

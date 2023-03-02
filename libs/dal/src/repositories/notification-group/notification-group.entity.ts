@@ -1,7 +1,6 @@
-import { Types } from 'mongoose';
-
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class NotificationGroupEntity {
   _id: string;
@@ -15,13 +14,7 @@ export class NotificationGroupEntity {
   _parentId?: string;
 }
 
-export type NotificationGroupDBModel = Omit<
+export type NotificationGroupDBModel = ChangePropsValueType<
   NotificationGroupEntity,
   '_environmentId' | '_organizationId' | '_parentId'
-> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-
-  _parentId: Types.ObjectId;
-};
+>;

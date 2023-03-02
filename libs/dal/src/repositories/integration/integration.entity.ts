@@ -3,6 +3,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
+import { ChangePropsValueType } from '../../types/helpers';
 
 export interface ICredentials {
   apiKey?: string;
@@ -52,8 +53,4 @@ export class IntegrationEntity {
   deletedBy: string;
 }
 
-export type IntegrationDBModel = Omit<IntegrationEntity, '_environmentId' | '_organizationId'> & {
-  _environmentId: Types.ObjectId;
-
-  _organizationId: Types.ObjectId;
-};
+export type IntegrationDBModel = ChangePropsValueType<IntegrationEntity, '_environmentId' | '_organizationId'>;
