@@ -29,7 +29,7 @@ export class SmsFactory implements ISmsFactory {
     new BurstSmsHandler(),
   ];
 
-  getHandler(integration: IntegrationEntity): ISmsHandler {
+  getHandler(integration: IntegrationEntity) {
     try {
       const handler =
         this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;

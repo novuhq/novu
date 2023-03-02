@@ -263,7 +263,7 @@ export class SendMessageInApp extends SendMessageBase {
     subscriber: SubscriberEntity,
     command: SendMessageCommand,
     organization: OrganizationEntity | null
-  ): Promise<string | null> {
+  ): Promise<string> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         template: content as string,

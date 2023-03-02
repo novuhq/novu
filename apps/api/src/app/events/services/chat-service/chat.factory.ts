@@ -7,7 +7,7 @@ import { MSTeamsHandler } from './handlers/msteams.handler';
 export class ChatFactory implements IChatFactory {
   handlers: IChatHandler[] = [new SlackHandler(), new DiscordHandler(), new MSTeamsHandler()];
 
-  getHandler(integration: IntegrationEntity): IChatHandler {
+  getHandler(integration: IntegrationEntity) {
     try {
       const handler =
         this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
