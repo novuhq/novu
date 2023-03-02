@@ -10,7 +10,13 @@ import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
 import { useActiveIntegrations } from '../../../hooks';
 import { ActivePageEnum } from '../../../constants/editorEnums';
 
-export const TemplateEditor = ({ activePage, activeStep }) => {
+export const TemplateEditor = ({
+  activePage,
+  activeStepIndex,
+}: {
+  activePage: ActivePageEnum;
+  activeStepIndex: number;
+}) => {
   const { integrations } = useActiveIntegrations();
   const {
     control,
@@ -24,7 +30,7 @@ export const TemplateEditor = ({ activePage, activeStep }) => {
       {activePage === ActivePageEnum.SMS && (
         <div style={{ padding: '20px 25px' }}>
           {steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.SMS && activeStep === index ? (
+            return message.template.type === StepTypeEnum.SMS && activeStepIndex === index ? (
               <TemplateSMSEditor
                 key={message._id}
                 control={control}
@@ -39,7 +45,7 @@ export const TemplateEditor = ({ activePage, activeStep }) => {
       {activePage === ActivePageEnum.EMAIL && (
         <div style={{ padding: '20px 25px' }}>
           {steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.EMAIL && activeStep === index ? (
+            return message.template.type === StepTypeEnum.EMAIL && activeStepIndex === index ? (
               <EmailMessagesCards
                 key={message._id}
                 index={index}
@@ -54,7 +60,7 @@ export const TemplateEditor = ({ activePage, activeStep }) => {
       {activePage === ActivePageEnum.IN_APP && (
         <>
           {steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.IN_APP && activeStep === index ? (
+            return message.template.type === StepTypeEnum.IN_APP && activeStepIndex === index ? (
               <TemplateInAppEditor key={message._id} errors={errors} control={control} index={index} />
             ) : null;
           })}
@@ -63,7 +69,7 @@ export const TemplateEditor = ({ activePage, activeStep }) => {
       {activePage === ActivePageEnum.PUSH && (
         <div style={{ padding: '20px 25px' }}>
           {steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.PUSH && activeStep === index ? (
+            return message.template.type === StepTypeEnum.PUSH && activeStepIndex === index ? (
               <TemplatePushEditor
                 key={message._id}
                 control={control}
@@ -80,7 +86,7 @@ export const TemplateEditor = ({ activePage, activeStep }) => {
       {activePage === ActivePageEnum.CHAT && (
         <div style={{ padding: '20px 25px' }}>
           {steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.CHAT && activeStep === index ? (
+            return message.template.type === StepTypeEnum.CHAT && activeStepIndex === index ? (
               <TemplateChatEditor
                 key={index}
                 errors={errors}

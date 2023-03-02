@@ -83,7 +83,9 @@ const WorkflowEditor = ({
     setToDelete(id);
   };
 
-  useEffect(() => () => setSelectedNodeId(''), []);
+  useEffect(() => {
+    setSelectedNodeId('');
+  }, []);
 
   return (
     <>

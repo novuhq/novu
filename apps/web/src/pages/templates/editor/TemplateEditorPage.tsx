@@ -58,7 +58,7 @@ export default function TemplateEditorPage() {
     addStep,
     deleteStep,
   } = useTemplateEditorForm();
-  const { activePage, setActivePage, activeStep } = useTemplateEditorContext();
+  const { activePage, setActivePage, activeStepIndex } = useTemplateEditorContext();
   const methods = useFormContext<IForm>();
   const {
     formState: { isDirty },
@@ -180,7 +180,7 @@ export default function TemplateEditorPage() {
             <UserPreference activePage={activePage} setActivePage={setActivePage} />
           </When>
           {!isLoading && !isIntegrationsLoading ? (
-            <TemplateEditor activeStep={activeStep} activePage={activePage} />
+            <TemplateEditor activeStepIndex={activeStepIndex} activePage={activePage} />
           ) : null}
           {trigger && (
             <TemplateTriggerModal
