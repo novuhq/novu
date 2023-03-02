@@ -8,6 +8,9 @@ export class ChannelCredentials {
   })
   webhookUrl?: string;
 
+  @ApiProperty({ description: 'Channel specification for Mattermost chat notifications' })
+  channel?: string;
+
   @ApiPropertyOptional({
     description: 'Contains an array of the subscriber device tokens for a given provider. Used on Push integrations',
   })
