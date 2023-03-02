@@ -207,7 +207,6 @@ The floating popover component that appears when clicking on the [NotificationBe
 | actionsResultBlock         | function (optional)                                            | The render function that allows you to define the custom component that will be rendered after the notification button is clicked.                                                                                           |
 | onTabClick                 | function (optional)                                            | The callback function triggered when the notifications feed tab changes.                                                                                                                                                     |
 
-
 ### Props interface
 
 ```ts
@@ -275,7 +274,6 @@ The component that renders the notifications feed and allows to update the user 
 | onActionClick              | function (optional)                                            | The callback function triggered when the notification button is clicked.                                                                                                                                                     |
 | actionsResultBlock         | function (optional)                                            | The render function that allows you to define the custom component that will be rendered after the notification button is clicked.                                                                                           |
 | onTabClick                 | function (optional)                                            | The callback function triggered when the notifications feed tab changes.                                                                                                                                                     |
-
 
 ### The props interface
 
