@@ -39,7 +39,11 @@ export interface IFieldFilterPart extends IBaseFieldFilterPart {
 export interface IPreviousStepFilterPart extends IBaseFilterPart {
   on: FilterPartTypeEnum.PREVIOUS_STEP;
   step: string;
-  type: PreviousStepTypeEnum;
+  stepType:
+    | PreviousStepTypeEnum.READ
+    | PreviousStepTypeEnum.SEEN
+    | PreviousStepTypeEnum.UNREAD
+    | PreviousStepTypeEnum.UNSEEN;
 }
 
 export interface IWebhookFilterPart extends IBaseFieldFilterPart {

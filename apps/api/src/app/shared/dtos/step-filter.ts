@@ -94,7 +94,7 @@ class PreviousStepFilterPart extends BaseFilterPart {
   @ApiProperty({
     enum: PreviousStepTypeEnum,
   })
-  type: PreviousStepTypeEnum;
+  stepType: PreviousStepTypeEnum;
 }
 
 type FilterParts =

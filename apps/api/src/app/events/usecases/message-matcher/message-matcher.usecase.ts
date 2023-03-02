@@ -271,7 +271,7 @@ export class MessageMatcher {
     }
 
     const label = FILTER_TO_LABEL[filter.on];
-    const field = filter.type;
+    const field = filter.stepType;
     const expected = 'true';
     const operator = 'EQUAL';
 
@@ -284,7 +284,7 @@ export class MessageMatcher {
         webhookStatus: EmailEventStatusEnum.OPENED,
       });
 
-      const passed = [PreviousStepTypeEnum.UNREAD, PreviousStepTypeEnum.UNSEEN].includes(filter.type)
+      const passed = [PreviousStepTypeEnum.UNREAD, PreviousStepTypeEnum.UNSEEN].includes(filter.stepType)
         ? count === 0
         : count > 0;
 
@@ -300,10 +300,10 @@ export class MessageMatcher {
       return passed;
     }
 
-    const value = [PreviousStepTypeEnum.SEEN, PreviousStepTypeEnum.UNSEEN].includes(filter.type)
+    const value = [PreviousStepTypeEnum.SEEN, PreviousStepTypeEnum.UNSEEN].includes(filter.stepType)
       ? message.seen
       : message.read;
-    const passed = [PreviousStepTypeEnum.UNREAD, PreviousStepTypeEnum.UNSEEN].includes(filter.type)
+    const passed = [PreviousStepTypeEnum.UNREAD, PreviousStepTypeEnum.UNSEEN].includes(filter.stepType)
       ? value === false
       : value;
 

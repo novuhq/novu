@@ -67,7 +67,7 @@ export const PreviousStepFiltersForm = ({
       <Grid.Col span={3}>
         <Controller
           control={control}
-          name={`steps.${stepIndex}.filters.0.children.${index}.type`}
+          name={`steps.${stepIndex}.filters.0.children.${index}.stepType`}
           defaultValue=""
           render={({ field }) => {
             return (

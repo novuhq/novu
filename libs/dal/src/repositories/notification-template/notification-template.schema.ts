@@ -83,6 +83,8 @@ const notificationTemplateSchema = new Schema(
                 on: Schema.Types.String,
                 webhookUrl: Schema.Types.String,
                 timeOperator: Schema.Types.String,
+                step: Schema.Types.String,
+                stepType: Schema.Types.String,
               },
             ],
           },
