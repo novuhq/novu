@@ -37,8 +37,8 @@ import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
 import { Setup } from './pages/quick-start/steps/Setup';
 import { Trigger } from './pages/quick-start/steps/Trigger';
 import { RequiredAuth } from './components/layout/RequiredAuth';
-import { TemplateFormProvider } from './pages/templates/components/TemplateFormProvider';
-import { TemplateEditorProvider } from './pages/templates/components/TemplateEditorProvider';
+import { TemplateEditorFormProvider } from './pages/templates/components/TemplateEditorFormProvider';
+import { TemplateEditorProvider } from './pages/templates/editor/TemplateEditorProvider';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -176,21 +176,21 @@ function App() {
                   <Route
                     path={ROUTES.TEMPLATES_CREATE}
                     element={
-                      <TemplateFormProvider>
+                      <TemplateEditorFormProvider>
                         <TemplateEditorProvider>
                           <TemplateEditorPage />
                         </TemplateEditorProvider>
-                      </TemplateFormProvider>
+                      </TemplateEditorFormProvider>
                     }
                   />
                   <Route
                     path={ROUTES.TEMPLATES_EDIT_TEMPLATEID}
                     element={
-                      <TemplateFormProvider>
+                      <TemplateEditorFormProvider>
                         <TemplateEditorProvider>
                           <TemplateEditorPage />
                         </TemplateEditorProvider>
-                      </TemplateFormProvider>
+                      </TemplateEditorFormProvider>
                     }
                   />
                   <Route path={ROUTES.TEMPLATES} element={<NotificationList />} />

@@ -5,12 +5,12 @@ import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
 import { TemplateSMSEditor } from './TemplateSMSEditor';
 import type { IForm } from './formTypes';
-import { ActivePageEnum } from '../editor/TemplateEditorPage';
 import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
 import { useActiveIntegrations } from '../../../hooks';
+import { ActivePageEnum } from '../../../constants/editorEnums';
 
-export const TemplateEditor = ({ activePage, templateId, activeStep }) => {
+export const TemplateEditor = ({ activePage, activeStep }) => {
   const { integrations } = useActiveIntegrations();
   const {
     control,

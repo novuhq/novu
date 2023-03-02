@@ -2,11 +2,12 @@ import { Center, Container, Grid, Group } from '@mantine/core';
 
 import { Button, colors, Switch, Title, Text } from '../../../design-system';
 import { ArrowLeft } from '../../../design-system/icons';
-import { ActivePageEnum, EditorPages } from '../editor/TemplateEditorPage';
+import { EditorPages } from '../editor/TemplateEditorPage';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
-import { useTemplateEditor } from './TemplateEditorProvider';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { useStatusChangeControllerHook } from './useStatusChangeController';
+import { ActivePageEnum } from '../../../constants/editorEnums';
 
 const Header = ({
   activePage,
@@ -68,7 +69,7 @@ export const TemplatePageHeader = ({
   setActivePage,
   onTestWorkflowClicked,
 }: Props) => {
-  const { template, editMode } = useTemplateEditor();
+  const { template, editMode } = useTemplateEditorForm();
   const { readonly } = useEnvController();
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(

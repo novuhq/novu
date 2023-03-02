@@ -1,12 +1,12 @@
-import React from 'react';
 import { useMantineTheme } from '@mantine/core';
 import { useFormState } from 'react-hook-form';
 import styled from '@emotion/styled';
+
 import { colors, TemplateButton, Text, Tooltip } from '../../../design-system';
 import { BellGradient, ConnectGradient, LevelsGradient, TapeGradient } from '../../../design-system/icons';
-import { ActivePageEnum } from '../editor/TemplateEditorPage';
 import { When } from '../../../components/utils/When';
 import { getExplicitErrors } from '../shared/errors';
+import { ActivePageEnum } from '../../../constants/editorEnums';
 
 export function TemplatesSideBar({
   activeTab,
