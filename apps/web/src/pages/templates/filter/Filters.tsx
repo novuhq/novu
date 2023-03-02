@@ -4,6 +4,9 @@ import { BuilderFieldOperator, FilterParts, FilterPartTypeEnum } from '@novu/sha
 
 import type { IStepEntity } from '../components/formTypes';
 import { colors } from '../../../design-system';
+import { useWatch } from 'react-hook-form';
+import { useMemo } from 'react';
+import { channels } from '../shared/channels';
 
 export const Filters = ({ step }: { step: IStepEntity | null }) => {
   if (!step || !step.filters || !Array.isArray(step.filters)) {
@@ -29,12 +32,21 @@ export const Filters = ({ step }: { step: IStepEntity | null }) => {
 
 export const Filter = ({ filter }: { filter: FilterParts }) => {
   const { colorScheme } = useMantineColorScheme();
+  const steps: IStepEntity[] = useWatch({
+    name: 'steps',
+  });
 
-  const filterValue = getFilterValue(filter);
+  const filterValue = useMemo(() => {
+    return getFilterValue(filter);
+  }, [filter]);
+
+  const filterLabel = useMemo(() => {
+    return getFilterLabel(filter, steps);
+  }, [filter, steps]);
 
   return (
     <FilterItem className="filter-item" dark={colorScheme === 'dark'}>
-      <FilterPosition>{getFilterLabel(filter)}</FilterPosition>
+      <FilterPosition>{filterLabel}</FilterPosition>
       <FilterValue className="filter-item-value">{filterValue}</FilterValue>
     </FilterItem>
   );
@@ -66,7 +78,7 @@ export const translateOperator = (operator?: BuilderFieldOperator) => {
   return 'equal';
 };
 
-export const getFilterLabel = (filter: FilterParts): string => {
+export const getFilterLabel = (filter: FilterParts, steps: IStepEntity[]): string => {
   if (filter.on === FilterPartTypeEnum.IS_ONLINE) {
     return `is online right now ${translateOperator('EQUAL')}`;
   }
@@ -75,7 +87,18 @@ export const getFilterLabel = (filter: FilterParts): string => {
   }
 
   if (filter.on === FilterPartTypeEnum.PREVIOUS_STEP) {
-    return '';
+    const dependingStep = steps.find((item) => item.uuid === filter.step);
+
+    if (!dependingStep) {
+      return 'Previous step';
+    }
+
+    const sameTypeSteps = steps.filter((step) => step.template.type === dependingStep.template.type);
+    const foundIndex = sameTypeSteps.findIndex((step) => step.uuid === dependingStep.uuid);
+
+    const label = channels.find((item) => item.channelType === dependingStep.template.type)?.label;
+
+    return `Previous step - ${label} ${sameTypeSteps.length > 1 ? `(${foundIndex + 1}) ` : ''} `;
   }
 
   return `${filter.on} ${filter.field} ${translateOperator(filter.operator)}`;
@@ -83,7 +106,7 @@ export const getFilterLabel = (filter: FilterParts): string => {
 
 const getFilterValue = (filter: FilterParts) => {
   if (filter.on === FilterPartTypeEnum.PREVIOUS_STEP) {
-    return 'Previous step on: ' + filter.type;
+    return filter.stepType;
   }
 
   let value = filter.value;
