@@ -1,8 +1,10 @@
 import { Injectable, Scope } from '@nestjs/common';
-import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 import * as dns from 'dns';
+import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
+
 import { GetMxRecordCommand } from './get-mx-record.command';
 import { GetMxRecordResponseDto } from '../../dtos/get-mx-record.dto';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -12,6 +14,8 @@ export class GetMxRecord {
 
   async execute(command: GetMxRecordCommand): Promise<GetMxRecordResponseDto> {
     const env = await this.environmentRepository.findOne({ _id: command.environmentId });
+    if (!env) throw new ApiException('Environment is not found');
+
     const inboundParseDomain = env.dns?.inboundParseDomain;
 
     if (!inboundParseDomain) return { mxRecordConfigured: false };

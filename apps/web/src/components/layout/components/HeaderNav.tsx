@@ -39,7 +39,7 @@ export function HeaderNav({}: Props) {
     useEffect(() => {
       if (currentUser && currentOrganization) {
         boot({
-          email: currentUser?.email,
+          email: currentUser?.email ?? '',
           name: currentUser?.firstName + ' ' + currentUser?.lastName,
           createdAt: currentUser?.createdAt,
           company: {

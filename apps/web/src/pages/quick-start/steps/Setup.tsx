@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Stack, Stepper, Timeline } from '@mantine/core';
+import { Stack, Timeline } from '@mantine/core';
 
-import { ChannelCTATypeEnum, ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
+import { ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { useNotificationGroup, useTemplates, useEnvController } from '../../../hooks';
 import {
+  API_KEY,
   APPLICATION_IDENTIFIER,
+  BACKEND_API_URL,
+  BACKEND_SOCKET_URL,
   frameworkInstructions,
   notificationTemplateName,
   OnBoardingAnalyticsEnum,
@@ -21,13 +24,17 @@ import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { getInAppActivated } from '../../../api/integration';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { getApiKeys } from '../../../api/environment';
+import { API_ROOT, WS_URL } from '../../../config';
 
 export function Setup() {
-  const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();
   const { framework } = useParams();
-  const { groups } = useNotificationGroup();
-  const { templates = [], loading } = useTemplates();
+  const { groups, loading: notificationGroupLoading } = useNotificationGroup();
+  const { templates = [], loading: templatesLoading } = useTemplates();
   const { environment } = useEnvController();
+  const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
+  const apiKey = apiKeys?.length ? apiKeys[0].key : '';
+
   const segment = useSegment();
 
   const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(['inAppActive'], async () => getInAppActivated(), {
@@ -38,7 +45,7 @@ export function Setup() {
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
 
-  const { mutateAsync: createNotificationTemplate } = useMutation<
+  const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
     INotificationTemplate,
     { error: string; message: string; statusCode: number },
     ICreateNotificationTemplateDto
@@ -49,14 +56,12 @@ export function Setup() {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
+    if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading) {
       const onboardingNotificationTemplate = templates.find((template) =>
         template.name.includes(notificationTemplateName)
       );
 
-      if (onboardingNotificationTemplate) {
-        setNotificationTemplate(onboardingNotificationTemplate);
-      } else {
+      if (!onboardingNotificationTemplate) {
         createOnBoardingTemplate();
       }
     }
@@ -72,19 +77,13 @@ export function Setup() {
         {
           template: {
             type: StepTypeEnum.IN_APP,
-            content:
-              'Welcome to Novu! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
-            cta: {
-              type: ChannelCTATypeEnum.REDIRECT,
-              data: { url: `/templates/edit/${notificationTemplate?._id}` },
-            },
+            content: 'Welcome to Novu! <b>visit the cloud admin panel</b> managing this message',
           },
         },
       ],
     } as ICreateNotificationTemplateDto;
 
-    const createdTemplate = await createNotificationTemplate(payloadToCreate);
-    setNotificationTemplate(createdTemplate);
+    await createNotificationTemplate(payloadToCreate);
   }
 
   function handleOnCopy(copiedStepIndex: number) {
@@ -117,7 +116,7 @@ export function Setup() {
                     <PrismOnCopy
                       language={instruction.language}
                       index={index}
-                      code={`${updateCodeSnipped(instruction.snippet, environmentIdentifier)}   `}
+                      code={`${updateCodeSnippet(instruction.snippet, environmentIdentifier, apiKey)}   `}
                       onCopy={handleOnCopy}
                     />
                   </div>
@@ -146,8 +145,14 @@ const LoaderWrapper = styled.div`
   margin-top: 10px;
 `;
 
-function updateCodeSnipped(codeSnippet: string, environmentIdentifier: string) {
-  return codeSnippet.replace(APPLICATION_IDENTIFIER, environmentIdentifier);
+function updateCodeSnippet(codeSnippet: string, environmentIdentifier: string, apiKey: string) {
+  const concatUrls = process.env.REACT_APP_ENVIRONMENT !== 'prod' || !!process.env.REACT_APP_DOCKER_HOSTED_ENV;
+
+  return codeSnippet
+    .replace(APPLICATION_IDENTIFIER, environmentIdentifier)
+    .replace(API_KEY, apiKey ?? '')
+    .replace(BACKEND_API_URL, concatUrls ? API_ROOT : '')
+    .replace(BACKEND_SOCKET_URL, concatUrls ? WS_URL : '');
 }
 
 export function OpenBrowser() {

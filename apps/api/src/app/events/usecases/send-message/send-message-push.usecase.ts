@@ -251,6 +251,10 @@ export class SendMessagePush extends SendMessageBase {
     try {
       const pushFactory = new PushFactory();
       const pushHandler = pushFactory.getHandler(integration);
+      if (!pushHandler) {
+        throw new ApiException(`Push handler for provider ${integration.providerId} is  not found`);
+      }
+
       const result = await pushHandler.send({
         target: (overrides as { deviceTokens?: string[] }).deviceTokens || target,
         title,

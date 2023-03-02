@@ -29,7 +29,7 @@ export function Trigger() {
 export function TriggerDescription() {
   return (
     <span>
-      Now let's ring the in your new notification center
+      Now let's ring the bell in your new notification center
       <BellGradient style={{ margin: '0px 5px 0', top: '8px', position: 'relative' }} />
     </span>
   );

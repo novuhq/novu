@@ -20,7 +20,7 @@
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
     "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
-    "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts",
+    "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e.ts",
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/normalize-users-email/normalize-users-email.migration.ts"
   },
   "dependencies": {
@@ -141,7 +141,7 @@
     "sinon": "^9.2.4",
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
-    "tsconfig-paths": "3.14.1",
+    "tsconfig-paths": "3.14.2",
     "typescript": "4.9.5"
   },
   "lint-staged": {

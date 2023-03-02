@@ -66,7 +66,7 @@ export class InboundEmailParse {
       mail: command,
     };
 
-    return await axios.post(currentParseWebhook, userPayload);
+    await axios.post(currentParseWebhook, userPayload);
   }
 
   private splitTo(address: string) {
@@ -109,7 +109,7 @@ export interface IUserWebhookPayload {
   payload: Record<string, unknown>;
   template: NotificationTemplateEntity;
   notification: NotificationEntity;
-  message: MessageEntity;
+  message: MessageEntity | null;
   mail: MailMetadata;
   hmac: string;
 }
