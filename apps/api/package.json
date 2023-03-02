@@ -54,6 +54,7 @@
     "@novu/mailgun": "^0.12.0",
     "@novu/mailjet": "^0.12.0",
     "@novu/mandrill": "^0.12.0",
+    "@novu/mattermost": "^0.12.0",
     "@novu/ms-teams": "^0.12.0",
     "@novu/netcore": "^0.12.0",
     "@novu/node": "^0.12.0",
