@@ -57,7 +57,7 @@ export class UpdateMessageTemplate {
     }
 
     if (!command.feedId && existingTemplate._feedId) {
-      updatePayload._feedId = null;
+      updatePayload._feedId = undefined;
     }
 
     if (command.layoutId) {
@@ -100,6 +100,7 @@ export class UpdateMessageTemplate {
     );
 
     const item = await this.messageTemplateRepository.findById(command.templateId);
+    if (!item) throw new NotFoundException(`Message template with id ${command.templateId} is not found`);
 
     if (command.feedId || (!command.feedId && existingTemplate._feedId)) {
       await this.messageRepository.updateFeedByMessageTemplateId(

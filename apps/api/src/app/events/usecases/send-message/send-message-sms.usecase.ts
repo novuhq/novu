@@ -258,6 +258,9 @@ export class SendMessageSms extends SendMessageBase {
     try {
       const smsFactory = new SmsFactory();
       const smsHandler = smsFactory.getHandler(integration);
+      if (!smsHandler) {
+        throw new ApiException(`Sms handler for provider ${integration.providerId} is  not found`);
+      }
 
       const result = await smsHandler.send({
         to: phone,

@@ -1,6 +1,7 @@
 import { DalService } from '@novu/dal';
 import { testServer } from '@novu/testing';
 import * as sinon from 'sinon';
+
 import { bootstrap } from '../src/bootstrap';
 
 const dalService = new DalService();
@@ -12,6 +13,7 @@ before(async () => {
 
 after(async () => {
   await testServer.teardown();
+
   try {
     await dalService.destroy();
   } catch (e) {

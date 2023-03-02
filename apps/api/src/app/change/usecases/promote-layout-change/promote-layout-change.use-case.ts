@@ -8,7 +8,7 @@ export class PromoteLayoutChange {
   constructor(private layoutRepository: LayoutRepository) {}
 
   async execute(command: PromoteTypeChangeCommand) {
-    let item: LayoutEntity | undefined = await this.layoutRepository.findOne({
+    let item = await this.layoutRepository.findOne({
       _environmentId: command.environmentId,
       _parentId: command.item._id,
     });

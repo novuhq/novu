@@ -134,7 +134,7 @@ export class Webhook {
     return parsedEvent;
   }
 
-  private getHandler(integration, type: WebhookTypes): ISmsHandler | IMailHandler {
+  private getHandler(integration, type: WebhookTypes): ISmsHandler | IMailHandler | null {
     switch (type) {
       case 'sms':
         return this.smsFactory.getHandler(integration);

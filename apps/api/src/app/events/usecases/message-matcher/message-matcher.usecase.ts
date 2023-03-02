@@ -40,6 +40,7 @@ import {
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { EmailEventStatusEnum } from '@novu/stateless';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: TimeOperatorEnum) => {
   if (timeOperator === TimeOperatorEnum.MINUTES) {
@@ -462,7 +463,7 @@ export class MessageMatcher {
     if (process.env.NODE_ENV === 'test') return variables;
 
     const payload: Partial<{
-      subscriber: SubscriberEntity;
+      subscriber: SubscriberEntity | null;
       payload: Record<string, unknown>;
       identifier: string;
       channel: string;
@@ -499,6 +500,7 @@ export class MessageMatcher {
       _id: command.environmentId,
       _organizationId: command.organizationId,
     });
+    if (!environment) throw new ApiException('Environment is not found');
 
     return createHmac('sha256', environment.apiKeys[0].key).update(command.environmentId).digest('hex');
   }

@@ -20,8 +20,11 @@ const enum ActivePageEnum {
   EDIT_LAYOUT = 'edit_layout',
   CREATE_LAYOUT = 'create_layout',
 }
+type LayoutsListPageProps = {
+  handleLayoutAnalytics: (event: string, data?: Record<string, unknown>) => void;
+};
 
-export function LayoutsListPage() {
+export function LayoutsListPage({ handleLayoutAnalytics }: LayoutsListPageProps) {
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
   const { readonly } = useEnvController();
@@ -71,6 +74,7 @@ export function LayoutsListPage() {
   const editLayout = (id: string) => {
     setEditId(id);
     setActiveScreen(ActivePageEnum.EDIT_LAYOUT);
+    handleLayoutAnalytics('Edit screen opened', { layoutId: id });
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
@@ -157,7 +161,13 @@ export function LayoutsListPage() {
               marginBottom: '10px',
             }}
           >
-            <UnstyledButton disabled={readonly} onClick={() => setActiveScreen(ActivePageEnum.CREATE_LAYOUT)}>
+            <UnstyledButton
+              disabled={readonly}
+              onClick={() => {
+                setActiveScreen(ActivePageEnum.CREATE_LAYOUT);
+                handleLayoutAnalytics('Create new layout btn clicked');
+              }}
+            >
               <Text gradient={!readonly} color={colors.B60}>
                 + Create New Layout
               </Text>

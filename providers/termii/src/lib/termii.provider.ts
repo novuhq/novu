@@ -27,7 +27,7 @@ export class TermiiSmsProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      apiKey: string;
+      apiKey?: string;
       from?: string;
     }
   ) {}

@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('User get my profile', async () => {
+describe('User Profile', async () => {
   let session: UserSession;
 
   before(async () => {

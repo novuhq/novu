@@ -1,5 +1,5 @@
 import { createHmac } from 'crypto';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository, FeedRepository, MemberRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
@@ -45,6 +45,8 @@ export class InitializeSession {
     const subscriber = await this.createSubscriber.execute(commandos);
 
     const organizationAdmin = await this.membersRepository.getOrganizationAdminAccount(environment._organizationId);
+    if (!organizationAdmin) throw new NotFoundException('Organization admin not found');
+
     this.analyticsService.track('Initialize Widget Session - [Notification Center]', organizationAdmin._userId, {
       _organization: environment._organizationId,
       environmentName: environment.name,
@@ -52,7 +54,7 @@ export class InitializeSession {
     });
 
     return {
-      token: await this.authService.getSubscriberWidgetToken(subscriber, organizationAdmin?._userId),
+      token: await this.authService.getSubscriberWidgetToken(subscriber, organizationAdmin._userId),
       profile: {
         _id: subscriber._id,
         firstName: subscriber.firstName,

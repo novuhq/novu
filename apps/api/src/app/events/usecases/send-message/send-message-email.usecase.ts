@@ -258,6 +258,9 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+    if (!environment) {
+      throw new ApiException(`Environment ${command.environmentId} is not found`);
+    }
 
     if (environment.dns?.mxRecordConfigured && environment.dns?.inboundParseDomain) {
       return getReplyToAddress(command.transactionId, environment._id, environment?.dns?.inboundParseDomain);

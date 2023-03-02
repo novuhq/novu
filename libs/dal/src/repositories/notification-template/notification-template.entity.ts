@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import {
   FilterParts,
   BuilderFieldType,
@@ -8,8 +9,12 @@ import {
   DelayTypeEnum,
   TemplateVariableTypeEnum,
 } from '@novu/shared';
+
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
+import type { OrganizationId } from '../organization';
+import type { EnvironmentId } from '../environment';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class NotificationTemplateEntity {
   _id: string;
@@ -30,11 +35,11 @@ export class NotificationTemplateEntity {
 
   steps: NotificationStepEntity[];
 
-  _organizationId: string;
+  _organizationId: OrganizationId;
 
   _creatorId: string;
 
-  _environmentId: string;
+  _environmentId: EnvironmentId;
 
   triggers: NotificationTriggerEntity[];
 
@@ -58,6 +63,13 @@ export class NotificationTemplateEntity {
 
   blueprintId?: string;
 }
+
+export type NotificationTemplateDBModel = ChangePropsValueType<
+  Omit<NotificationTemplateEntity, '_parentId'>,
+  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId'
+> & {
+  _parentId?: Types.ObjectId;
+};
 
 export class NotificationTriggerEntity {
   type: 'event';

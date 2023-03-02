@@ -22,12 +22,14 @@ export class UpdateSubscriberOnlineFlag {
 
   private async trackIsOnlineUpdate(command: UpdateSubscriberOnlineFlagCommand, subscriber: SubscriberEntity) {
     const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    this.analyticsService.track('Update online flag - [Subscriber]', admin._userId, {
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      _subscriberId: subscriber._id,
-      ...this.getUpdatedFields(command.isOnline),
-    });
+    if (admin) {
+      this.analyticsService.track('Update online flag - [Subscriber]', admin._userId, {
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        _subscriberId: subscriber._id,
+        ...this.getUpdatedFields(command.isOnline),
+      });
+    }
   }
 
   async execute(command: UpdateSubscriberOnlineFlagCommand) {
