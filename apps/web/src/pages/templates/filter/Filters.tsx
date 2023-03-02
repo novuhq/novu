@@ -83,7 +83,7 @@ export const getFilterLabel = (filter: FilterParts): string => {
 
 const getFilterValue = (filter: FilterParts) => {
   if (filter.on === FilterPartTypeEnum.PREVIOUS_STEP) {
-    return filter.type;
+    return 'Previous step on: ' + filter.type;
   }
 
   let value = filter.value;

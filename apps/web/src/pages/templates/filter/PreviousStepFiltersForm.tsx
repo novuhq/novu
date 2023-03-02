@@ -51,7 +51,7 @@ export const PreviousStepFiltersForm = ({
                       }
 
                       return {
-                        label: item.template.type + (itemNumber > 0 ? ` ${itemNumber}` : ''),
+                        label: item.template.type + (itemNumber > 0 ? ` (${itemNumber})` : ''),
                         value: item.uuid,
                       };
                     })
