@@ -8,7 +8,7 @@ export class ChannelCredentials {
   })
   webhookUrl?: string;
 
-  @ApiProperty({ description: 'Channel specification for Mattermost chat notifications' })
+  @ApiPropertyOptional({ description: 'Channel specification for Mattermost chat notifications' })
   channel?: string;
 
   @ApiPropertyOptional({
