@@ -44,6 +44,10 @@ export function FilterModal({
       },
       { value: FilterPartTypeEnum.WEBHOOK, label: FILTER_TO_LABEL[FilterPartTypeEnum.WEBHOOK] },
       { value: FilterPartTypeEnum.IS_ONLINE, label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE] },
+      {
+        value: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
+        label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE_IN_LAST],
+      },
     ];
 
     if (steps.length < 2) {
