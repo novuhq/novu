@@ -1,15 +1,11 @@
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { BaseRepository, Omit } from '../base-repository';
-import { ChangeEntity } from './change.entity';
+
+import { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
+import { ChangeEntity, ChangeDBModel } from './change.entity';
 import { Change } from './change.schema';
-import { Document, FilterQuery } from 'mongoose';
 
-class PartialChangeEntity extends Omit(ChangeEntity, ['_environmentId', '_organizationId']) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialChangeEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, ChangeEntity> {
+export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Change, ChangeEntity);
   }

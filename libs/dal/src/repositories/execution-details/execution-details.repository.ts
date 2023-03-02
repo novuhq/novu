@@ -1,18 +1,18 @@
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
-import { ExecutionDetailsEntity } from './execution-details.entity';
+
+import { ExecutionDetailsEntity, ExecutionDetailsDBModel } from './execution-details.entity';
 import { ExecutionDetails } from './execution-details.schema';
-import { BaseRepository, Omit } from '../base-repository';
-import { Document, FilterQuery } from 'mongoose';
-
-class PartialExecutionDetailsEntity extends Omit(ExecutionDetailsEntity, ['_environmentId', '_organizationId']) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialExecutionDetailsEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
+import { BaseRepository } from '../base-repository';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 /**
  * Execution details is meant to be read only almost exclusively as a log history of the Jobs executions.
  */
-export class ExecutionDetailsRepository extends BaseRepository<EnforceEnvironmentQuery, ExecutionDetailsEntity> {
+export class ExecutionDetailsRepository extends BaseRepository<
+  ExecutionDetailsDBModel,
+  ExecutionDetailsEntity,
+  EnforceEnvOrOrgIds
+> {
   constructor() {
     super(ExecutionDetails, ExecutionDetailsEntity);
   }

@@ -1,9 +1,10 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
-import { schemaOptions } from '../schema-default.options';
-import { NotificationEntity } from './notification.entity';
+import { Schema } from 'mongoose';
 
-const notificationSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { NotificationDBModel } from './notification.entity';
+
+const notificationSchema = new Schema<NotificationDBModel>(
   {
     _templateId: {
       type: Schema.Types.ObjectId,
@@ -73,10 +74,7 @@ notificationSchema.virtual('jobs', {
   foreignField: '_notificationId',
 });
 
-interface INotificationDocument extends NotificationEntity, Document {
-  _id: never;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Notification =
-  mongoose.models.Notification || mongoose.model<INotificationDocument>('Notification', notificationSchema);
+  (mongoose.models.Notification as mongoose.Model<NotificationDBModel>) ||
+  mongoose.model<NotificationDBModel>('Notification', notificationSchema);
