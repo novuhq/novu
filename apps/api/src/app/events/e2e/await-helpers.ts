@@ -25,10 +25,10 @@ export class AwaitHelpers {
     do {
       const count = await this.jobRepository.count(query);
       console.log(`awaitAndGetJobs:${count}/${expectedCount}`);
-      if (count >= expectedCount || retryCount >= MAX_RETRIES) break;
+      if (count >= expectedCount) break;
       await sleep(SLEEP_TIME);
       retryCount++;
-    } while (true);
+    } while (retryCount < MAX_RETRIES);
 
     return await this.jobRepository.find(query);
   }
@@ -38,10 +38,10 @@ export class AwaitHelpers {
     do {
       const count = (await this.jobRepository.findById(digestJobId))?.digestedNotificationIds?.length;
       console.log(`awaitForDigest:${count}/${digestCount}`);
-      if ((count && count >= digestCount) || retryCount >= MAX_RETRIES) return count;
+      if (count && count >= digestCount) return count;
       await sleep(SLEEP_TIME);
       retryCount++;
-    } while (true);
+    } while (retryCount < MAX_RETRIES);
   }
 
   async getNotificationCount(template: NotificationTemplateEntity, expectedCount: number) {
@@ -50,10 +50,10 @@ export class AwaitHelpers {
     do {
       const count = await this.notificationRepository?.count(query);
       console.log(`getNotificationCount:${count}/${expectedCount}`);
-      if ((count && count >= expectedCount) || retryCount >= MAX_RETRIES) return count;
+      if (count && count >= expectedCount) return count;
       sleep(SLEEP_TIME);
       retryCount++;
-    } while (true);
+    } while (retryCount < MAX_RETRIES);
   }
 
   async awaitAndGetMessages(template: NotificationTemplateEntity, expectedCount: number) {
@@ -63,10 +63,10 @@ export class AwaitHelpers {
     do {
       const count = await this.messageRepository.count(query);
       console.log(`awaitAndGetMessages:${count}/${expectedCount}`);
-      if (count >= expectedCount || retryCount >= MAX_RETRIES) break;
+      if (count >= expectedCount) break;
       await sleep(SLEEP_TIME);
       retryCount++;
-    } while (true);
+    } while (retryCount < MAX_RETRIES);
 
     return await this.messageRepository.find(query);
   }
@@ -80,14 +80,14 @@ export class AwaitHelpers {
     let retryCount = 0;
     do {
       const delayJobs = await this.jobRepository.find(query);
-      if (delayJobs.length === 0 || retryCount >= MAX_RETRIES) return;
+      if (delayJobs.length === 0) return;
       for (const delayJob of delayJobs) {
         await this.promoteJob(delayJob._id);
       }
       console.log('delayJobs processed', delayJobs.length);
       await sleep(SLEEP_TIME);
       retryCount++;
-    } while (true);
+    } while (retryCount < MAX_RETRIES);
   }
 
   async promoteJob(jobId) {

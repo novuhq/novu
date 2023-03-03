@@ -213,7 +213,7 @@ export const DAG_TEST_DATA = [
   },
   {
     title: 'Multiple delays with out digest steps',
-    steps: [DELAY_5, CHAT, EMAIL, PUSH, , DELAY_10, SMS, EMAIL, CHAT],
+    steps: [DELAY_5, CHAT, EMAIL, PUSH, DELAY_10, SMS, EMAIL, CHAT],
     expected: [[{ ...CHAT, delay: FIVE_MINS }, EMAIL, PUSH, { ...SMS, delay: TEN_MINS }, EMAIL, CHAT]],
   },
   {

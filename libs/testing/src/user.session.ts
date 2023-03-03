@@ -355,19 +355,6 @@ export class UserSession {
     } while (parsedEvents > 0 || waitingCount > 0 || runningJobs > unfinishedJobs);
   }
 
-  public async awaitAndPromote(workFlowQueue: any, id: string) {
-    do {
-      const delayedJobs = await workFlowQueue.getDelayed();
-      for (const job of delayedJobs) {
-        if (job.data._id === id) {
-          console.log('Got the added job back', id, job);
-
-          return;
-        }
-      }
-    } while (true);
-  }
-
   public async applyChanges(where: Partial<ChangeEntity> = {}) {
     const changes = await this.changeRepository.find(
       {
