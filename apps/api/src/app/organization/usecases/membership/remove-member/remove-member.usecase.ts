@@ -30,6 +30,7 @@ export class RemoveMember {
 
     if (isMemberAssociatedWithEnvironment) {
       const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
+      if (!admin) throw new NotFoundException('No admin account found for organization');
 
       await this.environmentRepository.updateApiKeyUserId(
         command.organizationId,

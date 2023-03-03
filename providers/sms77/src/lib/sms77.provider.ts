@@ -19,7 +19,7 @@ export class Sms77SmsProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      apiKey: string;
+      apiKey?: string;
       from?: string;
     }
   ) {

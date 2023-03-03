@@ -8,8 +8,6 @@ export class ClickatellHandler extends BaseSmsHandler {
     super('clickatell', ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
-    const config: { apiKey: string } = { apiKey: credentials.apiKey };
-
-    this.provider = new ClickatellSmsProvider(config);
+    this.provider = new ClickatellSmsProvider({ apiKey: credentials.apiKey });
   }
 }
