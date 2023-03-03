@@ -85,6 +85,9 @@ function getMetaDelay(step: NotificationStepEntity) {
 }
 
 export function getBackoffDate(step: NotificationStepEntity) {
+  if (!step.metadata?.backoffUnit || !step.metadata?.backoffAmount)
+    throw new ApiException('Invalid backoff unit or amount');
+
   return sub(new Date(), {
     [step.metadata?.backoffUnit]: step.metadata?.backoffAmount,
   });

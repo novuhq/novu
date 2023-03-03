@@ -103,7 +103,7 @@ const jobSchema = new Schema<JobDBModel>(
       ref: 'Subscriber',
     },
     digestRunKey: {
-      type: Schema.Types.String,
+      type: Schema.Types.UUID,
     },
   },
   schemaOptions

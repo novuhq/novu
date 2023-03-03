@@ -42,13 +42,10 @@ export class WorkflowQueueService {
         new: true,
       }
     );
-
-    if (!nextJob) return;
-
-    await this.addJob(nextJob);
+    if (nextJob) return await this.addJob(nextJob);
   }
 
-  public async addJob(job: JobEntity) {
+  public async addJob(job: JobEntity | null) {
     if (job?.status !== JobStatusEnum.QUEUED) throw new ApiException(`Job status must be ${JobStatusEnum.QUEUED}`);
     this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
@@ -61,7 +58,6 @@ export class WorkflowQueueService {
       })
     );
     const backoffType = this.stepContainsFilter(job, 'webhook') ? this.workflowQueue.WEBHOOK_FILTER_BACKOFF : undefined;
-
     await this.workflowQueue.addToQueue(job.identifier, job, backoffType);
   }
 

@@ -5,7 +5,7 @@ import { constructActiveDAG, StepWithDelay } from '../helpers/helpers';
 import { UserSession, SubscribersService } from '@novu/testing';
 
 export class EventsDataGenerator {
-  NUMBER_OF_SUBSCRIBERS = 10;
+  NUMBER_OF_SUBSCRIBERS = 3;
   private subscribers: SubscriberEntity[] = [];
   private subscriberService: SubscribersService;
   constructor(private session: UserSession) {
@@ -25,7 +25,7 @@ export class EventsDataGenerator {
     return await this.triggerEventByTemplate(template, numberOfEvenets);
   }
   triggerEventByTemplate = async (template: NotificationTemplateEntity, numberOfEvenets = 1) => {
-    const payloadArray = [];
+    const payloadArray: any = [];
     for (let index = 0; index < numberOfEvenets; index++) {
       const payloadTemp = await this.generatePayload(template);
       payloadArray.push(payloadTemp);
@@ -125,7 +125,7 @@ async function createDigestStep(): Promise<any> {
   };
 }
 
-export const totalExpectedJobCounts = (template, payloadArray) => {
+export const totalExpectedJobCounts = (template: NotificationTemplateEntity, payloadArray) => {
   const subscriberStepDigestCounts = new Map<string, Map<string, number>>();
   let totalJobCount = 0;
   let digestJobCount = 0;

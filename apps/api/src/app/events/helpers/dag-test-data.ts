@@ -243,7 +243,7 @@ export const DAG_TEST_DATA = [
   },
   {
     title: 'Digest with delay path steps',
-    payload: { [DELAY_PATH.metadata.delayPath]: DELAY_DATE },
+    payload: DELAY_PATH.metadata.delayPath ? { [DELAY_PATH.metadata.delayPath]: DELAY_DATE } : {},
     steps: [DIGEST_5, CHAT, EMAIL, PUSH, DELAY_PATH, SMS, CHAT, EMAIL],
     expected: [
       [{ ...DIGEST_5, delay: FIVE_MINS }, CHAT, EMAIL, PUSH],
@@ -252,7 +252,7 @@ export const DAG_TEST_DATA = [
   },
   {
     title: 'Digest with delay path nested steps',
-    payload: { [DELAY_PATH_NESTED.metadata.delayPath]: DELAY_DATE },
+    payload: DELAY_PATH_NESTED.metadata.delayPath ? { [DELAY_PATH_NESTED.metadata.delayPath]: DELAY_DATE } : {},
     steps: [DIGEST_5, CHAT, EMAIL, PUSH, DELAY_PATH_NESTED, SMS, CHAT, EMAIL],
     expected: [
       [{ ...DIGEST_5, delay: FIVE_MINS }, CHAT, EMAIL, PUSH],
@@ -261,7 +261,7 @@ export const DAG_TEST_DATA = [
   },
   {
     title: 'Delay path at start with Digest steps',
-    payload: { [DELAY_PATH.metadata.delayPath]: DELAY_DATE },
+    payload: DELAY_PATH.metadata.delayPath ? { [DELAY_PATH.metadata.delayPath]: DELAY_DATE } : {},
     steps: [DELAY_PATH, CHAT, EMAIL, DIGEST_5, PUSH, SMS, CHAT, EMAIL],
     expected: [
       [{ ...CHAT, delay: differenceInMilliseconds(new Date(DELAY_DATE), new Date()) }, EMAIL],

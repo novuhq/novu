@@ -20,6 +20,8 @@ import {
 } from '../../../integrations/usecases/get-decrypted-integrations';
 import { v5 as uuidv5 } from 'uuid';
 
+export type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
+
 @Injectable()
 export class DigestService {
   constructor(
@@ -29,7 +31,7 @@ export class DigestService {
     private getDecryptedIntegrations: GetDecryptedIntegrations
   ) {}
 
-  private async findOneAndUpdate(notification: NotificationEntity, step: NotificationStepEntity, upsert = true) {
+  private async findOneAndUpdate(notification: NotificationEntity, step: NotificationStepEntity, upsert: boolean) {
     const digestRunKey = this.createDigestRunKey(notification, step);
     const query = {
       _environmentId: notification._environmentId,
@@ -41,6 +43,7 @@ export class DigestService {
     return await this.jobRepository.findOneAndUpdate(
       query,
       {
+        status: JobStatusEnum.QUEUED,
         $push: {
           digestedNotificationIds: notification._id,
         },
@@ -54,20 +57,17 @@ export class DigestService {
   }
   public async findOneAndUpdateDigest(notification: NotificationEntity, step: NotificationStepEntity) {
     try {
-      return this.findOneAndUpdate(notification, step);
+      return await this.findOneAndUpdate(notification, step, true);
     } catch (error) {
-      console.log('error in digest key', error.message);
-
-      return this.findOneAndUpdate(notification, step, false);
+      if (error.message.includes('duplicate key')) return await this.findOneAndUpdate(notification, step, false);
+      else throw new ApiException(error);
     }
   }
 
   private createDigestRunKey(notification: NotificationEntity, step: NotificationStepEntity) {
     const { _environmentId, _subscriberId, _templateId, payload } = notification;
     let plainKey = `${_environmentId}${_subscriberId}${_templateId}${step._templateId}`;
-    if (step.metadata?.digestKey) {
-      plainKey += step.metadata?.digestKey + get(payload, step.metadata?.digestKey);
-    }
+    if (step.metadata?.digestKey) plainKey += step.metadata?.digestKey + get(payload, step.metadata?.digestKey);
 
     return uuidv5(plainKey, uuidv5.URL);
   }
@@ -97,6 +97,7 @@ export class DigestService {
   }
 
   private async getDigestedPayload(job: JobEntity) {
+    if (job.step?.template?.type === StepTypeEnum.DIGEST) return [];
     const digestIds = job.digestedNotificationIds ?? [];
     const digestedPayload =
       digestIds.length > 0
@@ -129,7 +130,7 @@ export class DigestService {
     let digestBranch = dag.find((branch) => branch[0]._templateId === digestJob.step?._templateId);
     digestBranch = digestBranch?.slice(1);
     if (!digestBranch) return;
-    const jobs: Omit<JobEntity, '_id'>[] = [];
+    const jobs: NotificationJob[] = [];
     for (const step of digestBranch) {
       jobs.push(await this.prepareChildJob(digestJob, step));
     }
@@ -138,7 +139,7 @@ export class DigestService {
     return await this.jobRepository.storeJobs(jobs);
   }
 
-  private async prepareChildJob(parentJob: JobEntity, stepWithDelay: StepWithDelay): Promise<Omit<JobEntity, '_id'>> {
+  private async prepareChildJob(parentJob: JobEntity, stepWithDelay: StepWithDelay): Promise<NotificationJob> {
     const { delay = 0, ...step } = stepWithDelay;
     if (!step.template) throw new ApiException('Step template was not found');
     const providerId: string | undefined = await this.getProviderId(
@@ -189,6 +190,9 @@ export class DigestService {
 
   @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
   public async getNotificationTemplate(environmentId: string, identifier: string) {
-    return await this.notificationTemplateRepository.findByTriggerIdentifier(environmentId, identifier);
+    const template = await this.notificationTemplateRepository.findByTriggerIdentifier(environmentId, identifier);
+    if (!template) throw new ApiException(`Template not found for identifier ${identifier}`);
+
+    return template;
   }
 }

@@ -47,7 +47,7 @@ export class TriggerEvent {
         })
       );
 
-      if (!subscriber) continue; //Skipping the job
+      if (!subscriberProcessed) continue; //Skipping the job
       await this.processNotification.execute(
         ProcessNotificationCommand.create({
           identifier: command.identifier,
