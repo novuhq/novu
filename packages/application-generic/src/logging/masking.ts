@@ -2,7 +2,7 @@ import MaskData from 'maskdata';
 
 const cardFields = ['credit', 'debit', 'creditCard', 'debitCard'];
 
-const emailFields = ['primaryEmail', 'secondaryEmail', 'email', 'to', 'from'];
+const emailFields = ['primaryEmail', 'secondaryEmail', 'email'];
 
 const passwordFields = [
   'password',
@@ -26,6 +26,8 @@ const addressFields = [
   'cardAddress',
 ];
 
+const httpFields = ['webhookUrl', 'avatar', 'avatar_url'];
+
 const uuidFields = [];
 
 const sensitiveFields = cardFields.concat(
@@ -33,7 +35,8 @@ const sensitiveFields = cardFields.concat(
   passwordFields,
   phoneFields,
   addressFields,
-  uuidFields
+  uuidFields,
+  httpFields
 );
 
 function isSecureField(field: string): boolean {
@@ -51,6 +54,8 @@ function maskValueHelper(name: string, value: any) {
     return maskAddress(value);
   } else if (phoneFields.includes(name)) {
     return maskPhoneNumber(value);
+  } else if (httpFields.includes(name)) {
+    return maskUrl(value);
   } else {
     return maskPassword(value);
   }
@@ -59,6 +64,15 @@ function maskValueHelper(name: string, value: any) {
 export function maskValue(name: string, value: any) {
   if (process.env.EXPOSE === 'true') {
     return value;
+  } else if (Array.isArray(value)) {
+    const arr = [];
+    for (const element of value) {
+      arr.push(maskValue('arr', element));
+    }
+
+    return arr;
+  } else if (typeof value === undefined || value === null) {
+    return 'null';
   } else if (typeof value === 'object') {
     const object = {};
     for (const key of Object.keys(value)) {
@@ -128,6 +142,13 @@ const addressMaskOptions = {
   maskSpace: false,
 };
 
+const maskUrlOptions = {
+  maskWith: '*',
+  maxMaskedCharacters: 30,
+  unmaskedStartCharacters: 25,
+  unmaskedEndCharacters: 0,
+};
+
 export function maskAddress(value: string) {
   return MaskData.maskString(value, addressMaskOptions);
 }
@@ -142,6 +163,10 @@ export function maskEmail(value: string) {
 
 export function maskPassword(value: string) {
   return MaskData.maskPassword(value, maskPasswordOptions);
+}
+
+export function maskUrl(value: string) {
+  return MaskData.maskPassword(value, maskUrlOptions);
 }
 
 export function maskPhoneNumber(value: string) {

@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { JobsOptions, Queue, QueueBaseOptions, QueueScheduler, Worker } from 'bullmq';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { RunJob } from '../../usecases/run-job/run-job.usecase';
-import { RunJobCommand } from '../../usecases/run-job/run-job.command';
+import { RunJob } from '../../usecases/run-job';
+import { RunJobCommand } from '../../usecases/run-job';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
@@ -10,8 +10,8 @@ import {
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
-import { QueueNextJobCommand } from '../../usecases/queue-next-job/queue-next-job.command';
-import { QueueNextJob } from '../../usecases/queue-next-job/queue-next-job.usecase';
+import { QueueNextJobCommand } from '../../usecases/queue-next-job';
+import { QueueNextJob } from '../../usecases/queue-next-job';
 import { ConnectionOptions } from 'tls';
 import { PinoLogger, storage, Store } from '@novu/application-generic';
 
@@ -83,7 +83,6 @@ export class WorkflowQueueService {
   public getWorkerProcessor() {
     return async ({ data }: { data: JobEntity }) => {
       return await new Promise(async (resolve, reject) => {
-        //Todo
         await storage.run(new Store(PinoLogger.root), () => {
           return this.runJob
             .execute(

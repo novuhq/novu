@@ -12,14 +12,14 @@ import { UpdateMailSettingsRequestDto } from './dtos/update-mail-settings-reques
 import { UpdateSmsSettingsRequestDto } from './dtos/update-sms-settings-request.dto';
 import { UpdateSettingsResponseDto } from './dtos/update-settings-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { logDecorator } from '@novu/application-generic';
+import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/channels')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Channels')
 @ApiExcludeController()
-@logDecorator()
+@LogDecorator()
 export class ChannelsController {
   constructor(
     private updateMailSettingsUsecase: UpdateMailSettings,

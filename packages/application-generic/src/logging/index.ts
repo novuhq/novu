@@ -5,8 +5,7 @@ import {
   PinoLogger,
 } from 'nestjs-pino';
 import { storage, Store } from 'nestjs-pino/storage';
-import * as process from 'process';
-export * from './log.decorator';
+export * from './LogDecorator';
 export * from './masking';
 
 export function getErrorInterceptor() {
@@ -14,10 +13,6 @@ export function getErrorInterceptor() {
 }
 export { Logger, LoggerModule, PinoLogger, storage, Store };
 
-/*
- * todo add verbose to pino logger
- * todo make debug higher then trace(verbose)
- */
 const loggingLevelArr = ['error', 'warn', 'info', 'verbose', 'debug'];
 
 const loggingLevelSet = {
@@ -88,7 +83,6 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings) {
   return {
     pinoHttp: {
       customLevels: loggingLevelSet,
-      // useOnlyCustomLevels: true,
       level: values.level,
       redact: {
         paths: ['req.headers.authorization'],

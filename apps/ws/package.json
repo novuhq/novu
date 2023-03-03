@@ -47,8 +47,6 @@
     "jsonwebtoken": "9.0.0",
     "lodash": "^4.17.15",
     "nest-raven": "^9.1.0",
-    "pino": "^8.10.0",
-    "pino-http": "^8.3.3",
     "newrelic": "9.10.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

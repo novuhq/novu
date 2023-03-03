@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
-import { logDecorator } from '@novu/application-generic';
+import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/message-templates')
-@logDecorator()
+@LogDecorator()
 export class MessageTemplateController {}

@@ -16,11 +16,11 @@ import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetActivity } from './usecases/get-activity/get-activity.usecase';
 import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
-import { logDecorator } from '@novu/application-generic';
+import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/notifications')
 @ApiTags('Notification')
-@logDecorator()
+@LogDecorator()
 export class NotificationsController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,

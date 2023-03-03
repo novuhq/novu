@@ -28,14 +28,14 @@ import { SetVercelConfigurationCommand } from './usecases/set-vercel-configurati
 import { SetVercelConfiguration } from './usecases/set-vercel-configuration/set-vercel-configuration.usecase';
 import { UpdateVercelConfigurationCommand } from './usecases/update-vercel-configuration/update-vercel-configuration.command';
 import { UpdateVercelConfiguration } from './usecases/update-vercel-configuration/update-vercel-configuration.usecase';
-import { logDecorator } from '@novu/application-generic';
+import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/partner-integrations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Partner Integrations')
 @ApiExcludeController()
-@logDecorator()
+@LogDecorator()
 export class PartnerIntegrationsController {
   constructor(
     private setVercelConfigurationUsecase: SetVercelConfiguration,

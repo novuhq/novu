@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException, Inject, Logger } fr
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
-import { encryptCredentials } from '@novu/application-generic';
+import { encryptCredentials, maskValue } from '@novu/application-generic';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
@@ -19,8 +19,8 @@ export class UpdateIntegration {
   ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
-    Logger.verbose('Excuting Update Integration Command');
-    Logger.debug('Command: ' + command);
+    Logger.verbose('Executing Update Integration Command');
+    Logger.debug('Command: ' + maskValue('command', command));
 
     const existingIntegration = await this.integrationRepository.findById(command.integrationId);
     if (!existingIntegration) {

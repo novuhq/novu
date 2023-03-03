@@ -33,11 +33,7 @@ export class ParseEventRequest {
 
     const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
 
-    if (mappedActor === undefined) {
-      Logger.warn('mappedActor is undefined');
-    } else {
-      Logger.debug(mappedActor);
-    }
+    Logger.debug(mappedActor);
 
     const mappedRecipients = await this.mapTriggerRecipients.execute(
       MapTriggerRecipientsCommand.create({

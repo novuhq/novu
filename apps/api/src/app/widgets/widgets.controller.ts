@@ -15,7 +15,7 @@ import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
-import { AnalyticsService, logDecorator } from '@novu/application-generic';
+import { AnalyticsService, LogDecorator } from '@novu/application-generic';
 
 import { SessionInitializeRequestDto } from './dtos/session-initialize-request.dto';
 import { InitializeSessionCommand } from './usecases/initialize-session/initialize-session.command';
@@ -54,7 +54,7 @@ import { RemoveMessage } from './usecases/remove-message/remove-message.usecase'
 
 @Controller('/widgets')
 @ApiExcludeController()
-@logDecorator()
+@LogDecorator()
 export class WidgetsController {
   constructor(
     private initializeSessionUsecase: InitializeSession,

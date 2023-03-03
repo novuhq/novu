@@ -24,13 +24,13 @@ import { ChangesResponseDto, ChangeResponseDto } from './dtos/change-response.dt
 import { ChangesRequestDto } from './dtos/change-request.dto';
 
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { logDecorator } from '@novu/application-generic';
+import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Changes')
-@logDecorator()
+@LogDecorator()
 export class ChangesController {
   constructor(
     private applyChange: ApplyChange,

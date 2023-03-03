@@ -19,7 +19,7 @@ import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
 import { getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
-const packageJson = require('../package.json');
+import * as packageJson from '../package.json';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 
