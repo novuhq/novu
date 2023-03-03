@@ -5,7 +5,7 @@ test('should trigger mattermost library correctly, default channel', async () =>
   const fakePostDefaultChannel = jest.fn((webhookUrl, payload) => {
     expect(payload.channel).toBe(undefined);
 
-    return { headers: { ['request-id']: 'default' } };
+    return { headers: { ['x-request-id']: 'default' } };
   });
   jest.spyOn(axios, 'create').mockImplementation(() => {
     return {
@@ -32,7 +32,7 @@ test('should trigger mattermost library correctly, override channel', async () =
   const fakePostUserChannel = jest.fn((webhookUrl, payload) => {
     expect(payload.channel).toBe('@username');
 
-    return { headers: { ['request-id']: 'username' } };
+    return { headers: { ['x-request-id']: 'username' } };
   });
   jest.spyOn(axios, 'create').mockImplementation(() => {
     return {

@@ -5,7 +5,7 @@ A Mattermost chat provider library for [@novu/node](https://github.com/novuhq/no
 ## Usage
 
 ```javascript
-import { MattermostProvider } from '@novu/ms-teams';
+import { MattermostProvider } from '@novu/mattermost';
 
 const provider = new MattermostProvider({});
 ```

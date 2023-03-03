@@ -1,10 +1,10 @@
+import axios from 'axios';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
   IChatOptions,
   IChatProvider,
 } from '@novu/stateless';
-import axios from 'axios';
 
 interface IMattermostPayload {
   channel?: string;
@@ -27,8 +27,8 @@ export class MattermostProvider implements IChatProvider {
     const response = await this.axiosInstance.post(data.webhookUrl, payload);
 
     return {
-      id: response.headers['request-id'],
-      date: new Date().toISOString(),
+      id: response.headers['x-request-id'],
+      date: response.headers.date,
     };
   }
 }

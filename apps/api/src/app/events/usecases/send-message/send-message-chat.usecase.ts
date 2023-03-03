@@ -119,8 +119,8 @@ export class SendMessageChat extends SendMessageBase {
   private async sendChannelMessage(
     command: SendMessageCommand,
     subscriberChannel: IChannelSettings,
-    notification: NotificationEntity,
-    chatChannel: NotificationStepEntity,
+    notification,
+    chatChannel,
     content: string
   ) {
     const integration = await this.getIntegration(
@@ -197,12 +197,12 @@ export class SendMessageChat extends SendMessageBase {
     if (chatWebhookUrl && integration) {
       await this.sendMessage(
         chatWebhookUrl,
-        channelSpecification,
         integration,
         content,
         message,
         command,
-        notification
+        notification,
+        channelSpecification
       );
 
       return;
@@ -270,12 +270,12 @@ export class SendMessageChat extends SendMessageBase {
 
   private async sendMessage(
     chatWebhookUrl: string,
-    channelSpecification: string | undefined,
     integration: IntegrationEntity,
     content: string,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    channelSpecification?: string | undefined
   ) {
     try {
       const chatFactory = new ChatFactory();
