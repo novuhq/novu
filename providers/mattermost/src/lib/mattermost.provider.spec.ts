@@ -1,5 +1,5 @@
-import { MattermostProvider } from './mattermost.provider';
 import axios from 'axios';
+import { MattermostProvider } from './mattermost.provider';
 
 test('should trigger mattermost library correctly, default channel', async () => {
   const fakePostDefaultChannel = jest.fn((webhookUrl, payload) => {
