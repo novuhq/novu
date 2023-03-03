@@ -36,7 +36,7 @@ export class MailFactory {
   ];
 
   getHandler(
-    integration: Pick<IntegrationEntity, '_id' | 'credentials' | 'channel' | 'providerId'>,
+    integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId'>,
     from?: string
   ): IMailHandler {
     try {
@@ -49,7 +49,7 @@ export class MailFactory {
 
       return handler;
     } catch (error) {
-      throw new Error(`Could not build mail handler id: ${integration._id} error ${error}`);
+      throw new Error(`Could not build mail handler for provider: ${integration.providerId} error ${error}`);
     }
   }
 }

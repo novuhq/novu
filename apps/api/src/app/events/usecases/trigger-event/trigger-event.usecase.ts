@@ -61,7 +61,7 @@ export class TriggerEvent {
       template
     );
 
-    const subscribersJobs: Omit<JobEntity, '_id'>[][] = [];
+    const subscribersJobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[][] = [];
 
     // We might have a single actor for every trigger so we only need to check for it once
     let actorProcessed;

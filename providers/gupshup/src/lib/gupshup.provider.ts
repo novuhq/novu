@@ -16,8 +16,8 @@ export class GupshupSmsProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      userId: string;
-      password: string;
+      userId?: string;
+      password?: string;
     }
   ) {}
   id: string;

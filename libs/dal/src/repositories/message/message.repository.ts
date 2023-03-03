@@ -111,7 +111,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     );
   }
 
-  async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId: string) {
+  async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId?: string | null) {
     return this.update(
       { _environmentId: environmentId, _messageTemplateId: messageId },
       {

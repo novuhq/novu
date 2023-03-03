@@ -12,7 +12,7 @@ export abstract class BaseCommand {
 
     const errors = validateSync(convertedObject as unknown as object);
     if (errors?.length) {
-      const mappedErrors = flatten(errors.map((item) => Object.values(item.constraints)));
+      const mappedErrors = flatten(errors.map((item) => Object.values(item.constraints ?? {})));
 
       Sentry.addBreadcrumb({
         category: 'BaseCommand',

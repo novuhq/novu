@@ -25,8 +25,8 @@ export class NotificationRepository extends BaseRepository<
   async getFeed(
     environmentId: string,
     query: {
-      channels?: ChannelTypeEnum[];
-      templates?: string[];
+      channels?: ChannelTypeEnum[] | null;
+      templates?: string[] | null;
       subscriberIds?: string[];
       transactionId?: string;
     } = {},

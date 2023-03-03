@@ -26,11 +26,11 @@ export class GetDecryptedIntegrations {
       query.providerId = command.providerId;
     }
 
-    let integrations = command.findOne
+    const foundIntegrations = command.findOne
       ? [await this.integrationRepository.findOne(query)]
       : await this.integrationRepository.find(query);
 
-    integrations = integrations
+    const integrations = foundIntegrations
       .filter((integration) => integration)
       .map((integration: IntegrationEntity) => {
         integration.credentials = decryptCredentials(integration.credentials);

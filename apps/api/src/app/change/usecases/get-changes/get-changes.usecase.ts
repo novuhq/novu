@@ -7,7 +7,6 @@ import {
   NotificationTemplateRepository,
   FeedRepository,
   LayoutRepository,
-  LayoutEntity,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ChangesResponseDto } from '../../dtos/change-response.dto';
@@ -182,7 +181,7 @@ export class GetChanges {
     entityId: string,
     environmentId: string
   ): Promise<IViewEntity | Record<string, unknown>> {
-    let item: LayoutEntity | undefined = await this.layoutRepository.findOne({
+    let item = await this.layoutRepository.findOne({
       _environmentId: environmentId,
       _id: entityId,
     });
