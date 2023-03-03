@@ -40,6 +40,7 @@ const WorkflowEditor = ({
   deleteStep: (index: number) => void;
 }) => {
   const { setSelectedNodeId, activeStepIndex, selectedChannel } = useTemplateEditorContext();
+  const hasActiveStepSelected = activeStepIndex >= 0;
   const { colorScheme } = useMantineColorScheme();
   const [dragging, setDragging] = useState(false);
 
@@ -118,7 +119,7 @@ const WorkflowEditor = ({
             addStep={addStep}
             setSelectedNodeId={setSelectedNodeId}
           />
-          <When truthy={activeStepIndex > 0}>
+          <When truthy={hasActiveStepSelected}>
             <FilterModal
               isOpen={filterOpen}
               cancel={() => {

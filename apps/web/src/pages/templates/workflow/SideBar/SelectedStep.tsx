@@ -45,6 +45,7 @@ export function SelectedStep({
   } = useFormContext<IForm>();
   const { selectedNodeId, setSelectedNodeId, activeStep, activeStepIndex, selectedChannel } =
     useTemplateEditorContext();
+  const hasActiveStepSelected = activeStepIndex >= 0;
   const { readonly } = useEnvController();
   const onSideMenuClose = () => setSelectedNodeId('');
 
@@ -76,7 +77,7 @@ export function SelectedStep({
                 {readonly ? 'View' : 'Edit'} Template
               </EditTemplateButton>
               <Divider my={30} />
-              <When truthy={activeStepIndex >= 0}>
+              <When truthy={hasActiveStepSelected}>
                 <Stack>
                   <StepActiveSwitch index={activeStepIndex} control={control} />
                   <ShouldStopOnFailSwitch index={activeStepIndex} control={control} />
@@ -130,7 +131,7 @@ export function SelectedStep({
               </Text>
             </NavSection>
             <NavSection>
-              <When truthy={activeStepIndex >= 0}>
+              <When truthy={hasActiveStepSelected}>
                 <DigestMetadata
                   control={control}
                   index={activeStepIndex}
