@@ -17,8 +17,8 @@ import {
   DetailEnum,
 } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { constructActiveDAG, StepWithDelay } from '../../helpers/helpers';
-
-import { DigestService, NotificationJob } from '../../services/digest/digest-service';
+import { NotificationJob, prepareJob } from '../../helpers/job_preparation';
+import { DigestService } from '../../services/digest/digest-service';
 
 @Injectable()
 export class ProcessNotification {
@@ -47,7 +47,7 @@ export class ProcessNotification {
   ) {
     const jobs: NotificationJob[] = [];
     for (const step of steps) {
-      jobs.push(await this.prepareJob(command, notification, step));
+      jobs.push(await prepareJob(command, notification, step));
     }
     await this.storeAndAddJobs(jobs);
   }
@@ -64,69 +64,33 @@ export class ProcessNotification {
     )
       return await this.processJobs(command, notification, steps.slice(1));
 
-    let digestJob = await this.digestService.findOneAndUpdateDigest(notification, steps[0]);
-    if (!digestJob || digestJob.digestedNotificationIds?.[0] !== notification._id) return; //old
-    const preparedJob = await this.prepareJob(command, notification, steps[0]);
-    preparedJob.status = JobStatusEnum.QUEUED;
-    digestJob = await this.jobRepository.findOneAndUpdate(
-      { _id: digestJob._id, _environmentId: notification._environmentId },
-      { ...preparedJob },
-      { new: true }
-    );
-    await this.workflowQueueService.addJob(digestJob);
+    const digestJob = await this.digestService.createOrUpdateDigestJob(command, notification, steps);
+    if (digestJob) {
+      await this.workflowQueueService.addJob(digestJob);
+      await this.createExecutionDetail(digestJob);
+    }
   }
 
   private async storeAndAddJobs(jobs: NotificationJob[]) {
     jobs[0].status = JobStatusEnum.QUEUED; //first job to be queued
     const storedJobs = await this.jobRepository.storeJobs(jobs);
     for (const job of storedJobs) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEP_CREATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: false,
-        })
-      );
+      await this.createExecutionDetail(job);
     }
     await this.workflowQueueService.addJob(storedJobs[0]);
   }
 
-  private async prepareJob(
-    command: ProcessNotificationCommand,
-    notification: NotificationEntity,
-    stepWithDelay: StepWithDelay
-  ): Promise<NotificationJob> {
-    const { delay = 0, ...step } = stepWithDelay;
-    if (!step.template) throw new ApiException('Step template was not found');
-    const providerId = await this.digestService.getProviderId(
-      notification._environmentId,
-      notification._organizationId,
-      command.userId,
-      step.template.type
+  private async createExecutionDetail(job: JobEntity) {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        detail: DetailEnum.STEP_CREATED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+      })
     );
-
-    return {
-      identifier: command.identifier,
-      overrides: command.overrides,
-      _userId: command.userId,
-      transactionId: notification.transactionId,
-      payload: notification.payload,
-      _notificationId: notification._id,
-      _environmentId: notification._environmentId,
-      _organizationId: notification._organizationId,
-      _subscriberId: notification._subscriberId,
-      status: JobStatusEnum.PENDING,
-      _templateId: notification._templateId,
-      providerId,
-      step,
-      digest: step.metadata,
-      type: step.template?.type,
-      delay: delay,
-      ...(command.actorSubscriber && { _actorId: command.actorSubscriber._id }),
-    };
   }
 
   private async createNotification(

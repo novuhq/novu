@@ -11,6 +11,7 @@ export enum DetailEnum {
   REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION = 'Inbound mail - Missing MX route domain configuration',
   CHAT_WEBHOOK_URL_MISSING = 'Webhook URL for the chat channel is missing',
   STEP_CREATED = 'Step created',
+  DIGEST_STEP_CREATED = 'Digest step created',
   STEP_QUEUED = 'Step queued',
   STEP_QUEUED_WITH_DELAY = 'Step queued with delay',
   MESSAGE_CONTENT_NOT_GENERATED = 'Message content could not be generated',
@@ -31,8 +32,6 @@ export enum DetailEnum {
   WEBHOOK_FILTER_FAILED_RETRY = 'Webhook filter failed, retry will be executed',
   WEBHOOK_FILTER_FAILED_LAST_RETRY = 'Failed to get response from remote webhook filter on last retry',
   JOB_FAILED = 'Job Failed',
-  DIGEST_MERGED = 'Digest was merged with other digest',
-  DELAY_FINISHED = 'Delay is finished',
   PUSH_MISSING_DEVICE_TOKENS = 'Subscriber credentials is missing the tokens for sending a push notification message',
 }
 

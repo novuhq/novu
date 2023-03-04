@@ -92,6 +92,17 @@ export class SendMessage {
       return;
     }
 
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+      })
+    );
+
     switch (stepType) {
       case StepTypeEnum.SMS:
         return await this.sendMessageSms.execute(command);

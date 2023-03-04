@@ -8,31 +8,40 @@ import {
   JobStatusEnum,
   JobEntity,
 } from '@novu/dal';
-import { StepTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE, InAppProviderIdEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { get } from 'lodash';
 import { constructActiveDAG, getBackoffDate, StepWithDelay } from '../../helpers/helpers';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { Cached } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../../../integrations/usecases/get-decrypted-integrations';
-import { v5 as uuidv5 } from 'uuid';
+import { NotificationJob, prepareJob, prepareChildJob } from '../../helpers/job_preparation';
 
-export type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
+import { v5 as uuidv5 } from 'uuid';
 
 @Injectable()
 export class DigestService {
   constructor(
     private notificationRepository: NotificationRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private jobRepository: JobRepository,
-    private getDecryptedIntegrations: GetDecryptedIntegrations
+    private jobRepository: JobRepository
   ) {}
 
-  private async findOneAndUpdate(notification: NotificationEntity, step: NotificationStepEntity, upsert: boolean) {
-    const digestRunKey = this.createDigestRunKey(notification, step);
+  //Returns digest job only when it is created, other cases returns undefined
+  public async createOrUpdateDigestJob(command: any, notification: NotificationEntity, steps: StepWithDelay[]) {
+    let digestJob = await this.findOneAndUpdateDigest(notification, steps[0]);
+    if (!digestJob || digestJob.digestedNotificationIds?.[0] !== notification._id) return; //old
+    const preparedJob = await prepareJob(command, notification, steps[0]);
+    preparedJob.status = JobStatusEnum.QUEUED;
+    //Can avoid this additional update by using setOnInsert, but need to send huge data on every call to DB.
+    digestJob = await this.jobRepository.findOneAndUpdate(
+      { _id: digestJob._id, _environmentId: notification._environmentId },
+      { ...preparedJob },
+      { new: true }
+    );
+
+    return digestJob;
+  }
+  private async findOneAndUpdate(notification: NotificationEntity, digestRunKey, upsert = false) {
     const query = {
       _environmentId: notification._environmentId,
       digestRunKey,
@@ -55,19 +64,21 @@ export class DigestService {
       }
     );
   }
+
   public async findOneAndUpdateDigest(notification: NotificationEntity, step: NotificationStepEntity) {
+    const digestRunKey = this.createDigestRunKey(notification, step._templateId, step.metadata?.digestKey);
     try {
-      return await this.findOneAndUpdate(notification, step, true);
+      return await this.findOneAndUpdate(notification, digestRunKey, true);
     } catch (error) {
-      if (error.message.includes('duplicate key')) return await this.findOneAndUpdate(notification, step, false);
+      if (error.message.includes('duplicate key')) return await this.findOneAndUpdate(notification, digestRunKey);
       else throw new ApiException(error);
     }
   }
 
-  private createDigestRunKey(notification: NotificationEntity, step: NotificationStepEntity) {
+  private createDigestRunKey(notification: NotificationEntity, stepTemplateId, digestKey) {
     const { _environmentId, _subscriberId, _templateId, payload } = notification;
-    let plainKey = `${_environmentId}${_subscriberId}${_templateId}${step._templateId}`;
-    if (step.metadata?.digestKey) plainKey += step.metadata?.digestKey + get(payload, step.metadata?.digestKey);
+    let plainKey = `${_environmentId}${_subscriberId}${_templateId}${stepTemplateId}`;
+    if (digestKey) plainKey += digestKey + get(payload, digestKey);
 
     return uuidv5(plainKey, uuidv5.URL);
   }
@@ -132,60 +143,11 @@ export class DigestService {
     if (!digestBranch) return;
     const jobs: NotificationJob[] = [];
     for (const step of digestBranch) {
-      jobs.push(await this.prepareChildJob(digestJob, step));
+      jobs.push(await prepareChildJob(digestJob, step));
     }
     jobs[0]._parentId = digestJob._id;
 
     return await this.jobRepository.storeJobs(jobs);
-  }
-
-  private async prepareChildJob(parentJob: JobEntity, stepWithDelay: StepWithDelay): Promise<NotificationJob> {
-    const { delay = 0, ...step } = stepWithDelay;
-    if (!step.template) throw new ApiException('Step template was not found');
-    const providerId: string | undefined = await this.getProviderId(
-      parentJob._environmentId,
-      parentJob._organizationId,
-      parentJob._userId,
-      step.template.type
-    );
-
-    return {
-      identifier: parentJob.identifier,
-      overrides: parentJob.overrides,
-      _userId: parentJob._userId,
-      transactionId: parentJob.transactionId,
-      payload: parentJob.payload,
-      _notificationId: parentJob._notificationId,
-      _environmentId: parentJob._environmentId,
-      _organizationId: parentJob._organizationId,
-      _subscriberId: parentJob._subscriberId,
-      status: JobStatusEnum.PENDING,
-      _templateId: parentJob._templateId,
-      providerId,
-      step,
-      digest: step.metadata,
-      digestedNotificationIds: parentJob.digestedNotificationIds,
-      type: step.template?.type,
-      delay: delay,
-      ...(parentJob._actorId && { _actorId: parentJob._actorId }),
-    };
-  }
-
-  //for now keep it here
-  public async getProviderId(
-    environmentId: string,
-    organizationId: string,
-    userId: string,
-    stepType: StepTypeEnum
-  ): Promise<string | undefined> {
-    const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(stepType);
-    if (!channelType) return;
-    const integrations = await this.getDecryptedIntegrations.execute(
-      GetDecryptedIntegrationsCommand.create({ channelType, active: true, organizationId, environmentId, userId })
-    );
-    const integration = integrations[0];
-
-    return integration?.providerId ?? InAppProviderIdEnum.Novu;
   }
 
   @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)

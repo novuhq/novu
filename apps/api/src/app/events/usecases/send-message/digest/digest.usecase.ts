@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MessageRepository } from '@novu/dal';
+import { MessageRepository, JobEntity } from '@novu/dal';
 import { CreateLog } from '../../../../logs/usecases/create-log/create-log.usecase';
 import { SendMessageCommand } from '../send-message.command';
 import { SendMessageType } from '../send-message-type.usecase';
@@ -23,7 +23,19 @@ export class Digest extends SendMessageType {
   }
 
   public async execute(command: SendMessageCommand) {
-    const result = await this.digestService.createDigestChildJobs(command.job);
+    const result = (await this.digestService.createDigestChildJobs(command.job)) ?? [];
+    for (const job of result) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEP_CREATED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+    }
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
