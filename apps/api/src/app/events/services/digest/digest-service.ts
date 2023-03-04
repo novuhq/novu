@@ -83,27 +83,32 @@ export class DigestService {
     return uuidv5(plainKey, uuidv5.URL);
   }
 
-  public async needToBackoff(
-    notification: NotificationEntity,
-    digestStep: NotificationStepEntity,
-    nextStep: NotificationStepEntity
-  ) {
+  //Creates backoff jobs only when backoff criteria met, else return undefined
+  public async createBackoffJobs(command: any, notification: NotificationEntity, steps: StepWithDelay[]) {
+    const digestRunKey = this.createDigestRunKey(notification, steps[1]._templateId, steps[0].metadata?.digestKey);
     const query = {
+      digestRunKey,
       updatedAt: {
-        $gte: getBackoffDate(digestStep),
+        $gte: getBackoffDate(steps[0]),
       },
-      'step._templateId': nextStep._templateId,
-      _templateId: notification._templateId,
       _environmentId: notification._environmentId,
-      _subscriberId: notification._subscriberId,
     };
-    this.setDigestCondition(query, digestStep, notification.payload);
+    const count = await this.jobRepository.count(query);
+    if (count > 0) return;
+    const preparedJob = await prepareJob(command, notification, steps[1]);
+    preparedJob.status = JobStatusEnum.QUEUED;
+    preparedJob.digestRunKey = digestRunKey;
+    try {
+      const firstJob = await this.jobRepository.create(preparedJob);
+      //remove steps[0] and steps[1] (digest and first child)
+      steps = steps.slice(2);
+      if (steps.length === 0) return [firstJob];
+      const nextJobs = (await this.storeJobs(firstJob, steps)) ?? [];
 
-    return !(await this.jobRepository.findOne(query));
-  }
-  private setDigestCondition(query, digestStep: NotificationStepEntity, payload) {
-    if (digestStep.metadata?.digestKey) {
-      query['payload.' + digestStep.metadata.digestKey] = get(payload, digestStep.metadata.digestKey);
+      return [firstJob, ...nextJobs];
+    } catch (error) {
+      if (error.message.includes('duplicate key')) return;
+      else throw new ApiException(error);
     }
   }
 
@@ -140,12 +145,15 @@ export class DigestService {
     const dag = constructActiveDAG(template.steps, digestJob.payload, digestJob.overrides) || [];
     let digestBranch = dag.find((branch) => branch[0]._templateId === digestJob.step?._templateId);
     digestBranch = digestBranch?.slice(1);
-    if (!digestBranch) return;
+    if (digestBranch) return await this.storeJobs(digestJob, digestBranch);
+  }
+
+  public async storeJobs(parentJob: JobEntity, steps: StepWithDelay[]) {
     const jobs: NotificationJob[] = [];
-    for (const step of digestBranch) {
-      jobs.push(await prepareChildJob(digestJob, step));
+    for (const step of steps) {
+      jobs.push(await prepareChildJob(parentJob, step));
     }
-    jobs[0]._parentId = digestJob._id;
+    jobs[0]._parentId = parentJob._id;
 
     return await this.jobRepository.storeJobs(jobs);
   }

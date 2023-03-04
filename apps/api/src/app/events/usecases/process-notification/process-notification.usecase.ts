@@ -58,12 +58,14 @@ export class ProcessNotification {
     steps: StepWithDelay[]
   ) {
     if (steps.length == 1) return; //Just digest step, so skip it
-    if (
-      steps[0]?.metadata?.type === DigestTypeEnum.BACKOFF &&
-      (await this.digestService.needToBackoff(notification, steps[0], steps[1]))
-    )
-      return await this.processJobs(command, notification, steps.slice(1));
+    if (steps[0]?.metadata?.type === DigestTypeEnum.BACKOFF) {
+      const backoffJobs = await this.digestService.createBackoffJobs(command, notification, steps);
+      if (backoffJobs && backoffJobs.length > 0) {
+        for (const job of backoffJobs) await this.createExecutionDetail(job);
 
+        return await this.workflowQueueService.addJob(backoffJobs[0]);
+      }
+    }
     const digestJob = await this.digestService.createOrUpdateDigestJob(command, notification, steps);
     if (digestJob) {
       await this.workflowQueueService.addJob(digestJob);
@@ -74,9 +76,7 @@ export class ProcessNotification {
   private async storeAndAddJobs(jobs: NotificationJob[]) {
     jobs[0].status = JobStatusEnum.QUEUED; //first job to be queued
     const storedJobs = await this.jobRepository.storeJobs(jobs);
-    for (const job of storedJobs) {
-      await this.createExecutionDetail(job);
-    }
+    for (const job of storedJobs) await this.createExecutionDetail(job);
     await this.workflowQueueService.addJob(storedJobs[0]);
   }
 
