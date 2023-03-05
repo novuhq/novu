@@ -58,6 +58,10 @@ export class AnalyticsService {
 
   upsertUser(user: IUser, distinctId: string) {
     if (this.segmentEnabled) {
+      const githubToken = (user as any).tokens?.find(
+        (token) => token.provider === 'github'
+      );
+
       this.segment.identify({
         userId: distinctId,
         traits: {
@@ -67,6 +71,7 @@ export class AnalyticsService {
           email: user.email,
           avatar: user.profilePicture,
           createdAt: user.createdAt,
+          githubProfile: githubToken?.username,
         },
       });
     }

@@ -16,6 +16,7 @@ export class CreateUser {
     user.showOnBoarding = true;
     user.tokens = [
       {
+        username: data.auth.username,
         providerId: data.auth.profileId,
         provider: data.auth.provider,
         accessToken: data.auth.accessToken,
