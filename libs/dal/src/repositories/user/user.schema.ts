@@ -25,6 +25,7 @@ const userSchema = new Schema<UserDBModel>(
         refreshToken: Schema.Types.String,
         valid: Schema.Types.Boolean,
         lastUsed: Schema.Types.Date,
+        username: Schema.Types.String,
       },
     ],
     password: Schema.Types.String,
