@@ -7,8 +7,8 @@ export const PageGradient = (props: React.ComponentPropsWithoutRef<'svg'>) => {
       />
       <defs>
         <linearGradient id="a" x1="12.5" x2="36.5" y1="24" y2="24" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#DD2476" />
-          <stop offset="1" stop-color="#FF512F" />
+          <stop stopColor="#DD2476" />
+          <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
       </defs>
     </svg>

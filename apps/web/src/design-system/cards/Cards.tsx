@@ -45,7 +45,13 @@ function Card({ cell }: { cell: ICardCell }) {
   const alt = cell.imagePath?.split('/').pop();
   const frameworkName = getFrameworkName(alt);
 
-  const handleOnClick = () => {
+  const handleOnClick: React.MouseEventHandler<HTMLButtonElement> = (e) => {
+    if (cell.onClick) {
+      cell.onClick?.(e);
+
+      return;
+    }
+
     if (cell.navigateTo) {
       navigate(cell.navigateTo);
     }
@@ -54,7 +60,7 @@ function Card({ cell }: { cell: ICardCell }) {
   return (
     <StyledCard
       dark={colorScheme === 'dark'}
-      onClick={cell.onClick ?? handleOnClick}
+      onClick={handleOnClick}
       disabled={cell.disabled}
       data-test-id={cell.testId}
     >
