@@ -6,7 +6,7 @@ export const useNotificationStatus = (notification: any): JobStatusEnum => {
 
   useEffect(() => {
     const result = notification?.jobs
-      .map((job) => {
+      ?.map((job) => {
         return job.status;
       })
       .reduce((prev: JobStatusEnum, item: JobStatusEnum) => {
