@@ -1,36 +1,36 @@
-<p align="center">
-  <a href="https://discord.novu.co">
-    <img src="https://user-images.githubusercontent.com/8877285/139603641-66966234-84f4-42aa-9c31-9d296fab7ba1.png">
-  </a>
-<p align="center">Read <a href="https://github.com/novuhq/novu/discussions/70">here</a> our plans for the upcoming weeks.</p>
-
-</p>
 <div align="center">
-  <a href="https://novu.co">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/8872447/165779319-34962ccc-3149-466c-b1da-97fd93254520.png">
-      <img src="https://user-images.githubusercontent.com/8872447/165779274-22a190da-3284-487e-bd1e-14983df12cbb.png" width="280" alt="Logo"/>
-    </picture>
+  <a href="https://novu.co" target="_blank">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
+    <img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280" alt="Logo"/>
+  </picture>
   </a>
 </div>
-<h1 align="center">Notification management simplified.</h1>
+
+<h1 align="center">The open-source notification infrastructure for developers</h1>
 
 <div align="center">
-The ultimate library for managing multi-channel notifications with a single API. 
+The ultimate service for managing multi-channel notifications with a single API.
 </div>
 
   <p align="center">
     <br />
-    <a href="https://docs.novu.co"><strong>Explore the docs »</strong></a>
+    <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
     <br />
+
   <br/>
     <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
     ·
     <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
     ·
-    <a href="https://novu.co/blog">Read our blog</a>
+  <a href="https://discord.novu.co">Join Our Discord</a>
+    ·
+    <a href="https://github.com/orgs/novuhq/projects/10">Roadmap</a>
+    ·
+    <a href="https://twitter.com/novuhq">Twitter</a>
+    ·
+    <a href="https://notifications.directory">Notifications Directory</a>
   </p>
-  
 ## ⭐️ Why
 Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multichannel communication experience over email, sms, push, chat and more... An ever-growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and its users.
 
