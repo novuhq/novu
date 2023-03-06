@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
 
@@ -112,6 +112,7 @@ export class CreateNotificationTemplate {
     });
 
     const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);
+    if (!item) throw new NotFoundException(`Notification template ${savedTemplate._id} is not found`);
 
     await this.createChange.execute(
       CreateChangeCommand.create({

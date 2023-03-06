@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -7,6 +8,7 @@ import {
   SubscriberEntity,
   MessageEntity,
   OrganizationRepository,
+  OrganizationEntity,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -18,7 +20,7 @@ import {
   ActorTypeEnum,
   IActor,
 } from '@novu/shared';
-import * as Sentry from '@sentry/node';
+
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
@@ -31,7 +33,7 @@ import {
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { OrganizationEntity } from '../../../../../../../libs/dal/src/repositories/organization/organization.entity';
+import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -46,9 +48,16 @@ export class SendMessageInApp extends SendMessageBase {
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
     private compileTemplate: CompileTemplate,
-    private organizationRepository: OrganizationRepository
+    private organizationRepository: OrganizationRepository,
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails, subscriberRepository);
+    super(
+      messageRepository,
+      createLogUsecase,
+      createExecutionDetails,
+      subscriberRepository,
+      getDecryptedIntegrationsUsecase
+    );
   }
 
   public async execute(command: SendMessageCommand) {
@@ -254,7 +263,7 @@ export class SendMessageInApp extends SendMessageBase {
     subscriber: SubscriberEntity,
     command: SendMessageCommand,
     organization: OrganizationEntity | null
-  ): Promise<string | null> {
+  ): Promise<string> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         template: content as string,

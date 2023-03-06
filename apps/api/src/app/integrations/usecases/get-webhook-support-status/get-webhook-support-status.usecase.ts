@@ -17,8 +17,7 @@ export class GetWebhookSupportStatus {
   async execute(command: GetWebhookSupportStatusCommand): Promise<boolean> {
     const { providerId } = command;
 
-    const integration: IntegrationEntity = await this.getIntegration(command);
-
+    const integration = await this.getIntegration(command);
     if (!integration) {
       throw new NotFoundException(`Integration for ${providerId} was not found`);
     }
@@ -36,7 +35,7 @@ export class GetWebhookSupportStatus {
 
     return true;
   }
-  private async getIntegration(command: GetWebhookSupportStatusCommand): Promise<IntegrationEntity> {
+  private async getIntegration(command: GetWebhookSupportStatusCommand) {
     return await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -44,7 +43,7 @@ export class GetWebhookSupportStatus {
     });
   }
 
-  private getHandler(integration: IntegrationEntity): ISmsHandler | IMailHandler {
+  private getHandler(integration: IntegrationEntity): ISmsHandler | IMailHandler | null {
     switch (integration.channel) {
       case 'sms':
         return this.smsFactory.getHandler(integration);

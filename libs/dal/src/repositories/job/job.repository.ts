@@ -1,24 +1,28 @@
-import { BaseRepository, Omit } from '../base-repository';
-import { JobEntity, JobStatusEnum } from './job.entity';
-import { Job } from './job.schema';
+import { ProjectionType } from 'mongoose';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Document, FilterQuery, ProjectionType } from 'mongoose';
+
+import { BaseRepository } from '../base-repository';
+import { JobEntity, JobDBModel, JobStatusEnum } from './job.entity';
+import { Job } from './job.schema';
 import { NotificationTemplateEntity } from '../notification-template';
 import { SubscriberEntity } from '../subscriber';
 import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-class PartialJobEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
+type JobEntityPopulated = JobEntity & {
+  template: NotificationTemplateEntity;
+  notification: NotificationEntity;
+  subscriber: SubscriberEntity;
+  environment: EnvironmentEntity;
+};
 
-type EnforceEnvironmentQuery = FilterQuery<PartialJobEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEntity> {
+export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Job, JobEntity);
   }
 
-  public async storeJobs(jobs: Omit<JobEntity, '_id'>[]): Promise<JobEntity[]> {
+  public async storeJobs(jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[]): Promise<JobEntity[]> {
     const stored: JobEntity[] = [];
     for (let index = 0; index < jobs.length; index++) {
       if (index > 0) {
@@ -150,21 +154,16 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     selectNotification?: ProjectionType<NotificationEntity>;
     selectSubscriber?: ProjectionType<SubscriberEntity>;
     selectEnvironment?: ProjectionType<EnvironmentEntity>;
-  }): Promise<
-    JobEntity & {
-      template: NotificationTemplateEntity;
-      notification: NotificationEntity;
-      subscriber: SubscriberEntity;
-      environment: EnvironmentEntity;
-    }
-  > {
-    return this.MongooseModel.findOne(query, select)
+  }) {
+    const job = this.MongooseModel.findOne(query, select)
       .populate('template', selectTemplate)
       .populate('notification', selectNotification)
       .populate('subscriber', selectSubscriber)
       .populate('environment', selectEnvironment)
       .lean()
       .exec();
+
+    return job as unknown as JobEntityPopulated;
   }
 
   public async shouldDelayDigestJobOrMerge(

@@ -25,7 +25,7 @@ describe('Create Organization - /organizations (POST)', async () => {
         .expect(201);
       const dbOrganization = await organizationRepository.findById(body.data._id);
 
-      const members = await memberRepository.getOrganizationMembers(dbOrganization._id);
+      const members = await memberRepository.getOrganizationMembers(dbOrganization?._id as string);
 
       expect(members.length).to.eq(1);
       expect(members[0]._userId).to.eq(session.user._id);

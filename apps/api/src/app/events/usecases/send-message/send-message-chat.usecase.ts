@@ -269,6 +269,9 @@ export class SendMessageChat extends SendMessageBase {
     try {
       const chatFactory = new ChatFactory();
       const chatHandler = chatFactory.getHandler(integration);
+      if (!chatHandler) {
+        throw new ApiException(`Chat handler for provider ${integration.providerId} is  not found`);
+      }
 
       const result = await chatHandler.send({
         webhookUrl: chatWebhookUrl,

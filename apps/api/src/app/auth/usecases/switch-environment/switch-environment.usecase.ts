@@ -20,7 +20,11 @@ export class SwitchEnvironment {
     }
 
     const member = await this.memberRepository.findMemberByUserId(command.organizationId, command.userId);
+    if (!member) throw new NotFoundException('Member is not found');
+
     const user = await this.userRepository.findById(command.userId);
+    if (!user) throw new NotFoundException('User is not found');
+
     const token = await this.authService.getSignedToken(user, command.organizationId, member, command.newEnvironmentId);
 
     return token;

@@ -99,7 +99,7 @@ export class UpdateLayoutUseCase {
   private mapToEntity(layout: LayoutDto): LayoutEntity {
     return {
       ...layout,
-      _id: layout._id,
+      _id: layout._id as string,
       _organizationId: layout._organizationId,
       _environmentId: layout._environmentId,
       contentType: 'customHtml',

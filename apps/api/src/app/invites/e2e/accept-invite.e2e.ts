@@ -40,8 +40,8 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
     it('should change the member status to active', async () => {
       const member = await memberRepository.findMemberByUserId(session.organization._id, invitedUserSession.user._id);
 
-      expect(member._userId).to.equal(invitedUserSession.user._id);
-      expect(member.memberStatus).to.equal(MemberStatusEnum.ACTIVE);
+      expect(member?._userId).to.equal(invitedUserSession.user._id);
+      expect(member?.memberStatus).to.equal(MemberStatusEnum.ACTIVE);
     });
 
     it('should invite existing user instead of creating new user', async () => {

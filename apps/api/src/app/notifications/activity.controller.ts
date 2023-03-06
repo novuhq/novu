@@ -38,18 +38,18 @@ export class ActivityController {
     @UserSession() user: IJwtPayload,
     @Query() query: ActivitiesRequestDto
   ): Promise<ActivitiesResponseDto> {
-    let channelsQuery: ChannelTypeEnum[];
+    let channelsQuery: ChannelTypeEnum[] | undefined;
 
     if (query.channels) {
       channelsQuery = Array.isArray(query.channels) ? query.channels : [query.channels];
     }
 
-    let templatesQuery: string[];
+    let templatesQuery: string[] | undefined;
     if (query.templates) {
       templatesQuery = Array.isArray(query.templates) ? query.templates : [query.templates];
     }
 
-    let emailsQuery: string[];
+    let emailsQuery: string[] | undefined;
     if (query.emails) {
       emailsQuery = Array.isArray(query.emails) ? query.emails : [query.emails];
     }

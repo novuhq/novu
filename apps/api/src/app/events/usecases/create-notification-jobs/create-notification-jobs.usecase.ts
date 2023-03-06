@@ -10,7 +10,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 
-type NotificationJob = Omit<JobEntity, '_id'>;
+type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
 
 @Injectable()
 export class CreateNotificationJobs {

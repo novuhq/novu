@@ -91,13 +91,13 @@ jobs:
         run: npm i -g wait-on
 
       - name: Wait on API
-        run: wait-on --timeout=120000 http://localhost:1336/v1/health-check
+        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
 
       - name: Wait on WS
-        run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
+        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check
 
       - name: Wait on WEB
-        run: wait-on --timeout=120000 http://localhost:4200
+        run: wait-on --timeout=180000 http://localhost:4200
 
       # run cypress install only when cache was not hit
       - name: Cypress install

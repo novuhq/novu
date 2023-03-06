@@ -1,10 +1,11 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
+import { Schema } from 'mongoose';
 import * as mongooseDelete from 'mongoose-delete';
-import { schemaOptions } from '../schema-default.options';
-import { SubscriberEntity } from './subscriber.entity';
 
-const subscriberSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { SubscriberDBModel } from './subscriber.entity';
+
+const subscriberSchema = new Schema<SubscriberDBModel>(
   {
     _organizationId: {
       type: Schema.Types.ObjectId,
@@ -38,11 +39,7 @@ subscriberSchema.index({ _environmentId: 1, subscriberId: 1 });
 
 subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-interface ISubscriberDocument extends SubscriberEntity, Document {
-  _id: never;
-  __v: never;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Subscriber =
-  mongoose.models.Subscriber || mongoose.model<ISubscriberDocument>('Subscriber', subscriberSchema);
+  (mongoose.models.Subscriber as mongoose.Model<SubscriberDBModel>) ||
+  mongoose.model<SubscriberDBModel>('Subscriber', subscriberSchema);

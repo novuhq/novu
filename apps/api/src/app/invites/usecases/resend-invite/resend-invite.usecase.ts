@@ -26,13 +26,15 @@ export class ResendInvite {
     });
     if (!foundInvitee) throw new ApiException('Member not found');
     if (foundInvitee.memberStatus !== MemberStatusEnum.INVITED) throw new ApiException('Member already active');
+    if (!foundInvitee.invite) throw new ApiException('Invited user is not found');
 
     const inviterUser = await this.userRepository.findById(command.userId);
+    if (!inviterUser) throw new ApiException('Inviter is not found');
 
     const token = createGuid();
 
     if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
-      const novu = new Novu(process.env.NOVU_API_KEY);
+      const novu = new Novu(process.env.NOVU_API_KEY ?? '');
 
       // eslint-disable-next-line @cspell/spellchecker
       // cspell:disable-next
@@ -45,7 +47,7 @@ export class ResendInvite {
           email: foundInvitee.invite.email,
           inviteeName: capitalize(foundInvitee.invite.email.split('@')[0]),
           organizationName: capitalize(organization.name),
-          inviterName: capitalize(inviterUser.firstName),
+          inviterName: capitalize(inviterUser.firstName ?? ''),
           acceptInviteUrl: `${process.env.FRONT_BASE_URL}/auth/invitation/${token}`,
         },
       });
