@@ -11,6 +11,7 @@ import {
   MessageEntity,
   NotificationEntity,
   IntegrationEntity,
+  IChannelSettings,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -117,7 +118,7 @@ export class SendMessageChat extends SendMessageBase {
 
   private async sendChannelMessage(
     command: SendMessageCommand,
-    subscriberChannel,
+    subscriberChannel: IChannelSettings,
     notification,
     chatChannel,
     content: string
@@ -135,6 +136,7 @@ export class SendMessageChat extends SendMessageBase {
     );
 
     const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+    const channelSpecification = subscriberChannel.credentials?.channel;
 
     if (!chatWebhookUrl) {
       await this.createExecutionDetails.execute(
@@ -193,7 +195,15 @@ export class SendMessageChat extends SendMessageBase {
     );
 
     if (chatWebhookUrl && integration) {
-      await this.sendMessage(chatWebhookUrl, integration, content, message, command, notification);
+      await this.sendMessage(
+        chatWebhookUrl,
+        integration,
+        content,
+        message,
+        command,
+        notification,
+        channelSpecification
+      );
 
       return;
     }
@@ -264,7 +274,8 @@ export class SendMessageChat extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    channelSpecification?: string | undefined
   ) {
     try {
       const chatFactory = new ChatFactory();
@@ -275,6 +286,7 @@ export class SendMessageChat extends SendMessageBase {
 
       const result = await chatHandler.send({
         webhookUrl: chatWebhookUrl,
+        channel: channelSpecification,
         content,
       });
 
