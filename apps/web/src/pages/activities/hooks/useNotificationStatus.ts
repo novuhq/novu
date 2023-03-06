@@ -5,7 +5,7 @@ export const useNotificationStatus = (notification: any): JobStatusEnum => {
   const [status, setStatus] = useState(JobStatusEnum.PENDING);
 
   useEffect(() => {
-    const jobs = notification.jobs || [];
+    const jobs = notification?.jobs || [];
     const result = jobs
       ?.map((job) => {
         return job.status;
