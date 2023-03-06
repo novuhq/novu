@@ -16,8 +16,6 @@ export class MattermostProvider implements IChatProvider {
   public id = 'mattermost';
   private axiosInstance = axios.create();
 
-  constructor(private config) {}
-
   async sendMessage(data: IChatOptions): Promise<ISendMessageSuccessResponse> {
     const payload: IMattermostPayload = { text: data.content };
 

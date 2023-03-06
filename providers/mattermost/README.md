@@ -7,5 +7,5 @@ A Mattermost chat provider library for [@novu/node](https://github.com/novuhq/no
 ```javascript
 import { MattermostProvider } from '@novu/mattermost';
 
-const provider = new MattermostProvider({});
+const provider = new MattermostProvider();
 ```

@@ -14,7 +14,7 @@ test('should trigger mattermost library correctly, default channel', async () =>
     } as any;
   });
 
-  const provider = new MattermostProvider({});
+  const provider = new MattermostProvider();
   const testWebhookUrl = 'https://mattermost.dummy.webhook.com';
   const testContent = 'Dummy content message';
   const result = await provider.sendMessage({
@@ -41,7 +41,7 @@ test('should trigger mattermost library correctly, override channel', async () =
     } as any;
   });
 
-  const provider = new MattermostProvider({});
+  const provider = new MattermostProvider();
   const testWebhookUrl = 'https://mattermost.dummy.webhook.com';
   const testContent = 'Dummy content message';
   const result = await provider.sendMessage({

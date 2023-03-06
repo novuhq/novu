@@ -287,7 +287,7 @@ export class SendMessageChat extends SendMessageBase {
       const result = await chatHandler.send({
         webhookUrl: chatWebhookUrl,
         channel: channelSpecification,
-        content: content,
+        content,
       });
 
       await this.createExecutionDetails.execute(

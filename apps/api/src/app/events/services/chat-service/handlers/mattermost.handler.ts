@@ -9,6 +9,6 @@ export class MattermostHandler extends BaseChatHandler {
   }
 
   buildProvider(_credentials: ICredentials) {
-    this.provider = new MattermostProvider({});
+    this.provider = new MattermostProvider();
   }
 }
