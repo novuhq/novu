@@ -90,7 +90,7 @@ export class AwaitHelpers {
     } while (retryCount < MAX_RETRIES);
   }
 
-  async promoteJob(jobId) {
+  async promoteJob(jobId: string) {
     try {
       await this.workflowQueueService.promoteJob(jobId);
     } catch (error) {

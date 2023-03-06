@@ -88,7 +88,6 @@ export class SendMessageInApp extends SendMessageBase {
         inAppChannel.template.content,
         command.payload,
         subscriber,
-        command,
         organization
       );
 
@@ -97,7 +96,6 @@ export class SendMessageInApp extends SendMessageBase {
           inAppChannel.template.cta?.data?.url,
           command.payload,
           subscriber,
-          command,
           organization
         );
       }
@@ -110,7 +108,6 @@ export class SendMessageInApp extends SendMessageBase {
             action.content,
             command.payload,
             subscriber,
-            command,
             organization
           );
           ctaButtons.push({ type: action.type, content: buttonContent });
@@ -260,7 +257,6 @@ export class SendMessageInApp extends SendMessageBase {
     content: string | IEmailBlock[],
     payload: any,
     subscriber: SubscriberEntity,
-    command: SendMessageCommand,
     organization: OrganizationEntity | null
   ): Promise<string> {
     return await this.compileTemplate.execute(

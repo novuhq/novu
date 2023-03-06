@@ -708,7 +708,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(totalJobs.length).to.equal(6);
   });
 
-  // TODO: Review backoff individually
   it('should create multiple digest based on different digestKeys with backoff', async function () {
     const postId = MessageRepository.createObjectId();
     const postId2 = MessageRepository.createObjectId();
@@ -955,6 +954,352 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const message = await awaitHelpers.awaitAndGetMessages(template, 1);
 
     expect(message[0].content).to.include('HAS_DIGEST_PROP');
+  });
+
+  it('should merge digest events accordingly when concurrent calls with backoff', async () => {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: StepTypeEnum.CHAT,
+          content:
+            'Total events in digest:{{step.total_count}} Hello world {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+      ],
+    });
+    await Promise.all(
+      Array.from(Array(10).keys()).map(async (index) => {
+        await triggerEvent({
+          customVar: `concurrent-call-${index}`,
+        });
+      })
+    );
+    const jobs = await awaitHelpers.awaitAndGetJobs(template, 2);
+    expect(jobs.length).to.eql(2);
+    let messages = await awaitHelpers.awaitAndGetMessages(template, 1);
+    expect(messages.length).to.equal(1);
+    expect(messages[0].content).to.include('NO_DIGEST_PROP');
+    const digestJob = jobs.find((job) => job.type === StepTypeEnum.DIGEST);
+    await awaitHelpers.promoteJob(digestJob._id);
+    messages = await awaitHelpers.awaitAndGetMessages(template, 2);
+    expect(messages.length).to.equal(2);
+    expect(messages[1].content).to.include('HAS_DIGEST_PROP');
+    expect(messages[1].content).to.include('Total events in digest:9');
+  });
+
+  it('should send only backoff messages with out digest', async () => {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'digestKey',
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: StepTypeEnum.CHAT,
+          content:
+            'Total events in digest:{{step.total_count}} Hello world {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+      ],
+    });
+    await Promise.all(
+      Array.from(Array(10).keys()).map(async (index) => {
+        await triggerEvent({
+          customVar: `concurrent-call-${index}`,
+          digestKey: `digestValue${index}`,
+        });
+      })
+    );
+    const jobs = await awaitHelpers.awaitAndGetJobs(template, 10);
+    expect(jobs.length).to.eql(10);
+    const digestJobs = jobs.filter((job) => job.type === StepTypeEnum.DIGEST);
+    expect(digestJobs.length).to.equal(0);
+    const messages = await awaitHelpers.awaitAndGetMessages(template, 10);
+    expect(messages.length).to.equal(10);
+    for (const message of messages) expect(message.content).to.include('NO_DIGEST_PROP');
+  });
+
+  it('should merge digest events accordingly when concurrent calls with backoff and digest key', async () => {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'digestKey',
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: StepTypeEnum.CHAT,
+          content:
+            'Total events in digest:{{step.total_count}} Hello world {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+      ],
+    });
+    await Promise.all(
+      Array.from(Array(10).keys()).map(async (index) => {
+        await triggerEvent({
+          customVar: `concurrent-call-${index}`,
+          digestKey: `digestValue${index % 2}`,
+        });
+      })
+    );
+    let jobs = await awaitHelpers.awaitAndGetJobs(template, 4);
+    expect(jobs.length).to.eql(4);
+    let messages = await awaitHelpers.awaitAndGetMessages(template, 2);
+    expect(messages.length).to.equal(2);
+    for (const message of messages) expect(message.content).to.include('NO_DIGEST_PROP');
+
+    const digestJobs = jobs.filter((job) => job.type === StepTypeEnum.DIGEST);
+    expect(digestJobs.length).to.equal(2);
+    for (const digestJob of digestJobs) await awaitHelpers.promoteJob(digestJob._id);
+    jobs = await awaitHelpers.awaitAndGetJobs(template, 6);
+    expect(jobs.length).to.eql(6);
+    messages = await awaitHelpers.awaitAndGetMessages(template, 4);
+    expect(messages.length).to.equal(4);
+    messages = messages.filter(({ content }) => content.toString().includes('HAS_DIGEST_PROP'));
+    expect(messages.length).to.equal(2);
+    for (const message of messages) expect(message.content).to.include('Total events in digest:4');
+  });
+
+  it('should test, regular steps, multiple digest steps with backoff and regular digest, concurrent calls', async () => {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.SMS,
+          content: 'Before digest node {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'digestKey1',
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content:
+            'events in digest:{{step.total_count}} After 1st digest {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'digestKey2',
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: StepTypeEnum.CHAT,
+          content:
+            'events in digest:{{step.total_count}} After 2nd digest {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'digestKey3',
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content:
+            'events in digest:{{step.total_count}} After 3rd digest {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+      ],
+    });
+
+    /*
+     *Total 30 events, expected 30 regular messages for before digest step, total 6 digest nodes,
+     *1st digest step(with backoff) should generate 2 regular messages, 2 digest messages,
+     *2nd digest(with out backoff) should generate 2 digest messages and
+     *3rd  digest with backoff should generate 2 regular and 2 digest messages.
+     *total expected jobs: 46 jobs, total messages: 30 + 4 backoff + 6 digest
+     */
+
+    await Promise.all(
+      Array.from(Array(30).keys()).map(async (index) => {
+        await triggerEvent({
+          customVar: `concurrent-call-${index}`,
+          digestKey1: `digestValue${index % 2}`,
+          digestKey2: `digestValue${index % 2}`,
+          digestKey3: `digestValue${index % 2}`,
+        });
+      })
+    );
+    let jobs = await awaitHelpers.awaitAndGetJobs(template, 40);
+    expect(jobs.length).to.eql(40);
+    let messages = await awaitHelpers.awaitAndGetMessages(template, 34);
+    expect(messages.length).to.equal(34);
+    for (const message of messages) expect(message.content).to.include('NO_DIGEST_PROP');
+
+    const digestJobs = jobs.filter((job) => job.type === StepTypeEnum.DIGEST);
+    expect(digestJobs.length).to.equal(6);
+    for (const digestJob of digestJobs) await awaitHelpers.promoteJob(digestJob._id);
+    jobs = await awaitHelpers.awaitAndGetJobs(template, 46);
+    expect(jobs.length).to.eql(46);
+    messages = await awaitHelpers.awaitAndGetMessages(template, 40);
+    expect(messages.length).to.equal(40);
+    messages = messages.filter(({ content }) => content.toString().includes('HAS_DIGEST_PROP'));
+    expect(messages.length).to.equal(6);
+    const firstDigestMessages = messages.filter(
+      (message) => message._messageTemplateId === template.steps[2].template._id
+    );
+    expect(firstDigestMessages.length).to.equal(2);
+    for (const message of firstDigestMessages) expect(message.content).to.include('events in digest:14');
+    const secondDigestMessages = messages.filter(
+      (message) => message._messageTemplateId === template.steps[4].template._id
+    );
+    expect(secondDigestMessages.length).to.equal(2);
+    for (const message of secondDigestMessages) expect(message.content).to.include('events in digest:15');
+
+    const thirdDigestMessages = messages.filter(
+      (message) => message._messageTemplateId === template.steps[6].template._id
+    );
+    expect(thirdDigestMessages.length).to.equal(2);
+    for (const message of thirdDigestMessages) expect(message.content).to.include('events in digest:14');
+  });
+
+  it('should test, regular steps, multiple digest steps with backoff and regular digest, sequential calls', async () => {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.SMS,
+          content: 'Before digest node {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'digestKey1',
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content:
+            'events in digest:{{step.total_count}} After 1st digest {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'digestKey2',
+            type: DigestTypeEnum.REGULAR,
+          },
+        },
+        {
+          type: StepTypeEnum.CHAT,
+          content:
+            'events in digest:{{step.total_count}} After 2nd digest {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+        {
+          type: StepTypeEnum.DIGEST,
+          content: '',
+          metadata: {
+            unit: DigestUnitEnum.MINUTES,
+            amount: 5,
+            digestKey: 'digestKey3',
+            type: DigestTypeEnum.BACKOFF,
+            backoffUnit: DigestUnitEnum.MINUTES,
+            backoffAmount: 5,
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content:
+            'events in digest:{{step.total_count}} After 3rd digest {{#if step.digest}} HAS_DIGEST_PROP {{else}} NO_DIGEST_PROP {{/if}}',
+        },
+      ],
+    });
+
+    /*
+     *Total 30 events, expected 30 regular messages for before digest step, total 6 digest nodes,
+     *1st digest step(with backoff) should generate 2 regular messages, 2 digest messages,
+     *2nd digest(with out backoff) should generate 2 digest messages and
+     *3rd  digest with backoff should generate 2 regular and 2 digest messages.
+     *total expected jobs: 46 jobs, total messages 40: 30 + 4 backoff + 6 digest
+     */
+
+    for (let index = 0; index < 30; index++) {
+      await triggerEvent({
+        customVar: `sequential-call-${index}`,
+        digestKey1: `digestValue${index % 2}`,
+        digestKey2: `digestValue${index % 2}`,
+        digestKey3: `digestValue${index % 2}`,
+      });
+    }
+    let jobs = await awaitHelpers.awaitAndGetJobs(template, 40);
+    expect(jobs.length).to.eql(40);
+    let messages = await awaitHelpers.awaitAndGetMessages(template, 34);
+    expect(messages.length).to.equal(34);
+    for (const message of messages) expect(message.content).to.include('NO_DIGEST_PROP');
+
+    const digestJobs = jobs.filter((job) => job.type === StepTypeEnum.DIGEST);
+    expect(digestJobs.length).to.equal(6);
+    for (const digestJob of digestJobs) await awaitHelpers.promoteJob(digestJob._id);
+    jobs = await awaitHelpers.awaitAndGetJobs(template, 46);
+    expect(jobs.length).to.eql(46);
+    messages = await awaitHelpers.awaitAndGetMessages(template, 40);
+    expect(messages.length).to.equal(40);
+    messages = messages.filter(({ content }) => content.toString().includes('HAS_DIGEST_PROP'));
+    expect(messages.length).to.equal(6);
+    const firstDigestMessages = messages.filter(
+      (message) => message._messageTemplateId === template.steps[2].template._id
+    );
+    expect(firstDigestMessages.length).to.equal(2);
+    for (const message of firstDigestMessages) expect(message.content).to.include('events in digest:14');
+    const secondDigestMessages = messages.filter(
+      (message) => message._messageTemplateId === template.steps[4].template._id
+    );
+    expect(secondDigestMessages.length).to.equal(2);
+    for (const message of secondDigestMessages) expect(message.content).to.include('events in digest:15');
+
+    const thirdDigestMessages = messages.filter(
+      (message) => message._messageTemplateId === template.steps[6].template._id
+    );
+    expect(thirdDigestMessages.length).to.equal(2);
+    for (const message of thirdDigestMessages) expect(message.content).to.include('events in digest:14');
   });
 
   it('should merge digest events accordingly when concurrent calls', async () => {
