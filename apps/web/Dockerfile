@@ -1,4 +1,5 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine
+# start build stage
+FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as builder
 
 WORKDIR /usr/src/app
 
@@ -32,5 +33,22 @@ RUN pnpm add @babel/core -w
 COPY [".eslintrc.js",".prettierrc",".prettierignore", "./"]
 
 RUN NX_DAEMON=false pnpm build:web
+# end build stage
 
-CMD [ "pnpm", "start:static:web" ]
+# start production stage
+FROM node:16-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache bash
+RUN npm install -g pnpm@7.27.0 http-server --loglevel notice
+
+COPY --from=builder /usr/src/app/apps/web/env.sh /app/env.sh
+COPY --from=builder /usr/src/app/apps/web/.env /app/.env
+
+COPY --from=builder /usr/src/app/apps/web/build /app/build
+COPY --from=builder /usr/src/app/apps/web/public /app/public
+COPY --from=builder /usr/src/app/apps/web/package.json /app/package.json
+
+CMD [ "pnpm", "start:static:build" ]
+# end production stage
