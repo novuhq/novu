@@ -11,6 +11,7 @@ import {
   infobipSMSConfig,
   burstSmsConfig,
   clickatellConfig,
+  fortySixElksConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -106,5 +107,13 @@ export const smsProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: 'https://docs.clickatell.com/',
     logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
+  },
+  {
+    id: SmsProviderIdEnum.FortySixElks,
+    displayName: '46elks',
+    channel: ChannelTypeEnum.SMS,
+    credentials: fortySixElksConfig,
+    docReference: 'https://docs.clickatell.com/',
+    logoFileName: { light: '', dark: '' },
   },
 ];
