@@ -147,10 +147,11 @@ To send an email notification to all subscribers who were active within the last
 - Click on the "Add Filter" button from the sidebar.
 - Select "Online in the last X time period" and choose "minutes" as the time period.
 - Enter "30" in the input field.
+
 <div align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="/img/platform/filter/dark-is-online-filter.gif"/>
-    <img src="/img/platform/filter/light-is-online-filter.gif" width="1280" alt="is-online-filter"/>
+    <img src="/img/platform/filter/light-is-online-filter.gif" alt="is-online-filter"/>
   </picture>
 </div>
 
