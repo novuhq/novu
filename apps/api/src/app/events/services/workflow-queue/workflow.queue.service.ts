@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { JobsOptions, Queue, QueueBaseOptions, QueueScheduler, Worker } from 'bullmq';
 // TODO: Remove this DAL dependency, maybe through a DTO or shared entity
 import { JobEntity } from '@novu/dal';
@@ -14,11 +14,11 @@ import {
   SetJobAsFailedCommand,
 } from '../../usecases/update-job-status';
 
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 
 export const WORKER_NAME = 'standard';
 
@@ -39,20 +39,16 @@ export class WorkflowQueueService {
   };
   public readonly queue: Queue;
   public readonly worker: Worker;
-  @Inject()
-  private createExecutionDetails: CreateExecutionDetails;
-  @Inject()
-  private queueNextJob: QueueNextJob;
-  @Inject()
-  private runJob: RunJob;
-  @Inject()
-  private setJobAsCompleted: SetJobAsCompleted;
-  @Inject()
-  private setJobAsFailed: SetJobAsFailed;
   private readonly queueScheduler: QueueScheduler;
   readonly DEFAULT_ATTEMPTS = 3;
 
-  constructor() {
+  constructor(
+    @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
+    @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
+    @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
+    @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
+    @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
+  ) {
     this.queue = new Queue(WORKER_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {

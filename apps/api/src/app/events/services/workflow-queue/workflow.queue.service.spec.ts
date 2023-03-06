@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { Test } from '@nestjs/testing';
 import {
   JobEntity,
   JobRepository,
@@ -11,10 +11,14 @@ import {
 } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { formatISO } from 'date-fns';
 import { v4 as uuid } from 'uuid';
 
 import { WorkflowQueueService } from './workflow.queue.service';
+
+import { EventsModule } from '../../events.module';
+import { ExecutionDetailsModule } from '../../../execution-details/execution-details.module';
 
 let workflowQueueService: WorkflowQueueService;
 
@@ -26,7 +30,11 @@ describe('Workflow Queue service', () => {
   let template: NotificationTemplateEntity;
 
   beforeEach(async () => {
-    workflowQueueService = new WorkflowQueueService();
+    const moduleRef = await Test.createTestingModule({
+      imports: [EventsModule, ExecutionDetailsModule],
+    }).compile();
+
+    workflowQueueService = moduleRef.get<WorkflowQueueService>(WorkflowQueueService);
 
     jobRepository = new JobRepository();
     session = new UserSession();
@@ -47,9 +55,14 @@ describe('Workflow Queue service', () => {
     expect(workflowQueueService).to.have.all.keys(
       'DEFAULT_ATTEMPTS',
       'bullConfig',
+      'createExecutionDetails',
       'getBackoffStrategies',
       'queue',
+      'queueNextJob',
       'queueScheduler',
+      'runJob',
+      'setJobAsCompleted',
+      'setJobAsFailed',
       'worker'
     );
     expect(workflowQueueService.DEFAULT_ATTEMPTS).to.eql(3);
