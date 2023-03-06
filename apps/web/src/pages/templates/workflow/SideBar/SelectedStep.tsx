@@ -48,6 +48,7 @@ export function SelectedStep({
   const hasActiveStepSelected = activeStepIndex >= 0;
   const { readonly } = useEnvController();
   const onSideMenuClose = () => setSelectedNodeId('');
+  const isSubmitDisabled = readonly || loadingEditTemplate || isLoading || !isDirty;
 
   return (
     <StyledNav data-test-id="step-properties-side-menu">
@@ -136,7 +137,7 @@ export function SelectedStep({
                   control={control}
                   index={activeStepIndex}
                   loading={isLoading || isUpdateLoading}
-                  disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+                  disableSubmit={isSubmitDisabled}
                   onSideMenuClose={onSideMenuClose}
                 />
               </When>

@@ -5,18 +5,18 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.initializeSession().as('session');
   });
 
-  const interceptEditTemplate = () => {
-    cy.intercept('**/notification-templates/**').as('getTemplate');
+  const interceptEditTemplateRequests = () => {
+    cy.intercept('**/notification-templates/**').as('getTemplateToEdit');
     cy.intercept('**/notification-groups').as('getNotificationGroups');
   };
 
   const waitForEditTemplateRequests = () => {
-    cy.wait('@getTemplate');
+    cy.wait('@getTemplateToEdit');
     cy.wait('@getNotificationGroups');
   };
 
   it('should be able to delete a step', function () {
-    interceptEditTemplate();
+    interceptEditTemplateRequests();
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
@@ -41,7 +41,7 @@ describe('Workflow Editor - Steps Actions', function () {
   });
 
   it('should show add step in sidebar after delete', function () {
-    interceptEditTemplate();
+    interceptEditTemplateRequests();
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
@@ -60,7 +60,7 @@ describe('Workflow Editor - Steps Actions', function () {
   });
 
   it('should keep steps order on reload', function () {
-    interceptEditTemplate();
+    interceptEditTemplateRequests();
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
