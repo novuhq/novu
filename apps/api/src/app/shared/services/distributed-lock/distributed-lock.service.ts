@@ -2,10 +2,10 @@ import Redis from 'ioredis';
 import * as Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
 import { Logger } from '@nestjs/common';
-
-import { ApiException } from '../../exceptions/api.exception';
 import { getRedisPrefix } from '@novu/shared';
 import { ConnectionOptions } from 'tls';
+
+import { ApiException } from '../../exceptions/api.exception';
 
 const shouldLog = process.env.FF_IS_DISTRIBUTED_LOCK_LOGGING_ENABLED === 'true';
 
@@ -56,8 +56,9 @@ export class DistributedLockService {
     }
 
     // TODO: Implement distributed nodes (at least 3 Redis instances)
-    this.instances = [getRedisObject()].filter((instance) => !!instance).map((url) => new Redis(url));
-
+    this.instances = [getRedisObject()]
+      .filter((instanceSettings) => !!instanceSettings)
+      .map((redisSettings) => new Redis(redisSettings));
     this.distributedLock = new Redlock(this.instances, settings);
     Logger.log('Redlock started', LOG_CONTEXT);
 
