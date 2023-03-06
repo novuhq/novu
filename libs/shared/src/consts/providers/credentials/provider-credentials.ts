@@ -535,5 +535,5 @@ export const fortySixElksConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
-  ...mailConfigBase,
+  ...smsConfigBase,
 ];
