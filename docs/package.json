@@ -38,7 +38,7 @@
     "react-dom": "^17.0.1",
     "sass": "^1.51.0",
     "sharp": "^0.31.0",
-    "styled-components": "5.3.6",
+    "styled-components": "5.3.8",
     "stylelint-config-css-modules": "^4.1.0",
     "url-loader": "^4.1.1"
   },
