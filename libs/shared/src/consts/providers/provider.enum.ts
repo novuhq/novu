@@ -57,7 +57,7 @@ export enum SmsProviderIdEnum {
   Infobip = 'infobip-sms',
   BurstSms = 'burst-sms',
   Clickatell = 'clickatell',
-  FortySixElks = '46elks',
+  FortySixElks = 'forty-six-elks',
 }
 
 export enum ChatProviderIdEnum {

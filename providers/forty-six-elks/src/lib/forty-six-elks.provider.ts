@@ -23,7 +23,7 @@ interface IFortySixElksRequestResponse {
 }
 
 export class FortySixElksSmsProvider implements ISmsProvider {
-  id = '46elks';
+  id = 'forty-six-elks';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
 
   constructor(
