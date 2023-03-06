@@ -1,18 +1,26 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { JobsOptions, Queue, QueueBaseOptions, QueueScheduler, Worker } from 'bullmq';
-import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { RunJob } from '../../usecases/run-job/run-job.usecase';
-import { RunJobCommand } from '../../usecases/run-job/run-job.command';
+// TODO: Remove this DAL dependency, maybe through a DTO or shared entity
+import { JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import {
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
-import { QueueNextJobCommand } from '../../usecases/queue-next-job/queue-next-job.command';
-import { QueueNextJob } from '../../usecases/queue-next-job/queue-next-job.usecase';
 import { ConnectionOptions } from 'tls';
+
+import { RunJob, RunJobCommand } from '../../usecases/run-job';
+import { QueueNextJob, QueueNextJobCommand } from '../../usecases/queue-next-job';
+import {
+  SetJobAsCommand,
+  SetJobAsCompleted,
+  SetJobAsFailed,
+  SetJobAsFailedCommand,
+} from '../../usecases/update-job-status';
+
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
+
+export const WORKER_NAME = 'standard';
 
 @Injectable()
 export class WorkflowQueueService {
@@ -31,41 +39,42 @@ export class WorkflowQueueService {
   };
   public readonly queue: Queue;
   public readonly worker: Worker;
-  @Inject()
-  private jobRepository: JobRepository;
-  @Inject()
-  private runJob: RunJob;
   private readonly queueScheduler: QueueScheduler;
   readonly DEFAULT_ATTEMPTS = 3;
 
-  constructor(private createExecutionDetails: CreateExecutionDetails, private queueNextJob: QueueNextJob) {
-    this.queue = new Queue('standard', {
+  constructor(
+    @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
+    @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
+    @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
+    @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
+    @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
+  ) {
+    this.queue = new Queue(WORKER_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
 
-    this.worker = new Worker('standard', this.getWorkerProcessor(), this.getWorkerOpts());
+    this.worker = new Worker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.worker.on('completed', async (job) => {
-      await this.jobRepository.updateStatus(job.data._organizationId, job.data._id, JobStatusEnum.COMPLETED);
+      await this.jobHasCompleted(job);
     });
 
-    this.worker.on('failed', async (job, e) => {
-      if (!shouldBackoff(e)) {
-        await this.jobRepository.updateStatus(job.data._organizationId, job.data._id, JobStatusEnum.FAILED);
-        await this.jobRepository.setError(job.data._organizationId, job.data._id, e);
-      }
-
-      const lastWebhookFilterRetry = job.attemptsMade === this.DEFAULT_ATTEMPTS && shouldBackoff(e);
-
-      if (lastWebhookFilterRetry) {
-        await this.handleLastFailedWebhookFilter(job, e);
-      }
+    this.worker.on('failed', async (job, error) => {
+      await this.jobHasFailed(job, error);
     });
 
-    this.queueScheduler = new QueueScheduler('standard', this.bullConfig);
+    this.queueScheduler = new QueueScheduler(WORKER_NAME, this.bullConfig);
+  }
+
+  public async gracefulShutdown() {
+    // Right now we only want this for testing purposes
+    if (process.env.NODE_ENV === 'test') {
+      await this.queue.drain();
+      await this.worker.close();
+    }
   }
 
   private getWorkerOpts() {
@@ -79,7 +88,7 @@ export class WorkflowQueueService {
     };
   }
 
-  public getWorkerProcessor() {
+  private getWorkerProcessor() {
     return async ({ data }: { data: JobEntity }) => {
       return await this.runJob.execute(
         RunJobCommand.create({
@@ -92,10 +101,47 @@ export class WorkflowQueueService {
     };
   }
 
+  private async jobHasCompleted(job): Promise<void> {
+    await this.setJobAsCompleted.execute(
+      SetJobAsCommand.create({
+        environmentId: job.data._environmentId,
+        _jobId: job.data._id,
+        organizationId: job.data._organizationId,
+      })
+    );
+  }
+
+  private async jobHasFailed(job, error): Promise<void> {
+    const hasToBackoff = this.runJob.shouldBackoff(error);
+
+    if (!hasToBackoff) {
+      await this.setJobAsFailed.execute(
+        SetJobAsFailedCommand.create({
+          environmentId: job.data._environmentId,
+          error,
+          _jobId: job.data._id,
+          organizationId: job.data._organizationId,
+        })
+      );
+    }
+
+    const lastWebhookFilterRetry = job.attemptsMade === this.DEFAULT_ATTEMPTS && hasToBackoff;
+
+    if (lastWebhookFilterRetry) {
+      await this.handleLastFailedWebhookFilter(job, error);
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private async handleLastFailedWebhookFilter(job: any, e: Error) {
-    await this.jobRepository.updateStatus(job.data._organizationId, job.data._id, JobStatusEnum.FAILED);
-    await this.jobRepository.setError(job.data._organizationId, job.data._id, e);
+  private async handleLastFailedWebhookFilter(job: any, error: Error) {
+    await this.setJobAsFailed.execute(
+      SetJobAsFailedCommand.create({
+        environmentId: job.data._environmentId,
+        error,
+        _jobId: job.data._id,
+        organizationId: job.data._organizationId,
+      })
+    );
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
@@ -105,7 +151,7 @@ export class WorkflowQueueService {
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: true,
-        raw: JSON.stringify({ message: JSON.parse(e.message).message }),
+        raw: JSON.stringify({ message: JSON.parse(error.message).message }),
       })
     );
 
@@ -167,8 +213,4 @@ export class WorkflowQueueService {
       },
     };
   };
-}
-
-export function shouldBackoff(err) {
-  return err.message.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
 }

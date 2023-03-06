@@ -1,4 +1,4 @@
-import { CreateExecutionDetails } from './create-execution-details/create-execution-details.usecase';
-import { GetExecutionDetails } from './get-execution-details/get-execution-details.usecase';
+import { CreateExecutionDetails } from './create-execution-details';
+import { GetExecutionDetails } from './get-execution-details';
 
 export const USE_CASES = [CreateExecutionDetails, GetExecutionDetails];
