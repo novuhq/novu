@@ -3,22 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 
-import { When } from '../../../components/utils/When';
-import { colors, shadows, Text } from '../../../design-system';
+import { When } from '../../components/utils/When';
+import { colors, shadows } from '../config';
+import { Text } from '../typography/text/Text';
 
 interface ICardCell {
   navIcon?: (props: React.ComponentPropsWithoutRef<'svg'>) => JSX.Element | React.ReactNode;
   description?: React.ReactNode | string;
   navigateTo?: string;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
   imagePath?: string;
   href?: string;
+  disabled?: boolean;
+  testId?: string;
 }
 
 export function Cards({ cells }: { cells: ICardCell[] }) {
   const spanNumber = 12 / cells.length;
 
   return (
-    <Grid mb={50} sx={{ justifyContent: 'center' }}>
+    <Grid sx={{ justifyContent: 'center' }}>
       {cells.map((cell, index) => (
         <Grid.Col span={spanNumber} key={index} sx={{ maxWidth: 'initial' }}>
           <Card cell={cell} key={index} />
@@ -48,7 +52,12 @@ function Card({ cell }: { cell: ICardCell }) {
   };
 
   return (
-    <StyledCard dark={colorScheme === 'dark'} onClick={handleOnClick}>
+    <StyledCard
+      dark={colorScheme === 'dark'}
+      onClick={cell.onClick ?? handleOnClick}
+      disabled={cell.disabled}
+      data-test-id={cell.testId}
+    >
       <When truthy={onlyDescription}>
         <Text mt={10} size={'lg'}>
           {cell.description ?? ''}
@@ -56,7 +65,7 @@ function Card({ cell }: { cell: ICardCell }) {
       </When>
 
       <When truthy={cardWithIconAndDescription}>
-        {NavIcon ? <NavIcon style={{ height: '48px', width: '39px' }} /> : null}
+        {NavIcon ? <NavIcon style={{ height: '50px', width: '50px' }} /> : null}
         <Text mt={10} size={'lg'}>
           {cell.description ?? ''}
         </Text>
@@ -78,17 +87,25 @@ function getFrameworkName(alt) {
   return framework === 'js' ? 'JS' : framework;
 }
 
-const StyledCard = styled.div<{ dark: boolean }>`
+const StyledCard = styled.button<{ dark: boolean }>`
+  outline: none;
+  border: none;
+  cursor: pointer;
   background-color: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
   border-radius: 7px;
-  height: 200px;
-  min-width: 320px;
+  height: 180px;
+  min-width: 240px;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
 
-  &:hover {
+  &:disabled {
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
     cursor: pointer;
     ${({ dark }) =>
       dark
