@@ -1,15 +1,9 @@
 import React from 'react';
 
-export interface IIconProps {
-  width?: string;
-  height?: string;
-}
+import { ISvgPropsInterface } from '../interfaces/svg-props.interface';
+
 /* eslint-disable */
-export function DigestGradient({
-  width = '30',
-  height = '31',
-  ...props
-}: IIconProps & React.ComponentPropsWithoutRef<'svg'>) {
+export function DigestGradient({ width = '30', height = '31', ...props }: ISvgPropsInterface) {
   return (
     <svg
       width={width}

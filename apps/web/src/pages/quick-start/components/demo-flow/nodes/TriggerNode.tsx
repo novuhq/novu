@@ -6,19 +6,17 @@ import { TurnOnGradient } from '../../../../../design-system/icons/gradient/Turn
 
 export function TriggerNode({ data, id }: { data: any; id: string }) {
   return (
-    <>
-      <NodeButton
-        data={data}
-        id={id}
-        Icon={TurnOnGradient}
-        Handlers={() => {
-          return (
-            <>
-              <Handle type="source" id="a" position={Position.Bottom} />
-            </>
-          );
-        }}
-      />
-    </>
+    <NodeButton
+      data={data}
+      id={id}
+      Icon={TurnOnGradient}
+      Handlers={() => {
+        return (
+          <>
+            <Handle type="source" id="a" position={Position.Bottom} />
+          </>
+        );
+      }}
+    />
   );
 }

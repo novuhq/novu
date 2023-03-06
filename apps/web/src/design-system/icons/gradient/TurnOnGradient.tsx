@@ -1,6 +1,8 @@
 import React from 'react';
+import { ISvgPropsInterface } from '../interfaces/svg-props.interface';
 /* eslint-disable */
-export function TurnOnGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
+
+export function TurnOnGradient({ stopColor, offSetStopColor, ...props }: ISvgPropsInterface) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="24" viewBox="0 0 22 24" fill="none" {...props}>
       <path
@@ -12,8 +14,8 @@ export function TurnOnGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
       />
       <defs>
         <linearGradient id="paint0_linear_1020_1949" x1="11" y1="23" x2="11" y2="1" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop stopColor={stopColor ?? '#FF512F'} />
+          <stop offset="1" stopColor={offSetStopColor ?? '#DD2476'} />
         </linearGradient>
       </defs>
     </svg>
