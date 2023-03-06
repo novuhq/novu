@@ -1,5 +1,5 @@
 import { FunctionComponent } from 'react';
-import { Grid, Input, useMantineColorScheme, InputWrapperProps } from '@mantine/core';
+import { Grid, Input, InputWrapperProps } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext, Controller } from 'react-hook-form';
 
@@ -26,8 +26,6 @@ export function TemplatePreference() {
 
 export function ChannelPreference() {
   const { control } = useFormContext();
-  const { colorScheme } = useMantineColorScheme();
-  const dark = colorScheme === 'dark';
 
   return (
     <Controller
@@ -46,7 +44,6 @@ export function ChannelPreference() {
 
         return (
           <InputBackground
-            dark={dark}
             label="Template Defaults"
             description="Check the channels you would like to be ON by default"
             styles={inputStyles}
@@ -59,7 +56,6 @@ export function ChannelPreference() {
                 return (
                   <Grid.Col key={key} md={6} lg={4}>
                     <StyledCheckbox
-                      isChecked={checked}
                       checked={checked}
                       disabled={readonly}
                       data-test-id={`preference-${key}`}
@@ -79,8 +75,6 @@ export function ChannelPreference() {
 
 export function CriticalPreference() {
   const { control } = useFormContext();
-  const { colorScheme } = useMantineColorScheme();
-  const dark = colorScheme === 'dark';
 
   return (
     <Controller
@@ -90,7 +84,6 @@ export function CriticalPreference() {
       render={({ field }) => {
         return (
           <InputBackground
-            dark={dark}
             label="System Critical (Always Sent)"
             description={<CriticalDescription field={field} />}
             styles={inputStyles}
@@ -117,8 +110,8 @@ export const InputWrapperProxy: FunctionComponent<InputWrapperProps> = ({ childr
   return <Input.Wrapper {...props}>{children}</Input.Wrapper>;
 };
 
-const InputBackground = styled(InputWrapperProxy)<{ dark: boolean }>`
-  background: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
+const InputBackground = styled(InputWrapperProxy)`
+  background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.B98)};
   border-radius: 7px;
   padding: 20px;
 `;
@@ -128,10 +121,10 @@ const DescriptionWrapper = styled.div`
   justify-content: space-between;
 `;
 
-const StyledCheckbox = styled(CheckboxProxy)<{ isChecked: boolean }>`
+const StyledCheckbox = styled(CheckboxProxy)<{ checked: boolean }>`
   label {
-    ${({ isChecked }) =>
-      !isChecked &&
+    ${({ checked }) =>
+      !checked &&
       `
     color: ${colors.B60}
   `}
