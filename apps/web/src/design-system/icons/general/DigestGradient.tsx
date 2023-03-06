@@ -1,19 +1,8 @@
 import React from 'react';
 
-export interface IIconProps {
-  width?: string;
-  height?: string;
-}
-/* eslint-disable */
-export function DigestGradient({ width = '30', height = '31' }: IIconProps) {
+export function DigestGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg width={30} height={31} viewBox={`0 0 30 31`} fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path
         d="M1 19.5L12 25.5L23 19.5M1 13.5L12 19.5L23 13.5M12 1.5L1 7.5L12 13.5L23 7.5L12 1.5Z"
         stroke="url(#paint0_linear_1981_26278)"
