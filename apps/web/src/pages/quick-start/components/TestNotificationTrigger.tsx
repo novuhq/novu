@@ -3,20 +3,25 @@ import { useNavigate } from 'react-router-dom';
 import { LoadingOverlay, Stack, useMantineTheme } from '@mantine/core';
 
 import { Button, colors, Text } from '../../../design-system';
-import { useTemplates } from '../../../api/hooks/useTemplates';
-import { notificationTemplateName, onBoardingSubscriberId } from '../consts';
+import { useTemplates } from '../../../hooks';
+import { notificationTemplateName, OnBoardingAnalyticsEnum, onBoardingSubscriberId } from '../consts';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { testTrigger } from '../../../api/notification-templates';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import * as Sentry from '@sentry/react';
 
 export function TestNotificationTrigger() {
   const [loader, setLoader] = useState<boolean>(false);
   const [showTemplateSection, setShowTemplateSection] = useState<boolean>(false);
   const { templates = [] } = useTemplates();
   const navigate = useNavigate();
+  const segment = useSegment();
   const { colorScheme } = useMantineTheme();
   const onboardingNotificationTemplate = templates.find((template) => template.name.includes(notificationTemplateName));
 
   function navigateToNotificationTemplates() {
+    segment.track(OnBoardingAnalyticsEnum.CLICKED_CREATE_TEMPLATE);
+
     navigate('/templates');
   }
 
@@ -28,6 +33,8 @@ export function TestNotificationTrigger() {
   }
 
   const onTrigger = async () => {
+    segment.track(OnBoardingAnalyticsEnum.CLICKED_TRIGGER_EVENT);
+
     try {
       await testTrigger({
         name: onboardingNotificationTemplate?.triggers[0].identifier,
@@ -38,6 +45,7 @@ export function TestNotificationTrigger() {
       successMessage('Template triggered successfully');
       showTemplateCreation();
     } catch (e: any) {
+      Sentry.captureException(e);
       errorMessage(e.message || 'Un-expected error occurred');
     }
   };

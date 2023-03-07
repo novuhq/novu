@@ -3,7 +3,7 @@ import { Input } from '@mantine/core';
 
 import { Text } from '../../../design-system';
 import { WIDGET_EMBED_PATH } from '../../../config';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks';
 import { Security } from './components/Security';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { Prism } from './components/Prism';

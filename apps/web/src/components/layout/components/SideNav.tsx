@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Navbar,
@@ -13,11 +13,11 @@ import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
-import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
-import { useEnvController } from '../../../store/useEnvController';
-import { AuthContext } from '../../../store/authContext';
+import { ChangesCountBadge } from './ChangesCountBadge';
+import { useEnvController } from '../../../hooks';
+import { useAuthContext } from '../../providers/AuthProvider';
 import OrganizationSelect from './OrganizationSelect';
-import { SpotlightContext } from '../../../store/spotlightContext';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
 import { LimitBar } from '../../../pages/integrations/components/LimitBar';
 import { localNavigate } from '../../../pages/quick-start/components/route/store';
@@ -45,12 +45,12 @@ type Props = {};
 export function SideNav({}: Props) {
   const navigate = useNavigate();
   const { setEnvironment, isLoading, environment, readonly } = useEnvController();
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser } = useAuthContext();
   const location = useLocation();
   const [opened, setOpened] = useState(readonly);
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
-  const { addItem } = useContext(SpotlightContext);
+  const { addItem } = useSpotlightContext();
   const { classes } = usePopoverStyles();
 
   useEffect(() => {

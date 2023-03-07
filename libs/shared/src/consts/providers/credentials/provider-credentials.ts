@@ -146,6 +146,24 @@ export const nodemailerConfig: IConfigCredentials[] = [
     required: false,
   },
   {
+    key: CredentialsKeyEnum.RequireTls,
+    displayName: 'Require TLS',
+    type: 'boolean',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.IgnoreTls,
+    displayName: 'Ignore TLS',
+    type: 'boolean',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.TlsOptions,
+    displayName: 'TLS options',
+    type: 'object',
+    required: false,
+  },
+  {
     key: CredentialsKeyEnum.Domain,
     displayName: 'DKIM: Domain name',
     type: 'string',

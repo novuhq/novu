@@ -1,13 +1,12 @@
 import styled from '@emotion/styled/macro';
-import { useContext } from 'react';
 import { Center, Title, Text } from '@mantine/core';
 import { colors } from '../../../design-system';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { LimitBar } from './LimitBar';
-import { AuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../../components/providers/AuthProvider';
 
 export function NovuEmailProviderModal({ onClose }: { onClose: () => void }) {
-  const { currentOrganization } = useContext(AuthContext);
+  const { currentOrganization } = useAuthContext();
 
   return (
     <div

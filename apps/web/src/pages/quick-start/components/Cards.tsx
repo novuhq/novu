@@ -18,20 +18,14 @@ export function Cards({ cells }: { cells: ICardCell[] }) {
   const spanNumber = 12 / cells.length;
 
   return (
-    <Grid mb={50}>
+    <Grid mb={50} sx={{ justifyContent: 'center' }}>
       {cells.map((cell, index) => (
-        <Grid.Col span={spanNumber} key={index}>
+        <Grid.Col span={spanNumber} key={index} sx={{ maxWidth: 'initial' }}>
           <Card cell={cell} key={index} />
         </Grid.Col>
       ))}
     </Grid>
   );
-}
-
-function getFrameworkName(alt) {
-  const framework = alt?.replace('.png', '');
-
-  return framework === 'js' ? 'JS' : framework;
 }
 
 function Card({ cell }: { cell: ICardCell }) {
@@ -76,6 +70,12 @@ function Card({ cell }: { cell: ICardCell }) {
       </When>
     </StyledCard>
   );
+}
+
+function getFrameworkName(alt) {
+  const framework = alt?.replace('.png', '');
+
+  return framework === 'js' ? 'JS' : framework;
 }
 
 const StyledCard = styled.div<{ dark: boolean }>`

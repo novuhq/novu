@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
@@ -6,17 +6,17 @@ import { IOrganizationEntity } from '@novu/shared';
 
 import { Select } from '../../../design-system';
 import { addOrganization, switchOrganization } from '../../../api/organization';
-import { AuthContext } from '../../../store/authContext';
-import { SpotlightContext } from '../../../store/spotlightContext';
+import { useAuthContext } from '../../providers/AuthProvider';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
 
 export default function OrganizationSelect() {
   const [value, setValue] = useState<string>('');
   const [search, setSearch] = useState<string>('');
   const [loadingSwitch, setLoadingSwitch] = useState<boolean>(false);
-  const { addItem, removeItem } = useContext(SpotlightContext);
+  const { addItem, removeItem } = useSpotlightContext();
 
   const queryClient = useQueryClient();
-  const { currentOrganization, organizations, setToken } = useContext(AuthContext);
+  const { currentOrganization, organizations, setToken } = useAuthContext();
 
   const { isLoading: loadingAddOrganization, mutateAsync: createOrganization } = useMutation<
     IOrganizationEntity,

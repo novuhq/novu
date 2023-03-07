@@ -1,9 +1,9 @@
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { APP_ID, ENV, WIDGET_EMBED_PATH } from '../config';
-import { AuthContext } from '../store/authContext';
+import { useAuthContext } from '../components/providers/AuthProvider';
 
 export function useNovu() {
-  const authContext = useContext(AuthContext);
+  const authContext = useAuthContext();
 
   useEffect(() => {
     if ((ENV === 'dev' || ENV === 'prod') && authContext.currentUser) {

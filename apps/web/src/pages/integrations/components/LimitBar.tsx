@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Stack } from '@mantine/core';
 import { colors, Tooltip } from '../../../design-system';
-import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
+import { useIntegrationLimit } from '../../../hooks';
 import styled from '@emotion/styled/macro';
 import { Link } from 'react-router-dom';
 

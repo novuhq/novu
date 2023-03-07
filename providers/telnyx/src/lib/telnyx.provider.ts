@@ -18,9 +18,9 @@ export class TelnyxSmsProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      apiKey: string;
-      from: string;
-      messageProfileId: string;
+      apiKey?: string;
+      from?: string;
+      messageProfileId?: string;
     }
   ) {
     this.telnyxClient = Telnyx(config.apiKey);

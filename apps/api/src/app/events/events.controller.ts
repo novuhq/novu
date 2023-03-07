@@ -1,5 +1,5 @@
-import { IJwtPayload } from '@novu/shared';
-import { ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/node';
+import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
+import { TriggerRecipientSubscriber } from '@novu/node';
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,21 +11,16 @@ import {
   TriggerEventResponseDto,
   TriggerEventToAllRequestDto,
 } from './dtos';
-import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
-import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
-import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
-import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
-import { SendTestEmail } from './usecases/send-message/test-send-email.usecase';
-import { TestSendMessageCommand } from './usecases/send-message/send-message.command';
+import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
+import { SendMessageCommand, SendTestEmail, SendTestEmailCommand } from './usecases/send-message';
 import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
+import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
+import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
+import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ParseEventRequest } from './usecases/parse-event-request/parse-event-request.usecase';
-import { ParseEventRequestCommand } from './usecases/parse-event-request/parse-event-request.command';
-import { ProcessBulkTrigger } from './usecases/process-bulk-trigger/process-bulk-trigger.usecase';
-import { ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger/process-bulk-trigger.command';
 
 @Controller({
   path: 'events',
@@ -176,7 +171,7 @@ export class EventsController {
   @ApiExcludeEndpoint()
   async testEmailMessage(@UserSession() user: IJwtPayload, @Body() body: TestSendEmailRequestDto): Promise<void> {
     return await this.sendTestEmail.execute(
-      TestSendMessageCommand.create({
+      SendTestEmailCommand.create({
         subject: body.subject,
         payload: body.payload,
         contentType: body.contentType,

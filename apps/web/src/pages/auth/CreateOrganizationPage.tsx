@@ -1,8 +1,8 @@
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
-import { CreateOrganization } from '../../components/auth/CreateOrganizationForm';
-import { useVercelIntegration } from '../../api/hooks/useVercelIntegration';
-import SetupLoader from '../../components/auth/SetupLoader';
+import { CreateOrganization } from './components/CreateOrganizationForm';
+import { useVercelIntegration } from '../../hooks';
+import SetupLoader from './components/SetupLoader';
 
 export default function CreateOrganizationPage() {
   const { isLoading } = useVercelIntegration();

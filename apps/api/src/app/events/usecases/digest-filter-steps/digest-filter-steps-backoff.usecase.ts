@@ -11,11 +11,13 @@ export class DigestFilterStepsBackoff {
 
   public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
     const steps = [DigestFilterSteps.createTriggerStep(command)];
+
     for (const step of command.steps) {
       if (step.template?.type !== StepTypeEnum.DIGEST) {
         steps.push(step);
         continue;
       }
+
       const trigger = await this.getTrigger(command, step);
       if (!trigger) {
         continue;
@@ -25,6 +27,7 @@ export class DigestFilterStepsBackoff {
       if (haveDigest) {
         return steps;
       }
+
       steps.push(step);
     }
 

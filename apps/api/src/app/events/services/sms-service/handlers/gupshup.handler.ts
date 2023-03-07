@@ -9,11 +9,6 @@ export class GupshupSmsHandler extends BaseSmsHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    const config: {
-      userId: string;
-      password: string;
-    } = { userId: credentials.user, password: credentials.password };
-
-    this.provider = new GupshupSmsProvider(config);
+    this.provider = new GupshupSmsProvider({ userId: credentials.user, password: credentials.password });
   }
 }

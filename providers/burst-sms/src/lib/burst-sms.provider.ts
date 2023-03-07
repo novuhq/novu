@@ -14,8 +14,8 @@ export class BurstSmsProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      apiKey: string;
-      secretKey: string;
+      apiKey?: string;
+      secretKey?: string;
     }
   ) {
     this.axiosInstance = axios.create({

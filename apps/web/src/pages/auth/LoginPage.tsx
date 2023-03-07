@@ -1,23 +1,21 @@
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import jwtDecode from 'jwt-decode';
 import { IJwtPayload } from '@novu/shared';
 
-import { AuthContext } from '../../store/authContext';
-import { LoginForm } from '../../components/auth/LoginForm';
+import { useAuthContext } from '../../components/providers/AuthProvider';
+import { LoginForm } from './components/LoginForm';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
-import { useVercelIntegration } from '../../api/hooks/useVercelIntegration';
-import SetupLoader from '../../components/auth/SetupLoader';
-import { useVercelParams } from '../../hooks/useVercelParams';
-import { useSegment } from '../../hooks/useSegment';
-import { useAcceptInvite } from '../../components/auth/useAcceptInvite';
-import { useBlueprint } from '../../hooks/useBlueprint';
+import { useVercelIntegration, useBlueprint, useVercelParams } from '../../hooks';
+import SetupLoader from './components/SetupLoader';
+import { useSegment } from '../../components/providers/SegmentProvider';
+import { useAcceptInvite } from './components/useAcceptInvite';
 import { ROUTES } from '../../constants/routes.enum';
 
 export default function LoginPage() {
   useBlueprint();
-  const { setToken, token: oldToken } = useContext(AuthContext);
+  const { setToken, token: oldToken } = useAuthContext();
   const segment = useSegment();
   const navigate = useNavigate();
   const [params] = useSearchParams();

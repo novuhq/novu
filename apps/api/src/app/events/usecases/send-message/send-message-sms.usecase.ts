@@ -18,11 +18,11 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
@@ -258,6 +258,9 @@ export class SendMessageSms extends SendMessageBase {
     try {
       const smsFactory = new SmsFactory();
       const smsHandler = smsFactory.getHandler(integration);
+      if (!smsHandler) {
+        throw new ApiException(`Sms handler for provider ${integration.providerId} is  not found`);
+      }
 
       const result = await smsHandler.send({
         to: phone,

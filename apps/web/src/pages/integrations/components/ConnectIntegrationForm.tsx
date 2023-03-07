@@ -14,8 +14,7 @@ import { createIntegration, getWebhookSupportStatus, updateIntegration } from '.
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IntegrationInput } from './IntegrationInput';
 import { API_ROOT } from '../../../config';
-import { useEnvController } from '../../../store/useEnvController';
-import { useAuthController } from '../../../store/useAuthController';
+import { useEnvController, useAuthController } from '../../../hooks';
 import { Check, Copy } from '../../../design-system/icons';
 import { CONTEXT_PATH } from '../../../config';
 

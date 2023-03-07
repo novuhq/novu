@@ -41,13 +41,15 @@ export class UpdateSubscriberPreference {
     });
 
     const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    this.analyticsService.track('Update User Preference - [Notification Center]', admin._userId, {
-      _organization: command.organizationId,
-      _subscriber: subscriber._id,
-      _template: command.templateId,
-      channel: command.channel?.type,
-      enabled: command.channel?.enabled,
-    });
+    if (admin) {
+      this.analyticsService.track('Update User Preference - [Notification Center]', admin._userId, {
+        _organization: command.organizationId,
+        _subscriber: subscriber._id,
+        _template: command.templateId,
+        channel: command.channel?.type,
+        enabled: command.channel?.enabled,
+      });
+    }
 
     if (!userPreference) {
       await this.createUserPreference(command, subscriber);
@@ -56,6 +58,9 @@ export class UpdateSubscriberPreference {
     }
 
     const template = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
+    if (!template) {
+      throw new NotFoundException(`Template with id ${command.templateId} is not found`);
+    }
 
     const getSubscriberPreferenceCommand = GetSubscriberTemplatePreferenceCommand.create({
       organizationId: command.organizationId,

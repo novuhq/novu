@@ -7,7 +7,7 @@ import { Input, Tooltip } from '../../../design-system';
 import { Check, Copy } from '../../../design-system/icons';
 import { getApiKeys } from '../../../api/environment';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks';
 import { Regenerate } from './components/Regenerate';
 
 export const ApiKeysCard = () => {

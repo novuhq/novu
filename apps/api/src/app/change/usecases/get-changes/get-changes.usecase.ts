@@ -62,6 +62,9 @@ export class GetChanges {
       if (change.type === ChangeEntityTypeEnum.LAYOUT) {
         item = await this.getTemplateDataForLayout(change._entityId, command.environmentId);
       }
+      if (change.type === ChangeEntityTypeEnum.DEFAULT_LAYOUT) {
+        item = await this.getTemplateDataForDefaultLayout(change._entityId, command.environmentId);
+      }
 
       list.push({
         ...change,
@@ -194,6 +197,24 @@ export class GetChanges {
 
     return {
       templateName: item.name,
+    };
+  }
+
+  private async getTemplateDataForDefaultLayout(
+    entityId: string,
+    environmentId: string
+  ): Promise<IViewEntity | Record<string, unknown>> {
+    const currentDefaultLayout = await this.getTemplateDataForLayout(entityId, environmentId);
+
+    const defaultLayout = await this.layoutRepository.findOne({
+      _environmentId: environmentId,
+      isDefault: true,
+      _id: { $ne: entityId },
+    });
+
+    return {
+      templateName: currentDefaultLayout?.templateName,
+      previousDefaultLayout: defaultLayout?.name,
     };
   }
 }

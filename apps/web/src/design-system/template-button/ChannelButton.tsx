@@ -10,7 +10,7 @@ import { useStyles } from './TemplateButton.styles';
 import { colors, shadows } from '../config';
 import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
-import { useEnvController } from '../../store/useEnvController';
+import { useEnvController } from '../../hooks';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
 
 import { useViewport } from 'react-flow-renderer';
@@ -264,7 +264,9 @@ export function ChannelButton({
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
           </Popover.Target>
           <Popover.Dropdown>
-            <Text rows={1}>{stepErrorContent || 'Something is missing here'}</Text>
+            <Text rows={1} color={colors.white}>
+              {stepErrorContent || 'Something is missing here'}
+            </Text>
           </Popover.Dropdown>
         </Popover>
       )}

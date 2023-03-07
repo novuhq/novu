@@ -1,29 +1,41 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Stack, Stepper } from '@mantine/core';
+import { Stack, Timeline } from '@mantine/core';
 
-import { ChannelCTATypeEnum, ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
+import { ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
-import { useNotificationGroup } from '../../../api/hooks/useNotificationGroup';
-import { useTemplates } from '../../../api/hooks/useTemplates';
-import { useEnvController } from '../../../store/useEnvController';
-import { APPLICATION_IDENTIFIER, frameworkInstructions, notificationTemplateName } from '../consts';
+import { useNotificationGroup, useTemplates, useEnvController } from '../../../hooks';
+import {
+  API_KEY,
+  APPLICATION_IDENTIFIER,
+  BACKEND_API_URL,
+  BACKEND_SOCKET_URL,
+  frameworkInstructions,
+  notificationTemplateName,
+  OnBoardingAnalyticsEnum,
+} from '../consts';
 import { createTemplate } from '../../../api/notification-templates';
 import { LoaderProceedTernary } from '../components/LoaderProceedTernary';
-import { Prism } from '../../settings/tabs/components/Prism';
+import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { getInAppActivated } from '../../../api/integration';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { getApiKeys } from '../../../api/environment';
+import { API_ROOT, WS_URL } from '../../../config';
 
 export function Setup() {
-  const [notificationTemplate, setNotificationTemplate] = useState<INotificationTemplate>();
   const { framework } = useParams();
-  const { groups } = useNotificationGroup();
-  const { templates = [], loading } = useTemplates();
+  const { groups, loading: notificationGroupLoading } = useNotificationGroup();
+  const { templates = [], loading: templatesLoading } = useTemplates();
   const { environment } = useEnvController();
+  const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
+  const apiKey = apiKeys?.length ? apiKeys[0].key : '';
+
+  const segment = useSegment();
 
   const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(['inAppActive'], async () => getInAppActivated(), {
     refetchInterval: (data) => stopIfInAppActive(data),
@@ -31,25 +43,25 @@ export function Setup() {
   });
 
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
-  const openBrowser = framework === 'demo';
-
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
 
-  const { mutateAsync: createNotificationTemplate } = useMutation<
+  const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
     INotificationTemplate,
     { error: string; message: string; statusCode: number },
     ICreateNotificationTemplateDto
   >(createTemplate);
 
   useEffect(() => {
-    if (!loading) {
+    segment.track(OnBoardingAnalyticsEnum.FRAMEWORK_SETUP_VISIT, { framework });
+  }, []);
+
+  useEffect(() => {
+    if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading) {
       const onboardingNotificationTemplate = templates.find((template) =>
         template.name.includes(notificationTemplateName)
       );
 
-      if (onboardingNotificationTemplate) {
-        setNotificationTemplate(onboardingNotificationTemplate);
-      } else {
+      if (!onboardingNotificationTemplate) {
         createOnBoardingTemplate();
       }
     }
@@ -65,54 +77,82 @@ export function Setup() {
         {
           template: {
             type: StepTypeEnum.IN_APP,
-            content:
-              'Welcome to Novu! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
-            cta: {
-              type: ChannelCTATypeEnum.REDIRECT,
-              data: { url: `/templates/edit/${notificationTemplate?._id}` },
-            },
+            content: 'Welcome to Novu! <b>visit the cloud admin panel</b> managing this message',
           },
         },
       ],
     } as ICreateNotificationTemplateDto;
 
-    const createdTemplate = await createNotificationTemplate(payloadToCreate);
-    setNotificationTemplate(createdTemplate);
+    await createNotificationTemplate(payloadToCreate);
+  }
+
+  function handleOnCopy(copiedStepIndex: number) {
+    const stepNumber = (copiedStepIndex + 1).toString();
+    segment.track(OnBoardingAnalyticsEnum.COPIED_STEP, { step: stepNumber });
   }
 
   return (
     <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true}>
-      <LoaderWrapper>
-        <LoaderProceedTernary
-          appInitialized={inAppData.active}
-          navigatePath={'/quickstart/notification-center/trigger'}
-        />
-      </LoaderWrapper>
-      <Stack align="center">
-        <Stepper active={0} onStepClick={() => {}} orientation="vertical">
-          {instructions.map((instruction, index) => {
-            return (
-              <Stepper.Step
-                label={instruction.instruction}
-                description={<Prism code={`${updateCodeSnipped(instruction.snippet, environmentIdentifier)}   `} />}
-                key={index}
-              />
-            );
-          })}
-        </Stepper>
-        <When truthy={openBrowser}>{<OpenBrowser />}</When>
+      <Stack align="center" sx={{ width: '100%' }}>
+        <TimelineWrapper>
+          <Timeline
+            active={instructions?.length + 1}
+            bulletSize={40}
+            lineWidth={2}
+            styles={{
+              itemBullet: {
+                backgroundColor: 'grey',
+              },
+            }}
+          >
+            {instructions.map((instruction, index) => {
+              return (
+                <Timeline.Item
+                  bullet={<div style={{}}>{index + 1}</div>}
+                  key={index}
+                  title={<div>{instruction.instruction}</div>}
+                >
+                  <div style={{ marginTop: 10 }}>
+                    <PrismOnCopy
+                      language={instruction.language}
+                      index={index}
+                      code={`${updateCodeSnippet(instruction.snippet, environmentIdentifier, apiKey)}   `}
+                      onCopy={handleOnCopy}
+                    />
+                  </div>
+                </Timeline.Item>
+              );
+            })}
+            <Timeline.Item bullet={instructions?.length + 1} title={'Waiting for your application to connect to Novu'}>
+              <LoaderWrapper>
+                <LoaderProceedTernary
+                  appInitialized={inAppData.active}
+                  navigatePath={'/quickstart/notification-center/trigger'}
+                />
+              </LoaderWrapper>
+            </Timeline.Item>
+          </Timeline>
+        </TimelineWrapper>
+
+        <When truthy={framework === 'demo'}>{<OpenBrowser />}</When>
       </Stack>{' '}
     </QuickStartWrapper>
   );
 }
 
 const LoaderWrapper = styled.div`
-  margin-top: -40px;
   margin-bottom: 20px;
+  margin-top: 10px;
 `;
 
-function updateCodeSnipped(codeSnippet: string, environmentIdentifier: string) {
-  return codeSnippet.replace(APPLICATION_IDENTIFIER, environmentIdentifier);
+function updateCodeSnippet(codeSnippet: string, environmentIdentifier: string, apiKey: string) {
+  const concatUrls = process.env.REACT_APP_ENVIRONMENT !== 'prod' || !!process.env.REACT_APP_DOCKER_HOSTED_ENV;
+
+  return codeSnippet
+    .replace(APPLICATION_IDENTIFIER, environmentIdentifier)
+    .replace(API_KEY, apiKey ?? '')
+    .replace(BACKEND_API_URL, concatUrls ? API_ROOT : '')
+    .replace(BACKEND_SOCKET_URL, concatUrls ? WS_URL : '');
 }
 
 export function OpenBrowser() {
@@ -125,7 +165,7 @@ export function OpenBrowser() {
 
 export function TroubleshootingDescription() {
   return (
-    <Stack align="center">
+    <Stack align="center" sx={{ gap: '20px' }}>
       <span>Follow the installation steps and then sit back while we</span>
       <span>connect to your application</span>
     </Stack>
@@ -139,3 +179,15 @@ interface IGetInAppActivatedResponse {
 function stopIfInAppActive(data) {
   return data?.active ? false : 3000;
 }
+
+const TimelineWrapper = styled.div`
+  width: 100%;
+
+  .mantine-Timeline-itemBullet {
+    background-color: ${colors.B30};
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.2);
+  }
+`;

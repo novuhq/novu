@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
-import { welcomeDescription } from '../consts';
+import { OnBoardingAnalyticsEnum, welcomeDescription } from '../consts';
 import { Stack } from '@mantine/core';
 import { Cards } from '../components/Cards';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function FrameworkSetup() {
+  const segment = useSegment();
+
+  useEffect(() => {
+    segment.track(OnBoardingAnalyticsEnum.FRAMEWORKS_SETUP_VISIT);
+  }, []);
+
   return (
     <QuickStartWrapper title={welcomeDescription} secondaryTitle={<ImplementationDescription />} faq={true}>
       <Cards
@@ -34,7 +41,7 @@ export function FrameworkSetup() {
 
 export function ImplementationDescription() {
   return (
-    <Stack align="center">
+    <Stack align="center" sx={{ gap: '20px' }}>
       <span>A fully functional notification center is now at your fingertips.</span>
       <span>What's your go-to frontend framework?</span>
     </Stack>

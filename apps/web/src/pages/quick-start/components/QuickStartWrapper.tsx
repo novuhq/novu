@@ -8,7 +8,8 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import { GoBack } from './route/GoBack';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
-import { faqUrl } from '../consts';
+import { faqUrl, OnBoardingAnalyticsEnum } from '../consts';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function QuickStartWrapper({
   title,
@@ -78,7 +79,7 @@ export function QuickStartWrapper({
               <Description>{description}</Description>
             </When>
 
-            <div style={{ marginBottom: '30px' }} />
+            <div style={{ marginBottom: '20px' }} />
 
             {children}
           </Stack>
@@ -93,17 +94,28 @@ export function QuickStartWrapper({
 }
 
 export function Faq() {
+  const segment = useSegment();
+
+  function handleOnClick() {
+    segment.track(OnBoardingAnalyticsEnum.CLICKED_FAQ);
+  }
+
   return (
     <Center
       data-test-id="go-back-button"
       inline
       style={{
-        cursor: 'pointer',
         marginTop: '75px',
       }}
     >
       <span style={{ color: colors.B60 }}>Got stuck? </span>
-      <a href={faqUrl} style={{ marginLeft: '5px', color: '#DD2476' }}>
+      <a
+        href={faqUrl}
+        style={{ marginLeft: '5px', color: '#DD2476' }}
+        onClick={() => handleOnClick}
+        target="_blank"
+        rel="noreferrer"
+      >
         Check our FAQ’s
       </a>
     </Center>
@@ -111,7 +123,7 @@ export function Faq() {
 }
 
 function getFrameworkTitle(framework) {
-  return framework === 'demo' ? 'Great Choice!' : 'Let’s set up the Notification Center in your app';
+  return framework === 'demo' ? 'Great Choice!' : 'Let’s set up the notification center in your app';
 }
 
 const Title = styled.div`
@@ -122,6 +134,7 @@ const Title = styled.div`
 const SecondaryTitle = styled.div<{ onlySecondary: boolean }>`
   font-size: 30px;
   font-weight: bold;
+  line-height: 1;
 
   margin-top: ${({ onlySecondary }) => {
     return onlySecondary ? '127px' : '0';

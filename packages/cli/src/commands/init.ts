@@ -2,7 +2,7 @@ import * as open from 'open';
 import { Answers } from 'inquirer';
 import * as ora from 'ora';
 import { v4 as uuidv4 } from 'uuid';
-import { IEnvironment, ICreateNotificationTemplateDto, StepTypeEnum, SignUpOriginEnum } from '@novu/shared';
+import { IEnvironment, SignUpOriginEnum } from '@novu/shared';
 import { prompt } from '../client';
 import {
   emailQuestion,
@@ -155,73 +155,12 @@ async function handleOnboardingFlow(config: ConfigService) {
       await gitHubOAuth(httpServer, config);
       spinner.stop();
     } else if (regMethod.value === 'email') {
-      let errorInSignup = true;
-      const { fullName } = await prompt(fullNameQuestion);
-
-      while (errorInSignup) {
-        const { email } = await prompt(emailQuestion);
-
-        if (privateEmailDomains.includes(email.split('@')[1])) {
-          analytics.track({
-            identity: { anonymousId },
-            event: AnalyticsEventEnum.PRIVATE_EMAIL_ATTEMPT,
-            data: {
-              method: 'email',
-            },
-          });
-
-          const { domain } = await prompt(privateDomainQuestions(email));
-
-          if (domain === 'updateEmail') {
-            errorInSignup = true;
-
-            continue;
-          }
-        }
-
-        const { password } = await prompt(passwordQuestion);
-        try {
-          const response = await signup({
-            email,
-            password,
-            firstName: fullName.split(' ')[0],
-            lastName: fullName.split(' ')[1] || '',
-            origin: SignUpOriginEnum.CLI,
-          });
-
-          storeToken(config, response.token);
-          errorInSignup = false;
-        } catch (e) {
-          const error = e.response.data;
-
-          if (error?.message === 'User already exists') {
-            const { proceedSignup } = await prompt(proceedSignupQuestions);
-
-            if (proceedSignup === 'resetPassword') {
-              await open(`${CLIENT_LOGIN_URL.replace('/auth/login', '/auth/reset/request')}`);
-              console.log('Finished flow');
-              process.exit();
-            } else {
-              errorInSignup = true;
-            }
-          } else {
-            errorInSignup = true;
-            console.log(
-              chalk.bold.red(
-                Array.isArray(error?.message) ? error?.messag?.join('\n') : error?.message || 'Something went wrong'
-              )
-            );
-          }
-        }
-      }
+      await signUp(config);
     }
 
     spinner = ora('Setting up your new account').start();
 
     await createOrganizationHandler(config, answers);
-    const applicationIdentifier = await createEnvironmentHandler(config, answers);
-
-    const address = httpServer.getAddress();
 
     const user = config.getDecodedToken();
 
@@ -254,23 +193,28 @@ async function handleOnboardingFlow(config: ConfigService) {
     }
 
     spinner.start();
-    analytics.identify(user);
-    analytics.alias({ previousId: anonymousId, userId: user._id });
 
     analytics.track({
-      identity: { userId: user._id },
+      identity: { anonymousId },
       event: AnalyticsEventEnum.ACCOUNT_CREATED,
       data: {
         method: regMethod.value,
       },
     });
 
-    spinner.succeed(`Created your account successfully. 
-    
-  We've created a demo web page for you to see novu notifications in action.
-  Visit: ${address}/demo to continue`);
+    const redirectUrl = `${CLIENT_LOGIN_URL}/?token=${config.getToken()}`;
 
-    await raiseDemoDashboard(httpServer, config, applicationIdentifier);
+    spinner.succeed(`Your account has been successfully created. 
+    
+    To help you get started quickly, 
+    we've developed a quick start that will guide you through setting up and testing Novu notifications with ease.
+    
+    In case the browser haven't opened automatically, you can access the quick start here:
+    ${chalk.blue(redirectUrl)}
+    `);
+
+    httpServer.redirectSuccessDashboard(redirectUrl);
+
     await exitHandler();
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -324,91 +268,6 @@ async function createEnvironmentHandler(config: ConfigService, answers: Answers)
   storeToken(config, newUserJwt);
 
   return createEnvironmentResponse.identifier;
-}
-
-async function raiseDemoDashboard(httpServer: HttpServer, config: ConfigService, applicationIdentifier: string) {
-  const notificationGroupResponse = await getNotificationGroup();
-
-  const template = buildTemplate(notificationGroupResponse[0]._id);
-  const createNotificationTemplatesResponse = await createNotificationTemplates(template);
-
-  const decodedToken = config.getDecodedToken();
-  const demoDashboardUrl = await getDemoDashboardUrl();
-
-  storeDashboardData(config, createNotificationTemplatesResponse, decodedToken, applicationIdentifier);
-
-  analytics.track({
-    identity: { userId: config.getDecodedToken()._id },
-    event: AnalyticsEventEnum.OPEN_DASHBOARD,
-    data: {
-      existingUser: false,
-    },
-  });
-
-  httpServer.redirectSuccessDashboard(demoDashboardUrl);
-}
-
-function buildTemplate(notificationGroupId: string): ICreateNotificationTemplateDto {
-  const redirectUrl = `${CLIENT_LOGIN_URL}?token={{token}}&source=${SignUpOriginEnum.CLI}&source_widget=notification`;
-
-  const steps = [
-    {
-      template: {
-        type: StepTypeEnum.IN_APP,
-        content:
-          'Welcome to Novu! Click on this notification to <b>visit the cloud admin panel</b> managing this message',
-        cta: {
-          type: ChannelCTATypeEnum.REDIRECT,
-          data: {
-            url: redirectUrl,
-          },
-        },
-      },
-    },
-  ];
-
-  return {
-    notificationGroupId,
-    name: 'On-boarding notification',
-    active: true,
-    draft: false,
-    steps,
-    tags: null,
-    description: null,
-  };
-}
-
-async function getDemoDashboardUrl() {
-  return `http://${SERVER_HOST}:${await getServerPort()}${WIDGET_DEMO_ROUTE}`;
-}
-
-function storeDashboardData(
-  config: ConfigService,
-  createNotificationTemplatesResponse,
-  decodedToken,
-  applicationIdentifier: string
-) {
-  const dashboardURL = `${CLIENT_LOGIN_URL}?token=${config.getToken()}&source=${SignUpOriginEnum.CLI}`;
-  const analyticsSource = `${ANALYTICS_SOURCE}-(UI)`;
-  const tmpPayload: { key: string; value: string }[] = [
-    { key: 'embedPath', value: EMBED_PATH },
-    { key: 'url', value: API_TRIGGER_URL },
-    { key: 'apiKey', value: config.getValue('apiKey') },
-    { key: 'name', value: createNotificationTemplatesResponse.triggers[0].identifier },
-    { key: 'subscriberId', value: decodedToken._id },
-    { key: 'firstName', value: decodedToken.firstName },
-    { key: 'lastName', value: decodedToken.lastName },
-    { key: 'email', value: decodedToken.email },
-    { key: 'environmentId', value: applicationIdentifier },
-    { key: 'token', value: config.getToken() },
-    { key: 'dashboardURL', value: dashboardURL },
-    { key: 'skipTutorial', value: `${AnalyticsEventEnum.SKIP_TUTORIAL} - ${analyticsSource}` },
-    { key: 'dashboardOpen', value: `${AnalyticsEventEnum.DASHBOARD_PAGE_OPENED} - ${analyticsSource}` },
-    { key: 'copySnippet', value: `${AnalyticsEventEnum.COPY_SNIPPET} - ${analyticsSource}` },
-    { key: 'triggerButton', value: `${AnalyticsEventEnum.TRIGGER_BUTTON} - ${analyticsSource}` },
-  ];
-
-  config.setValue('triggerPayload', JSON.stringify(tmpPayload));
 }
 
 /*
@@ -476,5 +335,68 @@ async function handleExistingSession(result: string, config: ConfigService) {
     });
     await analytics.flush();
     process.exit();
+  }
+}
+
+async function signUp(config: ConfigService) {
+  let errorInSignup = true;
+  const { fullName } = await prompt(fullNameQuestion);
+
+  while (errorInSignup) {
+    const { email } = await prompt(emailQuestion);
+
+    if (privateEmailDomains.includes(email.split('@')[1])) {
+      analytics.track({
+        identity: { anonymousId },
+        event: AnalyticsEventEnum.PRIVATE_EMAIL_ATTEMPT,
+        data: {
+          method: 'email',
+        },
+      });
+
+      const { domain } = await prompt(privateDomainQuestions(email));
+
+      if (domain === 'updateEmail') {
+        errorInSignup = true;
+
+        continue;
+      }
+    }
+
+    const { password } = await prompt(passwordQuestion);
+    try {
+      const response = await signup({
+        email,
+        password,
+        firstName: fullName.split(' ')[0],
+        lastName: fullName.split(' ')[1] || '',
+        origin: SignUpOriginEnum.CLI,
+      });
+
+      storeToken(config, response.token);
+
+      errorInSignup = false;
+    } catch (e) {
+      const error = e?.response?.data;
+
+      if (error?.message === 'User already exists') {
+        const { proceedSignup } = await prompt(proceedSignupQuestions);
+
+        if (proceedSignup === 'resetPassword') {
+          await open(`${CLIENT_LOGIN_URL.replace('/auth/login', '/auth/reset/request')}`);
+          console.log('Finished flow');
+          process.exit();
+        } else {
+          errorInSignup = true;
+        }
+      } else {
+        errorInSignup = true;
+        console.log(
+          chalk.bold.red(
+            Array.isArray(error?.message) ? error?.messag?.join('\n') : error?.message || 'Something went wrong'
+          )
+        );
+      }
+    }
   }
 }

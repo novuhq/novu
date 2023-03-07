@@ -398,7 +398,11 @@
     "redlock",
     "axios",
     "ioredis",
-    "newrelic"
+    "newrelic",
+    "nodemailer",
+    "emailjs",
+    "typeof",
+    "nbsp"
   ],
   "flagWords": [],
   "patterns": [

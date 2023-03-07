@@ -8,6 +8,10 @@ Inbound Webhook is a feature that allows processing of incoming emails for a dom
 The feature parses the contents of the email and POSTs the information to a specified URL in a
 multipart/form-data format.
 
+:::info
+This feature is available only in our SaaS. This feature will not work in self hosted environment.
+:::
+
 ## To set up Inbound Webhook, follow these steps
 
 1. Set up an MX Record:
@@ -25,4 +29,6 @@ multipart/form-data format.
    - Enable the Inbound Parse feature.
    - Set the Webhook URL to the location where you want the parsed data to be POSTed.
 
-Note: The Webhook URL must be publicly accessible.
+:::note
+The Webhook URL must be publicly accessible.
+:::

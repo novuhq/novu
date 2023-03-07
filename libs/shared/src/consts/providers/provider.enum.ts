@@ -21,6 +21,9 @@ export enum CredentialsKeyEnum {
   ServiceAccount = 'serviceAccount',
   BaseUrl = 'baseUrl',
   WebhookUrl = 'webhookUrl',
+  RequireTls = 'requireTls',
+  IgnoreTls = 'ignoreTls',
+  TlsOptions = 'tlsOptions',
 }
 
 export enum EmailProviderIdEnum {
@@ -61,6 +64,7 @@ export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
   MsTeams = 'msteams',
+  Mattermost = 'mattermost',
 }
 
 export enum PushProviderIdEnum {

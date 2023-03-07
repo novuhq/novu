@@ -1,19 +1,22 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Center, Stack } from '@mantine/core';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
-import { welcomeDescription } from '../consts';
+import { OnBoardingAnalyticsEnum, welcomeDescription } from '../consts';
 import { Cards } from '../components/Cards';
 import { BellGradient, ChatGradient, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
 import { colors, Text } from '../../../design-system';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function Quickstart() {
+  const segment = useSegment();
+
+  useEffect(() => {
+    segment.track(OnBoardingAnalyticsEnum.QUICK_START_VISIT);
+  }, []);
+
   return (
-    <QuickStartWrapper
-      title={welcomeDescription}
-      secondaryTitle={'What would you like to build?'}
-      description={<QuickstartDescription />}
-    >
+    <QuickStartWrapper title={welcomeDescription} secondaryTitle={'What would you like to build?'}>
       <Cards
         cells={[
           {
@@ -37,12 +40,7 @@ export function Quickstart() {
 }
 
 export function QuickstartDescription() {
-  return (
-    <Stack align="center" spacing="xs">
-      <span>Novu integrates with all communication channels -</span>
-      <span>Email, SMS, Chat Apps (WhatsApp, Slack...), Push and Notification Center</span>
-    </Stack>
-  );
+  return null;
 }
 
 export function OtherChannelsDescription() {
