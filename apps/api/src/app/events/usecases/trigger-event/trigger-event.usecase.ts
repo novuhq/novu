@@ -42,6 +42,14 @@ export class TriggerEvent {
       },
     });
 
+    this.logger.assign({
+      transactionId: command.transactionId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
+
+    await this.validateTransactionIdProperty(command.transactionId, command.organizationId, command.environmentId);
+
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
       command.identifier
