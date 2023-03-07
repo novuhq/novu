@@ -12,7 +12,7 @@ const str32 = makeValidator((variable) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NODE_ENV: str({
-    choices: ['dev', 'test', 'prod', 'ci', 'local'],
+    choices: ['dev', 'regression', 'test', 'prod', 'ci', 'local'],
     default: 'local',
   }),
   PORT: port(),
@@ -91,7 +91,19 @@ if (process.env.STORAGE_SERVICE === 'AWS' || !process.env.STORAGE_SERVICE) {
   validators.AWS_SECRET_ACCESS_KEY = str();
 }
 
-if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV === 'regression') {
+  const noEmpty = makeValidator((dopplerToken) => {
+    if (!dopplerToken) {
+      throw new Error('Expected a non empty Doppler token');
+    }
+  });
+
+  validators.DOPPLER_TOKEN = noEmpty({
+    desc: 'Doppler read-only access token to get the secrets needed to run regression tests',
+  });
+}
+
+if (!['local', 'test', 'regression'].includes(process.env.NODE_ENV)) {
   validators.SENTRY_DSN = str({
     default: '',
   });

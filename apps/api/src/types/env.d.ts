@@ -6,7 +6,7 @@ declare namespace NodeJS {
     SYNC_PATH: string;
     GOOGLE_OAUTH_CLIENT_SECRET: string;
     GOOGLE_OAUTH_CLIENT_ID: string;
-    NODE_ENV: 'test' | 'prod' | 'dev' | 'ci' | 'local';
+    NODE_ENV: 'test' | 'regression' | 'prod' | 'dev' | 'ci' | 'local';
     PORT: string;
     DISABLE_USER_REGISTRATION: 'true' | 'false';
     FRONT_BASE_URL: string;
