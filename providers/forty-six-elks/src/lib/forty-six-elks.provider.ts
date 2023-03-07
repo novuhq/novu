@@ -28,9 +28,9 @@ export class FortySixElksSmsProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      user: string;
-      password: string;
-      from: string;
+      user?: string;
+      password?: string;
+      from?: string;
     }
   ) {}
 
@@ -47,16 +47,14 @@ export class FortySixElksSmsProvider implements ISmsProvider {
       message: options.content,
     }).toString();
 
-    const config = {
-      headers: {
-        Authorization: 'Basic ' + authKey,
-      },
-    };
-
     const res: IFortySixElksRequestResponse = await axios.post(
       'https://api.46elks.com/a1/sms',
       data,
-      config
+      {
+        headers: {
+          Authorization: 'Basic ' + authKey,
+        },
+      }
     );
 
     return {

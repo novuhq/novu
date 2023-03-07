@@ -113,7 +113,7 @@ export const smsProviders: IProviderConfig[] = [
     displayName: '46elks',
     channel: ChannelTypeEnum.SMS,
     credentials: fortySixElksConfig,
-    docReference: 'https://docs.clickatell.com/',
-    logoFileName: { light: '', dark: '' },
+    docReference: 'https://46elks.com/docs/send-sms',
+    logoFileName: { light: '46elks.png', dark: '46elks.png' },
   },
 ];
