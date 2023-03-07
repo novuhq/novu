@@ -70,18 +70,20 @@ export const createRegressionNotificationTemplate = async (session: UserSession,
 export const createProviderIntegration = async (
   session: UserSession,
   providerId: EmailProviderIdEnum,
-  channel: ChannelTypeEnum,
+  channel: ChannelTypeEnum
 ): Promise<void> => {
   const credentials = getProviderSecrets(providerId);
 
   const _environmentId = session.environment._id;
   const _organizationId = session.organization._id;
 
-  const activeIntegration = await integrationRepository.findActiveIntegrationForChannel(_environmentId, channel); 
+  const activeIntegration = await integrationRepository.findActiveIntegrationForChannel(_environmentId, channel);
 
   if (activeIntegration) {
     await integrationRepository.delete({
-      _environmentId, _organizationId, _id: activeIntegration._id
+      _environmentId,
+      _organizationId,
+      _id: activeIntegration._id,
     });
   }
 
