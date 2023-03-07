@@ -67,7 +67,7 @@ export const guidePlayground: Record<string, IGuide> = {
   },
   digest: {
     title: GuideTitleEnum.DIGEST_PLAYGROUND,
-    description: 'Digest engine aggregates multiple events aaand... ',
+    description: 'Digest engine aggregates multiple events and... ',
     sequence: {
       1: { open: false, opacity: 0 },
       2: { open: true, opacity: 1 },
