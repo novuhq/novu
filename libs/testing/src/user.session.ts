@@ -51,7 +51,7 @@ const queue = new Queue('trigger-handler', {
   },
 });
 
-if (process.env.NODE_ENV === 'test') {
+if (['test', 'regression'].includes(process.env.NODE_ENV as string)) {
   queue.obliterate({ force: true });
 }
 
