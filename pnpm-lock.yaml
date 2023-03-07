@@ -445,7 +445,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.15
       prettier: 2.7.1
-      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
+      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -794,7 +794,7 @@ importers:
   apps/widget:
     specifiers:
       '@ant-design/icons': ^4.5.0
-      '@craco/craco': ^6.1.1
+      '@craco/craco': ^7.0.0
       '@emotion/babel-plugin': ^11.7.2
       '@emotion/react': ^11.7.1
       '@emotion/styled': ^11.6.0
@@ -875,7 +875,7 @@ importers:
       web-vitals: 0.2.4
       webfontloader: 1.6.28
     devDependencies:
-      '@craco/craco': 6.4.3_frc6irgtnn5b6sgy3nj6rejhia
+      '@craco/craco': 7.0.0_c6yy4g2rlidp6xxyd4gnbhzpkq
       '@emotion/babel-plugin': 11.10.5_@babel+core@7.20.12
       '@faker-js/faker': 6.1.1
       '@novu/dal': link:../../libs/dal
@@ -885,7 +885,7 @@ importers:
       '@types/react': 17.0.53
       '@types/react-dom': 17.0.19
       '@types/react-router-dom': 5.3.3
-      craco-antd: 1.19.0_hbvkgpmbh473c2skmhlgaulcva
+      craco-antd: 1.19.0_jqirgatd6beuf2f5ncnskphig4
       cross-env: 7.0.3
       cypress: 12.5.0
       cypress-intellij-reporter: 0.0.7
@@ -14744,24 +14744,26 @@ packages:
     dev: false
     optional: true
 
-  /@craco/craco/6.4.3_frc6irgtnn5b6sgy3nj6rejhia:
-    resolution: {integrity: sha512-RzkXYmNzRCGUyG7mM+IUMM+nvrpSfA34352sPSGQN76UivAmCAht3sI4v5JKgzO05oUK9Zwi6abCKD7iKXI8hQ==}
+  /@craco/craco/7.0.0_c6yy4g2rlidp6xxyd4gnbhzpkq:
+    resolution: {integrity: sha512-OyjL9zpURB6Ha1HO62Hlt27Xd7UYJ8DRiBNuE4DBB8Ue0iQ9q/xsv3ze7ROm6gCZqV6I2Gxjnq0EHCCye+4xDQ==}
     engines: {node: '>=6'}
     hasBin: true
     peerDependencies:
-      react-scripts: ^4.0.0
+      react-scripts: ^5.0.0
     dependencies:
-      cosmiconfig: 7.0.1
-      cosmiconfig-typescript-loader: 1.0.6_zkqi72m7mx26fpfcdspo4dsycq
+      autoprefixer: 10.4.13_postcss@8.4.21
+      cosmiconfig: 7.1.0
+      cosmiconfig-typescript-loader: 1.0.6_kevfshiozarfkyvkbjne5io2ce
       cross-spawn: 7.0.3
       lodash: 4.17.21
       react-scripts: 5.0.1_24tr2icexdfuforc5mk7qedlwq
-      semver: 7.3.7
-      webpack-merge: 4.2.2
+      semver: 7.3.8
+      webpack-merge: 5.8.0
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
       - '@types/node'
+      - postcss
       - typescript
     dev: true
 
@@ -35036,7 +35038,7 @@ packages:
     engines: {node: '>= 0.4.0'}
     dev: true
 
-  /cosmiconfig-typescript-loader/1.0.6_zkqi72m7mx26fpfcdspo4dsycq:
+  /cosmiconfig-typescript-loader/1.0.6_kevfshiozarfkyvkbjne5io2ce:
     resolution: {integrity: sha512-2nEotziYJWtNtoTjKbchj9QrdTT6DBxCvqjNKoDKARw+e2yZmTQCa07uRrykLIZuvSgp69YXLH89UHc0WhdMfQ==}
     engines: {node: '>=12', npm: '>=6'}
     peerDependencies:
@@ -35045,7 +35047,7 @@ packages:
       typescript: '>=3'
     dependencies:
       '@types/node': 12.20.47
-      cosmiconfig: 7.0.1
+      cosmiconfig: 7.1.0
       ts-node: 10.9.1_pcraivvvcp3hdgpdkddzbjo4ki
       typescript: 4.9.5
     transitivePeerDependencies:
@@ -35193,30 +35195,30 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /craco-antd/1.19.0_hbvkgpmbh473c2skmhlgaulcva:
+  /craco-antd/1.19.0_jqirgatd6beuf2f5ncnskphig4:
     resolution: {integrity: sha512-MpbF2LQxb/POiR003oOkuAhHwpyRx1w5opyg7SA4/2og/FMRR/2oca/eqKYQ7vre2dOpt64gkQ5xWETktHWCQQ==}
     peerDependencies:
       '@craco/craco': ^5.5.0
       antd: '>= 3.0.0'
       react-scripts: ^3.4.3
     dependencies:
-      '@craco/craco': 6.4.3_frc6irgtnn5b6sgy3nj6rejhia
+      '@craco/craco': 7.0.0_c6yy4g2rlidp6xxyd4gnbhzpkq
       antd: 4.19.3_sfoxds7t5ydpegc3knd667wn6m
       babel-plugin-import: 1.13.3
-      craco-less: 1.17.0_gtcpaoctccjwi7xsxz5ba6hb6e
+      craco-less: 1.17.0_m32iuy7vewc64ho3x2mh2juofa
       less-vars-to-js: 1.3.0
       react-scripts: 5.0.1_24tr2icexdfuforc5mk7qedlwq
     transitivePeerDependencies:
       - webpack
     dev: true
 
-  /craco-less/1.17.0_gtcpaoctccjwi7xsxz5ba6hb6e:
+  /craco-less/1.17.0_m32iuy7vewc64ho3x2mh2juofa:
     resolution: {integrity: sha512-G+GPEKPPKiSvYDsnQWuj1C4CIuaY8w+iHvULHkNf5QWLE0LkPfSRf3frhRDJjFxtkThpLPSLjWndD9kx8bCWzw==}
     peerDependencies:
       '@craco/craco': ^5.5.0
       react-scripts: ^3.3.0
     dependencies:
-      '@craco/craco': 6.4.3_frc6irgtnn5b6sgy3nj6rejhia
+      '@craco/craco': 7.0.0_c6yy4g2rlidp6xxyd4gnbhzpkq
       less: 3.13.1
       less-loader: 6.2.0_webpack@5.74.0
       react-scripts: 5.0.1_24tr2icexdfuforc5mk7qedlwq
@@ -43678,7 +43680,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
+      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -56743,7 +56745,7 @@ packages:
     dependencies:
       tslib: 1.14.1
 
-  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
+  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -56764,6 +56766,7 @@ packages:
       esbuild:
         optional: true
     dependencies:
+      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
@@ -58626,12 +58629,6 @@ packages:
       tapable: 2.2.1
       webpack: 5.74.0
       webpack-sources: 2.3.1
-
-  /webpack-merge/4.2.2:
-    resolution: {integrity: sha512-TUE1UGoTX2Cd42j3krGYqObZbOD+xF7u28WB7tfUordytSjbWTIjK/8V0amkBfTYN4/pB/GIDlJZZ657BGG19g==}
-    dependencies:
-      lodash: 4.17.21
-    dev: true
 
   /webpack-merge/5.8.0:
     resolution: {integrity: sha512-/SaI7xY0831XwP6kzuwhKWVKDP9t1QY1h65lAFLbZqMPIuYcD9QAW4u9STIbU9kaJbPBB/geU/gLr1wDjOhQ+Q==}
