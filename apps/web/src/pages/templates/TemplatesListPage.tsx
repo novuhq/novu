@@ -35,8 +35,7 @@ function NotificationList() {
     ICreateNotificationTemplateDto
   >(createTemplate, {
     onSuccess: (template) => {
-      // TODO: redirect to the digest playground
-      navigate(parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: template._id as string }));
+      navigate(parseUrl(ROUTES.TEMPLATES_DIGEST_PLAYGROUND, { templateId: template._id as string }));
     },
     onError: () => {
       errorMessage('Failed to create Digest Workflow');
