@@ -17,7 +17,7 @@ importers:
       '@nrwl/nx-cloud': ^15.0.0
       '@nrwl/tao': 13.10.6
       '@nrwl/workspace': 13.10.6
-      '@octokit/core': ^3.6.0
+      '@octokit/core': ^4.0.0
       '@pnpm/filter-workspace-packages': ^4.1.11
       '@pnpm/logger': ^4.0.0
       '@types/inquirer': 8.2.6
@@ -80,8 +80,8 @@ importers:
       nx: 14.5.10
       tslib: 2.4.0
     devDependencies:
-      '@auto-it/npm': 10.36.5_gdxbtungus7rykd22mbjbmvap4
-      '@auto-it/released': 10.36.5_gdxbtungus7rykd22mbjbmvap4
+      '@auto-it/npm': 10.36.5_4ce3bo5432dvtcesdwqyhksibi
+      '@auto-it/released': 10.36.5_4ce3bo5432dvtcesdwqyhksibi
       '@commitlint/cli': 17.4.4
       '@commitlint/config-angular': 17.4.4
       '@commitlint/config-conventional': 17.4.4
@@ -93,7 +93,7 @@ importers:
       '@nrwl/nx-cloud': 15.1.1
       '@nrwl/tao': 13.10.6
       '@nrwl/workspace': 13.10.6_whvszw2m75xtityfnxnoryexiq
-      '@octokit/core': 3.6.0
+      '@octokit/core': 4.0.4
       '@pnpm/filter-workspace-packages': 4.4.35_@pnpm+logger@4.0.0
       '@pnpm/logger': 4.0.0
       '@types/inquirer': 8.2.6
@@ -101,7 +101,7 @@ importers:
       '@types/node': 16.11.7
       '@typescript-eslint/eslint-plugin': 5.50.0_go4drrxstycfikanvu45pi4vgq
       '@typescript-eslint/parser': 5.50.0_4vsywjlpuriuw3tl5oq6zy5a64
-      auto: 10.36.5_gdxbtungus7rykd22mbjbmvap4
+      auto: 10.36.5_4ce3bo5432dvtcesdwqyhksibi
       chalk: 4.1.2
       chalk-animation: 1.6.0
       commitizen: 4.2.4
@@ -1697,7 +1697,7 @@ importers:
       axios: 1.3.3
       codecov: 3.8.3
       cz-conventional-changelog: 3.3.0
-      jest: 27.5.1_ts-node@10.9.1
+      jest: 27.5.1
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       rimraf: 3.0.2
@@ -1945,7 +1945,7 @@ importers:
       '@types/node': 14.18.12
       codecov: 3.8.3
       cz-conventional-changelog: 3.3.0
-      jest: 27.5.1_ts-node@10.9.1
+      jest: 27.5.1
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       rimraf: 3.0.2
@@ -4494,7 +4494,7 @@ packages:
     engines: {node: '>=10.x'}
     dev: true
 
-  /@auto-it/core/10.36.5_gdxbtungus7rykd22mbjbmvap4:
+  /@auto-it/core/10.36.5_4ce3bo5432dvtcesdwqyhksibi:
     resolution: {integrity: sha512-muA7V4oKl5EYt7xzuuQp1qyXjUIapUn5XRj9fHgDrFcHseQhOZLJjjmPXI7W6NVZ9AGW98eq7xcQzbg/VC1HSg==}
     peerDependencies:
       typescript: '*'
@@ -4506,7 +4506,7 @@ packages:
       '@endemolshinegroup/cosmiconfig-typescript-loader': 3.0.2_7xcwfsfqkm3z47jew3ci4ezh7m
       '@octokit/plugin-enterprise-compatibility': 1.3.0
       '@octokit/plugin-retry': 3.0.9
-      '@octokit/plugin-throttling': 3.6.2_@octokit+core@3.6.0
+      '@octokit/plugin-throttling': 3.6.2_@octokit+core@4.0.4
       '@octokit/rest': 18.12.0
       await-to-js: 3.0.0
       chalk: 4.1.2
@@ -4548,10 +4548,10 @@ packages:
       - supports-color
     dev: true
 
-  /@auto-it/npm/10.36.5_gdxbtungus7rykd22mbjbmvap4:
+  /@auto-it/npm/10.36.5_4ce3bo5432dvtcesdwqyhksibi:
     resolution: {integrity: sha512-Tct2LxqECJR/kG2+yAlJFi5NtE+JqfoO48hGOAk94sZvET29jWN8hln1eHPI2SIA1a1VOddQsSHbCEbGzrgTeg==}
     dependencies:
-      '@auto-it/core': 10.36.5_gdxbtungus7rykd22mbjbmvap4
+      '@auto-it/core': 10.36.5_4ce3bo5432dvtcesdwqyhksibi
       '@auto-it/package-json-utils': 10.36.5
       await-to-js: 3.0.0
       endent: 2.1.0
@@ -4580,11 +4580,11 @@ packages:
       parse-github-url: 1.0.2
     dev: true
 
-  /@auto-it/released/10.36.5_gdxbtungus7rykd22mbjbmvap4:
+  /@auto-it/released/10.36.5_4ce3bo5432dvtcesdwqyhksibi:
     resolution: {integrity: sha512-dbSxtnjSlPVy1D/BBZw2DW3aSVVvujebS32zaiPzy6gsvvkwlzavpm1iuG5jfmdo5Ai490CGcIePMWbhZ7lqXA==}
     dependencies:
       '@auto-it/bot-list': 10.36.5
-      '@auto-it/core': 10.36.5_gdxbtungus7rykd22mbjbmvap4
+      '@auto-it/core': 10.36.5_4ce3bo5432dvtcesdwqyhksibi
       deepmerge: 4.2.2
       fp-ts: 2.11.9
       io-ts: 2.2.16_fp-ts@2.11.9
@@ -21400,7 +21400,7 @@ packages:
   /@octokit/auth-token/2.5.0:
     resolution: {integrity: sha512-r5FVUJCOLl19AxiuZD2VRZ/ORjp/4IN98Of6YJoJOkY75CIBuYfmiNHGrDwXr+aLGG55igl9QrxX3hbiXlLb+g==}
     dependencies:
-      '@octokit/types': 6.34.0
+      '@octokit/types': 6.41.0
     dev: true
 
   /@octokit/auth-token/3.0.0:
@@ -21417,7 +21417,7 @@ packages:
       '@octokit/graphql': 4.8.0
       '@octokit/request': 5.6.3
       '@octokit/request-error': 2.1.0
-      '@octokit/types': 6.34.0
+      '@octokit/types': 6.41.0
       before-after-hook: 2.2.2
       universal-user-agent: 6.0.0
     transitivePeerDependencies:
@@ -21442,7 +21442,7 @@ packages:
   /@octokit/endpoint/6.0.12:
     resolution: {integrity: sha512-lF3puPwkQWGfkMClXb4k/eUT/nZKQfxinRWJrdZaJO85Dqwo/G0yOC434Jr2ojwafWJMYqFGFa5ms4jJUgujdA==}
     dependencies:
-      '@octokit/types': 6.34.0
+      '@octokit/types': 6.41.0
       is-plain-object: 5.0.0
       universal-user-agent: 6.0.0
 
@@ -21480,7 +21480,6 @@ packages:
 
   /@octokit/openapi-types/12.11.0:
     resolution: {integrity: sha512-VsXyi8peyRq9PqIz/tpqiL2w3w80OgVMwBHltTml3LmVvXiphgeqmY9mvBw9Wu7e0QWk/fqD37ux8yP5uVekyQ==}
-    dev: true
 
   /@octokit/plugin-enterprise-compatibility/1.3.0:
     resolution: {integrity: sha512-h34sMGdEOER/OKrZJ55v26ntdHb9OPfR1fwOx6Q4qYyyhWA104o11h9tFxnS/l41gED6WEI41Vu2G2zHDVC5lQ==}
@@ -21556,12 +21555,12 @@ packages:
       bottleneck: 2.19.5
     dev: true
 
-  /@octokit/plugin-throttling/3.6.2_@octokit+core@3.6.0:
+  /@octokit/plugin-throttling/3.6.2_@octokit+core@4.0.4:
     resolution: {integrity: sha512-0az5fxgVlhFfFtiKLKVXTpmCG2tK3BG0fYI8SO4pmGlN1kyJktJVQA+6KKaFxtxMIWsuHmSEAkR6zSgtk86g2A==}
     peerDependencies:
       '@octokit/core': ^3.5.0
     dependencies:
-      '@octokit/core': 3.6.0
+      '@octokit/core': 4.0.4
       '@octokit/types': 6.41.0
       bottleneck: 2.19.5
     dev: true
@@ -21569,7 +21568,7 @@ packages:
   /@octokit/request-error/2.1.0:
     resolution: {integrity: sha512-1VIvgXxs9WHSjicsRwq8PlR2LR2x6DwsJAaFgzdi0JfJoGSO8mYI/cHJQ+9FbN21aa+DrgNLnwObmyeSC8Rmpg==}
     dependencies:
-      '@octokit/types': 6.34.0
+      '@octokit/types': 6.41.0
       deprecation: 2.3.1
       once: 1.4.0
 
@@ -21587,7 +21586,7 @@ packages:
     dependencies:
       '@octokit/endpoint': 6.0.12
       '@octokit/request-error': 2.1.0
-      '@octokit/types': 6.34.0
+      '@octokit/types': 6.41.0
       is-plain-object: 5.0.0
       node-fetch: 2.6.9
       universal-user-agent: 6.0.0
@@ -21640,7 +21639,6 @@ packages:
     resolution: {integrity: sha512-eJ2jbzjdijiL3B4PrSQaSjuF2sPEQPVCPzBvTHJD9Nz+9dw2SGH4K4xeQJ77YfTq5bRQ+bD8wT11JbeDPmxmGg==}
     dependencies:
       '@octokit/openapi-types': 12.11.0
-    dev: true
 
   /@opentelemetry/api/1.1.0:
     resolution: {integrity: sha512-hf+3bwuBwtXsugA2ULBc95qxrOqP2pOekLz34BJhcAKawt94vfeNyUKpYc0lZQ/3sCP6LqRa7UAdHA7i5UODzQ==}
@@ -31679,14 +31677,14 @@ packages:
     engines: {node: '>=0.8'}
     dev: true
 
-  /auto/10.36.5_gdxbtungus7rykd22mbjbmvap4:
+  /auto/10.36.5_4ce3bo5432dvtcesdwqyhksibi:
     resolution: {integrity: sha512-BKH2Vetv3Kkrd1COPnpvfm93+p5XlGjmg+EnBYyha6+bpXKUu1rwd3emr+5VLD32jkwoh5UnPJ0/PiMNGVB7vQ==}
     engines: {node: '>=10.x'}
     hasBin: true
     dependencies:
-      '@auto-it/core': 10.36.5_gdxbtungus7rykd22mbjbmvap4
-      '@auto-it/npm': 10.36.5_gdxbtungus7rykd22mbjbmvap4
-      '@auto-it/released': 10.36.5_gdxbtungus7rykd22mbjbmvap4
+      '@auto-it/core': 10.36.5_4ce3bo5432dvtcesdwqyhksibi
+      '@auto-it/npm': 10.36.5_4ce3bo5432dvtcesdwqyhksibi
+      '@auto-it/released': 10.36.5_4ce3bo5432dvtcesdwqyhksibi
       await-to-js: 3.0.0
       chalk: 4.1.2
       command-line-application: 0.10.1
@@ -37972,7 +37970,7 @@ packages:
       minimatch: 3.1.2
       object.values: 1.1.5
       resolve: 1.22.1
-      tsconfig-paths: 3.14.2
+      tsconfig-paths: 3.14.1
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
@@ -56511,6 +56509,7 @@ packages:
       json5: 1.0.2
       minimist: 1.2.7
       strip-bom: 3.0.0
+    dev: true
 
   /tsconfig-paths/4.1.2:
     resolution: {integrity: sha512-uhxiMgnXQp1IR622dUXI+9Ehnws7i/y6xvpZB9IbUVOPy0muvdvgXeZOn88UcGPiT98Vp3rJPTa8bFoalZ3Qhw==}
