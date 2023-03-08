@@ -8,6 +8,10 @@ export class IChannelCredentialsCommand implements ChannelCredentials {
   @IsOptional()
   webhookUrl?: string;
 
+  @IsString()
+  @IsOptional()
+  channel?: string;
+
   @IsString({ each: true })
   @IsOptional()
   deviceTokens?: string[];

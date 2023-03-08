@@ -51,7 +51,7 @@
     "socket.io": "^4.5.4"
   },
   "devDependencies": {
-    "@nestjs/cli": "^7.6.0",
+    "@nestjs/cli": "^9.0.0",
     "@nestjs/schematics": "^9.0.4",
     "@nestjs/testing": "^9.2.1",
     "@types/chai": "^4.3.4",
@@ -67,7 +67,7 @@
     "jest": "^27.0.6",
     "mocha": "^8.1.1",
     "nodemon": "^2.0.7",
-    "prettier": "^2.1.2",
+    "prettier": "~2.8.0",
     "sinon": "^9.2.4",
     "supertest": "^6.0.0",
     "ts-jest": "^27.0.7",

@@ -30,4 +30,12 @@ export const chatProviders: IProviderConfig[] = [
       'https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook',
     logoFileName: { light: 'msteams.svg', dark: 'msteams.svg' },
   },
+  {
+    id: ChatProviderIdEnum.Mattermost,
+    displayName: 'Mattermost',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredentials[],
+    docReference: 'https://developers.mattermost.com/integrate/webhooks/incoming/',
+    logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
+  },
 ];

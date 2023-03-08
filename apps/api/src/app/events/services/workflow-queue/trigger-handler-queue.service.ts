@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Queue, QueueBaseOptions, Worker } from 'bullmq';
 import { getRedisPrefix } from '@novu/shared';
-import { TriggerEvent, TriggerEventCommand } from '../../usecases/trigger-event';
 import { ConnectionOptions } from 'tls';
 import { PinoLogger, storage, Store } from '@novu/application-generic';
+
+import { TriggerEvent, TriggerEventCommand } from '../../usecases/trigger-event';
 
 @Injectable()
 export class TriggerHandlerQueueService {

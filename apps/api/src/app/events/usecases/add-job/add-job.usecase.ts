@@ -7,11 +7,11 @@ import { AddDigestJobCommand } from './add-digest-job.command';
 import { AddDigestJob } from './add-digest-job.usecase';
 import { AddJobCommand } from './add-job.command';
 
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 import { WorkflowQueueService } from '../../services/workflow-queue/workflow.queue.service';
 
 @Injectable()

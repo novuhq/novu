@@ -57,12 +57,14 @@ export enum SmsProviderIdEnum {
   Infobip = 'infobip-sms',
   BurstSms = 'burst-sms',
   Clickatell = 'clickatell',
+  Kannel = 'kannel',
 }
 
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
   MsTeams = 'msteams',
+  Mattermost = 'mattermost',
 }
 
 export enum PushProviderIdEnum {
