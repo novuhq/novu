@@ -36,6 +36,23 @@ novu.trigger('event-name', {
     },
   },
 });
+
+// Sample for data only message
+novu.trigger("mscp_open_consultation", {
+  to: {
+    subscriberId: '...',
+  },
+  payload: {
+    some_key: "some_value",
+    sound: "tadah_20s.wav",
+  },
+  overrides: {
+    fcm: {
+      type: "data"
+    },
+  },
+});
+    
 ```
 
   </TabItem>
