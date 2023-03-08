@@ -30,7 +30,7 @@ const httpFields = ['webhookUrl', 'avatar', 'avatar_url'];
 
 const uuidFields = [];
 
-const sensitiveFields = cardFields.concat(
+export const sensitiveFields = cardFields.concat(
   emailFields,
   passwordFields,
   phoneFields,

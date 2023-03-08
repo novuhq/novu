@@ -3,15 +3,17 @@ import {
   Logger,
   LoggerModule,
   PinoLogger,
+  getLoggerToken,
 } from 'nestjs-pino';
 import { storage, Store } from 'nestjs-pino/storage';
+import { sensitiveFields } from './masking';
 export * from './LogDecorator';
 export * from './masking';
 
 export function getErrorInterceptor() {
   return new LoggerErrorInterceptor();
 }
-export { Logger, LoggerModule, PinoLogger, storage, Store };
+export { Logger, LoggerModule, PinoLogger, storage, Store, getLoggerToken };
 
 const loggingLevelArr = ['error', 'warn', 'info', 'verbose', 'debug'];
 
@@ -31,7 +33,7 @@ interface ILoggingVariables {
   tenant: string;
 }
 
-function getLogLevel() {
+export function getLogLevel() {
   let logLevel = process.env.LOGGING_LEVEL ?? 'info';
 
   if (loggingLevelArr.indexOf(logLevel) === -1) {
@@ -45,9 +47,6 @@ function getLogLevel() {
 
     logLevel = 'info';
   }
-
-  // eslint-disable-next-line no-console
-  console.log('Logging Level: ' + logLevel);
 
   return logLevel;
 }
@@ -80,12 +79,29 @@ function getLoggingVariables(): ILoggingVariables {
 export function createNestLoggingModuleOptions(settings: ILoggerSettings) {
   const values = getLoggingVariables();
 
+  let redactFields: string[] = sensitiveFields.map((val) => val);
+
+  redactFields.push('req.headers.authorization');
+
+  const baseWildCards = '*.';
+  const baseArrayWildCards = '*[*].';
+  for (let i = 1; i <= 6; i++) {
+    redactFields = redactFields.concat(
+      sensitiveFields.map((val) => baseWildCards.repeat(i) + val)
+    );
+
+    redactFields = redactFields.concat(
+      sensitiveFields.map((val) => baseArrayWildCards.repeat(i) + val)
+    );
+  }
+
   return {
     pinoHttp: {
       customLevels: loggingLevelSet,
       level: values.level,
       redact: {
-        paths: ['req.headers.authorization'],
+        paths: redactFields,
+        censor: '[REDACTED]',
         remove: true,
       },
       base: {

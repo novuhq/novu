@@ -1,5 +1,6 @@
 import { DecorateAll } from 'decorate-all';
 import { Logger } from '@nestjs/common';
+import { getLogLevel } from './index';
 import { maskValue } from './masking';
 
 export function log() {
@@ -17,24 +18,32 @@ export function log() {
         args: [],
       };
 
-      if (typeof args !== undefined && args !== null) {
-        args.forEach((value) => {
-          if (value !== undefined && value !== null) {
-            try {
-              item.args.push({
-                [value.constructor.name]: maskValue(
-                  value.constructor.name,
-                  value
-                ),
-              });
-            } catch (e) {
-              Logger.error(
-                'unable to mask data from: ' + JSON.stringify(value),
-                e
-              );
+      if (
+        typeof args !== undefined &&
+        args !== null &&
+        getLogLevel() === 'debug'
+      ) {
+        //args.forEach((value) => {
+        const test = await Promise.all(
+          args.map(async (value) => {
+            if (value !== undefined && value !== null) {
+              try {
+                item.args.push({
+                  [value.constructor.name]: maskValue(
+                    value.constructor.name,
+                    value
+                  ),
+                });
+              } catch (e) {
+                Logger.error(
+                  'unable to mask data from: ' + JSON.stringify(value),
+                  e
+                );
+              }
             }
-          }
-        });
+          })
+        );
+        //});
 
         Logger.debug(JSON.stringify(item));
 
