@@ -4,10 +4,10 @@ import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } 
 
 import { ApiException } from '../../../../shared/exceptions/api.exception';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { CreateExecutionDetails } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+} from '../../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../../execution-details/types';
 import { DigestFilterSteps } from '../../digest-filter-steps/digest-filter-steps.usecase';
 
 @Injectable()
