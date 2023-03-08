@@ -27,10 +27,10 @@ import type { IForm, IStepEntity } from '../../components/formTypes';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../../../hooks';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
-import { ActivePageEnum } from '../../editor/TemplateEditorPage';
 import { getFormattedStepErrors } from '../../shared/errors';
 import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
-import { useTemplateEditor } from '../../components/TemplateEditorProvider';
+import { useTemplateEditorForm } from '../../components/TemplateEditorFormProvider';
+import { ActivePageEnum } from '../../../../constants/editorEnums';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -79,7 +79,7 @@ export function FlowEditor({
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
-  const { template, trigger } = useTemplateEditor();
+  const { template, trigger } = useTemplateEditorForm();
   const { trigger: triggerErrors } = useFormContext<IForm>();
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
@@ -318,6 +318,7 @@ export function FlowEditor({
                 handleDisplayAddNodeOnEdge(`edge-button-${edge.source}`);
               }
             }}
+            onPaneClick={() => setSelectedNodeId('')}
             {...reactFlowDefaultProps}
           >
             <MinimalTemplatesSideBar
