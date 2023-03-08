@@ -77,7 +77,6 @@
     "@nrwl/nx-cloud": "^15.0.0",
     "@nrwl/tao": "13.10.6",
     "@nrwl/workspace": "13.10.6",
-    "@octokit/core": "^3.6.0",
     "@pnpm/filter-workspace-packages": "^4.1.11",
     "@pnpm/logger": "^4.0.0",
     "@types/inquirer": "8.2.6",
