@@ -117,6 +117,7 @@ export const smsProviders: IProviderConfig[] = [
     docReference: 'https://46elks.com/docs/send-sms',
     logoFileName: { light: '46elks.png', dark: '46elks.png' },
   },
+  {
     id: SmsProviderIdEnum.Kannel,
     displayName: 'Kannel SMS',
     channel: ChannelTypeEnum.SMS,
