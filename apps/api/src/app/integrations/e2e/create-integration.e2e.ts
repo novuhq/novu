@@ -19,7 +19,6 @@ describe('Create Integration - /integration (POST)', function () {
     expect(integration.providerId).to.equal('sendgrid');
     expect(integration.channel).to.equal('email');
     expect(integration.credentials.apiKey).to.equal('SG.123');
-    expect(integration.credentials.secretKey).to.equal('abc');
     expect(integration.active).to.equal(true);
   });
 
@@ -51,7 +50,7 @@ describe('Create Integration - /integration (POST)', function () {
     const payload = {
       providerId: 'sendgrid',
       channel: 'email',
-      credentials: { apiKey: '123', secretKey: 'abc' },
+      credentials: { apiKey: '123' },
       active: true,
       check: false,
     };
@@ -92,14 +91,19 @@ describe('Create Integration - /integration (POST)', function () {
     const firstIntegration = integrations.find((i) => i.providerId.toString() === 'sendgrid');
     const secondIntegration = integrations.find((i) => i.providerId.toString() === 'mailgun');
 
-    expect(firstIntegration.active).to.equal(false);
-    expect(secondIntegration.active).to.equal(true);
+    expect(firstIntegration?.active).to.equal(false);
+    expect(secondIntegration?.active).to.equal(true);
   });
 });
 
 async function insertIntegrationTwice(
   session: UserSession,
-  payload: { credentials: { apiKey: string; secretKey: string }; providerId: string; channel: string; active: boolean },
+  payload: {
+    credentials: { apiKey: string; secretKey?: string };
+    providerId: string;
+    channel: string;
+    active: boolean;
+  },
   createDiffChannels: boolean
 ) {
   await session.testAgent.post('/v1/integrations').send(payload);

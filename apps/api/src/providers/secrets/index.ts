@@ -48,7 +48,6 @@ export const getProviderSecrets = (providerId: EmailProviderIdEnum): Record<stri
   const providers = {
     [EmailProviderIdEnum.SendGrid]: {
       apiKey: process.env.REGRESSION_SENDGRID_API_KEY,
-      secretKey: process.env.REGRESSION_SENDGRID_SECRET_KEY,
     },
   };
 

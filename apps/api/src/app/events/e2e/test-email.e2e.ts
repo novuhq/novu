@@ -40,7 +40,7 @@ describe('Events - Test email - /v1/events/test/email (POST)', function () {
       channel: ChannelTypeEnum.EMAIL,
       _environmentId: session.environment._id,
     });
-    await integrationRepository.delete({ _id: emailIntegration._id, _environmentId: session.environment._id });
+    await integrationRepository.delete({ _id: emailIntegration?._id, _environmentId: session.environment._id });
   };
 
   const deactivateEmailIntegration = async () => {
@@ -50,7 +50,7 @@ describe('Events - Test email - /v1/events/test/email (POST)', function () {
     });
     await integrationRepository.update(
       {
-        _id: emailIntegration._id,
+        _id: emailIntegration?._id,
         _environmentId: session.environment._id,
       },
       { active: false }

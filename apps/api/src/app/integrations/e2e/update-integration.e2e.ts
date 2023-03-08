@@ -40,7 +40,7 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     const firstProviderPayload = {
       providerId: 'sendgrid',
       channel: 'EMAIL',
-      credentials: { apiKey: '123', secretKey: 'abc' },
+      credentials: { apiKey: '123' },
       active: true,
       check: false,
     };
@@ -75,8 +75,8 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
       (i) => i.providerId.toString() === 'sendgrid' && i.channel.toString() === 'SMS'
     );
 
-    expect(firstProviderIntegration.active).to.equal(false);
-    expect(secondProviderIntegration.active).to.equal(true);
-    expect(irrelevantProviderIntegration.active).to.equal(true);
+    expect(firstProviderIntegration?.active).to.equal(false);
+    expect(secondProviderIntegration?.active).to.equal(true);
+    expect(irrelevantProviderIntegration?.active).to.equal(true);
   });
 });

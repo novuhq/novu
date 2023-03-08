@@ -20,7 +20,6 @@ describe('Get Integrations - /integrations (GET)', function () {
     expect(integration.providerId).to.equal('sendgrid');
     expect(integration.channel).to.equal(ChannelTypeEnum.EMAIL);
     expect(integration.credentials.apiKey).to.equal('SG.123');
-    expect(integration.credentials.secretKey).to.equal('abc');
     expect(integration.active).to.equal(true);
   });
 });

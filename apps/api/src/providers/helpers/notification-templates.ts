@@ -9,10 +9,15 @@ import {
 import { expect } from 'chai';
 import { isSameDay } from 'date-fns';
 
+import { SENDER_NAME, TEMPLATE_IDENTIFIER } from './constants';
+
 import { CreateNotificationTemplateRequestDto } from '../../app/notification-template/dto';
 import { MessageTemplate } from '../../app/shared/dtos/message-template';
 
-export const createRegressionNotificationTemplate = async (session: UserSession, providerId: string): Promise<void> => {
+export const createRegressionNotificationTemplate = async (
+  session: UserSession,
+  providerId: string
+): Promise<INotificationTemplate> => {
   const name = `Regression email notification template for ${providerId}`;
   const description = 'This is a description for the regression email notification template';
   const tags = ['regression-tag'];
@@ -21,7 +26,7 @@ export const createRegressionNotificationTemplate = async (session: UserSession,
     name: 'Message Name',
     subject: `Regression subject for ${providerId}`,
     preheader: 'Regression preheader',
-    senderName: 'Regression Regressing',
+    senderName: SENDER_NAME,
     content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a regression email content block' }],
     type: StepTypeEnum.EMAIL,
   };
@@ -35,7 +40,7 @@ export const createRegressionNotificationTemplate = async (session: UserSession,
   const regressionTemplateRequest: CreateNotificationTemplateRequestDto = {
     active: true,
     draft: false,
-    name,
+    name: TEMPLATE_IDENTIFIER,
     description,
     tags,
     notificationGroupId: session.notificationGroups[0]._id,
@@ -51,13 +56,16 @@ export const createRegressionNotificationTemplate = async (session: UserSession,
 
   expect(template._id).to.be.ok;
   expect(template.description).to.equal(description);
-  expect(template.name).to.equal(name);
+  expect(template.name).to.equal(TEMPLATE_IDENTIFIER);
   expect(template.draft).to.equal(false);
   expect(template.active).to.equal(true);
   expect(template.tags).to.deep.members(tags);
   expect(isSameDay(new Date(template?.createdAt as string), new Date()));
 
+  expect(template.preferenceSettings).to.deep.equal({ email: true, sms: true, in_app: true, chat: true, push: true });
   expect(template.steps.length).to.equal(1);
   expect(template.steps[0].template?.type).to.equal(ChannelTypeEnum.EMAIL);
   expect(template.steps[0].template?.content).to.deep.equal(regressionSteps[0].template.content);
+
+  return template;
 };

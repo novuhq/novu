@@ -7,15 +7,14 @@ export class SubscribersService {
 
   constructor(private _organizationId: string, private _environmentId: string) {}
 
-  async createSubscriber(fields: Partial<SubscriberEntity> = {}) {
-    return await this.subscriberRepository.create({
+  async createSubscriber(fields: Partial<SubscriberEntity> = {}): Promise<SubscriberEntity> {
+    const defaults = {
       lastName: faker.name.lastName(),
       firstName: faker.name.firstName(),
       email: faker.internet.email(),
       phone: faker.phone.phoneNumber(),
       _environmentId: this._environmentId,
       _organizationId: this._organizationId,
-      subscriberId: SubscriberRepository.createObjectId(),
       channels: [
         {
           _integrationId: 'integrationId_slack',
@@ -28,6 +27,10 @@ export class SubscribersService {
           credentials: { deviceTokens: ['identifier'] },
         },
       ],
+    };
+
+    return await this.subscriberRepository.createSubscriber({
+      ...defaults,
       ...fields,
     });
   }

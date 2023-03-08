@@ -314,4 +314,18 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     return this.mapEntity(res);
   }
+
+  async findMessagesByTransactionId(query: {
+    _environmentId: string;
+    _organizationId: string;
+    transactionId: string;
+  }): Promise<MessageEntity[]> {
+    const { _environmentId, _organizationId, transactionId } = query;
+
+    const result = await this.MongooseModel.find({ _environmentId, _organizationId, transactionId }).populate(
+      'subscriber'
+    );
+
+    return result.map(this.mapEntity);
+  }
 }
