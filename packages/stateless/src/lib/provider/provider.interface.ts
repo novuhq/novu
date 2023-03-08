@@ -63,6 +63,7 @@ export interface IPushOptions {
 
 export interface IChatOptions {
   webhookUrl: string;
+  channel?: string;
   content: string;
 }
 

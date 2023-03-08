@@ -42,7 +42,7 @@
     "googleapis": "^60.0.1",
     "intercom-client": "^2.11.0",
     "jsonfile": "^6.0.1",
-    "mongoose": "6.9.2",
+    "mongoose": "6.10.1",
     "mongoose-delete": "^0.5.4",
     "ng-intercom": "^8.0.2",
     "reflect-metadata": "^0.1.13",

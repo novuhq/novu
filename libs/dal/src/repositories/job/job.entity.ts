@@ -7,6 +7,7 @@ import type { OrganizationId } from '../organization';
 import type { ChangePropsValueType } from '../../types/helpers';
 
 export { JobStatusEnum };
+
 export class JobEntity {
   _id: string;
   identifier: string;
