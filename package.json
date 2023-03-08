@@ -74,7 +74,7 @@
     "@nrwl/eslint-plugin-nx": "13.10.6",
     "@nrwl/jest": "13.10.6",
     "@nrwl/linter": "13.10.6",
-    "@nrwl/nx-cloud": "^13.2.1",
+    "@nrwl/nx-cloud": "^15.0.0",
     "@nrwl/tao": "13.10.6",
     "@nrwl/workspace": "13.10.6",
     "@octokit/core": "^3.6.0",
