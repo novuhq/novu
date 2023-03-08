@@ -23,8 +23,7 @@ export function log() {
         args !== null &&
         getLogLevel() === 'debug'
       ) {
-        //args.forEach((value) => {
-        const test = await Promise.all(
+        await Promise.all(
           args.map(async (value) => {
             if (value !== undefined && value !== null) {
               try {
@@ -43,15 +42,14 @@ export function log() {
             }
           })
         );
-        //});
-
-        Logger.debug(JSON.stringify(item));
-
-        return await originalMethod.apply(this, args);
       }
-    };
-  };
-}
+
+      Logger.debug(JSON.stringify(item));
+
+      return await originalMethod.apply(this, args);
+    }; // property.value
+  }; // return
+} // Decorator
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
