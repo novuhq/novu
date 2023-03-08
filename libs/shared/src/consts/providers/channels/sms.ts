@@ -11,6 +11,7 @@ import {
   infobipSMSConfig,
   burstSmsConfig,
   clickatellConfig,
+  kannelConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -106,5 +107,14 @@ export const smsProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: 'https://docs.clickatell.com/',
     logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Kannel,
+    displayName: 'Kannel SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: kannelConfig,
+    betaVersion: true,
+    docReference: 'https://www.kannel.org/doc.shtml',
+    logoFileName: { light: 'kannel.png', dark: 'kannel.png' },
   },
 ];

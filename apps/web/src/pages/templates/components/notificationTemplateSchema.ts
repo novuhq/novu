@@ -1,12 +1,9 @@
-import { FormProvider, useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
 
-import type { IForm } from './formTypes';
 import { getChannel } from '../shared/channels';
 
-const schema = z
+export const schema = z
   .object({
     name: z
       .string({
@@ -186,29 +183,3 @@ const schema = z
       .optional(),
   })
   .passthrough();
-
-const defaultValues: IForm = {
-  name: '',
-  notificationGroupId: '',
-  description: '',
-  identifier: '',
-  tags: [],
-  critical: false,
-  steps: [],
-  preferenceSettings: {
-    email: true,
-    sms: true,
-    in_app: true,
-    chat: true,
-    push: true,
-  },
-};
-export const TemplateFormProvider = ({ children }) => {
-  const methods = useForm<IForm>({
-    resolver: zodResolver(schema),
-    defaultValues,
-    mode: 'onChange',
-  });
-
-  return <FormProvider {...methods}>{children}</FormProvider>;
-};

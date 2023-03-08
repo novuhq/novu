@@ -18,7 +18,7 @@ export class PasswordResetRequest {
   async execute(command: PasswordResetRequestCommand): Promise<{ success: boolean }> {
     const email = normalizeEmail(command.email);
     const foundUser = await this.userRepository.findByEmail(email);
-    if (foundUser) {
+    if (foundUser && foundUser.email) {
       const { error, isBlocked } = this.isRequestBlocked(foundUser);
       if (isBlocked) {
         throw new UnauthorizedException(error);

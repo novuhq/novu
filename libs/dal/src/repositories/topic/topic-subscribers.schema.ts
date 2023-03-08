@@ -1,11 +1,11 @@
 import * as mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 
-import { TopicSubscribersEntity } from './topic-subscribers.entity';
+import { TopicSubscribersDBModel } from './topic-subscribers.entity';
 
 import { schemaOptions } from '../schema-default.options';
 
-const topicSubscribersSchema = new Schema(
+const topicSubscribersSchema = new Schema<TopicSubscribersDBModel>(
   {
     _environmentId: {
       type: Schema.Types.ObjectId,
@@ -43,5 +43,5 @@ const topicSubscribersSchema = new Schema(
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const TopicSubscribers =
-  mongoose.models.TopicSubscribers ||
-  mongoose.model<TopicSubscribersEntity>('TopicSubscribers', topicSubscribersSchema);
+  (mongoose.models.TopicSubscribers as mongoose.Model<TopicSubscribersDBModel>) ||
+  mongoose.model<TopicSubscribersDBModel>('TopicSubscribers', topicSubscribersSchema);

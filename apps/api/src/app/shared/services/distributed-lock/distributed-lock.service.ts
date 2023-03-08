@@ -2,6 +2,8 @@ import Redis from 'ioredis';
 import * as Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
 import { Logger } from '@nestjs/common';
+import { getRedisPrefix } from '@novu/shared';
+import { ConnectionOptions } from 'tls';
 
 import { ApiException } from '../../exceptions/api.exception';
 
@@ -9,14 +11,21 @@ const shouldLog = process.env.FF_IS_DISTRIBUTED_LOCK_LOGGING_ENABLED === 'true';
 
 const LOG_CONTEXT = 'DistributedLock';
 
-const getRedisUrl = () => {
+const getRedisObject = () => {
   if (!process.env.REDIS_HOST || !process.env.REDIS_PORT) {
     throw new ApiException(
       'Missing needed environment variables for Redis instance configuration for the distributed lock service'
     );
   }
 
-  return `${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
+  return {
+    db: Number(process.env.REDIS_DB_INDEX),
+    port: Number(process.env.REDIS_PORT),
+    host: process.env.REDIS_HOST,
+    password: process.env.REDIS_PASSWORD,
+    keyPrefix: getRedisPrefix(),
+    tls: process.env.REDIS_TLS as ConnectionOptions,
+  };
 };
 
 interface ILockOptions {
@@ -47,8 +56,9 @@ export class DistributedLockService {
     }
 
     // TODO: Implement distributed nodes (at least 3 Redis instances)
-    this.instances = [getRedisUrl()].filter((instance) => !!instance).map((url) => new Redis(url));
-
+    this.instances = [getRedisObject()]
+      .filter((instanceSettings) => !!instanceSettings)
+      .map((redisSettings) => new Redis(redisSettings));
     this.distributedLock = new Redlock(this.instances, settings);
     Logger.log('Redlock started', LOG_CONTEXT);
 

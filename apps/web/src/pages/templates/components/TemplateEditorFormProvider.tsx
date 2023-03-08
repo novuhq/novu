@@ -1,5 +1,6 @@
 import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
 import { DigestTypeEnum, INotificationTemplate, INotificationTrigger } from '@novu/shared';
 import * as Sentry from '@sentry/react';
@@ -9,6 +10,7 @@ import type { IForm, IStepEntity } from './formTypes';
 import { useTemplateController } from './useTemplateController';
 import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } from './templateToFormMappers';
 import { errorMessage } from '../../../utils/notifications';
+import { schema } from './notificationTemplateSchema';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
@@ -55,7 +57,7 @@ const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => ({
   }),
 });
 
-interface ITemplateEditorContext {
+interface ITemplateEditorFormContext {
   template?: INotificationTemplate;
   isLoading: boolean;
   isCreating: boolean;
@@ -69,7 +71,7 @@ interface ITemplateEditorContext {
   deleteStep: (index: number) => void;
 }
 
-const TemplateEditorContext = createContext<ITemplateEditorContext>({
+const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
   isLoading: false,
   isCreating: false,
   isUpdating: false,
@@ -82,11 +84,30 @@ const TemplateEditorContext = createContext<ITemplateEditorContext>({
   deleteStep: () => {},
 });
 
-const { Provider } = TemplateEditorContext;
+const defaultValues: IForm = {
+  name: '',
+  notificationGroupId: '',
+  description: '',
+  identifier: '',
+  tags: [],
+  critical: false,
+  steps: [],
+  preferenceSettings: {
+    email: true,
+    sms: true,
+    in_app: true,
+    chat: true,
+    push: true,
+  },
+};
 
-const TemplateEditorProvider = ({ children }) => {
+const TemplateEditorFormProvider = ({ children }) => {
   const { templateId = '' } = useParams<{ templateId?: string }>();
-  const methods = useFormContext<IForm>();
+  const methods = useForm<IForm>({
+    resolver: zodResolver(schema),
+    defaultValues,
+    mode: 'onChange',
+  });
   const [{ editMode, trigger, createdTemplateId }, setState] = useState<{
     editMode: boolean;
     trigger?: INotificationTrigger;
@@ -196,7 +217,7 @@ const TemplateEditorProvider = ({ children }) => {
     [steps]
   );
 
-  const value = useMemo<ITemplateEditorContext>(
+  const value = useMemo<ITemplateEditorFormContext>(
     () => ({
       template,
       isLoading,
@@ -225,9 +246,13 @@ const TemplateEditorProvider = ({ children }) => {
     ]
   );
 
-  return <Provider value={value}>{children}</Provider>;
+  return (
+    <FormProvider {...methods}>
+      <TemplateEditorFormContext.Provider value={value}>{children}</TemplateEditorFormContext.Provider>
+    </FormProvider>
+  );
 };
 
-const useTemplateEditor = () => useContext(TemplateEditorContext);
+const useTemplateEditorForm = () => useContext(TemplateEditorFormContext);
 
-export { TemplateEditorProvider, useTemplateEditor };
+export { TemplateEditorFormProvider, useTemplateEditorForm };

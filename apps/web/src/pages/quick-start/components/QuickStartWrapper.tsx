@@ -67,6 +67,7 @@ export function QuickStartWrapper({
               backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
               height: '100%',
               background: 'border-box',
+              marginBottom: '50px',
             })}
           >
             <When truthy={title}>
@@ -105,7 +106,7 @@ export function Faq() {
       data-test-id="go-back-button"
       inline
       style={{
-        marginTop: '75px',
+        marginTop: '25px',
       }}
     >
       <span style={{ color: colors.B60 }}>Got stuck? </span>

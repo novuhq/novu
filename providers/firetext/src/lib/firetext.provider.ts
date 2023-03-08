@@ -17,8 +17,8 @@ export class FiretextSmsProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      apiKey: string;
-      from: string;
+      apiKey?: string;
+      from?: string;
     }
   ) {}
 
