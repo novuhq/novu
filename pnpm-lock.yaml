@@ -17,7 +17,6 @@ importers:
       '@nrwl/nx-cloud': ^15.0.0
       '@nrwl/tao': 13.10.6
       '@nrwl/workspace': 13.10.6
-      '@octokit/core': ^3.6.0
       '@pnpm/filter-workspace-packages': ^4.1.11
       '@pnpm/logger': ^4.0.0
       '@types/inquirer': 8.2.6
@@ -93,7 +92,6 @@ importers:
       '@nrwl/nx-cloud': 15.1.1
       '@nrwl/tao': 13.10.6
       '@nrwl/workspace': 13.10.6_5tvp64g6xhyzatwhrkwzapwmga
-      '@octokit/core': 3.6.0
       '@pnpm/filter-workspace-packages': 4.4.35_@pnpm+logger@4.0.0
       '@pnpm/logger': 4.0.0
       '@types/inquirer': 8.2.6
@@ -1158,7 +1156,6 @@ importers:
       '@aws-sdk/s3-request-presigner': ^3.14.0
       '@faker-js/faker': ^6.0.0
       '@novu/shared': ^0.12.0
-      '@octokit/graphql': ^4.3.1
       '@sendgrid/mail': ^7.4.2
       '@types/async': ^3.2.1
       '@types/bluebird': ^3.5.30
@@ -1201,7 +1198,6 @@ importers:
       '@aws-sdk/s3-request-presigner': 3.58.0
       '@faker-js/faker': 6.1.1
       '@novu/shared': link:../shared
-      '@octokit/graphql': 4.8.0
       '@sendgrid/mail': 7.6.2
       JSONStream: 1.3.5
       agenda: 4.2.1
@@ -21445,6 +21441,7 @@ packages:
       '@octokit/types': 6.34.0
       is-plain-object: 5.0.0
       universal-user-agent: 6.0.0
+    dev: true
 
   /@octokit/endpoint/7.0.0:
     resolution: {integrity: sha512-Kz/mIkOTjs9rV50hf/JK9pIDl4aGwAtT8pry6Rpy+hVXkAPhXanNQRxMoq6AeRgDCZR6t/A1zKniY2V1YhrzlQ==}
@@ -21463,6 +21460,7 @@ packages:
       universal-user-agent: 6.0.0
     transitivePeerDependencies:
       - encoding
+    dev: true
 
   /@octokit/graphql/5.0.0:
     resolution: {integrity: sha512-1ZZ8tX4lUEcLPvHagfIVu5S2xpHYXAmgN0+95eAOPoaVPzCfUXJtA5vASafcpWcO86ze0Pzn30TAx72aB2aguQ==}
@@ -21477,6 +21475,7 @@ packages:
 
   /@octokit/openapi-types/11.2.0:
     resolution: {integrity: sha512-PBsVO+15KSlGmiI8QAzaqvsNlZlrDlyAJYcrXBCvVUxCp7VnXjkwPoFHgjEJXx3WF9BAwkA6nfCUA7i9sODzKA==}
+    dev: true
 
   /@octokit/openapi-types/12.11.0:
     resolution: {integrity: sha512-VsXyi8peyRq9PqIz/tpqiL2w3w80OgVMwBHltTml3LmVvXiphgeqmY9mvBw9Wu7e0QWk/fqD37ux8yP5uVekyQ==}
@@ -21572,6 +21571,7 @@ packages:
       '@octokit/types': 6.34.0
       deprecation: 2.3.1
       once: 1.4.0
+    dev: true
 
   /@octokit/request-error/3.0.0:
     resolution: {integrity: sha512-WBtpzm9lR8z4IHIMtOqr6XwfkGvMOOILNLxsWvDwtzm/n7f5AWuqJTXQXdDtOvPfTDrH4TPhEvW2qMlR4JFA2w==}
@@ -21593,6 +21593,7 @@ packages:
       universal-user-agent: 6.0.0
     transitivePeerDependencies:
       - encoding
+    dev: true
 
   /@octokit/request/6.2.0:
     resolution: {integrity: sha512-7IAmHnaezZrgUqtRShMlByJK33MT9ZDnMRgZjnRrRV9a/jzzFwKGz0vxhFU6i7VMLraYcQ1qmcAOin37Kryq+Q==}
@@ -21635,6 +21636,7 @@ packages:
     resolution: {integrity: sha512-s1zLBjWhdEI2zwaoSgyOFoKSl109CUcVBCc7biPJ3aAf6LGLU6szDvi31JPU7bxfla2lqfhjbbg/5DdFNxOwHw==}
     dependencies:
       '@octokit/openapi-types': 11.2.0
+    dev: true
 
   /@octokit/types/6.41.0:
     resolution: {integrity: sha512-eJ2jbzjdijiL3B4PrSQaSjuF2sPEQPVCPzBvTHJD9Nz+9dw2SGH4K4xeQJ77YfTq5bRQ+bD8wT11JbeDPmxmGg==}
@@ -36332,6 +36334,7 @@ packages:
 
   /deprecation/2.3.1:
     resolution: {integrity: sha512-xmHIy4F3scKVwMsQ4WnVaS8bHOx0DmVwRywosKhaILI0ywMDWPtBSku2HNxRvF7jtwDRsoEwYQSfbxj8b7RlJQ==}
+    dev: true
 
   /dequal/2.0.3:
     resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
@@ -56964,6 +56967,7 @@ packages:
 
   /universal-user-agent/6.0.0:
     resolution: {integrity: sha512-isyNax3wXoKaulPDZWHQqbmIx1k2tb9fb3GGDBRxCscfYV2Ch7WxPArBsFEG8s/safwXTT7H4QGhaIkTp9447w==}
+    dev: true
 
   /universalify/0.1.2:
     resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
