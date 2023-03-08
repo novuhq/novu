@@ -54,7 +54,7 @@
     "socket.io": "^4.5.4"
   },
   "devDependencies": {
-    "@nestjs/cli": "^7.6.0",
+    "@nestjs/cli": "^9.0.0",
     "@nestjs/schematics": "^7.3.1",
     "@nestjs/testing": "^7.6.17",
     "@types/express": "^4.17.8",

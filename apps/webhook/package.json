@@ -50,7 +50,7 @@
     "socket.io": "^4.5.4"
   },
   "devDependencies": {
-    "@nestjs/cli": "^7.6.0",
+    "@nestjs/cli": "^9.0.0",
     "@nestjs/schematics": "^9.0.4",
     "@nestjs/testing": "^9.2.1",
     "@types/chai": "^4.3.4",
