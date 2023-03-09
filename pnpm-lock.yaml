@@ -2301,6 +2301,7 @@ importers:
       cspell: ~6.19.2
       cz-conventional-changelog: ~3.3.0
       jest: ~27.5.1
+      npm-run-all: ^4.1.5
       nyc: ~15.1.0
       prettier: ~2.8.0
       rimraf: ~3.0.2
@@ -2316,6 +2317,7 @@ importers:
       cspell: 6.19.2
       cz-conventional-changelog: 3.3.0
       jest: 27.5.1_ts-node@10.9.1
+      npm-run-all: 4.1.5
       nyc: 15.1.0
       prettier: 2.8.4
       rimraf: 3.0.2
@@ -28973,7 +28975,7 @@ packages:
   /@types/oauth/0.9.1:
     resolution: {integrity: sha512-a1iY62/a3yhZ7qH7cNUsxoI3U/0Fe9+RnuFrpTKr+0WVOzbKlSLojShCKe20aOD1Sppv+i8Zlq0pLDuTJnwS4A==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
     dev: true
 
   /@types/overlayscrollbars/1.12.1:
