@@ -45,6 +45,37 @@ test('should trigger fcm correctly', async () => {
   });
 });
 
+test('should trigger fcm with fcm options override', async () => {
+  await provider.sendMessage({
+    title: 'Test',
+    content: 'Test push',
+    target: ['tester'],
+    payload: {
+      sound: 'test_sound',
+    },
+    overrides: {
+      data: { foo: 'bar' },
+      fcmOptions: {
+        analyticsLabel: 'my-label',
+      },
+    },
+  });
+  expect(app.initializeApp).toHaveBeenCalledTimes(1);
+  expect(app.cert).toHaveBeenCalledTimes(1);
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    notification: {
+      title: 'Test',
+      body: 'Test push',
+    },
+    tokens: ['tester'],
+    data: { foo: 'bar' },
+    fcmOptions: {
+      analyticsLabel: 'my-label',
+    },
+  });
+});
+
 test('should trigger fcm with android override', async () => {
   await provider.sendMessage({
     title: 'Test',

@@ -8,6 +8,7 @@ import { initializeApp, cert, deleteApp, getApp } from 'firebase-admin/app';
 import {
   AndroidConfig,
   ApnsConfig,
+  FcmOptions,
   getMessaging,
   Messaging,
 } from 'firebase-admin/messaging';
@@ -49,8 +50,10 @@ export class FcmPushProvider implements IPushProvider {
     const overridesData = options.overrides || ({} as any);
     const androidData: AndroidConfig = overridesData.android;
     const apnsData: ApnsConfig = overridesData.apns;
+    const fcmOptionsData: FcmOptions = overridesData.fcmOptions;
     delete overridesData.android;
     delete overridesData.apns;
+    delete overridesData.fcmOptions;
 
     let res;
 
@@ -61,6 +64,7 @@ export class FcmPushProvider implements IPushProvider {
         data: options.payload as { [key: string]: string },
         ...(androidData ? { android: androidData } : {}),
         ...(apnsData ? { apns: apnsData } : {}),
+        ...(fcmOptionsData ? { fcmOptions: fcmOptionsData } : {}),
       });
     } else {
       const { data, ...overrides } = overridesData;
@@ -75,6 +79,7 @@ export class FcmPushProvider implements IPushProvider {
         data,
         ...(androidData ? { android: androidData } : {}),
         ...(apnsData ? { apns: apnsData } : {}),
+        ...(fcmOptionsData ? { fcmOptions: fcmOptionsData } : {}),
       });
     }
 
