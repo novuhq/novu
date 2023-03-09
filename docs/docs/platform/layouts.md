@@ -8,7 +8,7 @@ Novu allows the creation of layouts - a specific HTML design or structure to wra
 Layouts can be manipulated and assigned to new and existing templates within the Novu platform,
 allowing users to create, manage, and assign these layouts to templates, so they can be reused to structure the appearance of notifications sent through the platform.
 
-By default, a Novu will create a default layout and assign it as the organization's default layout. At any time, you can choose any of your layouts as the default for your organization.
+By default, Novu will create a default layout and assign it as the organization's default layout. At any time, you can choose any of your layouts as the default for your organization.
 All new email templates will be assigned the default layout unless assigned a different one through the email editor.
 
 ## Manage Layouts
@@ -57,11 +57,11 @@ You can preview your layout combined with your email content through the `Previe
 
 ## Using SDK
 
-Novu SDK supports all layout functionalities as follows:-
+Novu SDK supports all layout functionalities:
 
 ### Create a new layout
 
-A new layout can be created with name, description, content, variables and isDefault. Here content is html content with custom variables.
+A new layout can be created with name, description, content, variables and an <code>isDefault</code> flag. Here, content param is html content with custom variables.
 
 ```typescript
 const name: string = 'layout-name';
@@ -97,7 +97,7 @@ enum TemplateVariableTypeEnum {
 
 ### Update existing layout
 
-When updating none of the properties is mandatory and SDK will only update the ones passed.
+When updating a layout, all properties are optional and the SDK will only update the ones passed.
 
 ```typescript
 const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout.

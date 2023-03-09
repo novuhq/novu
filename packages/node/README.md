@@ -30,6 +30,8 @@ The ultimate service for managing multi-channel notifications with a single API.
     <a href="https://twitter.com/novuhq">Twitter</a>
     ·
     <a href="https://notifications.directory">Notifications Directory</a>
+    .
+    <a href="https://novu.co/blog">Read our blog</a>
   </p>
 ## ⭐️ Why
 Building a notification system is hard, at first it seems like just sending an email but in reality it's just the beginning. In today's world users expect multichannel communication experience over email, sms, push, chat and more... An ever-growing list of providers are popping up each day, and notifications are spread around the code. Novu's goal is to simplify notifications and provide developers the tools to create meaningful communication between the system and its users.
