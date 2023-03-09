@@ -1,0 +1,1254 @@
+---
+# Source: novu/templates/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: novu-pdb
+  namespace: novu
+spec:
+  maxUnavailable: "33%"
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: novu
+---
+# Source: novu/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: novu-secret
+  namespace: novu
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+type: Opaque
+data:
+
+  JWT_SECRET: "WHdpb3NpdHBCNDBJQUpsY0diVEJLTjVvZDZXbm11Tk85eVdIS1hMYWdsTWo0cXRENkVET21CcXVjSXloWk9wMUVGRzI2blpFWFpJUzA3WllBbTRaRkxJZTlDR1VlOHpDaEtzdzNWMk5zR2FFTXBiR09BbVU4RTZNVmVVWQ=="
+  STORE_ENCRYPTION_KEY: "bk1PMDZZeFZaSEUwYXU4VHE4NFZGMnU2TldWNmZ0aVY="
+
+  AWS_ACCESS_KEY_ID: "QWNjZXNzS2V5"
+  AWS_SECRET_ACCESS_KEY: "U3VwZXJTZWNyZXRBY2Nlc3NLZXk="
+
+  MONGO_URL: "bW9uZ29kYjovL21vbmdvZGIubm92dS5zdmMuY2x1c3Rlci5sb2NhbDoyNzAxNy9ub3Z1"
+---
+# Source: novu/templates/configMap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: novu-map
+  namespace: novu
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+
+data:
+  NODE_ENV: "dev"
+
+  #Mongo
+  MONGO_URL: mongodb://mongodb.novu.svc.cluster.local:27017/novu
+
+  #REDIS
+  REDIS_HOST: "redis.novu.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_PREFIX: "novu"
+
+  # Sentry
+  SENTRY_DSN: "novu"
+  SAMPLE_RATE: "1"
+
+  # AWS
+  S3_LOCAL_STACK: "minio.novu.svc.cluster.local:9000"
+  S3_BUCKET_NAME: "novu"
+  S3_REGION: "us-east-1"
+
+  # Ports
+  API_PORT: "3000"
+  WS_PORT: "3002"
+
+  REACT_APP_WS_URL: novu-ws.novu.svc.cluster.local:%!s(float64=3002)
+  API_ROOT_URL: novu-api.novu.svc.cluster.local:%!s(float64=3000)
+  FRONT_BASE_URL: novu-web.novu.svc.cluster.local:%!s(float64=4200)
+  WIDGET_EMBED_PATH: novu-embed.novu.svc.cluster.local:%!s(float64=4701)/embed.umd.min.js
+  WIDGET_URL: novu-widget.novu.svc.cluster.local:%!s(float64=4500)
+  DISABLE_USER_REGISTRATION: "false"
+
+  # Global context path that will be prepended to all calls
+  GLOBAL_CONTEXTPATH: ""
+
+  # Service Sepecifc Context Path
+  # Will be combined after GLOBAL_CONTEXTPATH
+  FRONT_BASE_CONTEXTPATH: ""
+  API_CONTEXTPATH: ""
+  REACT_APP_WS_CONTEXTPATH: ""
+  WIDGET_CONTEXTPATH: ""
+---
+# Source: novu/templates/minio-volumes.yaml
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: minio-novu-pv
+  namespace: novu
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Retain
+  capacity:
+    storage: 5Gi
+  hostPath:
+    path: /kubernetes/minio-data
+  claimRef:
+    name:  minio-novu-pv-claim
+    namespace: novu
+---
+# Source: novu/templates/mongo-volumes.yaml
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: mongo-novu-pv
+  namespace: novu
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  persistentVolumeReclaimPolicy: Retain
+  capacity:
+    storage: 5Gi
+  hostPath:
+    path: /data/db
+  claimRef:
+    name: mongo-novu-pv-claim
+    namespace: novu
+---
+# Source: novu/templates/minio-volumes.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: minio-novu-pv-claim
+  namespace: novu
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: minio-novu-pv
+---
+# Source: novu/templates/mongo-volumes.yaml
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mongo-novu-pv-claim
+  namespace: novu
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  volumeName: mongo-novu-pv
+---
+# Source: novu/templates/minio.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: novu
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  ports:
+    - port: 9000
+      targetPort: 9000
+      protocol: TCP
+  selector:
+    app: minio
+---
+# Source: novu/templates/mongo.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  namespace: novu
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  ports:
+    - port: 27017
+      targetPort: 27017
+      protocol: TCP
+  selector:
+    app: mongodb
+---
+# Source: novu/templates/redis.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: novu
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+      protocol: TCP
+  selector:
+    app: redis
+---
+# Source: novu/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: novu-api-service
+  labels:
+    app.kubernetes.io/name: api-service
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: novu
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: novu-api
+---
+# Source: novu/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: novu-embed-service
+  labels:
+    app.kubernetes.io/name: embed-service
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: novu
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  type: ClusterIP
+  ports:
+    - port: 4701
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: novu-embed
+---
+# Source: novu/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: novu-web-service
+  labels:
+    app.kubernetes.io/name: web-service
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: novu
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  type: ClusterIP
+  ports:
+    - port: 4200
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: novu-web
+---
+# Source: novu/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: novu-widget-service
+  labels:
+    app.kubernetes.io/name: widget-service
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: novu
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  type: ClusterIP
+  ports:
+    - port: 4500
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: novu-widget
+---
+# Source: novu/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: novu-ws-service
+  labels:
+    app.kubernetes.io/name: ws-service
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/component: service
+    app.kubernetes.io/part-of: novu
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3002
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: novu-ws
+---
+# Source: novu/templates/api.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: novu-api-deployment
+  namespace: novu
+  labels:
+    app.kubernetes.io/name: novu-api
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: novu
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  strategy:
+    type: "Recreate"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: novu-api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: novu-api
+        app.kubernetes.io/version: "0.8.0"
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: novu
+        app.kubernetes.io/managed-by: Helm
+        meta.helm.sh/release-name: release-name
+        meta.helm.sh/release-namespace: novu
+    spec:
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+      setHostnameAsFQDN: true
+      containers:
+        - image: "ghcr.io/novuhq/novu/api:0.8.0"
+          name: api
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort:  3000
+          livenessProbe:
+            # an http probe
+            httpGet:
+              path: /v1/health-check
+              port:  3000
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 120
+          readinessProbe:
+            httpGet:
+              path: /v1/health-check
+              port:  3000
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 30
+          env:
+            - name: API_ROOT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: API_ROOT_URL
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: novu-secret
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: novu-secret
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: DISABLE_USER_REGISTRATION
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: DISABLE_USER_REGISTRATION
+            - name: FRONT_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: FRONT_BASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: novu-secret
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: MONGO_URL
+              valueFrom:
+                secretKeyRef:
+                  name: novu-secret
+                  key: MONGO_URL
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: NODE_ENV
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: API_PORT
+            - name: REDIS_DB_INDEX
+              value: "2"
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: REDIS_PORT
+            - name: REDIS_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: REDIS_PREFIX
+            - name: S3_BUCKET_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: S3_BUCKET_NAME
+            - name: S3_LOCAL_STACK
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: S3_LOCAL_STACK
+            - name: S3_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: S3_REGION
+            - name: STORE_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: novu-secret
+                  key: STORE_ENCRYPTION_KEY
+            - name: SENTRY_DSN
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: SENTRY_DSN
+            - name: GLOBAL_CONTEXTPATH
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: GLOBAL_CONTEXTPATH
+            - name: API_CONTEXTPATH
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: API_CONTEXTPATH
+      restartPolicy: Always
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/part-of
+                      operator: In
+                      values:
+                        - novu
+                  matchLabels:
+                    app.kubernetes.io/component: api
+                topologyKey: kubernetes.io/1-hostname
+              weight: 100
+---
+# Source: novu/templates/embed.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: novu-embed-deployment
+  namespace: novu
+  labels:
+    app.kubernetes.io/name: novu-embed
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/component: embed
+    app.kubernetes.io/part-of: novu
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  strategy:
+    type: "Recreate"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: "novu-embed"
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: novu-embed
+        app.kubernetes.io/version: "0.8.0"
+        app.kubernetes.io/component: embed
+        app.kubernetes.io/part-of: novu
+        meta.helm.sh/release-name: release-name
+        meta.helm.sh/release-namespace: novu
+    spec:
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+      setHostnameAsFQDN: true
+      containers:
+        - image: "ghcr.io/novuhq/novu/embed:0.8.0"
+          name: embed
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4701
+          # livenessProbe:
+          #   # an http probe
+          #   httpGet:
+          #     path: /rundeckpro
+          #     port: 4701
+          #     scheme: HTTP
+          #   initialDelaySeconds: 120
+          #   periodSeconds: 120
+          # readinessProbe:
+          #   httpGet:
+          #     path: /rundeckpro
+          #     port: 4701
+          #     scheme: HTTP
+          #   initialDelaySeconds: 60
+          #   periodSeconds: 30
+          env:
+            - name: WIDGET_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: WIDGET_URL
+      restartPolicy: Always
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/part-of
+                      operator: In
+                      values:
+                        - novu
+                  matchLabels:
+                    app.kubernetes.io/component: api
+                topologyKey: kubernetes.io/1-hostname
+              weight: 100
+---
+# Source: novu/templates/minio.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # This name uniquely identifies the Deployment
+  name: minio
+  namespace: novu
+  labels:
+    app: minio
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        # Label is used as selector in the service.
+        app: minio
+    spec:
+      serviceAccountName: default
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: "Always"
+      # Refer to the PVC created earlier
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            # Name of the PVC created earlier
+            claimName: minio-novu-pv-claim
+      initContainers:
+        - name: take-data-dir-ownership
+          image:  "ghcr.io/alpine:latest"
+          resources:
+            limits:
+              memory: "100Mi"
+              cpu: "50m"
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+          command:
+            - chown
+            - -R
+            - 1000:1000
+            - /data
+          volumeMounts:
+            - name: storage # must match the volume name, above
+              mountPath: "/data"
+      containers:
+        - name: minio
+          # Pulls the default Minio image from Docker Hub
+          image: pplzacrcored.azurecr.io/minio/minio:latest
+          args: ['server', '/data']
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              memory: "0.5G"
+              cpu: "1"
+          env:
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: novu-secret
+                  key: AWS_ACCESS_KEY_ID
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: novu-secret
+                  key: AWS_SECRET_ACCESS_KEY
+          ports:
+            - containerPort: 9000
+          # Mount the volume into the pod
+          volumeMounts:
+            - name: storage # must match the volume name, above
+              mountPath: "/data"
+---
+# Source: novu/templates/mongo.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # This name uniquely identifies the Deployment
+  name: mongodb
+  namespace: novu
+  labels:
+    app: mongodb
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        # Label is used as selector in the service.
+        app: mongodb
+    spec:
+      serviceAccountName: default
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: "Always"
+      initContainers:
+        - name: take-data-dir-ownership
+          image: "ghcr.io/alpine:latest"
+          resources:
+            limits:
+              memory: "100Mi"
+              cpu: "50m"
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+          command:
+            - chown
+            - -R
+            - 1000:1000
+            - /data
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+      containers:
+        - image: ghcr.io/mongo:latest
+          name: mongodb
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              memory: "0.5G"
+              cpu: "1"
+          ports:
+            - containerPort: 27017
+          env:
+            - name: PGID
+              value: "1000"
+            - name: PUID
+              value: "1000"
+          volumeMounts:
+            - name: mongo-data
+              mountPath: /data/db
+      restartPolicy: Always
+      volumes:
+        - name: mongo-data
+          persistentVolumeClaim:
+            claimName: mongo-novu-pv-claim
+---
+# Source: novu/templates/redis.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # This name uniquely identifies the Deployment
+  name: redis
+  namespace: novu
+  labels:
+    app: redis
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        # Label is used as selector in the service.
+        app: redis
+    spec:
+      serviceAccountName: default
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: "Always"
+      containers:
+        - image:  "ghcr.io/redis:alpine"
+          name: redis
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              memory: "0.5G"
+              cpu: "1"
+          ports:
+            - containerPort: 6379
+      restartPolicy: Always
+---
+# Source: novu/templates/web.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # This name uniquely identifies the Deployment
+  name: novu-web-deployment
+  namespace: novu
+  labels:
+    app.kubernetes.io/name: novu-web
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/component: web
+    app.kubernetes.io/part-of: novu
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  strategy:
+    type: "Recreate"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: novu-web
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: novu-web
+        app.kubernetes.io/version: "0.8.0"
+        app.kubernetes.io/component: web
+        app.kubernetes.io/part-of: novu
+        meta.helm.sh/release-name: release-name
+        meta.helm.sh/release-namespace: novu
+    spec:
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+      setHostnameAsFQDN: true
+      containers:
+        - image: "ghcr.io/novuhq/novu/web:0.8.0"
+          name: web
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4200
+          livenessProbe:
+            # an http probe
+            httpGet:
+              path: /
+              port: 4200
+              scheme: HTTP
+            initialDelaySeconds: 120
+            periodSeconds: 120
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4200
+              scheme: HTTP
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          env:
+            - name: REACT_APP_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: API_ROOT_URL
+            - name: REACT_APP_DOCKER_HOSTED_ENV
+              value: "true"
+            - name: REACT_APP_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: NODE_ENV
+            - name: REACT_APP_WIDGET_EMBED_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: WIDGET_EMBED_PATH
+            - name: SENTRY_DSN
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: WIDGET_EMBED_PATH
+            - name: GLOBAL_CONTEXTPATH
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: GLOBAL_CONTEXTPATH
+            - name: FRONT_BASE_CONTEXTPATH
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: FRONT_BASE_CONTEXTPATH
+
+      restartPolicy: Always
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/part-of
+                      operator: In
+                      values:
+                        - novu
+                  matchLabels:
+                    app.kubernetes.io/component: web
+                topologyKey: kubernetes.io/1-hostname
+              weight: 100
+---
+# Source: novu/templates/widget.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: novu-widget-deployment
+  namespace: novu
+  labels:
+    app.kubernetes.io/name: novu-widget
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/component: widget
+    app.kubernetes.io/part-of: novu
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  strategy:
+    type: "Recreate"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: novu-widget
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: novu-widget
+        app.kubernetes.io/version: "0.8.0"
+        app.kubernetes.io/component: widget
+        app.kubernetes.io/part-of: novu
+        meta.helm.sh/release-name: release-name
+        meta.helm.sh/release-namespace: novu
+    spec:
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+      setHostnameAsFQDN: true
+      containers:
+        - image: "ghcr.io/novuhq/novu/widget:0.8.0"
+          name: widget
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 4500
+          env:
+            - name: REACT_APP_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: API_ROOT_URL
+            - name: REACT_APP_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: NODE_ENV
+            - name: REACT_APP_WS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: REACT_APP_WS_URL
+            - name: GLOBAL_CONTEXTPATH
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: GLOBAL_CONTEXTPATH
+            - name: WIDGET_CONTEXTPATH
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: WIDGET_CONTEXTPATH
+      restartPolicy: Always
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/part-of
+                      operator: In
+                      values:
+                        - novu
+                  matchLabels:
+                    app.kubernetes.io/component: widget
+                topologyKey: kubernetes.io/1-hostname
+              weight: 100
+---
+# Source: novu/templates/ws.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # This name uniquely identifies the Deployment
+  name: novu-ws-deployment
+  namespace: novu
+  labels:
+    app.kubernetes.io/name: novu-ws
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/component: ws
+    app.kubernetes.io/part-of: novu
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  strategy:
+    type: "Recreate"
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: novu-ws
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: novu-ws
+        app.kubernetes.io/version: "0.8.0"
+        app.kubernetes.io/component: ws
+        app.kubernetes.io/part-of: novu
+        meta.helm.sh/release-name: release-name
+        meta.helm.sh/release-namespace: novu
+    spec:
+      automountServiceAccountToken: true
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: Always
+      setHostnameAsFQDN: true
+      containers:
+        - image: "ghcr.io/novuhq/novu/ws:0.8.0"
+          name: ws
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3002
+          # livenessProbe:
+          #   # an http probe
+          #   httpGet:
+          #     path: /rundeckpro
+          #     port: 3002
+          #     scheme: HTTP
+          #   initialDelaySeconds: 120
+          #   periodSeconds: 120
+          # readinessProbe:
+          #   httpGet:
+          #     path: /rundeckpro
+          #     port: 3002
+          #     scheme: HTTP
+          #   initialDelaySeconds: 60
+          #   periodSeconds: 30
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: novu-secret
+                  key: JWT_SECRET
+            - name: MONGO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: MONGO_URL
+            - name: NODE_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: NODE_ENV
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: WS_PORT
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: REDIS_PORT
+            - name: REDIS_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: REDIS_PREFIX
+            - name: GLOBAL_CONTEXTPATH
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: GLOBAL_CONTEXTPATH
+            - name: REACT_APP_WS_CONTEXTPATH
+              valueFrom:
+                configMapKeyRef:
+                  name: novu-map
+                  key: REACT_APP_WS_CONTEXTPATH
+      restartPolicy: Always
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app.kubernetes.io/part-of
+                      operator: In
+                      values:
+                        - novu
+                  matchLabels:
+                    app.kubernetes.io/component: ws
+                topologyKey: kubernetes.io/1-hostname
+              weight: 100
+---
+# Source: novu/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: novu-api-hpa
+  namespace: novu
+  labels:
+    app.kubernetes.io/part-of: novu
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: novu-api-deployment
+  minReplicas: 3
+  maxReplicas: 100
+---
+# Source: novu/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: novu-web-hpa
+  namespace: novu
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: novu-web-deployment
+  minReplicas: 3
+  maxReplicas: 100
+---
+# Source: novu/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: novu-embed-hpa
+  namespace: novu
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: novu-embed-deployment
+  minReplicas: 3
+  maxReplicas: 100
+---
+# Source: novu/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: novu-widget-hpa
+  namespace: novu
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: novu-widget-deployment
+  minReplicas: 3
+  maxReplicas: 100
+---
+# Source: novu/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: novu-ws-hpa
+  namespace: novu
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: novu-ws-deployment
+  minReplicas: 3
+  maxReplicas: 100
+---
+# Source: novu/templates/minio.yaml
+# Create rundeck bucket
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-create-bucket
+  namespace: novu
+  labels:
+    app.kubernetes.io/managed-by: Helm
+    meta.helm.sh/release-name: release-name
+    meta.helm.sh/release-namespace: novu
+spec:
+  completions: 1
+  template:
+    metadata:
+      name: minio-create-bucket
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: minio-bucket
+          image: pplzacrcored.azurecr.io/minio/mc
+          securityContext:
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "1"
+          env:
+            - name: MINIO_URL
+              value: "http://minio.novu.svc.cluster.local:9000"
+            - name: MINIO_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: novu-secret
+                  key: AWS_ACCESS_KEY_ID
+            - name: MINIO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: novu-secret
+                  key: AWS_SECRET_ACCESS_KEY
+            - name: MINIO_BUCKET
+              value: "novu"
+          command: ["/bin/sh","-c","sleep 30 && mc config host add miniorundeck $MINIO_URL $MINIO_ACCESS_KEY $MINIO_SECRET_KEY  && mc mb miniorundeck/$MINIO_BUCKET --ignore-existing"]
+---
+# Source: novu/templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "release-name-novu-test-connection"
+  labels:
+    helm.sh/chart: novu-1.0.0
+    app.kubernetes.io/name: novu
+    app.kubernetes.io/instance: release-name
+    app.kubernetes.io/version: "0.8.0"
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['release-name-novu:']
+  restartPolicy: Never
