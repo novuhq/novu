@@ -48,6 +48,7 @@
     "@novu/expo": "^0.12.0",
     "@novu/fcm": "^0.12.0",
     "@novu/firetext": "^0.12.0",
+    "@novu/forty-six-elks": "^0.12.0",
     "@novu/gupshup": "^0.12.0",
     "@novu/infobip": "^0.12.0",
     "@novu/mailersend": "^0.12.0",
