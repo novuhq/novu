@@ -2302,7 +2302,7 @@ importers:
       cz-conventional-changelog: ~3.3.0
       jest: ~27.5.1
       nyc: ~15.1.0
-      prettier: ~2.6.2
+      prettier: ~2.8.0
       rimraf: ~3.0.2
       ts-jest: ~27.1.5
       ts-node: ~10.9.1
@@ -2317,7 +2317,7 @@ importers:
       cz-conventional-changelog: 3.3.0
       jest: 27.5.1_ts-node@10.9.1
       nyc: 15.1.0
-      prettier: 2.6.2
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
