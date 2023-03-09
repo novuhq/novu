@@ -1,8 +1,9 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
+
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
-import { JobEntity } from '@novu/dal';
 
 export enum DetailEnum {
   REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL = 'Inbound mail - Missing replay callback URL',

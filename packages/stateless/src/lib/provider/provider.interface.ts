@@ -58,11 +58,13 @@ export interface IPushOptions {
     mutableContent?: boolean;
     android?: { [key: string]: { [key: string]: string } };
     apns?: { payload: { aps: { [key: string]: { [key: string]: string } } } };
+    fcmOptions?: { analyticsLabel?: string };
   };
 }
 
 export interface IChatOptions {
   webhookUrl: string;
+  channel?: string;
   content: string;
 }
 

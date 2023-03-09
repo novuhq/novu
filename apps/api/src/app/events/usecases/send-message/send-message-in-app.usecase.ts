@@ -25,11 +25,11 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
 import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';

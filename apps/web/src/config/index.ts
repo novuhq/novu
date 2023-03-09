@@ -11,8 +11,8 @@ const isCypress = (isBrowser() && (window as any).Cypress) || (isBrowser() && (w
 
 export const API_ROOT =
   window._env_.REACT_APP_API_URL || isCypress
-    ? window._env_.REACT_APP_API_URL || 'http://localhost:1336'
-    : window._env_.REACT_APP_API_URL || 'http://localhost:3000';
+    ? window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:1336'
+    : window._env_.REACT_APP_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:3000';
 
 export const WS_URL = isCypress
   ? window._env_.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL || 'http://localhost:1340'
