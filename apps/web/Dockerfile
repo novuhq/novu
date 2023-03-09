@@ -4,7 +4,7 @@ FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as builder
 WORKDIR /usr/src/app
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@7.27.0 --loglevel notice
+RUN npm install -g pnpm@7.28.0 --loglevel notice
 
 COPY .npmrc .
 COPY package.json .
@@ -41,7 +41,7 @@ FROM node:16-alpine
 WORKDIR /app
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@7.27.0 http-server --loglevel notice
+RUN npm install -g pnpm@7.28.0 http-server --loglevel notice
 
 COPY --from=builder /usr/src/app/apps/web/env.sh /app/env.sh
 COPY --from=builder /usr/src/app/apps/web/.env /app/.env
