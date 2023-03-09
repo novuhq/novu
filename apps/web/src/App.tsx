@@ -39,6 +39,8 @@ import { Trigger } from './pages/quick-start/steps/Trigger';
 import { RequiredAuth } from './components/layout/RequiredAuth';
 import { TemplateFormProvider } from './pages/templates/components/TemplateFormProvider';
 import { TemplateEditorProvider } from './pages/templates/components/TemplateEditorProvider';
+import { GetStarted } from './pages/quick-start/steps/GetStarted';
+import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -203,6 +205,8 @@ function App() {
                     }
                   />
                   <Route path={ROUTES.QUICKSTART} element={<Quickstart />} />
+                  <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
+                  <Route path={ROUTES.DIGEST_PREVIEW} element={<DigestPreview />} />
                   <Route path="/quickstart/notification-center" element={<NotificationCenter />} />
                   <Route path="/quickstart/notification-center/set-up" element={<FrameworkSetup />} />
                   <Route path="/quickstart/notification-center/set-up/:framework" element={<Setup />} />

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Stack } from '@mantine/core';
+import { ROUTES } from '../../constants/routes.enum';
 
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
 export const notificationTemplateName = 'On-boarding notification';
@@ -9,6 +10,7 @@ export const setupProject = `npm run setup:onboarding -- ${APPLICATION_IDENTIFIE
 export const npmRunCommand = `npm run dev`;
 export const welcomeDescription = 'Welcome to Novu, let’s get started';
 export const faqUrl = 'https://docs.novu.co/notification-center/react/react-components/#faq';
+export const getStartedSteps = { first: ROUTES.GET_STARTED, second: ROUTES.DIGEST_PREVIEW };
 
 interface ISnippetInstructions {
   instruction: React.ReactNode | string;

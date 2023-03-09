@@ -13,6 +13,8 @@ export enum ROUTES {
   TEMPLATES_EDIT_TEMPLATEID = '/templates/edit/:templateId',
   TEMPLATES = '/templates',
   QUICKSTART = '/quickstart',
+  GET_STARTED = '/get-started',
+  DIGEST_PREVIEW = '/get-started/preview',
   ACTIVITIES = '/activities',
   SETTINGS = '/settings',
   INTEGRATIONS = '/integrations',
