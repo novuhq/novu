@@ -318,6 +318,7 @@ export function FlowEditor({
                 handleDisplayAddNodeOnEdge(`edge-button-${edge.source}`);
               }
             }}
+            deleteKeyCode={null}
             {...reactFlowDefaultProps}
           >
             <MinimalTemplatesSideBar
