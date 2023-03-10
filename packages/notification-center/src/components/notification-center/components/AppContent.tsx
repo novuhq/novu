@@ -29,7 +29,7 @@ export function AppContent() {
 
 const wrapperClassName = (primaryColor: string, fontFamily: string, dir: string) => css`
   margin: 0;
-  font-family: ${fontFamily}, Helvetica, sans-serif;
+  font-family: ${fontFamily};
   color: #333737;
   direction: ${dir};
   width: 420px;

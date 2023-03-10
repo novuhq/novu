@@ -106,7 +106,7 @@ export function BrandingForm({
 
   const { setValue, handleSubmit, control } = useForm({
     defaultValues: {
-      fontFamily: organization?.branding?.fontFamily || 'Roboto',
+      fontFamily: organization?.branding?.fontFamily || 'inherit',
       color: organization?.branding?.color || '#f47373',
       image: image || '',
       file: file || '',
@@ -189,7 +189,17 @@ export function BrandingForm({
                   label="Font Family"
                   description="Will be used as the main font-family in the in-app widget"
                   placeholder="Select a font family"
-                  data={['Fira Code', 'Roboto', 'Montserrat', 'Open Sans', 'Lato', 'Nunito', 'Oswald', 'Raleway']}
+                  data={[
+                    'inherit',
+                    'Fira Code',
+                    'Roboto',
+                    'Montserrat',
+                    'Open Sans',
+                    'Lato',
+                    'Nunito',
+                    'Oswald',
+                    'Raleway',
+                  ]}
                   data-test-id="font-family-selector"
                   {...field}
                 />
