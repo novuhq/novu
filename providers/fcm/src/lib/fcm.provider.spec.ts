@@ -167,3 +167,131 @@ test('should trigger fcm with apns (ios) override', async () => {
     },
   });
 });
+
+test('should trigger fcm data for ios with headers options', async () => {
+  await provider.sendMessage({
+    title: 'Test',
+    content: 'Test push',
+    target: ['tester'],
+    payload: {
+      key_1: 'val_1',
+      key_2: 'val_2',
+    },
+    overrides: {
+      type: 'data',
+      apns: {
+        headers: {
+          'apns-priority': '5',
+        },
+        payload: {
+          aps: {
+            alert: {
+              'loc-key': 'some_body',
+              'title-loc-key': 'some_title',
+            },
+            sound: 'demo.wav',
+          },
+        },
+      },
+    },
+  });
+  expect(app.initializeApp).toHaveBeenCalledTimes(1);
+  expect(app.cert).toHaveBeenCalledTimes(1);
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    tokens: ['tester'],
+    apns: {
+      headers: {
+        'apns-priority': '5',
+      },
+      payload: {
+        aps: {
+          alert: {
+            'loc-key': 'some_body',
+            'title-loc-key': 'some_title',
+          },
+          sound: 'demo.wav',
+        },
+      },
+    },
+    data: {
+      key_1: 'val_1',
+      key_2: 'val_2',
+    },
+  });
+});
+
+test('should trigger fcm data for both android and ios with override options', async () => {
+  await provider.sendMessage({
+    title: 'Test',
+    content: 'Test push',
+    target: ['tester'],
+    payload: {
+      key_1: 'val_1',
+      key_2: 'val_2',
+    },
+    overrides: {
+      type: 'data',
+      android: {
+        data: {
+          body_loc_key: 'body_loc_value',
+          title_loc_key: 'title_loc_value',
+          sound: 'demo.wav',
+        },
+        priority: 'high',
+      },
+      apns: {
+        headers: {
+          'apns-priority': '5',
+        },
+        payload: {
+          aps: {
+            alert: {
+              'loc-key': 'some_body',
+              'title-loc-key': 'some_title',
+            },
+            sound: 'demo.wav',
+          },
+        },
+      },
+      fcmOptions: {
+        analyticsLabel: 'test_label',
+      },
+    },
+  });
+  expect(app.initializeApp).toHaveBeenCalledTimes(1);
+  expect(app.cert).toHaveBeenCalledTimes(1);
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    tokens: ['tester'],
+    android: {
+      data: {
+        body_loc_key: 'body_loc_value',
+        title_loc_key: 'title_loc_value',
+        sound: 'demo.wav',
+      },
+      priority: 'high',
+    },
+    apns: {
+      headers: {
+        'apns-priority': '5',
+      },
+      payload: {
+        aps: {
+          alert: {
+            'loc-key': 'some_body',
+            'title-loc-key': 'some_title',
+          },
+          sound: 'demo.wav',
+        },
+      },
+    },
+    fcmOptions: {
+      analyticsLabel: 'test_label',
+    },
+    data: {
+      key_1: 'val_1',
+      key_2: 'val_2',
+    },
+  });
+});
