@@ -136,6 +136,7 @@ describe('headless.service', () => {
   const options = {
     backendUrl: 'http://localhost:3000',
     socketUrl: 'http://localhost:3001',
+    socketPath: '/',
     applicationIdentifier: 'applicationIdentifier',
     subscriberId: 'subscriberId',
     subscriberHash: 'subscriberHash',
@@ -217,6 +218,7 @@ describe('headless.service', () => {
         1,
         options.socketUrl,
         expect.objectContaining({
+          path: options.socketPath
           reconnectionDelayMax: 10000,
           transports: ['websocket'],
           query: {

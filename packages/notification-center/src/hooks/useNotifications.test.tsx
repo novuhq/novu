@@ -134,6 +134,7 @@ describe('useNotifications', () => {
       <NovuProvider
         backendUrl="https://mock_url.com"
         socketUrl="wss://mock_url.com"
+        socketPath="/"
         applicationIdentifier="mock_app"
         subscriberId="mock_subscriber_id"
         initialFetchingStrategy={{ fetchNotifications: true }}
@@ -203,6 +204,7 @@ describe('useNotifications', () => {
       <NovuProvider
         backendUrl="https://mock_url.com"
         socketUrl="wss://mock_url.com"
+        socketPath="/"
         applicationIdentifier="mock_app"
         subscriberId="mock_subscriber_id"
         stores={stores}
