@@ -221,7 +221,7 @@ test('should trigger fcm data for ios with headers options', async () => {
   });
 });
 
-test('should trigger fcm data for both android and ios with override options', async () => {
+test('should trigger fcm data for android with priority option', async () => {
   await provider.sendMessage({
     title: 'Test',
     content: 'Test push',
@@ -234,28 +234,9 @@ test('should trigger fcm data for both android and ios with override options', a
       type: 'data',
       android: {
         data: {
-          body_loc_key: 'body_loc_value',
-          title_loc_key: 'title_loc_value',
-          sound: 'demo.wav',
+          for_android: 'only',
         },
         priority: 'high',
-      },
-      apns: {
-        headers: {
-          'apns-priority': '5',
-        },
-        payload: {
-          aps: {
-            alert: {
-              'loc-key': 'some_body',
-              'title-loc-key': 'some_title',
-            },
-            sound: 'demo.wav',
-          },
-        },
-      },
-      fcmOptions: {
-        analyticsLabel: 'test_label',
       },
     },
   });
@@ -266,28 +247,9 @@ test('should trigger fcm data for both android and ios with override options', a
     tokens: ['tester'],
     android: {
       data: {
-        body_loc_key: 'body_loc_value',
-        title_loc_key: 'title_loc_value',
-        sound: 'demo.wav',
+        for_android: 'only',
       },
       priority: 'high',
-    },
-    apns: {
-      headers: {
-        'apns-priority': '5',
-      },
-      payload: {
-        aps: {
-          alert: {
-            'loc-key': 'some_body',
-            'title-loc-key': 'some_title',
-          },
-          sound: 'demo.wav',
-        },
-      },
-    },
-    fcmOptions: {
-      analyticsLabel: 'test_label',
     },
     data: {
       key_1: 'val_1',
