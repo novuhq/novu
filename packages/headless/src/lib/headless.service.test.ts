@@ -218,7 +218,7 @@ describe('headless.service', () => {
         1,
         options.socketUrl,
         expect.objectContaining({
-          path: options.socketPath
+          path: options.socketPath,
           reconnectionDelayMax: 10000,
           transports: ['websocket'],
           query: {
