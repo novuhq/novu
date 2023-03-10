@@ -11,6 +11,7 @@ export class CreateUserCommand extends BaseCommand {
   picture?: string;
 
   auth: {
+    username?: string;
     profileId: string;
     provider: AuthProviderEnum;
     accessToken: string;

@@ -25,11 +25,11 @@ import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase'
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
 import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -263,7 +263,7 @@ export class SendMessageInApp extends SendMessageBase {
     subscriber: SubscriberEntity,
     command: SendMessageCommand,
     organization: OrganizationEntity | null
-  ): Promise<string | null> {
+  ): Promise<string> {
     return await this.compileTemplate.execute(
       CompileTemplateCommand.create({
         template: content as string,

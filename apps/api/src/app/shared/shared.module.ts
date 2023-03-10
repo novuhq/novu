@@ -26,6 +26,7 @@ import { AnalyticsService } from '@novu/application-generic';
 import { ConnectionOptions } from 'tls';
 
 import { DistributedLockService } from './services/distributed-lock';
+import { PerformanceService } from './services/performance';
 import { QueueService } from './services/queue';
 import {
   AzureBlobStorageService,
@@ -109,6 +110,12 @@ const PROVIDERS = [
       await dalService.connect(process.env.MONGO_URL);
 
       return dalService;
+    },
+  },
+  {
+    provide: PerformanceService,
+    useFactory: () => {
+      return new PerformanceService();
     },
   },
   cacheService,

@@ -20,7 +20,7 @@ runs:
       shell: bash
       run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 
-    - uses: actions/setup-node@v2
+    - uses: actions/setup-node@v3
       name: ⚙️ Setup Node Version
       with:
         node-version: '16.15.1'

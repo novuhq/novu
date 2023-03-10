@@ -8,12 +8,10 @@ export class TwilioHandler extends BaseSmsHandler {
     super('twilio', ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
-    const config: {
-      accountSid: string;
-      authToken: string;
-      from: string;
-    } = { accountSid: credentials.accountSid, authToken: credentials.token, from: credentials.from };
-
-    this.provider = new TwilioSmsProvider(config);
+    this.provider = new TwilioSmsProvider({
+      accountSid: credentials.accountSid,
+      authToken: credentials.token,
+      from: credentials.from,
+    });
   }
 }
