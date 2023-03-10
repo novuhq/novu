@@ -12,6 +12,7 @@ import { NotificationCenter } from '../notification-center/NotificationCenter';
 export const NOTIFICATION_CENTER_CONTENT_PROPS = [
   'backendUrl',
   'socketUrl',
+  'socketPath',
   'subscriberId',
   'applicationIdentifier',
   'subscriberHash',
@@ -40,6 +41,7 @@ export type NotificationCenterContentComponentProps = Omit<NotificationCenterCom
 export const NotificationCenterContentComponent: FunctionComponent<NotificationCenterContentComponentProps> = ({
   backendUrl,
   socketUrl,
+  socketPath,
   subscriberId,
   applicationIdentifier,
   subscriberHash,
@@ -68,6 +70,7 @@ export const NotificationCenterContentComponent: FunctionComponent<NotificationC
       stores={stores}
       backendUrl={backendUrl}
       socketUrl={socketUrl}
+      socketPath={socketPath}
       subscriberId={subscriberId}
       applicationIdentifier={applicationIdentifier}
       subscriberHash={subscriberHash}

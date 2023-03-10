@@ -58,6 +58,7 @@ function Header() {
     <NovuProvider
       backendUrl={'YOUR_BACKEND_URL'}
       socketUrl={'YOUR_SOCKET_URL'}
+      socketPath={'YOUR_SOCKET_PATH'}
       subscriberId={'USER_ID'}
       applicationIdentifier={'APP_ID_FROM_ADMIN_PANEL'}
     >
@@ -460,6 +461,7 @@ To create multiple stores you can use the prop `stores` on the `NovuProvider` co
   ]}
   backendUrl={API_ROOT}
   socketUrl={WS_URL}
+  socketPath={WS_PATH}
   subscriberId={user?._id}
   applicationIdentifier={environment?.identifier}
 >
@@ -551,6 +553,7 @@ Possible causes for the notification center not loading properly:
 - Invalid applicationIdentifier
 - Invalid backendUrl (in case of self hosted)
 - Invalid socketUrl (in case of self hosted)
+- Invalid socketPath (in case of self hosted)
 
 </details>
 

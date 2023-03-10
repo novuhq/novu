@@ -11,6 +11,7 @@ export type FloatingPosition = FloatingSide | `${FloatingSide}-${FloatingPlaceme
 export interface INotificationCenterComponentProps {
   backendUrl?: NotificationCenterContentComponentProps['backendUrl'];
   socketUrl?: NotificationCenterContentComponentProps['socketUrl'];
+  socketPath?: NotificationCenterContentComponentProps['socketPath'];
   subscriberId?: NotificationCenterContentComponentProps['subscriberId'];
   applicationIdentifier: NotificationCenterContentComponentProps['applicationIdentifier'];
   subscriberHash?: NotificationCenterContentComponentProps['subscriberHash'];
@@ -105,6 +106,7 @@ watch(computedStyles, (newComputedStyles) => {
       <notification-center-content-component
         :backendUrl="backendUrl"
         :socketUrl="socketUrl"
+        :socketPath="socketPath"
         :subscriberId="subscriberId"
         :applicationIdentifier="applicationIdentifier"
         :subscriberHash="subscriberHash"

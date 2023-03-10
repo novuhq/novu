@@ -7,6 +7,7 @@ import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 export interface IHeadlessServiceOptions {
   backendUrl?: string;
   socketUrl?: string;
+  socketPath?: string;
   applicationIdentifier: string;
   subscriberId?: string;
   subscriberHash?: string;

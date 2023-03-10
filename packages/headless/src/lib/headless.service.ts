@@ -129,6 +129,7 @@ export class HeadlessService {
 
   private initializeSocket(token: string | null) {
     const socketUrl = this.options.socketUrl ?? 'https://ws.novu.co';
+    const socketPath = this.options.socketPath ?? '/';
 
     if (this.socket) {
       this.socket.disconnect();
@@ -136,6 +137,7 @@ export class HeadlessService {
 
     if (token) {
       this.socket = io(socketUrl, {
+        path: socketPath,
         reconnectionDelayMax: 10000,
         transports: ['websocket'],
         query: {

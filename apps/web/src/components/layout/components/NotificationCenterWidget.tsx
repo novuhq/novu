@@ -2,7 +2,7 @@ import { useMantineColorScheme } from '@mantine/core';
 import { IUserEntity, IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '@novu/shared';
 import { NotificationBell, NovuProvider, PopoverNotificationCenter, useUpdateAction } from '@novu/notification-center';
 
-import { API_ROOT, WS_URL } from '../../../config';
+import { API_ROOT, WS_URL, WS_PATH } from '../../../config';
 import { useEnvController } from '../../../hooks';
 
 export function NotificationCenterWidget({ user }: { user: IUserEntity | undefined }) {
@@ -13,6 +13,7 @@ export function NotificationCenterWidget({ user }: { user: IUserEntity | undefin
       <NovuProvider
         backendUrl={API_ROOT}
         socketUrl={WS_URL}
+        socketPath={WS_PATH}
         subscriberId={user?._id as string}
         applicationIdentifier={environment?.identifier as string}
       >

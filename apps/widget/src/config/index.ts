@@ -10,4 +10,6 @@ export const WS_URL =
     ? window._env_.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL || 'http://localhost:1340'
     : window._env_.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL || 'http://localhost:3002';
 
+  export const WS_PATH = window._env_.REACT_APP_WS_PATH || process.env.REACT_APP_WS_PATH || '/';
+  
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WIDGET);

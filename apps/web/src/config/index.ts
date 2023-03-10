@@ -18,6 +18,8 @@ export const WS_URL = isCypress
   ? window._env_.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL || 'http://localhost:1340'
   : window._env_.REACT_APP_WS_URL || process.env.REACT_APP_WS_URL || 'http://localhost:3002';
 
+export const WS_PATH = window._env_.REACT_APP_WS_PATH || process.env.REACT_APP_WS_PATH || '/';
+
 export const SENTRY_DSN = window._env_.REACT_APP_SENTRY_DSN || process.env.REACT_APP_SENTRY_DSN;
 
 export const ENV = window._env_.REACT_APP_ENVIRONMENT || process.env.REACT_APP_ENVIRONMENT;

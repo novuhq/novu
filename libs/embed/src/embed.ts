@@ -18,6 +18,8 @@ class Novu {
 
   private socketUrl?: string = '';
 
+  private socketPath?: string = '';
+
   private theme?: Record<string, unknown>;
 
   private colorScheme?: ColorScheme;
@@ -73,6 +75,7 @@ class Novu {
       this.options = selectorOrOptions;
       this.backendUrl = selectorOrOptions.backendUrl;
       this.socketUrl = selectorOrOptions.socketUrl;
+      this.socketPath = selectorOrOptions.socketPath;
       this.theme = selectorOrOptions.theme;
       this.styles = selectorOrOptions.styles;
       this.i18n = selectorOrOptions.i18n;
@@ -237,6 +240,7 @@ class Novu {
                 clientId: this.clientId,
                 backendUrl: this.backendUrl,
                 socketUrl: this.socketUrl,
+                socketPath: this.socketPath,
                 theme: this.theme,
                 styles: this.styles,
                 i18n: this.i18n,
@@ -412,6 +416,7 @@ interface IOptions {
   unseenBadgeSelector: string;
   backendUrl?: string;
   socketUrl?: string;
+  socketPath?: string;
   theme?: Record<string, unknown>;
   styles?: INotificationCenterStyles;
   i18n?: Record<string, unknown>;

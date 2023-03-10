@@ -9,6 +9,7 @@ type SelectedProviderProps = Pick<
   | 'stores'
   | 'backendUrl'
   | 'socketUrl'
+  | 'socketPath'
   | 'subscriberId'
   | 'applicationIdentifier'
   | 'subscriberHash'

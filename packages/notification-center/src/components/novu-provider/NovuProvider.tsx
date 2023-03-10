@@ -37,6 +37,7 @@ export interface INovuProviderProps {
   subscriberId?: string;
   applicationIdentifier: string;
   socketUrl?: string;
+  socketPath?: string;
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
   subscriberHash?: string;
   i18n?: I18NLanguage | ITranslationEntry;
@@ -47,6 +48,7 @@ export interface INovuProviderProps {
 export function NovuProvider({
   backendUrl: initialBackendUrl,
   socketUrl: initialSocketUrl,
+  socketPath: initialSocketPath,
   applicationIdentifier,
   subscriberId,
   subscriberHash,
@@ -59,6 +61,7 @@ export function NovuProvider({
 }: INovuProviderProps) {
   const backendUrl = initialBackendUrl ?? 'https://api.novu.co';
   const socketUrl = initialSocketUrl ?? 'https://ws.novu.co';
+  const socketPath = initialSocketPath ?? '/'
   const stores = initialStores ?? [{ storeId: 'default_store' }];
   const [fetchingStrategy, setFetchingStrategyState] = useState({
     ...DEFAULT_FETCHING_STRATEGY,
@@ -75,7 +78,7 @@ export function NovuProvider({
     return service;
   }, [backendUrl]);
 
-  const { socket, initializeSocket, disconnectSocket } = useInitializeSocket({ socketUrl });
+  const { socket, initializeSocket, disconnectSocket } = useInitializeSocket({ socketUrl, socketPath });
 
   const onSuccessfulSession = useCallback(
     (newSession: ISession) => {
@@ -101,6 +104,7 @@ export function NovuProvider({
     () => ({
       backendUrl,
       socketUrl,
+      socketPath,
       applicationIdentifier,
       subscriberId,
       subscriberHash,
@@ -115,6 +119,7 @@ export function NovuProvider({
     [
       backendUrl,
       socketUrl,
+      socketPath,
       applicationIdentifier,
       subscriberId,
       subscriberHash,

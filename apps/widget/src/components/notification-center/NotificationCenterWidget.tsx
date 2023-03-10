@@ -13,7 +13,7 @@ import {
 import type { INovuThemeProvider, INotificationCenterStyles } from '@novu/notification-center';
 import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
 
-import { API_URL, WS_URL } from '../../config';
+import { API_URL, WS_URL, WS_PATH } from '../../config';
 
 interface INotificationCenterWidgetProps {
   onUrlChange: (url: string) => void;
@@ -27,6 +27,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [userDataPayload, setUserDataPayload] = useState<{ subscriberId: string; subscriberHash: string }>();
   const [backendUrl, setBackendUrl] = useState(API_URL);
   const [socketUrl, setSocketUrl] = useState(WS_URL);
+  const [socketPath, setSocketPath] = useState(WS_PATH);
   const [theme, setTheme] = useState<INovuThemeProvider>({});
   const [fontFamily, setFontFamily] = useState<string>('Lato');
   const [frameInitialized, setFrameInitialized] = useState(false);
@@ -59,6 +60,10 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
 
         if (data.value.socketUrl) {
           setSocketUrl(data.value.socketUrl);
+        }
+
+        if (data.value.socketPath) {
+          setSocketPath(data.value.socketPath);
         }
 
         if (data.value.theme) {
@@ -118,6 +123,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
         <NovuProvider
           backendUrl={backendUrl}
           socketUrl={socketUrl}
+          socketPath={socketPath}
           applicationIdentifier={props.applicationIdentifier as string}
           subscriberId={userDataPayload.subscriberId}
           onLoad={onLoad}

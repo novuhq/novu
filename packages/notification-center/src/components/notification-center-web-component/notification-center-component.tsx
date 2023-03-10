@@ -15,6 +15,7 @@ import { useUpdateAction } from '../../hooks';
 export const NOTIFICATION_CENTER_PROPS = [
   'backendUrl',
   'socketUrl',
+  'socketPath',
   'subscriberId',
   'applicationIdentifier',
   'subscriberHash',
@@ -42,6 +43,7 @@ export const NOTIFICATION_CENTER_PROPS = [
 export const NotificationCenterComponent: FunctionComponent<NotificationCenterComponentProps> = ({
   backendUrl,
   socketUrl,
+  socketPath,
   subscriberId,
   applicationIdentifier,
   subscriberHash,
@@ -71,6 +73,7 @@ export const NotificationCenterComponent: FunctionComponent<NotificationCenterCo
       stores={stores}
       backendUrl={backendUrl}
       socketUrl={socketUrl}
+      socketPath={socketPath}
       subscriberId={subscriberId}
       applicationIdentifier={applicationIdentifier}
       subscriberHash={subscriberHash}

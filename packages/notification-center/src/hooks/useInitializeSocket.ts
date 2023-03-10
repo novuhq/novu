@@ -1,15 +1,15 @@
 import { useRef, useCallback } from 'react';
-import { Manager } from 'socket.io-client';
+import { io } from 'socket.io-client';
 
 import type { Socket, ISession } from '../shared/interfaces';
 
-type IUseInitializeSocket = (args: { socketUrl: string }) => {
+type IUseInitializeSocket = (args: { socketUrl: string, socketPath: string }) => {
   socket: Socket | undefined;
   initializeSocket: (args: ISession) => void;
   disconnectSocket: () => void;
 };
 
-export const useInitializeSocket: IUseInitializeSocket = ({ socketUrl }) => {
+export const useInitializeSocket: IUseInitializeSocket = ({ socketUrl, socketPath }) => {
   const socketRef = useRef<Socket | null>(null);
 
   const disconnectSocket = useCallback(() => {
@@ -26,8 +26,8 @@ export const useInitializeSocket: IUseInitializeSocket = ({ socketUrl }) => {
       }
 
       if (token) {
-        const manager = new Manager(socketUrl);
-        socketRef.current = manager.socket('/', {
+        socketRef.current = io(socketUrl, {
+          path: socketPath,
           reconnectionDelayMax: 10000,
           transports: ['websocket'],
           auth: {

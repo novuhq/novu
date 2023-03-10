@@ -8,6 +8,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
   template: `<notification-center-web-component
     [backendUrl]="backendUrl"
     [socketUrl]="socketUrl"
+    [socketPath]="socketPath"
     [subscriberId]="subscriberId"
     [applicationIdentifier]="applicationIdentifier"
     [subscriberHash]="subscriberHash"
@@ -29,6 +30,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
   inputs: [
     'backendUrl',
     'socketUrl',
+    'socketPath',
     'subscriberId',
     'applicationIdentifier',
     'subscriberHash',
@@ -51,6 +53,7 @@ customElements.define('notification-center-web-component', NotificationCenterWeb
 export class NotificationCenterComponent {
   @Input() backendUrl: NotificationCenterComponentProps['backendUrl'];
   @Input() socketUrl: NotificationCenterComponentProps['socketUrl'];
+  @Input() socketPath: NotificationCenterComponentProps['socketPath'];
   @Input() subscriberId: NotificationCenterComponentProps['subscriberId'];
   @Input() applicationIdentifier: NotificationCenterComponentProps['applicationIdentifier'] = '';
   @Input() subscriberHash: NotificationCenterComponentProps['subscriberHash'];

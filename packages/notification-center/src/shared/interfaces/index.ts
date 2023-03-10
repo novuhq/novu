@@ -84,6 +84,7 @@ export interface INovuProviderContext {
   applicationIdentifier?: string;
   isSessionInitialized: boolean;
   socketUrl?: string;
+  socketPath?: string;
   subscriberHash: string;
   apiService: ApiService;
   socket?: ISocket;
