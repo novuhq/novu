@@ -403,7 +403,9 @@
     "emailjs",
     "typeof",
     "nbsp",
-    "stddev"
+    "stddev",
+    "instrumentations",
+    "otel"
   ],
   "flagWords": [],
   "patterns": [

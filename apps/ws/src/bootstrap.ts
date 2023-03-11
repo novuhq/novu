@@ -8,6 +8,8 @@ import { version } from '../package.json';
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
 import helmet from 'helmet';
+import { getOTELSDK } from '@novu/application-generic';
+import * as packageJson from '../package.json';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -17,7 +19,11 @@ if (process.env.SENTRY_DSN) {
   });
 }
 
+const otelSDK = getOTELSDK(packageJson.name);
+
 export async function bootstrap() {
+  await otelSDK.start();
+
   const app = await NestFactory.create(AppModule);
   const redisIoAdapter = new RedisIoAdapter(app);
 
@@ -36,3 +42,12 @@ export async function bootstrap() {
 
   await app.listen(process.env.PORT as string);
 }
+
+// gracefully shut down the SDK on process exit
+process.on('SIGTERM', () => {
+  otelSDK
+    .shutdown()
+    .then(() => console.log('Tracing terminated'))
+    .catch((error) => console.log('Error terminating tracing', error))
+    .finally(() => process.exit(0));
+});

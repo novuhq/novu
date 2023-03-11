@@ -19,6 +19,8 @@ import { ResponseInterceptor } from './app/shared/framework/response.interceptor
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
+import { getOTELSDK } from '@novu/application-generic/build/main/tracing/tracing';
+import * as packageJson from '../package.json';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 
@@ -38,7 +40,11 @@ if (process.env.SENTRY_DSN) {
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
 
+const otelSDK = getOTELSDK(packageJson.name);
+
 export async function bootstrap(expressApp?): Promise<INestApplication> {
+  await otelSDK.start();
+
   let app: INestApplication;
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
@@ -138,3 +144,12 @@ const corsOptionsDelegate = function (req, callback) {
 function isWidgetRoute(url: string) {
   return url.startsWith('/v1/widgets');
 }
+
+// gracefully shut down the SDK on process exit
+process.on('SIGTERM', () => {
+  otelSDK
+    .shutdown()
+    .then(() => console.log('Tracing terminated'))
+    .catch((error) => console.log('Error terminating tracing', error))
+    .finally(() => process.exit(0));
+});

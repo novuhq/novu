@@ -34,6 +34,7 @@ import { CalculateLimitNovuIntegration } from './usecases/calculate-limit-novu-i
 import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit-novu-integration';
 import { GetInAppActivatedCommand } from './usecases/get-In-app-activated/get-In-app-activated.command';
 import { GetInAppActivated } from './usecases/get-In-app-activated/get-In-app-activated.usecase';
+import { Span } from '@novu/application-generic';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -180,6 +181,7 @@ export class IntegrationsController {
   }
 
   @Get('/:channelType/limit')
+  @Span()
   async getProviderLimit(
     @UserSession() user: IJwtPayload,
     @Param('channelType') channelType: ChannelTypeEnum

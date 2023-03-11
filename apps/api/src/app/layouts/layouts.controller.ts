@@ -56,6 +56,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { UserSession } from '../shared/framework/user.decorator';
 import { AnalyticsService } from '@novu/application-generic';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
+import { Span } from '@novu/application-generic';
 
 @Controller('/layouts')
 @ApiTags('Layouts')
@@ -78,6 +79,7 @@ export class LayoutsController {
     description: 'The layout has been successfully created.',
   })
   @ApiOperation({ summary: 'Layout creation', description: 'Create a layout' })
+  @Span()
   async createLayout(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateLayoutRequestDto

@@ -8,7 +8,7 @@ export class SlackHandler extends BaseChatHandler {
     super('slack', ChannelTypeEnum.CHAT);
   }
 
-  buildProvider(_: ICredentials) {
+  buildProvider(credentials: ICredentials) {
     this.provider = new SlackProvider();
   }
 }
