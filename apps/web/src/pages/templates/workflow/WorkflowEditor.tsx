@@ -14,7 +14,7 @@ import { TemplatePageHeader } from '../components/TemplatePageHeader';
 import { EditorPages } from '../editor/TemplateEditorPage';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { FilterModal } from '../filter/FilterModal';
-import { SelectedStep } from './SideBar/SelectedStep';
+import { StepSettings } from './SideBar/StepSettings';
 import { AddStepMenu } from './SideBar/AddStepMenu';
 import { useTemplateFetcher } from '../components/useTemplateFetcher';
 import { ActivePageEnum } from '../../../constants/editorEnums';
@@ -113,7 +113,6 @@ const WorkflowEditor = ({
             onDelete={onDelete}
             setActivePage={setActivePageWrapper}
             dragging={dragging}
-            templateId={templateId}
             errors={errors}
             steps={steps}
             addStep={addStep}
@@ -136,7 +135,7 @@ const WorkflowEditor = ({
         <Grid.Col md={3} sm={6}>
           <SideBarWrapper dark={colorScheme === 'dark'}>
             {selectedChannel ? (
-              <SelectedStep
+              <StepSettings
                 setActivePage={setActivePageWrapper}
                 setFilterOpen={setFilterOpen}
                 isLoading={isCreatingTemplate}
