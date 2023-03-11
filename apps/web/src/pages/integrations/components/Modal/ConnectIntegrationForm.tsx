@@ -204,7 +204,14 @@ export function ConnectIntegrationForm({
   const webhookUrl = `${API_ROOT}/v1/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
 
   return (
-    <form noValidate onSubmit={handleSubmitIntegration(onCreateIntegration)}>
+    <form
+      name={'connect-integration-form'}
+      noValidate
+      onSubmit={(e) => {
+        handleSubmitIntegration(onCreateIntegration)(e);
+        e.stopPropagation();
+      }}
+    >
       <Header dark={colorScheme === 'dark'}>
         <Stack spacing={10}>
           <Image
@@ -231,7 +238,7 @@ export function ConnectIntegrationForm({
 
       <CenterDiv>
         {provider?.credentials.map((credential: IConfigCredentials) => (
-          <InputWrapper key={credential.key}>
+          <InputWrapper key={`${credential.key}-${provider?.providerId}`}>
             <Controller
               name={credential.key}
               control={control}

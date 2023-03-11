@@ -156,6 +156,7 @@ export function IntegrationsStoreModal({
               <When truthy={!provider?.novu}>
                 <ConnectIntegrationForm
                   onClose={handleCloseForm}
+                  key={provider?.providerId}
                   provider={provider}
                   showForm={handlerShowForm}
                   createModel={isCreateIntegrationModal}
