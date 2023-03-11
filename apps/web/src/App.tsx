@@ -39,6 +39,7 @@ import { Trigger } from './pages/quick-start/steps/Trigger';
 import { RequiredAuth } from './components/layout/RequiredAuth';
 import { TemplateEditorFormProvider } from './pages/templates/components/TemplateEditorFormProvider';
 import { TemplateEditorProvider } from './pages/templates/editor/TemplateEditorProvider';
+import { TemplatesDigestPlaygroundPage } from './pages/templates/TemplatesDigestPlaygroundPage';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -173,6 +174,7 @@ function App() {
                 />
                 <Route element={<AppLayout />}>
                   <Route path={ROUTES.ANY} element={<HomePage />} />
+                  <Route path={ROUTES.TEMPLATES_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
                   <Route
                     path={ROUTES.TEMPLATES_CREATE}
                     element={

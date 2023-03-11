@@ -9,6 +9,7 @@ export enum ROUTES {
   PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS = '/partner-integrations/vercel/link-projects',
   PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT = '/partner-integrations/vercel/link-projects/edit',
   ANY = '/*',
+  TEMPLATES_DIGEST_PLAYGROUND = '/templates/:templateId/digest-playground',
   TEMPLATES_CREATE = '/templates/create',
   TEMPLATES_EDIT_TEMPLATEID = '/templates/edit/:templateId',
   TEMPLATES = '/templates',
