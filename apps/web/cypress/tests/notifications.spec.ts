@@ -58,7 +58,7 @@ describe('Notification Templates Screen', function () {
     cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
     cy.getByTestId('try-digest-playground-tile').should('not.be.disabled').click();
 
-    cy.url().should('include', '/templates/digest-playground');
+    cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
   });
 
@@ -71,7 +71,7 @@ describe('Notification Templates Screen', function () {
     cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
     cy.getByTestId('try-digest-playground-tile').click();
 
-    cy.url().should('include', '/templates/digest-playground');
+    cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
 
     cy.contains('Go Back').click();
