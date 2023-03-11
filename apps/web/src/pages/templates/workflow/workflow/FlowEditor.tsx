@@ -90,9 +90,7 @@ export function FlowEditor({
   }, [reactFlowInstance]);
 
   useEffect(() => {
-    if (steps.length > 0) {
-      initializeWorkflowTree();
-    }
+    initializeWorkflowTree();
   }, [steps, dragging, errors, readonly]);
 
   const addNewNode = useCallback(
