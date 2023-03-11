@@ -14,10 +14,9 @@ importers:
       '@nrwl/eslint-plugin-nx': 13.10.6
       '@nrwl/jest': 13.10.6
       '@nrwl/linter': 13.10.6
-      '@nrwl/nx-cloud': ^13.2.1
+      '@nrwl/nx-cloud': ^15.0.0
       '@nrwl/tao': 13.10.6
       '@nrwl/workspace': 13.10.6
-      '@octokit/core': ^3.6.0
       '@pnpm/filter-workspace-packages': ^4.1.11
       '@pnpm/logger': ^4.0.0
       '@types/inquirer': 8.2.6
@@ -44,7 +43,7 @@ importers:
       eslint-plugin-functional: ^3.7.2
       eslint-plugin-import: ^2.25.4
       eslint-plugin-jsx-a11y: ^6.5.1
-      eslint-plugin-prettier: ^3.4.1
+      eslint-plugin-prettier: ^4.2.1
       eslint-plugin-promise: ^4.3.1
       eslint-plugin-react: 7.32.2
       eslint-plugin-react-hooks: ^4.4.0
@@ -66,7 +65,7 @@ importers:
       nx: ^14.5.10
       ora: ~5.4.1
       pnpm: 7.28.0
-      prettier: ^2.6.2
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       shelljs: ^0.8.5
       stop-only: ^3.1.2
@@ -87,13 +86,12 @@ importers:
       '@commitlint/config-conventional': 17.4.4
       '@cspell/eslint-plugin': 6.14.3
       '@nrwl/cli': 13.10.6
-      '@nrwl/eslint-plugin-nx': 13.10.6_smedc52a7ra4k3zgdmfnbbivkq
+      '@nrwl/eslint-plugin-nx': 13.10.6_bbah62p5gftlksphgvxcywosl4
       '@nrwl/jest': 13.10.6_nx@14.5.10+ts-node@10.9.1
       '@nrwl/linter': 13.10.6_bcc3khvf2yo3dht5hdivnypbwi
-      '@nrwl/nx-cloud': 13.2.1_chalk@4.1.2+rxjs@6.5.5
+      '@nrwl/nx-cloud': 15.1.1
       '@nrwl/tao': 13.10.6
-      '@nrwl/workspace': 13.10.6_whvszw2m75xtityfnxnoryexiq
-      '@octokit/core': 3.6.0
+      '@nrwl/workspace': 13.10.6_5tvp64g6xhyzatwhrkwzapwmga
       '@pnpm/filter-workspace-packages': 4.4.35_@pnpm+logger@4.0.0
       '@pnpm/logger': 4.0.0
       '@types/inquirer': 8.2.6
@@ -120,7 +118,7 @@ importers:
       eslint-plugin-functional: 3.7.2_4vsywjlpuriuw3tl5oq6zy5a64
       eslint-plugin-import: 2.26.0_le6bq4wixy3va5oryeliptrdgy
       eslint-plugin-jsx-a11y: 6.5.1_eslint@8.33.0
-      eslint-plugin-prettier: 3.4.1_cuarspdxmw7ji6hxmghkt53idi
+      eslint-plugin-prettier: 4.2.1_qa2thblfovmfepmgrc7z2owbo4
       eslint-plugin-promise: 4.3.1
       eslint-plugin-react: 7.32.2_eslint@8.33.0
       eslint-plugin-react-hooks: 4.4.0_eslint@8.33.0
@@ -129,7 +127,7 @@ importers:
       globby: 12.2.0
       gradient-string: 2.0.1
       husky: 8.0.1
-      hygen: 6.2.0_cuarspdxmw7ji6hxmghkt53idi
+      hygen: 6.2.0_qa2thblfovmfepmgrc7z2owbo4
       inquirer: 8.2.5
       jest: 27.5.1_ts-node@10.9.1
       jira-prepare-commit-msg: 1.7.2
@@ -141,7 +139,7 @@ importers:
       mississippi: 4.0.0
       ora: 5.4.1
       pnpm: 7.28.0
-      prettier: 2.6.2
+      prettier: 2.8.4
       rimraf: 3.0.2
       shelljs: 0.8.5
       stop-only: 3.1.2
@@ -181,6 +179,7 @@ importers:
       '@novu/expo': ^0.12.0
       '@novu/fcm': ^0.12.0
       '@novu/firetext': ^0.12.0
+      '@novu/forty-six-elks': ^0.12.0
       '@novu/gupshup': ^0.12.0
       '@novu/infobip': ^0.12.0
       '@novu/kannel': ^0.12.0
@@ -294,6 +293,7 @@ importers:
       '@novu/expo': link:../../providers/expo
       '@novu/fcm': link:../../providers/fcm
       '@novu/firetext': link:../../providers/firetext
+      '@novu/forty-six-elks': link:../../providers/forty-six-elks
       '@novu/gupshup': link:../../providers/gupshup
       '@novu/infobip': link:../../providers/infobip
       '@novu/kannel': link:../../providers/kannel
@@ -407,7 +407,7 @@ importers:
       mailparser: ^0.6.0
       node-uuid: ^1.4.3
       nodemon: ^2.0.7
-      prettier: ^2.1.2
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       rxjs: ^6.5.5
       shelljs: ^0.8.5
@@ -444,8 +444,8 @@ importers:
       '@types/smtp-server': 3.5.7
       cross-env: 7.0.3
       nodemon: 2.0.15
-      prettier: 2.7.1
-      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
+      prettier: 2.8.4
+      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -724,7 +724,7 @@ importers:
       mocha: ^8.1.1
       nest-raven: ^7.2.0
       nodemon: ^2.0.7
-      prettier: ^2.1.2
+      prettier: ~2.8.0
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       rxjs: ^7.5.5
@@ -782,7 +782,7 @@ importers:
       jest: 27.5.1_ts-node@10.9.1
       mocha: 8.4.0
       nodemon: 2.0.15
-      prettier: 2.7.1
+      prettier: 2.8.4
       sinon: 9.2.4
       supertest: 6.2.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
@@ -937,7 +937,7 @@ importers:
       nest-raven: ^9.1.0
       newrelic: 9.10.2
       nodemon: ^2.0.7
-      prettier: ^2.1.2
+      prettier: ~2.8.0
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       rxjs: ^6.5.5
@@ -991,7 +991,7 @@ importers:
       cross-env: 7.0.3
       jest: 27.5.1_ts-node@10.9.1
       nodemon: 2.0.15
-      prettier: 2.6.1
+      prettier: 2.8.4
       supertest: 6.2.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
@@ -1019,7 +1019,7 @@ importers:
       husky: ^8.0.0
       lint-staged: ^12.4.1
       markdownlint-cli: ^0.33.0
-      prettier: 2.6.2
+      prettier: ~2.8.0
       prism-react-renderer: ^1.3.1
       react: ^17.0.1
       react-dom: ^17.0.1
@@ -1064,7 +1064,7 @@ importers:
       husky: 8.0.1
       lint-staged: 12.5.0
       markdownlint-cli: 0.33.0
-      prettier: 2.6.2
+      prettier: 2.8.4
       sass-loader: 13.0.0_sass@1.52.3+webpack@5.75.0
       stylelint: 14.9.1
       stylelint-config-recess-order: 3.0.0_stylelint@14.9.1
@@ -1158,7 +1158,6 @@ importers:
       '@aws-sdk/s3-request-presigner': ^3.14.0
       '@faker-js/faker': ^6.0.0
       '@novu/shared': ^0.12.0
-      '@octokit/graphql': ^4.3.1
       '@sendgrid/mail': ^7.4.2
       '@types/async': ^3.2.1
       '@types/bluebird': ^3.5.30
@@ -1177,7 +1176,7 @@ importers:
       bull-arena: ^3.2.2
       class-transformer: ^0.5.1
       cross-fetch: ^3.0.4
-      eslint-plugin-prettier: ^3.4.0
+      eslint-plugin-prettier: ^4.2.1
       event-stream: ^4.0.1
       fs-extra: ^9.0.0
       googleapis: ^60.0.1
@@ -1201,7 +1200,6 @@ importers:
       '@aws-sdk/s3-request-presigner': 3.58.0
       '@faker-js/faker': 6.1.1
       '@novu/shared': link:../shared
-      '@octokit/graphql': 4.8.0
       '@sendgrid/mail': 7.6.2
       JSONStream: 1.3.5
       agenda: 4.2.1
@@ -1235,7 +1233,7 @@ importers:
       '@types/twilio': 3.19.3
       '@typescript-eslint/parser': 4.33.0_jofidmxrjzhj7l6vknpw5ecvfe
       apollo-boost: 0.4.9_graphql@15.8.0
-      eslint-plugin-prettier: 3.4.1_lk2fkjavihlcu7p5a3tdxfycz4
+      eslint-plugin-prettier: 4.2.1_xlxobjkai7xsh6g3rbhfrwkt4u
       nodemon: 2.0.15
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -1263,7 +1261,7 @@ importers:
       jest-config: ^27.4.7
       lint-staged: ^8.0.0
       lodash.camelcase: ^4.3.0
-      prettier: ^1.14.3
+      prettier: ~2.8.0
       prompt: ^1.0.0
       replace-in-file: ^3.4.2
       rimraf: ^2.6.2
@@ -1303,7 +1301,7 @@ importers:
       jest-config: 27.5.1_ts-node@10.9.1
       lint-staged: 8.2.1
       lodash.camelcase: 4.3.0
-      prettier: 1.19.1
+      prettier: 2.8.4
       prompt: 1.2.2
       replace-in-file: 3.4.4
       rimraf: 2.7.1
@@ -1359,7 +1357,7 @@ importers:
       bullmq: ^3.5.6
       class-transformer: 0.5.1
       cross-fetch: ^3.0.4
-      eslint-plugin-prettier: ^3.4.0
+      eslint-plugin-prettier: ^4.2.1
       event-stream: ^4.0.1
       fs-extra: ^9.0.0
       jsonfile: ^6.0.1
@@ -1402,7 +1400,7 @@ importers:
       '@types/node': 14.18.12
       '@typescript-eslint/parser': 4.33.0_jofidmxrjzhj7l6vknpw5ecvfe
       apollo-boost: 0.4.9_graphql@15.8.0
-      eslint-plugin-prettier: 3.4.1_lk2fkjavihlcu7p5a3tdxfycz4
+      eslint-plugin-prettier: 4.2.1_xlxobjkai7xsh6g3rbhfrwkt4u
       nodemon: 2.0.15
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -1455,7 +1453,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       sinon: ^9.2.4
       ts-jest: ^27.0.5
@@ -1509,7 +1507,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       sinon: 9.2.4
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
@@ -1634,7 +1632,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -1654,7 +1652,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -1883,13 +1881,13 @@ importers:
       eslint-plugin-vue: ^9.3.0
       floating-vue: https://github.com/LetItRock/floating-vue/raw/main/packages/floating-vue/floating-vue-2.0.0-beta.21.tgz
       npm-run-all: ^4.1.5
-      prettier: ^2.7.1
+      prettier: ~2.8.0
       react: ^17.0.1
       react-dom: ^17.0.1
       typescript: 4.9.5
       vite: ^4.0.0
       vue: ^3.2.45
-      vue-tsc: ^1.0.12
+      vue-tsc: ^1.2.0
     dependencies:
       '@emotion/css': 11.10.5_@babel+core@7.20.12
       '@novu/notification-center': link:../notification-center
@@ -1901,17 +1899,17 @@ importers:
       '@types/node': 18.11.13
       '@vitejs/plugin-vue': 4.0.0_vite@4.0.2+vue@3.2.45
       '@vitejs/plugin-vue-jsx': 3.0.0_vite@4.0.2+vue@3.2.45
-      '@vue/eslint-config-prettier': 7.0.0_kuvvoglztceao54jgbqqzvnnqm
+      '@vue/eslint-config-prettier': 7.0.0_bvbber5bpu44h34irgleodnoia
       '@vue/eslint-config-typescript': 11.0.2_e7nujtl4m5gujhbjzh7ybztlfm
       '@vue/tsconfig': 0.1.3_@types+node@18.11.13
       eslint: 8.30.0
       eslint-plugin-vue: 9.8.0_eslint@8.30.0
       npm-run-all: 4.1.5
-      prettier: 2.7.1
+      prettier: 2.8.4
       typescript: 4.9.5
       vite: 4.0.2_@types+node@18.11.13
       vue: 3.2.45
-      vue-tsc: 1.0.14_typescript@4.9.5
+      vue-tsc: 1.2.0_typescript@4.9.5
 
   packages/stateless:
     specifiers:
@@ -1968,7 +1966,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
       typedoc: ^0.23.0
@@ -1987,7 +1985,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
@@ -2007,7 +2005,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       qs: ^6.11.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
@@ -2030,7 +2028,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2052,7 +2050,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
       typedoc: ^0.23.0
@@ -2071,7 +2069,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
@@ -2091,7 +2089,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2111,7 +2109,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2132,7 +2130,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2152,7 +2150,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2173,7 +2171,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2193,7 +2191,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2217,7 +2215,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2240,7 +2238,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2264,7 +2262,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2287,11 +2285,44 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
+      typescript: 4.9.5
+
+  providers/forty-six-elks:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ~1.0.1
+      '@novu/stateless': ^0.12.0
+      '@types/jest': ~27.5.2
+      axios: ^1.3.4
+      cspell: ~6.19.2
+      cz-conventional-changelog: ~3.3.0
+      jest: ~27.5.1
+      npm-run-all: ^4.1.5
+      nyc: ~15.1.0
+      prettier: ~2.8.0
+      rimraf: ~3.0.2
+      ts-jest: ~27.1.5
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@novu/stateless': link:../../packages/stateless
+      axios: 1.3.4
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.5.2
+      cspell: 6.19.2
+      cz-conventional-changelog: 3.3.0
+      jest: 27.5.1_ts-node@10.9.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      prettier: 2.8.4
+      rimraf: 3.0.2
+      ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typescript: 4.9.5
 
   providers/gupshup:
@@ -2309,7 +2340,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2330,7 +2361,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.2
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2351,7 +2382,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2371,7 +2402,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2392,7 +2423,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2412,7 +2443,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.2
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2433,7 +2464,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2453,7 +2484,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2476,7 +2507,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2498,7 +2529,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2520,7 +2551,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2541,7 +2572,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2564,7 +2595,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: 2.4.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2586,7 +2617,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.4.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2604,7 +2635,7 @@ importers:
       jest: ~27.5.1
       npm-run-all: ^4.1.5
       nyc: ~15.1.0
-      prettier: ~2.6.2
+      prettier: ~2.8.0
       rimraf: ~3.0.2
       ts-jest: ~27.1.5
       ts-node: ~10.9.1
@@ -2620,7 +2651,7 @@ importers:
       jest: 27.5.1_ts-node@10.9.1
       npm-run-all: 4.1.5
       nyc: 15.1.0
-      prettier: 2.6.2
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2640,7 +2671,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2661,7 +2692,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2683,7 +2714,7 @@ importers:
       nyc: ^15.1.0
       open-cli: ^6.0.1
       pepipost: ^5.0.0
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.7
       ts-node: ~10.9.1
@@ -2703,7 +2734,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2724,7 +2755,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2744,7 +2775,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2766,7 +2797,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.7
       ts-node: ~10.9.1
@@ -2787,7 +2818,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2808,7 +2839,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2828,7 +2859,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2849,7 +2880,7 @@ importers:
       nyc: ^15.1.0
       open-cli: ^6.0.1
       plivo: ^4.22.4
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2869,7 +2900,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2890,7 +2921,7 @@ importers:
       nyc: ^15.1.0
       open-cli: ^6.0.1
       postmark: ^2.7.8
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2910,7 +2941,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2930,7 +2961,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       resend: ^0.11.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
@@ -2951,7 +2982,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -2972,7 +3003,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -2992,7 +3023,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -3014,7 +3045,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -3035,7 +3066,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -3057,7 +3088,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -3078,7 +3109,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -3100,7 +3131,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -3121,7 +3152,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -3143,7 +3174,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       sms77-client: ^2.14.0
       ts-jest: ^27.0.5
@@ -3166,7 +3197,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -3187,7 +3218,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -3207,7 +3238,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -3228,7 +3259,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       sparkpost: ^2.1.4
       ts-jest: ^27.0.5
@@ -3250,7 +3281,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.7.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -3270,7 +3301,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       telnyx: ^1.23.0
       ts-jest: ^27.0.5
@@ -3291,7 +3322,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -3313,7 +3344,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -3334,7 +3365,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.2
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -3354,7 +3385,7 @@ importers:
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
       open-cli: ^6.0.1
-      prettier: ^2.1.1
+      prettier: ~2.8.0
       rimraf: ^3.0.2
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -3375,7 +3406,7 @@ importers:
       npm-run-all: 4.1.5
       nyc: 15.1.0
       open-cli: 6.0.1
-      prettier: 2.6.1
+      prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
@@ -3639,7 +3670,7 @@ packages:
       tree-kill: 1.2.2
       tslib: 2.4.1
       typescript: 4.9.5
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
       webpack-dev-middleware: 5.3.3_webpack@5.75.0
       webpack-dev-server: 4.11.1_webpack@5.75.0
       webpack-merge: 5.8.0
@@ -3749,7 +3780,7 @@ packages:
       tree-kill: 1.2.2
       tslib: 2.5.0
       typescript: 4.9.5
-      webpack: 5.75.0_esbuild@0.17.8
+      webpack: 5.75.0
       webpack-dev-middleware: 6.0.1_webpack@5.75.0
       webpack-dev-server: 4.11.1_webpack@5.75.0
       webpack-merge: 5.8.0
@@ -3780,7 +3811,7 @@ packages:
     dependencies:
       '@angular-devkit/architect': 0.1500.0_chokidar@3.5.3
       rxjs: 6.6.7
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
       webpack-dev-server: 4.11.1_webpack@5.75.0
     transitivePeerDependencies:
       - chokidar
@@ -3795,7 +3826,7 @@ packages:
     dependencies:
       '@angular-devkit/architect': 0.1502.0_chokidar@3.5.3
       rxjs: 6.6.7
-      webpack: 5.75.0_esbuild@0.17.8
+      webpack: 5.75.0
       webpack-dev-server: 4.11.1_webpack@5.75.0
     transitivePeerDependencies:
       - chokidar
@@ -17038,6 +17069,7 @@ packages:
     cpu: [arm]
     os: [android]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@esbuild/android-arm/0.15.14:
@@ -17235,6 +17267,7 @@ packages:
     cpu: [loong64]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /@esbuild/linux-loong64/0.15.14:
@@ -20829,7 +20862,7 @@ packages:
     dependencies:
       '@angular/compiler-cli': 15.0.0_hkrohac3r5tzyiymw7onjymdfe
       typescript: 4.9.5
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
     dev: true
 
   /@ngtools/webpack/15.2.0_22givpha6qvbhkpz54v6dqomni:
@@ -20842,7 +20875,7 @@ packages:
     dependencies:
       '@angular/compiler-cli': 15.2.0_m4al3dxpm6stx7f4nyyv5fszcu
       typescript: 4.9.5
-      webpack: 5.75.0_esbuild@0.17.8
+      webpack: 5.75.0
     dev: true
 
   /@nodelib/fs.scandir/2.1.5:
@@ -21167,7 +21200,7 @@ packages:
       - typescript
     dev: true
 
-  /@nrwl/eslint-plugin-nx/13.10.6_smedc52a7ra4k3zgdmfnbbivkq:
+  /@nrwl/eslint-plugin-nx/13.10.6_bbah62p5gftlksphgvxcywosl4:
     resolution: {integrity: sha512-vZ7m0cJsiNZTyllm86fQnw3fVSmNK/11RIaymHttNVgVAHCPH/uZ22XZ1fNMagNcbY/MVEPIpfrHJwiG0uxkng==}
     peerDependencies:
       '@typescript-eslint/parser': ~5.18.0
@@ -21177,7 +21210,7 @@ packages:
         optional: true
     dependencies:
       '@nrwl/devkit': 13.10.6_nx@14.5.10
-      '@nrwl/workspace': 13.10.6_whvszw2m75xtityfnxnoryexiq
+      '@nrwl/workspace': 13.10.6_5tvp64g6xhyzatwhrkwzapwmga
       '@typescript-eslint/experimental-utils': 5.18.0_4vsywjlpuriuw3tl5oq6zy5a64
       '@typescript-eslint/parser': 5.50.0_4vsywjlpuriuw3tl5oq6zy5a64
       chalk: 4.1.0
@@ -21294,19 +21327,18 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@nrwl/nx-cloud/13.2.1_chalk@4.1.2+rxjs@6.5.5:
-    resolution: {integrity: sha512-fiZg0Y6U1amfOnv29wp3gBKc6eqNcEFj6iAlTBFF6ZW+JylH1aVzMHGiBdNLGX2y4aMVPILIfz61LY0Hphi0Gg==}
+  /@nrwl/nx-cloud/15.1.1:
+    resolution: {integrity: sha512-aIVb87PQpAjwdEaFksQ3rYgFq9MDaBG2KvYZcj/k+z2uWeWH84ha/opO37aCFLf5VXNiyJZGRb/+7vW7BFpNOw==}
     hasBin: true
-    peerDependencies:
-      chalk: 4.1.0
-      rxjs: 6.5.5
     dependencies:
       axios: 0.21.4
-      chalk: 4.1.2
+      chalk: 4.1.0
+      dotenv: 10.0.0
+      fs-extra: 10.1.0
       node-machine-id: 1.1.12
-      rxjs: 6.5.5
       strip-json-comments: 3.1.1
       tar: 6.1.11
+      yargs-parser: 21.1.1
     transitivePeerDependencies:
       - debug
     dev: true
@@ -21340,7 +21372,7 @@ packages:
       - debug
     dev: true
 
-  /@nrwl/workspace/13.10.6_whvszw2m75xtityfnxnoryexiq:
+  /@nrwl/workspace/13.10.6_5tvp64g6xhyzatwhrkwzapwmga:
     resolution: {integrity: sha512-BtAlkNdf+cxcq65Trpo+ob5ez7fVDVTUGnlIyIPQ33p5Ge4sp9/0zTlUTBSJRusyLYAIHhpRTGf7w/WcV063/Q==}
     peerDependencies:
       prettier: ^2.5.1
@@ -21367,7 +21399,7 @@ packages:
       npm-run-path: 4.0.1
       nx: 13.10.6
       open: 8.4.0
-      prettier: 2.6.2
+      prettier: 2.8.4
       rxjs: 6.6.7
       semver: 7.3.4
       tmp: 0.2.1
@@ -21444,6 +21476,7 @@ packages:
       '@octokit/types': 6.34.0
       is-plain-object: 5.0.0
       universal-user-agent: 6.0.0
+    dev: true
 
   /@octokit/endpoint/7.0.0:
     resolution: {integrity: sha512-Kz/mIkOTjs9rV50hf/JK9pIDl4aGwAtT8pry6Rpy+hVXkAPhXanNQRxMoq6AeRgDCZR6t/A1zKniY2V1YhrzlQ==}
@@ -21462,6 +21495,7 @@ packages:
       universal-user-agent: 6.0.0
     transitivePeerDependencies:
       - encoding
+    dev: true
 
   /@octokit/graphql/5.0.0:
     resolution: {integrity: sha512-1ZZ8tX4lUEcLPvHagfIVu5S2xpHYXAmgN0+95eAOPoaVPzCfUXJtA5vASafcpWcO86ze0Pzn30TAx72aB2aguQ==}
@@ -21476,6 +21510,7 @@ packages:
 
   /@octokit/openapi-types/11.2.0:
     resolution: {integrity: sha512-PBsVO+15KSlGmiI8QAzaqvsNlZlrDlyAJYcrXBCvVUxCp7VnXjkwPoFHgjEJXx3WF9BAwkA6nfCUA7i9sODzKA==}
+    dev: true
 
   /@octokit/openapi-types/12.11.0:
     resolution: {integrity: sha512-VsXyi8peyRq9PqIz/tpqiL2w3w80OgVMwBHltTml3LmVvXiphgeqmY9mvBw9Wu7e0QWk/fqD37ux8yP5uVekyQ==}
@@ -21571,6 +21606,7 @@ packages:
       '@octokit/types': 6.34.0
       deprecation: 2.3.1
       once: 1.4.0
+    dev: true
 
   /@octokit/request-error/3.0.0:
     resolution: {integrity: sha512-WBtpzm9lR8z4IHIMtOqr6XwfkGvMOOILNLxsWvDwtzm/n7f5AWuqJTXQXdDtOvPfTDrH4TPhEvW2qMlR4JFA2w==}
@@ -21592,6 +21628,7 @@ packages:
       universal-user-agent: 6.0.0
     transitivePeerDependencies:
       - encoding
+    dev: true
 
   /@octokit/request/6.2.0:
     resolution: {integrity: sha512-7IAmHnaezZrgUqtRShMlByJK33MT9ZDnMRgZjnRrRV9a/jzzFwKGz0vxhFU6i7VMLraYcQ1qmcAOin37Kryq+Q==}
@@ -21634,6 +21671,7 @@ packages:
     resolution: {integrity: sha512-s1zLBjWhdEI2zwaoSgyOFoKSl109CUcVBCc7biPJ3aAf6LGLU6szDvi31JPU7bxfla2lqfhjbbg/5DdFNxOwHw==}
     dependencies:
       '@octokit/openapi-types': 11.2.0
+    dev: true
 
   /@octokit/types/6.41.0:
     resolution: {integrity: sha512-eJ2jbzjdijiL3B4PrSQaSjuF2sPEQPVCPzBvTHJD9Nz+9dw2SGH4K4xeQJ77YfTq5bRQ+bD8wT11JbeDPmxmGg==}
@@ -28903,7 +28941,6 @@ packages:
 
   /@types/node/16.11.7:
     resolution: {integrity: sha512-QB5D2sqfSjCmTuWcBWyJ+/44bcjO7VbjSbOE0ucoVbAsSNQc4Lt6QkgkVXkTDwkL4z/beecZNDvVX15D4P8Jbw==}
-    dev: true
 
   /@types/node/16.18.3:
     resolution: {integrity: sha512-jh6m0QUhIRcZpNv7Z/rpN+ZWXOicUUQbSoWks7Htkbb9IjFQj4kzcX/xFCkjstCj5flMsN8FiSvt+q+Tcs4Llg==}
@@ -29806,26 +29843,18 @@ packages:
       vue: 3.2.45
     dev: true
 
-  /@volar/language-core/1.0.14:
-    resolution: {integrity: sha512-j1tMQgw0qCV2amM4qDJNG/zc0yj3ay8HoWNt05IaiCPsULtSSpF/9+F6Izvn0DF7nWOd6MUHTxaQAeZwLfr56Q==}
-    dependencies:
-      '@volar/source-map': 1.0.14
-      '@vue/reactivity': 3.2.45
-      muggle-string: 0.1.0
-    dev: true
-
   /@volar/language-core/1.0.9:
     resolution: {integrity: sha512-5Fty3slLet6svXiJw2YxhYeo6c7wFdtILrql5bZymYLM+HbiZtJbryW1YnUEKAP7MO9Mbeh+TNH4Z0HFxHgIqw==}
     dependencies:
       '@volar/source-map': 1.0.9
-      '@vue/reactivity': 3.2.45
+      '@vue/reactivity': 3.2.47
       muggle-string: 0.1.0
     dev: true
 
-  /@volar/source-map/1.0.14:
-    resolution: {integrity: sha512-8pHCbEWHWaSDGb/FM9zRIW1lY1OAo16MENVSQGCgTwz7PWf3Gw6WW3TFVKCtzaFhLjPH0i5e9hALy7vBPbSHoA==}
+  /@volar/language-core/1.3.0-alpha.0:
+    resolution: {integrity: sha512-W3uMzecHPcbwddPu4SJpUcPakRBK/y/BP+U0U6NiPpUX1tONLC4yCawt+QBJqtgJ+sfD6ztf5PyvPL3hQRqfOA==}
     dependencies:
-      muggle-string: 0.1.0
+      '@volar/source-map': 1.3.0-alpha.0
     dev: true
 
   /@volar/source-map/1.0.9:
@@ -29834,10 +29863,10 @@ packages:
       muggle-string: 0.1.0
     dev: true
 
-  /@volar/typescript/1.0.14:
-    resolution: {integrity: sha512-67qcjjz7KGFhMCG9EKMA9qJK3BRGQecO4dGyAKfMfClZ/PaVoKfDvJvYo89McGTQ8SeczD48I9TPnaJM0zK8JQ==}
+  /@volar/source-map/1.3.0-alpha.0:
+    resolution: {integrity: sha512-jSdizxWFvDTvkPYZnO6ew3sBZUnS0abKCbuopkc0JrIlFbznWC/fPH3iPFIMS8/IIkRxq1Jh9VVG60SmtsdaMQ==}
     dependencies:
-      '@volar/language-core': 1.0.14
+      muggle-string: 0.2.2
     dev: true
 
   /@volar/typescript/1.0.9:
@@ -29846,17 +29875,10 @@ packages:
       '@volar/language-core': 1.0.9
     dev: true
 
-  /@volar/vue-language-core/1.0.14:
-    resolution: {integrity: sha512-grJ4dQ7c/suZmBBmZtw2O2XeDX+rtgpdBtHxMug1NMPRDxj5EZ9WGphWtGnMQj8RyVgpz9ByvV5GbQjk4/wfBw==}
+  /@volar/typescript/1.3.0-alpha.0:
+    resolution: {integrity: sha512-5UItyW2cdH2mBLu4RrECRNJRgtvvzKrSCn2y3v/D61QwIDkGx4aeil6x8RFuUL5TFtV6QvVHXnsOHxNgd+sCow==}
     dependencies:
-      '@volar/language-core': 1.0.14
-      '@volar/source-map': 1.0.14
-      '@vue/compiler-dom': 3.2.45
-      '@vue/compiler-sfc': 3.2.45
-      '@vue/reactivity': 3.2.45
-      '@vue/shared': 3.2.45
-      minimatch: 5.1.6
-      vue-template-compiler: 2.7.14
+      '@volar/language-core': 1.3.0-alpha.0
     dev: true
 
   /@volar/vue-language-core/1.0.9:
@@ -29872,11 +29894,18 @@ packages:
       vue-template-compiler: 2.7.14
     dev: true
 
-  /@volar/vue-typescript/1.0.14:
-    resolution: {integrity: sha512-2P0QeGLLY05fDTu8GqY8SR2+jldXRTrkQdD2Nc0sVOjMJ7j3RYYY0wJyZ9hCBDuxV4Micc6jdB8nKS0yxQgNvA==}
+  /@volar/vue-language-core/1.2.0:
+    resolution: {integrity: sha512-w7yEiaITh2WzKe6u8ZdeLKCUz43wdmY/OqAmsB/PGDvvhTcVhCJ6f0W/RprZL1IhqH8wALoWiwEh/Wer7ZviMQ==}
     dependencies:
-      '@volar/typescript': 1.0.14
-      '@volar/vue-language-core': 1.0.14
+      '@volar/language-core': 1.3.0-alpha.0
+      '@volar/source-map': 1.3.0-alpha.0
+      '@vue/compiler-dom': 3.2.47
+      '@vue/compiler-sfc': 3.2.47
+      '@vue/reactivity': 3.2.47
+      '@vue/shared': 3.2.47
+      minimatch: 6.2.0
+      muggle-string: 0.2.2
+      vue-template-compiler: 2.7.14
     dev: true
 
   /@volar/vue-typescript/1.0.9:
@@ -29884,6 +29913,13 @@ packages:
     dependencies:
       '@volar/typescript': 1.0.9
       '@volar/vue-language-core': 1.0.9
+    dev: true
+
+  /@volar/vue-typescript/1.2.0:
+    resolution: {integrity: sha512-zjmRi9y3J1EkG+pfuHp8IbHmibihrKK485cfzsHjiuvJMGrpkWvlO5WVEk8oslMxxeGC5XwBFE9AOlvh378EPA==}
+    dependencies:
+      '@volar/typescript': 1.3.0-alpha.0
+      '@volar/vue-language-core': 1.2.0
     dev: true
 
   /@vonage/server-sdk/2.10.11:
@@ -29941,11 +29977,27 @@ packages:
       estree-walker: 2.0.2
       source-map: 0.6.1
 
+  /@vue/compiler-core/3.2.47:
+    resolution: {integrity: sha512-p4D7FDnQb7+YJmO2iPEv0SQNeNzcbHdGByJDsT4lynf63AFkOTFN07HsiRSvjGo0QrxR/o3d0hUyNCUnBU2Tig==}
+    dependencies:
+      '@babel/parser': 7.20.15
+      '@vue/shared': 3.2.47
+      estree-walker: 2.0.2
+      source-map: 0.6.1
+    dev: true
+
   /@vue/compiler-dom/3.2.45:
     resolution: {integrity: sha512-tyYeUEuKqqZO137WrZkpwfPCdiiIeXYCcJ8L4gWz9vqaxzIQRccTSwSWZ/Axx5YR2z+LvpUbmPNXxuBU45lyRw==}
     dependencies:
       '@vue/compiler-core': 3.2.45
       '@vue/shared': 3.2.45
+
+  /@vue/compiler-dom/3.2.47:
+    resolution: {integrity: sha512-dBBnEHEPoftUiS03a4ggEig74J2YBZ2UIeyfpcRM2tavgMWo4bsEfgCGsu+uJIL/vax9S+JztH8NmQerUo7shQ==}
+    dependencies:
+      '@vue/compiler-core': 3.2.47
+      '@vue/shared': 3.2.47
+    dev: true
 
   /@vue/compiler-sfc/3.2.45:
     resolution: {integrity: sha512-1jXDuWah1ggsnSAOGsec8cFjT/K6TMZ0sPL3o3d84Ft2AYZi2jWJgRMjw4iaK0rBfA89L5gw427H4n1RZQBu6Q==}
@@ -29961,13 +30013,35 @@ packages:
       postcss: 8.4.21
       source-map: 0.6.1
 
+  /@vue/compiler-sfc/3.2.47:
+    resolution: {integrity: sha512-rog05W+2IFfxjMcFw10tM9+f7i/+FFpZJJ5XHX72NP9eC2uRD+42M3pYcQqDXVYoj74kHMSEdQ/WmCjt8JFksQ==}
+    dependencies:
+      '@babel/parser': 7.20.15
+      '@vue/compiler-core': 3.2.47
+      '@vue/compiler-dom': 3.2.47
+      '@vue/compiler-ssr': 3.2.47
+      '@vue/reactivity-transform': 3.2.47
+      '@vue/shared': 3.2.47
+      estree-walker: 2.0.2
+      magic-string: 0.25.9
+      postcss: 8.4.21
+      source-map: 0.6.1
+    dev: true
+
   /@vue/compiler-ssr/3.2.45:
     resolution: {integrity: sha512-6BRaggEGqhWht3lt24CrIbQSRD5O07MTmd+LjAn5fJj568+R9eUD2F7wMQJjX859seSlrYog7sUtrZSd7feqrQ==}
     dependencies:
       '@vue/compiler-dom': 3.2.45
       '@vue/shared': 3.2.45
 
-  /@vue/eslint-config-prettier/7.0.0_kuvvoglztceao54jgbqqzvnnqm:
+  /@vue/compiler-ssr/3.2.47:
+    resolution: {integrity: sha512-wVXC+gszhulcMD8wpxMsqSOpvDZ6xKXSVWkf50Guf/S+28hTAXPDYRTbLQ3EDkOP5Xz/+SY37YiwDquKbJOgZw==}
+    dependencies:
+      '@vue/compiler-dom': 3.2.47
+      '@vue/shared': 3.2.47
+    dev: true
+
+  /@vue/eslint-config-prettier/7.0.0_bvbber5bpu44h34irgleodnoia:
     resolution: {integrity: sha512-/CTc6ML3Wta1tCe1gUeO0EYnVXfo3nJXsIhZ8WJr3sov+cGASr6yuiibJTL6lmIBm7GobopToOuB3B6AWyV0Iw==}
     peerDependencies:
       eslint: '>= 7.28.0'
@@ -29975,8 +30049,8 @@ packages:
     dependencies:
       eslint: 8.30.0
       eslint-config-prettier: 8.5.0_eslint@8.30.0
-      eslint-plugin-prettier: 4.0.0_bat6r7ilbbslsp5dhd45s4onze
-      prettier: 2.7.1
+      eslint-plugin-prettier: 4.2.1_dbz2lr3szdyzre67dqvrzuu6ia
+      prettier: 2.8.4
     dev: true
 
   /@vue/eslint-config-typescript/11.0.2_e7nujtl4m5gujhbjzh7ybztlfm:
@@ -30009,10 +30083,26 @@ packages:
       estree-walker: 2.0.2
       magic-string: 0.25.9
 
+  /@vue/reactivity-transform/3.2.47:
+    resolution: {integrity: sha512-m8lGXw8rdnPVVIdIFhf0LeQ/ixyHkH5plYuS83yop5n7ggVJU+z5v0zecwEnX7fa7HNLBhh2qngJJkxpwEEmYA==}
+    dependencies:
+      '@babel/parser': 7.20.15
+      '@vue/compiler-core': 3.2.47
+      '@vue/shared': 3.2.47
+      estree-walker: 2.0.2
+      magic-string: 0.25.9
+    dev: true
+
   /@vue/reactivity/3.2.45:
     resolution: {integrity: sha512-PRvhCcQcyEVohW0P8iQ7HDcIOXRjZfAsOds3N99X/Dzewy8TVhTCT4uXpAHfoKjVTJRA0O0K+6QNkDIZAxNi3A==}
     dependencies:
       '@vue/shared': 3.2.45
+
+  /@vue/reactivity/3.2.47:
+    resolution: {integrity: sha512-7khqQ/75oyyg+N/e+iwV6lpy1f5wq759NdlS1fpAhFXa8VeAIKGgk2E/C4VF59lx5b+Ezs5fpp/5WsRYXQiKxQ==}
+    dependencies:
+      '@vue/shared': 3.2.47
+    dev: true
 
   /@vue/runtime-core/3.2.45:
     resolution: {integrity: sha512-gzJiTA3f74cgARptqzYswmoQx0fIA+gGYBfokYVhF8YSXjWTUA2SngRzZRku2HbGbjzB6LBYSbKGIaK8IW+s0A==}
@@ -30038,6 +30128,10 @@ packages:
 
   /@vue/shared/3.2.45:
     resolution: {integrity: sha512-Ewzq5Yhimg7pSztDV+RH1UDKBzmtqieXQlpTVm2AwraoRL/Rks96mvd8Vgi7Lj+h+TH8dv7mXD3FRZR3TUvbSg==}
+
+  /@vue/shared/3.2.47:
+    resolution: {integrity: sha512-BHGyyGN3Q97EZx0taMQ+OLNuZcW3d37ZEVmEAyeoA9ERdGvm9Irc/0Fua8SNyOtV1w6BS4q25wbMzJujO9HIfQ==}
+    dev: true
 
   /@vue/tsconfig/0.1.3_@types+node@16.18.3:
     resolution: {integrity: sha512-kQVsh8yyWPvHpb8gIc9l/HIDiiVUy1amynLNpCy8p+FoCiZXCo6fQos5/097MmnNZc9AtseDsCrfkhqCrJ8Olg==}
@@ -31857,6 +31951,15 @@ packages:
     transitivePeerDependencies:
       - debug
 
+  /axios/1.3.4:
+    resolution: {integrity: sha512-toYm+Bsyl6VC5wSkfkbbNB6ROv7KY93PEBBL6xyDczaIHasAiv4wPqQ/c4RjoQzipxRD2W5g21cOqQulZ7rHwQ==}
+    dependencies:
+      follow-redirects: 1.15.2
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
   /axobject-query/2.2.0:
     resolution: {integrity: sha512-Td525n+iPOOyUQIeBfcASuG6uJsDOITl7Mds5gFyerkWiX7qhUTdYUBlSgNMyVqtSJqwpt1kXGLdUt6SykLMRA==}
 
@@ -32012,7 +32115,7 @@ packages:
       '@babel/core': 7.20.2
       find-cache-dir: 3.3.2
       schema-utils: 4.0.0
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
     dev: true
 
   /babel-loader/9.1.2_la66t7xldg4uecmyawueag5wkm:
@@ -32025,7 +32128,7 @@ packages:
       '@babel/core': 7.20.12
       find-cache-dir: 3.3.2
       schema-utils: 4.0.0
-      webpack: 5.75.0_esbuild@0.17.8
+      webpack: 5.75.0
     dev: true
 
   /babel-plugin-add-react-displayname/0.0.5:
@@ -35393,7 +35496,7 @@ packages:
       postcss-modules-values: 4.0.0_postcss@8.4.21
       postcss-value-parser: 4.2.0
       semver: 7.3.8
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
     dev: true
 
   /css-loader/6.7.3_webpack@5.75.0:
@@ -36332,6 +36435,7 @@ packages:
 
   /deprecation/2.3.1:
     resolution: {integrity: sha512-xmHIy4F3scKVwMsQ4WnVaS8bHOx0DmVwRywosKhaILI0ywMDWPtBSku2HNxRvF7jtwDRsoEwYQSfbxj8b7RlJQ==}
+    dev: true
 
   /dequal/2.0.3:
     resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
@@ -36362,7 +36466,7 @@ packages:
     dev: true
 
   /detect-indent/5.0.0:
-    resolution: {integrity: sha1-OHHMCmoALow+Wzz38zYmRnXwa50=}
+    resolution: {integrity: sha512-rlpvsxUtM0PQvy9iZe640/IWwWYyBsTApREbA1pHOpmOUIl9MkP/U4z7vTtg4Oaojvqhxt7sdufnT0EzGaR31g==}
     engines: {node: '>=4'}
     dev: true
 
@@ -37137,6 +37241,7 @@ packages:
     cpu: [x64]
     os: [android]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-android-64/0.15.14:
@@ -37154,6 +37259,7 @@ packages:
     cpu: [arm64]
     os: [android]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-android-arm64/0.15.14:
@@ -37171,6 +37277,7 @@ packages:
     cpu: [x64]
     os: [darwin]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-darwin-64/0.15.14:
@@ -37188,6 +37295,7 @@ packages:
     cpu: [arm64]
     os: [darwin]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-darwin-arm64/0.15.14:
@@ -37205,6 +37313,7 @@ packages:
     cpu: [x64]
     os: [freebsd]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-freebsd-64/0.15.14:
@@ -37222,6 +37331,7 @@ packages:
     cpu: [arm64]
     os: [freebsd]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-freebsd-arm64/0.15.14:
@@ -37239,6 +37349,7 @@ packages:
     cpu: [ia32]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-linux-32/0.15.14:
@@ -37256,6 +37367,7 @@ packages:
     cpu: [x64]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-linux-64/0.15.14:
@@ -37273,6 +37385,7 @@ packages:
     cpu: [arm]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-linux-arm/0.15.14:
@@ -37290,6 +37403,7 @@ packages:
     cpu: [arm64]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-linux-arm64/0.15.14:
@@ -37307,6 +37421,7 @@ packages:
     cpu: [mips64el]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-linux-mips64le/0.15.14:
@@ -37324,6 +37439,7 @@ packages:
     cpu: [ppc64]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-linux-ppc64le/0.15.14:
@@ -37341,6 +37457,7 @@ packages:
     cpu: [riscv64]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-linux-riscv64/0.15.14:
@@ -37358,6 +37475,7 @@ packages:
     cpu: [s390x]
     os: [linux]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-linux-s390x/0.15.14:
@@ -37375,6 +37493,7 @@ packages:
     cpu: [x64]
     os: [netbsd]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-netbsd-64/0.15.14:
@@ -37392,6 +37511,7 @@ packages:
     cpu: [x64]
     os: [openbsd]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-openbsd-64/0.15.14:
@@ -37409,6 +37529,7 @@ packages:
     cpu: [x64]
     os: [sunos]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-sunos-64/0.15.14:
@@ -37438,6 +37559,7 @@ packages:
     cpu: [ia32]
     os: [win32]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-windows-32/0.15.14:
@@ -37455,6 +37577,7 @@ packages:
     cpu: [x64]
     os: [win32]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-windows-64/0.15.14:
@@ -37472,6 +37595,7 @@ packages:
     cpu: [arm64]
     os: [win32]
     requiresBuild: true
+    dev: true
     optional: true
 
   /esbuild-windows-arm64/0.15.14:
@@ -37511,6 +37635,8 @@ packages:
       esbuild-windows-32: 0.15.13
       esbuild-windows-64: 0.15.13
       esbuild-windows-arm64: 0.15.13
+    dev: true
+    optional: true
 
   /esbuild/0.15.14:
     resolution: {integrity: sha512-pJN8j42fvWLFWwSMG4luuupl2Me7mxciUOsMegKvwCmhEbJ2covUdFnihxm0FMIBV+cbwbtMoHgMCCI+pj1btQ==}
@@ -37601,6 +37727,7 @@ packages:
       '@esbuild/win32-ia32': 0.17.8
       '@esbuild/win32-x64': 0.17.8
     dev: true
+    optional: true
 
   /escalade/3.1.1:
     resolution: {integrity: sha512-k0er2gUkLf8O0zKJiAhmkTnJlTvINGv7ygDNPbeIsX/TJjGJZHuh9B2UxbsaEkmlEo9MfhrSzmhIlhRlI2GXnw==}
@@ -37995,42 +38122,9 @@ packages:
       language-tags: 1.0.5
       minimatch: 3.1.2
 
-  /eslint-plugin-prettier/3.4.1_cuarspdxmw7ji6hxmghkt53idi:
-    resolution: {integrity: sha512-htg25EUYUeIhKHXjOinK4BgCcDwtLHjqaxCDsMy5nbnUMkKFvIhMVCp+5GFUXQ4Nr8lBsPqtGAqBenbpFqAA2g==}
-    engines: {node: '>=6.0.0'}
-    peerDependencies:
-      eslint: '>=5.0.0'
-      eslint-config-prettier: '*'
-      prettier: '>=1.13.0'
-    peerDependenciesMeta:
-      eslint-config-prettier:
-        optional: true
-    dependencies:
-      eslint: 8.33.0
-      eslint-config-prettier: 8.6.0_eslint@8.33.0
-      prettier: 2.6.2
-      prettier-linter-helpers: 1.0.0
-    dev: true
-
-  /eslint-plugin-prettier/3.4.1_lk2fkjavihlcu7p5a3tdxfycz4:
-    resolution: {integrity: sha512-htg25EUYUeIhKHXjOinK4BgCcDwtLHjqaxCDsMy5nbnUMkKFvIhMVCp+5GFUXQ4Nr8lBsPqtGAqBenbpFqAA2g==}
-    engines: {node: '>=6.0.0'}
-    peerDependencies:
-      eslint: '>=5.0.0'
-      eslint-config-prettier: '*'
-      prettier: '>=1.13.0'
-    peerDependenciesMeta:
-      eslint-config-prettier:
-        optional: true
-    dependencies:
-      eslint: 7.32.0
-      prettier: 2.6.2
-      prettier-linter-helpers: 1.0.0
-    dev: true
-
-  /eslint-plugin-prettier/4.0.0_bat6r7ilbbslsp5dhd45s4onze:
-    resolution: {integrity: sha512-98MqmCJ7vJodoQK359bqQWaxOE0CS8paAz/GgjaZLyex4TTk3g9HugoO89EqWCrFiOqn9EVvcoo7gZzONCWVwQ==}
-    engines: {node: '>=6.0.0'}
+  /eslint-plugin-prettier/4.2.1_dbz2lr3szdyzre67dqvrzuu6ia:
+    resolution: {integrity: sha512-f/0rXLXUt0oFYs8ra4w49wYZBG5GKZpAYsJSm6rnYL5uVDjd+zowwMwVZHnAjf4edNrKpCDYfXDgmRE/Ak7QyQ==}
+    engines: {node: '>=12.0.0'}
     peerDependencies:
       eslint: '>=7.28.0'
       eslint-config-prettier: '*'
@@ -38041,13 +38135,13 @@ packages:
     dependencies:
       eslint: 8.30.0
       eslint-config-prettier: 8.5.0_eslint@8.30.0
-      prettier: 2.7.1
+      prettier: 2.8.4
       prettier-linter-helpers: 1.0.0
     dev: true
 
-  /eslint-plugin-prettier/4.0.0_cuarspdxmw7ji6hxmghkt53idi:
-    resolution: {integrity: sha512-98MqmCJ7vJodoQK359bqQWaxOE0CS8paAz/GgjaZLyex4TTk3g9HugoO89EqWCrFiOqn9EVvcoo7gZzONCWVwQ==}
-    engines: {node: '>=6.0.0'}
+  /eslint-plugin-prettier/4.2.1_qa2thblfovmfepmgrc7z2owbo4:
+    resolution: {integrity: sha512-f/0rXLXUt0oFYs8ra4w49wYZBG5GKZpAYsJSm6rnYL5uVDjd+zowwMwVZHnAjf4edNrKpCDYfXDgmRE/Ak7QyQ==}
+    engines: {node: '>=12.0.0'}
     peerDependencies:
       eslint: '>=7.28.0'
       eslint-config-prettier: '*'
@@ -38058,7 +38152,23 @@ packages:
     dependencies:
       eslint: 8.33.0
       eslint-config-prettier: 8.6.0_eslint@8.33.0
-      prettier: 2.6.2
+      prettier: 2.8.4
+      prettier-linter-helpers: 1.0.0
+    dev: true
+
+  /eslint-plugin-prettier/4.2.1_xlxobjkai7xsh6g3rbhfrwkt4u:
+    resolution: {integrity: sha512-f/0rXLXUt0oFYs8ra4w49wYZBG5GKZpAYsJSm6rnYL5uVDjd+zowwMwVZHnAjf4edNrKpCDYfXDgmRE/Ak7QyQ==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      eslint: '>=7.28.0'
+      eslint-config-prettier: '*'
+      prettier: '>=2.0.0'
+    peerDependenciesMeta:
+      eslint-config-prettier:
+        optional: true
+    dependencies:
+      eslint: 7.32.0
+      prettier: 2.8.4
       prettier-linter-helpers: 1.0.0
     dev: true
 
@@ -39918,7 +40028,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       at-least-node: 1.0.0
-      graceful-fs: 4.2.9
+      graceful-fs: 4.2.10
       jsonfile: 6.1.0
       universalify: 2.0.0
 
@@ -40777,9 +40887,6 @@ packages:
   /graceful-fs/4.2.10:
     resolution: {integrity: sha512-9ByhssR2fPVsNZj478qUUbKfmL0+t5BDVyjShtyZZLiK7ZDAArFFfopyOTj0M05wE2tJPisA4iTnnXl2YoPvOA==}
 
-  /graceful-fs/4.2.9:
-    resolution: {integrity: sha512-NtNxqUcXgpW2iMrfqSfR73Glt39K+BLwWsPs94yR63v45T0Wbej7eRmL5cWfwEgqXnmjQp3zaJTshdRW/qC2ZQ==}
-
   /gradient-string/1.2.0:
     resolution: {integrity: sha512-Lxog7IDMMWNjwo4O0KbdBvSewk4vW6kQe5XaLuuPCyCE65AGQ1P8YqKJa5dq8TYf/Ge31F+KjWzPR5mAJvjlAg==}
     engines: {node: '>=4'}
@@ -40913,7 +41020,7 @@ packages:
     engines: {node: '>=0.4.7'}
     hasBin: true
     dependencies:
-      minimist: 1.2.6
+      minimist: 1.2.7
       neo-async: 2.6.2
       source-map: 0.6.1
       wordwrap: 1.0.0
@@ -41619,7 +41726,7 @@ packages:
     hasBin: true
     dev: true
 
-  /hygen/6.2.0_cuarspdxmw7ji6hxmghkt53idi:
+  /hygen/6.2.0_qa2thblfovmfepmgrc7z2owbo4:
     resolution: {integrity: sha512-5kma/nx7K+gJu8Q8kirkamUDb2TLvDJEiG/hfAL2Jt93SGrWEd0vWVEwaJW7qQylbIoT7gBVefrXZS2sYS8aag==}
     hasBin: true
     dependencies:
@@ -41630,7 +41737,7 @@ packages:
       degit: 2.8.4
       ejs: 3.1.6
       enquirer: 2.3.6
-      eslint-plugin-prettier: 4.0.0_cuarspdxmw7ji6hxmghkt53idi
+      eslint-plugin-prettier: 4.2.1_qa2thblfovmfepmgrc7z2owbo4
       execa: 5.1.1
       front-matter: 4.0.2
       fs-extra: 10.1.0
@@ -43206,7 +43313,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -43962,7 +44069,7 @@ packages:
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     dependencies:
       '@jest/types': 27.5.1
-      '@types/node': 14.18.12
+      '@types/node': 16.11.7
       chalk: 4.1.2
       ci-info: 3.3.0
       graceful-fs: 4.2.10
@@ -44376,12 +44483,6 @@ packages:
     dependencies:
       string-convert: 0.2.1
 
-  /json5/1.0.1:
-    resolution: {integrity: sha512-aKS4WQjPenRxiQsC93MNfjx+nbF4PAdYzmd/1JIj8HYzqfbu86beTuNgXDzPknWk0n0uARlyewZo4s++ES36Ow==}
-    hasBin: true
-    dependencies:
-      minimist: 1.2.7
-
   /json5/1.0.2:
     resolution: {integrity: sha512-g1MWMLBiz8FKi1e4w0UyVL3w+iJceWAFBAaBnnGKOpNa5f8TLktkbre1+s6oICydWAm+HRUGTmI+//xv2hvXYA==}
     hasBin: true
@@ -44780,7 +44881,7 @@ packages:
     dependencies:
       klona: 2.0.5
       less: 4.1.3
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
     dev: true
 
   /less-loader/4.1.0_less@4.1.2+webpack@5.74.0:
@@ -44931,7 +45032,7 @@ packages:
       webpack-sources:
         optional: true
     dependencies:
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
       webpack-sources: 3.2.3
     dev: true
 
@@ -46290,7 +46391,7 @@ packages:
       webpack: ^5.0.0
     dependencies:
       schema-utils: 4.0.0
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
     dev: true
 
   /mini-css-extract-plugin/2.7.2_webpack@5.75.0:
@@ -46384,6 +46485,7 @@ packages:
 
   /minimist/1.2.6:
     resolution: {integrity: sha512-Jsjnk4bw3YJqYzbdyBiNsPWHPfO++UGG749Cxs6peCu5Xg4nrena6OVxOYxrQTqww0Jmwt+Ref8rggumkTLz9Q==}
+    dev: true
 
   /minimist/1.2.7:
     resolution: {integrity: sha512-bzfL1YUZsP41gmu/qjrEk0Q6i2ix/cVeAhbCbqH9u3zYutS1cLg00qhrD0M2MVdCcx4Sc0UpP2eBWo9rotpq6g==}
@@ -46819,6 +46921,10 @@ packages:
 
   /muggle-string/0.1.0:
     resolution: {integrity: sha512-Tr1knR3d2mKvvWthlk7202rywKbiOm4rVFLsfAaSIhJ6dt9o47W4S+JMtWhd/PW9Wrdew2/S2fSvhz3E2gkfEg==}
+    dev: true
+
+  /muggle-string/0.2.2:
+    resolution: {integrity: sha512-YVE1mIJ4VpUMqZObFndk9CJu6DBJR/GB13p3tXuNbwD4XExaI5EOuRl6BHeIDxIqXZVxSfAC+y6U1Z/IxCfKUg==}
     dev: true
 
   /multer/1.4.2:
@@ -47940,7 +48046,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.36
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.3.3
+      axios: 1.3.4
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -49552,7 +49658,7 @@ packages:
       klona: 2.0.5
       postcss: 8.4.19
       semver: 7.3.8
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
     dev: true
 
   /postcss-loader/7.0.2_6jdsrmfenkuhhw3gx4zvjlznce:
@@ -50195,37 +50301,13 @@ packages:
       fast-diff: 1.2.0
     dev: true
 
-  /prettier/1.19.1:
-    resolution: {integrity: sha512-s7PoyDv/II1ObgQunCbB9PdLmUcBZcnWOcxDh7O0N/UwDEsHyqkW+Qh28jW+mVuCdx7gLB0BotYI1Y6uI9iyew==}
-    engines: {node: '>=4'}
-    hasBin: true
-    dev: true
-
   /prettier/2.3.0:
     resolution: {integrity: sha512-kXtO4s0Lz/DW/IJ9QdWhAf7/NmPWQXkFr/r/WkR3vyI+0v8amTDxiaQSLzs8NBlytfLWX/7uQUMIW677yLKl4w==}
     engines: {node: '>=10.13.0'}
     hasBin: true
 
-  /prettier/2.4.1:
-    resolution: {integrity: sha512-9fbDAXSBcc6Bs1mZrDYb3XKzDLm4EXXL9sC1LqKP5rZkT6KRr/rf9amVUcODVXgguK/isJz0d0hP72WeaKWsvA==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-    dev: true
-
-  /prettier/2.6.1:
-    resolution: {integrity: sha512-8UVbTBYGwN37Bs9LERmxCPjdvPxlEowx2urIL6urHzdb3SDq4B/Z6xLFCblrSnE4iKWcS6ziJ3aOYrc1kz/E2A==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-    dev: true
-
-  /prettier/2.6.2:
-    resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-    dev: true
-
-  /prettier/2.7.1:
-    resolution: {integrity: sha512-ujppO+MkdPqoVINuDFDRLClm7D78qbDt0/NR+wp5FqEZOoTNAjPHWj17QRhu7geIHJfcNhRk1XVQmF8Bp3ye+g==}
+  /prettier/2.8.4:
+    resolution: {integrity: sha512-vIS4Rlc2FNh0BySk3Wkd6xmwxB0FpOndW5fisM5H8hsZSxU2VWVB5CWIkIjWvrHjIhxk2g3bfMKM87zNTrZddw==}
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true
@@ -53156,13 +53238,6 @@ packages:
       rxjs: 6.6.7
     dev: true
 
-  /rxjs/6.5.5:
-    resolution: {integrity: sha512-WfQI+1gohdf0Dai/Bbmk5L5ItH5tYqm3ki2c5GdWhKjalzjg93N3avFjVStyZZz+A2Em+ZxKH5bNghw9UeylGQ==}
-    engines: {npm: '>=2.0.0'}
-    dependencies:
-      tslib: 1.14.1
-    dev: true
-
   /rxjs/6.6.3:
     resolution: {integrity: sha512-trsQc+xYYXZ3urjOiJOuCOa5N3jAZ3eiSpQB5hIT8zGlL2QfnHLJ2r7GMkBGuIausdJN1OneaI6gQlsqNHHmZQ==}
     engines: {npm: '>=2.0.0'}
@@ -53360,7 +53435,7 @@ packages:
       klona: 2.0.5
       neo-async: 2.6.2
       sass: 1.56.1
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
     dev: true
 
   /sass-loader/13.2.0_sass@1.58.1+webpack@5.75.0:
@@ -53385,7 +53460,7 @@ packages:
       klona: 2.0.5
       neo-async: 2.6.2
       sass: 1.58.1
-      webpack: 5.75.0_esbuild@0.17.8
+      webpack: 5.75.0
     dev: true
 
   /sass/1.52.3:
@@ -54264,7 +54339,7 @@ packages:
       abab: 2.0.6
       iconv-lite: 0.6.3
       source-map-js: 1.0.2
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
     dev: true
 
   /source-map-resolve/0.5.3:
@@ -55670,55 +55745,6 @@ packages:
       webpack: 5.70.0
     dev: true
 
-  /terser-webpack-plugin/5.3.3_6hyl5w2uqyeivowpusuiulbmoy:
-    resolution: {integrity: sha512-Fx60G5HNYknNTNQnzQ1VePRuu89ZVYWfjRAeT5rITuCY/1b08s49e5kSQwHDirKZWuoKOBRFS98EUUoZ9kLEwQ==}
-    engines: {node: '>= 10.13.0'}
-    peerDependencies:
-      '@swc/core': '*'
-      esbuild: '*'
-      uglify-js: '*'
-      webpack: ^5.1.0
-    peerDependenciesMeta:
-      '@swc/core':
-        optional: true
-      esbuild:
-        optional: true
-      uglify-js:
-        optional: true
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.17
-      esbuild: 0.17.8
-      jest-worker: 27.5.1
-      schema-utils: 3.1.1
-      serialize-javascript: 6.0.0
-      terser: 5.16.3
-      webpack: 5.75.0_esbuild@0.17.8
-    dev: true
-
-  /terser-webpack-plugin/5.3.3_lex532nclbef5ull34kxwtef74:
-    resolution: {integrity: sha512-Fx60G5HNYknNTNQnzQ1VePRuu89ZVYWfjRAeT5rITuCY/1b08s49e5kSQwHDirKZWuoKOBRFS98EUUoZ9kLEwQ==}
-    engines: {node: '>= 10.13.0'}
-    peerDependencies:
-      '@swc/core': '*'
-      esbuild: '*'
-      uglify-js: '*'
-      webpack: ^5.1.0
-    peerDependenciesMeta:
-      '@swc/core':
-        optional: true
-      esbuild:
-        optional: true
-      uglify-js:
-        optional: true
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.17
-      esbuild: 0.15.13
-      jest-worker: 27.5.1
-      schema-utils: 3.1.1
-      serialize-javascript: 6.0.0
-      terser: 5.16.3
-      webpack: 5.75.0_esbuild@0.15.13
-
   /terser-webpack-plugin/5.3.3_webpack@5.70.0:
     resolution: {integrity: sha512-Fx60G5HNYknNTNQnzQ1VePRuu89ZVYWfjRAeT5rITuCY/1b08s49e5kSQwHDirKZWuoKOBRFS98EUUoZ9kLEwQ==}
     engines: {node: '>= 10.13.0'}
@@ -56169,7 +56195,7 @@ packages:
     dependencies:
       tslib: 1.14.1
 
-  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
+  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -56190,7 +56216,6 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
@@ -56532,7 +56557,7 @@ packages:
     resolution: {integrity: sha512-fxDhWnFSLt3VuTwtvJt5fpwxBHg5AdKWMsgcPOOIilyjymcYVZoCQF8fvFRezCNfblEXmi+PcM1eYHeOAgXCOQ==}
     dependencies:
       '@types/json5': 0.0.29
-      json5: 1.0.1
+      json5: 1.0.2
       minimist: 1.2.7
       strip-bom: 3.0.0
 
@@ -56996,6 +57021,7 @@ packages:
 
   /universal-user-agent/6.0.0:
     resolution: {integrity: sha512-isyNax3wXoKaulPDZWHQqbmIx1k2tb9fb3GGDBRxCscfYV2Ch7WxPArBsFEG8s/safwXTT7H4QGhaIkTp9447w==}
+    dev: true
 
   /universalify/0.1.2:
     resolution: {integrity: sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==}
@@ -57644,17 +57670,6 @@ packages:
       he: 1.2.0
     dev: true
 
-  /vue-tsc/1.0.14_typescript@4.9.5:
-    resolution: {integrity: sha512-HeqtyxMrSRUCnU5nxB0lQc3o7zirMppZ/V6HLL3l4FsObGepH3A3beNmNehpLQs0Gt7DkSWVi3CpVCFgrf+/sQ==}
-    hasBin: true
-    peerDependencies:
-      typescript: '*'
-    dependencies:
-      '@volar/vue-language-core': 1.0.14
-      '@volar/vue-typescript': 1.0.14
-      typescript: 4.9.5
-    dev: true
-
   /vue-tsc/1.0.9_typescript@4.9.5:
     resolution: {integrity: sha512-vRmHD1K6DmBymNhoHjQy/aYKTRQNLGOu2/ESasChG9Vy113K6CdP0NlhR0bzgFJfv2eFB9Ez/9L5kIciUajBxQ==}
     hasBin: true
@@ -57663,6 +57678,17 @@ packages:
     dependencies:
       '@volar/vue-language-core': 1.0.9
       '@volar/vue-typescript': 1.0.9
+      typescript: 4.9.5
+    dev: true
+
+  /vue-tsc/1.2.0_typescript@4.9.5:
+    resolution: {integrity: sha512-rIlzqdrhyPYyLG9zxsVRa+JEseeS9s8F2BbVVVWRRsTZvJO2BbhLEb2HW3MY+DFma0378tnIqs+vfTzbcQtRFw==}
+    hasBin: true
+    peerDependencies:
+      typescript: '*'
+    dependencies:
+      '@volar/vue-language-core': 1.2.0
+      '@volar/vue-typescript': 1.2.0
       typescript: 4.9.5
     dev: true
 
@@ -57882,7 +57908,7 @@ packages:
       mime-types: 2.1.35
       range-parser: 1.2.1
       schema-utils: 4.0.0
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
 
   /webpack-dev-middleware/6.0.1_webpack@5.75.0:
     resolution: {integrity: sha512-PZPZ6jFinmqVPJZbisfggDiC+2EeGZ1ZByyMP5sOFJcPPWSexalISz+cvm+j+oYPT7FIJyxT76esjnw9DhE5sw==}
@@ -57895,7 +57921,7 @@ packages:
       mime-types: 2.1.35
       range-parser: 1.2.1
       schema-utils: 4.0.0
-      webpack: 5.75.0_esbuild@0.17.8
+      webpack: 5.75.0
     dev: true
 
   /webpack-dev-server/4.11.1_webpack@5.74.0:
@@ -58065,7 +58091,7 @@ packages:
         optional: true
     dependencies:
       typed-assert: 1.0.9
-      webpack: 5.75.0_esbuild@0.15.13
+      webpack: 5.75.0
     dev: true
 
   /webpack-virtual-modules/0.2.2:
@@ -58235,85 +58261,6 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
-
-  /webpack/5.75.0_esbuild@0.15.13:
-    resolution: {integrity: sha512-piaIaoVJlqMsPtX/+3KTTO6jfvrSYgauFVdt8cr9LTHKmcq/AMd4mhzsiP7ZF/PGRNPGA8336jldh9l2Kt2ogQ==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-    peerDependencies:
-      webpack-cli: '*'
-    peerDependenciesMeta:
-      webpack-cli:
-        optional: true
-    dependencies:
-      '@types/eslint-scope': 3.7.4
-      '@types/estree': 0.0.51
-      '@webassemblyjs/ast': 1.11.1
-      '@webassemblyjs/wasm-edit': 1.11.1
-      '@webassemblyjs/wasm-parser': 1.11.1
-      acorn: 8.8.1
-      acorn-import-assertions: 1.8.0_acorn@8.8.1
-      browserslist: 4.21.5
-      chrome-trace-event: 1.0.3
-      enhanced-resolve: 5.10.0
-      es-module-lexer: 0.9.3
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.10
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.0
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 3.1.1
-      tapable: 2.2.1
-      terser-webpack-plugin: 5.3.3_lex532nclbef5ull34kxwtef74
-      watchpack: 2.4.0
-      webpack-sources: 3.2.3
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-
-  /webpack/5.75.0_esbuild@0.17.8:
-    resolution: {integrity: sha512-piaIaoVJlqMsPtX/+3KTTO6jfvrSYgauFVdt8cr9LTHKmcq/AMd4mhzsiP7ZF/PGRNPGA8336jldh9l2Kt2ogQ==}
-    engines: {node: '>=10.13.0'}
-    hasBin: true
-    peerDependencies:
-      webpack-cli: '*'
-    peerDependenciesMeta:
-      webpack-cli:
-        optional: true
-    dependencies:
-      '@types/eslint-scope': 3.7.4
-      '@types/estree': 0.0.51
-      '@webassemblyjs/ast': 1.11.1
-      '@webassemblyjs/wasm-edit': 1.11.1
-      '@webassemblyjs/wasm-parser': 1.11.1
-      acorn: 8.8.1
-      acorn-import-assertions: 1.8.0_acorn@8.8.1
-      browserslist: 4.21.5
-      chrome-trace-event: 1.0.3
-      enhanced-resolve: 5.10.0
-      es-module-lexer: 0.9.3
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.10
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.0
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 3.1.1
-      tapable: 2.2.1
-      terser-webpack-plugin: 5.3.3_6hyl5w2uqyeivowpusuiulbmoy
-      watchpack: 2.4.0
-      webpack-sources: 3.2.3
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-    dev: true
 
   /webpackbar/5.0.2_webpack@5.75.0:
     resolution: {integrity: sha512-BmFJo7veBDgQzfWXl/wwYXr/VFus0614qZ8i9znqcl9fnEdiVkdbi0TedLQ6xAK92HZHDJ0QmyQ0fmuZPAgCYQ==}
