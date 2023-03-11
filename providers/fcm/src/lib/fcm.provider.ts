@@ -48,6 +48,7 @@ export class FcmPushProvider implements IPushProvider {
     delete (options.overrides as { deviceTokens?: string[] })?.deviceTokens;
 
     const overridesData = options.overrides || ({} as any);
+
     const androidData: AndroidConfig = overridesData.android;
     const apnsData: ApnsConfig = overridesData.apns;
     const fcmOptionsData: FcmOptions = overridesData.fcmOptions;
