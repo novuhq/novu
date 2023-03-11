@@ -13,7 +13,7 @@ import { IForm } from '../components/formTypes';
 const digestTourSteps: Step[] = [
   {
     target: '[data-test-id="digest-step-settings-interval"]',
-    content: 'Setup digest settings',
+    content: '',
     placement: 'left',
     disableBeacon: true,
     hideBackButton: true,
@@ -23,7 +23,7 @@ const digestTourSteps: Step[] = [
   },
   {
     target: '[data-test-id="email-step-settings-edit"]',
-    content: 'Setup email settings',
+    content: '',
     placement: 'left',
     disableBeacon: true,
     hideBackButton: true,
@@ -33,7 +33,7 @@ const digestTourSteps: Step[] = [
   },
   {
     target: '[data-test-id="test-workflow-btn"]',
-    content: 'Setup digest settings',
+    content: '',
     placement: 'bottom',
     disableBeacon: true,
     hideBackButton: true,
