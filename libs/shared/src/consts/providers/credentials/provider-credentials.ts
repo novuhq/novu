@@ -522,6 +522,22 @@ export const infobipEmailConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const fortySixElksConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const kannelConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.Host,
