@@ -12,6 +12,7 @@ import {
   InfobipSmsHandler,
   BurstSmsHandler,
   ClickatellHandler,
+  KannelSmsHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -27,6 +28,7 @@ export class SmsFactory implements ISmsFactory {
     new FiretextSmsHandler(),
     new InfobipSmsHandler(),
     new BurstSmsHandler(),
+    new KannelSmsHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

@@ -6,11 +6,11 @@ import { SendMessageType } from '../send-message-type.usecase';
 import { StepTypeEnum, DigestTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
-import { CreateExecutionDetails } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../../execution-details/types';
 
 @Injectable()
 export class Digest extends SendMessageType {

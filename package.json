@@ -67,7 +67,7 @@
     "@auto-it/npm": "^10.36.5",
     "@auto-it/released": "^10.36.5",
     "@commitlint/cli": "17.4.4",
-    "@commitlint/config-angular": "^13.2.0",
+    "@commitlint/config-angular": "^17.0.0",
     "@commitlint/config-conventional": "17.4.4",
     "@cspell/eslint-plugin": "^6.14.3",
     "@nrwl/cli": "13.10.6",
