@@ -15,6 +15,7 @@ export enum ROUTES {
   QUICKSTART = '/quickstart',
   GET_STARTED = '/get-started',
   DIGEST_PREVIEW = '/get-started/preview',
+  GET_STARTED_NOTIFICATION = '/quickstart/notification-center',
   ACTIVITIES = '/activities',
   SETTINGS = '/settings',
   INTEGRATIONS = '/integrations',

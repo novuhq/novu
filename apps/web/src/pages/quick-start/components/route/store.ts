@@ -14,7 +14,7 @@ export function localNavigate() {
   }
 
   function push(location: string) {
-    const isGetStartedFlow = location?.includes(ROUTES.GET_STARTED);
+    const isGetStartedFlow = location?.includes(ROUTES.GET_STARTED) || location?.includes(ROUTES.QUICKSTART);
 
     if (!location || !isGetStartedFlow) return;
 

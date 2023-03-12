@@ -1,5 +1,9 @@
 import React from 'react';
 import { Stack } from '@mantine/core';
+import { NavigateFunction } from 'react-router-dom';
+import { ChannelTypeEnum } from '@novu/shared';
+
+import { Bell, Chat, Mail, Mobile, Sms } from '../../design-system/icons';
 import { ROUTES } from '../../constants/routes.enum';
 
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
@@ -233,4 +237,60 @@ export enum OnBoardingAnalyticsEnum {
 export enum FlowTypeEnum {
   IN_APP = 'in_app',
   OTHER = 'other',
+}
+
+export const quickStartChannels: IQuickStartChannelConfiguration[] = [
+  {
+    Icon: Bell,
+    title: 'In-App notifications',
+    displayName: 'In-App',
+    type: ChannelTypeEnum.IN_APP,
+    description: 'A set of APIs and components to create a customized notification center',
+    clickHandler: (navigation: NavigateFunction) => {
+      if (navigation) {
+        navigation(ROUTES.GET_STARTED_NOTIFICATION);
+      }
+    },
+  },
+  {
+    Icon: Mail,
+    title: 'Email',
+    displayName: 'Email',
+    type: ChannelTypeEnum.EMAIL,
+    description: '🎉  Try our gift: 300 emails Use Novu provider for free or change the provider to yours',
+    clickHandler: () => {},
+  },
+  {
+    Icon: Mobile,
+    title: 'Push',
+    displayName: 'Push',
+    type: ChannelTypeEnum.PUSH,
+    description: 'Set up an integration with FCM, APNS or any other mobile push provider',
+    clickHandler: () => {},
+  },
+  {
+    Icon: Chat,
+    title: 'Chat',
+    displayName: 'Chat',
+    type: ChannelTypeEnum.CHAT,
+    description: 'Connect chat apps such as Slack, WhatsApp and Teams.',
+    clickHandler: () => {},
+  },
+  {
+    Icon: Sms,
+    title: 'SMS',
+    displayName: 'SMS',
+    type: ChannelTypeEnum.SMS,
+    description: 'Connect to a SMS provider to start sending SMS programmatically',
+    clickHandler: () => {},
+  },
+];
+
+interface IQuickStartChannelConfiguration {
+  Icon: React.FC<any>;
+  title: string;
+  displayName: string;
+  type: ChannelTypeEnum;
+  description: string;
+  clickHandler: (navigation: NavigateFunction) => void;
 }

@@ -11,10 +11,10 @@ export function FooterLayout({ leftSide, rightSide }: IFooterLayoutProps) {
   return (
     <FooterWrapper>
       <Grid justify="space-between" style={{ width: '100%', padding: '0 80px' }} gutter={0}>
-        <Grid.Col span={4}>
+        <Grid.Col span={4} style={{ display: 'flex', alignItems: 'center' }}>
           <LeftSide>{leftSide}</LeftSide>
         </Grid.Col>
-        <Grid.Col span={4}>
+        <Grid.Col span={4} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <MiddleSide> .. </MiddleSide>
         </Grid.Col>
         <Grid.Col span={4}>
@@ -45,4 +45,24 @@ const FooterWrapper = styled.div`
   justify-content: center;
   align-items: center;
   flex-direction: row;
+
+  box-shadow: inset 0 1px 0 #000000;
+
+  ${({ theme }) => {
+    return (
+      theme.colorScheme === 'dark' &&
+      `
+      box-shadow: inset 0 1px 0px #000000;
+      `
+    );
+  }};
+
+  ${({ theme }) =>
+    theme.colorScheme === 'dark'
+      ? `
+           box-shadow: inset 0 1px 0px #000000;
+          `
+      : `
+           box-shadow: inset 0px 1px 0px rgba(0, 0, 0, 0.2);
+          `};
 `;
