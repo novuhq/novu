@@ -1,12 +1,7 @@
----
-    to: providers/<%= name %>/package.json
----
-
-
 {
-  "name": "@novu/<%= name %>",
-  "version": "^0.12.0",
-  "description": "A <%= name %> wrapper for novu",
+  "name": "@novu/forty-six-elks",
+  "version": "0.12.0",
+  "description": "A 46elks wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
@@ -38,7 +33,8 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "@novu/stateless": "^0.12.0"
+    "@novu/stateless": "^0.12.0",
+    "axios": "^1.3.4"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "~1.0.1",
