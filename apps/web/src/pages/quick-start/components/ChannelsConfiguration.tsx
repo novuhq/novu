@@ -118,7 +118,7 @@ function getIntegrationsStatus(integrations): Record<ChannelTypeEnum, boolean> {
     return acc;
   }, {} as Record<ChannelTypeEnum, boolean>);
 
-  const noActiveIntegration = !integrationStatus.hasOwnProperty(ChannelTypeEnum.EMAIL);
+  const noActiveIntegration = integrationStatus && !integrationStatus.hasOwnProperty(ChannelTypeEnum.EMAIL);
   if (noActiveIntegration) {
     integrationStatus[ChannelTypeEnum.EMAIL] = true;
   }
