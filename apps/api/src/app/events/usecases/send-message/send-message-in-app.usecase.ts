@@ -78,10 +78,6 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
-    if (actor && actor.type !== ActorTypeEnum.NONE) {
-      actor.data = await this.processAvatar(actor, command);
-    }
-
     const organization = await this.organizationRepository.findById(command.organizationId);
 
     try {
@@ -170,6 +166,7 @@ export class SendMessageInApp extends SendMessageBase {
         ...(actor &&
           actor.type !== ActorTypeEnum.NONE && {
             actor,
+            _actorId: command.job._actorId,
           }),
       });
     }

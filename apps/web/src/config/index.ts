@@ -37,3 +37,7 @@ export const INTERCOM_APP_ID = window._env_.REACT_APP_INTERCOM_APP_ID || process
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WEB);
 
 export const LOGROCKET_ID = (window._env_.REACT_APP_LOGROCKET_ID || process.env.REACT_APP_LOGROCKET_ID) ?? '';
+
+export const WEBHOOK_URL = isCypress
+  ? window._env_.REACT_APP_WEBHOOK_URL || process.env.REACT_APP_WEBHOOK_URL || 'http://localhost:1341'
+  : window._env_.REACT_APP_WEBHOOK_URL || process.env.REACT_APP_WEBHOOK_URL || 'http://localhost:3003';

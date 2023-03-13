@@ -13,7 +13,7 @@ import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IntegrationInput } from './IntegrationInput';
-import { API_ROOT } from '../../../config';
+import { WEBHOOK_URL } from '../../../config';
 import { useEnvController, useAuthController } from '../../../hooks';
 import { Check, Copy } from '../../../design-system/icons';
 import { CONTEXT_PATH } from '../../../config';
@@ -200,7 +200,7 @@ export function ConnectIntegrationForm({
     : '';
 
   // eslint-disable-next-line max-len
-  const webhookUrl = `${API_ROOT}/v1/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
+  const webhookUrl = `${WEBHOOK_URL}/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
 
   return (
     <Form noValidate onSubmit={handleSubmit(onCreateIntegration)}>
