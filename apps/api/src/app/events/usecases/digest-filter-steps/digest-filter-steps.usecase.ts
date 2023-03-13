@@ -1,12 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
-import { StepTypeEnum, DigestTypeEnum } from '@novu/shared';
+import { NotificationStepEntity } from '@novu/dal';
+import { DigestTypeEnum, StepTypeEnum } from '@novu/shared';
+
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterStepsBackoff } from './digest-filter-steps-backoff.usecase';
 import { DigestFilterStepsRegular } from './digest-filter-steps-regular.usecase';
 
 import { EventsPerformanceService } from '../../services/performance-service';
 
+// TODO; Potentially rename this use case
 @Injectable()
 export class DigestFilterSteps {
   constructor(
@@ -23,44 +25,35 @@ export class DigestFilterSteps {
       command.subscriberId
     );
 
-    const matchedSteps = command.steps.filter((step) => step.active === true);
-    const digestStep = matchedSteps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
-
-    if (!digestStep) {
-      return matchedSteps;
-    }
-
-    const type = digestStep?.metadata?.type;
-
     const actions = {
       [DigestTypeEnum.BACKOFF]: this.filterStepsBackoff,
       [DigestTypeEnum.REGULAR]: this.filterStepsRegular,
     };
 
-    const action = type ? actions[type] : undefined;
-    if (!action) {
-      return [];
-    }
+    const action = actions[command.type];
 
     const steps = await action.execute({
       ...command,
-      steps: matchedSteps,
+      steps: command.steps,
     });
+
+    const triggerStep = this.createTriggerStep(command);
 
     this.performanceService.setEnd(mark);
 
-    return steps;
+    return [triggerStep, ...steps];
   }
 
-  public static createTriggerStep(command: DigestFilterStepsCommand): NotificationStepEntity {
+  private createTriggerStep(command: DigestFilterStepsCommand): NotificationStepEntity {
     return {
       template: {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _creatorId: command.userId,
+        _layoutId: null,
         type: StepTypeEnum.TRIGGER,
         content: '',
-      } as MessageTemplateEntity,
+      },
       _templateId: command.templateId,
     };
   }
