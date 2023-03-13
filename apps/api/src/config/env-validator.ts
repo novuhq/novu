@@ -96,6 +96,8 @@ if (process.env.NODE_ENV === 'regression') {
     if (!dopplerToken) {
       throw new Error('Expected a non empty Doppler token');
     }
+
+    return str();
   });
 
   validators.DOPPLER_TOKEN = noEmpty({
