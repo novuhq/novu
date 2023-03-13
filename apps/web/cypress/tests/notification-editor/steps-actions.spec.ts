@@ -178,7 +178,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.filter-item-value').contains('read');
   });
 
-  it('should be able to add read/seen filters to a particular step', function () {
+  it('should be able to not add read/seen filters to first step', function () {
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
