@@ -66,7 +66,7 @@ function BodyNavigation() {
 
 const TimelineWrapper = styled.div`
   width: 100%;
-  padding: 75px;
+  padding: 0 75px;
 
   .mantine-Timeline-itemBullet {
     background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : '#EDF0F2')};

@@ -24,8 +24,6 @@ export function QuickStartWrapper({
   faq?: boolean;
   children: React.ReactNode;
 }) {
-  const FIRST_PAGE = '/quickstart';
-
   const { framework } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -59,7 +57,7 @@ export function QuickStartWrapper({
     <>
       <PageContainer>
         <PageWrapper>
-          <GoBack goBackHandler={goBackHandler} display={location.pathname !== FIRST_PAGE} />
+          <GoBack goBackHandler={goBackHandler} />
           <Stack
             align="center"
             justify="center"
