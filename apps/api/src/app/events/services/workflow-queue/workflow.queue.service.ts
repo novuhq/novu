@@ -49,14 +49,19 @@ export class WorkflowQueueService {
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
-    this.queue = new Queue(WORKER_NAME, {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const WorkerClass = true ? Worker : require('@taskforcesh/bullmq-pro').WorkerPro;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const QueueClass = true ? Queue : require('@taskforcesh/bullmq-pro').QueuePro;
+
+    this.queue = new QueueClass(WORKER_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
 
-    this.worker = new Worker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
+    this.worker = new WorkerClass(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.worker.on('completed', async (job) => {
       await this.jobHasCompleted(job);
