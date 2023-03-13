@@ -42,13 +42,15 @@ export class MarkAllMessagesAs {
       },
     });
 
-    await this.queueService.wsSocketQueue.add({
-      event: 'unread_count_changed',
-      userId: subscriber._id,
-      payload: {
-        unreadCount: 0,
-      },
-    });
+    if (command.markAs === 'read') {
+      await this.queueService.wsSocketQueue.add({
+        event: 'unread_count_changed',
+        userId: subscriber._id,
+        payload: {
+          unreadCount: 0,
+        },
+      });
+    }
 
     this.analyticsService.track(
       `Mark all messages as ${command.markAs}- [Notification Center]`,
