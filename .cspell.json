@@ -402,7 +402,8 @@
     "nodemailer",
     "emailjs",
     "typeof",
-    "nbsp"
+    "nbsp",
+    "upsert"
   ],
   "flagWords": [],
   "patterns": [
@@ -458,6 +459,7 @@
   ],
   "ignorePaths": [
     "apps/api/src/.env.test",
+    "apps/api/src/.env.regression",
     "apps/ws/src/.env.test",
     "apps/ws/src/.example.env",
     ".cspell.json",

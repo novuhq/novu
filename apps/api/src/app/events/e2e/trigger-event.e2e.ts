@@ -215,7 +215,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const message = messages[0];
 
     expect(message.channel).to.equal(ChannelTypeEnum.IN_APP);
-    expect(message.content as string).to.equal('Test content for <b>Testing of User Name</b>');
+    expect(message?.content as string).to.equal('Test content for <b>Testing of User Name</b>');
     expect(message.seen).to.equal(false);
     expect(message.cta.data.url).to.equal('/cypress/test-shell/example/test?test-param=true');
     expect(message.lastSeenDate).to.be.not.ok;
@@ -380,7 +380,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       channel: channelType,
     });
 
-    expect(message.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
+    expect(message?.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
   });
 
   it('should trigger SMS notification with subscriber data', async function () {
@@ -404,7 +404,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       channel: channelType,
     });
 
-    expect(message.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
+    expect(message?.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
   });
 
   it('should trigger E-Mail notification with subscriber data', async function () {
@@ -448,10 +448,10 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       channel: channelType,
     });
 
-    const block = message.content[0] as IEmailBlock;
+    const block = message?.content[0] as IEmailBlock;
 
     expect(block.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
-    expect(message.subject).to.equal('Test email a subject nested');
+    expect(message?.subject).to.equal('Test email a subject nested');
   });
 
   it('should not trigger notification with subscriber data if integration is inactive', async function () {
@@ -465,7 +465,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     await integrationRepository.update(
-      { _environmentId: session.environment._id, _id: integration._id },
+      { _environmentId: session.environment._id, _id: integration?._id },
       { active: false }
     );
 
@@ -761,7 +761,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       channel: channelType,
     });
 
-    const block = message.content[0] as IEmailBlock;
+    const block = message?.content[0] as IEmailBlock;
 
     expect(block.content).to.equal('Hello John Doe, Welcome to Umbrella Corp');
   });
