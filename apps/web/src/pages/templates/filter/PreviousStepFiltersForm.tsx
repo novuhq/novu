@@ -3,6 +3,7 @@ import { ChannelTypeEnum, PreviousStepTypeEnum } from '@novu/shared';
 import { Controller, useFieldArray } from 'react-hook-form';
 import { Select } from '../../../design-system';
 import { Trash } from '../../../design-system/icons';
+import { channels } from '../shared/channels';
 import { DeleteStepButton } from './FilterModal.styles';
 
 export const PreviousStepFiltersForm = ({
@@ -50,8 +51,10 @@ export const PreviousStepFiltersForm = ({
                         itemNumber = filteredList.findIndex((listItem) => listItem.id === item.id) + 1;
                       }
 
+                      const label = channels.find((channel) => channel.channelType === item.template.type)?.label;
+
                       return {
-                        label: item.template.type + (itemNumber > 0 ? ` (${itemNumber})` : ''),
+                        label: label + (itemNumber > 0 ? ` (${itemNumber})` : ''),
                         value: item.uuid,
                       };
                     })

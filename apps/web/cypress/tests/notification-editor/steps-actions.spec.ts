@@ -146,6 +146,58 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.filter-item-value').contains('filter-value');
   });
 
+  it('should be able to add read/seen filters to a particular step', function () {
+    const template = this.session.templates[0];
+
+    cy.visit('/templates/edit/' + template._id);
+
+    cy.waitForNetworkIdle(500);
+
+    clickWorkflow();
+
+    cy.clickWorkflowNode(`node-emailSelector`);
+
+    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('group-rules-dropdown').click();
+    cy.get('.mantine-Select-item').contains('And').click();
+
+    cy.getByTestId('create-rule-btn').click();
+    cy.getByTestId('filter-on-dropdown').click();
+    cy.get('.mantine-Select-item').contains('Previous step').click();
+
+    cy.getByTestId('previous-step-dropdown').click();
+    cy.get('.mantine-Select-item').contains('In-App').click();
+    cy.getByTestId('previous-step-type-dropdown').click();
+    cy.get('.mantine-Select-item').contains('Read').click();
+
+    cy.getByTestId('filter-confirm-btn').click();
+
+    cy.get('.filter-item').should('have.length', 1);
+
+    cy.get('.filter-item').contains('Previous step - In-App');
+    cy.get('.filter-item-value').contains('read');
+  });
+
+  it('should be able to add read/seen filters to a particular step', function () {
+    const template = this.session.templates[0];
+
+    cy.visit('/templates/edit/' + template._id);
+
+    cy.waitForNetworkIdle(500);
+
+    clickWorkflow();
+
+    cy.clickWorkflowNode(`node-inAppSelector`);
+
+    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('group-rules-dropdown').click();
+    cy.get('.mantine-Select-item').contains('And').click();
+
+    cy.getByTestId('create-rule-btn').click();
+    cy.getByTestId('filter-on-dropdown').click();
+    cy.get('.mantine-Select-item').contains('Previous step').should('not.exist');
+  });
+
   it('should be able to remove filters for a particular step', function () {
     const template = this.session.templates[0];
 
