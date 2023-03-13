@@ -31,8 +31,7 @@ import {
 
 import { IFilterVariables } from './types';
 import { FilterProcessingDetails } from './filter-processing-details';
-
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details';
 import { SendMessageCommand } from '../send-message/send-message.command';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
 import {

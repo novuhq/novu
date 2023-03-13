@@ -393,6 +393,8 @@
     "isequal",
     "Scriptable",
     "iife",
+    "kannel",
+    "sendsms",
     "redlock",
     "axios",
     "ioredis",
@@ -400,7 +402,8 @@
     "nodemailer",
     "emailjs",
     "typeof",
-    "nbsp"
+    "nbsp",
+    "stddev"
   ],
   "flagWords": [],
   "patterns": [
