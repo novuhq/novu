@@ -46,7 +46,6 @@ export class BulkInvite {
           Logger.error(e);
           Sentry.captureException(e);
           invites.push({
-            failReason: null,
             success: false,
             email: invitee.email,
           });

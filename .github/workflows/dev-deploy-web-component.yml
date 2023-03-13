@@ -21,7 +21,7 @@ jobs:
     environment: Development
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Download the artifact
         uses: actions/download-artifact@master

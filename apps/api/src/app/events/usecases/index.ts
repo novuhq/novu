@@ -25,6 +25,8 @@ import { MapTriggerRecipients } from './map-trigger-recipients';
 import { MessageMatcher } from './message-matcher';
 import { ParseEventRequest } from './parse-event-request';
 import { ProcessBulkTrigger } from './process-bulk-trigger';
+import { StoreSubscriberJobs } from './store-subscriber-jobs';
+import { SetJobAsCompleted, SetJobAsFailed, UpdateJobStatus } from './update-job-status';
 
 export const USE_CASES = [
   MessageMatcher,
@@ -56,4 +58,8 @@ export const USE_CASES = [
   MapTriggerRecipients,
   ParseEventRequest,
   ProcessBulkTrigger,
+  StoreSubscriberJobs,
+  SetJobAsCompleted,
+  SetJobAsFailed,
+  UpdateJobStatus,
 ];

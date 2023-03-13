@@ -10,6 +10,7 @@ interface IOrganization {
 }
 
 interface IUser {
+  _id?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   email?: string | null;
@@ -31,17 +32,18 @@ export class AnalyticsService {
   upsertGroup(
     organizationId: string,
     organization: IOrganization,
-    userId: string
+    user: IUser
   ) {
     if (this.segmentEnabled) {
       this.segment.group({
-        userId: userId,
+        userId: user._id,
         groupId: organizationId,
         traits: {
           _organization: organizationId,
           id: organizationId,
           name: organization.name,
           createdAt: organization.createdAt,
+          domain: user.email?.split('@')[1],
         },
       });
     }
@@ -58,6 +60,10 @@ export class AnalyticsService {
 
   upsertUser(user: IUser, distinctId: string) {
     if (this.segmentEnabled) {
+      const githubToken = (user as any).tokens?.find(
+        (token) => token.provider === 'github'
+      );
+
       this.segment.identify({
         userId: distinctId,
         traits: {
@@ -67,6 +73,7 @@ export class AnalyticsService {
           email: user.email,
           avatar: user.profilePicture,
           createdAt: user.createdAt,
+          githubProfile: githubToken?.username,
         },
       });
     }

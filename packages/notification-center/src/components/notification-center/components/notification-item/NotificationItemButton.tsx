@@ -34,7 +34,6 @@ export function NotificationButton({ className, messageAction, buttonIndex, onAc
 export const actionButtonStyles = (buttonStyle: IButtonStyles) => css`
   background: ${buttonStyle.backGroundColor};
   color: ${buttonStyle.fontColor};
-  font-family: ${buttonStyle.fontFamily};
   box-shadow: none;
   display: flex;
   justify-content: center;

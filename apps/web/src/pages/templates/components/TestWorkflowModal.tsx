@@ -6,7 +6,6 @@ import * as Sentry from '@sentry/react';
 import { INotificationTrigger, IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, Title, Modal } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { useState } from 'react';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
@@ -68,7 +67,7 @@ export function TestWorkflowModal({
   const form = useForm({
     initialValues: {
       toValue: makeToValue(subscriberVariables, currentUser),
-      payloadValue: makePayloadValue(variables),
+      payloadValue: makePayloadValue(variables) === '{}' ? `{\n\n}` : makePayloadValue(variables),
       overridesValue: overridesTrigger,
     },
     validate: {
@@ -153,7 +152,7 @@ export function TestWorkflowModal({
           validationError="Invalid JSON"
         />
         <div style={{ alignItems: 'end' }}>
-          <Button data-test-id="test-trigger-btn" mt={30} inherit submit>
+          <Button disabled={!form.isValid()} data-test-id="test-trigger-btn" mt={30} inherit submit>
             Trigger
           </Button>
         </div>

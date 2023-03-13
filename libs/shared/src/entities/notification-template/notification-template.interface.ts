@@ -1,7 +1,7 @@
 import type { BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum, FilterParts } from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
-import { DigestUnitEnum } from '../step';
+import { DelayTypeEnum, DigestTypeEnum, DigestUnitEnum } from '../step';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -53,6 +53,7 @@ export interface INotificationTemplateStep {
   metadata?: {
     amount?: number;
     unit?: DigestUnitEnum;
+    type?: DigestTypeEnum | DelayTypeEnum;
     digestKey?: string;
     delayPath?: string;
   };

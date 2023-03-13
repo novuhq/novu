@@ -1,6 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ChangeRepository, LayoutRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { EnvironmentId, LayoutId, OrganizationId } from '../../types';
 import { CreateDefaultLayoutChangeCommand } from '../create-default-layout-change/create-default-layout-change.command';
 import { CreateDefaultLayoutChangeUseCase } from '../create-default-layout-change/create-default-layout-change.usecase';
@@ -13,7 +15,8 @@ export class SetDefaultLayoutUseCase {
     private getLayout: GetLayoutUseCase,
     private createDefaultLayoutChange: CreateDefaultLayoutChangeUseCase,
     private layoutRepository: LayoutRepository,
-    private changeRepository: ChangeRepository
+    private changeRepository: ChangeRepository,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: SetDefaultLayoutCommand) {
@@ -47,6 +50,13 @@ export class SetDefaultLayoutUseCase {
       await this.createDefaultChange({
         ...command,
         parentChangeId: existingParentChangeId || previousDefaultLayoutChangeId,
+      });
+
+      this.analyticsService.track('[Layout] - Set default layout', command.userId, {
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        newDefaultLayoutId: layout._id,
+        previousDefaultLayout: existingDefaultLayoutId,
       });
     } catch (error) {
       Logger.error(error);

@@ -41,7 +41,7 @@ export function FrameworkSetup() {
 
 export function ImplementationDescription() {
   return (
-    <Stack align="center">
+    <Stack align="center" sx={{ gap: '20px' }}>
       <span>A fully functional notification center is now at your fingertips.</span>
       <span>What's your go-to frontend framework?</span>
     </Stack>

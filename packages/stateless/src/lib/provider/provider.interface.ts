@@ -56,13 +56,20 @@ export interface IPushOptions {
     channelId?: string;
     categoryId?: string;
     mutableContent?: boolean;
-    android?: { [key: string]: { [key: string]: string } };
-    apns?: { payload: { aps: { [key: string]: { [key: string]: string } } } };
+    android?: { [key: string]: { [key: string]: string } | string };
+    apns?: {
+      headers?: { [key: string]: string };
+      payload: {
+        aps: { [key: string]: { [key: string]: string } | string };
+      };
+    };
+    fcmOptions?: { analyticsLabel?: string };
   };
 }
 
 export interface IChatOptions {
   webhookUrl: string;
+  channel?: string;
   content: string;
 }
 
