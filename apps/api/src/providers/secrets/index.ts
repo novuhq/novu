@@ -1,5 +1,12 @@
 import { EmailProviderIdEnum } from '@novu/shared';
+import { MailtrapAccountId, MailtrapApiKey, MailtrapInboxId } from '@novu/testing';
 import axios from 'axios';
+
+export interface IMailtrapSecrets {
+  accountId: MailtrapAccountId;
+  apiKey: MailtrapApiKey;
+  inboxId: MailtrapInboxId;
+}
 
 const getDopplerSecrets = async () => {
   const response = await axios.get(
@@ -19,6 +26,22 @@ export const injectDopplerSecrets = async (): Promise<void> => {
   for (const [key, value] of providerSecrets) {
     process.env[key] = `${value}`;
   }
+};
+
+export const getMailtrapSecrets = (): IMailtrapSecrets => {
+  const accountId = Number(process.env.REGRESSION_MAILTRAP_ACCOUNT_ID);
+  const apiKey = process.env.REGRESSION_MAILTRAP_API_KEY;
+  const inboxId = Number(process.env.REGRESSION_MAILTRAP_INBOX_ID);
+
+  if (!accountId || !apiKey || !inboxId) {
+    throw new Error('Missing any Mailtrap.io secrets');
+  }
+
+  return {
+    accountId,
+    apiKey,
+    inboxId,
+  };
 };
 
 export const getProviderSecrets = (providerId: EmailProviderIdEnum): Record<string, string> => {
