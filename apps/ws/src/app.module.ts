@@ -6,13 +6,13 @@ import { AppService } from './app.service';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
 import { SocketModule } from './socket/socket.module';
-import { getOTELModule } from '@novu/application-generic';
+import { otelModule } from '@novu/application-generic';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   SharedModule,
   HealthModule,
   SocketModule,
-  getOTELModule(),
+  otelModule,
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

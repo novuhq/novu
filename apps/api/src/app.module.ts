@@ -31,7 +31,7 @@ import { MessagesModule } from './app/messages/messages.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
 import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
-import { getOTELModule } from '@novu/application-generic';
+import { otelModule } from '@novu/application-generic';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
@@ -59,7 +59,7 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   MessagesModule,
   PartnerIntegrationsModule,
   TopicsModule,
-  getOTELModule(),
+  otelModule,
 ];
 
 const providers: Provider[] = [];

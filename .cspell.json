@@ -405,7 +405,10 @@
     "nbsp",
     "stddev",
     "instrumentations",
-    "otel"
+    "otel",
+    "OTELSDK",
+    "opentelemetry",
+    "pino"
   ],
   "flagWords": [],
   "patterns": [

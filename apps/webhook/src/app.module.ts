@@ -7,9 +7,9 @@ import { AppService } from './app.service';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
-import { getOTELModule } from '@novu/application-generic';
+import { otelModule } from '@novu/application-generic';
 
-const modules = [SharedModule, HealthModule, WebhooksModule, getOTELModule()];
+const modules = [SharedModule, HealthModule, WebhooksModule, otelModule];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const providers: any[] = [AppService];
