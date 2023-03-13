@@ -1,0 +1,53 @@
+import React, { useEffect } from 'react';
+
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { GetStartedLayout } from '../components/layout/GetStartedLayout';
+import { getStartedSteps } from '../consts';
+import { NavButton } from './DigestPreview';
+import { ArrowRight } from '../../../design-system/icons/arrows/ArrowRight';
+import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
+
+export function GetStarted() {
+  const segment = useSegment();
+
+  useEffect(() => {
+    // segment.track(OnBoardingAnalyticsEnum.QUICK_START_VISIT);
+  }, []);
+
+  return (
+    <GetStartedLayout
+      footer={{
+        leftSide: <LearnMoreRef />,
+        rightSide: (
+          <NavButton navigateTo={getStartedSteps.second} variant={'gradient'}>
+            <div style={{ fontSize: '16px' }}>Next Page</div>
+            <ArrowRight style={{ marginLeft: '10px' }} />
+          </NavButton>
+        ),
+      }}
+    >
+      <ChannelsConfiguration />
+    </GetStartedLayout>
+  );
+}
+
+function LearnMoreRef() {
+  function handleOnClick() {
+    /*
+     * todo add optional event
+     * segment.track(OnBoardingAnalyticsEnum);
+     */
+  }
+
+  return (
+    <a
+      href={'https://docs.novu.co/platform/digest/'}
+      style={{ color: '#DD2476', textDecoration: 'underline', fontSize: '18px' }}
+      onClick={() => handleOnClick}
+      target="_blank"
+      rel="noreferrer"
+    >
+      Learn more in the docs
+    </a>
+  );
+}
