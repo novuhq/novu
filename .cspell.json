@@ -408,7 +408,8 @@
     "otel",
     "OTELSDK",
     "opentelemetry",
-    "pino"
+    "pino",
+    "shortid"
   ],
   "flagWords": [],
   "patterns": [

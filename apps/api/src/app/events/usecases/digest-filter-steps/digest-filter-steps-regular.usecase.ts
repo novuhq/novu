@@ -9,7 +9,7 @@ export class DigestFilterStepsRegular {
   constructor(private jobRepository: JobRepository, private notificationRepository: NotificationRepository) {}
 
   public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
-    const steps = [DigestFilterSteps.createTriggerStep(command)];
+    const steps: NotificationStepEntity[] = [];
     let delayedDigests;
 
     for (const step of command.steps) {

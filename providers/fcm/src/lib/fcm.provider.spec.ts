@@ -167,3 +167,93 @@ test('should trigger fcm with apns (ios) override', async () => {
     },
   });
 });
+
+test('should trigger fcm data for ios with headers options', async () => {
+  await provider.sendMessage({
+    title: 'Test',
+    content: 'Test push',
+    target: ['tester'],
+    payload: {
+      key_1: 'val_1',
+      key_2: 'val_2',
+    },
+    overrides: {
+      type: 'data',
+      apns: {
+        headers: {
+          'apns-priority': '5',
+        },
+        payload: {
+          aps: {
+            alert: {
+              'loc-key': 'some_body',
+              'title-loc-key': 'some_title',
+            },
+            sound: 'demo.wav',
+          },
+        },
+      },
+    },
+  });
+  expect(app.initializeApp).toHaveBeenCalledTimes(1);
+  expect(app.cert).toHaveBeenCalledTimes(1);
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    tokens: ['tester'],
+    apns: {
+      headers: {
+        'apns-priority': '5',
+      },
+      payload: {
+        aps: {
+          alert: {
+            'loc-key': 'some_body',
+            'title-loc-key': 'some_title',
+          },
+          sound: 'demo.wav',
+        },
+      },
+    },
+    data: {
+      key_1: 'val_1',
+      key_2: 'val_2',
+    },
+  });
+});
+
+test('should trigger fcm data for android with priority option', async () => {
+  await provider.sendMessage({
+    title: 'Test',
+    content: 'Test push',
+    target: ['tester'],
+    payload: {
+      key_1: 'val_1',
+      key_2: 'val_2',
+    },
+    overrides: {
+      type: 'data',
+      android: {
+        data: {
+          for_android: 'only',
+        },
+        priority: 'high',
+      },
+    },
+  });
+  expect(app.initializeApp).toHaveBeenCalledTimes(1);
+  expect(app.cert).toHaveBeenCalledTimes(1);
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    tokens: ['tester'],
+    android: {
+      data: {
+        for_android: 'only',
+      },
+      priority: 'high',
+    },
+    data: {
+      key_1: 'val_1',
+      key_2: 'val_2',
+    },
+  });
+});
