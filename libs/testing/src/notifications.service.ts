@@ -1,10 +1,6 @@
 import axios from 'axios';
-import { ChannelTypeEnum } from '@novu/shared';
-import { MessageRepository } from '@novu/dal';
 
 export class NotificationsService {
-  private messageRepository = new MessageRepository();
-
   constructor(private token: string) {}
 
   async triggerEvent(name: string, subscriberId: string, payload = {}) {
