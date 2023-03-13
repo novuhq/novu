@@ -18,6 +18,7 @@ export interface ISubscribers {
     providerId: string,
     credentials: IChannelCredentials
   );
+  unsetCredentials(subscriberId: string, providerId: string);
   getPreference(subscriberId: string);
   updatePreference(
     subscriberId: string,
