@@ -25,8 +25,6 @@ export class MessageEntity {
 
   _subscriberId: string;
 
-  _actorId?: string;
-
   subscriber?: SubscriberEntity;
 
   template?: NotificationTemplateEntity;
