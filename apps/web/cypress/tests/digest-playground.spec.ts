@@ -11,7 +11,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
     cy.getByTestId('try-digest-playground-tile').click();
 
-    cy.url().should('include', '/templates/digest-playground');
+    cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
 
     cy.get('a[href="https://docs.novu.co/platform/digest"]').contains('Learn more in docs');
@@ -25,7 +25,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
     cy.getByTestId('try-digest-playground-tile').click();
 
-    cy.url().should('include', '/templates/digest-playground');
+    cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
 
     cy.get('button').contains('Set Up Digest Workflow').click();

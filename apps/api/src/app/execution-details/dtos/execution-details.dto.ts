@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ExecutionDetailsEntity } from '@novu/dal';
 
-import { CreateExecutionDetailsCommand } from '../usecases/create-execution-details/create-execution-details.command';
+import { CreateExecutionDetailsCommand } from '../usecases/create-execution-details';
 
 export class CreateExecutionDetailsResponseDto {
   @ApiProperty()

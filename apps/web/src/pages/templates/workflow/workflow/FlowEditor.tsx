@@ -315,6 +315,13 @@ export function FlowEditor({
               }
             }}
             onPaneClick={() => setSelectedNodeId('')}
+            /*
+             * TODO: for now this disables the deletion of a step using delete/backspace keys
+             * as it will require some sort of refactoring of how we save the workflow state
+             * to properly support keyboard delete events
+             * Remove this line once we tackle the workflow state handling
+             */
+            deleteKeyCode={null}
             {...reactFlowDefaultProps}
           >
             <MinimalTemplatesSideBar

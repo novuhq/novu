@@ -2,14 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
+
+import { RunJobCommand } from './run-job.command';
+
+import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
+import { SendMessage, SendMessageCommand } from '../send-message';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
-import { QueueNextJobCommand } from '../queue-next-job/queue-next-job.command';
-import { QueueNextJob } from '../queue-next-job/queue-next-job.usecase';
-import { SendMessageCommand } from '../send-message/send-message.command';
-import { SendMessage } from '../send-message/send-message.usecase';
-import { RunJobCommand } from './run-job.command';
-import { shouldBackoff } from '../../services/workflow-queue/workflow.queue.service';
+import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
 
 @Injectable()
 export class RunJob {
@@ -61,7 +62,7 @@ export class RunJob {
 
       await this.storageHelperService.deleteAttachments(job.payload?.attachments);
     } catch (error) {
-      if (job.step.shouldStopOnFail || shouldBackoff(error)) {
+      if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
       throw new ApiException(error);
@@ -83,6 +84,7 @@ export class RunJob {
     if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY) {
       return false;
     }
+
     const count = await this.jobRepository.count({
       _environmentId: job._environmentId,
       _id: job._id,
@@ -90,5 +92,9 @@ export class RunJob {
     });
 
     return count > 0;
+  }
+
+  public shouldBackoff(error: Error): boolean {
+    return error.message.includes(EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER);
   }
 }

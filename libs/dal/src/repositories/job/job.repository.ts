@@ -9,6 +9,7 @@ import { SubscriberEntity } from '../subscriber';
 import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { DalException } from '../../shared';
 
 type JobEntityPopulated = JobEntity & {
   template: NotificationTemplateEntity;
@@ -54,11 +55,11 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     );
   }
 
-  public async setError(organizationId: string, jobId: string, error: Error) {
-    await this.update(
+  public async setError(organizationId: string, jobId: string, error: Error): Promise<void> {
+    const result = await this._model.update(
       {
-        _organizationId: organizationId,
-        _id: jobId,
+        _organizationId: this.convertStringToObjectId(organizationId),
+        _id: this.convertStringToObjectId(jobId),
       },
       {
         $set: {
@@ -66,6 +67,12 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         },
       }
     );
+
+    if (result.modifiedCount === 0) {
+      throw new DalException(
+        `There was a problem when trying to set an error for the job ${jobId} in the organization ${organizationId}`
+      );
+    }
   }
 
   public async findInAppsForDigest(organizationId: string, transactionId: string, subscriberId: string) {
