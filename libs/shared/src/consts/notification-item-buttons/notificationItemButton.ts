@@ -9,7 +9,6 @@ export interface IButtonStyles {
   backGroundColor: string;
   fontColor: string;
   removeCircleColor: string;
-  fontFamily?: string;
 }
 
 export interface IStyleButtons {
