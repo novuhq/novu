@@ -1,4 +1,4 @@
-import { IntegrationRepository } from '@novu/dal';
+import { IntegrationQuery, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 
 export class IntegrationService {
@@ -58,5 +58,29 @@ export class IntegrationService {
     };
 
     await this.integrationRepository.create(pushFcmPayload);
+  }
+
+  async createEmailIntegration(emailIntegrationEntity: IntegrationQuery) {
+    return await this.integrationRepository.create(emailIntegrationEntity);
+  }
+
+  async findIntegration(environmentId: string, organizationId: string, providerId: string) {
+    return await this.integrationRepository.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      providerId,
+    });
+  }
+
+  async findActiveIntegrationForChannel(environmentId: string, channel: ChannelTypeEnum) {
+    return await this.integrationRepository.findActiveIntegrationForChannel(environmentId, channel);
+  }
+
+  async deleteIntegration(id: string, environmentId: string, organizationId: string) {
+    return await this.integrationRepository.delete({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      _id: id,
+    });
   }
 }
