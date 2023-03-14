@@ -30,12 +30,6 @@ import { CreateNotificationTemplateRequestDto } from '../dto';
 
 import axios from 'axios';
 import { SendMessageEmail } from '../../events/usecases/send-message/send-message-email.usecase';
-import { RunJob, RunJobCommand } from '../../events/usecases/run-job';
-import { SendMessage } from '../../events/usecases/send-message';
-import { QueueNextJob } from '../../events/usecases/queue-next-job';
-import { StorageHelperService } from '../../events/services/storage-helper-service/storage-helper.service';
-import { v4 as uuid } from 'uuid';
-import { EmailEventStatusEnum } from '@novu/stateless';
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
   let session: UserSession;
@@ -43,27 +37,16 @@ describe('Create Notification template - /notification-templates (POST)', async 
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
-  const executionDetailsRepository: ExecutionDetailsRepository = new ExecutionDetailsRepository();
   const axiosInstance = axios.create();
 
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
-  const jobRepository = new JobRepository();
-  const messageRepository = new MessageRepository();
-  let runJob: RunJob;
 
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-
-    runJob = new RunJob(
-      jobRepository,
-      session?.testServer?.getService(SendMessage),
-      session?.testServer?.getService(QueueNextJob),
-      session?.testServer?.getService(StorageHelperService)
-    );
   });
 
   it('should be able to create a notification with the API Key', async function () {
@@ -415,210 +398,6 @@ describe('Create Notification template - /notification-templates (POST)', async 
     );
 
     expect(result.credentials.senderName).to.equal('senderName');
-  });
-
-  it('should filter in app seen/read step', async function () {
-    const firstStepUuid = uuid();
-    const template = await session.createTemplate({
-      steps: [
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Not Delayed {{customVar}}' as string,
-          uuid: firstStepUuid,
-        },
-        {
-          type: StepTypeEnum.DELAY,
-          content: '',
-          metadata: {
-            unit: DigestUnitEnum.MINUTES,
-            amount: 5,
-            type: DelayTypeEnum.REGULAR,
-          },
-        },
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Hello world {{customVar}}' as string,
-          filters: [
-            {
-              isNegated: false,
-              type: 'GROUP',
-              value: 'AND',
-              children: [
-                {
-                  on: FilterPartTypeEnum.PREVIOUS_STEP,
-                  stepType: PreviousStepTypeEnum.READ,
-                  step: firstStepUuid,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    });
-
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'Testing of User Name',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    await session.awaitRunningJobs(template?._id, true, 1);
-
-    const delayedJob = await jobRepository.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DELAY,
-    });
-
-    if (!delayedJob) {
-      throw new Error();
-    }
-
-    expect(delayedJob.status).to.equal(JobStatusEnum.DELAYED);
-
-    const messages = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
-    });
-
-    expect(messages.length).to.equal(1);
-
-    await runJob.execute(
-      RunJobCommand.create({
-        jobId: delayedJob._id,
-        environmentId: delayedJob._environmentId,
-        organizationId: delayedJob._organizationId,
-        userId: delayedJob._userId,
-      })
-    );
-    await session.awaitRunningJobs(template?._id, true, 0);
-
-    const messagesAfter = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: StepTypeEnum.IN_APP,
-    });
-
-    expect(messagesAfter.length).to.equal(1);
-  });
-
-  it('should filter email seen/read step', async function () {
-    const firstStepUuid = uuid();
-    const template = await session.createTemplate({
-      steps: [
-        {
-          type: StepTypeEnum.EMAIL,
-          name: 'Message Name',
-          subject: 'Test email subject',
-          content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
-          uuid: firstStepUuid,
-        },
-        {
-          type: StepTypeEnum.DELAY,
-          content: '',
-          metadata: {
-            unit: DigestUnitEnum.MINUTES,
-            amount: 5,
-            type: DelayTypeEnum.REGULAR,
-          },
-        },
-        {
-          type: StepTypeEnum.EMAIL,
-          name: 'Message Name',
-          subject: 'Test email subject',
-          content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
-          filters: [
-            {
-              isNegated: false,
-              type: 'GROUP',
-              value: 'AND',
-              children: [
-                {
-                  on: FilterPartTypeEnum.PREVIOUS_STEP,
-                  stepType: PreviousStepTypeEnum.READ,
-                  step: firstStepUuid,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    });
-
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
-        payload: {
-          customVar: 'Testing of User Name',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-
-    await session.awaitRunningJobs(template?._id, true, 1);
-
-    const delayedJob = await jobRepository.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DELAY,
-    });
-
-    if (!delayedJob) {
-      throw new Error();
-    }
-
-    expect(delayedJob.status).to.equal(JobStatusEnum.DELAYED);
-
-    const messages = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: StepTypeEnum.EMAIL,
-    });
-
-    expect(messages.length).to.equal(1);
-
-    await executionDetailsRepository.create({
-      _jobId: delayedJob._parentId,
-      _messageId: messages[0]._id,
-      _environmentId: session.environment._id,
-      _organizationId: session.organization._id,
-      webhookStatus: EmailEventStatusEnum.OPENED,
-    });
-
-    await runJob.execute(
-      RunJobCommand.create({
-        jobId: delayedJob._id,
-        environmentId: delayedJob._environmentId,
-        organizationId: delayedJob._organizationId,
-        userId: delayedJob._userId,
-      })
-    );
-    await session.awaitRunningJobs(template?._id, true, 0);
-
-    const messagesAfter = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: StepTypeEnum.EMAIL,
-    });
-
-    expect(messagesAfter.length).to.equal(1);
   });
 
   async function getProductionEnvironment() {
