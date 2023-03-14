@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { JobsOptions, Queue, QueueBaseOptions, QueueScheduler, Worker } from 'bullmq';
+import { JobsOptions, QueueBaseOptions } from 'bullmq';
 // TODO: Remove this DAL dependency, maybe through a DTO or shared entity
 import { JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
@@ -19,6 +19,7 @@ import {
   CreateExecutionDetailsCommand,
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
+import { BullmqService } from '../../../shared/services/bullmq/Bullmq.service';
 
 export const WORKER_NAME = 'standard';
 
@@ -37,10 +38,9 @@ export class WorkflowQueueService {
       tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
-  public readonly queue: Queue;
-  public readonly worker: Worker;
-  private readonly queueScheduler: QueueScheduler;
   readonly DEFAULT_ATTEMPTS = 3;
+
+  public readonly bullmqService: BullmqService;
 
   constructor(
     @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
@@ -49,36 +49,31 @@ export class WorkflowQueueService {
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const WorkerClass = true ? Worker : require('@taskforcesh/bullmq-pro').WorkerPro;
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const QueueClass = true ? Queue : require('@taskforcesh/bullmq-pro').QueuePro;
-
-    this.queue = new QueueClass(WORKER_NAME, {
+    this.bullmqService = new BullmqService(WORKER_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
 
-    this.worker = new WorkerClass(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
+    this.bullmqService.createWorker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
 
-    this.worker.on('completed', async (job) => {
+    this.bullmqService.worker.on('completed', async (job) => {
       await this.jobHasCompleted(job);
     });
 
-    this.worker.on('failed', async (job, error) => {
+    this.bullmqService.worker.on('failed', async (job, error) => {
       await this.jobHasFailed(job, error);
     });
 
-    this.queueScheduler = new QueueScheduler(WORKER_NAME, this.bullConfig);
+    this.bullmqService.createScheduler(WORKER_NAME, this.bullConfig);
   }
 
   public async gracefulShutdown() {
     // Right now we only want this for testing purposes
     if (process.env.NODE_ENV === 'test') {
-      await this.queue.drain();
-      await this.worker.close();
+      await this.bullmqService.queue.drain();
+      await this.bullmqService.worker.close();
     }
   }
 
@@ -172,7 +167,7 @@ export class WorkflowQueueService {
     }
   }
 
-  public async addToQueue(id: string, data: JobEntity, delay?: number | undefined) {
+  public async addToQueue(id: string, data: JobEntity, delay?: number | undefined, organizationId?: string) {
     const options: JobsOptions = {
       removeOnComplete: true,
       removeOnFail: true,
@@ -188,7 +183,7 @@ export class WorkflowQueueService {
       options.attempts = this.DEFAULT_ATTEMPTS;
     }
 
-    await this.queue.add(id, data, options);
+    await this.bullmqService.add(id, data, options, organizationId);
   }
 
   private stepContainsFilter(data: JobEntity, onFilter: string) {

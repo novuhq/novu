@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Queue, QueueBaseOptions, Worker } from 'bullmq';
+import { QueueBaseOptions } from 'bullmq';
 import { getRedisPrefix } from '@novu/shared';
 import { ConnectionOptions } from 'tls';
 
 import { TriggerEvent, TriggerEventCommand } from '../../usecases/trigger-event';
+import { BullmqService } from '../../../shared/services/bullmq/Bullmq.service';
 
 @Injectable()
 export class TriggerHandlerQueueService {
@@ -20,18 +21,18 @@ export class TriggerHandlerQueueService {
       tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
-  public readonly queue: Queue;
-  public readonly worker: Worker;
+  private readonly bullmqService: BullmqService;
 
   constructor(private triggerEventUsecase: TriggerEvent) {
-    this.queue = new Queue<TriggerEventCommand>('trigger-handler', {
+    const name = 'trigger-handler';
+    this.bullmqService = new BullmqService(name, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
 
-    this.worker = new Worker('trigger-handler', this.getWorkerProcessor(), this.getWorkerOpts());
+    this.bullmqService.createWorker(name, this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
   private getWorkerOpts() {
@@ -46,5 +47,17 @@ export class TriggerHandlerQueueService {
     return async ({ data }: { data: TriggerEventCommand }) => {
       return this.triggerEventUsecase.execute(data);
     };
+  }
+
+  public add(id: string, data: any, organizationId: string) {
+    this.bullmqService.add(
+      id,
+      data,
+      {
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+      organizationId
+    );
   }
 }

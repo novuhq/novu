@@ -57,7 +57,7 @@ export class AddJob {
       })
     );
 
-    await this.workflowQueueService.addToQueue(job._id, job, delay);
+    await this.workflowQueueService.addToQueue(job._id, job, delay, command.organizationId);
 
     if (delay) {
       this.createExecutionDetails.execute(
