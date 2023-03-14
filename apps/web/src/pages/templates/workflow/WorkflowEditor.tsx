@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Grid, useMantineColorScheme } from '@mantine/core';
@@ -16,7 +16,7 @@ import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { FilterModal } from '../filter/FilterModal';
 import { StepSettings } from './SideBar/StepSettings';
 import { AddStepMenu } from './SideBar/AddStepMenu';
-import { useTemplateFetcher } from '../components/useTemplateFetcher';
+import { useTemplateFetcher } from '../../../api/hooks';
 import { ActivePageEnum } from '../../../constants/editorEnums';
 import { useTemplateEditorContext } from '../editor/TemplateEditorProvider';
 
@@ -54,7 +54,7 @@ const WorkflowEditor = ({
     clearErrors,
     formState: { errors, isDirty: isDirtyForm, isSubmitted },
   } = useFormContext<IForm>();
-  const { loading: loadingEditTemplate } = useTemplateFetcher(templateId);
+  const { isInitialLoading: loadingEditTemplate } = useTemplateFetcher({ templateId });
 
   const [filterOpen, setFilterOpen] = useState(false);
   const steps = watch('steps');
@@ -83,10 +83,6 @@ const WorkflowEditor = ({
   const onDelete = (id) => {
     setToDelete(id);
   };
-
-  useEffect(() => {
-    setSelectedNodeId('');
-  }, []);
 
   return (
     <>
