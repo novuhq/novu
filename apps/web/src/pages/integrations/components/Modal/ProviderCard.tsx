@@ -126,7 +126,7 @@ const CardFooter = styled.div`
 
 const StyledCard = styled.div<{ dark: boolean; active: boolean; selected: boolean }>`
   background-color: ${({ dark }) => (dark ? colors.B17 : colors.B98)};
-
+  box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.medium)};
   border: 1px solid transparent;
   border-radius: 7px;
   display: inline-block;

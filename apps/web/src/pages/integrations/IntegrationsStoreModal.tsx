@@ -173,7 +173,7 @@ const IntegrationCardWrapper = styled.div`
   height: calc(100vh - ${INTEGRATION_SETTING_TOP_SMALL + 20}px);
   box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.medium)};
   border-radius: 7px;
-  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight)};
+  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : colors.B98)};
   overflow: hidden;
 
   @media screen and (min-width: 1367px) {
