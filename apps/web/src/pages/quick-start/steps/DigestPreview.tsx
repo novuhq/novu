@@ -14,6 +14,7 @@ import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLe
 import { Label } from '../components/demo-flow/nodes/NodeStep';
 import { getStartedSteps } from '../consts';
 import { ROUTES } from '../../../constants/routes.enum';
+import { HeaderSecondaryTitle, HeaderTitle } from '../components/layout/HeaderLayout';
 
 export function DigestPreview() {
   const segment = useSegment();
@@ -26,6 +27,12 @@ export function DigestPreview() {
 
   return (
     <GetStartedLayout
+      header={
+        <>
+          <HeaderTitle>Set-up steps to get started</HeaderTitle>
+          <HeaderSecondaryTitle>Quick Start Guide</HeaderSecondaryTitle>
+        </>
+      }
       footer={{
         leftSide: (
           <NavButton navigateTo={getStartedSteps.first}>
@@ -36,7 +43,9 @@ export function DigestPreview() {
         rightSide: <RightSide />,
       }}
     >
-      <DigestDemoFlow />
+      <DemoContainer>
+        <DigestDemoFlow />
+      </DemoContainer>
     </GetStartedLayout>
   );
 }
@@ -47,23 +56,49 @@ function RightSide() {
       <NavButton navigateTo={ROUTES.TEMPLATES} style={{ marginRight: '40px' }}>
         <ButtonText>Build a Workflow</ButtonText>
       </NavButton>
-      <NavButton navigateTo={ROUTES.TEMPLATES} variant={'gradient'}>
+      <NavButton pulse={true} navigateTo={ROUTES.TEMPLATES} variant={'gradient'}>
         <ButtonText>Try the Digest Playground</ButtonText>
       </NavButton>
     </>
   );
 }
 
+const DemoContainer = styled.div`
+  margin-left: 300px;
+
+  transition: margin-left 0.3s ease;
+
+  @media (max-width: 1750px) {
+     {
+      margin-left: 150px;
+    }
+  }
+
+  @media (max-width: 1470px) {
+     {
+      margin-left: 30px;
+    }
+  }
+
+  @media (max-width: 1300px) {
+     {
+      margin-left: 10px;
+    }
+  }
+`;
+
 const ButtonText = styled.div`
   font-size: 16px;
 `;
 
 export function NavButton({
+  pulse = false,
   navigateTo,
   variant,
   children,
   ...props
 }: {
+  pulse?: boolean;
   navigateTo: string;
   variant?: 'outline' | 'gradient';
   children: React.ReactNode;
@@ -80,7 +115,7 @@ export function NavButton({
 
   return (
     <Center data-test-id="get-started-footer-left-side" inline onClick={handleOnClick} {...props}>
-      <StyledButton fullWidth variant={variant ?? 'outline'}>
+      <StyledButton fullWidth variant={variant ?? 'outline'} pulse={pulse ? pulse : false}>
         <>{children}</>
       </StyledButton>
     </Center>
@@ -93,6 +128,26 @@ function ThemeArrowLeft(props: React.ComponentPropsWithoutRef<'svg'>) {
   return <>{theme.colorScheme === 'dark' ? <ArrowLeft {...props} /> : <ArrowLeftGradient {...props} />}</>;
 }
 
-const StyledButton = styled(Button)`
+const StyledButton = styled(Button)<{ pulse: boolean }>`
   height: 50px;
+
+  ${({ pulse }) => {
+    return (
+      pulse &&
+      `
+      animation: pulse-animation 2s infinite;
+      @keyframes pulse-animation {
+        0% {
+          box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
+        }
+      }
+      `
+    );
+  }};
 `;

@@ -23,13 +23,13 @@ export function ChannelsConfiguration() {
   }, []);
 
   return (
-    <Grid>
+    <Grid style={{ maxWidth: '850px' }}>
       {quickStartChannels.map((channel, index) => {
         const Icon = channel.Icon;
         const integrationStatus = isLoading ? false : integrationsStatus[channel.type];
 
         return (
-          <Grid.Col span={5} key={index} style={{ marginBottom: '43px' }}>
+          <Grid.Col span={6} key={index} style={{ marginBottom: '43px' }}>
             <Container>
               <IconContainer>
                 <Icon style={{ width: '28px', height: '32px' }} />

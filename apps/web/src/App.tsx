@@ -206,7 +206,7 @@ function App() {
                   />
                   <Route path={ROUTES.QUICKSTART} element={<Quickstart />} />
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
-                  <Route path={ROUTES.DIGEST_PREVIEW} element={<DigestPreview />} />
+                  <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
                   <Route path={ROUTES.GET_STARTED_NOTIFICATION} element={<NotificationCenter />} />
                   <Route path="/quickstart/notification-center/set-up" element={<FrameworkSetup />} />
                   <Route path="/quickstart/notification-center/set-up/:framework" element={<Setup />} />

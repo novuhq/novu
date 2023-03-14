@@ -14,9 +14,10 @@ interface IGetStartedLayoutProps {
     leftSide: React.ReactNode;
     rightSide: React.ReactNode;
   };
+  header: React.ReactNode;
 }
 
-export function GetStartedLayout({ children, footer }: IGetStartedLayoutProps) {
+export function GetStartedLayout({ children, footer, header }: IGetStartedLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -43,7 +44,7 @@ export function GetStartedLayout({ children, footer }: IGetStartedLayoutProps) {
     <>
       <PageContainer fullSize>
         <PageWrapper>
-          <HeaderLayout />
+          <HeaderLayout>{header}</HeaderLayout>
           <BodyLayout>{children}</BodyLayout>
           <FooterLayout leftSide={footer.leftSide} rightSide={footer.rightSide} />
         </PageWrapper>

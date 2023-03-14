@@ -7,6 +7,8 @@ import { colors } from '../../../../design-system';
 import { TriggerNode } from './nodes/TriggerNode';
 import { DigestNode } from './nodes/DigestNode';
 import { EmailNode } from './nodes/EmailNode';
+import { DotsHorizontal } from '../../../../design-system/icons';
+import { AddNodeIcon } from './nodes/NodeStep';
 
 export function DigestDemoFlow() {
   const { colorScheme } = useMantineColorScheme();
@@ -34,7 +36,7 @@ const edges: Edge[] = [
   { id: 'e-2-3', source: '2', target: '3', type: 'special' },
 ];
 
-const NODE_INITIAL_X = 100;
+const NODE_INITIAL_X = 20;
 const NODE_INITIAL_Y = 20;
 const NODE_DIST = 150;
 
@@ -44,6 +46,7 @@ const nodes: Node[] = [
     type: 'triggerNode',
     data: {
       label: 'Trigger',
+      ActionItem: DotsHorizontal,
     },
     position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y },
   },
@@ -52,6 +55,7 @@ const nodes: Node[] = [
     type: 'digestNode',
     data: {
       label: 'Digest',
+      ActionItem: DotsHorizontal,
     },
     position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y + NODE_DIST },
   },
@@ -60,14 +64,26 @@ const nodes: Node[] = [
     type: 'emailNode',
     data: {
       label: 'Email',
+      ActionItem: DotsHorizontal,
     },
-    position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y + NODE_DIST + NODE_DIST },
+    position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y + NODE_DIST * 2 },
+  },
+  {
+    id: '4',
+    type: 'addNode',
+    data: {
+      label: 'Add Node',
+      ActionItem: DotsHorizontal,
+    },
+    position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y + NODE_DIST * 2 + 100 },
   },
 ];
 
-const nodeTypes = { triggerNode: TriggerNode, digestNode: DigestNode, emailNode: EmailNode };
+const nodeTypes = { triggerNode: TriggerNode, digestNode: DigestNode, emailNode: EmailNode, addNode: AddNodeIcon };
 
 const Wrapper = styled.div<{ dark: boolean }>`
+  max-width: 700px;
+
   .react-flow__node.react-flow__node-triggerNode,
   .react-flow__node.react-flow__node-digestNode,
   .react-flow__node.react-flow__node-emailNode {

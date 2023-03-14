@@ -7,6 +7,7 @@ import { colors, shadows, Text } from '../../../../../design-system';
 import { guidePreview, GuideTitleEnum, IBeat, IGuide } from './consts';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
+import { AddNodeContainer } from '../../../../templates/workflow/workflow/node-types/AddNode';
 
 export function NodeStep({
   data,
@@ -109,6 +110,7 @@ const ContentContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 `;
 
 const LeftContent = styled.div`
@@ -182,3 +184,25 @@ export function Description({ label, description, url }: { label: string; descri
     </div>
   );
 }
+
+export function AddNodeIcon() {
+  return (
+    <AddNodeIconWrapper>
+      <AddNodeContainer />
+    </AddNodeIconWrapper>
+  );
+}
+
+const AddNodeIconWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 300px;
+  pointer-events: auto;
+  cursor: default;
+
+  button {
+    cursor: default;
+    pointer-events: none;
+  }
+`;

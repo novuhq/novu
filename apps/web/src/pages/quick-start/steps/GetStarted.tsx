@@ -6,6 +6,7 @@ import { getStartedSteps } from '../consts';
 import { NavButton } from './DigestPreview';
 import { ArrowRight } from '../../../design-system/icons/arrows/ArrowRight';
 import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
+import { HeaderSecondaryTitle } from '../components/layout/HeaderLayout';
 
 export function GetStarted() {
   const segment = useSegment();
@@ -16,6 +17,7 @@ export function GetStarted() {
 
   return (
     <GetStartedLayout
+      header={<HeaderSecondaryTitle>Quick Start Guide</HeaderSecondaryTitle>}
       footer={{
         leftSide: <LearnMoreRef />,
         rightSide: (
@@ -26,7 +28,9 @@ export function GetStarted() {
         ),
       }}
     >
-      <ChannelsConfiguration />
+      <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+        <ChannelsConfiguration />
+      </div>
     </GetStartedLayout>
   );
 }
