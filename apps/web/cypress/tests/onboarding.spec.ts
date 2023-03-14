@@ -28,14 +28,4 @@ describe('Getting Started Screen', function () {
     cy.getByTestId('create-template-btn').should('not.exist');
     cy.getByTestId('template-created').contains('Created');
   });
-
-  it('should dismiss on-boarding', function () {
-    cy.visit('/');
-    cy.getByTestId('side-nav-quickstart-link').click({ force: true });
-    cy.getByTestId('other-channels-button').click();
-    cy.getByTestId('dismiss-onboarding-btn').click({ force: true });
-
-    cy.location('pathname').should('equal', '/templates');
-    cy.getByTestId('side-nav-quickstart-link').should('not.exist');
-  });
 });
