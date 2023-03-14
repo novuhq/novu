@@ -15,6 +15,7 @@ export class Events extends WithHttp {
       payload: {
         ...data?.payload,
       },
+      transactionId: data.transactionId,
       overrides: data.overrides || {},
       ...(data.actor && { actor: data.actor }),
     });

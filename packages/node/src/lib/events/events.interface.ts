@@ -23,6 +23,7 @@ export interface IBroadcastPayloadOptions {
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   to: TriggerRecipientsPayload;
   actor?: TriggerRecipientSubscriber;
+  transactionId?: string;
 }
 
 export interface ITriggerPayload {
