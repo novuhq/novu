@@ -5,18 +5,29 @@ import { ChannelTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
 import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
+import { EventsPerformanceService } from '../../services/performance-service';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 
-type NotificationJob = Omit<JobEntity, '_id'>;
+type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
 
 @Injectable()
 export class CreateNotificationJobs {
-  constructor(private digestFilterSteps: DigestFilterSteps, private notificationRepository: NotificationRepository) {}
+  constructor(
+    private digestFilterSteps: DigestFilterSteps,
+    private notificationRepository: NotificationRepository,
+    protected performanceService: EventsPerformanceService
+  ) {}
 
   public async execute(command: CreateNotificationJobsCommand): Promise<NotificationJob[]> {
+    const mark = this.performanceService.buildCreateNotificationJobsMark(
+      command.identifier,
+      command.transactionId,
+      command.to.subscriberId
+    );
+
     const notification = await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -43,6 +54,7 @@ export class CreateNotificationJobs {
         userId: command.userId,
         templateId: command.template._id,
         notificationId: notification._id,
+        transactionId: command.transactionId,
       })
     );
 
@@ -76,6 +88,8 @@ export class CreateNotificationJobs {
 
       jobs.push(job);
     }
+
+    this.performanceService.setEnd(mark);
 
     return jobs;
   }

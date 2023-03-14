@@ -37,7 +37,7 @@ export class CreateMessageTemplate {
       actor: command.actor,
     });
 
-    item = await this.messageTemplateRepository.findById(item._id);
+    item = (await this.messageTemplateRepository.findById(item._id)) as MessageTemplateEntity;
     await this.createChange.execute(
       CreateChangeCommand.create({
         organizationId: command.organizationId,

@@ -1,12 +1,12 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
+import { Schema } from 'mongoose';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 
-import { ExecutionDetailsEntity } from './execution-details.entity';
+import { ExecutionDetailsDBModel } from './execution-details.entity';
 
 import { schemaOptions } from '../schema-default.options';
 
-const executionDetailsSchema = new Schema(
+const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
   {
     _jobId: {
       type: Schema.Types.String,
@@ -79,11 +79,7 @@ const executionDetailsSchema = new Schema(
   schemaOptions
 );
 
-interface IExecutionDetailsDocument extends ExecutionDetailsEntity, Document {
-  _id: never;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ExecutionDetails =
-  mongoose.models.ExecutionDetails ||
-  mongoose.model<IExecutionDetailsDocument>('ExecutionDetails', executionDetailsSchema);
+  (mongoose.models.ExecutionDetails as mongoose.Model<ExecutionDetailsDBModel>) ||
+  mongoose.model<ExecutionDetailsDBModel>('ExecutionDetails', executionDetailsSchema);

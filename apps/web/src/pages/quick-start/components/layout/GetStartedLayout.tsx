@@ -42,7 +42,7 @@ export function GetStartedLayout({ children, footer, header }: IGetStartedLayout
 
   return (
     <>
-      <PageContainer fullSize>
+      <PageContainer style={{ minHeight: '100%', display: 'flex' }}>
         <PageWrapper>
           <HeaderLayout>{header}</HeaderLayout>
           <BodyLayout>{children}</BodyLayout>

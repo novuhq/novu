@@ -9,11 +9,6 @@ export class TermiiSmsHandler extends BaseSmsHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    const config: {
-      apiKey: string;
-      from: string;
-    } = { apiKey: credentials.apiKey, from: credentials.from };
-
-    this.provider = new TermiiSmsProvider(config);
+    this.provider = new TermiiSmsProvider({ apiKey: credentials.apiKey, from: credentials.from });
   }
 }

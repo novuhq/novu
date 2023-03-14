@@ -1,11 +1,10 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Center, Stack } from '@mantine/core';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { OnBoardingAnalyticsEnum, welcomeDescription } from '../consts';
-import { Cards } from '../components/Cards';
 import { BellGradient, ChatGradient, MailGradient, MobileGradient, SmsGradient } from '../../../design-system/icons';
-import { colors, Text } from '../../../design-system';
+import { colors, Text, Cards } from '../../../design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export function Quickstart() {
@@ -20,7 +19,7 @@ export function Quickstart() {
       <Cards
         cells={[
           {
-            navIcon: BellGradient,
+            navIcon: BellGradientIcon,
             description: (
               <Text size="lg" weight="bold">
                 Notification Center
@@ -38,6 +37,8 @@ export function Quickstart() {
     </QuickStartWrapper>
   );
 }
+
+const BellGradientIcon = () => <BellGradient style={{ width: '40px', height: '40px' }} />;
 
 export function QuickstartDescription() {
   return null;

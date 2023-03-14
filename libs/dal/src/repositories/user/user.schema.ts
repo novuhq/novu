@@ -1,9 +1,10 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
-import { schemaOptions } from '../schema-default.options';
-import { UserEntity } from './user.entity';
+import { Schema } from 'mongoose';
 
-const userSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { UserDBModel } from './user.entity';
+
+const userSchema = new Schema<UserDBModel>(
   {
     firstName: Schema.Types.String,
     lastName: Schema.Types.String,
@@ -24,6 +25,7 @@ const userSchema = new Schema(
         refreshToken: Schema.Types.String,
         valid: Schema.Types.Boolean,
         lastUsed: Schema.Types.Date,
+        username: Schema.Types.String,
       },
     ],
     password: Schema.Types.String,
@@ -35,9 +37,6 @@ const userSchema = new Schema(
   schemaOptions
 );
 
-export interface IUserDocument extends UserEntity, Document {
-  _id: string;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const User = mongoose.models.User || mongoose.model<IUserDocument>('User', userSchema);
+export const User =
+  (mongoose.models.User as mongoose.Model<UserDBModel>) || mongoose.model<UserDBModel>('User', userSchema);

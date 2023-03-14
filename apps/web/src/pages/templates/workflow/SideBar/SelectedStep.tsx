@@ -1,7 +1,6 @@
-import { SetStateAction } from 'react';
 import styled from '@emotion/styled';
 import { ActionIcon, Divider, Stack } from '@mantine/core';
-import { FieldErrors } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { StepTypeEnum } from '@novu/shared';
 
 import { Button, colors, Text, Title } from '../../../../design-system';
@@ -18,44 +17,38 @@ import { Filters } from '../../filter/Filters';
 import { ShouldStopOnFailSwitch } from '../ShouldStopOnFailSwitch';
 import { ReplyCallback } from '../ReplyCallback';
 import { NavSection } from '../../components/TemplatesSideBar';
-import { StyledNav } from '../WorkflowEditorPage';
+import { StyledNav } from '../WorkflowEditor';
+import { useTemplateEditorContext } from '../../editor/TemplateEditorProvider';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
 };
 
 export function SelectedStep({
-  selectedChannel,
-  setSelectedChannel,
   setActivePage,
-  steps,
-  activeStep,
-  control,
-  errors,
   setFilterOpen,
   isLoading,
   isUpdateLoading,
   loadingEditTemplate,
-  isDirty,
   onDelete,
-  selectedNodeId,
 }: {
-  selectedChannel: StepTypeEnum;
-  setSelectedChannel: (value: SetStateAction<StepTypeEnum | null>) => void;
   setActivePage: (string) => void;
-  steps;
-  activeStep: number;
-  control: any;
-  errors: FieldErrors<IForm>;
   setFilterOpen: (value: ((prevState: boolean) => boolean) | boolean) => void;
   isLoading: boolean;
   isUpdateLoading: boolean;
   loadingEditTemplate: boolean;
-  isDirty: boolean;
   onDelete: (id) => void;
-  selectedNodeId: string;
 }) {
+  const {
+    control,
+    formState: { errors, isDirty },
+  } = useFormContext<IForm>();
+  const { selectedNodeId, setSelectedNodeId, activeStep, activeStepIndex, selectedChannel } =
+    useTemplateEditorContext();
+  const hasActiveStepSelected = activeStepIndex >= 0;
   const { readonly } = useEnvController();
+  const onSideMenuClose = () => setSelectedNodeId('');
+  const isSubmitDisabled = readonly || loadingEditTemplate || isLoading || !isDirty;
 
   return (
     <StyledNav data-test-id="step-properties-side-menu">
@@ -64,12 +57,8 @@ export function SelectedStep({
           <When truthy={selectedChannel !== StepTypeEnum.DIGEST && selectedChannel !== StepTypeEnum.DELAY}>
             <NavSection>
               <ButtonWrapper>
-                <Title size={2}>{getChannel(selectedChannel)?.label} Properties</Title>
-                <ActionIcon
-                  data-test-id="close-side-menu-btn"
-                  variant="transparent"
-                  onClick={() => setSelectedChannel(null)}
-                >
+                <Title size={2}>{getChannel(selectedChannel ?? '')?.label} Properties</Title>
+                <ActionIcon data-test-id="close-side-menu-btn" variant="transparent" onClick={onSideMenuClose}>
                   <Close />
                 </ActionIcon>
               </ButtonWrapper>
@@ -82,26 +71,22 @@ export function SelectedStep({
                 fullWidth
                 onClick={() => {
                   setActivePage(
-                    selectedChannel === StepTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel)
+                    selectedChannel === StepTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel ?? '')
                   );
                 }}
               >
                 {readonly ? 'View' : 'Edit'} Template
               </EditTemplateButton>
               <Divider my={30} />
-              {steps.map((i, index) => {
-                return (
-                  <When key={i._id || i.id} truthy={index === activeStep}>
-                    <Stack key={index}>
-                      <StepActiveSwitch index={activeStep} control={control} />
-                      <ShouldStopOnFailSwitch index={activeStep} control={control} />
-                      <When truthy={selectedChannel === StepTypeEnum.EMAIL}>
-                        <ReplyCallback index={activeStep} control={control} errors={errors} />
-                      </When>
-                    </Stack>
+              <When truthy={hasActiveStepSelected}>
+                <Stack>
+                  <StepActiveSwitch index={activeStepIndex} control={control} />
+                  <ShouldStopOnFailSwitch index={activeStepIndex} control={control} />
+                  <When truthy={selectedChannel === StepTypeEnum.EMAIL}>
+                    <ReplyCallback index={activeStepIndex} control={control} errors={errors} />
                   </When>
-                );
-              })}
+                </Stack>
+              </When>
             </NavSection>
             <NavSection>
               <Divider
@@ -111,9 +96,7 @@ export function SelectedStep({
                 label="Filters"
                 labelPosition="center"
               />
-              {steps.map((i, index) => {
-                return index !== activeStep ? null : <Filters key={index} step={i} />;
-              })}
+              {activeStep && <Filters step={activeStep} />}
               <FilterButton
                 fullWidth
                 variant="outline"
@@ -136,11 +119,7 @@ export function SelectedStep({
             <NavSection>
               <ButtonWrapper>
                 <Title size={2}>Digest Properties</Title>
-                <ActionIcon
-                  data-test-id="close-side-menu-btn"
-                  variant="transparent"
-                  onClick={() => setSelectedChannel(null)}
-                >
+                <ActionIcon data-test-id="close-side-menu-btn" variant="transparent" onClick={onSideMenuClose}>
                   <Close />
                 </ActionIcon>
               </ButtonWrapper>
@@ -153,41 +132,31 @@ export function SelectedStep({
               </Text>
             </NavSection>
             <NavSection>
-              {steps.map((i, index) => {
-                return index === activeStep ? (
-                  <DigestMetadata
-                    key={i._id || i.id}
-                    control={control}
-                    index={index}
-                    loading={isLoading || isUpdateLoading}
-                    disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
-                    setSelectedChannel={setSelectedChannel}
-                  />
-                ) : null;
-              })}
+              <When truthy={hasActiveStepSelected}>
+                <DigestMetadata
+                  control={control}
+                  index={activeStepIndex}
+                  loading={isLoading || isUpdateLoading}
+                  disableSubmit={isSubmitDisabled}
+                  onSideMenuClose={onSideMenuClose}
+                />
+              </When>
             </NavSection>
           </When>
           <When truthy={selectedChannel === StepTypeEnum.DELAY}>
             <NavSection>
               <ButtonWrapper>
                 <Title size={2}>Delay Properties</Title>
-                <ActionIcon
-                  data-test-id="close-side-menu-btn"
-                  variant="transparent"
-                  onClick={() => setSelectedChannel(null)}
-                >
+                <ActionIcon data-test-id="close-side-menu-btn" variant="transparent" onClick={onSideMenuClose}>
                   <Close />
                 </ActionIcon>
               </ButtonWrapper>
-
               <Text mr={10} mt={10} size="md" color={colors.B60}>
                 Configure the delay parameters.
               </Text>
             </NavSection>
             <NavSection>
-              {steps.map((i, index) => {
-                return index === activeStep ? <DelayMetadata key={index} control={control} index={index} /> : null;
-              })}
+              {activeStepIndex > 0 && <DelayMetadata control={control} index={activeStepIndex} />}
             </NavSection>
           </When>
         </Stack>
@@ -205,7 +174,7 @@ export function SelectedStep({
               marginRight: '5px',
             }}
           />
-          Delete {getChannel(selectedChannel.toString())?.type === NodeTypeEnum.CHANNEL ? 'Step' : 'Action'}
+          Delete {getChannel(selectedChannel?.toString() ?? '')?.type === NodeTypeEnum.CHANNEL ? 'Step' : 'Action'}
         </DeleteStepButton>
       </MenuBar>
     </StyledNav>

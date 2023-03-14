@@ -14,7 +14,7 @@ export interface INotificationCenterProps {
   onUnseenCountChanged?: (unseenCount: number) => void;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  emptyState?: () => JSX.Element;
+  emptyState?: JSX.Element;
   listItem?: ListItem;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   colorScheme: ColorScheme;

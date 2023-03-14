@@ -5,7 +5,7 @@ import styled from '@emotion/styled';
 
 import { localNavigate } from './route/store';
 import PageContainer from '../../../components/layout/components/PageContainer';
-import { GoBack } from './route/GoBack';
+import { ArrowButton } from '../../../design-system';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { faqUrl, OnBoardingAnalyticsEnum } from '../consts';
@@ -57,7 +57,7 @@ export function QuickStartWrapper({
     <>
       <PageContainer>
         <PageWrapper>
-          <GoBack goBackHandler={goBackHandler} />
+          <ArrowButton onClick={goBackHandler} label="Go Back" testId="go-back-button" />
           <Stack
             align="center"
             justify="center"
@@ -65,6 +65,7 @@ export function QuickStartWrapper({
               backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
               height: '100%',
               background: 'border-box',
+              marginBottom: '50px',
             })}
           >
             <When truthy={title}>
@@ -103,7 +104,7 @@ export function Faq() {
       data-test-id="go-back-button"
       inline
       style={{
-        marginTop: '75px',
+        marginTop: '25px',
       }}
     >
       <span style={{ color: colors.B60 }}>Got stuck? </span>

@@ -1,8 +1,10 @@
+import { FilterQuery } from 'mongoose';
 import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
-import { MemberEntity } from './member.entity';
-import { BaseRepository, Omit } from '../base-repository';
+
+import { MemberEntity, MemberDBModel } from './member.entity';
+import { BaseRepository } from '../base-repository';
 import { Member } from './member.schema';
-import { Document, FilterQuery } from 'mongoose';
+import type { EnforceOrgId } from '../../types/enforce';
 
 export interface IAddMemberData {
   _userId?: string;
@@ -11,11 +13,9 @@ export interface IAddMemberData {
   memberStatus: MemberStatusEnum;
 }
 
-class PartialMemberEntity extends Omit(MemberEntity, ['_organizationId']) {}
+type MemberQuery = FilterQuery<MemberDBModel> & EnforceOrgId;
 
-type EnforceEnvironmentQuery = FilterQuery<PartialMemberEntity & Document> & { _organizationId: string };
-
-export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, MemberEntity> {
+export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity, EnforceOrgId> {
   constructor() {
     super(Member, MemberEntity);
   }
@@ -40,7 +40,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
   }
 
   async getOrganizationMembers(organizationId: string) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: MemberQuery = {
       _organizationId: organizationId,
     };
 
@@ -64,19 +64,19 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
     ];
   }
 
-  async getOrganizationAdminAccount(organizationId: string): Promise<MemberEntity> {
-    const requestQuery: EnforceEnvironmentQuery = {
+  async getOrganizationAdminAccount(organizationId: string) {
+    const requestQuery: MemberQuery = {
       _organizationId: organizationId,
       roles: MemberRoleEnum.ADMIN,
     };
 
     const member = await this.MongooseModel.findOne(requestQuery);
 
-    return member;
+    return this.mapEntity(member);
   }
 
   async getOrganizationAdmins(organizationId: string) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: MemberQuery = {
       _organizationId: organizationId,
     };
 
@@ -104,7 +104,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
     const requestQuery = {
       _userId: userId,
       memberStatus: MemberStatusEnum.ACTIVE,
-    } as unknown as EnforceEnvironmentQuery;
+    } as unknown as MemberQuery;
 
     return await this.find(requestQuery);
   }
@@ -134,7 +134,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
   async findByInviteToken(token: string) {
     const requestQuery = {
       'invite.token': token,
-    } as unknown as EnforceEnvironmentQuery;
+    } as unknown as MemberQuery;
 
     return await this.findOne(requestQuery);
   }

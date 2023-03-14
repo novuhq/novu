@@ -5,7 +5,7 @@ import { BuilderFieldOperator, FilterParts } from '@novu/shared';
 import type { IStepEntity } from '../components/formTypes';
 import { colors } from '../../../design-system';
 
-export const Filters = ({ step }: { step: IStepEntity | null }) => {
+export const Filters = ({ step }: { step?: IStepEntity }) => {
   if (!step || !step.filters || !Array.isArray(step.filters)) {
     return null;
   }

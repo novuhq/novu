@@ -32,7 +32,7 @@ export function fillBasicNotificationDetails(title?: string) {
 }
 
 export function clickWorkflow() {
-  cy.getByTestId('workflowButton').click({ force: true });
+  cy.getByTestId('workflowButton').click();
 }
 
 export function awaitGetContains(getSelector: string, contains: string) {

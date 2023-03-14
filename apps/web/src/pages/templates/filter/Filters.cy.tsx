@@ -7,10 +7,12 @@ import {
   FilterPartTypeEnum,
   TimeOperatorEnum,
 } from '@novu/shared';
+
 import { TestWrapper } from '../../../testing';
+import { IStepEntity } from '../components/formTypes';
 import { Filters, translateOperator, getFilterLabel } from './Filters';
 
-const defaultStep = {
+const defaultStep: IStepEntity = {
   id: '',
   _templateId: '',
   template: {
@@ -25,7 +27,7 @@ describe('Filters Component', function () {
   it('should not render if step is null', function () {
     cy.mount(
       <TestWrapper>
-        <Filters step={null} />
+        <Filters />
       </TestWrapper>
     );
 

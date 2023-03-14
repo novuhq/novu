@@ -1,18 +1,20 @@
-import { SendMessageType } from './send-message-type.usecase';
 import { MessageRepository, SubscriberRepository, JobEntity } from '@novu/dal';
+import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+
+import { SendMessageType } from './send-message-type.usecase';
+
 import { CreateLog } from '../../../logs/usecases';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import { Cached } from '../../../shared/interceptors';
 import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -21,7 +23,7 @@ export abstract class SendMessageBase extends SendMessageType {
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
     protected subscriberRepository: SubscriberRepository,
-    protected getDecryptedIntegrationsUsecase?: GetDecryptedIntegrations
+    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations
   ) {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
