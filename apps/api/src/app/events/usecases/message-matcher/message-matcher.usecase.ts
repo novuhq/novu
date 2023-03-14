@@ -34,7 +34,7 @@ import { FilterProcessingDetails } from './filter-processing-details';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details';
 import { SendMessageCommand } from '../send-message/send-message.command';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
-import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DetailEnum } from '../../../execution-details/types';
@@ -292,7 +292,7 @@ export class MessageMatcher {
         expected,
         actual: `${passed}`,
         operator,
-        passed: passed,
+        passed,
       });
 
       return passed;
@@ -311,7 +311,7 @@ export class MessageMatcher {
       expected,
       actual: `${passed}`,
       operator,
-      passed: passed,
+      passed,
     });
 
     return passed;
