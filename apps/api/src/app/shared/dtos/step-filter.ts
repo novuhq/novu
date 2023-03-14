@@ -3,6 +3,7 @@ import {
   BuilderFieldType,
   BuilderGroupValues,
   FilterPartTypeEnum,
+  PreviousStepTypeEnum,
   TimeOperatorEnum,
 } from '@novu/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -81,7 +82,27 @@ class OnlineInLastFilterPart extends BaseFilterPart {
   value: number;
 }
 
-type FilterParts = FieldFilterPart | WebhookFilterPart | RealtimeOnlineFilterPart | OnlineInLastFilterPart;
+class PreviousStepFilterPart extends BaseFilterPart {
+  @ApiProperty({
+    enum: [FilterPartTypeEnum.PREVIOUS_STEP],
+  })
+  on: FilterPartTypeEnum.PREVIOUS_STEP;
+
+  @ApiProperty()
+  step: string;
+
+  @ApiProperty({
+    enum: PreviousStepTypeEnum,
+  })
+  stepType: PreviousStepTypeEnum;
+}
+
+type FilterParts =
+  | FieldFilterPart
+  | WebhookFilterPart
+  | RealtimeOnlineFilterPart
+  | OnlineInLastFilterPart
+  | PreviousStepFilterPart;
 
 export class StepFilter {
   @ApiProperty()
@@ -98,7 +119,13 @@ export class StepFilter {
   value: BuilderGroupValues;
 
   @ApiProperty({
-    type: [FieldFilterPart, WebhookFilterPart, RealtimeOnlineFilterPart, OnlineInLastFilterPart],
+    type: [
+      FieldFilterPart,
+      WebhookFilterPart,
+      RealtimeOnlineFilterPart,
+      OnlineInLastFilterPart,
+      PreviousStepFilterPart,
+    ],
   })
   children: FilterParts[];
 }
