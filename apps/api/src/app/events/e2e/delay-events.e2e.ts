@@ -202,7 +202,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const updatedAt = delayedJob?.updatedAt as string;
     const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(updatedAt));
 
-    const delay = await workflowQueueService.bullmqService.queue.getDelayed();
+    const delay = await workflowQueueService.bullMqService.queue.getDelayed();
     expect(delay[0].opts.delay).to.approximately(diff, 1000);
   });
 

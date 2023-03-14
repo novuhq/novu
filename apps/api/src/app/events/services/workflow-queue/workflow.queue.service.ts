@@ -19,7 +19,7 @@ import {
   CreateExecutionDetailsCommand,
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
-import { BullmqService } from '../../../shared/services/bullmq/Bullmq.service';
+import { BullmqService } from '../../../shared/services/bullmq/bull-mq.service';
 
 export const WORKER_NAME = 'standard';
 
@@ -40,7 +40,7 @@ export class WorkflowQueueService {
   };
   readonly DEFAULT_ATTEMPTS = 3;
 
-  public readonly bullmqService: BullmqService;
+  public readonly bullMqService: BullmqService;
 
   constructor(
     @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
@@ -49,31 +49,31 @@ export class WorkflowQueueService {
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
-    this.bullmqService = new BullmqService(WORKER_NAME, {
+    this.bullMqService = new BullmqService(WORKER_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
 
-    this.bullmqService.createWorker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
+    this.bullMqService.createWorker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
 
-    this.bullmqService.worker.on('completed', async (job) => {
+    this.bullMqService.worker.on('completed', async (job) => {
       await this.jobHasCompleted(job);
     });
 
-    this.bullmqService.worker.on('failed', async (job, error) => {
+    this.bullMqService.worker.on('failed', async (job, error) => {
       await this.jobHasFailed(job, error);
     });
 
-    this.bullmqService.createScheduler(WORKER_NAME, this.bullConfig);
+    this.bullMqService.createScheduler(WORKER_NAME, this.bullConfig);
   }
 
   public async gracefulShutdown() {
     // Right now we only want this for testing purposes
     if (process.env.NODE_ENV === 'test') {
-      await this.bullmqService.queue.drain();
-      await this.bullmqService.worker.close();
+      await this.bullMqService.queue.drain();
+      await this.bullMqService.worker.close();
     }
   }
 
@@ -183,7 +183,7 @@ export class WorkflowQueueService {
       options.attempts = this.DEFAULT_ATTEMPTS;
     }
 
-    await this.bullmqService.add(id, data, options, organizationId);
+    await this.bullMqService.add(id, data, options, organizationId);
   }
 
   private stepContainsFilter(data: JobEntity, onFilter: string) {

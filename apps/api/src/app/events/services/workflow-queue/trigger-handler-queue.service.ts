@@ -4,7 +4,7 @@ import { getRedisPrefix } from '@novu/shared';
 import { ConnectionOptions } from 'tls';
 
 import { TriggerEvent, TriggerEventCommand } from '../../usecases/trigger-event';
-import { BullmqService } from '../../../shared/services/bullmq/Bullmq.service';
+import { BullmqService } from '../../../shared/services/bullmq/bull-mq.service';
 
 @Injectable()
 export class TriggerHandlerQueueService {
@@ -21,18 +21,18 @@ export class TriggerHandlerQueueService {
       tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
-  private readonly bullmqService: BullmqService;
+  private readonly bullMqService: BullmqService;
 
   constructor(private triggerEventUsecase: TriggerEvent) {
     const name = 'trigger-handler';
-    this.bullmqService = new BullmqService(name, {
+    this.bullMqService = new BullmqService(name, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
 
-    this.bullmqService.createWorker(name, this.getWorkerProcessor(), this.getWorkerOpts());
+    this.bullMqService.createWorker(name, this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
   private getWorkerOpts() {
@@ -50,7 +50,7 @@ export class TriggerHandlerQueueService {
   }
 
   public add(id: string, data: any, organizationId: string) {
-    this.bullmqService.add(
+    this.bullMqService.add(
       id,
       data,
       {
