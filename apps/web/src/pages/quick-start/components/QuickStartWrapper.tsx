@@ -5,7 +5,7 @@ import styled from '@emotion/styled';
 
 import { localNavigate } from './route/store';
 import PageContainer from '../../../components/layout/components/PageContainer';
-import { GoBack } from './route/GoBack';
+import { ArrowButton } from '../../../design-system';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { faqUrl, OnBoardingAnalyticsEnum } from '../consts';
@@ -24,8 +24,6 @@ export function QuickStartWrapper({
   faq?: boolean;
   children: React.ReactNode;
 }) {
-  const FIRST_PAGE = '/quickstart';
-
   const { framework } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -59,7 +57,7 @@ export function QuickStartWrapper({
     <>
       <PageContainer>
         <PageWrapper>
-          <GoBack goBackHandler={goBackHandler} display={location.pathname !== FIRST_PAGE} />
+          <ArrowButton onClick={goBackHandler} label="Go Back" testId="go-back-button" />
           <Stack
             align="center"
             justify="center"
