@@ -1,17 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import styled from '@emotion/styled';
+import { Grid, Group, Modal, ActionIcon, createStyles, MantineTheme } from '@mantine/core';
 import {
   ChannelTypeEnum,
   IConfigCredentials,
   ILogoFileName,
-  providers,
-  PushProviderIdEnum,
   EmailProviderIdEnum,
   InAppProviderIdEnum,
 } from '@novu/shared';
-import { Grid, Group, Modal, ActionIcon, useMantineColorScheme, createStyles, MantineTheme } from '@mantine/core';
-import * as cloneDeep from 'lodash.clonedeep';
-import { useIntegrations } from '../../hooks';
+
+import { useAuthController, useEnvController, useIntegrations } from '../../hooks';
 import { When } from '../../components/utils/When';
 import { NovuEmailProviderModal } from './components/NovuEmailProviderModal';
 import { NovuInAppProviderModal } from './components/NovuInAppProviderModal';
@@ -19,6 +17,7 @@ import { ChannelGroup } from './components/Modal/ChannelGroup';
 import { colors, shadows, Title } from '../../design-system';
 import { ConnectIntegrationForm } from './components/Modal/ConnectIntegrationForm';
 import { Close } from '../../design-system/icons/actions/Close';
+import { useProviders } from './useProviders';
 
 export function IntegrationsStoreModal({
   openIntegration,
@@ -27,16 +26,13 @@ export function IntegrationsStoreModal({
   openIntegration: boolean;
   closeIntegration: () => void;
 }) {
-  const { integrations, loading: isLoading, refetch } = useIntegrations();
-  const { colorScheme } = useMantineColorScheme();
-  const [emailProviders, setEmailProviders] = useState<IIntegratedProvider[]>([]);
-  const [smsProvider, setSmsProvider] = useState<IIntegratedProvider[]>([]);
-  const [chatProvider, setChatProvider] = useState<IIntegratedProvider[]>([]);
-  const [pushProvider, setPushProvider] = useState<IIntegratedProvider[]>([]);
+  const { environment } = useEnvController();
+  const { organization } = useAuthController();
+  const { loading: isLoading } = useIntegrations({ refetchOnMount: false });
+  const { emailProviders, smsProvider, chatProvider, pushProvider } = useProviders();
   const [isFormOpened, setFormIsOpened] = useState(false);
   const [isCreateIntegrationModal, setIsCreateIntegrationModal] = useState(false);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
-  const [selectedProvider, setSelectedProvider] = useState<string>('');
 
   const { classes } = useModalStyles();
 
@@ -47,56 +43,34 @@ export function IntegrationsStoreModal({
   ) {
     setFormIsOpened(visible);
     setProvider(providerConfig);
-    setSelectedProvider(providerConfig.providerId);
     setIsCreateIntegrationModal(createIntegrationModal);
   }
 
-  async function handlerShowForm(showForm: boolean) {
-    await setFormIsOpened(showForm);
-    if (!showForm) {
-      await refetch();
-    }
-  }
+  const handleCloseForm = useCallback(() => {
+    if (isFormOpened) {
+      setProvider(null);
+      setFormIsOpened(false);
 
-  function handleCloseForm() {
-    setSelectedProvider('');
-    setFormIsOpened(false);
-  }
+      return;
+    }
+
+    closeIntegration();
+  }, [isFormOpened, closeIntegration]);
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === 'Escape') {
+        handleCloseForm();
+      }
+    },
+    [handleCloseForm]
+  );
 
   useEffect(() => {
-    if (integrations) {
-      const initializedProviders = initializeProviders(integrations);
+    document.addEventListener('keydown', handleKeyDown);
 
-      setEmailProviders(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.EMAIL))
-      );
-      setSmsProvider(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.SMS))
-      );
-
-      setChatProvider(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.CHAT))
-      );
-
-      setPushProvider(
-        sortProviders(initializedProviders.filter((providerItem) => providerItem.channel === ChannelTypeEnum.PUSH))
-      );
-    }
-  }, [integrations]);
-
-  function handleKeyDown(e) {
-    if (e.key === 'Escape') {
-      handleCloseForm();
-    }
-  }
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => window.removeEventListener('keydown', handleKeyDown);
-
-    return undefined;
-  }, []);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
     <Modal
@@ -115,33 +89,33 @@ export function IntegrationsStoreModal({
       opened={openIntegration}
       onClose={closeIntegration}
     >
-      <Grid gutter={24}>
+      <Grid gutter={24} sx={{ margin: 0 }}>
         <Grid.Col lg={isFormOpened ? 8 : 12}>
           {!isLoading ? (
             <>
               <ChannelGroup
-                selectedProvider={selectedProvider}
+                selectedProvider={provider?.providerId}
                 channel={ChannelTypeEnum.EMAIL}
                 providers={emailProviders}
                 title="Email"
                 onProviderClick={handlerVisible}
               />
               <ChannelGroup
-                selectedProvider={selectedProvider}
+                selectedProvider={provider?.providerId}
                 channel={ChannelTypeEnum.SMS}
                 providers={smsProvider}
                 title="SMS"
                 onProviderClick={handlerVisible}
               />
               <ChannelGroup
-                selectedProvider={selectedProvider}
+                selectedProvider={provider?.providerId}
                 channel={ChannelTypeEnum.CHAT}
                 providers={chatProvider}
                 title="Chat"
                 onProviderClick={handlerVisible}
               />
               <ChannelGroup
-                selectedProvider={selectedProvider}
+                selectedProvider={provider?.providerId}
                 channel={ChannelTypeEnum.PUSH}
                 providers={pushProvider}
                 title="Push"
@@ -152,15 +126,15 @@ export function IntegrationsStoreModal({
         </Grid.Col>
         <When truthy={isFormOpened}>
           <Grid.Col lg={4} mt={50}>
-            <IntegrationCardWrapper dark={colorScheme === 'dark'} onKeyPress={handleKeyDown}>
+            <IntegrationCardWrapper onKeyDown={handleKeyDown}>
               <When truthy={!provider?.novu}>
                 <ConnectIntegrationForm
                   onClose={handleCloseForm}
                   key={provider?.providerId}
                   provider={provider}
-                  showForm={handlerShowForm}
                   createModel={isCreateIntegrationModal}
-                  closeIntegration={closeIntegration}
+                  organization={organization}
+                  environment={environment}
                 />
               </When>
               <When truthy={provider?.providerId === EmailProviderIdEnum.Novu}>
@@ -181,18 +155,31 @@ export function IntegrationsStoreModal({
   );
 }
 
-const IntegrationCardWrapper = styled.div<{ dark: boolean }>`
+const HEADER_HEIGHT_SMALL = 70;
+const HEADER_HEIGHT = 90;
+const HEADER_MARGIN = 10;
+const DISTANCE_FROM_HEADER = 64;
+const INTEGRATION_SETTING_TOP_SMALL = HEADER_HEIGHT_SMALL + HEADER_MARGIN + DISTANCE_FROM_HEADER;
+const INTEGRATION_SETTING_TOP = HEADER_HEIGHT + HEADER_MARGIN + DISTANCE_FROM_HEADER;
+
+const IntegrationCardWrapper = styled.div`
   position: sticky;
-  top: 10rem;
+  top: ${INTEGRATION_SETTING_TOP_SMALL}px;
   box-sizing: border-box;
   padding: 0;
   display: flex;
   justify-content: space-between;
   flex-direction: column;
-  height: 80vh;
-  background-color: ${({ dark }) => (dark ? colors.B20 : colors.BGLight)};
-  box-shadow: ${({ dark }) => (dark ? shadows.dark : shadows.medium)};
+  height: calc(100vh - ${INTEGRATION_SETTING_TOP_SMALL + 20}px);
+  box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.medium)};
   border-radius: 7px;
+  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : colors.BGLight)};
+  overflow: hidden;
+
+  @media screen and (min-width: 1367px) {
+    top: ${INTEGRATION_SETTING_TOP}px;
+    height: calc(100vh - ${INTEGRATION_SETTING_TOP + 40}px);
+  }
 `;
 
 const useModalStyles = createStyles((theme: MantineTheme) => {
@@ -205,11 +192,26 @@ const useModalStyles = createStyles((theme: MantineTheme) => {
       padding: '30px',
       marginLeft: '-30px',
       marginRight: '-30px',
+      height: HEADER_HEIGHT_SMALL,
       zIndex: 9,
       boxShadow: dark ? shadows.dark : shadows.medium,
       backgroundColor: dark ? colors.BGDark : colors.white,
+      marginBottom: 10,
+      '@media screen and (min-width: 1367px)': {
+        height: HEADER_HEIGHT,
+      },
     },
-    title: { width: '100%' },
+    title: {
+      width: '100%',
+      h1: {
+        fontSize: 22,
+      },
+      '@media screen and (min-width: 1367px)': {
+        h1: {
+          fontSize: 26,
+        },
+      },
+    },
     modal: {
       backdropFilter: 'blur(15px)',
       padding: '0px 30px !important',
@@ -217,20 +219,6 @@ const useModalStyles = createStyles((theme: MantineTheme) => {
     },
   };
 });
-
-const sortProviders = (unsortedProviders: IIntegratedProvider[]) => {
-  return unsortedProviders
-    .sort((a, b) => Number(b.active) - Number(a.active))
-    .sort((a, b) => Number(isConnected(b)) - Number(isConnected(a)));
-};
-
-function isConnected(provider: IIntegratedProvider) {
-  if (!provider.credentials.length) return false;
-
-  return provider.credentials?.some((cred) => {
-    return cred.value;
-  });
-}
 
 export interface IIntegratedProvider {
   providerId: string;
@@ -288,53 +276,4 @@ export interface IntegrationEntity {
   deletedAt: string;
 
   deletedBy: string;
-}
-
-function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProvider[] {
-  return providers.map((providerItem) => {
-    const integration = integrations.find((integrationItem) => integrationItem.providerId === providerItem.id);
-
-    const clonedCredentials = cloneDeep(providerItem.credentials);
-
-    if (integration?.credentials && Object.keys(clonedCredentials).length !== 0) {
-      clonedCredentials.forEach((credential) => {
-        // eslint-disable-next-line no-param-reassign
-        credential.value = integration.credentials[credential.key]?.toString();
-      });
-    }
-
-    // Remove this like after the run of the fcm-credentials-migration script
-    fcmFallback(integration, clonedCredentials);
-
-    return {
-      providerId: providerItem.id,
-      integrationId: integration?._id ? integration._id : '',
-      displayName: providerItem.displayName,
-      channel: providerItem.channel,
-      credentials: integration?.credentials ? clonedCredentials : providerItem.credentials,
-      docReference: providerItem.docReference,
-      comingSoon: !!providerItem.comingSoon,
-      betaVersion: !!providerItem.betaVersion,
-      active: integration?.active ?? false,
-      connected: !!integration,
-      logoFileName: providerItem.logoFileName,
-    };
-  });
-}
-
-/*
- * temporary patch before migration script
- */
-function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentials) {
-  if (integration?.providerId === PushProviderIdEnum.FCM) {
-    const serviceAccount = integration?.credentials.serviceAccount
-      ? integration?.credentials.serviceAccount
-      : integration?.credentials.user;
-
-    clonedCredentials?.forEach((cred) => {
-      if (cred.key === 'serviceAccount') {
-        cred.value = serviceAccount;
-      }
-    });
-  }
 }

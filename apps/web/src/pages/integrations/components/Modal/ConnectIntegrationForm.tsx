@@ -1,11 +1,11 @@
-import { useEffect, useState, useReducer } from 'react';
+import { useEffect, useState, useReducer, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled/macro';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert, ActionIcon, Center } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
-import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials, IOrganizationEntity, IEnvironment } from '@novu/shared';
 
 import { Button, colors, Input, shadows, Switch, Text } from '../../../../design-system';
 import { IIntegratedProvider } from '../../IntegrationsStorePage';
@@ -13,7 +13,7 @@ import { createIntegration, getWebhookSupportStatus, updateIntegration } from '.
 import { Close } from '../../../../design-system/icons/actions/Close';
 import { IntegrationInput } from '../IntegrationInput';
 import { API_ROOT } from '../../../../config';
-import { useEnvController, useAuthController } from '../../../../hooks';
+import { useIntegrations } from '../../../../hooks';
 import { Check, Copy } from '../../../../design-system/icons';
 import { CONTEXT_PATH } from '../../../../config';
 import { successMessage } from '../../../../utils/notifications';
@@ -22,6 +22,7 @@ enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
   HANDLE_ALERT_AND_ERROR_MSG = 'handle_alert_and_error_msg',
   TOGGLE_CHECK = 'toggle_check',
+  TOGGLE_IS_ACTIVE = 'set_is_active',
 }
 
 type ActionType =
@@ -36,16 +37,31 @@ type ActionType =
         isShowAlert: boolean;
         errorMsg: string;
       };
+    }
+  | {
+      type: ACTION_TYPE_ENUM.TOGGLE_IS_ACTIVE;
     };
 
-const checkIntegrationInitialState = {
+interface CheckIntegrationState {
+  isActive: boolean;
+  check: boolean;
+  isShowSwitch: boolean;
+  isShowAlert: boolean;
+  errorMsg: string;
+}
+
+const checkIntegrationInitialState: CheckIntegrationState = {
+  isActive: false,
   check: true,
   isShowSwitch: false,
   isShowAlert: false,
   errorMsg: '',
 };
 
-const checkIntegrationReducer = (state: typeof checkIntegrationInitialState, action: ActionType) => {
+const checkIntegrationReducer = (
+  state: typeof checkIntegrationInitialState,
+  action: ActionType
+): CheckIntegrationState => {
   switch (action.type) {
     case ACTION_TYPE_ENUM.HANDLE_SHOW_SWITCH:
       return {
@@ -66,6 +82,12 @@ const checkIntegrationReducer = (state: typeof checkIntegrationInitialState, act
         check: !state.check,
       };
 
+    case ACTION_TYPE_ENUM.TOGGLE_IS_ACTIVE:
+      return {
+        ...state,
+        isActive: !state.isActive,
+      };
+
     default:
       return state;
   }
@@ -73,17 +95,18 @@ const checkIntegrationReducer = (state: typeof checkIntegrationInitialState, act
 
 export function ConnectIntegrationForm({
   provider,
-  showForm,
+  organization,
+  environment,
   createModel,
   onClose,
-  closeIntegration,
 }: {
   provider: IIntegratedProvider | null;
-  showForm: (visible: boolean) => void;
+  organization?: IOrganizationEntity;
+  environment?: IEnvironment;
   createModel: boolean;
   onClose: () => void;
-  closeIntegration: () => void;
 }) {
+  const alertRef = useRef<HTMLDivElement | null>(null);
   const {
     register,
     handleSubmit: handleSubmitIntegration,
@@ -93,11 +116,12 @@ export function ConnectIntegrationForm({
   } = useForm({ shouldUseNativeValidation: false });
 
   const { colorScheme } = useMantineColorScheme();
-  const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
-  const { environment } = useEnvController();
-  const { organization } = useAuthController();
   const webhookUrlClipboard = useClipboard({ timeout: 1000 });
-  const [checkIntegrationState, dispatch] = useReducer(checkIntegrationReducer, checkIntegrationInitialState);
+  const [{ isActive, isShowAlert, isShowSwitch, check, errorMsg }, dispatch] = useReducer(checkIntegrationReducer, {
+    ...checkIntegrationInitialState,
+    isActive: !!provider?.active,
+  });
+  const { refetch } = useIntegrations({ refetchOnMount: false });
 
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
     { res: string },
@@ -136,11 +160,20 @@ export function ConnectIntegrationForm({
         setValue(credential.key, credential.value);
       }
     }
+    if (provider) {
+      dispatch({
+        type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG,
+        payload: {
+          isShowAlert: false,
+          errorMsg: '',
+        },
+      });
+    }
   }, [provider]);
 
   async function onCreateIntegration(credentials: ICredentialsDto) {
     try {
-      if (checkIntegrationState.isShowAlert) {
+      if (isShowAlert) {
         dispatch({
           type: ACTION_TYPE_ENUM.HANDLE_ALERT_AND_ERROR_MSG,
           payload: {
@@ -155,14 +188,15 @@ export function ConnectIntegrationForm({
           channel: provider?.channel ? provider?.channel : null,
           credentials,
           active: isActive,
-          check: checkIntegrationState.check,
+          check,
         });
       } else {
         await updateIntegrationApi({
           integrationId: provider?.integrationId ? provider?.integrationId : '',
-          data: { credentials, active: isActive, check: checkIntegrationState.check },
+          data: { credentials, active: isActive, check },
         });
       }
+      await refetch();
     } catch (e: any) {
       dispatch({
         type: ACTION_TYPE_ENUM.HANDLE_SHOW_SWITCH,
@@ -175,6 +209,7 @@ export function ConnectIntegrationForm({
           errorMsg: e?.message,
         },
       });
+      alertRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'end' });
 
       return;
     }
@@ -182,12 +217,12 @@ export function ConnectIntegrationForm({
     successMessage(`Successfully ${createModel ? 'added' : 'updated'} integration`);
 
     onClose();
-    closeIntegration();
-    showForm(false);
   }
 
   function handlerSwitchChange() {
-    setIsActive((prev) => !prev);
+    dispatch({
+      type: ACTION_TYPE_ENUM.TOGGLE_IS_ACTIVE,
+    });
   }
 
   function handlerCheckIntegrationChange() {
@@ -204,7 +239,7 @@ export function ConnectIntegrationForm({
   const webhookUrl = `${API_ROOT}/v1/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
 
   return (
-    <form
+    <FormStyled
       name={'connect-integration-form'}
       noValidate
       onSubmit={(e) => {
@@ -212,7 +247,7 @@ export function ConnectIntegrationForm({
         e.stopPropagation();
       }}
     >
-      <Header dark={colorScheme === 'dark'}>
+      <Header>
         <Stack spacing={10}>
           <Image
             radius="md"
@@ -231,7 +266,13 @@ export function ConnectIntegrationForm({
             </Text>
           </Center>
         </Stack>
-        <ActionIcon mt={-50} variant={'transparent'} onClick={onClose} data-test-id="connection-integration-form-close">
+        <ActionIcon
+          mt={-50}
+          mr={-10}
+          variant={'transparent'}
+          onClick={onClose}
+          data-test-id="connection-integration-form-close"
+        >
           <Close />
         </ActionIcon>
       </Header>
@@ -277,14 +318,14 @@ export function ConnectIntegrationForm({
               {isActive ? 'Active' : 'Disabled'}
             </StyledText>
           </ActiveWrapper>
-          {provider?.channel === ChannelTypeEnum.EMAIL && checkIntegrationState.isShowSwitch && (
+          {provider?.channel === ChannelTypeEnum.EMAIL && isShowSwitch && (
             <CheckIntegrationWrapper>
               <Controller
                 control={control}
                 name="check"
                 render={({ field }) => (
                   <Switch
-                    checked={checkIntegrationState.check}
+                    checked={check}
                     data-test-id="is_check_integration_id"
                     {...field}
                     onChange={handlerCheckIntegrationChange}
@@ -294,15 +335,19 @@ export function ConnectIntegrationForm({
               <StyledText>Verify provider credentials</StyledText>
             </CheckIntegrationWrapper>
           )}
-
-          {checkIntegrationState.isShowAlert && (
-            <Alert icon={<WarningOutlined size={16} />} title="An error occurred!" color="red" mb={30}>
-              {checkIntegrationState.errorMsg}
-            </Alert>
-          )}
+          <Alert
+            ref={alertRef}
+            icon={<WarningOutlined size={16} />}
+            title="An error occurred!"
+            color="red"
+            mb={30}
+            sx={{ display: isShowAlert ? 'initial' : 'none' }}
+          >
+            {errorMsg}
+          </Alert>
         </Stack>
       </CenterDiv>
-      <Footer dark={colorScheme === 'dark'}>
+      <Footer>
         <Button onClick={onClose} variant={'outline'}>
           Cancel
         </Button>
@@ -310,9 +355,20 @@ export function ConnectIntegrationForm({
           {createModel ? 'Connect' : 'Update'}
         </Button>
       </Footer>
-    </form>
+    </FormStyled>
   );
 }
+
+const FormStyled = styled.form`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  > *:last-child {
+    margin-top: auto;
+  }
+`;
 
 const StyledText = styled(Text)`
   display: inline-block;
@@ -336,23 +392,23 @@ const ActiveWrapper = styled(SideElementBase)<{ active: boolean }>`
   }
 `;
 
-const Footer = styled.div<{ dark: boolean }>`
+const Footer = styled.div`
   padding: 15px;
   height: 80px;
   display: flex;
   justify-content: right;
   align-items: center;
   gap: 20px;
-  box-shadow: ${({ dark }) => (dark ? shadows.dark : shadows.medium)};
+  box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.medium)};
 `;
 
-const Header = styled.div<{ dark: boolean }>`
+const Header = styled.div`
   padding: 30px;
   height: 120px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: ${({ dark }) => (dark ? shadows.dark : shadows.medium)};
+  box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.medium)};
 `;
 
 const InputWrapper = styled.div`
@@ -380,7 +436,6 @@ const CopyWrapper = styled.div`
 `;
 
 const CenterDiv = styled.div`
-  height: calc(80vh - 200px);
   overflow: auto;
   padding: 30px;
 `;
