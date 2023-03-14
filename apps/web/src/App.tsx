@@ -36,9 +36,12 @@ import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
 import { Setup } from './pages/quick-start/steps/Setup';
 import { Trigger } from './pages/quick-start/steps/Trigger';
-import { RequiredAuth } from './components/layout/RequiredAuth';
-import { TemplateEditorFormProvider } from './pages/templates/components/TemplateEditorFormProvider';
 import { TemplateEditorProvider } from './pages/templates/editor/TemplateEditorProvider';
+import { TemplateEditorFormProvider } from './pages/templates/components/TemplateEditorFormProvider';
+import { RequiredAuth } from './components/layout/RequiredAuth';
+import { GetStarted } from './pages/quick-start/steps/GetStarted';
+import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
+import { TemplatesDigestPlaygroundPage } from './pages/templates/TemplatesDigestPlaygroundPage';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -173,6 +176,7 @@ function App() {
                 />
                 <Route element={<AppLayout />}>
                   <Route path={ROUTES.ANY} element={<HomePage />} />
+                  <Route path={ROUTES.TEMPLATES_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
                   <Route
                     path={ROUTES.TEMPLATES_CREATE}
                     element={
@@ -203,7 +207,9 @@ function App() {
                     }
                   />
                   <Route path={ROUTES.QUICKSTART} element={<Quickstart />} />
-                  <Route path="/quickstart/notification-center" element={<NotificationCenter />} />
+                  <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
+                  <Route path={ROUTES.DIGEST_PREVIEW} element={<DigestPreview />} />
+                  <Route path={ROUTES.GET_STARTED_NOTIFICATION} element={<NotificationCenter />} />
                   <Route path="/quickstart/notification-center/set-up" element={<FrameworkSetup />} />
                   <Route path="/quickstart/notification-center/set-up/:framework" element={<Setup />} />
                   <Route path="/quickstart/notification-center/trigger" element={<Trigger />} />
