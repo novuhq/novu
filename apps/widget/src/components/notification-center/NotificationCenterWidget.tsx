@@ -15,6 +15,7 @@ import { IMessage, IOrganizationEntity, ButtonTypeEnum } from '@novu/shared';
 
 import { API_URL, WS_URL, WS_PATH } from '../../config';
 
+const DEFAULT_FONT_FAMILY = 'inherit';
 interface INotificationCenterWidgetProps {
   onUrlChange: (url: string) => void;
   onNotificationClick: (notification: IMessage) => void;
@@ -29,7 +30,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [socketUrl, setSocketUrl] = useState(WS_URL);
   const [socketPath, setSocketPath] = useState(WS_PATH);
   const [theme, setTheme] = useState<INovuThemeProvider>({});
-  const [fontFamily, setFontFamily] = useState<string>('Lato');
+  const [fontFamily, setFontFamily] = useState<string>(DEFAULT_FONT_FAMILY);
   const [frameInitialized, setFrameInitialized] = useState(false);
   const [i18n, setI18n] = useState<ITranslationEntry>();
   const [tabs, setTabs] = useState<ITab[]>();
@@ -39,11 +40,13 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   const [doLogout, setDoLogout] = useState(false);
 
   useEffect(() => {
-    WebFont.load({
-      google: {
-        families: [fontFamily],
-      },
-    });
+    if (fontFamily !== DEFAULT_FONT_FAMILY) {
+      WebFont.load({
+        google: {
+          families: [fontFamily],
+        },
+      });
+    }
   }, [fontFamily]);
 
   useEffect(() => {
@@ -111,7 +114,7 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
   }, []);
 
   function onLoad({ organization }: { organization: IOrganizationEntity }) {
-    setFontFamily(organization?.branding?.fontFamily || 'Lato');
+    setFontFamily(organization?.branding?.fontFamily || DEFAULT_FONT_FAMILY);
   }
 
   if (!userDataPayload) return null;

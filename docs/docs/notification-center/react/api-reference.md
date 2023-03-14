@@ -919,11 +919,11 @@ interface INovuTheme {
 | `buttons.primary.backGroundColor`         | `linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)` | `linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)` |
 | `buttons.primary.fontColor`               | `#FFFFFF`                                                 | `#FFFFFF`                                                 |
 | `buttons.primary.removeCircleColor`       | `white`                                                   | `white`                                                   |
-| `buttons.primary.fontFamily`              | `Lato`                                                    | `Lato`                                                    |
+| `buttons.primary.fontFamily`              | `inherit`                                                 | `inherit`                                                 |
 | `buttons.secondary.backGroundColor`       | `#F5F8FA`                                                 | `#3D3D4D`                                                 |
 | `buttons.secondary.fontColor`             | `#525266`                                                 | `#FFFFFF`                                                 |
 | `buttons.secondary.removeCircleColor`     | `#525266`                                                 | `#525266`                                                 |
-| `buttons.secondary.fontFamily`            | `Lato`                                                    | `Lato`                                                    |
+| `buttons.secondary.fontFamily`            | `inherit`                                                 | `inherit`                                                 |
 
 **`IThemeActionsMenu` customization properties**
 

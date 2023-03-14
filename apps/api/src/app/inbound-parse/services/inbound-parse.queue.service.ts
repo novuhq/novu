@@ -40,7 +40,7 @@ export class InboundParseQueueService {
     return {
       ...this.bullConfig,
       lockDuration: 90000,
-      concurrency: 50,
+      concurrency: 200,
     };
   }
 

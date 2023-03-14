@@ -403,7 +403,8 @@
     "emailjs",
     "typeof",
     "nbsp",
-    "stddev"
+    "stddev",
+    "shortid"
   ],
   "flagWords": [],
   "patterns": [
