@@ -1,10 +1,10 @@
 import { AuthProviderEnum } from '@novu/shared';
-import { BaseRepository } from '../base-repository';
-import { IUserResetTokenCount, UserEntity } from './user.entity';
-import { User } from './user.schema';
-import { Document, FilterQuery } from 'mongoose';
 
-export class UserRepository extends BaseRepository<FilterQuery<UserEntity & Document>, UserEntity> {
+import { BaseRepository } from '../base-repository';
+import { IUserResetTokenCount, UserEntity, UserDBModel } from './user.entity';
+import { User } from './user.schema';
+
+export class UserRepository extends BaseRepository<UserDBModel, UserEntity> {
   constructor() {
     super(User, UserEntity);
   }

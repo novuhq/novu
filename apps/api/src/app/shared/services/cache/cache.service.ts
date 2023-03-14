@@ -37,7 +37,7 @@ export class CacheService implements ICacheService {
       console.log('Connecting to ' + this.config.host + ':' + this.config.port);
 
       this.client = new Redis(Number(this.config.port || 6379), this.config.host, {
-        password: this.config.password ?? null,
+        password: this.config.password,
         connectTimeout: this.config.connectTimeout ? Number(this.config.connectTimeout) : this.DEFAULT_CONNECT_TIMEOUT,
         keepAlive: this.config.keepAlive ? Number(this.config.keepAlive) : this.DEFAULT_KEEP_ALIVE,
         family: this.config.family ? Number(this.config.family) : this.DEFAULT_FAMILY,
@@ -124,7 +124,7 @@ export class CacheService implements ICacheService {
 }
 
 export interface ICacheServiceConfig {
-  host: string;
+  host?: string;
   port: string;
   ttl?: string;
   password?: string;

@@ -1,18 +1,20 @@
 import { ExternalSubscriberId } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
 
-import { CreateTopicSubscribersEntity, TopicSubscribersEntity } from './topic-subscribers.entity';
+import {
+  CreateTopicSubscribersEntity,
+  TopicSubscribersEntity,
+  TopicSubscribersDBModel,
+} from './topic-subscribers.entity';
 import { TopicSubscribers } from './topic-subscribers.schema';
 import { EnvironmentId, OrganizationId, TopicId, TopicKey } from './types';
-
 import { BaseRepository } from '../base-repository';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-type IPartialTopicSubscribersEntity = Omit<TopicSubscribersEntity, '_environmentId' | '_organizationId'>;
-
-type EnforceEnvironmentQuery = FilterQuery<IPartialTopicSubscribersEntity> &
-  ({ _environmentId: EnvironmentId } | { _organizationId: OrganizationId });
-
-export class TopicSubscribersRepository extends BaseRepository<EnforceEnvironmentQuery, TopicSubscribersEntity> {
+export class TopicSubscribersRepository extends BaseRepository<
+  TopicSubscribersDBModel,
+  TopicSubscribersEntity,
+  EnforceEnvOrOrgIds
+> {
   constructor() {
     super(TopicSubscribers, TopicSubscribersEntity);
   }

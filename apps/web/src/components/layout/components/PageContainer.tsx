@@ -1,14 +1,19 @@
-import React from 'react';
+import React, { CSSProperties } from 'react';
 import { Container } from '../../../design-system';
 import PageMeta from './PageMeta';
-import { ContainerProps } from '@mantine/core';
 
-export type PageContainerProps = { fullSize?: boolean } & ContainerProps;
-
-function PageContainer({ children, fullSize, ...props }: PageContainerProps) {
+function PageContainer({
+  children,
+  title,
+  style,
+}: {
+  children: React.ReactNode;
+  title?: string;
+  style?: CSSProperties;
+}) {
   return (
-    <Container pl={0} pr={0} fluid {...props} style={fullSize ? { minHeight: '100%', display: 'flex' } : {}}>
-      <PageMeta />
+    <Container pl={0} pr={0} fluid style={style}>
+      <PageMeta title={title} />
       {children}
     </Container>
   );

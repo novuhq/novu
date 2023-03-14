@@ -7,10 +7,10 @@ import { useEffect, useState } from 'react';
 import { updateUserOnBoarding } from '../../../api/user';
 import { IUserEntity } from '@novu/shared';
 import { createTemplateFromBluePrintId, getBlueprintTemplateById } from '../../../api/notification-templates';
-import { ActivePageEnum } from '../editor/TemplateEditorPage';
 import { errorMessage } from '../../../utils/notifications';
 import { When } from '../../../components/utils/When';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { ActivePageEnum } from '../../../constants/editorEnums';
 
 export function BlueprintModal() {
   const theme = useMantineTheme();

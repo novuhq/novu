@@ -202,7 +202,7 @@ The floating popover component that appears when clicking on the [NotificationBe
 | children                   | function                                                       | The render function that allows you to define the custom bell button. It's called with an argument that has `unseenCount` prop the number of unseen notifications.                                                           |
 | header                     | function (optional)                                            | The render function that allows you to define the custom header component.                                                                                                                                                   |
 | footer                     | function (optional)                                            | The render function that allows you to define the custom footer component.                                                                                                                                                   |
-| emptyState                 | function (optional)                                            | The render function that allows you to define the custom component for the empty notifications list state.                                                                                                                   |
+| emptyState                 | JSX.Element (optional)                                         | The render function that allows you to define the custom component for the empty notifications list state.                                                                                                                   |
 | onActionClick              | function (optional)                                            | The callback function triggered when the notification button is clicked.                                                                                                                                                     |
 | actionsResultBlock         | function (optional)                                            | The render function that allows you to define the custom component that will be rendered after the notification button is clicked.                                                                                           |
 | onTabClick                 | function (optional)                                            | The callback function triggered when the notifications feed tab changes.                                                                                                                                                     |
@@ -225,7 +225,7 @@ interface IPopoverNotificationCenterProps {
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  emptyState?: () => JSX.Element;
+  emptyState?: JSX.Element;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   onTabClick?: (tab: ITab) => void;
@@ -270,7 +270,7 @@ The component that renders the notifications feed and allows to update the user 
 | onUnseenCountChanged       | function (optional)                                            | The function that is called when the unseen notifications count changed.                                                                                                                                                     |
 | header                     | function (optional)                                            | The render function that allows you to define the custom header component.                                                                                                                                                   |
 | footer                     | function (optional)                                            | The render function that allows you to define the custom footer component.                                                                                                                                                   |
-| emptyState                 | function (optional)                                            | The render function that allows you to define the custom component for the empty notifications list state.                                                                                                                   |
+| emptyState                 | JSX.Element (optional)                                         | The render function that allows you to define the custom component for the empty notifications list state.                                                                                                                   |
 | onActionClick              | function (optional)                                            | The callback function triggered when the notification button is clicked.                                                                                                                                                     |
 | actionsResultBlock         | function (optional)                                            | The render function that allows you to define the custom component that will be rendered after the notification button is clicked.                                                                                           |
 | onTabClick                 | function (optional)                                            | The callback function triggered when the notifications feed tab changes.                                                                                                                                                     |
@@ -290,7 +290,7 @@ interface INotificationCenterProps {
   onUnseenCountChanged?: (unseenCount: number) => void;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  emptyState?: () => JSX.Element;
+  emptyState?: JSX.Element;
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   onTabClick?: (tab: ITab) => void;

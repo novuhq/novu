@@ -36,11 +36,12 @@ import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
 import { Setup } from './pages/quick-start/steps/Setup';
 import { Trigger } from './pages/quick-start/steps/Trigger';
+import { TemplateEditorProvider } from './pages/templates/editor/TemplateEditorProvider';
+import { TemplateEditorFormProvider } from './pages/templates/components/TemplateEditorFormProvider';
 import { RequiredAuth } from './components/layout/RequiredAuth';
-import { TemplateFormProvider } from './pages/templates/components/TemplateFormProvider';
-import { TemplateEditorProvider } from './pages/templates/components/TemplateEditorProvider';
 import { GetStarted } from './pages/quick-start/steps/GetStarted';
 import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
+import { TemplatesDigestPlaygroundPage } from './pages/templates/TemplatesDigestPlaygroundPage';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -175,24 +176,25 @@ function App() {
                 />
                 <Route element={<AppLayout />}>
                   <Route path={ROUTES.ANY} element={<HomePage />} />
+                  <Route path={ROUTES.TEMPLATES_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
                   <Route
                     path={ROUTES.TEMPLATES_CREATE}
                     element={
-                      <TemplateFormProvider>
+                      <TemplateEditorFormProvider>
                         <TemplateEditorProvider>
                           <TemplateEditorPage />
                         </TemplateEditorProvider>
-                      </TemplateFormProvider>
+                      </TemplateEditorFormProvider>
                     }
                   />
                   <Route
                     path={ROUTES.TEMPLATES_EDIT_TEMPLATEID}
                     element={
-                      <TemplateFormProvider>
+                      <TemplateEditorFormProvider>
                         <TemplateEditorProvider>
                           <TemplateEditorPage />
                         </TemplateEditorProvider>
-                      </TemplateFormProvider>
+                      </TemplateEditorFormProvider>
                     }
                   />
                   <Route path={ROUTES.TEMPLATES} element={<NotificationList />} />

@@ -1,10 +1,14 @@
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 
+import type { EnvironmentId } from '../environment';
+import type { OrganizationId } from '../organization';
+import type { ChangePropsValueType } from '../../types/helpers';
+
 export class ExecutionDetailsEntity {
   _id: string;
   _jobId: string;
-  _environmentId: string;
-  _organizationId: string;
+  _environmentId: EnvironmentId;
+  _organizationId: OrganizationId;
   _notificationId: string;
   _notificationTemplateId: string;
   _subscriberId: string;
@@ -21,3 +25,8 @@ export class ExecutionDetailsEntity {
   raw?: string | null;
   webhookStatus?: string;
 }
+
+export type ExecutionDetailsDBModel = ChangePropsValueType<
+  ExecutionDetailsEntity,
+  '_environmentId' | '_organizationId' | '_notificationId' | '_notificationTemplateId' | '_subscriberId'
+>;

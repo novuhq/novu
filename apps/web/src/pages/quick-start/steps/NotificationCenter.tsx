@@ -1,10 +1,8 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import { Stack } from '@mantine/core';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
-import { Cards } from '../components/Cards';
-import { Stack } from '@mantine/core';
-import { BellGradient } from '../../../design-system/icons';
-import { Smiley } from '../../../design-system/icons/gradient/Smiley';
+import { Cards } from '../../../design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { FlowTypeEnum, OnBoardingAnalyticsEnum } from '../consts';
 

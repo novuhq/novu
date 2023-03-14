@@ -74,9 +74,12 @@ export class UpdateIntegration {
       });
     }
 
-    return await this.integrationRepository.findOne({
+    const updatedIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
       _environmentId: command.environmentId,
     });
+    if (!updatedIntegration) throw new NotFoundException(`Integration with id ${command.integrationId} is not found`);
+
+    return updatedIntegration;
   }
 }
