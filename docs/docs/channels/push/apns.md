@@ -27,7 +27,7 @@ The overrides field supports all [Notification payload](https://developer.apple.
   <TabItem value="nodejs" label="Node.js" default>
 
 ```ts
-import { Novu } from '@node';
+import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
@@ -57,7 +57,7 @@ novu.trigger('event-name', {
 ```
 
 ```ts
-import { Novu } from '@node';
+import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
