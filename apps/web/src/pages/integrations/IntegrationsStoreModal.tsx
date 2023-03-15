@@ -20,9 +20,11 @@ import { Close } from '../../design-system/icons/actions/Close';
 import { useProviders } from './useProviders';
 
 export function IntegrationsStoreModal({
+  scrollTo,
   openIntegration,
   closeIntegration,
 }: {
+  scrollTo?: ChannelTypeEnum;
   openIntegration: boolean;
   closeIntegration: () => void;
 }) {
@@ -46,6 +48,12 @@ export function IntegrationsStoreModal({
     setIsCreateIntegrationModal(createIntegrationModal);
   }
 
+  const handleModalClose = useCallback(() => {
+    closeIntegration();
+    setFormIsOpened(false);
+    setProvider(null);
+  }, [closeIntegration]);
+
   const handleCloseForm = useCallback(() => {
     if (isFormOpened) {
       setProvider(null);
@@ -59,11 +67,11 @@ export function IntegrationsStoreModal({
 
   const handleKeyDown = useCallback(
     (e) => {
-      if (e.key === 'Escape') {
+      if (openIntegration && e.key === 'Escape') {
         handleCloseForm();
       }
     },
-    [handleCloseForm]
+    [openIntegration, handleCloseForm]
   );
 
   useEffect(() => {
@@ -72,6 +80,21 @@ export function IntegrationsStoreModal({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  useEffect(() => {
+    if (!scrollTo || !openIntegration) return;
+
+    setTimeout(() => {
+      const channelSection = document.getElementById(scrollTo);
+      const modalContainer = document.querySelector('.mantine-Modal-modal');
+      if (channelSection && modalContainer) {
+        modalContainer.scrollBy({
+          top: window.pageYOffset + channelSection.getBoundingClientRect().top - HEADER_HEIGHT,
+          behavior: 'smooth',
+        });
+      }
+    }, 0);
+  }, [openIntegration, scrollTo]);
+
   return (
     <Modal
       withCloseButton={false}
@@ -79,7 +102,7 @@ export function IntegrationsStoreModal({
       title={
         <Group style={{ width: '100%' }} position={'apart'}>
           <Title>Integration Store</Title>
-          <ActionIcon variant={'transparent'} onClick={closeIntegration}>
+          <ActionIcon variant={'transparent'} onClick={handleModalClose}>
             <Close />
           </ActionIcon>
         </Group>
@@ -87,7 +110,7 @@ export function IntegrationsStoreModal({
       classNames={classes}
       fullScreen
       opened={openIntegration}
-      onClose={closeIntegration}
+      onClose={handleModalClose}
     >
       <Grid gutter={24} sx={{ margin: 0 }}>
         <Grid.Col lg={isFormOpened ? 8 : 12}>
@@ -130,6 +153,7 @@ export function IntegrationsStoreModal({
               <When truthy={!provider?.novu}>
                 <ConnectIntegrationForm
                   onClose={handleCloseForm}
+                  onSuccessFormSubmit={closeIntegration}
                   key={provider?.providerId}
                   provider={provider}
                   createModel={isCreateIntegrationModal}

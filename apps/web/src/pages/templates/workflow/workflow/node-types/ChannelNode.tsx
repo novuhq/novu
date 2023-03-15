@@ -16,7 +16,6 @@ interface NodeData {
   error: string;
   setActivePage: (string) => void;
   active?: boolean;
-  hasActiveIntegration: boolean;
 }
 
 export default memo(({ data, id, dragging }: { data: NodeData; selected: boolean; id: string; dragging: boolean }) => {
@@ -40,7 +39,6 @@ export default memo(({ data, id, dragging }: { data: NodeData; selected: boolean
         id={id}
         index={data.index}
         dragging={dragging}
-        hasActiveIntegration={data.hasActiveIntegration}
       />
       <Handle type="target" id="b" position={Position.Top} />
       <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />

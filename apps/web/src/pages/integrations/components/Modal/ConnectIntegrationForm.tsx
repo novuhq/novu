@@ -1,7 +1,7 @@
-import { useEffect, useState, useReducer, useRef } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled/macro';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert, ActionIcon, Center } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
@@ -13,10 +13,10 @@ import { createIntegration, getWebhookSupportStatus, updateIntegration } from '.
 import { Close } from '../../../../design-system/icons/actions/Close';
 import { IntegrationInput } from '../IntegrationInput';
 import { API_ROOT } from '../../../../config';
-import { useIntegrations } from '../../../../hooks';
 import { Check, Copy } from '../../../../design-system/icons';
 import { CONTEXT_PATH } from '../../../../config';
 import { successMessage } from '../../../../utils/notifications';
+import { QueryKeys } from '../../../../api/query.keys';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
@@ -98,12 +98,14 @@ export function ConnectIntegrationForm({
   organization,
   environment,
   createModel,
+  onSuccessFormSubmit,
   onClose,
 }: {
   provider: IIntegratedProvider | null;
   organization?: IOrganizationEntity;
   environment?: IEnvironment;
   createModel: boolean;
+  onSuccessFormSubmit: () => void;
   onClose: () => void;
 }) {
   const alertRef = useRef<HTMLDivElement | null>(null);
@@ -121,7 +123,7 @@ export function ConnectIntegrationForm({
     ...checkIntegrationInitialState,
     isActive: !!provider?.active,
   });
-  const { refetch } = useIntegrations({ refetchOnMount: false });
+  const queryClient = useQueryClient();
 
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
     { res: string },
@@ -196,7 +198,10 @@ export function ConnectIntegrationForm({
           data: { credentials, active: isActive, check },
         });
       }
-      await refetch();
+      await queryClient.refetchQueries({
+        predicate: ({ queryKey }) =>
+          queryKey.includes(QueryKeys.integrationsList) || queryKey.includes(QueryKeys.activeNotificationsList),
+      });
     } catch (e: any) {
       dispatch({
         type: ACTION_TYPE_ENUM.HANDLE_SHOW_SWITCH,
@@ -216,6 +221,7 @@ export function ConnectIntegrationForm({
 
     successMessage(`Successfully ${createModel ? 'added' : 'updated'} integration`);
 
+    onSuccessFormSubmit();
     onClose();
   }
 

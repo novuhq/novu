@@ -7,6 +7,8 @@ interface IQueryKeys {
   getFeeds: string;
   getLayoutsList: string;
   getLayoutById: string;
+  activeNotificationsList: string;
+  integrationsList: string;
 }
 
 export const QueryKeys: IQueryKeys = Object.freeze({
@@ -18,4 +20,6 @@ export const QueryKeys: IQueryKeys = Object.freeze({
   getFeeds: 'getFeeds',
   getLayoutsList: 'getLayoutsList',
   getLayoutById: 'getLayoutById',
+  activeNotificationsList: 'activeNotificationsList',
+  integrationsList: 'integrationsList',
 });

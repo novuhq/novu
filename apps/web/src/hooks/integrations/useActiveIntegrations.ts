@@ -1,13 +1,20 @@
-import { useQuery } from '@tanstack/react-query';
+import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
 import { getActiveIntegrations } from '../../api/integration';
+import { QueryKeys } from '../../api/query.keys';
+import { IntegrationEntity } from '../../pages/integrations/IntegrationsStorePage';
 
-export function useActiveIntegrations() {
-  const { data, isLoading, refetch } = useQuery(['activeNotificationsList'], getActiveIntegrations);
+export function useActiveIntegrations(options: UseQueryOptions<IntegrationEntity[], any, IntegrationEntity[]> = {}) {
+  const { data, ...rest } = useQuery<IntegrationEntity[], any, IntegrationEntity[]>(
+    [QueryKeys.activeNotificationsList],
+    getActiveIntegrations,
+    {
+      ...options,
+    }
+  );
 
   return {
     integrations: data,
-    loading: isLoading,
-    refetch,
+    ...rest,
   };
 }

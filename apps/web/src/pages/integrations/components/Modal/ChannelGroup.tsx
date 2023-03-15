@@ -25,7 +25,7 @@ export function ChannelGroup({
   }
 
   return (
-    <Container fluid>
+    <Container id={channel} fluid>
       <Grid mx={0} mb={50}>
         <Grid.Col span={12} data-test-id={`integration-group-${title.toLowerCase()}`}>
           <Title size={2}>{title}</Title>
