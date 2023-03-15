@@ -48,7 +48,7 @@ export class DistributedLockService {
     this.instances = [getRedisUrl()].filter((instance) => !!instance).map((url) => new Redis(url));
 
     this.distributedLock = new Redlock(this.instances, settings);
-    Logger.log('Redlock started', LOG_CONTEXT);
+    // Logger.log('Redlock started', LOG_CONTEXT);
 
     /**
      * https://github.com/mike-marcacci/node-redlock/blob/dc7bcd923f70f66abc325d23ae618f7caf01ad75/src/index.ts#L192
@@ -112,26 +112,26 @@ export class DistributedLockService {
     const releaseLock = await this.lock(resource, ttl);
 
     try {
-      Logger.log(`Lock ${resource} for ${handler.name}`, LOG_CONTEXT);
+      // Logger.log(`Lock ${resource} for ${handler.name}`, LOG_CONTEXT);
 
       const result = await handler();
 
       return result;
     } finally {
       await releaseLock();
-      Logger.log(`Lock ${resource} released for ${handler.name}`, LOG_CONTEXT);
+      // Logger.log(`Lock ${resource} released for ${handler.name}`, LOG_CONTEXT);
     }
   }
 
   private async lock(resource: string, ttl: number): Promise<() => Promise<void>> {
     if (!this.distributedLock) {
-      Logger.log(`Redlock was not started. Starting after calling lock ${resource} for ${ttl} ms`, LOG_CONTEXT);
+      // Logger.log(`Redlock was not started. Starting after calling lock ${resource} for ${ttl} ms`, LOG_CONTEXT);
       this.startup();
     }
 
     try {
       const acquiredLock = await this.distributedLock.acquire([resource], ttl);
-      Logger.log(`Lock ${resource} acquired for ${ttl} ms`, LOG_CONTEXT);
+      // Logger.log(`Lock ${resource} acquired for ${ttl} ms`, LOG_CONTEXT);
 
       return this.createLockRelease(resource, acquiredLock);
     } catch (error) {
@@ -145,8 +145,7 @@ export class DistributedLockService {
 
     return async (): Promise<void> => {
       try {
-        // TODO: Hide or move to trace.
-        Logger.debug(`Lock ${resource} counter at ${this.lockCounter[resource]}`, LOG_CONTEXT);
+        // Logger.debug(`Lock ${resource} counter at ${this.lockCounter[resource]}`, LOG_CONTEXT);
         await lock.unlock();
       } catch (error) {
         Logger.error(`Releasing lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
