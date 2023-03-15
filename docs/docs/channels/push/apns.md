@@ -99,7 +99,6 @@ import { Novu, PushProviderIdEnum } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-const body = req.body; // From your HTTPS listener
 await novu.subscribers.setCredentials('subscriberId', PushProviderIdEnum.APNS, {
   deviceTokens: ['token1', 'token2'],
 });

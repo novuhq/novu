@@ -19,7 +19,7 @@ The overrides field supports all [NotificationMessagePayload](https://firebase.g
 Device/notification identifiers can be set by using [Subscriber Credentials](/platform/subscribers#updating-subscriber-credentials) or by using the `deviceIdentifiers` field in overrides.
 
 ```ts
-import { Novu } from '@node';
+import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
@@ -46,7 +46,7 @@ novu.trigger('event-name', {
 Before triggering the notification to a subscriber(user) with push as a step in the workflow, make sure you have added the subscriber's device token as follows:
 
 ```ts
-import { Novu, PushProviderIdEnum } from '@node';
+import { Novu, PushProviderIdEnum } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
