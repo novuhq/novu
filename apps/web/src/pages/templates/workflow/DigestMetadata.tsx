@@ -26,64 +26,66 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, onSideM
 
   return (
     <>
-      <MantineInput.Wrapper
-        label="Time Interval"
-        description="Once triggered, for how long the digest should collect events"
-        styles={inputStyles}
-      >
-        <Grid
-          sx={{
-            marginBottom: '2px',
-          }}
+      <div data-test-id="digest-step-settings-interval">
+        <MantineInput.Wrapper
+          label="Time Interval"
+          description="Once triggered, for how long the digest should collect events"
+          styles={inputStyles}
         >
-          <Grid.Col span={4}>
-            <Controller
-              control={control}
-              name={`steps.${index}.metadata.amount`}
-              defaultValue=""
-              render={({ field, fieldState }) => {
-                return (
-                  <Input
-                    {...field}
-                    value={field.value || ''}
-                    error={showErrors && fieldState.error?.message}
-                    min={0}
-                    max={100}
-                    type="number"
-                    data-test-id="time-amount"
-                    placeholder="0"
-                    disabled={readonly}
-                  />
-                );
-              }}
-            />
-          </Grid.Col>
-          <Grid.Col span={8}>
-            <Controller
-              control={control}
-              name={`steps.${index}.metadata.unit`}
-              defaultValue=""
-              render={({ field, fieldState }) => {
-                return (
-                  <Select
-                    disabled={readonly}
-                    error={showErrors && fieldState.error?.message}
-                    placeholder="Interval"
-                    data={[
-                      { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
-                      { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
-                      { value: DigestUnitEnum.HOURS, label: 'Hours' },
-                      { value: DigestUnitEnum.DAYS, label: 'Days' },
-                    ]}
-                    data-test-id="time-unit"
-                    {...field}
-                  />
-                );
-              }}
-            />
-          </Grid.Col>
-        </Grid>
-      </MantineInput.Wrapper>
+          <Grid
+            sx={{
+              marginBottom: '2px',
+            }}
+          >
+            <Grid.Col span={4}>
+              <Controller
+                control={control}
+                name={`steps.${index}.metadata.amount`}
+                defaultValue=""
+                render={({ field, fieldState }) => {
+                  return (
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      error={showErrors && fieldState.error?.message}
+                      min={0}
+                      max={100}
+                      type="number"
+                      data-test-id="time-amount"
+                      placeholder="0"
+                      disabled={readonly}
+                    />
+                  );
+                }}
+              />
+            </Grid.Col>
+            <Grid.Col span={8}>
+              <Controller
+                control={control}
+                name={`steps.${index}.metadata.unit`}
+                defaultValue=""
+                render={({ field, fieldState }) => {
+                  return (
+                    <Select
+                      disabled={readonly}
+                      error={showErrors && fieldState.error?.message}
+                      placeholder="Interval"
+                      data={[
+                        { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
+                        { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
+                        { value: DigestUnitEnum.HOURS, label: 'Hours' },
+                        { value: DigestUnitEnum.DAYS, label: 'Days' },
+                      ]}
+                      data-test-id="time-unit"
+                      {...field}
+                    />
+                  );
+                }}
+              />
+            </Grid.Col>
+          </Grid>
+        </MantineInput.Wrapper>
+      </div>
       <div
         style={{
           marginBottom: '15px',

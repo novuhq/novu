@@ -24,7 +24,7 @@ const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
 };
 
-export function SelectedStep({
+export function StepSettings({
   setActivePage,
   setFilterOpen,
   isLoading,
@@ -64,19 +64,21 @@ export function SelectedStep({
               </ButtonWrapper>
             </NavSection>
             <NavSection>
-              <EditTemplateButton
-                mt={10}
-                variant="outline"
-                data-test-id="edit-template-channel"
-                fullWidth
-                onClick={() => {
-                  setActivePage(
-                    selectedChannel === StepTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel ?? '')
-                  );
-                }}
-              >
-                {readonly ? 'View' : 'Edit'} Template
-              </EditTemplateButton>
+              <div data-test-id="email-step-settings-edit">
+                <EditTemplateButton
+                  mt={10}
+                  variant="outline"
+                  data-test-id="edit-template-channel"
+                  fullWidth
+                  onClick={() => {
+                    setActivePage(
+                      selectedChannel === StepTypeEnum.IN_APP ? selectedChannel : capitalize(selectedChannel ?? '')
+                    );
+                  }}
+                >
+                  {readonly ? 'View' : 'Edit'} Template
+                </EditTemplateButton>
+              </div>
               <Divider my={30} />
               <When truthy={hasActiveStepSelected}>
                 <Stack>

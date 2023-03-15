@@ -43,7 +43,7 @@ export const TemplatesDigestPlaygroundPage = () => {
         <DigestWorkflowHolder />
       </Stack>
       <Stack mt={40} mb={40} align="center">
-        <Button onClick={() => navigate(parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId }))}>
+        <Button onClick={() => navigate(`${parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId })}?tour=digest`)}>
           Set Up Digest Workflow
         </Button>
         <LinkStyled target="_blank" rel="noopener noreferrer" href="https://docs.novu.co/platform/digest">
