@@ -9,6 +9,7 @@ import type { IForm, IStepEntity } from './formTypes';
 import { useTemplateController } from './useTemplateController';
 import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } from './templateToFormMappers';
 import { errorMessage } from '../../../utils/notifications';
+import { v4 as uuid4 } from 'uuid';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
@@ -22,6 +23,7 @@ const defaultEmailBlocks: IEmailBlock[] = [
 
 const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => ({
   _id: id,
+  uuid: uuid4(),
   template: {
     type: channelType,
     content: channelType === StepTypeEnum.EMAIL ? defaultEmailBlocks : '',

@@ -12,6 +12,7 @@ import {
   JobEntity,
   JobStatusEnum,
   IntegrationRepository,
+  ExecutionDetailsRepository,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import {
@@ -24,7 +25,16 @@ import {
   EmailProviderIdEnum,
   SmsProviderIdEnum,
   FilterPartTypeEnum,
+  DigestUnitEnum,
+  DelayTypeEnum,
+  PreviousStepTypeEnum,
 } from '@novu/shared';
+import { RunJob, RunJobCommand } from '../usecases/run-job';
+import { SendMessage } from '../usecases/send-message';
+import { QueueNextJob } from '../usecases/queue-next-job';
+import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
+import { EmailEventStatusEnum } from '@novu/stateless';
+import { v4 as uuid } from 'uuid';
 
 const axiosInstance = axios.create();
 
@@ -33,12 +43,14 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+  let runJob: RunJob;
   const notificationRepository = new NotificationRepository();
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
   const integrationRepository = new IntegrationRepository();
   const logRepository = new LogRepository();
   const jobRepository = new JobRepository();
+  const executionDetailsRepository = new ExecutionDetailsRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -46,6 +58,12 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
+    runJob = new RunJob(
+      jobRepository,
+      session?.testServer?.getService(SendMessage),
+      session?.testServer?.getService(QueueNextJob),
+      session?.testServer?.getService(StorageHelperService)
+    );
   });
 
   it('should trigger an event successfully', async function () {
@@ -1265,6 +1283,212 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     expect(messages).to.equal(1);
     axiosPostStub.restore();
+  });
+
+  describe('seen/read filter', () => {
+    it('should filter in app seen/read step', async function () {
+      const firstStepUuid = uuid();
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'Not Delayed {{customVar}}' as string,
+            uuid: firstStepUuid,
+          },
+          {
+            type: StepTypeEnum.DELAY,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.MINUTES,
+              amount: 5,
+              type: DelayTypeEnum.REGULAR,
+            },
+          },
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'Hello world {{customVar}}' as string,
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: 'AND',
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PREVIOUS_STEP,
+                    stepType: PreviousStepTypeEnum.READ,
+                    step: firstStepUuid,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}/v1/events/trigger`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 1);
+
+      const delayedJob = await jobRepository.findOne({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DELAY,
+      });
+
+      if (!delayedJob) {
+        throw new Error();
+      }
+
+      expect(delayedJob.status).to.equal(JobStatusEnum.DELAYED);
+
+      const messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(messages.length).to.equal(1);
+
+      await runJob.execute(
+        RunJobCommand.create({
+          jobId: delayedJob._id,
+          environmentId: delayedJob._environmentId,
+          organizationId: delayedJob._organizationId,
+          userId: delayedJob._userId,
+        })
+      );
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(messagesAfter.length).to.equal(1);
+    });
+
+    it('should filter email seen/read step', async function () {
+      const firstStepUuid = uuid();
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            uuid: firstStepUuid,
+          },
+          {
+            type: StepTypeEnum.DELAY,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.MINUTES,
+              amount: 5,
+              type: DelayTypeEnum.REGULAR,
+            },
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: 'AND',
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PREVIOUS_STEP,
+                    stepType: PreviousStepTypeEnum.READ,
+                    step: firstStepUuid,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}/v1/events/trigger`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 1);
+
+      const delayedJob = await jobRepository.findOne({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DELAY,
+      });
+
+      if (!delayedJob) {
+        throw new Error();
+      }
+
+      expect(delayedJob.status).to.equal(JobStatusEnum.DELAYED);
+
+      const messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messages.length).to.equal(1);
+
+      await executionDetailsRepository.create({
+        _jobId: delayedJob._parentId,
+        _messageId: messages[0]._id,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        webhookStatus: EmailEventStatusEnum.OPENED,
+      });
+
+      await runJob.execute(
+        RunJobCommand.create({
+          jobId: delayedJob._id,
+          environmentId: delayedJob._environmentId,
+          organizationId: delayedJob._organizationId,
+          userId: delayedJob._userId,
+        })
+      );
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messagesAfter.length).to.equal(1);
+    });
   });
 });
 
