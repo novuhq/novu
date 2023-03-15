@@ -79,16 +79,16 @@ export function NodeStep({
           backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
         }}
       >
-        <Title gradientColor={titleGradient} style={{ marginBottom: '8px' }}>
+        <Label gradientColor={titleGradient} style={{ marginBottom: '8px' }}>
           {popoverData.title}
-        </Title>
+        </Label>
         <Description description={popoverData.description} url={popoverData.docsUrl} label={label} />
       </Popover.Dropdown>
     </Popover>
   );
 }
 
-const Title = styled.div<{ gradientColor: 'red' | 'blue' }>`
+export const Label = styled.div<{ gradientColor: 'red' | 'blue' | 'none' }>`
   height: 20px;
   font-family: 'Lato', serif;
   font-style: normal;
@@ -99,12 +99,21 @@ const Title = styled.div<{ gradientColor: 'red' | 'blue' }>`
   display: flex;
   align-items: center;
 
-  background: ${({ gradientColor }) =>
-    gradientColor === 'red'
-      ? 'linear-gradient(90deg, #DD2476 0%, #FF512F 100%)'
-      : 'linear-gradient(0deg, #14deeb 0%, #446edc 100%)'};
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  ${({ gradientColor }) => {
+    return (
+      gradientColor !== 'none' &&
+      `
+    background: ${
+      gradientColor === 'red'
+        ? 'linear-gradient(90deg, #DD2476 0%, #FF512F 100%)'
+        : 'linear-gradient(0deg, #14deeb 0%, #446edc 100%)'
+    };
+        
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;  
+      `
+    );
+  }};
 `;
 
 const ContentContainer = styled.div`
