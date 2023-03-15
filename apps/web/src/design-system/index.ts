@@ -27,3 +27,4 @@ export { Modal } from './modal/Modal';
 export { LoadingOverlay } from './loading-overlay/LoadingOverlay';
 export * from './cards';
 export * from './arrow-button';
+export * from './popover';

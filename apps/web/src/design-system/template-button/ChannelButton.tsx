@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { UnstyledButton, Popover, ActionIcon, createStyles, MantineTheme, Menu } from '@mantine/core';
+import { UnstyledButton, Popover as MantinePopover, ActionIcon, createStyles, MantineTheme, Menu } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
@@ -12,9 +12,10 @@ import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
 import { useEnvController } from '../../hooks';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
-
 import { useViewport } from 'react-flow-renderer';
 import { getFormattedStepErrors } from '../../pages/templates/shared/errors';
+import { Popover } from '../popover';
+import { Button } from '../button/Button';
 
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
@@ -26,7 +27,7 @@ interface ITemplateButtonProps {
   active?: boolean;
   action?: boolean;
   testId?: string;
-  tabKey: string;
+  tabKey?: ChannelTypeEnum;
   checked?: boolean;
   readonly?: boolean;
   switchButton?: (boolean) => void;
@@ -39,6 +40,7 @@ interface ITemplateButtonProps {
   dragging?: boolean;
   setActivePage?: (string) => void;
   disabled?: boolean;
+  hasActiveIntegration: boolean;
 }
 
 const useMenuStyles = createStyles((theme: MantineTheme) => {
@@ -105,6 +107,7 @@ export function ChannelButton({
   dragging = false,
   setActivePage = (page: string) => {},
   disabled: initDisabled,
+  hasActiveIntegration,
 }: ITemplateButtonProps) {
   const { readonly: readonlyEnv } = useEnvController();
   const { cx, classes, theme } = useStyles();
@@ -112,10 +115,13 @@ export function ChannelButton({
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [showDotMenu, setShowDotMenu] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);
+  const [isIntegrationsModalVisible, setIntegrationsModalVisible] = useState(false);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
   const disabledProp = disabled ? { disabled: disabled } : {};
   const { classes: popoverClasses } = usePopoverStyles();
   const viewport = useViewport();
+  const channelKey = tabKey ?? '';
+  const isChannel = getChannel(channelKey)?.type === NodeTypeEnum.CHANNEL;
 
   const {
     watch,
@@ -146,8 +152,12 @@ export function ChannelButton({
     }
   }, [dragging, showDotMenu, active]);
 
+  const toggleIntegrationsModalVisible = () => {
+    setIntegrationsModalVisible((old) => !old);
+  };
+
   return (
-    <Button
+    <UnstyledButtonStyled
       type={'button'}
       onMouseEnter={() => setPopoverOpened(true)}
       onMouseLeave={() => setPopoverOpened(false)}
@@ -202,7 +212,7 @@ export function ChannelButton({
                 </ActionIcon>
               </Menu.Target>
               <Menu.Dropdown>
-                <When truthy={getChannel(tabKey)?.type === NodeTypeEnum.CHANNEL}>
+                <When truthy={isChannel}>
                   <Menu.Item
                     key="edit"
                     style={{
@@ -220,7 +230,7 @@ export function ChannelButton({
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowDotMenu(false);
-                      setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(tabKey));
+                      setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(channelKey));
                     }}
                   >
                     Edit Template
@@ -238,16 +248,30 @@ export function ChannelButton({
                     onDelete(id || '');
                   }}
                 >
-                  Delete {getChannel(tabKey)?.type === NodeTypeEnum.CHANNEL ? 'Step' : 'Action'}
+                  Delete {isChannel ? 'Step' : 'Action'}
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
           </When>
         </ActionWrapper>
       </ButtonWrapper>
-
-      {stepErrorContent && (
+      {!hasActiveIntegration && (
         <Popover
+          opened={popoverOpened}
+          transition="rotate-left"
+          transitionDuration={250}
+          offset={10}
+          target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
+          title="Connect provider"
+          titleGradient="red"
+          description="Please configure a chat provider to send notifications over this channel"
+          content={
+            <ConfigureProviderButton onClick={toggleIntegrationsModalVisible}>Configure</ConfigureProviderButton>
+          }
+        />
+      )}
+      {hasActiveIntegration && stepErrorContent && (
+        <MantinePopover
           withinPortal
           classNames={popoverClasses}
           withArrow
@@ -260,19 +284,23 @@ export function ChannelButton({
           positionDependencies={[dragging, viewport]}
           clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
         >
-          <Popover.Target>
+          <MantinePopover.Target>
             <ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />
-          </Popover.Target>
-          <Popover.Dropdown>
+          </MantinePopover.Target>
+          <MantinePopover.Dropdown>
             <Text rows={1} color={colors.white}>
               {stepErrorContent || 'Something is missing here'}
             </Text>
-          </Popover.Dropdown>
-        </Popover>
+          </MantinePopover.Dropdown>
+        </MantinePopover>
       )}
-    </Button>
+    </UnstyledButtonStyled>
   );
 }
+
+const ConfigureProviderButton = styled(Button)`
+  margin-top: 16px;
+`;
 
 const ErrorCircle = styled.div<{ dark: boolean }>`
   width: 11px;
@@ -317,7 +345,7 @@ const StyledContentWrapper = styled.div`
   padding-right: 10px;
 `;
 
-const Button: any = styled(UnstyledButton)`
+const UnstyledButtonStyled: any = styled(UnstyledButton)`
   position: relative;
 
   @media screen and (max-width: 1400px) {

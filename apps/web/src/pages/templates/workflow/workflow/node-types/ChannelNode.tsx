@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { Handle, Position, getOutgoers, useReactFlow } from 'react-flow-renderer';
+import { ChannelTypeEnum } from '@novu/shared';
 
 import { ChannelButton } from '../../../../../design-system';
 import { useTemplateEditorContext } from '../../../editor/TemplateEditorProvider';
@@ -8,13 +9,14 @@ interface NodeData {
   Icon: React.FC<any>;
   description: string;
   label: string;
-  tabKey: string;
+  tabKey: ChannelTypeEnum;
   index: number;
   testId: string;
   onDelete: (id: string) => void;
   error: string;
   setActivePage: (string) => void;
   active?: boolean;
+  hasActiveIntegration: boolean;
 }
 
 export default memo(({ data, id, dragging }: { data: NodeData; selected: boolean; id: string; dragging: boolean }) => {
@@ -38,6 +40,7 @@ export default memo(({ data, id, dragging }: { data: NodeData; selected: boolean
         id={id}
         index={data.index}
         dragging={dragging}
+        hasActiveIntegration={data.hasActiveIntegration}
       />
       <Handle type="target" id="b" position={Position.Top} />
       <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />

@@ -11,7 +11,7 @@ import { localNavigate } from '../components/route/store';
 import { ArrowLeft } from '../../../design-system/icons';
 import { Button } from '../../../design-system';
 import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLeftGradient';
-import { Label } from '../components/demo-flow/nodes/NodeStep';
+import { Label } from '../../../design-system/typography/label';
 import { getStartedSteps } from '../consts';
 import { ROUTES } from '../../../constants/routes.enum';
 

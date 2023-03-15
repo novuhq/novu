@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { Popover } from '@mantine/core';
 
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
-import { colors, shadows, Text } from '../../../../../design-system';
+import { colors, Popover, shadows, Text } from '../../../../../design-system';
 import { guidePreview, GuideTitleEnum, IBeat, IGuide } from './consts';
-import { useSegment } from '../../../../../components/providers/SegmentProvider';
-import { When } from '../../../../../components/utils/When';
 
 export function NodeStep({
   data,
@@ -38,16 +35,10 @@ export function NodeStep({
 
   return (
     <Popover
-      withArrow
       opened={sequence?.open || false}
       transition="rotate-left"
       transitionDuration={600}
-      position="right"
-      radius="md"
-      shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
-      offset={30}
-    >
-      <Popover.Target>
+      target={
         <div>
           <StepCard data-test-id={`data-test-id-${label}`}>
             <ContentContainer>
@@ -60,50 +51,14 @@ export function NodeStep({
           </StepCard>
           <Handlers />
         </div>
-      </Popover.Target>
-      <Popover.Dropdown
-        style={{
-          height: '100px',
-          padding: '16px',
-          backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
-        }}
-      >
-        <Label gradientColor={titleGradient} style={{ marginBottom: '8px' }}>
-          {popoverData.title}
-        </Label>
-        <Description description={popoverData.description} url={popoverData.docsUrl} label={label} />
-      </Popover.Dropdown>
-    </Popover>
+      }
+      title={popoverData.title}
+      titleGradient={titleGradient}
+      description={popoverData.description}
+      url={popoverData.docsUrl}
+    />
   );
 }
-
-export const Label = styled.div<{ gradientColor: 'red' | 'blue' | 'none' }>`
-  height: 20px;
-  font-family: 'Lato', serif;
-  font-style: normal;
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 20px;
-
-  display: flex;
-  align-items: center;
-
-  ${({ gradientColor }) => {
-    return (
-      gradientColor !== 'none' &&
-      `
-    background: ${
-      gradientColor === 'red'
-        ? 'linear-gradient(90deg, #DD2476 0%, #FF512F 100%)'
-        : 'linear-gradient(0deg, #14deeb 0%, #446edc 100%)'
-    };
-        
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;  
-      `
-    );
-  }};
-`;
 
 const ContentContainer = styled.div`
   display: flex;
@@ -153,32 +108,4 @@ function useCounter() {
   }, [counter]);
 
   return { counter };
-}
-
-export function Description({ label, description, url }: { label: string; description: string; url?: string }) {
-  const segment = useSegment();
-
-  function handleOnClick() {
-    /*
-     * todo add ('label' will probably be needed here)
-     * segment.track(OnBoardingAnalyticsEnum);
-     */
-  }
-
-  return (
-    <div style={{ maxWidth: '220px' }}>
-      <span style={{ color: colors.B60 }}>{description}</span>
-      <When truthy={url}>
-        <a
-          href={url}
-          style={{ color: '#DD2476', textDecoration: 'underline' }}
-          onClick={() => handleOnClick}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Learn More
-        </a>
-      </When>
-    </div>
-  );
 }
