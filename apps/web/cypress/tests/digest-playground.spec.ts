@@ -42,7 +42,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
     cy.getByTestId('try-digest-playground-tile').click();
 
-    cy.url().should('include', '/templates/digest-playground');
+    cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
 
     // click set up digest workflow
@@ -115,7 +115,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.getByTestId('no-workflow-templates-placeholder').should('be.visible');
     cy.getByTestId('try-digest-playground-tile').click();
 
-    cy.url().should('include', '/templates/digest-playground');
+    cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
 
     // click set up digest workflow

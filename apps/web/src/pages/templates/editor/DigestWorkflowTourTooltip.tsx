@@ -2,6 +2,7 @@ import { UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
 import { TooltipRenderProps } from 'react-joyride';
 import { useFormContext } from 'react-hook-form';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
 
 import { useTour } from './TourProvider';
@@ -64,7 +65,8 @@ export const DigestWorkflowTourTooltip = ({
   const { watch } = useFormContext<IForm>();
   const steps = watch('steps');
   const { stopTour, setStep } = useTour();
-
+  const location = useLocation();
+  const navigate = useNavigate();
   const Icon = ICONS[index];
 
   const handleOnClick = (tourStepIndex: number) => {
@@ -72,15 +74,21 @@ export const DigestWorkflowTourTooltip = ({
       const digestStep = steps.find((el) => el.template?.type === StepTypeEnum.DIGEST);
       setStep(tourStepIndex);
       setSelectedNodeId(digestStep?.id || '');
-    }
-    if (tourStepIndex === 1) {
+    } else if (tourStepIndex === 1) {
       const emailStep = steps.find((el) => el.template?.type === StepTypeEnum.EMAIL);
       setStep(tourStepIndex);
       setSelectedNodeId(emailStep?.id || '');
-    }
-    if (tourStepIndex === 2) {
+    } else if (tourStepIndex === 2) {
       setStep(tourStepIndex);
       setSelectedNodeId('');
+    }
+  };
+
+  const stopTourCallback = () => {
+    stopTour();
+    const queryParams = new URLSearchParams(location.search);
+    if (queryParams.has('tour')) {
+      navigate(location.pathname, { replace: true });
     }
   };
 
@@ -94,7 +102,7 @@ export const DigestWorkflowTourTooltip = ({
           {...primaryProps}
           onClick={() => {
             if (isLastStep) {
-              stopTour();
+              stopTourCallback();
 
               return;
             }
@@ -106,7 +114,7 @@ export const DigestWorkflowTourTooltip = ({
           {primaryProps.title}
         </Button>
         {!isLastStep && (
-          <UnstyledButton {...skipProps} data-test-id="digest-workflow-tooltip-skip-button">
+          <UnstyledButton {...skipProps} onClick={stopTourCallback} data-test-id="digest-workflow-tooltip-skip-button">
             {skipProps.title}
           </UnstyledButton>
         )}
