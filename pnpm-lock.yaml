@@ -1008,6 +1008,7 @@ importers:
       '@types/react-helmet': 6.1.6
       '@types/react-router-dom': 5.3.3
       clsx: ^1.1.1
+      docusaurus-plugin-plausible: ^0.0.5
       docusaurus-plugin-sass: ^0.2.2
       eslint-config-airbnb-typescript: ^17.0.0
       eslint-config-prettier: ^8.5.0
@@ -1039,6 +1040,7 @@ importers:
       '@mdx-js/react': 1.6.22_react@17.0.2
       '@svgr/webpack': 6.2.1
       clsx: 1.1.1
+      docusaurus-plugin-plausible: 0.0.5
       docusaurus-plugin-sass: 0.2.2_mcydvbedg7x36egqo2cl6dubry
       file-loader: 6.2.0_webpack@5.75.0
       prism-react-renderer: 1.3.1_react@17.0.2
@@ -37119,6 +37121,10 @@ packages:
     dependencies:
       esutils: 2.0.3
 
+  /docusaurus-plugin-plausible/0.0.5:
+    resolution: {integrity: sha512-8wiglvMjkGjhGUnBYgJM87V1Ip0wr8AbIHiC5YHNar3DOfXX+JL0nBoThlnvaX1ib/emraWgimR5QiMDOgMJjA==}
+    dev: false
+
   /docusaurus-plugin-sass/0.2.2_mcydvbedg7x36egqo2cl6dubry:
     resolution: {integrity: sha512-ZZBpj3PrhGpYE2kAnkZB9NRwy/CDi4rGun1oec6PYR8YvGzqxYGtXvLgHi6FFbu8/N483klk8udqyYMh6Ted+A==}
     peerDependencies:
@@ -44018,7 +44024,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
+      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
     transitivePeerDependencies:
       - bufferutil
       - canvas
