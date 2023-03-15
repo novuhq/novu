@@ -18,3 +18,4 @@ export * from './useTemplates';
 export * from './useVariablesManager';
 export * from './useVercelIntegration';
 export * from './useVercelParams';
+export * from './useEffectOnce';

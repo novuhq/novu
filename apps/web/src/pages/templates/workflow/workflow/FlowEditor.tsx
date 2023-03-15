@@ -60,7 +60,6 @@ export function FlowEditor({
   dragging,
   errors,
   onDelete,
-  templateId,
 }: {
   activePage: ActivePageEnum;
   setActivePage: (string) => void;
@@ -70,7 +69,6 @@ export function FlowEditor({
   addStep: (channelType: StepTypeEnum, id: string, index?: number) => void;
   dragging: boolean;
   errors: any;
-  templateId: string;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -84,13 +82,11 @@ export function FlowEditor({
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
   useEffect(() => {
-    if (reactFlowWrapper) {
-      const clientWidth = reactFlowWrapper.current?.clientWidth;
-      const middle = clientWidth ? clientWidth / 2 - 100 : 0;
-      const zoomView = nodes.length > 4 ? 0.75 : 1;
-      const xyPos = reactFlowInstance?.project({ x: middle, y: 0 });
-      setViewport({ x: xyPos?.x ?? 0, y: xyPos?.y ?? 0, zoom: zoomView }, { duration: 800 });
-    }
+    const clientWidth = reactFlowWrapper.current?.clientWidth;
+    const middle = clientWidth ? clientWidth / 2 - 100 : 0;
+    const zoomView = nodes.length > 4 ? 0.75 : 1;
+    const xyPos = reactFlowInstance?.project({ x: middle, y: 0 });
+    setViewport({ x: xyPos?.x ?? middle, y: xyPos?.y ?? 0, zoom: zoomView }, { duration: 800 });
   }, [reactFlowInstance]);
 
   useEffect(() => {

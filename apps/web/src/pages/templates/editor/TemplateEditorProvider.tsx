@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StepTypeEnum } from '@novu/shared';
 
@@ -41,21 +41,25 @@ export const TemplateEditorProvider = ({ children }) => {
 
   const activeStep: IStepEntity | undefined = steps[activeStepIndex];
 
+  const setActivePageCallback = useCallback((page: ActivePageEnum) => {
+    setActivePage(page);
+  }, []);
+
+  const setSelectedNodeIdCallback = useCallback((id: string) => {
+    setSelectedNodeId(id);
+  }, []);
+
   const value = useMemo(
     () => ({
       activePage,
-      setActivePage: (page: ActivePageEnum) => {
-        setActivePage(page);
-      },
+      setActivePage: setActivePageCallback,
       selectedNodeId,
-      setSelectedNodeId: (id: string) => {
-        setSelectedNodeId(id);
-      },
+      setSelectedNodeId: setSelectedNodeIdCallback,
       activeStepIndex,
       activeStep,
       selectedChannel: activeStep?.template.type,
     }),
-    [activePage, selectedNodeId, activeStepIndex, activeStep]
+    [activePage, selectedNodeId, activeStepIndex, activeStep, setActivePageCallback, setSelectedNodeIdCallback]
   );
 
   return <TemplateEditorContext.Provider value={value}>{children}</TemplateEditorContext.Provider>;

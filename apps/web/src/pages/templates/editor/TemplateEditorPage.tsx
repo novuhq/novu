@@ -26,6 +26,7 @@ import { getExplicitErrors } from '../shared/errors';
 import { ROUTES } from '../../../constants/routes.enum';
 import { ActivePageEnum } from '../../../constants/editorEnums';
 import { useTemplateEditorContext } from './TemplateEditorProvider';
+import { TourProvider } from './TourProvider';
 
 export const EditorPages = [
   ActivePageEnum.CHAT,
@@ -138,6 +139,7 @@ export default function TemplateEditorPage() {
 
   return (
     <>
+      <TourProvider />
       <PageContainer>
         <PageMeta title={editMode ? template?.name : 'Create Template'} />
         <form
