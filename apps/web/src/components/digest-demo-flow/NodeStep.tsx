@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
 import { Popover } from '@mantine/core';
+import { useLocation, useParams } from 'react-router-dom';
 
-import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
-import { colors, shadows, Text } from '../../../../../design-system';
-import { guidePreview, GuideTitleEnum, IBeat, IGuide } from './consts';
-import { useSegment } from '../../../../../components/providers/SegmentProvider';
-import { When } from '../../../../../components/utils/When';
-import { PlusCircleOutlined } from '../../../../../design-system/icons';
+import { useStyles } from '../../design-system/template-button/TemplateButton.styles';
+import { colors, shadows, Text } from '../../design-system';
+import { guidePreview, guidePlayground, GuideTitleEnum, IBeat } from './consts';
+import { useSegment } from '../providers/SegmentProvider';
+import { When } from '../utils/When';
+import { ROUTES } from '../../constants/routes.enum';
+import { parseUrl } from '../../utils/routeUtils';
+import { PlusCircleOutlined } from '../../design-system/icons';
 
 export function NodeStep({
   data,
@@ -15,19 +18,25 @@ export function NodeStep({
   Handlers,
   Icon,
   ActionItem,
+  ContentItem,
 }: {
-  data: any;
+  data: { label: string };
   id: string;
   Handlers: React.FC<any>;
   Icon: React.FC<any>;
   ActionItem?: React.ReactNode;
+  ContentItem?: React.ReactNode;
 }) {
   const { theme } = useStyles();
   const { counter } = useCounter();
   const [sequence, setSequence] = useState<IBeat>();
+  const { pathname } = useLocation();
+  const { templateId = '' } = useParams<{ templateId: string }>();
+  const digestPlaygroundPathname = parseUrl(ROUTES.TEMPLATES_DIGEST_PLAYGROUND, { templateId });
+  const isDigestPlayground = pathname === digestPlaygroundPathname;
 
   const label = data.label.toLowerCase();
-  const popoverData = guidePreview[label] as IGuide;
+  const popoverData = isDigestPlayground ? guidePlayground[label] : guidePreview[label];
   const titleGradient =
     popoverData.title === GuideTitleEnum.DIGEST_PREVIEW || popoverData.title === GuideTitleEnum.DIGEST_PLAYGROUND
       ? 'blue'
@@ -40,6 +49,7 @@ export function NodeStep({
   return (
     <Popover
       withArrow
+      withinPortal
       opened={sequence?.open || false}
       transition="rotate-left"
       transitionDuration={600}
@@ -58,6 +68,7 @@ export function NodeStep({
               </LeftContent>
               {ActionItem}
             </ContentContainer>
+            {ContentItem}
           </StepCard>
           <Handlers />
         </div>
@@ -113,6 +124,7 @@ const ContentContainer = styled.div`
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  pointer-events: all;
 `;
 
 const LeftContent = styled.div`
@@ -171,7 +183,7 @@ export function Description({ label, description, url }: { label: string; descri
 
   return (
     <div style={{ maxWidth: '220px' }}>
-      <span style={{ color: colors.B60 }}>{description}</span>
+      <span>{description}</span>
       <When truthy={url}>
         <a
           href={url}

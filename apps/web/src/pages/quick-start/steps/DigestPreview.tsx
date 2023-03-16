@@ -2,16 +2,16 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Center } from '@mantine/core';
 import styled from '@emotion/styled';
+import { ReactFlowProvider } from 'react-flow-renderer';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
-import { DigestDemoFlow } from '../components/demo-flow/DigestDemoFlow';
+import { DigestDemoFlow, Label } from '../../../components';
 import useStyles from '../components/OnboardingSteps.styles';
 import { localNavigate } from '../components/route/store';
 import { ArrowLeft } from '../../../design-system/icons';
 import { Button } from '../../../design-system';
 import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLeftGradient';
-import { Label } from '../components/demo-flow/nodes/NodeStep';
 import { getStartedSteps } from '../consts';
 import { ROUTES } from '../../../constants/routes.enum';
 import { HeaderSecondaryTitle, HeaderTitle } from '../components/layout/HeaderLayout';
@@ -44,7 +44,9 @@ export function DigestPreview() {
       }}
     >
       <DemoContainer>
-        <DigestDemoFlow />
+        <ReactFlowProvider>
+          <DigestDemoFlow />
+        </ReactFlowProvider>
       </DemoContainer>
     </GetStartedLayout>
   );
@@ -64,26 +66,14 @@ function RightSide() {
 }
 
 const DemoContainer = styled.div`
-  margin-left: 300px;
+  width: 400px;
 
-  transition: margin-left 0.3s ease;
-
-  @media (max-width: 1750px) {
-     {
-      margin-left: 150px;
-    }
+  @media screen and (min-width: 1367px) {
+    width: 450px;
   }
 
-  @media (max-width: 1470px) {
-     {
-      margin-left: 30px;
-    }
-  }
-
-  @media (max-width: 1300px) {
-     {
-      margin-left: 10px;
-    }
+  @media screen and (min-width: 1921px) {
+    width: 600px;
   }
 `;
 
