@@ -19,7 +19,7 @@ import {
   CreateExecutionDetailsCommand,
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
-import { BullmqService } from '../../../shared/services/bullmq/bull-mq.service';
+import { BullmqService } from '@novu/application-generic';
 
 export const WORKER_NAME = 'standard';
 
@@ -49,13 +49,14 @@ export class WorkflowQueueService {
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
-    this.bullMqService = new BullmqService(WORKER_NAME, {
+    this.bullMqService = new BullmqService();
+
+    this.bullMqService.createQueue(WORKER_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
-
     this.bullMqService.createWorker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.bullMqService.worker.on('completed', async (job) => {

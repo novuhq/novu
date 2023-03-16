@@ -66,7 +66,8 @@
     "analytics-node": "^6.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
-    "node-fetch": "^3.2.10"
+    "node-fetch": "^3.2.10",
+    "bullmq": "^1.81.4"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

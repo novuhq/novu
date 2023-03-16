@@ -4,7 +4,7 @@ import { getRedisPrefix } from '@novu/shared';
 import { ConnectionOptions } from 'tls';
 
 import { TriggerEvent, TriggerEventCommand } from '../../usecases/trigger-event';
-import { BullmqService } from '../../../shared/services/bullmq/bull-mq.service';
+import { BullmqService } from '@novu/application-generic';
 
 @Injectable()
 export class TriggerHandlerQueueService {
@@ -25,13 +25,14 @@ export class TriggerHandlerQueueService {
 
   constructor(private triggerEventUsecase: TriggerEvent) {
     const name = 'trigger-handler';
-    this.bullMqService = new BullmqService(name, {
+    this.bullMqService = new BullmqService();
+
+    this.bullMqService.createQueue(name, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
-
     this.bullMqService.createWorker(name, this.getWorkerProcessor(), this.getWorkerOpts());
   }
 

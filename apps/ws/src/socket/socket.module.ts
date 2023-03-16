@@ -1,7 +1,9 @@
 import { Module, OnModuleInit } from '@nestjs/common';
 import { WSGateway } from './ws.gateway';
 import { SharedModule } from '../shared/shared.module';
-import { QueueService } from '../shared/queue';
+import { BullmqService } from '@novu/application-generic';
+
+export const WS_SOCKET_QUEUE = 'ws_socket_queue';
 
 @Module({
   imports: [SharedModule],
@@ -9,11 +11,22 @@ import { QueueService } from '../shared/queue';
   exports: [WSGateway],
 })
 export class SocketModule implements OnModuleInit {
-  constructor(private queueService: QueueService, private wsGateway: WSGateway) {}
+  private readonly bullMqService: BullmqService;
+
+  constructor(private wsGateway: WSGateway) {
+    this.bullMqService = new BullmqService();
+  }
 
   async onModuleInit() {
-    this.queueService.wsSocketQueue.process(5, async (job) => {
-      this.wsGateway.sendMessage(job.data.userId, job.data.event, job.data.payload);
-    });
+    this.bullMqService.createWorker(
+      WS_SOCKET_QUEUE,
+      async (job) => {
+        this.wsGateway.sendMessage(job.data.userId, job.data.event, job.data.payload);
+      },
+      {
+        lockDuration: 90000,
+        concurrency: 5,
+      }
+    );
   }
 }

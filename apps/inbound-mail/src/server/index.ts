@@ -368,7 +368,7 @@ class Mailin extends events.EventEmitter {
       return new Promise(function (resolve) {
         logger.info(connection.id + ' Adding mail to queue ');
 
-        queueService.queue.add(finalizedMessage.messageId, finalizedMessage, {
+        queueService.bullMqService.add(finalizedMessage.messageId, finalizedMessage, {
           removeOnComplete: true,
           removeOnFail: true,
         });
