@@ -368,10 +368,20 @@ class Mailin extends events.EventEmitter {
       return new Promise(function (resolve) {
         logger.info(connection.id + ' Adding mail to queue ');
 
-        queueService.bullMqService.add(finalizedMessage.messageId, finalizedMessage, {
-          removeOnComplete: true,
-          removeOnFail: true,
-        });
+        const toAddress: string = finalizedMessage.envelopeTo;
+        const parts: string[] = toAddress.split('@');
+        const username: string = parts[0];
+        const environmentId = username.split('-nv-e=').at(-1);
+
+        queueService.bullMqService.add(
+          finalizedMessage.messageId,
+          finalizedMessage,
+          {
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+          environmentId
+        );
 
         return resolve();
       });
