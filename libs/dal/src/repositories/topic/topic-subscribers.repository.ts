@@ -23,6 +23,20 @@ export class TopicSubscribersRepository extends BaseRepository<
     await this.upsertMany(subscribers);
   }
 
+  async findOneByTopicKeyAndExternalSubscriberId(
+    _environmentId: EnvironmentId,
+    _organizationId: OrganizationId,
+    topicKey: TopicKey,
+    externalSubscriberId: ExternalSubscriberId
+  ): Promise<TopicSubscribersEntity | null> {
+    return this.findOne({
+      _environmentId,
+      _organizationId,
+      topicKey,
+      externalSubscriberId,
+    });
+  }
+
   async findSubscribersByTopicId(
     _environmentId: EnvironmentId,
     _organizationId: OrganizationId,

@@ -1,5 +1,5 @@
 import { AxiosInstance } from 'axios';
-import { TopicKey, TopicName } from '@novu/shared';
+import { ExternalSubscriberId, TopicKey, TopicName } from '@novu/shared';
 
 import {
   ITopicPayload,
@@ -34,6 +34,15 @@ export class Topics extends WithHttp implements ITopics {
 
   async get(topicKey: TopicKey) {
     return await this.http.get(`/topics/${topicKey}`);
+  }
+
+  async getSubscriber(
+    topicKey: TopicKey,
+    externalSubscriberId: ExternalSubscriberId
+  ) {
+    return await this.http.get(
+      `/topics/${topicKey}/subscribers/${externalSubscriberId}`
+    );
   }
 
   async rename(topicKey: TopicKey, newName: TopicName) {
