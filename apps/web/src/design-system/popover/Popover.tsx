@@ -13,6 +13,7 @@ type PopoverProps = {
   urlText?: string;
   onUrlClick?: MouseEventHandler<HTMLAnchorElement>;
   titleGradient: 'red' | 'blue' | 'none';
+  opacity?: string | number;
 } & Omit<MantinePopoverProps, 'children'>;
 
 export const Popover = ({
@@ -24,6 +25,7 @@ export const Popover = ({
   url,
   urlText,
   onUrlClick,
+  opacity,
   ...rest
 }: PopoverProps) => {
   const { colorScheme } = useMantineTheme();
@@ -45,6 +47,7 @@ export const Popover = ({
           padding: '16px',
           backgroundColor: colorScheme === 'dark' ? colors.B17 : colors.white,
         }}
+        sx={{ opacity: `${opacity} !important` ?? 1 }}
       >
         {title && (
           <Label gradientColor={titleGradient} style={{ marginBottom: '8px' }}>

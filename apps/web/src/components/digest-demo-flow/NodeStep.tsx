@@ -47,6 +47,7 @@ export function NodeStep({
       opened={sequence?.open || false}
       transition="rotate-left"
       transitionDuration={600}
+      opacity={sequence?.opacity ? sequence.opacity : 1}
       target={
         <div>
           <StepCard data-test-id={`data-test-id-${label}`}>
@@ -105,7 +106,7 @@ function useCounter() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (counter >= 4) {
+      if (counter >= 5) {
         clearInterval(interval);
 
         return;

@@ -69,5 +69,17 @@ export function localNavigate() {
     localSet(res);
   }
 
-  return { push, pop, peek, length };
+  function normalizeOldOnboarding() {
+    const stack = localGet();
+
+    if (!stack) return;
+
+    const oldOnboarding = stack[0]?.startsWith(ROUTES.QUICKSTART);
+
+    if (oldOnboarding) {
+      localSet([ROUTES.GET_STARTED]);
+    }
+  }
+
+  return { push, pop, peek, length, normalizeOldOnboarding };
 }

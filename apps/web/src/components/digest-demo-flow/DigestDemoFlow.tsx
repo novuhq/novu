@@ -62,7 +62,7 @@ const edges: Edge[] = [
   { id: 'e-2-3', source: '2', target: '3' },
 ];
 
-const NODE_INITIAL_X = 100;
+const NODE_INITIAL_X = 20;
 const NODE_INITIAL_Y = 20;
 const NODE_DIST = 150;
 
@@ -89,7 +89,7 @@ const nodes: Node[] = [
     data: {
       label: 'Email',
     },
-    position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y + NODE_DIST + NODE_DIST },
+    position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y + NODE_DIST * 2 },
   },
 ];
 
