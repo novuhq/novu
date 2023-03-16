@@ -41,7 +41,16 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                   </When>
                 </TitleRow>
                 <Description>{channel.description}</Description>
-                <StyledButton variant={'outline'} onClick={() => channel.clickHandler(navigate)}>
+                <StyledButton
+                  variant={'outline'}
+                  onClick={() =>
+                    channel.clickHandler({
+                      navigate,
+                      setClickedChannel,
+                      channelType: channel.type,
+                    })
+                  }
+                >
                   {integrationStatus ? 'Change Provider' : `Configure ${channel.displayName}`}
                 </StyledButton>
               </ChannelCard>

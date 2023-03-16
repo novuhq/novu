@@ -7,9 +7,15 @@ import { NavButton } from './DigestPreview';
 import { ArrowRight } from '../../../design-system/icons/arrows/ArrowRight';
 import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
 import { HeaderSecondaryTitle } from '../components/layout/HeaderLayout';
+import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export function GetStarted() {
   const segment = useSegment();
+  const [clickedChannel, setClickedChannel] = useState<{
+    open: boolean;
+    channelType?: ChannelTypeEnum;
+  }>({ open: false });
 
   useEffect(() => {
     // segment.track(OnBoardingAnalyticsEnum.QUICK_START_VISIT);
@@ -29,7 +35,13 @@ export function GetStarted() {
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-        <ChannelsConfiguration />
+        <IntegrationsStoreModal
+          openIntegration={clickedChannel.open}
+          closeIntegration={() => {
+            setClickedChannel({ open: false });
+          }}
+        />
+        <ChannelsConfiguration setClickedChannel={setClickedChannel} />
       </div>
     </GetStartedLayout>
   );
