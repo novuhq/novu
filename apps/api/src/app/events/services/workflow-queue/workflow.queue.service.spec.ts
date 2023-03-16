@@ -55,15 +55,13 @@ describe('Workflow Queue service', () => {
     expect(workflowQueueService).to.have.all.keys(
       'DEFAULT_ATTEMPTS',
       'bullConfig',
+      'bullMqService',
       'createExecutionDetails',
       'getBackoffStrategies',
-      'queue',
       'queueNextJob',
-      'queueScheduler',
       'runJob',
       'setJobAsCompleted',
-      'setJobAsFailed',
-      'worker'
+      'setJobAsFailed'
     );
     expect(workflowQueueService.DEFAULT_ATTEMPTS).to.eql(3);
     expect(workflowQueueService.bullMqService.queue).to.deep.include({
