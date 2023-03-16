@@ -10,6 +10,7 @@ import { useSegment } from '../providers/SegmentProvider';
 import { When } from '../utils/When';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
+import { PlusCircleOutlined } from '../../design-system/icons';
 
 export function NodeStep({
   data,
@@ -72,18 +73,12 @@ export function NodeStep({
           <Handlers />
         </div>
       </Popover.Target>
-      <Popover.Dropdown
-        style={{
-          height: '100px',
-          padding: '16px',
-          backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
-        }}
-      >
+      <Dropdown opacity={sequence?.opacity ? sequence.opacity : 1}>
         <Label gradientColor={titleGradient} style={{ marginBottom: '8px' }}>
           {popoverData.title}
         </Label>
         <Description description={popoverData.description} url={popoverData.docsUrl} label={label} />
-      </Popover.Dropdown>
+      </Dropdown>
     </Popover>
   );
 }
@@ -114,6 +109,14 @@ export const Label = styled.div<{ gradientColor: 'red' | 'blue' | 'none' }>`
       `
     );
   }};
+`;
+
+const Dropdown = styled(Popover.Dropdown)<{ opacity: number }>`
+  height: 100px;
+  padding: 16px;
+  background-color: ${({ theme }) => `${theme.colorScheme === 'dark' ? colors.B17 : colors.white}`};
+
+  opacity: ${({ opacity }) => `${opacity} !important`};
 `;
 
 const ContentContainer = styled.div`
@@ -195,3 +198,21 @@ export function Description({ label, description, url }: { label: string; descri
     </div>
   );
 }
+
+export function AddNodeIcon() {
+  return (
+    <AddNodeIconWrapper>
+      <PlusCircleOutlined />
+    </AddNodeIconWrapper>
+  );
+}
+
+const AddNodeIconWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 300px;
+  cursor: default;
+  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B60)};
+`;

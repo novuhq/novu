@@ -3,16 +3,11 @@ import styled from '@emotion/styled';
 
 import { colors, Text, Title } from '../../../../design-system';
 
-export function HeaderLayout() {
-  return (
-    <StyledHeader>
-      <HeaderTitle>Set-up steps to get started</HeaderTitle>
-      <HeaderSecondaryTitle>Quick Start Guide</HeaderSecondaryTitle>
-    </StyledHeader>
-  );
+export function HeaderLayout({ children }: { children: React.ReactNode }) {
+  return <StyledHeader>{children}</StyledHeader>;
 }
 
-const HeaderTitle = styled(Text)`
+export const HeaderTitle = styled(Text)`
   height: 32px;
   font-size: 20px;
   color: ${colors.B40};
@@ -23,7 +18,7 @@ const HeaderTitle = styled(Text)`
   margin-bottom: 4px;
 `;
 
-const HeaderSecondaryTitle = styled(Title)`
+export const HeaderSecondaryTitle = styled(Title)`
   height: 48px;
   font-size: 40px;
   color: ${colors.B40};

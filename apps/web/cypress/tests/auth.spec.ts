@@ -18,7 +18,7 @@ describe('User Sign-up and Login', function () {
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');
       cy.getByTestId('submit-btn').click();
-      cy.location('pathname').should('equal', '/quickstart');
+      cy.location('pathname').should('equal', '/get-started');
     });
 
     it('should show account already exists when signing up with already registered mail', function () {

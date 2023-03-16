@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Dispatch } from 'react';
 import { Stack } from '@mantine/core';
 import { NavigateFunction } from 'react-router-dom';
 import { ChannelTypeEnum } from '@novu/shared';
@@ -17,7 +17,7 @@ export const setupProject = `npm run setup:onboarding -- ${APPLICATION_IDENTIFIE
 export const npmRunCommand = `npm run dev`;
 export const welcomeDescription = 'Welcome to Novu, let’s get started';
 export const faqUrl = 'https://docs.novu.co/notification-center/react/react-components/#faq';
-export const getStartedSteps = { first: ROUTES.GET_STARTED, second: ROUTES.DIGEST_PREVIEW };
+export const getStartedSteps = { first: ROUTES.GET_STARTED, second: ROUTES.GET_STARTED_PREVIEW };
 
 interface ISnippetInstructions {
   instruction: React.ReactNode | string;
@@ -249,10 +249,8 @@ export const quickStartChannels: IQuickStartChannelConfiguration[] = [
     displayName: 'In-App',
     type: ChannelTypeEnum.IN_APP,
     description: 'A set of APIs and components to create a customized notification center',
-    clickHandler: (navigation: NavigateFunction) => {
-      if (navigation) {
-        navigation(ROUTES.GET_STARTED_NOTIFICATION);
-      }
+    clickHandler: (options) => {
+      options.navigate(ROUTES.QUICK_START_NOTIFICATION_CENTER);
     },
   },
   {
@@ -261,7 +259,9 @@ export const quickStartChannels: IQuickStartChannelConfiguration[] = [
     displayName: 'Email',
     type: ChannelTypeEnum.EMAIL,
     description: '🎉  Try our gift: 300 emails Use Novu provider for free or change the provider to yours',
-    clickHandler: () => {},
+    clickHandler: (options) => {
+      options.setClickedChannel({ open: true, channelType: options.channelType });
+    },
   },
   {
     Icon: Mobile,
@@ -269,7 +269,9 @@ export const quickStartChannels: IQuickStartChannelConfiguration[] = [
     displayName: 'Push',
     type: ChannelTypeEnum.PUSH,
     description: 'Set up an integration with FCM, APNS or any other mobile push provider',
-    clickHandler: () => {},
+    clickHandler: (options) => {
+      options.setClickedChannel({ open: true, channelType: options.channelType });
+    },
   },
   {
     Icon: Chat,
@@ -277,7 +279,9 @@ export const quickStartChannels: IQuickStartChannelConfiguration[] = [
     displayName: 'Chat',
     type: ChannelTypeEnum.CHAT,
     description: 'Connect chat apps such as Slack, WhatsApp and Teams.',
-    clickHandler: () => {},
+    clickHandler: (container) => {
+      container.setClickedChannel({ open: true, channelType: container.channelType });
+    },
   },
   {
     Icon: Sms,
@@ -285,7 +289,9 @@ export const quickStartChannels: IQuickStartChannelConfiguration[] = [
     displayName: 'SMS',
     type: ChannelTypeEnum.SMS,
     description: 'Connect to a SMS provider to start sending SMS programmatically',
-    clickHandler: () => {},
+    clickHandler: (options) => {
+      options.setClickedChannel({ open: true, channelType: options.channelType });
+    },
   },
 ];
 
@@ -295,5 +301,11 @@ interface IQuickStartChannelConfiguration {
   displayName: string;
   type: ChannelTypeEnum;
   description: string;
-  clickHandler: (navigation: NavigateFunction) => void;
+  clickHandler: (options: IOptions) => void;
+}
+
+interface IOptions {
+  navigate: NavigateFunction;
+  setClickedChannel: Dispatch<any>;
+  channelType: ChannelTypeEnum;
 }
