@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Grid, useMantineColorScheme } from '@mantine/core';
@@ -83,6 +83,10 @@ const WorkflowEditor = ({
   const onDelete = (id) => {
     setToDelete(id);
   };
+
+  useEffect(() => {
+    setSelectedNodeId('');
+  }, []);
 
   return (
     <>

@@ -66,7 +66,7 @@ export function DigestNode({ data, id }: { data: any; id: string }) {
             onChange={updateDigestInterval}
             max={30}
             min={10}
-            parser={(value) => (value ?? '').replace(/(\ \w+)|(\D{1,3})/g, '')}
+            parser={(value) => (value ?? '').replace(/( \w+)|(\D{1,3})/g, '')}
             formatter={(value) => `${value} sec`}
             icon={<CountdownTimer />}
             disabled={isRunningDigest}
