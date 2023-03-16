@@ -9,7 +9,7 @@ import {
 import { StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { subDays, subWeeks, subMonths } from 'date-fns';
+import { formatISO, subDays, subWeeks, subMonths } from 'date-fns';
 import { v4 as uuid } from 'uuid';
 
 describe('Get activity stats - /notifications/stats (GET)', async () => {
@@ -38,6 +38,16 @@ describe('Get activity stats - /notifications/stats (GET)', async () => {
       .expect(201);
   });
 
+  it('should retrieve zero for yearly, monthly and weekly stats if no notifications', async () => {
+    const {
+      body: { data },
+    } = await session.testAgent.get('/v1/notifications/stats');
+
+    expect(data.weeklySent).to.equal(0);
+    expect(data.monthlySent).to.equal(0);
+    expect(data.yearlySent).to.equal(0);
+  });
+
   it('should retrieve last month and last week activity', async function () {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId, {
       firstName: 'Test',
@@ -63,7 +73,7 @@ describe('Get activity stats - /notifications/stats (GET)', async () => {
       },
       {
         $set: {
-          createdAt: subDays(new Date(), 12),
+          createdAt: formatISO(subDays(new Date(), 12)),
         },
       },
       {
@@ -114,7 +124,7 @@ describe('Get activity stats - /notifications/stats (GET)', async () => {
 
     // Create 11 notifications older than a week but younger than a month
     for (let i = 10; i <= 20; i += 1) {
-      const createdAt = subDays(new Date(), i);
+      const createdAt = formatISO(subDays(new Date(), i));
       const transactionId = uuid();
       notifications.push({
         _environmentId,
@@ -131,7 +141,7 @@ describe('Get activity stats - /notifications/stats (GET)', async () => {
 
     // Create 9 notifications older than two months but younger than a eleven months
     for (let i = 2; i <= 10; i += 1) {
-      const createdAt = subMonths(new Date(), i);
+      const createdAt = formatISO(subMonths(new Date(), i));
       const transactionId = uuid();
       notifications.push({
         _environmentId,
@@ -148,7 +158,7 @@ describe('Get activity stats - /notifications/stats (GET)', async () => {
 
     // Create 13 notifications older than one year
     for (let i = 12; i <= 24; i += 1) {
-      const createdAt = subMonths(new Date(), i);
+      const createdAt = formatISO(subMonths(new Date(), i));
       const transactionId = uuid();
       notifications.push({
         _environmentId,
