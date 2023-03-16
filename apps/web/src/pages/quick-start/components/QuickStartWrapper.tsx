@@ -39,6 +39,8 @@ export function QuickStartWrapper({
   }, [location.pathname]);
 
   useEffect(() => {
+    localNavigate().normalizeOldOnboarding();
+
     const lastRoute = localNavigate().peek();
     if (lastRoute) {
       navigate(lastRoute);
