@@ -1,8 +1,13 @@
 import { MouseEventHandler, ReactNode } from 'react';
+import styled from '@emotion/styled';
 import { Popover as MantinePopover, PopoverProps as MantinePopoverProps, useMantineTheme } from '@mantine/core';
 
 import { colors, shadows } from '../config';
 import { Label } from '../typography/label';
+
+const DescriptionHolder = styled.div`
+  max-width: 220px;
+`;
 
 type PopoverProps = {
   target: ReactNode;
@@ -13,6 +18,7 @@ type PopoverProps = {
   urlText?: string;
   onUrlClick?: MouseEventHandler<HTMLAnchorElement>;
   titleGradient: 'red' | 'blue' | 'none';
+  className?: string;
 } & Omit<MantinePopoverProps, 'children'>;
 
 export const Popover = ({
@@ -24,6 +30,7 @@ export const Popover = ({
   url,
   urlText,
   onUrlClick,
+  className,
   ...rest
 }: PopoverProps) => {
   const { colorScheme } = useMantineTheme();
@@ -39,6 +46,7 @@ export const Popover = ({
     >
       <MantinePopover.Target>{target}</MantinePopover.Target>
       <MantinePopover.Dropdown
+        className={className}
         onClick={(e) => e.stopPropagation()}
         style={{
           minHeight: '100px',
@@ -51,7 +59,7 @@ export const Popover = ({
             {title}
           </Label>
         )}
-        <div style={{ maxWidth: '220px' }}>
+        <DescriptionHolder className="popover-description-holder">
           {description && (
             <span style={{ color: colorScheme === 'dark' ? colors.white : colors.B60, lineHeight: 1.5 }}>
               {description}
@@ -68,7 +76,7 @@ export const Popover = ({
               {urlText ?? 'Learn More'}
             </a>
           )}
-        </div>
+        </DescriptionHolder>
         {content}
       </MantinePopover.Dropdown>
     </MantinePopover>

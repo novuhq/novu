@@ -31,7 +31,7 @@ export function ChannelGroup({
           <Title size={2}>{title}</Title>
         </Grid.Col>
         <When truthy={channel === ChannelTypeEnum.EMAIL && !IS_DOCKER_HOSTED}>
-          <Grid.Col lg={selectedProvider ? 4 : 3} xl={selectedProvider ? 3 : 2}>
+          <Grid.Col lg={3} xl={2}>
             <NovuIntegrationCard
               selected={selectedProvider === EmailProviderIdEnum.Novu}
               provider={{
@@ -58,7 +58,7 @@ export function ChannelGroup({
           </Grid.Col>
         </When>
         {providers.map((provider) => (
-          <Grid.Col lg={selectedProvider ? 4 : 3} xl={selectedProvider ? 3 : 2} key={provider.providerId}>
+          <Grid.Col lg={3} xl={2} key={provider.providerId}>
             <ProviderCard
               selected={selectedProvider === provider.providerId}
               provider={provider}
