@@ -1,5 +1,6 @@
 import type { INotificationTemplate, ICreateNotificationTemplateDto } from '@novu/shared';
 import { StepTypeEnum, ActorTypeEnum, ChannelCTATypeEnum } from '@novu/shared';
+import { v4 as uuid4 } from 'uuid';
 
 import type { IForm, IStepEntity } from './formTypes';
 
@@ -57,6 +58,10 @@ export const mapNotificationTemplateToForm = (template: INotificationTemplate): 
   };
 
   form.steps = (template.steps as IStepEntity[]).map((item) => {
+    if (!item.uuid) {
+      item.uuid = uuid4();
+    }
+
     if (item.template.type === StepTypeEnum.EMAIL) {
       return mapEmailStep(item);
     }

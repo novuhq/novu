@@ -90,8 +90,12 @@ export class CreateNotificationTemplate {
         active: message.active,
         shouldStopOnFail: message.shouldStopOnFail,
         replyCallback: message.replyCallback,
+        uuid: message.uuid,
       });
-      parentStepId = stepId;
+
+      if (stepId) {
+        parentStepId = stepId;
+      }
     }
 
     const savedTemplate = await this.notificationTemplateRepository.create({

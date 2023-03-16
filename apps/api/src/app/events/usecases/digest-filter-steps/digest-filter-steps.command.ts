@@ -1,5 +1,7 @@
 import { IsDefined, IsMongoId, IsString } from 'class-validator';
 import { NotificationStepEntity } from '@novu/dal';
+import { DigestTypeEnum } from '@novu/shared';
+
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class DigestFilterStepsCommand extends EnvironmentWithUserCommand {
@@ -20,4 +22,7 @@ export class DigestFilterStepsCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   transactionId: string;
+
+  @IsString()
+  type: DigestTypeEnum;
 }

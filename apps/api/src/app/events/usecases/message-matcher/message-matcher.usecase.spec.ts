@@ -12,7 +12,14 @@ describe('Message filter matcher', function () {
   const createExecutionDetails = {
     execute: sinon.stub(),
   };
-  let messageMatcher = new MessageMatcher(undefined as any, createExecutionDetails as any, undefined as any);
+  let messageMatcher = new MessageMatcher(
+    undefined as any,
+    createExecutionDetails as any,
+    undefined as any,
+    undefined as any,
+    undefined as any,
+    undefined as any
+  );
 
   it('should filter correct message by the filter value', async function () {
     const matchedMessage = await messageMatcher.filter(
@@ -638,6 +645,9 @@ describe('Message filter matcher', function () {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber()) } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -672,6 +682,9 @@ describe('Message filter matcher', function () {
               }),
           } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -700,6 +713,9 @@ describe('Message filter matcher', function () {
               }),
           } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -722,6 +738,9 @@ describe('Message filter matcher', function () {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber()) } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -744,6 +763,9 @@ describe('Message filter matcher', function () {
         const matcher = new MessageMatcher(
           { findOne: () => Promise.resolve(getSubscriber({ isOnline: false })) } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -770,6 +792,9 @@ describe('Message filter matcher', function () {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 3 } })),
           } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -805,6 +830,9 @@ describe('Message filter matcher', function () {
               }),
           } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -830,6 +858,9 @@ describe('Message filter matcher', function () {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: true }, { subDuration: { minutes: 10 } })),
           } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -855,6 +886,9 @@ describe('Message filter matcher', function () {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 4 } })),
           } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -880,6 +914,9 @@ describe('Message filter matcher', function () {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 6 } })),
           } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -905,6 +942,9 @@ describe('Message filter matcher', function () {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { minutes: 30 } })),
           } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
@@ -930,6 +970,9 @@ describe('Message filter matcher', function () {
             findOne: () => Promise.resolve(getSubscriber({ isOnline: false }, { subDuration: { hours: 23 } })),
           } as any,
           createExecutionDetails as any,
+          undefined as any,
+          undefined as any,
+          undefined as any,
           undefined as any
         );
         const matchedMessage = await matcher.filter(
