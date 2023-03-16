@@ -2,10 +2,11 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Center } from '@mantine/core';
 import styled from '@emotion/styled';
+import { ReactFlowProvider } from 'react-flow-renderer';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
-import { DigestDemoFlow } from '../components/demo-flow/DigestDemoFlow';
+import { DigestDemoFlow } from '../../../components';
 import useStyles from '../components/OnboardingSteps.styles';
 import { localNavigate } from '../components/route/store';
 import { ArrowLeft } from '../../../design-system/icons';
@@ -14,6 +15,7 @@ import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLe
 import { Label } from '../../../design-system/typography/label';
 import { getStartedSteps } from '../consts';
 import { ROUTES } from '../../../constants/routes.enum';
+import { HeaderSecondaryTitle, HeaderTitle } from '../components/layout/HeaderLayout';
 
 export function DigestPreview() {
   const segment = useSegment();
@@ -26,6 +28,12 @@ export function DigestPreview() {
 
   return (
     <GetStartedLayout
+      header={
+        <>
+          <HeaderTitle>Set-up steps to get started</HeaderTitle>
+          <HeaderSecondaryTitle>Quick Start Guide</HeaderSecondaryTitle>
+        </>
+      }
       footer={{
         leftSide: (
           <NavButton navigateTo={getStartedSteps.first}>
@@ -36,7 +44,11 @@ export function DigestPreview() {
         rightSide: <RightSide />,
       }}
     >
-      <DigestDemoFlow />
+      <DemoContainer>
+        <ReactFlowProvider>
+          <DigestDemoFlow />
+        </ReactFlowProvider>
+      </DemoContainer>
     </GetStartedLayout>
   );
 }
@@ -47,23 +59,37 @@ function RightSide() {
       <NavButton navigateTo={ROUTES.TEMPLATES} style={{ marginRight: '40px' }}>
         <ButtonText>Build a Workflow</ButtonText>
       </NavButton>
-      <NavButton navigateTo={ROUTES.TEMPLATES} variant={'gradient'}>
+      <NavButton pulse={true} navigateTo={ROUTES.TEMPLATES} variant={'gradient'}>
         <ButtonText>Try the Digest Playground</ButtonText>
       </NavButton>
     </>
   );
 }
 
+const DemoContainer = styled.div`
+  width: 400px;
+
+  @media screen and (min-width: 1367px) {
+    width: 450px;
+  }
+
+  @media screen and (min-width: 1921px) {
+    width: 600px;
+  }
+`;
+
 const ButtonText = styled.div`
   font-size: 16px;
 `;
 
 export function NavButton({
+  pulse = false,
   navigateTo,
   variant,
   children,
   ...props
 }: {
+  pulse?: boolean;
   navigateTo: string;
   variant?: 'outline' | 'gradient';
   children: React.ReactNode;
@@ -80,7 +106,7 @@ export function NavButton({
 
   return (
     <Center data-test-id="get-started-footer-left-side" inline onClick={handleOnClick} {...props}>
-      <StyledButton fullWidth variant={variant ?? 'outline'}>
+      <StyledButton fullWidth variant={variant ?? 'outline'} pulse={pulse}>
         <>{children}</>
       </StyledButton>
     </Center>
