@@ -36,6 +36,10 @@ export { Clicked } from './general/Clicked';
 export { Camera } from './general/Camera';
 export { Avatar } from './general/Avatar';
 export { DigestGradient } from './general/DigestGradient';
+export { Clock } from './general/Clock';
+export { LetterOpened } from './general/LetterOpened';
+export { BellWithNotification } from './general/BellWithNotification';
+export { CountdownTimer } from './general/CountdownTimer';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';

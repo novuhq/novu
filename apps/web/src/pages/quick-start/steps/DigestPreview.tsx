@@ -2,10 +2,11 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Center } from '@mantine/core';
 import styled from '@emotion/styled';
+import { ReactFlowProvider } from 'react-flow-renderer';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
-import { DigestDemoFlow } from '../components/demo-flow/DigestDemoFlow';
+import { DigestDemoFlow } from '../../../components';
 import useStyles from '../components/OnboardingSteps.styles';
 import { localNavigate } from '../components/route/store';
 import { ArrowLeft } from '../../../design-system/icons';
@@ -36,7 +37,9 @@ export function DigestPreview() {
         rightSide: <RightSide />,
       }}
     >
-      <DigestDemoFlow />
+      <ReactFlowProvider>
+        <DigestDemoFlow />
+      </ReactFlowProvider>
     </GetStartedLayout>
   );
 }
