@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Popover as MantinePopover, ActionIcon, createStyles, MantineTheme, Menu } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
@@ -29,6 +29,7 @@ interface ITemplateButtonProps {
   action?: boolean;
   testId?: string;
   tabKey?: ChannelTypeEnum;
+  channelType: StepTypeEnum;
   checked?: boolean;
   readonly?: boolean;
   switchButton?: (boolean) => void;
@@ -98,6 +99,7 @@ export function ChannelButton({
   label,
   Icon,
   tabKey,
+  channelType,
   index,
   testId,
   errors: initialErrors = false,
@@ -124,7 +126,8 @@ export function ChannelButton({
   const isChannel = getChannel(channelKey)?.type === NodeTypeEnum.CHANNEL;
 
   const hasActiveIntegration = useMemo(() => {
-    if (tabKey && tabKey !== ChannelTypeEnum.IN_APP) {
+    const isChannelStep = ![StepTypeEnum.TRIGGER, StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(channelType);
+    if (tabKey && tabKey !== ChannelTypeEnum.IN_APP && isChannelStep) {
       return !!integrations?.some((integration) => integration.channel === tabKey);
     }
 

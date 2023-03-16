@@ -1,3 +1,4 @@
+import { StepTypeEnum } from '@novu/shared';
 import React, { memo } from 'react';
 import { Handle, Position, useReactFlow } from 'react-flow-renderer';
 import { ChannelButton } from '../../../../../design-system';
@@ -10,7 +11,13 @@ export default memo(({ selected }: { selected: boolean }) => {
 
   return (
     <div data-test-id={`node-triggerSelector`} style={{ pointerEvents: 'none' }}>
-      <ChannelButton showDots={false} Icon={TapeGradient} label={'Trigger'} active={selected} />
+      <ChannelButton
+        showDots={false}
+        Icon={TapeGradient}
+        label={'Trigger'}
+        active={selected}
+        channelType={StepTypeEnum.TRIGGER}
+      />
       <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
     </div>
   );
