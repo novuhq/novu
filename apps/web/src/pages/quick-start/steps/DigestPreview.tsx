@@ -5,13 +5,12 @@ import styled from '@emotion/styled';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
-import { DigestDemoFlow } from '../components/demo-flow/DigestDemoFlow';
+import { DigestDemoFlow, Label } from '../../../components';
 import useStyles from '../components/OnboardingSteps.styles';
 import { localNavigate } from '../components/route/store';
 import { ArrowLeft } from '../../../design-system/icons';
 import { Button } from '../../../design-system';
 import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLeftGradient';
-import { Label } from '../components/demo-flow/nodes/NodeStep';
 import { getStartedSteps } from '../consts';
 import { ROUTES } from '../../../constants/routes.enum';
 
