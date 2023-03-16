@@ -229,12 +229,23 @@ export enum OnBoardingAnalyticsEnum {
   FRAMEWORK_SETUP_VISIT = 'In app frameworks select',
   FRAMEWORKS_SETUP_VISIT = 'Framework Setup Page Visit',
   FLOW_SELECTED = 'Quick Start Flow Select',
-  QUICK_START_VISIT = 'Quick Start Page Visit',
   TRIGGER_VISIT = 'Trigger Page Visit',
   CLICKED_FAQ = 'Clicked On FAQ',
   CLICKED_CREATE_TEMPLATE = 'Clicked On Create Template',
   CLICKED_TRIGGER_EVENT = 'Clicked On Trigger Event',
   COPIED_STEP = 'Copied Snippet',
+  CONFIGURE_PROVIDER_VISIT = 'Configure Provider Page Visit',
+  BUILD_NOTIFICATION_WORKFLOW_VISIT = 'Build Notification Workflow Page Visit',
+  CONFIGURE_PROVIDER_LEARN_MORE_CLICK = 'Configure Provider Page Learn More Click',
+  CONFIGURE_PROVIDER_CLICK = 'Configure Provider Page Configure Provider Click',
+  CHANGE_PROVIDER_CLICK = 'Configure Provider Page Change Provider Click',
+  GET_STARTED_NAVIGATION_CLICK_CONFIGURE_PROVIDER = 'Get Started Navigation Click - Configure Provider',
+  GET_STARTED_NAVIGATION_CLICK_BUILD_WORKFLOW = 'Get Started Navigation Click - Build Workflow',
+  CONFIGURE_PROVIDER_NAVIGATION_CLICK_NEXT_PAGE = 'Configure Provider Navigation Click - Next Page',
+  BUILD_WORKFLOW_NAVIGATION_CLICK_PREVIOUS_PAGE = 'Build WorkFlow Navigation Click - Previous Page',
+  BUILD_WORKFLOW_NAVIGATION_CLICK_BUILD_WORKFLOW = 'Build WorkFlow Navigation Click - Build Workflow',
+  BUILD_WORKFLOW_NAVIGATION_CLICK_TRY_DIGEST = 'Build WorkFlow Navigation Click - Try Digest',
+  BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK = 'Build WorkFlow Node Popover Click - Learn More',
 }
 
 export enum FlowTypeEnum {
@@ -295,7 +306,7 @@ export const quickStartChannels: IQuickStartChannelConfiguration[] = [
   },
 ];
 
-interface IQuickStartChannelConfiguration {
+export interface IQuickStartChannelConfiguration {
   Icon: React.FC<any>;
   title: string;
   displayName: string;

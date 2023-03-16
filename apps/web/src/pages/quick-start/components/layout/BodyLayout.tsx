@@ -5,7 +5,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { colors } from '../../../../design-system';
 import { localNavigate } from '../route/store';
-import { getStartedSteps } from '../../consts';
+import { getStartedSteps, OnBoardingAnalyticsEnum } from '../../consts';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
 
 export function BodyLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -27,10 +28,17 @@ const StyledBody = styled.div`
 
 function BodyNavigation() {
   const navigate = useNavigate();
+  const segment = useSegment();
 
   const stepNum = localNavigate().length();
 
-  function handleClick(step: string) {
+  function handleClick(step: 'first' | 'second') {
+    const eventAction =
+      step === 'first'
+        ? OnBoardingAnalyticsEnum.GET_STARTED_NAVIGATION_CLICK_CONFIGURE_PROVIDER
+        : OnBoardingAnalyticsEnum.GET_STARTED_NAVIGATION_CLICK_BUILD_WORKFLOW;
+    segment.track(eventAction);
+
     navigate(getStartedSteps[step]);
   }
 

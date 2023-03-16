@@ -8,6 +8,7 @@ import { guidePreview, GuideTitleEnum, IBeat, IGuide } from './consts';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
 import { PlusCircleOutlined } from '../../../../../design-system/icons';
+import { OnBoardingAnalyticsEnum } from '../../../consts';
 
 export function NodeStep({
   data,
@@ -161,12 +162,10 @@ function useCounter() {
 
 export function Description({ label, description, url }: { label: string; description: string; url?: string }) {
   const segment = useSegment();
+  const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
 
   function handleOnClick() {
-    /*
-     * todo add ('label' will probably be needed here)
-     * segment.track(OnBoardingAnalyticsEnum);
-     */
+    segment.track(`${OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK} On ${capitalizedLabel}`);
   }
 
   return (

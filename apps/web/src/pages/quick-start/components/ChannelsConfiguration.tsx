@@ -1,10 +1,10 @@
-import React, { Dispatch, useEffect } from 'react';
+import React, { Dispatch } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Grid } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { quickStartChannels } from '../consts';
+import { IQuickStartChannelConfiguration, OnBoardingAnalyticsEnum, quickStartChannels } from '../consts';
 import { When } from '../../../components/utils/When';
 import { ActiveLabel } from '../../../design-system/icons/general/ActiveLabel';
 import { useSegment } from '../../../components/providers/SegmentProvider';
@@ -17,9 +17,13 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
   const { integrations, loading: isLoading } = useIntegrations();
   const integrationsStatus = getIntegrationsStatus(integrations);
 
-  useEffect(() => {
-    // segment.track(OnBoardingAnalyticsEnum.QUICK_START_VISIT);
-  }, []);
+  function trackClick(channel: IQuickStartChannelConfiguration, integrationStatus: boolean) {
+    const eventAction = integrationStatus
+      ? OnBoardingAnalyticsEnum.CHANGE_PROVIDER_CLICK
+      : OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_CLICK;
+
+    segment.track(eventAction, { channel: channel.type });
+  }
 
   return (
     <Grid style={{ maxWidth: '850px' }}>
@@ -43,13 +47,15 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                 <Description>{channel.description}</Description>
                 <StyledButton
                   variant={'outline'}
-                  onClick={() =>
+                  onClick={() => {
+                    trackClick(channel, integrationStatus);
+
                     channel.clickHandler({
                       navigate,
                       setClickedChannel,
                       channelType: channel.type,
-                    })
-                  }
+                    });
+                  }}
                 >
                   {integrationStatus ? 'Change Provider' : `Configure ${channel.displayName}`}
                 </StyledButton>
@@ -116,7 +122,7 @@ const Container = styled.div`
  * @param integrations
  */
 function getIntegrationsStatus(integrations): Record<ChannelTypeEnum, boolean> {
-  const integrationStatus = integrations?.reduce((acc, obj) => {
+  const integrationStatus: Record<ChannelTypeEnum, boolean> = integrations?.reduce((acc, obj) => {
     if (!acc.hasOwnProperty(obj.channel)) {
       acc[obj.channel] = obj.active;
     } else if (obj.active && !acc[obj.channel]) {
@@ -126,7 +132,7 @@ function getIntegrationsStatus(integrations): Record<ChannelTypeEnum, boolean> {
     return acc;
   }, {} as Record<ChannelTypeEnum, boolean>);
 
-  const noActiveIntegration = integrationStatus && !integrationStatus.hasOwnProperty(ChannelTypeEnum.EMAIL);
+  const noActiveIntegration = integrationStatus && !integrationStatus[ChannelTypeEnum.EMAIL];
   if (noActiveIntegration) {
     integrationStatus[ChannelTypeEnum.EMAIL] = true;
   }
