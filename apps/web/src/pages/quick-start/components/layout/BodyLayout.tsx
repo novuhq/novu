@@ -10,11 +10,11 @@ import { getStartedSteps } from '../../consts';
 export function BodyLayout({ children }: { children: React.ReactNode }) {
   return (
     <StyledBody>
-      <Grid>
-        <Grid.Col span={4}>
+      <Grid columns={24}>
+        <Grid.Col span={7}>
           <BodyNavigation />
         </Grid.Col>
-        <Grid.Col span={8}>{children}</Grid.Col>
+        <Grid.Col span={17}>{children}</Grid.Col>
       </Grid>
     </StyledBody>
   );
@@ -66,7 +66,7 @@ function BodyNavigation() {
 
 const TimelineWrapper = styled.div`
   width: 100%;
-  padding: 0 75px;
+  padding: 0 0 0 75px;
 
   .mantine-Timeline-itemBullet {
     background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : '#EDF0F2')};
@@ -77,17 +77,28 @@ const TimelineWrapper = styled.div`
 `;
 
 const TimelineText = styled.div<{ active: boolean }>`
+  display: flex;
+  align-items: center;
+
+  max-width: 320px;
+  min-height: 80px;
+
   font-size: 20px;
   font-weight: 700;
   line-height: 32px;
 
-  min-height: 80px;
-
-  margin-left: 52px;
+  margin-left: 12px;
   padding: 24px;
 
-  display: flex;
-  align-items: center;
+  transition: margin-left 0.3s ease, padding 0.3s ease;
+
+  @media (max-width: 1525px) {
+     {
+      margin-left: 6px;
+      padding: 20px 12px;
+    }
+  }
+
   border-radius: 8px;
 
   cursor: pointer;
@@ -115,4 +126,5 @@ const TimelineText = styled.div<{ active: boolean }>`
 
 const StyledItem = styled(Timeline.Item)`
   min-height: 140px;
+  min-width: 170px;
 `;

@@ -93,7 +93,7 @@ export function CreateOrganization({}: Props) {
 
       return;
     }
-    navigate(ROUTES.QUICKSTART);
+    navigate(ROUTES.GET_STARTED);
   };
 
   return (

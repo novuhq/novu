@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { Dispatch, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Grid } from '@mantine/core';
@@ -11,11 +11,10 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useIntegrations } from '../../../hooks';
 import { Button, colors } from '../../../design-system';
 
-export function ChannelsConfiguration() {
+export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel: Dispatch<any> }) {
   const segment = useSegment();
   const navigate = useNavigate();
   const { integrations, loading: isLoading } = useIntegrations();
-
   const integrationsStatus = getIntegrationsStatus(integrations);
 
   useEffect(() => {
@@ -23,13 +22,13 @@ export function ChannelsConfiguration() {
   }, []);
 
   return (
-    <Grid>
+    <Grid style={{ maxWidth: '850px' }}>
       {quickStartChannels.map((channel, index) => {
         const Icon = channel.Icon;
         const integrationStatus = isLoading ? false : integrationsStatus[channel.type];
 
         return (
-          <Grid.Col span={5} key={index} style={{ marginBottom: '43px' }}>
+          <Grid.Col span={6} key={index} style={{ marginBottom: '43px' }}>
             <Container>
               <IconContainer>
                 <Icon style={{ width: '28px', height: '32px' }} />
@@ -42,7 +41,16 @@ export function ChannelsConfiguration() {
                   </When>
                 </TitleRow>
                 <Description>{channel.description}</Description>
-                <StyledButton variant={'outline'} onClick={() => channel.clickHandler(navigate)}>
+                <StyledButton
+                  variant={'outline'}
+                  onClick={() =>
+                    channel.clickHandler({
+                      navigate,
+                      setClickedChannel,
+                      channelType: channel.type,
+                    })
+                  }
+                >
                   {integrationStatus ? 'Change Provider' : `Configure ${channel.displayName}`}
                 </StyledButton>
               </ChannelCard>

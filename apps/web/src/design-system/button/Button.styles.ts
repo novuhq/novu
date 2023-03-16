@@ -22,16 +22,37 @@ export const getOutlineStyles = (theme) => {
   };
 };
 
+export const getPulseStyles = () => {
+  return {
+    animation: 'pulse-animation 2s infinite',
+    '@keyframes pulse-animation': {
+      '0%': {
+        boxShadow: '0 0 0 0 rgba(255, 82, 82, 0.7)',
+      },
+      '70%': {
+        boxShadow: '0 0 0 10px rgba(255, 82, 82, 0)',
+      },
+      '100%': {
+        boxShadow: '0 0 0 0 rgba(255, 82, 82, 0)',
+      },
+    },
+  };
+};
+
 export default createStyles(
   (
     theme: MantineTheme,
-    { disabled, inherit, variant }: { disabled: boolean; inherit: boolean; variant?: string },
+    { disabled, inherit, variant, pulse }: { disabled: boolean; inherit: boolean; variant?: string; pulse?: boolean },
     getRef
   ) => {
     const loading = getRef('loading');
     let overrides = {};
     if (variant === 'outline') {
       overrides = getOutlineStyles(theme);
+    }
+
+    if (pulse) {
+      overrides = Object.assign({}, overrides, getPulseStyles());
     }
 
     return {
@@ -44,6 +65,10 @@ export default createStyles(
         },
         '&&:hover': {
           backgroundSize: '100%',
+        },
+        '&:focus': {
+          outlineOffset: 0,
+          outline: '2px solid rgb(153,200,255)',
         },
         ...overrides,
       },
