@@ -89,20 +89,24 @@ export const DigestDemoFlowProvider = ({
     }
   }, [template, currentUser]);
 
+  const startDigestTimer = useCallback(() => {
+    setTimeout(() => {
+      setState((state) => ({
+        ...state,
+        isRunningDigest: false,
+        triggerCount: 0,
+        emailsSentCount: state.emailsSentCount + 1,
+      }));
+    }, digestInterval * 1000);
+  }, [digestInterval]);
+
   useEffect(() => {
     if (template && !isRunningDigest && triggerCount > 0) {
       setState((state) => ({ ...state, isRunningDigest: true }));
 
-      setTimeout(() => {
-        setState((state) => ({
-          ...state,
-          isRunningDigest: false,
-          triggerCount: 0,
-          emailsSentCount: state.emailsSentCount + 1,
-        }));
-      }, digestInterval * 1000);
+      startDigestTimer();
     }
-  }, [template, isRunningDigest, triggerCount, digestInterval]);
+  }, [template, isRunningDigest, triggerCount, startDigestTimer]);
 
   const value = useMemo(
     () => ({
