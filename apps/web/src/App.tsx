@@ -30,8 +30,6 @@ import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelPr
 import { ROUTES } from './constants/routes.enum';
 import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './components/providers/SegmentProvider';
-import { GeneralStarter } from './pages/quick-start/steps/GeneralStarter';
-import { QuickStartWrapper } from './pages/quick-start/components/QuickStartWrapper';
 import { Quickstart } from './pages/quick-start/steps/Quickstart';
 import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
@@ -199,14 +197,6 @@ function App() {
                     }
                   />
                   <Route path={ROUTES.TEMPLATES} element={<NotificationList />} />
-                  <Route
-                    path="/general-started"
-                    element={
-                      <QuickStartWrapper>
-                        <GeneralStarter />
-                      </QuickStartWrapper>
-                    }
-                  />
                   <Route path={ROUTES.QUICKSTART} element={<Quickstart />} />
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
