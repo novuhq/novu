@@ -73,7 +73,7 @@ describe('Workflow Queue service', () => {
         removeOnComplete: true,
       },
     });
-    expect(workflowQueueService.bullMqService.queue).to.deep.include({
+    expect(workflowQueueService.bullMqService.worker).to.deep.include({
       _eventsCount: 2,
       _maxListeners: undefined,
       name: 'standard',
