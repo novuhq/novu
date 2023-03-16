@@ -1,11 +1,14 @@
+import React from 'react';
 import { Handle, Position } from 'react-flow-renderer';
 import styled from '@emotion/styled';
+import { useMantineTheme } from '@mantine/core';
 
 import { NodeStep } from './NodeStep';
 import { MailGradient } from '../../design-system/icons';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
 import { useAuthContext } from '../providers/AuthProvider';
+import { colors } from '../../design-system';
 
 const Email = styled.span`
   position: absolute;
@@ -17,6 +20,8 @@ const Email = styled.span`
 export function EmailNode({ data, id }: { data: any; id: string }) {
   const { currentUser } = useAuthContext();
   const { isReadOnly, emailsSentCount } = useDigestDemoFlowContext();
+  const { colorScheme } = useMantineTheme();
+  const ActionItem = data.ActionItem as React.FC<any>;
 
   return (
     <NodeStep
@@ -32,6 +37,7 @@ export function EmailNode({ data, id }: { data: any; id: string }) {
           <Email>{currentUser?.email ?? ''}</Email>
         </>
       }
+      ActionItem={<ActionItem style={{ color: `${colorScheme === 'dark' ? colors.B40 : colors.B80}` }} />}
       Handlers={() => {
         return (
           <>
