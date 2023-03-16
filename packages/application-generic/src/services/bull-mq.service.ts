@@ -13,7 +13,7 @@ export class BullmqService {
   private _worker: Worker;
   private _queueScheduler: QueueScheduler;
   public static readonly pro: boolean =
-    process.env.NOVU_EMAIL_INTEGRATION_API_KEY !== undefined;
+    process.env.NOVU_MANAGED_SERVICE !== undefined;
 
   get worker() {
     return this._worker;
