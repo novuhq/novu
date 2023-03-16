@@ -43,3 +43,6 @@ export const LOGROCKET_ID = (window._env_.REACT_APP_LOGROCKET_ID || process.env.
 export const WEBHOOK_URL = isCypress
   ? window._env_.REACT_APP_WEBHOOK_URL || process.env.REACT_APP_WEBHOOK_URL || 'http://localhost:1341'
   : window._env_.REACT_APP_WEBHOOK_URL || process.env.REACT_APP_WEBHOOK_URL || 'http://localhost:3003';
+
+export const MAIL_SERVER_DOMAIN =
+  window._env_.REACT_APP_MAIL_SERVER_DOMAIN || process.env.REACT_APP_MAIL_SERVER_DOMAIN || 'dev.inbound-mail.novu.co';

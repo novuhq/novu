@@ -109,6 +109,25 @@ const response = await novu.topics.removeSubscribers(topicKey, {
 
 Where `subscribers` will be an array of the subscriber identifiers we want to unassign from the topic. If successful an empty response will be returned.
 
+### Verify a subscriber belongs to a topic
+
+There would be times when it would be needed to verify if a certain subscriber belongs to a topic in order to decide what to do with that subscriber. The API call to achieve that is the following:
+
+```typescript
+import { Novu } from '@novu/node';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+const externalSubscriberId = 'external-subscriber-id-1';
+const topicKey = 'posts:comment:12345';
+
+const response = await novu.topics.getSubscriber(topicKey, externalSubscriberId);
+```
+
+:::info
+The subscriber ID to use in this API call is the one used as subscriber identifier. The choice was done to make easier for the user to use this endpoint without extra calls to Novu.
+:::
+
 ## Sending a notification to a topic
 
 In the section [Quick Start](/overview/quick-start#trigger-the-notification) it is explained how to trigger a notification for a single subscriber either by passing the subscribers identifier or by passing the full subscriber information if user wants to skip the identify step.
