@@ -8,7 +8,6 @@ import { TriggerNode } from './nodes/TriggerNode';
 import { DigestNode } from './nodes/DigestNode';
 import { EmailNode } from './nodes/EmailNode';
 import { DotsHorizontal } from '../../../../design-system/icons';
-import { AddNodeIcon } from './nodes/NodeStep';
 
 export function DigestDemoFlow() {
   const { colorScheme } = useMantineColorScheme();
@@ -68,18 +67,9 @@ const nodes: Node[] = [
     },
     position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y + NODE_DIST * 2 },
   },
-  {
-    id: '4',
-    type: 'addNode',
-    data: {
-      label: 'Add Node',
-      ActionItem: DotsHorizontal,
-    },
-    position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y + NODE_DIST * 2 + 100 },
-  },
 ];
 
-const nodeTypes = { triggerNode: TriggerNode, digestNode: DigestNode, emailNode: EmailNode, addNode: AddNodeIcon };
+const nodeTypes = { triggerNode: TriggerNode, digestNode: DigestNode, emailNode: EmailNode };
 
 const Wrapper = styled.div<{ dark: boolean }>`
   max-width: 700px;

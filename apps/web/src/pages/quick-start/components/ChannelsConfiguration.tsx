@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { Dispatch, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Grid } from '@mantine/core';
@@ -11,11 +11,10 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useIntegrations } from '../../../hooks';
 import { Button, colors } from '../../../design-system';
 
-export function ChannelsConfiguration() {
+export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel: Dispatch<any> }) {
   const segment = useSegment();
   const navigate = useNavigate();
   const { integrations, loading: isLoading } = useIntegrations();
-
   const integrationsStatus = getIntegrationsStatus(integrations);
 
   useEffect(() => {

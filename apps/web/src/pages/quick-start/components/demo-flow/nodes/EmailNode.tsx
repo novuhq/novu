@@ -15,7 +15,7 @@ export function EmailNode({ data, id }: { data: any; id: string }) {
       data={data}
       id={id}
       Icon={MailGradient}
-      ActionItem={() => <ActionItem style={{ color: `${theme.colorScheme === 'dark' ? colors.B40 : colors.B80}` }} />}
+      ActionItem={<ActionItem style={{ color: `${theme.colorScheme === 'dark' ? colors.B40 : colors.B80}` }} />}
       Handlers={() => {
         return (
           <>

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';

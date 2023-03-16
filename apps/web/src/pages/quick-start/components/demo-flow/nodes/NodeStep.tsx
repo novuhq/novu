@@ -7,7 +7,7 @@ import { colors, shadows, Text } from '../../../../../design-system';
 import { guidePreview, GuideTitleEnum, IBeat, IGuide } from './consts';
 import { useSegment } from '../../../../../components/providers/SegmentProvider';
 import { When } from '../../../../../components/utils/When';
-import { AddNodeContainer } from '../../../../templates/workflow/workflow/node-types/AddNode';
+import { PlusCircleOutlined } from '../../../../../design-system/icons';
 
 export function NodeStep({
   data,
@@ -20,7 +20,7 @@ export function NodeStep({
   id: string;
   Handlers: React.FC<any>;
   Icon: React.FC<any>;
-  ActionItem?: React.FC<any>;
+  ActionItem?: React.ReactNode;
 }) {
   const { theme } = useStyles();
   const { counter } = useCounter();
@@ -56,7 +56,7 @@ export function NodeStep({
                 <Icon style={{ marginRight: '15px' }} />
                 <Text weight={'bold'}>{data.label} </Text>
               </LeftContent>
-              {ActionItem ? <ActionItem /> : null}
+              {ActionItem}
             </ContentContainer>
           </StepCard>
           <Handlers />
@@ -190,7 +190,7 @@ export function Description({ label, description, url }: { label: string; descri
 export function AddNodeIcon() {
   return (
     <AddNodeIconWrapper>
-      <AddNodeContainer />
+      <PlusCircleOutlined />
     </AddNodeIconWrapper>
   );
 }
@@ -199,12 +199,8 @@ const AddNodeIconWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 300px;
-  pointer-events: auto;
-  cursor: default;
 
-  button {
-    cursor: default;
-    pointer-events: none;
-  }
+  width: 300px;
+  cursor: default;
+  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B60)};
 `;

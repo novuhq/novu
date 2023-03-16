@@ -115,7 +115,7 @@ export function NavButton({
 
   return (
     <Center data-test-id="get-started-footer-left-side" inline onClick={handleOnClick} {...props}>
-      <StyledButton fullWidth variant={variant ?? 'outline'} pulse={pulse ? pulse : false}>
+      <StyledButton fullWidth variant={variant ?? 'outline'} pulse={pulse}>
         <>{children}</>
       </StyledButton>
     </Center>
@@ -128,26 +128,6 @@ function ThemeArrowLeft(props: React.ComponentPropsWithoutRef<'svg'>) {
   return <>{theme.colorScheme === 'dark' ? <ArrowLeft {...props} /> : <ArrowLeftGradient {...props} />}</>;
 }
 
-const StyledButton = styled(Button)<{ pulse: boolean }>`
+const StyledButton = styled(Button)`
   height: 50px;
-
-  ${({ pulse }) => {
-    return (
-      pulse &&
-      `
-      animation: pulse-animation 2s infinite;
-      @keyframes pulse-animation {
-        0% {
-          box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7);
-        }
-        70% {
-          box-shadow: 0 0 0 10px rgba(255, 82, 82, 0);
-        }
-        100% {
-          box-shadow: 0 0 0 0 rgba(255, 82, 82, 0);
-        }
-      }
-      `
-    );
-  }};
 `;
