@@ -209,7 +209,8 @@ export function FlowEditor({
   ): Node {
     const channel = getChannel(step.template.type);
     let hasActiveIntegration = true;
-    if (channel?.tabKey !== ChannelTypeEnum.IN_APP) {
+    const isChannelStep = ![StepTypeEnum.TRIGGER, StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(step.template.type);
+    if (channel?.tabKey !== ChannelTypeEnum.IN_APP && isChannelStep) {
       hasActiveIntegration = !!integrations?.some((integration) => integration.channel === channel?.tabKey);
     }
 
