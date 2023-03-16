@@ -12,8 +12,8 @@ export class BullmqService {
   private _queue: Queue;
   private _worker: Worker;
   private _queueScheduler: QueueScheduler;
-  private readonly pro: boolean =
-    process.env.NPM_TASKFORCESH_TOKEN !== undefined;
+  public static readonly pro: boolean =
+    process.env.NOVU_EMAIL_INTEGRATION_API_KEY !== undefined;
 
   get worker() {
     return this._worker;
@@ -23,9 +23,17 @@ export class BullmqService {
     return this._queue;
   }
 
+  public static haveProInstalled() {
+    if (!BullmqService.pro) {
+      return;
+    }
+
+    require('@taskforcesh/bullmq-pro');
+  }
+
   public createQueue(name: string, config: QueueOptions) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const QueueClass = !this.pro
+    const QueueClass = !BullmqService.pro
       ? Queue
       : require('@taskforcesh/bullmq-pro').QueuePro;
 
@@ -42,12 +50,12 @@ export class BullmqService {
     options?: any
   ) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
-    const WorkerClass = !this.pro
+    const WorkerClass = !BullmqService.pro
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;
     this._worker = new WorkerClass(name, processor, {
       ...options,
-      ...(this.pro
+      ...(BullmqService.pro
         ? {
             group: {},
           }
@@ -71,7 +79,7 @@ export class BullmqService {
   ) {
     this._queue.add(id, data, {
       ...options,
-      ...(this.pro && groupId
+      ...(BullmqService.pro && groupId
         ? {
             group: {
               id: groupId,

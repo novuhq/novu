@@ -19,6 +19,7 @@ import { ResponseInterceptor } from './app/shared/framework/response.interceptor
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
+import { BullmqService } from '@novu/application-generic';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 
@@ -39,6 +40,8 @@ if (process.env.SENTRY_DSN) {
 validateEnv();
 
 export async function bootstrap(expressApp?): Promise<INestApplication> {
+  BullmqService.haveProInstalled();
+
   let app: INestApplication;
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
