@@ -24,10 +24,11 @@ export const guidePreview: Record<string, IGuide> = {
     description: 'Use the server SDK in your app for a specific trigger. ',
     docsUrl: 'https://docs.novu.co/api/trigger-event/',
     sequence: {
-      1: { open: true, opacity: 1 },
-      2: { open: true, opacity: 0.4 },
+      1: { open: false, opacity: 0 },
+      2: { open: true, opacity: 1 },
       3: { open: true, opacity: 0.4 },
       4: { open: true, opacity: 0.4 },
+      5: { open: true, opacity: 0.4 },
     },
   },
   digest: {
@@ -36,9 +37,10 @@ export const guidePreview: Record<string, IGuide> = {
     docsUrl: 'https://docs.novu.co/platform/digest/',
     sequence: {
       1: { open: false, opacity: 0 },
-      2: { open: true, opacity: 1 },
-      3: { open: true, opacity: 0.4 },
-      4: { open: true, opacity: 1 },
+      2: { open: false, opacity: 0 },
+      3: { open: true, opacity: 1 },
+      4: { open: true, opacity: 0.4 },
+      5: { open: true, opacity: 1 },
     },
   },
   email: {
@@ -48,8 +50,9 @@ export const guidePreview: Record<string, IGuide> = {
     sequence: {
       1: { open: false, opacity: 0 },
       2: { open: false, opacity: 0 },
-      3: { open: true, opacity: 1 },
-      4: { open: true, opacity: 0.4 },
+      3: { open: false, opacity: 0 },
+      4: { open: true, opacity: 1 },
+      5: { open: true, opacity: 0.4 },
     },
   },
 };
@@ -57,12 +60,13 @@ export const guidePreview: Record<string, IGuide> = {
 export const guidePlayground: Record<string, IGuide> = {
   trigger: {
     title: GuideTitleEnum.TRIGGER_PLAYGROUND,
-    description: 'Once event triggered, app send it to digest',
+    description: 'Once the event is triggered, the app sends it to digest',
     sequence: {
-      1: { open: true, opacity: 1 },
-      2: { open: true, opacity: 0.4 },
+      1: { open: false, opacity: 0 },
+      2: { open: true, opacity: 1 },
       3: { open: true, opacity: 0.4 },
       4: { open: true, opacity: 0.4 },
+      5: { open: true, opacity: 0.4 },
     },
   },
   digest: {
@@ -70,9 +74,10 @@ export const guidePlayground: Record<string, IGuide> = {
     description: 'Digest engine aggregates multiple events and... ',
     sequence: {
       1: { open: false, opacity: 0 },
-      2: { open: true, opacity: 1 },
-      3: { open: true, opacity: 0.4 },
-      4: { open: true, opacity: 1 },
+      2: { open: false, opacity: 0 },
+      3: { open: true, opacity: 1 },
+      4: { open: true, opacity: 0.4 },
+      5: { open: true, opacity: 1 },
     },
   },
   email: {
@@ -81,8 +86,9 @@ export const guidePlayground: Record<string, IGuide> = {
     sequence: {
       1: { open: false, opacity: 0 },
       2: { open: false, opacity: 0 },
-      3: { open: true, opacity: 1 },
-      4: { open: true, opacity: 0.4 },
+      3: { open: false, opacity: 0 },
+      4: { open: true, opacity: 1 },
+      5: { open: true, opacity: 0.4 },
     },
   },
 };
