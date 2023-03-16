@@ -8,6 +8,7 @@ import { version } from '../package.json';
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
 import helmet from 'helmet';
+import { BullmqService } from '@novu/application-generic';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -18,6 +19,7 @@ if (process.env.SENTRY_DSN) {
 }
 
 export async function bootstrap() {
+  BullmqService.haveProInstalled();
   const app = await NestFactory.create(AppModule);
   const redisIoAdapter = new RedisIoAdapter(app);
 
