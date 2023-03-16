@@ -10,7 +10,7 @@ import { useStyles } from './TemplateButton.styles';
 import { colors, shadows } from '../config';
 import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
-import { useActiveIntegrations, useEnvController } from '../../hooks';
+import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../hooks';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
 import { useViewport } from 'react-flow-renderer';
 import { getFormattedStepErrors } from '../../pages/templates/shared/errors';
@@ -124,15 +124,26 @@ export function ChannelButton({
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
   const isChannel = getChannel(channelKey)?.type === NodeTypeEnum.CHANNEL;
+  const {
+    enabled,
+    data: { limit, count },
+  } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const isLimitReached = enabled && limit === count;
 
   const hasActiveIntegration = useMemo(() => {
-    const isChannelStep = ![StepTypeEnum.TRIGGER, StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(channelType);
-    if (tabKey && tabKey !== ChannelTypeEnum.IN_APP && isChannelStep) {
-      return !!integrations?.some((integration) => integration.channel === tabKey);
+    const isChannelStep = [StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(
+      channelType
+    );
+    const isEmailStep = channelType === StepTypeEnum.EMAIL;
+
+    if (isChannelStep) {
+      const isActive = !!integrations?.some((integration) => integration.channel === tabKey);
+
+      return isActive || (isEmailStep && !isLimitReached);
     }
 
     return true;
-  }, [integrations, tabKey]);
+  }, [integrations, tabKey, isLimitReached]);
 
   const {
     watch,

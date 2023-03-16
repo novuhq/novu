@@ -19,10 +19,12 @@ export function useIntegrationLimit(type: ChannelTypeEnum) {
   } = useQuery(['integrationLimit', type], () => getIntegrationLimit(type), {
     enabled,
     refetchInterval: 10000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   return {
-    limit: data,
+    data,
     loading: isLoading,
     refetch,
     enabled,
