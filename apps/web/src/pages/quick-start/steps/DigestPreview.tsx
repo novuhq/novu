@@ -76,11 +76,7 @@ function FooterRightSide() {
 
   return (
     <ButtonsHolder>
-      <NavButton
-        navigateTo={ROUTES.TEMPLATES_CREATE}
-        handleOnClick={handlerBuildWorkflowClick}
-        style={{ marginRight: '40px' }}
-      >
+      <NavButton navigateTo={ROUTES.TEMPLATES_CREATE} handleOnClick={handlerBuildWorkflowClick}>
         <ButtonText>Build a Workflow</ButtonText>
       </NavButton>
       <StyledButton fullWidth pulse onClick={handlerTryDigestClick} loading={isCreating}>
