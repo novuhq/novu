@@ -7,8 +7,6 @@ import { ConnectionOptions } from 'tls';
 
 import { ApiException } from '../../exceptions/api.exception';
 
-const shouldLog = process.env.FF_IS_DISTRIBUTED_LOCK_LOGGING_ENABLED === 'true';
-
 const LOG_CONTEXT = 'DistributedLock';
 
 const getRedisObject = () => {
@@ -60,7 +58,7 @@ export class DistributedLockService {
       .filter((instanceSettings) => !!instanceSettings)
       .map((redisSettings) => new Redis(redisSettings));
     this.distributedLock = new Redlock(this.instances, settings);
-    Logger.log('Redlock started', LOG_CONTEXT);
+    Logger.verbose('Redlock started', LOG_CONTEXT);
 
     /**
      * https://github.com/mike-marcacci/node-redlock/blob/dc7bcd923f70f66abc325d23ae618f7caf01ad75/src/index.ts#L192
@@ -92,15 +90,15 @@ export class DistributedLockService {
 
       if (!this.shuttingDown) {
         try {
-          Logger.log('Redlock starting to shut down', LOG_CONTEXT);
+          Logger.verbose('Redlock starting to shut down', LOG_CONTEXT);
           this.shuttingDown = true;
           await this.distributedLock.quit();
         } catch (error) {
-          Logger.error(`Error quiting redlock: ${error.message}`, LOG_CONTEXT);
+          Logger.verbose(`Error quiting redlock: ${error.message}`, LOG_CONTEXT);
         } finally {
           this.shuttingDown = false;
           this.distributedLock = undefined;
-          Logger.log('Redlock shutdown', LOG_CONTEXT);
+          Logger.verbose('Redlock shutdown', LOG_CONTEXT);
         }
       }
     }
@@ -123,31 +121,30 @@ export class DistributedLockService {
     const releaseLock = await this.lock(resource, ttl);
 
     try {
-      shouldLog && Logger.log(`Lock ${resource} for ${handler.name}`, LOG_CONTEXT);
+      Logger.debug(`Lock ${resource} for ${handler.name}`, LOG_CONTEXT);
 
       const result = await handler();
 
       return result;
     } finally {
       await releaseLock();
-      shouldLog && Logger.log(`Lock ${resource} released for ${handler.name}`, LOG_CONTEXT);
+      Logger.debug(`Lock ${resource} released for ${handler.name}`, LOG_CONTEXT);
     }
   }
 
   private async lock(resource: string, ttl: number): Promise<() => Promise<void>> {
     if (!this.distributedLock) {
-      shouldLog &&
-        Logger.log(`Redlock was not started. Starting after calling lock ${resource} for ${ttl} ms`, LOG_CONTEXT);
+      Logger.verbose(`Redlock was not started. Starting after calling lock ${resource} for ${ttl} ms`, LOG_CONTEXT);
       this.startup();
     }
 
     try {
       const acquiredLock = await this.distributedLock.acquire([resource], ttl);
-      shouldLog && Logger.log(`Lock ${resource} acquired for ${ttl} ms`, LOG_CONTEXT);
+      Logger.verbose(`Lock ${resource} acquired for ${ttl} ms`, LOG_CONTEXT);
 
       return this.createLockRelease(resource, acquiredLock);
     } catch (error) {
-      shouldLog && Logger.error(`Lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
+      Logger.verbose(`Lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
       throw error;
     }
   }
@@ -157,10 +154,10 @@ export class DistributedLockService {
 
     return async (): Promise<void> => {
       try {
-        shouldLog && Logger.debug(`Lock ${resource} counter at ${this.lockCounter[resource]}`, LOG_CONTEXT);
+        Logger.debug(`Lock ${resource} counter at ${this.lockCounter[resource]}`, LOG_CONTEXT);
         await lock.unlock();
       } catch (error) {
-        shouldLog && Logger.error(`Releasing lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
+        Logger.error(`Releasing lock ${resource} threw an error: ${error.message}`, LOG_CONTEXT);
       } finally {
         this.decreaseLockCounter(resource);
       }

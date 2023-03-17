@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Inject, Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
@@ -29,8 +29,12 @@ export class ParseEventRequest {
 
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
+    Logger.log('Starting Trigger');
 
     const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
+
+    Logger.debug(mappedActor);
+
     const mappedRecipients = await this.mapTriggerRecipients.execute(
       MapTriggerRecipientsCommand.create({
         environmentId: command.environmentId,

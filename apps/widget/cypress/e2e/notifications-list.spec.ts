@@ -37,6 +37,7 @@ describe('Notifications List', function () {
       count: 3,
     });
 
+    cy.wait(1000);
     cy.wait('@getNotifications');
     cy.getByTestId('unseen-count-label').contains('8');
 

@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException, Inject } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Inject, Logger } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
-import { encryptCredentials } from '../../../shared/services/encryption';
+import { encryptCredentials } from '@novu/application-generic';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
@@ -19,10 +19,14 @@ export class UpdateIntegration {
   ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
-    const existingIntegration = await this.integrationRepository.findById(command.integrationId);
-    if (!existingIntegration) throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
+    Logger.verbose('Executing Update Integration Command');
 
-    this.invalidateCache.clearCache({
+    const existingIntegration = await this.integrationRepository.findById(command.integrationId);
+    if (!existingIntegration) {
+      throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
+    }
+
+    await this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
       credentials: {
         environmentId: command.environmentId,

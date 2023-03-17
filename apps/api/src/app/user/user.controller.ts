@@ -1,4 +1,14 @@
-import { Body, ClassSerializerInterceptor, Controller, Get, Put, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Put,
+  UseGuards,
+  UseInterceptors,
+  Logger,
+  ExecutionContext,
+} from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetMyProfileUsecase } from './usecases/get-my-profile/get-my-profile.usecase';
@@ -35,6 +45,10 @@ export class UsersController {
   })
   @ExternalApiAccessible()
   async getMyProfile(@UserSession() user: IJwtPayload): Promise<UserResponseDto> {
+    Logger.verbose('Getting User');
+    Logger.debug('User id: ' + user._id);
+    Logger.verbose('Creating GetMyProfileCommand');
+
     const command = GetMyProfileCommand.create({
       userId: user._id,
     });
