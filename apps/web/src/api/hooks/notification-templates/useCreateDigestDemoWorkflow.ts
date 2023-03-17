@@ -56,7 +56,7 @@ export const useCreateDigestDemoWorkflow = () => {
     };
 
     createNotificationTemplate(payload as any);
-  }, [createNotificationTemplate]);
+  }, [createNotificationTemplate, groups]);
 
   return {
     createDigestDemoWorkflow,
