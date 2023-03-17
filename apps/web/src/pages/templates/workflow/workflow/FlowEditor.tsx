@@ -17,7 +17,7 @@ import { useFormContext } from 'react-hook-form';
 import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { v4 as uuid4 } from 'uuid';
-import { StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import ChannelNode from './node-types/ChannelNode';
 import { colors } from '../../../../design-system';
@@ -25,7 +25,7 @@ import TriggerNode from './node-types/TriggerNode';
 import { getChannel } from '../../shared/channels';
 import type { IForm, IStepEntity } from '../../components/formTypes';
 import AddNode from './node-types/AddNode';
-import { useEnvController } from '../../../../hooks';
+import { useActiveIntegrations, useEnvController } from '../../../../hooks';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
 import { getFormattedStepErrors } from '../../shared/errors';
 import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
@@ -80,6 +80,7 @@ export function FlowEditor({
   const { template, trigger } = useTemplateEditorForm();
   const { trigger: triggerErrors } = useFormContext<IForm>();
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
+  const { integrations } = useActiveIntegrations();
 
   useEffect(() => {
     const clientWidth = reactFlowWrapper.current?.clientWidth;
@@ -206,13 +207,21 @@ export function FlowEditor({
     step: IStepEntity,
     i: number
   ): Node {
+    const channel = getChannel(step.template.type);
+    let hasActiveIntegration = true;
+    const isChannelStep = ![StepTypeEnum.TRIGGER, StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(step.template.type);
+    if (channel?.tabKey !== ChannelTypeEnum.IN_APP && isChannelStep) {
+      hasActiveIntegration = !!integrations?.some((integration) => integration.channel === channel?.tabKey);
+    }
+
     return {
       id: newId,
       type: 'channelNode',
       position: { x: oldNode.position.x, y: oldNode.position.y },
       parentNode: parentId,
       data: {
-        ...getChannel(step.template.type),
+        ...channel,
+        hasActiveIntegration,
         active: step.active,
         index: i,
         error: getFormattedStepErrors(i, errors),

@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { Popover } from '@mantine/core';
 import { useLocation, useParams } from 'react-router-dom';
 
-import { useStyles } from '../../design-system/template-button/TemplateButton.styles';
-import { colors, shadows, Text } from '../../design-system';
+import { colors, Popover, Text } from '../../design-system';
 import { guidePreview, guidePlayground, GuideTitleEnum, IBeat } from './consts';
-import { useSegment } from '../providers/SegmentProvider';
-import { When } from '../utils/When';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
-import { PlusCircleOutlined } from '../../design-system/icons';
 
 export function NodeStep({
   data,
@@ -27,7 +22,6 @@ export function NodeStep({
   ActionItem?: React.ReactNode;
   ContentItem?: React.ReactNode;
 }) {
-  const { theme } = useStyles();
   const { counter } = useCounter();
   const [sequence, setSequence] = useState<IBeat>();
   const { pathname } = useLocation();
@@ -53,12 +47,8 @@ export function NodeStep({
       opened={sequence?.open || false}
       transition="rotate-left"
       transitionDuration={600}
-      position="right"
-      radius="md"
-      shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
-      offset={30}
-    >
-      <Popover.Target>
+      opacity={sequence?.opacity ? sequence.opacity : 1}
+      target={
         <div>
           <StepCard data-test-id={`data-test-id-${label}`}>
             <ContentContainer>
@@ -72,52 +62,14 @@ export function NodeStep({
           </StepCard>
           <Handlers />
         </div>
-      </Popover.Target>
-      <Dropdown opacity={sequence?.opacity ? sequence.opacity : 1}>
-        <Label gradientColor={titleGradient} style={{ marginBottom: '8px' }}>
-          {popoverData.title}
-        </Label>
-        <Description description={popoverData.description} url={popoverData.docsUrl} label={label} />
-      </Dropdown>
-    </Popover>
+      }
+      title={popoverData.title}
+      titleGradient={titleGradient}
+      description={popoverData.description}
+      url={popoverData.docsUrl}
+    />
   );
 }
-
-export const Label = styled.div<{ gradientColor: 'red' | 'blue' | 'none' }>`
-  height: 20px;
-  font-family: 'Lato', serif;
-  font-style: normal;
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 20px;
-
-  display: flex;
-  align-items: center;
-
-  ${({ gradientColor }) => {
-    return (
-      gradientColor !== 'none' &&
-      `
-    background: ${
-      gradientColor === 'red'
-        ? 'linear-gradient(90deg, #DD2476 0%, #FF512F 100%)'
-        : 'linear-gradient(0deg, #14deeb 0%, #446edc 100%)'
-    };
-        
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;  
-      `
-    );
-  }};
-`;
-
-const Dropdown = styled(Popover.Dropdown)<{ opacity: number }>`
-  height: 100px;
-  padding: 16px;
-  background-color: ${({ theme }) => `${theme.colorScheme === 'dark' ? colors.B17 : colors.white}`};
-
-  opacity: ${({ opacity }) => `${opacity} !important`};
-`;
 
 const ContentContainer = styled.div`
   display: flex;
@@ -154,7 +106,7 @@ function useCounter() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (counter >= 4) {
+      if (counter >= 5) {
         clearInterval(interval);
 
         return;
@@ -170,49 +122,3 @@ function useCounter() {
 
   return { counter };
 }
-
-export function Description({ label, description, url }: { label: string; description: string; url?: string }) {
-  const segment = useSegment();
-
-  function handleOnClick() {
-    /*
-     * todo add ('label' will probably be needed here)
-     * segment.track(OnBoardingAnalyticsEnum);
-     */
-  }
-
-  return (
-    <div style={{ maxWidth: '220px' }}>
-      <span>{description}</span>
-      <When truthy={url}>
-        <a
-          href={url}
-          style={{ color: '#DD2476', textDecoration: 'underline' }}
-          onClick={() => handleOnClick}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Learn More
-        </a>
-      </When>
-    </div>
-  );
-}
-
-export function AddNodeIcon() {
-  return (
-    <AddNodeIconWrapper>
-      <PlusCircleOutlined />
-    </AddNodeIconWrapper>
-  );
-}
-
-const AddNodeIconWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 300px;
-  cursor: default;
-  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B60)};
-`;

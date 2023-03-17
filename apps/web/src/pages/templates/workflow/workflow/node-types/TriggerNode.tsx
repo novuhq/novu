@@ -10,7 +10,7 @@ export default memo(({ selected }: { selected: boolean }) => {
 
   return (
     <div data-test-id={`node-triggerSelector`} style={{ pointerEvents: 'none' }}>
-      <ChannelButton tabKey="" showDots={false} Icon={TapeGradient} label={'Trigger'} active={selected} />
+      <ChannelButton hasActiveIntegration showDots={false} Icon={TapeGradient} label={'Trigger'} active={selected} />
       <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
     </div>
   );

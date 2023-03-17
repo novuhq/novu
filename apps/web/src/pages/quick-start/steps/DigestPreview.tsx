@@ -6,12 +6,13 @@ import { ReactFlowProvider } from 'react-flow-renderer';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
-import { DigestDemoFlow, Label } from '../../../components';
+import { DigestDemoFlow } from '../../../components';
 import useStyles from '../components/OnboardingSteps.styles';
 import { localNavigate } from '../components/route/store';
 import { ArrowLeft } from '../../../design-system/icons';
 import { Button } from '../../../design-system';
 import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLeftGradient';
+import { Label } from '../../../design-system/typography/label';
 import { getStartedSteps } from '../consts';
 import { ROUTES } from '../../../constants/routes.enum';
 import { HeaderSecondaryTitle, HeaderTitle } from '../components/layout/HeaderLayout';
