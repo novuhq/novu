@@ -46,7 +46,7 @@ export default function TemplateEditorPage() {
   const onTriggerModalDismiss = () => {
     navigate('/templates');
   };
-  const { loading: isIntegrationsLoading } = useActiveIntegrations();
+  const { isLoading: isIntegrationsLoading } = useActiveIntegrations();
   const {
     template,
     isLoading,

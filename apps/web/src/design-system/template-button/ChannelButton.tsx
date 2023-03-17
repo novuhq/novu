@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { UnstyledButton, Popover as MantinePopover, ActionIcon, createStyles, MantineTheme, Menu } from '@mantine/core';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Popover as MantinePopover, ActionIcon, createStyles, MantineTheme, Menu } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
@@ -10,12 +10,13 @@ import { useStyles } from './TemplateButton.styles';
 import { colors, shadows } from '../config';
 import { DotsHorizontal, Edit, Trash } from '../icons';
 import { When } from '../../components/utils/When';
-import { useEnvController } from '../../hooks';
+import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../hooks';
 import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
 import { useViewport } from 'react-flow-renderer';
 import { getFormattedStepErrors } from '../../pages/templates/shared/errors';
 import { Popover } from '../popover';
 import { Button } from '../button/Button';
+import { IntegrationsStoreModal } from '../../pages/integrations/IntegrationsStoreModal';
 
 const CHANNEL_TYPE_TO_TEXT = {
   [ChannelTypeEnum.IN_APP]: 'in-app',
@@ -36,6 +37,7 @@ interface ITemplateButtonProps {
   action?: boolean;
   testId?: string;
   tabKey?: ChannelTypeEnum;
+  channelType: StepTypeEnum;
   checked?: boolean;
   readonly?: boolean;
   switchButton?: (boolean) => void;
@@ -48,7 +50,6 @@ interface ITemplateButtonProps {
   dragging?: boolean;
   setActivePage?: (string) => void;
   disabled?: boolean;
-  hasActiveIntegration: boolean;
 }
 
 const useMenuStyles = createStyles((theme: MantineTheme) => {
@@ -106,6 +107,7 @@ export function ChannelButton({
   label,
   Icon,
   tabKey,
+  channelType,
   index,
   testId,
   errors: initialErrors = false,
@@ -115,9 +117,9 @@ export function ChannelButton({
   dragging = false,
   setActivePage = (page: string) => {},
   disabled: initDisabled,
-  hasActiveIntegration,
 }: ITemplateButtonProps) {
   const { readonly: readonlyEnv } = useEnvController();
+  const { integrations } = useActiveIntegrations({ refetchOnMount: false, refetchOnWindowFocus: false });
   const { cx, classes, theme } = useStyles();
   const { classes: menuClasses } = useMenuStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
@@ -130,6 +132,22 @@ export function ChannelButton({
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
   const isChannel = getChannel(channelKey)?.type === NodeTypeEnum.CHANNEL;
+  const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+
+  const hasActiveIntegration = useMemo(() => {
+    const isChannelStep = [StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(
+      channelType
+    );
+    const isEmailStep = channelType === StepTypeEnum.EMAIL;
+
+    if (isChannelStep) {
+      const isActive = !!integrations?.some((integration) => integration.channel === tabKey);
+
+      return isActive || (isEmailStep && !isLimitReached);
+    }
+
+    return true;
+  }, [integrations, tabKey, isLimitReached]);
 
   const {
     watch,
@@ -160,21 +178,13 @@ export function ChannelButton({
     }
   }, [dragging, showDotMenu, active]);
 
-  const toggleIntegrationsModalVisible = () => {
-    setIntegrationsModalVisible((old) => !old);
-  };
-
   return (
     <UnstyledButtonStyled
-      type={'button'}
+      role={'button'}
       onMouseEnter={() => setPopoverOpened(true)}
       onMouseLeave={() => setPopoverOpened(false)}
       data-test-id={testId}
       className={cx(classes.button, { [classes.active]: active })}
-      style={{ pointerEvents: 'all' }}
-      sx={{
-        backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
-      }}
     >
       <ButtonWrapper>
         <LeftContainerWrapper>
@@ -263,6 +273,14 @@ export function ChannelButton({
           </When>
         </ActionWrapper>
       </ButtonWrapper>
+      <IntegrationsStoreModal
+        openIntegration={isIntegrationsModalVisible}
+        closeIntegration={() => {
+          setIntegrationsModalVisible(false);
+          setPopoverOpened(false);
+        }}
+        scrollTo={tabKey}
+      />
       {!hasActiveIntegration && (
         <Popover
           opened={popoverOpened}
@@ -274,7 +292,9 @@ export function ChannelButton({
           titleGradient="red"
           description={`Please configure a ${CHANNEL_TYPE_TO_TEXT[channelKey]} provider to send notifications over this channel`}
           content={
-            <ConfigureProviderButton onClick={toggleIntegrationsModalVisible}>Configure</ConfigureProviderButton>
+            <ConfigureProviderButton onClick={() => setIntegrationsModalVisible(true)}>
+              Configure
+            </ConfigureProviderButton>
           }
         />
       )}
@@ -345,6 +365,7 @@ const LeftContainerWrapper = styled.div`
 `;
 
 const ButtonWrapper = styled.div`
+  width: 100%;
   display: flex;
   justify-content: space-between;
 `;
@@ -353,8 +374,13 @@ const StyledContentWrapper = styled.div`
   padding-right: 10px;
 `;
 
-const UnstyledButtonStyled: any = styled(UnstyledButton)`
+const UnstyledButtonStyled = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   position: relative;
+  pointer-events: all;
+  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)};
 
   @media screen and (max-width: 1400px) {
     padding: 0 5px;

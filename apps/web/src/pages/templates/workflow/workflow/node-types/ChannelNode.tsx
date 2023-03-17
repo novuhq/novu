@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { Handle, Position, getOutgoers, useReactFlow } from 'react-flow-renderer';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { ChannelButton } from '../../../../../design-system';
 import { useTemplateEditorContext } from '../../../editor/TemplateEditorProvider';
@@ -10,13 +10,13 @@ interface NodeData {
   description: string;
   label: string;
   tabKey: ChannelTypeEnum;
+  channelType: StepTypeEnum;
   index: number;
   testId: string;
   onDelete: (id: string) => void;
   error: string;
   setActivePage: (string) => void;
   active?: boolean;
-  hasActiveIntegration: boolean;
 }
 
 export default memo(({ data, id, dragging }: { data: NodeData; selected: boolean; id: string; dragging: boolean }) => {
@@ -33,6 +33,7 @@ export default memo(({ data, id, dragging }: { data: NodeData; selected: boolean
         errors={data.error}
         onDelete={data.onDelete}
         tabKey={data.tabKey}
+        channelType={data.channelType}
         Icon={data.Icon}
         label={data.label}
         active={id === selectedNodeId}
@@ -40,7 +41,6 @@ export default memo(({ data, id, dragging }: { data: NodeData; selected: boolean
         id={id}
         index={data.index}
         dragging={dragging}
-        hasActiveIntegration={data.hasActiveIntegration}
       />
       <Handle type="target" id="b" position={Position.Top} />
       <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
