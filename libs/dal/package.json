@@ -36,6 +36,7 @@
     "bull-arena": "^3.2.2",
     "class-transformer": "^0.5.1",
     "cross-fetch": "^3.0.4",
+    "date-fns": "^2.29.2",
     "event-stream": "^4.0.1",
     "fs-extra": "^9.0.0",
     "googleapis": "^60.0.1",

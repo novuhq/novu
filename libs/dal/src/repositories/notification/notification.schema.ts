@@ -19,6 +19,7 @@ const notificationSchema = new Schema<NotificationDBModel>(
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
+      index: true,
     },
     _subscriberId: {
       type: Schema.Types.ObjectId,
@@ -50,6 +51,13 @@ const notificationSchema = new Schema<NotificationDBModel>(
 notificationSchema.virtual('environment', {
   ref: 'Environment',
   localField: '_environmentId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+notificationSchema.virtual('organization', {
+  ref: 'Organization',
+  localField: '_organizationId',
   foreignField: '_id',
   justOne: true,
 });
