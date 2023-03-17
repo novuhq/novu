@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import { Handle, Position, getOutgoers, useReactFlow } from 'react-flow-renderer';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
-import { ChannelButton } from '../../../../../design-system';
+import { WorkflowNode } from './WorkflowNode';
 import { useTemplateEditorContext } from '../../../editor/TemplateEditorProvider';
 
 interface NodeData {
@@ -28,7 +28,7 @@ export default memo(({ data, id, dragging }: { data: NodeData; selected: boolean
 
   return (
     <div data-test-id={`node-${data.testId}`} style={{ pointerEvents: 'none' }}>
-      <ChannelButton
+      <WorkflowNode
         setActivePage={data.setActivePage}
         errors={data.error}
         onDelete={data.onDelete}
