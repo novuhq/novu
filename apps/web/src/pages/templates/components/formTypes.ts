@@ -18,6 +18,7 @@ export interface ITemplates extends IMessageTemplate {
 export interface IStepEntity {
   id?: string;
   _id?: string;
+  uuid?: string;
   _templateId?: string;
   template: ITemplates;
   filters?: {

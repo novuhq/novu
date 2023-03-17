@@ -6,7 +6,7 @@ import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types/helpers';
 
 export class MessageTemplateEntity {
-  _id: string;
+  _id?: string;
 
   _environmentId: EnvironmentId;
 

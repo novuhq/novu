@@ -44,7 +44,7 @@ export class APNSPushProvider implements IPushProvider {
     });
     const res = await this.provider.send(notification, options.target);
 
-    if (res.failed) {
+    if (res.failed.length > 0) {
       throw new Error(
         res.failed
           .map(

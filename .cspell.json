@@ -409,7 +409,11 @@
     "typeof",
     "nbsp",
     "maskdata",
-    "LOGDECORATOR"
+    "LOGDECORATOR",
+    "nbsp",
+    "stddev",
+    "shortid",
+    "upsert"
   ],
   "flagWords": [],
   "patterns": [

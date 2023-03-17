@@ -74,7 +74,6 @@ export class DistributedLockService {
      * when an "error" event is emitted in the absence of listeners.
      */
     this.distributedLock.on('error', (error) => {
-      // Log all other errors.
       Logger.error(error, LOG_CONTEXT);
     });
   }

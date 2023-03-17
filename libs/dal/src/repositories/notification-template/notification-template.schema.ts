@@ -68,6 +68,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
           type: Schema.Types.Boolean,
           default: false,
         },
+        uuid: Schema.Types.String,
         filters: [
           {
             isNegated: Schema.Types.Boolean,
@@ -83,6 +84,8 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
                 on: Schema.Types.String,
                 webhookUrl: Schema.Types.String,
                 timeOperator: Schema.Types.String,
+                step: Schema.Types.String,
+                stepType: Schema.Types.String,
               },
             ],
           },

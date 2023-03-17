@@ -260,6 +260,10 @@ export class UpdateNotificationTemplate {
       partialNotificationStep.replyCallback = message.replyCallback;
     }
 
+    if (message.uuid) {
+      partialNotificationStep.uuid = message.uuid;
+    }
+
     return partialNotificationStep;
   }
 

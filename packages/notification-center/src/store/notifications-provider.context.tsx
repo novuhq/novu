@@ -6,6 +6,7 @@ import { NotificationsContext } from './notifications.context';
 import type { IStore } from '../shared/interfaces';
 import { useFetchNotifications, useRemoveNotification, useUnseenCount } from '../hooks';
 import { useMarkNotificationsAs } from '../hooks';
+import { useMarkNotificationsAsReadByFeed } from '../hooks/useMarkNotificationAsReadByFeed';
 
 const DEFAULT_STORES = [{ storeId: 'default_store' }];
 
@@ -39,6 +40,7 @@ export function NotificationsProvider({
   const { data: unseenCountData } = useUnseenCount();
   const { markNotificationsAs } = useMarkNotificationsAs();
   const { removeNotification } = useRemoveNotification();
+  const { markNotificationsAsReadByFeed } = useMarkNotificationsAsReadByFeed();
 
   const markNotificationAsRead = useCallback(
     (messageId: string) => markNotificationsAs({ messageId, seen: true, read: true }),
@@ -50,6 +52,10 @@ export function NotificationsProvider({
     [markNotificationsAs]
   );
   const removeMessage = useCallback((messageId: string) => removeNotification({ messageId }), [removeNotification]);
+
+  const markAllNotificationsAsReadByFeed = useCallback(() => {
+    markNotificationsAsReadByFeed({ feedId: storeQuery?.feedIdentifier });
+  }, [markNotificationsAsReadByFeed, storeQuery?.feedIdentifier]);
 
   const markNotificationAsSeen = useCallback(
     (messageId: string) => markNotificationsAs({ messageId, seen: true, read: false }),
@@ -114,6 +120,7 @@ export function NotificationsProvider({
       markAllNotificationsAsRead,
       markAllNotificationsAsSeen,
       removeMessage,
+      markAllNotificationsAsReadByFeed,
     }),
     [
       storeId,
@@ -133,6 +140,7 @@ export function NotificationsProvider({
       markAllNotificationsAsRead,
       markAllNotificationsAsSeen,
       removeMessage,
+      markAllNotificationsAsReadByFeed,
     ]
   );
 

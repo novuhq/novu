@@ -93,6 +93,12 @@ export class ApiService {
     return await this.httpClient.delete(`/widgets/messages/${messageId}`, {});
   }
 
+  async markAllMessagesAsRead(feedId?: string | string[]): Promise<any> {
+    return await this.httpClient.post(`/widgets/messages/read`, {
+      feedId,
+    });
+  }
+
   async getNotificationsList(
     page: number,
     query: IStoreQuery = {}
