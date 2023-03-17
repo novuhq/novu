@@ -82,7 +82,12 @@ export const DigestDemoFlowProvider = ({
 
       testTriggerMutation({
         name: template.triggers[0].identifier,
-        to: [currentUser._id],
+        to: [
+          {
+            subscriberId: currentUser._id,
+            email: currentUser.email,
+          },
+        ],
         payload: {},
         overrides: {},
       });
