@@ -100,6 +100,7 @@ export class NotificationTemplateService {
         active: message.active,
         metadata: message.metadata,
         replyCallback: message.replyCallback,
+        uuid: message.uuid,
       });
     }
 

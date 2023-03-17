@@ -51,7 +51,10 @@ export class PromoteNotificationTemplateChange {
 
         return undefined;
       }
-      step._templateId = oldMessage._id;
+
+      if (step?._templateId && oldMessage._id) {
+        step._templateId = oldMessage._id;
+      }
 
       return step;
     };

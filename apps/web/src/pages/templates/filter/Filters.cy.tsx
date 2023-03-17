@@ -7,8 +7,20 @@ import {
   FilterPartTypeEnum,
   TimeOperatorEnum,
 } from '@novu/shared';
+import { FormProvider, useForm } from 'react-hook-form';
 import { TestWrapper } from '../../../testing';
 import { Filters, translateOperator, getFilterLabel } from './Filters';
+
+const TestFormProvider = ({ children }) => {
+  const methods = useForm({
+    defaultValues: {
+      steps: [],
+    },
+    mode: 'onChange',
+  });
+
+  return <FormProvider {...methods}>{children}</FormProvider>;
+};
 
 const defaultStep = {
   id: '',
@@ -80,23 +92,25 @@ describe('Filters Component', function () {
   it('should render filter', function () {
     cy.mount(
       <TestWrapper>
-        <Filters
-          step={{
-            ...defaultStep,
-            filters: [
-              {
-                children: [
-                  {
-                    on: FilterPartTypeEnum.PAYLOAD,
-                    field: 'name',
-                    value: 'Novu',
-                    operator: 'EQUAL',
-                  },
-                ],
-              },
-            ],
-          }}
-        />
+        <TestFormProvider>
+          <Filters
+            step={{
+              ...defaultStep,
+              filters: [
+                {
+                  children: [
+                    {
+                      on: FilterPartTypeEnum.PAYLOAD,
+                      field: 'name',
+                      value: 'Novu',
+                      operator: 'EQUAL',
+                    },
+                  ],
+                },
+              ],
+            }}
+          />
+        </TestFormProvider>
       </TestWrapper>
     );
     cy.get('.filter-item').should('have.length', 1);
@@ -136,9 +150,11 @@ describe('Filters Component', function () {
       value: 'test-value',
     };
 
-    expect(getFilterLabel(onlineRightNowFilter)).to.equal('is online right now equal');
-    expect(getFilterLabel(onlineInLastFilter)).to.equal(`online in the last "X" ${onlineInLastFilter.timeOperator}`);
-    expect(getFilterLabel(webhookFilter)).to.equal('webhook test-field equal');
-    expect(getFilterLabel(fieldFilters)).to.equal('payload test-field includes');
+    expect(getFilterLabel(onlineRightNowFilter, [])).to.equal('is online right now equal');
+    expect(getFilterLabel(onlineInLastFilter, [])).to.equal(
+      `online in the last "X" ${onlineInLastFilter.timeOperator}`
+    );
+    expect(getFilterLabel(webhookFilter, [])).to.equal('webhook test-field equal');
+    expect(getFilterLabel(fieldFilters, [])).to.equal('payload test-field includes');
   });
 });

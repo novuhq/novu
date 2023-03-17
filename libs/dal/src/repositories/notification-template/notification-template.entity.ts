@@ -87,6 +87,8 @@ export class NotificationTriggerEntity {
 export class NotificationStepEntity {
   _id?: string;
 
+  uuid?: string;
+
   _templateId: string;
 
   active?: boolean;
