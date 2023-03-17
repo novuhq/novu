@@ -6,6 +6,7 @@ import {
   QueueOptions,
   QueueScheduler,
   Worker,
+  WorkerOptions,
 } from 'bullmq';
 
 export class BullmqService {
@@ -47,7 +48,7 @@ export class BullmqService {
   public createWorker(
     name: string,
     processor?: string | Processor<any, any, any>,
-    options?: any
+    options?: WorkerOptions
   ) {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const WorkerClass = !BullmqService.pro
