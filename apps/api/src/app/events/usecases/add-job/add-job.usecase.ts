@@ -60,7 +60,7 @@ export class AddJob {
     const delay = digestAmount ?? delayAmount;
     Logger.debug('delay is: ' + delay);
 
-    await this.createExecutionDetails.execute(
+    this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.STEP_QUEUED,
@@ -80,7 +80,7 @@ export class AddJob {
 
     if (delay) {
       Logger.verbose('Delay is active, Creating execution details');
-      await this.createExecutionDetails.execute(
+      this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_DELAYED,
