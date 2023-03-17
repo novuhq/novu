@@ -10,6 +10,8 @@ import { Button, colors, DotsNavigation } from '../../../design-system';
 import { Clock, LetterOpened, BellWithNotification } from '../../../design-system/icons';
 import { useTemplateEditorContext } from './TemplateEditorProvider';
 import { IForm } from '../components/formTypes';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { DigestWorkflowTourAnalyticsEnum } from '../constants';
 
 const ICONS = [Clock, LetterOpened, BellWithNotification];
 const TITLE = ['Set-up time interval', 'Set-up email content', 'Test your workflow'];
@@ -53,6 +55,31 @@ const DotsNavigationStyled = styled(DotsNavigation)`
   align-self: center;
 `;
 
+const HINT_INDEX_TO_CLICK_ANALYTICS = {
+  0: DigestWorkflowTourAnalyticsEnum.FIRST_HINT_NEXT_CLICK,
+  1: DigestWorkflowTourAnalyticsEnum.SECOND_HINT_NEXT_CLICK,
+  2: DigestWorkflowTourAnalyticsEnum.THIRD_HINT_GOT_IT_CLICK,
+};
+
+const HINT_INDEX_TO_SKIP_ANALYTICS = {
+  0: DigestWorkflowTourAnalyticsEnum.FIRST_HINT_SKIP_TOUR_CLICK,
+  1: DigestWorkflowTourAnalyticsEnum.SECOND_HINT_SKIP_TOUR_CLICK,
+};
+
+const HINT_INDEX_TO_NAVIGATION_ANALYTICS = {
+  0: DigestWorkflowTourAnalyticsEnum.NAVIGATE_TO_FIRST_HINT_CLICK,
+  1: DigestWorkflowTourAnalyticsEnum.NAVIGATE_TO_SECOND_HINT_CLICK,
+  2: DigestWorkflowTourAnalyticsEnum.NAVIGATE_TO_THIRD_HINT_CLICK,
+};
+
+const getAnalyticsEvent = (index: number, isFromNavigation: boolean): string | undefined => {
+  if (isFromNavigation) {
+    return HINT_INDEX_TO_NAVIGATION_ANALYTICS[index];
+  }
+
+  return HINT_INDEX_TO_CLICK_ANALYTICS[index];
+};
+
 export const DigestWorkflowTourTooltip = ({
   tooltipProps,
   primaryProps,
@@ -61,6 +88,7 @@ export const DigestWorkflowTourTooltip = ({
   index,
   size,
 }: TooltipRenderProps) => {
+  const segment = useSegment();
   const { setSelectedNodeId } = useTemplateEditorContext();
   const { watch } = useFormContext<IForm>();
   const steps = watch('steps');
@@ -69,7 +97,7 @@ export const DigestWorkflowTourTooltip = ({
   const navigate = useNavigate();
   const Icon = ICONS[index];
 
-  const handleOnClick = (tourStepIndex: number) => {
+  const handleOnClick = (tourStepIndex: number, isFromNavigation = false) => {
     if (tourStepIndex === 0) {
       const digestStep = steps.find((el) => el.template?.type === StepTypeEnum.DIGEST);
       setStep(tourStepIndex);
@@ -82,6 +110,11 @@ export const DigestWorkflowTourTooltip = ({
       setStep(tourStepIndex);
       setSelectedNodeId('');
     }
+
+    const analyticsEvent = getAnalyticsEvent(isFromNavigation ? tourStepIndex : index, isFromNavigation);
+    if (analyticsEvent) {
+      segment.track(analyticsEvent);
+    }
   };
 
   const stopTourCallback = () => {
@@ -90,6 +123,14 @@ export const DigestWorkflowTourTooltip = ({
     if (queryParams.has('tour')) {
       navigate(location.pathname, { replace: true });
     }
+  };
+
+  const handleSkipClick = () => {
+    const analyticsEvent = HINT_INDEX_TO_SKIP_ANALYTICS[index];
+    if (analyticsEvent) {
+      segment.track(analyticsEvent);
+    }
+    stopTourCallback();
   };
 
   return (
@@ -102,6 +143,7 @@ export const DigestWorkflowTourTooltip = ({
           {...primaryProps}
           onClick={() => {
             if (isLastStep) {
+              segment.track(DigestWorkflowTourAnalyticsEnum.THIRD_HINT_GOT_IT_CLICK);
               stopTourCallback();
 
               return;
@@ -114,7 +156,7 @@ export const DigestWorkflowTourTooltip = ({
           {primaryProps.title}
         </Button>
         {!isLastStep && (
-          <UnstyledButton {...skipProps} onClick={stopTourCallback} data-test-id="digest-workflow-tooltip-skip-button">
+          <UnstyledButton {...skipProps} onClick={handleSkipClick} data-test-id="digest-workflow-tooltip-skip-button">
             {skipProps.title}
           </UnstyledButton>
         )}
@@ -125,7 +167,7 @@ export const DigestWorkflowTourTooltip = ({
         onClick={(num) => {
           if (num === index) return;
 
-          handleOnClick(num);
+          handleOnClick(num, true);
         }}
         testId="digest-workflow-tooltip-dots-navigation"
       />

@@ -23,10 +23,14 @@ export const DigestDemoFlowProvider = ({
   children,
   isReadOnly,
   templateId,
+  onRunTriggerClick,
+  onDigestIntervalChange,
 }: {
   children: ReactNode;
   isReadOnly: boolean;
   templateId?: string;
+  onRunTriggerClick?: () => void;
+  onDigestIntervalChange?: (interval: number) => void;
 }) => {
   const [{ isRunningDigest, triggerCount, digestInterval, emailsSentCount }, setState] = useState({
     isRunningDigest: false,
@@ -51,10 +55,10 @@ export const DigestDemoFlowProvider = ({
     }
   );
   const { updateTemplateMutation } = useUpdateTemplate();
-  const debouncedUpdateTemplate = useDebounce(
-    (args: { id: string; data: Partial<IUpdateNotificationTemplateDto> }) => updateTemplateMutation(args),
-    1000
-  );
+  const debouncedUpdateTemplate = useDebounce((args: { id: string; data: Partial<IUpdateNotificationTemplateDto> }) => {
+    updateTemplateMutation(args);
+    onDigestIntervalChange?.(digestInterval);
+  }, 1000);
   const { mutateAsync: testTriggerMutation } = useMutation(testTrigger);
 
   const updateDigestInterval = useCallback(
@@ -91,6 +95,8 @@ export const DigestDemoFlowProvider = ({
         payload: {},
         overrides: {},
       });
+
+      onRunTriggerClick?.();
     }
   }, [template, currentUser]);
 

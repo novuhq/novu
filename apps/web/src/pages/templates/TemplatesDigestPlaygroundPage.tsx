@@ -8,6 +8,8 @@ import { ArrowButton, colors, Title, Text, Button } from '../../design-system';
 import { parseUrl } from '../../utils/routeUtils';
 import { ROUTES } from '../../constants/routes.enum';
 import { DigestDemoFlow } from '../../components';
+import { useSegment } from '../../components/providers/SegmentProvider';
+import { DigestPlaygroundAnalyticsEnum } from './constants';
 
 const Heading = styled(Title)`
   color: ${colors.B40};
@@ -18,12 +20,6 @@ const SubHeading = styled(Text)`
   font-size: 20px;
 `;
 
-const DigestWorkflowHolder = styled.div`
-  width: 400px;
-  height: 400px;
-  background: ${colors.vertical};
-`;
-
 const LinkStyled = styled.a`
   font-size: 16px;
   color: #2b85df;
@@ -31,25 +27,56 @@ const LinkStyled = styled.a`
 `;
 
 export const TemplatesDigestPlaygroundPage = () => {
+  const segment = useSegment();
   const { templateId = '' } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
+
+  const handleBackClick = () => {
+    segment.track(DigestPlaygroundAnalyticsEnum.BACK_BUTTON_CLICK);
+    navigate(-1);
+  };
+
+  const handleSetupDigestWorkflowClick = () => {
+    segment.track(DigestPlaygroundAnalyticsEnum.SETUP_DIGEST_WORKFLOW_CLICK);
+    navigate(`${parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId })}?tour=digest`);
+  };
+
+  const handleLearnMoreClick = () => {
+    segment.track(DigestPlaygroundAnalyticsEnum.LEARN_MORE_IN_DOCS_CLICK);
+  };
+
+  const handleRunTriggerClick = () => {
+    segment.track(DigestPlaygroundAnalyticsEnum.RUN_TRIGGER_CLICK_CLICK);
+  };
+
+  const handleDigestIntervalChange = (interval: number) => {
+    segment.track(DigestPlaygroundAnalyticsEnum.DIGEST_INTERVAL_CHANGE, { interval });
+  };
 
   return (
     <ReactFlowProvider>
       <PageContainer title="Digest Workflow Playground" style={{ padding: '32px' }}>
-        <ArrowButton label="Go Back" onClick={() => navigate(-1)} />
+        <ArrowButton label="Go Back" onClick={handleBackClick} />
         <Stack mt={20} spacing="xs" align="center">
           <Heading>Digest Workflow Playground</Heading>
           <SubHeading>The digest engine aggregates multiple events into a precise notification</SubHeading>
         </Stack>
         <Stack mt={40} align="center">
-          <DigestDemoFlow isReadOnly={false} templateId={templateId} />
+          <DigestDemoFlow
+            isReadOnly={false}
+            templateId={templateId}
+            onRunTriggerClick={handleRunTriggerClick}
+            onDigestIntervalChange={handleDigestIntervalChange}
+          />
         </Stack>
         <Stack mt={40} mb={40} align="center">
-          <Button onClick={() => navigate(`${parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId })}?tour=digest`)}>
-            Set Up Digest Workflow
-          </Button>
-          <LinkStyled target="_blank" rel="noopener noreferrer" href="https://docs.novu.co/platform/digest">
+          <Button onClick={handleSetupDigestWorkflowClick}>Set Up Digest Workflow</Button>
+          <LinkStyled
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://docs.novu.co/platform/digest"
+            onClick={handleLearnMoreClick}
+          >
             Learn more in docs
           </LinkStyled>
         </Stack>
