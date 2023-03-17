@@ -405,6 +405,8 @@
     "nbsp",
     "stddev",
     "shortid",
+    "upsert",
+    "cond",
     "TASKFORCESH"
   ],
   "flagWords": [],
