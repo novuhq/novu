@@ -2,7 +2,11 @@ import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Route, Routes, BrowserRouter } from 'react-router-dom';
+import LogRocket from 'logrocket';
+import setupLogRocketReact from 'logrocket-react';
 import { Integrations } from '@sentry/tracing';
+
+import packageJson from '../package.json';
 import { AuthProvider } from './components/providers/AuthProvider';
 import { applyToken, getToken } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
@@ -26,19 +30,16 @@ import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelPr
 import { ROUTES } from './constants/routes.enum';
 import { BrandPage } from './pages/brand/BrandPage';
 import { SegmentProvider } from './components/providers/SegmentProvider';
-import LogRocket from 'logrocket';
-import setupLogRocketReact from 'logrocket-react';
-import packageJson from '../package.json';
-import { GeneralStarter } from './pages/quick-start/steps/GeneralStarter';
-import { QuickStartWrapper } from './pages/quick-start/components/QuickStartWrapper';
-import { Quickstart } from './pages/quick-start/steps/Quickstart';
 import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
 import { Setup } from './pages/quick-start/steps/Setup';
 import { Trigger } from './pages/quick-start/steps/Trigger';
+import { TemplateEditorProvider } from './pages/templates/editor/TemplateEditorProvider';
+import { TemplateEditorFormProvider } from './pages/templates/components/TemplateEditorFormProvider';
 import { RequiredAuth } from './components/layout/RequiredAuth';
-import { TemplateFormProvider } from './pages/templates/components/TemplateFormProvider';
-import { TemplateEditorProvider } from './pages/templates/components/TemplateEditorProvider';
+import { GetStarted } from './pages/quick-start/steps/GetStarted';
+import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
+import { TemplatesDigestPlaygroundPage } from './pages/templates/TemplatesDigestPlaygroundPage';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -173,40 +174,34 @@ function App() {
                 />
                 <Route element={<AppLayout />}>
                   <Route path={ROUTES.ANY} element={<HomePage />} />
+                  <Route path={ROUTES.TEMPLATES_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
                   <Route
                     path={ROUTES.TEMPLATES_CREATE}
                     element={
-                      <TemplateFormProvider>
+                      <TemplateEditorFormProvider>
                         <TemplateEditorProvider>
                           <TemplateEditorPage />
                         </TemplateEditorProvider>
-                      </TemplateFormProvider>
+                      </TemplateEditorFormProvider>
                     }
                   />
                   <Route
                     path={ROUTES.TEMPLATES_EDIT_TEMPLATEID}
                     element={
-                      <TemplateFormProvider>
+                      <TemplateEditorFormProvider>
                         <TemplateEditorProvider>
                           <TemplateEditorPage />
                         </TemplateEditorProvider>
-                      </TemplateFormProvider>
+                      </TemplateEditorFormProvider>
                     }
                   />
                   <Route path={ROUTES.TEMPLATES} element={<NotificationList />} />
-                  <Route
-                    path="/general-started"
-                    element={
-                      <QuickStartWrapper>
-                        <GeneralStarter />
-                      </QuickStartWrapper>
-                    }
-                  />
-                  <Route path={ROUTES.QUICKSTART} element={<Quickstart />} />
-                  <Route path="/quickstart/notification-center" element={<NotificationCenter />} />
-                  <Route path="/quickstart/notification-center/set-up" element={<FrameworkSetup />} />
-                  <Route path="/quickstart/notification-center/set-up/:framework" element={<Setup />} />
-                  <Route path="/quickstart/notification-center/trigger" element={<Trigger />} />
+                  <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
+                  <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
+                  <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
+                  <Route path={ROUTES.QUICK_START_SETUP} element={<FrameworkSetup />} />
+                  <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
+                  <Route path={ROUTES.QUICK_START_SETUP_TRIGGER} element={<Trigger />} />
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
                   <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
                   <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsStore />} />

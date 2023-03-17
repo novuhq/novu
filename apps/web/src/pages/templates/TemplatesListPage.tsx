@@ -5,7 +5,7 @@ import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
 
-import { useTemplates, useEnvController } from '../../hooks';
+import { useTemplates, useEnvController, useNotificationGroup } from '../../hooks';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -15,13 +15,18 @@ import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
+import { TemplatesListNoData } from './TemplatesListNoData';
+import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 
 function NotificationList() {
   const { readonly } = useEnvController();
   const [page, setPage] = useState<number>(0);
+  const { groups, loading: areNotificationGroupLoading } = useNotificationGroup();
   const { templates, loading: isLoading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
   const theme = useMantineTheme();
   const navigate = useNavigate();
+
+  const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
@@ -122,7 +127,7 @@ function NotificationList() {
       <TemplateListTableWrapper>
         <Table
           onRowClick={onRowClick}
-          loading={isLoading}
+          loading={isLoading || areNotificationGroupLoading}
           data-test-id="notifications-template"
           columns={columns}
           data={templates || []}
@@ -132,6 +137,13 @@ function NotificationList() {
             total: totalTemplatesCount,
             onPageChange: handleTableChange,
           }}
+          noDataPlaceholder={
+            <TemplatesListNoData
+              onCreateClick={handleRedirectToCreateTemplate}
+              onTryDigestClick={createDigestDemoWorkflow}
+              tryDigestDisabled={isTryDigestDisabled}
+            />
+          }
         />
       </TemplateListTableWrapper>
     </PageContainer>
