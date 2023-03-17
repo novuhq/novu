@@ -76,7 +76,7 @@ export function SideNav({}: Props) {
 
   const menuItems = [
     {
-      condition: !readonly && currentUser?.showOnBoarding,
+      condition: !readonly,
       icon: <CheckCircleOutlined />,
       link: lastRoute ?? ROUTES.GET_STARTED,
       label: 'Get Started',

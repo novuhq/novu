@@ -24,16 +24,18 @@ export const getOutlineStyles = (theme) => {
 
 export const getPulseStyles = () => {
   return {
-    animation: 'pulse-animation 2s infinite',
-    '@keyframes pulse-animation': {
-      '0%': {
-        boxShadow: '0 0 0 0 rgba(255, 82, 82, 0.7)',
-      },
-      '70%': {
-        boxShadow: '0 0 0 10px rgba(255, 82, 82, 0)',
-      },
-      '100%': {
-        boxShadow: '0 0 0 0 rgba(255, 82, 82, 0)',
+    [`&:not(:disabled):not([data-loading])`]: {
+      animation: 'pulse-animation 2s infinite',
+      '@keyframes pulse-animation': {
+        '0%': {
+          boxShadow: '0 0 0 0 rgba(255, 82, 82, 0.7)',
+        },
+        '70%': {
+          boxShadow: '0 0 0 10px rgba(255, 82, 82, 0)',
+        },
+        '100%': {
+          boxShadow: '0 0 0 0 rgba(255, 82, 82, 0)',
+        },
       },
     },
   };

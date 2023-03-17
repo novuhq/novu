@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
+import styled from '@emotion/styled';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
@@ -9,6 +10,19 @@ import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
 import { HeaderSecondaryTitle } from '../components/layout/HeaderLayout';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { NavButton } from '../components/NavButton';
+
+const ChannelsConfigurationHolder = styled.div`
+  display: flex;
+  margin-left: 20px;
+
+  @media screen and (min-width: 1369px) {
+    margin-left: 40px;
+  }
+
+  @media screen and (min-width: 1921px) {
+    margin-left: 8vw;
+  }
+`;
 
 export function GetStarted() {
   const segment = useSegment();
@@ -32,13 +46,13 @@ export function GetStarted() {
         leftSide: <LearnMoreRef />,
         rightSide: (
           <NavButton navigateTo={getStartedSteps.second} variant={'gradient'} handleOnClick={handleOnClick}>
-            <div style={{ fontSize: '16px' }}>Next Page</div>
+            <div style={{ fontSize: '16px' }}>Next</div>
             <ArrowRight style={{ marginLeft: '10px' }} />
           </NavButton>
         ),
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+      <ChannelsConfigurationHolder>
         <IntegrationsStoreModal
           openIntegration={clickedChannel.open}
           closeIntegration={() => {
@@ -46,7 +60,7 @@ export function GetStarted() {
           }}
         />
         <ChannelsConfiguration setClickedChannel={setClickedChannel} />
-      </div>
+      </ChannelsConfigurationHolder>
     </GetStartedLayout>
   );
 }

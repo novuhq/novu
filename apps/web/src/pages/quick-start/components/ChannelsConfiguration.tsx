@@ -1,4 +1,4 @@
-import React, { Dispatch } from 'react';
+import { Dispatch } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Grid } from '@mantine/core';
@@ -8,14 +8,14 @@ import { IQuickStartChannelConfiguration, OnBoardingAnalyticsEnum, quickStartCha
 import { When } from '../../../components/utils/When';
 import { ActiveLabel } from '../../../design-system/icons/general/ActiveLabel';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { useIntegrations } from '../../../hooks';
+import { useActiveIntegrations, useIntegrationLimit } from '../../../hooks';
 import { Button, colors } from '../../../design-system';
 
 export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel: Dispatch<any> }) {
   const segment = useSegment();
   const navigate = useNavigate();
-  const { integrations, loading: isLoading } = useIntegrations();
-  const integrationsStatus = getIntegrationsStatus(integrations);
+  const { integrations } = useActiveIntegrations();
+  const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
 
   function trackClick(channel: IQuickStartChannelConfiguration, integrationStatus: boolean) {
     const eventAction = integrationStatus
@@ -29,10 +29,14 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
     <Grid style={{ maxWidth: '850px' }}>
       {quickStartChannels.map((channel, index) => {
         const Icon = channel.Icon;
-        const integrationStatus = isLoading ? false : integrationsStatus[channel.type];
+
+        let isIntegrationActive = !!integrations?.some((integration) => integration.channel === channel.type);
+        if (channel.type === ChannelTypeEnum.EMAIL) {
+          isIntegrationActive = isIntegrationActive || !isLimitReached;
+        }
 
         return (
-          <Grid.Col span={6} key={index} style={{ marginBottom: '43px' }}>
+          <CardCol span={5} key={index}>
             <Container>
               <IconContainer>
                 <Icon style={{ width: '28px', height: '32px' }} />
@@ -40,7 +44,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
               <ChannelCard>
                 <TitleRow>
                   {channel.title}
-                  <When truthy={integrationStatus}>
+                  <When truthy={isIntegrationActive}>
                     <ActiveLabel style={{ height: '20px', marginLeft: '16px' }} />
                   </When>
                 </TitleRow>
@@ -48,7 +52,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                 <StyledButton
                   variant={'outline'}
                   onClick={() => {
-                    trackClick(channel, integrationStatus);
+                    trackClick(channel, isIntegrationActive);
 
                     channel.clickHandler({
                       navigate,
@@ -57,11 +61,11 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                     });
                   }}
                 >
-                  {integrationStatus ? 'Change Provider' : `Configure ${channel.displayName}`}
+                  {isIntegrationActive ? 'Change Provider' : `Configure ${channel.displayName}`}
                 </StyledButton>
               </ChannelCard>
             </Container>
-          </Grid.Col>
+          </CardCol>
         );
       })}
     </Grid>
@@ -72,10 +76,8 @@ const IconContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-
   width: 28px;
   height: 32px;
-
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B40 : colors.B80)};
   margin-right: 20px;
 `;
@@ -116,26 +118,11 @@ const Container = styled.div`
   height: 100%;
 `;
 
-/**
- * return if channel contains active integration
- * due the missing in-app integrations we return default true for Novu 'provider starter'
- * @param integrations
- */
-function getIntegrationsStatus(integrations): Record<ChannelTypeEnum, boolean> {
-  const integrationStatus: Record<ChannelTypeEnum, boolean> = integrations?.reduce((acc, obj) => {
-    if (!acc.hasOwnProperty(obj.channel)) {
-      acc[obj.channel] = obj.active;
-    } else if (obj.active && !acc[obj.channel]) {
-      acc[obj.channel] = true;
-    }
+const CardCol = styled(Grid.Col)`
+  margin-bottom: 40px;
+  width: 300px;
 
-    return acc;
-  }, {} as Record<ChannelTypeEnum, boolean>);
-
-  const noActiveIntegration = integrationStatus && !integrationStatus[ChannelTypeEnum.EMAIL];
-  if (noActiveIntegration) {
-    integrationStatus[ChannelTypeEnum.EMAIL] = true;
+  @media screen and (min-width: 1369px) {
+    width: initial;
   }
-
-  return integrationStatus || {};
-}
+`;

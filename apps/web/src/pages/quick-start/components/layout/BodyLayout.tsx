@@ -74,42 +74,46 @@ function BodyNavigation() {
 
 const TimelineWrapper = styled.div`
   width: 100%;
-  padding: 0 0 0 75px;
+  padding: 0 0 0 40px;
 
   .mantine-Timeline-itemBullet {
+    width: 34px;
+    height: 34px;
     background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : '#EDF0F2')};
     font-size: 16px;
     font-weight: bold;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  @media screen and (min-width: 1369px) {
+    padding: 0 0 0 75px;
+
+    .mantine-Timeline-itemBullet {
+      width: 40px;
+      height: 40px;
+    }
   }
 `;
 
 const TimelineText = styled.div<{ active: boolean }>`
   display: flex;
   align-items: center;
-
   max-width: 320px;
   min-height: 80px;
-
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 700;
-  line-height: 32px;
-
-  margin-left: 12px;
-  padding: 24px;
-
+  line-height: 1.4;
+  padding: 12px;
   transition: margin-left 0.3s ease, padding 0.3s ease;
-
-  @media (max-width: 1525px) {
-     {
-      margin-left: 6px;
-      padding: 20px 12px;
-    }
-  }
-
   border-radius: 8px;
-
   cursor: pointer;
+
+  @media screen and (min-width: 1369px) {
+    margin-left: 12px;
+    padding: 24px;
+    font-size: 20px;
+    line-height: 32px;
+  }
 
   ${({ active, theme }) => {
     return (
@@ -133,6 +137,18 @@ const TimelineText = styled.div<{ active: boolean }>`
 `;
 
 const StyledItem = styled(Timeline.Item)`
-  min-height: 140px;
+  min-height: 100px;
   min-width: 170px;
+
+  &:before {
+    left: -5px;
+  }
+
+  @media screen and (min-width: 1369px) {
+    min-height: 140px;
+
+    &:before {
+      left: -2px;
+    }
+  }
 `;

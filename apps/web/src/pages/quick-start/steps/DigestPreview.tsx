@@ -13,6 +13,8 @@ import { ROUTES } from '../../../constants/routes.enum';
 import { HeaderSecondaryTitle, HeaderTitle } from '../components/layout/HeaderLayout';
 import { NavButton } from '../components/NavButton';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { useCreateDigestDemoWorkflow } from '../../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
+import { Button } from '../../../design-system';
 
 export function DigestPreview() {
   const segment = useSegment();
@@ -36,7 +38,7 @@ export function DigestPreview() {
     >
       <DemoContainer>
         <ReactFlowProvider>
-          <DigestDemoFlow />
+          <DigestDemoFlowStyled />
         </ReactFlowProvider>
       </DemoContainer>
     </GetStartedLayout>
@@ -54,13 +56,14 @@ function FooterLeftSide() {
   return (
     <NavButton navigateTo={getStartedSteps.first} handleOnClick={handleOnClick}>
       <ThemeArrowLeft style={{ marginRight: '10px' }} />
-      <Label gradientColor={gradientColor}>Previous Page</Label>
+      <Label gradientColor={gradientColor}>Previous</Label>
     </NavButton>
   );
 }
 
 function FooterRightSide() {
   const segment = useSegment();
+  const { createDigestDemoWorkflow, isLoading: isCreating } = useCreateDigestDemoWorkflow();
 
   function handlerBuildWorkflowClick() {
     segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NAVIGATION_CLICK_BUILD_WORKFLOW);
@@ -68,23 +71,37 @@ function FooterRightSide() {
 
   function handlerTryDigestClick() {
     segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NAVIGATION_CLICK_TRY_DIGEST);
+    createDigestDemoWorkflow();
   }
 
   return (
-    <>
+    <ButtonsHolder>
       <NavButton
-        navigateTo={ROUTES.TEMPLATES}
+        navigateTo={ROUTES.TEMPLATES_CREATE}
         handleOnClick={handlerBuildWorkflowClick}
         style={{ marginRight: '40px' }}
       >
         <ButtonText>Build a Workflow</ButtonText>
       </NavButton>
-      <NavButton pulse={true} navigateTo={ROUTES.TEMPLATES} handleOnClick={handlerTryDigestClick} variant={'gradient'}>
+      <StyledButton fullWidth pulse onClick={handlerTryDigestClick} loading={isCreating}>
         <ButtonText>Try the Digest Playground</ButtonText>
-      </NavButton>
-    </>
+      </StyledButton>
+    </ButtonsHolder>
   );
 }
+
+const StyledButton = styled(Button)`
+  height: 50px;
+`;
+
+const DigestDemoFlowStyled = styled(DigestDemoFlow)`
+  height: 400px;
+`;
+
+const ButtonsHolder = styled.div`
+  display: flex;
+  gap: 40px;
+`;
 
 const DemoContainer = styled.div`
   width: 400px;
