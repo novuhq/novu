@@ -15,7 +15,7 @@ export class InvalidateCacheService {
   }) {
     Logger.log('Clearing the cache of keys with the specified prefixes');
     Logger.debug('StoreKeyPrefix(s) are: ' + storeKeyPrefix);
-    Logger.debug('Credentials are: ' + credentials._id);
+    Logger.debug('Credentials are: ' + (credentials._id as string));
     if (!this.cacheService?.cacheEnabled()) {
       Logger.verbose('Cashing service is not enabled to clear Cache.');
 

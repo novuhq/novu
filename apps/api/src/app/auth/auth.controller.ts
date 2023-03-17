@@ -61,7 +61,7 @@ export class AuthController {
   ) {}
 
   @Get('/github')
-  githubAuth(context: ExecutionContext) {
+  githubAuth() {
     Logger.verbose('Checking Github Auth');
 
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
