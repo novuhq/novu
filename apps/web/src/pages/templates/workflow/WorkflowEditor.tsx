@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { Grid, useMantineColorScheme } from '@mantine/core';
-import { StepTypeEnum } from '@novu/shared';
+import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
+import { showNotification } from '@mantine/notifications';
 
 import FlowEditor from './workflow/FlowEditor';
 import { colors } from '../../../design-system';
-import { getChannel, NodeTypeEnum } from '../shared/channels';
+import { channels, getChannel, NodeTypeEnum } from '../shared/channels';
 import type { IForm } from '../components/formTypes';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
@@ -81,6 +82,41 @@ const WorkflowEditor = ({
   };
 
   const onDelete = (id) => {
+    const currentStep = steps.find((step) => step.id === id);
+
+    if (!currentStep) {
+      setToDelete(id);
+
+      return;
+    }
+
+    const dependingStep = steps.find((step) => {
+      return (
+        step.filters?.find(
+          (filter) =>
+            filter.children?.find(
+              (item) => item.on === FilterPartTypeEnum.PREVIOUS_STEP && item.step === currentStep.uuid
+            ) !== undefined
+        ) !== undefined
+      );
+    });
+
+    if (dependingStep) {
+      const sameTypeSteps = steps.filter((step) => step.template.type === dependingStep.template.type);
+      const foundIndex = sameTypeSteps.findIndex((step) => step.uuid === dependingStep.uuid);
+
+      const label = channels.find((item) => item.channelType === dependingStep.template.type)?.label;
+
+      showNotification({
+        message: `${label} ${
+          sameTypeSteps.length > 1 ? `(${foundIndex + 1}) ` : ''
+        } filters is depending on the step you try to delete`,
+        color: 'red',
+      });
+
+      return;
+    }
+
     setToDelete(id);
   };
 

@@ -24,7 +24,7 @@ export class SubscriberOnlineService {
 
   private async trackIsOnlineUpdate(updatePayload: IUpdateSubscriberPayload, subscriber: ISubscriberJwt) {
     const admin = await this.memberRepository.getOrganizationAdminAccount(subscriber.organizationId);
-    if (admin) {
+    if (admin?._userId) {
       this.analyticsService.track('Update online flag - [Subscriber]', admin._userId, {
         _organizationId: subscriber.organizationId,
         _environmentId: subscriber.environmentId,

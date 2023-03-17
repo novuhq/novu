@@ -1,6 +1,5 @@
-import React from 'react';
 import { Handle, Position } from 'react-flow-renderer';
-import { createStyles, NumberInput, Loader, useMantineTheme } from '@mantine/core';
+import { createStyles, NumberInput, Loader } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { NodeStep } from './NodeStep';
@@ -48,8 +47,6 @@ export function DigestNode({ data, id }: { data: any; id: string }) {
   const { isReadOnly, triggerCount, isRunningDigest, digestInterval, updateDigestInterval } =
     useDigestDemoFlowContext();
   const { classes } = useNumberInputStyles();
-  const { colorScheme } = useMantineTheme();
-  const ActionItem = data.ActionItem as React.FC<any>;
 
   return (
     <NodeStep
@@ -63,9 +60,7 @@ export function DigestNode({ data, id }: { data: any; id: string }) {
         </>
       }
       ActionItem={
-        ActionItem ? (
-          <ActionItem style={{ color: `${colorScheme === 'dark' ? colors.B40 : colors.B80}` }} />
-        ) : !isReadOnly ? (
+        !isReadOnly && (
           <NumberInput
             value={digestInterval}
             onChange={updateDigestInterval}
@@ -77,7 +72,7 @@ export function DigestNode({ data, id }: { data: any; id: string }) {
             disabled={isRunningDigest}
             classNames={classes}
           />
-        ) : undefined
+        )
       }
       Handlers={() => {
         return (

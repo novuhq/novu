@@ -403,7 +403,10 @@
     "emailjs",
     "typeof",
     "nbsp",
-    "stddev"
+    "stddev",
+    "shortid",
+    "upsert",
+    "cond"
   ],
   "flagWords": [],
   "patterns": [

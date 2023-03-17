@@ -88,6 +88,20 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     return this.mapEntity(saved);
   }
 
+  async insertMany(
+    data: FilterQuery<T_DBModel> & T_Enforcement[]
+  ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: Types.ObjectId[] }> {
+    const result = await this.MongooseModel.insertMany(data, { ordered: false });
+
+    const insertedIds = result.map((inserted) => inserted._id);
+
+    return {
+      acknowledged: true,
+      insertedCount: result.length,
+      insertedIds,
+    };
+  }
+
   async update(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     updateBody: UpdateQuery<T_DBModel>

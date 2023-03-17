@@ -32,6 +32,7 @@ import {
   RemoveSubscribersRequestDto,
   RenameTopicRequestDto,
   RenameTopicResponseDto,
+  TopicSubscriberDto,
 } from './dtos';
 import {
   AddSubscribersCommand,
@@ -42,6 +43,8 @@ import {
   FilterTopicsUseCase,
   GetTopicCommand,
   GetTopicUseCase,
+  GetTopicSubscriberCommand,
+  GetTopicSubscriberUseCase,
   RemoveSubscribersCommand,
   RemoveSubscribersUseCase,
   RenameTopicCommand,
@@ -60,6 +63,7 @@ export class TopicsController {
     private addSubscribersUseCase: AddSubscribersUseCase,
     private createTopicUseCase: CreateTopicUseCase,
     private filterTopicsUseCase: FilterTopicsUseCase,
+    private getTopicSubscriberUseCase: GetTopicSubscriberUseCase,
     private getTopicUseCase: GetTopicUseCase,
     private removeSubscribersUseCase: RemoveSubscribersUseCase,
     private renameTopicUseCase: RenameTopicUseCase,
@@ -123,6 +127,25 @@ export class TopicsController {
         },
       }),
     };
+  }
+
+  @Get('/:topicKey/subscribers/:externalSubscriberId')
+  @ExternalApiAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Check topic subscriber', description: 'Check if a subscriber belongs to a certain topic' })
+  async getTopicSubscriber(
+    @UserSession() user: IJwtPayload,
+    @Param('topicKey') topicKey: TopicKey,
+    @Param('externalSubscriberId') externalSubscriberId: ExternalSubscriberId
+  ): Promise<TopicSubscriberDto> {
+    return await this.getTopicSubscriberUseCase.execute(
+      GetTopicSubscriberCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        externalSubscriberId,
+        topicKey,
+      })
+    );
   }
 
   @Post('/:topicKey/subscribers/removal')

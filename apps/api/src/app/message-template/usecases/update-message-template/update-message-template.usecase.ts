@@ -110,23 +110,25 @@ export class UpdateMessageTemplate {
       );
     }
 
-    const changeId = await this.changeRepository.getChangeId(
-      command.environmentId,
-      ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-      item._id
-    );
+    if (item._id) {
+      const changeId = await this.changeRepository.getChangeId(
+        command.environmentId,
+        ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+        item._id
+      );
 
-    await this.createChange.execute(
-      CreateChangeCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-        item,
-        type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-        parentChangeId: command.parentChangeId,
-        changeId,
-      })
-    );
+      await this.createChange.execute(
+        CreateChangeCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+          item,
+          type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+          parentChangeId: command.parentChangeId,
+          changeId,
+        })
+      );
+    }
 
     if (command.feedId) {
       await this.updateChange.execute(

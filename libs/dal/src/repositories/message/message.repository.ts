@@ -104,11 +104,50 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return await this.count(requestQuery);
   }
 
-  async markAllUnseenAsSeen(subscriberId: string, environmentId: string) {
-    return this.update(
-      { _subscriberId: subscriberId, _environmentId: environmentId, seen: false },
-      { $set: { seen: true, lastSeenDate: new Date() } }
-    );
+  async markAllMessagesAs(
+    subscriberId: string,
+    environmentId: string,
+    markAs: 'read' | 'seen',
+    feedIdentifiers?: string[]
+  ) {
+    let feedQuery;
+
+    if (feedIdentifiers) {
+      const feeds = await this.feedRepository.find(
+        {
+          _environmentId: environmentId,
+          identifier: {
+            $in: feedIdentifiers,
+          },
+        },
+        '_id'
+      );
+
+      feedQuery = {
+        $in: feeds.map((feed) => feed._id),
+      };
+    }
+
+    const updateQuery = {
+      _subscriberId: subscriberId,
+      _environmentId: environmentId,
+      [markAs]: false,
+      ...(feedQuery && { _feedId: feedQuery }),
+    };
+
+    const now = new Date();
+    const updatePayload = {
+      seen: true,
+      lastSeenDate: now,
+      ...(markAs === 'read' && {
+        read: true,
+        lastReadDate: now,
+      }),
+    };
+
+    return await this.update(updateQuery, {
+      $set: updatePayload,
+    });
   }
 
   async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId?: string | null) {

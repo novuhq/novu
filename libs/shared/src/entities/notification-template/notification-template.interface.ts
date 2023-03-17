@@ -40,6 +40,7 @@ export interface INotificationTriggerVariable {
 
 export interface INotificationTemplateStep {
   _id?: string;
+  uuid?: string;
   filters?: IMessageFilter[];
   _templateId?: string;
   _parentId?: string | null;
