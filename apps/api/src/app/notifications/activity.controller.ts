@@ -83,7 +83,6 @@ export class ActivityController {
       GetActivityStatsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        userId: user._id,
       })
     );
   }

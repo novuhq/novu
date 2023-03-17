@@ -173,7 +173,7 @@ export class ActivityNotificationResponseDto {
   transactionId: string;
 
   @ApiPropertyOptional()
-  createdAt?: Date;
+  createdAt?: string;
 
   @ApiPropertyOptional({
     enum: StepTypeEnum,
