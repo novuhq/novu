@@ -66,6 +66,10 @@ export default createStyles(
         '&&:hover': {
           backgroundSize: '100%',
         },
+        '&:focus': {
+          outlineOffset: 0,
+          outline: '2px solid rgb(153,200,255)',
+        },
         ...overrides,
       },
     };

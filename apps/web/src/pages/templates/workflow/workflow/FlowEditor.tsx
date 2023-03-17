@@ -206,13 +206,15 @@ export function FlowEditor({
     step: IStepEntity,
     i: number
   ): Node {
+    const channel = getChannel(step.template.type);
+
     return {
       id: newId,
       type: 'channelNode',
       position: { x: oldNode.position.x, y: oldNode.position.y },
       parentNode: parentId,
       data: {
-        ...getChannel(step.template.type),
+        ...channel,
         active: step.active,
         index: i,
         error: getFormattedStepErrors(i, errors),

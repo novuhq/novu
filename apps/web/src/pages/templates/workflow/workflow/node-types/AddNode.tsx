@@ -28,7 +28,28 @@ export default memo(({ data }: { data: NodeData }) => {
 
   return (
     <Container data-test-id={dataTestId} style={{ pointerEvents: 'none' }}>
-      <Dropdown withinPortal control={<AddNodeContainer showDropZone={data.showDropZone} />}>
+      <Dropdown
+        withinPortal
+        control={
+          <ActionIcon
+            data-test-id="button-add"
+            sx={{
+              '&:active': {
+                color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+              },
+              zIndex: 9999,
+              pointerEvents: 'all',
+              color: theme.colorScheme === 'dark' ? (data.showDropZone ? colors.white : colors.B60) : colors.B60,
+              '&:hover': {
+                color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+              },
+            }}
+            variant="transparent"
+          >
+            <PlusCircleOutlined />
+          </ActionIcon>
+        }
+      >
         <Dropdown.Item
           data-test-id={`add-in-app-node`}
           icon={<InApp />}
@@ -98,27 +119,3 @@ const Dropzone = styled.div<{ dark: boolean; visible: boolean }>`
   justify-content: center;
   flex-direction: column;
 `;
-
-export function AddNodeContainer({ showDropZone = false }: { showDropZone?: boolean }) {
-  const theme = useMantineTheme();
-
-  return (
-    <ActionIcon
-      data-test-id="button-add"
-      sx={{
-        '&:active': {
-          color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
-        },
-        zIndex: 9999,
-        pointerEvents: 'all',
-        color: theme.colorScheme === 'dark' ? (showDropZone ? colors.white : colors.B60) : colors.B60,
-        '&:hover': {
-          color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
-        },
-      }}
-      variant="transparent"
-    >
-      <PlusCircleOutlined />
-    </ActionIcon>
-  );
-}

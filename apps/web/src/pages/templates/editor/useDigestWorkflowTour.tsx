@@ -8,7 +8,7 @@ import { useTemplateEditorContext } from './TemplateEditorProvider';
 import { ActivePageEnum } from '../../../constants/editorEnums';
 import { useEffectOnce } from '../../../hooks';
 import { IForm } from '../components/formTypes';
-// import { DigestWorkflowTourTooltip } from './DigestWorkflowTourTooltip';
+import { DigestWorkflowTourTooltip } from './DigestWorkflowTourTooltip';
 
 const digestTourSteps: Step[] = [
   {
@@ -17,7 +17,7 @@ const digestTourSteps: Step[] = [
     placement: 'left',
     disableBeacon: true,
     hideBackButton: true,
-    // tooltipComponent: DigestWorkflowTourTooltip,
+    tooltipComponent: DigestWorkflowTourTooltip,
     locale: { skip: 'Skip tour' },
     offset: 0,
   },
@@ -28,7 +28,7 @@ const digestTourSteps: Step[] = [
     disableBeacon: true,
     hideBackButton: true,
     locale: { skip: 'Skip tour' },
-    // tooltipComponent: DigestWorkflowTourTooltip,
+    tooltipComponent: DigestWorkflowTourTooltip,
     offset: 0,
   },
   {
@@ -37,7 +37,7 @@ const digestTourSteps: Step[] = [
     placement: 'bottom',
     disableBeacon: true,
     hideBackButton: true,
-    // tooltipComponent: DigestWorkflowTourTooltip,
+    tooltipComponent: DigestWorkflowTourTooltip,
     locale: { last: 'Got it' },
     offset: 0,
   },
@@ -61,8 +61,10 @@ export const useDigestWorkflowTour = ({ startTour }: { startTour: () => void }) 
     // once there are steps select the node with type DIGEST and start the tour
     const digestStep = steps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
     if (digestStep) {
-      setSelectedNodeId(digestStep.id || '');
-      startTour();
+      setTimeout(() => {
+        setSelectedNodeId(digestStep.id || '');
+        startTour();
+      }, 0);
     }
   }, isDigestTour && steps.length > 0);
 

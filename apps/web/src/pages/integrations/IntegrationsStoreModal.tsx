@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import styled from '@emotion/styled';
-import { Grid, Group, Modal, ActionIcon, createStyles, MantineTheme } from '@mantine/core';
+import { Grid, Group, Modal, ActionIcon, createStyles, MantineTheme, Drawer } from '@mantine/core';
 import {
   ChannelTypeEnum,
   IConfigCredentials,
@@ -20,9 +20,11 @@ import { Close } from '../../design-system/icons/actions/Close';
 import { useProviders } from './useProviders';
 
 export function IntegrationsStoreModal({
+  scrollTo,
   openIntegration,
   closeIntegration,
 }: {
+  scrollTo?: ChannelTypeEnum;
   openIntegration: boolean;
   closeIntegration: () => void;
 }) {
@@ -35,6 +37,7 @@ export function IntegrationsStoreModal({
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
 
   const { classes } = useModalStyles();
+  const { classes: drawerClasses } = useDrawerStyles();
 
   async function handlerVisible(
     visible: boolean,
@@ -46,6 +49,12 @@ export function IntegrationsStoreModal({
     setIsCreateIntegrationModal(createIntegrationModal);
   }
 
+  const handleModalClose = useCallback(() => {
+    closeIntegration();
+    setFormIsOpened(false);
+    setProvider(null);
+  }, [closeIntegration]);
+
   const handleCloseForm = useCallback(() => {
     if (isFormOpened) {
       setProvider(null);
@@ -55,31 +64,44 @@ export function IntegrationsStoreModal({
     }
 
     closeIntegration();
-  }, [isFormOpened, closeIntegration]);
-
-  const handleKeyDown = useCallback(
-    (e) => {
-      if (e.key === 'Escape') {
-        handleCloseForm();
-      }
-    },
-    [handleCloseForm]
-  );
+  }, [isFormOpened, setProvider, setFormIsOpened, closeIntegration]);
 
   useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (openIntegration && e.key === 'Escape') {
+        handleCloseForm();
+      }
+    };
+
     document.addEventListener('keydown', handleKeyDown);
 
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
+  }, [openIntegration, handleCloseForm]);
+
+  useEffect(() => {
+    if (!scrollTo || !openIntegration) return;
+
+    setTimeout(() => {
+      const channelSection = document.getElementById(scrollTo);
+      const modalContainer = document.querySelector('.mantine-Modal-modal');
+      if (channelSection && modalContainer) {
+        modalContainer.scrollBy({
+          top: channelSection.getBoundingClientRect().top - HEADER_HEIGHT - HEADER_MARGIN,
+          behavior: 'smooth',
+        });
+      }
+    }, 0);
+  }, [openIntegration, scrollTo]);
 
   return (
     <Modal
+      withinPortal
       withCloseButton={false}
       closeOnEscape={!isFormOpened}
       title={
         <Group style={{ width: '100%' }} position={'apart'}>
           <Title>Integration Store</Title>
-          <ActionIcon variant={'transparent'} onClick={closeIntegration}>
+          <ActionIcon variant={'transparent'} onClick={handleModalClose}>
             <Close />
           </ActionIcon>
         </Group>
@@ -87,10 +109,10 @@ export function IntegrationsStoreModal({
       classNames={classes}
       fullScreen
       opened={openIntegration}
-      onClose={closeIntegration}
+      onClose={handleModalClose}
     >
       <Grid gutter={24} sx={{ margin: 0 }}>
-        <Grid.Col lg={isFormOpened ? 8 : 12}>
+        <Grid.Col lg={12}>
           {!isLoading ? (
             <>
               <ChannelGroup
@@ -124,53 +146,60 @@ export function IntegrationsStoreModal({
             </>
           ) : null}
         </Grid.Col>
-        <When truthy={isFormOpened}>
-          <Grid.Col lg={4} mt={50}>
-            <IntegrationCardWrapper onKeyDown={handleKeyDown}>
-              <When truthy={!provider?.novu}>
-                <ConnectIntegrationForm
-                  onClose={handleCloseForm}
-                  key={provider?.providerId}
-                  provider={provider}
-                  createModel={isCreateIntegrationModal}
-                  organization={organization}
-                  environment={environment}
-                />
-              </When>
-              <When truthy={provider?.providerId === EmailProviderIdEnum.Novu}>
-                <div style={{ padding: '30px' }}>
-                  <NovuEmailProviderModal onClose={handleCloseForm} />
-                </div>
-              </When>
-              <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
-                <div style={{ padding: '30px' }}>
-                  <NovuInAppProviderModal onClose={handleCloseForm} />
-                </div>
-              </When>
-            </IntegrationCardWrapper>
-          </Grid.Col>
-        </When>
+        <Drawer
+          opened={isFormOpened}
+          position="right"
+          onClose={handleCloseForm}
+          withOverlay={false}
+          withCloseButton={false}
+          closeOnEscape={false}
+          classNames={drawerClasses}
+        >
+          <IntegrationCardWrapper>
+            <When truthy={!provider?.novu}>
+              <ConnectIntegrationForm
+                onClose={handleCloseForm}
+                onSuccessFormSubmit={closeIntegration}
+                key={provider?.providerId}
+                provider={provider}
+                createModel={isCreateIntegrationModal}
+                organization={organization}
+                environment={environment}
+              />
+            </When>
+            <When truthy={provider?.providerId === EmailProviderIdEnum.Novu}>
+              <div style={{ padding: '30px' }}>
+                <NovuEmailProviderModal onClose={handleCloseForm} />
+              </div>
+            </When>
+            <When truthy={provider?.providerId === InAppProviderIdEnum.Novu}>
+              <div style={{ padding: '30px' }}>
+                <NovuInAppProviderModal onClose={handleCloseForm} />
+              </div>
+            </When>
+          </IntegrationCardWrapper>
+        </Drawer>
       </Grid>
     </Modal>
   );
 }
-
+const DRAWER_PADDING = 40;
+const DRAWER_PADDING_SMALL = 20;
 const HEADER_HEIGHT_SMALL = 70;
 const HEADER_HEIGHT = 90;
 const HEADER_MARGIN = 10;
 const DISTANCE_FROM_HEADER = 64;
-const INTEGRATION_SETTING_TOP_SMALL = HEADER_HEIGHT_SMALL + HEADER_MARGIN + DISTANCE_FROM_HEADER;
+const INTEGRATION_SETTING_TOP_SMALL = HEADER_HEIGHT_SMALL + HEADER_MARGIN;
 const INTEGRATION_SETTING_TOP = HEADER_HEIGHT + HEADER_MARGIN + DISTANCE_FROM_HEADER;
 
 const IntegrationCardWrapper = styled.div`
   position: sticky;
-  top: ${INTEGRATION_SETTING_TOP_SMALL}px;
   box-sizing: border-box;
   padding: 0;
   display: flex;
   justify-content: space-between;
   flex-direction: column;
-  height: calc(100vh - ${INTEGRATION_SETTING_TOP_SMALL + 20}px);
+  height: calc(100vh - ${INTEGRATION_SETTING_TOP_SMALL + DRAWER_PADDING_SMALL}px);
   box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.medium)};
   border-radius: 7px;
   background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : colors.B98)};
@@ -178,7 +207,7 @@ const IntegrationCardWrapper = styled.div`
 
   @media screen and (min-width: 1367px) {
     top: ${INTEGRATION_SETTING_TOP}px;
-    height: calc(100vh - ${INTEGRATION_SETTING_TOP + 40}px);
+    height: calc(100vh - ${INTEGRATION_SETTING_TOP + DRAWER_PADDING}px);
   }
 `;
 
@@ -203,6 +232,7 @@ const useModalStyles = createStyles((theme: MantineTheme) => {
     },
     title: {
       width: '100%',
+      marginRight: 0,
       h1: {
         fontSize: 22,
       },
@@ -216,6 +246,26 @@ const useModalStyles = createStyles((theme: MantineTheme) => {
       backdropFilter: 'blur(15px)',
       padding: '0px 30px !important',
       backgroundColor: dark ? theme.fn.rgba(colors.BGDark, 0.8) : theme.fn.rgba(colors.white, 0.7),
+    },
+  };
+});
+
+const useDrawerStyles = createStyles((theme: MantineTheme) => {
+  return {
+    drawer: {
+      top: `${INTEGRATION_SETTING_TOP_SMALL - DRAWER_PADDING_SMALL}px`,
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'end',
+      background: 'transparent',
+      width: 660,
+      padding: `${DRAWER_PADDING_SMALL}px !important`,
+      boxShadow: 'none',
+
+      '@media screen and (min-width: 1367px)': {
+        top: `${INTEGRATION_SETTING_TOP - DRAWER_PADDING}px`,
+        padding: `${DRAWER_PADDING}px !important`,
+      },
     },
   };
 });

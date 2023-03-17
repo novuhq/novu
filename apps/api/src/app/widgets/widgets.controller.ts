@@ -11,46 +11,48 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { AnalyticsService } from '@novu/application-generic';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
 
-import { SessionInitializeRequestDto } from './dtos/session-initialize-request.dto';
-import { InitializeSessionCommand } from './usecases/initialize-session/initialize-session.command';
-import { InitializeSession } from './usecases/initialize-session/initialize-session.usecase';
-import { GetNotificationsFeed } from './usecases/get-notifications-feed/get-notifications-feed.usecase';
-import { GetNotificationsFeedCommand } from './usecases/get-notifications-feed/get-notifications-feed.command';
 import { SubscriberSession } from '../shared/framework/user.decorator';
-import { GetOrganizationData } from './usecases/get-organization-data/get-organization-data.usecase';
-import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
-import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecase';
-import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
-import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
-import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
-import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
-import { LogUsageRequestDto } from './dtos/log-usage-request.dto';
-import { LogUsageResponseDto } from './dtos/log-usage-response.dto';
-import { OrganizationResponseDto } from './dtos/organization-response.dto';
 import { GetSubscriberPreferenceCommand } from '../subscribers/usecases/get-subscriber-preference/get-subscriber-preference.command';
 import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference/get-subscriber-preference.usecase';
 import {
   UpdateSubscriberPreference,
   UpdateSubscriberPreferenceCommand,
 } from '../subscribers/usecases/update-subscriber-preference';
-import { MarkAllMessageAsSeenCommand } from './usecases/mark-all-message-as-seen/mark-all-message-as-seen.command';
-import { MarkAllMessageAsSeen } from './usecases/mark-all-message-as-seen/mark-all-message-as-seen.usecase';
+import { LogUsageRequestDto } from './dtos/log-usage-request.dto';
+import { LogUsageResponseDto } from './dtos/log-usage-response.dto';
+import { OrganizationResponseDto } from './dtos/organization-response.dto';
+import { SessionInitializeRequestDto } from './dtos/session-initialize-request.dto';
+import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
+import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
+import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
+import { GetNotificationsFeedCommand } from './usecases/get-notifications-feed/get-notifications-feed.command';
+import { GetNotificationsFeed } from './usecases/get-notifications-feed/get-notifications-feed.usecase';
+import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
+import { GetOrganizationData } from './usecases/get-organization-data/get-organization-data.usecase';
+import { InitializeSessionCommand } from './usecases/initialize-session/initialize-session.command';
+import { InitializeSession } from './usecases/initialize-session/initialize-session.usecase';
+import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
+import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecase';
+
 import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
-import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
-import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
 import { StoreQuery } from './queries/store.query';
 import { GetFeedCountCommand } from './usecases/get-feed-count/get-feed-count.command';
 import { GetFeedCount } from './usecases/get-feed-count/get-feed-count.usecase';
 import { GetCountQuery } from './queries/get-count.query';
 import { RemoveMessageCommand } from './usecases/remove-message/remove-message.command';
 import { RemoveMessage } from './usecases/remove-message/remove-message.usecase';
+import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
+import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
+
+import { MarkAllMessagesAsCommand } from './usecases/mark-all-messages-as/mark-all-messages-as.command';
+import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-messages-as.usecase';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -61,11 +63,11 @@ export class WidgetsController {
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private removeMessageUsecase: RemoveMessage,
-    private markAllMessageAsSeenUseCase: MarkAllMessageAsSeen,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
     private updateSubscriberPreferenceUsecase: UpdateSubscriberPreference,
+    private markAllMessagesAsUsecase: MarkAllMessagesAs,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -249,17 +251,46 @@ export class WidgetsController {
     return await this.removeMessageUsecase.execute(command);
   }
 
+  @ApiOperation({
+    summary: "Mark subscriber's all unread messages as read",
+  })
   @UseGuards(AuthGuard('subscriberJwt'))
-  @Post('/messages/seen')
-  async markAllUnseenAsSeen(@SubscriberSession() subscriberSession: SubscriberEntity): Promise<number> {
-    const command = MarkAllMessageAsSeenCommand.create({
+  @Post('/messages/read')
+  async markAllUnreadAsRead(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: { feedId?: string | string[] }
+  ) {
+    const feedIds = this.toArray(body.feedId);
+    const command = MarkAllMessagesAsCommand.create({
       organizationId: subscriberSession._organizationId,
-      _subscriberId: subscriberSession._id,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
+      markAs: 'read',
+      feedIds,
     });
 
-    return await this.markAllMessageAsSeenUseCase.execute(command);
+    return await this.markAllMessagesAsUsecase.execute(command);
+  }
+
+  @ApiOperation({
+    summary: "Mark subscriber's all unread messages as seen",
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/seen')
+  async markAllUnseenAsSeen(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: { feedId?: string | string[] }
+  ): Promise<number> {
+    const feedIds = this.toArray(body.feedId);
+    const command = MarkAllMessagesAsCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      markAs: 'seen',
+      feedIds,
+    });
+
+    return await this.markAllMessagesAsUsecase.execute(command);
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
