@@ -54,8 +54,6 @@ export class TriggerEvent {
       organizationId: command.organizationId,
     });
 
-    await this.validateTransactionIdProperty(command.transactionId, command.organizationId, command.environmentId);
-
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
       command.identifier
