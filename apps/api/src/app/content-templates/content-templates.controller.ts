@@ -4,11 +4,9 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { CompileEmailTemplate } from './usecases/compile-email-template/compile-email-template.usecase';
 import { CompileEmailTemplateCommand } from './usecases/compile-email-template/compile-email-template.command';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/content-templates')
 @ApiExcludeController()
-@LogDecorator()
 export class ContentTemplatesController {
   constructor(private compileEmailTemplateUsecase: CompileEmailTemplate) {}
 

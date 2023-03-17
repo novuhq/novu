@@ -20,7 +20,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
-import { AnalyticsService, LogDecorator } from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 
 import {
   AddSubscribersRequestDto,
@@ -58,7 +58,6 @@ import { ANALYTICS_SERVICE } from '../shared/shared.module';
 @Controller('/topics')
 @ApiTags('Topics')
 @UseGuards(JwtAuthGuard)
-@LogDecorator()
 export class TopicsController {
   constructor(
     private addSubscribersUseCase: AddSubscribersUseCase,

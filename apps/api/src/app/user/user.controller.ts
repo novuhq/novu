@@ -23,14 +23,12 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ChangeProfileEmailDto } from './dtos/change-profile-email.dto';
 import { UpdateProfileEmail } from './usecases/update-profile-email/update-profile-email.usecase';
 import { UpdateProfileEmailCommand } from './usecases/update-profile-email/update-profile-email.command';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/users')
 @ApiTags('Users')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiExcludeController()
-@LogDecorator()
 export class UsersController {
   constructor(
     private getMyProfileUsecase: GetMyProfileUsecase,

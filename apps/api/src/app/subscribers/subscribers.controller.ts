@@ -54,11 +54,9 @@ import {
   UpdateSubscriberOnlineFlagCommand,
 } from './usecases/update-subscriber-online-flag';
 import { MarkMessageAsRequestDto } from '../widgets/dtos/mark-message-as-request.dto';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
-@LogDecorator()
 export class SubscribersController {
   constructor(
     private createSubscriberUsecase: CreateSubscriber,

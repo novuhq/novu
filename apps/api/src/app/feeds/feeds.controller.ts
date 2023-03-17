@@ -23,13 +23,11 @@ import { DeleteFeedCommand } from './usecases/delete-feed/delete-feed.command';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FeedResponseDto } from './dto/feed-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/feeds')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Feeds')
-@LogDecorator()
 export class FeedsController {
   constructor(
     private createFeedUsecase: CreateFeed,

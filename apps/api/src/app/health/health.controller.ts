@@ -3,11 +3,9 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckService, HttpHealthIndicator } from '@nestjs/terminus';
 import { DalService } from '@novu/dal';
 import { version } from '../../../package.json';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller('health-check')
 @ApiExcludeController()
-@LogDecorator()
 export class HealthController {
   constructor(
     private healthCheckService: HealthCheckService,

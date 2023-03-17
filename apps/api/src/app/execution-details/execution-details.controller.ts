@@ -7,13 +7,11 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetExecutionDetails, GetExecutionDetailsCommand } from './usecases/get-execution-details';
 import { ExecutionDetailsResponseDto } from './dtos/execution-details-response.dto';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/execution-details')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Execution Details')
-@LogDecorator()
 export class ExecutionDetailsController {
   constructor(private getExecutionDetails: GetExecutionDetails) {}
 

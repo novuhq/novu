@@ -35,13 +35,11 @@ import { CalculateLimitNovuIntegration } from './usecases/calculate-limit-novu-i
 import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit-novu-integration';
 import { GetInAppActivatedCommand } from './usecases/get-In-app-activated/get-In-app-activated.command';
 import { GetInAppActivated } from './usecases/get-In-app-activated/get-In-app-activated.usecase';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('Integrations')
-@LogDecorator()
 export class IntegrationsController {
   constructor(
     private getInAppActivatedUsecase: GetInAppActivated,

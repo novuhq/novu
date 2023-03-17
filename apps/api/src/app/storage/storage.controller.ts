@@ -7,14 +7,12 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UploadUrlResponse } from './dtos/upload-url-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/storage')
 @ApiTags('Storage')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiExcludeController()
-@LogDecorator()
 export class StorageController {
   constructor(private getSignedUrlUsecase: GetSignedUrl) {}
 

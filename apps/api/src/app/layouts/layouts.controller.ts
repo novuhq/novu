@@ -56,13 +56,12 @@ import { LayoutId } from './types';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { AnalyticsService, LogDecorator } from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import { ANALYTICS_SERVICE } from '../shared/shared.module';
 
 @Controller('/layouts')
 @ApiTags('Layouts')
 @UseGuards(JwtAuthGuard)
-@LogDecorator()
 export class LayoutsController {
   constructor(
     private createLayoutUseCase: CreateLayoutUseCase,

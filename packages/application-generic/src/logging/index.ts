@@ -8,7 +8,6 @@ import {
 import { storage, Store } from 'nestjs-pino/storage';
 import { sensitiveFields } from './masking';
 export * from './LogDecorator';
-export * from './masking';
 
 export function getErrorInterceptor() {
   return new LoggerErrorInterceptor();
@@ -56,7 +55,7 @@ function getLoggingVariables(): ILoggingVariables {
   const env = process.env.NODE_ENV ?? 'local';
 
   // eslint-disable-next-line no-console
-  console.log('Env: ' + env);
+  console.log('Environment: ' + env);
 
   const hostingPlatform = process.env.HOSTING_PLATFORM ?? 'Docker';
 

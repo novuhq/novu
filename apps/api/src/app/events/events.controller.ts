@@ -22,14 +22,12 @@ import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
 })
 @ApiTags('Events')
-@LogDecorator()
 export class EventsController {
   constructor(
     private mapTriggerRecipients: MapTriggerRecipients,

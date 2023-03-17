@@ -7,13 +7,11 @@ import { IJwtPayload } from '@novu/shared';
 import { GetMxRecord } from './usecases/get-mx-record/get-mx-record.usecase';
 import { GetMxRecordCommand } from './usecases/get-mx-record/get-mx-record.command';
 import { GetMxRecordResponseDto } from './dtos/get-mx-record.dto';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/inbound-parse')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
 @ApiTags('inbound-parse')
-@LogDecorator()
 export class InboundParseController {
   constructor(private getMxRecordUsecase: GetMxRecord) {}
 

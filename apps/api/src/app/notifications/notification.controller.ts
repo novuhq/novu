@@ -13,7 +13,6 @@ import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-respon
 import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { GetActivity } from './usecases/get-activity/get-activity.usecase';
 import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
-import { LogDecorator } from '@novu/application-generic';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -21,7 +20,6 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 
 @Controller('/notifications')
 @ApiTags('Notification')
-@LogDecorator()
 export class NotificationsController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,

@@ -26,13 +26,11 @@ import { ResendInviteDto } from '../organization/dtos/resend-invite.dto';
 import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
 import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
-import { LogDecorator } from '@novu/application-generic';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @Controller('/invites')
 @ApiTags('Invites')
 @ApiExcludeController()
-@LogDecorator()
 export class InvitesController {
   constructor(
     private inviteMemberUsecase: InviteMember,

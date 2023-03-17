@@ -40,13 +40,11 @@ import { PasswordReset } from './usecases/password-reset/password-reset.usecase'
 import { ApiException } from '../shared/exceptions/api.exception';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { PasswordResetBodyDto } from './dtos/password-reset.dto';
-import { LogDecorator } from '@novu/application-generic';
 
 @Controller('/auth')
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('Auth')
 @ApiExcludeController()
-@LogDecorator()
 export class AuthController {
   constructor(
     private userRepository: UserRepository,
