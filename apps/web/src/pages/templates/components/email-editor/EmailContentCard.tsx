@@ -28,7 +28,7 @@ export function EmailContentCard({
   const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
 
-  const { enabled } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
 
   useEffect(() => {
     if (integrations.length === 0) {
@@ -63,16 +63,13 @@ export function EmailContentCard({
 
   return (
     <>
-      {!isIntegrationActive ? (
+      {!isIntegrationActive && isLimitReached && (
         <LackIntegrationError
-          channelType="E-Mail"
-          text={
-            enabled
-              ? 'Looks like you haven’t configured your E-Mail provider yet, visit the integrations page to configure.'
-              : undefined
-          }
+          channel="E-Mail"
+          channelType={ChannelTypeEnum.EMAIL}
+          text="Looks like you haven’t configured your E-Mail provider yet, visit the integrations page to configure."
         />
-      ) : null}
+      )}
       <EmailInboxContent integration={integration} index={index} readonly={readonly} />
 
       <div data-test-id="editor-type-selector">

@@ -1,4 +1,5 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
+import { ChannelTypeEnum } from '@novu/shared';
 
 import { LackIntegrationError } from './LackIntegrationError';
 import type { IForm } from './formTypes';
@@ -26,7 +27,7 @@ export function TemplatePushEditor({
 
   return (
     <>
-      {!isIntegrationActive ? <LackIntegrationError channelType="Push" /> : null}
+      {!isIntegrationActive ? <LackIntegrationError channel="Push" channelType={ChannelTypeEnum.PUSH} /> : null}
       <Controller
         name={`steps.${index}.template.title` as any}
         defaultValue=""

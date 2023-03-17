@@ -101,6 +101,39 @@ describe('Novu Node.js package - Topics class', () => {
     expect(result).toStrictEqual(mockedResponse);
   });
 
+  test('should get topic subscriber by the external subscriber ID', async () => {
+    const topicKey = 'topic-key';
+    const externalSubscriberId = 'external-subscriber-id';
+
+    const topicSubscriber = {
+      _id: 'topic-subscriber-id',
+      _environmentId: 'environment-id',
+      _organizationId: 'organization-id',
+      _subscriberId: 'subscriber-id',
+      _topicId: 'topic-id',
+      topicKey,
+      externalSubscriberId,
+    };
+
+    const mockedResponse = {
+      data: {
+        ...topicSubscriber,
+      },
+    };
+    mockedAxios.get.mockResolvedValue(mockedResponse);
+
+    const result = await novu.topics.getSubscriber(
+      topicKey,
+      externalSubscriberId
+    );
+
+    expect(mockedAxios.get).toHaveBeenCalled();
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      `/topics/${topicKey}/subscribers/${externalSubscriberId}`
+    );
+    expect(result).toStrictEqual(mockedResponse);
+  });
+
   test('should list topics', async () => {
     const key = 'topic-key';
     const name = 'topic-name';

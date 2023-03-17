@@ -8,8 +8,21 @@ import {
   TimeOperatorEnum,
 } from '@novu/shared';
 import { FormProvider, useForm } from 'react-hook-form';
+
 import { TestWrapper } from '../../../testing';
+import { IStepEntity } from '../components/formTypes';
 import { Filters, translateOperator, getFilterLabel } from './Filters';
+
+const defaultStep: IStepEntity = {
+  id: '',
+  _templateId: '',
+  template: {
+    type: StepTypeEnum.EMAIL,
+    content: '',
+  },
+  active: true,
+  shouldStopOnFail: false,
+};
 
 const TestFormProvider = ({ children }) => {
   const methods = useForm({
@@ -22,22 +35,11 @@ const TestFormProvider = ({ children }) => {
   return <FormProvider {...methods}>{children}</FormProvider>;
 };
 
-const defaultStep = {
-  id: '',
-  _templateId: '',
-  template: {
-    type: StepTypeEnum.EMAIL,
-    content: '',
-  },
-  active: true,
-  shouldStopOnFail: false,
-};
-
 describe('Filters Component', function () {
   it('should not render if step is null', function () {
     cy.mount(
       <TestWrapper>
-        <Filters step={null} />
+        <Filters />
       </TestWrapper>
     );
 

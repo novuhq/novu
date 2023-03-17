@@ -27,6 +27,9 @@ export class NotificationEntity {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any;
+
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type NotificationDBModel = ChangePropsValueType<

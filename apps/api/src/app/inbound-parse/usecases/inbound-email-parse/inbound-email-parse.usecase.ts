@@ -18,11 +18,16 @@ export class InboundEmailParse {
   async execute(command: InboundEmailParseCommand) {
     const { toDomain, toTransactionId, toEnvironmentId } = this.splitTo(command.to[0].address);
 
+    Logger.debug('toDomain in InboundEmailParse is: ' + toDomain);
+    Logger.debug('toTransactionId in InboundEmailParse is: ' + toTransactionId);
+
     if (!toTransactionId) {
       Logger.warn(`missing transactionId on address ${command.to[0].address}`);
 
       return;
     }
+
+    Logger.debug('toEnvironmentId in InboundEmailParse is: ' + toEnvironmentId);
 
     if (!toEnvironmentId) {
       Logger.warn(`missing environmentId on address ${command.to[0].address}`);
@@ -90,6 +95,8 @@ export class InboundEmailParse {
   }
 
   createHmac(apiKeys, subscriberId: string) {
+    Logger.verbose('Creating Hmac');
+
     return createHmac('sha256', apiKeys[0].key).update(subscriberId).digest('hex');
   }
 }

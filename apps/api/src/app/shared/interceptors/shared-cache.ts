@@ -103,7 +103,7 @@ export function getQueryParams(keysConfig: Record<string, unknown>): string {
 
     const elementValue = typeof value === 'object' ? JSON.stringify(value) : value;
 
-    const elementKey = `${key}=${elementValue}`;
+    const elementKey = `${key}=${elementValue as string}`;
 
     if (elementKey) {
       result += ':' + elementKey;

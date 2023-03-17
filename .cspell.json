@@ -402,9 +402,19 @@
     "nodemailer",
     "emailjs",
     "typeof",
+    "newrelic",
+    "pino",
+    "occurance",
+    "apikey",
+    "typeof",
+    "nbsp",
+    "maskdata",
+    "LOGDECORATOR",
     "nbsp",
     "stddev",
-    "shortid"
+    "shortid",
+    "upsert",
+    "cond"
   ],
   "flagWords": [],
   "patterns": [
