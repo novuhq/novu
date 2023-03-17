@@ -46,6 +46,12 @@ export const getMailtrapSecrets = (): IMailtrapSecrets => {
 
 export const getProviderSecrets = (providerId: EmailProviderIdEnum): Record<string, string> => {
   const providers = {
+    [EmailProviderIdEnum.CustomSMTP]: {
+      host: process.env.REGRESSION_CUSTOM_SMTP_HOST,
+      port: process.env.REGRESSION_CUSTOM_SMTP_PORT,
+      user: process.env.REGRESSION_CUSTOM_SMTP_USERNAME,
+      password: process.env.REGRESSION_CUSTOM_SMTP_PASSWORD,
+    },
     [EmailProviderIdEnum.Novu]: {
       apiKey: process.env.REGRESSION_NOVU_API_KEY,
     },
