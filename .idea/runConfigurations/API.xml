@@ -6,9 +6,7 @@
       <script value="start:dev" />
     </scripts>
     <node-interpreter value="project" />
-    <envs>
-      <env name="LOGGING_LEVEL" value="debug" />
-    </envs>
+    <envs />
     <method v="2" />
   </configuration>
 </component>
