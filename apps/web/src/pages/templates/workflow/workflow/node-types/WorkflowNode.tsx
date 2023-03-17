@@ -4,19 +4,19 @@ import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
-import { Text } from '../typography/text/Text';
-import { Switch } from '../switch/Switch';
-import { useStyles } from './TemplateButton.styles';
-import { colors, shadows } from '../config';
-import { DotsHorizontal, Edit, Trash } from '../icons';
-import { When } from '../../components/utils/When';
-import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../hooks';
-import { getChannel, NodeTypeEnum } from '../../pages/templates/shared/channels';
+import { Text } from '../../../../../design-system/typography/text/Text';
+import { Switch } from '../../../../../design-system/switch/Switch';
+import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
+import { colors, shadows } from '../../../../../design-system/config';
+import { DotsHorizontal, Edit, Trash } from '../../../../../design-system/icons';
+import { When } from '../../../../../components/utils/When';
+import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../../../../hooks';
+import { getChannel, NodeTypeEnum } from '../../../shared/channels';
 import { useViewport } from 'react-flow-renderer';
-import { getFormattedStepErrors } from '../../pages/templates/shared/errors';
-import { Popover } from '../popover';
-import { Button } from '../button/Button';
-import { IntegrationsStoreModal } from '../../pages/integrations/IntegrationsStoreModal';
+import { getFormattedStepErrors } from '../../../shared/errors';
+import { Popover } from '../../../../../design-system/popover';
+import { Button } from '../../../../../design-system/button/Button';
+import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
 
 const CHANNEL_TYPE_TO_TEXT = {
   [ChannelTypeEnum.IN_APP]: 'in-app',
@@ -98,7 +98,7 @@ const usePopoverStyles = createStyles(() => ({
 
 const MENU_CLICK_OUTSIDE_EVENTS = ['click', 'mousedown', 'touchstart'];
 
-export function ChannelButton({
+export function WorkflowNode({
   active = false,
   action = false,
   switchButton,
