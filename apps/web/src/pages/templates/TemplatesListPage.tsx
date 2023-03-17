@@ -4,8 +4,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
-import { useMutation } from '@tanstack/react-query';
-import { INotificationTemplate, StepTypeEnum } from '@novu/shared';
 
 import { useTemplates, useEnvController, useNotificationGroup } from '../../hooks';
 import PageMeta from '../../components/layout/components/PageMeta';
@@ -18,8 +16,7 @@ import { Data } from '../../design-system/table/Table';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
 import { TemplatesListNoData } from './TemplatesListNoData';
-import { createTemplate } from '../../api/notification-templates';
-import { errorMessage } from '../../utils/notifications';
+import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 
 function NotificationList() {
   const { readonly } = useEnvController();
@@ -29,18 +26,7 @@ function NotificationList() {
   const theme = useMantineTheme();
   const navigate = useNavigate();
 
-  const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
-    INotificationTemplate,
-    { error: string; message: string; statusCode: number },
-    ICreateNotificationTemplateDto
-  >(createTemplate, {
-    onSuccess: (template) => {
-      navigate(parseUrl(ROUTES.TEMPLATES_DIGEST_PLAYGROUND, { templateId: template._id as string }));
-    },
-    onError: () => {
-      errorMessage('Failed to create Digest Workflow');
-    },
-  });
+  const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
@@ -48,39 +34,6 @@ function NotificationList() {
 
   const handleRedirectToCreateTemplate = () => {
     navigate(ROUTES.TEMPLATES_CREATE);
-  };
-
-  const handleTryDigestClick = () => {
-    const payload = {
-      name: 'Digest Workflow Example',
-      notificationGroupId: groups[0]._id,
-      active: true,
-      draft: false,
-      critical: false,
-      tags: [],
-      steps: [
-        {
-          template: { type: StepTypeEnum.DIGEST, content: '' },
-          metadata: { amount: '10', unit: 'seconds', type: 'regular', digestKey: '' },
-          active: true,
-          filters: [],
-        },
-        {
-          template: {
-            subject: 'Digest Workflow Example',
-            senderName: 'Novu',
-            type: StepTypeEnum.EMAIL,
-            contentType: 'customHtml',
-            variables: [{ type: 'String', name: 'step.digest', defaultValue: '1', required: false }],
-            preheader: '',
-            content: `Hi {{subscriber.firstName}}! 👋 You've sent {{step.total_count}} events!`,
-          },
-          active: true,
-        },
-      ],
-    };
-
-    createNotificationTemplate(payload as any);
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
@@ -187,8 +140,8 @@ function NotificationList() {
           noDataPlaceholder={
             <TemplatesListNoData
               onCreateClick={handleRedirectToCreateTemplate}
-              onTryDigestClick={handleTryDigestClick}
-              tryDigestDisabled={createTemplateLoading}
+              onTryDigestClick={createDigestDemoWorkflow}
+              tryDigestDisabled={isTryDigestDisabled}
             />
           }
         />

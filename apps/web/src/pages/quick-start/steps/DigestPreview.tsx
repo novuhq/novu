@@ -16,6 +16,7 @@ import { Label } from '../../../design-system/typography/label';
 import { getStartedSteps } from '../consts';
 import { ROUTES } from '../../../constants/routes.enum';
 import { HeaderSecondaryTitle, HeaderTitle } from '../components/layout/HeaderLayout';
+import { useCreateDigestDemoWorkflow } from '../../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 
 export function DigestPreview() {
   const segment = useSegment();
@@ -38,7 +39,7 @@ export function DigestPreview() {
         leftSide: (
           <NavButton navigateTo={getStartedSteps.first}>
             <ThemeArrowLeft style={{ marginRight: '10px' }} />
-            <Label gradientColor={gradientColor}>Previous Page</Label>
+            <Label gradientColor={gradientColor}>Previous</Label>
           </NavButton>
         ),
         rightSide: <RightSide />,
@@ -46,7 +47,7 @@ export function DigestPreview() {
     >
       <DemoContainer>
         <ReactFlowProvider>
-          <DigestDemoFlow />
+          <DigestDemoFlowStyled />
         </ReactFlowProvider>
       </DemoContainer>
     </GetStartedLayout>
@@ -54,17 +55,28 @@ export function DigestPreview() {
 }
 
 function RightSide() {
+  const { createDigestDemoWorkflow, isLoading: isCreating } = useCreateDigestDemoWorkflow();
+
   return (
-    <>
-      <NavButton navigateTo={ROUTES.TEMPLATES} style={{ marginRight: '40px' }}>
+    <ButtonsHolder>
+      <NavButton navigateTo={ROUTES.TEMPLATES_CREATE}>
         <ButtonText>Build a Workflow</ButtonText>
       </NavButton>
-      <NavButton pulse={true} navigateTo={ROUTES.TEMPLATES} variant={'gradient'}>
+      <StyledButton fullWidth pulse onClick={createDigestDemoWorkflow} loading={isCreating}>
         <ButtonText>Try the Digest Playground</ButtonText>
-      </NavButton>
-    </>
+      </StyledButton>
+    </ButtonsHolder>
   );
 }
+
+const DigestDemoFlowStyled = styled(DigestDemoFlow)`
+  height: 400px;
+`;
+
+const ButtonsHolder = styled.div`
+  display: flex;
+  gap: 40px;
+`;
 
 const DemoContainer = styled.div`
   width: 400px;
