@@ -63,7 +63,6 @@ export class AuthController {
   @Get('/github')
   githubAuth(context: ExecutionContext) {
     Logger.verbose('Checking Github Auth');
-    Logger.debug('Context: ' + context);
 
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
       throw new ApiException(
@@ -71,7 +70,7 @@ export class AuthController {
       );
     }
 
-    Logger.log('Github Auth has all variables.');
+    Logger.verbose('Github Auth has all variables.');
 
     return {
       success: true,

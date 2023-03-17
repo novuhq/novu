@@ -44,8 +44,8 @@ export class UsersController {
     summary: 'Get User',
   })
   @ExternalApiAccessible()
-  async getMyProfile(@UserSession() user: IJwtPayload, context: ExecutionContext): Promise<UserResponseDto> {
-    Logger.verbose('Getting User', context);
+  async getMyProfile(@UserSession() user: IJwtPayload): Promise<UserResponseDto> {
+    Logger.verbose('Getting User');
     Logger.debug('User id: ' + user._id);
     Logger.verbose('Creating GetMyProfileCommand');
 

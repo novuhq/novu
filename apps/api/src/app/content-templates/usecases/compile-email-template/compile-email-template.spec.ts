@@ -7,8 +7,6 @@ import { CompileEmailTemplate } from './compile-email-template.usecase';
 import { CompileEmailTemplateCommand } from './compile-email-template.command';
 import { ChannelTypeEnum, EmailBlockTypeEnum, ITemplateVariable } from '@novu/shared';
 import { LayoutRepository } from '@novu/dal';
-import { createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
-import packageJson from '../../../../../package.json';
 
 describe('Compile E-mail Template', function () {
   let useCase: CompileEmailTemplate;

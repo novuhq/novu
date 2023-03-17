@@ -13,6 +13,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
 import { WorkflowQueueService } from '../../services/workflow-queue/workflow.queue.service';
+import { LogDecorator } from '@novu/application-generic';
 
 @Injectable()
 export class AddJob {
@@ -24,17 +25,18 @@ export class AddJob {
     private addDelayJob: AddDelayJob
   ) {}
 
+  @LogDecorator()
   public async execute(command: AddJobCommand): Promise<void> {
-    Logger.debug('command is: ' + command);
-
     Logger.verbose('Getting Job');
     const job = command.job ?? (await this.jobRepository.findById(command.jobId));
-    Logger.debug('job is: ' + job);
+    Logger.debug(job, 'job contents');
+
     if (!job) {
       Logger.warn('job was null in both the input and search');
 
       return;
     }
+
     Logger.log('Starting New Job of type: ' + job.type);
 
     const digestAmount =

@@ -82,13 +82,10 @@ export class LayoutsController {
   @ApiOperation({ summary: 'Layout creation', description: 'Create a layout' })
   async createLayout(
     @UserSession() user: IJwtPayload,
-    @Body() body: CreateLayoutRequestDto,
-    context: ExecutionContext
+    @Body() body: CreateLayoutRequestDto
   ): Promise<CreateLayoutResponseDto> {
-    Logger.debug('User: ' + user._id);
-    Logger.debug('body: ' + body);
+    Logger.verbose('Executing new layout command');
 
-    Logger.verbose('Executing new layout command', context);
     const layout = await this.createLayoutUseCase.execute(
       CreateLayoutCommand.create({
         environmentId: user.environmentId,
@@ -102,7 +99,7 @@ export class LayoutsController {
       })
     );
 
-    Logger.log('Created new Layout' + layout._id + ' for: ' + user._id + ' in ' + user.organizationId, context);
+    Logger.verbose('Created new Layout' + layout._id);
 
     return {
       _id: layout._id,
