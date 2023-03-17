@@ -10,6 +10,7 @@ import { DigestNode } from './DigestNode';
 import { EmailNode } from './EmailNode';
 import { useTemplateFetcher } from '../../api/hooks';
 import { DigestDemoFlowProvider } from './DigestDemoFlowProvider';
+import { DotsHorizontal } from '../../design-system/icons';
 
 export function DigestDemoFlow({
   isReadOnly = true,
@@ -72,6 +73,7 @@ const nodes: Node[] = [
     type: 'triggerNode',
     data: {
       label: 'Trigger',
+      ActionItem: DotsHorizontal,
     },
     position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y },
   },
@@ -80,6 +82,7 @@ const nodes: Node[] = [
     type: 'digestNode',
     data: {
       label: 'Digest',
+      ActionItem: DotsHorizontal,
     },
     position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y + NODE_DIST },
   },
@@ -88,6 +91,7 @@ const nodes: Node[] = [
     type: 'emailNode',
     data: {
       label: 'Email',
+      ActionItem: DotsHorizontal,
     },
     position: { x: NODE_INITIAL_X, y: NODE_INITIAL_Y + NODE_DIST * 2 },
   },

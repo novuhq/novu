@@ -28,11 +28,7 @@ export function EmailContentCard({
   const { integrations = [] } = useActiveIntegrations();
   const [integration, setIntegration]: any = useState(null);
 
-  const {
-    enabled,
-    data: { limit, count },
-  } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
-  const isLimitReached = enabled && limit === count;
+  const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
 
   useEffect(() => {
     if (integrations.length === 0) {
