@@ -404,7 +404,8 @@
     "typeof",
     "nbsp",
     "stddev",
-    "shortid"
+    "shortid",
+    "TASKFORCESH"
   ],
   "flagWords": [],
   "patterns": [
