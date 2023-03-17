@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Grid } from '@mantine/core';
 import styled from '@emotion/styled';
+
+import { DotsNavigation } from '../../../../design-system';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../../constants/routes.enum';
 
 interface IFooterLayoutProps {
   leftSide: React.ReactNode;
@@ -8,19 +12,30 @@ interface IFooterLayoutProps {
 }
 
 export function FooterLayout({ leftSide, rightSide }: IFooterLayoutProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [selectedIndex, setSelectedIndex] = React.useState(location.pathname === ROUTES.GET_STARTED ? 0 : 1);
+
+  const handleOnNavigationClick = (index: number) => {
+    setSelectedIndex(index);
+    navigate(index === 0 ? ROUTES.GET_STARTED : ROUTES.GET_STARTED_PREVIEW);
+  };
+
+  useEffect(() => {
+    if (location.pathname === ROUTES.GET_STARTED) {
+      setSelectedIndex(0);
+    } else if (location.pathname === ROUTES.GET_STARTED_PREVIEW) {
+      setSelectedIndex(1);
+    }
+  }, [location]);
+
   return (
     <FooterWrapper>
-      <Grid justify="space-between" style={{ width: '100%', padding: '0 80px' }} gutter={0}>
-        <Grid.Col span={4} style={{ display: 'flex', alignItems: 'center' }}>
-          <LeftSide>{leftSide}</LeftSide>
-        </Grid.Col>
-        <Grid.Col span={4} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <MiddleSide> .. </MiddleSide>
-        </Grid.Col>
-        <Grid.Col span={4}>
-          <RightSide>{rightSide}</RightSide>
-        </Grid.Col>
-      </Grid>
+      <LeftSide>{leftSide}</LeftSide>
+      <MiddleSide>
+        <DotsNavigation selectedIndex={selectedIndex} size={2} onClick={handleOnNavigationClick} />
+      </MiddleSide>
+      <RightSide>{rightSide}</RightSide>
     </FooterWrapper>
   );
 }
@@ -39,14 +54,17 @@ const RightSide = styled.div`
 `;
 
 const FooterWrapper = styled.div`
+  padding: 32px 40px;
   height: 150px;
-
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   flex-direction: row;
-
   box-shadow: inset 0 1px 0 #000000;
+
+  @media screen and (min-width: 1369px) {
+    padding: 32px 80px;
+  }
 
   ${({ theme }) => {
     return (

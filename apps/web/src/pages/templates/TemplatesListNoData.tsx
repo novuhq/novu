@@ -59,7 +59,7 @@ export const TemplatesListNoData = ({
               navIcon: DigestGradientIcon,
               description: (
                 <Text size="lg" weight="bold">
-                  Try Digest Playground
+                  Try the Digest Playground
                 </Text>
               ),
               onClick: onTryDigestClick,

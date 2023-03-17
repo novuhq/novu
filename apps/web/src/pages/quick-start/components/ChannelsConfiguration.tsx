@@ -28,7 +28,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
         const integrationStatus = isLoading ? false : integrationsStatus[channel.type];
 
         return (
-          <Grid.Col span={6} key={index} style={{ marginBottom: '43px' }}>
+          <CardCol span={5} key={index}>
             <Container>
               <IconContainer>
                 <Icon style={{ width: '28px', height: '32px' }} />
@@ -55,7 +55,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                 </StyledButton>
               </ChannelCard>
             </Container>
-          </Grid.Col>
+          </CardCol>
         );
       })}
     </Grid>
@@ -108,6 +108,15 @@ const Container = styled.div`
   display: flex;
   justify-content: flex-start;
   height: 100%;
+`;
+
+const CardCol = styled(Grid.Col)`
+  margin-bottom: 40px;
+  width: 300px;
+
+  @media screen and (min-width: 1369px) {
+    width: initial;
+  }
 `;
 
 /**

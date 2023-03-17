@@ -18,6 +18,7 @@ interface IInputProps extends SpacingProps {
   min?: string | number;
   max?: string | number;
   onBlur?: (event: FocusEvent<HTMLInputElement>) => void;
+  autoFocus?: boolean;
 }
 
 /**

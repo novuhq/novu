@@ -28,11 +28,13 @@ export const HeaderSecondaryTitle = styled(Title)`
 `;
 
 const StyledHeader = styled.div`
-  height: 200px;
-
+  height: 160px;
   display: flex;
   justify-content: center;
   align-items: center;
-
   flex-direction: column;
+
+  @media screen and (min-width: 1369px) {
+    height: 200px;
+  }
 `;

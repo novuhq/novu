@@ -90,6 +90,7 @@ export const NotificationSettingsForm = ({
                 label="Notification Name"
                 description="This will be used to identify the notification in the dashboard."
                 placeholder="Notification name goes here..."
+                autoFocus
               />
             )}
           />
