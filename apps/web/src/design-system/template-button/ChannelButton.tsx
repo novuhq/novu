@@ -132,11 +132,7 @@ export function ChannelButton({
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
   const isChannel = getChannel(channelKey)?.type === NodeTypeEnum.CHANNEL;
-  const {
-    enabled,
-    data: { limit, count },
-  } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
-  const isLimitReached = enabled && limit === count;
+  const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
 
   const hasActiveIntegration = useMemo(() => {
     const isChannelStep = [StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(

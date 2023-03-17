@@ -8,7 +8,7 @@ import { useActiveIntegrations } from './useActiveIntegrations';
 export function useIntegrationLimit(type: ChannelTypeEnum) {
   const { integrations = [] } = useActiveIntegrations();
 
-  const enabled = useMemo<boolean>(() => {
+  const isLimitFetchingEnabled = useMemo<boolean>(() => {
     return !IS_DOCKER_HOSTED && integrations.filter((integration) => integration.channel === type).length === 0;
   }, [integrations, type, IS_DOCKER_HOSTED]);
 
@@ -17,16 +17,19 @@ export function useIntegrationLimit(type: ChannelTypeEnum) {
     isLoading,
     refetch,
   } = useQuery(['integrationLimit', type], () => getIntegrationLimit(type), {
-    enabled,
+    enabled: isLimitFetchingEnabled,
     refetchInterval: 10000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
+  const isLimitReached = isLimitFetchingEnabled && data.limit === data.count;
+
   return {
     data,
     loading: isLoading,
     refetch,
-    enabled,
+    isLimitFetchingEnabled,
+    isLimitReached,
   };
 }

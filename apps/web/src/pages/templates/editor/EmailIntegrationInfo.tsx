@@ -14,7 +14,7 @@ export const EmailIntegrationInfo = ({
   };
   field: 'from' | 'senderName';
 }) => {
-  const { enabled, loading } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const { isLimitFetchingEnabled, loading } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
   const { currentOrganization } = useAuthContext();
 
   if (integration) {
@@ -25,7 +25,7 @@ export const EmailIntegrationInfo = ({
     return null;
   }
 
-  if (!enabled) {
+  if (!isLimitFetchingEnabled) {
     return <>No active email integration</>;
   }
 
