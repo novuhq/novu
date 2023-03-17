@@ -1,12 +1,16 @@
+import React from 'react';
 import { Handle, Position } from 'react-flow-renderer';
+import { useMantineTheme } from '@mantine/core';
 
 import { NodeStep } from './NodeStep';
 import { TurnOnGradient } from '../../design-system/icons/gradient/TurnOnGradient';
-import { Button } from '../../design-system';
+import { Button, colors } from '../../design-system';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 
 export function TriggerNode({ data, id }: { data: any; id: string }) {
   const { isReadOnly, runTrigger } = useDigestDemoFlowContext();
+  const ActionItem = data.ActionItem as React.FC<any>;
+  const { colorScheme } = useMantineTheme();
 
   return (
     <NodeStep
@@ -14,7 +18,9 @@ export function TriggerNode({ data, id }: { data: any; id: string }) {
       id={id}
       Icon={TurnOnGradient}
       ActionItem={
-        !isReadOnly ? (
+        ActionItem ? (
+          <ActionItem style={{ color: `${colorScheme === 'dark' ? colors.B40 : colors.B80}` }} />
+        ) : !isReadOnly ? (
           <Button variant="outline" onClick={runTrigger}>
             Run Trigger
           </Button>

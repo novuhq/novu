@@ -18,6 +18,14 @@ import { Popover } from '../popover';
 import { Button } from '../button/Button';
 import { IntegrationsStoreModal } from '../../pages/integrations/IntegrationsStoreModal';
 
+const CHANNEL_TYPE_TO_TEXT = {
+  [ChannelTypeEnum.IN_APP]: 'in-app',
+  [ChannelTypeEnum.EMAIL]: 'email',
+  [ChannelTypeEnum.SMS]: 'sms',
+  [ChannelTypeEnum.CHAT]: 'chat',
+  [ChannelTypeEnum.PUSH]: 'push',
+};
+
 const capitalize = (text: string) => {
   return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
 };
@@ -286,7 +294,7 @@ export function ChannelButton({
           target={<ErrorCircle data-test-id="error-circle" dark={theme.colorScheme === 'dark'} />}
           title="Connect provider"
           titleGradient="red"
-          description="Please configure a chat provider to send notifications over this channel"
+          description={`Please configure a ${CHANNEL_TYPE_TO_TEXT[channelKey]} provider to send notifications over this channel`}
           content={
             <ConfigureProviderButton onClick={() => setIntegrationsModalVisible(true)}>
               Configure
