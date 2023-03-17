@@ -1,9 +1,11 @@
-import { UserSession, SubscribersService } from '@novu/testing';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
+import { EmailProviderIdEnum } from '@novu/shared';
+import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import { isSameDay } from 'date-fns';
 
 import { MAILTRAP_EMAIL, TEMPLATE_IDENTIFIER } from './constants';
+import { buildIdentifier } from './notification-templates';
 
 export const createSubscriber = async (session: UserSession): Promise<SubscriberEntity> => {
   const _environmentId = session.environment._id;
@@ -42,11 +44,12 @@ export const createSubscriber = async (session: UserSession): Promise<Subscriber
 
 export const triggerEvent = async (
   session: UserSession,
+  providerId: EmailProviderIdEnum,
   subscriberId: string,
   payload = {}
 ): Promise<Record<string, string>> => {
   const response = await session.testAgent.post('/v1/events/trigger').send({
-    name: TEMPLATE_IDENTIFIER,
+    name: buildIdentifier(providerId),
     to: subscriberId,
     payload,
   });

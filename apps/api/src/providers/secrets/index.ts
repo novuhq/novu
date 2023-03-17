@@ -46,6 +46,9 @@ export const getMailtrapSecrets = (): IMailtrapSecrets => {
 
 export const getProviderSecrets = (providerId: EmailProviderIdEnum): Record<string, string> => {
   const providers = {
+    [EmailProviderIdEnum.Novu]: {
+      apiKey: process.env.REGRESSION_NOVU_API_KEY,
+    },
     [EmailProviderIdEnum.SendGrid]: {
       apiKey: process.env.REGRESSION_SENDGRID_API_KEY,
     },
