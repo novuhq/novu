@@ -212,7 +212,7 @@ export class AuthController {
     @Query('organizationId') organizationId: string,
     @Query('environmentId') environmentId: string
   ) {
-    if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
+    if (!['test', 'regression'].includes(process.env.NODE_ENV)) throw new NotFoundException();
 
     const user = await this.userRepository.findById(userId);
     if (!user) throw new BadRequestException('No user found');

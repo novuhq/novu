@@ -79,7 +79,7 @@ if (process.env.SENTRY_DSN) {
   });
 }
 
-if (process.env.NODE_ENV === 'test') {
+if (['test', 'regression'].includes(process.env.NODE_ENV)) {
   modules.push(TestingModule);
 }
 

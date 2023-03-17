@@ -29,7 +29,7 @@ export class DalService {
   }
 
   async destroy() {
-    if (process.env.NODE_ENV !== 'test') throw new Error('Allowed only in test mode');
+    if (!['test', 'regression'].includes(process.env.NODE_ENV)) throw new Error('Allowed only in test mode');
 
     await mongoose.connection.dropDatabase();
   }

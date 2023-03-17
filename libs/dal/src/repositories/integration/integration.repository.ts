@@ -1,13 +1,13 @@
-import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
 import { BaseRepository } from '../base-repository';
 import { IntegrationEntity, IntegrationDBModel } from './integration.entity';
 import { Integration } from './integration.schema';
 import { DalException } from '../../shared';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-type IntegrationQuery = FilterQuery<IntegrationDBModel> & EnforceEnvOrOrgIds;
+import { IntegrationQuery } from './types';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { ChannelTypeEnum } from '../layout';
 
 export class IntegrationRepository extends BaseRepository<IntegrationDBModel, IntegrationEntity, EnforceEnvOrOrgIds> {
   private integration: SoftDeleteModel;
@@ -31,18 +31,31 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     });
   }
 
+  async findActiveIntegrationForChannel(
+    environmentId: string,
+    channel: ChannelTypeEnum
+  ): Promise<IntegrationEntity | null> {
+    return await this.findOne({
+      _environmentId: environmentId,
+      channel,
+      active: true,
+    });
+  }
+
   async create(data: IntegrationQuery): Promise<IntegrationEntity> {
     const existingIntegration = await this.findOne({
       _environmentId: data._environmentId,
       providerId: data.providerId,
       channel: data.channel,
     });
+
     if (existingIntegration) {
       throw new DalException('Duplicate key - One environment may not have two providers of the same channel type');
     }
 
     return await super.create(data);
   }
+
   async delete(query: IntegrationQuery) {
     const integration = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
     if (!integration) throw new DalException(`Could not find integration with id ${query._id}`);

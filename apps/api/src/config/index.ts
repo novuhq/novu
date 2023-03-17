@@ -8,6 +8,7 @@ dotenv.config();
 const envFileMapper = {
   prod: '.env.production',
   test: '.env.test',
+  regression: '.env.regression',
   ci: '.env.ci',
   local: '.env',
   dev: '.env.development',
