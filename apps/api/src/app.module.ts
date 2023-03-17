@@ -60,12 +60,6 @@ const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardRefe
   MessagesModule,
   PartnerIntegrationsModule,
   TopicsModule,
-  LoggerModule.forRoot(
-    createNestLoggingModuleOptions({
-      serviceName: packageJson.name,
-      version: packageJson.version,
-    })
-  ),
 ];
 
 const providers: Provider[] = [];

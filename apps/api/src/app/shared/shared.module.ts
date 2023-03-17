@@ -35,7 +35,7 @@ import {
   StorageService,
 } from './services/storage/storage.service';
 import { CacheService, InvalidateCacheService } from './services/cache';
-import packageJson from '../../../package.json';
+import * as packageJson from '../../../package.json';
 
 const DAL_MODELS = [
   UserRepository,
@@ -142,12 +142,12 @@ const PROVIDERS = [
   imports: [
     LoggerModule.forRoot(
       createNestLoggingModuleOptions({
-        serviceName: 'novu/api',
-        version: '0.12.0',
+        serviceName: packageJson.name,
+        version: packageJson.version,
       })
     ),
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS],
+  exports: [...PROVIDERS, LoggerModule],
 })
 export class SharedModule {}

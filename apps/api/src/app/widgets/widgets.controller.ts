@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
-import { AnalyticsService, LogDecorator } from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import { MessageEntity, SubscriberEntity } from '@novu/dal';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
 
@@ -56,7 +56,6 @@ import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-mess
 
 @Controller('/widgets')
 @ApiExcludeController()
-@LogDecorator()
 export class WidgetsController {
   constructor(
     private initializeSessionUsecase: InitializeSession,
