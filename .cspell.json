@@ -413,7 +413,8 @@
     "nbsp",
     "stddev",
     "shortid",
-    "upsert"
+    "upsert",
+    "cond"
   ],
   "flagWords": [],
   "patterns": [

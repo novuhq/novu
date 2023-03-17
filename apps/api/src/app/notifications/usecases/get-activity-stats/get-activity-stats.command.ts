@@ -1,3 +1,3 @@
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
-export class GetActivityStatsCommand extends EnvironmentWithUserCommand {}
+export class GetActivityStatsCommand extends EnvironmentCommand {}
