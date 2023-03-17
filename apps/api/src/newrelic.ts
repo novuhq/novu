@@ -4,6 +4,7 @@
  * See lib/config/default.js in the agent distribution for a more complete
  * description of configuration variables and their potential values.
  */
+
 exports.config = {
   /**
    * Array of application names.
@@ -28,6 +29,11 @@ exports.config = {
      * @env NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
      */
     enabled: true,
+  },
+  application_logging: {
+    forwarding: {
+      enabled: true,
+    },
   },
   logging: {
     /**

@@ -53,7 +53,6 @@ export function HeaderNav({}: Props) {
 
   useEffect(() => {
     if (!LOGROCKET_ID) return;
-
     if (currentUser && currentOrganization) {
       let logrocketTraits;
 

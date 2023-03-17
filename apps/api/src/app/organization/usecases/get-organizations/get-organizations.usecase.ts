@@ -9,8 +9,6 @@ export class GetOrganizations {
   constructor(private readonly organizationRepository: OrganizationRepository) {}
 
   async execute(command: GetOrganizationsCommand) {
-    const organizations = await this.organizationRepository.findUserActiveOrganizations(command.userId);
-
-    return organizations;
+    return await this.organizationRepository.findUserActiveOrganizations(command.userId);
   }
 }

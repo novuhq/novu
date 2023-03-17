@@ -12,7 +12,7 @@ const str32 = makeValidator((variable) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NODE_ENV: str({
-    choices: ['dev', 'test', 'prod', 'ci', 'local'],
+    choices: ['dev', 'test', 'prod', 'ci', 'local', 'staging'],
     default: 'local',
   }),
   PORT: port(),
@@ -43,11 +43,6 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   FF_IS_TOPIC_NOTIFICATION_ENABLED: bool({
     desc: 'This is the environment variable used to enable the feature to send notifications to a topic',
-    default: true,
-    choices: [false, true],
-  }),
-  FF_IS_DISTRIBUTED_LOCK_LOGGING_ENABLED: bool({
-    desc: 'This is the environment variable used to enable the logging for the distributed lock',
     default: true,
     choices: [false, true],
   }),

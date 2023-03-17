@@ -1,7 +1,7 @@
 import { createHmac } from 'crypto';
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository, FeedRepository, MemberRepository } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, LogDecorator } from '@novu/application-generic';
 
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -21,6 +21,7 @@ export class InitializeSession {
     private membersRepository: MemberRepository
   ) {}
 
+  @LogDecorator()
   async execute(command: InitializeSessionCommand): Promise<SessionInitializeResponseDto> {
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 
