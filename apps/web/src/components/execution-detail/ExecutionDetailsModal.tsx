@@ -1,25 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Center, LoadingOverlay, Modal, UnstyledButton, useMantineTheme } from '@mantine/core';
+import { LoadingOverlay, Modal, useMantineTheme } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { JobStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsAccordion } from './ExecutionDetailsAccordion';
 import { ExecutionDetailsFooter } from './ExecutionDetailsFooter';
 import { getNotification } from '../../api/activity';
-import { colors, shadows, Text, Title } from '../../design-system';
-import { When } from '../utils/When';
+import { colors, shadows, Title } from '../../design-system';
 import { useNotificationStatus } from '../../pages/activities/hooks/useNotificationStatus';
 
 export function ExecutionDetailsModal({
   notificationId,
   modalVisibility,
   onClose,
-  onViewDigestExecution,
 }: {
   notificationId: string;
   modalVisibility: boolean;
   onClose: () => void;
-  onViewDigestExecution?: (digestNotificationId: string) => void;
 }) {
   const theme = useMantineTheme();
   const [shouldRefetch, setShouldRefetch] = useState(true);
@@ -31,7 +28,6 @@ export function ExecutionDetailsModal({
       refetchInterval: shouldRefetch ? 1000 : false,
     }
   );
-
   const status = useNotificationStatus(response?.data);
 
   useEffect(() => {
@@ -40,12 +36,7 @@ export function ExecutionDetailsModal({
     }
   }, [status]);
 
-  const {
-    jobs,
-    _digestedNotificationId: digestedNotificationId,
-    to: subscriberVariables,
-    template,
-  } = response?.data || {};
+  const { jobs, to: subscriberVariables, template } = response?.data || {};
   const { triggers } = template || {};
   const identifier = triggers ? triggers[0]?.identifier : undefined;
 
@@ -83,24 +74,6 @@ export function ExecutionDetailsModal({
       />
 
       <ExecutionDetailsAccordion identifier={identifier} steps={jobs} subscriberVariables={subscriberVariables} />
-      <When truthy={digestedNotificationId}>
-        <Center mt={20}>
-          <Text mr={10} size="md" color={colors.B60}>
-            Remaining execution has been merged to an active Digest.
-          </Text>
-        </Center>
-        <When truthy={onViewDigestExecution}>
-          <Center mt={10}>
-            <UnstyledButton
-              onClick={() => {
-                onViewDigestExecution && onViewDigestExecution(digestedNotificationId);
-              }}
-            >
-              <Text gradient>View Digest Execution</Text>
-            </UnstyledButton>
-          </Center>
-        </When>
-      </When>
       <ExecutionDetailsFooter />
     </Modal>
   );

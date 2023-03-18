@@ -46,6 +46,7 @@
     "@mantine/notifications": "^5.7.1",
     "@mantine/prism": "^5.7.1",
     "@mantine/spotlight": "^5.7.1",
+    "@mantine/dates": "^5.10.5",
     "@novu/notification-center": "^0.12.0",
     "@novu/shared": "^0.12.0",
     "@segment/analytics-next": "^1.48.0",

@@ -49,3 +49,9 @@ export enum SystemAvatarIconEnum {
   UP = 'up',
   QUESTION = 'question',
 }
+
+export enum PeriodicityEnum {
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+}

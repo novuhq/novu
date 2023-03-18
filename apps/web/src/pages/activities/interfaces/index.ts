@@ -1,21 +1,20 @@
 import { ScriptableContext } from 'chart.js';
-import { ChannelTypeEnum } from '@novu/shared';
 
 export interface IChartData {
   datasets: IDataSet[];
-  labels: string[][];
+  //labels: string[][];
 }
 
 export interface IDataSet {
+  label: string;
   data: Array<IActivityGraphStats & { dateLabel: string }>;
-  backgroundColor: string;
-  hoverBackgroundColor: (context: ScriptableContext<'bar'>) => CanvasGradient;
-  borderRadius: number;
+  backgroundColor?: string;
+  hoverBackgroundColor?: (context: ScriptableContext<'bar' | 'line'>) => CanvasGradient;
+  borderRadius?: number;
+  count: number;
 }
 
 export interface IActivityGraphStats {
-  _id: string;
+  _id: any;
   count: number;
-  templates: string[];
-  channels: ChannelTypeEnum[];
 }

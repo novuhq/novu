@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { NotificationRepository } from '@novu/dal';
+import { JobRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
@@ -9,7 +9,7 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 @Injectable()
 export class GetActivity {
   constructor(
-    private notificationRepository: NotificationRepository,
+    private jobRepository: JobRepository,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
@@ -18,7 +18,7 @@ export class GetActivity {
       _organization: command.organizationId,
     });
 
-    return this.notificationRepository.getFeedItem(
+    return this.jobRepository.getFeedItem(
       command.notificationId,
       command.environmentId,
       command.organizationId

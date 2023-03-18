@@ -31,9 +31,14 @@ export class ProcessNotification {
   ) {}
 
   public async execute(command: ProcessNotificationCommand): Promise<void> {
-    const template = await this.digestService.getNotificationTemplate(command.environmentId, command.identifier);
+    const template = command.template;
+    /*
+     * channels belongs to jobs layer, so back propagating to notification is bad design,
+     * in new design we do not need this, just keeping for backward compatibility, remove later.
+     */
     const channels = template.steps.map((step) => step.template?.type);
     const notification = await this.createNotification(command, template._id, command.subscriber, channels);
+
     const dag = constructActiveDAG(template.steps, command.payload, command.overrides) || [];
     for (const steps of dag) {
       if (steps[0].template?.type === StepTypeEnum.DIGEST) await this.processDigestChain(command, notification, steps);

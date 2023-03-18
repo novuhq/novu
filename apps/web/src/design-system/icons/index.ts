@@ -27,6 +27,7 @@ export { ErrorIcon } from './general/ErrorIcon';
 export { Chat } from './general/Chat';
 export { InApp } from './general/InApp';
 export { Timer } from './general/Timer';
+export { Calendar } from './general/Calendar';
 export { Digest } from './general/Digest';
 export { Sent } from './general/Sent';
 export { Received } from './general/Received';

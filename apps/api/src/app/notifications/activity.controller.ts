@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
 import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
 import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
@@ -7,13 +7,14 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { GetActivityStats } from './usecases/get-activity-stats/get-activity-stats.usecase';
 import { GetActivityStatsCommand } from './usecases/get-activity-stats/get-activity-stats.command';
 import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
-import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
 import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
-import { ActivitiesResponseDto } from './dtos/activities-response.dto';
+import { ActivitiesResponseDto, ActivityNotificationResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
 import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { GetActivity } from './usecases/get-activity/get-activity.usecase';
+import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
 
 @Controller('/activity')
 @ApiTags('Activity')
@@ -21,7 +22,8 @@ export class ActivityController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,
     private getActivityStatsUsecase: GetActivityStats,
-    private getActivityGraphStatsUsecase: GetActivityGraphStats
+    private getActivityGraphStatsUsecase: GetActivityGraphStats,
+    private getActivityUsecase: GetActivity
   ) {}
 
   @Get('')
@@ -29,7 +31,6 @@ export class ActivityController {
     type: ActivitiesResponseDto,
   })
   @ApiOperation({
-    deprecated: true,
     summary: 'Get activity feed',
   })
   @UseGuards(JwtAuthGuard)
@@ -38,41 +39,13 @@ export class ActivityController {
     @UserSession() user: IJwtPayload,
     @Query() query: ActivitiesRequestDto
   ): Promise<ActivitiesResponseDto> {
-    let channelsQuery: ChannelTypeEnum[] | undefined;
-
-    if (query.channels) {
-      channelsQuery = Array.isArray(query.channels) ? query.channels : [query.channels];
-    }
-
-    let templatesQuery: string[] | undefined;
-    if (query.templates) {
-      templatesQuery = Array.isArray(query.templates) ? query.templates : [query.templates];
-    }
-
-    let emailsQuery: string[] | undefined;
-    if (query.emails) {
-      emailsQuery = Array.isArray(query.emails) ? query.emails : [query.emails];
-    }
-
-    return this.getActivityFeedUsecase.execute(
-      GetActivityFeedCommand.create({
-        page: query.page ? Number(query.page) : 0,
-        organizationId: user.organizationId,
-        environmentId: user.environmentId,
-        userId: user._id,
-        channels: channelsQuery,
-        templates: templatesQuery,
-        emails: emailsQuery,
-        search: query.search,
-      })
-    );
+    return this.getActivityFeedUsecase.execute(createACtivityFeedCommand(query, user));
   }
 
   @ApiOkResponse({
     type: ActivityStatsResponseDto,
   })
   @ApiOperation({
-    deprecated: true,
     summary: 'Get activity statistics',
   })
   @Get('/stats')
@@ -94,21 +67,31 @@ export class ActivityController {
     type: [ActivityGraphStatesResponse],
   })
   @ApiOperation({
-    deprecated: true,
     summary: 'Get activity graph statistics',
-  })
-  @ApiQuery({
-    name: 'days',
-    type: Number,
-    required: false,
   })
   getActivityGraphStats(
     @UserSession() user: IJwtPayload,
-    @Query('days') days = 32
+    @Query() query: ActivitiesRequestDto
   ): Promise<ActivityGraphStatesResponse[]> {
-    return this.getActivityGraphStatsUsecase.execute(
-      GetActivityGraphStatsCommand.create({
-        days: days ? Number(days) : 32,
+    return this.getActivityGraphStatsUsecase.execute(createACtivityFeedCommand(query, user));
+  }
+
+  @Get('/:notificationId')
+  @ApiOkResponse({
+    type: ActivityNotificationResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Get notification',
+  })
+  @UseGuards(JwtAuthGuard)
+  @ExternalApiAccessible()
+  getActivity(
+    @UserSession() user: IJwtPayload,
+    @Param('notificationId') notificationId: string
+  ): Promise<ActivityNotificationResponseDto> {
+    return this.getActivityUsecase.execute(
+      GetActivityCommand.create({
+        notificationId: notificationId,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
@@ -116,3 +99,35 @@ export class ActivityController {
     );
   }
 }
+
+const createACtivityFeedCommand = (query, user) => {
+  let channelsQuery: ChannelTypeEnum[] | null = null;
+
+  if (query.channels) {
+    channelsQuery = Array.isArray(query.channels) ? query.channels : [query.channels];
+  }
+
+  let templatesQuery: string[] | null = null;
+  if (query.templates) {
+    templatesQuery = Array.isArray(query.templates) ? query.templates : [query.templates];
+  }
+
+  let emailsQuery: string[] | null = null;
+  if (query.emails) {
+    emailsQuery = Array.isArray(query.emails) ? query.emails : [query.emails];
+  }
+
+  return GetActivityFeedCommand.create({
+    page: query.page ? Number(query.page) : 0,
+    organizationId: user.organizationId,
+    environmentId: user.environmentId,
+    userId: user._id,
+    channels: channelsQuery,
+    templates: templatesQuery,
+    emails: emailsQuery,
+    search: query.search,
+    startDate: query.startDate,
+    endDate: query.endDate,
+    periodicity: query.periodicity,
+  });
+};

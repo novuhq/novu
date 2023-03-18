@@ -92,6 +92,7 @@ export class AwaitHelpers {
 
   async promoteJob(jobId: string) {
     try {
+      await sleep(100); //to make sure digest jobs wait until all parallel events fired
       await this.workflowQueueService.promoteJob(jobId);
     } catch (error) {
       //console.log(error.message);

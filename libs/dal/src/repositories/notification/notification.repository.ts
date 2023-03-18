@@ -24,6 +24,7 @@ export class NotificationRepository extends BaseRepository<
     });
   }
 
+  //Deprecated as part of redesign, use JobRepository getFeed method
   async getFeed(
     environmentId: string,
     query: {
@@ -104,6 +105,7 @@ export class NotificationRepository extends BaseRepository<
       });
   }
 
+  //Deprecated as part of redesign, use JobRepository getActivityGraphStats method
   async getActivityGraphStats(date: Date, environmentId: string) {
     return await this.aggregate([
       {

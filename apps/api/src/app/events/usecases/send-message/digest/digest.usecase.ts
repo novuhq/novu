@@ -36,15 +36,28 @@ export class Digest extends SendMessageType {
         })
       );
     }
+    const currentJobDetails = CreateExecutionDetailsCommand.getDetailsFromJob(command.job);
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        ...currentJobDetails,
         detail: DetailEnum.DIGESTED_EVENTS_PROVIDED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
         raw: JSON.stringify(result),
+      })
+    );
+    const digestedPayload = await this.digestService.getDigestedPayload(command.job);
+    this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...currentJobDetails,
+        detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify(digestedPayload),
       })
     );
   }

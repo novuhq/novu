@@ -116,13 +116,15 @@ const getDetailsStyledComponentByStepStatus = (status) => {
   return StepDetails;
 };
 
-const StepOutcome = ({ createdAt, name, detail, status }) => {
+const StepOutcome = ({ createdAt, name, detail, status, digestCount }) => {
   const Details = getDetailsStyledComponentByStepStatus(status);
   const date = format(parseISO(createdAt), 'dd/MM/yyyy');
+  let stepName = name?.replace('_', ' ');
+  if (name === StepTypeEnum.DIGEST) stepName += `(digestCount:${digestCount})`;
 
   return (
     <>
-      <StepName>{name?.replace('_', ' ')}</StepName>
+      <StepName>{stepName}</StepName>
       <Details>{detail}</Details>
       <StepDate>{date}</StepDate>
     </>
@@ -139,7 +141,13 @@ export const ExecutionDetailsStepHeader = ({ step }) => {
         <StepLogo status={status} type={step.type} />
       </Grid.Col>
       <Grid.Col span={7}>
-        <StepOutcome createdAt={step?.createdAt} name={step?.type} detail={generatedDetail} status={status} />
+        <StepOutcome
+          createdAt={step?.createdAt}
+          digestCount={step?.digestCount}
+          name={step?.type}
+          detail={generatedDetail}
+          status={status}
+        />
       </Grid.Col>
       <Grid.Col span={4}>
         <ExecutionDetailsWebhookFeedback executionDetails={step.executionDetails} />

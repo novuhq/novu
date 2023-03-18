@@ -1,6 +1,7 @@
 import { IsDefined, IsString, IsOptional } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { SubscriberEntity } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/shared';
 
 export class ProcessNotificationCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -22,4 +23,10 @@ export class ProcessNotificationCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   actorSubscriber?: SubscriberEntity | null;
+
+  @IsDefined()
+  template: NotificationTemplateEntity;
+
+  @IsDefined()
+  templateProviderIds: Map<ChannelTypeEnum, string>;
 }

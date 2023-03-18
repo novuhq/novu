@@ -1,24 +1,21 @@
 import { JobEntity, JobStatusEnum, NotificationEntity } from '@novu/dal';
 import { StepWithDelay } from './helpers';
 import { ApiException } from '../../shared/exceptions/api.exception';
+import { ProcessNotificationCommand } from '../usecases/process-notification/process-notification.command';
+import { ChannelTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 
 export type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
 
 export async function prepareJob(
-  command: any,
+  command: ProcessNotificationCommand,
   notification: NotificationEntity,
   stepWithDelay: StepWithDelay
 ): Promise<NotificationJob> {
   const { delay = 0, ...step } = stepWithDelay;
   if (!step.template) throw new ApiException('Step template was not found');
-  /*
-   *const providerId = await this.digestService.getProviderId(
-   *notification._environmentId,
-   *notification._organizationId,
-   *command.userId,
-   *step.template.type
-   *);
-   */
+  const providerId = command.templateProviderIds.get(
+    STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type) as ChannelTypeEnum
+  );
 
   return {
     identifier: command.identifier,
@@ -32,7 +29,7 @@ export async function prepareJob(
     _subscriberId: notification._subscriberId,
     status: JobStatusEnum.PENDING,
     _templateId: notification._templateId,
-    //providerId,
+    providerId,
     step,
     digest: step.metadata,
     type: step.template?.type,
@@ -41,17 +38,16 @@ export async function prepareJob(
   };
 }
 
-export async function prepareChildJob(parentJob: JobEntity, stepWithDelay: StepWithDelay): Promise<NotificationJob> {
+export async function prepareChildJob(
+  command: ProcessNotificationCommand | null,
+  parentJob: JobEntity,
+  stepWithDelay: StepWithDelay
+): Promise<NotificationJob> {
   const { delay = 0, ...step } = stepWithDelay;
   if (!step.template) throw new ApiException('Step template was not found');
-  /*
-   *const providerId: string | undefined = await this.getProviderId(
-   *parentJob._environmentId,
-   *parentJob._organizationId,
-   *parentJob._userId,
-   *step.template.type
-   *);
-   */
+  const providerId = command
+    ? command.templateProviderIds.get(STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type) as ChannelTypeEnum)
+    : undefined;
 
   return {
     identifier: parentJob.identifier,
@@ -65,7 +61,7 @@ export async function prepareChildJob(parentJob: JobEntity, stepWithDelay: StepW
     _subscriberId: parentJob._subscriberId,
     status: JobStatusEnum.PENDING,
     _templateId: parentJob._templateId,
-    //providerId,
+    providerId,
     step,
     digest: step.metadata,
     digestedNotificationIds: parentJob.digestedNotificationIds,

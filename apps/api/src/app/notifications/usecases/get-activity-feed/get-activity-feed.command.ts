@@ -1,5 +1,5 @@
 import { IsArray, IsEnum, IsMongoId, IsNumber, IsOptional, IsString } from 'class-validator';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, PeriodicityEnum } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
@@ -29,4 +29,16 @@ export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   transactionId?: string;
+
+  @IsOptional()
+  @IsString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsString()
+  endDate?: string;
+
+  @IsOptional()
+  @IsEnum(PeriodicityEnum)
+  periodicity?: PeriodicityEnum;
 }

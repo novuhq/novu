@@ -5,8 +5,6 @@ import { format } from 'date-fns';
 import styled from '@emotion/styled';
 
 import { ActivityStep } from './ActivityStep';
-import { DigestedStep } from './DigestedStep';
-
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { CheckCircle, ErrorIcon, Timer } from '../../../design-system/icons';
@@ -19,12 +17,7 @@ const checkJobsLength = (item) => {
 };
 
 const getJobsLength = (item) => {
-  let length = item.jobs.length;
-  if (item._digestedNotificationId) {
-    length = length + 1;
-  }
-
-  return length;
+  return item.jobs.length;
 };
 
 interface IUnstyledButtonProps {
@@ -44,15 +37,11 @@ export const ActivityItem = ({ item, onClick }) => {
   const status = useNotificationStatus(item);
   const theme = useMantineTheme();
   const [isOld, setIsOld] = useState<boolean>(false);
-  const [digestedNode, setDigestedNode] = useState<string>('');
   const { classes } = useStyles({ isOld });
 
   useEffect(() => {
-    const details = item.jobs.reduce((items: any[], job) => [...items, ...job.executionDetails], []);
-    if (item._digestedNotificationId !== null) {
-      setDigestedNode(item._digestedNotificationId);
-    }
-    setIsOld(details.length === 0);
+    const detailsIndex = item.jobs.find((job) => job.executionDetails?.length > 0);
+    setIsOld(detailsIndex === -1);
   }, [item]);
 
   return (
@@ -120,7 +109,7 @@ export const ActivityItem = ({ item, onClick }) => {
               </small>
               <div data-test-id="subscriber-id">
                 <small>
-                  <b>Subscriber id:</b> {item?.subscriber?.id ? item.subscriber.id : 'Deleted Subscriber'}
+                  <b>Subscriber id:</b> {item?._subscriberId ? item._subscriberId : 'Deleted Subscriber'}
                 </small>
               </div>
               <div data-test-id="transaction-id">
@@ -148,9 +137,6 @@ export const ActivityItem = ({ item, onClick }) => {
                   job={job}
                 />
               ))}
-              <When truthy={!checkJobsLength(item) && digestedNode}>
-                <DigestedStep digestedId={digestedNode} onClick={onClick} />
-              </When>
               <When truthy={checkJobsLength(item)}>
                 <Grid.Col span={1}>
                   <Text align="center" size="xl">

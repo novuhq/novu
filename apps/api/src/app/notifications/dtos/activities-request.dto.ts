@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, PeriodicityEnum } from '@novu/shared';
 
 export class ActivitiesRequestDto {
   @ApiProperty({
@@ -35,4 +35,21 @@ export class ActivitiesRequestDto {
     required: false,
   })
   transactionId: string;
+
+  @ApiProperty({
+    type: String,
+    required: false,
+  })
+  startDate?: string;
+  @ApiProperty({
+    type: String,
+    required: false,
+  })
+  endDate?: string;
+
+  @ApiProperty({
+    enum: PeriodicityEnum,
+    required: false,
+  })
+  periodicity?: PeriodicityEnum;
 }

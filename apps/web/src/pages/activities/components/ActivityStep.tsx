@@ -1,4 +1,4 @@
-import { Grid, Text, useMantineTheme } from '@mantine/core';
+import { Grid, Text, useMantineTheme, Space } from '@mantine/core';
 import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
@@ -27,11 +27,27 @@ const TypeIcon = ({ type }: { type: StepTypeEnum }) => {
           <Digest color={theme.colorScheme === 'dark' ? colors.B80 : colors.B40} />
         </div>
       );
-    case StepTypeEnum.DELAY:
+    case StepTypeEnum.DELAY: //keeping this for backward compatibility, need to remove later
       return <Timer width={22} height={22} />;
     default:
       return null;
   }
+};
+const convertMilliseconds = (milliseconds) => {
+  const seconds = Math.floor(milliseconds / 1000) % 60;
+  const minutes = Math.floor(milliseconds / (1000 * 60)) % 60;
+  const hours = Math.floor(milliseconds / (1000 * 60 * 60)) % 24;
+
+  return hours > 0
+    ? `${hours} hrs - ${minutes} mins - ${seconds} secs`
+    : minutes > 0
+    ? `${minutes} mins - ${seconds} secs`
+    : `${seconds} secs`;
+};
+const getDelayOrDigestCount = (job) => {
+  if (job.type === StepTypeEnum.DIGEST && job.digestCount > 0) return `(${job.digestCount})`;
+
+  return job.delay > 0 ? `(delay:${convertMilliseconds(job.delay)})` : '';
 };
 
 export const ActivityStep = ({ job, span = 4, isOld }) => {
@@ -78,6 +94,7 @@ export const ActivityStep = ({ job, span = 4, isOld }) => {
             >
               {capitalize(job.type?.replace('_', ' '))}
             </Header>
+            <Text color={theme.primaryColor}>{getDelayOrDigestCount(job)}</Text>
           </When>
           <When truthy={isOld}>
             <Header dark={theme.colorScheme === 'dark'} done={false} failed={false}>

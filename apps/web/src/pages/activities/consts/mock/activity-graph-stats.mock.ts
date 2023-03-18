@@ -1,198 +1,44 @@
 import { IActivityGraphStats } from '../../interfaces';
+import { PeriodicityEnum, StepTypeEnum } from '@novu/shared';
+import { getDayOfYear, getYear, getMonth, getWeek, subDays, addMonths, addWeeks, addDays, isAfter } from 'date-fns';
 
-export const activityGraphStatsMock: IActivityGraphStats[] = [
-  {
-    _id: '2022-03-30',
-    count: 122,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-29',
-    count: 121,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-28',
-    count: 103,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-27',
-    count: 142,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-26',
-    count: 97,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-25',
-    count: 66,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-24',
-    count: 85,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-23',
-    count: 43,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-22',
-    count: 12,
-    templates: [],
-    channels: [],
-  },
+const JOB_TYPES = [StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT, StepTypeEnum.IN_APP];
+const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-  {
-    _id: '2022-03-21',
-    count: 23,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-20',
-    count: 54,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-19',
-    count: 112,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-18',
-    count: 23,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-17',
-    count: 64,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-16',
-    count: 23,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-15',
-    count: 32,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-14',
-    count: 76,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-13',
-    count: 66,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-12',
-    count: 25,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-11',
-    count: 43,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-10',
-    count: 11,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-09',
-    count: 32,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-08',
-    count: 50,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-07',
-    count: 8,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-06',
-    count: 10,
-    templates: [],
-    channels: [],
-  },
+function getNextDate(date, unit) {
+  return unit === 'month' ? addMonths(date, 1) : unit === 'week' ? addWeeks(date, 1) : addDays(date, 1);
+}
 
-  {
-    _id: '2022-03-05',
-    count: 14,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-04',
-    count: 17,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-03',
-    count: 12,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-02',
-    count: 33,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-03-01',
-    count: 22,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-02-27',
-    count: 1,
-    templates: [],
-    channels: [],
-  },
-  {
-    _id: '2022-02-26',
-    count: 4,
-    templates: [],
-    channels: [],
-  },
-];
+function getPeriod(date, unit) {
+  return unit === 'month' ? getMonth(date) : unit === 'week' ? getWeek(date) : getDayOfYear(date);
+}
+
+export const generateMockData = (filters) => {
+  const { startDate, endDate, periodicity } = filters;
+  const mockData: IActivityGraphStats[] = [];
+  const unit =
+    periodicity === PeriodicityEnum.MONTHLY ? 'month' : periodicity === PeriodicityEnum.WEEKLY ? 'week' : 'day';
+
+  if (!startDate || !endDate || isAfter(startDate, endDate)) return { data: [] };
+  for (let date = startDate; !isAfter(date, endDate); date = getNextDate(date, unit)) {
+    const year = getYear(date);
+    const period = getPeriod(date, unit);
+    for (const type of JOB_TYPES) {
+      mockData.push({
+        _id: {
+          type: type,
+          [unit]: period,
+          year,
+        },
+        count: randomInt(0, 150),
+      });
+    }
+  }
+
+  return { data: mockData };
+};
+export const dailyGraphStatsMock: IActivityGraphStats[] = generateMockData({
+  startDate: subDays(new Date(), 15),
+  endDate: new Date(),
+  periodicity: PeriodicityEnum.DAILY,
+}).data;

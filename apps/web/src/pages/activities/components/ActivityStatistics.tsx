@@ -56,14 +56,13 @@ const StatisticsBox = styled.div`
 const ContentWrapper = styled.div`
   display: flex;
   justify-content: flex-start;
-  margin-bottom: 30px;
+  margin-top: 9px;
   padding-left: 30px;
 `;
 
 const StyledNumber = styled.div<{ isColored: boolean }>`
-  font-size: 26px;
+  font-size: 21px;
   font-weight: 900;
-  line-height: 30px;
   text-align: left;
   margin-bottom: 2px;
   background: ${({ isColored }: { isColored: boolean }) =>
@@ -73,8 +72,7 @@ const StyledNumber = styled.div<{ isColored: boolean }>`
 `;
 
 const StatsLabel = styled.div<{ isColored: boolean; isDark: boolean }>`
-  font-size: 14px;
-  line-height: 17px;
+  font-size: 12px;
   font-weight: 700;
   color: ${({ isColored, isDark }) => {
     const notColoredThemeTextColor = isDark ? colors.white : colors.B40;

@@ -10,8 +10,10 @@ export function useTemplates(page = 0, limit = 10) {
     data: INotificationTemplate[];
     totalCount: number;
     pageSize: number;
+    refetch;
   }>(['notificationsList', environment?._id, page, limit], () => getNotificationsList(page, limit), {
     keepPreviousData: true,
+    refetchOnWindowFocus: false,
   });
 
   return {

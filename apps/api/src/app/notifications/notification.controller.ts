@@ -33,6 +33,7 @@ export class NotificationsController {
     type: ActivitiesResponseDto,
   })
   @ApiOperation({
+    deprecated: true,
     summary: 'Get notifications',
   })
   @UseGuards(JwtAuthGuard)
@@ -76,6 +77,7 @@ export class NotificationsController {
     type: ActivityStatsResponseDto,
   })
   @ApiOperation({
+    deprecated: true,
     summary: 'Get notification statistics',
   })
   @Get('/stats')
@@ -97,6 +99,7 @@ export class NotificationsController {
     type: [ActivityGraphStatesResponse],
   })
   @ApiOperation({
+    deprecated: true,
     summary: 'Get notification graph statistics',
   })
   @ApiQuery({
@@ -123,6 +126,7 @@ export class NotificationsController {
     type: ActivityNotificationResponseDto,
   })
   @ApiOperation({
+    deprecated: true,
     summary: 'Get notification',
   })
   @UseGuards(JwtAuthGuard)

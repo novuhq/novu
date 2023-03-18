@@ -29,6 +29,7 @@ export enum DetailEnum {
   PROCESSING_STEP_FILTER = 'Processing step filter',
   FILTER_STEPS = 'Step was filtered based on steps filters',
   DIGESTED_EVENTS_PROVIDED = 'Steps to get digest events found',
+  DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
   STEP_FILTERED_BY_PREFERENCES = 'Step filtered by subscriber preferences',
   WEBHOOK_FILTER_FAILED_RETRY = 'Webhook filter failed, retry will be executed',
   WEBHOOK_FILTER_FAILED_LAST_RETRY = 'Failed to get response from remote webhook filter on last retry',

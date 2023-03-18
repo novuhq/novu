@@ -15,7 +15,7 @@ import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { Cached } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { NotificationJob, prepareJob, prepareChildJob } from '../../helpers/job_preparation';
-
+import { ProcessNotificationCommand } from '../../usecases/process-notification/process-notification.command';
 import { v5 as uuidv5 } from 'uuid';
 
 @Injectable()
@@ -27,7 +27,11 @@ export class DigestService {
   ) {}
 
   //Returns digest job only when it is created, other cases returns undefined
-  public async createOrUpdateDigestJob(command: any, notification: NotificationEntity, steps: StepWithDelay[]) {
+  public async createOrUpdateDigestJob(
+    command: ProcessNotificationCommand,
+    notification: NotificationEntity,
+    steps: StepWithDelay[]
+  ) {
     let digestJob = await this.findOneAndUpdateDigest(notification, steps[0]);
     if (!digestJob || digestJob.digestedNotificationIds?.[0] !== notification._id) return; //old
     const preparedJob = await prepareJob(command, notification, steps[0]);
@@ -84,7 +88,11 @@ export class DigestService {
   }
 
   //Creates backoff jobs only when backoff criteria met, else return undefined
-  public async createBackoffJobs(command: any, notification: NotificationEntity, steps: StepWithDelay[]) {
+  public async createBackoffJobs(
+    command: ProcessNotificationCommand,
+    notification: NotificationEntity,
+    steps: StepWithDelay[]
+  ) {
     const digestRunKey = this.createDigestRunKey(notification, steps[1]._templateId, steps[0].metadata?.digestKey);
     const query = {
       digestRunKey,
@@ -103,7 +111,7 @@ export class DigestService {
       //remove steps[0] and steps[1] (digest and first child)
       steps = steps.slice(2);
       if (steps.length === 0) return [firstJob];
-      const nextJobs = (await this.storeJobs(firstJob, steps)) ?? [];
+      const nextJobs = (await this.storeJobs(command, firstJob, steps)) ?? [];
 
       return [firstJob, ...nextJobs];
     } catch (error) {
@@ -112,8 +120,7 @@ export class DigestService {
     }
   }
 
-  private async getDigestedPayload(job: JobEntity) {
-    if (job.step?.template?.type === StepTypeEnum.DIGEST) return [];
+  public async getDigestedPayload(job: JobEntity) {
     const digestIds = job.digestedNotificationIds ?? [];
     const digestedPayload =
       digestIds.length > 0
@@ -145,13 +152,13 @@ export class DigestService {
     const dag = constructActiveDAG(template.steps, digestJob.payload, digestJob.overrides) || [];
     let digestBranch = dag.find((branch) => branch[0]._templateId === digestJob.step?._templateId);
     digestBranch = digestBranch?.slice(1);
-    if (digestBranch) return await this.storeJobs(digestJob, digestBranch);
+    if (digestBranch) return await this.storeJobs(null, digestJob, digestBranch);
   }
 
-  public async storeJobs(parentJob: JobEntity, steps: StepWithDelay[]) {
+  public async storeJobs(command: ProcessNotificationCommand | null, parentJob: JobEntity, steps: StepWithDelay[]) {
     const jobs: NotificationJob[] = [];
     for (const step of steps) {
-      jobs.push(await prepareChildJob(parentJob, step));
+      jobs.push(await prepareChildJob(command, parentJob, step));
     }
     jobs[0]._parentId = parentJob._id;
 

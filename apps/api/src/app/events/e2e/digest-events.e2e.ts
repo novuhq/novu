@@ -688,7 +688,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       customVar: 'digest key1 repeat',
       nested: { postId: postId },
     });
-
     const digests = await awaitHelpers.awaitAndGetJobs(template, 3);
 
     expect(digests.length).to.eql(3);
