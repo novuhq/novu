@@ -10,6 +10,7 @@ import {
 } from '@novu/dal';
 import axios from 'axios';
 import { createHash } from '../../../shared/helpers/hmac.service';
+
 @Injectable()
 export class InboundEmailParse {
   constructor(private jobRepository: JobRepository, private messageRepository: MessageRepository) {}
@@ -17,11 +18,16 @@ export class InboundEmailParse {
   async execute(command: InboundEmailParseCommand) {
     const { toDomain, toTransactionId, toEnvironmentId } = this.splitTo(command.to[0].address);
 
+    Logger.debug('toDomain in InboundEmailParse is: ' + toDomain);
+    Logger.debug('toTransactionId in InboundEmailParse is: ' + toTransactionId);
+
     if (!toTransactionId) {
       Logger.warn(`missing transactionId on address ${command.to[0].address}`);
 
       return;
     }
+
+    Logger.debug('toEnvironmentId in InboundEmailParse is: ' + toEnvironmentId);
 
     if (!toEnvironmentId) {
       Logger.warn(`missing environmentId on address ${command.to[0].address}`);
@@ -60,7 +66,7 @@ export class InboundEmailParse {
       mail: command,
     };
 
-    return await axios.post(currentParseWebhook, userPayload);
+    await axios.post(currentParseWebhook, userPayload);
   }
 
   private splitTo(address: string) {
@@ -97,7 +103,7 @@ export interface IUserWebhookPayload {
   payload: Record<string, unknown>;
   template: NotificationTemplateEntity;
   notification: NotificationEntity;
-  message: MessageEntity;
+  message: MessageEntity | null;
   mail: MailMetadata;
   hmac: string;
 }

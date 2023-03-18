@@ -21,7 +21,7 @@ export class CreateLayoutUseCase {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: CreateLayoutCommand): Promise<LayoutDto> {
+  async execute(command: CreateLayoutCommand): Promise<LayoutDto & { _id: string }> {
     const variables = this.getExtractedVariables(command.variables as ITemplateVariable[], command.content);
     const hasBody = command.content.includes('{{{body}}}');
     if (!hasBody) {
@@ -33,7 +33,7 @@ export class CreateLayoutUseCase {
 
     const dto = this.mapFromEntity(layout);
 
-    if (dto._id && dto.isDefault === true) {
+    if (dto._id && dto.isDefault) {
       const setDefaultLayoutCommand = SetDefaultLayoutCommand.create({
         environmentId: dto._environmentId,
         layoutId: dto._id,
@@ -81,7 +81,7 @@ export class CreateLayoutUseCase {
     };
   }
 
-  private mapFromEntity(layout: LayoutEntity): LayoutDto {
+  private mapFromEntity(layout: LayoutEntity): LayoutDto & { _id: string } {
     return {
       ...layout,
       _id: layout._id,

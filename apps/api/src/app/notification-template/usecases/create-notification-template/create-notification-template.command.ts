@@ -80,6 +80,9 @@ class NotificationStepCommand {
   template?: MessageTemplate;
 
   @IsOptional()
+  uuid?: string;
+
+  @IsOptional()
   name?: string;
 
   @IsBoolean()

@@ -8,6 +8,9 @@ import { TriggerEventCommand } from './trigger-event.command';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { CreateNotificationJobsCommand, CreateNotificationJobs } from '../create-notification-jobs';
 import { ProcessSubscriber, ProcessSubscriberCommand } from '../process-subscriber';
+
+import { EventsPerformanceService } from '../../services/performance-service';
+
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -16,6 +19,8 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
+import { PinoLogger } from '@novu/application-generic';
+
 @Injectable()
 export class TriggerEvent {
   constructor(
@@ -23,11 +28,15 @@ export class TriggerEvent {
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private getDecryptedIntegrations: GetDecryptedIntegrations,
+    protected performanceService: EventsPerformanceService,
     private jobRepository: JobRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private logger: PinoLogger
   ) {}
 
   async execute(command: TriggerEventCommand) {
+    const mark = this.performanceService.buildTriggerEventMark(command.identifier, command.transactionId);
+
     const { actor, environmentId, identifier, organizationId, to, userId } = command;
 
     await this.validateTransactionIdProperty(command.transactionId, organizationId, environmentId);
@@ -37,6 +46,12 @@ export class TriggerEvent {
       data: {
         triggerIdentifier: identifier,
       },
+    });
+
+    this.logger.assign({
+      transactionId: command.transactionId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
     });
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
@@ -61,7 +76,7 @@ export class TriggerEvent {
       template
     );
 
-    const subscribersJobs: Omit<JobEntity, '_id'>[][] = [];
+    const subscribersJobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[][] = [];
 
     // We might have a single actor for every trigger so we only need to check for it once
     let actorProcessed;
@@ -117,6 +132,8 @@ export class TriggerEvent {
       });
       await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
     }
+
+    this.performanceService.setEnd(mark);
   }
 
   private async validateTransactionIdProperty(

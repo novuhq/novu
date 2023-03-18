@@ -11,7 +11,7 @@ export class TriggerEventToAll {
 
   public async execute(command: TriggerEventToAllCommand) {
     const batchSize = 500;
-    let list = [];
+    let list: SubscriberEntity[] = [];
 
     for await (const subscriber of this.subscriberRepository.findBatch(
       {
@@ -21,7 +21,7 @@ export class TriggerEventToAll {
       'subscriberId',
       {},
       batchSize
-    ) as any) {
+    )) {
       list.push(subscriber);
       if (list.length === batchSize) {
         await this.trigger(command, list);

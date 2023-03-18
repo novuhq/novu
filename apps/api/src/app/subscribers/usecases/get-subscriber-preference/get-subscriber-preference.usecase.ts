@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   MessageTemplateRepository,
   NotificationTemplateRepository,
@@ -29,16 +29,19 @@ export class GetSubscriberPreference {
 
   async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
     const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
+
     const templateList = await this.notificationTemplateRepository.getActiveList(
       command.organizationId,
       command.environmentId,
       true
     );
 
-    this.analyticsService.track('Fetch User Preferences - [Notification Center]', admin?._userId, {
-      _organization: command.organizationId,
-      templatesSize: templateList.length,
-    });
+    if (admin) {
+      this.analyticsService.track('Fetch User Preferences - [Notification Center]', admin._userId, {
+        _organization: command.organizationId,
+        templatesSize: templateList.length,
+      });
+    }
 
     return await Promise.all(templateList.map(async (template) => this.getTemplatePreference(template, command)));
   }

@@ -9,6 +9,7 @@ import {
   Put,
   UseGuards,
   UseInterceptors,
+  Logger,
 } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';

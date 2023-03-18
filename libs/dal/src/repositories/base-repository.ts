@@ -77,7 +77,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
       })
       .batchSize(batchSize)
       .cursor()) {
-      yield this.mapEntities(doc);
+      yield this.mapEntity(doc);
     }
   }
 
@@ -86,6 +86,20 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     const saved = await newEntity.save();
 
     return this.mapEntity(saved);
+  }
+
+  async insertMany(
+    data: FilterQuery<T_DBModel> & T_Enforcement[]
+  ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: Types.ObjectId[] }> {
+    const result = await this.MongooseModel.insertMany(data, { ordered: false });
+
+    const insertedIds = result.map((inserted) => inserted._id);
+
+    return {
+      acknowledged: true,
+      insertedCount: result.length,
+      insertedIds,
+    };
   }
 
   async update(

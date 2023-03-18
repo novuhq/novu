@@ -1,10 +1,12 @@
 import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { subYears, subMonths, subWeeks } from 'date-fns';
 
 import { BaseRepository } from '../base-repository';
 import { NotificationEntity, NotificationDBModel } from './notification.entity';
 import { Notification } from './notification.schema';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { EnvironmentId } from '../environment';
 
 export class NotificationRepository extends BaseRepository<
   NotificationDBModel,
@@ -25,8 +27,8 @@ export class NotificationRepository extends BaseRepository<
   async getFeed(
     environmentId: string,
     query: {
-      channels?: ChannelTypeEnum[];
-      templates?: string[];
+      channels?: ChannelTypeEnum[] | null;
+      templates?: string[] | null;
       subscriberIds?: string[];
       transactionId?: string;
     } = {},
@@ -130,5 +132,39 @@ export class NotificationRepository extends BaseRepository<
       },
       { $sort: { _id: -1 } },
     ]);
+  }
+
+  async getStats(environmentId: EnvironmentId): Promise<{ weekly: number; monthly: number; yearly: number }> {
+    const now: number = Date.now();
+    const yearBefore = subYears(now, 1);
+    const monthBefore = subMonths(now, 1);
+    const weekBefore = subWeeks(now, 1);
+
+    const result = await this.aggregate([
+      {
+        $match: {
+          _environmentId: this.convertStringToObjectId(environmentId),
+          createdAt: {
+            $gte: yearBefore,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          weekly: { $sum: { $cond: [{ $gte: ['$createdAt', weekBefore] }, 1, 0] } },
+          monthly: { $sum: { $cond: [{ $gte: ['$createdAt', monthBefore] }, 1, 0] } },
+          yearly: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const stats = result[0] || {};
+
+    return {
+      weekly: stats.weekly || 0,
+      monthly: stats.monthly || 0,
+      yearly: stats.yearly || 0,
+    };
   }
 }

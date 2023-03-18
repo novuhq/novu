@@ -7,7 +7,7 @@ import { FieldErrors, useFormContext } from 'react-hook-form';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
 import type { IForm } from '../components/formTypes';
-import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
+import WorkflowEditor from '../workflow/WorkflowEditor';
 import { TemplateEditor } from '../components/TemplateEditor';
 import { TemplateSettings } from '../components/TemplateSettings';
 import { TemplatePageHeader } from '../components/TemplatePageHeader';
@@ -20,22 +20,13 @@ import { TestWorkflowModal } from '../components/TestWorkflowModal';
 import { SaveChangesModal } from '../components/SaveChangesModal';
 import { ExecutionDetailsModalWrapper } from '../components/ExecutionDetailsModalWrapper';
 import { BlueprintModal } from '../components/BlueprintModal';
-import { useTemplateEditor } from '../components/TemplateEditorProvider';
+import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 import { errorMessage } from '../../../utils/notifications';
 import { getExplicitErrors } from '../shared/errors';
 import { ROUTES } from '../../../constants/routes.enum';
-
-export enum ActivePageEnum {
-  SETTINGS = 'Settings',
-  WORKFLOW = 'Workflow',
-  USER_PREFERENCE = 'UserPreference',
-  SMS = 'Sms',
-  EMAIL = 'Email',
-  IN_APP = 'in_app',
-  PUSH = 'Push',
-  CHAT = 'Chat',
-  TRIGGER_SNIPPET = 'TriggerSnippet',
-}
+import { ActivePageEnum } from '../../../constants/editorEnums';
+import { useTemplateEditorContext } from './TemplateEditorProvider';
+import { TourProvider } from './TourProvider';
 
 export const EditorPages = [
   ActivePageEnum.CHAT,
@@ -51,13 +42,11 @@ export default function TemplateEditorPage() {
   const location = useLocation();
   const { readonly, environment } = useEnvController();
   const [transactionId, setTransactionId] = useState<string>('');
-  const [activeStep, setActiveStep] = useState<number>(-1);
-  const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.SETTINGS);
   const [isTriggerModalVisible, setTriggerModalVisible] = useState(false);
   const onTriggerModalDismiss = () => {
     navigate('/templates');
   };
-  const { loading: isIntegrationsLoading } = useActiveIntegrations();
+  const { isLoading: isIntegrationsLoading } = useActiveIntegrations();
   const {
     template,
     isLoading,
@@ -69,7 +58,8 @@ export default function TemplateEditorPage() {
     onSubmit,
     addStep,
     deleteStep,
-  } = useTemplateEditor();
+  } = useTemplateEditorForm();
+  const { activePage, setActivePage, activeStepIndex } = useTemplateEditorContext();
   const methods = useFormContext<IForm>();
   const {
     formState: { isDirty },
@@ -149,6 +139,7 @@ export default function TemplateEditorPage() {
 
   return (
     <>
+      <TourProvider />
       <PageContainer>
         <PageMeta title={editMode ? template?.name : 'Create Template'} />
         <form
@@ -174,10 +165,8 @@ export default function TemplateEditorPage() {
 
           {activePage === ActivePageEnum.WORKFLOW && (
             <ReactFlowProvider>
-              <WorkflowEditorPage
+              <WorkflowEditor
                 activePage={activePage}
-                activeStep={activeStep}
-                setActiveStep={setActiveStep}
                 templateId={templateId}
                 setActivePage={setActivePage}
                 onTestWorkflowClicked={onTestWorkflowClicked}
@@ -193,7 +182,7 @@ export default function TemplateEditorPage() {
             <UserPreference activePage={activePage} setActivePage={setActivePage} />
           </When>
           {!isLoading && !isIntegrationsLoading ? (
-            <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
+            <TemplateEditor activeStepIndex={activeStepIndex} activePage={activePage} />
           ) : null}
           {trigger && (
             <TemplateTriggerModal

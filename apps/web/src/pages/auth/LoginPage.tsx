@@ -56,7 +56,7 @@ export default function LoginPage() {
           source: 'cli',
         });
         setToken(token);
-        navigate(ROUTES.QUICKSTART);
+        navigate(ROUTES.GET_STARTED);
 
         return;
       }

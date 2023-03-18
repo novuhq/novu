@@ -12,21 +12,32 @@ import {
   FilterPartTypeEnum,
   ICondition,
   TimeOperatorEnum,
+  ChannelTypeEnum,
+  IPreviousStepFilterPart,
+  PreviousStepTypeEnum,
 } from '@novu/shared';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { SubscriberEntity, EnvironmentRepository, SubscriberRepository, StepFilter } from '@novu/dal';
+import {
+  SubscriberEntity,
+  EnvironmentRepository,
+  SubscriberRepository,
+  StepFilter,
+  ExecutionDetailsRepository,
+  MessageRepository,
+  JobRepository,
+  MessageEntity,
+} from '@novu/dal';
 
 import { IFilterVariables } from './types';
 import { FilterProcessingDetails } from './filter-processing-details';
-
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details';
 import { SendMessageCommand } from '../send-message/send-message.command';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
-import {
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
 import { createHash } from '../../../shared/helpers/hmac.service';
+import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details';
+import { EmailEventStatusEnum } from '@novu/stateless';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { DetailEnum } from '../../../execution-details/types';
 
 const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: TimeOperatorEnum) => {
   if (timeOperator === TimeOperatorEnum.MINUTES) {
@@ -45,7 +56,10 @@ export class MessageMatcher {
   constructor(
     private subscriberRepository: SubscriberRepository,
     private createExecutionDetails: CreateExecutionDetails,
-    private environmentRepository: EnvironmentRepository
+    private environmentRepository: EnvironmentRepository,
+    private executionDetailsRepository: ExecutionDetailsRepository,
+    private messageRepository: MessageRepository,
+    private jobRepository: JobRepository
   ) {}
 
   public async filter(
@@ -225,6 +239,84 @@ export class MessageMatcher {
     ));
   }
 
+  private async processPreviousStep(
+    filter: IPreviousStepFilterPart,
+    command: SendMessageCommand,
+    filterProcessingDetails: FilterProcessingDetails
+  ): Promise<boolean> {
+    const job = await this.jobRepository.findOne({
+      transactionId: command.transactionId,
+      _subscriberId: command.subscriberId,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      'step.uuid': filter.step,
+    });
+
+    if (!job) {
+      return true;
+    }
+
+    const message = await this.messageRepository.findOne({
+      _jobId: job._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      _subscriberId: command.subscriberId,
+      transactionId: command.transactionId,
+    });
+
+    if (!message) {
+      return true;
+    }
+
+    const label = FILTER_TO_LABEL[filter.on];
+    const field = filter.stepType;
+    const expected = 'true';
+    const operator = 'EQUAL';
+
+    if (message?.channel === ChannelTypeEnum.EMAIL) {
+      const count = await this.executionDetailsRepository.count({
+        _jobId: command.job._parentId,
+        _messageId: message._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        webhookStatus: EmailEventStatusEnum.OPENED,
+      });
+
+      const passed = [PreviousStepTypeEnum.UNREAD, PreviousStepTypeEnum.UNSEEN].includes(filter.stepType)
+        ? count === 0
+        : count > 0;
+
+      filterProcessingDetails.addCondition({
+        filter: label,
+        field,
+        expected,
+        actual: `${passed}`,
+        operator,
+        passed,
+      });
+
+      return passed;
+    }
+
+    const value = [PreviousStepTypeEnum.SEEN, PreviousStepTypeEnum.UNSEEN].includes(filter.stepType)
+      ? message.seen
+      : message.read;
+    const passed = [PreviousStepTypeEnum.UNREAD, PreviousStepTypeEnum.UNSEEN].includes(filter.stepType)
+      ? value === false
+      : value;
+
+    filterProcessingDetails.addCondition({
+      filter: label,
+      field,
+      expected,
+      actual: `${passed}`,
+      operator,
+      passed,
+    });
+
+    return passed;
+  }
+
   private async processIsOnline(
     filter: IRealtimeOnlineFilterPart | IOnlineInLastFilterPart,
     command: SendMessageCommand,
@@ -368,7 +460,7 @@ export class MessageMatcher {
     if (process.env.NODE_ENV === 'test') return variables;
 
     const payload: Partial<{
-      subscriber: SubscriberEntity;
+      subscriber: SubscriberEntity | null;
       payload: Record<string, unknown>;
       identifier: string;
       channel: string;
@@ -405,6 +497,7 @@ export class MessageMatcher {
       _id: command.environmentId,
       _organizationId: command.organizationId,
     });
+    if (!environment) throw new ApiException('Environment is not found');
 
     return createHash(environment.apiKeys[0].key, command.environmentId);
   }
@@ -428,6 +521,10 @@ export class MessageMatcher {
 
     if (child.on === FilterPartTypeEnum.IS_ONLINE || child.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {
       passed = await this.processIsOnline(child, command, filterProcessingDetails);
+    }
+
+    if (child.on === FilterPartTypeEnum.PREVIOUS_STEP) {
+      passed = await this.processPreviousStep(child, command, filterProcessingDetails);
     }
 
     return passed;

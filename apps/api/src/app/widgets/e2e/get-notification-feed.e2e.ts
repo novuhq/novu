@@ -23,16 +23,16 @@ describe('GET /widget/notifications/feed', function () {
       noFeedId: true,
     });
 
-    const { body } = await session.testAgent
-      .post('/v1/widgets/session/initialize')
-      .send({
-        applicationIdentifier: session.environment.identifier,
-        subscriberId,
-        firstName: 'Test',
-        lastName: 'User',
-        email: 'test@example.com',
-      })
-      .expect(201);
+    const { body } = await session.testAgent.post('/v1/widgets/session/initialize').send({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId,
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@example.com',
+    });
+
+    expect(body).to.be.ok;
+    expect(body.data).to.be.ok;
 
     const { token, profile } = body.data;
 

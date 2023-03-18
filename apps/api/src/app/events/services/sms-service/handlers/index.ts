@@ -9,3 +9,5 @@ export * from './gupshup.handler';
 export * from './firetext.handler';
 export * from './infobip.handler';
 export * from './burst-sms.handler';
+export * from './forty-six-elks.handler';
+export * from './kannel.handler';

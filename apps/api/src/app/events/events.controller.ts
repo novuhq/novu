@@ -11,6 +11,7 @@ import {
   TriggerEventResponseDto,
   TriggerEventToAllRequestDto,
 } from './dtos';
+import { EventsPerformanceService } from './services/performance-service';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
 import { SendMessageCommand, SendTestEmail, SendTestEmailCommand } from './usecases/send-message';
 import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
@@ -34,7 +35,8 @@ export class EventsController {
     private triggerEventToAll: TriggerEventToAll,
     private sendTestEmail: SendTestEmail,
     private parseEventRequest: ParseEventRequest,
-    private processBulkTriggerUsecase: ProcessBulkTrigger
+    private processBulkTriggerUsecase: ProcessBulkTrigger,
+    protected performanceService: EventsPerformanceService
   ) {}
 
   @ExternalApiAccessible()
@@ -64,6 +66,8 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
+    const mark = this.performanceService.buildEndpointTriggerEventMark(body.transactionId as string);
+
     const result = await this.parseEventRequest.execute(
       ParseEventRequestCommand.create({
         userId: user._id,
@@ -77,6 +81,8 @@ export class EventsController {
         transactionId: body.transactionId,
       })
     );
+
+    this.performanceService.setEnd(mark);
 
     return result as unknown as TriggerEventResponseDto;
   }

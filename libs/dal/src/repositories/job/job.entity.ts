@@ -7,6 +7,7 @@ import type { OrganizationId } from '../organization';
 import type { ChangePropsValueType } from '../../types/helpers';
 
 export { JobStatusEnum };
+
 export class JobEntity {
   _id: string;
   identifier: string;
@@ -27,8 +28,8 @@ export class JobEntity {
   status: JobStatusEnum;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error?: any;
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
   _templateId: string;
   digest?: {
     events?: any[];
