@@ -10,7 +10,6 @@ import { DigestNode } from './DigestNode';
 import { EmailNode } from './EmailNode';
 import { useTemplateFetcher } from '../../api/hooks';
 import { DigestDemoFlowProvider } from './DigestDemoFlowProvider';
-import { DotsHorizontal } from '../../design-system/icons';
 
 export function DigestDemoFlow({
   isReadOnly = true,
