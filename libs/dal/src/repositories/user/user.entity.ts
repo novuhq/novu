@@ -9,6 +9,7 @@ export interface IUserToken {
   accessToken: string;
   refreshToken: string;
   valid: boolean;
+  username?: string;
 }
 
 export interface IUserResetTokenCount {
