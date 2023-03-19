@@ -95,6 +95,40 @@ describe('Create Integration - /integration (POST)', function () {
     expect(firstIntegration.active).to.equal(false);
     expect(secondIntegration.active).to.equal(true);
   });
+
+  it('should create custom SMTP integration with TLS options successfully', async function () {
+    const payload = {
+      providerId: 'nodemailer',
+      channel: 'email',
+      credentials: {
+        host: 'smtp.example.com',
+        port: '587',
+        secure: 'true',
+        requireTls: 'true',
+        tlsOptions: JSON.stringify({ rejectUnauthorized: false }),
+      },
+      active: true,
+      check: false,
+    };
+
+    const environmentId = (await session.testAgent.get(`/v1/integrations`)).body.data[0]._environmentId;
+
+    await session.testAgent.post('/v1/integrations').send(payload);
+
+    const integrations = await integrationRepository.findByEnvironmentId(environmentId);
+
+    const sendGridIntegration = integrations.find((i) => i.providerId.toString() === 'sendgrid');
+    const nodeMailerIntegration = integrations.find((i) => i.providerId.toString() === 'nodemailer');
+
+    expect(sendGridIntegration?.active).to.equal(false);
+    expect(nodeMailerIntegration?.credentials?.host).to.equal(payload.credentials.host);
+    expect(nodeMailerIntegration?.credentials?.port).to.equal(payload.credentials.port);
+    expect(nodeMailerIntegration?.credentials?.secure).to.equal(payload.credentials.secure);
+    expect(nodeMailerIntegration?.credentials?.requireTls).to.equal(payload.credentials.requireTls);
+    expect(nodeMailerIntegration?.credentials?.tlsOptions).to.equal(payload.credentials.tlsOptions);
+    expect(nodeMailerIntegration?.active).to.equal(true);
+  });
+  
 });
 
 async function insertIntegrationTwice(
