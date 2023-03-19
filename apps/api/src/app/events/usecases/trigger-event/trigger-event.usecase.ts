@@ -19,6 +19,8 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
+import { PinoLogger } from '@novu/application-generic';
+
 @Injectable()
 export class TriggerEvent {
   constructor(
@@ -28,7 +30,8 @@ export class TriggerEvent {
     private getDecryptedIntegrations: GetDecryptedIntegrations,
     protected performanceService: EventsPerformanceService,
     private jobRepository: JobRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private logger: PinoLogger
   ) {}
 
   async execute(command: TriggerEventCommand) {
@@ -43,6 +46,12 @@ export class TriggerEvent {
       data: {
         triggerIdentifier: identifier,
       },
+    });
+
+    this.logger.assign({
+      transactionId: command.transactionId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
     });
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(

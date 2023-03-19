@@ -1,24 +1,27 @@
-import { ChannelTypeEnum } from '@novu/shared';
 import React, { memo, useEffect, useState } from 'react';
 import { Handle, Position, getOutgoers, useReactFlow, useNodes } from 'react-flow-renderer';
-import { ChannelButton } from '../../../../../design-system';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+
+import { WorkflowNode } from './WorkflowNode';
+import { useTemplateEditorContext } from '../../../editor/TemplateEditorProvider';
 
 interface NodeData {
   Icon: React.FC<any>;
   description: string;
   label: string;
-  tabKey: string;
+  tabKey: ChannelTypeEnum;
   index: number;
   testId: string;
   onDelete: (id: string) => void;
   error: string;
   setActivePage: (string) => void;
   active?: boolean;
-  channelType: ChannelTypeEnum;
+  channelType: StepTypeEnum;
 }
 
 export default memo(
   ({ data, selected, id, dragging }: { data: NodeData; selected: boolean; id: string; dragging: boolean }) => {
+    const { selectedNodeId } = useTemplateEditorContext();
     const { getNode, getEdges, getNodes } = useReactFlow();
     const nodes = useNodes<NodeData>();
     const thisNode = getNode(id);
@@ -27,7 +30,7 @@ export default memo(
     const [count, setCount] = useState(0);
 
     useEffect(() => {
-      if (![ChannelTypeEnum.EMAIL, ChannelTypeEnum.IN_APP].includes(data.channelType)) {
+      if (![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(data.channelType)) {
         setCount(0);
 
         return;
@@ -58,14 +61,15 @@ export default memo(
 
     return (
       <div data-test-id={`node-${data.testId}`} style={{ pointerEvents: 'none' }}>
-        <ChannelButton
+        <WorkflowNode
           setActivePage={data.setActivePage}
           errors={data.error}
           onDelete={data.onDelete}
           tabKey={data.tabKey}
+          channelType={data.channelType}
           Icon={data.Icon}
           label={data.label + (count > 0 ? ` (${count})` : '')}
-          active={selected}
+          active={id === selectedNodeId}
           disabled={!data.active}
           id={id}
           index={data.index}

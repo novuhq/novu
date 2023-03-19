@@ -30,7 +30,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
   });
 
   const { data: organizationMembers } = useQuery<any[]>(['getOrganizationMembers'], getOrganizationMembers);
-  const { enabled } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const { isLimitFetchingEnabled } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
 
   const [sendTo, setSendTo] = useState<string[]>(currentUser?.email ? [currentUser?.email] : []);
   const [membersEmails, setMembersEmails] = useState<string[]>([currentUser?.email || '']);
@@ -131,7 +131,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
           loading={isLoading}
           icon={<Invite />}
           data-test-id="test-send-email-btn"
-          disabled={!isIntegrationActive && !enabled}
+          disabled={!isIntegrationActive && !isLimitFetchingEnabled}
           onClick={() => onTestEmail()}
         >
           Send Test Email

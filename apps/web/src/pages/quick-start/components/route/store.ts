@@ -1,3 +1,5 @@
+import { ROUTES } from '../../../../constants/routes.enum';
+
 export function localNavigate() {
   const localStorageRouteStack = 'localStorageRouteStack';
 
@@ -12,6 +14,10 @@ export function localNavigate() {
   }
 
   function push(location: string) {
+    const isGetStartedFlow = location?.includes(ROUTES.GET_STARTED) || location?.includes(ROUTES.QUICKSTART);
+
+    if (!location || !isGetStartedFlow) return;
+
     const routeStack = localGet();
 
     if (!routeStack) {
@@ -51,6 +57,10 @@ export function localNavigate() {
     return stack.at(-1);
   }
 
+  function length() {
+    return localGet()?.length ?? 0;
+  }
+
   function normalizeRouteStack(routeStack: string[], index: number) {
     if (routeStack.length === index + 1) return;
 
@@ -59,5 +69,17 @@ export function localNavigate() {
     localSet(res);
   }
 
-  return { push, pop, peek };
+  function normalizeOldOnboarding() {
+    const stack = localGet();
+
+    if (!stack) return;
+
+    const oldOnboarding = stack[0]?.startsWith(ROUTES.QUICKSTART);
+
+    if (oldOnboarding) {
+      localSet([ROUTES.GET_STARTED]);
+    }
+  }
+
+  return { push, pop, peek, length, normalizeOldOnboarding };
 }

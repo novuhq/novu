@@ -20,6 +20,7 @@ import {
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
 import { BullmqService } from '@novu/application-generic';
+import { PinoLogger, storage, Store } from '@novu/application-generic';
 
 export const WORKER_NAME = 'standard';
 
@@ -91,14 +92,21 @@ export class WorkflowQueueService {
 
   private getWorkerProcessor() {
     return async ({ data }: { data: JobEntity }) => {
-      return await this.runJob.execute(
-        RunJobCommand.create({
-          jobId: data._id,
-          environmentId: data._environmentId,
-          organizationId: data._organizationId,
-          userId: data._userId,
-        })
-      );
+      return await new Promise(async (resolve, reject) => {
+        storage.run(new Store(PinoLogger.root), () => {
+          this.runJob
+            .execute(
+              RunJobCommand.create({
+                jobId: data._id,
+                environmentId: data._environmentId,
+                organizationId: data._organizationId,
+                userId: data._userId,
+              })
+            )
+            .then(resolve)
+            .catch(reject);
+        });
+      });
     };
   }
 

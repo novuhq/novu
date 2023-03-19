@@ -3,12 +3,13 @@ import 'newrelic';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
 import { RedisIoAdapter } from './shared/framework/redis.adapter';
-import { version } from '../package.json';
 
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
 import helmet from 'helmet';
 import { BullmqService } from '@novu/application-generic';
+import { version } from '../package.json';
+import { getErrorInterceptor, Logger } from '@novu/application-generic';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -20,8 +21,13 @@ if (process.env.SENTRY_DSN) {
 
 export async function bootstrap() {
   BullmqService.haveProInstalled();
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
   const redisIoAdapter = new RedisIoAdapter(app);
+
+  app.useLogger(app.get(Logger));
+  app.flushLogs();
+
+  app.useGlobalInterceptors(getErrorInterceptor());
 
   app.setGlobalPrefix(CONTEXT_PATH);
 

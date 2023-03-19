@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { QueueBaseOptions } from 'bullmq';
 import { getRedisPrefix } from '@novu/shared';
 import { ConnectionOptions } from 'tls';
+import { PinoLogger, storage, Store } from '@novu/application-generic';
 
 import { TriggerEvent, TriggerEventCommand } from '../../usecases/trigger-event';
 import { BullmqService } from '@novu/application-generic';
@@ -46,7 +47,11 @@ export class TriggerHandlerQueueService {
 
   public getWorkerProcessor() {
     return async ({ data }: { data: TriggerEventCommand }) => {
-      return this.triggerEventUsecase.execute(data);
+      return await new Promise(async (resolve, reject) => {
+        storage.run(new Store(PinoLogger.root), () => {
+          this.triggerEventUsecase.execute(data).then(resolve).catch(reject);
+        });
+      });
     };
   }
 
