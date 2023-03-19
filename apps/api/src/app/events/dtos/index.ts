@@ -1,3 +1,4 @@
+export * from './event-job.dto';
 export * from './test-email-request.dto';
 export * from './trigger-event-response.dto';
 export * from './trigger-event-request.dto';
