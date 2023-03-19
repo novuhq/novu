@@ -35,8 +35,8 @@ function BodyNavigation() {
   function handleClick(step: 'first' | 'second') {
     const eventAction =
       step === 'first'
-        ? OnBoardingAnalyticsEnum.GET_STARTED_NAVIGATION_CLICK_CONFIGURE_PROVIDER
-        : OnBoardingAnalyticsEnum.GET_STARTED_NAVIGATION_CLICK_BUILD_WORKFLOW;
+        ? OnBoardingAnalyticsEnum.NAVIGATION_CONFIGURE_PROVIDER_CLICK
+        : OnBoardingAnalyticsEnum.NAVIGATION_BUILD_WORKFLOW_CLICK;
     segment.track(eventAction);
 
     navigate(getStartedSteps[step]);

@@ -39,10 +39,10 @@ export function NodeStep({
       ? 'blue'
       : 'red';
 
-  const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
-
   function onUrlClickHandler() {
-    segment.track(`${OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK} On ${capitalizedLabel}`);
+    segment.track(`${OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK}`, {
+      channel: label,
+    });
   }
 
   useEffect(() => {

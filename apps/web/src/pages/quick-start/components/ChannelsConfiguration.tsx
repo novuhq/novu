@@ -2,7 +2,7 @@ import { Dispatch } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Grid } from '@mantine/core';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 
 import { IQuickStartChannelConfiguration, OnBoardingAnalyticsEnum, quickStartChannels } from '../consts';
 import { When } from '../../../components/utils/When';
@@ -10,6 +10,7 @@ import { ActiveLabel } from '../../../design-system/icons/general/ActiveLabel';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useActiveIntegrations, useIntegrationLimit } from '../../../hooks';
 import { Button, colors } from '../../../design-system';
+import { IntegrationEntity } from '../../integrations/IntegrationsStorePage';
 
 export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel: Dispatch<any> }) {
   const segment = useSegment();
@@ -17,20 +18,30 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
   const { integrations } = useActiveIntegrations();
   const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
 
-  function trackClick(channel: IQuickStartChannelConfiguration, integrationStatus: boolean) {
-    const eventAction = integrationStatus
-      ? OnBoardingAnalyticsEnum.CHANGE_PROVIDER_CLICK
-      : OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_CLICK;
+  function trackClick(channel: IQuickStartChannelConfiguration, integrationActive: boolean) {
+    if (integrationActive) {
+      let providerId = getActiveIntegration(integrations, channel)?.providerId;
 
-    segment.track(eventAction, { channel: channel.type });
+      if (channel.type === ChannelTypeEnum.EMAIL && !providerId) {
+        providerId = InAppProviderIdEnum.Novu;
+      }
+
+      segment.track(OnBoardingAnalyticsEnum.UPDATE_PROVIDER_CLICK, {
+        channel: channel.type,
+        provider: providerId,
+      });
+    } else {
+      segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_CLICK, {
+        channel: channel.type,
+      });
+    }
   }
 
   return (
     <Grid style={{ maxWidth: '850px' }}>
       {quickStartChannels.map((channel, index) => {
         const Icon = channel.Icon;
-
-        let isIntegrationActive = !!integrations?.some((integration) => integration.channel === channel.type);
+        let isIntegrationActive = !!getActiveIntegration(integrations, channel);
         if (channel.type === ChannelTypeEnum.EMAIL) {
           isIntegrationActive = isIntegrationActive || !isLimitReached;
         }
@@ -70,6 +81,10 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
       })}
     </Grid>
   );
+}
+
+function getActiveIntegration(integrations: IntegrationEntity[] | undefined, channel: IQuickStartChannelConfiguration) {
+  return integrations?.find((integration) => integration.channel === channel.type);
 }
 
 const IconContainer = styled.div`

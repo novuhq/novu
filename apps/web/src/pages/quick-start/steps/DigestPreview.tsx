@@ -20,7 +20,7 @@ export function DigestPreview() {
   const segment = useSegment();
 
   useEffect(() => {
-    segment.track(OnBoardingAnalyticsEnum.BUILD_NOTIFICATION_WORKFLOW_VISIT);
+    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_VISIT);
   }, []);
 
   return (
@@ -50,7 +50,7 @@ function FooterLeftSide() {
   const gradientColor = theme.colorScheme === 'dark' ? 'none' : 'red';
 
   function handleOnClick() {
-    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NAVIGATION_CLICK_PREVIOUS_PAGE);
+    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_PREVIOUS_PAGE_CLICK);
   }
 
   return (
@@ -66,11 +66,11 @@ function FooterRightSide() {
   const { createDigestDemoWorkflow, isLoading: isCreating } = useCreateDigestDemoWorkflow();
 
   function handlerBuildWorkflowClick() {
-    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NAVIGATION_CLICK_BUILD_WORKFLOW);
+    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_CLICK);
   }
 
   function handlerTryDigestClick() {
-    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NAVIGATION_CLICK_TRY_DIGEST);
+    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_TRY_DIGEST_PLAYGROUND_CLICK);
     createDigestDemoWorkflow();
   }
 

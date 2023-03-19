@@ -36,7 +36,7 @@ export function GetStarted() {
   }, []);
 
   function handleOnClick() {
-    segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_NAVIGATION_CLICK_NEXT_PAGE);
+    segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_NAVIGATION_NEXT_PAGE_CLICK);
   }
 
   return (
