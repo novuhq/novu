@@ -51,6 +51,7 @@ export function DigestDemoFlow({
             zoomOnPinch={false}
             panOnDrag={false}
             panOnScroll={false}
+            preventScrolling={false}
           />
         )}
       </Wrapper>
