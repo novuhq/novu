@@ -46,7 +46,7 @@ export const TemplatesDigestPlaygroundPage = () => {
   };
 
   const handleRunTriggerClick = () => {
-    segment.track(DigestPlaygroundAnalyticsEnum.RUN_TRIGGER_CLICK_CLICK);
+    segment.track(DigestPlaygroundAnalyticsEnum.RUN_TRIGGER_CLICK);
   };
 
   const handleDigestIntervalChange = (interval: number) => {

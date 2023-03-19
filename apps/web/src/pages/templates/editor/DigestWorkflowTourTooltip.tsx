@@ -11,7 +11,7 @@ import { Clock, LetterOpened, BellWithNotification } from '../../../design-syste
 import { useTemplateEditorContext } from './TemplateEditorProvider';
 import { IForm } from '../components/formTypes';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { DigestWorkflowTourAnalyticsEnum } from '../constants';
+import { DigestWorkflowTourAnalyticsEnum, HINT_INDEX_TO_CLICK_ANALYTICS, ordinalNumbers } from '../constants';
 
 const ICONS = [Clock, LetterOpened, BellWithNotification];
 const TITLE = ['Set-up time interval', 'Set-up email content', 'Test your workflow'];
@@ -55,26 +55,9 @@ const DotsNavigationStyled = styled(DotsNavigation)`
   align-self: center;
 `;
 
-const HINT_INDEX_TO_CLICK_ANALYTICS = {
-  0: DigestWorkflowTourAnalyticsEnum.FIRST_HINT_NEXT_CLICK,
-  1: DigestWorkflowTourAnalyticsEnum.SECOND_HINT_NEXT_CLICK,
-  2: DigestWorkflowTourAnalyticsEnum.THIRD_HINT_GOT_IT_CLICK,
-};
-
-const HINT_INDEX_TO_SKIP_ANALYTICS = {
-  0: DigestWorkflowTourAnalyticsEnum.FIRST_HINT_SKIP_TOUR_CLICK,
-  1: DigestWorkflowTourAnalyticsEnum.SECOND_HINT_SKIP_TOUR_CLICK,
-};
-
-const HINT_INDEX_TO_NAVIGATION_ANALYTICS = {
-  0: DigestWorkflowTourAnalyticsEnum.NAVIGATE_TO_FIRST_HINT_CLICK,
-  1: DigestWorkflowTourAnalyticsEnum.NAVIGATE_TO_SECOND_HINT_CLICK,
-  2: DigestWorkflowTourAnalyticsEnum.NAVIGATE_TO_THIRD_HINT_CLICK,
-};
-
 const getAnalyticsEvent = (index: number, isFromNavigation: boolean): string | undefined => {
   if (isFromNavigation) {
-    return HINT_INDEX_TO_NAVIGATION_ANALYTICS[index];
+    return DigestWorkflowTourAnalyticsEnum.NAVIGATE_HINT_CLICK;
   }
 
   return HINT_INDEX_TO_CLICK_ANALYTICS[index];
@@ -111,9 +94,11 @@ export const DigestWorkflowTourTooltip = ({
       setSelectedNodeId('');
     }
 
-    const analyticsEvent = getAnalyticsEvent(isFromNavigation ? tourStepIndex : index, isFromNavigation);
+    const stepIndex = isFromNavigation ? tourStepIndex : index;
+    const analyticsEvent = getAnalyticsEvent(stepIndex, isFromNavigation);
+
     if (analyticsEvent) {
-      segment.track(analyticsEvent);
+      segment.track(analyticsEvent, { when: ordinalNumbers[stepIndex] });
     }
   };
 
@@ -126,10 +111,7 @@ export const DigestWorkflowTourTooltip = ({
   };
 
   const handleSkipClick = () => {
-    const analyticsEvent = HINT_INDEX_TO_SKIP_ANALYTICS[index];
-    if (analyticsEvent) {
-      segment.track(analyticsEvent);
-    }
+    segment.track(DigestWorkflowTourAnalyticsEnum.HINT_SKIP_TOUR_CLICK, { when: ordinalNumbers[index] });
     stopTourCallback();
   };
 
