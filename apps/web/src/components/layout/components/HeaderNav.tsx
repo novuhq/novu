@@ -46,6 +46,7 @@ export function HeaderNav({}: Props) {
             name: currentOrganization?.name,
             companyId: currentOrganization?._id as string,
           },
+          userHash: currentUser.servicesHashes?.intercom,
         });
       }
     }, [currentUser, currentOrganization]);
