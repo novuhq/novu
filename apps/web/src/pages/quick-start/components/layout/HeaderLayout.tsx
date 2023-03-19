@@ -29,12 +29,9 @@ export const HeaderSecondaryTitle = styled(Title)`
 
 const StyledHeader = styled.div`
   height: 160px;
+  padding: 60px;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
-
-  @media screen and (min-width: 1369px) {
-    height: 200px;
-  }
 `;

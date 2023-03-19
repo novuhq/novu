@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { Grid } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { DotsNavigation } from '../../../../design-system';
@@ -43,9 +42,8 @@ export function FooterLayout({ leftSide, rightSide }: IFooterLayoutProps) {
 const LeftSide = styled.div``;
 
 const MiddleSide = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: absolute;
+  left: 55%;
 `;
 
 const RightSide = styled.div`
@@ -55,7 +53,6 @@ const RightSide = styled.div`
 
 const FooterWrapper = styled.div`
   padding: 32px 40px;
-  height: 150px;
   display: flex;
   justify-content: space-between;
   align-items: center;
