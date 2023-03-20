@@ -82,7 +82,7 @@ export const guidePlayground: Record<string, IGuide> = {
   },
   email: {
     title: GuideTitleEnum.CHANNELS_PLAYGROUND,
-    description: 'As soon as the specified time runs out, it sends a precise notification',
+    description: 'As soon as the specified time runs out, we will send a digest email to: {{email}}',
     sequence: {
       1: { open: false, opacity: 0 },
       2: { open: false, opacity: 0 },

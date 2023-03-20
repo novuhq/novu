@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 export const Clock = (props: React.ComponentPropsWithoutRef<'svg'>) => {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 135 136" {...props}>

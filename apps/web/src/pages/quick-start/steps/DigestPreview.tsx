@@ -1,30 +1,26 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Center } from '@mantine/core';
 import styled from '@emotion/styled';
 import { ReactFlowProvider } from 'react-flow-renderer';
 
-import { useSegment } from '../../../components/providers/SegmentProvider';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 import { DigestDemoFlow } from '../../../components';
 import useStyles from '../components/OnboardingSteps.styles';
-import { localNavigate } from '../components/route/store';
 import { ArrowLeft } from '../../../design-system/icons';
-import { Button } from '../../../design-system';
 import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLeftGradient';
+import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
 import { Label } from '../../../design-system/typography/label';
-import { getStartedSteps } from '../consts';
 import { ROUTES } from '../../../constants/routes.enum';
 import { HeaderSecondaryTitle, HeaderTitle } from '../components/layout/HeaderLayout';
+import { NavButton } from '../components/NavButton';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useCreateDigestDemoWorkflow } from '../../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
+import { Button } from '../../../design-system';
 
 export function DigestPreview() {
   const segment = useSegment();
-  const { theme } = useStyles();
-  const gradientColor = theme.colorScheme === 'dark' ? 'none' : 'red';
 
   useEffect(() => {
-    // segment.track(OnBoardingAnalyticsEnum.QUICK_START_VISIT);
+    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_VISIT);
   }, []);
 
   return (
@@ -36,13 +32,8 @@ export function DigestPreview() {
         </>
       }
       footer={{
-        leftSide: (
-          <NavButton navigateTo={getStartedSteps.first}>
-            <ThemeArrowLeft style={{ marginRight: '10px' }} />
-            <Label gradientColor={gradientColor}>Previous</Label>
-          </NavButton>
-        ),
-        rightSide: <RightSide />,
+        leftSide: <FooterLeftSide />,
+        rightSide: <FooterRightSide />,
       }}
     >
       <DemoContainer>
@@ -53,21 +44,51 @@ export function DigestPreview() {
     </GetStartedLayout>
   );
 }
+function FooterLeftSide() {
+  const { theme } = useStyles();
+  const segment = useSegment();
+  const gradientColor = theme.colorScheme === 'dark' ? 'none' : 'red';
 
-function RightSide() {
+  function handleOnClick() {
+    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_PREVIOUS_PAGE_CLICK);
+  }
+
+  return (
+    <NavButton navigateTo={getStartedSteps.first} handleOnClick={handleOnClick}>
+      <ThemeArrowLeft style={{ marginRight: '10px' }} />
+      <Label gradientColor={gradientColor}>Previous</Label>
+    </NavButton>
+  );
+}
+
+function FooterRightSide() {
+  const segment = useSegment();
   const { createDigestDemoWorkflow, isLoading: isCreating } = useCreateDigestDemoWorkflow();
+
+  function handlerBuildWorkflowClick() {
+    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_CLICK);
+  }
+
+  function handlerTryDigestClick() {
+    segment.track(OnBoardingAnalyticsEnum.BUILD_WORKFLOW_TRY_DIGEST_PLAYGROUND_CLICK);
+    createDigestDemoWorkflow();
+  }
 
   return (
     <ButtonsHolder>
-      <NavButton navigateTo={ROUTES.TEMPLATES_CREATE}>
+      <NavButton navigateTo={ROUTES.TEMPLATES_CREATE} handleOnClick={handlerBuildWorkflowClick}>
         <ButtonText>Build a Workflow</ButtonText>
       </NavButton>
-      <StyledButton fullWidth pulse onClick={createDigestDemoWorkflow} loading={isCreating}>
+      <StyledButton fullWidth pulse onClick={handlerTryDigestClick} loading={isCreating}>
         <ButtonText>Try the Digest Playground</ButtonText>
       </StyledButton>
     </ButtonsHolder>
   );
 }
+
+const StyledButton = styled(Button)`
+  height: 50px;
+`;
 
 const DigestDemoFlowStyled = styled(DigestDemoFlow)`
   height: 400px;
@@ -94,43 +115,8 @@ const ButtonText = styled.div`
   font-size: 16px;
 `;
 
-export function NavButton({
-  pulse = false,
-  navigateTo,
-  variant,
-  children,
-  ...props
-}: {
-  pulse?: boolean;
-  navigateTo: string;
-  variant?: 'outline' | 'gradient';
-  children: React.ReactNode;
-} & React.HTMLAttributes<HTMLDivElement>) {
-  const navigate = useNavigate();
-
-  function handleOnClick() {
-    localNavigate().push(navigateTo);
-
-    if (navigateTo) {
-      navigate(navigateTo);
-    }
-  }
-
-  return (
-    <Center data-test-id="get-started-footer-left-side" inline onClick={handleOnClick} {...props}>
-      <StyledButton fullWidth variant={variant ?? 'outline'} pulse={pulse}>
-        <>{children}</>
-      </StyledButton>
-    </Center>
-  );
-}
-
 function ThemeArrowLeft(props: React.ComponentPropsWithoutRef<'svg'>) {
   const { theme } = useStyles();
 
   return <>{theme.colorScheme === 'dark' ? <ArrowLeft {...props} /> : <ArrowLeftGradient {...props} />}</>;
 }
-
-const StyledButton = styled(Button)`
-  height: 50px;
-`;
