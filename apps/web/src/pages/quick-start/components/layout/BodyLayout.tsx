@@ -8,6 +8,8 @@ import { localNavigate } from '../route/store';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../../consts';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 
+const BULLET_TOP_MARGIN = 20;
+
 export function BodyLayout({ children }: { children: React.ReactNode }) {
   return (
     <StyledBody>
@@ -49,6 +51,7 @@ function BodyNavigation() {
         lineWidth={2}
         styles={{
           itemBullet: {
+            marginTop: `${BULLET_TOP_MARGIN}px`,
             ['&[data-active][data-with-child]']: {
               color: 'inherit',
             },
@@ -74,7 +77,7 @@ function BodyNavigation() {
 
 const TimelineWrapper = styled.div`
   width: 100%;
-  padding: 0 0 0 40px;
+  padding: 0 0 0 60px;
 
   .mantine-Timeline-itemBullet {
     width: 34px;
@@ -86,8 +89,6 @@ const TimelineWrapper = styled.div`
   }
 
   @media screen and (min-width: 1369px) {
-    padding: 0 0 0 75px;
-
     .mantine-Timeline-itemBullet {
       width: 40px;
       height: 40px;
@@ -142,6 +143,8 @@ const StyledItem = styled(Timeline.Item)`
 
   &:before {
     left: -5px;
+    top: ${BULLET_TOP_MARGIN}px;
+    bottom: ${({ theme }) => `calc((${theme.spacing.xl}px + ${BULLET_TOP_MARGIN}px) * -1)`};
   }
 
   @media screen and (min-width: 1369px) {
