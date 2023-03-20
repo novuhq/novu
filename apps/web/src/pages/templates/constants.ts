@@ -3,6 +3,11 @@ export enum TemplateAnalyticsEnum {
   TRY_DIGEST_CLICK = '[Templates] Try Digest Click',
 }
 
+export enum TemplateEditorAnalyticsEnum {
+  CONFIGURE_PROVIDER_BANNER_CLICK = '[Template Editor] Configure Provider Banner Click',
+  CONFIGURE_PROVIDER_POPOVER_CLICK = '[Template Editor] Configure Provider Popover Click',
+}
+
 export enum DigestPlaygroundAnalyticsEnum {
   BACK_BUTTON_CLICK = '[Digest Playground] Back Button Click',
   SETUP_DIGEST_WORKFLOW_CLICK = '[Digest Playground] Set Up Digest Workflow Click',

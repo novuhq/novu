@@ -17,6 +17,8 @@ import { Check, Copy } from '../../../../design-system/icons';
 import { CONTEXT_PATH } from '../../../../config';
 import { successMessage } from '../../../../utils/notifications';
 import { QueryKeys } from '../../../../api/query.keys';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { IntegrationsStoreModalAnalytics } from '../../constants';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
@@ -108,6 +110,7 @@ export function ConnectIntegrationForm({
   onSuccessFormSubmit: () => void;
   onClose: () => void;
 }) {
+  const segment = useSegment();
   const alertRef = useRef<HTMLDivElement | null>(null);
   const {
     register,
@@ -192,11 +195,13 @@ export function ConnectIntegrationForm({
           active: isActive,
           check,
         });
+        segment.track(IntegrationsStoreModalAnalytics.CREATE_INTEGRATION_FORM_SUBMIT);
       } else {
         await updateIntegrationApi({
           integrationId: provider?.integrationId ? provider?.integrationId : '',
           data: { credentials, active: isActive, check },
         });
+        segment.track(IntegrationsStoreModalAnalytics.UPDATE_INTEGRATION_FORM_SUBMIT);
       }
       await queryClient.refetchQueries({
         predicate: ({ queryKey }) =>
