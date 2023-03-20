@@ -2,6 +2,7 @@ import { UserSession } from '@novu/testing';
 import {
   ChannelTypeEnum,
   EmailBlockTypeEnum,
+  EmailProviderIdEnum,
   INotificationTemplate,
   INotificationTemplateStep,
   StepTypeEnum,
@@ -14,19 +15,23 @@ import { SENDER_NAME, TEMPLATE_IDENTIFIER } from './constants';
 import { CreateNotificationTemplateRequestDto } from '../../app/notification-template/dto';
 import { MessageTemplate } from '../../app/shared/dtos/message-template';
 
+export const buildIdentifier = (providerId: EmailProviderIdEnum): string => `${TEMPLATE_IDENTIFIER}-${providerId}`;
+export const buildSenderName = (providerId: EmailProviderIdEnum): string => `${SENDER_NAME} through ${providerId}`;
+
 export const createRegressionNotificationTemplate = async (
   session: UserSession,
-  providerId: string
+  providerId: EmailProviderIdEnum
 ): Promise<INotificationTemplate> => {
+  const templateIdentifier = `${TEMPLATE_IDENTIFIER}-${providerId}`;
   const name = `Regression email notification template for ${providerId}`;
   const description = 'This is a description for the regression email notification template';
-  const tags = ['regression-tag'];
+  const tags = ['regression-tag', providerId];
 
   const regressionTemplate: MessageTemplate = {
     name: 'Message Name',
     subject: `Regression subject for ${providerId}`,
     preheader: 'Regression preheader',
-    senderName: SENDER_NAME,
+    senderName: buildSenderName(providerId),
     content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a regression email content block' }],
     type: StepTypeEnum.EMAIL,
   };
@@ -40,7 +45,7 @@ export const createRegressionNotificationTemplate = async (
   const regressionTemplateRequest: CreateNotificationTemplateRequestDto = {
     active: true,
     draft: false,
-    name: TEMPLATE_IDENTIFIER,
+    name: buildIdentifier(providerId),
     description,
     tags,
     notificationGroupId: session.notificationGroups[0]._id,
@@ -56,7 +61,7 @@ export const createRegressionNotificationTemplate = async (
 
   expect(template._id).to.be.ok;
   expect(template.description).to.equal(description);
-  expect(template.name).to.equal(TEMPLATE_IDENTIFIER);
+  expect(template.name).to.equal(templateIdentifier);
   expect(template.draft).to.equal(false);
   expect(template.active).to.equal(true);
   expect(template.tags).to.deep.members(tags);

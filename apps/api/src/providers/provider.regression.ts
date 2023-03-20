@@ -6,6 +6,7 @@ import { readFile } from 'fs/promises';
 import { setTimeout } from 'timers/promises';
 
 import {
+  buildSenderName,
   checkProviderIntegration,
   createProviderIntegration,
   createRegressionNotificationTemplate,
@@ -19,7 +20,7 @@ import {
 } from './helpers';
 import { getMailtrapSecrets, getProviderSecrets } from './secrets';
 
-const providers = [EmailProviderIdEnum.SendGrid];
+const providers = [EmailProviderIdEnum.SendGrid, EmailProviderIdEnum.Novu];
 
 let mailtrapService: MailtrapService;
 let session: UserSession;
@@ -168,7 +169,7 @@ describe('Regression test - Providers', () => {
 
           it('should create notification template properly', async () => {
             template = await createRegressionNotificationTemplate(session, providerId);
-            expect(template.name).to.eql('regression-template-email');
+            expect(template.name).to.eql(`regression-template-email-${providerId}`);
             expect(template.active).to.eql(true);
             expect(template.steps[0].template.type).to.eql(channel);
           });
@@ -190,7 +191,7 @@ describe('Regression test - Providers', () => {
 
           it('should send the notification to the chosen subscriber without attachment', async () => {
             const eventTime = Date.now();
-            const notification = await triggerEvent(session, subscriber.subscriberId);
+            const notification = await triggerEvent(session, providerId, subscriber.subscriberId);
 
             expect(notification.acknowledged).to.eql(true);
             expect(notification.status).to.eql('processed');
@@ -212,7 +213,7 @@ describe('Regression test - Providers', () => {
               inbox_id: inboxId,
               subject: `Regression subject for ${providerId}`,
               from_email: FROM_EMAIL,
-              from_name: SENDER_NAME,
+              from_name: buildSenderName(providerId),
               to_email: MAILTRAP_EMAIL,
               to_name: '',
               is_read: false,
