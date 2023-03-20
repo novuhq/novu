@@ -15,10 +15,14 @@ export function DigestDemoFlow({
   isReadOnly = true,
   templateId,
   className,
+  onRunTriggerClick,
+  onDigestIntervalChange,
 }: {
   isReadOnly?: boolean;
   templateId?: string;
   className?: string;
+  onRunTriggerClick?: () => void;
+  onDigestIntervalChange?: (interval: number) => void;
 }) {
   const [ref, rect] = useResizeObserver();
   const { colorScheme } = useMantineColorScheme();
@@ -33,7 +37,12 @@ export function DigestDemoFlow({
   }, [rect.width, rect.height]);
 
   return (
-    <DigestDemoFlowProvider isReadOnly={isReadOnly} templateId={templateId}>
+    <DigestDemoFlowProvider
+      isReadOnly={isReadOnly}
+      templateId={templateId}
+      onRunTriggerClick={onRunTriggerClick}
+      onDigestIntervalChange={onDigestIntervalChange}
+    >
       <Wrapper ref={ref} dark={colorScheme === 'dark'} className={className}>
         {isLoadingTemplate ? (
           <Skeleton width={600} height={500} sx={{ margin: '0 auto' }} />
