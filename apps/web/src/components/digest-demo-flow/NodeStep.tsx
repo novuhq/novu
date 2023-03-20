@@ -3,7 +3,14 @@ import styled from '@emotion/styled';
 import { useLocation, useParams } from 'react-router-dom';
 
 import { colors, Popover, Text } from '../../design-system';
-import { guidePreview, guidePlayground, GuideTitleEnum, IBeat } from './consts';
+import {
+  guidePreview,
+  guidePlayground,
+  GuideTitleEnum,
+  IBeat,
+  HINT_MIDDLE_OPACITY,
+  HINT_VISIBLE_OPACITY,
+} from './consts';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
 import { OnBoardingAnalyticsEnum } from '../../pages/quick-start/consts';
@@ -12,10 +19,10 @@ import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 
 const getOpacity = (id: string, hoveredHintId?: string, sequence?: { opacity: number }): number => {
   if (hoveredHintId) {
-    return hoveredHintId === id ? 1 : 0.4;
+    return hoveredHintId === id ? HINT_VISIBLE_OPACITY : HINT_MIDDLE_OPACITY;
   }
 
-  return sequence?.opacity ?? 1;
+  return sequence?.opacity ?? HINT_VISIBLE_OPACITY;
 };
 
 export function NodeStep({

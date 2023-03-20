@@ -15,13 +15,8 @@ interface IDigestDemoFlowProviderState {
   hoveredHintId?: string;
 }
 
-interface IDigestDemoFlowContextProps {
+interface IDigestDemoFlowContextProps extends IDigestDemoFlowProviderState {
   isReadOnly: boolean;
-  isRunningDigest: boolean;
-  digestInterval: number;
-  triggerCount: number;
-  emailsSentCount: number;
-  hoveredHintId?: string;
   updateDigestInterval: (interval: number) => void;
   runTrigger: () => void;
   setHoveredHintId: (hintId?: string) => void;
