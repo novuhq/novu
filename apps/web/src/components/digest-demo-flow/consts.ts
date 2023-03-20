@@ -18,17 +18,21 @@ export interface IBeat {
   opacity: number;
 }
 
+export const HINT_HIDDEN_OPACITY = 0;
+export const HINT_MIDDLE_OPACITY = 0.4;
+export const HINT_VISIBLE_OPACITY = 1;
+
 export const guidePreview: Record<string, IGuide> = {
   trigger: {
     title: GuideTitleEnum.TRIGGER_PREVIEW,
     description: 'Use the server SDK in your app for a specific trigger. ',
     docsUrl: 'https://docs.novu.co/api/trigger-event/',
     sequence: {
-      1: { open: false, opacity: 0 },
-      2: { open: true, opacity: 1 },
-      3: { open: true, opacity: 0.4 },
-      4: { open: true, opacity: 0.4 },
-      5: { open: true, opacity: 0.4 },
+      1: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      2: { open: true, opacity: HINT_VISIBLE_OPACITY },
+      3: { open: true, opacity: HINT_MIDDLE_OPACITY },
+      4: { open: true, opacity: HINT_MIDDLE_OPACITY },
+      5: { open: true, opacity: HINT_MIDDLE_OPACITY },
     },
   },
   digest: {
@@ -36,11 +40,11 @@ export const guidePreview: Record<string, IGuide> = {
     description: 'Aggregates multiple events into a precise notification. ',
     docsUrl: 'https://docs.novu.co/platform/digest/',
     sequence: {
-      1: { open: false, opacity: 0 },
-      2: { open: false, opacity: 0 },
-      3: { open: true, opacity: 1 },
-      4: { open: true, opacity: 0.4 },
-      5: { open: true, opacity: 1 },
+      1: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      2: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      3: { open: true, opacity: HINT_VISIBLE_OPACITY },
+      4: { open: true, opacity: HINT_MIDDLE_OPACITY },
+      5: { open: true, opacity: HINT_VISIBLE_OPACITY },
     },
   },
   email: {
@@ -48,11 +52,11 @@ export const guidePreview: Record<string, IGuide> = {
     description: 'Build desired order of channels. ',
     docsUrl: 'https://docs.novu.co/platform/integrations/#provider-channels',
     sequence: {
-      1: { open: false, opacity: 0 },
-      2: { open: false, opacity: 0 },
-      3: { open: false, opacity: 0 },
-      4: { open: true, opacity: 1 },
-      5: { open: true, opacity: 0.4 },
+      1: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      2: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      3: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      4: { open: true, opacity: HINT_VISIBLE_OPACITY },
+      5: { open: true, opacity: HINT_MIDDLE_OPACITY },
     },
   },
 };
@@ -62,33 +66,33 @@ export const guidePlayground: Record<string, IGuide> = {
     title: GuideTitleEnum.TRIGGER_PLAYGROUND,
     description: 'Once the event is triggered, the app sends it to digest',
     sequence: {
-      1: { open: false, opacity: 0 },
-      2: { open: true, opacity: 1 },
-      3: { open: true, opacity: 0.4 },
-      4: { open: true, opacity: 0.4 },
-      5: { open: true, opacity: 0.4 },
+      1: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      2: { open: true, opacity: HINT_VISIBLE_OPACITY },
+      3: { open: true, opacity: HINT_MIDDLE_OPACITY },
+      4: { open: true, opacity: HINT_MIDDLE_OPACITY },
+      5: { open: true, opacity: HINT_MIDDLE_OPACITY },
     },
   },
   digest: {
     title: GuideTitleEnum.DIGEST_PLAYGROUND,
     description: 'Digest engine aggregates multiple events and... ',
     sequence: {
-      1: { open: false, opacity: 0 },
-      2: { open: false, opacity: 0 },
-      3: { open: true, opacity: 1 },
-      4: { open: true, opacity: 0.4 },
-      5: { open: true, opacity: 1 },
+      1: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      2: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      3: { open: true, opacity: HINT_VISIBLE_OPACITY },
+      4: { open: true, opacity: HINT_MIDDLE_OPACITY },
+      5: { open: true, opacity: HINT_VISIBLE_OPACITY },
     },
   },
   email: {
     title: GuideTitleEnum.CHANNELS_PLAYGROUND,
     description: 'As soon as the specified time runs out, we will send a digest email to: {{email}}',
     sequence: {
-      1: { open: false, opacity: 0 },
-      2: { open: false, opacity: 0 },
-      3: { open: false, opacity: 0 },
-      4: { open: true, opacity: 1 },
-      5: { open: true, opacity: 0.4 },
+      1: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      2: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      3: { open: false, opacity: HINT_HIDDEN_OPACITY },
+      4: { open: true, opacity: HINT_VISIBLE_OPACITY },
+      5: { open: true, opacity: HINT_MIDDLE_OPACITY },
     },
   },
 };
