@@ -17,7 +17,7 @@ export function NodeStep({
   ActionItem,
   ContentItem,
 }: {
-  data: { label: string };
+  data: { label: string; email?: string };
   id: string;
   Handlers: React.FC<any>;
   Icon: React.FC<any>;
@@ -38,6 +38,11 @@ export function NodeStep({
     popoverData.title === GuideTitleEnum.DIGEST_PREVIEW || popoverData.title === GuideTitleEnum.DIGEST_PLAYGROUND
       ? 'blue'
       : 'red';
+
+  const EMAIL_PLACEHOLDER = '{{email}}';
+  const description = !popoverData.description.includes(EMAIL_PLACEHOLDER)
+    ? popoverData.description
+    : popoverData.description.replace(EMAIL_PLACEHOLDER, data?.email || '');
 
   function onUrlClickHandler() {
     segment.track(`${OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK}`, {
@@ -74,7 +79,7 @@ export function NodeStep({
       }
       title={popoverData.title}
       titleGradient={titleGradient}
-      description={popoverData.description}
+      description={description}
       url={popoverData.docsUrl}
       onUrlClick={onUrlClickHandler}
     />
