@@ -9,7 +9,6 @@ import {
   Put,
   UseGuards,
   UseInterceptors,
-  Logger,
 } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
@@ -149,6 +148,7 @@ export class IntegrationsController {
   ): Promise<IntegrationResponseDto> {
     return this.updateIntegrationUsecase.execute(
       UpdateIntegrationCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,

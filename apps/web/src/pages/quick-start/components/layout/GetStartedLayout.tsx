@@ -6,7 +6,8 @@ import PageContainer from '../../../../components/layout/components/PageContaine
 import { HeaderLayout } from './HeaderLayout';
 import { BodyLayout } from './BodyLayout';
 import { FooterLayout } from './FooterLayout';
-import { localNavigate } from '../route/store';
+import { currentOnboardingStep } from '../route/store';
+import { ROUTES } from '../../../../constants/routes.enum';
 
 interface IGetStartedLayoutProps {
   children?: React.ReactNode;
@@ -30,14 +31,17 @@ export function GetStartedLayout({ children, footer, header }: IGetStartedLayout
   }, []);
 
   function onStepMountNavigateToCurrentStep() {
-    const lastRoute = localNavigate().peek();
-    if (lastRoute) {
-      navigate(lastRoute);
+    const route = currentOnboardingStep().get();
+
+    if (route) {
+      navigate(route);
+    } else {
+      navigate(ROUTES.GET_STARTED);
     }
   }
 
   function onRouteChangeUpdateNavigationStore() {
-    localNavigate().push(location.pathname);
+    currentOnboardingStep().set(location.pathname);
   }
 
   return (

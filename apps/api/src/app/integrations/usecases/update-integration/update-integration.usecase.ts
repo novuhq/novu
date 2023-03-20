@@ -2,11 +2,12 @@ import { BadRequestException, Injectable, NotFoundException, Inject, Logger } fr
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
-import { encryptCredentials } from '@novu/application-generic';
+import { AnalyticsService, encryptCredentials } from '@novu/application-generic';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { ChannelTypeEnum } from '@novu/shared';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class UpdateIntegration {
@@ -15,7 +16,8 @@ export class UpdateIntegration {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
-    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations
+    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
@@ -25,6 +27,13 @@ export class UpdateIntegration {
     if (!existingIntegration) {
       throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
     }
+
+    this.analyticsService.track('Update Integration - [Integrations]', command.userId, {
+      providerId: existingIntegration.providerId,
+      channel: existingIntegration.channel,
+      _organization: command.organizationId,
+      active: command.active,
+    });
 
     await this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],

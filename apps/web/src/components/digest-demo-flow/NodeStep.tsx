@@ -6,6 +6,8 @@ import { colors, Popover, Text } from '../../design-system';
 import { guidePreview, guidePlayground, GuideTitleEnum, IBeat } from './consts';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
+import { OnBoardingAnalyticsEnum } from '../../pages/quick-start/consts';
+import { useSegment } from '../providers/SegmentProvider';
 
 export function NodeStep({
   data,
@@ -15,13 +17,14 @@ export function NodeStep({
   ActionItem,
   ContentItem,
 }: {
-  data: { label: string };
+  data: { label: string; email?: string };
   id: string;
   Handlers: React.FC<any>;
   Icon: React.FC<any>;
   ActionItem?: React.ReactNode;
   ContentItem?: React.ReactNode;
 }) {
+  const segment = useSegment();
   const { counter } = useCounter();
   const [sequence, setSequence] = useState<IBeat>();
   const { pathname } = useLocation();
@@ -35,6 +38,17 @@ export function NodeStep({
     popoverData.title === GuideTitleEnum.DIGEST_PREVIEW || popoverData.title === GuideTitleEnum.DIGEST_PLAYGROUND
       ? 'blue'
       : 'red';
+
+  const EMAIL_PLACEHOLDER = '{{email}}';
+  const description = !popoverData.description.includes(EMAIL_PLACEHOLDER)
+    ? popoverData.description
+    : popoverData.description.replace(EMAIL_PLACEHOLDER, data?.email || '');
+
+  function onUrlClickHandler() {
+    segment.track(`${OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK}`, {
+      channel: label,
+    });
+  }
 
   useEffect(() => {
     setSequence(popoverData.sequence[counter.toString()] as IBeat);
@@ -65,8 +79,9 @@ export function NodeStep({
       }
       title={popoverData.title}
       titleGradient={titleGradient}
-      description={popoverData.description}
+      description={description}
       url={popoverData.docsUrl}
+      onUrlClick={onUrlClickHandler}
     />
   );
 }

@@ -8,6 +8,8 @@ import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
 import { CountdownTimer } from '../../design-system/icons';
 import { colors } from '../../design-system';
+import { useEffect, useState } from 'react';
+import { useInterval } from '@mantine/hooks';
 
 const LoaderStyled = styled(Loader)`
   position: absolute;
@@ -48,6 +50,22 @@ export function DigestNode({ data, id }: { data: any; id: string }) {
     useDigestDemoFlowContext();
   const { classes } = useNumberInputStyles();
 
+  const [seconds, setSeconds] = useState(0);
+  const interval = useInterval(() => setSeconds((sec) => sec - 1), 1000);
+
+  useEffect(() => {
+    if (isRunningDigest) {
+      setSeconds(digestInterval);
+      interval.start();
+    } else {
+      interval.stop();
+    }
+
+    return interval.stop;
+  }, [isRunningDigest]);
+
+  const digestIntervalDisplay = !isRunningDigest ? digestInterval : seconds;
+
   return (
     <NodeStep
       data={data}
@@ -62,7 +80,7 @@ export function DigestNode({ data, id }: { data: any; id: string }) {
       ActionItem={
         !isReadOnly && (
           <NumberInput
-            value={digestInterval}
+            value={digestIntervalDisplay}
             onChange={updateDigestInterval}
             max={30}
             min={10}

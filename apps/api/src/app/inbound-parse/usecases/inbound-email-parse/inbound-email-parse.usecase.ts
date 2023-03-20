@@ -9,7 +9,7 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import axios from 'axios';
-import { createHmac } from 'crypto';
+import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()
 export class InboundEmailParse {
@@ -56,7 +56,7 @@ export class InboundEmailParse {
     }
 
     const userPayload: IUserWebhookPayload = {
-      hmac: this.createHmac(environment.apiKeys, subscriber.subscriberId),
+      hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId),
       transactionId: toTransactionId,
       payload: job.payload,
       templateIdentifier: job.identifier,
@@ -92,12 +92,6 @@ export class InboundEmailParse {
     const message = await this.messageRepository.findOne({ transactionId, _environmentId: environment._id });
 
     return { transactionId, template, notification, subscriber, environment, job, message };
-  }
-
-  createHmac(apiKeys, subscriberId: string) {
-    Logger.verbose('Creating Hmac');
-
-    return createHmac('sha256', apiKeys[0].key).update(subscriberId).digest('hex');
   }
 }
 
