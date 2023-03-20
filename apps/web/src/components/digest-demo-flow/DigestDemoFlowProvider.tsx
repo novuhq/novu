@@ -7,7 +7,7 @@ import { useAuthContext } from '../providers/AuthProvider';
 import { useDebounce } from '../../hooks';
 import { useTemplateFetcher, useUpdateTemplate } from '../../api/hooks';
 
-interface DigestDemoFlowProviderState {
+interface IDigestDemoFlowProviderState {
   isRunningDigest: boolean;
   triggerCount: number;
   digestInterval: number;
@@ -15,7 +15,7 @@ interface DigestDemoFlowProviderState {
   hoveredHintId?: string;
 }
 
-interface DigestDemoFlowContextProps {
+interface IDigestDemoFlowContextProps {
   isReadOnly: boolean;
   isRunningDigest: boolean;
   digestInterval: number;
@@ -27,7 +27,7 @@ interface DigestDemoFlowContextProps {
   setHoveredHintId: (hintId?: string) => void;
 }
 
-const DigestDemoFlowContext = React.createContext<DigestDemoFlowContextProps>({
+const DigestDemoFlowContext = React.createContext<IDigestDemoFlowContextProps>({
   isReadOnly: true,
   isRunningDigest: true,
   digestInterval: 10,
@@ -50,7 +50,7 @@ export const DigestDemoFlowProvider = ({
   templateId?: string;
 }) => {
   const [{ isRunningDigest, triggerCount, digestInterval, emailsSentCount, hoveredHintId }, setState] =
-    useState<DigestDemoFlowProviderState>({
+    useState<IDigestDemoFlowProviderState>({
       isRunningDigest: false,
       triggerCount: 0,
       digestInterval: 10,
