@@ -195,13 +195,23 @@ export function ConnectIntegrationForm({
           active: isActive,
           check,
         });
-        segment.track(IntegrationsStoreModalAnalytics.CREATE_INTEGRATION_FORM_SUBMIT);
+        segment.track(IntegrationsStoreModalAnalytics.CREATE_INTEGRATION_FORM_SUBMIT, {
+          providerId: provider?.providerId,
+          channel: provider?.channel,
+          name: provider?.displayName,
+          active: provider?.active,
+        });
       } else {
         await updateIntegrationApi({
           integrationId: provider?.integrationId ? provider?.integrationId : '',
           data: { credentials, active: isActive, check },
         });
-        segment.track(IntegrationsStoreModalAnalytics.UPDATE_INTEGRATION_FORM_SUBMIT);
+        segment.track(IntegrationsStoreModalAnalytics.UPDATE_INTEGRATION_FORM_SUBMIT, {
+          providerId: provider?.providerId,
+          channel: provider?.channel,
+          name: provider?.displayName,
+          active: provider?.active,
+        });
       }
       await queryClient.refetchQueries({
         predicate: ({ queryKey }) =>
