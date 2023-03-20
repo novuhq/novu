@@ -15,7 +15,7 @@ describe('Delete Integration - /integration/:integrationId (DELETE)', function (
     const payload = {
       providerId: 'sendgrid',
       channel: 'EMAIL',
-      credentials: { apiKey: '123', secretKey: 'abc' },
+      credentials: { apiKey: '123' },
       active: true,
       check: false,
     };

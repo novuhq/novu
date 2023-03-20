@@ -17,6 +17,24 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     this.subscriber = Subscriber;
   }
 
+  async createSubscriber(
+    entity: Omit<SubscriberEntity, '_id' | 'subscriberId' | 'deleted' | 'createdAt' | 'updatedAt'>
+  ): Promise<SubscriberEntity> {
+    const { _environmentId, _organizationId, channels, email, firstName, lastName, phone } = entity;
+
+    return await this.create({
+      channels,
+      ...(email && { email }),
+      firstName,
+      lastName,
+      ...(phone && { phone }),
+      subscriberId: SubscriberRepository.createObjectId(),
+      // TODO: review somehow the environmentId needs to be converted to ObjectId but organizationId not
+      _environmentId: this.convertStringToObjectId(_environmentId),
+      _organizationId,
+    });
+  }
+
   async findBySubscriberId(environmentId: string, subscriberId: string): Promise<SubscriberEntity | null> {
     return await this.findOne({
       _environmentId: environmentId,

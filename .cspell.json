@@ -406,7 +406,9 @@
     "stddev",
     "shortid",
     "upsert",
-    "cond"
+    "cond",
+    "supertest",
+    "superagent"
   ],
   "flagWords": [],
   "patterns": [

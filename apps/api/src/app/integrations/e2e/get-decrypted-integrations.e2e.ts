@@ -36,11 +36,11 @@ describe('Get Decrypted Integrations - /integrations (GET)', function () {
       await integrationRepository.findByEnvironmentId(activeEmailIntegration?._environmentId)
     ).find((i) => i.providerId.toString() === 'mailgun');
 
-    expect(encryptedStoredIntegration.providerId).to.equal('mailgun');
-    expect(encryptedStoredIntegration.credentials.apiKey).to.contains('nvsk.');
-    expect(encryptedStoredIntegration.credentials.apiKey).to.not.equal('123');
-    expect(encryptedStoredIntegration.credentials.secretKey).to.contains('nvsk.');
-    expect(encryptedStoredIntegration.credentials.secretKey).to.not.equal('abc');
-    expect(encryptedStoredIntegration.active).to.equal(true);
+    expect(encryptedStoredIntegration?.providerId).to.equal('mailgun');
+    expect(encryptedStoredIntegration?.credentials.apiKey).to.contains('nvsk.');
+    expect(encryptedStoredIntegration?.credentials.apiKey).to.not.equal('123');
+    expect(encryptedStoredIntegration?.credentials.secretKey).to.contains('nvsk.');
+    expect(encryptedStoredIntegration?.credentials.secretKey).to.not.equal('abc');
+    expect(encryptedStoredIntegration?.active).to.equal(true);
   });
 });

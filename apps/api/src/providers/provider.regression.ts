@@ -1,8 +1,22 @@
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { MailtrapInboxStatusEnum, MailtrapService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { differenceInSeconds, parseISO } from 'date-fns';
+import { readFile } from 'fs/promises';
+import { setTimeout } from 'timers/promises';
 
-import { checkProviderIntegration, createProviderIntegration, createRegressionNotificationTemplate } from './helpers';
+import {
+  checkProviderIntegration,
+  createProviderIntegration,
+  createRegressionNotificationTemplate,
+  createSubscriber,
+  EMAIL_BLOCK_TEXT,
+  FROM_EMAIL,
+  MAILTRAP_EMAIL,
+  MINUTE_IN_SECONDS,
+  SENDER_NAME,
+  triggerEvent,
+} from './helpers';
 import { getMailtrapSecrets, getProviderSecrets } from './secrets';
 
 const providers = [EmailProviderIdEnum.SendGrid];
@@ -122,14 +136,16 @@ describe('Regression test - Providers', () => {
     providers.forEach((providerId) => {
       describe(`Provider ${providerId}`, () => {
         let secrets;
+        let subscriber;
+        let template;
 
         before(async () => {
           await createProviderIntegration(session, providerId, channel);
+          subscriber = await createSubscriber(session);
         });
 
         beforeEach(async () => {
           secrets = getProviderSecrets(providerId);
-          await createRegressionNotificationTemplate(session, providerId);
         });
 
         describe('Setting up', () => {
@@ -141,14 +157,79 @@ describe('Regression test - Providers', () => {
               _organizationId: session.organization._id,
               providerId,
               channel,
-              credentials: { apiKey: secrets.apiKey, secretKey: secrets.secretKey },
+              credentials: {
+                ...secrets,
+                from: FROM_EMAIL,
+              },
               active: true,
               deleted: false,
             });
           });
 
           it('should create notification template properly', async () => {
-            expect(1).to.eql(0);
+            template = await createRegressionNotificationTemplate(session, providerId);
+            expect(template.name).to.eql('regression-template-email');
+            expect(template.active).to.eql(true);
+            expect(template.steps[0].template.type).to.eql(channel);
+          });
+        });
+
+        describe('Triggering event use cases', () => {
+          beforeEach(async () => {
+            const { accountId, inboxId } = getMailtrapSecrets();
+            const inbox = await mailtrapService.cleanInbox(accountId, inboxId);
+
+            expect(inbox).to.deep.include({
+              id: inboxId,
+              name: 'Regression',
+              status: MailtrapInboxStatusEnum.ACTIVE,
+              emails_count: 0,
+              emails_unread_count: 0,
+            });
+          });
+
+          it('should send the notification to the chosen subscriber without attachment', async () => {
+            const eventTime = Date.now();
+            const notification = await triggerEvent(session, subscriber.subscriberId);
+
+            expect(notification.acknowledged).to.eql(true);
+            expect(notification.status).to.eql('processed');
+            expect(notification.transactionId).to.be.a('string');
+
+            await session.awaitRunningJobs(template._id, false, 0);
+
+            const { accountId, inboxId } = getMailtrapSecrets();
+            const inboxMessages = await mailtrapService.pollInbox(accountId, inboxId);
+
+            expect(inboxMessages.length).to.eql(1);
+            const [message] = inboxMessages;
+
+            const messageSentAt: Date = parseISO(message.sent_at);
+
+            expect(differenceInSeconds(eventTime, messageSentAt)).to.be.lessThan(MINUTE_IN_SECONDS / 5);
+
+            expect(message).to.deep.include({
+              inbox_id: inboxId,
+              subject: `Regression subject for ${providerId}`,
+              from_email: FROM_EMAIL,
+              from_name: SENDER_NAME,
+              to_email: MAILTRAP_EMAIL,
+              to_name: '',
+              is_read: false,
+              html_path: `/api/accounts/${accountId}/inboxes/${inboxId}/messages/${message.id}/body.html`,
+              raw_path: `/api/accounts/${accountId}/inboxes/${inboxId}/messages/${message.id}/body.raw`,
+              txt_path: `/api/accounts/${accountId}/inboxes/${inboxId}/messages/${message.id}/body.txt`,
+            });
+
+            const [txtMessage, htmlMessage, messageAttachments] = await Promise.all([
+              mailtrapService.getMessageByPath(message.txt_path),
+              mailtrapService.getMessageByPath(message.html_path),
+              mailtrapService.getAttachment(accountId, inboxId, message.id),
+            ]);
+
+            expect(txtMessage).to.not.be.ok;
+            expect(htmlMessage?.includes(EMAIL_BLOCK_TEXT)).to.eql(true);
+            expect(messageAttachments).to.deep.equal([]);
           });
         });
       });

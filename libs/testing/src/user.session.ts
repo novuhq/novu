@@ -31,6 +31,7 @@ import { OrganizationService } from './organization.service';
 import { EnvironmentService } from './environment.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 import { IntegrationService } from './integration.service';
+import { MessageService } from './message.service';
 import { UserService } from './user.service';
 
 /**
@@ -63,6 +64,7 @@ const EMAIL_BLOCK: IEmailBlock[] = [
 ];
 
 export class UserSession {
+  private messageService = new MessageService();
   private environmentRepository = new EnvironmentRepository();
   private notificationGroupRepository = new NotificationGroupRepository();
   private jobRepository = new JobRepository();

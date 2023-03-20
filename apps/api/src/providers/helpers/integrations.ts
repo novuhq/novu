@@ -3,6 +3,8 @@ import { IntegrationEntity, IntegrationQuery } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 
+import { FROM_EMAIL } from './constants';
+
 import { getProviderSecrets } from '../secrets';
 
 const integrationService = new TestingIntegrationService();
@@ -12,7 +14,7 @@ export const createProviderIntegration = async (
   providerId: EmailProviderIdEnum,
   channel: ChannelTypeEnum
 ): Promise<void> => {
-  const credentials = getProviderSecrets(providerId);
+  const secrets = getProviderSecrets(providerId);
 
   const _environmentId = session.environment._id;
   const _organizationId = session.organization._id;
@@ -22,6 +24,11 @@ export const createProviderIntegration = async (
   if (activeIntegration) {
     await integrationService.deleteIntegration(activeIntegration._id, _environmentId, _organizationId);
   }
+
+  const credentials = {
+    ...secrets,
+    from: FROM_EMAIL,
+  };
 
   const emailIntegrationEntity = {
     _environmentId,
@@ -41,6 +48,10 @@ export const createProviderIntegration = async (
     channel,
     credentials,
     active: true,
+  });
+  expect(result.credentials).to.deep.eq({
+    ...secrets,
+    from: FROM_EMAIL,
   });
 };
 
