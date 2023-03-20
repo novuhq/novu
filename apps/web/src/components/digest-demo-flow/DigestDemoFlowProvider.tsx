@@ -7,7 +7,27 @@ import { useAuthContext } from '../providers/AuthProvider';
 import { useDebounce } from '../../hooks';
 import { useTemplateFetcher, useUpdateTemplate } from '../../api/hooks';
 
-const DigestDemoFlowContext = React.createContext({
+interface DigestDemoFlowProviderState {
+  isRunningDigest: boolean;
+  triggerCount: number;
+  digestInterval: number;
+  emailsSentCount: number;
+  hoveredHintId?: string;
+}
+
+interface DigestDemoFlowContextProps {
+  isReadOnly: boolean;
+  isRunningDigest: boolean;
+  digestInterval: number;
+  triggerCount: number;
+  emailsSentCount: number;
+  hoveredHintId?: string;
+  updateDigestInterval: (interval: number) => void;
+  runTrigger: () => void;
+  setHoveredHintId: (hintId?: string) => void;
+}
+
+const DigestDemoFlowContext = React.createContext<DigestDemoFlowContextProps>({
   isReadOnly: true,
   isRunningDigest: true,
   digestInterval: 10,
@@ -15,6 +35,7 @@ const DigestDemoFlowContext = React.createContext({
   emailsSentCount: 0,
   updateDigestInterval: (interval: number) => {},
   runTrigger: () => {},
+  setHoveredHintId: (hintId?: string) => {},
 });
 
 export const useDigestDemoFlowContext = () => useContext(DigestDemoFlowContext);
@@ -28,12 +49,13 @@ export const DigestDemoFlowProvider = ({
   isReadOnly: boolean;
   templateId?: string;
 }) => {
-  const [{ isRunningDigest, triggerCount, digestInterval, emailsSentCount }, setState] = useState({
-    isRunningDigest: false,
-    triggerCount: 0,
-    digestInterval: 10,
-    emailsSentCount: 0,
-  });
+  const [{ isRunningDigest, triggerCount, digestInterval, emailsSentCount, hoveredHintId }, setState] =
+    useState<DigestDemoFlowProviderState>({
+      isRunningDigest: false,
+      triggerCount: 0,
+      digestInterval: 10,
+      emailsSentCount: 0,
+    });
   const { currentUser } = useAuthContext();
   const { template } = useTemplateFetcher(
     { templateId },
@@ -105,6 +127,13 @@ export const DigestDemoFlowProvider = ({
     }, digestInterval * 1000);
   }, [digestInterval]);
 
+  const setHoveredHintId = useCallback((hintId?: string) => {
+    setState((state) => ({
+      ...state,
+      hoveredHintId: hintId,
+    }));
+  }, []);
+
   useEffect(() => {
     if (template && !isRunningDigest && triggerCount > 0) {
       setState((state) => ({ ...state, isRunningDigest: true }));
@@ -120,10 +149,22 @@ export const DigestDemoFlowProvider = ({
       digestInterval,
       triggerCount,
       emailsSentCount,
+      hoveredHintId,
       updateDigestInterval,
       runTrigger,
+      setHoveredHintId,
     }),
-    [isReadOnly, isRunningDigest, digestInterval, triggerCount, emailsSentCount, updateDigestInterval, runTrigger]
+    [
+      isReadOnly,
+      isRunningDigest,
+      digestInterval,
+      triggerCount,
+      emailsSentCount,
+      hoveredHintId,
+      updateDigestInterval,
+      runTrigger,
+      setHoveredHintId,
+    ]
   );
 
   return <DigestDemoFlowContext.Provider value={value}>{children}</DigestDemoFlowContext.Provider>;

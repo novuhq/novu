@@ -20,6 +20,8 @@ type PopoverProps = {
   titleGradient: 'red' | 'blue' | 'none';
   className?: string;
   opacity?: string | number;
+  onDropdownMouseEnter?: MouseEventHandler<HTMLDivElement>;
+  onDropdownMouseLeave?: MouseEventHandler<HTMLDivElement>;
 } & Omit<MantinePopoverProps, 'children'>;
 
 export const Popover = ({
@@ -33,6 +35,8 @@ export const Popover = ({
   onUrlClick,
   className,
   opacity,
+  onDropdownMouseEnter,
+  onDropdownMouseLeave,
   ...rest
 }: PopoverProps) => {
   const { colorScheme } = useMantineTheme();
@@ -49,6 +53,8 @@ export const Popover = ({
       <MantinePopover.Target>{target}</MantinePopover.Target>
       <MantinePopover.Dropdown
         className={className}
+        onMouseEnter={onDropdownMouseEnter}
+        onMouseLeave={onDropdownMouseLeave}
         onClick={(e) => e.stopPropagation()}
         style={{
           minHeight: '100px',
