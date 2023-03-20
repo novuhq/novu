@@ -3,24 +3,27 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Center, Stack } from '@mantine/core';
 import styled from '@emotion/styled';
 
-import { localNavigate } from './route/store';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import { ArrowButton } from '../../../design-system';
 import { When } from '../../../components/utils/When';
 import { colors } from '../../../design-system';
 import { faqUrl, OnBoardingAnalyticsEnum } from '../consts';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { currentOnboardingStep } from './route/store';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function QuickStartWrapper({
   title,
   secondaryTitle,
   description,
+  goBackPath,
   faq = false,
   children,
 }: {
   title?: React.ReactNode | string;
   secondaryTitle?: React.ReactNode | string;
   description?: React.ReactNode | string;
+  goBackPath: string;
   faq?: boolean;
   children: React.ReactNode;
 }) {
@@ -35,24 +38,29 @@ export function QuickStartWrapper({
   const onlySecondary = !!secondaryTitle && !title && !description;
 
   useEffect(() => {
-    localNavigate().push(location.pathname);
+    onRouteChangeUpdateNavigationStore();
   }, [location.pathname]);
 
-  useEffect(() => {
-    localNavigate().normalizeOldOnboarding();
+  function onRouteChangeUpdateNavigationStore() {
+    currentOnboardingStep().set(location.pathname);
+  }
 
-    const lastRoute = localNavigate().peek();
-    if (lastRoute) {
-      navigate(lastRoute);
-    }
+  useEffect(() => {
+    onStepMountNavigateToCurrentStep();
   }, []);
 
-  function goBackHandler() {
-    const route = localNavigate().pop()?.at(-1);
+  function onStepMountNavigateToCurrentStep() {
+    const route = currentOnboardingStep().get();
 
     if (route) {
       navigate(route);
+    } else {
+      navigate(ROUTES.GET_STARTED);
     }
+  }
+
+  function goBackHandler() {
+    navigate(goBackPath);
   }
 
   return (

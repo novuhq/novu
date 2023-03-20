@@ -4,9 +4,9 @@ import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 
 import { colors } from '../../../../design-system';
-import { localNavigate } from '../route/store';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../../consts';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { ROUTES } from '../../../../constants/routes.enum';
 
 const BULLET_TOP_MARGIN = 20;
 
@@ -32,7 +32,7 @@ function BodyNavigation() {
   const navigate = useNavigate();
   const segment = useSegment();
 
-  const stepNum = localNavigate().length();
+  const stepNum = location.pathname === ROUTES.GET_STARTED ? 1 : 2;
 
   function handleClick(step: 'first' | 'second') {
     const eventAction =
