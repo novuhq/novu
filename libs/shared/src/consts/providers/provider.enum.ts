@@ -3,6 +3,7 @@
 export enum CredentialsKeyEnum {
   ApiKey = 'apiKey',
   User = 'user',
+  AccessKeyId = 'accessKeyId',
   SecretKey = 'secretKey',
   Domain = 'domain',
   Password = 'password',
@@ -59,6 +60,7 @@ export enum SmsProviderIdEnum {
   Clickatell = 'clickatell',
   FortySixElks = 'forty-six-elks',
   Kannel = 'kannel',
+  Maqsam = 'maqsam',
 }
 
 export enum ChatProviderIdEnum {

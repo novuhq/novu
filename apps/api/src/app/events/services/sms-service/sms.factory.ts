@@ -14,6 +14,7 @@ import {
   ClickatellHandler,
   FortySixElksHandler,
   KannelSmsHandler,
+  MaqsamHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -31,6 +32,7 @@ export class SmsFactory implements ISmsFactory {
     new BurstSmsHandler(),
     new FortySixElksHandler(),
     new KannelSmsHandler(),
+    new MaqsamHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

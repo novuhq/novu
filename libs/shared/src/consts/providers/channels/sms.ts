@@ -13,6 +13,7 @@ import {
   clickatellConfig,
   fortySixElksConfig,
   kannelConfig,
+  maqsamConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -125,5 +126,13 @@ export const smsProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: 'https://www.kannel.org/doc.shtml',
     logoFileName: { light: 'kannel.png', dark: 'kannel.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Maqsam,
+    displayName: 'Maqsam',
+    channel: ChannelTypeEnum.SMS,
+    credentials: maqsamConfig,
+    docReference: 'https://portal.maqsam.com/docs/v2/sms',
+    logoFileName: { light: 'maqsam.png', dark: 'maqsam.png' },
   },
 ];
