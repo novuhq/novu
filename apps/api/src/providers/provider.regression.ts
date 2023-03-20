@@ -20,7 +20,12 @@ import {
 } from './helpers';
 import { getMailtrapSecrets, getProviderSecrets } from './secrets';
 
-const providers = [EmailProviderIdEnum.SendGrid, EmailProviderIdEnum.Novu, EmailProviderIdEnum.CustomSMTP];
+const providers = [
+  EmailProviderIdEnum.SendGrid,
+  EmailProviderIdEnum.Novu,
+  EmailProviderIdEnum.CustomSMTP,
+  EmailProviderIdEnum.Sendinblue,
+];
 
 let mailtrapService: MailtrapService;
 let session: UserSession;
