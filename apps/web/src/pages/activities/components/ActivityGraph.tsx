@@ -40,9 +40,6 @@ export function ActivityGraph({
   const [chartType, setChartType] = useState('line');
   const [datasetVisibility, setDatasetVisibility] =
     useState<[{ label: string; color: string; visible: boolean; count: number }]>();
-
-  const [render, setRender] = useState(true);
-
   const isDark = useMantineTheme().colorScheme === 'dark';
   const getChart = () => (chartType === 'line' ? (lineRef.current as any) : (barRef.current as any));
   const updateDatasetVisibility = () => {

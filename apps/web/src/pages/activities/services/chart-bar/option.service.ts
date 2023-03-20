@@ -22,6 +22,8 @@ const createOptions = (type) => {
         },
         filter: (tooltipItem) => tooltipItem.parsed.y > 0,
         callbacks: {
+          label: (context) => (context.dataset.label as string).toUpperCase() + ': ' + context.parsed.y,
+          title: (context) => context[0].dataset.data[0].xTitle,
           footer: total,
         },
       },

@@ -3,6 +3,7 @@ import {
   format,
   getDayOfYear,
   getYear,
+  getWeekYear,
   setDayOfYear,
   setWeek,
   setMonth,
@@ -13,6 +14,8 @@ import {
   addMonths,
   addWeeks,
   addDays,
+  startOfWeek,
+  endOfWeek,
 } from 'date-fns';
 import { IActivityGraphStats, IChartData } from '../../interfaces';
 import { StepTypeEnum, ChannelTypeEnum } from '@novu/shared';
@@ -32,13 +35,15 @@ export function getChartData(data: IActivityGraphStats[], isDark: boolean): ICha
 function buildChartDataContainer(data: IActivityGraphStats[], isDark: boolean): any {
   return buildChartData(data);
 }
+const getWeekFormatted = (date) =>
+  `${format(startOfWeek(date), 'EEE dd MMM')} to ${format(endOfWeek(date), 'EEE dd MMM')}`;
 
 function getFormattedDate(date: Date, unit: string) {
   return unit === 'month'
-    ? format(date, 'MMM yyyy')
+    ? { short: format(date, 'MMM yyyy'), long: format(date, 'MMMM yyyy') }
     : unit === 'week'
-    ? format(date, "wo 'Week'/yyyy")
-    : format(date, 'EEE dd/MMM');
+    ? { short: format(date, "wo 'Week'/yyyy"), long: getWeekFormatted(date) }
+    : { short: format(date, 'EEE dd/MMM'), long: format(date, 'EEE dd MMM yyyy') };
 }
 
 function getNextDate(date, unit) {
@@ -101,14 +106,14 @@ function buildChartData(graphData: IActivityGraphStats[]) {
       datasets.push(record);
     }
     for (let date = startDate; !isAfter(date, endDate); date = getNextDate(date, unit)) {
-      const year = getYear(date);
+      const year = unit === 'week' ? getWeekYear(date) : getYear(date);
       const period = getPeriod(date, unit);
       let rawData: any = graphData.find(
         (data) => data._id.year === year && data._id[unit] === period && data._id.type === channel
       );
       if (!rawData) rawData = { count: 0, _id: { year, [unit]: period } };
-      const xLabel = getFormattedDate(date, unit);
-      record.data.push({ xLabel, ...rawData });
+      const { short: xLabel, long: xTitle } = getFormattedDate(date, unit);
+      record.data.push({ xLabel, xTitle, ...rawData });
       record.count += rawData.count;
       totalCount += rawData.count;
     }

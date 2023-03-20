@@ -15,8 +15,7 @@ export function ActivityFilters({ filterState, onFiltersChange, templates }) {
   }, 500);
 
   const onDateChange = (value: DateRangePickerValue) => {
-    console.log('onDateChange', value);
-    onFiltersChange({ range: value });
+    if (value[0] && value[1]) onFiltersChange({ range: value });
   };
 
   return (
@@ -30,12 +29,7 @@ export function ActivityFilters({ filterState, onFiltersChange, templates }) {
           onChange={onDateChange}
           icon={<Calendar width={18} height={18} />}
           clearable={false}
-          sx={{
-            backgroundColor: 'green',
-            '&:hover': {
-              backgroundColor: 'blue',
-            },
-          }}
+          allowSingleDateInRange={false}
         />
       </div>
       <div style={{ minWidth: '210px' }}>
