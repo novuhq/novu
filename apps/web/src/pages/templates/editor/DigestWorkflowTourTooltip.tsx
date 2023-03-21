@@ -10,6 +10,8 @@ import { Button, colors, DotsNavigation } from '../../../design-system';
 import { Clock, LetterOpened, BellWithNotification } from '../../../design-system/icons';
 import { useTemplateEditorContext } from './TemplateEditorProvider';
 import { IForm } from '../components/formTypes';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { DigestWorkflowTourAnalyticsEnum, HINT_INDEX_TO_CLICK_ANALYTICS, ordinalNumbers } from '../constants';
 
 const ICONS = [Clock, LetterOpened, BellWithNotification];
 const TITLE = ['Set-up time interval', 'Set-up email content', 'Test your workflow'];
@@ -53,6 +55,14 @@ const DotsNavigationStyled = styled(DotsNavigation)`
   align-self: center;
 `;
 
+const getAnalyticsEvent = (index: number, isFromNavigation: boolean): string | undefined => {
+  if (isFromNavigation) {
+    return DigestWorkflowTourAnalyticsEnum.NAVIGATE_HINT_CLICK;
+  }
+
+  return HINT_INDEX_TO_CLICK_ANALYTICS[index];
+};
+
 export const DigestWorkflowTourTooltip = ({
   tooltipProps,
   primaryProps,
@@ -61,6 +71,7 @@ export const DigestWorkflowTourTooltip = ({
   index,
   size,
 }: TooltipRenderProps) => {
+  const segment = useSegment();
   const { setSelectedNodeId } = useTemplateEditorContext();
   const { watch } = useFormContext<IForm>();
   const steps = watch('steps');
@@ -69,7 +80,7 @@ export const DigestWorkflowTourTooltip = ({
   const navigate = useNavigate();
   const Icon = ICONS[index];
 
-  const handleOnClick = (tourStepIndex: number) => {
+  const handleOnClick = (tourStepIndex: number, isFromNavigation = false) => {
     if (tourStepIndex === 0) {
       const digestStep = steps.find((el) => el.template?.type === StepTypeEnum.DIGEST);
       setStep(tourStepIndex);
@@ -82,6 +93,13 @@ export const DigestWorkflowTourTooltip = ({
       setStep(tourStepIndex);
       setSelectedNodeId('');
     }
+
+    const stepIndex = isFromNavigation ? tourStepIndex : index;
+    const analyticsEvent = getAnalyticsEvent(stepIndex, isFromNavigation);
+
+    if (analyticsEvent) {
+      segment.track(analyticsEvent, { when: ordinalNumbers[stepIndex] });
+    }
   };
 
   const stopTourCallback = () => {
@@ -90,6 +108,11 @@ export const DigestWorkflowTourTooltip = ({
     if (queryParams.has('tour')) {
       navigate(location.pathname, { replace: true });
     }
+  };
+
+  const handleSkipClick = () => {
+    segment.track(DigestWorkflowTourAnalyticsEnum.HINT_SKIP_TOUR_CLICK, { when: ordinalNumbers[index] });
+    stopTourCallback();
   };
 
   return (
@@ -102,6 +125,7 @@ export const DigestWorkflowTourTooltip = ({
           {...primaryProps}
           onClick={() => {
             if (isLastStep) {
+              segment.track(DigestWorkflowTourAnalyticsEnum.THIRD_HINT_GOT_IT_CLICK);
               stopTourCallback();
 
               return;
@@ -114,7 +138,7 @@ export const DigestWorkflowTourTooltip = ({
           {primaryProps.title}
         </Button>
         {!isLastStep && (
-          <UnstyledButton {...skipProps} onClick={stopTourCallback} data-test-id="digest-workflow-tooltip-skip-button">
+          <UnstyledButton {...skipProps} onClick={handleSkipClick} data-test-id="digest-workflow-tooltip-skip-button">
             {skipProps.title}
           </UnstyledButton>
         )}
@@ -125,7 +149,7 @@ export const DigestWorkflowTourTooltip = ({
         onClick={(num) => {
           if (num === index) return;
 
-          handleOnClick(num);
+          handleOnClick(num, true);
         }}
         testId="digest-workflow-tooltip-dots-navigation"
       />

@@ -1,5 +1,4 @@
 import * as _ from 'lodash';
-import { createHmac } from 'crypto';
 import axios from 'axios';
 import { Injectable } from '@nestjs/common';
 import { parseISO, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
@@ -34,6 +33,7 @@ import { FilterProcessingDetails } from './filter-processing-details';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details';
 import { SendMessageCommand } from '../send-message/send-message.command';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
+import { createHash } from '../../../shared/helpers/hmac.service';
 import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -499,7 +499,7 @@ export class MessageMatcher {
     });
     if (!environment) throw new ApiException('Environment is not found');
 
-    return createHmac('sha256', environment.apiKeys[0].key).update(command.environmentId).digest('hex');
+    return createHash(environment.apiKeys[0].key, command.environmentId);
   }
 
   private async processFilter(

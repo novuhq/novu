@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { Grid } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { DotsNavigation } from '../../../../design-system';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../../constants/routes.enum';
+import { Grid } from '@mantine/core';
 
 interface IFooterLayoutProps {
   leftSide: React.ReactNode;
@@ -31,35 +31,44 @@ export function FooterLayout({ leftSide, rightSide }: IFooterLayoutProps) {
 
   return (
     <FooterWrapper>
-      <LeftSide>{leftSide}</LeftSide>
-      <MiddleSide>
-        <DotsNavigation selectedIndex={selectedIndex} size={2} onClick={handleOnNavigationClick} />
-      </MiddleSide>
-      <RightSide>{rightSide}</RightSide>
+      <Grid justify={'space-between'} style={{ width: '100%' }}>
+        <LeftCol span={4}>{leftSide} </LeftCol>
+        <MiddleCol span={4}>
+          <DotsNavigation selectedIndex={selectedIndex} size={2} onClick={handleOnNavigationClick} />
+        </MiddleCol>
+        <RightCol span={4}>{rightSide} </RightCol>
+      </Grid>
     </FooterWrapper>
   );
 }
 
-const LeftSide = styled.div``;
+const LeftCol = styled(Grid.Col)`
+  display: flex;
+  justify-content: flex-start;
+  justify-items: center;
+  align-items: center;
+`;
 
-const MiddleSide = styled.div`
+const MiddleCol = styled(Grid.Col)`
   display: flex;
   justify-content: center;
   align-items: center;
 `;
 
-const RightSide = styled.div`
+const RightCol = styled(Grid.Col)`
   display: flex;
+  justify-items: center;
   justify-content: end;
+  align-items: center;
 `;
 
 const FooterWrapper = styled.div`
-  padding: 32px 40px;
-  height: 150px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-direction: row;
+
+  padding: 32px 40px;
   box-shadow: inset 0 1px 0 #000000;
 
   @media screen and (min-width: 1369px) {

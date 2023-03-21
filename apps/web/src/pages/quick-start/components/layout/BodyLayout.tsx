@@ -4,8 +4,11 @@ import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 
 import { colors } from '../../../../design-system';
-import { localNavigate } from '../route/store';
-import { getStartedSteps } from '../../consts';
+import { getStartedSteps, OnBoardingAnalyticsEnum } from '../../consts';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { ROUTES } from '../../../../constants/routes.enum';
+
+const BULLET_TOP_MARGIN = 20;
 
 export function BodyLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -27,10 +30,17 @@ const StyledBody = styled.div`
 
 function BodyNavigation() {
   const navigate = useNavigate();
+  const segment = useSegment();
 
-  const stepNum = localNavigate().length();
+  const stepNum = location.pathname === ROUTES.GET_STARTED ? 1 : 2;
 
-  function handleClick(step: string) {
+  function handleClick(step: 'first' | 'second') {
+    const eventAction =
+      step === 'first'
+        ? OnBoardingAnalyticsEnum.NAVIGATION_CONFIGURE_PROVIDER_CLICK
+        : OnBoardingAnalyticsEnum.NAVIGATION_BUILD_WORKFLOW_CLICK;
+    segment.track(eventAction);
+
     navigate(getStartedSteps[step]);
   }
 
@@ -41,6 +51,7 @@ function BodyNavigation() {
         lineWidth={2}
         styles={{
           itemBullet: {
+            marginTop: `${BULLET_TOP_MARGIN}px`,
             ['&[data-active][data-with-child]']: {
               color: 'inherit',
             },
@@ -66,7 +77,7 @@ function BodyNavigation() {
 
 const TimelineWrapper = styled.div`
   width: 100%;
-  padding: 0 0 0 40px;
+  padding: 0 0 0 60px;
 
   .mantine-Timeline-itemBullet {
     width: 34px;
@@ -78,8 +89,6 @@ const TimelineWrapper = styled.div`
   }
 
   @media screen and (min-width: 1369px) {
-    padding: 0 0 0 75px;
-
     .mantine-Timeline-itemBullet {
       width: 40px;
       height: 40px;
@@ -134,6 +143,8 @@ const StyledItem = styled(Timeline.Item)`
 
   &:before {
     left: -5px;
+    top: ${BULLET_TOP_MARGIN}px;
+    bottom: ${({ theme }) => `calc((${theme.spacing.xl}px + ${BULLET_TOP_MARGIN}px) * -1)`};
   }
 
   @media screen and (min-width: 1369px) {
