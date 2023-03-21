@@ -51,7 +51,7 @@ export class EventsPerformanceService {
     });
 
     Object.keys(measures).forEach((key) => {
-      this.performanceService.calculateAverage(MarkFunctionNameEnum.ENDPOINT_TRIGGER_EVENT, measures[key]);
+      this.performanceService.calculateAverage(key, measures[key]);
     });
   }
 
