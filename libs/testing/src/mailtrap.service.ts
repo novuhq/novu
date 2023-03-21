@@ -190,17 +190,21 @@ export class MailtrapService {
    * Due the async nature of sending an email and being processed we use this poller to try to
    * know when the email has arrived.
    */
-  async pollInbox(accountId: MailtrapAccountId, inboxId: MailtrapInboxId): Promise<IMailtrapMail[]> {
+  async pollInbox(
+    accountId: MailtrapAccountId,
+    inboxId: MailtrapInboxId,
+    expectedEmails = 1
+  ): Promise<IMailtrapMail[]> {
     let tries = 10;
     while (tries > 0) {
       console.info(`Number of tries left: ${tries}`);
       const inboxMessages = await this.getInboxMessages(accountId, inboxId);
 
-      if (inboxMessages.length === 0) {
+      if (inboxMessages.length === expectedEmails) {
+        return inboxMessages;
+      } else {
         tries--;
         await setTimeout(1000);
-      } else {
-        return inboxMessages;
       }
     }
 

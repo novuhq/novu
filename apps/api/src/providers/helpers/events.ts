@@ -46,12 +46,13 @@ export const triggerEvent = async (
   session: UserSession,
   providerId: EmailProviderIdEnum,
   subscriberId: string,
-  payload = {}
+  overrides?: Record<string, unknown>
 ): Promise<Record<string, string>> => {
   const response = await session.testAgent.post('/v1/events/trigger').send({
     name: buildIdentifier(providerId),
     to: subscriberId,
-    payload,
+    payload: {},
+    overrides,
   });
 
   expect(response.status).to.eql(201);
