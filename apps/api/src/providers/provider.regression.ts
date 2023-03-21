@@ -265,12 +265,9 @@ describe('Regression test - Providers', () => {
             let ccMessage;
             let bccMessage;
             for (const inboxMessage of inboxMessages) {
-              const {
-                smtp_information: {
-                  data: { rcpt_to_addrs: rcptToAddrs },
-                },
-              } = inboxMessage;
-              const [inboxMessageFromEmail] = rcptToAddrs;
+              const recipientToAddress = inboxMessage?.smtp_information?.data?.rcpt_to_addrs;
+              const [inboxMessageFromEmail] = recipientToAddress;
+
               if (inboxMessageFromEmail === MAILTRAP_EMAIL) {
                 mainMessage = inboxMessage;
               }
