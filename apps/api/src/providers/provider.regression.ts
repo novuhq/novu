@@ -25,6 +25,7 @@ const providers = [
   EmailProviderIdEnum.Novu,
   EmailProviderIdEnum.CustomSMTP,
   EmailProviderIdEnum.Mailjet,
+  EmailProviderIdEnum.Sendinblue,
 ];
 
 let mailtrapService: MailtrapService;
