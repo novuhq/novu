@@ -42,6 +42,16 @@ jobs:
           tag: dev
           push: 'true'
           github_token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/docker/build-api
+        id: docker_build
+        with:
+          tag: dev
+          push: 'true'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          docker_name: 'novu/api-ee'
 
       - name: Checkout cloud infra
         uses: actions/checkout@master
@@ -118,4 +128,3 @@ jobs:
           ignore_empty: true
           ignore_missing: true
           url_prefix: "~"
-
