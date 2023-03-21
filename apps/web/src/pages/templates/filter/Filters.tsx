@@ -8,7 +8,7 @@ import { useWatch } from 'react-hook-form';
 import { useMemo } from 'react';
 import { channels } from '../shared/channels';
 
-export const Filters = ({ step }: { step: IStepEntity | null }) => {
+export const Filters = ({ step }: { step?: IStepEntity }) => {
   if (!step || !step.filters || !Array.isArray(step.filters)) {
     return null;
   }

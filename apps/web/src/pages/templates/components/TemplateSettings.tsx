@@ -7,18 +7,18 @@ import { Button, colors } from '../../../design-system';
 import { NotificationSettingsForm } from './notification-setting-form/NotificationSettingsForm';
 import { TemplatesSideBar } from './TemplatesSideBar';
 import { TriggerSnippetTabs } from './TriggerSnippetTabs';
-import { ActivePageEnum } from '../editor/TemplateEditorPage';
 import { Trash } from '../../../design-system/icons';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { useEnvController } from '../../../hooks';
-import { useTemplateEditor } from './TemplateEditorProvider';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { deleteTemplateById } from '../../../api/notification-templates';
 import { ROUTES } from '../../../constants/routes.enum';
+import { ActivePageEnum } from '../../../constants/editorEnums';
 
 export const TemplateSettings = ({ activePage, setActivePage, templateId }) => {
   const { colorScheme } = useMantineColorScheme();
   const { readonly } = useEnvController();
-  const { template, editMode, trigger } = useTemplateEditor();
+  const { template, editMode, trigger } = useTemplateEditorForm();
   const [toDelete, setToDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isError, setIsError] = useState<string | undefined>(undefined);

@@ -46,6 +46,7 @@ export function HeaderNav({}: Props) {
             name: currentOrganization?.name,
             companyId: currentOrganization?._id as string,
           },
+          userHash: currentUser.servicesHashes?.intercom,
         });
       }
     }, [currentUser, currentOrganization]);
@@ -53,7 +54,6 @@ export function HeaderNav({}: Props) {
 
   useEffect(() => {
     if (!LOGROCKET_ID) return;
-
     if (currentUser && currentOrganization) {
       let logrocketTraits;
 

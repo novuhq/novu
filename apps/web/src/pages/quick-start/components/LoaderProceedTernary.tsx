@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Center, Loader, useMantineTheme } from '@mantine/core';
+import { Loader, useMantineTheme } from '@mantine/core';
 
 import { Button, colors } from '../../../design-system';
 

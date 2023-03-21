@@ -22,7 +22,7 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
 import { ConnectionOptions } from 'tls';
 
 import { DistributedLockService } from './services/distributed-lock';
@@ -35,6 +35,7 @@ import {
   StorageService,
 } from './services/storage/storage.service';
 import { CacheService, InvalidateCacheService } from './services/cache';
+import * as packageJson from '../../../package.json';
 
 const DAL_MODELS = [
   UserRepository,
@@ -138,8 +139,15 @@ const PROVIDERS = [
 ];
 
 @Module({
-  imports: [],
+  imports: [
+    LoggerModule.forRoot(
+      createNestLoggingModuleOptions({
+        serviceName: packageJson.name,
+        version: packageJson.version,
+      })
+    ),
+  ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS],
+  exports: [...PROVIDERS, LoggerModule],
 })
 export class SharedModule {}

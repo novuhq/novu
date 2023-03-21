@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import { Stack } from '@mantine/core';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { OnBoardingAnalyticsEnum, welcomeDescription } from '../consts';
-import { Stack } from '@mantine/core';
-import { Cards } from '../components/Cards';
+import { Cards } from '../../../design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function FrameworkSetup() {
   const segment = useSegment();
@@ -14,7 +15,12 @@ export function FrameworkSetup() {
   }, []);
 
   return (
-    <QuickStartWrapper title={welcomeDescription} secondaryTitle={<ImplementationDescription />} faq={true}>
+    <QuickStartWrapper
+      title={welcomeDescription}
+      secondaryTitle={<ImplementationDescription />}
+      faq={true}
+      goBackPath={ROUTES.QUICK_START_NOTIFICATION_CENTER}
+    >
       <Cards
         cells={[
           {
