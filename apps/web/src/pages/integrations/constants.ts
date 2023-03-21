@@ -1,6 +1,6 @@
 export enum IntegrationsStoreModalAnalytics {
-  CREATE_INTEGRATION_FORM_SUBMIT = '[Integrations Store Modal] Create Integration Form Submit',
-  UPDATE_INTEGRATION_FORM_SUBMIT = '[Integrations Store Modal] Update Integration Form Submit',
-  SELECT_PROVIDER_CLICK = '[Integrations Store Modal] Select Provider Click',
-  CLOSE_MODAL = '[Integrations Store Modal] Close Modal',
+  CREATE_INTEGRATION_FORM_SUBMIT = 'Create Integration Form Submit - [Integrations Store Modal]',
+  UPDATE_INTEGRATION_FORM_SUBMIT = 'Update Integration Form Submit - [Integrations Store Modal]',
+  SELECT_PROVIDER_CLICK = 'Select Provider Click - [Integrations Store Modal]',
+  CLOSE_MODAL = 'Close Modal - [Integrations Store Modal]',
 }

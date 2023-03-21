@@ -1,27 +1,27 @@
 export enum TemplateAnalyticsEnum {
-  CREATE_TEMPLATE_CLICK = '[Templates] Create Template Click',
-  TRY_DIGEST_CLICK = '[Templates] Try Digest Click',
+  CREATE_TEMPLATE_CLICK = 'Create Template Click - [Templates]',
+  TRY_DIGEST_CLICK = 'Try Digest Click - [Templates]',
 }
 
 export enum TemplateEditorAnalyticsEnum {
-  CONFIGURE_PROVIDER_BANNER_CLICK = '[Template Editor] Configure Provider Banner Click',
-  CONFIGURE_PROVIDER_POPOVER_CLICK = '[Template Editor] Configure Provider Popover Click',
+  CONFIGURE_PROVIDER_BANNER_CLICK = 'Configure Provider Banner Click - [Template Editor]',
+  CONFIGURE_PROVIDER_POPOVER_CLICK = 'Configure Provider Popover Click - [Template Editor]',
 }
 
 export enum DigestPlaygroundAnalyticsEnum {
-  BACK_BUTTON_CLICK = '[Digest Playground] Back Button Click',
-  SETUP_DIGEST_WORKFLOW_CLICK = '[Digest Playground] Set Up Digest Workflow Click',
-  LEARN_MORE_IN_DOCS_CLICK = '[Digest Playground] Learn More In Docs Click',
-  RUN_TRIGGER_CLICK = '[Digest Playground] Run Trigger Click',
-  DIGEST_INTERVAL_CHANGE = '[Digest Playground] Digest Interval Change',
+  BACK_BUTTON_CLICK = 'Back Button Click - [Digest Playground]',
+  SETUP_DIGEST_WORKFLOW_CLICK = 'Set Up Digest Workflow Click - [Digest Playground]',
+  LEARN_MORE_IN_DOCS_CLICK = 'Learn More In Docs Click - [Digest Playground]',
+  RUN_TRIGGER_CLICK = 'Run Trigger Click - [Digest Playground]',
+  DIGEST_INTERVAL_CHANGE = 'Digest Interval Change - [Digest Playground]',
 }
 
 export enum DigestWorkflowTourAnalyticsEnum {
-  FIRST_HINT_NEXT_CLICK = '[Digest Workflow Tour] First Hint Next Click',
-  SECOND_HINT_NEXT_CLICK = '[Digest Workflow Tour] Second Hint Next Click',
-  THIRD_HINT_GOT_IT_CLICK = '[Digest Workflow Tour] Third Hint Got It Click',
-  HINT_SKIP_TOUR_CLICK = '[Digest Workflow Tour] Hint Skip Tour Click',
-  NAVIGATE_HINT_CLICK = '[Digest Workflow Tour] Navigate Hint Click',
+  FIRST_HINT_NEXT_CLICK = 'First Hint Next Click - [Digest Workflow Tour]',
+  SECOND_HINT_NEXT_CLICK = 'Second Hint Next Click - [Digest Workflow Tour]',
+  THIRD_HINT_GOT_IT_CLICK = 'Third Hint Got It Click - [Digest Workflow Tour]',
+  HINT_SKIP_TOUR_CLICK = 'Hint Skip Tour Click - [Digest Workflow Tour]',
+  NAVIGATE_HINT_CLICK = 'Navigate Hint Click - [Digest Workflow Tour]',
 }
 
 export const HINT_INDEX_TO_CLICK_ANALYTICS = {
