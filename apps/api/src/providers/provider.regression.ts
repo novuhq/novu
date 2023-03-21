@@ -14,6 +14,8 @@ import {
   EMAIL_BLOCK_TEXT,
   FROM_EMAIL,
   MAILTRAP_EMAIL,
+  MAILTRAP_EMAIL_BCC,
+  MAILTRAP_EMAIL_CC,
   MINUTE_IN_SECONDS,
   SENDER_NAME,
   triggerEvent,
@@ -237,6 +239,79 @@ describe('Regression test - Providers', () => {
             expect(txtMessage).to.not.be.ok;
             expect(htmlMessage?.includes(EMAIL_BLOCK_TEXT)).to.eql(true);
             expect(messageAttachments).to.deep.equal([]);
+          });
+
+          it('should send the notification to the chosen subscriber with the cc and bcc', async () => {
+            const overrides = {
+              email: {
+                cc: [MAILTRAP_EMAIL_CC],
+                bcc: [MAILTRAP_EMAIL_BCC],
+              },
+            };
+            const notification = await triggerEvent(session, providerId, subscriber.subscriberId, overrides);
+
+            expect(notification.acknowledged).to.eql(true);
+            expect(notification.status).to.eql('processed');
+            expect(notification.transactionId).to.be.a('string');
+
+            await session.awaitRunningJobs(template._id, false, 0);
+
+            const { accountId, inboxId } = getMailtrapSecrets();
+            const expectedEmails = 3;
+            const inboxMessages = await mailtrapService.pollInbox(accountId, inboxId, expectedEmails);
+            expect(inboxMessages.length).to.eql(expectedEmails);
+
+            let mainMessage;
+            let ccMessage;
+            let bccMessage;
+            for (const inboxMessage of inboxMessages) {
+              const recipientToAddress = inboxMessage?.smtp_information?.data?.rcpt_to_addrs;
+              const [inboxMessageFromEmail] = recipientToAddress;
+
+              if (inboxMessageFromEmail === MAILTRAP_EMAIL) {
+                mainMessage = inboxMessage;
+              }
+              if (inboxMessageFromEmail === MAILTRAP_EMAIL_CC) {
+                ccMessage = inboxMessage;
+              }
+              if (inboxMessageFromEmail === MAILTRAP_EMAIL_BCC) {
+                bccMessage = inboxMessage;
+              }
+            }
+
+            expect(mainMessage).to.be.ok;
+            expect(ccMessage).to.be.ok;
+            expect(bccMessage).to.be.ok;
+
+            const messages = [mainMessage, ccMessage, bccMessage];
+            const emails = [MAILTRAP_EMAIL, MAILTRAP_EMAIL_CC, MAILTRAP_EMAIL_BCC];
+
+            for (const [index, message] of messages.entries()) {
+              expect(message).to.deep.include({
+                inbox_id: inboxId,
+                subject: `Regression subject for ${providerId}`,
+                from_email: FROM_EMAIL,
+                from_name: buildSenderName(providerId),
+                to_email: MAILTRAP_EMAIL,
+                to_name: '',
+                is_read: false,
+                html_path: `/api/accounts/${accountId}/inboxes/${inboxId}/messages/${message.id}/body.html`,
+                raw_path: `/api/accounts/${accountId}/inboxes/${inboxId}/messages/${message.id}/body.raw`,
+                txt_path: `/api/accounts/${accountId}/inboxes/${inboxId}/messages/${message.id}/body.txt`,
+              });
+
+              expect(message.smtp_information.data.rcpt_to_addrs).to.deep.equal([emails[index]]);
+
+              const [txtMessage, htmlMessage, messageAttachments] = await Promise.all([
+                mailtrapService.getMessageByPath(message.txt_path),
+                mailtrapService.getMessageByPath(message.html_path),
+                mailtrapService.getAttachment(accountId, inboxId, message.id),
+              ]);
+
+              expect(txtMessage).to.not.be.ok;
+              expect(htmlMessage?.includes(EMAIL_BLOCK_TEXT)).to.eql(true);
+              expect(messageAttachments).to.deep.equal([]);
+            }
           });
         });
       });
