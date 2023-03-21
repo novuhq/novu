@@ -43,8 +43,6 @@ jobs:
           push: 'true'
           github_token: ${{ secrets.GITHUB_TOKEN }}
       
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-api
         id: docker_build
         with:
