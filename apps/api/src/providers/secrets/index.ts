@@ -52,6 +52,10 @@ export const getProviderSecrets = (providerId: EmailProviderIdEnum): Record<stri
       user: process.env.REGRESSION_CUSTOM_SMTP_USERNAME,
       password: process.env.REGRESSION_CUSTOM_SMTP_PASSWORD,
     },
+    [EmailProviderIdEnum.Mailjet]: {
+      apiKey: process.env.REGRESSION_MAILJET_API_KEY,
+      secretKey: process.env.REGRESSION_MAILJET_API_SECRET,
+    },
     [EmailProviderIdEnum.Novu]: {
       apiKey: process.env.REGRESSION_NOVU_API_KEY,
     },

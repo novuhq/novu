@@ -24,6 +24,7 @@ const providers = [
   EmailProviderIdEnum.SendGrid,
   EmailProviderIdEnum.Novu,
   EmailProviderIdEnum.CustomSMTP,
+  EmailProviderIdEnum.Mailjet,
   EmailProviderIdEnum.Sendinblue,
 ];
 
