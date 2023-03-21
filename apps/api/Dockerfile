@@ -14,6 +14,9 @@ COPY ./meta .
 COPY ./deps .
 COPY ./pkg .
 
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then cp .npmrc-cloud .npmrc  ; fi
+
 RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  pnpm install --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
  --frozen-lockfile\
@@ -57,6 +60,8 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  --frozen-lockfile \
  --unsafe-perm \
  --reporter=silent
+
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
