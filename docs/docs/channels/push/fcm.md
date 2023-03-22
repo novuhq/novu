@@ -41,8 +41,8 @@ Make sure your service account json content contains these fields
 
 The overrides field supports apns, android, webpush and fcmOptions overrides
 
-| Override Field | Type / Interface | Link                                                                                         |
-| -------------- | ---------------- | -------------------------------------------------------------------------------------------- |
+| Override Field | Type / Interface | Link                                                                                           |
+| -------------- | ---------------- | ---------------------------------------------------------------------------------------------- |
 | android        | AndroidConfig    | <https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.androidconfig> |
 | apns           | ApnsConfig       | <https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.apnsconfig>    |
 | webPush        | WebpushConfig    | <https://firebase.google.com/docs/reference/admin/node/firebase-admin.messaging.webpushconfig> |
