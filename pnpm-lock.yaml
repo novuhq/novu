@@ -205,6 +205,7 @@ importers:
       '@novu/slack': ^0.12.0
       '@novu/sms77': ^0.12.0
       '@novu/sns': ^0.12.0
+      '@novu/sparkpost': ^0.12.0
       '@novu/stateless': ^0.12.0
       '@novu/telnyx': ^0.12.0
       '@novu/termii': ^0.12.0
@@ -319,6 +320,7 @@ importers:
       '@novu/slack': link:../../providers/slack
       '@novu/sms77': link:../../providers/sms77
       '@novu/sns': link:../../providers/sns
+      '@novu/sparkpost': link:../../providers/sparkpost
       '@novu/stateless': link:../../packages/stateless
       '@novu/telnyx': link:../../providers/telnyx
       '@novu/termii': link:../../providers/termii
@@ -1533,7 +1535,7 @@ importers:
       rimraf: 3.0.2
       sinon: 9.2.4
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -1576,7 +1578,7 @@ importers:
       jwt-decode: 3.1.2
       open: 8.4.0
       ora: 5.4.1
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       uuid: 9.0.0
     devDependencies:
       '@types/analytics-node': 3.1.9
@@ -1677,7 +1679,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2009,7 +2011,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.8.4
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2053,7 +2055,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
       uuid: 9.0.0
@@ -2093,7 +2095,7 @@ importers:
       open-cli: 6.0.1
       prettier: 2.8.4
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2134,7 +2136,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2175,7 +2177,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2216,7 +2218,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2263,7 +2265,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2310,7 +2312,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2344,7 +2346,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typescript: 4.9.5
 
   providers/gupshup:
@@ -2386,7 +2388,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2427,7 +2429,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2468,7 +2470,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.19.2_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2509,7 +2511,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2554,7 +2556,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2597,7 +2599,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2642,7 +2644,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2676,7 +2678,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typescript: 4.9.5
 
   providers/ms-teams:
@@ -2717,7 +2719,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
       uuid: 9.0.0
@@ -2759,7 +2761,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2800,7 +2802,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2843,7 +2845,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2884,7 +2886,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2925,7 +2927,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -2966,7 +2968,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3007,7 +3009,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.19.2_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3048,7 +3050,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3091,7 +3093,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3134,7 +3136,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3177,7 +3179,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3222,7 +3224,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3263,7 +3265,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3306,7 +3308,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3347,7 +3349,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3390,7 +3392,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -3431,7 +3433,7 @@ importers:
       prettier: 2.8.4
       rimraf: 3.0.2
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_ebv7jpk5iu7ytdhj56oi5mjoga
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -17714,7 +17716,7 @@ packages:
     engines: {node: ^8.13.0 || >=10.10.0}
     dependencies:
       '@grpc/proto-loader': 0.7.4
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
     dev: false
     optional: true
 
@@ -18082,7 +18084,7 @@ packages:
     dependencies:
       '@jest/types': 27.5.1
       '@sinonjs/fake-timers': 8.1.0
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       jest-message-util: 27.5.1
       jest-mock: 27.5.1
       jest-util: 27.5.1
@@ -28437,12 +28439,12 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 3.0.5
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
 
   /@types/graceful-fs/4.1.5:
     resolution: {integrity: sha512-anKkLmZZ+xm4p8JWBf4hElkM4XR+EZeA2M9BAkkTldmcyDY4mbdIJnRghDJH3Ov5ooY7/UAoENtmdMSkaAd7Cw==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
 
   /@types/handlebars/4.1.0:
     resolution: {integrity: sha512-gq9YweFKNNB1uFK71eRqsd4niVkXrxHugqWFQkeLRJvGjnxsLr16bYtcsG4tOFwmYi0Bax+wCkbf1reUfdl4kA==}
@@ -28830,7 +28832,7 @@ packages:
   /@types/resolve/1.17.1:
     resolution: {integrity: sha512-yy7HuzQhj0dhGpD8RLXSZWEkLsV9ibvxvi6EiJ3bkqLAO1RGo0WbkWQiwpRlSFymTJRz0d3k5LM3kkx8ArDbLw==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
 
   /@types/resolve/1.20.2:
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
@@ -28847,7 +28849,7 @@ packages:
   /@types/sax/1.2.4:
     resolution: {integrity: sha512-pSAff4IAxJjfAXUG6tFkO7dsSbTmf8CtUpfhhZ5VhkRpC4628tJhh3+V6H1E+/Gs9piSzYKT5yzHO5M4GG9jkw==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
     dev: false
 
   /@types/scheduler/0.16.2:
@@ -29011,14 +29013,14 @@ packages:
   /@types/webpack-sources/3.2.0:
     resolution: {integrity: sha512-Ft7YH3lEVRQ6ls8k4Ff1oB4jN6oy/XmU6tQISKdhfh+1mR+viZFphS6WL0IrtDOzvefmJg5a0s7ZQoRXwqTEFg==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       '@types/source-list-map': 0.1.2
       source-map: 0.7.4
 
   /@types/webpack/4.41.32:
     resolution: {integrity: sha512-cb+0ioil/7oz5//7tZUSwbrSAN/NWHrQylz5cW8G0dWTcF/g+/dSdMlKVZspBYuMAN1+WnwHrkxiRrLcwd0Heg==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       '@types/tapable': 1.0.8
       '@types/uglify-js': 3.13.1
       '@types/webpack-sources': 3.2.0
@@ -29028,7 +29030,7 @@ packages:
   /@types/whatwg-url/8.2.1:
     resolution: {integrity: sha512-2YubE1sjj5ifxievI5Ge1sckb9k/Er66HyR2c+3+I6VDUUg1TLPdYYTEbQ+DjRkS4nTxMJhgWfSfMRD2sl2EYQ==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       '@types/webidl-conversions': 6.1.1
     dev: false
 
@@ -30044,7 +30046,7 @@ packages:
   /@wry/context/0.4.4:
     resolution: {integrity: sha512-LrKVLove/zw6h2Md/KZyWxIkFM6AoyKp71OqpH9Hiip1csjPVoD3tPxlbQUNxEnHENks3UGgNpSBCAfq9KWuag==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       tslib: 1.14.1
     dev: true
 
@@ -37882,7 +37884,7 @@ packages:
     resolution: {integrity: sha512-EzV94NYKoO09GLXGjXj9JIlXijVck4ONSr5wiCWDvhsvj5jxSrzTmRU/9C1DyB6uToszLs8aifA6NQ7lEQdvFw==}
     engines: {node: '>= 0.8'}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       require-like: 0.1.2
     dev: false
 
@@ -42251,7 +42253,7 @@ packages:
       '@jest/expect': 29.3.1
       '@jest/test-result': 29.3.1
       '@jest/types': 29.3.1
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       chalk: 4.1.2
       co: 4.6.0
       dedent: 0.7.0
@@ -42711,7 +42713,7 @@ packages:
       '@jest/environment': 29.3.1
       '@jest/fake-timers': 29.3.1
       '@jest/types': 29.3.1
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       jest-mock: 29.3.1
       jest-util: 29.3.1
     dev: true
@@ -42740,7 +42742,7 @@ packages:
     dependencies:
       '@jest/types': 26.6.2
       '@types/graceful-fs': 4.1.5
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       anymatch: 3.1.2
       fb-watchman: 2.0.1
       graceful-fs: 4.2.10
@@ -43148,7 +43150,7 @@ packages:
     resolution: {integrity: sha512-S5wqyz0DXnNJPd/xfIzZ5Xnp1HrJWBczg8mMfMpN78OJ5eDxXyf+Ygld9wX1DnUWbIbhM1YDY95NjR4CBXkb2g==}
     engines: {node: '>= 10.14.2'}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       graceful-fs: 4.2.10
 
   /jest-serializer/27.5.1:
@@ -43228,7 +43230,7 @@ packages:
     engines: {node: '>= 10.14.2'}
     dependencies:
       '@jest/types': 26.6.2
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       chalk: 4.1.2
       graceful-fs: 4.2.10
       is-ci: 2.0.0
@@ -43312,7 +43314,7 @@ packages:
     dependencies:
       '@jest/test-result': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       jest-util: 27.5.1
@@ -43352,7 +43354,7 @@ packages:
     resolution: {integrity: sha512-lY4AnnmsEWeiXirAIA0c9SDPbuCBq8IYuDVL8PMm0MZ2PEs2yPvRA/J64QBXuZp7CYKrDM/rmNrc9/i3KJQncw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       jest-util: 29.3.1
       merge-stream: 2.0.0
       supports-color: 8.1.1
@@ -49804,7 +49806,7 @@ packages:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/long': 4.0.1
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       long: 4.0.0
     dev: false
     optional: true
@@ -49825,7 +49827,7 @@ packages:
       '@protobufjs/pool': 1.1.0
       '@protobufjs/utf8': 1.1.0
       '@types/long': 4.0.1
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
       long: 5.2.0
     dev: false
 
@@ -55735,6 +55737,7 @@ packages:
       typescript: 4.9.5
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+    dev: true
 
   /ts-node/10.9.1_pcraivvvcp3hdgpdkddzbjo4ki:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}
@@ -55796,7 +55799,6 @@ packages:
       typescript: 4.9.5
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
-    dev: true
 
   /ts-node/9.1.1_typescript@4.9.5:
     resolution: {integrity: sha512-hPlt7ZACERQGf03M253ytLY3dHbGNGrAq9qIHWUY9XHYl1z7wYngSr3OQ5xmui8o2AaxsONxIzjafLUiWBo1Fg==}
