@@ -1,5 +1,4 @@
 // axios must be imported because it is used with http
-import axios from 'axios';
 import {
   IBroadcastPayloadOptions,
   IBulkEvents,
@@ -15,6 +14,7 @@ export class Events extends WithHttp {
       payload: {
         ...data?.payload,
       },
+      transactionId: data.transactionId,
       overrides: data.overrides || {},
       ...(data.actor && { actor: data.actor }),
     });

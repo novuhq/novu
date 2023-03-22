@@ -8,11 +8,6 @@ export class BurstSmsHandler extends BaseSmsHandler {
     super('burst-sms', ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
-    const config: {
-      apiKey: string;
-      secretKey: string;
-    } = { apiKey: credentials.apiKey, secretKey: credentials.secretKey };
-
-    this.provider = new BurstSmsProvider(config);
+    this.provider = new BurstSmsProvider({ apiKey: credentials.apiKey, secretKey: credentials.secretKey });
   }
 }

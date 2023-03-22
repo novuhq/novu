@@ -150,6 +150,7 @@ export class UpdateNotificationTemplate {
               subject: message.template.subject,
               title: message.template.title,
               preheader: message.template.preheader,
+              senderName: message.template.senderName,
               actor: message.template.actor,
               parentChangeId,
             })
@@ -174,6 +175,7 @@ export class UpdateNotificationTemplate {
               subject: message.template.subject,
               title: message.template.title,
               preheader: message.template.preheader,
+              senderName: message.template.senderName,
               parentChangeId,
             })
           );
@@ -212,6 +214,9 @@ export class UpdateNotificationTemplate {
       command.id,
       command.environmentId
     );
+    if (!notificationTemplateWithStepTemplate) {
+      throw new NotFoundException(`Notification template ${command.id} is not found`);
+    }
 
     const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);
 
@@ -263,10 +268,14 @@ export class UpdateNotificationTemplate {
       partialNotificationStep.replyCallback = message.replyCallback;
     }
 
+    if (message.uuid) {
+      partialNotificationStep.uuid = message.uuid;
+    }
+
     return partialNotificationStep;
   }
 
-  private cleanNotificationTemplate(notificationTemplateWithStepTemplate) {
+  private cleanNotificationTemplate(notificationTemplateWithStepTemplate: NotificationTemplateEntity) {
     const notificationTemplate = Object.assign({}, notificationTemplateWithStepTemplate);
 
     notificationTemplate.steps = notificationTemplateWithStepTemplate.steps.map((step) => {

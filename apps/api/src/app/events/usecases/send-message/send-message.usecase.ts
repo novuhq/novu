@@ -15,24 +15,26 @@ import {
 } from '@novu/dal';
 
 import { SendMessageCommand } from './send-message.command';
+import { SendMessageDelay } from './send-message-delay.usecase';
 import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import { SendMessageDelay } from './send-message-delay.usecase';
+
+import { MessageMatcher } from '../message-matcher';
+
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { MessageMatcher } from '../trigger-event/message-matcher.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { KeyGenerator } from '../../../shared/services/cache/keys';
@@ -83,7 +85,7 @@ export class SendMessage {
         digestAmount: command.job.digest?.amount,
         filterPassed: shouldRun,
         preferencesPassed: preferred,
-        usedFilters,
+        ...(usedFilters || {}),
       });
     }
 
@@ -190,6 +192,7 @@ export class SendMessage {
       _id: job._templateId,
       environmentId: job._environmentId,
     });
+    if (!template) throw new ApiException(`Notification template ${job._templateId} is not found`);
 
     const subscriber = await this.subscriberRepository.findById(job._subscriberId);
     if (!subscriber) throw new ApiException('Subscriber not found with id ' + job._subscriberId);

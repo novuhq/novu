@@ -1,126 +1,146 @@
-import { JobEntity, JobRepository, NotificationTemplateRepository, NotificationRepository } from '@novu/dal';
-import { Injectable } from '@nestjs/common';
-import { StepTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
+import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 
 import { TriggerEventCommand } from './trigger-event.command';
-import { ProcessSubscriber } from '../process-subscriber/process-subscriber.usecase';
-import { ProcessSubscriberCommand } from '../process-subscriber/process-subscriber.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
-import { AddJob } from '../add-job/add-job.usecase';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+
+import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
+import { CreateNotificationJobsCommand, CreateNotificationJobs } from '../create-notification-jobs';
+import { ProcessSubscriber, ProcessSubscriberCommand } from '../process-subscriber';
+
+import { EventsPerformanceService } from '../../services/performance-service';
+
 import {
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '../../../integrations/usecases/get-decrypted-integrations';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+
+const LOG_CONTEXT = 'TriggerEventUseCase';
+
+import { PinoLogger } from '@novu/application-generic';
 
 @Injectable()
 export class TriggerEvent {
   constructor(
-    private notificationTemplateRepository: NotificationTemplateRepository,
+    private storeSubscriberJobs: StoreSubscriberJobs,
+    private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
+    private getDecryptedIntegrations: GetDecryptedIntegrations,
+    protected performanceService: EventsPerformanceService,
     private jobRepository: JobRepository,
-    private addJobUsecase: AddJob,
-    private notificationRepository: NotificationRepository,
-    protected createExecutionDetails: CreateExecutionDetails
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private logger: PinoLogger
   ) {}
 
   async execute(command: TriggerEventCommand) {
-    await this.validateTransactionIdProperty(command.transactionId, command.organizationId, command.environmentId);
+    const mark = this.performanceService.buildTriggerEventMark(command.identifier, command.transactionId);
+
+    const { actor, environmentId, identifier, organizationId, to, userId } = command;
+
+    await this.validateTransactionIdProperty(command.transactionId, organizationId, environmentId);
+
+    Sentry.addBreadcrumb({
+      message: 'Sending trigger',
+      data: {
+        triggerIdentifier: identifier,
+      },
+    });
+
+    this.logger.assign({
+      transactionId: command.transactionId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
       command.environmentId,
       command.identifier
     );
 
-    Sentry.addBreadcrumb({
-      message: 'Sending trigger',
-      data: {
-        triggerIdentifier: command.identifier,
-      },
-    });
-
-    const jobs: Omit<JobEntity, '_id'>[][] = [];
-
-    for (const subscriberToTrigger of command.to) {
-      jobs.push(
-        await this.processSubscriber.execute(
-          ProcessSubscriberCommand.create({
-            identifier: command.identifier,
-            payload: command.payload,
-            overrides: command.overrides,
-            to: subscriberToTrigger,
-            transactionId: command.transactionId,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.organizationId,
-            templateId: template._id,
-            actor: command.actor,
-            template,
-          })
-        )
-      );
+    /*
+     * Makes no sense to execute anything if template doesn't exist
+     * TODO: Send a 404?
+     */
+    if (!template) {
+      const message = 'Notification template could not be found';
+      Logger.error(message, LOG_CONTEXT);
+      throw new ApiException(message);
     }
 
-    for (const job of jobs) {
-      await this.storeAndAddJob(job);
-    }
-  }
+    const templateProviderIds = await this.getProviderIdsForTemplate(
+      command.userId,
+      command.organizationId,
+      command.environmentId,
+      template
+    );
 
-  private async storeAndAddJob(jobs: Omit<JobEntity, '_id'>[]) {
-    const storedJobs = await this.jobRepository.storeJobs(jobs);
-    const channels = storedJobs
-      .map((item) => item.type as StepTypeEnum)
-      .reduce<StepTypeEnum[]>((list, channel) => {
-        if (list.includes(channel) || channel === StepTypeEnum.TRIGGER) {
-          return list;
-        }
-        list.push(channel);
+    const subscribersJobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[][] = [];
 
-        return list;
-      }, []);
-
-    for (const job of storedJobs) {
-      this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEP_CREATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: false,
+    // We might have a single actor for every trigger so we only need to check for it once
+    let actorProcessed;
+    if (actor) {
+      actorProcessed = await this.processSubscriber.execute(
+        ProcessSubscriberCommand.create({
+          environmentId,
+          organizationId,
+          userId,
+          subscriber: actor,
         })
       );
     }
 
-    const firstJob = storedJobs[0];
+    for (const subscriber of to) {
+      const subscriberProcessed = await this.processSubscriber.execute(
+        ProcessSubscriberCommand.create({
+          environmentId,
+          organizationId,
+          userId,
+          subscriber,
+        })
+      );
 
-    await this.notificationRepository.update(
-      {
-        _organizationId: firstJob._organizationId,
-        _id: firstJob._notificationId,
-      },
-      {
-        $set: {
-          channels: channels,
-        },
+      // If no subscriber makes no sense to try to create notification
+      if (subscriberProcessed) {
+        const createNotificationJobsCommand = CreateNotificationJobsCommand.create({
+          environmentId,
+          identifier,
+          organizationId,
+          overrides: command.overrides,
+          payload: command.payload,
+          subscriber: subscriberProcessed,
+          template,
+          templateProviderIds,
+          to: subscriber,
+          transactionId: command.transactionId,
+          userId,
+          ...(actor && actorProcessed && { actor: actorProcessed }),
+        });
+
+        const notificationJobs = await this.createNotificationJobs.execute(createNotificationJobsCommand);
+
+        subscribersJobs.push(notificationJobs);
       }
-    );
+    }
 
-    await this.addJobUsecase.execute({
-      userId: firstJob._userId,
-      environmentId: firstJob._environmentId,
-      organizationId: firstJob._organizationId,
-      jobId: firstJob._id,
-      job: firstJob,
-    });
+    for (const subscriberJobs of subscribersJobs) {
+      const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
+        environmentId: command.environmentId,
+        jobs: subscriberJobs,
+        organizationId: command.organizationId,
+      });
+      await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
+    }
+
+    this.performanceService.setEnd(mark);
   }
 
-  public async validateTransactionIdProperty(
+  private async validateTransactionIdProperty(
     transactionId: string,
     organizationId: string,
     environmentId: string
-  ): Promise<boolean> {
+  ): Promise<void> {
     const found = await this.jobRepository.count({
       transactionId,
       _organizationId: organizationId,
@@ -132,7 +152,53 @@ export class TriggerEvent {
         'transactionId property is not unique, please make sure all triggers have a unique transactionId'
       );
     }
+  }
 
-    return true;
+  private async getProviderIdsForTemplate(
+    userId: string,
+    organizationId: string,
+    environmentId: string,
+    template: NotificationTemplateEntity
+  ): Promise<Map<ChannelTypeEnum, string>> {
+    const providers = new Map<ChannelTypeEnum, string>();
+
+    for (const step of template?.steps) {
+      const type = step.template?.type;
+      if (type) {
+        const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
+
+        if (channelType) {
+          const provider = await this.getProviderId(userId, organizationId, environmentId, channelType);
+          if (provider) {
+            providers.set(channelType, provider);
+          } else {
+            providers.set(channelType, InAppProviderIdEnum.Novu);
+          }
+        }
+      }
+    }
+
+    return providers;
+  }
+
+  private async getProviderId(
+    userId: string,
+    organizationId: string,
+    environmentId: string,
+    channelType: ChannelTypeEnum
+  ): Promise<string> {
+    const integrations = await this.getDecryptedIntegrations.execute(
+      GetDecryptedIntegrationsCommand.create({
+        channelType,
+        active: true,
+        organizationId,
+        environmentId,
+        userId,
+      })
+    );
+
+    const integration = integrations[0];
+
+    return integration?.providerId;
   }
 }

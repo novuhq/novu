@@ -631,7 +631,7 @@ describe('Promote changes', () => {
           _organizationId: session.organization._id,
           enabled: false,
           _entityId: layoutId,
-          type: ChangeEntityTypeEnum.LAYOUT,
+          type: ChangeEntityTypeEnum.DEFAULT_LAYOUT,
         },
         '',
         {
@@ -641,7 +641,7 @@ describe('Promote changes', () => {
 
       expect(changes.length).to.eql(1);
       expect(changes[0]._entityId).to.eql(layoutId);
-      expect(changes[0].type).to.eql(ChangeEntityTypeEnum.LAYOUT);
+      expect(changes[0].type).to.eql(ChangeEntityTypeEnum.DEFAULT_LAYOUT);
       expect(changes[0].change).to.deep.include({ op: 'add', path: ['_id'], val: layoutId });
 
       await session.applyChanges({

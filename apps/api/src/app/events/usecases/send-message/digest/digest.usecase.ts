@@ -6,11 +6,11 @@ import { SendMessageType } from '../send-message-type.usecase';
 import { StepTypeEnum, DigestTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
-import { CreateExecutionDetails } from '../../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../../execution-details/types';
 
 @Injectable()
 export class Digest extends SendMessageType {
@@ -61,7 +61,7 @@ export class Digest extends SendMessageType {
   private async getEvents(command: SendMessageCommand) {
     const currentJob = await this.jobRepository.findOne({ _environmentId: command.environmentId, _id: command.jobId });
 
-    if (currentJob.digest.type === DigestTypeEnum.BACKOFF) {
+    if (currentJob?.digest?.type === DigestTypeEnum.BACKOFF) {
       return this.getDigestEventsBackoff.execute(command);
     }
 

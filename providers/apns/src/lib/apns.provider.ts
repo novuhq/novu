@@ -16,6 +16,8 @@ export class APNSPushProvider implements IPushProvider {
       key: string;
       keyId: string;
       teamId: string;
+      bundleId: string;
+      production: boolean;
     }
   ) {
     this.config = config;
@@ -25,7 +27,7 @@ export class APNSPushProvider implements IPushProvider {
         keyId: config.keyId,
         teamId: config.teamId,
       },
-      production: process.env.NODE_ENV === 'prod',
+      production: config.production,
     });
   }
 
@@ -37,11 +39,12 @@ export class APNSPushProvider implements IPushProvider {
       body: options.content,
       title: options.title,
       payload: options.payload,
+      topic: this.config.bundleId,
       ...options.overrides,
     });
     const res = await this.provider.send(notification, options.target);
 
-    if (res.failed) {
+    if (res.failed.length > 0) {
       throw new Error(
         res.failed
           .map(

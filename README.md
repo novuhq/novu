@@ -1,16 +1,4 @@
 <div align="center">
-  <a href="https://novu.co/polishing" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/100117126/216938999-e49784fc-f5a9-43d3-8430-f33c1be1a38a.jpeg">
-    <img width="100%" src="https://user-images.githubusercontent.com/100117126/216939116-d5f8f4d2-6c7c-4165-a509-0844909dd9eb.jpeg" width="280" alt="Bar"/>
-  </picture>
-  </a>
-</div>
-
-</br>
-</br>
-
-<div align="center">
   <a href="https://novu.co" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
@@ -40,10 +28,12 @@ The ultimate service for managing multi-channel notifications with a single API.
     <a href="https://github.com/orgs/novuhq/projects/10">Roadmap</a>
     ·
     <a href="https://twitter.com/novuhq">Twitter</a>
+    ·
+    <a href="https://notifications.directory">Notifications Directory</a>
   </p>
   
   <p align="center">
-  Available in: <a href="https://github.com/novuhq/novu/tree/next/packages/node">Node.js<a/>
+  Available in: <a href="https://github.com/novuhq/novu/tree/next/packages/node">Node.js</a>
   · <a href="https://github.com/unicodeveloper/novu">PHP</a>
   · <a href="https://github.com/novuhq/elixir">Elixir</a>
   · <a href="https://github.com/novuhq/rust">Rust</a>
@@ -77,7 +67,6 @@ With Novu, you can create custom workflows and define conditions for each channe
   - [Chat](https://github.com/novuhq/novu#-chat)
   - [In-App](https://github.com/novuhq/novu#-in-app)
   - [Others](https://github.com/novuhq/novu#other-coming-soon)
-- [Jarvis](https://github.com/novuhq/novu#-meet-jarvis)
 - [Need Help?](https://github.com/novuhq/novu#-need-help)
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
@@ -152,6 +141,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
 - [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
 - [x] [MailerSend](https://github.com/novuhq/novu/tree/main/providers/mailersend)
+- [x] [Resend](https://github.com/novuhq/novu/tree/main/providers/resend)
 - [ ] SparkPost
 
 #### 📞 SMS
@@ -179,7 +169,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] Slack
 - [x] Discord
 - [x] MS Teams
-- [ ] Mattermost
+- [x] Mattermost
 
 #### 📱 In-App
 

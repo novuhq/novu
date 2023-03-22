@@ -39,11 +39,13 @@ Handlebars.registerHelper(HandlebarHelpersEnum.DATEFORMAT, function (date, dateF
 
 @Injectable()
 export class CompileTemplate {
-  async execute(command: CompileTemplateCommand): Promise<string | null> {
+  async execute(command: CompileTemplateCommand): Promise<string> {
     const templateContent = command.template;
 
     const template = Handlebars.compile(templateContent);
 
-    return template(command.data);
+    const result = template(command.data, {});
+
+    return result.replace(/&#x27;/g, "'");
   }
 }

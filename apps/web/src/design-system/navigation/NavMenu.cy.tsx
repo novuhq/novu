@@ -1,6 +1,7 @@
 import { NavMenu } from './NavMenu';
 import { MemoryRouter as Router } from 'react-router-dom';
 import { TestWrapper } from '../../testing';
+import { ROUTES } from '../../constants/routes.enum';
 
 describe('NavMenu', () => {
   it('should have active class when clicked menu item', () => {
@@ -8,21 +9,21 @@ describe('NavMenu', () => {
       {
         icon: null,
         label: 'Home',
-        link: '/',
+        link: ROUTES.HOME,
         testId: 'menu-home',
         rightSide: null,
       },
       {
         icon: null,
         label: 'About',
-        link: '/about',
+        link: ROUTES.ABOUT,
         testId: 'menu-about',
         rightSide: null,
       },
       {
         icon: null,
         label: 'Contact',
-        link: '/contact',
+        link: ROUTES.CONTACT,
         testId: 'menu-contact',
         rightSide: null,
       },

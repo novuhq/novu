@@ -6,8 +6,8 @@ import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Button, Tabs } from '../../design-system';
 import PageMeta from '../../components/layout/components/PageMeta';
-import { usePromotedChanges, useUnPromotedChanges } from '../../api/hooks/useEnvironmentChanges';
-import { ChangesTable } from '../../components/changes/ChangesTableLayout';
+import { usePromotedChanges, useUnPromotedChanges } from '../../hooks';
+import { ChangesTable } from './components/ChangesTableLayout';
 import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
 import { errorMessage, successMessage } from '../../utils/notifications';
@@ -43,6 +43,7 @@ export function PromoteChangesPage() {
       value: PENDING,
       content: (
         <ChangesTable
+          key={page}
           loading={isLoadingChanges}
           changes={changes}
           handleTableChange={handleTableChange}
@@ -57,6 +58,7 @@ export function PromoteChangesPage() {
       value: HISTORY,
       content: (
         <ChangesTable
+          key={page}
           loading={isLoadingHistory}
           changes={history}
           handleTableChange={handleTableChange}
@@ -88,7 +90,7 @@ export function PromoteChangesPage() {
         }
       />
       <StyledTabs>
-        <Tabs menuTabs={menuTabs} defaultValue={PENDING} />
+        <Tabs menuTabs={menuTabs} defaultValue={PENDING} onTabChange={() => setPage(0)} />
       </StyledTabs>
     </PageContainer>
   );

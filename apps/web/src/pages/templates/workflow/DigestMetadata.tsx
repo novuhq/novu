@@ -6,81 +6,86 @@ import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';
 import { Input, Select, Switch, Button } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks';
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;
   margin-top: 15px;
 `;
 
-export const DigestMetadata = ({ control, index, loading, disableSubmit, setSelectedChannel }) => {
+export const DigestMetadata = ({ control, index, loading, disableSubmit, onSideMenuClose }) => {
   const { readonly } = useEnvController();
   const {
-    formState: { errors },
+    formState: { errors, isSubmitted },
     watch,
+    trigger,
   } = useFormContext();
+
   const type = watch(`steps.${index}.metadata.type`);
+  const showErrors = isSubmitted && errors?.steps;
 
   return (
     <>
-      <MantineInput.Wrapper
-        label="Time Interval"
-        description="Once triggered, for how long the digest should collect events"
-        styles={inputStyles}
-      >
-        <Grid
-          sx={{
-            marginBottom: '2px',
-          }}
+      <div data-test-id="digest-step-settings-interval">
+        <MantineInput.Wrapper
+          label="Time Interval"
+          description="Once triggered, for how long the digest should collect events"
+          styles={inputStyles}
         >
-          <Grid.Col span={4}>
-            <Controller
-              control={control}
-              name={`steps.${index}.metadata.amount`}
-              defaultValue=""
-              render={({ field, fieldState }) => {
-                return (
-                  <Input
-                    {...field}
-                    value={field.value || ''}
-                    error={fieldState.error?.message}
-                    min={0}
-                    max={100}
-                    type="number"
-                    data-test-id="time-amount"
-                    placeholder="0"
-                    disabled={readonly}
-                  />
-                );
-              }}
-            />
-          </Grid.Col>
-          <Grid.Col span={8}>
-            <Controller
-              control={control}
-              name={`steps.${index}.metadata.unit`}
-              defaultValue=""
-              render={({ field }) => {
-                return (
-                  <Select
-                    disabled={readonly}
-                    error={errors?.steps ? errors.steps[index]?.metadata?.unit?.message : undefined}
-                    placeholder="Interval"
-                    data={[
-                      { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
-                      { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
-                      { value: DigestUnitEnum.HOURS, label: 'Hours' },
-                      { value: DigestUnitEnum.DAYS, label: 'Days' },
-                    ]}
-                    data-test-id="time-unit"
-                    {...field}
-                  />
-                );
-              }}
-            />
-          </Grid.Col>
-        </Grid>
-      </MantineInput.Wrapper>
+          <Grid
+            sx={{
+              marginBottom: '2px',
+            }}
+          >
+            <Grid.Col span={4}>
+              <Controller
+                control={control}
+                name={`steps.${index}.metadata.amount`}
+                defaultValue=""
+                render={({ field, fieldState }) => {
+                  return (
+                    <Input
+                      {...field}
+                      value={field.value || ''}
+                      error={showErrors && fieldState.error?.message}
+                      min={0}
+                      max={100}
+                      type="number"
+                      data-test-id="time-amount"
+                      placeholder="0"
+                      disabled={readonly}
+                    />
+                  );
+                }}
+              />
+            </Grid.Col>
+            <Grid.Col span={8}>
+              <Controller
+                control={control}
+                name={`steps.${index}.metadata.unit`}
+                defaultValue=""
+                render={({ field, fieldState }) => {
+                  return (
+                    <Select
+                      disabled={readonly}
+                      error={showErrors && fieldState.error?.message}
+                      placeholder="Interval"
+                      data={[
+                        { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
+                        { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
+                        { value: DigestUnitEnum.HOURS, label: 'Hours' },
+                        { value: DigestUnitEnum.DAYS, label: 'Days' },
+                      ]}
+                      data-test-id="time-unit"
+                      {...field}
+                    />
+                  );
+                }}
+              />
+            </Grid.Col>
+          </Grid>
+        </MantineInput.Wrapper>
+      </div>
       <div
         style={{
           marginBottom: '15px',
@@ -93,14 +98,18 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
           render={({ field }) => {
             return (
               <Select
+                {...field}
                 label="Type of digest"
                 disabled={readonly}
                 data={[
                   { value: DigestTypeEnum.REGULAR, label: 'Regular' },
                   { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
                 ]}
+                onChange={async (value) => {
+                  field.onChange(value);
+                  await trigger(`steps.${index}.metadata`);
+                }}
                 data-test-id="digest-type"
-                {...field}
               />
             );
           }}
@@ -128,7 +137,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                     <Input
                       {...field}
                       value={field.value || ''}
-                      error={fieldState.error?.message}
+                      error={showErrors && fieldState.error?.message}
                       min={0}
                       max={100}
                       type="number"
@@ -146,11 +155,11 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
                 control={control}
                 name={`steps.${index}.metadata.backoffUnit`}
                 defaultValue=""
-                render={({ field }) => {
+                render={({ field, fieldState }) => {
                   return (
                     <Select
                       disabled={readonly}
-                      error={errors?.steps ? errors.steps[index]?.metadata?.backoffUnit?.message : undefined}
+                      error={showErrors && fieldState.error?.message}
                       placeholder="Interval"
                       data={[
                         { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
@@ -227,7 +236,7 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, setSele
         data-test-id="delete-step-button"
         loading={loading}
         disabled={disableSubmit}
-        onClick={() => setSelectedChannel(null)}
+        onClick={onSideMenuClose}
       >
         Save
       </Button>

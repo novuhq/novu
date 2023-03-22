@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Stack } from '@mantine/core';
 import { colors, Tooltip } from '../../../design-system';
-import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
+import { useIntegrationLimit } from '../../../hooks';
 import styled from '@emotion/styled/macro';
 import { Link } from 'react-router-dom';
 
@@ -15,13 +15,17 @@ export const LimitBar = ({
   channel?: ChannelTypeEnum;
   label?: string | null;
 }) => {
-  const { limit: { limit, count } = { limit: 0, count: 0 }, loading, enabled } = useIntegrationLimit(channel);
+  const {
+    data: { limit, count },
+    loading,
+    isLimitFetchingEnabled,
+  } = useIntegrationLimit(channel);
 
   if (channel !== ChannelTypeEnum.EMAIL && channel !== ChannelTypeEnum.SMS) {
     return null;
   }
 
-  if (loading || !enabled) {
+  if (loading || !isLimitFetchingEnabled) {
     return null;
   }
 

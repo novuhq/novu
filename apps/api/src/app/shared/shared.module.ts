@@ -22,8 +22,11 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
+import { ConnectionOptions } from 'tls';
 
+import { DistributedLockService } from './services/distributed-lock';
+import { PerformanceService } from './services/performance';
 import { QueueService } from './services/queue';
 import {
   AzureBlobStorageService,
@@ -32,7 +35,7 @@ import {
   StorageService,
 } from './services/storage/storage.service';
 import { CacheService, InvalidateCacheService } from './services/cache';
-import { ConnectionOptions } from 'tls';
+import * as packageJson from '../../../package.json';
 
 const DAL_MODELS = [
   UserRepository,
@@ -91,6 +94,12 @@ const cacheService = {
 
 const PROVIDERS = [
   {
+    provide: DistributedLockService,
+    useFactory: () => {
+      return new DistributedLockService();
+    },
+  },
+  {
     provide: QueueService,
     useFactory: () => {
       return new QueueService();
@@ -102,6 +111,12 @@ const PROVIDERS = [
       await dalService.connect(process.env.MONGO_URL);
 
       return dalService;
+    },
+  },
+  {
+    provide: PerformanceService,
+    useFactory: () => {
+      return new PerformanceService();
     },
   },
   cacheService,
@@ -124,8 +139,15 @@ const PROVIDERS = [
 ];
 
 @Module({
-  imports: [],
+  imports: [
+    LoggerModule.forRoot(
+      createNestLoggingModuleOptions({
+        serviceName: packageJson.name,
+        version: packageJson.version,
+      })
+    ),
+  ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS],
+  exports: [...PROVIDERS, LoggerModule],
 })
 export class SharedModule {}

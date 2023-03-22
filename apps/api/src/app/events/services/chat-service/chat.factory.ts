@@ -3,11 +3,12 @@ import { SlackHandler } from './handlers/slack.handler';
 import { IntegrationEntity } from '@novu/dal';
 import { DiscordHandler } from './handlers/discord.handler';
 import { MSTeamsHandler } from './handlers/msteams.handler';
+import { MattermostHandler } from './handlers/mattermost.handler';
 
 export class ChatFactory implements IChatFactory {
-  handlers: IChatHandler[] = [new SlackHandler(), new DiscordHandler(), new MSTeamsHandler()];
+  handlers: IChatHandler[] = [new SlackHandler(), new DiscordHandler(), new MSTeamsHandler(), new MattermostHandler()];
 
-  getHandler(integration: IntegrationEntity): IChatHandler {
+  getHandler(integration: IntegrationEntity) {
     try {
       const handler =
         this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;

@@ -1,24 +1,29 @@
-import { BaseRepository, Omit } from '../base-repository';
-import { JobEntity, JobStatusEnum } from './job.entity';
-import { Job } from './job.schema';
+import { ProjectionType } from 'mongoose';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Document, FilterQuery, ProjectionType } from 'mongoose';
+
+import { BaseRepository } from '../base-repository';
+import { JobEntity, JobDBModel, JobStatusEnum } from './job.entity';
+import { Job } from './job.schema';
 import { NotificationTemplateEntity } from '../notification-template';
 import { SubscriberEntity } from '../subscriber';
 import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { DalException } from '../../shared';
 
-class PartialJobEntity extends Omit(JobEntity, ['_environmentId', '_organizationId']) {}
+type JobEntityPopulated = JobEntity & {
+  template: NotificationTemplateEntity;
+  notification: NotificationEntity;
+  subscriber: SubscriberEntity;
+  environment: EnvironmentEntity;
+};
 
-type EnforceEnvironmentQuery = FilterQuery<PartialJobEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEntity> {
+export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Job, JobEntity);
   }
 
-  public async storeJobs(jobs: Omit<JobEntity, '_id'>[]): Promise<JobEntity[]> {
+  public async storeJobs(jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[]): Promise<JobEntity[]> {
     const stored: JobEntity[] = [];
     for (let index = 0; index < jobs.length; index++) {
       if (index > 0) {
@@ -32,8 +37,12 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     return stored;
   }
 
-  public async updateStatus(organizationId: string, jobId: string, status: JobStatusEnum) {
-    await this.update(
+  public async updateStatus(
+    organizationId: string,
+    jobId: string,
+    status: JobStatusEnum
+  ): Promise<{ matched: number; modified: number }> {
+    return await this.update(
       {
         _organizationId: organizationId,
         _id: jobId,
@@ -46,11 +55,11 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     );
   }
 
-  public async setError(organizationId: string, jobId: string, error: Error) {
-    await this.update(
+  public async setError(organizationId: string, jobId: string, error: Error): Promise<void> {
+    const result = await this._model.update(
       {
-        _organizationId: organizationId,
-        _id: jobId,
+        _organizationId: this.convertStringToObjectId(organizationId),
+        _id: this.convertStringToObjectId(jobId),
       },
       {
         $set: {
@@ -58,6 +67,12 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
         },
       }
     );
+
+    if (result.modifiedCount === 0) {
+      throw new DalException(
+        `There was a problem when trying to set an error for the job ${jobId} in the organization ${organizationId}`
+      );
+    }
   }
 
   public async findInAppsForDigest(organizationId: string, transactionId: string, subscriberId: string) {
@@ -146,20 +161,58 @@ export class JobRepository extends BaseRepository<EnforceEnvironmentQuery, JobEn
     selectNotification?: ProjectionType<NotificationEntity>;
     selectSubscriber?: ProjectionType<SubscriberEntity>;
     selectEnvironment?: ProjectionType<EnvironmentEntity>;
-  }): Promise<
-    JobEntity & {
-      template: NotificationTemplateEntity;
-      notification: NotificationEntity;
-      subscriber: SubscriberEntity;
-      environment: EnvironmentEntity;
-    }
-  > {
-    return this.MongooseModel.findOne(query, select)
+  }) {
+    const job = this.MongooseModel.findOne(query, select)
       .populate('template', selectTemplate)
       .populate('notification', selectNotification)
       .populate('subscriber', selectSubscriber)
       .populate('environment', selectEnvironment)
       .lean()
       .exec();
+
+    return job as unknown as JobEntityPopulated;
+  }
+
+  public async shouldDelayDigestJobOrMerge(
+    job: JobEntity,
+    digestKey?: string,
+    digestValue?: string | number
+  ): Promise<{ matched: number; modified: number }> {
+    const execution = {
+      matched: 0,
+      modified: 0,
+    };
+
+    const delayedDigestJobs = await this._model.find({
+      status: JobStatusEnum.DELAYED,
+      type: StepTypeEnum.DIGEST,
+      _templateId: job._templateId,
+      _environmentId: this.convertStringToObjectId(job._environmentId),
+      _subscriberId: this.convertStringToObjectId(job._subscriberId),
+      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
+    });
+
+    const matched = delayedDigestJobs.length;
+    execution.matched = matched;
+
+    if (execution.matched === 0) {
+      const updatedDigestJob = await this._model.updateOne(
+        {
+          _environmentId: job._environmentId,
+          _templateId: job._templateId,
+          _subscriberId: job._subscriberId,
+          _id: job._id,
+        },
+        {
+          $set: {
+            status: JobStatusEnum.DELAYED,
+          },
+        }
+      );
+
+      execution.modified = updatedDigestJob.modifiedCount;
+    }
+
+    return execution;
   }
 }

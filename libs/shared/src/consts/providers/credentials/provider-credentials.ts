@@ -146,6 +146,24 @@ export const nodemailerConfig: IConfigCredentials[] = [
     required: false,
   },
   {
+    key: CredentialsKeyEnum.RequireTls,
+    displayName: 'Require TLS',
+    type: 'boolean',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.IgnoreTls,
+    displayName: 'Ignore TLS',
+    type: 'boolean',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.TlsOptions,
+    displayName: 'TLS options',
+    type: 'object',
+    required: false,
+  },
+  {
     key: CredentialsKeyEnum.Domain,
     displayName: 'DKIM: Domain name',
     type: 'string',
@@ -177,6 +195,16 @@ export const postmarkConfig: IConfigCredentials[] = [
 ];
 
 export const sendgridConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...mailConfigBase,
+];
+
+export const resendConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'API Key',
@@ -402,15 +430,28 @@ export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Key ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
   {
     key: CredentialsKeyEnum.ProjectName,
     displayName: 'Team ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Bundle ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Secure,
+    displayName: 'Production',
+    type: 'switch',
+    required: true,
+  },
+
   ...pushConfigBase,
 ];
 
@@ -479,4 +520,48 @@ export const infobipEmailConfig: IConfigCredentials[] = [
     required: true,
   },
   ...mailConfigBase,
+];
+
+export const fortySixElksConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const kannelConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Host,
+    displayName: 'Host',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Port,
+    displayName: 'Port',
+    type: 'number',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: false,
+  },
+  ...smsConfigBase,
 ];

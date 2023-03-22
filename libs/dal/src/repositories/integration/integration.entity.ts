@@ -1,5 +1,9 @@
 import { ChannelTypeEnum } from '@novu/shared';
 
+import type { EnvironmentId } from '../environment';
+import type { OrganizationId } from '../organization';
+import { ChangePropsValueType } from '../../types/helpers';
+
 export interface ICredentials {
   apiKey?: string;
   user?: string;
@@ -21,14 +25,17 @@ export interface ICredentials {
   serviceAccount?: string;
   baseUrl?: string;
   ipPoolName?: string;
+  requireTls?: boolean;
+  ignoreTls?: boolean;
+  tlsOptions?: Record<string, unknown>;
 }
 
 export class IntegrationEntity {
-  _id?: string;
+  _id: string;
 
-  _environmentId: string;
+  _environmentId: EnvironmentId;
 
-  _organizationId: string;
+  _organizationId: OrganizationId;
 
   providerId: string;
 
@@ -44,3 +51,5 @@ export class IntegrationEntity {
 
   deletedBy: string;
 }
+
+export type IntegrationDBModel = ChangePropsValueType<IntegrationEntity, '_environmentId' | '_organizationId'>;

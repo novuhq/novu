@@ -12,6 +12,8 @@ import {
   Post,
   Query,
   UseGuards,
+  Logger,
+  ExecutionContext,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -82,6 +84,8 @@ export class LayoutsController {
     @UserSession() user: IJwtPayload,
     @Body() body: CreateLayoutRequestDto
   ): Promise<CreateLayoutResponseDto> {
+    Logger.verbose('Executing new layout command');
+
     const layout = await this.createLayoutUseCase.execute(
       CreateLayoutCommand.create({
         environmentId: user.environmentId,
@@ -94,6 +98,8 @@ export class LayoutsController {
         isDefault: body.isDefault,
       })
     );
+
+    Logger.verbose('Created new Layout' + layout._id);
 
     return {
       _id: layout._id,

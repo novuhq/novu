@@ -1,4 +1,4 @@
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { OrganizationRepository, UserRepository, MemberRepository, IAddMemberData } from '@novu/dal';
 import { MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
@@ -30,10 +30,9 @@ export class InviteMember {
     if (foundInvitee) throw new ApiException('Already invited');
 
     const inviterUser = await this.userRepository.findById(command.userId);
+    if (!inviterUser) throw new NotFoundException(`Inviter ${command.userId} is not found`);
 
     const token = createGuid();
-
-    const existingUser = await this.userRepository.findByEmail(normalizeEmail(command.email));
 
     if (process.env.NOVU_API_KEY && (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod')) {
       const novu = new Novu(process.env.NOVU_API_KEY);
@@ -49,7 +48,7 @@ export class InviteMember {
           email: command.email,
           inviteeName: capitalize(command.email.split('@')[0]),
           organizationName: capitalize(organization.name),
-          inviterName: capitalize(inviterUser.firstName),
+          inviterName: capitalize(inviterUser.firstName ?? ''),
           acceptInviteUrl: `${process.env.FRONT_BASE_URL}/auth/invitation/${token}`,
         },
       });
@@ -65,10 +64,6 @@ export class InviteMember {
         invitationDate: new Date(),
       },
     };
-
-    if (existingUser) {
-      memberPayload._userId = existingUser._id;
-    }
 
     this.analyticsService.track('Invite Organization Member', command.userId, {
       _organization: command.organizationId,

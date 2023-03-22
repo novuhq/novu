@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { Center } from '@mantine/core';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
-import { PasswordResetRequestForm } from '../../components/auth/PasswordResetRequestForm';
-import { PasswordResetForm } from '../../components/auth/PasswordResetForm';
+import { PasswordResetRequestForm } from './components/PasswordResetRequestForm';
+import { PasswordResetForm } from './components/PasswordResetForm';
 import { Button, Text } from '../../design-system';
-import { useVercelParams } from '../../hooks/useVercelParams';
+import { ROUTES } from '../../constants/routes.enum';
+import { useVercelParams } from '../../hooks';
 
 type Props = {};
 
@@ -17,7 +18,7 @@ export function PasswordResetPage({}: Props) {
   const { isFromVercel, code, next, configurationId } = useVercelParams();
 
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : '/auth/login';
+  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : ROUTES.AUTH_LOGIN;
   function onSent() {
     setShowSentSuccess(true);
   }

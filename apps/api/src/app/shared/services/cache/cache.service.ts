@@ -1,6 +1,7 @@
 import Redis from 'ioredis';
 import { ConnectionOptions } from 'tls';
 import { QUERY_PREFIX } from './keys';
+import { Logger } from '@nestjs/common';
 
 const STORE_CONNECTED = 'ready';
 
@@ -47,11 +48,11 @@ export class CacheService implements ICacheService {
       });
 
       this.client.on('connect', () => {
-        console.log('REDIS CONNECTED');
+        Logger.log('REDIS CONNECTED');
       });
 
       this.client.on('error', (error) => {
-        console.error(error);
+        Logger.error(error);
       });
 
       this.cacheTtl = this.config.ttl ? Number(this.config.ttl) : this.DEFAULT_TTL_SECONDS;
@@ -163,7 +164,7 @@ export class CacheService implements ICacheService {
 }
 
 export interface ICacheServiceConfig {
-  host: string;
+  host?: string;
   port: string;
   ttl?: string;
   password?: string;

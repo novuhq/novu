@@ -22,6 +22,8 @@ import { SwitchOrganizationCommand } from '../usecases/switch-organization/switc
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 import { CachedEntity } from '../../shared/interceptors/cached-entity.interceptor';
 import { KeyGenerator } from '../../shared/services/cache/keys';
+import { normalizeEmail } from '../../shared/helpers/email-normalization.service';
+import { ApiException } from '../../shared/exceptions/api.exception';
 
 @Injectable()
 export class AuthService {
@@ -46,17 +48,19 @@ export class AuthService {
     distinctId: string,
     origin?: SignUpOriginEnum
   ) {
-    let user = await this.userRepository.findByLoginProvider(profile.id, authProvider);
+    const email = normalizeEmail(profile.email);
+    let user = await this.userRepository.findByEmail(email);
     let newUser = false;
 
     if (!user) {
       user = await this.createUserUsecase.execute(
         CreateUserCommand.create({
           picture: profile.avatar_url,
-          email: profile.email,
+          email,
           lastName: profile.name ? profile.name.split(' ').slice(-1).join(' ') : null,
           firstName: profile.name ? profile.name.split(' ').slice(0, -1).join(' ') : profile.login,
           auth: {
+            username: profile.login,
             profileId: profile.id,
             provider: authProvider,
             accessToken,
@@ -70,17 +74,40 @@ export class AuthService {
         this.analyticsService.alias(distinctId, user._id);
       }
 
-      this.analyticsService.upsertUser(user, user._id);
-
       this.analyticsService.track('[Authentication] - Signup', user._id, {
         loginType: authProvider,
         origin: origin,
       });
     } else {
+      if (authProvider === AuthProviderEnum.GITHUB) {
+        const withoutUsername = user.tokens.find(
+          (i) => i.provider === AuthProviderEnum.GITHUB && !i.username && String(i.providerId) === String(profile.id)
+        );
+
+        if (withoutUsername) {
+          await this.userRepository.update(
+            {
+              _id: user._id,
+              'tokens.providerId': profile.id,
+            },
+            {
+              $set: {
+                'tokens.$.username': profile.login,
+              },
+            }
+          );
+
+          user = await this.userRepository.findById(user._id);
+          if (!user) throw new ApiException('User not found');
+        }
+      }
+
       this.analyticsService.track('[Authentication] - Login', user._id, {
         loginType: authProvider,
       });
     }
+
+    this.analyticsService.upsertUser(user, user._id);
 
     return {
       newUser,

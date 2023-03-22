@@ -5,7 +5,7 @@ export function addAndEditChannel(channel: Channel) {
   clickWorkflow();
 
   dragAndDrop(channel);
-  editChannel(channel);
+  editChannel(channel, true);
 }
 
 export function dragAndDrop(channel: Channel, dropTestId = 'addNodeButton') {
@@ -32,7 +32,7 @@ export function fillBasicNotificationDetails(title?: string) {
 }
 
 export function clickWorkflow() {
-  cy.getByTestId('workflowButton').click({ force: true });
+  cy.getByTestId('workflowButton').click();
 }
 
 export function awaitGetContains(getSelector: string, contains: string) {

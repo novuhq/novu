@@ -5,9 +5,6 @@ name: Test WEB
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
-    secrets:
-      cypress_key:
-        required: false
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -78,25 +75,30 @@ jobs:
         env:
           REACT_APP_API_URL: http://localhost:1336
           REACT_APP_WS_URL: http://localhost:1340
+          REACT_APP_WEBHOOK_URL: http://localhost:1341
         run: pnpm pnpm start:static:build &
 
       - name: Start WS
         run: pnpm start:ws:test &
 
       - name: Start API in TEST
+        env:
+          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
+          GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
+          GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
         run: cd apps/api && pnpm start:test &
 
       - name: Install wait-on plugin
         run: npm i -g wait-on
 
       - name: Wait on API
-        run: wait-on --timeout=120000 http://localhost:1336/v1/health-check
+        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
 
       - name: Wait on WS
-        run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
+        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check
 
       - name: Wait on WEB
-        run: wait-on --timeout=120000 http://localhost:4200
+        run: wait-on --timeout=180000 http://localhost:4200
 
       # run cypress install only when cache was not hit
       - name: Cypress install
@@ -109,7 +111,10 @@ jobs:
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
+          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
+          CYPRESS_IS_CI: true
         with:
           working-directory: apps/web
           browser: chrome
@@ -118,7 +123,7 @@ jobs:
           install: false
           config-file: cypress.config.ts
 
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: cypress-screenshots
@@ -154,7 +159,7 @@ jobs:
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
           NODE_OPTIONS: --max_old_space_size=4096
         with:
           browser: chrome
@@ -162,7 +167,7 @@ jobs:
           install: false
           component: true
 
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: cypress-screenshots

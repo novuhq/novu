@@ -1,9 +1,10 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
-import { schemaOptions } from '../schema-default.options';
-import { OrganizationEntity, PartnerTypeEnum } from './organization.entity';
+import { Schema } from 'mongoose';
 
-const organizationSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { OrganizationDBModel, PartnerTypeEnum } from './organization.entity';
+
+const organizationSchema = new Schema<OrganizationDBModel>(
   {
     name: Schema.Types.String,
     logo: Schema.Types.String,
@@ -34,10 +35,7 @@ const organizationSchema = new Schema(
   schemaOptions
 );
 
-interface IOrganizationDocument extends OrganizationEntity, Document {
-  _id: never;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Organization =
-  mongoose.models.Organization || mongoose.model<IOrganizationDocument>('Organization', organizationSchema);
+  (mongoose.models.Organization as mongoose.Model<OrganizationDBModel>) ||
+  mongoose.model<OrganizationDBModel>('Organization', organizationSchema);

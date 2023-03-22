@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { JobEntity, JobStatusEnum, JobRepository, NotificationStepEntity, NotificationRepository } from '@novu/dal';
+import { JobStatusEnum, JobRepository, NotificationStepEntity, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterSteps } from './digest-filter-steps.usecase';
@@ -9,15 +9,12 @@ export class DigestFilterStepsRegular {
   constructor(private jobRepository: JobRepository, private notificationRepository: NotificationRepository) {}
 
   public async execute(command: DigestFilterStepsCommand): Promise<NotificationStepEntity[]> {
-    const steps = [DigestFilterSteps.createTriggerStep(command)];
-    let delayedDigests: JobEntity = null;
-    for (const step of command.steps) {
-      if (step.template.type === StepTypeEnum.DIGEST) {
-        delayedDigests = await this.getDigest(command, step);
-      }
+    const steps: NotificationStepEntity[] = [];
+    let delayedDigests;
 
-      if (delayedDigests) {
-        continue;
+    for (const step of command.steps) {
+      if (step?.template?.type === StepTypeEnum.DIGEST) {
+        delayedDigests = await this.getDigest(command, step);
       }
 
       steps.push(step);
@@ -41,7 +38,7 @@ export class DigestFilterStepsRegular {
   }
 
   private async getDigest(command: DigestFilterStepsCommand, step: NotificationStepEntity) {
-    const where: any = {
+    const where = {
       status: JobStatusEnum.DELAYED,
       type: StepTypeEnum.DIGEST,
       _subscriberId: command._subscriberId,
@@ -49,8 +46,9 @@ export class DigestFilterStepsRegular {
       _environmentId: command.environmentId,
     };
 
-    if (step.metadata.digestKey) {
-      where['payload.' + step.metadata.digestKey] = command.payload[step.metadata.digestKey];
+    const digestKey = step?.metadata?.digestKey;
+    if (digestKey) {
+      where['payload.' + digestKey] = DigestFilterSteps.getNestedValue(command.payload, digestKey);
     }
 
     return await this.jobRepository.findOne(where);

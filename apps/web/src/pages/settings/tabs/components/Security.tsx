@@ -8,7 +8,7 @@ import { useMutation } from '@tanstack/react-query';
 import { Button, colors, Switch, Text } from '../../../../design-system';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { updateWidgetSettings } from '../../../../api/environment';
-import { useEnvController } from '../../../../store/useEnvController';
+import { useEnvController } from '../../../../hooks';
 
 export const Security = () => {
   const [isHmacEnabled, setIsHmacEnabled] = useState<boolean>(false);

@@ -1,5 +1,6 @@
 import { IsDefined, IsOptional } from 'class-validator';
-import { ISubscribersDefine, TriggerRecipientsPayload } from '@novu/node';
+import { ISubscribersDefine } from '@novu/shared';
+import { TriggerRecipientsPayload } from '@novu/node';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 

@@ -1,9 +1,10 @@
-import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Inject, Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
 import { AnalyticsService } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
+import { ISubscribersDefine } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
@@ -14,7 +15,6 @@ import { StorageHelperService } from '../../services/storage-helper-service/stor
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
-import { ISubscribersDefine } from '@novu/node';
 
 @Injectable()
 export class ParseEventRequest {
@@ -29,8 +29,12 @@ export class ParseEventRequest {
 
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
+    Logger.log('Starting Trigger');
 
     const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
+
+    Logger.debug(mappedActor);
+
     const mappedRecipients = await this.mapTriggerRecipients.execute(
       MapTriggerRecipientsCommand.create({
         environmentId: command.environmentId,

@@ -1,9 +1,9 @@
-import { ActivePageEnum } from '../pages/templates/editor/TemplateEditorPage';
 import { useSearchParams } from './useSearchParams';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import { getToken } from '../store/useAuthController';
-import { useSegment } from './useSegment';
+import { getToken } from './useAuthController';
+import { useSegment } from '../components/providers/SegmentProvider';
+import { ActivePageEnum } from '../constants/editorEnums';
 
 export const useBlueprint = () => {
   const searchParams = useSearchParams();

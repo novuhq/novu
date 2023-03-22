@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import {
   MessageTemplateRepository,
   NotificationTemplateEntity,
-  NotificationTemplateRepository,
   SubscriberPreferenceRepository,
   SubscriberRepository,
   SubscriberEntity,
@@ -22,7 +21,6 @@ import { KeyGenerator } from '../../../shared/services/cache/keys';
 export class GetSubscriberTemplatePreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private subscriberRepository: SubscriberRepository
   ) {}

@@ -61,6 +61,7 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'max-len': ['warn', { code: 140 }],
     '@typescript-eslint/return-await': 'off',
+    '@typescript-eslint/no-base-to-string': 'error',
     'no-restricted-imports': [
       'error',
       {

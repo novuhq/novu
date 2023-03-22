@@ -1,15 +1,14 @@
 import { Grid, useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 
-import { TemplatesSideBar } from '../../components/templates/TemplatesSideBar';
 import { colors } from '../../design-system';
-import { TemplatePreference } from '../../components/templates/notification-setting-form/TemplatePreference';
-import { useTemplateEditor } from '../../components/templates/TemplateEditorProvider';
-import { useTemplateFetcher } from '../../components/templates/useTemplateFetcher';
+import { useTemplateEditorForm } from '../templates/components/TemplateEditorFormProvider';
+import { TemplatesSideBar } from '../templates/components/TemplatesSideBar';
+import { TemplatePreference } from '../templates/components/notification-setting-form/TemplatePreference';
 
-export function UserPreference({ activePage, setActivePage, showErrors, templateId }) {
+export function UserPreference({ activePage, setActivePage }) {
   const { colorScheme } = useMantineColorScheme();
-  const { template, trigger } = useTemplateEditor();
+  const { template, trigger } = useTemplateEditorForm();
 
   return (
     <div style={{ marginLeft: 12, marginRight: 12, padding: 17.5, minHeight: 500 }}>
@@ -20,7 +19,6 @@ export function UserPreference({ activePage, setActivePage, showErrors, template
               activeTab={activePage}
               changeTab={setActivePage}
               showTriggerSection={!!template && !!trigger}
-              showErrors={showErrors}
             />
           </SideBarWrapper>
         </Grid.Col>

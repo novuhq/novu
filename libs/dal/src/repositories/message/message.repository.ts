@@ -1,18 +1,16 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { SoftDeleteModel } from 'mongoose-delete';
-import { Document, FilterQuery, Types } from 'mongoose';
-import { BaseRepository, Omit } from '../base-repository';
-import { MessageEntity } from './message.entity';
+import { FilterQuery, Types } from 'mongoose';
+
+import { BaseRepository } from '../base-repository';
+import { MessageEntity, MessageDBModel } from './message.entity';
 import { Message } from './message.schema';
 import { FeedRepository } from '../feed';
 import { DalException } from '../../shared';
 
-class PartialMessageEntity extends Omit(MessageEntity, ['_environmentId', '_organizationId']) {}
+type MessageQuery = FilterQuery<MessageDBModel>;
 
-type EnforceEnvironmentQuery = FilterQuery<PartialMessageEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, MessageEntity> {
+export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity> {
   private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
   constructor() {
@@ -26,8 +24,8 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     channel: ChannelTypeEnum,
     query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
     options: { limit: number; skip?: number } = { limit: 10 }
-  ): Promise<EnforceEnvironmentQuery> {
-    const requestQuery: EnforceEnvironmentQuery = {
+  ): Promise<MessageQuery> {
+    const requestQuery: MessageQuery = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
@@ -106,14 +104,53 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     return await this.count(requestQuery);
   }
 
-  async markAllUnseenAsSeen(subscriberId: string, environmentId: string) {
-    return this.update(
-      { _subscriberId: subscriberId, _environmentId: environmentId, seen: false },
-      { $set: { seen: true, lastSeenDate: new Date() } }
-    );
+  async markAllMessagesAs(
+    subscriberId: string,
+    environmentId: string,
+    markAs: 'read' | 'seen',
+    feedIdentifiers?: string[]
+  ) {
+    let feedQuery;
+
+    if (feedIdentifiers) {
+      const feeds = await this.feedRepository.find(
+        {
+          _environmentId: environmentId,
+          identifier: {
+            $in: feedIdentifiers,
+          },
+        },
+        '_id'
+      );
+
+      feedQuery = {
+        $in: feeds.map((feed) => feed._id),
+      };
+    }
+
+    const updateQuery = {
+      _subscriberId: subscriberId,
+      _environmentId: environmentId,
+      [markAs]: false,
+      ...(feedQuery && { _feedId: feedQuery }),
+    };
+
+    const now = new Date();
+    const updatePayload = {
+      seen: true,
+      lastSeenDate: now,
+      ...(markAs === 'read' && {
+        read: true,
+        lastReadDate: now,
+      }),
+    };
+
+    return await this.update(updateQuery, {
+      $set: updatePayload,
+    });
   }
 
-  async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId: string) {
+  async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId?: string | null) {
     return this.update(
       { _environmentId: environmentId, _messageTemplateId: messageId },
       {
@@ -177,7 +214,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     skip = 0,
     limit = 10
   ) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: MessageQuery = {
       _environmentId: environmentId,
     };
 
@@ -251,7 +288,7 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     );
   }
 
-  async delete(query: EnforceEnvironmentQuery) {
+  async delete(query: MessageQuery) {
     const message = await this.findOne({
       _id: query._id,
       _environmentId: query._environmentId,
@@ -264,8 +301,8 @@ export class MessageRepository extends BaseRepository<EnforceEnvironmentQuery, M
     await this.message.delete({ _id: message._id, _environmentId: message._environmentId });
   }
 
-  async findDeleted(query: EnforceEnvironmentQuery): Promise<MessageEntity> {
-    const res = await this.message.findDeleted(query);
+  async findDeleted(query: MessageQuery): Promise<MessageEntity> {
+    const res: MessageEntity = await this.message.findDeleted(query);
 
     return this.mapEntity(res);
   }

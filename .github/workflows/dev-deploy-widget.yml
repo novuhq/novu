@@ -19,8 +19,7 @@ on:
 jobs:
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
-    secrets:
-      cypress_key: ${{ secrets.CYPRESS_WIDGET_KEY }}
+    secrets: inherit
 
   # This workflow contains a single job called "build"
   deploy_widget:
@@ -46,6 +45,7 @@ jobs:
           touch .env
           echo REACT_APP_API_URL="https://dev.api.novu.co" >> .env
           echo REACT_APP_WS_URL="https://dev.ws.novu.co" >> .env
+          echo REACT_APP_WEBHOOK_URL="https://dev.webhook.novu.co" >> .env
           echo REACT_APP_SENTRY_DSN="https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116" >> .env
           echo REACT_APP_ENVIRONMENT=dev >> .env
 
@@ -93,12 +93,8 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: cypress-screenshots
           path: apps/widget/cypress/screenshots
-
-
-
-

@@ -1,15 +1,15 @@
-import { BadRequestException, Injectable, NotFoundException, Inject } from '@nestjs/common';
-
+import { BadRequestException, Injectable, NotFoundException, Inject, Logger } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { encryptCredentials } from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
+import { AnalyticsService, encryptCredentials } from '@novu/application-generic';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { InvalidateCacheService } from '../../../shared/services/cache';
 import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class UpdateIntegration {
@@ -18,12 +18,24 @@ export class UpdateIntegration {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
-    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations
+    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
+    Logger.verbose('Executing Update Integration Command');
+
     const existingIntegration = await this.integrationRepository.findById(command.integrationId);
-    if (!existingIntegration) throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
+    if (!existingIntegration) {
+      throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
+    }
+
+    this.analyticsService.track('Update Integration - [Integrations]', command.userId, {
+      providerId: existingIntegration.providerId,
+      channel: existingIntegration.channel,
+      _organization: command.organizationId,
+      active: command.active,
+    });
 
     await this.invalidateCache.invalidateByKey({
       key: KeyGenerator.entity().integration({
@@ -77,9 +89,12 @@ export class UpdateIntegration {
       });
     }
 
-    return await this.integrationRepository.findOne({
+    const updatedIntegration = await this.integrationRepository.findOne({
       _id: command.integrationId,
       _environmentId: command.environmentId,
     });
+    if (!updatedIntegration) throw new NotFoundException(`Integration with id ${command.integrationId} is not found`);
+
+    return updatedIntegration;
   }
 }

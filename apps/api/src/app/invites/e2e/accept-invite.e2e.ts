@@ -40,8 +40,8 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
     it('should change the member status to active', async () => {
       const member = await memberRepository.findMemberByUserId(session.organization._id, invitedUserSession.user._id);
 
-      expect(member._userId).to.equal(invitedUserSession.user._id);
-      expect(member.memberStatus).to.equal(MemberStatusEnum.ACTIVE);
+      expect(member?._userId).to.equal(invitedUserSession.user._id);
+      expect(member?.memberStatus).to.equal(MemberStatusEnum.ACTIVE);
     });
 
     it('should invite existing user instead of creating new user', async () => {
@@ -63,12 +63,13 @@ describe('Accept invite - /invites/:inviteToken/accept (POST)', async () => {
       });
 
       const members = await memberRepository.getOrganizationMembers(thirdUserSession.organization._id);
-      const newInvitee = members.find((i) => i._userId === invitedUserSession.user._id);
+      const newInvitee = members.find(
+        (member) => member.invite && member.invite.email === invitedUserSession.user.email
+      );
       expect(newInvitee).to.exist;
 
       const { body } = await invitedUserSession.testAgent.get(`/v1/invites/${newInvitee.invite.token}`).expect(200);
-
-      expect(body.data._userId).to.eq(newInvitee.user._id);
+      expect(body.data.email).to.eq(invitedUserSession.user.email);
 
       await invitedUserSession.testAgent.post(`/v1/invites/${newInvitee.invite.token}/accept`).expect(201);
 

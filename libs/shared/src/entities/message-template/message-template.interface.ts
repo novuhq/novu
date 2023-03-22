@@ -13,6 +13,7 @@ export interface IMessageTemplate {
   _id?: string;
   subject?: string;
   name?: string;
+  title?: string;
   type: StepTypeEnum;
   contentType?: MessageTemplateContentType;
   content: string | IEmailBlock[];
@@ -28,6 +29,7 @@ export interface IMessageTemplate {
   _layoutId?: string;
   active?: boolean;
   preheader?: string;
+  senderName?: string;
   actor?: {
     type: ActorTypeEnum;
     data: string | null;
