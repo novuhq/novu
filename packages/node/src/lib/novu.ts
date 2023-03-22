@@ -41,6 +41,7 @@ export class Novu extends EventEmitter {
     this.environments = new Environments(this.http);
     this.events = new Events(this.http);
     this.trigger = this.events.trigger;
+    this.bulkTrigger = this.events.bulkTrigger;
     this.broadcast = this.events.broadcast;
     this.changes = new Changes(this.http);
     this.layouts = new Layouts(this.http);
@@ -53,9 +54,9 @@ export class Novu extends EventEmitter {
 
   public trigger: typeof Events.prototype.trigger;
 
-  public broadcast: typeof Events.prototype.broadcast;
-
   public bulkTrigger: typeof Events.prototype.bulkTrigger;
+
+  public broadcast: typeof Events.prototype.broadcast;
 
   private buildBackendUrl(config?: INovuConfiguration) {
     const novuVersion = 'v1';
