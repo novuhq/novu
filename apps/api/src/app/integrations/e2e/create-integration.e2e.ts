@@ -96,7 +96,6 @@ describe('Create Integration - /integration (POST)', function () {
     expect(secondIntegration.active).to.equal(true);
   });
 
-
   it('should create custom SMTP integration with TLS options successfully', async function () {
     const payload = {
       providerId: 'nodemailer',
@@ -105,7 +104,7 @@ describe('Create Integration - /integration (POST)', function () {
         host: 'smtp.example.com',
         port: '587',
         secure: 'true',
-        requireTls: 'true',
+        requireTls: true,
         tlsOptions: JSON.stringify({ rejectUnauthorized: false }),
       },
       active: true,
