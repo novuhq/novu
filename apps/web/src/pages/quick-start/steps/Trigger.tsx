@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { CheckCircleBroken } from '../../../design-system/icons/gradient/CheckCircleBroken';
@@ -6,9 +7,11 @@ import { TestNotificationTrigger } from '../components/TestNotificationTrigger';
 import { BellGradient } from '../../../design-system/icons';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { OnBoardingAnalyticsEnum } from '../consts';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function Trigger() {
   const segment = useSegment();
+  const { framework } = useParams();
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.TRIGGER_VISIT);
@@ -20,6 +23,7 @@ export function Trigger() {
       secondaryTitle={'Amazing, nearly done!'}
       description={<TriggerDescription />}
       faq={true}
+      goBackPath={ROUTES.QUICK_START_SETUP_FRAMEWORK.replace(':framework', framework || '')}
     >
       <TestNotificationTrigger />
     </QuickStartWrapper>

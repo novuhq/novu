@@ -4,7 +4,7 @@ import { Center } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { Button } from '../../../design-system';
-import { localNavigate } from './route/store';
+import { currentOnboardingStep } from './route/store';
 
 export function NavButton({
   pulse = false,
@@ -27,7 +27,7 @@ export function NavButton({
       handleOnClick();
     }
 
-    localNavigate().push(navigateTo);
+    currentOnboardingStep().set(navigateTo);
 
     if (navigateTo) {
       navigate(navigateTo);

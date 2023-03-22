@@ -3,11 +3,27 @@ import styled from '@emotion/styled';
 import { useLocation, useParams } from 'react-router-dom';
 
 import { colors, Popover, Text } from '../../design-system';
-import { guidePreview, guidePlayground, GuideTitleEnum, IBeat } from './consts';
+import {
+  guidePreview,
+  guidePlayground,
+  GuideTitleEnum,
+  IBeat,
+  HINT_MIDDLE_OPACITY,
+  HINT_VISIBLE_OPACITY,
+} from './consts';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
 import { OnBoardingAnalyticsEnum } from '../../pages/quick-start/consts';
 import { useSegment } from '../providers/SegmentProvider';
+import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
+
+const getOpacity = (id: string, hoveredHintId?: string, sequence?: { opacity: number }): number => {
+  if (hoveredHintId) {
+    return hoveredHintId === id ? HINT_VISIBLE_OPACITY : HINT_MIDDLE_OPACITY;
+  }
+
+  return sequence?.opacity ?? HINT_VISIBLE_OPACITY;
+};
 
 export function NodeStep({
   data,
@@ -17,13 +33,14 @@ export function NodeStep({
   ActionItem,
   ContentItem,
 }: {
-  data: { label: string };
+  data: { label: string; email?: string };
   id: string;
   Handlers: React.FC<any>;
   Icon: React.FC<any>;
   ActionItem?: React.ReactNode;
   ContentItem?: React.ReactNode;
 }) {
+  const { hoveredHintId, setHoveredHintId } = useDigestDemoFlowContext();
   const segment = useSegment();
   const { counter } = useCounter();
   const [sequence, setSequence] = useState<IBeat>();
@@ -39,6 +56,11 @@ export function NodeStep({
       ? 'blue'
       : 'red';
 
+  const EMAIL_PLACEHOLDER = '{{email}}';
+  const description = !popoverData.description.includes(EMAIL_PLACEHOLDER)
+    ? popoverData.description
+    : popoverData.description.replace(EMAIL_PLACEHOLDER, data?.email || '');
+
   function onUrlClickHandler() {
     segment.track(`${OnBoardingAnalyticsEnum.BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK}`, {
       channel: label,
@@ -49,6 +71,14 @@ export function NodeStep({
     setSequence(popoverData.sequence[counter.toString()] as IBeat);
   }, [counter]);
 
+  const onDropdownMouseEnter = () => {
+    setHoveredHintId(id);
+  };
+
+  const onDropdownMouseLeave = () => {
+    setHoveredHintId(undefined);
+  };
+
   return (
     <Popover
       withArrow
@@ -56,7 +86,7 @@ export function NodeStep({
       opened={sequence?.open || false}
       transition="rotate-left"
       transitionDuration={600}
-      opacity={sequence?.opacity ? sequence.opacity : 1}
+      opacity={getOpacity(id, hoveredHintId, sequence)}
       target={
         <div>
           <StepCard data-test-id={`data-test-id-${label}`}>
@@ -74,9 +104,11 @@ export function NodeStep({
       }
       title={popoverData.title}
       titleGradient={titleGradient}
-      description={popoverData.description}
+      description={description}
       url={popoverData.docsUrl}
       onUrlClick={onUrlClickHandler}
+      onDropdownMouseEnter={onDropdownMouseEnter}
+      onDropdownMouseLeave={onDropdownMouseLeave}
     />
   );
 }

@@ -5,6 +5,7 @@ import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { Cards } from '../../../design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { FlowTypeEnum, OnBoardingAnalyticsEnum } from '../consts';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function NotificationCenter() {
   const segment = useSegment();
@@ -14,7 +15,7 @@ export function NotificationCenter() {
   }, []);
 
   return (
-    <QuickStartWrapper secondaryTitle={'How would you like to start?'}>
+    <QuickStartWrapper secondaryTitle={'How would you like to start?'} goBackPath={ROUTES.GET_STARTED}>
       <Cards
         cells={[
           {

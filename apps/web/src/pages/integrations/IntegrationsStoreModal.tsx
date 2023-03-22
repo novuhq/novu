@@ -18,6 +18,8 @@ import { colors, shadows, Title } from '../../design-system';
 import { ConnectIntegrationForm } from './components/Modal/ConnectIntegrationForm';
 import { Close } from '../../design-system/icons/actions/Close';
 import { useProviders } from './useProviders';
+import { useSegment } from '../../components/providers/SegmentProvider';
+import { IntegrationsStoreModalAnalytics } from './constants';
 
 export function IntegrationsStoreModal({
   scrollTo,
@@ -28,6 +30,7 @@ export function IntegrationsStoreModal({
   openIntegration: boolean;
   closeIntegration: () => void;
 }) {
+  const segment = useSegment();
   const { environment } = useEnvController();
   const { organization } = useAuthController();
   const { loading: isLoading } = useIntegrations({ refetchOnMount: false });
@@ -39,7 +42,7 @@ export function IntegrationsStoreModal({
   const { classes } = useModalStyles();
   const { classes: drawerClasses } = useDrawerStyles();
 
-  async function handlerVisible(
+  async function handleOnProviderClick(
     visible: boolean,
     createIntegrationModal: boolean,
     providerConfig: IIntegratedProvider
@@ -47,12 +50,19 @@ export function IntegrationsStoreModal({
     setFormIsOpened(visible);
     setProvider(providerConfig);
     setIsCreateIntegrationModal(createIntegrationModal);
+    segment.track(IntegrationsStoreModalAnalytics.SELECT_PROVIDER_CLICK, {
+      providerId: provider?.providerId,
+      channel: provider?.channel,
+      name: provider?.displayName,
+      active: provider?.active,
+    });
   }
 
   const handleModalClose = useCallback(() => {
     closeIntegration();
     setFormIsOpened(false);
     setProvider(null);
+    segment.track(IntegrationsStoreModalAnalytics.CLOSE_MODAL);
   }, [closeIntegration]);
 
   const handleCloseForm = useCallback(() => {
@@ -64,6 +74,7 @@ export function IntegrationsStoreModal({
     }
 
     closeIntegration();
+    segment.track(IntegrationsStoreModalAnalytics.CLOSE_MODAL);
   }, [isFormOpened, setProvider, setFormIsOpened, closeIntegration]);
 
   useEffect(() => {
@@ -120,28 +131,28 @@ export function IntegrationsStoreModal({
                 channel={ChannelTypeEnum.EMAIL}
                 providers={emailProviders}
                 title="Email"
-                onProviderClick={handlerVisible}
+                onProviderClick={handleOnProviderClick}
               />
               <ChannelGroup
                 selectedProvider={provider?.providerId}
                 channel={ChannelTypeEnum.SMS}
                 providers={smsProvider}
                 title="SMS"
-                onProviderClick={handlerVisible}
+                onProviderClick={handleOnProviderClick}
               />
               <ChannelGroup
                 selectedProvider={provider?.providerId}
                 channel={ChannelTypeEnum.CHAT}
                 providers={chatProvider}
                 title="Chat"
-                onProviderClick={handlerVisible}
+                onProviderClick={handleOnProviderClick}
               />
               <ChannelGroup
                 selectedProvider={provider?.providerId}
                 channel={ChannelTypeEnum.PUSH}
                 providers={pushProvider}
                 title="Push"
-                onProviderClick={handlerVisible}
+                onProviderClick={handleOnProviderClick}
               />
             </>
           ) : null}

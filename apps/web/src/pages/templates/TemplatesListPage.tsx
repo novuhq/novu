@@ -17,8 +17,11 @@ import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
 import { TemplatesListNoData } from './TemplatesListNoData';
 import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
+import { useSegment } from '../../components/providers/SegmentProvider';
+import { TemplateAnalyticsEnum } from './constants';
 
 function NotificationList() {
+  const segment = useSegment();
   const { readonly } = useEnvController();
   const [page, setPage] = useState<number>(0);
   const { groups, loading: areNotificationGroupLoading } = useNotificationGroup();
@@ -32,8 +35,14 @@ function NotificationList() {
     setPage(pageIndex);
   }
 
-  const handleRedirectToCreateTemplate = () => {
+  const handleRedirectToCreateTemplate = (isFromHeader: boolean) => {
+    segment.track(TemplateAnalyticsEnum.CREATE_TEMPLATE_CLICK, { isFromHeader });
     navigate(ROUTES.TEMPLATES_CREATE);
+  };
+
+  const handleCreateDigestDemoWorkflow = () => {
+    segment.track(TemplateAnalyticsEnum.TRY_DIGEST_CLICK);
+    createDigestDemoWorkflow();
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
@@ -116,7 +125,7 @@ function NotificationList() {
         actions={
           <Button
             disabled={readonly}
-            onClick={handleRedirectToCreateTemplate}
+            onClick={() => handleRedirectToCreateTemplate(true)}
             icon={<PlusCircle />}
             data-test-id="create-template-btn"
           >
@@ -139,8 +148,8 @@ function NotificationList() {
           }}
           noDataPlaceholder={
             <TemplatesListNoData
-              onCreateClick={handleRedirectToCreateTemplate}
-              onTryDigestClick={createDigestDemoWorkflow}
+              onCreateClick={() => handleRedirectToCreateTemplate(false)}
+              onTryDigestClick={handleCreateDigestDemoWorkflow}
               tryDigestDisabled={isTryDigestDisabled}
             />
           }

@@ -26,16 +26,16 @@ import { getInAppActivated } from '../../../api/integration';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { getApiKeys } from '../../../api/environment';
 import { API_ROOT, WS_URL } from '../../../config';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function Setup() {
+  const segment = useSegment();
   const { framework } = useParams();
   const { groups, loading: notificationGroupLoading } = useNotificationGroup();
   const { templates = [], loading: templatesLoading } = useTemplates();
   const { environment } = useEnvController();
   const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
-
-  const segment = useSegment();
 
   const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(['inAppActive'], async () => getInAppActivated(), {
     refetchInterval: (data) => stopIfInAppActive(data),
@@ -44,6 +44,7 @@ export function Setup() {
 
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
+  const goBackRoute = framework === 'demo' ? ROUTES.QUICK_START_NOTIFICATION_CENTER : ROUTES.QUICK_START_SETUP;
 
   const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
     INotificationTemplate,
@@ -92,7 +93,7 @@ export function Setup() {
   }
 
   return (
-    <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true}>
+    <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true} goBackPath={goBackRoute}>
       <Stack align="center" sx={{ width: '100%' }}>
         <TimelineWrapper>
           <Timeline
@@ -127,7 +128,7 @@ export function Setup() {
               <LoaderWrapper>
                 <LoaderProceedTernary
                   appInitialized={inAppData.active}
-                  navigatePath={'/quickstart/notification-center/trigger'}
+                  navigatePath={`/quickstart/notification-center/set-up/${framework}/trigger`}
                 />
               </LoaderWrapper>
             </Timeline.Item>
@@ -135,7 +136,7 @@ export function Setup() {
         </TimelineWrapper>
 
         <When truthy={framework === 'demo'}>{<OpenBrowser />}</When>
-      </Stack>{' '}
+      </Stack>
     </QuickStartWrapper>
   );
 }
