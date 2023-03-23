@@ -6,7 +6,7 @@ import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { entityBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class PasswordResetRequest {
@@ -27,7 +27,7 @@ export class PasswordResetRequest {
       const token = uuidv4();
 
       await this.invalidateCache.invalidateByKey({
-        key: KeyGenerator.entity().user({
+        key: entityBuilder().user({
           _id: foundUser._id,
         }),
       });

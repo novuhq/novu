@@ -4,7 +4,7 @@ import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { entityBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class UpdateSubscriber {
@@ -55,7 +55,7 @@ export class UpdateSubscriber {
     }
 
     await this.invalidateCache.invalidateByKey({
-      key: KeyGenerator.entity().subscriber({
+      key: entityBuilder().subscriber({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),

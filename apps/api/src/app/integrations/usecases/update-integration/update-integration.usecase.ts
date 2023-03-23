@@ -7,9 +7,9 @@ import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/
 import { AnalyticsService, encryptCredentials } from '@novu/application-generic';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { buildCommonKey, CacheKeyTypeEnum } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class UpdateIntegration {
@@ -37,10 +37,12 @@ export class UpdateIntegration {
       active: command.active,
     });
 
-    await this.invalidateCache.invalidateByKey({
-      key: KeyGenerator.entity().integration({
-        _id: command.integrationId,
-        _environmentId: command.environmentId,
+    await this.invalidateCache.invalidateQuery({
+      key: buildCommonKey({
+        type: CacheKeyTypeEnum.QUERY,
+        keyEntity: CacheKeyPrefixEnum.INTEGRATION,
+        environmentId: command.environmentId,
+        identifier: command.userId,
       }),
     });
 

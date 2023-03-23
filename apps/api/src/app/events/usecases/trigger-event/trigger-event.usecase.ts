@@ -78,7 +78,7 @@ export class TriggerEvent {
 
     const subscribersJobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[][] = [];
 
-    // We might have a single actor for every trigger so we only need to check for it once
+    // We might have a single actor for every trigger, so we only need to check for it once
     let actorProcessed;
     if (actor) {
       actorProcessed = await this.processSubscriber.execute(

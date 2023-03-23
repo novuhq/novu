@@ -10,13 +10,13 @@ import {
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { queryBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class RemoveMessage {
@@ -31,14 +31,14 @@ export class RemoveMessage {
 
   async execute(command: RemoveMessageCommand): Promise<MessageEntity> {
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.query().feed().invalidate({
+      key: queryBuilder().feed().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.query().messageCount().invalidate({
+      key: queryBuilder().messageCount().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),

@@ -22,7 +22,7 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { CacheService, InvalidateCacheService } from '../../../shared/services/cache';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { NotificationStep } from '../../../shared/dtos/notification-step';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { entityBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -39,7 +39,7 @@ export class UpdateNotificationTemplate {
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
     await this.invalidateCache.invalidateByKey({
-      key: KeyGenerator.entity().notificationTemplate({
+      key: entityBuilder().notificationTemplate({
         _id: command.id,
         _environmentId: command.environmentId,
       }),

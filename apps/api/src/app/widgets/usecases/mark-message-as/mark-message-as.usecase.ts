@@ -3,12 +3,12 @@ import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntit
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { InvalidateCacheService } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { buildCommonKey, CacheKeyTypeEnum, queryBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class MarkMessageAs {
@@ -23,14 +23,14 @@ export class MarkMessageAs {
 
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.query().feed().invalidate({
+      key: queryBuilder().feed().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.query().messageCount().invalidate({
+      key: queryBuilder().messageCount().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
@@ -95,7 +95,14 @@ export class MarkMessageAs {
     });
   }
   @CachedEntity({
-    builder: KeyGenerator.entity().subscriber,
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildCommonKey({
+        type: CacheKeyTypeEnum.ENTITY,
+        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
+        environmentId: command._environmentId,
+        identifier: command.subscriberId,
+        identifierPrefix: 's',
+      }),
   })
   private async fetchSubscriber({
     subscriberId,

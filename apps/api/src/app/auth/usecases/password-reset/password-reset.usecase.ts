@@ -6,7 +6,7 @@ import { PasswordResetCommand } from './password-reset.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AuthService } from '../../services/auth.service';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { entityBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class PasswordReset {
@@ -29,7 +29,7 @@ export class PasswordReset {
     const passwordHash = await bcrypt.hash(command.password, 10);
 
     await this.invalidateCache.invalidateByKey({
-      key: KeyGenerator.entity().user({
+      key: entityBuilder().user({
         _id: user._id,
       }),
     });

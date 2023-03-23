@@ -3,7 +3,7 @@ import { MessageRepository } from '@novu/dal';
 import { RemoveMessageCommand } from './remove-message.command';
 import { InvalidateCacheService } from '../../../shared/services/cache';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { queryBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class RemoveMessage {
@@ -21,14 +21,14 @@ export class RemoveMessage {
     if (!message.subscriber) throw new ApiException(`A subscriber was not found for message ${command.messageId}`);
 
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.query().feed().invalidate({
+      key: queryBuilder().feed().invalidate({
         subscriberId: message.subscriber.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.query().messageCount().invalidate({
+      key: queryBuilder().messageCount().invalidate({
         subscriberId: message.subscriber.subscriberId,
         _environmentId: command.environmentId,
       }),

@@ -4,13 +4,24 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { GetFeedCountCommand } from './get-feed-count.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { GetNotificationsFeedCommand } from '../get-notifications-feed/get-notifications-feed.command';
+import { buildQueryKey, CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class GetFeedCount {
   constructor(private messageRepository: MessageRepository, private subscriberRepository: SubscriberRepository) {}
 
-  @CachedQuery({ builder: KeyGenerator.query().messageCount().cache })
+  @CachedQuery({
+    builder: (command: GetNotificationsFeedCommand) =>
+      buildQueryKey({
+        type: CacheKeyTypeEnum.QUERY,
+        keyEntity: CacheKeyPrefixEnum.MESSAGE_COUNT,
+        environmentId: command.environmentId,
+        identifierPrefix: 's',
+        identifier: command.subscriberId,
+        query: command as any,
+      }),
+  })
   async execute(command: GetFeedCountCommand): Promise<{ count: number }> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 

@@ -9,7 +9,8 @@ import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { InvalidateCacheService } from '../../../shared/services/cache';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { buildCommonKey, CacheKeyTypeEnum } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class CreateIntegration {
@@ -43,6 +44,15 @@ export class CreateIntegration {
           })
         );
       }
+
+      await this.invalidateCache.invalidateQuery({
+        key: buildCommonKey({
+          type: CacheKeyTypeEnum.QUERY,
+          keyEntity: CacheKeyPrefixEnum.INTEGRATION,
+          environmentId: command.environmentId,
+          identifier: command.userId,
+        }),
+      });
 
       response = await this.integrationRepository.create({
         _environmentId: command.environmentId,

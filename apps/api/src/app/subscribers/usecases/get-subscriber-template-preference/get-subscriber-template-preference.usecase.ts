@@ -15,7 +15,7 @@ import {
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { buildCommonKey, CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class GetSubscriberTemplatePreference {
@@ -78,7 +78,14 @@ export class GetSubscriberTemplatePreference {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.entity().subscriber,
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildCommonKey({
+        type: CacheKeyTypeEnum.ENTITY,
+        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
+        environmentId: command._environmentId,
+        identifier: command.subscriberId,
+        identifierPrefix: 's',
+      }),
   })
   private async fetchSubscriber({
     subscriberId,

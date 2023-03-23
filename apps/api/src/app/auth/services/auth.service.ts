@@ -21,9 +21,9 @@ import { SwitchOrganization } from '../usecases/switch-organization/switch-organ
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 import { CachedEntity } from '../../shared/interceptors/cached-entity.interceptor';
-import { KeyGenerator } from '../../shared/services/cache/keys';
 import { normalizeEmail } from '../../shared/helpers/email-normalization.service';
 import { ApiException } from '../../shared/exceptions/api.exception';
+import { buildCommonKey, buildKeyById, CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../shared/services/cache/keys';
 
 @Injectable()
 export class AuthService {
@@ -286,25 +286,38 @@ export class AuthService {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.entity().user,
+    builder: (command: { _id: string }) =>
+      buildKeyById({
+        type: CacheKeyTypeEnum.ENTITY,
+        keyEntity: CacheKeyPrefixEnum.USER,
+        identifier: command._id,
+      }),
   })
   private async getUser({ _id }: { _id: string }) {
     return await this.userRepository.findById(_id);
   }
 
   @CachedEntity({
-    builder: KeyGenerator.entity().environmentByApiKey,
+    builder: (command: { _id: string }) =>
+      buildKeyById({
+        type: CacheKeyTypeEnum.ENTITY,
+        keyEntity: CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY,
+        identifier: command._id,
+      }),
   })
   private async getEnvironment({ _id }: { _id: string }) {
-    /**
-     * _id is used here because the Cached decorator needs and it.
-     * TODO: Refactor cached decorator to support custom keys
-     */
     return await this.environmentRepository.findByApiKey(_id);
   }
 
   @CachedEntity({
-    builder: KeyGenerator.entity().subscriber,
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildCommonKey({
+        type: CacheKeyTypeEnum.ENTITY,
+        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
+        environmentId: command._environmentId,
+        identifier: command.subscriberId,
+        identifierPrefix: 's',
+      }),
   })
   private async getSubscriber({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }) {
     return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);

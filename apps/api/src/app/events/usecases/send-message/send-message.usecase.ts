@@ -37,7 +37,7 @@ import {
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { buildCommonKey, CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class SendMessage {
@@ -152,13 +152,13 @@ export class SendMessage {
   }
 
   private async getFilterData(command: SendMessageCommand) {
-    const fetchSubscriber = command.step?.filters?.find((filter) => {
+    const subscriberFilterExist = command.step?.filters?.find((filter) => {
       return filter?.children?.find((item) => item?.on === 'subscriber');
     });
 
     let subscriber;
 
-    if (fetchSubscriber) {
+    if (subscriberFilterExist) {
       subscriber = await this.getSubscriberBySubscriberId({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
@@ -172,7 +172,14 @@ export class SendMessage {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.entity().subscriber,
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildCommonKey({
+        type: CacheKeyTypeEnum.ENTITY,
+        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
+        environmentId: command._environmentId,
+        identifier: command.subscriberId,
+        identifierPrefix: 's',
+      }),
   })
   private async getSubscriberBySubscriberId({
     subscriberId,
@@ -227,7 +234,13 @@ export class SendMessage {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.entity().notificationTemplate,
+    builder: (command: { _id: string; environmentId: string }) =>
+      buildCommonKey({
+        type: CacheKeyTypeEnum.ENTITY,
+        keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
+        environmentId: command.environmentId,
+        identifier: command._id,
+      }),
   })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);

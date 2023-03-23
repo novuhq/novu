@@ -34,7 +34,7 @@ import { InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { queryBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -148,14 +148,14 @@ export class SendMessageInApp extends SendMessageBase {
     let message: MessageEntity | null = null;
 
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.query().feed().invalidate({
+      key: queryBuilder().feed().invalidate({
         subscriberId: subscriber.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
     await this.invalidateCache.invalidateQuery({
-      key: KeyGenerator.query().messageCount().invalidate({
+      key: queryBuilder().messageCount().invalidate({
         subscriberId: subscriber.subscriberId,
         _environmentId: command.environmentId,
       }),

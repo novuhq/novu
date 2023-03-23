@@ -18,17 +18,15 @@ export enum CacheKeyTypeEnum {
 
 export const QUERY_PREFIX = '#query#';
 
-export class KeyGenerator {
-  public static query = () => {
-    return { feed, messageCount };
-  };
+export const queryBuilder = () => {
+  return { feed, messageCount };
+};
 
-  public static entity = () => {
-    return { subscriber, integration, notificationTemplate, user, environmentByApiKey };
-  };
-}
+export const entityBuilder = () => {
+  return { subscriber, integration, notificationTemplate, user, environmentByApiKey };
+};
 
-const buildQueryKey = ({
+export const buildQueryKey = ({
   type,
   keyEntity,
   environmentIdPrefix = 'e',
@@ -145,7 +143,7 @@ const environmentByApiKey = ({ _id }: { _id: string }): string =>
     identifier: _id,
   });
 
-const buildCommonKey = ({
+export const buildCommonKey = ({
   type,
   keyEntity,
   environmentIdPrefix = 'e',
@@ -161,7 +159,7 @@ const buildCommonKey = ({
   identifier: string;
 }): string => `${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}:${identifierPrefix}=${identifier}`;
 
-const buildKeyById = ({
+export const buildKeyById = ({
   type,
   keyEntity,
   identifierPrefix = 'i',

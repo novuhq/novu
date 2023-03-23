@@ -5,7 +5,7 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { entityBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class ChangeTemplateActiveStatus {
@@ -30,7 +30,7 @@ export class ChangeTemplateActiveStatus {
     }
 
     await this.invalidateCache.invalidateByKey({
-      key: KeyGenerator.entity().notificationTemplate({
+      key: entityBuilder().notificationTemplate({
         _id: command.templateId,
         _environmentId: command.environmentId,
       }),

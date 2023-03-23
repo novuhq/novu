@@ -1,4 +1,4 @@
-import { MessageRepository, SubscriberRepository, JobEntity } from '@novu/dal';
+import { JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 
 import { SendMessageType } from './send-message-type.usecase';
@@ -13,7 +13,13 @@ import {
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import {
+  buildCommonKey,
+  buildQueryKey,
+  CacheKeyPrefixEnum,
+  CacheKeyTypeEnum,
+} from '../../../shared/services/cache/keys';
+import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -28,7 +34,14 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   @CachedEntity({
-    builder: KeyGenerator.entity().subscriber,
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildCommonKey({
+        type: CacheKeyTypeEnum.ENTITY,
+        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
+        environmentId: command._environmentId,
+        identifier: command.subscriberId,
+        identifierPrefix: 's',
+      }),
   })
   protected async getSubscriberBySubscriberId({
     subscriberId,
@@ -43,8 +56,15 @@ export abstract class SendMessageBase extends SendMessageType {
     });
   }
 
-  @CachedEntity({
-    builder: KeyGenerator.entity().integration,
+  @CachedQuery({
+    builder: (command: GetDecryptedIntegrationsCommand) =>
+      buildQueryKey({
+        type: CacheKeyTypeEnum.QUERY,
+        keyEntity: CacheKeyPrefixEnum.INTEGRATION,
+        environmentId: command.environmentId,
+        identifier: command.userId,
+        query: command as any,
+      }),
   })
   protected async getIntegration(getDecryptedIntegrationsCommand: GetDecryptedIntegrationsCommand) {
     return (

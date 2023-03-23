@@ -10,7 +10,8 @@ import { expect } from 'chai';
 import axios from 'axios';
 import { ChannelTypeEnum, ISubscribersDefine, StepTypeEnum } from '@novu/shared';
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
-import { CacheKeyPrefixEnum, CacheService, InvalidateCacheService } from '../../shared/services/cache';
+import { CacheService, InvalidateCacheService } from '../../shared/services/cache';
+import { entityBuilder } from '../../shared/services/cache/keys';
 
 const axiosInstance = axios.create();
 
@@ -193,12 +194,11 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
 
-    await invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
-      credentials: {
+    await invalidateCache.invalidateByKey({
+      key: entityBuilder().notificationTemplate({
         _id: template._id,
-        environmentId: session.environment._id,
-      },
+        _environmentId: session.environment._id,
+      }),
     });
 
     await notificationTemplateRepository.update(

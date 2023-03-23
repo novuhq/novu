@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { isEqual } from 'lodash';
-import { IChannelSettings, SubscriberRepository, IntegrationRepository, SubscriberEntity } from '@novu/dal';
+import { IChannelSettings, IntegrationRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { entityBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class UpdateSubscriberChannel {
@@ -68,7 +68,7 @@ export class UpdateSubscriberChannel {
     updatePayload.providerId = command.providerId;
 
     await this.invalidateCache.invalidateByKey({
-      key: KeyGenerator.entity().subscriber({
+      key: entityBuilder().subscriber({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
@@ -97,7 +97,7 @@ export class UpdateSubscriberChannel {
     }
 
     await this.invalidateCache.invalidateByKey({
-      key: KeyGenerator.entity().subscriber({
+      key: entityBuilder().subscriber({
         subscriberId: foundSubscriber.subscriberId,
         _environmentId: foundSubscriber._environmentId,
       }),

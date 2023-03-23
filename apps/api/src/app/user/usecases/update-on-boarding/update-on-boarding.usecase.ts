@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
 import { UpdateOnBoardingCommand } from './update-on-boarding.command';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { KeyGenerator } from '../../../shared/services/cache/keys';
+import { entityBuilder } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class UpdateOnBoardingUsecase {
@@ -10,7 +10,7 @@ export class UpdateOnBoardingUsecase {
 
   async execute(command: UpdateOnBoardingCommand) {
     await this.invalidateCache.invalidateByKey({
-      key: KeyGenerator.entity().user({
+      key: entityBuilder().user({
         _id: command.userId,
       }),
     });
