@@ -1,5 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  IMessageButton,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IEmailBlock,
+  InAppProviderIdEnum,
+  ActorTypeEnum,
+  IActor,
+} from '@novu/shared';
 import { GetMessagesCommand } from './get-messages.command';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
@@ -42,6 +52,12 @@ export class GetMessages {
       skip: command.page * LIMIT,
     });
 
+    for (const message of data) {
+      if (message._actorId && message.actor?.type === ActorTypeEnum.USER) {
+        message.actor.data = await this.processAvatar(message._actorId, command.environmentId);
+      }
+    }
+
     return {
       page: command.page,
       totalCount,
@@ -65,5 +81,17 @@ export class GetMessages {
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
     return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
+  }
+
+  private async processAvatar(actorId: string, environmentId: string): Promise<string | null> {
+    const actorSubscriber: SubscriberEntity | null = await this.subscriberRepository.findOne(
+      {
+        _environmentId: environmentId,
+        _id: actorId,
+      },
+      'avatar'
+    );
+
+    return actorSubscriber?.avatar || null;
   }
 }

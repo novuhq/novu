@@ -112,6 +112,11 @@ const messageSchema = new Schema<MessageDBModel>(
       },
       data: Schema.Types.Mixed,
     },
+    _actorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Subscriber',
+      index: true,
+    },
   },
   { ...schemaOptions }
 );
