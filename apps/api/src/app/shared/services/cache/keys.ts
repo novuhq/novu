@@ -23,7 +23,7 @@ export const queryBuilder = () => {
 };
 
 export const entityBuilder = () => {
-  return { subscriber, integration, notificationTemplate, user, environmentByApiKey };
+  return { subscriber, integration, user, environmentByApiKey };
 };
 
 export const buildQueryKey = ({
@@ -121,14 +121,6 @@ const integration = ({ _id, _environmentId }: { _id: string; _environmentId: str
     identifier: _id,
   });
 
-const notificationTemplate = ({ _id, _environmentId }: { _id: string; _environmentId: string }): string =>
-  buildCommonKey({
-    type: CacheKeyTypeEnum.ENTITY,
-    keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
-    environmentId: _environmentId,
-    identifier: _id,
-  });
-
 const user = ({ _id }: { _id: string }): string =>
   buildKeyById({
     type: CacheKeyTypeEnum.ENTITY,
@@ -170,3 +162,76 @@ export const buildKeyById = ({
   identifierPrefix?: string;
   identifier: string;
 }): string => `${type}:${keyEntity}:${identifierPrefix}=${identifier}`;
+
+export const notificationTemplateQueryKeyBuild = () => {
+  const cache = ({
+    _environmentId,
+    identifiers,
+  }: {
+    _environmentId: string;
+    identifiers: ({ id: string } & { triggerIdentifier?: string }) | ({ id?: string } & { triggerIdentifier: string });
+  }): string =>
+    buildQueryKeyByEnvironment({
+      type: CacheKeyTypeEnum.QUERY,
+      keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
+      environmentId: _environmentId,
+      query: identifiers as unknown as Record<string, unknown>,
+    });
+
+  const invalidate = ({ _environmentId }: { _environmentId: string }): string =>
+    buildKeyByEnvironment({
+      type: CacheKeyTypeEnum.QUERY,
+      keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
+      environmentId: _environmentId,
+    });
+
+  return {
+    cache,
+    invalidate,
+  };
+};
+
+/*
+ * const notificationTemplate = ({ _id, _environmentId }: { _id: string; _environmentId: string }): string =>
+ *   buildCommonKey({
+ *     type: CacheKeyTypeEnum.ENTITY,
+ *     keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
+ *     environmentId: _environmentId,
+ *     identifier: _id,
+ *   });
+ */
+
+export const buildQueryKeyByEnvironment = ({
+  type,
+  keyEntity,
+  environmentIdPrefix = 'e',
+  environmentId,
+  query,
+}: {
+  type: CacheKeyTypeEnum;
+  keyEntity: CacheKeyPrefixEnum;
+  environmentIdPrefix?: string;
+  environmentId: string;
+  query: Record<string, unknown>;
+}): string => {
+  const keyBase = buildKeyByEnvironment({
+    type,
+    keyEntity,
+    environmentIdPrefix,
+    environmentId,
+  });
+
+  return `${keyBase}:${QUERY_PREFIX}=${JSON.stringify(query)}`;
+};
+
+export const buildKeyByEnvironment = ({
+  type,
+  keyEntity,
+  environmentIdPrefix = 'e',
+  environmentId,
+}: {
+  type: CacheKeyTypeEnum;
+  keyEntity: CacheKeyPrefixEnum;
+  environmentIdPrefix?: string;
+  environmentId: string;
+}): string => `${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}`;

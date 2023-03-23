@@ -37,7 +37,13 @@ import {
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { buildCommonKey, CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/keys';
+import {
+  buildCommonKey,
+  CacheKeyPrefixEnum,
+  CacheKeyTypeEnum,
+  notificationTemplateQueryKeyBuild,
+} from '../../../shared/services/cache/keys';
+import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
 
 @Injectable()
 export class SendMessage {
@@ -233,13 +239,11 @@ export class SendMessage {
     return result || template.critical;
   }
 
-  @CachedEntity({
+  @CachedQuery({
     builder: (command: { _id: string; environmentId: string }) =>
-      buildCommonKey({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
-        environmentId: command.environmentId,
-        identifier: command._id,
+      notificationTemplateQueryKeyBuild().cache({
+        _environmentId: command.environmentId,
+        identifiers: { id: command._id },
       }),
   })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {

@@ -20,6 +20,8 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
 import { PinoLogger } from '@novu/application-generic';
+import { notificationTemplateQueryKeyBuild } from '../../../shared/services/cache/keys';
+import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
 
 @Injectable()
 export class TriggerEvent {
@@ -54,10 +56,10 @@ export class TriggerEvent {
       organizationId: command.organizationId,
     });
 
-    const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.environmentId,
-      command.identifier
-    );
+    const template = await this.getNotificationTemplateByTriggerIdentifier({
+      environmentId: command.environmentId,
+      triggerIdentifier: command.identifier,
+    });
 
     /*
      * Makes no sense to execute anything if template doesn't exist
@@ -134,6 +136,23 @@ export class TriggerEvent {
     }
 
     this.performanceService.setEnd(mark);
+  }
+
+  @CachedQuery({
+    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
+      notificationTemplateQueryKeyBuild().cache({
+        _environmentId: command.environmentId,
+        identifiers: { triggerIdentifier: command.triggerIdentifier },
+      }),
+  })
+  private async getNotificationTemplateByTriggerIdentifier(command: {
+    triggerIdentifier: string;
+    environmentId: string;
+  }) {
+    return await this.notificationTemplateRepository.findByTriggerIdentifier(
+      command.environmentId,
+      command.triggerIdentifier
+    );
   }
 
   private async validateTransactionIdProperty(

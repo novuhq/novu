@@ -9,12 +9,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
-import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
+import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
+import { notificationTemplateQueryKeyBuild } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class ParseEventRequest {
@@ -48,10 +49,10 @@ export class ParseEventRequest {
 
     await this.validateSubscriberIdProperty(mappedRecipients);
 
-    const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.environmentId,
-      command.identifier
-    );
+    const template = await this.getNotificationTemplateByTriggerIdentifier({
+      environmentId: command.environmentId,
+      triggerIdentifier: command.identifier,
+    });
 
     if (!template) {
       throw new UnprocessableEntityException('template_not_found');
@@ -134,6 +135,23 @@ export class ParseEventRequest {
       status: 'processed',
       transactionId: transactionId,
     };
+  }
+
+  @CachedQuery({
+    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
+      notificationTemplateQueryKeyBuild().cache({
+        _environmentId: command.environmentId,
+        identifiers: { triggerIdentifier: command.triggerIdentifier },
+      }),
+  })
+  private async getNotificationTemplateByTriggerIdentifier(command: {
+    triggerIdentifier: string;
+    environmentId: string;
+  }) {
+    return await this.notificationTemplateRepository.findByTriggerIdentifier(
+      command.environmentId,
+      command.triggerIdentifier
+    );
   }
 
   private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {

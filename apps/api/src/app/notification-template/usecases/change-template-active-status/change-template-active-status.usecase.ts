@@ -5,7 +5,7 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { entityBuilder } from '../../../shared/services/cache/keys';
+import { notificationTemplateQueryKeyBuild } from '../../../shared/services/cache/keys';
 
 @Injectable()
 export class ChangeTemplateActiveStatus {
@@ -29,9 +29,8 @@ export class ChangeTemplateActiveStatus {
       throw new BadRequestException('You must provide a different status from the current status');
     }
 
-    await this.invalidateCache.invalidateByKey({
-      key: entityBuilder().notificationTemplate({
-        _id: command.templateId,
+    await this.invalidateCache.invalidateQuery({
+      key: notificationTemplateQueryKeyBuild().invalidate({
         _environmentId: command.environmentId,
       }),
     });
