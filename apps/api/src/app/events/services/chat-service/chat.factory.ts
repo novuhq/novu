@@ -23,3 +23,5 @@ export class ChatFactory implements IChatFactory {
     }
   }
 }
+
+// TODO remove?

@@ -3,6 +3,7 @@ import { JobEntity, JobRepository } from '@novu/dal';
 import { AddJob } from '../add-job/add-job.usecase';
 import { QueueNextJobCommand } from './queue-next-job.command';
 
+// TODO remove?
 @Injectable()
 export class QueueNextJob {
   constructor(

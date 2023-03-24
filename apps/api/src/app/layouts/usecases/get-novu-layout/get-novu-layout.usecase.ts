@@ -22,3 +22,4 @@ export class GetNovuLayout {
     return content.toString();
   }
 }
+// TODO move?

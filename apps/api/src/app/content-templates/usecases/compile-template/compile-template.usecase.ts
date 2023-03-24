@@ -49,3 +49,5 @@ export class CompileTemplate {
     return result.replace(/&#x27;/g, "'");
   }
 }
+
+// TODO move?

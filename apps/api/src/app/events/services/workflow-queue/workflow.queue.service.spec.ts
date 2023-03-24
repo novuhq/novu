@@ -15,12 +15,12 @@ import { expect } from 'chai';
 import { formatISO } from 'date-fns';
 import { v4 as uuid } from 'uuid';
 
-import { WorkflowQueueService } from './workflow.queue.service';
+import { WorkflowQueueProducerService } from './workflow-queue-producer.service';
 
 import { EventsModule } from '../../events.module';
 import { ExecutionDetailsModule } from '../../../execution-details/execution-details.module';
 
-let workflowQueueService: WorkflowQueueService;
+let workflowQueueProducerService: WorkflowQueueProducerService;
 
 describe('Workflow Queue service', () => {
   let jobRepository: JobRepository;
@@ -34,7 +34,7 @@ describe('Workflow Queue service', () => {
       imports: [EventsModule, ExecutionDetailsModule],
     }).compile();
 
-    workflowQueueService = moduleRef.get<WorkflowQueueService>(WorkflowQueueService);
+    workflowQueueProducerService = moduleRef.get<WorkflowQueueProducerService>(WorkflowQueueProducerService);
 
     jobRepository = new JobRepository();
     session = new UserSession();
@@ -47,12 +47,12 @@ describe('Workflow Queue service', () => {
   });
 
   afterEach(async () => {
-    await workflowQueueService.gracefulShutdown();
+    await workflowQueueProducerService.gracefulShutdown();
   });
 
   it('should be initialised properly', async () => {
-    expect(workflowQueueService).to.be.ok;
-    expect(workflowQueueService).to.have.all.keys(
+    expect(workflowQueueProducerService).to.be.ok;
+    expect(workflowQueueProducerService).to.have.all.keys(
       'DEFAULT_ATTEMPTS',
       'bullConfig',
       'bullMqService',
@@ -63,8 +63,8 @@ describe('Workflow Queue service', () => {
       'setJobAsCompleted',
       'setJobAsFailed'
     );
-    expect(workflowQueueService.DEFAULT_ATTEMPTS).to.eql(3);
-    expect(workflowQueueService.bullMqService.queue).to.deep.include({
+    expect(workflowQueueProducerService.DEFAULT_ATTEMPTS).to.eql(3);
+    expect(workflowQueueProducerService.bullMqService.queue).to.deep.include({
       _events: {},
       _eventsCount: 0,
       _maxListeners: undefined,
@@ -73,7 +73,7 @@ describe('Workflow Queue service', () => {
         removeOnComplete: true,
       },
     });
-    expect(workflowQueueService.bullMqService.worker).to.deep.include({
+    expect(workflowQueueProducerService.bullMqService.worker).to.deep.include({
       _eventsCount: 2,
       _maxListeners: undefined,
       name: 'standard',
@@ -124,7 +124,7 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await workflowQueueService.addToQueue(jobCreated._id, jobCreated, 0);
+    await workflowQueueProducerService.addToQueue(jobCreated._id, jobCreated, 0);
 
     await session.awaitRunningJobs(_templateId, false, 0);
 
@@ -175,11 +175,11 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await workflowQueueService.addToQueue(jobCreated._id, jobCreated, 0);
+    await workflowQueueProducerService.addToQueue(jobCreated._id, jobCreated, 0);
 
     await session.awaitRunningJobs(_templateId, false, 1);
     // We pause the worker as little trick to allow the `failed` status to be updated in the callback of the worker and not having a race condition.
-    await workflowQueueService.gracefulShutdown();
+    await workflowQueueProducerService.gracefulShutdown();
 
     const jobs = await jobRepository.find({ _environmentId, _organizationId });
     expect(jobs.length).to.eql(1);

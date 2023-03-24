@@ -1,25 +1,25 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { JobRepository, JobStatusEnum } from '@novu/dal';
+import { JobsOptions } from 'bullmq';
+import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum, DigestUnitEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { LogDecorator } from '@novu/application-generic';
 
 import { AddDelayJob } from './add-delay-job.usecase';
 import { AddDigestJobCommand } from './add-digest-job.command';
 import { AddDigestJob } from './add-digest-job.usecase';
 import { AddJobCommand } from './add-job.command';
-
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
-import { WorkflowQueueService } from '../../services/workflow-queue/workflow.queue.service';
-import { LogDecorator } from '@novu/application-generic';
+import { WorkflowQueueProducerService } from '../../services/workflow-queue/workflow-queue-producer.service';
 
 @Injectable()
 export class AddJob {
   constructor(
     private jobRepository: JobRepository,
-    private workflowQueueService: WorkflowQueueService,
+    private workflowQueueProducerService: WorkflowQueueProducerService,
     private createExecutionDetails: CreateExecutionDetails,
     private addDigestJob: AddDigestJob,
     private addDelayJob: AddDelayJob
@@ -78,7 +78,17 @@ export class AddJob {
     }
 
     Logger.verbose('Adding Job to Queue');
-    await this.workflowQueueService.addToQueue(job._id, job, delay, command.organizationId);
+    const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
+    const options: JobsOptions = {
+      delay,
+    };
+    if (stepContainsWebhookFilter) {
+      options.backoff = {
+        type: 'webhookFilterBackoff',
+      };
+      options.attempts = this.workflowQueueProducerService.DEFAULT_ATTEMPTS;
+    }
+    await this.workflowQueueProducerService.addToQueue(job._id, job, command.organizationId, options);
 
     if (delay) {
       Logger.verbose('Delay is active, Creating execution details');
@@ -94,6 +104,14 @@ export class AddJob {
         })
       );
     }
+  }
+
+  private stepContainsFilter(job: JobEntity, onFilter: string) {
+    return job.step.filters?.some((filter) => {
+      return filter.children?.some((child) => {
+        return child.on === onFilter;
+      });
+    });
   }
 
   public static toMilliseconds(amount: number, unit: DigestUnitEnum): number {

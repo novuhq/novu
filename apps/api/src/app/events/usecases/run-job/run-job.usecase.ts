@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
@@ -13,6 +13,7 @@ import { StorageHelperService } from '../../services/storage-helper-service/stor
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
 import { PinoLogger } from '@novu/application-generic';
 
+// TODO remove?
 @Injectable()
 export class RunJob {
   constructor(

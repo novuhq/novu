@@ -1,48 +1,30 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { JobsOptions, QueueBaseOptions } from 'bullmq';
-// TODO: Remove this DAL dependency, maybe through a DTO or shared entity
-import { JobEntity } from '@novu/dal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
-import { ConnectionOptions } from 'tls';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { QueueService, PinoLogger, storage, Store } from '@novu/application-generic';
 
-import { RunJob, RunJobCommand } from '../../usecases/run-job';
-import { QueueNextJob, QueueNextJobCommand } from '../../usecases/queue-next-job';
 import {
+  RunJob,
+  RunJobCommand,
+  QueueNextJob,
+  QueueNextJobCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
   SetJobAsCommand,
   SetJobAsCompleted,
   SetJobAsFailed,
   SetJobAsFailedCommand,
-} from '../../usecases/update-job-status';
+} from '../usecases';
 
-import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-} from '../../../execution-details/usecases/create-execution-details';
-import { DetailEnum } from '../../../execution-details/types';
-import { BullmqService } from '@novu/application-generic';
-import { PinoLogger, storage, Store } from '@novu/application-generic';
-
-export const WORKER_NAME = 'standard';
+interface IJobData {
+  _id: string;
+  _environmentId: string;
+  _organizationId: string;
+  _userId: string;
+}
 
 @Injectable()
-export class WorkflowQueueService {
-  private bullConfig: QueueBaseOptions = {
-    connection: {
-      db: Number(process.env.REDIS_DB_INDEX),
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST,
-      password: process.env.REDIS_PASSWORD,
-      connectTimeout: 50000,
-      keepAlive: 30000,
-      family: 4,
-      keyPrefix: getRedisPrefix(),
-      tls: process.env.REDIS_TLS as ConnectionOptions,
-    },
-  };
-  readonly DEFAULT_ATTEMPTS = 3;
-
-  public readonly bullMqService: BullmqService;
-
+export class WorkflowQueueService extends QueueService<IJobData> {
   constructor(
     @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
     @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
@@ -50,15 +32,8 @@ export class WorkflowQueueService {
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
-    this.bullMqService = new BullmqService();
-
-    this.bullMqService.createQueue(WORKER_NAME, {
-      ...this.bullConfig,
-      defaultJobOptions: {
-        removeOnComplete: true,
-      },
-    });
-    this.bullMqService.createWorker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
+    super();
+    this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.bullMqService.worker.on('completed', async (job) => {
       await this.jobHasCompleted(job);
@@ -67,8 +42,6 @@ export class WorkflowQueueService {
     this.bullMqService.worker.on('failed', async (job, error) => {
       await this.jobHasFailed(job, error);
     });
-
-    this.bullMqService.createScheduler(WORKER_NAME, this.bullConfig);
   }
 
   public async gracefulShutdown() {
@@ -91,7 +64,7 @@ export class WorkflowQueueService {
   }
 
   private getWorkerProcessor() {
-    return async ({ data }: { data: JobEntity }) => {
+    return async ({ data }: { data: IJobData }) => {
       return await new Promise(async (resolve, reject) => {
         storage.run(new Store(PinoLogger.root), () => {
           this.runJob
@@ -174,33 +147,6 @@ export class WorkflowQueueService {
         })
       );
     }
-  }
-
-  public async addToQueue(id: string, data: JobEntity, delay?: number | undefined, organizationId?: string) {
-    const options: JobsOptions = {
-      removeOnComplete: true,
-      removeOnFail: true,
-      delay,
-    };
-
-    const stepContainsWebhookFilter = this.stepContainsFilter(data, 'webhook');
-
-    if (stepContainsWebhookFilter) {
-      options.backoff = {
-        type: 'webhookFilterBackoff',
-      };
-      options.attempts = this.DEFAULT_ATTEMPTS;
-    }
-
-    await this.bullMqService.add(id, data, options, organizationId);
-  }
-
-  private stepContainsFilter(data: JobEntity, onFilter: string) {
-    return data.step.filters?.some((filter) => {
-      return filter.children?.some((child) => {
-        return child.on === onFilter;
-      });
-    });
   }
 
   private getBackoffStrategies = () => {

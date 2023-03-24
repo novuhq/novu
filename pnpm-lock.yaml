@@ -462,24 +462,65 @@ importers:
 
   apps/jobs-processing-service:
     specifiers:
+      '@aws-sdk/client-s3': ^3.234.0
+      '@aws-sdk/s3-request-presigner': ^3.234.0
+      '@azure/storage-blob': ^12.11.0
+      '@google-cloud/storage': ^6.2.3
       '@nestjs/axios': ~2.0.0
       '@nestjs/cli': 9.2.0
       '@nestjs/common': 9.3.9
       '@nestjs/core': 9.3.9
       '@nestjs/platform-express': 9.3.9
       '@nestjs/schematics': 9.0.4
+      '@nestjs/swagger': 6.0.1
       '@nestjs/terminus': 9.2.1
       '@nestjs/testing': 9.3.9
+      '@novu/apns': ^0.12.0
       '@novu/application-generic': ^0.12.0
+      '@novu/burst-sms': ^0.12.0
+      '@novu/clickatell': ^0.12.0
       '@novu/dal': ^0.12.0
+      '@novu/discord': ^0.12.0
+      '@novu/emailjs': ^0.12.0
+      '@novu/expo': ^0.12.0
+      '@novu/fcm': ^0.12.0
+      '@novu/firetext': ^0.12.0
+      '@novu/forty-six-elks': ^0.12.0
+      '@novu/gupshup': ^0.12.0
+      '@novu/infobip': ^0.12.0
+      '@novu/kannel': ^0.12.0
+      '@novu/mailersend': ^0.12.0
+      '@novu/mailgun': ^0.12.0
+      '@novu/mailjet': ^0.12.0
+      '@novu/mandrill': ^0.12.0
+      '@novu/mattermost': ^0.12.0
+      '@novu/ms-teams': ^0.12.0
+      '@novu/netcore': ^0.12.0
+      '@novu/node': ^0.12.0
+      '@novu/nodemailer': ^0.12.0
+      '@novu/outlook365': ^0.12.0
+      '@novu/plivo': ^0.12.0
+      '@novu/postmark': ^0.12.0
+      '@novu/resend': ^0.12.0
+      '@novu/sendgrid': ^0.12.0
+      '@novu/sendinblue': ^0.12.0
+      '@novu/ses': ^0.12.0
       '@novu/shared': ^0.12.0
+      '@novu/slack': ^0.12.0
+      '@novu/sms77': ^0.12.0
+      '@novu/sns': ^0.12.0
+      '@novu/stateless': ^0.12.0
+      '@novu/telnyx': ^0.12.0
+      '@novu/termii': ^0.12.0
       '@novu/testing': ^0.12.0
+      '@novu/twilio': ^0.12.0
       '@sentry/node': ^7.40.0
       '@sentry/tracing': ^7.40.0
       '@types/bcrypt': ^3.0.0
       '@types/bull': ^3.15.8
       '@types/chai': ^4.2.11
       '@types/express': 4.17.17
+      '@types/handlebars': ^4.1.0
       '@types/mocha': ^8.0.1
       '@types/node': ^14.6.0
       '@types/sinon': ^9.0.0
@@ -495,6 +536,7 @@ importers:
       date-fns: ^2.29.2
       dotenv: ^8.2.0
       envalid: ^6.0.1
+      handlebars: ^4.7.7
       helmet: ^6.0.1
       ioredis: ^5.2.4
       lodash: ^4.17.15
@@ -502,6 +544,7 @@ importers:
       nest-raven: 8.2.0
       newrelic: 9.10.2
       nodemon: ^2.0.3
+      redlock: 4.2.0
       rimraf: ^3.0.2
       rxjs: 7.5.6
       shortid: ^2.2.16
@@ -513,15 +556,55 @@ importers:
       tsconfig-paths: 3.14.2
       typescript: 4.9.5
     dependencies:
+      '@aws-sdk/client-s3': 3.252.0
+      '@aws-sdk/s3-request-presigner': 3.252.0
+      '@azure/storage-blob': 12.11.0
+      '@google-cloud/storage': 6.2.3
       '@nestjs/axios': 2.0.0_e4l2pm546tcjy5pdua5kssuvze
       '@nestjs/common': 9.3.9_r72jqgu3m7fr66qxp7vl4agwte
       '@nestjs/core': 9.3.9_v3dwamjy3ezshn7kdlxqms6y6a
       '@nestjs/platform-express': 9.3.9_77foi4w27ghy47yutmnzv7krjy
+      '@nestjs/swagger': 6.0.1_ldzmua2hsw2tga2e42i6lmmdty
       '@nestjs/terminus': 9.2.1_2spuqtgzhiho5m4qxlnf4acjb4
+      '@novu/apns': link:../../providers/apns
       '@novu/application-generic': link:../../packages/application-generic
+      '@novu/burst-sms': link:../../providers/burst-sms
+      '@novu/clickatell': link:../../providers/clickatell
       '@novu/dal': link:../../libs/dal
+      '@novu/discord': link:../../providers/discord
+      '@novu/emailjs': link:../../providers/emailjs
+      '@novu/expo': link:../../providers/expo
+      '@novu/fcm': link:../../providers/fcm
+      '@novu/firetext': link:../../providers/firetext
+      '@novu/forty-six-elks': link:../../providers/forty-six-elks
+      '@novu/gupshup': link:../../providers/gupshup
+      '@novu/infobip': link:../../providers/infobip
+      '@novu/kannel': link:../../providers/kannel
+      '@novu/mailersend': link:../../providers/mailersend
+      '@novu/mailgun': link:../../providers/mailgun
+      '@novu/mailjet': link:../../providers/mailjet
+      '@novu/mandrill': link:../../providers/mandrill
+      '@novu/mattermost': link:../../providers/mattermost
+      '@novu/ms-teams': link:../../providers/ms-teams
+      '@novu/netcore': link:../../providers/netcore
+      '@novu/node': link:../../packages/node
+      '@novu/nodemailer': link:../../providers/nodemailer
+      '@novu/outlook365': link:../../providers/outlook365
+      '@novu/plivo': link:../../providers/plivo
+      '@novu/postmark': link:../../providers/postmark
+      '@novu/resend': link:../../providers/resend
+      '@novu/sendgrid': link:../../providers/sendgrid
+      '@novu/sendinblue': link:../../providers/sendinblue
+      '@novu/ses': link:../../providers/ses
       '@novu/shared': link:../../libs/shared
+      '@novu/slack': link:../../providers/slack
+      '@novu/sms77': link:../../providers/sms77
+      '@novu/sns': link:../../providers/sns
+      '@novu/stateless': link:../../packages/stateless
+      '@novu/telnyx': link:../../providers/telnyx
+      '@novu/termii': link:../../providers/termii
       '@novu/testing': link:../../libs/testing
+      '@novu/twilio': link:../../providers/twilio
       '@sentry/node': 7.40.0
       '@sentry/tracing': 7.40.0
       axios: 1.3.4
@@ -534,11 +617,13 @@ importers:
       date-fns: 2.29.2
       dotenv: 8.6.0
       envalid: 6.0.2
+      handlebars: 4.7.7
       helmet: 6.0.1
       ioredis: 5.3.1
       lodash: 4.17.21
       nest-raven: 8.2.0_3ytl2phop4s4ughx6bmv225cme
       newrelic: 9.10.2
+      redlock: 4.2.0
       rimraf: 3.0.2
       rxjs: 7.5.6
       shortid: 2.2.16
@@ -550,6 +635,7 @@ importers:
       '@types/bull': 3.15.8
       '@types/chai': 4.3.4
       '@types/express': 4.17.17
+      '@types/handlebars': 4.1.0
       '@types/mocha': 8.2.3
       '@types/node': 14.18.12
       '@types/sinon': 9.0.11
@@ -28591,7 +28677,6 @@ packages:
     deprecated: This is a stub types definition. handlebars provides its own type definitions, so you do not need this installed.
     dependencies:
       handlebars: 4.7.7
-    dev: false
 
   /@types/hast/2.3.4:
     resolution: {integrity: sha512-wLEm0QvaoawEDoTRwzTXp4b4jpwiJDvR5KMnFnVodm3scufTlBOWRD6N1OBf9TZMhjlNsSfcO5V+7AF4+Vy+9g==}

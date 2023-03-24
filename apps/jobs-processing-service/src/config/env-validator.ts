@@ -8,8 +8,17 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: 'local',
   }),
   PORT: port(),
+  MAX_NOVU_INTEGRATION_MAIL_REQUESTS: num({
+    default: 300,
+  }),
+  STORAGE_SERVICE: str({
+    default: undefined,
+  }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),
+  REDIS_PASSWORD: str({
+    default: undefined,
+  }),
   REDIS_TLS: json({
     default: undefined,
   }),
@@ -27,6 +36,9 @@ if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
   validators.NEW_RELIC_LICENSE_KEY = str({
     default: '',
   });
+  validators.REDIS_CACHE_SERVICE_HOST = str();
+  validators.REDIS_CACHE_SERVICE_PORT = str();
+  validators.REDIS_CACHE_PASSWORD = str();
 }
 
 export function validateEnv() {
