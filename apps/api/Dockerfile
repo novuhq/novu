@@ -14,6 +14,7 @@ COPY ./meta .
 COPY ./deps .
 COPY ./pkg .
 
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; echo 'enterprise edition' ; fi
 RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
 RUN if $BULL_MQ_PRO_NPM_TOKEN ; then cp .npmrc-cloud .npmrc  ; fi
 
