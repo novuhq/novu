@@ -74,6 +74,7 @@ export class LayoutsController {
   ) {}
 
   @Post('')
+  @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
   @ApiCreatedResponse({
     type: CreateLayoutResponseDto,
@@ -107,6 +108,7 @@ export class LayoutsController {
   }
 
   @Get('')
+  @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
   @ApiQuery({
     name: 'page',
@@ -161,6 +163,7 @@ export class LayoutsController {
   }
 
   @Get('/:layoutId')
+  @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
   @ApiOkResponse({
     type: GetLayoutResponseDto,
@@ -184,6 +187,7 @@ export class LayoutsController {
   }
 
   @Delete('/:layoutId')
+  @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
   @ApiNoContentResponse({
     description: 'The layout has been deleted correctly',
@@ -209,6 +213,7 @@ export class LayoutsController {
   }
 
   @Patch('/:layoutId')
+  @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
   @ApiOkResponse({
     type: UpdateLayoutResponseDto,
@@ -253,6 +258,7 @@ export class LayoutsController {
   }
 
   @Post('/:layoutId/default')
+  @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
   @ApiNoContentResponse({
     description: 'The selected layout has been set as the default for the environment.',
