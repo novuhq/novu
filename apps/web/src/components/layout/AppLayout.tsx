@@ -10,7 +10,7 @@ import { INTERCOM_APP_ID } from '../../config';
 import { HEADER_HEIGHT } from './constants';
 import { RequiredAuth } from './RequiredAuth';
 import { SpotLight } from '../utils/Spotlight';
-import { SpotLightProvider } from '../../store/spotlightContext';
+import { SpotLightProvider } from '../providers/SpotlightProvider';
 
 export function AppLayout() {
   return (
@@ -35,6 +35,7 @@ export function AppLayout() {
                   backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
                   minHeight: 'auto',
                   padding: '30px',
+                  overflowX: 'hidden',
                 },
               })}
             >

@@ -1,11 +1,14 @@
 import styled from '@emotion/styled';
 import { useMantineColorScheme } from '@mantine/core';
-import { BuilderFieldOperator, FilterParts } from '@novu/shared';
+import { BuilderFieldOperator, FilterParts, FilterPartTypeEnum } from '@novu/shared';
 
-import type { IStepEntity } from '../../../components/templates/formTypes';
+import type { IStepEntity } from '../components/formTypes';
 import { colors } from '../../../design-system';
+import { useWatch } from 'react-hook-form';
+import { useMemo } from 'react';
+import { channels } from '../shared/channels';
 
-export const Filters = ({ step }: { step: IStepEntity | null }) => {
+export const Filters = ({ step }: { step?: IStepEntity }) => {
   if (!step || !step.filters || !Array.isArray(step.filters)) {
     return null;
   }
@@ -29,12 +32,15 @@ export const Filters = ({ step }: { step: IStepEntity | null }) => {
 
 export const Filter = ({ filter }: { filter: FilterParts }) => {
   const { colorScheme } = useMantineColorScheme();
+  const steps: IStepEntity[] = useWatch({
+    name: 'steps',
+  });
 
   const filterValue = getFilterValue(filter);
 
   return (
     <FilterItem className="filter-item" dark={colorScheme === 'dark'}>
-      <FilterPosition>{getFilterLabel(filter)}</FilterPosition>
+      <FilterPosition>{getFilterLabel(filter, steps)}</FilterPosition>
       <FilterValue className="filter-item-value">{filterValue}</FilterValue>
     </FilterItem>
   );
@@ -66,21 +72,40 @@ export const translateOperator = (operator?: BuilderFieldOperator) => {
   return 'equal';
 };
 
-export const getFilterLabel = (filter: FilterParts): string => {
-  if (filter.on === 'isOnline') {
+export const getFilterLabel = (filter: FilterParts, steps: IStepEntity[]): string => {
+  if (filter.on === FilterPartTypeEnum.IS_ONLINE) {
     return `is online right now ${translateOperator('EQUAL')}`;
   }
-  if (filter.on === 'isOnlineInLast') {
+  if (filter.on === FilterPartTypeEnum.IS_ONLINE_IN_LAST) {
     return `online in the last "X" ${filter.timeOperator}`;
+  }
+
+  if (filter.on === FilterPartTypeEnum.PREVIOUS_STEP) {
+    const dependingStep = steps.find((item) => item.uuid === filter.step);
+
+    if (!dependingStep) {
+      return 'Previous step';
+    }
+
+    const sameTypeSteps = steps.filter((step) => step.template.type === dependingStep.template.type);
+    const foundIndex = sameTypeSteps.findIndex((step) => step.uuid === dependingStep.uuid);
+
+    const label = channels.find((item) => item.channelType === dependingStep.template.type)?.label;
+
+    return `Previous step - ${label} ${sameTypeSteps.length > 1 ? `(${foundIndex + 1}) ` : ''} `;
   }
 
   return `${filter.on} ${filter.field} ${translateOperator(filter.operator)}`;
 };
 
 const getFilterValue = (filter: FilterParts) => {
+  if (filter.on === FilterPartTypeEnum.PREVIOUS_STEP) {
+    return filter.stepType;
+  }
+
   let value = filter.value;
 
-  if (filter.on === 'isOnline') {
+  if (filter.on === FilterPartTypeEnum.IS_ONLINE) {
     if (filter.value === true) {
       value = 'Yes';
     }

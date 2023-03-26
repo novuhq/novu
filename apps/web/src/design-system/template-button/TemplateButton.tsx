@@ -7,9 +7,9 @@ import { Text } from '../typography/text/Text';
 import { Switch } from '../switch/Switch';
 import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
-import { ActivePageEnum } from '../../pages/templates/editor/TemplateEditorPage';
 import { Button } from './Button';
 import { IconWrapper } from './IconWrapper';
+import { ActivePageEnum } from '../../constants/editorEnums';
 
 const usePopoverStyles = createStyles(() => ({
   dropdown: {

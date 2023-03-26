@@ -21,11 +21,11 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration';
@@ -258,6 +258,9 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+    if (!environment) {
+      throw new ApiException(`Environment ${command.environmentId} is not found`);
+    }
 
     if (environment.dns?.mxRecordConfigured && environment.dns?.inboundParseDomain) {
       return getReplyToAddress(command.transactionId, environment._id, environment?.dns?.inboundParseDomain);

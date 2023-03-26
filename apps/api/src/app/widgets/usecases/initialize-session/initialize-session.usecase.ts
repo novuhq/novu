@@ -1,7 +1,6 @@
-import { createHmac } from 'crypto';
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository, FeedRepository, MemberRepository } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, LogDecorator } from '@novu/application-generic';
 
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -9,7 +8,7 @@ import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/
 import { InitializeSessionCommand } from './initialize-session.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
-
+import { createHash } from '../../../shared/helpers/hmac.service';
 @Injectable()
 export class InitializeSession {
   constructor(
@@ -21,6 +20,7 @@ export class InitializeSession {
     private membersRepository: MemberRepository
   ) {}
 
+  @LogDecorator()
   async execute(command: InitializeSessionCommand): Promise<SessionInitializeResponseDto> {
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 
@@ -45,6 +45,8 @@ export class InitializeSession {
     const subscriber = await this.createSubscriber.execute(commandos);
 
     const organizationAdmin = await this.membersRepository.getOrganizationAdminAccount(environment._organizationId);
+    if (!organizationAdmin) throw new NotFoundException('Organization admin not found');
+
     this.analyticsService.track('Initialize Widget Session - [Notification Center]', organizationAdmin._userId, {
       _organization: environment._organizationId,
       environmentName: environment.name,
@@ -52,7 +54,7 @@ export class InitializeSession {
     });
 
     return {
-      token: await this.authService.getSubscriberWidgetToken(subscriber, organizationAdmin?._userId),
+      token: await this.authService.getSubscriberWidgetToken(subscriber, organizationAdmin._userId),
       profile: {
         _id: subscriber._id,
         firstName: subscriber.firstName,
@@ -64,8 +66,7 @@ export class InitializeSession {
 }
 
 function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
-  const hmacHash = createHmac('sha256', environment.apiKeys[0].key).update(command.subscriberId).digest('hex');
-
+  const hmacHash = createHash(environment.apiKeys[0].key, command.subscriberId);
   if (hmacHash !== command.hmacHash) {
     throw new ApiException('Please provide a valid HMAC hash');
   }

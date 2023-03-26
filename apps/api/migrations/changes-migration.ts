@@ -12,8 +12,8 @@ import {
   OrganizationRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum, MemberRoleEnum } from '@novu/shared';
-import { CreateChange } from '../src/app/change/usecases/create-change.usecase';
-import { CreateChangeCommand } from '../src/app/change/usecases/create-change.command';
+import { CreateChange } from '../src/app/change/usecases/create-change/create-change.usecase';
+import { CreateChangeCommand } from '../src/app/change/usecases/create-change/create-change.command';
 import { CreateEnvironment } from '../src/app/environments/usecases/create-environment/create-environment.usecase';
 import { CreateEnvironmentCommand } from '../src/app/environments/usecases/create-environment/create-environment.command';
 import { ApplyChange } from '../src/app/change/usecases/apply-change/apply-change.usecase';
@@ -98,6 +98,7 @@ export async function run(): Promise<void> {
     for (const group of groups) {
       const found = await notificationGroupRepository.findOne({
         _parentId: group._id,
+        _environmentId: group._environmentId,
       });
       if (!found) {
         console.log(`Migrating group ${group._id}`);
@@ -135,6 +136,7 @@ export async function run(): Promise<void> {
     for (const messageTemplate of messageTemplates) {
       const found = await messageTemplateRepository.findOne({
         _parentId: messageTemplate._id,
+        _environmentId: messageTemplate._environmentId,
       });
       if (!found) {
         console.log(`Migrating message template ${messageTemplate._id}`);
@@ -172,6 +174,7 @@ export async function run(): Promise<void> {
     for (const notificationTemplate of notificationTemplates) {
       const found = await notificationTemplateRepository.findOne({
         _parentId: notificationTemplate._id,
+        _environmentId: notificationTemplate._environmentId,
       });
       if (!found) {
         console.log(`Migrating notification template ${notificationTemplate._id}`);

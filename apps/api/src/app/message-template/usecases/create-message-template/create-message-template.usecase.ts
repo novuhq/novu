@@ -18,7 +18,7 @@ export class CreateMessageTemplate {
   ) {}
 
   async execute(command: CreateMessageTemplateCommand): Promise<MessageTemplateEntity> {
-    let item = await this.messageTemplateRepository.create({
+    let item: MessageTemplateEntity = await this.messageTemplateRepository.create({
       cta: command.cta,
       name: command.name,
       variables: command.variables ? UpdateMessageTemplate.mapVariables(command.variables) : undefined,
@@ -37,7 +37,10 @@ export class CreateMessageTemplate {
       actor: command.actor,
     });
 
-    item = await this.messageTemplateRepository.findById(item._id);
+    if (item?._id) {
+      item = (await this.messageTemplateRepository.findById(item._id)) as MessageTemplateEntity;
+    }
+
     await this.createChange.execute(
       CreateChangeCommand.create({
         organizationId: command.organizationId,

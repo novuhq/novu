@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ColumnWithStrictAccessor } from 'react-table';
 import { format } from 'date-fns';
-import { useSubscribers } from '../../api/hooks/useSubscribers';
+import { useSubscribers } from '../../hooks';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';

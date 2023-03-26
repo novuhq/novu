@@ -1,14 +1,23 @@
-import React from 'react';
+import React, { Dispatch } from 'react';
 import { Stack } from '@mantine/core';
+import { NavigateFunction } from 'react-router-dom';
+import { ChannelTypeEnum } from '@novu/shared';
+
+import { Bell, Chat, Mail, Mobile, Sms } from '../../design-system/icons';
+import { ROUTES } from '../../constants/routes.enum';
 
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
 export const notificationTemplateName = 'On-boarding notification';
 export const cloneDemoRepo = `git clone git@github.com:novuhq/notification-center-demo.git`;
 export const APPLICATION_IDENTIFIER = '<APPLICATION_IDENTIFIER>';
-export const setupProject = `npm run setup:onboarding -- ${APPLICATION_IDENTIFIER}`;
+export const API_KEY = '<API_KEY>';
+export const BACKEND_API_URL = '<BACKEND_API_URL>';
+export const BACKEND_SOCKET_URL = '<BACKEND_SOCKET_URL>';
+export const setupProject = `npm run setup:onboarding -- ${APPLICATION_IDENTIFIER} ${API_KEY} ${BACKEND_API_URL} ${BACKEND_SOCKET_URL}`;
 export const npmRunCommand = `npm run dev`;
 export const welcomeDescription = 'Welcome to Novu, let’s get started';
 export const faqUrl = 'https://docs.novu.co/notification-center/react/react-components/#faq';
+export const getStartedSteps = { first: ROUTES.GET_STARTED, second: ROUTES.GET_STARTED_PREVIEW };
 
 interface ISnippetInstructions {
   instruction: React.ReactNode | string;
@@ -220,15 +229,94 @@ export enum OnBoardingAnalyticsEnum {
   FRAMEWORK_SETUP_VISIT = 'In app frameworks select',
   FRAMEWORKS_SETUP_VISIT = 'Framework Setup Page Visit',
   FLOW_SELECTED = 'Quick Start Flow Select',
-  QUICK_START_VISIT = 'Quick Start Page Visit',
   TRIGGER_VISIT = 'Trigger Page Visit',
   CLICKED_FAQ = 'Clicked On FAQ',
   CLICKED_CREATE_TEMPLATE = 'Clicked On Create Template',
   CLICKED_TRIGGER_EVENT = 'Clicked On Trigger Event',
   COPIED_STEP = 'Copied Snippet',
+  CONFIGURE_PROVIDER_VISIT = 'Page Visit - [Get Started - Configure Provider]',
+  CONFIGURE_PROVIDER_LEARN_MORE_CLICK = 'Learn More Click - [Get Started - Configure Provider]',
+  CONFIGURE_PROVIDER_CLICK = 'Configure Provider Click - [Get Started - Configure Provider]',
+  UPDATE_PROVIDER_CLICK = 'Update Provider Click - [Get Started - Configure Provider]',
+  CONFIGURE_PROVIDER_NAVIGATION_NEXT_PAGE_CLICK = 'Next Page Click - [Get Started - Configure Provider]',
+  NAVIGATION_CONFIGURE_PROVIDER_CLICK = 'Navigation Configure Provider Click - [Get Started]',
+  NAVIGATION_BUILD_WORKFLOW_CLICK = 'Navigation Build Workflow Click - [Get Started]',
+  BUILD_WORKFLOW_VISIT = 'Page Visit - [Get Started - Build WorkFlow]',
+  BUILD_WORKFLOW_PREVIOUS_PAGE_CLICK = 'Previous Page Click - [Get Started - Build WorkFlow]',
+  BUILD_WORKFLOW_CLICK = 'Build Workflow Click - [Get Started - Build WorkFlow]',
+  BUILD_WORKFLOW_TRY_DIGEST_PLAYGROUND_CLICK = 'Try Digest Playground Click - [Get Started - Build WorkFlow]',
+  BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK = 'Node Popover Learn More Click - [Get Started - Build WorkFlow]',
 }
 
 export enum FlowTypeEnum {
   IN_APP = 'in_app',
   OTHER = 'other',
+}
+
+export const quickStartChannels: IQuickStartChannelConfiguration[] = [
+  {
+    Icon: Bell,
+    title: 'In-App notifications',
+    displayName: 'In-App',
+    type: ChannelTypeEnum.IN_APP,
+    description: 'A set of APIs and components to create a customized notification center',
+    clickHandler: (options) => {
+      options.navigate(ROUTES.QUICK_START_NOTIFICATION_CENTER);
+    },
+  },
+  {
+    Icon: Mail,
+    title: 'Email',
+    displayName: 'Email',
+    type: ChannelTypeEnum.EMAIL,
+    description: '🎉  Try our gift: 300 emails Use Novu provider for free or change the provider to yours',
+    clickHandler: (options) => {
+      options.setClickedChannel({ open: true, channelType: options.channelType });
+    },
+  },
+  {
+    Icon: Mobile,
+    title: 'Push',
+    displayName: 'Push',
+    type: ChannelTypeEnum.PUSH,
+    description: 'Set up an integration with FCM, APNS or any other mobile push provider',
+    clickHandler: (options) => {
+      options.setClickedChannel({ open: true, channelType: options.channelType });
+    },
+  },
+  {
+    Icon: Chat,
+    title: 'Chat',
+    displayName: 'Chat',
+    type: ChannelTypeEnum.CHAT,
+    description: 'Connect chat apps such as Slack, WhatsApp and Teams.',
+    clickHandler: (container) => {
+      container.setClickedChannel({ open: true, channelType: container.channelType });
+    },
+  },
+  {
+    Icon: Sms,
+    title: 'SMS',
+    displayName: 'SMS',
+    type: ChannelTypeEnum.SMS,
+    description: 'Connect to a SMS provider to start sending SMS programmatically',
+    clickHandler: (options) => {
+      options.setClickedChannel({ open: true, channelType: options.channelType });
+    },
+  },
+];
+
+export interface IQuickStartChannelConfiguration {
+  Icon: React.FC<any>;
+  title: string;
+  displayName: string;
+  type: ChannelTypeEnum;
+  description: string;
+  clickHandler: (options: IOptions) => void;
+}
+
+interface IOptions {
+  navigate: NavigateFunction;
+  setClickedChannel: Dispatch<any>;
+  channelType: ChannelTypeEnum;
 }

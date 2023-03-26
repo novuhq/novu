@@ -13,6 +13,8 @@ import {
   Res,
   UseGuards,
   UseInterceptors,
+  Logger,
+  ExecutionContext,
 } from '@nestjs/common';
 import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
 import { JwtService } from '@nestjs/jwt';
@@ -60,11 +62,15 @@ export class AuthController {
 
   @Get('/github')
   githubAuth() {
+    Logger.verbose('Checking Github Auth');
+
     if (!process.env.GITHUB_OAUTH_CLIENT_ID || !process.env.GITHUB_OAUTH_CLIENT_SECRET) {
       throw new ApiException(
         'GitHub auth is not configured, please provide GITHUB_OAUTH_CLIENT_ID and GITHUB_OAUTH_CLIENT_SECRET as env variables'
       );
     }
+
+    Logger.verbose('Github Auth has all variables.');
 
     return {
       success: true,

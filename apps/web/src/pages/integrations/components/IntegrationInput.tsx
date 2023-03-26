@@ -67,7 +67,7 @@ export function IntegrationInput({
         data-test-id={credential.key}
         error={errors[credential.key]?.message}
         {...register(credential.key)}
-        checked={field.value === 'true'}
+        checked={field.value}
         onChange={field.onChange}
       />
     );

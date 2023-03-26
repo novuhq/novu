@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import {
   MessageTemplateRepository,
   NotificationTemplateEntity,
-  NotificationTemplateRepository,
   SubscriberPreferenceRepository,
   SubscriberRepository,
 } from '@novu/dal';
@@ -19,7 +18,6 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 export class GetSubscriberTemplatePreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private subscriberRepository: SubscriberRepository
   ) {}

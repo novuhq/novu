@@ -1,0 +1,1 @@
+export { DotsNavigation } from './DotsNavigation';

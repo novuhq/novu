@@ -4,14 +4,14 @@ import * as capitalize from 'lodash.capitalize';
 import { useIntercom } from 'react-use-intercom';
 import { Link } from 'react-router-dom';
 
-import { useAuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../providers/AuthProvider';
 import { shadows, colors, Text, Dropdown } from '../../../design-system';
 import { Sun, Moon, Ellipse, Trash, Mail } from '../../../design-system/icons';
-import { useLocalThemePreference } from '../../../hooks/useLocalThemePreference';
-import { NotificationCenterWidget } from '../../widget/NotificationCenterWidget';
+import { useLocalThemePreference } from '../../../hooks';
+import { NotificationCenterWidget } from './NotificationCenterWidget';
 import { Tooltip } from '../../../design-system';
 import { CONTEXT_PATH, INTERCOM_APP_ID, LOGROCKET_ID } from '../../../config';
-import { useSpotlightContext } from '../../../store/spotlightContext';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
 import LogRocket from 'logrocket';
 import { ROUTES } from '../../../constants/routes.enum';
@@ -39,13 +39,14 @@ export function HeaderNav({}: Props) {
     useEffect(() => {
       if (currentUser && currentOrganization) {
         boot({
-          email: currentUser?.email,
+          email: currentUser?.email ?? '',
           name: currentUser?.firstName + ' ' + currentUser?.lastName,
           createdAt: currentUser?.createdAt,
           company: {
             name: currentOrganization?.name,
             companyId: currentOrganization?._id as string,
           },
+          userHash: currentUser.servicesHashes?.intercom,
         });
       }
     }, [currentUser, currentOrganization]);
@@ -53,7 +54,6 @@ export function HeaderNav({}: Props) {
 
   useEffect(() => {
     if (!LOGROCKET_ID) return;
-
     if (currentUser && currentOrganization) {
       let logrocketTraits;
 

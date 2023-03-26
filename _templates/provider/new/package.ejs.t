@@ -5,7 +5,7 @@
 
 {
   "name": "@novu/<%= name %>",
-  "version": "^0.11.0",
+  "version": "^0.12.0",
   "description": "A <%= name %> wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -38,7 +38,7 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "@novu/stateless": "^0.11.0"
+    "@novu/stateless": "^0.12.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "~1.0.1",
@@ -46,8 +46,9 @@
     "cspell": "~6.19.2",
     "cz-conventional-changelog": "~3.3.0",
     "jest": "~27.5.1",
+    "npm-run-all": "^4.1.5",
     "nyc": "~15.1.0",
-    "prettier": "~2.6.2",
+    "prettier": "~2.8.0",
     "rimraf": "~3.0.2",
     "ts-jest": "~27.1.5",
     "ts-node": "~10.9.1",
