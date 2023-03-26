@@ -8,15 +8,16 @@ import { ROUTES } from '../../constants/routes.enum';
 
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
 export const notificationTemplateName = 'On-boarding notification';
-export const cloneDemoRepo = `git clone git@github.com:novuhq/notification-center-demo.git`;
+export const cloneDemoRepo = `git clone https://github.com/novuhq/notification-center-demo.git`;
 export const APPLICATION_IDENTIFIER = '<APPLICATION_IDENTIFIER>';
 export const API_KEY = '<API_KEY>';
 export const BACKEND_API_URL = '<BACKEND_API_URL>';
 export const BACKEND_SOCKET_URL = '<BACKEND_SOCKET_URL>';
-export const setupProject = `npm run setup:onboarding -- ${APPLICATION_IDENTIFIER} ${API_KEY} ${BACKEND_API_URL} ${BACKEND_SOCKET_URL}`;
+// eslint-disable-next-line max-len
+export const setupProject = `cd notification-center-demo && npm run setup:onboarding -- ${APPLICATION_IDENTIFIER} ${API_KEY} ${BACKEND_API_URL} ${BACKEND_SOCKET_URL}`;
 export const npmRunCommand = `npm run dev`;
 export const welcomeDescription = 'Welcome to Novu, let’s get started';
-export const faqUrl = 'https://docs.novu.co/notification-center/react/react-components/#faq';
+export const faqUrl = 'https://docs.novu.co/notification-center/FAQ';
 export const getStartedSteps = { first: ROUTES.GET_STARTED, second: ROUTES.GET_STARTED_PREVIEW };
 
 interface ISnippetInstructions {
