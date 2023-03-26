@@ -53,3 +53,7 @@ We do provide a few other ways to integrate the notification center into your ap
 - [Vue Component](/notification-center/vue-component)
 - [Angular Component](/notification-center/angular-component)
 - [iFrame Embed](/notification-center/iframe-embed)
+
+:::note
+Facing issues in using notification center? Check out FAQs [here](./FAQ)
+:::
