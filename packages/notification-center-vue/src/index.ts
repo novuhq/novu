@@ -1,6 +1,6 @@
 import type { App } from 'vue';
-import FloatingVue from 'floating-vue';
-import 'floating-vue/dist/style.css';
+import FloatingVue from '@novu/floating-vue';
+import '@novu/floating-vue/dist/style.css';
 import { NotificationCenterContentWebComponent } from '@novu/notification-center';
 
 import { NotificationCenterComponent } from './lib';
