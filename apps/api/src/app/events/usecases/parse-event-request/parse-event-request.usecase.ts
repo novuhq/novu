@@ -15,7 +15,7 @@ import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
-import { notificationTemplateQueryKeyBuild } from '../../../shared/services/cache/keys';
+import { buildNotificationTemplateKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class ParseEventRequest {
@@ -139,7 +139,7 @@ export class ParseEventRequest {
 
   @CachedQuery({
     builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      notificationTemplateQueryKeyBuild().cache({
+      buildNotificationTemplateKey().cache({
         _environmentId: command.environmentId,
         identifiers: { triggerIdentifier: command.triggerIdentifier },
       }),

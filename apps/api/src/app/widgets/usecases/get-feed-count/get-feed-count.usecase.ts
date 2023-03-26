@@ -5,7 +5,8 @@ import { GetFeedCountCommand } from './get-feed-count.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
 import { GetNotificationsFeedCommand } from '../get-notifications-feed/get-notifications-feed.command';
-import { buildQueryKey, CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/keys';
+import { CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/key-builders/shared';
+import { buildQueryKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class GetFeedCount {

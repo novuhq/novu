@@ -1,7 +1,7 @@
 import { CacheService } from './cache.service';
 import { buildKey, CacheInterceptorTypeEnum } from '../../interceptors';
 import { Injectable, Logger } from '@nestjs/common';
-import { CacheKeyPrefixEnum } from './keys';
+import { CacheKeyPrefixEnum } from './key-builders/shared';
 
 @Injectable()
 export class InvalidateCacheService {

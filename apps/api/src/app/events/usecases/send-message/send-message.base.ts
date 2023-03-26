@@ -13,13 +13,10 @@ import {
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import {
-  buildCommonKey,
-  buildQueryKey,
-  CacheKeyPrefixEnum,
-  CacheKeyTypeEnum,
-} from '../../../shared/services/cache/keys';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
+import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
+import { buildQueryKey } from '../../../shared/services/cache/key-builders/queries';
+import { CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/key-builders/shared';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -35,12 +32,9 @@ export abstract class SendMessageBase extends SendMessageType {
 
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildCommonKey({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
-        environmentId: command._environmentId,
-        identifier: command.subscriberId,
-        identifierPrefix: 's',
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
       }),
   })
   protected async getSubscriberBySubscriberId({

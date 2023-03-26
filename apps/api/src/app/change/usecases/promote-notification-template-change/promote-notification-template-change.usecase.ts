@@ -12,7 +12,7 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { notificationTemplateQueryKeyBuild } from '../../../shared/services/cache/keys';
+import { buildNotificationTemplateKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {
@@ -137,7 +137,7 @@ export class PromoteNotificationTemplateChange {
     }
 
     await this.invalidateCache.invalidateQuery({
-      key: notificationTemplateQueryKeyBuild().invalidate({
+      key: buildNotificationTemplateKey().invalidate({
         _environmentId: command.environmentId,
       }),
     });

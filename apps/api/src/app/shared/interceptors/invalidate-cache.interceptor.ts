@@ -1,6 +1,7 @@
 import { getInvalidateQuery } from './shared-cache';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../services/cache';
 import { Inject } from '@nestjs/common';
+import { CacheKeyPrefixEnum } from '../services/cache/key-builders/shared';
+import { InvalidateCacheService } from '../services/cache';
 
 const USE_CASE_METHOD = 'execute';
 

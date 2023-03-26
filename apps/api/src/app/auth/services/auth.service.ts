@@ -23,7 +23,11 @@ import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 import { CachedEntity } from '../../shared/interceptors/cached-entity.interceptor';
 import { normalizeEmail } from '../../shared/helpers/email-normalization.service';
 import { ApiException } from '../../shared/exceptions/api.exception';
-import { buildCommonKey, buildKeyById, CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../shared/services/cache/keys';
+import {
+  buildEnvironmentByApiKey,
+  buildSubscriberKey,
+  buildUserKey,
+} from '../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class AuthService {
@@ -287,10 +291,8 @@ export class AuthService {
 
   @CachedEntity({
     builder: (command: { _id: string }) =>
-      buildKeyById({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.USER,
-        identifier: command._id,
+      buildUserKey({
+        _id: command._id,
       }),
   })
   private async getUser({ _id }: { _id: string }) {
@@ -299,10 +301,8 @@ export class AuthService {
 
   @CachedEntity({
     builder: (command: { _id: string }) =>
-      buildKeyById({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY,
-        identifier: command._id,
+      buildEnvironmentByApiKey({
+        _id: command._id,
       }),
   })
   private async getEnvironment({ _id }: { _id: string }) {
@@ -311,12 +311,9 @@ export class AuthService {
 
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildCommonKey({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
-        environmentId: command._environmentId,
-        identifier: command.subscriberId,
-        identifierPrefix: 's',
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
       }),
   })
   private async getSubscriber({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }) {

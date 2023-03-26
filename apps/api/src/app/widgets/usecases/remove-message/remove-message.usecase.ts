@@ -16,7 +16,7 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
-import { queryBuilder } from '../../../shared/services/cache/keys';
+import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class RemoveMessage {
@@ -31,14 +31,14 @@ export class RemoveMessage {
 
   async execute(command: RemoveMessageCommand): Promise<MessageEntity> {
     await this.invalidateCache.invalidateQuery({
-      key: queryBuilder().feed().invalidate({
+      key: buildFeedKey().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
     await this.invalidateCache.invalidateQuery({
-      key: queryBuilder().messageCount().invalidate({
+      key: buildMessageCountKey().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),

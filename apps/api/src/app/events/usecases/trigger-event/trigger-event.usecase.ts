@@ -20,8 +20,8 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
 import { PinoLogger } from '@novu/application-generic';
-import { notificationTemplateQueryKeyBuild } from '../../../shared/services/cache/keys';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
+import { buildNotificationTemplateKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class TriggerEvent {
@@ -140,7 +140,7 @@ export class TriggerEvent {
 
   @CachedQuery({
     builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      notificationTemplateQueryKeyBuild().cache({
+      buildNotificationTemplateKey().cache({
         _environmentId: command.environmentId,
         identifiers: { triggerIdentifier: command.triggerIdentifier },
       }),

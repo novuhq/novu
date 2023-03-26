@@ -8,12 +8,9 @@ import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
-import {
-  buildCommonKey,
-  buildQueryKey,
-  CacheKeyPrefixEnum,
-  CacheKeyTypeEnum,
-} from '../../../shared/services/cache/keys';
+import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
+import { buildQueryKey } from '../../../shared/services/cache/key-builders/queries';
+import { CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/key-builders/shared';
 
 @Injectable()
 export class GetNotificationsFeed {
@@ -89,12 +86,9 @@ export class GetNotificationsFeed {
 
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildCommonKey({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
-        environmentId: command._environmentId,
-        identifier: command.subscriberId,
-        identifierPrefix: 's',
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
       }),
   })
   private async fetchSubscriber({
