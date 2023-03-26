@@ -449,7 +449,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.15
       prettier: 2.8.4
-      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
+      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -1256,6 +1256,7 @@ importers:
       '@commitlint/cli': ^17.0.0
       '@commitlint/config-conventional': ^17.0.0
       '@novu/notification-center': ^0.13.0
+      '@rollup/plugin-node-resolve': ^6.0.0
       '@rollup/plugin-replace': ^5.0.2
       '@types/iframe-resizer': ^3.5.8
       '@types/jest': 27.5.2
@@ -1280,7 +1281,6 @@ importers:
       rollup: ^3.15.0
       rollup-plugin-commonjs: ^10.1.0
       rollup-plugin-json: ^4.0.0
-      rollup-plugin-node-resolve: ^5.2.0
       rollup-plugin-sourcemaps: ^0.6.3
       rollup-plugin-terser: ^7.0.2
       rollup-plugin-typescript2: ^0.34.1
@@ -1298,6 +1298,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 17.4.4
       '@commitlint/config-conventional': 17.4.4
+      '@rollup/plugin-node-resolve': 6.1.0_rollup@3.15.0
       '@rollup/plugin-replace': 5.0.2_rollup@3.15.0
       '@types/jest': 27.5.2
       '@types/node': 14.18.12
@@ -1320,7 +1321,6 @@ importers:
       rollup: 3.15.0
       rollup-plugin-commonjs: 10.1.0_rollup@3.15.0
       rollup-plugin-json: 4.0.0
-      rollup-plugin-node-resolve: 5.2.0_rollup@3.15.0
       rollup-plugin-sourcemaps: 0.6.3_o6mygvtd3nomnu4rqtim7c6gvi
       rollup-plugin-terser: 7.0.2_rollup@3.15.0
       rollup-plugin-typescript2: 0.34.1_xswiuafr57fmdlvfpvse52fe3e
@@ -22351,6 +22351,20 @@ packages:
       rollup: 3.7.3
     dev: true
 
+  /@rollup/plugin-node-resolve/6.1.0_rollup@3.15.0:
+    resolution: {integrity: sha512-Cv7PDIvxdE40SWilY5WgZpqfIUEaDxFxs89zCAHjqyRwlTSuql4M5hjIuc5QYJkOH0/vyiyNXKD72O+LhRipGA==}
+    engines: {node: '>= 8.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0
+    dependencies:
+      '@rollup/pluginutils': 3.1.0_rollup@3.15.0
+      '@types/resolve': 0.0.8
+      builtin-modules: 3.3.0
+      is-module: 1.0.0
+      resolve: 1.22.1
+      rollup: 3.15.0
+    dev: true
+
   /@rollup/plugin-replace/2.4.2_rollup@2.79.1:
     resolution: {integrity: sha512-IGcu+cydlUMZ5En85jxHH4qj2hta/11BHq95iHEyb2sbgiN0eCdzvUcHw5gt9pBL5lTi4JDYJ1acCoMGpTvEZg==}
     peerDependencies:
@@ -42501,7 +42515,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
+      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -52317,20 +52331,6 @@ packages:
       rollup: 3.7.3
     dev: true
 
-  /rollup-plugin-node-resolve/5.2.0_rollup@3.15.0:
-    resolution: {integrity: sha512-jUlyaDXts7TW2CqQ4GaO5VJ4PwwaV8VUGA7+km3n6k6xtOEacf61u0VXwN80phY/evMcaS+9eIeJ9MOyDxt5Zw==}
-    deprecated: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-node-resolve.
-    peerDependencies:
-      rollup: '>=1.11.0'
-    dependencies:
-      '@types/resolve': 0.0.8
-      builtin-modules: 3.3.0
-      is-module: 1.0.0
-      resolve: 1.22.1
-      rollup: 3.15.0
-      rollup-pluginutils: 2.8.2
-    dev: true
-
   /rollup-plugin-peer-deps-external/2.2.4_rollup@3.7.3:
     resolution: {integrity: sha512-AWdukIM1+k5JDdAqV/Cxd+nejvno2FVLVeZ74NKggm3Q5s9cbbcOgUPGdbxPi4BXu7xGaZ8HG12F+thImYu/0g==}
     peerDependencies:
@@ -55459,7 +55459,7 @@ packages:
       tslib: 1.14.1
     dev: true
 
-  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
+  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -55480,6 +55480,7 @@ packages:
       esbuild:
         optional: true
     dependencies:
+      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
