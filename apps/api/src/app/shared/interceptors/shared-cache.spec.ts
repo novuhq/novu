@@ -13,7 +13,7 @@ import {
   getQueryParams,
   validateCredentials,
 } from './shared-cache';
-import { CacheKeyPrefixEnum } from '../services/cache';
+import { CacheKeyPrefixEnum } from '../services/cache/key-builders/shared';
 
 describe('shared cache', function () {
   describe('validateCredentials', function () {
