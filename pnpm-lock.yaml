@@ -189,6 +189,7 @@ importers:
       '@novu/mailgun': ^0.13.0
       '@novu/mailjet': ^0.13.0
       '@novu/mandrill': ^0.13.0
+      '@novu/maqsam': ^0.13.0
       '@novu/mattermost': ^0.13.0
       '@novu/ms-teams': ^0.13.0
       '@novu/netcore': ^0.13.0
@@ -210,7 +211,6 @@ importers:
       '@novu/termii': ^0.13.0
       '@novu/testing': ^0.13.0
       '@novu/twilio': ^0.13.0
-      '@novu/maqsam': ^0.12.0
       '@sendgrid/mail': ^7.6.0
       '@sentry/hub': ^7.40.0
       '@sentry/node': ^7.40.0
@@ -2653,7 +2653,7 @@ importers:
   providers/maqsam:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ~1.0.1
-      '@novu/stateless': ^0.12.0
+      '@novu/stateless': ^0.13.0
       '@types/jest': ~27.5.2
       axios: ^1.3.4
       cspell: ~6.19.2
@@ -28707,7 +28707,7 @@ packages:
   /@types/oauth/0.9.1:
     resolution: {integrity: sha512-a1iY62/a3yhZ7qH7cNUsxoI3U/0Fe9+RnuFrpTKr+0WVOzbKlSLojShCKe20aOD1Sppv+i8Zlq0pLDuTJnwS4A==}
     dependencies:
-      '@types/node': 18.11.13
+      '@types/node': 14.18.12
     dev: true
 
   /@types/overlayscrollbars/1.12.1:

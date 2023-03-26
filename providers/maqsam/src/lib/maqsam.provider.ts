@@ -17,7 +17,7 @@ export class MaqsamSmsProvider implements ISmsProvider {
     private config: {
       accessKeyId?: string;
       accessSecret?: string;
-      from: string;
+      from?: string;
     }
   ) {
     this.axiosInstance = axios.create({
