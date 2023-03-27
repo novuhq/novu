@@ -460,7 +460,7 @@ importers:
       tsconfig-paths: 3.14.1
       typescript: 4.9.5
 
-  apps/jobs-processing-service:
+  apps/worker-service:
     specifiers:
       '@nestjs/axios': ~2.0.0
       '@nestjs/cli': 9.2.0
