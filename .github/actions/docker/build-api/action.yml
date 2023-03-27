@@ -19,8 +19,7 @@ inputs:
     default: 'false'
   docker_name: 
     description: 'Name for docker image'
-    required: false
-    default: 'novu/api'
+    required: true
 
 outputs:
   image:

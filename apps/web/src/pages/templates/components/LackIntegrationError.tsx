@@ -5,6 +5,8 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { Text } from '../../../design-system';
 import { DoubleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { TemplateEditorAnalyticsEnum } from '../constants';
 
 const DoubleArrowRightStyled = styled(DoubleArrowRight)`
   cursor: pointer;
@@ -19,6 +21,7 @@ export function LackIntegrationError({
   channelType: ChannelTypeEnum;
   text?: string;
 }) {
+  const segment = useSegment();
   const [isIntegrationsModalOpened, openIntegrationsModal] = useState(false);
 
   return (
@@ -29,7 +32,12 @@ export function LackIntegrationError({
             ? text
             : `Looks like you haven’t configured your ${channel} provider yet, this channel will be disabled until you configure it.`}
         </Text>
-        <DoubleArrowRightStyled onClick={() => openIntegrationsModal(true)} />
+        <DoubleArrowRightStyled
+          onClick={() => {
+            openIntegrationsModal(true);
+            segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
+          }}
+        />
       </WarningMessage>
       <IntegrationsStoreModal
         openIntegration={isIntegrationsModalOpened}

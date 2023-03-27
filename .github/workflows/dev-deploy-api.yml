@@ -19,7 +19,12 @@ env:
 
 jobs:
   test_api:
+    strategy:
+      matrix:
+        name: ['novu/api', 'novu/api-ee']
     uses: ./.github/workflows/reusable-api-e2e.yml
+    with: 
+      ee: ${{ contains (matrix.name,'ee') }}
 
   deploy_dev_api:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -33,23 +38,22 @@ jobs:
       packages: write
       deployments: write
       id-token: write
+    strategy:
+      matrix:
+        name: ['novu/api', 'novu/api-ee']
     steps:
+      - name: echo
+        run: echo ${{ matrix.name }} container
+
       - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/setup-project      
       - uses: ./.github/actions/docker/build-api
         id: docker_build
         with:
           tag: dev
           push: 'true'
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - uses: ./.github/actions/docker/build-api
-        id: docker_build
-        with:
-          tag: dev
-          push: 'true'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          docker_name: 'novu/api-ee'
+          docker_name: ${{ matrix.name }}
 
       - name: Checkout cloud infra
         uses: actions/checkout@master
