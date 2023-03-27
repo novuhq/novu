@@ -47,7 +47,7 @@ export class GetMessages {
 
     const totalCount = await this.messageRepository.count(query);
 
-    const data = await this.messageRepository.find(query, '', {
+    const data = await this.messageRepository.getMessages(query, '', {
       limit: LIMIT,
       skip: command.page * LIMIT,
     });
