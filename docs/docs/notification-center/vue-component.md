@@ -97,3 +97,7 @@ The `NotificationCenterComponent` also accepts a scoped slot which exposes the `
 ## Props
 
 The `NotificationCenterComponent` accepts the same set of props as the [Web Component](./web-component#properties).
+
+:::note
+Facing issues in using notification center? Check out FAQs [here](./FAQ)
+:::
