@@ -54,7 +54,7 @@ export class GetMessages {
 
     for (const message of data) {
       if (message._actorId && message.actor?.type === ActorTypeEnum.USER) {
-        message.actor.data = await this.processAvatar(message._actorId, command.environmentId);
+        message.actor.data = this.processUserAvatar(message.actorSubscriber);
       }
     }
 
@@ -83,15 +83,7 @@ export class GetMessages {
     return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 
-  private async processAvatar(actorId: string, environmentId: string): Promise<string | null> {
-    const actorSubscriber: SubscriberEntity | null = await this.subscriberRepository.findOne(
-      {
-        _environmentId: environmentId,
-        _id: actorId,
-      },
-      'avatar'
-    );
-
+  private processUserAvatar(actorSubscriber?: SubscriberEntity): string | null {
     return actorSubscriber?.avatar || null;
   }
 }

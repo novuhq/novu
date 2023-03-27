@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ActorTypeEnum } from '@novu/shared';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { FilterQuery, Types } from 'mongoose';
 
@@ -69,13 +69,22 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
+
     const messages = await this.MongooseModel.find(requestQuery, '', {
       limit: options.limit,
       skip: options.skip,
       sort: '-createdAt',
     })
       .read('secondaryPreferred')
-      .populate('subscriber', '_id firstName lastName avatar subscriberId');
+      .populate('subscriber', '_id firstName lastName avatar subscriberId')
+      .populate({
+        path: 'actorSubscriber',
+        match: {
+          'actor.type': ActorTypeEnum.USER,
+          _actorId: { $exists: true },
+        },
+        select: '_id firstName lastName avatar subscriberId',
+      });
 
     return this.mapEntities(messages);
   }

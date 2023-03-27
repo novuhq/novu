@@ -115,7 +115,6 @@ const messageSchema = new Schema<MessageDBModel>(
     _actorId: {
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
-      index: true,
     },
   },
   { ...schemaOptions }
@@ -131,6 +130,13 @@ messageSchema.virtual('subscriber', {
 messageSchema.virtual('template', {
   ref: 'NotificationTemplate',
   localField: '_templateId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+messageSchema.virtual('actorSubscriber', {
+  ref: 'Subscriber',
+  localField: '_actorId',
   foreignField: '_id',
   justOne: true,
 });
