@@ -449,7 +449,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.15
       prettier: 2.8.4
-      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
+      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -1338,14 +1338,12 @@ importers:
       axios: 1.2.0
       class-transformer: 0.5.1
       class-validator: 0.14.0
-      mixpanel: ^0.17.0
       rimraf: ^3.0.2
       typescript: 4.9.5
     dependencies:
       axios: 1.2.0
       class-transformer: 0.5.1
       class-validator: 0.14.0
-      mixpanel: 0.17.0
     devDependencies:
       '@types/bluebird': 3.5.36
       rimraf: 3.0.2
@@ -45764,15 +45762,6 @@ packages:
       for-in: 1.0.2
       is-extendable: 1.0.1
 
-  /mixpanel/0.17.0:
-    resolution: {integrity: sha512-DY5WeOy/hmkPrNiiZugJpWR0iMuOwuj1a3u0bgwB2eUFRV6oIew/pIahhpawdbNjb+Bye4a8ID3gefeNPvL81g==}
-    engines: {node: '>=10.0'}
-    dependencies:
-      https-proxy-agent: 5.0.0
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
   /mkdirp-classic/0.5.3:
     resolution: {integrity: sha512-gKLcREMhtuZRwRAfqP3RFW+TK4JqApVBtOIftVgjuABpAtpxhPGaDcfvbhNvD0B8iD1oUr/txX35NjcaY6Ns/A==}
     dev: false
@@ -55459,7 +55448,7 @@ packages:
       tslib: 1.14.1
     dev: true
 
-  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
+  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -55480,6 +55469,7 @@ packages:
       esbuild:
         optional: true
     dependencies:
+      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
