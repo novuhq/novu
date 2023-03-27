@@ -23,9 +23,9 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  --unsafe-perm\
  --reporter=silent
 
-RUN NODE_ENV=production NX_DAEMON=false pnpm build:jobs-processing
+RUN NODE_ENV=production NX_DAEMON=false pnpm build:worker-service
 
-WORKDIR /usr/src/app/apps/jobs-processing-service
+WORKDIR /usr/src/app/apps/worker-service
 
 RUN cp src/.example.env dist/src/.env
 RUN cp src/.env.test dist/src/.env.test
@@ -65,5 +65,5 @@ RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
-WORKDIR /usr/src/app/apps/jobs-processing-service
+WORKDIR /usr/src/app/apps/worker-service
 CMD [ "pm2-runtime","start", "dist/main.js" ]
