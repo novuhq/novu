@@ -414,7 +414,8 @@
     "stddev",
     "shortid",
     "upsert",
-    "cond"
+    "cond",
+    "Webpush"
   ],
   "flagWords": [],
   "patterns": [
