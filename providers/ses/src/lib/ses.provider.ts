@@ -1,10 +1,12 @@
 import {
   ChannelTypeEnum,
+  CheckIntegrationResponseEnum,
+  EmailEventStatusEnum,
+  ICheckIntegrationResponse,
+  IEmailEventBody,
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-  ICheckIntegrationResponse,
-  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import { SESClient, SendRawEmailCommand } from '@aws-sdk/client-ses';
 import { SESConfig } from './ses.config';
@@ -83,6 +85,63 @@ export class SESEmailProvider implements IEmailProvider {
       id: info?.messageId,
       date: new Date().toISOString(),
     };
+  }
+
+  getMessageId(body: any | any[]): string[] {
+    if (Array.isArray(body)) {
+      return body.map((item) => item.mail.messageId);
+    }
+
+    return [body.mail.messageId];
+  }
+
+  parseEventBody(
+    body: any | any[],
+    identifier: string
+  ): IEmailEventBody | undefined {
+    if (Array.isArray(body)) {
+      body = body.find((item) => item.mail.messageId === identifier);
+    }
+
+    if (!body) {
+      return undefined;
+    }
+
+    const status = this.getStatus(body.eventType);
+
+    if (status === undefined) {
+      return undefined;
+    }
+
+    return {
+      status: status,
+      date: new Date(body.mail.timestamp).toISOString(),
+      externalId: body.mail.messageId,
+      row: body,
+    };
+  }
+
+  private getStatus(event: string): EmailEventStatusEnum | undefined {
+    switch (event) {
+      case 'Bounce':
+        return EmailEventStatusEnum.BOUNCED;
+      case 'Complaint':
+        return EmailEventStatusEnum.COMPLAINT;
+      case 'Delivery':
+        return EmailEventStatusEnum.DELIVERED;
+      case 'Send':
+        return EmailEventStatusEnum.SENT;
+      case 'Reject':
+        return EmailEventStatusEnum.REJECTED;
+      case 'Open':
+        return EmailEventStatusEnum.OPENED;
+      case 'Click':
+        return EmailEventStatusEnum.CLICKED;
+      case 'DeliveryDelay':
+        return EmailEventStatusEnum.DELAYED;
+      case 'Subscription':
+        return EmailEventStatusEnum.UNSUBSCRIBED;
+    }
   }
 
   async checkIntegration(): Promise<ICheckIntegrationResponse> {
