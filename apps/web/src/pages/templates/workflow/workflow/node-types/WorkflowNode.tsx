@@ -17,6 +17,8 @@ import { getFormattedStepErrors } from '../../../shared/errors';
 import { Popover } from '../../../../../design-system/popover';
 import { Button } from '../../../../../design-system/button/Button';
 import { IntegrationsStoreModal } from '../../../../integrations/IntegrationsStoreModal';
+import { useSegment } from '../../../../../components/providers/SegmentProvider';
+import { TemplateEditorAnalyticsEnum } from '../../../constants';
 
 const CHANNEL_TYPE_TO_TEXT = {
   [ChannelTypeEnum.IN_APP]: 'in-app',
@@ -118,6 +120,7 @@ export function WorkflowNode({
   setActivePage = (page: string) => {},
   disabled: initDisabled,
 }: ITemplateButtonProps) {
+  const segment = useSegment();
   const { readonly: readonlyEnv } = useEnvController();
   const { integrations } = useActiveIntegrations({ refetchOnMount: false, refetchOnWindowFocus: false });
   const { cx, classes, theme } = useStyles();
@@ -288,6 +291,7 @@ export function WorkflowNode({
             content={
               <ConfigureProviderButton
                 onClick={() => {
+                  segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_POPOVER_CLICK);
                   setIntegrationsModalVisible(true);
                   setPopoverOpened(false);
                 }}
