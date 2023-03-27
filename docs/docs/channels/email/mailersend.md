@@ -1,3 +1,7 @@
+---
+sidebar_position: 8
+---
+
 # MailerSend
 
 [MailerSend](https://www.mailersend.com/) is an email delivery service that allows you to send emails from your application.

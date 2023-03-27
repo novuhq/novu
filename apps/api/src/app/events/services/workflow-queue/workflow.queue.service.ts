@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { JobsOptions, Queue, QueueBaseOptions, QueueScheduler, Worker } from 'bullmq';
+import { Job, JobsOptions, Queue, QueueBaseOptions, QueueScheduler, Worker } from 'bullmq';
 // TODO: Remove this DAL dependency, maybe through a DTO or shared entity
 import { JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
@@ -13,6 +13,10 @@ import {
   SetJobAsFailed,
   SetJobAsFailedCommand,
 } from '../../usecases/update-job-status';
+import {
+  WebhookFilterBackoffStrategy,
+  WebhookFilterBackoffStrategyCommand,
+} from '../../usecases/webhook-filter-backoff-strategy';
 
 import {
   CreateExecutionDetails,
@@ -22,6 +26,10 @@ import { DetailEnum } from '../../../execution-details/types';
 import { PinoLogger, storage, Store } from '@novu/application-generic';
 
 export const WORKER_NAME = 'standard';
+
+export enum BackoffStrategiesEnum {
+  WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
+}
 
 @Injectable()
 export class WorkflowQueueService {
@@ -48,6 +56,8 @@ export class WorkflowQueueService {
     @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
     @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
+    @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
+    private webhookFilterWebhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
     this.queue = new Queue(WORKER_NAME, {
@@ -186,7 +196,7 @@ export class WorkflowQueueService {
 
     if (stepContainsWebhookFilter) {
       options.backoff = {
-        type: 'webhookFilterBackoff',
+        type: BackoffStrategiesEnum.WEBHOOK_FILTER_BACKOFF,
       };
       options.attempts = this.DEFAULT_ATTEMPTS;
     }
@@ -204,20 +214,22 @@ export class WorkflowQueueService {
 
   private getBackoffStrategies = () => {
     return {
-      webhookFilterBackoff: async (attemptsMade, err, job) => {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(job.data),
-            detail: DetailEnum.WEBHOOK_FILTER_FAILED_RETRY,
-            source: ExecutionDetailsSourceEnum.WEBHOOK,
-            status: ExecutionDetailsStatusEnum.PENDING,
-            isTest: false,
-            isRetry: true,
-            raw: JSON.stringify({ message: JSON.parse(err.message).message, attempt: attemptsMade }),
-          })
-        );
+      [BackoffStrategiesEnum.WEBHOOK_FILTER_BACKOFF]: async (
+        attemptsMade: number,
+        eventError: Error,
+        eventJob: Job
+      ): Promise<number> => {
+        // TODO: Review why when using `Command.create` class-transformer fails with `undefined has no property toKey()`
+        const command = {
+          attemptsMade,
+          environmentId: eventJob?.data?._environmentId,
+          eventError,
+          eventJob,
+          organizationId: eventJob?.data?._organizationId,
+          userId: eventJob?.data?._userId,
+        };
 
-        return Math.round(Math.random() * Math.pow(2, attemptsMade) * 1000);
+        return await this.webhookFilterWebhookFilterBackoffStrategy.execute(command);
       },
     };
   };

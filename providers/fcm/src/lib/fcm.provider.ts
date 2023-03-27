@@ -11,6 +11,7 @@ import {
   FcmOptions,
   getMessaging,
   Messaging,
+  WebpushConfig,
 } from 'firebase-admin/messaging';
 import crypto from 'crypto';
 
@@ -52,9 +53,11 @@ export class FcmPushProvider implements IPushProvider {
     const androidData: AndroidConfig = overridesData.android;
     const apnsData: ApnsConfig = overridesData.apns;
     const fcmOptionsData: FcmOptions = overridesData.fcmOptions;
+    const webPushData: WebpushConfig = overridesData.webPush;
     delete overridesData.android;
     delete overridesData.apns;
     delete overridesData.fcmOptions;
+    delete overridesData.webPush;
 
     let res;
 
@@ -66,6 +69,7 @@ export class FcmPushProvider implements IPushProvider {
         ...(androidData ? { android: androidData } : {}),
         ...(apnsData ? { apns: apnsData } : {}),
         ...(fcmOptionsData ? { fcmOptions: fcmOptionsData } : {}),
+        ...(webPushData ? { webpush: webPushData } : {}),
       });
     } else {
       const { data, ...overrides } = overridesData;
@@ -81,6 +85,7 @@ export class FcmPushProvider implements IPushProvider {
         ...(androidData ? { android: androidData } : {}),
         ...(apnsData ? { apns: apnsData } : {}),
         ...(fcmOptionsData ? { fcmOptions: fcmOptionsData } : {}),
+        ...(webPushData ? { webpush: webPushData } : {}),
       });
     }
 

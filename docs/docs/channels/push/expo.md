@@ -1,3 +1,8 @@
+---
+sidebar_label: Expo Push
+sidebar_position: 2
+---
+
 # Expo Push
 
 [Expo Push](https://docs.expo.dev/push-notifications/overview/) is a notification delivery service provided by Expo.
