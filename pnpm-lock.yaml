@@ -1035,7 +1035,7 @@ importers:
       sass: ^1.51.0
       sass-loader: ^13.0.0
       sharp: ^0.31.0
-      styled-components: 5.3.8
+      styled-components: 5.3.9
       stylelint: ^14.8.2
       stylelint-config-css-modules: ^4.1.0
       stylelint-config-recess-order: ^3.0.0
@@ -1060,7 +1060,7 @@ importers:
       react-dom: 17.0.2_react@17.0.2
       sass: 1.52.3
       sharp: 0.31.3
-      styled-components: 5.3.8_v5ja746gkdtknuc6tj46sve3be
+      styled-components: 5.3.9_v5ja746gkdtknuc6tj46sve3be
       stylelint-config-css-modules: 4.1.0_stylelint@14.9.1
       url-loader: 4.1.1_p5dl6emkcwslbw72e37w4ug7em
     devDependencies:
@@ -31814,7 +31814,7 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /babel-plugin-styled-components/2.0.6_styled-components@5.3.8:
+  /babel-plugin-styled-components/2.0.6_styled-components@5.3.9:
     resolution: {integrity: sha512-Sk+7o/oa2HfHv3Eh8sxoz75/fFvEdHsXV4grdeHufX0nauCmymlnN0rGhIvfpMQSJMvGutJ85gvCGea4iqmDpg==}
     peerDependencies:
       styled-components: '>= 2'
@@ -31824,7 +31824,7 @@ packages:
       babel-plugin-syntax-jsx: 6.18.0
       lodash: 4.17.21
       picomatch: 2.3.1
-      styled-components: 5.3.8_v5ja746gkdtknuc6tj46sve3be
+      styled-components: 5.3.9_v5ja746gkdtknuc6tj46sve3be
     dev: false
 
   /babel-plugin-syntax-jsx/6.18.0:
@@ -54297,8 +54297,8 @@ packages:
     dependencies:
       inline-style-parser: 0.1.1
 
-  /styled-components/5.3.8_v5ja746gkdtknuc6tj46sve3be:
-    resolution: {integrity: sha512-6jQrlvaJQ16uWVVO0rBfApaTPItkqaG32l3746enNZzpMDxMvzmHzj8rHUg39bvVtom0Y8o8ZzWuchEXKGjVsg==}
+  /styled-components/5.3.9_v5ja746gkdtknuc6tj46sve3be:
+    resolution: {integrity: sha512-Aj3kb13B75DQBo2oRwRa/APdB5rSmwUfN5exyarpX+x/tlM/rwZA2vVk2vQgVSP6WKaZJHWwiFrzgHt+CLtB4A==}
     engines: {node: '>=10'}
     peerDependencies:
       react: '>= 16.8.0'
@@ -54310,7 +54310,7 @@ packages:
       '@emotion/is-prop-valid': 1.1.2
       '@emotion/stylis': 0.8.5
       '@emotion/unitless': 0.7.5
-      babel-plugin-styled-components: 2.0.6_styled-components@5.3.8
+      babel-plugin-styled-components: 2.0.6_styled-components@5.3.9
       css-to-react-native: 3.0.0
       hoist-non-react-statics: 3.3.2
       react: 17.0.2
