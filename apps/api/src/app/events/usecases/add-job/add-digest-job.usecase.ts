@@ -83,7 +83,7 @@ export class AddDigestJob {
     digestKey?: string,
     digestValue?: string | number
   ): Promise<IFindAndUpdateResponse> {
-    const TTL = 500;
+    const TTL = 1500;
     let resource = `environment:${job._environmentId}:template:${job._templateId}:subscriber:${job._subscriberId}`;
     if (digestKey && digestValue) {
       resource = `${resource}:digestKey:${digestKey}:digestValue:${digestValue}`;
