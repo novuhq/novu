@@ -63,6 +63,7 @@ describe('Workflow Queue service', () => {
       'runJob',
       'setJobAsCompleted',
       'setJobAsFailed',
+      'webhookFilterWebhookFilterBackoffStrategy',
       'worker'
     );
     expect(workflowQueueService.DEFAULT_ATTEMPTS).to.eql(3);
