@@ -415,7 +415,10 @@
     "shortid",
     "upsert",
     "cond",
-    "TASKFORCESH"
+    "TASKFORCESH",
+    "monorepository",
+    "Metafiles",
+    "Metas"
   ],
   "flagWords": [],
   "patterns": [

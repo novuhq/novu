@@ -20,8 +20,14 @@ COPY packages/application-generic ./packages/application-generic
 
 COPY ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
 
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then echo 'enterprise edition' ; fi
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then cp .npmrc-cloud .npmrc  ; fi
+
 RUN pnpm install --reporter=silent
 RUN pnpm build:ws
+
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
 
 WORKDIR /usr/src/app/apps/ws
 
