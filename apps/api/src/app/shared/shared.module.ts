@@ -22,19 +22,21 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { AnalyticsService, createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
-import { ConnectionOptions } from 'tls';
-
-import { DistributedLockService } from './services/distributed-lock';
-import { PerformanceService } from './services/performance';
-import { QueueService } from './services/queue';
 import {
+  AnalyticsService,
+  createNestLoggingModuleOptions,
+  LoggerModule,
+  CacheService,
+  InvalidateCacheService,
   AzureBlobStorageService,
   GCSStorageService,
   S3StorageService,
   StorageService,
-} from './services/storage/storage.service';
-import { CacheService, InvalidateCacheService } from './services/cache';
+} from '@novu/application-generic';
+import { ConnectionOptions } from 'tls';
+
+import { DistributedLockService } from './services/distributed-lock';
+import { QueueService } from './services/queue';
 import * as packageJson from '../../../package.json';
 
 const DAL_MODELS = [
@@ -111,12 +113,6 @@ const PROVIDERS = [
       await dalService.connect(process.env.MONGO_URL);
 
       return dalService;
-    },
-  },
-  {
-    provide: PerformanceService,
-    useFactory: () => {
-      return new PerformanceService();
     },
   },
   cacheService,

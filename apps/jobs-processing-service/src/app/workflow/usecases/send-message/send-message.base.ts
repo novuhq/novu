@@ -1,9 +1,9 @@
 import { MessageRepository, SubscriberRepository, JobEntity } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { Cached, CacheKeyPrefixEnum } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
 import { CreateLog } from '../../../shared/logs';
-import { Cached, CacheKeyPrefixEnum } from '../../../shared/cache';
 import { GetDecryptedIntegrations, GetDecryptedIntegrationsCommand } from '../get-decrypted-integrations';
 import { CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
 import { DetailEnum } from '../create-execution-details/types';

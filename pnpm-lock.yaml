@@ -454,7 +454,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.15
       prettier: 2.8.4
-      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
+      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
       ts-loader: 9.4.2_hhrrucqyg4eysmfpujvov2ym5u
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -555,6 +555,7 @@ importers:
       ts-node: ~10.9.1
       tsconfig-paths: 3.14.2
       typescript: 4.9.5
+      uuid: ^8.3.2
     dependencies:
       '@aws-sdk/client-s3': 3.252.0
       '@aws-sdk/s3-request-presigner': 3.252.0
@@ -627,6 +628,7 @@ importers:
       rimraf: 3.0.2
       rxjs: 7.5.6
       shortid: 2.2.16
+      uuid: 8.3.2
     devDependencies:
       '@nestjs/cli': 9.2.0
       '@nestjs/schematics': 9.0.4_typescript@4.9.5
@@ -1614,6 +1616,10 @@ importers:
 
   packages/application-generic:
     specifiers:
+      '@aws-sdk/client-s3': ^3.234.0
+      '@aws-sdk/s3-request-presigner': ^3.234.0
+      '@azure/storage-blob': ^12.11.0
+      '@google-cloud/storage': ^6.2.3
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': ^9.3.9
       '@novu/dal': ^0.12.0
@@ -1656,6 +1662,7 @@ importers:
       cz-conventional-changelog: ^3.3.0
       decorate-all: ^1.2.1
       gh-pages: ^3.1.0
+      ioredis: ^5.2.4
       jest: ^27.1.0
       maskdata: ^1.2.0
       nestjs-pino: ^3.1.2
@@ -1674,6 +1681,10 @@ importers:
       typedoc: ^0.23.0
       typescript: 4.9.5
     dependencies:
+      '@aws-sdk/client-s3': 3.252.0
+      '@aws-sdk/s3-request-presigner': 3.252.0
+      '@azure/storage-blob': 12.11.0
+      '@google-cloud/storage': 6.2.3
       '@nestjs/common': 9.3.9_r72jqgu3m7fr66qxp7vl4agwte
       '@novu/dal': link:../../libs/dal
       '@novu/discord': link:../../providers/discord
@@ -1708,6 +1719,7 @@ importers:
       class-transformer: 0.5.1
       class-validator: 0.14.0
       decorate-all: 1.2.1_reflect-metadata@0.1.13
+      ioredis: 5.3.1
       maskdata: 1.2.0
       nestjs-pino: 3.1.2_atacoy3e24brwbzjtinj7jrj3e
       node-fetch: 3.2.10
@@ -7926,7 +7938,7 @@ packages:
       form-data: 4.0.0
       node-fetch: 2.6.9
       process: 0.11.10
-      tough-cookie: 4.0.0
+      tough-cookie: 4.1.2
       tslib: 2.5.0
       tunnel: 0.0.6
       uuid: 8.3.2
@@ -46162,7 +46174,7 @@ packages:
     engines: {node: '>=12.9.0'}
     dependencies:
       bson: 4.7.2
-      denque: 2.0.1
+      denque: 2.1.0
       mongodb-connection-string-url: 2.6.0
       socks: 2.7.1
     optionalDependencies:
@@ -55583,15 +55595,6 @@ packages:
       psl: 1.8.0
       punycode: 2.1.1
 
-  /tough-cookie/4.0.0:
-    resolution: {integrity: sha512-tHdtEpQCMrc1YLrMaqXXcj6AxhYi/xgit6mZu1+EDWUn+qhUf8wMQoFIy9NXuq23zAwtcB0t/MjACGR18pcRbg==}
-    engines: {node: '>=6'}
-    dependencies:
-      psl: 1.8.0
-      punycode: 2.1.1
-      universalify: 0.1.2
-    dev: false
-
   /tough-cookie/4.1.2:
     resolution: {integrity: sha512-G9fqXWoYFZgTc2z8Q5zaHy/vJMjm+WV0AkAeHxVCQiEB1b+dGvWzFW6QV07cY5jQ5gRkeid2qIkzkxUnmoQZUQ==}
     engines: {node: '>=6'}
@@ -55711,7 +55714,7 @@ packages:
       tslib: 1.14.1
     dev: true
 
-  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
+  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -55732,6 +55735,7 @@ packages:
       esbuild:
         optional: true
     dependencies:
+      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1

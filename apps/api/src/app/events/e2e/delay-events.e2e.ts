@@ -10,12 +10,12 @@ import { expect } from 'chai';
 import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
 import axios from 'axios';
 import { addSeconds, differenceInMilliseconds } from 'date-fns';
+import { StorageHelperService } from '@novu/application-generic';
 
 import { WorkflowQueueProducerService } from '../services/workflow-queue/workflow-queue-producer.service';
 import { RunJob, RunJobCommand } from '../usecases/run-job';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { QueueNextJob } from '../usecases/queue-next-job';
-import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
 
 const axiosInstance = axios.create();
 

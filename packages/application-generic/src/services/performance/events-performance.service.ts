@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 
-import { IMark, PerformanceContextEnum, PerformanceService } from '../../shared/performance';
+import {
+  IMark,
+  PerformanceContextEnum,
+  PerformanceService,
+} from './performance.service';
 
 enum MarkFunctionNameEnum {
   CREATE_NOTIFICATION_JOBS = 'createNotificationJobs',
@@ -90,7 +94,10 @@ export class EventsPerformanceService {
     return this.setStart(mark);
   }
 
-  public buildTriggerEventMark(notificationTemplateId: string, transactionId: string): IMark {
+  public buildTriggerEventMark(
+    notificationTemplateId: string,
+    transactionId: string
+  ): IMark {
     const mark = {
       id: `${MarkFunctionNameEnum.TRIGGER_EVENT}:notificationTemplate:${notificationTemplateId}:event:${transactionId}`,
     };

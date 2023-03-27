@@ -2,16 +2,16 @@ import { Inject, Injectable, UnprocessableEntityException, Logger } from '@nestj
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 import { AnalyticsService } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
-import { v4 as uuidv4 } from 'uuid';
+import { StorageHelperService } from '@novu/application-generic';
 
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
 import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
-import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';

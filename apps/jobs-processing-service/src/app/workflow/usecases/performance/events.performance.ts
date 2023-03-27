@@ -9,18 +9,13 @@ import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { UserSession, SubscribersService } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { getTime, parseISO } from 'date-fns';
-import mongoose from 'mongoose';
-import { setTimeout } from 'timers/promises';
 import { v4 as uuid } from 'uuid';
+import { EventsPerformanceService, StorageHelperService } from '@novu/application-generic';
 
-import { WorkflowQueueProducerService } from '../services/workflow-queue/workflow-queue-producer.service';
-import { SendMessage } from '../usecases/send-message/send-message.usecase';
-import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
-import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
-import { RunJob } from '../usecases/run-job/run-job.usecase';
-import { RunJobCommand } from '../usecases/run-job/run-job.command';
-import { EventsPerformanceService } from '../services/performance-service';
+import { WorkflowQueueService } from '../../services/workflow-queue.service';
+import { SendMessage } from '../send-message/send-message.usecase';
+import { QueueNextJob } from '../queue-next-job/queue-next-job.usecase';
+import { RunJob } from '../run-job/run-job.usecase';
 
 const axiosInstance = axios.create();
 const performanceService = new EventsPerformanceService();
@@ -31,7 +26,7 @@ describe('Performance - Events', () => {
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
-  let workflowQueueProducerService: WorkflowQueueProducerService;
+  let workflowQueueService: WorkflowQueueService;
   const messageRepository = new MessageRepository();
   let runJob: RunJob;
 
@@ -62,7 +57,7 @@ describe('Performance - Events', () => {
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-    workflowQueueProducerService = session.testServer?.getService(WorkflowQueueProducerService);
+    workflowQueueService = session.testServer?.getService(WorkflowQueueService);
 
     runJob = new RunJob(
       jobRepository,

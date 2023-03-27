@@ -1,13 +1,11 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, CacheKeyPrefixEnum, InvalidateCache } from '@novu/application-generic';
 
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
-import { InvalidateCache } from '../../../shared/interceptors';
 
 @Injectable()
 export class MarkMessageAs {

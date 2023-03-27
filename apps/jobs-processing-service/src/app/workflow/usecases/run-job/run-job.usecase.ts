@@ -2,13 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { PinoLogger } from '@novu/application-generic';
+import { PinoLogger, StorageHelperService } from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
 import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
-import { StorageHelperService } from '../../../shared/storage';
 
 @Injectable()
 export class RunJob {

@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
+import { EventsPerformanceService, StorageHelperService } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
 import { EventsDistributedLockService } from './services/distributed-lock-service';
-import { EventsPerformanceService } from './services/performance-service';
-import { StorageHelperService } from './services/storage-helper-service/storage-helper.service';
 import { TriggerHandlerQueueService } from './services/workflow-queue/trigger-handler-queue.service';
 import { WorkflowQueueProducerService } from './services/workflow-queue/workflow-queue-producer.service';
 import { USE_CASES } from './usecases';

@@ -1,7 +1,9 @@
-import { monitorEventLoopDelay, performance, PerformanceEntry, PerformanceObserver } from 'perf_hooks';
+import {
+  monitorEventLoopDelay,
+  performance,
+  PerformanceObserver,
+} from 'perf_hooks';
 import { Logger } from '@nestjs/common';
-
-import { ApiException } from '../../exceptions/api.exception';
 
 export enum PerformanceContextEnum {
   CONTEXT_EVENT_LOOP_DELAY = 'PerformanceEventLoopDelay',
@@ -100,7 +102,11 @@ export class PerformanceService {
   }
 
   private store(mark: IMark): void {
-    performance.measure(this.getMarkId(mark), this.buildMarkStart(mark), this.buildMarkEnd(mark));
+    performance.measure(
+      this.getMarkId(mark),
+      this.buildMarkStart(mark),
+      this.buildMarkEnd(mark)
+    );
   }
 
   public clear(): void {
@@ -120,7 +126,10 @@ export class PerformanceService {
     const p75 = percentiles.get(75);
     const p99 = percentiles.get(99);
 
-    Logger.debug('EVENT LOOP DELAY STATS', PerformanceContextEnum.CONTEXT_EVENT_LOOP_DELAY);
+    Logger.debug(
+      'EVENT LOOP DELAY STATS',
+      PerformanceContextEnum.CONTEXT_EVENT_LOOP_DELAY
+    );
     Logger.debug(
       `Min: ${min} | Max: ${max} | Mean: ${mean} | StdDev: ${stddev} | P50: ${p50} | P75: ${p75} | P99: ${p99}`,
       PerformanceContextEnum.CONTEXT_EVENT_LOOP_DELAY
@@ -128,9 +137,14 @@ export class PerformanceService {
   }
 
   private publishEventLoopUtilization(): void {
-    const { idle, active, utilization } = performance.eventLoopUtilization(this.utilization);
+    const { idle, active, utilization } = performance.eventLoopUtilization(
+      this.utilization
+    );
 
-    Logger.debug('EVENT LOOP UTILIZATION', PerformanceContextEnum.CONTEXT_EVENT_LOOP_UTILIZATION);
+    Logger.debug(
+      'EVENT LOOP UTILIZATION',
+      PerformanceContextEnum.CONTEXT_EVENT_LOOP_UTILIZATION
+    );
     Logger.debug(
       `Idle: ${idle} | Active: ${active} | Utilization: ${utilization}`,
       PerformanceContextEnum.CONTEXT_EVENT_LOOP_UTILIZATION
@@ -142,7 +156,9 @@ export class PerformanceService {
   }
 
   private publishMarks(): void {
-    this.marks.forEach((mark) => Logger.debug(mark, PerformanceContextEnum.CONTEXT_MARK));
+    this.marks.forEach((mark) =>
+      Logger.debug(mark, PerformanceContextEnum.CONTEXT_MARK)
+    );
   }
 
   public calculateAverage(markFunctionName: string, durations: number[]): void {
@@ -150,7 +166,9 @@ export class PerformanceService {
     const average = Number(sum) / Number(durations.length);
 
     Logger.debug(
-      `${markFunctionName} | Average: ${average.toFixed(2)} ms from a total of ${durations.length}`,
+      `${markFunctionName} | Average: ${average.toFixed(
+        2
+      )} ms from a total of ${durations.length}`,
       PerformanceContextEnum.CONTEXT_MEASURE
     );
   }

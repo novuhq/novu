@@ -1,12 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationStepEntity } from '@novu/dal';
 import { DigestTypeEnum, StepTypeEnum } from '@novu/shared';
+import { EventsPerformanceService } from '@novu/application-generic';
 
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterStepsBackoff } from './digest-filter-steps-backoff.usecase';
 import { DigestFilterStepsRegular } from './digest-filter-steps-regular.usecase';
-
-import { EventsPerformanceService } from '../../services/performance-service';
 
 // TODO; Potentially rename this use case
 @Injectable()

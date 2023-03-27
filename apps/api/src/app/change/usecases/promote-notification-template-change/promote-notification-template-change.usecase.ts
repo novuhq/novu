@@ -8,10 +8,10 @@ import {
   NotificationGroupRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
 
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {

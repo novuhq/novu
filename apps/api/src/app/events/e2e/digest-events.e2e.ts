@@ -10,13 +10,11 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
 import { getTime, parseISO } from 'date-fns';
-import mongoose from 'mongoose';
-import { setTimeout } from 'timers/promises';
+import { StorageHelperService } from '@novu/application-generic';
 
 import { WorkflowQueueProducerService } from '../services/workflow-queue/workflow-queue-producer.service';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
-import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
 import { RunJob, RunJobCommand } from '../usecases/run-job';
 
 const axiosInstance = axios.create();

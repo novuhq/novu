@@ -1,13 +1,13 @@
-import { expect } from 'chai';
 import { CachingConfig, ICacheService } from './cache.service';
 
 describe('cache-service', function () {
   let cacheService: ICacheService;
-  before(function () {
+
+  beforeEach(function () {
     cacheService = CacheService.createClient();
   });
 
-  after(function (done) {
+  afterEach(function (done) {
     cacheService.delByPattern('*');
     done();
   });
@@ -18,7 +18,7 @@ describe('cache-service', function () {
     cacheService.set(key, dataString);
     const res = cacheService.get(key);
 
-    expect(dataString).to.be.equal(res);
+    expect(dataString).toEqual(res);
   });
 
   it('should delete by pattern', async function () {
@@ -32,9 +32,9 @@ describe('cache-service', function () {
     const res2 = cacheService.get('feed:123:457');
     const res3 = cacheService.get('feed:query:123:457');
 
-    expect(res1).to.be.equal('random data');
-    expect(res2).to.be.equal(undefined);
-    expect(res3).to.be.equal(undefined);
+    expect(res1).toEqual('random data');
+    expect(res2).toEqual(undefined);
+    expect(res3).toEqual(undefined);
   });
 });
 
@@ -59,7 +59,11 @@ export const CacheService = {
         const preFixSuffixTuple = pattern.split('*');
 
         for (const key in data) {
-          if (key.startsWith(preFixSuffixTuple[0]) && key.endsWith(preFixSuffixTuple[1])) delete data[key];
+          if (
+            key.startsWith(preFixSuffixTuple[0]) &&
+            key.endsWith(preFixSuffixTuple[1])
+          )
+            delete data[key];
         }
 
         return;

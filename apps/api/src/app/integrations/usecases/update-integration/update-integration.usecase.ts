@@ -1,11 +1,16 @@
 import { BadRequestException, Injectable, NotFoundException, Inject, Logger } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  AnalyticsService,
+  encryptCredentials,
+  CacheKeyPrefixEnum,
+  InvalidateCacheService,
+} from '@novu/application-generic';
+
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
-import { AnalyticsService, encryptCredentials } from '@novu/application-generic';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
