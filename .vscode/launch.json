@@ -31,14 +31,14 @@
       "type": "pwa-node"
     },
     {
-      "name": "jobs-processing-service",
+      "name": "worker-service",
       "request": "launch",
       "runtimeArgs": [
         "run-script",
         "start"
       ],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/jobs-processing-service",
+      "cwd": "${workspaceFolder}/apps/worker-service",
       "skipFiles": [
         "<node_internals>/**"
       ],

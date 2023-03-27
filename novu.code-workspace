@@ -9,8 +9,8 @@
       "path": "apps/api"
     },
     {
-      "name": "🚀 @novu/jobs-processing-service",
-      "path": "apps/jobs-processing-service"
+      "name": "🚀 @novu/worker-service",
+      "path": "apps/worker-service"
     },
     {
       "name": "🚀 @novu/web",

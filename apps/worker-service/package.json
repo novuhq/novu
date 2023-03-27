@@ -1,5 +1,5 @@
 {
-  "name": "@novu/jobs-processing-service",
+  "name": "@novu/worker-service",
   "version": "0.12.0",
   "description": "description",
   "author": "",
@@ -10,8 +10,8 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/jobs-processing-service/Dockerfile | docker buildx build --build-arg PACKAGE_PATH=apps/jobs-processing-service - -t novu-jobs-processing-service",
-    "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/jobs-processing-service/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/jobs-processing-service - -t novu-jobs-processing-service --load",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/worker-service/Dockerfile | docker buildx build --build-arg PACKAGE_PATH=apps/worker-service - -t novu-worker-service",
+    "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/worker-service/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/worker-service - -t novu-worker-service --load",
     "start": "pnpm start:dev",
     "start:dev": "cross-env TZ=UTC nest start --watch",
     "start:test": "cross-env NODE_ENV=test PORT=1342 TZ=UTC nest start --watch",
