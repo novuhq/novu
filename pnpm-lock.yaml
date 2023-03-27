@@ -1256,6 +1256,7 @@ importers:
       '@commitlint/cli': ^17.0.0
       '@commitlint/config-conventional': ^17.0.0
       '@novu/notification-center': ^0.13.0
+      '@rollup/plugin-node-resolve': ^6.0.0
       '@rollup/plugin-replace': ^5.0.2
       '@types/iframe-resizer': ^3.5.8
       '@types/jest': 27.5.2
@@ -1280,7 +1281,6 @@ importers:
       rollup: ^3.15.0
       rollup-plugin-commonjs: ^10.1.0
       rollup-plugin-json: ^4.0.0
-      rollup-plugin-node-resolve: ^5.2.0
       rollup-plugin-sourcemaps: ^0.6.3
       rollup-plugin-terser: ^7.0.2
       rollup-plugin-typescript2: ^0.34.1
@@ -1298,6 +1298,7 @@ importers:
     devDependencies:
       '@commitlint/cli': 17.4.4
       '@commitlint/config-conventional': 17.4.4
+      '@rollup/plugin-node-resolve': 6.1.0_rollup@3.15.0
       '@rollup/plugin-replace': 5.0.2_rollup@3.15.0
       '@types/jest': 27.5.2
       '@types/node': 14.18.12
@@ -1320,7 +1321,6 @@ importers:
       rollup: 3.15.0
       rollup-plugin-commonjs: 10.1.0_rollup@3.15.0
       rollup-plugin-json: 4.0.0
-      rollup-plugin-node-resolve: 5.2.0_rollup@3.15.0
       rollup-plugin-sourcemaps: 0.6.3_o6mygvtd3nomnu4rqtim7c6gvi
       rollup-plugin-terser: 7.0.2_rollup@3.15.0
       rollup-plugin-typescript2: 0.34.1_xswiuafr57fmdlvfpvse52fe3e
@@ -22473,6 +22473,20 @@ packages:
       is-module: 1.0.0
       resolve: 1.22.1
       rollup: 3.7.3
+    dev: true
+
+  /@rollup/plugin-node-resolve/6.1.0_rollup@3.15.0:
+    resolution: {integrity: sha512-Cv7PDIvxdE40SWilY5WgZpqfIUEaDxFxs89zCAHjqyRwlTSuql4M5hjIuc5QYJkOH0/vyiyNXKD72O+LhRipGA==}
+    engines: {node: '>= 8.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0
+    dependencies:
+      '@rollup/pluginutils': 3.1.0_rollup@3.15.0
+      '@types/resolve': 0.0.8
+      builtin-modules: 3.3.0
+      is-module: 1.0.0
+      resolve: 1.22.1
+      rollup: 3.15.0
     dev: true
 
   /@rollup/plugin-replace/2.4.2_rollup@2.79.1:
@@ -52463,20 +52477,6 @@ packages:
       rollup: ^2.60.0 || ^3.0.0
     dependencies:
       rollup: 3.7.3
-    dev: true
-
-  /rollup-plugin-node-resolve/5.2.0_rollup@3.15.0:
-    resolution: {integrity: sha512-jUlyaDXts7TW2CqQ4GaO5VJ4PwwaV8VUGA7+km3n6k6xtOEacf61u0VXwN80phY/evMcaS+9eIeJ9MOyDxt5Zw==}
-    deprecated: This package has been deprecated and is no longer maintained. Please use @rollup/plugin-node-resolve.
-    peerDependencies:
-      rollup: '>=1.11.0'
-    dependencies:
-      '@types/resolve': 0.0.8
-      builtin-modules: 3.3.0
-      is-module: 1.0.0
-      resolve: 1.22.1
-      rollup: 3.15.0
-      rollup-pluginutils: 2.8.2
     dev: true
 
   /rollup-plugin-peer-deps-external/2.2.4_rollup@3.7.3:

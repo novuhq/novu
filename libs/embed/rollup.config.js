@@ -1,4 +1,4 @@
-const resolve = require('rollup-plugin-node-resolve');
+const resolve = require('@rollup/plugin-node-resolve');
 const commonjs = require('rollup-plugin-commonjs');
 const sourceMaps = require('rollup-plugin-sourcemaps');
 const camelCase = require('lodash.camelcase');
