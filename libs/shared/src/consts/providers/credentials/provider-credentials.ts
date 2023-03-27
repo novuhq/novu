@@ -568,7 +568,7 @@ export const kannelConfig: IConfigCredentials[] = [
 
 export const maqsamConfig: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.AccessKeyId,
+    key: CredentialsKeyEnum.ApiKey,
     displayName: 'Access Key ID',
     type: 'string',
     required: true,

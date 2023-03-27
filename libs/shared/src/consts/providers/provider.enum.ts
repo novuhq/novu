@@ -3,7 +3,6 @@
 export enum CredentialsKeyEnum {
   ApiKey = 'apiKey',
   User = 'user',
-  AccessKeyId = 'accessKeyId',
   SecretKey = 'secretKey',
   Domain = 'domain',
   Password = 'password',

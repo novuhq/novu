@@ -8,7 +8,6 @@ import { ChangePropsValueType } from '../../types/helpers';
 export interface ICredentials {
   apiKey?: string;
   user?: string;
-  accessKeyId?: string;
   secretKey?: string;
   domain?: string;
   password?: string;

@@ -9,7 +9,7 @@ export class MaqsamHandler extends BaseSmsHandler {
   }
   buildProvider(credentials: ICredentials) {
     this.provider = new MaqsamSmsProvider({
-      accessKeyId: credentials.accessKeyId,
+      accessKeyId: credentials.apiKey,
       accessSecret: credentials.secretKey,
       from: credentials.from,
     });
