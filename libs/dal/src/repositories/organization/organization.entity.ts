@@ -1,9 +1,9 @@
 export class OrganizationEntity {
-  _id?: string;
+  _id: string;
 
   name: string;
 
-  logo: string;
+  logo?: string;
 
   branding: {
     fontFamily?: string;
@@ -16,6 +16,8 @@ export class OrganizationEntity {
 
   partnerConfigurations?: IPartnerConfiguration[];
 }
+
+export type OrganizationDBModel = OrganizationEntity;
 
 export interface IPartnerConfiguration {
   accessToken: string;

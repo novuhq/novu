@@ -1,23 +1,27 @@
-import { ChannelTypeEnum, IMessageCTA, IActor } from '@novu/shared';
 import { Exclude } from 'class-transformer';
+import { ChannelTypeEnum, IMessageCTA, IActor } from '@novu/shared';
+
 import { IEmailBlock } from '../message-template';
 import { SubscriberEntity } from '../subscriber';
 import { NotificationTemplateEntity } from '../notification-template';
+import type { OrganizationId } from '../organization';
+import type { EnvironmentId } from '../environment';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class MessageEntity {
-  _id?: string;
+  _id: string;
 
   _templateId: string;
 
   _environmentId: string;
 
-  _messageTemplateId: string;
+  _messageTemplateId: EnvironmentId;
 
-  _organizationId: string;
+  _organizationId: OrganizationId;
 
   _notificationId: string;
 
-  _jobId?: string;
+  _jobId: string;
 
   _subscriberId: string;
 
@@ -46,6 +50,8 @@ export class MessageEntity {
   phone?: string;
 
   chatWebhookUrl?: string;
+
+  directWebhookUrl?: string;
 
   providerId?: string;
 
@@ -78,3 +84,17 @@ export class MessageEntity {
 
   actor?: IActor;
 }
+
+export type MessageDBModel = ChangePropsValueType<
+  Omit<MessageEntity, 'createdAt'>,
+  | '_templateId'
+  | '_environmentId'
+  | '_messageTemplateId'
+  | '_organizationId'
+  | '_notificationId'
+  | '_jobId'
+  | '_subscriberId'
+  | '_feedId'
+> & {
+  createdAt?: Date;
+};

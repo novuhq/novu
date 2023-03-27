@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '../../../entities/message-template';
+import { ChannelTypeEnum } from '../../../types';
 
 export interface IUpdateSubscriberPreferenceDto {
   channel?: IChannelPreference;

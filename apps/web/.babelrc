@@ -11,6 +11,7 @@
   ],
   "plugins": [
     "@emotion",
+    "@babel/plugin-transform-react-display-name",
     "@babel/plugin-proposal-optional-chaining",
     [
       "@babel/plugin-transform-runtime",

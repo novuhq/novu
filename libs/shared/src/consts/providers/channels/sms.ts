@@ -1,5 +1,4 @@
 import { IProviderConfig } from '../provider.interface';
-import { ChannelTypeEnum } from '../../../entities/message-template';
 import {
   gupshupConfig,
   nexmoConfig,
@@ -12,8 +11,12 @@ import {
   infobipSMSConfig,
   burstSmsConfig,
   clickatellConfig,
+  fortySixElksConfig,
+  kannelConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
+
+import { ChannelTypeEnum } from '../../../types';
 
 export const smsProviders: IProviderConfig[] = [
   {
@@ -105,5 +108,22 @@ export const smsProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: 'https://docs.clickatell.com/',
     logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
+  },
+  {
+    id: SmsProviderIdEnum.FortySixElks,
+    displayName: '46elks',
+    channel: ChannelTypeEnum.SMS,
+    credentials: fortySixElksConfig,
+    docReference: 'https://46elks.com/docs/send-sms',
+    logoFileName: { light: '46elks.png', dark: '46elks.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Kannel,
+    displayName: 'Kannel SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: kannelConfig,
+    betaVersion: true,
+    docReference: 'https://www.kannel.org/doc.shtml',
+    logoFileName: { light: 'kannel.png', dark: 'kannel.png' },
   },
 ];

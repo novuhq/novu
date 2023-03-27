@@ -8,5 +8,5 @@ export class GetVercelProjectsCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsString()
-  nextPage: string;
+  nextPage?: string;
 }

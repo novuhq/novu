@@ -30,6 +30,8 @@ describe('test use of novus node package - Subscribers class', () => {
 
     await novu.subscribers.update('test-update-subscriber', {
       phone: '8989898',
+      locale: 'en',
+      data: { custom1: 'custom value1', custom2: 'custom value2' },
     });
 
     expect(mockedAxios.put).toHaveBeenCalled();
@@ -37,6 +39,8 @@ describe('test use of novus node package - Subscribers class', () => {
       `/subscribers/test-update-subscriber`,
       {
         phone: '8989898',
+        locale: 'en',
+        data: { custom1: 'custom value1', custom2: 'custom value2' },
       }
     );
   });
@@ -49,6 +53,23 @@ describe('test use of novus node package - Subscribers class', () => {
     expect(mockedAxios.delete).toHaveBeenCalled();
     expect(mockedAxios.delete).toHaveBeenCalledWith(
       `/subscribers/test-delete-subscriber`
+    );
+  });
+
+  test('should unset subscriber channel credentials correctly', async () => {
+    mockedAxios.put.mockResolvedValue({});
+
+    await novu.subscribers.unsetCredentials('test-update-subscriber', 'slack');
+
+    expect(mockedAxios.put).toHaveBeenCalled();
+    expect(mockedAxios.put).toHaveBeenCalledWith(
+      `/subscribers/test-update-subscriber/credentials`,
+      {
+        providerId: 'slack',
+        credentials: {
+          webhookUrl: undefined,
+        },
+      }
     );
   });
 

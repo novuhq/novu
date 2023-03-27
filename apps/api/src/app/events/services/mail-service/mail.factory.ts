@@ -13,6 +13,7 @@ import {
   InfobipEmailHandler,
   MailerSendHandler,
   Outlook365Handler,
+  ResendHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -31,23 +32,24 @@ export class MailFactory {
     new InfobipEmailHandler(),
     new MailerSendHandler(),
     new Outlook365Handler(),
+    new ResendHandler(),
   ];
 
   getHandler(
-    integration: Pick<IntegrationEntity, '_id' | 'credentials' | 'channel' | 'providerId'>,
+    integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId'>,
     from?: string
   ): IMailHandler {
     try {
       const handler =
         this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
 
-      if (!handler) return null;
+      if (!handler) throw new Error('Handler for provider was not found');
 
       handler.buildProvider(integration.credentials, from);
 
       return handler;
     } catch (error) {
-      throw new Error(`Could not build mail handler id: ${integration._id} error ${error}`);
+      throw new Error(`Could not build mail handler for provider: ${integration.providerId} error ${error}`);
     }
   }
 }

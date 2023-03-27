@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 10
 ---
 
 # Webhooks
@@ -9,6 +9,10 @@ This enables to receive much more detailed information from the provider about t
 
 Currently, only `Email` and `SMS` channels are supported with limited providers.
 Support for more providers will be added in future.
+
+:::info
+This feature is available only in our SaaS. This feature will not work in self hosted environment.
+:::
 
 ## Get your Webhook URL
 

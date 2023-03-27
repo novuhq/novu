@@ -1,5 +1,6 @@
+import { Types } from 'mongoose';
 import {
-  BuilderFieldOperator,
+  FilterParts,
   BuilderFieldType,
   BuilderGroupValues,
   DigestUnitEnum,
@@ -8,11 +9,15 @@ import {
   DelayTypeEnum,
   TemplateVariableTypeEnum,
 } from '@novu/shared';
+
 import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
+import type { OrganizationId } from '../organization';
+import type { EnvironmentId } from '../environment';
+import type { ChangePropsValueType } from '../../types/helpers';
 
 export class NotificationTemplateEntity {
-  _id?: string;
+  _id: string;
 
   name: string;
 
@@ -30,11 +35,11 @@ export class NotificationTemplateEntity {
 
   steps: NotificationStepEntity[];
 
-  _organizationId: string;
+  _organizationId: OrganizationId;
 
   _creatorId: string;
 
-  _environmentId: string;
+  _environmentId: EnvironmentId;
 
   triggers: NotificationTriggerEntity[];
 
@@ -53,7 +58,18 @@ export class NotificationTemplateEntity {
   updatedAt?: string;
 
   readonly notificationGroup?: NotificationGroupEntity;
+
+  isBlueprint: boolean;
+
+  blueprintId?: string;
 }
+
+export type NotificationTemplateDBModel = ChangePropsValueType<
+  Omit<NotificationTemplateEntity, '_parentId'>,
+  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId'
+> & {
+  _parentId?: Types.ObjectId;
+};
 
 export class NotificationTriggerEntity {
   type: 'event';
@@ -73,15 +89,22 @@ export class NotificationTriggerEntity {
 export class NotificationStepEntity {
   _id?: string;
 
+  uuid?: string;
+
   _templateId: string;
 
   active?: boolean;
+
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
 
   template?: MessageTemplateEntity;
 
   filters?: StepFilter[];
 
-  _parentId?: string;
+  _parentId?: string | null;
 
   metadata?: {
     amount?: number;
@@ -104,10 +127,5 @@ export class StepFilter {
 
   value: BuilderGroupValues;
 
-  children: {
-    field: string;
-    value: string;
-    operator: BuilderFieldOperator;
-    on?: 'payload' | 'subscriber';
-  }[];
+  children: FilterParts[];
 }

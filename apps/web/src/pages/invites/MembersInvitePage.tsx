@@ -1,5 +1,5 @@
 import { Form } from 'antd';
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 import { showNotification } from '@mantine/notifications';
@@ -17,17 +17,19 @@ import {
   removeMember,
   resendInviteMember,
 } from '../../api/organization';
-import { MembersTable } from '../../components/invites/MembersTable';
+import { MembersTable } from './components/MembersTable';
 import { Button, Input } from '../../design-system';
 import { Invite } from '../../design-system/icons';
-import { AuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../components/providers/AuthProvider';
+import { parseUrl } from '../../utils/routeUtils';
+import { ROUTES } from '../../constants/routes.enum';
 
 export function MembersInvitePage() {
   const [form] = Form.useForm();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
   const [invitedMemberEmail, setInvitedMemberEmail] = useState<string>('');
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
-  const { currentOrganization, currentUser } = useContext(AuthContext);
+  const { currentOrganization, currentUser } = useAuthContext();
 
   const {
     data: members,
@@ -153,7 +155,7 @@ export function MembersInvitePage() {
   };
 
   const generateInviteLink = (memberToken: string) => {
-    return `${window.location.origin.toString()}/auth/invitation/${memberToken}`;
+    return `${window.location.origin.toString()}` + parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: memberToken });
   };
 
   function getInviteMemberByLinkDiv(inviteHref: string, currentMember) {

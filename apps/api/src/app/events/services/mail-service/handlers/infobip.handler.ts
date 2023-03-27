@@ -12,7 +12,7 @@ export class InfobipEmailHandler extends BaseHandler {
       baseUrl: string;
       apiKey: string;
       from?: string;
-    } = { baseUrl: credentials.baseUrl, apiKey: credentials.apiKey, from: credentials.from };
+    } = { baseUrl: credentials.baseUrl as string, apiKey: credentials.apiKey as string, from: credentials.from };
 
     this.provider = new InfobipEmailProvider(config);
   }

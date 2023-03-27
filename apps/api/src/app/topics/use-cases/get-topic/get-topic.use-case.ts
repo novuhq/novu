@@ -3,7 +3,7 @@ import { TopicEntity, TopicRepository } from '@novu/dal';
 
 import { GetTopicCommand } from './get-topic.command';
 
-import { TopicDto } from '../../dtos/topic.dto';
+import { TopicDto } from '../../dtos';
 import { ExternalSubscriberId } from '../../types';
 
 @Injectable()
@@ -11,10 +11,7 @@ export class GetTopicUseCase {
   constructor(private topicRepository: TopicRepository) {}
 
   async execute(command: GetTopicCommand) {
-    const topic = await this.topicRepository.findTopic(
-      command.topicKey,
-      TopicRepository.convertStringToObjectId(command.environmentId)
-    );
+    const topic = await this.topicRepository.findTopic(command.topicKey, command.environmentId);
 
     if (!topic) {
       throw new NotFoundException(
@@ -28,9 +25,9 @@ export class GetTopicUseCase {
   private mapFromEntity(topic: TopicEntity & { subscribers: ExternalSubscriberId[] }): TopicDto {
     return {
       ...topic,
-      _id: TopicRepository.convertObjectIdToString(topic._id),
-      _organizationId: TopicRepository.convertObjectIdToString(topic._organizationId),
-      _environmentId: TopicRepository.convertObjectIdToString(topic._environmentId),
+      _id: topic._id,
+      _organizationId: topic._organizationId,
+      _environmentId: topic._environmentId,
     };
   }
 }

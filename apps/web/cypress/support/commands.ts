@@ -43,10 +43,10 @@ Cypress.Commands.add('waitLoadTemplatePage', (beforeWait: () => void): void => {
 
 Cypress.Commands.add('clickWorkflowNode', (selector: string, last?: boolean) => {
   if (last) {
-    return cy.getByTestId(selector).last().click({ force: true });
+    return cy.awaitAttachedGetByTestId(selector).last().click({ force: true });
   }
 
-  return cy.getByTestId(selector).click({ force: true });
+  return cy.awaitAttachedGetByTestId(selector).first().click({ force: true });
 });
 
 Cypress.Commands.add('awaitAttachedGetByTestId', (selector: string) => {
@@ -71,7 +71,7 @@ Cypress.Commands.add('clickNodeButton', (selector: string) => {
 
 Cypress.Commands.add(
   'initializeSession',
-  (settings: { disableLocalStorage?: boolean } = { disableLocalStorage: false }) => {
+  (settings: { disableLocalStorage?: boolean; noTemplates?: boolean } = { disableLocalStorage: false }) => {
     return cy.task('getSession', settings).then((response: any) => {
       if (!settings.disableLocalStorage) {
         window.localStorage.setItem('auth_token', response.token);
@@ -111,6 +111,8 @@ Cypress.Commands.add('inviteUser', (email: string) => {
         })
         .as('token');
 
+      cy.then(() => session.user).as('inviter');
+
       cy.logout().then(() => {
         return session.organization;
       });
@@ -128,6 +130,31 @@ Cypress.Commands.add('seedDatabase', () => {
 
 Cypress.Commands.add('clearDatabase', () => {
   return cy.task('clearDatabase');
+});
+
+Cypress.Commands.add('loginWithGitHub', () => {
+  const gitHubUserEmail = Cypress.env('GITHUB_USER_EMAIL');
+  const gitHubPassword = Cypress.env('GITHUB_USER_PASSWORD');
+
+  cy.getByTestId('github-button').click();
+
+  return cy.origin(
+    'https://github.com',
+    { args: { gitHubUserEmail, gitHubPassword } },
+    ({ gitHubUserEmail, gitHubPassword }) => {
+      cy.get('#login_field').type(gitHubUserEmail);
+      cy.get('#password').type(gitHubPassword);
+      cy.get('input[type="submit"]').click();
+
+      cy.get('body').then(($body) => {
+        if ($body.find('#js-oauth-authorize-btn').length) {
+          cy.wait(2000).then(() => {
+            $body.find('#js-oauth-authorize-btn').trigger('click');
+          });
+        }
+      });
+    }
+  );
 });
 
 export {};

@@ -34,20 +34,26 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   content: string | IEmailBlock[];
 
   @IsOptional()
-  contentType: MessageTemplateContentType;
+  contentType?: MessageTemplateContentType;
 
   @IsOptional()
   @ValidateNested()
-  cta: IMessageCTA;
+  cta?: IMessageCTA;
 
   @IsOptional()
-  feedId: string;
+  feedId?: string | null;
+
+  @IsOptional()
+  layoutId?: string | null;
 
   @IsMongoId()
   parentChangeId: string;
 
   @IsOptional()
   preheader?: string;
+
+  @IsOptional()
+  senderName?: string;
 
   @IsOptional()
   actor?: IActor;

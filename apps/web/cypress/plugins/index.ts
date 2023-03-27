@@ -68,7 +68,11 @@ module.exports = (on, config) => {
       return organization;
     },
     async getSession(
-      settings: { noEnvironment?: boolean; partialTemplate?: Partial<NotificationTemplateEntity> } = {}
+      settings: {
+        noEnvironment?: boolean;
+        partialTemplate?: Partial<NotificationTemplateEntity>;
+        noTemplates?: boolean;
+      } = {}
     ) {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
@@ -85,7 +89,7 @@ module.exports = (on, config) => {
       );
 
       let templates;
-      if (!settings?.noEnvironment) {
+      if (!settings?.noTemplates) {
         const templatePartial = settings?.partialTemplate || {};
 
         templates = await Promise.all([

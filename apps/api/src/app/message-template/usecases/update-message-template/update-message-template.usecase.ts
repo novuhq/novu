@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, ITemplateVariable } from '@novu/shared';
+
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { UpdateChangeCommand } from '../../../change/usecases/update-change/update-change.command';
 import { UpdateChange } from '../../../change/usecases/update-change/update-change';
 
@@ -36,7 +36,7 @@ export class UpdateMessageTemplate {
     }
 
     if (command.variables) {
-      updatePayload.variables = command.variables;
+      updatePayload.variables = UpdateMessageTemplate.mapVariables(command.variables);
     }
 
     if (command.contentType) {
@@ -55,8 +55,13 @@ export class UpdateMessageTemplate {
     if (command.feedId) {
       updatePayload._feedId = command.feedId;
     }
+
     if (!command.feedId && existingTemplate._feedId) {
-      updatePayload._feedId = null;
+      updatePayload._feedId = undefined;
+    }
+
+    if (command.layoutId) {
+      updatePayload._layoutId = command.layoutId;
     }
 
     if (command.subject) {
@@ -69,6 +74,10 @@ export class UpdateMessageTemplate {
 
     if (command.preheader !== undefined || command.preheader !== null) {
       updatePayload.preheader = command.preheader;
+    }
+
+    if (command.senderName !== undefined || command.senderName !== null) {
+      updatePayload.senderName = command.senderName;
     }
 
     if (command.actor) {
@@ -91,6 +100,7 @@ export class UpdateMessageTemplate {
     );
 
     const item = await this.messageTemplateRepository.findById(command.templateId);
+    if (!item) throw new NotFoundException(`Message template with id ${command.templateId} is not found`);
 
     if (command.feedId || (!command.feedId && existingTemplate._feedId)) {
       await this.messageRepository.updateFeedByMessageTemplateId(
@@ -100,23 +110,25 @@ export class UpdateMessageTemplate {
       );
     }
 
-    const changeId = await this.changeRepository.getChangeId(
-      command.environmentId,
-      ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-      item._id
-    );
+    if (item._id) {
+      const changeId = await this.changeRepository.getChangeId(
+        command.environmentId,
+        ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+        item._id
+      );
 
-    await this.createChange.execute(
-      CreateChangeCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-        item,
-        type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-        parentChangeId: command.parentChangeId,
-        changeId,
-      })
-    );
+      await this.createChange.execute(
+        CreateChangeCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+          item,
+          type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+          parentChangeId: command.parentChangeId,
+          changeId,
+        })
+      );
+    }
 
     if (command.feedId) {
       await this.updateChange.execute(
@@ -131,6 +143,29 @@ export class UpdateMessageTemplate {
       );
     }
 
+    if (command.layoutId) {
+      await this.updateChange.execute(
+        UpdateChangeCommand.create({
+          _entityId: command.layoutId,
+          type: ChangeEntityTypeEnum.LAYOUT,
+          parentChangeId: command.parentChangeId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+        })
+      );
+    }
+
     return item;
+  }
+
+  public static mapVariables(items: ITemplateVariable[]) {
+    return items.map((item) => {
+      if (item.defaultValue === '') {
+        item.defaultValue = undefined;
+      }
+
+      return item;
+    });
   }
 }

@@ -1,15 +1,18 @@
+import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Document, FilterQuery, QueryWithHelpers, Types } from 'mongoose';
-import { BaseRepository, Omit } from '../base-repository';
-import { NotificationEntity } from './notification.entity';
+import { subYears, subMonths, subWeeks } from 'date-fns';
+
+import { BaseRepository } from '../base-repository';
+import { NotificationEntity, NotificationDBModel } from './notification.entity';
 import { Notification } from './notification.schema';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { EnvironmentId } from '../environment';
 
-class PartialNotificationEntity extends Omit(NotificationEntity, ['_environmentId', '_organizationId']) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialNotificationEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class NotificationRepository extends BaseRepository<EnforceEnvironmentQuery, NotificationEntity> {
+export class NotificationRepository extends BaseRepository<
+  NotificationDBModel,
+  NotificationEntity,
+  EnforceEnvOrOrgIds
+> {
   constructor() {
     super(Notification, NotificationEntity);
   }
@@ -24,15 +27,15 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
   async getFeed(
     environmentId: string,
     query: {
-      channels?: ChannelTypeEnum[];
-      templates?: string[];
+      channels?: ChannelTypeEnum[] | null;
+      templates?: string[] | null;
       subscriberIds?: string[];
       transactionId?: string;
     } = {},
     skip = 0,
     limit = 10
   ) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: FilterQuery<NotificationDBModel> = {
       _environmentId: environmentId,
     };
 
@@ -46,7 +49,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
       };
     }
 
-    if (query.subscriberIds.length > 0) {
+    if (query.subscriberIds && query.subscriberIds.length > 0) {
       requestQuery._subscriberId = {
         $in: query.subscriberIds,
       };
@@ -58,9 +61,9 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
       };
     }
 
-    const totalCount = await Notification.countDocuments(requestQuery);
+    const totalCount = await this.MongooseModel.countDocuments(requestQuery);
 
-    const response = await this.populateFeed(Notification.find(requestQuery))
+    const response = await this.populateFeed(this.MongooseModel.find(requestQuery))
       .skip(skip)
       .limit(limit)
       .sort('-createdAt');
@@ -72,13 +75,13 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
   }
 
   public async getFeedItem(notificationId: string, _environmentId: string, _organizationId: string) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: FilterQuery<NotificationDBModel> = {
       _id: notificationId,
       _environmentId,
       _organizationId,
     };
 
-    return this.mapEntity(await this.populateFeed(Notification.findOne(requestQuery)));
+    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery)));
   }
 
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>) {
@@ -92,7 +95,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
             $nin: [StepTypeEnum.TRIGGER],
           },
         },
-        select: 'createdAt digest payload providerId step status type updatedAt',
+        select: 'createdAt digest payload overrides to providerId step status type updatedAt',
         populate: [
           {
             path: 'executionDetails',
@@ -114,6 +117,7 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
           _environmentId: new Types.ObjectId(environmentId),
         },
       },
+      { $unwind: '$channels' },
       {
         $group: {
           _id: {
@@ -122,9 +126,45 @@ export class NotificationRepository extends BaseRepository<EnforceEnvironmentQue
           count: {
             $sum: 1,
           },
+          templates: { $addToSet: '$_templateId' },
+          channels: { $addToSet: '$channels' },
         },
       },
       { $sort: { _id: -1 } },
     ]);
+  }
+
+  async getStats(environmentId: EnvironmentId): Promise<{ weekly: number; monthly: number; yearly: number }> {
+    const now: number = Date.now();
+    const yearBefore = subYears(now, 1);
+    const monthBefore = subMonths(now, 1);
+    const weekBefore = subWeeks(now, 1);
+
+    const result = await this.aggregate([
+      {
+        $match: {
+          _environmentId: this.convertStringToObjectId(environmentId),
+          createdAt: {
+            $gte: yearBefore,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          weekly: { $sum: { $cond: [{ $gte: ['$createdAt', weekBefore] }, 1, 0] } },
+          monthly: { $sum: { $cond: [{ $gte: ['$createdAt', monthBefore] }, 1, 0] } },
+          yearly: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const stats = result[0] || {};
+
+    return {
+      weekly: stats.weekly || 0,
+      monthly: stats.monthly || 0,
+      yearly: stats.yearly || 0,
+    };
   }
 }

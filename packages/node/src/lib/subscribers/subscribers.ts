@@ -1,4 +1,3 @@
-import { AxiosInstance } from 'axios';
 import { WithHttp } from '../novu.interface';
 import {
   IGetSubscriberNotificationFeedParams,
@@ -24,7 +23,6 @@ export class Subscribers extends WithHttp implements ISubscribers {
   async get(subscriberId: string) {
     return await this.http.get(`/subscribers/${subscriberId}`);
   }
-
   async identify(subscriberId: string, data: ISubscriberPayload) {
     return await this.http.post(`/subscribers`, {
       subscriberId,
@@ -65,6 +63,13 @@ export class Subscribers extends WithHttp implements ISubscribers {
       credentials: {
         ...credentials,
       },
+    });
+  }
+
+  async unsetCredentials(subscriberId: string, providerId: string) {
+    return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
+      providerId,
+      credentials: { webhookUrl: undefined },
     });
   }
 

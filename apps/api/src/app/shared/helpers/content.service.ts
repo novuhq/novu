@@ -4,6 +4,10 @@ import {
   getTemplateVariables,
   IMustacheVariable,
   TemplateSystemVariables,
+  TemplateVariableTypeEnum,
+  DelayTypeEnum,
+  IFieldFilterPart,
+  FilterPartTypeEnum,
 } from '@novu/shared';
 import Handlebars from 'handlebars';
 import { ApiException } from '../exceptions/api.exception';
@@ -41,6 +45,8 @@ export class ContentService {
       variables.push(...extractedVariables);
     }
 
+    variables.push(...this.extractStepVariables(messages));
+
     return [
       ...new Map(
         variables.filter((item) => !this.isSystemVariable(item.name)).map((item) => [item.name, item])
@@ -48,15 +54,47 @@ export class ContentService {
     ];
   }
 
-  extractSubscriberMessageVariables(messages: INotificationTemplateStep[]): string[] {
-    const variables = [];
+  extractStepVariables(messages: INotificationTemplateStep[]): IMustacheVariable[] {
+    const variables: IMustacheVariable[] = [];
 
-    const hasSmsMessage = !!messages.find((i) => i.template.type === StepTypeEnum.SMS);
+    for (const message of messages) {
+      if (message.filters) {
+        const filterVariables = message.filters.flatMap((filter) =>
+          filter.children
+            .filter((item) => item.on === FilterPartTypeEnum.PAYLOAD)
+            .map((item: IFieldFilterPart) => {
+              return {
+                name: item.field,
+                type: TemplateVariableTypeEnum.STRING,
+              };
+            })
+        );
+        variables.push(...filterVariables);
+      }
+
+      if (message.metadata?.type === DelayTypeEnum.SCHEDULED && message.metadata.delayPath) {
+        variables.push({ name: message.metadata.delayPath, type: TemplateVariableTypeEnum.STRING });
+      }
+
+      if (message.template?.type === StepTypeEnum.DIGEST) {
+        if (message.metadata?.digestKey) {
+          variables.push({ name: message.metadata.digestKey, type: TemplateVariableTypeEnum.STRING });
+        }
+      }
+    }
+
+    return variables;
+  }
+
+  extractSubscriberMessageVariables(messages: INotificationTemplateStep[]): string[] {
+    const variables: string[] = [];
+
+    const hasSmsMessage = !!messages.find((i) => i.template?.type === StepTypeEnum.SMS);
     if (hasSmsMessage) {
       variables.push('phone');
     }
 
-    const hasEmailMessage = !!messages.find((i) => i.template.type === StepTypeEnum.EMAIL);
+    const hasEmailMessage = !!messages.find((i) => i.template?.type === StepTypeEnum.EMAIL);
     if (hasEmailMessage) {
       variables.push('email');
     }
@@ -66,19 +104,24 @@ export class ContentService {
 
   private *messagesTextIterator(messages: INotificationTemplateStep[]): Generator<string> {
     for (const message of messages) {
-      if (message.template.type === StepTypeEnum.IN_APP) {
+      if (!message.template) continue;
+
+      if (message.template?.type === StepTypeEnum.IN_APP) {
         yield message.template.content as string;
 
         if (message?.template.cta?.data?.url) {
           yield message.template.cta.data.url;
         }
-      } else if (message.template.type === StepTypeEnum.SMS) {
+      } else if (message.template?.type === StepTypeEnum.SMS) {
         yield message.template.content as string;
-      } else if (Array.isArray(message.template.content)) {
-        yield message.template.subject;
+      } else if (message.template?.type === StepTypeEnum.PUSH) {
+        yield message.template.content as string;
+        yield message.template.title as string;
+      } else if (Array.isArray(message.template?.content)) {
+        yield message.template.subject || '';
 
         for (const block of message.template.content) {
-          yield block.url;
+          yield block.url || '';
           yield block.content;
         }
       } else if (typeof message.template.content === 'string') {

@@ -4,7 +4,7 @@ module.exports = {
     'airbnb-typescript',
     'plugin:import/typescript',
     'plugin:@typescript-eslint/recommended',
-    'prettier/@typescript-eslint',
+    'prettier',
     'plugin:prettier/recommended',
     'plugin:promise/recommended',
     'plugin:@cspell/recommended',
@@ -61,10 +61,18 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
     'max-len': ['warn', { code: 140 }],
     '@typescript-eslint/return-await': 'off',
+    '@typescript-eslint/no-base-to-string': 'error',
     'no-restricted-imports': [
       'error',
       {
-        patterns: ['@novu/shared/*', '@novu/dal/*', '!import2/good'],
+        patterns: [
+          '@novu/shared/*',
+          '@novu/dal/*',
+          '!import2/good',
+          '*../libs/dal/*',
+          '*../libs/shared/*',
+          '*../libs/stateless/*',
+        ],
       },
     ],
     'padding-line-between-statements': [

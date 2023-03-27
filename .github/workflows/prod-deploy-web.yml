@@ -5,22 +5,92 @@ name: Deploy PROD WEB
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
 on:
-  push:
-    tags:
-      - '**@novu/web**'
-      - '**@novu/shared**'
   workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
-    secrets:
-      cypress_key: ${{ secrets.CYPRESS_WEB_KEY }}
+    secrets: inherit
+
+  deploy_web_eu:
+    needs: test_web
+    environment: Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+
+      # Runs a single command using the runners shell
+      - name: Build
+        run: CI='' pnpm build:web
+
+      - name: Create env file
+        working-directory: apps/web
+        run: |
+          touch .env
+          echo REACT_APP_INTERCOM_APP_ID=${{ secrets.INTERCOM_APP_ID }} >> .env
+          echo REACT_APP_API_URL="https://eu.api.novu.co" >> .env
+          echo REACT_APP_WS_URL="https://eu.ws.novu.co" >> .env
+          echo REACT_APP_WEBHOOK_URL="https://eu.webhook.novu.co" >> .env
+          echo REACT_APP_WIDGET_EMBED_PATH="https://eu.embed.novu.co/embed.umd.min.js" >> .env
+          echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
+          echo REACT_APP_SENTRY_DSN="https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907" >> .env
+          echo REACT_APP_ENVIRONMENT=prod >> .env
+          echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
+          echo REACT_APP_LOGROCKET_ID=${{ secrets.LOGROCKET_ID }} >> .env
+          echo REACT_APP_MAIL_SERVER_DOMAIN="inbound-mail.novu.co" >> .env
+
+      - name: Envsetup
+        working-directory: apps/web
+        run: npm run envsetup
+
+      - name: Build
+        env:
+          REACT_APP_INTERCOM_APP_ID: ${{ secrets.INTERCOM_APP_ID }}
+          REACT_APP_SEGMENT_KEY: ${{ secrets.WEB_SEGMENT_KEY }}
+          REACT_APP_API_URL: https://eu.api.novu.co
+          REACT_APP_WS_URL: https://eu.ws.novu.co
+          REACT_APP_WEBHOOK_URL: https://eu.webhook.novu.co
+          REACT_APP_WIDGET_EMBED_PATH: https://eu.embed.novu.co/embed.umd.min.js
+          REACT_APP_NOVU_APP_ID: ${{ secrets.NOVU_APP_ID }}
+          REACT_APP_LOGROCKET_ID: ${{ secrets.LOGROCKET_ID }}
+          REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
+          REACT_APP_ENVIRONMENT: prod
+          REACT_APP_MAIL_SERVER_DOMAIN: inbound-mail.novu.co
+
+        working-directory: apps/web
+        run: npm run build
+
+      - name: Deploy WEB to PROD
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: apps/web/build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: Prod deployment
+          production-deploy: true
+          alias: prod
+          github-deployment-environment: Production
+          github-deployment-description: Web Deployment
+          netlify-config-path: apps/web/netlify.toml
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: d2e8b860-7016-4202-9256-ebca0f13259a
+        timeout-minutes: 1
 
   # This workflow contains a single job called "build"
-  deploy_web:
-    needs: test_web
+  deploy_web_us:
+    needs:
+      - test_web
+      - deploy_web_eu
     environment: Production
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # The type of runner that the job will run on
@@ -34,26 +104,8 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16.15.1'
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-
-
-      - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 7.5.0
-          run_install: true
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell
       - name: Build
@@ -66,10 +118,13 @@ jobs:
           echo REACT_APP_INTERCOM_APP_ID=${{ secrets.INTERCOM_APP_ID }} >> .env
           echo REACT_APP_API_URL="https://api.novu.co" >> .env
           echo REACT_APP_WS_URL="https://ws.novu.co" >> .env
+          echo REACT_APP_WEBHOOK_URL="https://webhook.novu.co" >> .env
           echo REACT_APP_WIDGET_EMBED_PATH="https://embed.novu.co/embed.umd.min.js" >> .env
           echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
           echo REACT_APP_SENTRY_DSN="https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907" >> .env
           echo REACT_APP_ENVIRONMENT=prod >> .env
+          echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
+          echo REACT_APP_LOGROCKET_ID=${{ secrets.LOGROCKET_ID }} >> .env
 
       - name: Envsetup
         working-directory: apps/web
@@ -78,10 +133,13 @@ jobs:
       - name: Build
         env:
           REACT_APP_INTERCOM_APP_ID: ${{ secrets.INTERCOM_APP_ID }}
+          REACT_APP_SEGMENT_KEY: ${{ secrets.WEB_SEGMENT_KEY }}
           REACT_APP_API_URL: https://api.novu.co
           REACT_APP_WS_URL: https://ws.novu.co
+          REACT_APP_WEBHOOK_URL: https://webhook.novu.co
           REACT_APP_WIDGET_EMBED_PATH: https://embed.novu.co/embed.umd.min.js
           REACT_APP_NOVU_APP_ID: ${{ secrets.NOVU_APP_ID }}
+          REACT_APP_LOGROCKET_ID: ${{ secrets.LOGROCKET_ID }}
           REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
           REACT_APP_ENVIRONMENT: prod
         working-directory: apps/web
@@ -103,10 +161,36 @@ jobs:
           NETLIFY_SITE_ID: 8639d8b9-81f9-44c3-b885-585a7fd2b5ff
         timeout-minutes: 1
 
+  deploy_docker:
+    needs:
+      - deploy_web_us
+      - deploy_web_eu
+    environment: Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+
       - name: Setup Depot
         uses: depot/setup-action@v1
         with:
           oidc: true
+
+      - name: Remove build outputs
+        working-directory: apps/web
+        run: rm -rf build
+
+      # Runs a single command using the runners shell
+      - name: Build
+        run: CI='' pnpm build:web
 
       - name: Build, tag, and push image to ghcr.io
         id: build-image
@@ -125,9 +209,3 @@ jobs:
             -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest \
             -f apps/web/Dockerfile .
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
-
-      - uses: actions/upload-artifact@v1
-        if: failure()
-        with:
-          name: cypress-screenshots
-          path: apps/web/cypress/screenshots

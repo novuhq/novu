@@ -27,7 +27,7 @@ export class CreateExecutionDetails {
     message: MessageEntity,
     webhookEvent: IWebhookResult,
     channel: ChannelTypeEnum
-  ): ExecutionDetailsEntity {
+  ): Omit<ExecutionDetailsEntity, '_id' | 'createdAt'> {
     const { environmentId: _environmentId, organizationId: _organizationId, providerId, type } = webhook;
     const { _jobId, _templateId, _notificationId, _subscriberId, transactionId, _id } = message;
     const { externalId, attempts, response, row, status } = webhookEvent.event;

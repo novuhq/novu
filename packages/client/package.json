@@ -1,6 +1,6 @@
 {
   "name": "@novu/client",
-  "version": "0.10.0",
+  "version": "0.13.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "API client to be used in end user environments",
   "main": "dist/cjs/index.js",
@@ -45,21 +45,20 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/shared": "^0.10.0",
-    "axios": "^0.26.1"
+    "@novu/shared": "^0.13.0"
   },
   "devDependencies": {
-    "@types/jest": "27.4.0",
+    "@types/jest": "27.5.2",
     "@types/node": "^14.6.0",
     "codecov": "^3.5.0",
     "jest": "^27.0.6",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.0.5",
-    "typedoc": "^0.19.0",
-    "typescript": "4.1.3"
+    "typedoc": "^0.23.0",
+    "typescript": "4.9.5"
   },
   "prettier": {
     "singleQuote": true
   },
-  "gitHead": "fbbb8b9ad119058862ea8fdc14809eaca5bb9c98"
+  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
 }

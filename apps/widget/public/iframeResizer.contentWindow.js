@@ -320,9 +320,9 @@
       },
     };
 
-    if (options.eventNames && Array.prototype.map) {
+    if (options.eventNames && Array.prototype.forEach) {
       options.eventName = options.eventNames[0];
-      options.eventNames.map(listener[options.method]);
+      options.eventNames.forEach(listener[options.method]);
     } else {
       listener[options.method](options.eventName);
     }

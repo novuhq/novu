@@ -1,4 +1,5 @@
 export { Activity } from './general/Activity';
+export { Brand } from './general/Brand';
 export { Team } from './general/Team';
 export { Settings } from './general/Settings';
 export { Bolt } from './general/Bolt';
@@ -34,6 +35,11 @@ export { Seen } from './general/Seen';
 export { Clicked } from './general/Clicked';
 export { Camera } from './general/Camera';
 export { Avatar } from './general/Avatar';
+export { DigestGradient } from './general/DigestGradient';
+export { Clock } from './general/Clock';
+export { LetterOpened } from './general/LetterOpened';
+export { BellWithNotification } from './general/BellWithNotification';
+export { CountdownTimer } from './general/CountdownTimer';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';
@@ -63,5 +69,6 @@ export { ConnectGradient } from './gradient/ConnectGradient';
 export { ChatGradient } from './gradient/ChatGradient';
 export { LevelsGradient } from './gradient/LevelsGradient';
 export { TimerGradient } from './gradient/TimerGradient';
+export { PageGradient } from './gradient/PageGradient';
 
 export { GitHub } from './social/GitHub';

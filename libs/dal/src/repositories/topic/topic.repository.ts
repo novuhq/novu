@@ -1,19 +1,12 @@
-import { AuthProviderEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 
-import { TopicEntity } from './topic.entity';
+import { TopicEntity, TopicDBModel } from './topic.entity';
 import { Topic } from './topic.schema';
-import { TopicSubscribers } from './topic-subscribers.schema';
 import { EnvironmentId, ExternalSubscriberId, OrganizationId, TopicId, TopicKey, TopicName } from './types';
-
-import { BaseRepository, Omit } from '../base-repository';
+import { BaseRepository } from '../base-repository';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 const TOPIC_SUBSCRIBERS_COLLECTION = 'topicsubscribers';
-
-class PartialIntegrationEntity extends Omit(TopicEntity, ['_environmentId', '_organizationId']) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity> &
-  ({ _environmentId: EnvironmentId } | { _organizationId: OrganizationId });
 
 const topicWithSubscribersProjection = {
   $project: {
@@ -35,7 +28,7 @@ const lookup = {
   },
 };
 
-export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, TopicEntity> {
+export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Topic, TopicEntity);
   }
@@ -52,22 +45,28 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
   }
 
   async filterTopics(
-    query: EnforceEnvironmentQuery,
+    query: FilterQuery<TopicDBModel>,
     pagination: { limit: number; skip: number }
   ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }[]> {
+    const parsedQuery = { ...query };
+    if (query._id) {
+      parsedQuery._id = this.convertStringToObjectId(query._id);
+    }
+
+    parsedQuery._environmentId = this.convertStringToObjectId(query._environmentId);
+    parsedQuery._organizationId = this.convertStringToObjectId(query._organizationId);
+
     const data = await this.aggregate([
       {
-        $match: {
-          ...query,
-        },
+        $match: parsedQuery,
       },
       lookup,
       topicWithSubscribersProjection,
       {
-        $limit: pagination.limit,
+        $skip: pagination.skip,
       },
       {
-        $skip: pagination.skip,
+        $limit: pagination.limit,
       },
     ]);
 
@@ -77,10 +76,10 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
   async findTopic(
     topicKey: TopicKey,
     environmentId: EnvironmentId
-  ): Promise<TopicEntity & { subscribers: ExternalSubscriberId[] }> {
+  ): Promise<(TopicEntity & { subscribers: ExternalSubscriberId[] }) | null> {
     const [result] = await this.aggregate([
       {
-        $match: { _environmentId: environmentId, key: topicKey },
+        $match: { _environmentId: this.convertStringToObjectId(environmentId), key: topicKey },
       },
       lookup,
       topicWithSubscribersProjection,
@@ -88,7 +87,7 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
     ]);
 
     if (!result) {
-      return undefined;
+      return null;
     }
 
     return result;
@@ -98,7 +97,7 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
     key: TopicKey,
     organizationId: OrganizationId,
     environmentId: EnvironmentId
-  ): Promise<TopicEntity> {
+  ): Promise<TopicEntity | null> {
     return await this.findOne({
       key,
       _organizationId: organizationId,
@@ -124,8 +123,8 @@ export class TopicRepository extends BaseRepository<EnforceEnvironmentQuery, Top
     const [updatedTopic] = await this.aggregate([
       {
         $match: {
-          _id,
-          _environmentId,
+          _id: this.convertStringToObjectId(_id),
+          _environmentId: this.convertStringToObjectId(_environmentId),
         },
       },
       lookup,

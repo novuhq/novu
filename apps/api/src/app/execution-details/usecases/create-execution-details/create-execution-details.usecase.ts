@@ -33,7 +33,9 @@ export class CreateExecutionDetails {
     };
   }
 
-  private cleanFromNulls(entity: ExecutionDetailsEntity): ExecutionDetailsEntity {
+  private cleanFromNulls(
+    entity: Omit<ExecutionDetailsEntity, 'createdAt' | '_id'>
+  ): Omit<ExecutionDetailsEntity, 'createdAt' | '_id'> {
     const cleanEntity = Object.assign({}, entity);
 
     if (cleanEntity.raw === null) {

@@ -1,12 +1,15 @@
 import { AuthProviderEnum } from '@novu/shared';
 import { Exclude } from 'class-transformer';
 
+import { UserId } from './types';
+
 export interface IUserToken {
   providerId: string;
   provider: AuthProviderEnum;
   accessToken: string;
   refreshToken: string;
   valid: boolean;
+  username?: string;
 }
 
 export interface IUserResetTokenCount {
@@ -15,7 +18,7 @@ export interface IUserResetTokenCount {
 }
 
 export class UserEntity {
-  _id: string;
+  _id: UserId;
 
   resetToken?: string;
 
@@ -23,13 +26,13 @@ export class UserEntity {
 
   resetTokenCount?: IUserResetTokenCount;
 
-  firstName: string;
+  firstName?: string | null;
 
-  lastName: string;
+  lastName?: string | null;
 
-  email: string;
+  email?: string | null;
 
-  profilePicture: string;
+  profilePicture?: string | null;
 
   @Exclude({ toPlainOnly: true })
   tokens: IUserToken[];
@@ -45,4 +48,8 @@ export class UserEntity {
     times: number;
     lastFailedAttempt: string;
   };
+
+  servicesHashes?: { intercom?: string };
 }
+
+export type UserDBModel = UserEntity;

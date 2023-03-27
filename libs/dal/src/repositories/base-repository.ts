@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { Document, Model, Types, ProjectionType } from 'mongoose';
+import { Model, Types, ProjectionType, FilterQuery, UpdateQuery } from 'mongoose';
 
-export class BaseRepository<T_Query, T_Response> {
-  public _model: Model<any & Document>;
+export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
+  public _model: Model<T_DBModel>;
 
-  constructor(protected MongooseModel: Model<any & Document>, protected entity: ClassConstructor<T_Response>) {
+  constructor(protected MongooseModel: Model<T_DBModel>, protected entity: ClassConstructor<T_MappedEntity>) {
     this._model = MongooseModel;
   }
 
@@ -13,50 +13,52 @@ export class BaseRepository<T_Query, T_Response> {
     return new Types.ObjectId().toString();
   }
 
-  public static convertObjectIdToString(value: Types.ObjectId): string {
+  protected convertObjectIdToString(value: Types.ObjectId): string {
     return value.toString();
   }
 
-  public static convertStringToObjectId(value: string): Types.ObjectId {
+  protected convertStringToObjectId(value: string): Types.ObjectId {
     return new Types.ObjectId(value);
   }
 
-  async count(query: T_Query): Promise<number> {
-    return await this.MongooseModel.countDocuments(query);
+  async count(query: FilterQuery<T_DBModel> & T_Enforcement, limit?: number): Promise<number> {
+    return this.MongooseModel.countDocuments(query, {
+      limit,
+    });
   }
 
   async aggregate(query: any[]): Promise<any> {
     return await this.MongooseModel.aggregate(query);
   }
 
-  async findById(id: string, select?: string): Promise<T_Response | null> {
+  async findById(id: string, select?: string): Promise<T_MappedEntity | null> {
     const data = await this.MongooseModel.findById(id, select);
     if (!data) return null;
 
     return this.mapEntity(data.toObject());
   }
 
-  async findOne(query: T_Query, select?: ProjectionType<T_Response>) {
+  async findOne(query: FilterQuery<T_DBModel> & T_Enforcement, select?: ProjectionType<T_MappedEntity>) {
     const data = await this.MongooseModel.findOne(query, select);
     if (!data) return null;
 
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: T_Query) {
+  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<void> {
     return await this.MongooseModel.remove(query);
   }
 
   async find(
-    query: T_Query,
-    select: ProjectionType<T_Response> = '',
+    query: FilterQuery<T_DBModel> & T_Enforcement,
+    select: ProjectionType<T_MappedEntity> = '',
     options: { limit?: number; sort?: any; skip?: number } = {}
-  ): Promise<T_Response[]> {
+  ): Promise<T_MappedEntity[]> {
     const data = await this.MongooseModel.find(query, select, {
       sort: options.sort || null,
     })
-      .skip(options.skip)
-      .limit(options.limit)
+      .skip(options.skip as number)
+      .limit(options.limit as number)
       .lean()
       .exec();
 
@@ -64,7 +66,7 @@ export class BaseRepository<T_Query, T_Response> {
   }
 
   async *findBatch(
-    query: T_Query,
+    query: FilterQuery<T_DBModel> & T_Enforcement,
     select = '',
     options: { limit?: number; sort?: any; skip?: number } = {},
     batchSize = 500
@@ -75,20 +77,34 @@ export class BaseRepository<T_Query, T_Response> {
       })
       .batchSize(batchSize)
       .cursor()) {
-      yield this.mapEntities(doc);
+      yield this.mapEntity(doc);
     }
   }
 
-  async create(data: T_Query): Promise<T_Response> {
+  async create(data: FilterQuery<T_DBModel> & T_Enforcement): Promise<T_MappedEntity> {
     const newEntity = new this.MongooseModel(data);
     const saved = await newEntity.save();
 
     return this.mapEntity(saved);
   }
 
+  async insertMany(
+    data: FilterQuery<T_DBModel> & T_Enforcement[]
+  ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: Types.ObjectId[] }> {
+    const result = await this.MongooseModel.insertMany(data, { ordered: false });
+
+    const insertedIds = result.map((inserted) => inserted._id);
+
+    return {
+      acknowledged: true,
+      insertedCount: result.length,
+      insertedIds,
+    };
+  }
+
   async update(
-    query: T_Query,
-    updateBody: any
+    query: FilterQuery<T_DBModel> & T_Enforcement,
+    updateBody: UpdateQuery<T_DBModel>
   ): Promise<{
     matched: number;
     modified: number;
@@ -103,7 +119,7 @@ export class BaseRepository<T_Query, T_Response> {
     };
   }
 
-  async upsertMany(data: T_Query[]) {
+  async upsertMany(data: (FilterQuery<T_DBModel> & T_Enforcement)[]) {
     const promises = data.map((entry) => this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true }));
 
     return await Promise.all(promises);
@@ -113,15 +129,11 @@ export class BaseRepository<T_Query, T_Response> {
     await this.MongooseModel.bulkWrite(bulkOperations);
   }
 
-  protected mapEntity(data: any): T_Response {
-    return plainToInstance<T_Response, T_Response>(this.entity, JSON.parse(JSON.stringify(data))) as any;
+  protected mapEntity<TData>(data: TData): TData extends null ? null : T_MappedEntity {
+    return plainToInstance(this.entity, JSON.parse(JSON.stringify(data))) as any;
   }
 
-  protected mapEntities(data: any): T_Response[] {
-    return plainToInstance<T_Response, T_Response[]>(this.entity, JSON.parse(JSON.stringify(data)));
+  protected mapEntities(data: any): T_MappedEntity[] {
+    return plainToInstance<T_MappedEntity, T_MappedEntity[]>(this.entity, JSON.parse(JSON.stringify(data)));
   }
 }
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const Omit = <T, K extends keyof T>(Class: new () => T, keys: K[]): new () => Omit<T, typeof keys[number]> =>
-  Class;

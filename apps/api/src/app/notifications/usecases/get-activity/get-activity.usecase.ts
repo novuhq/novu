@@ -1,9 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { NotificationRepository } from '@novu/dal';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityCommand } from './get-activity.command';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class GetActivity {

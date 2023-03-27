@@ -1,10 +1,11 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
+import { Schema } from 'mongoose';
 import * as mongooseDelete from 'mongoose-delete';
-import { schemaOptions } from '../schema-default.options';
-import { NotificationTemplateEntity } from './notification-template.entity';
 
-const notificationTemplateSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { NotificationTemplateDBModel } from './notification-template.entity';
+
+const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
   {
     name: Schema.Types.String,
     description: Schema.Types.String,
@@ -19,6 +20,13 @@ const notificationTemplateSchema = new Schema(
     critical: {
       type: Schema.Types.Boolean,
       default: false,
+    },
+    isBlueprint: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
+    blueprintId: {
+      type: Schema.Types.String,
     },
     _notificationGroupId: {
       type: Schema.Types.ObjectId,
@@ -52,10 +60,15 @@ const notificationTemplateSchema = new Schema(
           type: Schema.Types.Boolean,
           default: true,
         },
+        replyCallback: {
+          active: Schema.Types.Boolean,
+          url: Schema.Types.String,
+        },
         shouldStopOnFail: {
           type: Schema.Types.Boolean,
           default: false,
         },
+        uuid: Schema.Types.String,
         filters: [
           {
             isNegated: Schema.Types.Boolean,
@@ -66,9 +79,13 @@ const notificationTemplateSchema = new Schema(
             children: [
               {
                 field: Schema.Types.String,
-                value: Schema.Types.String,
+                value: Schema.Types.Mixed,
                 operator: Schema.Types.String,
                 on: Schema.Types.String,
+                webhookUrl: Schema.Types.String,
+                timeOperator: Schema.Types.String,
+                step: Schema.Types.String,
+                stepType: Schema.Types.String,
               },
             ],
           },
@@ -174,11 +191,7 @@ notificationTemplateSchema.index({
 
 notificationTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
-interface INotificationTemplateDocument extends NotificationTemplateEntity, Document {
-  _id: never;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const NotificationTemplate =
-  mongoose.models.NotificationTemplate ||
-  mongoose.model<INotificationTemplateDocument>('NotificationTemplate', notificationTemplateSchema);
+  (mongoose.models.NotificationTemplate as mongoose.Model<NotificationTemplateDBModel>) ||
+  mongoose.model<NotificationTemplateDBModel>('NotificationTemplate', notificationTemplateSchema);

@@ -19,8 +19,7 @@ on:
 jobs:
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
-    secrets:
-      cypress_key: ${{ secrets.CYPRESS_WIDGET_KEY }}
+    secrets: inherit
 
   # This workflow contains a single job called "build"
   deploy_widget:
@@ -33,26 +32,8 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16.15.1'
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-
-
-      - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 7.5.0
-          run_install: true
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell
       - name: Build
@@ -64,6 +45,7 @@ jobs:
           touch .env
           echo REACT_APP_API_URL="https://dev.api.novu.co" >> .env
           echo REACT_APP_WS_URL="https://dev.ws.novu.co" >> .env
+          echo REACT_APP_WEBHOOK_URL="https://dev.webhook.novu.co" >> .env
           echo REACT_APP_SENTRY_DSN="https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116" >> .env
           echo REACT_APP_ENVIRONMENT=dev >> .env
 
@@ -91,6 +73,10 @@ jobs:
           NETLIFY_SITE_ID: b9147448-b835-4eb1-a2f0-11102f611f5f
         timeout-minutes: 1
 
+      - name: Remove build outputs
+        working-directory: apps/widget
+        run: rm -rf build
+
       - name: Build, tag, and push image to ghcr.io
         id: build-image
         env:
@@ -107,12 +93,8 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: cypress-screenshots
           path: apps/widget/cypress/screenshots
-
-
-
-

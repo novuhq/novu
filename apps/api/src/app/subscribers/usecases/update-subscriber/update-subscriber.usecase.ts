@@ -1,20 +1,18 @@
 import { Injectable } from '@nestjs/common';
+import { isEqual } from 'lodash';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
-import { InvalidateCache } from '../../../shared/interceptors';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class UpdateSubscriber {
-  constructor(private subscriberRepository: SubscriberRepository) {}
+  constructor(private invalidateCache: InvalidateCacheService, private subscriberRepository: SubscriberRepository) {}
 
-  @InvalidateCache(CacheKeyPrefixEnum.SUBSCRIBER)
   async execute(command: UpdateSubscriberCommand) {
-    const foundSubscriber = await this.subscriberRepository.findBySubscriberId(
-      command.environmentId,
-      command.subscriberId
-    );
+    const foundSubscriber = command.subscriber
+      ? command.subscriber
+      : await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     if (!foundSubscriber) {
       throw new ApiException(`SubscriberId: ${command.subscriberId} not found`);
@@ -41,6 +39,25 @@ export class UpdateSubscriber {
       updatePayload.avatar = command.avatar;
     }
 
+    if (command.locale != null) {
+      updatePayload.locale = command.locale;
+    }
+
+    if (command.data != null) {
+      updatePayload.data = command.data;
+    }
+
+    if (!subscriberNeedUpdate(foundSubscriber, updatePayload)) {
+      return {
+        ...foundSubscriber,
+      };
+    }
+
+    await this.invalidateCache.clearCache({
+      storeKeyPrefix: CacheKeyPrefixEnum.SUBSCRIBER,
+      credentials: { _id: foundSubscriber._id, _environmentId: foundSubscriber._environmentId },
+    });
+
     await this.subscriberRepository.update(
       {
         _environmentId: command.environmentId,
@@ -54,4 +71,19 @@ export class UpdateSubscriber {
       ...updatePayload,
     };
   }
+}
+
+export function subscriberNeedUpdate(
+  subscriber: SubscriberEntity,
+  subscriberPayload: Partial<SubscriberEntity>
+): boolean {
+  return (
+    !!(subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email) ||
+    !!(subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
+    !!(subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
+    !!(subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
+    !!(subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar) ||
+    !!(subscriberPayload?.locale && subscriber?.locale !== subscriberPayload?.locale) ||
+    !!(subscriberPayload?.data && !isEqual(subscriber?.data, subscriberPayload?.data))
+  );
 }

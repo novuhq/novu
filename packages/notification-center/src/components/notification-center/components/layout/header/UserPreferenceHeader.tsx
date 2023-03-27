@@ -3,13 +3,11 @@ import { ActionIcon } from '@mantine/core';
 import { css, cx } from '@emotion/css';
 
 import { ArrowLeft } from '../../../../../shared/icons';
-import { useNovuTheme, useScreens, useTranslations } from '../../../../../hooks';
-import { ScreensEnum } from '../../../../../shared/enums/screens.enum';
+import { useNovuTheme, useTranslations } from '../../../../../hooks';
 import { useStyles } from '../../../../../store/styles';
 
-export function UserPreferenceHeader() {
+export function UserPreferenceHeader({ onBackClick }: { onBackClick: () => void }) {
   const { theme } = useNovuTheme();
-  const { setScreen } = useScreens();
   const { t } = useTranslations();
   const [headerStyles, headerTitleStyles, backButtonStyles] = useStyles([
     'header.root',
@@ -29,7 +27,7 @@ export function UserPreferenceHeader() {
         )}
         data-test-id="go-back-btn"
         variant="transparent"
-        onClick={() => setScreen(ScreensEnum.NOTIFICATIONS)}
+        onClick={onBackClick}
       >
         <ArrowLeft style={{ marginLeft: '15px' }} />
       </ActionIcon>

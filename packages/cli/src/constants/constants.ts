@@ -13,6 +13,8 @@ export const EMBED_PATH = process.env.NOVU_EMBED_PATH ?? 'https://embed.novu.co/
 const apiAddress = process.env.NOVU_API_ADDRESS ?? 'https://api.novu.co';
 
 export const API_OAUTH_URL = `${apiAddress}/v1/auth/github`;
+export const API_AUTH_SIGNUP = `${apiAddress}/v1/auth/register`;
+export const API_UPDATE_EMAIL = `${apiAddress}/v1/users/profile/email`;
 export const API_CREATE_ORGANIZATION_URL = `${apiAddress}/v1/organizations`;
 export const API_SWITCH_ORGANIZATION_FORMAT_URL = `${apiAddress}/v1/auth/organizations/{organizationId}/switch`;
 export const API_CREATE_ENVIRONMENT_URL = `${apiAddress}/v1/environments`;
@@ -31,7 +33,7 @@ export const GITHUB_DOCKER_URL = 'https://github.com/novuhq/novu/tree/main/docke
 
 // segment analytics
 export const ANALYTICS_ENABLED = process.env.ANALYTICS_ENABLED === 'false' ? false : true;
-export const SEGMENTS_WRITE_KEY = 'tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW';
+export const SEGMENTS_WRITE_KEY = process.env.CLI_SEGMENT_WRITE_KEY || 'tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW';
 
 let SERVER_PORT;
 

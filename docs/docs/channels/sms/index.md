@@ -8,3 +8,4 @@ To read a provider specific documentation:
 - [SMS77](/channels/sms/SMS77)
 - [TWILIO](/channels/sms/twilio)
 - [TELNYX](/channels/sms/telnyx)
+- [NEXMO](/channels/sms/nexmo)

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
 import { RemoveMessageCommand } from './remove-message.command';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class RemoveMessage {
@@ -15,6 +16,8 @@ export class RemoveMessage {
     if (!message) {
       throw new NotFoundException(`Message with id ${command.messageId} not found`);
     }
+
+    if (!message.subscriber) throw new ApiException(`A subscriber was not found for message ${command.messageId}`);
 
     this.invalidateCache.clearCache({
       storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],

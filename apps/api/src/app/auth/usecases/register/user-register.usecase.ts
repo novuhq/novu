@@ -1,15 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationEntity, UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
+import { SignUpOriginEnum } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
 import { AuthService } from '../../services/auth.service';
 import { UserRegisterCommand } from './user-register.command';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-// eslint-disable-next-line max-len
+import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()
 export class UserRegister {
@@ -31,9 +33,22 @@ export class UserRegister {
     const user = await this.userRepository.create({
       email,
       firstName: command.firstName.toLowerCase(),
-      lastName: command.lastName.toLowerCase(),
+      lastName: command.lastName?.toLowerCase(),
       password: passwordHash,
     });
+
+    if (process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY) {
+      const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
+      const userHashForIntercom = createHash(intercomSecretKey, user._id);
+      await this.userRepository.update(
+        { _id: user._id },
+        {
+          $set: {
+            'servicesHashes.intercom': userHashForIntercom,
+          },
+        }
+      );
+    }
 
     let organization: OrganizationEntity;
     if (command.organizationName) {
@@ -46,6 +61,11 @@ export class UserRegister {
     }
 
     this.analyticsService.upsertUser(user, user._id);
+
+    this.analyticsService.track('[Authentication] - Signup', user._id, {
+      loginType: 'email',
+      origin: command.origin || SignUpOriginEnum.WEB,
+    });
 
     return {
       user: await this.userRepository.findById(user._id),

@@ -11,20 +11,20 @@ export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   @IsEnum(ChannelTypeEnum, {
     each: true,
   })
-  channels?: ChannelTypeEnum[];
+  channels?: ChannelTypeEnum[] | null;
 
   @IsOptional()
   @IsArray()
   @IsMongoId({ each: true })
-  templates?: string[];
+  templates?: string[] | null;
 
   @IsOptional()
   @IsArray()
-  emails?: string[];
+  emails?: string[] | null;
 
   @IsOptional()
   @IsString()
-  search?: string;
+  search?: string | null;
 
   @IsOptional()
   @IsString()

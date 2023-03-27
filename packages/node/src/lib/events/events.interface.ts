@@ -1,8 +1,7 @@
-import { DigestUnitEnum } from '@novu/shared';
+import { DigestUnitEnum, ISubscribersDefine } from '@novu/shared';
 
 import { IAttachmentOptions } from '../novu.interface';
 import { ITopic } from '../topics/topic.interface';
-import { ISubscribersDefine } from '../subscribers/subscriber.interface';
 
 export type TriggerRecipientSubscriber = string | ISubscribersDefine;
 export type TriggerRecipientTopics = ITopic[];
@@ -24,6 +23,7 @@ export interface IBroadcastPayloadOptions {
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   to: TriggerRecipientsPayload;
   actor?: TriggerRecipientSubscriber;
+  transactionId?: string;
 }
 
 export interface ITriggerPayload {
@@ -39,21 +39,31 @@ export interface ITriggerPayload {
     | Record<string, unknown>;
 }
 
+export interface IEmailOverrides {
+  to?: string[];
+  from?: string;
+  text?: string;
+  replyTo?: string;
+  cc?: string[];
+  bcc?: string[];
+}
+
 export type ITriggerOverrides = {
   [key in
-    | 'emailjs'
     | 'mailgun'
     | 'nodemailer'
     | 'plivo'
     | 'postmark'
     | 'sendgrid'
-    | 'twilio']: object;
+    | 'twilio']?: object;
 } & {
-  [key in 'fcm']: ITriggerOverrideFCM;
+  [key in 'fcm']?: ITriggerOverrideFCM;
 } & {
-  [key in 'apns']: ITriggerOverrideAPNS;
+  [key in 'apns']?: ITriggerOverrideAPNS;
 } & {
-  [key in 'delay']: ITriggerOverrideDelayAction;
+  [key in 'delay']?: ITriggerOverrideDelayAction;
+} & {
+  [key in 'email']?: IEmailOverrides;
 };
 
 export type ITriggerOverrideDelayAction = {
@@ -62,6 +72,7 @@ export type ITriggerOverrideDelayAction = {
 };
 
 export type ITriggerOverrideFCM = {
+  type?: 'notification' | 'data';
   tag?: string;
   body?: string;
   icon?: string;
@@ -74,6 +85,7 @@ export type ITriggerOverrideFCM = {
   clickAction?: string;
   titleLocKey?: string;
   titleLocArgs?: string;
+  data?: Record<string, any>;
 };
 
 export type IAPNSAlert = {
@@ -116,3 +128,7 @@ export type ITriggerOverrideAPNS = {
   mdm?: string | Record<string, unknown>;
   urlArgs?: string[];
 };
+
+export interface IBulkEvents extends ITriggerPayloadOptions {
+  name: string;
+}

@@ -1,0 +1,74 @@
+name: Setup Novu Monorepo
+
+description: Sets up the whole monorepo and install dependencies
+
+inputs:
+  cypress_version:
+    description: 'The version of cypress to install'
+    required: false
+    default: ''
+outputs:
+  cypress_cache_hit:
+    description: 'Did cypress use binary cache'
+    value: ${{ inputs.cypress_version != '' && steps.cache-cypress-binary-version.outputs.cache-hit || steps.cache-cypress-binary.outputs.cache-hit}}
+
+runs:
+  using: composite
+  steps:
+    # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+    - name: ⚙️ Setup kernel for react native, increase watchers
+      shell: bash
+      run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+
+    - uses: actions/setup-node@v3
+      name: ⚙️ Setup Node Version
+      with:
+        node-version: '16.15.1'
+
+    - name: 💵 Start Redis
+      uses: supercharge/redis-github-action@1.5.0
+
+    - name: 📚 Start MongoDB
+      uses: supercharge/mongodb-github-action@v1.9.0
+      with:
+        mongodb-version: 4.2.8
+
+    - uses: pnpm/action-setup@v2
+      name: 🛟 Install pnpm
+      id: pnpm-install
+      with:
+        run_install: false
+
+    - name: ⛏️ Get pnpm store directory
+      id: pnpm-cache
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+    - uses: actions/cache@v3
+      name: 🏦 Setup pnpm cache
+      with:
+        path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Cache Cypress Binary For Version
+      id: cache-cypress-binary-version
+      if: ${{ inputs.cypress_version != '' }}
+      uses: actions/cache@v3
+      with:
+        path: /home/runner/.cache/Cypress/${{ inputs.cypress_version }}
+        key: cypress-binary-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ inputs.cypress_version }}
+
+    - name: Cache Cypress Binary
+      id: cache-cypress-binary
+      if: ${{ inputs.cypress_version == '' }}
+      uses: actions/cache@v3
+      with:
+        path: /home/runner/.cache/Cypress
+        key: cypress-binary-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+    - name: 🛟 Install dependencies
+      shell: bash
+      run: pnpm install

@@ -1,13 +1,9 @@
-import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
+import { IPartnerConfiguration, OrganizationEntity, OrganizationDBModel } from './organization.entity';
 import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
 import { MemberRepository } from '../member';
-import { Document, FilterQuery } from 'mongoose';
 
-export class OrganizationRepository extends BaseRepository<
-  FilterQuery<OrganizationEntity & Document>,
-  OrganizationEntity
-> {
+export class OrganizationRepository extends BaseRepository<OrganizationDBModel, OrganizationEntity> {
   private memberRepository = new MemberRepository();
 
   constructor() {
@@ -30,6 +26,19 @@ export class OrganizationRepository extends BaseRepository<
       {
         $set: {
           branding,
+        },
+      }
+    );
+  }
+
+  async renameOrganization(organizationId: string, payload: { name: string }) {
+    return this.update(
+      {
+        _id: organizationId,
+      },
+      {
+        $set: {
+          name: payload.name,
         },
       }
     );

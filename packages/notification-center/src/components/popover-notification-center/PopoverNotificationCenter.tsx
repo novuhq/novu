@@ -5,19 +5,19 @@ import { IMessage, IMessageAction, ButtonTypeEnum } from '@novu/shared';
 import { NotificationCenter } from '../notification-center';
 import { INotificationBellProps } from '../notification-bell';
 import { Popover } from './components/Popover';
-import { useUnseenCount } from '../../hooks';
+import { useNotifications } from '../../hooks';
 import { ColorScheme, INovuThemePopoverProvider } from '../../index';
 import { ITab, ListItem } from '../../shared/interfaces';
 import { getDefaultTheme } from '../../utils/defaultTheme';
 
 export interface IPopoverNotificationCenterProps {
   onUrlChange?: (url: string) => void;
-  onNotificationClick: (notification: IMessage) => void;
+  onNotificationClick?: (notification: IMessage) => void;
   onUnseenCountChanged?: (unseenCount: number) => void;
   children: (props: INotificationBellProps) => JSX.Element;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  emptyState?: () => JSX.Element;
+  emptyState?: JSX.Element;
   listItem?: ListItem;
   colorScheme: ColorScheme;
   theme?: INovuThemePopoverProvider;
@@ -25,6 +25,7 @@ export interface IPopoverNotificationCenterProps {
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
   showUserPreferences?: boolean;
+  allowedNotificationActions?: boolean;
   onTabClick?: (tab: ITab) => void;
   offset?: number;
   position?: PopoverProps['position'];
@@ -32,17 +33,7 @@ export interface IPopoverNotificationCenterProps {
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
   const { theme } = getDefaultTheme({ colorScheme: props.colorScheme, theme: props.theme });
-  const { setUnseenCount, unseenCount } = useUnseenCount();
-
-  function handlerOnUnseenCount(count: number) {
-    if (isNaN(count)) return;
-
-    setUnseenCount(count);
-
-    if (props.onUnseenCountChanged) {
-      props.onUnseenCountChanged(count);
-    }
-  }
+  const { unseenCount } = useNotifications();
 
   return (
     <Popover
@@ -53,7 +44,6 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
     >
       <NotificationCenter
         onNotificationClick={props.onNotificationClick}
-        onUnseenCountChanged={handlerOnUnseenCount}
         onUrlChange={props.onUrlChange}
         header={props.header}
         footer={props.footer}
@@ -65,7 +55,9 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
         listItem={props.listItem}
         tabs={props.tabs}
         showUserPreferences={props.showUserPreferences}
+        allowedNotificationActions={props.allowedNotificationActions}
         onTabClick={props.onTabClick}
+        onUnseenCountChanged={props.onUnseenCountChanged}
       />
     </Popover>
   );

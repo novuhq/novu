@@ -1,5 +1,6 @@
-import { IsDefined, IsOptional } from 'class-validator';
+import { IsDefined } from 'class-validator';
 import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
+
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class CreateIntegrationCommand extends EnvironmentCommand {
@@ -18,6 +19,6 @@ export class CreateIntegrationCommand extends EnvironmentCommand {
   @IsDefined()
   check: boolean;
 
-  @IsOptional()
-  userId?: string;
+  @IsDefined()
+  userId: string;
 }

@@ -1,15 +1,11 @@
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { BaseRepository, Omit } from '../base-repository';
-import { ChangeEntity } from './change.entity';
+
+import { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
+import { ChangeEntity, ChangeDBModel } from './change.entity';
 import { Change } from './change.schema';
-import { Document, FilterQuery } from 'mongoose';
 
-class PartialChangeEntity extends Omit(ChangeEntity, ['_environmentId', '_organizationId']) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialChangeEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, ChangeEntity> {
+export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Change, ChangeEntity);
   }
@@ -40,7 +36,7 @@ export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, Ch
       enabled: false,
     });
 
-    if (change) {
+    if (change?._id) {
       return change._id;
     }
 
@@ -55,7 +51,7 @@ export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, Ch
       _parentId: { $exists: false, $eq: null },
     });
 
-    const items = await Change.find({
+    const items = await this.MongooseModel.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
       enabled,
@@ -66,5 +62,27 @@ export class ChangeRepository extends BaseRepository<EnforceEnvironmentQuery, Ch
       .populate('user');
 
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
+  }
+
+  public async getParentId(
+    environmentId: string,
+    entityType: ChangeEntityTypeEnum,
+    entityId: string
+  ): Promise<string | null> {
+    const change = await this.findOne(
+      {
+        _environmentId: environmentId,
+        _entityId: entityId,
+        type: entityType,
+        enabled: false,
+        _parentId: { $exists: true },
+      },
+      '_parentId'
+    );
+    if (change?._parentId) {
+      return change._parentId;
+    }
+
+    return null;
   }
 }

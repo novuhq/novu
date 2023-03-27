@@ -1,8 +1,10 @@
+import { FilterQuery } from 'mongoose';
 import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
-import { MemberEntity } from './member.entity';
-import { BaseRepository, Omit } from '../base-repository';
+
+import { MemberEntity, MemberDBModel } from './member.entity';
+import { BaseRepository } from '../base-repository';
 import { Member } from './member.schema';
-import { Document, FilterQuery } from 'mongoose';
+import type { EnforceOrgId } from '../../types/enforce';
 
 export interface IAddMemberData {
   _userId?: string;
@@ -11,17 +13,15 @@ export interface IAddMemberData {
   memberStatus: MemberStatusEnum;
 }
 
-class PartialMemberEntity extends Omit(MemberEntity, ['_organizationId']) {}
+type MemberQuery = FilterQuery<MemberDBModel> & EnforceOrgId;
 
-type EnforceEnvironmentQuery = FilterQuery<PartialMemberEntity & Document> & { _organizationId: string };
-
-export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, MemberEntity> {
+export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity, EnforceOrgId> {
   constructor() {
     super(Member, MemberEntity);
   }
 
   async removeMemberById(organizationId: string, memberId: string) {
-    return Member.remove({
+    return this.MongooseModel.remove({
       _id: memberId,
       _organizationId: organizationId,
     });
@@ -40,11 +40,11 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
   }
 
   async getOrganizationMembers(organizationId: string) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: MemberQuery = {
       _organizationId: organizationId,
     };
 
-    const members = await Member.find(requestQuery).populate(
+    const members = await this.MongooseModel.find(requestQuery).populate(
       '_userId',
       'firstName lastName email _id profilePicture createdAt'
     );
@@ -64,23 +64,23 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
     ];
   }
 
-  async getOrganizationAdminAccount(organizationId: string): Promise<MemberEntity> {
-    const requestQuery: EnforceEnvironmentQuery = {
+  async getOrganizationAdminAccount(organizationId: string) {
+    const requestQuery: MemberQuery = {
       _organizationId: organizationId,
       roles: MemberRoleEnum.ADMIN,
     };
 
-    const member = await Member.findOne(requestQuery);
+    const member = await this.MongooseModel.findOne(requestQuery);
 
-    return member;
+    return this.mapEntity(member);
   }
 
   async getOrganizationAdmins(organizationId: string) {
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: MemberQuery = {
       _organizationId: organizationId,
     };
 
-    const members = await Member.find(requestQuery).populate('_userId', 'firstName lastName email _id');
+    const members = await this.MongooseModel.find(requestQuery).populate('_userId', 'firstName lastName email _id');
     if (!members) return [];
 
     const membersEntity = this.mapEntities(members);
@@ -104,7 +104,7 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
     const requestQuery = {
       _userId: userId,
       memberStatus: MemberStatusEnum.ACTIVE,
-    } as unknown as EnforceEnvironmentQuery;
+    } as unknown as MemberQuery;
 
     return await this.find(requestQuery);
   }
@@ -134,12 +134,12 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
   async findByInviteToken(token: string) {
     const requestQuery = {
       'invite.token': token,
-    } as unknown as EnforceEnvironmentQuery;
+    } as unknown as MemberQuery;
 
     return await this.findOne(requestQuery);
   }
 
-  async findInviteeByEmail(organizationId: string, email: string): Promise<MemberEntity> {
+  async findInviteeByEmail(organizationId: string, email: string): Promise<MemberEntity | null> {
     const foundMember = await this.findOne({
       _organizationId: organizationId,
       'invite.email': email,
@@ -161,16 +161,13 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
   }
 
   async isMemberOfOrganization(organizationId: string, userId: string): Promise<boolean> {
-    return !!(await this.findOne(
-      {
-        _organizationId: organizationId,
-        _userId: userId,
-      },
-      '_id'
-    ));
+    return !!(await this.count({
+      _organizationId: organizationId,
+      _userId: userId,
+    }));
   }
 
-  async findMemberByUserId(organizationId: string, userId: string): Promise<MemberEntity> {
+  async findMemberByUserId(organizationId: string, userId: string): Promise<MemberEntity | null> {
     const member = await this.findOne({
       _organizationId: organizationId,
       _userId: userId,
@@ -178,11 +175,10 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
 
     if (!member) return null;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return this.mapEntity(member) as any;
+    return this.mapEntity(member) as MemberEntity;
   }
 
-  async findMemberById(organizationId: string, memberId: string): Promise<MemberEntity> {
+  async findMemberById(organizationId: string, memberId: string): Promise<MemberEntity | null> {
     const member = await this.findOne({
       _organizationId: organizationId,
       _id: memberId,
@@ -190,7 +186,6 @@ export class MemberRepository extends BaseRepository<EnforceEnvironmentQuery, Me
 
     if (!member) return null;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return this.mapEntity(member) as any;
+    return this.mapEntity(member) as MemberEntity;
   }
 }

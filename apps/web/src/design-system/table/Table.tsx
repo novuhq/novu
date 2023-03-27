@@ -1,9 +1,23 @@
 import React, { useEffect } from 'react';
 import { TableProps, Table as MantineTable, LoadingOverlay, Pagination } from '@mantine/core';
-import { useTable, Column, ColumnWithStrictAccessor, usePagination } from 'react-table';
+import styled from '@emotion/styled';
+import {
+  useTable,
+  Column,
+  ColumnWithStrictAccessor,
+  usePagination,
+  TableInstance,
+  UsePaginationInstanceProps,
+  UsePaginationState,
+} from 'react-table';
 
 import useStyles from './Table.styles';
 import { colors } from '../config';
+
+const NoDataPlaceholder = styled.div`
+  padding: 0 30px;
+  flex: 1;
+`;
 
 export type Data = Record<string, any>;
 
@@ -13,7 +27,13 @@ export interface ITableProps {
   loading?: boolean;
   pagination?: any;
   onRowClick?: (row: Data) => void;
+  noDataPlaceholder?: React.ReactNode;
 }
+
+type UseTableProps = UsePaginationInstanceProps<Data> &
+  TableInstance<Data> & {
+    state: UsePaginationState<Data>;
+  };
 
 /**
  * Table component
@@ -25,6 +45,7 @@ export function Table({
   pagination = false,
   loading = false,
   onRowClick,
+  noDataPlaceholder,
   ...props
 }: ITableProps) {
   const { pageSize, total, onPageChange, current } = pagination;
@@ -61,12 +82,12 @@ export function Table({
     getTableProps,
     getTableBodyProps,
     headerGroups,
-    rows,
+    rows: allRows,
     prepareRow,
     page,
     gotoPage,
     state: { pageIndex },
-  }: any = useTable(
+  } = useTable(
     {
       columns,
       data,
@@ -79,7 +100,7 @@ export function Table({
         : {}),
     } as any,
     usePagination
-  );
+  ) as UseTableProps;
 
   useEffect(() => {
     if (onPageChange) {
@@ -96,11 +117,14 @@ export function Table({
 
   const { classes, theme } = useStyles();
   const defaultDesign = { verticalSpacing: 'sm', horizontalSpacing: 'sm', highlightOnHover: true } as TableProps;
+  const rows = pagination ? page : allRows;
+  const noData = rows.length === 0;
 
   return (
     <div style={{ position: 'relative', minHeight: 500, display: 'flex', flexDirection: 'column' }}>
       <LoadingOverlay
         visible={loading}
+        zIndex={1}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
         loaderProps={{
           color: colors.error,
@@ -110,58 +134,43 @@ export function Table({
       <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
         <thead>
           {headerGroups.map((headerGroup, i) => {
-            const { key: rowKey, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
-
             return (
-              <tr key={rowKey} {...restHeaderGroupProps}>
-                {headerGroup.headers.map((column) => {
-                  const { key: headerKey, ...restHeaderProps } = column.getHeaderProps();
-
-                  return (
-                    <th key={headerKey} {...restHeaderProps}>
-                      {column.render('Header')}
-                    </th>
-                  );
-                })}
+              <tr {...headerGroup.getHeaderGroupProps()}>
+                {headerGroup.headers.map((column) => (
+                  <th {...column.getHeaderProps()}>{column.render('Header')}</th>
+                ))}
               </tr>
             );
           })}
         </thead>
         <tbody {...getTableBodyProps()}>
-          {(pagination ? page : rows).map((row) => {
+          {rows.map((row) => {
             prepareRow(row);
-
-            const { key: rowKey, ...restRowProps } = row.getRowProps();
 
             return (
               <tr
-                key={rowKey}
                 onClick={() => (onRowClick ? onRowClick(row) : null)}
-                {...restRowProps}
+                {...row.getRowProps()}
                 className={classes.tableRow}
               >
-                {row.cells.map((cell, i) => {
-                  const { key: cellKey } = cell.getCellProps();
-
-                  return (
-                    <td
-                      key={cellKey}
-                      {...cell.getCellProps({
-                        style: {
-                          maxWidth: cell.column.maxWidth,
-                          width: cell.column.width,
-                        },
-                      })}
-                    >
-                      {cell.render('Cell')}
-                    </td>
-                  );
-                })}
+                {row.cells.map((cell, i) => (
+                  <td
+                    {...cell.getCellProps({
+                      style: {
+                        maxWidth: cell.column.maxWidth,
+                        width: cell.column.width,
+                      },
+                    })}
+                  >
+                    {cell.render('Cell')}
+                  </td>
+                ))}
               </tr>
             );
           })}
         </tbody>
       </MantineTable>
+      {!loading && noData && noDataPlaceholder && <NoDataPlaceholder>{noDataPlaceholder}</NoDataPlaceholder>}
       {pagination && total > 0 && pageSize > 1 && getPageCount() > 1 && (
         <div style={{ marginTop: 'auto' }}>
           <Pagination

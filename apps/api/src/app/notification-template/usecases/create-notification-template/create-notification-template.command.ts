@@ -9,14 +9,15 @@ import {
   ValidateNested,
 } from 'class-validator';
 import {
-  BuilderFieldOperator,
   BuilderFieldType,
   BuilderGroupValues,
   ChannelCTATypeEnum,
   IMessageAction,
   DigestUnitEnum,
   IPreferenceChannels,
+  FilterParts,
 } from '@novu/shared';
+
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { MessageTemplate } from '../../../shared/dtos/message-template';
 
@@ -53,6 +54,9 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
 
   @IsOptional()
   preferenceSettings?: IPreferenceChannels;
+
+  @IsOptional()
+  blueprintId?: string;
 }
 
 export class ChannelCTACommand {
@@ -76,6 +80,9 @@ class NotificationStepCommand {
   template?: MessageTemplate;
 
   @IsOptional()
+  uuid?: string;
+
+  @IsOptional()
   name?: string;
 
   @IsBoolean()
@@ -83,6 +90,13 @@ class NotificationStepCommand {
 
   @IsBoolean()
   shouldStopOnFail?: boolean;
+
+  @ValidateNested()
+  @IsOptional()
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
 
   @IsOptional()
   @IsArray()
@@ -112,9 +126,5 @@ export class MessageFilter {
   value: BuilderGroupValues;
 
   @IsArray()
-  children: {
-    field: string;
-    value: string;
-    operator: BuilderFieldOperator;
-  }[];
+  children: FilterParts[];
 }

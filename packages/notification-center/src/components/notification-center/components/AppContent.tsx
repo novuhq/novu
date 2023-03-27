@@ -1,25 +1,14 @@
 import React from 'react';
-import { useQuery } from 'react-query';
 import { MantineProvider, MantineThemeOverride } from '@mantine/core';
 import { css } from '@emotion/css';
-import { IOrganizationEntity } from '@novu/shared';
 
 import { Layout } from './layout/Layout';
-import { Main } from './Main';
-import { useAuth, useApi, useNovuTheme } from '../../../hooks';
-import { ScreenProvider } from '../../../store/screens-provider.context';
+import { useNovuTheme } from '../../../hooks';
+import { useFetchOrganization } from '../../../hooks';
 
 export function AppContent() {
-  const { api } = useApi();
-  const { isLoggedIn } = useAuth();
   const { theme, common } = useNovuTheme();
-  const { data: organization } = useQuery<Pick<IOrganizationEntity, '_id' | 'name' | 'branding'>>(
-    'organization',
-    () => api.getOrganization(),
-    {
-      enabled: isLoggedIn && api.isAuthenticated,
-    }
-  );
+  const { data: organization } = useFetchOrganization();
 
   const primaryColor = organization?.branding?.color ?? theme.loaderColor;
   const fontFamily = common.fontFamily || organization?.branding?.fontFamily;
@@ -30,21 +19,17 @@ export function AppContent() {
   };
 
   return (
-    <MantineProvider withNormalizeCSS theme={themeConfig}>
-      <ScreenProvider>
-        <div className={wrapperClassName(primaryColor, fontFamily, dir)}>
-          <Layout>
-            <Main />
-          </Layout>
-        </div>
-      </ScreenProvider>
+    <MantineProvider theme={themeConfig}>
+      <div className={wrapperClassName(primaryColor, fontFamily, dir)}>
+        <Layout />
+      </div>
     </MantineProvider>
   );
 }
 
 const wrapperClassName = (primaryColor: string, fontFamily: string, dir: string) => css`
   margin: 0;
-  font-family: ${fontFamily}, Helvetica, sans-serif;
+  font-family: ${fontFamily === 'inherit' ? fontFamily : `${fontFamily}, Helvetica, sans-serif`};
   color: #333737;
   direction: ${dir};
   width: 420px;

@@ -1,10 +1,11 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
+import { Schema } from 'mongoose';
 import { ActorTypeEnum } from '@novu/shared';
-import { schemaOptions } from '../schema-default.options';
-import { MessageTemplateEntity } from './message-template.entity';
 
-const messageTemplateSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { MessageTemplateDBModel } from './message-template.entity';
+
+const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
   {
     type: {
       type: Schema.Types.String,
@@ -39,6 +40,7 @@ const messageTemplateSchema = new Schema(
       action: Schema.Types.Mixed,
     },
     preheader: Schema.Types.String,
+    senderName: Schema.Types.String,
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
@@ -59,6 +61,15 @@ const messageTemplateSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
     },
+    _layoutId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Layout',
+      /*
+       * This will make it retro-compatible and will allow
+       * that if no layout assigned to not break.
+       */
+      default: null,
+    },
     actor: {
       type: {
         type: Schema.Types.String,
@@ -75,10 +86,7 @@ messageTemplateSchema.index({
   'triggers.identifier': 1,
 });
 
-interface IMessageTemplateDocument extends MessageTemplateEntity, Document {
-  _id: never;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const MessageTemplate =
-  mongoose.models.MessageTemplate || mongoose.model<IMessageTemplateDocument>('MessageTemplate', messageTemplateSchema);
+  (mongoose.models.MessageTemplate as mongoose.Model<MessageTemplateDBModel>) ||
+  mongoose.model<MessageTemplateDBModel>('MessageTemplate', messageTemplateSchema);

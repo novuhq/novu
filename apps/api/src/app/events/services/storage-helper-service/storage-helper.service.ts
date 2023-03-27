@@ -12,7 +12,7 @@ export class StorageHelperService {
   }
 
   async uploadAttachments(attachments?: IAttachmentOptionsExtended[]) {
-    if (this.areAttachmentsMissing(attachments)) {
+    if (!attachments || this.areAttachmentsMissing(attachments)) {
       return;
     }
 
@@ -25,7 +25,7 @@ export class StorageHelperService {
   }
 
   async getAttachments(attachments?: IAttachmentOptionsExtended[]) {
-    if (this.areAttachmentsMissing(attachments)) {
+    if (!attachments || this.areAttachmentsMissing(attachments)) {
       return;
     }
 
@@ -43,7 +43,7 @@ export class StorageHelperService {
   }
 
   async deleteAttachments(attachments?: IAttachmentOptionsExtended[]) {
-    if (this.areAttachmentsMissing(attachments)) {
+    if (!attachments || this.areAttachmentsMissing(attachments)) {
       return;
     }
 

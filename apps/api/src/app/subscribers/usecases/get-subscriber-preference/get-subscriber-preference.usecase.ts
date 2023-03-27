@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   MessageTemplateRepository,
   NotificationTemplateRepository,
@@ -6,14 +6,15 @@ import {
   NotificationTemplateEntity,
   MemberRepository,
 } from '@novu/dal';
-import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import { IPreferenceChannels } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
+
+import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../get-subscriber-template-preference';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '../../../shared/services/analytics/analytics.service';
 
 @Injectable()
 export class GetSubscriberPreference {
@@ -28,16 +29,19 @@ export class GetSubscriberPreference {
 
   async execute(command: GetSubscriberPreferenceCommand): Promise<ISubscriberPreferenceResponse[]> {
     const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
+
     const templateList = await this.notificationTemplateRepository.getActiveList(
       command.organizationId,
       command.environmentId,
       true
     );
 
-    this.analyticsService.track('Fetch User Preferences - [Notification Center]', admin?._userId, {
-      _organization: command.organizationId,
-      templatesSize: templateList.length,
-    });
+    if (admin) {
+      this.analyticsService.track('Fetch User Preferences - [Notification Center]', admin._userId, {
+        _organization: command.organizationId,
+        templatesSize: templateList.length,
+      });
+    }
 
     return await Promise.all(templateList.map(async (template) => this.getTemplatePreference(template, command)));
   }

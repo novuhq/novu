@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Navbar,
@@ -12,12 +12,16 @@ import {
 import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
-import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined } from '../../../design-system/icons';
-import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
-import { useEnvController } from '../../../store/use-env-controller';
-import { AuthContext } from '../../../store/authContext';
+import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
+import { ChangesCountBadge } from './ChangesCountBadge';
+import { useEnvController } from '../../../hooks';
+import { useAuthContext } from '../../providers/AuthProvider';
 import OrganizationSelect from './OrganizationSelect';
-import { SpotlightContext } from '../../../store/spotlightContext';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
+import { HEADER_HEIGHT } from '../constants';
+import { LimitBar } from '../../../pages/integrations/components/LimitBar';
+import { ROUTES } from '../../../constants/routes.enum';
+import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -41,18 +45,18 @@ type Props = {};
 export function SideNav({}: Props) {
   const navigate = useNavigate();
   const { setEnvironment, isLoading, environment, readonly } = useEnvController();
-  const { currentUser } = useContext(AuthContext);
+  const { currentUser } = useAuthContext();
   const location = useLocation();
   const [opened, setOpened] = useState(readonly);
   const { colorScheme } = useMantineColorScheme();
   const dark = colorScheme === 'dark';
-  const { addItem } = useContext(SpotlightContext);
+  const { addItem } = useSpotlightContext();
   const { classes } = usePopoverStyles();
 
   useEffect(() => {
     setOpened(readonly);
-    if (readonly && location.pathname === '/changes') {
-      navigate('/');
+    if (readonly && location.pathname === ROUTES.CHANGES) {
+      navigate(ROUTES.HOME);
     }
   }, [readonly]);
 
@@ -68,33 +72,42 @@ export function SideNav({}: Props) {
     ]);
   }, [environment]);
 
+  const lastStep = currentOnboardingStep().get();
+  const getStartedRoute = lastStep === ROUTES.GET_STARTED_PREVIEW ? ROUTES.GET_STARTED : lastStep;
+
   const menuItems = [
     {
-      condition: !readonly && currentUser?.showOnBoarding,
+      condition: !readonly,
       icon: <CheckCircleOutlined />,
-      link: '/quickstart',
-      label: 'Getting Started',
+      link: getStartedRoute ?? ROUTES.GET_STARTED,
+      label: 'Get Started',
       testId: 'side-nav-quickstart-link',
     },
-    { icon: <Bolt />, link: '/templates', label: 'Notifications', testId: 'side-nav-templates-link' },
+    { icon: <Bolt />, link: ROUTES.TEMPLATES, label: 'Notifications', testId: 'side-nav-templates-link' },
     {
       icon: <Team />,
-      link: '/subscribers',
+      link: ROUTES.SUBSCRIBERS,
       label: 'Subscribers',
       testId: 'side-nav-subscribers-link',
     },
-    { icon: <Activity />, link: '/activities', label: 'Activity Feed', testId: 'side-nav-activities-link' },
-    { icon: <Box />, link: '/integrations', label: 'Integrations Store', testId: 'side-nav-integrations-link' },
-    { icon: <Settings />, link: '/settings', label: 'Settings', testId: 'side-nav-settings-link' },
+    {
+      icon: <Brand />,
+      link: '/brand',
+      label: 'Brand',
+      testId: 'side-nav-brand-link',
+    },
+    { icon: <Activity />, link: ROUTES.ACTIVITIES, label: 'Activity Feed', testId: 'side-nav-activities-link' },
+    { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
+    { icon: <Settings />, link: ROUTES.SETTINGS, label: 'Settings', testId: 'side-nav-settings-link' },
     {
       icon: <Team />,
-      link: '/team',
+      link: ROUTES.TEAM,
       label: 'Team Members',
       testId: 'side-nav-settings-organization',
     },
     {
       icon: <Repeat />,
-      link: '/changes',
+      link: ROUTES.CHANGES,
       label: 'Changes',
       testId: 'side-nav-changes-link',
       rightSide: <ChangesCountBadge />,
@@ -106,24 +119,27 @@ export function SideNav({}: Props) {
     e.preventDefault();
 
     await setEnvironment('Development');
-    navigate('/changes');
+    navigate(ROUTES.CHANGES);
   }
 
   return (
     <Navbar
       p={30}
       sx={{
-        position: 'static',
+        position: 'sticky',
+        top: HEADER_HEIGHT,
+        zIndex: 'auto',
         backgroundColor: 'transparent',
         borderRight: 'none',
         paddingRight: 0,
         width: '300px',
+        height: 'max-content',
         '@media (max-width: 768px)': {
           width: '100%',
         },
       }}
     >
-      <Navbar.Section grow>
+      <Navbar.Section>
         <Popover
           classNames={classes}
           withArrow
@@ -160,30 +176,46 @@ export function SideNav({}: Props) {
         <NavMenu menuItems={menuItems} />
       </Navbar.Section>
       <Navbar.Section mt={15}>
+        <LimitBar withLink={true} label="Novu email credits used" />
+      </Navbar.Section>
+      <Navbar.Section mt={15}>
         <Navbar.Section>
           <OrganizationSelect />
         </Navbar.Section>
-        <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://discord.novu.co"
-            data-test-id="side-nav-bottom-link-support"
-          >
-            Support
-          </a>
-          <p>
-            <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
-          </p>
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href="https://docs.novu.co"
-            data-test-id="side-nav-bottom-link-documentation"
-          >
-            Documentation
-          </a>
-        </BottomNav>
+        <Navbar.Section>
+          <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://discord.novu.co"
+              data-test-id="side-nav-bottom-link-support"
+            >
+              Support
+            </a>
+            <p>
+              <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+            </p>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://docs.novu.co"
+              data-test-id="side-nav-bottom-link-documentation"
+            >
+              Docs
+            </a>
+            <p>
+              <b>&nbsp;&nbsp;&nbsp;•&nbsp;&nbsp;&nbsp;</b>
+            </p>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href="https://github.com/novuhq/novu/issues/new/choose"
+              data-test-id="side-nav-bottom-link-share-feedback"
+            >
+              Share Feedback
+            </a>
+          </BottomNav>
+        </Navbar.Section>
       </Navbar.Section>
     </Navbar>
   );
@@ -203,11 +235,6 @@ const StyledLink = styled.a`
   &:hover {
     cursor: pointer;
   }
-`;
-
-const BottomNavWrapper = styled.div`
-  margin-top: auto;
-  padding-top: 30px;
 `;
 
 const BottomNav = styled.div<{ dark: boolean }>`

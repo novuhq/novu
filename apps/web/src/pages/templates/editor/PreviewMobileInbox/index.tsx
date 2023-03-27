@@ -1,6 +1,7 @@
 import { createStyles, Group } from '@mantine/core';
 import { format } from 'date-fns';
 import { colors } from '../../../../design-system';
+import { EmailIntegrationInfo } from '../EmailIntegrationInfo';
 import { Mobile } from '../Mobile';
 import { DateArrow } from './DateArrow';
 import { ItemSkeleton } from './InboxItem';
@@ -59,7 +60,9 @@ export const PreviewMobileInbox = ({
         <div className={classes.content}>
           <div className={classes.InboxItem}>
             <Group position="apart">
-              <div>{integration?.credentials?.senderName || 'No active email integration'}</div>
+              <div>
+                <EmailIntegrationInfo integration={integration} field={'senderName'} />
+              </div>
               <div>
                 <span className={classes.date}>{format(new Date(), 'MMM dd')}</span>
                 <DateArrow />

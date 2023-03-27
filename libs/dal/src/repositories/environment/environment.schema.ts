@@ -1,9 +1,10 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
-import { schemaOptions } from '../schema-default.options';
-import { EnvironmentEntity } from './environment.entity';
+import { Schema } from 'mongoose';
 
-const environmentSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { EnvironmentDBModel } from './environment.entity';
+
+const environmentSchema = new Schema<EnvironmentDBModel>(
   {
     name: Schema.Types.String,
     identifier: {
@@ -33,7 +34,14 @@ const environmentSchema = new Schema(
         default: false,
       },
     },
-
+    dns: {
+      mxRecordConfigured: {
+        type: Schema.Types.Boolean,
+      },
+      inboundParseDomain: {
+        type: Schema.Types.String,
+      },
+    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
@@ -42,11 +50,7 @@ const environmentSchema = new Schema(
   schemaOptions
 );
 
-interface IEnvironmentDocument extends EnvironmentEntity, Document {
-  // eslint-disable-next-line
-  _id: any;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Environment =
-  mongoose.models.Environment || mongoose.model<IEnvironmentDocument>('Environment', environmentSchema);
+  (mongoose.models.Environment as mongoose.Model<EnvironmentDBModel>) ||
+  mongoose.model<EnvironmentDBModel>('Environment', environmentSchema);

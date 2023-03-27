@@ -3,7 +3,7 @@ import { EnvironmentId, ExternalSubscriberId, OrganizationId, TopicId, TopicKey,
 
 export class TopicDto {
   @ApiPropertyOptional()
-  _id?: TopicId;
+  _id: TopicId;
 
   @ApiProperty()
   _organizationId: OrganizationId;

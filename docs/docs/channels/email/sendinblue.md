@@ -1,3 +1,7 @@
+---
+sidebar_position: 3
+---
+
 # Sendinblue
 
 You can use the [Sendinblue](https://www.sendinblue.com/) provider to send transactional emails to your customers using the Novu Platform with a single API.
@@ -25,5 +29,6 @@ Sendinblue allows you to authenticate your sender identity using one of the foll
 - Locate Sendinblue and click on the **Connect** button.
 - Enter your Sendinblue API key.
 - Fill the `From email address` field using the authenticated email from the previous step.
-- Click on the **Save** button.
+- Click on the `Disabled` button and mark as `Active`.
+- Click on the **Connect** button.
 - You should now be able to send notifications using Sendinblue in Novu.

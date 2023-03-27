@@ -10,6 +10,7 @@ import { UpdatePreference } from './update-preference/update-preference.usecase'
 import { UpdateSubscriber } from './update-subscriber';
 import { UpdateSubscriberChannel } from './update-subscriber-channel';
 import { UpdateSubscriberPreference } from './update-subscriber-preference';
+import { UpdateSubscriberOnlineFlag } from './update-subscriber-online-flag';
 
 export {
   SearchByExternalSubscriberIds,
@@ -29,4 +30,5 @@ export const USE_CASES = [
   UpdateSubscriber,
   UpdateSubscriberChannel,
   UpdateSubscriberPreference,
+  UpdateSubscriberOnlineFlag,
 ];

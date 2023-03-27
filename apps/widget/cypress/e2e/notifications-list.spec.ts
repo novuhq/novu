@@ -15,7 +15,9 @@ describe('Notifications List', function () {
   });
 
   it('should show list of current notifications', function () {
-    cy.getByTestId('notification-list-item').should('have.length', 5);
+    cy.getByTestId('notification-list-item', {
+      timeout: 10000,
+    }).should('have.length', 5);
     cy.getByTestId('notification-list-item')
       .first()
       .getByTestId('notification-content')
@@ -35,6 +37,7 @@ describe('Notifications List', function () {
       count: 3,
     });
 
+    cy.wait(1000);
     cy.wait('@getNotifications');
     cy.getByTestId('unseen-count-label').contains('8');
 

@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
   UseGuards,
@@ -33,6 +34,8 @@ import { IGetOrganizationsDto } from './dtos/get-organizations.dto';
 import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
 import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-organization.command';
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
+import { RenameOrganizationCommand } from './usecases/rename-organization/rename-organization-command';
+import { RenameOrganization } from './usecases/rename-organization/rename-organization.usecase';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -47,7 +50,8 @@ export class OrganizationController {
     private changeMemberRoleUsecase: ChangeMemberRole,
     private updateBrandingDetailsUsecase: UpdateBrandingDetails,
     private getOrganizationsUsecase: GetOrganizations,
-    private getMyOrganizationUsecase: GetMyOrganization
+    private getMyOrganizationUsecase: GetMyOrganization,
+    private renameOrganizationUsecase: RenameOrganization
   ) {}
 
   @Post('/')
@@ -60,9 +64,8 @@ export class OrganizationController {
       logo: body.logo,
       name: body.name,
     });
-    const organization = await this.createOrganizationUsecase.execute(command);
 
-    return organization;
+    return await this.createOrganizationUsecase.execute(command);
   }
 
   @Get('/')
@@ -70,9 +73,8 @@ export class OrganizationController {
     const command = GetOrganizationsCommand.create({
       userId: user._id,
     });
-    const organizations = await this.getOrganizationsUsecase.execute(command);
 
-    return organizations;
+    return await this.getOrganizationsUsecase.execute(command);
   }
 
   @Get('/me')
@@ -151,6 +153,18 @@ export class OrganizationController {
         fontColor: body.fontColor,
         fontFamily: body.fontFamily,
         contentBackground: body.contentBackground,
+      })
+    );
+  }
+
+  @Patch('/')
+  @Roles(MemberRoleEnum.ADMIN)
+  async renameOrganization(@UserSession() user: IJwtPayload, @Body() body: { name: string }) {
+    return await this.renameOrganizationUsecase.execute(
+      RenameOrganizationCommand.create({
+        name: body.name,
+        userId: user._id,
+        id: user.organizationId,
       })
     );
   }

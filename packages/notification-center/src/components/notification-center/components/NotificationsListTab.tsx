@@ -1,37 +1,15 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
-import { useNotifications, useApi, useNotificationCenter, useUnseenCount } from '../../../hooks';
+
+import { useNotifications, useNotificationCenter, useNovuContext } from '../../../hooks';
 import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
-import { ITab } from '../../../shared/interfaces';
+import { Loader } from './Loader';
 
-export function NotificationsListTab({ tab }: { tab?: ITab }) {
-  const { api } = useApi();
+export function NotificationsListTab() {
+  const { apiService } = useNovuContext();
   const { onNotificationClick, onUrlChange, emptyState } = useNotificationCenter();
-
-  const storeId = tab?.storeId || 'default_store';
-  const {
-    markAsRead: markNotificationAsRead,
-    fetchNextPage,
-    refetch,
-    notifications: data,
-    fetching: isLoading,
-    hasNextPage,
-  } = useNotifications({ storeId: storeId });
-
-  const { unseenCount } = useUnseenCount();
-
-  useEffect(() => {
-    if (!isNaN(unseenCount)) {
-      refetch();
-    }
-  }, [unseenCount]);
-
-  useEffect(() => {
-    if (!data) {
-      refetch();
-    }
-  }, []);
+  const { notifications, isLoading, hasNextPage, markNotificationAsRead, fetchNextPage } = useNotifications();
 
   async function fetchNext() {
     await fetchNextPage();
@@ -45,7 +23,7 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
     }
     const hasCta = notification.cta?.type === ChannelCTATypeEnum.REDIRECT && notification.cta?.data?.url;
 
-    api.postUsageLog('Notification Click', {
+    apiService.postUsageLog('Notification Click', {
       notificationId: notification._id,
       hasCta,
     });
@@ -55,9 +33,11 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
     }
   }
 
-  return (
+  return isLoading ? (
+    <Loader />
+  ) : (
     <>
-      {!isLoading && data?.length === 0 ? (
+      {!isLoading && notifications?.length === 0 ? (
         <>
           {emptyState ? (
             emptyState
@@ -78,7 +58,7 @@ export function NotificationsListTab({ tab }: { tab?: ITab }) {
       ) : (
         <NotificationsList
           onNotificationClicked={onNotificationClicked}
-          notifications={data || []}
+          notifications={notifications || []}
           onFetch={fetchNext}
           hasNextPage={hasNextPage}
         />

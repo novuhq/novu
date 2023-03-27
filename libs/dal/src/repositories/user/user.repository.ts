@@ -1,15 +1,15 @@
 import { AuthProviderEnum } from '@novu/shared';
-import { BaseRepository } from '../base-repository';
-import { IUserResetTokenCount, UserEntity } from './user.entity';
-import { User } from './user.schema';
-import { Document, FilterQuery } from 'mongoose';
 
-export class UserRepository extends BaseRepository<FilterQuery<UserEntity & Document>, UserEntity> {
+import { BaseRepository } from '../base-repository';
+import { IUserResetTokenCount, UserEntity, UserDBModel } from './user.entity';
+import { User } from './user.schema';
+
+export class UserRepository extends BaseRepository<UserDBModel, UserEntity> {
   constructor() {
     super(User, UserEntity);
   }
 
-  async findByEmail(email: string): Promise<UserEntity> {
+  async findByEmail(email: string): Promise<UserEntity | null> {
     return this.findOne({
       email,
     });
@@ -36,7 +36,7 @@ export class UserRepository extends BaseRepository<FilterQuery<UserEntity & Docu
     );
   }
 
-  async findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity> {
+  async findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity | null> {
     return this.findOne({
       'tokens.providerId': profileId,
       'tokens.provider': provider,

@@ -1,11 +1,11 @@
-import { EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, LayoutRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
 describe('Create Environment - /environments (POST)', async () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
-
+  const layoutRepository = new LayoutRepository();
   before(async () => {
     session = new UserSession();
     await session.initialize({
@@ -34,5 +34,20 @@ describe('Create Environment - /environments (POST)', async () => {
     const { body } = await session.testAgent.post('/v1/environments').send(demoEnvironment).expect(400);
 
     expect(body.message[0]).to.contain('name should not be null');
+  });
+
+  it('should create a default layout for environment', async function () {
+    const demoEnvironment = {
+      name: 'Hello App',
+    };
+    const { body } = await session.testAgent.post('/v1/environments').send(demoEnvironment).expect(201);
+    session.environment = body.data;
+
+    await session.fetchJWT();
+    const { body: layouts } = await session.testAgent.get('/v1/layouts');
+
+    expect(layouts.data.length).to.equal(1);
+    expect(layouts.data[0].isDefault).to.equal(true);
+    expect(layouts.data[0].content.length).to.be.greaterThan(20);
   });
 });

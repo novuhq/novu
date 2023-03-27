@@ -9,6 +9,7 @@ import ReactDOM from 'react-dom';
 const renderSymbol = Symbol.for('r2wc.reactRender');
 const shouldRenderSymbol = Symbol.for('r2wc.shouldRender');
 const rootSymbol = Symbol.for('r2wc.root');
+const isSSR = typeof window === 'undefined';
 
 function toDashedStyle(camelCase = '') {
   return camelCase.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
@@ -99,6 +100,10 @@ export default function (
   ReactComponent: React.FunctionComponent<any> | React.ComponentClass<any>,
   options: R2WCOptions = {}
 ): CustomElementConstructor {
+  if (isSSR) {
+    return;
+  }
+
   const propTypes = {}; // { [camelCasedProp]: String | Number | Boolean | Function | Object | Array }
   const propAttrMap = {}; // @TODO: add option to specify for asymmetric mapping (eg "className" from "class")
   const attrPropMap = {}; // cached inverse of propAttrMap

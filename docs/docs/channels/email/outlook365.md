@@ -1,3 +1,8 @@
+---
+sidebar_label: Outlook 365
+sidebar_position: 9
+---
+
 # Outlook365 ( based in custom SMTP server)
 
 You can use the [Outlook 365](https://office.com) provider to send transactional emails through your instance of Office 365 to your customers using the Novu Platform with a single API.
@@ -14,4 +19,6 @@ To use the Outlook 365 channel, you will need to have the sender's email (user) 
   - `from`: Complete email address of the sending user. (e.g. jdoe@mycompany.com)
   - `senderName`: Sender Name should be the same email address of the sending user. (e.g. jdoe@mycompany.com)
   - `password`: Password used to sign in with the email account.
-- You should now be able to send notifications using Nodemailer in Novu.
+- Click on the `Disabled` button and mark as `Active`.
+- Click on the **Connect** button.
+- You should now be able to send notifications using Outlook 365 in Novu.

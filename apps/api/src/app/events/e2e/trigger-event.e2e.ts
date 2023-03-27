@@ -1,3 +1,6 @@
+import { expect } from 'chai';
+import axios from 'axios';
+import * as sinon from 'sinon';
 import {
   LogRepository,
   MessageRepository,
@@ -9,19 +12,29 @@ import {
   JobEntity,
   JobStatusEnum,
   IntegrationRepository,
+  ExecutionDetailsRepository,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-
-import { expect } from 'chai';
 import {
   ChannelTypeEnum,
+  EmailBlockTypeEnum,
   StepTypeEnum,
   IEmailBlock,
+  ISubscribersDefine,
   TemplateVariableTypeEnum,
   EmailProviderIdEnum,
+  SmsProviderIdEnum,
+  FilterPartTypeEnum,
+  DigestUnitEnum,
+  DelayTypeEnum,
+  PreviousStepTypeEnum,
 } from '@novu/shared';
-import axios from 'axios';
-import { ISubscribersDefine } from '@novu/node';
+import { RunJob, RunJobCommand } from '../usecases/run-job';
+import { SendMessage } from '../usecases/send-message';
+import { QueueNextJob } from '../usecases/queue-next-job';
+import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
+import { EmailEventStatusEnum } from '@novu/stateless';
+import { v4 as uuid } from 'uuid';
 
 const axiosInstance = axios.create();
 
@@ -30,12 +43,14 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+  let runJob: RunJob;
   const notificationRepository = new NotificationRepository();
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
   const integrationRepository = new IntegrationRepository();
   const logRepository = new LogRepository();
   const jobRepository = new JobRepository();
+  const executionDetailsRepository = new ExecutionDetailsRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -43,35 +58,12 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-  });
-
-  it('should generate logs for the notification', async function () {
-    await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: template.triggers[0].identifier,
-        to: subscriber.subscriberId,
-        payload: {
-          firstName: 'Testing of User Name',
-          urlVariable: '/test/url/path',
-        },
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
+    runJob = new RunJob(
+      jobRepository,
+      session?.testServer?.getService(SendMessage),
+      session?.testServer?.getService(QueueNextJob),
+      session?.testServer?.getService(StorageHelperService)
     );
-
-    await session.awaitRunningJobs(template._id);
-
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    const logs = await logRepository.find({
-      _environmentId: session.environment._id,
-      _organizationId: session.organization._id,
-    });
-
-    expect(logs.length).to.be.gt(2);
   });
 
   it('should trigger an event successfully', async function () {
@@ -106,6 +98,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       firstName: 'Test Name',
       lastName: 'Last of name',
       email: 'test@email.novu',
+      locale: 'en',
     };
     const { data: body } = await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
@@ -125,12 +118,14 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       }
     );
 
+    await session.awaitRunningJobs();
     const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
 
-    expect(createdSubscriber.subscriberId).to.equal(subscriberId);
-    expect(createdSubscriber.firstName).to.equal(payload.firstName);
-    expect(createdSubscriber.lastName).to.equal(payload.lastName);
-    expect(createdSubscriber.email).to.equal(payload.email);
+    expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
+    expect(createdSubscriber?.firstName).to.equal(payload.firstName);
+    expect(createdSubscriber?.lastName).to.equal(payload.lastName);
+    expect(createdSubscriber?.email).to.equal(payload.email);
+    expect(createdSubscriber?.locale).to.equal(payload.locale);
   });
 
   it('should override subscriber email based on event data', async function () {
@@ -155,6 +150,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
         },
       }
     );
+    await session.awaitRunningJobs();
 
     let jobs: JobEntity[] = await jobRepository.find({ _environmentId: session.environment._id });
     let statuses: JobStatusEnum[] = jobs.map((job) => job.status);
@@ -178,7 +174,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const messages2 = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      createdSubscriber._id,
+      createdSubscriber?._id as string,
       ChannelTypeEnum.EMAIL
     );
 
@@ -255,11 +251,6 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const email = emails[0];
 
     expect(email.channel).to.equal(ChannelTypeEnum.EMAIL);
-    expect(Array.isArray(email.content)).to.be.ok;
-    expect((email.content[0] as IEmailBlock).type).to.equal('text');
-    expect((email.content[0] as IEmailBlock).content).to.equal(
-      'This are the text contents of the template for Testing of User Name'
-    );
   });
 
   it('should trigger SMS notification', async function () {
@@ -341,7 +332,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const message2 = await messageRepository._model.findOne({
       _environmentId: session.environment._id,
       _templateId: template._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: ChannelTypeEnum.SMS,
     });
 
@@ -403,7 +394,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -427,7 +418,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -448,7 +439,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           type: StepTypeEnum.EMAIL,
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -471,7 +462,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -483,12 +474,12 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should not trigger notification with subscriber data if integration is inactive', async function () {
     const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
-    const channelType = ChannelTypeEnum.EMAIL;
+    const channelType = ChannelTypeEnum.SMS;
 
     const integration = await integrationRepository.findOne({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
-      providerId: 'sendgrid',
+      providerId: SmsProviderIdEnum.Twilio,
     });
 
     await integrationRepository.update(
@@ -502,11 +493,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       steps: [
         {
           name: 'Message Name',
-          subject: 'Test email {{nested.subject}}',
+          subject: 'Test sms {{nested.subject}}',
           type: StepTypeEnum.EMAIL,
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -529,11 +520,68 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
     expect(message).to.be.null;
+  });
+
+  it('should use Novu integration for new orgs', async function () {
+    process.env.NOVU_EMAIL_INTEGRATION_API_KEY = 'true';
+
+    const existingIntegrations = await integrationRepository.find({
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    await integrationRepository.delete({
+      _id: { $in: existingIntegrations.map((integration) => integration._id) },
+      _organizationId: session.organization._id,
+      _environmentId: session.environment._id,
+    });
+
+    const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
+    const channelType = ChannelTypeEnum.EMAIL;
+
+    template = await createTemplate(session, channelType);
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          name: 'Message Name',
+          subject: 'Test sms {{nested.subject}}',
+          type: StepTypeEnum.EMAIL,
+          content: [
+            {
+              type: EmailBlockTypeEnum.TEXT,
+              content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
+            },
+          ],
+        },
+      ],
+    });
+
+    await sendTrigger(session, template, newSubscriberIdInAppNotification, {
+      nested: {
+        subject: 'a subject nested',
+      },
+    });
+
+    await session.awaitRunningJobs(template._id);
+
+    const createdSubscriber = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriberIdInAppNotification
+    );
+
+    const message = await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: createdSubscriber?._id,
+      channel: channelType,
+    });
+
+    expect(message.providerId).to.equal(EmailProviderIdEnum.Novu);
   });
 
   it('should trigger message with active integration', async function () {
@@ -568,7 +616,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     let messages = await messageRepository.find({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -595,7 +643,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     messages = await messageRepository.find({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
@@ -617,7 +665,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           ],
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -699,7 +747,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           ],
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -727,13 +775,36 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
     const message = await messageRepository.findOne({
       _environmentId: session.environment._id,
-      _subscriberId: createdSubscriber._id,
+      _subscriberId: createdSubscriber?._id,
       channel: channelType,
     });
 
     const block = message.content[0] as IEmailBlock;
 
     expect(block.content).to.equal('Hello John Doe, Welcome to Umbrella Corp');
+  });
+
+  it('should throw an error when workflow identifier provided is not in the database', async () => {
+    const response = await session.testAgent
+      .post(`/v1/events/trigger`)
+      .send({
+        name: 'non-existent-template-identifier',
+        to: subscriber.subscriberId,
+        payload: {
+          myUser: {
+            lastName: 'Test',
+          },
+        },
+      })
+      .expect(422);
+
+    const { body } = response;
+
+    expect(body).to.eql({
+      statusCode: 422,
+      message: 'template_not_found',
+      error: 'Unprocessable Entity',
+    });
   });
 
   it('should handle empty workflow scenario', async function () {
@@ -769,7 +840,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           variables: [{ name: 'myUser.lastName', required: true, type: TemplateVariableTypeEnum.STRING }],
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{myUser.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -808,7 +879,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           type: StepTypeEnum.EMAIL,
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'Hello {{subscriber.lastName}}, Welcome to {{organizationName}}' as string,
             },
           ],
@@ -850,11 +921,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },
@@ -872,7 +943,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
                   field: 'run',
                   value: 'true',
                   operator: 'EQUAL',
-                  on: 'payload',
+                  on: FilterPartTypeEnum.PAYLOAD,
                 },
               ],
             },
@@ -883,11 +954,11 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
           subject: 'Password reset',
           content: [
             {
-              type: 'text',
+              type: EmailBlockTypeEnum.TEXT,
               content: 'This are the text contents of the template for {{firstName}}',
             },
             {
-              type: 'button',
+              type: EmailBlockTypeEnum.BUTTON,
               content: 'SIGN UP',
               url: 'https://url-of-app.com/{{urlVariable}}',
             },
@@ -905,7 +976,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
                   field: 'subscriberId',
                   value: subscriber.subscriberId,
                   operator: 'NOT_EQUAL',
-                  on: 'subscriber',
+                  on: FilterPartTypeEnum.SUBSCRIBER,
                 },
               ],
             },
@@ -940,6 +1011,484 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     expect(messages).to.equal(1);
+  });
+
+  it('should filter a message based on webhook filter', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Password reset',
+          content: [
+            {
+              type: EmailBlockTypeEnum.TEXT,
+              content: 'This are the text contents of the template for {{firstName}}',
+            },
+            {
+              type: EmailBlockTypeEnum.BUTTON,
+              content: 'SIGN UP',
+              url: 'https://url-of-app.com/{{urlVariable}}',
+            },
+          ],
+          filters: [
+            {
+              isNegated: false,
+              type: 'GROUP',
+              value: 'AND',
+              children: [
+                {
+                  field: 'isOnline',
+                  value: 'true',
+                  operator: 'EQUAL',
+                  on: FilterPartTypeEnum.WEBHOOK,
+                  webhookUrl: 'www.user.com/webhook',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    let axiosPostStub = sinon.stub(axios, 'post').resolves(
+      Promise.resolve({
+        data: { isOnline: true },
+      })
+    );
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    let messages = await messageRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+
+    expect(messages).to.equal(1);
+
+    axiosPostStub.restore();
+    axiosPostStub = sinon.stub(axios, 'post').resolves(
+      Promise.resolve({
+        data: { isOnline: false },
+      })
+    );
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    messages = await messageRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+
+    expect(messages).to.equal(1);
+    axiosPostStub.restore();
+  });
+
+  it('should throw exception on webhook filter - demo unavailable server', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Password reset',
+          content: [
+            {
+              type: EmailBlockTypeEnum.TEXT,
+              content: 'This are the text contents of the template for {{firstName}}',
+            },
+            {
+              type: EmailBlockTypeEnum.BUTTON,
+              content: 'SIGN UP',
+              url: 'https://url-of-app.com/{{urlVariable}}',
+            },
+          ],
+          filters: [
+            {
+              isNegated: false,
+              type: 'GROUP',
+              value: 'AND',
+              children: [
+                {
+                  field: 'isOnline',
+                  value: 'true',
+                  operator: 'EQUAL',
+                  on: FilterPartTypeEnum.WEBHOOK,
+                  webhookUrl: 'www.user.com/webhook',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const axiosPostStub = sinon.stub(axios, 'post').throws(new Error('Users remote error'));
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    const messages = await messageRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+
+    expect(messages).to.equal(0);
+    axiosPostStub.restore();
+  });
+
+  it('should backoff on exception while webhook filter (original request + 2 retries)', async function () {
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Password reset',
+          content: [
+            {
+              type: EmailBlockTypeEnum.TEXT,
+              content: 'This are the text contents of the template for {{firstName}}',
+            },
+            {
+              type: EmailBlockTypeEnum.BUTTON,
+              content: 'SIGN UP',
+              url: 'https://url-of-app.com/{{urlVariable}}',
+            },
+          ],
+          filters: [
+            {
+              isNegated: false,
+              type: 'GROUP',
+              value: 'AND',
+              children: [
+                {
+                  field: 'isOnline',
+                  value: 'true',
+                  operator: 'EQUAL',
+                  on: FilterPartTypeEnum.WEBHOOK,
+                  webhookUrl: 'www.user.com/webhook',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    let axiosPostStub = sinon.stub(axios, 'post');
+
+    axiosPostStub
+      .onCall(0)
+      .throws(new Error('Users remote error'))
+      .onCall(1)
+      .resolves({
+        data: { isOnline: true },
+      });
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    let messages = await messageRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+
+    expect(messages).to.equal(1);
+
+    axiosPostStub.restore();
+    axiosPostStub = sinon
+      .stub(axios, 'post')
+      .onCall(0)
+      .throws(new Error('Users remote error'))
+      .onCall(1)
+      .throws(new Error('Users remote error'))
+      .onCall(2)
+      .throws(new Error('Users remote error'))
+      .resolves(
+        Promise.resolve({
+          data: { isOnline: true },
+        })
+      );
+
+    await axiosInstance.post(
+      `${session.serverUrl}/v1/events/trigger`,
+      {
+        name: template.triggers[0].identifier,
+        to: subscriber.subscriberId,
+        payload: {},
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    messages = await messageRepository.count({
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    });
+
+    expect(messages).to.equal(1);
+    axiosPostStub.restore();
+  });
+
+  describe('seen/read filter', () => {
+    it('should filter in app seen/read step', async function () {
+      const firstStepUuid = uuid();
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'Not Delayed {{customVar}}' as string,
+            uuid: firstStepUuid,
+          },
+          {
+            type: StepTypeEnum.DELAY,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.MINUTES,
+              amount: 5,
+              type: DelayTypeEnum.REGULAR,
+            },
+          },
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'Hello world {{customVar}}' as string,
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: 'AND',
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PREVIOUS_STEP,
+                    stepType: PreviousStepTypeEnum.READ,
+                    step: firstStepUuid,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}/v1/events/trigger`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 1);
+
+      const delayedJob = await jobRepository.findOne({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DELAY,
+      });
+
+      if (!delayedJob) {
+        throw new Error();
+      }
+
+      expect(delayedJob.status).to.equal(JobStatusEnum.DELAYED);
+
+      const messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(messages.length).to.equal(1);
+
+      await runJob.execute(
+        RunJobCommand.create({
+          jobId: delayedJob._id,
+          environmentId: delayedJob._environmentId,
+          organizationId: delayedJob._organizationId,
+          userId: delayedJob._userId,
+        })
+      );
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.IN_APP,
+      });
+
+      expect(messagesAfter.length).to.equal(1);
+    });
+
+    it('should filter email seen/read step', async function () {
+      const firstStepUuid = uuid();
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            uuid: firstStepUuid,
+          },
+          {
+            type: StepTypeEnum.DELAY,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.MINUTES,
+              amount: 5,
+              type: DelayTypeEnum.REGULAR,
+            },
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: 'AND',
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PREVIOUS_STEP,
+                    stepType: PreviousStepTypeEnum.READ,
+                    step: firstStepUuid,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}/v1/events/trigger`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 1);
+
+      const delayedJob = await jobRepository.findOne({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DELAY,
+      });
+
+      if (!delayedJob) {
+        throw new Error();
+      }
+
+      expect(delayedJob.status).to.equal(JobStatusEnum.DELAYED);
+
+      const messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messages.length).to.equal(1);
+
+      await executionDetailsRepository.create({
+        _jobId: delayedJob._parentId,
+        _messageId: messages[0]._id,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        webhookStatus: EmailEventStatusEnum.OPENED,
+      });
+
+      await runJob.execute(
+        RunJobCommand.create({
+          jobId: delayedJob._id,
+          environmentId: delayedJob._environmentId,
+          organizationId: delayedJob._organizationId,
+          userId: delayedJob._userId,
+        })
+      );
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messagesAfter.length).to.equal(1);
+    });
   });
 });
 

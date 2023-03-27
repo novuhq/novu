@@ -1,16 +1,17 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
-import { schemaOptions } from '../schema-default.options';
-import { JobEntity } from './job.entity';
+import { Schema } from 'mongoose';
 
-const jobSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { JobDBModel, JobStatusEnum } from './job.entity';
+
+const jobSchema = new Schema<JobDBModel>(
   {
     identifier: {
       type: Schema.Types.String,
     },
     status: {
       type: Schema.Types.String,
-      default: 'pending',
+      default: JobStatusEnum.PENDING,
     },
     payload: {
       type: Schema.Types.Mixed,
@@ -23,6 +24,7 @@ const jobSchema = new Schema(
     },
     _templateId: {
       type: Schema.Types.String,
+      ref: 'NotificationTemplate',
       index: true,
     },
     transactionId: {
@@ -109,9 +111,33 @@ jobSchema.virtual('executionDetails', {
   foreignField: '_jobId',
 });
 
-interface IJobDocument extends JobEntity, Document {
-  _id: never;
-}
+jobSchema.virtual('template', {
+  ref: 'NotificationTemplate',
+  localField: '_templateId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+jobSchema.virtual('notification', {
+  ref: 'Notification',
+  localField: '_notificationId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+jobSchema.virtual('subscriber', {
+  ref: 'Subscriber',
+  localField: '_subscriberId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+jobSchema.virtual('environment', {
+  ref: 'Environment',
+  localField: '_environmentId',
+  foreignField: '_id',
+  justOne: true,
+});
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const Job = mongoose.models.Job || mongoose.model<IJobDocument>('Job', jobSchema);
+export const Job = (mongoose.models.Job as mongoose.Model<JobDBModel>) || mongoose.model<JobDBModel>('Job', jobSchema);

@@ -2,6 +2,7 @@
 import axios from 'axios';
 import {
   IBroadcastPayloadOptions,
+  IBulkEvents,
   ITriggerPayloadOptions,
 } from './events.interface';
 import { WithHttp } from '../novu.interface';
@@ -14,6 +15,7 @@ export class Events extends WithHttp {
       payload: {
         ...data?.payload,
       },
+      transactionId: data.transactionId,
       overrides: data.overrides || {},
       ...(data.actor && { actor: data.actor }),
     });
@@ -31,5 +33,11 @@ export class Events extends WithHttp {
 
   async cancel(transactionId: string) {
     return await this.http.delete(`/events/trigger/${transactionId}`);
+  }
+
+  async bulkTrigger(events: IBulkEvents[]) {
+    return await this.http.post(`/events/trigger/bulk`, {
+      events,
+    });
   }
 }

@@ -1,23 +1,23 @@
-import { IJwtPayload } from '@novu/shared';
-import { ISubscribersDefine, TriggerRecipientSubscriber } from '@novu/node';
+import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
+import { TriggerRecipientSubscriber } from '@novu/node';
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
+  BulkTriggerEventDto,
   TestSendEmailRequestDto,
   TriggerEventRequestDto,
   TriggerEventResponseDto,
   TriggerEventToAllRequestDto,
 } from './dtos';
-import { TriggerEvent, TriggerEventCommand } from './usecases/trigger-event';
-import { CancelDelayed } from './usecases/cancel-delayed/cancel-delayed.usecase';
-import { CancelDelayedCommand } from './usecases/cancel-delayed/cancel-delayed.command';
-import { TriggerEventToAllCommand } from './usecases/trigger-event-to-all/trigger-event-to-all.command';
-import { TriggerEventToAll } from './usecases/trigger-event-to-all/trigger-event-to-all.usecase';
-import { SendTestEmail } from './usecases/send-message/test-send-email.usecase';
-import { TestSendMessageCommand } from './usecases/send-message/send-message.command';
-import { MapTriggerRecipients, MapTriggerRecipientsCommand } from './usecases/map-trigger-recipients';
+import { EventsPerformanceService } from './services/performance-service';
+import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
+import { SendMessageCommand, SendTestEmail, SendTestEmailCommand } from './usecases/send-message';
+import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
+import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
+import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
+import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -30,11 +30,13 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 @ApiTags('Events')
 export class EventsController {
   constructor(
-    private triggerEvent: TriggerEvent,
     private mapTriggerRecipients: MapTriggerRecipients,
     private cancelDelayedUsecase: CancelDelayed,
     private triggerEventToAll: TriggerEventToAll,
-    private sendTestEmail: SendTestEmail
+    private sendTestEmail: SendTestEmail,
+    private parseEventRequest: ParseEventRequest,
+    private processBulkTriggerUsecase: ProcessBulkTrigger,
+    protected performanceService: EventsPerformanceService
   ) {}
 
   @ExternalApiAccessible()
@@ -64,37 +66,69 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
-    const transactionId = body.transactionId || uuidv4();
+    const mark = this.performanceService.buildEndpointTriggerEventMark(body.transactionId as string);
 
-    const { _id: userId, environmentId, organizationId } = user;
-
-    await this.triggerEvent.validateTransactionIdProperty(transactionId, organizationId, environmentId);
-
-    const mappedActor = this.mapActor(body.actor);
-    const mapTriggerRecipientsCommand = MapTriggerRecipientsCommand.create({
-      environmentId,
-      organizationId,
-      recipients: body.to,
-      transactionId,
-      userId,
-    });
-    const mappedTo = await this.mapTriggerRecipients.execute(mapTriggerRecipientsCommand);
-
-    const result = await this.triggerEvent.execute(
-      TriggerEventCommand.create({
-        userId,
-        environmentId,
-        organizationId,
+    const result = await this.parseEventRequest.execute(
+      ParseEventRequestCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
         overrides: body.overrides || {},
-        to: mappedTo,
-        actor: mappedActor,
-        transactionId,
+        to: body.to,
+        actor: body.actor,
+        transactionId: body.transactionId,
       })
     );
 
+    this.performanceService.setEnd(mark);
+
     return result as unknown as TriggerEventResponseDto;
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Post('/trigger/bulk')
+  @ApiCreatedResponse({
+    type: TriggerEventResponseDto,
+    isArray: true,
+    content: {
+      '200': {
+        example: [
+          {
+            acknowledged: true,
+            status: 'processed',
+            transactionId: 'd2239acb-e879-4bdb-ab6f-365b43278d8f',
+          },
+          {
+            acknowledged: true,
+            status: 'processed',
+            transactionId: 'd2239acb-e879-4bdb-ab6f-115b43278d12',
+          },
+        ],
+      },
+    },
+  })
+  @ApiOperation({
+    summary: 'Bulk trigger event',
+    description: `
+      Using this endpoint you can trigger multiple events at once, to avoid multiple calls to the API.
+      The bulk API is limited to 100 events per request.
+    `,
+  })
+  async triggerBulkEvents(
+    @UserSession() user: IJwtPayload,
+    @Body() body: BulkTriggerEventDto
+  ): Promise<TriggerEventResponseDto[]> {
+    return this.processBulkTriggerUsecase.execute(
+      ProcessBulkTriggerCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        events: body.events,
+      })
+    );
   }
 
   @ExternalApiAccessible()
@@ -122,8 +156,7 @@ export class EventsController {
     @Body() body: TriggerEventToAllRequestDto
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
-    await this.triggerEvent.validateTransactionIdProperty(transactionId, user.organizationId, user.environmentId);
-    const mappedActor = this.mapActor(body.actor);
+    const mappedActor = body.actor ? this.mapActor(body.actor) : null;
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -144,12 +177,13 @@ export class EventsController {
   @ApiExcludeEndpoint()
   async testEmailMessage(@UserSession() user: IJwtPayload, @Body() body: TestSendEmailRequestDto): Promise<void> {
     return await this.sendTestEmail.execute(
-      TestSendMessageCommand.create({
+      SendTestEmailCommand.create({
         subject: body.subject,
         payload: body.payload,
         contentType: body.contentType,
         content: body.content,
         preheader: body.preheader,
+        layoutId: body.layoutId,
         to: body.to,
         userId: user._id,
         environmentId: user.environmentId,
@@ -185,8 +219,8 @@ export class EventsController {
     );
   }
 
-  private mapActor(actor: TriggerRecipientSubscriber): ISubscribersDefine {
-    if (!actor) return;
+  private mapActor(actor?: TriggerRecipientSubscriber | null): ISubscribersDefine | null {
+    if (!actor) return null;
 
     return this.mapTriggerRecipients.mapSubscriber(actor);
   }

@@ -1,5 +1,6 @@
-import { TemplateVariableTypeEnum } from '../../entities/message-template';
 import { HandlebarHelpersEnum } from './handlebarHelpers';
+
+import { TemplateVariableTypeEnum } from '../../types';
 
 export interface IMustacheVariable {
   type: TemplateVariableTypeEnum;

@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
-import { CreateChangeCommand } from '../../../change/usecases/create-change.command';
-import { CreateChange } from '../../../change/usecases/create-change.usecase';
+import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
@@ -50,6 +50,7 @@ export class ChangeTemplateActiveStatus {
     );
 
     const item = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
+    if (!item) throw new NotFoundException(`Notification template ${command.templateId} is not found`);
 
     await this.createChange.execute(
       CreateChangeCommand.create({

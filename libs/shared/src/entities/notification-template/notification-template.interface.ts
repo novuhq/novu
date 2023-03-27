@@ -1,6 +1,7 @@
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues } from '../../types';
-import { IMessageTemplate, TemplateVariableTypeEnum } from '../message-template';
+import type { BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum, FilterParts } from '../../types';
+import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
+import { DelayTypeEnum, DigestTypeEnum, DigestUnitEnum } from '../step';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -39,20 +40,29 @@ export interface INotificationTriggerVariable {
 
 export interface INotificationTemplateStep {
   _id?: string;
+  uuid?: string;
   filters?: IMessageFilter[];
   _templateId?: string;
-  _parentId?: string;
+  _parentId?: string | null;
   template?: IMessageTemplate;
   active?: boolean;
+  shouldStopOnFail?: boolean;
+  replyCallback?: {
+    active: boolean;
+    url: string;
+  };
+  metadata?: {
+    amount?: number;
+    unit?: DigestUnitEnum;
+    type?: DigestTypeEnum | DelayTypeEnum;
+    digestKey?: string;
+    delayPath?: string;
+  };
 }
 
 export interface IMessageFilter {
   isNegated?: boolean;
   type: BuilderFieldType;
   value: BuilderGroupValues;
-  children: {
-    field: string;
-    value: string;
-    operator: BuilderFieldOperator;
-  }[];
+  children: FilterParts[];
 }

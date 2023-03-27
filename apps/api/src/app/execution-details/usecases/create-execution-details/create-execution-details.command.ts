@@ -1,31 +1,9 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
-import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
-import { JobEntity } from '@novu/dal';
 
-export enum DetailEnum {
-  CHAT_WEBHOOK_URL_MISSING = 'Webhook URL for the chat channel is missing',
-  STEP_CREATED = 'Step created',
-  STEP_QUEUED = 'Step queued',
-  STEP_DELAYED = 'Step delayed',
-  MESSAGE_CONTENT_NOT_GENERATED = 'Message content could not be generated',
-  MESSAGE_CREATED = 'Message created',
-  SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
-  SUBSCRIBER_NO_CHANNEL_DETAILS = 'Subscriber missing recipient details',
-  SUBSCRIBER_NO_ACTIVE_CHANNEL = 'Subscriber does not have a configured channel',
-  MESSAGE_SENT = 'Message sent',
-  PROVIDER_ERROR = 'Unexpected provider error',
-  START_SENDING = 'Start sending message',
-  START_DIGESTING = 'Start digesting',
-  FILTER_STEPS = 'Step was filtered based on steps filters',
-  DIGESTED_EVENTS_PROVIDED = 'Steps to get digest events found',
-  DIGEST_TRIGGERED_EVENTS = 'Digest triggered events',
-  STEP_FILTERED_BY_PREFERENCES = 'Step filtered by subscriber preferences',
-  DIGEST_MERGED = 'Digest was merged with other digest',
-  DELAY_FINISHED = 'Delay is finished',
-  PUSH_MISSING_DEVICE_TOKENS = 'Subscriber credentials is missing the tokens for sending a push notification message',
-}
+import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsOptional()
@@ -66,7 +44,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   @IsString()
-  raw?: string;
+  raw?: string | null;
 
   webhookStatus?: EmailEventStatusEnum | SmsEventStatusEnum;
 

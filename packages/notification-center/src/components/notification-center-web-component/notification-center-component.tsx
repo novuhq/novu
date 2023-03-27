@@ -4,9 +4,9 @@ import { IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '@novu/shared'
 import { NovuProvider } from '../novu-provider';
 import { PopoverNotificationCenter } from '../popover-notification-center';
 import { NotificationBell } from '../notification-bell';
-import { useNotifications } from '../../hooks';
 import { reactToWebComponent } from '../../utils';
 import type { NotificationCenterComponentProps, PopoverWrapperProps } from './notification-center-component.types';
+import { useUpdateAction } from '../../hooks';
 
 /*
  * This array represents the public API of the web component.
@@ -21,6 +21,7 @@ export const NOTIFICATION_CENTER_PROPS = [
   'stores',
   'tabs',
   'showUserPreferences',
+  'allowedNotificationActions',
   'popover',
   'theme',
   'styles',
@@ -47,6 +48,7 @@ export const NotificationCenterComponent: FunctionComponent<NotificationCenterCo
   stores,
   tabs,
   showUserPreferences,
+  allowedNotificationActions,
   popover,
   theme,
   styles,
@@ -84,6 +86,7 @@ export const NotificationCenterComponent: FunctionComponent<NotificationCenterCo
         theme={theme}
         tabs={tabs}
         showUserPreferences={showUserPreferences}
+        allowedNotificationActions={allowedNotificationActions}
         popover={popover}
       />
     </NovuProvider>
@@ -99,27 +102,21 @@ function PopoverWrapper({
   theme,
   tabs,
   showUserPreferences,
+  allowedNotificationActions,
   popover,
   unseenBadgeColor,
   unseenBadgeBackgroundColor,
 }: PopoverWrapperProps) {
-  const { updateAction, markAsSeen } = useNotifications();
+  const { updateAction } = useUpdateAction();
 
-  function handlerOnNotificationClick(message: IMessage) {
-    if (message?.cta?.data?.url) {
-      markAsSeen();
-    }
-    onNotificationClick?.(message);
-  }
-
-  async function handlerOnActionClick(templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) {
-    await updateAction(message._id, type, MessageActionStatusEnum.DONE);
+  function handlerOnActionClick(templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) {
+    updateAction({ messageId: message._id, actionButtonType: type, status: MessageActionStatusEnum.DONE });
     onActionClick?.(templateIdentifier, type, message);
   }
 
   return (
     <PopoverNotificationCenter
-      onNotificationClick={handlerOnNotificationClick}
+      onNotificationClick={onNotificationClick}
       onUnseenCountChanged={onUnseenCountChanged}
       onActionClick={handlerOnActionClick}
       onTabClick={onTabClick}
@@ -127,6 +124,7 @@ function PopoverWrapper({
       theme={theme}
       tabs={tabs}
       showUserPreferences={showUserPreferences}
+      allowedNotificationActions={allowedNotificationActions}
       offset={popover?.offset}
       position={popover?.position}
     >

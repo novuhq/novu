@@ -1,7 +1,8 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
-import { NotificationStepEntity, IEmailBlock } from '@novu/dal';
+import { IEmailBlock } from '@novu/shared';
+import { NotificationStepEntity, JobEntity } from '@novu/dal';
+
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { JobEntity } from '../../../../../../../libs/dal/src/repositories/job/job.entity';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -35,19 +36,4 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   job: JobEntity;
-}
-
-export class TestSendMessageCommand extends EnvironmentWithUserCommand {
-  @IsDefined()
-  contentType: 'customHtml' | 'editor';
-  @IsDefined()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-  @IsDefined()
-  @IsString()
-  subject: string;
-  preheader?: string;
-  @IsDefined()
-  content: string | IEmailBlock[];
-  @IsDefined()
-  to: string | string[];
 }

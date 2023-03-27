@@ -6,6 +6,7 @@ import { CardStatusBar } from './CardStatusBar';
 import { Settings } from '../../../design-system/icons';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { When } from '../../../components/utils/When';
+import { CONTEXT_PATH } from '../../../config';
 
 export function ProviderCard({
   provider,
@@ -15,7 +16,7 @@ export function ProviderCard({
   onConnectClick: (visible: boolean, create: boolean, provider: IIntegratedProvider) => void;
 }) {
   const { colorScheme } = useMantineColorScheme();
-  const logoSrc = `/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
+  const logoSrc = `${CONTEXT_PATH}/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`;
   const brightCard =
     provider.active ||
     provider.credentials.some((cred: IConfigCredentials) => {
@@ -30,7 +31,7 @@ export function ProviderCard({
     <StyledCard
       dark={colorScheme === 'dark'}
       active={brightCard}
-      data-test-id="integration-provider-card"
+      data-test-id={`integration-provider-card-${provider.providerId}`}
       onClick={() => {
         if (provider.comingSoon) return;
         if (provider.connected) {
@@ -49,7 +50,9 @@ export function ProviderCard({
       <StyledGroup position="apart">
         <CardHeader>
           <Logo src={logoSrc} alt={provider.displayName} />
-          {provider.connected && !provider.betaVersion ? <Settings data-test-id="provider-card-settings-svg" /> : null}
+          {provider.connected && !provider.betaVersion && !provider.novu ? (
+            <Settings data-test-id="provider-card-settings-svg" />
+          ) : null}
         </CardHeader>
 
         <CardFooter>
@@ -141,6 +144,9 @@ const StyledCard = styled.div<{ dark: boolean; active: boolean }>`
   }};
 
   &:hover {
+    ${Logo} {
+      opacity: 1;
+    }
     cursor: pointer;
     ${({ dark }) =>
       dark

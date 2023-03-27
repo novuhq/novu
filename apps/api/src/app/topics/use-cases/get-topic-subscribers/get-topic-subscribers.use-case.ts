@@ -3,7 +3,7 @@ import { TopicSubscribersEntity, TopicSubscribersRepository, TopicRepository } f
 
 import { GetTopicSubscribersCommand } from './get-topic-subscribers.command';
 
-import { TopicSubscribersDto } from '../../dtos/topic-subscribers.dto';
+import { TopicSubscriberDto } from '../../dtos/topic-subscriber.dto';
 
 @Injectable()
 export class GetTopicSubscribersUseCase {
@@ -15,16 +15,16 @@ export class GetTopicSubscribersUseCase {
   async execute(command: GetTopicSubscribersCommand) {
     const topic = await this.topicRepository.findTopicByKey(
       command.topicKey,
-      TopicRepository.convertStringToObjectId(command.organizationId),
-      TopicRepository.convertStringToObjectId(command.environmentId)
+      command.organizationId,
+      command.environmentId
     );
     if (!topic) {
       throw new NotFoundException(`Topic with key ${command.topicKey} not found in current environment`);
     }
 
     const topicSubscribers = await this.topicSubscribersRepository.findSubscribersByTopicId(
-      TopicRepository.convertStringToObjectId(command.environmentId),
-      TopicRepository.convertStringToObjectId(command.organizationId),
+      command.environmentId,
+      command.organizationId,
       topic._id
     );
 
@@ -37,14 +37,14 @@ export class GetTopicSubscribersUseCase {
     return topicSubscribers.map(this.mapFromEntity);
   }
 
-  private mapFromEntity(topicSubscribers: TopicSubscribersEntity): TopicSubscribersDto {
+  private mapFromEntity(topicSubscriber: TopicSubscribersEntity): TopicSubscriberDto {
     return {
-      ...topicSubscribers,
-      topicKey: topicSubscribers.topicKey,
-      _topicId: TopicSubscribersRepository.convertObjectIdToString(topicSubscribers._topicId),
-      _organizationId: TopicSubscribersRepository.convertObjectIdToString(topicSubscribers._organizationId),
-      _environmentId: TopicSubscribersRepository.convertObjectIdToString(topicSubscribers._environmentId),
-      _subscriberId: TopicSubscribersRepository.convertObjectIdToString(topicSubscribers._subscriberId),
+      ...topicSubscriber,
+      topicKey: topicSubscriber.topicKey,
+      _topicId: topicSubscriber._topicId,
+      _organizationId: topicSubscriber._organizationId,
+      _environmentId: topicSubscriber._environmentId,
+      _subscriberId: topicSubscriber._subscriberId,
     };
   }
 }

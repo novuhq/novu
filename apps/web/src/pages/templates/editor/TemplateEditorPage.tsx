@@ -1,36 +1,40 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useDisclosure } from '@mantine/hooks';
+import { ReactFlowProvider } from 'react-flow-renderer';
+import { FieldErrors, useFormContext } from 'react-hook-form';
+
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
-import { IForm, useTemplateController } from '../../../components/templates/use-template-controller.hook';
-import { useActiveIntegrations } from '../../../api/hooks';
-import { useEnvController } from '../../../store/use-env-controller';
-import WorkflowEditorPage from '../workflow/WorkflowEditorPage';
-import { TemplateEditor } from '../../../components/templates/TemplateEditor';
-import { TemplateSettings } from '../../../components/templates/TemplateSettings';
-import { TemplatePageHeader } from '../../../components/templates/TemplatePageHeader';
-import { ReactFlowProvider } from 'react-flow-renderer';
-import { TemplateTriggerModal } from '../../../components/templates/TemplateTriggerModal';
-import { usePrompt } from '../../../hooks/use-prompt';
-import { UnsavedChangesModal } from '../../../components/templates/UnsavedChangesModal';
+import type { IForm } from '../components/formTypes';
+import WorkflowEditor from '../workflow/WorkflowEditor';
+import { TemplateEditor } from '../components/TemplateEditor';
+import { TemplateSettings } from '../components/TemplateSettings';
+import { TemplatePageHeader } from '../components/TemplatePageHeader';
+import { TemplateTriggerModal } from '../components/TemplateTriggerModal';
+import { usePrompt, useSearchParams, useEnvController, useActiveIntegrations } from '../../../hooks';
+import { UnsavedChangesModal } from '../components/UnsavedChangesModal';
 import { When } from '../../../components/utils/When';
 import { UserPreference } from '../../user-preference/UserPreference';
-import { TestWorkflowModal } from '../../../components/templates/TestWorkflowModal';
-import { SaveChangesModal } from '../../../components/templates/SaveChangesModal';
-import { useDisclosure } from '@mantine/hooks';
-import { ExecutionDetailsModalWrapper } from '../../../components/templates/ExecutionDetailsModalWrapper';
+import { TestWorkflowModal } from '../components/TestWorkflowModal';
+import { SaveChangesModal } from '../components/SaveChangesModal';
+import { ExecutionDetailsModalWrapper } from '../components/ExecutionDetailsModalWrapper';
+import { BlueprintModal } from '../components/BlueprintModal';
+import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
+import { errorMessage } from '../../../utils/notifications';
+import { getExplicitErrors } from '../shared/errors';
+import { ROUTES } from '../../../constants/routes.enum';
+import { ActivePageEnum } from '../../../constants/editorEnums';
+import { useTemplateEditorContext } from './TemplateEditorProvider';
+import { TourProvider } from './TourProvider';
 
-export enum ActivePageEnum {
-  SETTINGS = 'Settings',
-  WORKFLOW = 'Workflow',
-  USER_PREFERENCE = 'UserPreference',
-  SMS = 'Sms',
-  EMAIL = 'Email',
-  IN_APP = 'in_app',
-  PUSH = 'Push',
-  CHAT = 'Chat',
-  TRIGGER_SNIPPET = 'TriggerSnippet',
-}
+export const EditorPages = [
+  ActivePageEnum.CHAT,
+  ActivePageEnum.SMS,
+  ActivePageEnum.PUSH,
+  ActivePageEnum.EMAIL,
+  ActivePageEnum.IN_APP,
+];
 
 export default function TemplateEditorPage() {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -38,44 +42,73 @@ export default function TemplateEditorPage() {
   const location = useLocation();
   const { readonly, environment } = useEnvController();
   const [transactionId, setTransactionId] = useState<string>('');
-  const [activeStep, setActiveStep] = useState<number>(-1);
-  const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.SETTINGS);
-  const { loading: isIntegrationsLoading } = useActiveIntegrations();
+  const [isTriggerModalVisible, setTriggerModalVisible] = useState(false);
+  const onTriggerModalDismiss = () => {
+    navigate('/templates');
+  };
+  const { isLoading: isIntegrationsLoading } = useActiveIntegrations();
   const {
-    editMode,
-    onTestWorkflowDismiss,
     template,
     isLoading,
-    isUpdateLoading,
-    onSubmit,
-    loadingEditTemplate,
-    handleSubmit,
-    errors,
-    methods,
-    isDirty,
-    isEmbedModalVisible,
+    isCreating,
+    isUpdating,
+    editMode,
+    createdTemplateId,
     trigger,
-    onTriggerModalDismiss,
-  } = useTemplateController(templateId);
-  const isCreateTemplatePage = location.pathname === '/templates/create';
+    onSubmit,
+    addStep,
+    deleteStep,
+  } = useTemplateEditorForm();
+  const { activePage, setActivePage, activeStepIndex } = useTemplateEditorContext();
+  const methods = useFormContext<IForm>();
+  const {
+    formState: { isDirty },
+    handleSubmit,
+  } = methods;
 
+  const isCreateTemplatePage = location.pathname === ROUTES.TEMPLATES_CREATE;
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
+
+  const onInvalid = async (errors: FieldErrors<IForm>) => {
+    errorMessage(getExplicitErrors(errors));
+  };
 
   const [testWorkflowModalOpened, { close: closeTestWorkflowModal, open: openTestWorkflowModal }] = useDisclosure(
     false,
     {
       onClose() {
-        onTestWorkflowDismiss();
+        if (!editMode) {
+          navigate(`/templates/edit/${createdTemplateId}`);
+        }
       },
     }
   );
   const [saveChangesModalOpened, { close: closeSaveChangesModal, open: openSaveChangesModal }] = useDisclosure(false);
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
 
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const page = searchParams.page;
+    if (page !== ActivePageEnum.WORKFLOW) {
+      return;
+    }
+
+    setActivePage(page);
+  }, [searchParams.page]);
+
   const onConfirmSaveChanges = async (data: IForm) => {
     await onSubmit(data);
     closeSaveChangesModal();
     openTestWorkflowModal();
+  };
+
+  const onSubmitHandler = async (data: IForm) => {
+    await onSubmit(data, {
+      onCreateSuccess: () => {
+        setTriggerModalVisible(true);
+      },
+    });
   };
 
   const onTestWorkflowClicked = () => {
@@ -92,27 +125,33 @@ export default function TemplateEditorPage() {
         if (template._parentId) {
           navigate(`/templates/edit/${template._parentId}`);
         } else {
-          navigate('/templates');
+          navigate(ROUTES.TEMPLATES);
         }
       }
     }
   }, [environment, template]);
 
   if (environment && environment?.name === 'Production' && isCreateTemplatePage) {
-    navigate('/templates');
+    navigate(ROUTES.TEMPLATES);
   }
 
-  if (isLoading) return null;
+  if (isCreating) return null;
 
   return (
     <>
+      <TourProvider />
       <PageContainer>
         <PageMeta title={editMode ? template?.name : 'Create Template'} />
-        <form name="template-form" noValidate onSubmit={handleSubmit(onSubmit)} style={{ minHeight: '100%' }}>
+        <form
+          name="template-form"
+          noValidate
+          onSubmit={handleSubmit(onSubmitHandler, onInvalid)}
+          style={{ minHeight: '100%' }}
+        >
           <When truthy={activePage !== ActivePageEnum.WORKFLOW}>
             <TemplatePageHeader
-              loading={isLoading || isUpdateLoading}
-              disableSubmit={readonly || loadingEditTemplate || isLoading || !isDirty}
+              loading={isCreating || isUpdating}
+              disableSubmit={readonly || isLoading || isCreating || !isDirty}
               templateId={templateId}
               setActivePage={setActivePage}
               activePage={activePage}
@@ -121,43 +160,35 @@ export default function TemplateEditorPage() {
           </When>
 
           {(activePage === ActivePageEnum.SETTINGS || activePage === ActivePageEnum.TRIGGER_SNIPPET) && (
-            <TemplateSettings
-              activePage={activePage}
-              setActivePage={setActivePage}
-              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
-              templateId={templateId}
-            />
+            <TemplateSettings activePage={activePage} setActivePage={setActivePage} templateId={templateId} />
           )}
 
           {activePage === ActivePageEnum.WORKFLOW && (
             <ReactFlowProvider>
-              <WorkflowEditorPage
+              <WorkflowEditor
                 activePage={activePage}
-                activeStep={activeStep}
-                setActiveStep={setActiveStep}
                 templateId={templateId}
                 setActivePage={setActivePage}
                 onTestWorkflowClicked={onTestWorkflowClicked}
+                isCreatingTemplate={isCreating}
+                isUpdatingTemplate={isUpdating}
+                addStep={addStep}
+                deleteStep={deleteStep}
               />
             </ReactFlowProvider>
           )}
 
           <When truthy={activePage === ActivePageEnum.USER_PREFERENCE}>
-            <UserPreference
-              activePage={activePage}
-              setActivePage={setActivePage}
-              showErrors={methods.formState.isSubmitted && Object.keys(errors).length > 0}
-              templateId={templateId}
-            />
+            <UserPreference activePage={activePage} setActivePage={setActivePage} />
           </When>
-          {!loadingEditTemplate && !isIntegrationsLoading ? (
-            <TemplateEditor activeStep={activeStep} activePage={activePage} templateId={templateId} />
+          {!isLoading && !isIntegrationsLoading ? (
+            <TemplateEditor activeStepIndex={activeStepIndex} activePage={activePage} />
           ) : null}
           {trigger && (
             <TemplateTriggerModal
               trigger={trigger}
               onDismiss={onTriggerModalDismiss}
-              isVisible={!saveChangesModalOpened && !testWorkflowModalOpened && isEmbedModalVisible}
+              isVisible={!saveChangesModalOpened && !testWorkflowModalOpened && isTriggerModalVisible}
             />
           )}
           {trigger && !isDirty && (
@@ -175,7 +206,8 @@ export default function TemplateEditorPage() {
         onConfirm={onConfirmSaveChanges}
         isVisible={saveChangesModalOpened}
         onDismiss={closeSaveChangesModal}
-        loading={isLoading || isUpdateLoading}
+        loading={isCreating || isUpdating}
+        onInvalid={onInvalid}
       />
       <ExecutionDetailsModalWrapper
         transactionId={transactionId}
@@ -187,6 +219,7 @@ export default function TemplateEditorPage() {
         cancelNavigation={cancelNavigation}
         confirmNavigation={confirmNavigation}
       />
+      <BlueprintModal />
     </>
   );
 }

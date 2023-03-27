@@ -1,0 +1,21 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "stabilityDays": 3,
+  "extends": ["config:base"],
+  "prConcurrentLimit": 3,
+  "ignoreDeps": ["express", "node", "@types/node", "axios"],
+  "packageRules": [
+    {
+      "packagePatterns": ["^rollup", "@rollup"],
+      "groupName": "Update rollup packages"
+    },
+    {
+      "packagePatterns": ["^@babel/"],
+      "groupName": "Update babel packages"
+    },
+    {
+      "packageNames": ["jest", "@types/jest", "babel-jest", "ts-jest"],
+      "groupName": "Update jest packages"
+    }
+  ]
+}

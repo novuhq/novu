@@ -4,6 +4,7 @@ import {
   ButtonTypeEnum,
   MessageActionStatusEnum,
   IParamObject,
+  IPaginatedResponse,
 } from '@novu/shared';
 import {
   ITabCountQuery,
@@ -88,14 +89,27 @@ export class ApiService {
     });
   }
 
+  async removeMessage(messageId: string): Promise<any> {
+    return await this.httpClient.delete(`/widgets/messages/${messageId}`, {});
+  }
+
+  async markAllMessagesAsRead(feedId?: string | string[]): Promise<any> {
+    return await this.httpClient.post(`/widgets/messages/read`, {
+      feedId,
+    });
+  }
+
   async getNotificationsList(
     page: number,
     query: IStoreQuery = {}
-  ): Promise<IMessage[]> {
-    return await this.httpClient.get(`/widgets/notifications/feed`, {
-      page,
-      ...query,
-    });
+  ): Promise<IPaginatedResponse<IMessage>> {
+    return await this.httpClient.getFullResponse(
+      `/widgets/notifications/feed`,
+      {
+        page,
+        ...query,
+      }
+    );
   }
 
   async initializeSession(

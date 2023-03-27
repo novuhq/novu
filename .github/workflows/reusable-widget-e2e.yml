@@ -4,9 +4,6 @@ name: Test E2E WIDGET
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
-    secrets:
-      cypress_key:
-        required: false
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -19,35 +16,12 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - name: Setup kernel for react native, increase watchers
-        run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+        id: setup-project
         with:
-          node-version: '16.15.1'
-
-      - name: Start Redis
-        uses: supercharge/redis-github-action@1.2.0
-
-      - name: Start MongoDB
-        uses: supercharge/mongodb-github-action@1.3.0
-        with:
-          mongodb-version: 4.2.8
-
-      - name: Cache pnpm modules
-        uses: actions/cache@v2
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-
-
-      - uses: pnpm/action-setup@v2.0.1
-        with:
-          version: 7.5.0
-          run_install: true
-
-      - uses: mansagroup/nrwl-nx-action@v2
+          cypress_version: 10.1.0
+      - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint
           projects: '@novu/widget'
@@ -76,20 +50,25 @@ jobs:
       - name: Install wait-on plugin
         run: npm i -g wait-on
       - name: Wait on API
-        run: wait-on --timeout=120000 http://localhost:1336/v1/health-check
+        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
 
-      - name: Wait on API
-        run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
+      - name: Wait on WS
+        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check
 
       - name: Wait on WIDGET
-        run: wait-on --timeout=90000 http://localhost:3500
+        run: wait-on --timeout=180000 http://localhost:3500
+
+      - name: Cypress install
+        if: steps.setup-project.outputs.cypress_cache_hit != 'true'
+        working-directory: apps/widget
+        run: pnpm cypress install
 
       - name: Cypress run
         uses: cypress-io/github-action@v2
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WIDGET_KEY }}
         with:
           working-directory: apps/widget
           wait-on: http://localhost:3500
