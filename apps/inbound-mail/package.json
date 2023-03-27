@@ -34,7 +34,7 @@
     "newrelic": "9.7.5",
     "node-uuid": "^1.4.3",
     "rimraf": "^3.0.2",
-    "rxjs": "7.5.6",
+    "rxjs": "7.8.0",
     "shelljs": "^0.8.5",
     "smtp-server": "^1.4.0",
     "spamc": "0.0.5",
