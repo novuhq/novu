@@ -16,8 +16,8 @@ export class GetMyProfileUsecase {
     }
 
     /*
-     * This code is added for intercom identity verification, so that all we have hash value saved for all users.
-     * It can be deleted after 30 Sept, 2023.
+     * This code is added for intercom identity verification, so that we have hash value saved for all users.
+     * This code can be deleted after 30 Sept, 2023.
      * Read more about Intercom Identity Verification here
      * https://www.intercom.com/help/en/articles/183-enable-identity-verification-for-web-and-mobile
      */
