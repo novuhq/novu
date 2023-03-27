@@ -1851,7 +1851,7 @@ importers:
       '@angular/platform-browser-dynamic': ~15.2.0
       '@novu/notification-center': ^0.13.0
       '@types/jasmine': ~4.3.0
-      jasmine-core: ~4.5.0
+      jasmine-core: ~4.6.0
       karma: ~6.4.0
       karma-chrome-launcher: ~3.1.0
       karma-coverage: ~2.2.0
@@ -1879,12 +1879,12 @@ importers:
       '@angular/cli': 15.2.0
       '@angular/compiler-cli': 15.2.0_m4al3dxpm6stx7f4nyyv5fszcu
       '@types/jasmine': 4.3.0
-      jasmine-core: 4.5.0
+      jasmine-core: 4.6.0
       karma: 6.4.1
       karma-chrome-launcher: 3.1.1
       karma-coverage: 2.2.0
       karma-jasmine: 5.1.0_karma@6.4.1
-      karma-jasmine-html-reporter: 2.0.0_uk6l45dlsjldsnfgnal4othgyq
+      karma-jasmine-html-reporter: 2.0.0_vl3unt3t2otf46m2vvwnwo5vau
       ng-packagr: 15.2.2_meza2iixju3rjas5dlbjsn2nee
       typescript: 4.9.5
 
@@ -42615,6 +42615,10 @@ packages:
     resolution: {integrity: sha512-9PMzyvhtocxb3aXJVOPqBDswdgyAeSB81QnLop4npOpbqnheaTEwPc9ZloQeVswugPManznQBjD8kWDTjlnHuw==}
     dev: true
 
+  /jasmine-core/4.6.0:
+    resolution: {integrity: sha512-O236+gd0ZXS8YAjFx8xKaJ94/erqUliEkJTDedyE7iHvv4ZVqi+q+8acJxu05/WJDKm512EUNn809In37nWlAQ==}
+    dev: true
+
   /java-properties/1.0.2:
     resolution: {integrity: sha512-qjdpeo2yKlYTH7nFdK0vbZWuTCesk4o63v5iVOlhMQPfuIZQfW/HI35SjfhA+4qpg36rnFSvUK5b1m+ckIblQQ==}
     engines: {node: '>= 0.6.0'}
@@ -44282,6 +44286,18 @@ packages:
       karma-jasmine: ^5.0.0
     dependencies:
       jasmine-core: 4.5.0
+      karma: 6.4.1
+      karma-jasmine: 5.1.0_karma@6.4.1
+    dev: true
+
+  /karma-jasmine-html-reporter/2.0.0_vl3unt3t2otf46m2vvwnwo5vau:
+    resolution: {integrity: sha512-SB8HNNiazAHXM1vGEzf8/tSyEhkfxuDdhYdPBX2Mwgzt0OuF2gicApQ+uvXLID/gXyJQgvrM9+1/2SxZFUUDIA==}
+    peerDependencies:
+      jasmine-core: ^4.0.0
+      karma: ^6.0.0
+      karma-jasmine: ^5.0.0
+    dependencies:
+      jasmine-core: 4.6.0
       karma: 6.4.1
       karma-jasmine: 5.1.0_karma@6.4.1
     dev: true
