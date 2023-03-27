@@ -90,7 +90,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Events')
     .addTag('Subscribers')
     .addTag('Topics')
-    .addTag('Activity')
+    .addTag('Notification')
     .addTag('Integrations')
     .addTag('Layouts')
     .addTag('Notification templates')
