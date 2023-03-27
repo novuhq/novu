@@ -55,18 +55,12 @@ const buildMessageCountKey = () => {
 };
 
 const buildNotificationTemplateKey = () => {
-  const cache = ({
-    _environmentId,
-    identifiers,
-  }: {
-    _environmentId: string;
-    identifiers: ({ id: string } & { triggerIdentifier?: string }) | ({ id?: string } & { triggerIdentifier: string });
-  }): string =>
+  const cache = (options: IBuildNotificationTemplateByIdentifier): string =>
     buildQueryKeyByEnvironment({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
-      environmentId: _environmentId,
-      query: identifiers as unknown as Record<string, unknown>,
+      environmentId: options._environmentId,
+      query: options as unknown as Record<string, unknown>,
     });
 
   const invalidate = ({ _environmentId }: { _environmentId: string }): string =>
@@ -142,5 +136,10 @@ export const buildQueryKey = ({
     identifierPrefix,
     identifier,
   })}:${QUERY_PREFIX}=${JSON.stringify(query)}`;
+
+export interface IBuildNotificationTemplateByIdentifier {
+  _environmentId: string;
+  identifiers: ({ id: string } & { triggerIdentifier?: string }) | ({ id?: string } & { triggerIdentifier: string });
+}
 
 export { buildFeedKey, buildMessageCountKey, buildNotificationTemplateKey };

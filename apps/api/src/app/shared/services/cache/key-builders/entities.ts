@@ -49,4 +49,4 @@ const buildKeyById = ({
   identifier: string;
 }): string => `${type}:${keyEntity}:${identifierPrefix}=${identifier}`;
 
-export { buildUserKey, buildIntegrationKey, buildSubscriberKey, buildEnvironmentByApiKey };
+export { buildUserKey, buildIntegrationKey, buildSubscriberKey, buildEnvironmentByApiKey, buildKeyById };

@@ -13,10 +13,10 @@ import {
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
 import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 import { buildQueryKey } from '../../../shared/services/cache/key-builders/queries';
 import { CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/key-builders/shared';
+import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;

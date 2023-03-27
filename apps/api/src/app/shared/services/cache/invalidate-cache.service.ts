@@ -7,37 +7,6 @@ import { CacheKeyPrefixEnum } from './key-builders/shared';
 export class InvalidateCacheService {
   constructor(private cacheService: CacheService) {}
 
-  public async clearCache({
-    storeKeyPrefix,
-    credentials,
-  }: {
-    storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[];
-    credentials: { _id: string; _environmentId: string } | Record<string, unknown>;
-  }) {
-    Logger.log('Clearing the cache of keys with the specified prefixes');
-    Logger.debug('StoreKeyPrefix(s) are: ' + storeKeyPrefix);
-    Logger.debug('Credentials are: ' + (credentials._id as string));
-    if (!this.cacheService?.cacheEnabled()) {
-      Logger.verbose('Cashing service is not enabled to clear Cache.');
-
-      return;
-    }
-
-    if (Array.isArray(storeKeyPrefix)) {
-      Logger.verbose('Mapping all keys to flush');
-      const invalidatePromises = storeKeyPrefix.map((prefix) => {
-        return this.clearByPattern(prefix, credentials);
-      });
-
-      Logger.debug('invalidate promises are: ' + invalidatePromises);
-      Logger.verbose('Removing all keys with prefix');
-      await Promise.all(invalidatePromises);
-    } else {
-      Logger.warn('StoreKeyPrefix is not in array format');
-      await this.clearByPattern(storeKeyPrefix, credentials);
-    }
-  }
-
   public async invalidateByKey({ key }: { key: string }) {
     if (!this.cacheService?.cacheEnabled()) return;
 
