@@ -6,7 +6,7 @@ import {
 } from '@novu/stateless';
 
 import axios, { AxiosInstance } from 'axios';
-import moment from 'moment';
+import { fromUnixTime } from 'date-fns';
 
 export class MaqsamSmsProvider implements ISmsProvider {
   id = 'maqsam';
@@ -43,7 +43,7 @@ export class MaqsamSmsProvider implements ISmsProvider {
 
     return {
       id: mapsamResponse.data.message.identifier,
-      date: moment.unix(mapsamResponse.data.message.timestamp).toISOString(),
+      date: fromUnixTime(mapsamResponse.data.message.timestamp).toISOString(),
     };
   }
 }

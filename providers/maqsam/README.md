@@ -1,6 +1,6 @@
 # Nodejs Maqsam Provider
 
-A mapsam sms provider library for [@novu/stateless](https://github.com/novuhq/novu).
+A Maqsam SMS provider library for [@novu/node](https://github.com/novuhq/novu).
 
 ## Usage
 
@@ -10,7 +10,7 @@ import { MaqsamSmsProvider } from '@novu/maqsam';
 const provider = new MaqsamSmsProvider({
   accessKeyId: process.env.MAQSAM_ACCESS_KEY_ID,
   accessSecret: process.env.MAQSAM_ACCESS_SECRET,
-  from: process.env.MAQSAM_SENDER_ID, // a valid twilio phone number
+  from: process.env.MAQSAM_SENDER_ID, // a valid Maqsam sender ID
 });
 
 await provider.sendMessage({
