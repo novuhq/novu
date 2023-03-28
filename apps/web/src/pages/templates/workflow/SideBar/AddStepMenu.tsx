@@ -4,7 +4,6 @@ import { colors, DragButton, Text } from '../../../../design-system';
 import { channels, NodeTypeEnum } from '../../shared/channels';
 import { useEnvController } from '../../../../hooks';
 import { When } from '../../../../components/utils/When';
-import { NavSection } from '../../components/TemplatesSideBar';
 import { StyledNav } from '../WorkflowEditor';
 
 export function AddStepMenu({
@@ -18,11 +17,11 @@ export function AddStepMenu({
 
   return (
     <StyledNav data-test-id="drag-side-menu">
-      <NavSection>
+      <div>
         <Title color={colors.B60} size={16} mb={16}>
           Channels
         </Title>
-      </NavSection>
+      </div>
       <When truthy={!readonly}>
         <Stack spacing={18}>
           {channels
@@ -32,7 +31,7 @@ export function AddStepMenu({
             ))}
         </Stack>
       </When>
-      <NavSection
+      <div
         style={{
           marginTop: '15px',
         }}
@@ -40,7 +39,7 @@ export function AddStepMenu({
         <Title color={colors.B60} size={16} mb={16}>
           Actions
         </Title>
-      </NavSection>
+      </div>
       <When truthy={!readonly}>
         <Stack spacing={18}>
           {channels

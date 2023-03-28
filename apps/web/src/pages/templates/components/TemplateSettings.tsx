@@ -17,7 +17,7 @@ import { WorkflowSettingsTabs } from './WorkflowSettingsTabs';
 export const TemplateSettings = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
   const { readonly } = useEnvController();
-  const { editMode, trigger } = useTemplateEditorForm();
+  const { trigger } = useTemplateEditorForm();
   const [toDelete, setToDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isError, setIsError] = useState<string | undefined>(undefined);
@@ -51,24 +51,23 @@ export const TemplateSettings = () => {
     <SubPageWrapper title="Workflow Settings">
       <WorkflowSettingsTabs />
       <NotificationSettingsForm trigger={trigger} />
-      {editMode && (
-        <Group position="right">
-          <DeleteNotificationButton
-            mt={48}
-            variant="outline"
-            disabled={readonly}
-            data-test-id="delete-notification-button"
-            onClick={onDelete}
-          >
-            <Trash
-              style={{
-                marginRight: '5px',
-              }}
-            />
-            Delete Workflow
-          </DeleteNotificationButton>
-        </Group>
-      )}
+
+      <Group position="right">
+        <DeleteNotificationButton
+          mt={48}
+          variant="outline"
+          disabled={readonly}
+          data-test-id="delete-notification-button"
+          onClick={onDelete}
+        >
+          <Trash
+            style={{
+              marginRight: '5px',
+            }}
+          />
+          Delete Workflow
+        </DeleteNotificationButton>
+      </Group>
       <DeleteConfirmModal
         target="notification template"
         isOpen={toDelete}

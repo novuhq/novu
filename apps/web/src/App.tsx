@@ -34,8 +34,6 @@ import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
 import { Setup } from './pages/quick-start/steps/Setup';
 import { Trigger } from './pages/quick-start/steps/Trigger';
-import { TemplateEditorProvider } from './pages/templates/editor/TemplateEditorProvider';
-import { TemplateEditorFormProvider } from './pages/templates/components/TemplateEditorFormProvider';
 import { RequiredAuth } from './components/layout/RequiredAuth';
 import { GetStarted } from './pages/quick-start/steps/GetStarted';
 import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
@@ -181,33 +179,8 @@ function App() {
                 <Route element={<AppLayout />}>
                   <Route path={ROUTES.ANY} element={<HomePage />} />
                   <Route path={ROUTES.TEMPLATES_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
-                  <Route
-                    path={ROUTES.TEMPLATES_CREATE}
-                    element={
-                      <TemplateEditorFormProvider>
-                        <TemplateEditorProvider>
-                          <TemplateEditorPage />
-                        </TemplateEditorProvider>
-                      </TemplateEditorFormProvider>
-                    }
-                  >
-                    <Route path={ROUTES.TEMPLATES_CREATE} element={<Sidebar />} />
-                    <Route path={ROUTES.TEMPLATES_CREATE + '/settings'} element={<TemplateSettings />} />
-                    <Route path={ROUTES.TEMPLATES_CREATE + '/channels'} element={<UserPreference />} />
-                    <Route path={ROUTES.TEMPLATES_CREATE + '/testworkflow'} element={<TestWorkflow />} />
-                    <Route path={ROUTES.TEMPLATES_CREATE + '/snippet'} element={<SnippetPage />} />
-                    <Route path={ROUTES.TEMPLATES_CREATE + '/:channel/:stepUuid'} element={<TemplateEditor />} />
-                  </Route>
-                  <Route
-                    path={ROUTES.TEMPLATES_EDIT_TEMPLATEID}
-                    element={
-                      <TemplateEditorFormProvider>
-                        <TemplateEditorProvider>
-                          <TemplateEditorPage />
-                        </TemplateEditorProvider>
-                      </TemplateEditorFormProvider>
-                    }
-                  >
+                  <Route path={ROUTES.TEMPLATES_CREATE} element={<TemplateEditorPage />} />
+                  <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
                     <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID} element={<Sidebar />} />
                     <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/settings'} element={<TemplateSettings />} />
                     <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/channels'} element={<UserPreference />} />

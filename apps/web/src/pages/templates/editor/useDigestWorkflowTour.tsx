@@ -1,14 +1,13 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Step } from 'react-joyride';
 import { useFormContext } from 'react-hook-form';
 import { StepTypeEnum } from '@novu/shared';
 
-import { useTemplateEditorContext } from './TemplateEditorProvider';
-import { ActivePageEnum } from '../../../constants/editorEnums';
 import { useEffectOnce } from '../../../hooks';
 import { IForm } from '../components/formTypes';
 import { DigestWorkflowTourTooltip } from './DigestWorkflowTourTooltip';
+import { useBasePath } from '../hooks/useBasePath';
 
 const digestTourSteps: Step[] = [
   {
@@ -44,16 +43,17 @@ const digestTourSteps: Step[] = [
 ];
 
 export const useDigestWorkflowTour = ({ startTour }: { startTour: () => void }) => {
-  const { setSelectedNodeId, setActivePage } = useTemplateEditorContext();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const isDigestTour = queryParams.get('tour') == 'digest';
   const { watch } = useFormContext<IForm>();
   const steps = watch('steps');
+  const navigate = useNavigate();
+  const basePath = useBasePath();
 
   useEffect(() => {
     if (isDigestTour) {
-      setActivePage(ActivePageEnum.WORKFLOW);
+      navigate(basePath + '/');
     }
   }, []);
 
@@ -62,7 +62,7 @@ export const useDigestWorkflowTour = ({ startTour }: { startTour: () => void }) 
     const digestStep = steps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
     if (digestStep) {
       setTimeout(() => {
-        setSelectedNodeId(digestStep.id || '');
+        navigate(basePath + '/' + StepTypeEnum.DIGEST + '/' + digestStep?.uuid);
         startTour();
       }, 0);
     }

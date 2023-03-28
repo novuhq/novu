@@ -17,7 +17,6 @@ export function useTemplateController(templateId?: string) {
   >(createTemplate, {
     onSuccess: async () => {
       await client.refetchQueries([QueryKeys.changesCount]);
-      successMessage('Template saved successfully');
     },
   });
 

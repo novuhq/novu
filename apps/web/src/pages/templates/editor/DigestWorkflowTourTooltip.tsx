@@ -8,10 +8,10 @@ import { StepTypeEnum } from '@novu/shared';
 import { useTour } from './TourProvider';
 import { Button, colors, DotsNavigation } from '../../../design-system';
 import { Clock, LetterOpened, BellWithNotification } from '../../../design-system/icons';
-import { useTemplateEditorContext } from './TemplateEditorProvider';
 import { IForm } from '../components/formTypes';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { DigestWorkflowTourAnalyticsEnum, HINT_INDEX_TO_CLICK_ANALYTICS, ordinalNumbers } from '../constants';
+import { useBasePath } from '../hooks/useBasePath';
 
 const ICONS = [Clock, LetterOpened, BellWithNotification];
 const TITLE = ['Set-up time interval', 'Set-up email content', 'Test your workflow'];
@@ -72,26 +72,26 @@ export const DigestWorkflowTourTooltip = ({
   size,
 }: TooltipRenderProps) => {
   const segment = useSegment();
-  const { setSelectedNodeId } = useTemplateEditorContext();
   const { watch } = useFormContext<IForm>();
   const steps = watch('steps');
   const { stopTour, setStep } = useTour();
   const location = useLocation();
   const navigate = useNavigate();
   const Icon = ICONS[index];
+  const basePath = useBasePath();
 
   const handleOnClick = (tourStepIndex: number, isFromNavigation = false) => {
     if (tourStepIndex === 0) {
       const digestStep = steps.find((el) => el.template?.type === StepTypeEnum.DIGEST);
       setStep(tourStepIndex);
-      setSelectedNodeId(digestStep?.id || '');
+      navigate(basePath + '/' + StepTypeEnum.DIGEST + '/' + digestStep?.uuid);
     } else if (tourStepIndex === 1) {
       const emailStep = steps.find((el) => el.template?.type === StepTypeEnum.EMAIL);
       setStep(tourStepIndex);
-      setSelectedNodeId(emailStep?.id || '');
+      navigate(basePath + '/' + StepTypeEnum.EMAIL + '/' + emailStep?.uuid);
     } else if (tourStepIndex === 2) {
       setStep(tourStepIndex);
-      setSelectedNodeId('');
+      navigate(basePath);
     }
 
     const stepIndex = isFromNavigation ? tourStepIndex : index;

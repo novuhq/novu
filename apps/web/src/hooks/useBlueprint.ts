@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { getToken } from './useAuthController';
 import { useSegment } from '../components/providers/SegmentProvider';
-import { ActivePageEnum } from '../constants/editorEnums';
 
 export const useBlueprint = () => {
   const searchParams = useSearchParams();
@@ -16,7 +15,7 @@ export const useBlueprint = () => {
     const token = getToken();
 
     if (id && token !== null) {
-      navigate(`/templates/create?page=${ActivePageEnum.WORKFLOW}`, {
+      navigate(`/templates/create`, {
         replace: true,
       });
     }

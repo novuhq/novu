@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { ActionIcon, Grid, Stack } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -25,7 +24,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
     getValues,
   } = useFormContext<IForm>();
 
-  const { template, editMode } = useTemplateEditorForm();
+  const { template } = useTemplateEditorForm();
   const { templateId = '' } = useParams<{ templateId: string }>();
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
@@ -45,19 +44,6 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
       queryClient.setQueryData(['notificationGroups'], [...groups, data]);
     },
   });
-
-  useEffect(() => {
-    const group = getValues('notificationGroupId');
-    if (groups?.length && !editMode && !group) {
-      selectFirstGroupByDefault();
-    }
-  }, [groups, editMode]);
-
-  function selectFirstGroupByDefault() {
-    setTimeout(() => {
-      setValue('notificationGroupId', groups[0]._id);
-    }, 500);
-  }
 
   function addGroupItem(newGroup: string): undefined {
     if (newGroup) {
@@ -79,23 +65,21 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
     <>
       <Grid gutter={0}>
         <Grid.Col span={6}>
-          {editMode && (
-            <Stack
-              justify="center"
-              sx={{
-                height: '100%',
-              }}
-            >
-              <Switch
-                label={isTemplateActive ? 'Active' : 'Inactive'}
-                loading={isStatusChangeLoading}
-                disabled={readonly}
-                data-test-id="active-toggle-switch"
-                onChange={(e) => changeActiveStatus(e.target.checked)}
-                checked={isTemplateActive || false}
-              />
-            </Stack>
-          )}
+          <Stack
+            justify="center"
+            sx={{
+              height: '100%',
+            }}
+          >
+            <Switch
+              label={isTemplateActive ? 'Active' : 'Inactive'}
+              loading={isStatusChangeLoading}
+              disabled={readonly}
+              data-test-id="active-toggle-switch"
+              onChange={(e) => changeActiveStatus(e.target.checked)}
+              checked={isTemplateActive || false}
+            />
+          </Stack>
         </Grid.Col>
         <Grid.Col span={6}>
           <Controller
@@ -112,7 +96,6 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
                     disabled={readonly}
                     creatable
                     searchable
-                    required={!editMode}
                     error={errors.notificationGroupId?.message}
                     getCreateLabel={(newGroup) => (
                       <div data-test-id="submit-category-btn">+ Create Group {newGroup}</div>
@@ -136,7 +119,6 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
             {...field}
             data-test-id="title"
             disabled={readonly}
-            required={!editMode}
             value={field.value || ''}
             error={errors.name?.message}
             label="Name"
