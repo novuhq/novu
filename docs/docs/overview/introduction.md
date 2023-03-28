@@ -26,6 +26,12 @@ With Novu, you can focus on delivering the best experience to your customers, an
 
 ## Community Driven
 
-When we just started, we felt the frustration of reinventing the wheel of notification infrastructure is a unique problem that not a lot of developers have experienced. After a couple of conversations with fellow engineers, we decided to open-source the initial seed of Novu. Oh boy, how wrong we were. Thousands of developers from around the world reached out to tell us their stories of building such systems in-house.
+When we just started, we felt the frustration of reinventing the wheel of notification infrastructure and thought that it was a unique problem that not a lot of developers had experienced.
 
-Building Novu is not an act of an individual, it’s a collaborative work of many. Join us in building the future of notification experiences.
+After a couple of conversations with fellow engineers, we decided to open-source the initial seed of Novu. And boy, were we wrong!
+
+The seed exploded and thousands of developers from around the world started reaching out to tell us their stories of building such systems in-house.
+
+It was then that we realized: Building Novu was not going to be an act of an individual alone. Rather it’s a collaborative work of many.
+
+That's why we invite you to join us in building the future of notification experiences. Let's work together to create a better way to keep users informed and engaged.
