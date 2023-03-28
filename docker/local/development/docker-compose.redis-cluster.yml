@@ -129,7 +129,7 @@ services:
     image: rediscommander/redis-commander:latest
     container_name: redis_web
     environment:
-      REDIS_HOSTS: "local:redis_1:6379,local:redis_2:6379,local:redis_3:6379"
+      REDIS_HOSTS: "local:redis_1:6379,local:redis_2:6379,local:redis_3:6379,local:redis_4:6379,local:redis_5:6379,local:redis_6:6379"
     ports:
       - "5001:8081"
     depends_on:
