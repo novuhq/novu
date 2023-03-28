@@ -8,8 +8,9 @@ You can easily integrate your favorite delivery provider using the built-in [int
 
 To read a provider specific documentation:
 
-- [Expo Push](/channels/push/expo)
 - [Firebase Cloud Messages](/channels/push/fcm)
+- [Expo Push](/channels/push/expo)
+- [Apple Push Notification Service](/channels/push/apns)
 
 :::info
 Novu supports multiple active providers for push channel.
