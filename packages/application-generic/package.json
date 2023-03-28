@@ -59,6 +59,7 @@
     "@novu/shared": "^0.12.0",
     "@novu/slack": "^0.12.0",
     "@novu/sms77": "^0.12.0",
+    "@novu/sms-central": "^0.12.0",
     "@novu/sns": "^0.12.0",
     "@novu/stateless": "^0.12.0",
     "@novu/telnyx": "^0.12.0",

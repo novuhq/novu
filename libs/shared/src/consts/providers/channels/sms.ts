@@ -13,6 +13,7 @@ import {
   clickatellConfig,
   fortySixElksConfig,
   kannelConfig,
+  smsCentralConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -125,5 +126,13 @@ export const smsProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: 'https://www.kannel.org/doc.shtml',
     logoFileName: { light: 'kannel.png', dark: 'kannel.png' },
+  },
+  {
+    id: SmsProviderIdEnum.SmsCentral,
+    displayName: 'SMS Central',
+    channel: ChannelTypeEnum.SMS,
+    credentials: smsCentralConfig,
+    docReference: 'https://www.smscentral.com.au/sms-api/',
+    logoFileName: { light: 'sms-central.png', dark: 'sms-central.png' },
   },
 ];
