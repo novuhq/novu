@@ -14,9 +14,9 @@ Novu’s goal is to help developers create meaningful and transactional communic
 
 ## Unified API
 
-Today, users tend to receive communication across multiple providers. [Sendgrid](https://sendgrid.com/) for Email, [Twilio](https://www.twilio.com/) for SMS, Mailchimp, Push, Web-Push, and Chat messaging (Slack, etc...). The main reason behind this is that users expect to customize the communication channels to fit their needs and goals. This forces developers to manage all of those APIs across the codebase.
+Today, users tend to receive communication from multiple providers: [Sendgrid](https://sendgrid.com/) for Email, [Twilio](https://www.twilio.com/) for SMS, Mailchimp, Push, Web-Push, and Chat messaging (Slack, etc...). The main reason behind this is that users expect to customize the communication channels to fit their needs and goals. This forces developers to manage all of those APIs across the codebase.
 
-As developers, we tend to create abstractions, but following the growing number of integrations, channels of communication that are sent become a burden on the team and are usually implemented only on an as just-make-it-work-mode.
+As developers, we tend to create abstractions. However with growing number of integrations, channels of communication that are sent become a burden on the team and are usually implemented hastily in a "just-make-it-work" mode.
 
 Novu provides a single API to manage all your customer communication. Do you need to add a new provider? Consider switching your email provider. When SendGrid goes down, do you fall back to mailgun? Don't worry, we've got you covered!
 
