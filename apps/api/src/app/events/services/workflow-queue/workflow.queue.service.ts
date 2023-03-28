@@ -23,6 +23,7 @@ import {
   CreateExecutionDetailsCommand,
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
+import { BullmqService } from '@novu/application-generic';
 import { PinoLogger, storage, Store } from '@novu/application-generic';
 
 export const WORKER_NAME = 'standard';
@@ -46,10 +47,9 @@ export class WorkflowQueueService {
       tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
-  public readonly queue: Queue;
-  public readonly worker: Worker;
-  private readonly queueScheduler: QueueScheduler;
   readonly DEFAULT_ATTEMPTS = 3;
+
+  public readonly bullMqService: BullmqService;
 
   constructor(
     @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
@@ -60,31 +60,32 @@ export class WorkflowQueueService {
     private webhookFilterWebhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
-    this.queue = new Queue(WORKER_NAME, {
+    this.bullMqService = new BullmqService();
+
+    this.bullMqService.createQueue(WORKER_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
+    this.bullMqService.createWorker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
 
-    this.worker = new Worker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
-
-    this.worker.on('completed', async (job) => {
+    this.bullMqService.worker.on('completed', async (job) => {
       await this.jobHasCompleted(job);
     });
 
-    this.worker.on('failed', async (job, error) => {
+    this.bullMqService.worker.on('failed', async (job, error) => {
       await this.jobHasFailed(job, error);
     });
 
-    this.queueScheduler = new QueueScheduler(WORKER_NAME, this.bullConfig);
+    this.bullMqService.createScheduler(WORKER_NAME, this.bullConfig);
   }
 
   public async gracefulShutdown() {
     // Right now we only want this for testing purposes
     if (process.env.NODE_ENV === 'test') {
-      await this.queue.drain();
-      await this.worker.close();
+      await this.bullMqService.queue.drain();
+      await this.bullMqService.worker.close();
     }
   }
 
@@ -185,7 +186,7 @@ export class WorkflowQueueService {
     }
   }
 
-  public async addToQueue(id: string, data: JobEntity, delay?: number | undefined) {
+  public async addToQueue(id: string, data: JobEntity, delay?: number | undefined, organizationId?: string) {
     const options: JobsOptions = {
       removeOnComplete: true,
       removeOnFail: true,
@@ -201,7 +202,7 @@ export class WorkflowQueueService {
       options.attempts = this.DEFAULT_ATTEMPTS;
     }
 
-    await this.queue.add(id, data, options);
+    await this.bullMqService.add(id, data, options, organizationId);
   }
 
   private stepContainsFilter(data: JobEntity, onFilter: string) {

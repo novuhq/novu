@@ -192,13 +192,18 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!message) throw new ApiException('Message not found');
 
-    await this.queueService.wsSocketQueue.add({
-      event: 'notification_received',
-      userId: command.subscriberId,
-      payload: {
-        message,
+    await this.queueService.bullMqService.add(
+      'sendMessage',
+      {
+        event: 'notification_received',
+        userId: command.subscriberId,
+        payload: {
+          message,
+        },
       },
-    });
+      {},
+      command.organizationId
+    );
 
     const unseenCount = await this.messageRepository.getCount(
       command.environmentId,
@@ -227,21 +232,31 @@ export class SendMessageInApp extends SendMessageBase {
       })
     );
 
-    await this.queueService.wsSocketQueue.add({
-      event: 'unseen_count_changed',
-      userId: command.subscriberId,
-      payload: {
-        unseenCount,
+    await this.queueService.bullMqService.add(
+      'sendMessage',
+      {
+        event: 'unseen_count_changed',
+        userId: command.subscriberId,
+        payload: {
+          unseenCount,
+        },
       },
-    });
+      {},
+      command.organizationId
+    );
 
-    await this.queueService.wsSocketQueue.add({
-      event: 'unread_count_changed',
-      userId: command.subscriberId,
-      payload: {
-        unreadCount,
+    await this.queueService.bullMqService.add(
+      'sendMessage',
+      {
+        event: 'unread_count_changed',
+        userId: command.subscriberId,
+        payload: {
+          unreadCount,
+        },
       },
-    });
+      {},
+      command.organizationId
+    );
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({

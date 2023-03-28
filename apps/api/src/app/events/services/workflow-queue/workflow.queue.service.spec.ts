@@ -55,19 +55,17 @@ describe('Workflow Queue service', () => {
     expect(workflowQueueService).to.have.all.keys(
       'DEFAULT_ATTEMPTS',
       'bullConfig',
+      'bullMqService',
       'createExecutionDetails',
       'getBackoffStrategies',
-      'queue',
       'queueNextJob',
-      'queueScheduler',
       'runJob',
       'setJobAsCompleted',
       'setJobAsFailed',
-      'webhookFilterWebhookFilterBackoffStrategy',
-      'worker'
+      'webhookFilterWebhookFilterBackoffStrategy'
     );
     expect(workflowQueueService.DEFAULT_ATTEMPTS).to.eql(3);
-    expect(workflowQueueService.queue).to.deep.include({
+    expect(workflowQueueService.bullMqService.queue).to.deep.include({
       _events: {},
       _eventsCount: 0,
       _maxListeners: undefined,
@@ -76,7 +74,7 @@ describe('Workflow Queue service', () => {
         removeOnComplete: true,
       },
     });
-    expect(workflowQueueService.worker).to.deep.include({
+    expect(workflowQueueService.bullMqService.worker).to.deep.include({
       _eventsCount: 2,
       _maxListeners: undefined,
       name: 'standard',

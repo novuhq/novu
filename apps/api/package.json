@@ -121,6 +121,9 @@
     "twilio": "^3.72.0",
     "uuid": "^8.3.2"
   },
+  "optionalDependencies": {
+    "@taskforcesh/bullmq-pro": "5.1.14"
+  },
   "devDependencies": {
     "@faker-js/faker": "^6.0.0",
     "@nestjs/cli": "9.3.0",

@@ -101,7 +101,7 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    await this.triggerHandlerQueueService.queue.add(
+    await this.triggerHandlerQueueService.add(
       transactionId,
       {
         ...command,
@@ -109,10 +109,7 @@ export class ParseEventRequest {
         actor: mappedActor,
         transactionId,
       },
-      {
-        removeOnComplete: true,
-        removeOnFail: true,
-      }
+      command.organizationId
     );
 
     const steps = template.steps;
