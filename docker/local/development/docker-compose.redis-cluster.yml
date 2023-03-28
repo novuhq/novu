@@ -72,7 +72,7 @@ services:
     image: 'redis:7-alpine'
     container_name: redis_4
     ports:
-      - "6379"
+      - "6381:6379"
     volumes:
       - redis_4_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
@@ -85,7 +85,7 @@ services:
     image: 'redis:7-alpine'
     container_name: redis_5
     ports:
-      - "6379"
+      - "6382:6379"
     volumes:
       - redis_5_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
@@ -98,7 +98,7 @@ services:
     image: 'redis:7-alpine'
     container_name: redis_6
     ports:
-      - "6379"
+      - "6383:6379"
     volumes:
       - redis_6_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
