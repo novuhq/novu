@@ -1,3 +1,7 @@
+---
+sidebar_position: 5
+---
+
 # SparkPost
 
 You can use the [SparkPost](https://messagebird.com/email/cloud-sending) provider to send transactional emails to your customers using the Novu Platform with a single API.

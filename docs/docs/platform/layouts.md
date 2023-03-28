@@ -8,7 +8,7 @@ Novu allows the creation of layouts - a specific HTML design or structure to wra
 Layouts can be manipulated and assigned to new and existing templates within the Novu platform,
 allowing users to create, manage, and assign these layouts to templates, so they can be reused to structure the appearance of notifications sent through the platform.
 
-By default, a Novu layout will be created and assigned as the organization's default layout. At any time, you can choose any of your layouts as the default for your organization.
+By default, Novu will create a default layout and assign it as the organization's default layout. At any time, you can choose any of your layouts as the default for your organization.
 All new email templates will be assigned the default layout unless assigned a different one through the email editor.
 
 ## Manage Layouts
@@ -43,7 +43,25 @@ Layout content must include `{{{body}}}`, to indicate where the email editor con
 
 :::
 
-The creation of the layout can also be done through the Novu package.
+## Assign layout to template
+
+To assign, choose a layout through the email editor.
+You can preview your layout combined with your email content through the `Preview` tab.
+
+   <div align="center">
+     <picture>
+       <source media="(prefers-color-scheme: dark)" srcset="/img/platform/layouts/dark-assign-layout.png"/>
+       <img src="/img/platform/layouts/light-assign-layout.png" width="680" alt="Logo"/>
+     </picture>
+   </div>
+
+## Using SDK
+
+Novu SDK supports all layout functionalities:
+
+### Create a new layout
+
+A new layout can be created with name, description, content, variables and an <code>isDefault</code> flag. Here, content param is html content with custom variables.
 
 ```typescript
 const name: string = 'layout-name';
@@ -62,7 +80,24 @@ const { _id: layoutId } = await novu.layouts.create({
 });
 ```
 
-Likewise, the edition of an existing layout can also be done programatically. When updating none of the properties is mandatory and the API will only update the ones passed.
+```typescript
+interface ITemplateVariable {
+  type: TemplateVariableTypeEnum;
+  name: string;
+  required?: boolean;
+  defaultValue?: string | boolean;
+}
+
+enum TemplateVariableTypeEnum {
+  STRING = 'String',
+  ARRAY = 'Array',
+  BOOLEAN = 'Boolean',
+}
+```
+
+### Update existing layout
+
+When updating a layout, all properties are optional and the SDK will only update the ones passed.
 
 ```typescript
 const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout.
@@ -76,7 +111,9 @@ const updatedLayout = await novu.layouts.update(layoutId, {
 });
 ```
 
-And to set a layout as default programmatically it is as easy as to execute:
+### Set default layout
+
+When executing this, the existing default layout in the environment will be automatically set as non default and the chosen layout will be set as default. This action is non reversible.
 
 ```typescript
 const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout to be set as default.
@@ -84,24 +121,9 @@ const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout
 await novu.layouts.setDefault(layoutId);
 ```
 
-When executing this, the existing default layout in the environment will be automatically set as non default and the chosen layout will be set as default. This action is non reversible.
+### Delete an existing layout
 
-## Assign Layout to template
-
-To assign, choose a layout through the email editor.
-You can preview your layout combined with your email content through the `Preview` tab.
-
-   <div align="center">
-     <picture>
-       <source media="(prefers-color-scheme: dark)" srcset="/img/platform/layouts/dark-assign-layout.png"/>
-       <img src="/img/platform/layouts/light-assign-layout.png" width="680" alt="Logo"/>
-     </picture>
-   </div>
-
-## Delete a layout
-
-Layouts can also be deleted. The condition to be able to delete them is that they are not a default layout and that haven't been assigned to a notification template.
-Programmatically they can be deleted with the package.
+Layouts can also be deleted. The condition to be able to delete a layout is that it is not a default layout and is not assigned to a notification template.
 
 ```typescript
 const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout to be deleted.
@@ -109,10 +131,9 @@ const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout
 await novu.layouts.delete(layoutId);
 ```
 
-## Find layouts
+### Get a layout
 
-There are two ways to programmatically find any layout created in the environment.
-One is to retrieve the layout based in its known unique identifier.
+Find a layout by layoutId
 
 ```typescript
 const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout to be found.
@@ -120,11 +141,11 @@ const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout
 const layout = await novu.layouts.get(layoutId);
 ```
 
-The other one is to list the existing layouts of the environment.
+### List all layouts
+
+List paginated layouts
 
 ```typescript
-const layoutId: LayoutId = '<LAYOUT_ID>'; // The unique identifier of the layout to be found.
-
 const page: number = 0; // Pagination value of the page for the results. First page will be page = 0.
 const pageSize: number = 100; // Optional. Pagination value of the amount of layouts per page to return.
 const sortBy: string = 'createdAt'; // Optional. Property to order the list of the layouts. So far only `createdAt` is supported.
@@ -137,3 +158,7 @@ const layouts = await novu.layouts.list({
   orderBy,
 });
 ```
+
+:::info
+
+Checkout API reference for layouts methods [here](https://docs.novu.co/api/layout-creation/)
