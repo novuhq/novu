@@ -62,8 +62,7 @@ describe('Workflow Queue service', () => {
       'runJob',
       'setJobAsCompleted',
       'setJobAsFailed',
-      'webhookFilterWebhookFilterBackoffStrategy',
-      'worker'
+      'webhookFilterWebhookFilterBackoffStrategy'
     );
     expect(workflowQueueService.DEFAULT_ATTEMPTS).to.eql(3);
     expect(workflowQueueService.bullMqService.queue).to.deep.include({
