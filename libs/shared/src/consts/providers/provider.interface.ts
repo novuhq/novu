@@ -15,7 +15,7 @@ export interface IProviderConfig {
 
 export interface IConfigCredentials {
   key: CredentialsKeyEnum;
-  value?: string | boolean;
+  value?: unknown;
   displayName: string;
   description?: string;
   type: string;

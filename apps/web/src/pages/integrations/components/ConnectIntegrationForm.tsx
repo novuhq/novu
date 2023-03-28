@@ -6,7 +6,8 @@ import { showNotification } from '@mantine/notifications';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
-import { ChannelTypeEnum, ICredentialsDto, CredentialsKeyEnum } from '@novu/shared';
+import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials } from '@novu/shared';
+
 import { Button, colors, Input, Switch, Text } from '../../../design-system';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
@@ -91,9 +92,6 @@ export function ConnectIntegrationForm({
 
   const { colorScheme } = useMantineColorScheme();
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
-  const [booleanTypeCredentials, setBooleanTypeCredentials] = useState(
-    provider?.credentials.filter((credential) => credential.type === 'boolean')
-  );
   const { environment } = useEnvController();
   const { organization } = useAuthController();
   const webhookUrlClipboard = useClipboard({ timeout: 1000 });
@@ -149,6 +147,13 @@ export function ConnectIntegrationForm({
           },
         });
       }
+      if (credentials.tlsOptions) {
+        try {
+          credentials.tlsOptions = JSON.parse(String(credentials.tlsOptions));
+        } catch (err) {
+          throw new Error('Invalid JSON format for TLS Options');
+        }
+      }
       if (createModel) {
         await createIntegrationApi({
           providerId: provider?.providerId ? provider?.providerId : '',
@@ -197,19 +202,6 @@ export function ConnectIntegrationForm({
     });
   }
 
-  const handleBooleanTypeCredentialChange = (event) => {
-    const { name } = event.target;
-    const updatedCredentials = booleanTypeCredentials?.map((credential) => {
-      if (credential.key === name) {
-        credential.value = !credential.value;
-        setValue(name, Boolean(credential.value));
-      }
-
-      return credential;
-    });
-    setBooleanTypeCredentials(updatedCredentials);
-  };
-
   const logoSrc = provider
     ? `${CONTEXT_PATH}/static/images/providers/${colorScheme}/${provider.logoFileName[`${colorScheme}`]}`
     : '';
@@ -238,38 +230,17 @@ export function ConnectIntegrationForm({
               here.
             </a>
           </InlineDiv>
-          {provider?.credentials.map((credential) => {
-            if ([CredentialsKeyEnum.RequireTls, CredentialsKeyEnum.IgnoreTls].includes(credential.key)) {
-              return (
-                <InputWrapper key={credential.key}>
-                  <Controller
-                    control={control}
-                    name={credential.key}
-                    render={({ field }) => (
-                      <Switch
-                        checked={!!booleanTypeCredentials?.find((cred) => cred.key === credential.key)?.value}
-                        {...field}
-                        onChange={handleBooleanTypeCredentialChange}
-                      />
-                    )}
-                  />
-                  <StyledText>{credential.displayName}</StyledText>
-                </InputWrapper>
-              );
-            } else {
-              return (
-                <InputWrapper key={credential.key}>
-                  <Controller
-                    name={credential.key}
-                    control={control}
-                    render={({ field }) => (
-                      <IntegrationInput credential={credential} errors={errors} field={field} register={register} />
-                    )}
-                  />
-                </InputWrapper>
-              );
-            }
-          })}
+          {provider?.credentials.map((credential: IConfigCredentials) => (
+            <InputWrapper key={credential.key}>
+              <Controller
+                name={credential.key}
+                control={control}
+                render={({ field }) => (
+                  <IntegrationInput credential={credential} errors={errors} field={field} register={register} />
+                )}
+              />
+            </InputWrapper>
+          ))}
           {isWebhookEnabled && (
             <InputWrapper>
               <Input
@@ -376,7 +347,6 @@ const CloseButton = styled.button`
   border: none;
   color: ${colors.B40};
   outline: none;
-
   &:hover {
     cursor: pointer;
   }
