@@ -9,6 +9,7 @@ import { VariableManager } from './VariableManager';
 import { Group } from '@mantine/core';
 import { StepActiveSwitch } from '../workflow/StepActiveSwitch';
 import { ShouldStopOnFailSwitch } from '../workflow/ShouldStopOnFailSwitch';
+import { StepSettings } from '../workflow/SideBar/StepSettings';
 
 const templateFields = ['content'];
 
@@ -31,10 +32,7 @@ export function TemplateSMSEditor({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channel="SMS" channelType={ChannelTypeEnum.SMS} /> : null}
-      <Group>
-        <StepActiveSwitch index={index} control={control} />
-        <ShouldStopOnFailSwitch index={index} control={control} />
-      </Group>
+      <StepSettings index={index} />
       <Controller
         name={`steps.${index}.template.content` as any}
         defaultValue=""

@@ -4,7 +4,7 @@ import { useAuthContext } from '../../../../components/providers/AuthProvider';
 import { When } from '../../../../components/utils/When';
 import { Preview } from '../../editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
-import { Grid, Group, SegmentedControl, useMantineTheme } from '@mantine/core';
+import { Grid, SegmentedControl, useMantineTheme } from '@mantine/core';
 import { TestSendEmail } from './TestSendEmail';
 import { colors } from '../../../../design-system';
 import { MobileIcon } from '../../editor/PreviewSegment/MobileIcon';
@@ -13,11 +13,7 @@ import { useHotkeys } from '@mantine/hooks';
 import { VariablesManagement } from './variables-management/VariablesManagement';
 import { useVariablesManager } from '../../../../hooks';
 import { VariableManagerModal } from '../VariableManagerModal';
-import { StepActiveSwitch } from '../../workflow/StepActiveSwitch';
-import { ShouldStopOnFailSwitch } from '../../workflow/ShouldStopOnFailSwitch';
-import { useFormContext } from 'react-hook-form';
-import { IForm } from '../formTypes';
-import { ReplyCallback } from '../../workflow/ReplyCallback';
+import { StepSettings } from '../../workflow/SideBar/StepSettings';
 
 export enum ViewEnum {
   EDIT = 'Edit',
@@ -33,10 +29,6 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
   const theme = useMantineTheme();
   const [modalOpen, setModalOpen] = useState(false);
   const variablesArray = useVariablesManager(index, templateFields);
-  const {
-    control,
-    formState: { errors },
-  } = useFormContext<IForm>();
 
   useHotkeys([
     [
@@ -74,11 +66,7 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
           position: 'relative',
         }}
       >
-        <Group mb={30}>
-          <StepActiveSwitch index={index} control={control} />
-          <ShouldStopOnFailSwitch index={index} control={control} />
-          <ReplyCallback index={index} control={control} errors={errors} />
-        </Group>
+        <StepSettings index={index} />
         <Grid mb={view === ViewEnum.PREVIEW ? 40 : 20}>
           <Grid.Col span={6}>
             <Grid justify="right" mr={7}>

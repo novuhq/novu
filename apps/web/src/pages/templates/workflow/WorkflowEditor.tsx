@@ -7,10 +7,7 @@ import { showNotification } from '@mantine/notifications';
 import FlowEditor from './workflow/FlowEditor';
 import { channels, getChannel, NodeTypeEnum } from '../shared/channels';
 import type { IForm } from '../components/formTypes';
-import { When } from '../../../components/utils/When';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
-import { FilterModal } from '../filter/FilterModal';
-import { useTemplateEditorContext } from '../editor/TemplateEditorProvider';
 import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 import { Outlet, useParams } from 'react-router-dom';
 import { Container, TextInput } from '@mantine/core';
@@ -21,8 +18,6 @@ const WorkflowEditor = () => {
   const { channel } = useParams<{
     channel: StepTypeEnum | undefined;
   }>();
-  const { activeStepIndex } = useTemplateEditorContext();
-  const hasActiveStepSelected = activeStepIndex >= 0;
   const [dragging, setDragging] = useState(false);
 
   const {
@@ -32,8 +27,6 @@ const WorkflowEditor = () => {
   } = useFormContext<IForm>();
   const { readonly } = useEnvController();
   const showErrors = isSubmitted && errors?.steps;
-
-  const [filterOpen, setFilterOpen] = useState(false);
   const steps = watch('steps');
 
   const [toDelete, setToDelete] = useState<string>('');
@@ -154,19 +147,6 @@ const WorkflowEditor = () => {
             />
           </Container>
           <FlowEditor onDelete={onDelete} dragging={dragging} errors={errors} steps={steps} addStep={addStep} />
-          <When truthy={hasActiveStepSelected}>
-            <FilterModal
-              isOpen={filterOpen}
-              cancel={() => {
-                setFilterOpen(false);
-              }}
-              confirm={() => {
-                setFilterOpen(false);
-              }}
-              control={control}
-              stepIndex={activeStepIndex}
-            />
-          </When>
         </div>
         <div
           style={{

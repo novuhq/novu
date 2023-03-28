@@ -1,14 +1,13 @@
-import { Group, Stack } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import { Control, Controller, useFormContext } from 'react-hook-form';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 
 import type { IForm, ITemplates } from '../formTypes';
 import { Input } from '../../../../design-system';
 import { useEnvController, useVariablesManager } from '../../../../hooks';
 import { InAppContentCard } from './InAppContentCard';
 import { VariableManagerModal } from '../VariableManagerModal';
-import { StepActiveSwitch } from '../../workflow/StepActiveSwitch';
-import { ShouldStopOnFailSwitch } from '../../workflow/ShouldStopOnFailSwitch';
+import { StepSettings } from '../../workflow/SideBar/StepSettings';
 
 const getVariableContents = (template: ITemplates) => {
   const baseContent = ['content'];
@@ -36,10 +35,7 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
 
   return (
     <>
-      <Group>
-        <StepActiveSwitch index={index} control={control} />
-        <ShouldStopOnFailSwitch index={index} control={control} />
-      </Group>
+      <StepSettings index={index} />
       <Stack spacing={25}>
         <Controller
           name={`steps.${index}.template.cta.data.url` as any}
