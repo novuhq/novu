@@ -3,7 +3,8 @@ import { Handle, Position, getOutgoers, useReactFlow, useNodes } from 'react-flo
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { WorkflowNode } from './WorkflowNode';
-import { useTemplateEditorContext } from '../../../editor/TemplateEditorProvider';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useBasePath } from '../../../hooks/useBasePath';
 
 interface NodeData {
   Icon: React.FC<any>;
@@ -12,30 +13,26 @@ interface NodeData {
   tabKey: ChannelTypeEnum;
   index: number;
   testId: string;
-  onDelete: (id: string) => void;
+  onDelete: (uuid: string) => void;
   error: string;
-  setActivePage: (string) => void;
   active?: boolean;
   channelType: StepTypeEnum;
+  uuid: string;
 }
 
 export default memo(
   ({ data, selected, id, dragging }: { data: NodeData; selected: boolean; id: string; dragging: boolean }) => {
-    const { selectedNodeId } = useTemplateEditorContext();
     const { getNode, getEdges, getNodes } = useReactFlow();
     const nodes = useNodes<NodeData>();
     const thisNode = getNode(id);
     const isParent = thisNode ? getOutgoers(thisNode, getNodes(), getEdges()).length : false;
     const noChildStyle = isParent ? {} : { border: 'none', background: 'transparent' };
     const [count, setCount] = useState(0);
+    const navigate = useNavigate();
+    const basePath = useBasePath();
+    const { stepUuid = '' } = useParams<{ stepUuid: string }>();
 
     useEffect(() => {
-      if (![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(data.channelType)) {
-        setCount(0);
-
-        return;
-      }
-
       const items = nodes
         .filter((node) => node.type === 'channelNode')
         .filter((node) => {
@@ -62,18 +59,22 @@ export default memo(
     return (
       <div data-test-id={`node-${data.testId}`} style={{ pointerEvents: 'none' }}>
         <WorkflowNode
-          setActivePage={data.setActivePage}
           errors={data.error}
-          onDelete={data.onDelete}
+          onDelete={() => {
+            data.onDelete(data.uuid);
+          }}
           tabKey={data.tabKey}
           channelType={data.channelType}
           Icon={data.Icon}
           label={data.label + (count > 0 ? ` (${count})` : '')}
-          active={id === selectedNodeId}
+          active={stepUuid === data.uuid}
           disabled={!data.active}
           id={id}
           index={data.index}
           dragging={dragging}
+          onClick={() => {
+            navigate(basePath + `/${data.channelType}/${data.uuid}`);
+          }}
         />
         <Handle type="target" id="b" position={Position.Top} />
         <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />

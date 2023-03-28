@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TriggerTypeEnum } from '@novu/shared';
 
 import { TestWrapper } from '../../../testing';
-import { TestWorkflowModal } from './TestWorkflowModal';
+import { TestWorkflow } from './TestWorkflow';
 
 const queryClient = new QueryClient();
 
@@ -11,13 +11,7 @@ describe('TestWorkflowModal Component', function () {
     cy.mount(
       <QueryClientProvider client={queryClient}>
         <TestWrapper>
-          <TestWorkflowModal
-            isVisible={true}
-            onDismiss={() => {}}
-            setTransactionId={() => {}}
-            openExecutionModal={() => {}}
-            trigger={{ variables: [], type: TriggerTypeEnum.EVENT, identifier: '1234', subscriberVariables: [] }}
-          />
+          <TestWorkflow />
         </TestWrapper>
       </QueryClientProvider>
     );
@@ -31,18 +25,7 @@ describe('TestWorkflowModal Component', function () {
     cy.mount(
       <QueryClientProvider client={queryClient}>
         <TestWrapper>
-          <TestWorkflowModal
-            isVisible={true}
-            onDismiss={() => {}}
-            openExecutionModal={() => {}}
-            setTransactionId={() => {}}
-            trigger={{
-              variables: [{ name: 'firstVariable' }, { name: 'secondVariable' }],
-              type: TriggerTypeEnum.EVENT,
-              identifier: '1234',
-              subscriberVariables: [{ name: 'email' }],
-            }}
-          />
+          <TestWorkflow />
         </TestWrapper>
       </QueryClientProvider>
     );

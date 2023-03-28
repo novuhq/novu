@@ -40,6 +40,12 @@ import { RequiredAuth } from './components/layout/RequiredAuth';
 import { GetStarted } from './pages/quick-start/steps/GetStarted';
 import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
 import { TemplatesDigestPlaygroundPage } from './pages/templates/TemplatesDigestPlaygroundPage';
+import { Sidebar } from './pages/templates/workflow/SideBar/Sidebar';
+import { TemplateSettings } from './pages/templates/components/TemplateSettings';
+import { UserPreference } from './pages/templates/components/UserPreference';
+import { TestWorkflow } from './pages/templates/components/TestWorkflow';
+import { SnippetPage } from './pages/templates/components/SnippetPage';
+import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -184,7 +190,14 @@ function App() {
                         </TemplateEditorProvider>
                       </TemplateEditorFormProvider>
                     }
-                  />
+                  >
+                    <Route path={ROUTES.TEMPLATES_CREATE} element={<Sidebar />} />
+                    <Route path={ROUTES.TEMPLATES_CREATE + '/settings'} element={<TemplateSettings />} />
+                    <Route path={ROUTES.TEMPLATES_CREATE + '/channels'} element={<UserPreference />} />
+                    <Route path={ROUTES.TEMPLATES_CREATE + '/testworkflow'} element={<TestWorkflow />} />
+                    <Route path={ROUTES.TEMPLATES_CREATE + '/snippet'} element={<SnippetPage />} />
+                    <Route path={ROUTES.TEMPLATES_CREATE + '/:channel/:stepUuid'} element={<TemplateEditor />} />
+                  </Route>
                   <Route
                     path={ROUTES.TEMPLATES_EDIT_TEMPLATEID}
                     element={
@@ -194,7 +207,17 @@ function App() {
                         </TemplateEditorProvider>
                       </TemplateEditorFormProvider>
                     }
-                  />
+                  >
+                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID} element={<Sidebar />} />
+                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/settings'} element={<TemplateSettings />} />
+                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/channels'} element={<UserPreference />} />
+                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/testworkflow'} element={<TestWorkflow />} />
+                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/snippet'} element={<SnippetPage />} />
+                    <Route
+                      path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/:channel/:stepUuid'}
+                      element={<TemplateEditor />}
+                    />
+                  </Route>
                   <Route path={ROUTES.TEMPLATES} element={<NotificationList />} />
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />

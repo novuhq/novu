@@ -26,7 +26,7 @@ const TemplateEditorContext = React.createContext<ITemplateEditorContext>({
 export const useTemplateEditorContext = () => React.useContext(TemplateEditorContext);
 
 export const TemplateEditorProvider = ({ children }) => {
-  const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.SETTINGS);
+  const [activePage, setActivePage] = useState<ActivePageEnum>(ActivePageEnum.WORKFLOW);
   const [selectedNodeId, setSelectedNodeId] = useState<string>('');
   const { watch } = useFormContext<IForm>();
   const steps = watch('steps');

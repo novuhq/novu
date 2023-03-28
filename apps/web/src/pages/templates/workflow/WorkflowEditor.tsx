@@ -1,79 +1,46 @@
-import { useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useState } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { Grid, useMantineColorScheme } from '@mantine/core';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
 
 import FlowEditor from './workflow/FlowEditor';
-import { colors } from '../../../design-system';
 import { channels, getChannel, NodeTypeEnum } from '../shared/channels';
 import type { IForm } from '../components/formTypes';
-import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
-import { TemplatePageHeader } from '../components/TemplatePageHeader';
-import { EditorPages } from '../editor/TemplateEditorPage';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { FilterModal } from '../filter/FilterModal';
-import { StepSettings } from './SideBar/StepSettings';
-import { AddStepMenu } from './SideBar/AddStepMenu';
-import { useTemplateFetcher } from '../../../api/hooks';
-import { ActivePageEnum } from '../../../constants/editorEnums';
 import { useTemplateEditorContext } from '../editor/TemplateEditorProvider';
+import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
+import { Outlet, useParams } from 'react-router-dom';
+import { Container, TextInput } from '@mantine/core';
+import { useEnvController } from '../../../hooks';
 
-const WorkflowEditor = ({
-  setActivePage,
-  templateId,
-  activePage,
-  onTestWorkflowClicked,
-  isCreatingTemplate,
-  isUpdatingTemplate,
-  addStep,
-  deleteStep,
-}: {
-  setActivePage: (string) => void;
-  templateId: string;
-  activePage: ActivePageEnum;
-  onTestWorkflowClicked: () => void;
-  isCreatingTemplate: boolean;
-  isUpdatingTemplate: boolean;
-  addStep: (channelType: StepTypeEnum, id: string, index?: number) => void;
-  deleteStep: (index: number) => void;
-}) => {
-  const { setSelectedNodeId, activeStepIndex, selectedChannel } = useTemplateEditorContext();
+const WorkflowEditor = () => {
+  const { addStep, deleteStep } = useTemplateEditorForm();
+  const { channel } = useParams<{
+    channel: StepTypeEnum | undefined;
+  }>();
+  const { activeStepIndex } = useTemplateEditorContext();
   const hasActiveStepSelected = activeStepIndex >= 0;
-  const { colorScheme } = useMantineColorScheme();
   const [dragging, setDragging] = useState(false);
 
-  const onDragStart = (event, nodeType) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
-    event.dataTransfer.effectAllowed = 'move';
-  };
   const {
     control,
     watch,
-    clearErrors,
-    formState: { errors, isDirty: isDirtyForm, isSubmitted },
+    formState: { errors, isSubmitted },
   } = useFormContext<IForm>();
-  const { isInitialLoading: loadingEditTemplate } = useTemplateFetcher({ templateId });
+  const { readonly } = useEnvController();
+  const showErrors = isSubmitted && errors?.steps;
 
   const [filterOpen, setFilterOpen] = useState(false);
   const steps = watch('steps');
 
-  const { readonly } = useEnvController();
   const [toDelete, setToDelete] = useState<string>('');
 
-  const setActivePageWrapper = (page: ActivePageEnum) => {
-    if (!isSubmitted && EditorPages.includes(page)) {
-      clearErrors('steps');
-    }
-    setActivePage(page);
-  };
-
   const confirmDelete = () => {
-    const index = steps.findIndex((item) => item._id === toDelete);
+    const index = steps.findIndex((item) => item.uuid === toDelete);
     deleteStep(index);
-    setSelectedNodeId('');
     setToDelete('');
   };
 
@@ -81,11 +48,11 @@ const WorkflowEditor = ({
     setToDelete('');
   };
 
-  const onDelete = (id) => {
-    const currentStep = steps.find((step) => step.id === id);
+  const onDelete = (uuid) => {
+    const currentStep = steps.find((step) => step.uuid === uuid);
 
     if (!currentStep) {
-      setToDelete(id);
+      setToDelete(uuid);
 
       return;
     }
@@ -117,43 +84,76 @@ const WorkflowEditor = ({
       return;
     }
 
-    setToDelete(id);
+    setToDelete(uuid);
   };
 
-  useEffect(() => {
-    setSelectedNodeId('');
-  }, []);
+  if (channel && [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)) {
+    return (
+      <>
+        <Outlet
+          context={{
+            setDragging,
+          }}
+        />
+        <DeleteConfirmModal
+          target={channel !== null && getChannel(channel ?? '')?.type === NodeTypeEnum.CHANNEL ? 'step' : 'action'}
+          isOpen={toDelete.length > 0}
+          confirm={confirmDelete}
+          cancel={cancelDelete}
+        />
+      </>
+    );
+  }
 
   return (
     <>
-      <Grid gutter={0} grow style={{ minHeight: '100%' }}>
-        <Grid.Col
-          md={9}
-          sm={6}
+      <div style={{ minHeight: '100%', display: 'flex', flexFlow: 'row' }}>
+        <div
           style={{
-            display: 'flex',
-            flexDirection: 'column',
             minHeight: 'calc(100vh - var(--mantine-header-height, 0px) - 60px)',
+            flex: '1 1 auto',
+            display: 'flex',
+            flexFlow: 'Column',
           }}
         >
-          <TemplatePageHeader
-            loading={isCreatingTemplate || isUpdatingTemplate}
-            disableSubmit={readonly || loadingEditTemplate || isCreatingTemplate || !isDirtyForm}
-            templateId={templateId}
-            setActivePage={setActivePage}
-            activePage={activePage}
-            onTestWorkflowClicked={onTestWorkflowClicked}
-          />
-          <FlowEditor
-            activePage={activePage}
-            onDelete={onDelete}
-            setActivePage={setActivePageWrapper}
-            dragging={dragging}
-            errors={errors}
-            steps={steps}
-            addStep={addStep}
-            setSelectedNodeId={setSelectedNodeId}
-          />
+          <Container fluid sx={{ padding: '20px', width: '100%', height: '74px' }}>
+            <Controller
+              control={control}
+              name="name"
+              defaultValue="Untitled"
+              render={({ field, fieldState }) => {
+                return (
+                  <TextInput
+                    styles={() => ({
+                      wrapper: {
+                        background: 'transparent',
+                        width: '100%',
+                      },
+                      input: {
+                        background: 'transparent',
+                        border: 'none',
+                        fontSize: '20px',
+                        fontWeight: 'bolder',
+                        padding: 0,
+                        lineHeight: '28px',
+                        minHeight: 'auto',
+                        height: 'auto',
+                        width: '100%',
+                      },
+                    })}
+                    {...field}
+                    value={field.value || ''}
+                    error={showErrors && fieldState.error?.message}
+                    type="text"
+                    data-test-id="title"
+                    placeholder="Enter notification name"
+                    disabled={readonly}
+                  />
+                );
+              }}
+            />
+          </Container>
+          <FlowEditor onDelete={onDelete} dragging={dragging} errors={errors} steps={steps} addStep={addStep} />
           <When truthy={hasActiveStepSelected}>
             <FilterModal
               isOpen={filterOpen}
@@ -167,30 +167,25 @@ const WorkflowEditor = ({
               stepIndex={activeStepIndex}
             />
           </When>
-        </Grid.Col>
-        <Grid.Col md={3} sm={6}>
-          <SideBarWrapper dark={colorScheme === 'dark'}>
-            {selectedChannel ? (
-              <StepSettings
-                setActivePage={setActivePageWrapper}
-                setFilterOpen={setFilterOpen}
-                isLoading={isCreatingTemplate}
-                isUpdateLoading={isUpdatingTemplate}
-                loadingEditTemplate={loadingEditTemplate}
-                onDelete={onDelete}
-              />
-            ) : (
-              <AddStepMenu setDragging={setDragging} onDragStart={onDragStart} />
-            )}
-          </SideBarWrapper>
-        </Grid.Col>
-      </Grid>
+        </div>
+        <div
+          style={{
+            position: 'relative',
+            minWidth: '260px',
+            width: 'auto',
+            minHeight: 'calc(100vh - var(--mantine-header-height, 0px) - 60px)',
+          }}
+        >
+          <Outlet
+            context={{
+              setDragging,
+              onDelete,
+            }}
+          />
+        </div>
+      </div>
       <DeleteConfirmModal
-        target={
-          selectedChannel !== null && getChannel(selectedChannel ?? '')?.type === NodeTypeEnum.CHANNEL
-            ? 'step'
-            : 'action'
-        }
+        target={channel !== null && getChannel(channel ?? '')?.type === NodeTypeEnum.CHANNEL ? 'step' : 'action'}
         isOpen={toDelete.length > 0}
         confirm={confirmDelete}
         cancel={cancelDelete}
@@ -200,12 +195,6 @@ const WorkflowEditor = ({
 };
 
 export default WorkflowEditor;
-
-const SideBarWrapper = styled.div<{ dark: boolean }>`
-  background-color: ${({ dark }) => (dark ? colors.B17 : colors.white)};
-  height: 100%;
-  position: relative;
-`;
 
 export const StyledNav = styled.div`
   padding: 15px 20px;

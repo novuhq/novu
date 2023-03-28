@@ -3,7 +3,6 @@ import { Popover as MantinePopover, ActionIcon, createStyles, MantineTheme, Menu
 import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-
 import { Text } from '../../../../../design-system/typography/text/Text';
 import { Switch } from '../../../../../design-system/switch/Switch';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
@@ -48,10 +47,10 @@ interface ITemplateButtonProps {
   showDots?: boolean;
   id?: string;
   index?: number;
-  onDelete?: (id: string) => void;
+  onDelete?: () => void;
   dragging?: boolean;
-  setActivePage?: (string) => void;
   disabled?: boolean;
+  onClick?: () => void;
 }
 
 const useMenuStyles = createStyles((theme: MantineTheme) => {
@@ -117,8 +116,8 @@ export function WorkflowNode({
   id = undefined,
   onDelete = () => {},
   dragging = false,
-  setActivePage = (page: string) => {},
   disabled: initDisabled,
+  onClick = () => {},
 }: ITemplateButtonProps) {
   const segment = useSegment();
   const { readonly: readonlyEnv } = useEnvController();
@@ -176,10 +175,10 @@ export function WorkflowNode({
   }, [watch]);
 
   useEffect(() => {
-    if (showDotMenu && (dragging || !active)) {
+    if (showDotMenu && dragging) {
       setShowDotMenu(false);
     }
-  }, [dragging, showDotMenu, active]);
+  }, [dragging, showDotMenu]);
 
   return (
     <>
@@ -222,6 +221,7 @@ export function WorkflowNode({
                     style={{ pointerEvents: 'all' }}
                     component="span"
                     onClick={(e) => {
+                      e.stopPropagation();
                       e.preventDefault();
                       setShowDotMenu(!showDotMenu);
                     }}
@@ -252,7 +252,7 @@ export function WorkflowNode({
                       onClick={(e) => {
                         e.stopPropagation();
                         setShowDotMenu(false);
-                        setActivePage(tabKey === ChannelTypeEnum.IN_APP ? tabKey : capitalize(channelKey));
+                        onClick();
                       }}
                     >
                       Edit Template
@@ -267,7 +267,7 @@ export function WorkflowNode({
                     data-test-id="delete-step-action"
                     onClick={() => {
                       setShowDotMenu(false);
-                      onDelete(id || '');
+                      onDelete();
                     }}
                   >
                     Delete {isChannel ? 'Step' : 'Action'}

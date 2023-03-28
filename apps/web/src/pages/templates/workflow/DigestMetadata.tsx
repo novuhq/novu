@@ -7,19 +7,26 @@ import { When } from '../../../components/utils/When';
 import { Input, Select, Switch, Button } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../hooks';
+import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
+import { useNavigate } from 'react-router-dom';
+import { useBasePath } from '../hooks/useBasePath';
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;
   margin-top: 15px;
 `;
 
-export const DigestMetadata = ({ control, index, loading, disableSubmit, onSideMenuClose }) => {
+export const DigestMetadata = ({ control, index }) => {
+  const { isCreating, isUpdating, isLoading } = useTemplateEditorForm();
   const { readonly } = useEnvController();
   const {
-    formState: { errors, isSubmitted },
+    formState: { errors, isSubmitted, isDirty },
     watch,
     trigger,
   } = useFormContext();
+  const isSubmitDisabled = readonly || isLoading || isCreating || !isDirty;
+  const navigate = useNavigate();
+  const basePath = useBasePath();
 
   const type = watch(`steps.${index}.metadata.type`);
   const showErrors = isSubmitted && errors?.steps;
@@ -234,9 +241,11 @@ export const DigestMetadata = ({ control, index, loading, disableSubmit, onSideM
         mb={15}
         variant="outline"
         data-test-id="delete-step-button"
-        loading={loading}
-        disabled={disableSubmit}
-        onClick={onSideMenuClose}
+        loading={isCreating || isUpdating}
+        disabled={isSubmitDisabled}
+        onClick={() => {
+          navigate(basePath);
+        }}
       >
         Save
       </Button>

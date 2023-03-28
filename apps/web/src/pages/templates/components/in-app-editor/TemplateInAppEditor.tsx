@@ -1,4 +1,4 @@
-import { Stack } from '@mantine/core';
+import { Group, Stack } from '@mantine/core';
 import { Control, Controller, useFormContext } from 'react-hook-form';
 import { useState, useMemo } from 'react';
 
@@ -7,6 +7,8 @@ import { Input } from '../../../../design-system';
 import { useEnvController, useVariablesManager } from '../../../../hooks';
 import { InAppContentCard } from './InAppContentCard';
 import { VariableManagerModal } from '../VariableManagerModal';
+import { StepActiveSwitch } from '../../workflow/StepActiveSwitch';
+import { ShouldStopOnFailSwitch } from '../../workflow/ShouldStopOnFailSwitch';
 
 const getVariableContents = (template: ITemplates) => {
   const baseContent = ['content'];
@@ -34,37 +36,36 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
 
   return (
     <>
-      <div
-        style={{
-          margin: '0 25px 0 25px',
-        }}
-      >
-        <Stack spacing={25}>
-          <Controller
-            name={`steps.${index}.template.cta.data.url` as any}
-            defaultValue=""
-            control={control}
-            render={({ field, fieldState }) => (
-              <Input
-                {...field}
-                error={fieldState.error?.message}
-                value={field.value || ''}
-                disabled={readonly}
-                description="The URL that will be opened when user clicks the notification"
-                data-test-id="inAppRedirect"
-                label="Redirect URL"
-                placeholder="i.e /tasks/{{taskId}}"
-              />
-            )}
-          />
-          <InAppContentCard
-            index={index}
-            openVariablesModal={() => {
-              setModalOpen(true);
-            }}
-          />
-        </Stack>
-      </div>
+      <Group>
+        <StepActiveSwitch index={index} control={control} />
+        <ShouldStopOnFailSwitch index={index} control={control} />
+      </Group>
+      <Stack spacing={25}>
+        <Controller
+          name={`steps.${index}.template.cta.data.url` as any}
+          defaultValue=""
+          control={control}
+          render={({ field, fieldState }) => (
+            <Input
+              {...field}
+              error={fieldState.error?.message}
+              value={field.value || ''}
+              disabled={readonly}
+              description="The URL that will be opened when user clicks the notification"
+              data-test-id="inAppRedirect"
+              label="Redirect URL"
+              placeholder="i.e /tasks/{{taskId}}"
+            />
+          )}
+        />
+        <InAppContentCard
+          index={index}
+          openVariablesModal={() => {
+            setModalOpen(true);
+          }}
+        />
+      </Stack>
+
       <VariableManagerModal open={modalOpen} setOpen={setModalOpen} index={index} variablesArray={variablesArray} />
     </>
   );

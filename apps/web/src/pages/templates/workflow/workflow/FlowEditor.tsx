@@ -26,11 +26,10 @@ import { getChannel } from '../../shared/channels';
 import type { IForm, IStepEntity } from '../../components/formTypes';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../../../hooks';
-import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
 import { getFormattedStepErrors } from '../../shared/errors';
 import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
-import { useTemplateEditorForm } from '../../components/TemplateEditorFormProvider';
-import { ActivePageEnum } from '../../../../constants/editorEnums';
+import { useBasePath } from '../../hooks/useBasePath';
+import { useNavigate } from 'react-router-dom';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -52,20 +51,14 @@ const initialNodes: Node[] = [
 const initialEdges: Edge[] = [];
 
 export function FlowEditor({
-  activePage,
-  setActivePage,
   steps,
-  setSelectedNodeId,
   addStep,
   dragging,
   errors,
   onDelete,
 }: {
-  activePage: ActivePageEnum;
-  setActivePage: (string) => void;
   onDelete: (id: string) => void;
   steps: IStepEntity[];
-  setSelectedNodeId: (nodeId: string) => void;
   addStep: (channelType: StepTypeEnum, id: string, index?: number) => void;
   dragging: boolean;
   errors: any;
@@ -77,14 +70,13 @@ export function FlowEditor({
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
-  const { template, trigger } = useTemplateEditorForm();
   const { trigger: triggerErrors } = useFormContext<IForm>();
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
   useEffect(() => {
     const clientWidth = reactFlowWrapper.current?.clientWidth;
     const middle = clientWidth ? clientWidth / 2 - 100 : 0;
-    const zoomView = nodes.length > 4 ? 0.75 : 1;
+    const zoomView = 1;
     const xyPos = reactFlowInstance?.project({ x: middle, y: 0 });
     setViewport({ x: xyPos?.x ?? middle, y: xyPos?.y ?? 0, zoom: zoomView }, { duration: 800 });
   }, [reactFlowInstance]);
@@ -107,11 +99,15 @@ export function FlowEditor({
     [steps]
   );
 
+  const basePath = useBasePath();
+  const navigate = useNavigate();
+
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
-    setSelectedNodeId(node.id);
+
+    navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
     if (node.id === '1') {
-      setSelectedNodeId('');
+      navigate(basePath + '/testworkflow');
     }
   }, []);
 
@@ -219,7 +215,7 @@ export function FlowEditor({
         index: i,
         error: getFormattedStepErrors(i, errors),
         onDelete,
-        setActivePage,
+        uuid: step.uuid,
       },
     };
   }
@@ -294,7 +290,14 @@ export function FlowEditor({
   return (
     <>
       <Wrapper dark={colorScheme === 'dark'}>
-        <div style={{ minHeight: '500px', height: '100%', width: 'inherit' }} ref={reactFlowWrapper}>
+        <div
+          style={{
+            height: '100%',
+            width: '100%',
+            minHeight: '500px',
+          }}
+          ref={reactFlowWrapper}
+        >
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -316,7 +319,6 @@ export function FlowEditor({
                 handleDisplayAddNodeOnEdge(`edge-button-${edge.source}`);
               }
             }}
-            onPaneClick={() => setSelectedNodeId('')}
             /*
              * TODO: for now this disables the deletion of a step using delete/backspace keys
              * as it will require some sort of refactoring of how we save the workflow state
@@ -326,11 +328,6 @@ export function FlowEditor({
             deleteKeyCode={null}
             {...reactFlowDefaultProps}
           >
-            <MinimalTemplatesSideBar
-              activePage={activePage}
-              setActivePage={setActivePage}
-              showTriggerSection={!!template && !!trigger}
-            />
             <Controls />
             <Background
               size={1}

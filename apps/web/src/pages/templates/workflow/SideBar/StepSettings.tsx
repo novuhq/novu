@@ -117,50 +117,6 @@ export function StepSettings({
               </FilterButton>
             </NavSection>
           </When>
-          <When truthy={selectedChannel === StepTypeEnum.DIGEST}>
-            <NavSection>
-              <ButtonWrapper>
-                <Title size={2}>Digest Properties</Title>
-                <ActionIcon data-test-id="close-side-menu-btn" variant="transparent" onClick={onSideMenuClose}>
-                  <Close />
-                </ActionIcon>
-              </ButtonWrapper>
-              <Text mr={10} mt={10} size="md" color={colors.B60}>
-                Configure the digest parameters. Read more about the digest engine{' '}
-                <a target={'_blank'} rel="noopener noreferrer" href={'https://docs.novu.co/platform/digest'}>
-                  here
-                </a>
-                .
-              </Text>
-            </NavSection>
-            <NavSection>
-              <When truthy={hasActiveStepSelected}>
-                <DigestMetadata
-                  control={control}
-                  index={activeStepIndex}
-                  loading={isLoading || isUpdateLoading}
-                  disableSubmit={isSubmitDisabled}
-                  onSideMenuClose={onSideMenuClose}
-                />
-              </When>
-            </NavSection>
-          </When>
-          <When truthy={selectedChannel === StepTypeEnum.DELAY}>
-            <NavSection>
-              <ButtonWrapper>
-                <Title size={2}>Delay Properties</Title>
-                <ActionIcon data-test-id="close-side-menu-btn" variant="transparent" onClick={onSideMenuClose}>
-                  <Close />
-                </ActionIcon>
-              </ButtonWrapper>
-              <Text mr={10} mt={10} size="md" color={colors.B60}>
-                Configure the delay parameters.
-              </Text>
-            </NavSection>
-            <NavSection>
-              {activeStepIndex > 0 && <DelayMetadata control={control} index={activeStepIndex} />}
-            </NavSection>
-          </When>
         </Stack>
         <DeleteStepButton
           mt={10}

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Stack } from '@mantine/core';
-import { colors, DragButton, Text, Title } from '../../../../design-system';
+import { Stack, Title } from '@mantine/core';
+import { colors, DragButton, Text } from '../../../../design-system';
 import { channels, NodeTypeEnum } from '../../shared/channels';
 import { useEnvController } from '../../../../hooks';
 import { When } from '../../../../components/utils/When';
@@ -19,11 +19,9 @@ export function AddStepMenu({
   return (
     <StyledNav data-test-id="drag-side-menu">
       <NavSection>
-        <Title size={2}>Steps to add</Title>
-        <Text color={colors.B60} mt={5} mb={5}>
-          <When truthy={!readonly}>Drag and drop new steps to the canvas</When>
-          <When truthy={readonly}>You can not drag and drop new steps in Production</When>
-        </Text>
+        <Title color={colors.B60} size={16} mb={16}>
+          Channels
+        </Title>
       </NavSection>
       <When truthy={!readonly}>
         <Stack spacing={18}>
@@ -39,11 +37,9 @@ export function AddStepMenu({
           marginTop: '15px',
         }}
       >
-        <Title size={2}>Actions</Title>
-        <Text color={colors.B60} mt={5} mb={5}>
-          <When truthy={!readonly}>Add actions to the flow</When>
-          <When truthy={readonly}>You can not drag and drop new actions in Production</When>
-        </Text>
+        <Title color={colors.B60} size={16} mb={16}>
+          Actions
+        </Title>
       </NavSection>
       <When truthy={!readonly}>
         <Stack spacing={18}>
@@ -73,10 +69,6 @@ const DraggableNode = ({ channel, setDragging, onDragStart }) => (
     role="presentation"
     aria-grabbed="true"
   >
-    <DragButton
-      Icon={channel.Icon}
-      description={channel.type === NodeTypeEnum.ACTION ? channel.description : ''}
-      label={channel.label}
-    />
+    <DragButton Icon={channel.Icon} description={''} label={channel.label} />
   </div>
 );

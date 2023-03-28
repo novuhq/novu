@@ -6,6 +6,9 @@ import type { IForm } from './formTypes';
 import { Textarea } from '../../../design-system';
 import { useEnvController, useVariablesManager } from '../../../hooks';
 import { VariableManager } from './VariableManager';
+import { Group } from '@mantine/core';
+import { StepActiveSwitch } from '../workflow/StepActiveSwitch';
+import { ShouldStopOnFailSwitch } from '../workflow/ShouldStopOnFailSwitch';
 
 const templateFields = ['content'];
 
@@ -28,6 +31,10 @@ export function TemplateSMSEditor({
   return (
     <>
       {!isIntegrationActive ? <LackIntegrationError channel="SMS" channelType={ChannelTypeEnum.SMS} /> : null}
+      <Group>
+        <StepActiveSwitch index={index} control={control} />
+        <ShouldStopOnFailSwitch index={index} control={control} />
+      </Group>
       <Controller
         name={`steps.${index}.template.content` as any}
         defaultValue=""

@@ -1,5 +1,5 @@
 import { FunctionComponent } from 'react';
-import { Grid, Input, InputWrapperProps } from '@mantine/core';
+import { Group, Input, InputWrapperProps, Text } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext, Controller } from 'react-hook-form';
 
@@ -12,14 +12,8 @@ import type { IForm } from '../formTypes';
 export function TemplatePreference() {
   return (
     <>
-      <Grid>
-        <Grid.Col span={6}>
-          <ChannelPreference />
-        </Grid.Col>
-        <Grid.Col span={6}>
-          <CriticalPreference />
-        </Grid.Col>
-      </Grid>
+      <CriticalPreference />
+      <ChannelPreference />
     </>
   );
 }
@@ -48,24 +42,21 @@ export function ChannelPreference() {
             description="Check the channels you would like to be ON by default"
             styles={inputStyles}
           >
-            <Grid pt={8.5}>
-              {Object.keys(preferences).map((key) => {
-                const label = channels.find((channel) => channel.tabKey === key)?.label;
-                const checked = preferences[key] || false;
+            {Object.keys(preferences).map((key) => {
+              const label = channels.find((channel) => channel.tabKey === key)?.label;
+              const checked = preferences[key] || false;
 
-                return (
-                  <Grid.Col key={key} md={6} lg={4}>
-                    <StyledCheckbox
-                      checked={checked}
-                      disabled={readonly}
-                      data-test-id={`preference-${key}`}
-                      label={label}
-                      onChange={(e) => handleCheckboxChange(e, key)}
-                    />
-                  </Grid.Col>
-                );
-              })}
-            </Grid>
+              return (
+                <StyledCheckbox
+                  mb={8}
+                  checked={checked}
+                  disabled={readonly}
+                  data-test-id={`preference-${key}`}
+                  label={label}
+                  onChange={(e) => handleCheckboxChange(e, key)}
+                />
+              );
+            })}
           </InputBackground>
         );
       }}
@@ -75,6 +66,7 @@ export function ChannelPreference() {
 
 export function CriticalPreference() {
   const { control } = useFormContext();
+  const { readonly } = useEnvController();
 
   return (
     <Controller
@@ -83,26 +75,15 @@ export function CriticalPreference() {
       control={control}
       render={({ field }) => {
         return (
-          <InputBackground
-            label="System Critical (Always Sent)"
-            description={<CriticalDescription field={field} />}
-            styles={inputStyles}
-            children={null}
-          />
+          <Group mb={24} align="center" position="apart">
+            <Text weight="bold" size={14}>
+              Users will be able to manage subscriptions
+            </Text>
+            <Switch {...field} checked={!field.value || false} disabled={readonly} data-test-id="critical" />
+          </Group>
         );
       }}
     />
-  );
-}
-
-function CriticalDescription({ field }) {
-  const { readonly } = useEnvController();
-
-  return (
-    <DescriptionWrapper>
-      {"When on, the template will not show in the user preferences, meaning they wouldn't be able to opt out."}
-      <Switch {...field} checked={field.value || false} disabled={readonly} data-test-id="critical" />
-    </DescriptionWrapper>
   );
 }
 
@@ -113,12 +94,6 @@ export const InputWrapperProxy: FunctionComponent<InputWrapperProps> = ({ childr
 const InputBackground = styled(InputWrapperProxy)`
   background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.B98)};
   border-radius: 7px;
-  padding: 20px;
-`;
-
-const DescriptionWrapper = styled.div`
-  display: flex;
-  justify-content: space-between;
 `;
 
 const StyledCheckbox = styled(CheckboxProxy)<{ checked: boolean }>`

@@ -28,4 +28,5 @@ export const StepActiveSwitch = ({ control, index }) => {
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;
+  width: auto;
 `;
