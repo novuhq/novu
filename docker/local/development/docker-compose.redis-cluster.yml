@@ -33,7 +33,7 @@ services:
     image: 'redis:7-alpine'
     container_name: redis_1
     ports:
-      - "6379"
+      - "6391:6379"
     volumes:
       - redis_1_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
@@ -46,7 +46,7 @@ services:
     image: 'redis:7-alpine'
     container_name: redis_2
     ports:
-      - "6379"
+      - "6392:6379"
     volumes:
       - redis_2_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
@@ -59,7 +59,7 @@ services:
     image: 'redis:7-alpine'
     container_name: redis_3
     ports:
-      - "6379"
+      - "6393:6379"
     volumes:
       - redis_3_data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
@@ -110,7 +110,7 @@ services:
   # Ephemeral container to create the Redis cluster connections.
   # Once the setup is done, this container shuts down
   # and the cluster can be used by the service app container
-  redis-cluster-init:
+  redis_cluster_init:
     image: 'redis:7-alpine'
     command: redis-cli --cluster create 173.18.0.2:6379 173.18.0.3:6379 173.18.0.4:6379 173.18.0.5:6379 173.18.0.6:6379 173.18.0.7:6379 --cluster-replicas 1 --cluster-yes
     networks:
@@ -139,7 +139,7 @@ services:
       - redis_4
       - redis_5
       - redis_6
-      - redis-cluster
+      - redis_cluster_init
     networks:
       redis_cluster_net:
         ipv4_address: 173.18.0.9
