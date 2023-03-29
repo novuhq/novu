@@ -166,11 +166,11 @@ export const TemplateEditor = () => {
   const basePath = useBasePath();
 
   useEffect(() => {
-    if (index > -1) {
+    if (index > -1 || steps.length === 0) {
       return;
     }
     navigate(basePath);
-  }, [index]);
+  }, [index, steps]);
 
   if (index === -1 || channel === undefined) {
     return null;

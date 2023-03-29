@@ -8,6 +8,7 @@ import { parseUrl } from '../../../utils/routeUtils';
 import { ROUTES } from '../../../constants/routes.enum';
 import { errorMessage } from '../../../utils/notifications';
 import { useNotificationGroup, useTemplates } from '../../../hooks';
+import { v4 as uuid4 } from 'uuid';
 
 export const useCreateDigestDemoWorkflow = () => {
   const navigate = useNavigate();
@@ -47,6 +48,7 @@ export const useCreateDigestDemoWorkflow = () => {
             template: { type: StepTypeEnum.DIGEST, content: '' },
             metadata: { amount: '10', unit: 'seconds', type: 'regular', digestKey: '' },
             active: true,
+            uuid: uuid4(),
             filters: [],
           },
           {
@@ -59,6 +61,7 @@ export const useCreateDigestDemoWorkflow = () => {
               preheader: '',
               content: `Hi {{subscriber.firstName}}! 👋 You've sent {{step.total_count}} events!`,
             },
+            uuid: uuid4(),
             active: true,
           },
         ],

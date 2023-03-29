@@ -74,14 +74,6 @@ export const TemplateSettings = () => {
         </DeleteNotificationButton>
       </Group>
       <DeleteConfirmModal
-        target="notification template"
-        isOpen={toDelete}
-        confirm={confirmDelete}
-        cancel={cancelDelete}
-        isLoading={isDeleting}
-        error={isError}
-      />
-      <DeleteConfirmModal
         title={`Delete ${name} workflow?`}
         description={
           'This cannot be undone. ' +

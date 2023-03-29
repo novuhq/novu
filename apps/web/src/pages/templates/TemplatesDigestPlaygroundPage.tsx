@@ -38,7 +38,8 @@ export const TemplatesDigestPlaygroundPage = () => {
 
   const handleSetupDigestWorkflowClick = () => {
     segment.track(DigestPlaygroundAnalyticsEnum.SETUP_DIGEST_WORKFLOW_CLICK);
-    navigate(`${parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId })}?tour=digest`);
+    localStorage.setItem('tour-digest', '0');
+    navigate(`${parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId })}`);
   };
 
   const handleLearnMoreClick = () => {

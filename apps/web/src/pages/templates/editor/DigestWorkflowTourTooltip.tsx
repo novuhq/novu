@@ -2,7 +2,7 @@ import { UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
 import { TooltipRenderProps } from 'react-joyride';
 import { useFormContext } from 'react-hook-form';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
 
 import { useTour } from './TourProvider';
@@ -75,7 +75,6 @@ export const DigestWorkflowTourTooltip = ({
   const { watch } = useFormContext<IForm>();
   const steps = watch('steps');
   const { stopTour, setStep } = useTour();
-  const location = useLocation();
   const navigate = useNavigate();
   const Icon = ICONS[index];
   const basePath = useBasePath();
@@ -83,16 +82,15 @@ export const DigestWorkflowTourTooltip = ({
   const handleOnClick = (tourStepIndex: number, isFromNavigation = false) => {
     if (tourStepIndex === 0) {
       const digestStep = steps.find((el) => el.template?.type === StepTypeEnum.DIGEST);
-      setStep(tourStepIndex);
-      navigate(basePath + '/' + StepTypeEnum.DIGEST + '/' + digestStep?.uuid + '?tour=digest');
+      navigate(basePath + '/' + StepTypeEnum.DIGEST + '/' + digestStep?.uuid);
     } else if (tourStepIndex === 1) {
       const emailStep = steps.find((el) => el.template?.type === StepTypeEnum.EMAIL);
-      navigate(basePath + '/' + StepTypeEnum.EMAIL + '/' + emailStep?.uuid + '?tour=digest');
-      setStep(tourStepIndex);
+      navigate(basePath + '/' + StepTypeEnum.EMAIL + '/' + emailStep?.uuid);
     } else if (tourStepIndex === 2) {
-      setStep(tourStepIndex);
-      navigate(basePath + '/testworkflow' + '?tour=digest');
+      navigate(basePath + '/testworkflow');
     }
+    localStorage.setItem('tour-digest', tourStepIndex + '');
+    setStep(tourStepIndex);
 
     const stepIndex = isFromNavigation ? tourStepIndex : index;
     const analyticsEvent = getAnalyticsEvent(stepIndex, isFromNavigation);
@@ -104,10 +102,7 @@ export const DigestWorkflowTourTooltip = ({
 
   const stopTourCallback = () => {
     stopTour();
-    const queryParams = new URLSearchParams(location.search);
-    if (queryParams.has('tour')) {
-      navigate(location.pathname, { replace: true });
-    }
+    localStorage.removeItem('tour-digest');
   };
 
   const handleSkipClick = () => {
