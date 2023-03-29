@@ -13,15 +13,17 @@ import { When } from '../../../../components/utils/When';
 import { FilterModal } from '../../filter/FilterModal';
 import { useState } from 'react';
 import { Filter } from '../../../../design-system/icons/actions/Filter';
+import { FilterGradient } from '../../../../design-system/icons/gradient/FilterGradient';
 
 export function StepSettings({ index }: { index: number }) {
   const { readonly } = useEnvController();
-  const { control } = useFormContext<IForm>();
+  const { control, watch } = useFormContext<IForm>();
   const [filterOpen, setFilterOpen] = useState(false);
-
   const { channel } = useParams<{
     channel: StepTypeEnum;
   }>();
+
+  const filters = watch(`steps.${index}.filters.0.children`);
 
   return (
     <>
@@ -41,12 +43,22 @@ export function StepSettings({ index }: { index: number }) {
           disabled={readonly}
           data-test-id="add-filter-btn"
         >
-          <Filter
-            style={{
-              marginRight: '7px',
-            }}
-          />
-          Add filter
+          <When truthy={filters && filters?.length > 0}>
+            <FilterGradient
+              style={{
+                marginRight: '7px',
+              }}
+            />
+            {filters?.length} filter{filters && filters?.length < 2 ? '' : 's'}
+          </When>
+          <When truthy={filters && filters?.length === 0}>
+            <Filter
+              style={{
+                marginRight: '7px',
+              }}
+            />
+            Add filter
+          </When>
         </Button>
       </Group>
       <ReplyCallback index={index} control={control} />
