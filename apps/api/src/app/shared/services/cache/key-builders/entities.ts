@@ -1,4 +1,4 @@
-import { buildCommonKey, CacheKeyPrefixEnum, CacheKeyTypeEnum } from './shared';
+import { buildCommonKey, CacheKeyPrefixEnum, CacheKeyTypeEnum, IdentifierPrefixEnum } from './shared';
 
 const buildSubscriberKey = ({
   subscriberId,
@@ -11,7 +11,7 @@ const buildSubscriberKey = ({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
     environmentId: _environmentId,
-    identifierPrefix: 's',
+    identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
     identifier: subscriberId,
   });
 
@@ -40,12 +40,12 @@ const buildEnvironmentByApiKey = ({ _id }: { _id: string }): string =>
 const buildKeyById = ({
   type,
   keyEntity,
-  identifierPrefix = 'i',
+  identifierPrefix = IdentifierPrefixEnum.ID,
   identifier,
 }: {
   type: CacheKeyTypeEnum;
   keyEntity: CacheKeyPrefixEnum;
-  identifierPrefix?: string;
+  identifierPrefix?: IdentifierPrefixEnum;
   identifier: string;
 }): string => `${type}:${keyEntity}:${identifierPrefix}=${identifier}`;
 

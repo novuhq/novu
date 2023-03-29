@@ -1,6 +1,13 @@
 import { GetNotificationsFeedCommand } from '../../../../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
 import { GetFeedCountCommand } from '../../../../widgets/usecases/get-feed-count/get-feed-count.command';
-import { buildCommonKey, CacheKeyPrefixEnum, CacheKeyTypeEnum, QUERY_PREFIX } from './shared';
+import {
+  buildCommonKey,
+  CacheKeyPrefixEnum,
+  CacheKeyTypeEnum,
+  IdentifierPrefixEnum,
+  OrgScopePrefixEnum,
+  QUERY_PREFIX,
+} from './shared';
 
 const buildFeedKey = () => {
   const cache = (command: GetNotificationsFeedCommand): string =>
@@ -8,7 +15,7 @@ const buildFeedKey = () => {
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.FEED,
       environmentId: command.environmentId,
-      identifierPrefix: 's',
+      identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
       identifier: command.subscriberId,
       query: command as unknown as Record<string, unknown>,
     });
@@ -18,7 +25,7 @@ const buildFeedKey = () => {
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.FEED,
       environmentId: _environmentId,
-      identifierPrefix: 's',
+      identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
       identifier: subscriberId,
     });
 
@@ -34,7 +41,7 @@ const buildMessageCountKey = () => {
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.MESSAGE_COUNT,
       environmentId: command.environmentId,
-      identifierPrefix: 's',
+      identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
       identifier: command.subscriberId,
       query: command as unknown as Record<string, unknown>,
     });
@@ -44,7 +51,7 @@ const buildMessageCountKey = () => {
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.MESSAGE_COUNT,
       environmentId: _environmentId,
-      identifierPrefix: 's',
+      identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
       identifier: subscriberId,
     });
 
@@ -79,13 +86,13 @@ const buildNotificationTemplateKey = () => {
 const buildQueryKeyByEnvironment = ({
   type,
   keyEntity,
-  environmentIdPrefix = 'e',
+  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
   environmentId,
   query,
 }: {
   type: CacheKeyTypeEnum;
   keyEntity: CacheKeyPrefixEnum;
-  environmentIdPrefix?: string;
+  environmentIdPrefix?: OrgScopePrefixEnum;
   environmentId: string;
   query: Record<string, unknown>;
 }): string => {
@@ -102,29 +109,29 @@ const buildQueryKeyByEnvironment = ({
 const buildKeyBaseByEnvironment = ({
   type,
   keyEntity,
-  environmentIdPrefix = 'e',
+  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
   environmentId,
 }: {
   type: CacheKeyTypeEnum;
   keyEntity: CacheKeyPrefixEnum;
-  environmentIdPrefix?: string;
+  environmentIdPrefix?: OrgScopePrefixEnum;
   environmentId: string;
 }): string => `${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}`;
 
 export const buildQueryKey = ({
   type,
   keyEntity,
-  environmentIdPrefix = 'e',
+  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
   environmentId,
-  identifierPrefix = 'i',
+  identifierPrefix = IdentifierPrefixEnum.ID,
   identifier,
   query,
 }: {
   type: CacheKeyTypeEnum;
   keyEntity: CacheKeyPrefixEnum;
-  environmentIdPrefix?: string;
+  environmentIdPrefix?: OrgScopePrefixEnum;
   environmentId: string;
-  identifierPrefix?: string;
+  identifierPrefix?: IdentifierPrefixEnum;
   identifier: string;
   query: Record<string, unknown>;
 }): string =>

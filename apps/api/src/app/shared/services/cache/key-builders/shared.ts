@@ -3,14 +3,14 @@ export const buildCommonKey = ({
   keyEntity,
   environmentIdPrefix = 'e',
   environmentId,
-  identifierPrefix = 'i',
+  identifierPrefix = IdentifierPrefixEnum.ID,
   identifier,
 }: {
   type: CacheKeyTypeEnum;
   keyEntity: CacheKeyPrefixEnum;
   environmentIdPrefix?: string;
   environmentId: string;
-  identifierPrefix?: string;
+  identifierPrefix?: IdentifierPrefixEnum;
   identifier: string;
 }): string => `${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}:${identifierPrefix}=${identifier}`;
 
@@ -29,4 +29,14 @@ export enum CacheKeyPrefixEnum {
 export enum CacheKeyTypeEnum {
   ENTITY = 'entity',
   QUERY = 'query',
+}
+
+export enum IdentifierPrefixEnum {
+  ID = 'i',
+  SUBSCRIBER_ID = 's',
+}
+
+export enum OrgScopePrefixEnum {
+  ENVIRONMENT_ID = 'e',
+  ORGANIZATION_ID = 'o',
 }
