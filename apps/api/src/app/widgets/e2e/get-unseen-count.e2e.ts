@@ -1,9 +1,9 @@
 import axios from 'axios';
+import { expect } from 'chai';
 import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
 import { ChannelTypeEnum } from '@novu/shared';
-import { CacheKeyPrefixEnum, CacheService, InvalidateCacheService } from '../../shared/services/cache';
+import { CacheKeyPrefixEnum, CacheService, InvalidateCacheService } from '@novu/application-generic';
 
 describe('Unseen Count - GET /widget/notifications/unseen', function () {
   const messageRepository = new MessageRepository();

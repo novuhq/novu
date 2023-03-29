@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { QueueService, PinoLogger, storage, Store } from '@novu/application-generic';
 
@@ -84,33 +84,41 @@ export class WorkflowQueueService extends QueueService<IJobData> {
   }
 
   private async jobHasCompleted(job): Promise<void> {
-    await this.setJobAsCompleted.execute(
-      SetJobAsCommand.create({
-        environmentId: job.data._environmentId,
-        _jobId: job.data._id,
-        organizationId: job.data._organizationId,
-      })
-    );
-  }
-
-  private async jobHasFailed(job, error): Promise<void> {
-    const hasToBackoff = this.runJob.shouldBackoff(error);
-
-    if (!hasToBackoff) {
-      await this.setJobAsFailed.execute(
-        SetJobAsFailedCommand.create({
+    try {
+      await this.setJobAsCompleted.execute(
+        SetJobAsCommand.create({
           environmentId: job.data._environmentId,
-          error,
           _jobId: job.data._id,
           organizationId: job.data._organizationId,
         })
       );
+    } catch (error) {
+      Logger.error('Failed to set job as completed', error);
     }
+  }
 
-    const lastWebhookFilterRetry = job.attemptsMade === this.DEFAULT_ATTEMPTS && hasToBackoff;
+  private async jobHasFailed(job, error): Promise<void> {
+    try {
+      const hasToBackoff = this.runJob.shouldBackoff(error);
 
-    if (lastWebhookFilterRetry) {
-      await this.handleLastFailedWebhookFilter(job, error);
+      if (!hasToBackoff) {
+        await this.setJobAsFailed.execute(
+          SetJobAsFailedCommand.create({
+            environmentId: job.data._environmentId,
+            error,
+            _jobId: job.data._id,
+            organizationId: job.data._organizationId,
+          })
+        );
+      }
+
+      const lastWebhookFilterRetry = job.attemptsMade === this.DEFAULT_ATTEMPTS && hasToBackoff;
+
+      if (lastWebhookFilterRetry) {
+        await this.handleLastFailedWebhookFilter(job, error);
+      }
+    } catch (anotherError) {
+      Logger.error('Failed to set job as failed', anotherError);
     }
   }
 
@@ -152,17 +160,21 @@ export class WorkflowQueueService extends QueueService<IJobData> {
   private getBackoffStrategies = () => {
     return {
       webhookFilterBackoff: async (attemptsMade, err, job) => {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(job.data),
-            detail: DetailEnum.WEBHOOK_FILTER_FAILED_RETRY,
-            source: ExecutionDetailsSourceEnum.WEBHOOK,
-            status: ExecutionDetailsStatusEnum.PENDING,
-            isTest: false,
-            isRetry: true,
-            raw: JSON.stringify({ message: JSON.parse(err.message).message, attempt: attemptsMade }),
-          })
-        );
+        try {
+          await this.createExecutionDetails.execute(
+            CreateExecutionDetailsCommand.create({
+              ...CreateExecutionDetailsCommand.getDetailsFromJob(job.data),
+              detail: DetailEnum.WEBHOOK_FILTER_FAILED_RETRY,
+              source: ExecutionDetailsSourceEnum.WEBHOOK,
+              status: ExecutionDetailsStatusEnum.PENDING,
+              isTest: false,
+              isRetry: true,
+              raw: JSON.stringify({ message: JSON.parse(err?.message).message, attempt: attemptsMade }),
+            })
+          );
+        } catch (anotherError) {
+          Logger.error('Failed to create the execution details for backoff stategy', anotherError);
+        }
 
         return Math.round(Math.random() * Math.pow(2, attemptsMade) * 1000);
       },

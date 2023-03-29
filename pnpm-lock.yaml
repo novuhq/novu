@@ -20222,7 +20222,7 @@ packages:
     peerDependencies:
       '@nestjs/common': ^8.0.0 || ^9.0.0
     dependencies:
-      '@nestjs/common': 9.3.9_aniaiezvefq2fqnommj6u5l4zi
+      '@nestjs/common': 9.3.9_r72jqgu3m7fr66qxp7vl4agwte
       '@types/jsonwebtoken': 8.5.8
       jsonwebtoken: 8.5.1
     dev: false
@@ -20637,7 +20637,7 @@ packages:
       typeorm:
         optional: true
     dependencies:
-      '@nestjs/axios': 2.0.0_e4l2pm546tcjy5pdua5kssuvze
+      '@nestjs/axios': 2.0.0_55yx2xuoxauzradzjwl4zodbfi
       '@nestjs/common': 9.3.9_r72jqgu3m7fr66qxp7vl4agwte
       '@nestjs/core': 9.3.9_v3dwamjy3ezshn7kdlxqms6y6a
       boxen: 5.1.2
