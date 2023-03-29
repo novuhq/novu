@@ -8,7 +8,9 @@ Novu is an open-source notification infrastructure, built for engineering teams 
 
 ## Why?
 
-Developing a notification layer is something we often do when designing a new application. It usually starts the same, sending just a simple email, and after a while, you'll find yourself managing hundreds of notifications across multiple channels. Novu’s goal is to help developers create meaningful, transactional communication between the product and its users. All with an easy-to-use API and outstanding developer experience.
+Developing a notification layer is something we often do when designing a new application. It usually starts the same, sending an email here, a push notification there but before you know it, you have to manage hundreds of notifications across different channels.
+
+Novu’s goal is to help developers create meaningful and transactional communication between the product and its users. All with an easy-to-use API and outstanding developer experience.
 
 ## Unified API
 
