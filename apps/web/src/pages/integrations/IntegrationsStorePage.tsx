@@ -220,7 +220,9 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
         // eslint-disable-next-line no-param-reassign
         if (credential.type === 'object') {
           credential.value = JSON.stringify(integration.credentials[credential.key]);
-        } else credential.value = integration.credentials[credential.key]?.toString();
+        } else {
+          credential.value = integration.credentials[credential.key]?.toString();
+        }
       });
     }
 

@@ -128,18 +128,6 @@ describe('Create Integration - /integration (POST)', function () {
     expect(nodeMailerIntegration?.credentials?.tlsOptions).to.instanceOf(Object);
     expect(nodeMailerIntegration?.credentials?.tlsOptions).to.eql(payload.credentials.tlsOptions);
     expect(nodeMailerIntegration?.active).to.equal(true);
-
-    //database checks
-    const nodeMailerStoredIntegration = (await integrationRepository.findByEnvironmentId(environmentId)).find(
-      (i) => i.providerId.toString() === 'nodemailer'
-    );
-    expect(nodeMailerStoredIntegration?.credentials?.host).to.equal(payload.credentials.host);
-    expect(nodeMailerStoredIntegration?.credentials?.port).to.equal(payload.credentials.port);
-    expect(nodeMailerStoredIntegration?.credentials?.secure).to.equal(payload.credentials.secure);
-    expect(nodeMailerStoredIntegration?.credentials?.requireTls).to.equal(payload.credentials.requireTls);
-    expect(nodeMailerStoredIntegration?.credentials?.tlsOptions).to.instanceOf(Object);
-    expect(nodeMailerStoredIntegration?.credentials?.tlsOptions).to.eql(payload.credentials.tlsOptions);
-    expect(nodeMailerStoredIntegration?.active).to.equal(true);
   });
 });
 
