@@ -75,7 +75,7 @@ export class PromoteNotificationTemplateChange {
 
     if (!notificationGroup) {
       const changes = await this.changeRepository.getEntityChanges(
-        command.organizationId,
+        command.environmentId,
         ChangeEntityTypeEnum.NOTIFICATION_GROUP,
         newItem._notificationGroupId
       );

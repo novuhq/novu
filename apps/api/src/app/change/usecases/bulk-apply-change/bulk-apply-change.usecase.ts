@@ -16,7 +16,6 @@ export class BulkApplyChange {
           $in: command.changeIds,
         },
         _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
       },
       '',
       { sort: { createdAt: 1 } }

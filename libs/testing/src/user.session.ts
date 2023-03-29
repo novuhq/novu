@@ -359,7 +359,6 @@ export class UserSession {
     const changes = await this.changeRepository.find(
       {
         _environmentId: this.environment._id,
-        _organizationId: this.organization._id,
         _parentId: { $exists: false, $eq: null },
         ...where,
       },
