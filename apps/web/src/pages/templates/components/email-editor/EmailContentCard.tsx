@@ -71,9 +71,10 @@ export function EmailContentCard({
         />
       )}
       <EmailInboxContent integration={integration} index={index} readonly={readonly} />
-
-      <div data-test-id="editor-type-selector">
-        <Tabs value={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} keepMounted={false} />
+      <div data-test-id="email-step-settings-edit">
+        <div data-test-id="editor-type-selector">
+          <Tabs value={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} keepMounted={false} />
+        </div>
       </div>
     </>
   );

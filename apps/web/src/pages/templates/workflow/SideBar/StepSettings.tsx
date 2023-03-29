@@ -1,12 +1,12 @@
 import { Group } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
 
-import { Button, colors } from '../../../../design-system';
+import { Button } from '../../../../design-system';
 import type { IForm } from '../../components/formTypes';
 import { StepActiveSwitch } from '../StepActiveSwitch';
 import { useEnvController } from '../../../../hooks';
 import { ShouldStopOnFailSwitch } from '../ShouldStopOnFailSwitch';
-import { ReplyCallback } from '../ReplyCallback';
+import { ReplyCallback, ReplyCallbackSwitch } from '../ReplyCallback';
 import { useParams } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
 import { When } from '../../../../components/utils/When';
@@ -16,10 +16,7 @@ import { Filter } from '../../../../design-system/icons/actions/Filter';
 
 export function StepSettings({ index }: { index: number }) {
   const { readonly } = useEnvController();
-  const {
-    control,
-    formState: { errors },
-  } = useFormContext<IForm>();
+  const { control } = useFormContext<IForm>();
   const [filterOpen, setFilterOpen] = useState(false);
 
   const { channel } = useParams<{
@@ -33,7 +30,7 @@ export function StepSettings({ index }: { index: number }) {
           <StepActiveSwitch index={index} control={control} />
           <ShouldStopOnFailSwitch index={index} control={control} />
           <When truthy={channel === StepTypeEnum.EMAIL}>
-            <ReplyCallback index={index} control={control} errors={errors} />
+            <ReplyCallbackSwitch index={index} control={control} />
           </When>
         </Group>
         <Button
@@ -52,6 +49,7 @@ export function StepSettings({ index }: { index: number }) {
           Add filter
         </Button>
       </Group>
+      <ReplyCallback index={index} control={control} />
       <FilterModal
         isOpen={filterOpen}
         cancel={() => {

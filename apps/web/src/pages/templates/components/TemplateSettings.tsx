@@ -83,7 +83,10 @@ export const TemplateSettings = () => {
       />
       <DeleteConfirmModal
         title={`Delete ${name} workflow?`}
-        description={`This cannot be undone. The trigger code generated based on this workflow will be disabled and the notification will no longer be sent.`}
+        description={
+          'This cannot be undone. ' +
+          'The trigger code generated based on this workflow will be disabled and the notification will no longer be sent.'
+        }
         isOpen={toDelete}
         isLoading={isDeleting}
         error={isError}

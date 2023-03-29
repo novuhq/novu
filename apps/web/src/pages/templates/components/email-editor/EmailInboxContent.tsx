@@ -40,10 +40,12 @@ export const EmailInboxContent = ({
   return (
     <div
       style={{
-        background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+        borderColor: theme.colorScheme === 'dark' ? colors.B30 : colors.B98,
+        borderStyle: 'solid',
+        borderWidth: 1,
         borderRadius: '7px',
-        marginBottom: '40px',
-        padding: '5px 10px',
+        marginBottom: '24px',
+        padding: '16px',
       }}
     >
       <Grid grow justify="center" align="stretch">

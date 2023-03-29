@@ -20,7 +20,7 @@ import { When } from '../../../components/utils/When';
 import { useEffect, useMemo } from 'react';
 import { useBasePath } from '../hooks/useBasePath';
 
-const getPageTitle = (channel: StepTypeEnum) => {
+export const getPageTitle = (channel: StepTypeEnum) => {
   if (channel === StepTypeEnum.EMAIL) {
     return (
       <Group align="center" spacing={16}>

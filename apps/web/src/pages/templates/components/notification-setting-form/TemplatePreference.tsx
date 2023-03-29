@@ -4,10 +4,12 @@ import styled from '@emotion/styled';
 import { useFormContext, Controller } from 'react-hook-form';
 
 import { useEnvController } from '../../../../hooks';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { Checkbox, colors, Switch } from '../../../../design-system';
 import { channels } from '../../shared/channels';
 import type { IForm } from '../formTypes';
+import { getPageTitle } from '../TemplateEditor';
+import { StepTypeEnum } from '../../../../../../../libs/shared/src/types/channel/index';
+import { LabelWithTooltip } from '../../workflow/LabelWithTooltip';
 
 export function TemplatePreference() {
   return (
@@ -37,27 +39,37 @@ export function ChannelPreference() {
         }
 
         return (
-          <InputBackground
-            label="Template Defaults"
-            description="Check the channels you would like to be ON by default"
-            styles={inputStyles}
-          >
+          <>
+            <Text mb={16} color={colors.B60}>
+              Default subscriptions
+            </Text>
             {Object.keys(preferences).map((key) => {
               const label = channels.find((channel) => channel.tabKey === key)?.label;
               const checked = preferences[key] || false;
 
               return (
-                <StyledCheckbox
-                  mb={8}
-                  checked={checked}
-                  disabled={readonly}
-                  data-test-id={`preference-${key}`}
-                  label={label}
-                  onChange={(e) => handleCheckboxChange(e, key)}
-                />
+                <Group
+                  sx={{
+                    padding: 18,
+                    border: `1px dashed ${colors.B40}`,
+                    borderRadius: 8,
+                  }}
+                  mb={24}
+                  position="apart"
+                >
+                  <Text>{getPageTitle(key as StepTypeEnum)}</Text>
+                  <div>
+                    <Switch
+                      checked={checked}
+                      disabled={readonly}
+                      data-test-id={`preference-${key}`}
+                      onChange={(e) => handleCheckboxChange(e, key)}
+                    />
+                  </div>
+                </Group>
               );
             })}
-          </InputBackground>
+          </>
         );
       }}
     />
@@ -76,10 +88,11 @@ export function CriticalPreference() {
       render={({ field }) => {
         return (
           <Group mb={24} align="center" position="apart">
-            <Text weight="bold" size={14}>
-              Users will be able to manage subscriptions
-            </Text>
-            <Switch {...field} checked={!field.value || false} disabled={readonly} data-test-id="critical" />
+            <LabelWithTooltip
+              label="Users will be able to manage subscriptions"
+              tooltip="Users will receive notifications in the channels activated below. It will be able to opt out of those channels"
+            />
+            <Switch {...field} checked={field.value || false} disabled={readonly} data-test-id="critical" />
           </Group>
         );
       }}

@@ -84,14 +84,14 @@ export const DigestWorkflowTourTooltip = ({
     if (tourStepIndex === 0) {
       const digestStep = steps.find((el) => el.template?.type === StepTypeEnum.DIGEST);
       setStep(tourStepIndex);
-      navigate(basePath + '/' + StepTypeEnum.DIGEST + '/' + digestStep?.uuid);
+      navigate(basePath + '/' + StepTypeEnum.DIGEST + '/' + digestStep?.uuid + '?tour=digest');
     } else if (tourStepIndex === 1) {
       const emailStep = steps.find((el) => el.template?.type === StepTypeEnum.EMAIL);
+      navigate(basePath + '/' + StepTypeEnum.EMAIL + '/' + emailStep?.uuid + '?tour=digest');
       setStep(tourStepIndex);
-      navigate(basePath + '/' + StepTypeEnum.EMAIL + '/' + emailStep?.uuid);
     } else if (tourStepIndex === 2) {
       setStep(tourStepIndex);
-      navigate(basePath);
+      navigate(basePath + '/testworkflow' + '?tour=digest');
     }
 
     const stepIndex = isFromNavigation ? tourStepIndex : index;

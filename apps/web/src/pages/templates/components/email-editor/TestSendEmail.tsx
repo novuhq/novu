@@ -71,7 +71,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: 'auto', padding: '20px 25px' }}>
+    <div>
       <Text my={30} color={colors.B60}>
         Fill in the required variables and send a test to your desired address.
       </Text>
@@ -103,43 +103,51 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
         />
       </Wrapper>
 
-      <JsonInput
-        data-test-id="test-email-json-param"
-        formatOnBlur
-        mt={20}
-        autosize
-        styles={inputStyles}
-        label="Variables"
-        value={payloadValue}
-        onChange={setPayloadValue}
-        minRows={6}
-        mb={15}
-        validationError="Invalid JSON"
-        rightSectionWidth={50}
-        rightSectionProps={{ style: { alignItems: 'start', padding: '5px' } }}
-        rightSection={
-          <Tooltip label={clipboardJson.copied ? 'Copied!' : 'Copy Json'}>
-            <ActionIcon variant="transparent" onClick={() => clipboardJson.copy(payloadValue)}>
-              {clipboardJson.copied ? <Check /> : <Copy />}
-            </ActionIcon>
-          </Tooltip>
-        }
-      />
+      <div style={{ position: 'relative' }}>
+        <JsonInput
+          data-test-id="test-email-json-param"
+          formatOnBlur
+          mt={20}
+          autosize
+          styles={inputStyles}
+          label="Variables"
+          value={payloadValue}
+          onChange={setPayloadValue}
+          minRows={12}
+          mb={15}
+          validationError="Invalid JSON"
+          rightSectionWidth={50}
+          rightSectionProps={{ style: { alignItems: 'start', padding: '5px' } }}
+          rightSection={
+            <Tooltip label={clipboardJson.copied ? 'Copied!' : 'Copy Json'}>
+              <ActionIcon variant="transparent" onClick={() => clipboardJson.copy(payloadValue)}>
+                {clipboardJson.copied ? <Check /> : <Copy />}
+              </ActionIcon>
+            </Tooltip>
+          }
+        />
 
-      <Group mt={30}>
-        <Button
-          loading={isLoading}
-          icon={<Invite />}
-          data-test-id="test-send-email-btn"
-          disabled={!isIntegrationActive && !isLimitFetchingEnabled}
-          onClick={() => onTestEmail()}
+        <span
+          style={{
+            position: 'absolute',
+            bottom: 16,
+            right: 16,
+          }}
         >
-          Send Test Email
-        </Button>
-        {!isIntegrationActive && (
-          <Text color={colors.error}>{`* Looks like you haven’t configured your email provider yet`}</Text>
-        )}
-      </Group>
+          <Button
+            loading={isLoading}
+            icon={<Invite />}
+            data-test-id="test-send-email-btn"
+            disabled={!isIntegrationActive && !isLimitFetchingEnabled}
+            onClick={() => onTestEmail()}
+          >
+            Send Test Email
+          </Button>
+          {!isIntegrationActive && (
+            <Text color={colors.error}>{`* Looks like you haven’t configured your email provider yet`}</Text>
+          )}
+        </span>
+      </div>
     </div>
   );
 }

@@ -41,6 +41,7 @@ export function TemplateSMSEditor({
             error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
             disabled={readonly}
             minRows={4}
+            mt={24}
             value={field.value || ''}
             label="SMS message content"
             placeholder="Add notification content here..."

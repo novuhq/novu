@@ -36,6 +36,8 @@ export function TemplatePushEditor({
         control={control}
         render={({ field }) => (
           <Textarea
+            mt={24}
+            mb={24}
             {...field}
             data-test-id="pushNotificationTitle"
             error={errors?.steps ? errors.steps[index]?.template?.title?.message : undefined}

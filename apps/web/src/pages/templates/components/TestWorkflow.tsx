@@ -145,20 +145,21 @@ export function TestWorkflow() {
             minRows={3}
             validationError="Invalid JSON"
           />
-          <Group position="right">
-            <Button
-              sx={{
-                width: 'auto',
-              }}
-              fullWidth={false}
-              disabled={!form.isValid()}
-              data-test-id="test-trigger-btn"
-              mt={30}
-              inherit
-              submit
-            >
-              Run Trigger
-            </Button>
+          <Group mt={30} position="right">
+            <div data-test-id="test-workflow-btn">
+              <Button
+                sx={{
+                  width: 'auto',
+                }}
+                fullWidth={false}
+                disabled={!form.isValid()}
+                data-test-id="test-trigger-btn"
+                inherit
+                submit
+              >
+                Run Trigger
+              </Button>
+            </div>
           </Group>
         </form>
       </SubPageWrapper>

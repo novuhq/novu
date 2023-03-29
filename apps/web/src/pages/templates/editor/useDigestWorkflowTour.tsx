@@ -1,10 +1,8 @@
-import { useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Step } from 'react-joyride';
 import { useFormContext } from 'react-hook-form';
 import { StepTypeEnum } from '@novu/shared';
-
-import { useEffectOnce } from '../../../hooks';
+import { useEffectOnce, useSearchParams } from '../../../hooks';
 import { IForm } from '../components/formTypes';
 import { DigestWorkflowTourTooltip } from './DigestWorkflowTourTooltip';
 import { useBasePath } from '../hooks/useBasePath';
@@ -43,28 +41,19 @@ const digestTourSteps: Step[] = [
 ];
 
 export const useDigestWorkflowTour = ({ startTour }: { startTour: () => void }) => {
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const isDigestTour = queryParams.get('tour') == 'digest';
+  const queryParams = useSearchParams();
+  const isDigestTour = queryParams.tour == 'digest';
+  const basePath = useBasePath();
   const { watch } = useFormContext<IForm>();
   const steps = watch('steps');
   const navigate = useNavigate();
-  const basePath = useBasePath();
-
-  useEffect(() => {
-    if (isDigestTour) {
-      navigate(basePath + '/');
-    }
-  }, []);
 
   useEffectOnce(() => {
     // once there are steps select the node with type DIGEST and start the tour
     const digestStep = steps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
     if (digestStep) {
-      setTimeout(() => {
-        navigate(basePath + '/' + StepTypeEnum.DIGEST + '/' + digestStep?.uuid);
-        startTour();
-      }, 0);
+      navigate(basePath + '/' + StepTypeEnum.DIGEST + '/' + digestStep?.uuid + '?tour=digest');
+      startTour();
     }
   }, isDigestTour && steps.length > 0);
 
