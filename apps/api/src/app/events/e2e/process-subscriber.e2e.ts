@@ -11,7 +11,10 @@ import axios from 'axios';
 import { ChannelTypeEnum, ISubscribersDefine, StepTypeEnum } from '@novu/shared';
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
 import { CacheService, InvalidateCacheService } from '../../shared/services/cache';
-import { buildNotificationTemplateKey } from '../../shared/services/cache/key-builders/queries';
+import {
+  buildNotificationTemplateIdentifierKey,
+  buildNotificationTemplateKey,
+} from '../../shared/services/cache/key-builders/entities';
 
 const axiosInstance = axios.create();
 
@@ -194,8 +197,16 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
 
-    await invalidateCache.invalidateQuery({
-      key: buildNotificationTemplateKey().invalidate({
+    await invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateKey({
+        _id: template._id,
+        _environmentId: session.environment._id,
+      }),
+    });
+
+    await invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateIdentifierKey({
+        templateIdentifier: template.triggers[0].identifier,
         _environmentId: session.environment._id,
       }),
     });

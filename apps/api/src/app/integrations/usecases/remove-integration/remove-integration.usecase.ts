@@ -3,7 +3,7 @@ import { IntegrationRepository, DalException } from '@novu/dal';
 import { RemoveIntegrationCommand } from './remove-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { buildIntegrationKey } from '../../../shared/services/cache/key-builders/entities';
+import { buildIntegrationKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable({
   scope: Scope.REQUEST,
@@ -13,9 +13,8 @@ export class RemoveIntegration {
 
   async execute(command: RemoveIntegrationCommand) {
     try {
-      await this.invalidateCache.invalidateByKey({
-        key: buildIntegrationKey({
-          _id: command.integrationId,
+      await this.invalidateCache.invalidateQuery({
+        key: buildIntegrationKey().invalidate({
           _environmentId: command.environmentId,
         }),
       });

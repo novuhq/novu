@@ -10,7 +10,7 @@ import { CheckIntegrationCommand } from '../check-integration/check-integration.
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { InvalidateCacheService } from '../../../shared/services/cache';
-import { buildIntegrationKey } from '../../../shared/services/cache/key-builders/entities';
+import { buildIntegrationKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class CreateIntegration {
@@ -46,9 +46,8 @@ export class CreateIntegration {
       }
 
       await this.invalidateCache.invalidateQuery({
-        key: buildIntegrationKey({
+        key: buildIntegrationKey().invalidate({
           _environmentId: command.environmentId,
-          _id: command.userId,
         }),
       });
 

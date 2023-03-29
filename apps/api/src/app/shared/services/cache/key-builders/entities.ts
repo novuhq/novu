@@ -15,14 +15,6 @@ const buildSubscriberKey = ({
     identifier: subscriberId,
   });
 
-const buildIntegrationKey = ({ _id, _environmentId }: { _id: string; _environmentId: string }): string =>
-  buildCommonKey({
-    type: CacheKeyTypeEnum.ENTITY,
-    keyEntity: CacheKeyPrefixEnum.INTEGRATION,
-    environmentId: _environmentId,
-    identifier: _id,
-  });
-
 const buildUserKey = ({ _id }: { _id: string }): string =>
   buildKeyById({
     type: CacheKeyTypeEnum.ENTITY,
@@ -54,11 +46,12 @@ const buildNotificationTemplateIdentifierKey = ({
     identifier: templateIdentifier,
   });
 
-const buildEnvironmentByApiKey = ({ _id }: { _id: string }): string =>
+const buildEnvironmentByApiKey = ({ apiKey }: { apiKey: string }): string =>
   buildKeyById({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY,
-    identifier: _id,
+    identifier: apiKey,
+    identifierPrefix: IdentifierPrefixEnum.API_KEY,
   });
 
 const buildKeyById = ({
@@ -75,7 +68,6 @@ const buildKeyById = ({
 
 export {
   buildUserKey,
-  buildIntegrationKey,
   buildSubscriberKey,
   buildNotificationTemplateKey,
   buildNotificationTemplateIdentifierKey,

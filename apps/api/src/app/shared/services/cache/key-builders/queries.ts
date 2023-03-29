@@ -1,5 +1,3 @@
-import { GetNotificationsFeedCommand } from '../../../../widgets/usecases/get-notifications-feed/get-notifications-feed.command';
-import { GetFeedCountCommand } from '../../../../widgets/usecases/get-feed-count/get-feed-count.command';
 import {
   buildCommonKey,
   CacheKeyPrefixEnum,
@@ -10,14 +8,14 @@ import {
 } from './shared';
 
 const buildFeedKey = () => {
-  const cache = (command: GetNotificationsFeedCommand): string =>
+  const cache = (command: Record<string, unknown> & { environmentId: string; subscriberId: string }): string =>
     buildQueryKey({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.FEED,
       environmentId: command.environmentId,
       identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
       identifier: command.subscriberId,
-      query: command as unknown as Record<string, unknown>,
+      query: command,
     });
 
   const invalidate = ({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }): string =>
@@ -36,14 +34,14 @@ const buildFeedKey = () => {
 };
 
 const buildMessageCountKey = () => {
-  const cache = (command: GetFeedCountCommand): string =>
+  const cache = (command: Record<string, unknown> & { environmentId: string; subscriberId: string }): string =>
     buildQueryKey({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.MESSAGE_COUNT,
       environmentId: command.environmentId,
       identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
       identifier: command.subscriberId,
-      query: command as unknown as Record<string, unknown>,
+      query: command,
     });
 
   const invalidate = ({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }): string =>
@@ -53,6 +51,30 @@ const buildMessageCountKey = () => {
       environmentId: _environmentId,
       identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
       identifier: subscriberId,
+    });
+
+  return {
+    cache,
+    invalidate,
+  };
+};
+
+const buildIntegrationKey = () => {
+  const cache = (command: Record<string, unknown> & { _environmentId: string }): string =>
+    buildQueryByEnvironmentKey({
+      type: CacheKeyTypeEnum.QUERY,
+      keyEntity: CacheKeyPrefixEnum.INTEGRATION,
+      environmentId: command._environmentId,
+      environmentIdPrefix: OrgScopePrefixEnum.ENVIRONMENT_ID,
+      query: command,
+    });
+
+  const invalidate = ({ _environmentId }: { _environmentId: string }): string =>
+    buildKeyByEnvironment({
+      type: CacheKeyTypeEnum.QUERY,
+      keyEntity: CacheKeyPrefixEnum.INTEGRATION,
+      environmentId: _environmentId,
+      environmentIdPrefix: OrgScopePrefixEnum.ENVIRONMENT_ID,
     });
 
   return {
@@ -87,9 +109,41 @@ export const buildQueryKey = ({
     identifier,
   })}:${QUERY_PREFIX}=${JSON.stringify(query)}`;
 
+export const buildQueryByEnvironmentKey = ({
+  type,
+  keyEntity,
+  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
+  environmentId,
+  query,
+}: {
+  type: CacheKeyTypeEnum;
+  keyEntity: CacheKeyPrefixEnum;
+  environmentIdPrefix?: OrgScopePrefixEnum;
+  environmentId: string;
+  query: Record<string, unknown>;
+}): string =>
+  `${buildKeyByEnvironment({
+    type,
+    keyEntity,
+    environmentIdPrefix,
+    environmentId,
+  })}:${QUERY_PREFIX}=${JSON.stringify(query)}`;
+
+const buildKeyByEnvironment = ({
+  type,
+  keyEntity,
+  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
+  environmentId,
+}: {
+  type: CacheKeyTypeEnum;
+  keyEntity: CacheKeyPrefixEnum;
+  environmentIdPrefix?: OrgScopePrefixEnum;
+  environmentId: string;
+}): string => `${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}`;
+
 export interface IBuildNotificationTemplateByIdentifier {
   _environmentId: string;
   identifiers: ({ id: string } & { triggerIdentifier?: string }) | ({ id?: string } & { triggerIdentifier: string });
 }
 
-export { buildFeedKey, buildMessageCountKey };
+export { buildFeedKey, buildMessageCountKey, buildIntegrationKey };

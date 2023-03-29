@@ -131,7 +131,7 @@ export class AuthService {
   }
 
   async apiKeyAuthenticate(apiKey: string) {
-    const environment = await this.getEnvironment({ _id: apiKey });
+    const environment = await this.getEnvironment({ apiKey: apiKey });
     if (!environment) throw new UnauthorizedException('API Key not found');
 
     const key = environment.apiKeys.find((i) => i.key === apiKey);
@@ -300,13 +300,13 @@ export class AuthService {
   }
 
   @CachedEntity({
-    builder: (command: { _id: string }) =>
+    builder: ({ apiKey }: { apiKey: string }) =>
       buildEnvironmentByApiKey({
-        _id: command._id,
+        apiKey: apiKey,
       }),
   })
-  private async getEnvironment({ _id }: { _id: string }) {
-    return await this.environmentRepository.findByApiKey(_id);
+  private async getEnvironment({ apiKey }: { apiKey: string }) {
+    return await this.environmentRepository.findByApiKey(apiKey);
   }
 
   @CachedEntity({

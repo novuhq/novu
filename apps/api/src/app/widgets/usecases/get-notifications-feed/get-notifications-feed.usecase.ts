@@ -9,12 +9,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
 import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
-import { buildQueryKey } from '../../../shared/services/cache/key-builders/queries';
-import {
-  CacheKeyPrefixEnum,
-  CacheKeyTypeEnum,
-  IdentifierPrefixEnum,
-} from '../../../shared/services/cache/key-builders/shared';
+import { buildFeedKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class GetNotificationsFeed {
@@ -25,14 +20,11 @@ export class GetNotificationsFeed {
   ) {}
 
   @CachedQuery({
-    builder: (command: GetNotificationsFeedCommand) =>
-      buildQueryKey({
-        type: CacheKeyTypeEnum.QUERY,
-        keyEntity: CacheKeyPrefixEnum.FEED,
-        environmentId: command.environmentId,
-        identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
-        identifier: command.subscriberId,
-        query: command as any,
+    builder: ({ environmentId, subscriberId, ...command }: GetNotificationsFeedCommand) =>
+      buildFeedKey().cache({
+        environmentId: environmentId,
+        subscriberId: subscriberId,
+        ...command,
       }),
   })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {

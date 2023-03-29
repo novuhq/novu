@@ -14,9 +14,8 @@ import {
 import { DetailEnum } from '../../../execution-details/types';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
-import { buildQueryKey } from '../../../shared/services/cache/key-builders/queries';
-import { CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/key-builders/shared';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
+import { buildIntegrationKey } from '../../../shared/services/cache/key-builders/queries';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -51,13 +50,10 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   @CachedQuery({
-    builder: (command: GetDecryptedIntegrationsCommand) =>
-      buildQueryKey({
-        type: CacheKeyTypeEnum.QUERY,
-        keyEntity: CacheKeyPrefixEnum.INTEGRATION,
-        environmentId: command.environmentId,
-        identifier: command.userId,
-        query: command as any,
+    builder: ({ environmentId, ...command }: GetDecryptedIntegrationsCommand) =>
+      buildIntegrationKey().cache({
+        _environmentId: environmentId,
+        ...command,
       }),
   })
   protected async getIntegration(getDecryptedIntegrationsCommand: GetDecryptedIntegrationsCommand) {
