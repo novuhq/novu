@@ -43,13 +43,10 @@ changeSchema.virtual('user', {
 });
 
 changeSchema.index({
-  _environmentId: 1,
   _parentId: 1,
   _entityId: 1,
+  _environmentId: 1,
   createdAt: 1,
-  type: 1,
-  enabled: 1,
-  _creatorId: 1,
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
