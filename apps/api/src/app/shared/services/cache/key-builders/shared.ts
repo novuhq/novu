@@ -34,6 +34,7 @@ export enum CacheKeyTypeEnum {
 export enum IdentifierPrefixEnum {
   ID = 'i',
   SUBSCRIBER_ID = 's',
+  TEMPLATE_IDENTIFIER = 't_i',
 }
 
 export enum OrgScopePrefixEnum {

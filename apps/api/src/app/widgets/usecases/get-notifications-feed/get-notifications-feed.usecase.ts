@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
-import { MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
+import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
@@ -10,7 +10,11 @@ import { CachedEntity } from '../../../shared/interceptors/cached-entity.interce
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
 import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 import { buildQueryKey } from '../../../shared/services/cache/key-builders/queries';
-import { CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/key-builders/shared';
+import {
+  CacheKeyPrefixEnum,
+  CacheKeyTypeEnum,
+  IdentifierPrefixEnum,
+} from '../../../shared/services/cache/key-builders/shared';
 
 @Injectable()
 export class GetNotificationsFeed {
@@ -26,7 +30,7 @@ export class GetNotificationsFeed {
         type: CacheKeyTypeEnum.QUERY,
         keyEntity: CacheKeyPrefixEnum.FEED,
         environmentId: command.environmentId,
-        identifierPrefix: 's',
+        identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
         identifier: command.subscriberId,
         query: command as any,
       }),

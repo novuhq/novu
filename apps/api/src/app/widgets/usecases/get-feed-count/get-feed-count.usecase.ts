@@ -5,7 +5,11 @@ import { GetFeedCountCommand } from './get-feed-count.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
 import { GetNotificationsFeedCommand } from '../get-notifications-feed/get-notifications-feed.command';
-import { CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../../shared/services/cache/key-builders/shared';
+import {
+  CacheKeyPrefixEnum,
+  CacheKeyTypeEnum,
+  IdentifierPrefixEnum,
+} from '../../../shared/services/cache/key-builders/shared';
 import { buildQueryKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
@@ -18,7 +22,7 @@ export class GetFeedCount {
         type: CacheKeyTypeEnum.QUERY,
         keyEntity: CacheKeyPrefixEnum.MESSAGE_COUNT,
         environmentId: command.environmentId,
-        identifierPrefix: 's',
+        identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
         identifier: command.subscriberId,
         query: command as any,
       }),

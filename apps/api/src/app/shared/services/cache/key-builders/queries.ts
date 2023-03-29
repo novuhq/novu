@@ -61,63 +61,6 @@ const buildMessageCountKey = () => {
   };
 };
 
-const buildNotificationTemplateKey = () => {
-  const cache = (options: IBuildNotificationTemplateByIdentifier): string =>
-    buildQueryKeyByEnvironment({
-      type: CacheKeyTypeEnum.QUERY,
-      keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
-      environmentId: options._environmentId,
-      query: options as unknown as Record<string, unknown>,
-    });
-
-  const invalidate = ({ _environmentId }: { _environmentId: string }): string =>
-    buildKeyBaseByEnvironment({
-      type: CacheKeyTypeEnum.QUERY,
-      keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
-      environmentId: _environmentId,
-    });
-
-  return {
-    cache,
-    invalidate,
-  };
-};
-
-const buildQueryKeyByEnvironment = ({
-  type,
-  keyEntity,
-  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
-  environmentId,
-  query,
-}: {
-  type: CacheKeyTypeEnum;
-  keyEntity: CacheKeyPrefixEnum;
-  environmentIdPrefix?: OrgScopePrefixEnum;
-  environmentId: string;
-  query: Record<string, unknown>;
-}): string => {
-  const keyBase = buildKeyBaseByEnvironment({
-    type,
-    keyEntity,
-    environmentIdPrefix,
-    environmentId,
-  });
-
-  return `${keyBase}:${QUERY_PREFIX}=${JSON.stringify(query)}`;
-};
-
-const buildKeyBaseByEnvironment = ({
-  type,
-  keyEntity,
-  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
-  environmentId,
-}: {
-  type: CacheKeyTypeEnum;
-  keyEntity: CacheKeyPrefixEnum;
-  environmentIdPrefix?: OrgScopePrefixEnum;
-  environmentId: string;
-}): string => `${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}`;
-
 export const buildQueryKey = ({
   type,
   keyEntity,
@@ -149,4 +92,4 @@ export interface IBuildNotificationTemplateByIdentifier {
   identifiers: ({ id: string } & { triggerIdentifier?: string }) | ({ id?: string } & { triggerIdentifier: string });
 }
 
-export { buildFeedKey, buildMessageCountKey, buildNotificationTemplateKey };
+export { buildFeedKey, buildMessageCountKey };

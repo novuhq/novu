@@ -30,6 +30,30 @@ const buildUserKey = ({ _id }: { _id: string }): string =>
     identifier: _id,
   });
 
+const buildNotificationTemplateKey = ({ _id, _environmentId }: { _id: string; _environmentId: string }): string =>
+  buildCommonKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
+    environmentId: _environmentId,
+    identifierPrefix: IdentifierPrefixEnum.ID,
+    identifier: _id,
+  });
+
+const buildNotificationTemplateIdentifierKey = ({
+  templateIdentifier,
+  _environmentId,
+}: {
+  templateIdentifier: string;
+  _environmentId: string;
+}): string =>
+  buildCommonKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
+    environmentId: _environmentId,
+    identifierPrefix: IdentifierPrefixEnum.TEMPLATE_IDENTIFIER,
+    identifier: templateIdentifier,
+  });
+
 const buildEnvironmentByApiKey = ({ _id }: { _id: string }): string =>
   buildKeyById({
     type: CacheKeyTypeEnum.ENTITY,
@@ -49,4 +73,12 @@ const buildKeyById = ({
   identifier: string;
 }): string => `${type}:${keyEntity}:${identifierPrefix}=${identifier}`;
 
-export { buildUserKey, buildIntegrationKey, buildSubscriberKey, buildEnvironmentByApiKey, buildKeyById };
+export {
+  buildUserKey,
+  buildIntegrationKey,
+  buildSubscriberKey,
+  buildNotificationTemplateKey,
+  buildNotificationTemplateIdentifierKey,
+  buildEnvironmentByApiKey,
+  buildKeyById,
+};

@@ -20,8 +20,8 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
 import { PinoLogger } from '@novu/application-generic';
-import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
-import { buildNotificationTemplateKey } from '../../../shared/services/cache/key-builders/queries';
+import { buildNotificationTemplateIdentifierKey } from '../../../shared/services/cache/key-builders/entities';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class TriggerEvent {
@@ -138,11 +138,11 @@ export class TriggerEvent {
     this.performanceService.setEnd(mark);
   }
 
-  @CachedQuery({
+  @CachedEntity({
     builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      buildNotificationTemplateKey().cache({
+      buildNotificationTemplateIdentifierKey({
         _environmentId: command.environmentId,
-        identifiers: { triggerIdentifier: command.triggerIdentifier },
+        templateIdentifier: command.triggerIdentifier,
       }),
   })
   private async getNotificationTemplateByTriggerIdentifier(command: {
