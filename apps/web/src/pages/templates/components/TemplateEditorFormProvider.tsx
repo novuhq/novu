@@ -9,10 +9,13 @@ import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlign
 import type { IForm, IStepEntity } from './formTypes';
 import { useTemplateController } from './useTemplateController';
 import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } from './templateToFormMappers';
-import { errorMessage } from '../../../utils/notifications';
+import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
-import { useNotificationGroup } from '../../../hooks';
+import { useBlocker, useNotificationGroup } from '../../../hooks';
+import { useInterval } from '@mantine/hooks';
+import { useBasePath } from '../hooks/useBasePath';
+import { hideNotification, showNotification } from '@mantine/notifications';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
@@ -135,6 +138,55 @@ const TemplateEditorFormProvider = ({ children }) => {
     name: 'steps',
   });
 
+  const basePath = useBasePath();
+
+  const handleBlockedNavigation = useCallback((nextLocation) => {
+    if (!nextLocation.location.pathname.includes(basePath)) {
+      const notificationId = 'savingOnNavigation';
+
+      showNotification({
+        message: `We are saving your template please wait until we are done`,
+        color: 'blue',
+        id: notificationId,
+        autoClose: false,
+      });
+      onSubmit(methods.getValues(), false)
+        .then((value) => {
+          interval.stop();
+          hideNotification(notificationId);
+          successMessage('Template updated successfully');
+          navigate(nextLocation.location.pathname);
+
+          return value;
+        })
+        .catch(() => {
+          interval.stop();
+        });
+
+      return false;
+    }
+
+    return true;
+  }, []);
+
+  useBlocker(handleBlockedNavigation, methods.formState.isDirty);
+
+  const interval = useInterval(() => {
+    if (!methods.formState.isDirty) {
+      return;
+    }
+    interval.stop();
+    onSubmit(methods.getValues()).finally(() => {
+      interval.start();
+    });
+  }, 1000);
+
+  useEffect(() => {
+    interval.start();
+
+    return interval.stop;
+  }, []);
+
   const {
     template,
     isLoading,
@@ -182,7 +234,7 @@ const TemplateEditorFormProvider = ({ children }) => {
   }, [templateId, groups, localStorage.getItem('blueprintId')]);
 
   const onSubmit = useCallback(
-    async (form: IForm) => {
+    async (form: IForm, showMessage = true) => {
       const payloadToCreate = mapFormToCreateNotificationTemplate(form);
 
       try {
@@ -195,6 +247,9 @@ const TemplateEditorFormProvider = ({ children }) => {
         });
         setTrigger(response.triggers[0]);
         reset(form);
+        if (showMessage) {
+          successMessage('Template updated successfully');
+        }
       } catch (e: any) {
         Sentry.captureException(e);
 

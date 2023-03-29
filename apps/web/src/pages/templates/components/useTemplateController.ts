@@ -28,7 +28,6 @@ export function useTemplateController(templateId?: string) {
     onSuccess: async () => {
       refetch();
       await client.refetchQueries([QueryKeys.changesCount]);
-      successMessage('Template updated successfully');
     },
   });
 
