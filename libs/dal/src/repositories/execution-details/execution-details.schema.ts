@@ -10,44 +10,35 @@ const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
   {
     _jobId: {
       type: Schema.Types.String,
-      index: true,
     },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
-      index: true,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      index: true,
     },
     _notificationId: {
       type: Schema.Types.ObjectId,
       ref: 'Notification',
-      index: true,
     },
     _notificationTemplateId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
-      index: false,
     },
     _subscriberId: {
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
-      index: false,
     },
     _messageId: {
       type: Schema.Types.String,
-      index: false,
     },
     providerId: {
       type: Schema.Types.String,
-      index: false,
     },
     transactionId: {
       type: Schema.Types.String,
-      index: false,
     },
     channel: {
       type: Schema.Types.String,
@@ -78,6 +69,12 @@ const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
   },
   schemaOptions
 );
+
+executionDetailsSchema.index({
+  _messageId: 1,
+  _jobId: 1,
+  _environmentId: 1,
+});
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ExecutionDetails =
