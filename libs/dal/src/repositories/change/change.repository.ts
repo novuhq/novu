@@ -1,23 +1,23 @@
 import { ChangeEntityTypeEnum } from '@novu/shared';
 
-import { EnforceEnvId } from '../../types/enforce';
+import { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
 import { ChangeEntity, ChangeDBModel } from './change.entity';
 import { Change } from './change.schema';
 
-export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity, EnforceEnvId> {
+export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Change, ChangeEntity);
   }
 
   public async getEntityChanges(
-    environmentId: string,
+    organizationId: string,
     entityType: ChangeEntityTypeEnum,
     entityId: string
   ): Promise<ChangeEntity[]> {
     return await this.find(
       {
-        _environmentId: environmentId,
+        _organizationId: organizationId,
         _entityId: entityId,
         type: entityType,
       },

@@ -25,7 +25,7 @@ export class PromoteChangeToEnvironment {
   ) {}
 
   async execute(command: PromoteChangeToEnvironmentCommand) {
-    const changes = await this.changeRepository.getEntityChanges(command.environmentId, command.type, command.itemId);
+    const changes = await this.changeRepository.getEntityChanges(command.organizationId, command.type, command.itemId);
     const aggregatedItem = changes
       .filter((change) => change.enabled)
       .reduce((prev, change) => {

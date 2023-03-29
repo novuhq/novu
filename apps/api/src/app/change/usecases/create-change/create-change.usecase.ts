@@ -9,7 +9,11 @@ export class CreateChange {
   constructor(private changeRepository: ChangeRepository) {}
 
   async execute(command: CreateChangeCommand) {
-    const changes = await this.changeRepository.getEntityChanges(command.environmentId, command.type, command.item._id);
+    const changes = await this.changeRepository.getEntityChanges(
+      command.organizationId,
+      command.type,
+      command.item._id
+    );
     const aggregatedItem = changes
       .filter((change) => change.enabled)
       .reduce((prev, change) => {

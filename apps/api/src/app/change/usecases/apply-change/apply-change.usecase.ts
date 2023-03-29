@@ -15,6 +15,7 @@ export class ApplyChange {
     const parentChange = await this.changeRepository.findOne({
       _id: command.changeId,
       _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
     });
 
     if (!parentChange) throw new NotFoundException('Parent Change not found');
@@ -45,6 +46,7 @@ export class ApplyChange {
       {
         _id: change._id,
         _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
       },
       {
         enabled: true,

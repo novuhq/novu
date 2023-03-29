@@ -17,6 +17,7 @@ const changeSchema = new Schema<ChangeDBModel>(
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
+      index: true,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,
@@ -26,6 +27,7 @@ const changeSchema = new Schema<ChangeDBModel>(
     _creatorId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
+      index: true,
     },
     _parentId: {
       type: Schema.Types.ObjectId,
@@ -40,16 +42,6 @@ changeSchema.virtual('user', {
   localField: '_creatorId',
   foreignField: '_id',
   justOne: true,
-});
-
-changeSchema.index({
-  _environmentId: 1,
-  _parentId: 1,
-  _entityId: 1,
-  createdAt: 1,
-  type: 1,
-  enabled: 1,
-  _creatorId: 1,
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
