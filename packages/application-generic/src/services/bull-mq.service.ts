@@ -2,9 +2,7 @@ import {
   JobsOptions,
   Processor,
   Queue,
-  QueueBaseOptions,
   QueueOptions,
-  QueueScheduler,
   Worker,
   WorkerOptions,
 } from 'bullmq';
@@ -12,7 +10,6 @@ import {
 export class BullmqService {
   private _queue: Queue;
   private _worker: Worker;
-  private _queueScheduler: QueueScheduler;
   public static readonly pro: boolean =
     process.env.NOVU_MANAGED_SERVICE !== undefined;
 
@@ -64,12 +61,6 @@ export class BullmqService {
     });
 
     return this._worker;
-  }
-
-  public createScheduler(name: string, config: QueueBaseOptions) {
-    this._queueScheduler = new QueueScheduler(name, config);
-
-    return this._queueScheduler;
   }
 
   public add(
