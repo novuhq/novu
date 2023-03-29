@@ -6,9 +6,6 @@ import type { IForm } from './formTypes';
 import { Textarea } from '../../../design-system';
 import { useEnvController, useVariablesManager } from '../../../hooks';
 import { VariableManager } from './VariableManager';
-import { Group } from '@mantine/core';
-import { StepActiveSwitch } from '../workflow/StepActiveSwitch';
-import { ShouldStopOnFailSwitch } from '../workflow/ShouldStopOnFailSwitch';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 
 const templateFields = ['content'];

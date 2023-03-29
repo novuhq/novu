@@ -1,16 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Popover as MantinePopover, ActionIcon, createStyles, MantineTheme, Menu } from '@mantine/core';
+import { Popover as MantinePopover, createStyles } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { Text } from '../../../../../design-system/typography/text/Text';
 import { Switch } from '../../../../../design-system/switch/Switch';
 import { useStyles } from '../../../../../design-system/template-button/TemplateButton.styles';
-import { colors, shadows } from '../../../../../design-system/config';
-import { DotsHorizontal, Edit, Trash } from '../../../../../design-system/icons';
+import { colors } from '../../../../../design-system/config';
+import { Trash } from '../../../../../design-system/icons';
 import { When } from '../../../../../components/utils/When';
 import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../../../../hooks';
-import { getChannel, NodeTypeEnum } from '../../../shared/channels';
 import { useViewport } from 'react-flow-renderer';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { Popover } from '../../../../../design-system/popover';
@@ -27,10 +26,6 @@ const CHANNEL_TYPE_TO_TEXT = {
   [ChannelTypeEnum.PUSH]: 'push',
 };
 
-const capitalize = (text: string) => {
-  return typeof text !== 'string' ? '' : text.charAt(0).toUpperCase() + text.slice(1);
-};
-
 interface ITemplateButtonProps {
   Icon: React.FC<any>;
   label: string;
@@ -44,42 +39,13 @@ interface ITemplateButtonProps {
   switchButton?: (boolean) => void;
   changeTab?: (string) => void;
   errors?: boolean | string;
-  showDots?: boolean;
+  showDelete?: boolean;
   id?: string;
   index?: number;
   onDelete?: () => void;
   dragging?: boolean;
   disabled?: boolean;
-  onClick?: () => void;
 }
-
-const useMenuStyles = createStyles((theme: MantineTheme) => {
-  const dark = theme.colorScheme === 'dark';
-
-  return {
-    arrow: {
-      width: '7px',
-      height: '7px',
-      backgroundColor: dark ? colors.B20 : colors.white,
-      borderColor: dark ? colors.B30 : colors.B85,
-    },
-    dropdown: {
-      minWidth: 220,
-      backgroundColor: dark ? colors.B20 : colors.white,
-      color: dark ? theme.white : colors.B40,
-      borderColor: dark ? colors.B30 : colors.B85,
-    },
-    item: {
-      borerRadius: '5px',
-      color: `${dark ? theme.white : colors.B40} !important`,
-      fontWeight: 400,
-      fontSize: '14px',
-    },
-    itemHovered: {
-      backgroundColor: dark ? colors.B30 : colors.B98,
-    },
-  };
-});
 
 const usePopoverStyles = createStyles(() => ({
   dropdown: {
@@ -112,20 +78,17 @@ export function WorkflowNode({
   index,
   testId,
   errors: initialErrors = false,
-  showDots = true,
+  showDelete = true,
   id = undefined,
   onDelete = () => {},
   dragging = false,
   disabled: initDisabled,
-  onClick = () => {},
 }: ITemplateButtonProps) {
   const segment = useSegment();
   const { readonly: readonlyEnv } = useEnvController();
   const { integrations } = useActiveIntegrations({ refetchOnMount: false, refetchOnWindowFocus: false });
   const { cx, classes, theme } = useStyles();
-  const { classes: menuClasses } = useMenuStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
-  const [showDotMenu, setShowDotMenu] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);
   const [isIntegrationsModalVisible, setIntegrationsModalVisible] = useState(false);
   const disabledColor = disabled ? { color: theme.colorScheme === 'dark' ? colors.B40 : colors.B70 } : {};
@@ -133,8 +96,8 @@ export function WorkflowNode({
   const { classes: popoverClasses } = usePopoverStyles();
   const viewport = useViewport();
   const channelKey = tabKey ?? '';
-  const isChannel = getChannel(channelKey)?.type === NodeTypeEnum.CHANNEL;
   const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const [hover, setHover] = useState(false);
 
   const hasActiveIntegration = useMemo(() => {
     const isChannelStep = [StepTypeEnum.EMAIL, StepTypeEnum.PUSH, StepTypeEnum.SMS, StepTypeEnum.CHAT].includes(
@@ -174,18 +137,18 @@ export function WorkflowNode({
     return () => subscription.unsubscribe();
   }, [watch]);
 
-  useEffect(() => {
-    if (showDotMenu && dragging) {
-      setShowDotMenu(false);
-    }
-  }, [dragging, showDotMenu]);
-
   return (
     <>
       <UnstyledButtonStyled
         role={'button'}
-        onMouseEnter={() => setPopoverOpened(true)}
-        onMouseLeave={() => setPopoverOpened(false)}
+        onMouseEnter={() => {
+          setPopoverOpened(true);
+          setHover(true);
+        }}
+        onMouseLeave={() => {
+          setPopoverOpened(false);
+          setHover(false);
+        }}
         data-test-id={testId}
         className={cx(classes.button, { [classes.active]: active })}
       >
@@ -203,77 +166,15 @@ export function WorkflowNode({
             {action && !readonly && (
               <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
             )}
-            <When truthy={showDots && !readonlyEnv}>
-              <Menu
-                withinPortal
-                position="bottom-start"
-                shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.light}
-                classNames={menuClasses}
-                withArrow={true}
-                opened={showDotMenu}
-                onClose={() => setShowDotMenu(false)}
-                clickOutsideEvents={MENU_CLICK_OUTSIDE_EVENTS}
+            <When truthy={showDelete && !readonlyEnv && !dragging && hover}>
+              <UnstyledButtonStyled
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
               >
-                <Menu.Target>
-                  <ActionIcon
-                    variant="transparent"
-                    data-test-id="step-actions-dropdown"
-                    style={{ pointerEvents: 'all' }}
-                    component="span"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setShowDotMenu(!showDotMenu);
-                    }}
-                  >
-                    <DotsHorizontal
-                      style={{
-                        color: theme.colorScheme === 'dark' ? colors.B40 : colors.B80,
-                      }}
-                    />
-                  </ActionIcon>
-                </Menu.Target>
-                <Menu.Dropdown>
-                  <When truthy={isChannel}>
-                    <Menu.Item
-                      key="edit"
-                      style={{
-                        pointerEvents: 'all',
-                      }}
-                      icon={
-                        <Edit
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                          }}
-                        />
-                      }
-                      data-test-id="edit-step-action"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowDotMenu(false);
-                        onClick();
-                      }}
-                    >
-                      Edit Template
-                    </Menu.Item>
-                  </When>
-                  <Menu.Item
-                    key="delete"
-                    style={{
-                      pointerEvents: 'all',
-                    }}
-                    icon={<Trash />}
-                    data-test-id="delete-step-action"
-                    onClick={() => {
-                      setShowDotMenu(false);
-                      onDelete();
-                    }}
-                  >
-                    Delete {isChannel ? 'Step' : 'Action'}
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
+                <Trash />
+              </UnstyledButtonStyled>
             </When>
           </ActionWrapper>
         </ButtonWrapper>

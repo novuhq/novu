@@ -13,7 +13,7 @@ export default memo(({ selected }: { selected: boolean }) => {
   return (
     <div data-test-id={`node-triggerSelector`} style={{ pointerEvents: 'none' }}>
       <WorkflowNode
-        showDots={false}
+        showDelete={false}
         Icon={TapeGradient}
         label={'Trigger'}
         active={selected}

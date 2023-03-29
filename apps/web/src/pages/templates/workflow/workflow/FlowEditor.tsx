@@ -77,7 +77,7 @@ export function FlowEditor({
     const clientWidth = reactFlowWrapper.current?.clientWidth;
     const middle = clientWidth ? clientWidth / 2 - 100 : 0;
     const zoomView = 1;
-    const xyPos = reactFlowInstance?.project({ x: middle, y: 0 });
+    const xyPos = reactFlowInstance?.project({ x: middle, y: 2 });
     setViewport({ x: xyPos?.x ?? middle, y: xyPos?.y ?? 0, zoom: zoomView }, { duration: 800 });
   }, [reactFlowInstance]);
 
@@ -105,8 +105,10 @@ export function FlowEditor({
   const onNodeClick = useCallback((event, node) => {
     event.preventDefault();
 
-    navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
-    if (node.id === '1') {
+    if (node.type === 'channelNode') {
+      navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
+    }
+    if (node.type === 'triggerNode') {
       navigate(basePath + '/testworkflow');
     }
   }, []);

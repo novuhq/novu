@@ -3,8 +3,7 @@ import { Handle, Position, getOutgoers, useReactFlow, useNodes } from 'react-flo
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { WorkflowNode } from './WorkflowNode';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useBasePath } from '../../../hooks/useBasePath';
+import { useParams } from 'react-router-dom';
 
 interface NodeData {
   Icon: React.FC<any>;
@@ -28,8 +27,6 @@ export default memo(
     const isParent = thisNode ? getOutgoers(thisNode, getNodes(), getEdges()).length : false;
     const noChildStyle = isParent ? {} : { border: 'none', background: 'transparent' };
     const [count, setCount] = useState(0);
-    const navigate = useNavigate();
-    const basePath = useBasePath();
     const { stepUuid = '' } = useParams<{ stepUuid: string }>();
 
     useEffect(() => {
@@ -72,9 +69,6 @@ export default memo(
           id={id}
           index={data.index}
           dragging={dragging}
-          onClick={() => {
-            navigate(basePath + `/${data.channelType}/${data.uuid}`);
-          }}
         />
         <Handle type="target" id="b" position={Position.Top} />
         <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
