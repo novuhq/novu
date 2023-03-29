@@ -6,6 +6,7 @@ RUN npm install -g pnpm@7.28.0 --loglevel notice
 RUN npm i pm2 -g
 
 COPY .npmrc .
+COPY .npmrc-cloud .
 COPY package.json .
 
 COPY providers ./providers
