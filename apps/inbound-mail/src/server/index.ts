@@ -13,11 +13,13 @@ import * as dns from 'dns';
 import logger from './logger';
 import * as extend from 'extend';
 import { QueueService } from './queue-service';
+import { BullmqService } from '@novu/application-generic';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const LanguageDetect = require('languagedetect');
 const mailUtilities = Promise.promisifyAll(require('./mailUtilities'));
 const queueService = new QueueService();
+BullmqService.haveProInstalled();
 
 class Mailin extends events.EventEmitter {
   public configuration: IConfiguration;
@@ -368,10 +370,20 @@ class Mailin extends events.EventEmitter {
       return new Promise(function (resolve) {
         logger.info(connection.id + ' Adding mail to queue ');
 
-        queueService.queue.add(finalizedMessage.messageId, finalizedMessage, {
-          removeOnComplete: true,
-          removeOnFail: true,
-        });
+        const toAddress: string = finalizedMessage.envelopeTo;
+        const parts: string[] = toAddress.split('@');
+        const username: string = parts[0];
+        const environmentId = username.split('-nv-e=').at(-1);
+
+        queueService.bullMqService.add(
+          finalizedMessage.messageId,
+          finalizedMessage,
+          {
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+          environmentId
+        );
 
         return resolve();
       });
