@@ -11,12 +11,10 @@ const messageSchema = new Schema<MessageDBModel>(
     _templateId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
-      index: true,
     },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
-      index: true,
     },
     _messageTemplateId: {
       type: Schema.Types.ObjectId,
@@ -24,7 +22,6 @@ const messageSchema = new Schema<MessageDBModel>(
     _notificationId: {
       type: Schema.Types.ObjectId,
       ref: 'Notification',
-      index: true,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,
@@ -33,7 +30,6 @@ const messageSchema = new Schema<MessageDBModel>(
     _subscriberId: {
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
-      index: true,
     },
     _jobId: {
       type: Schema.Types.ObjectId,
@@ -100,7 +96,6 @@ const messageSchema = new Schema<MessageDBModel>(
     providerResponse: Schema.Types.Mixed,
     transactionId: {
       type: Schema.Types.String,
-      index: true,
     },
     identifier: Schema.Types.String,
     payload: Schema.Types.Mixed,
@@ -131,6 +126,17 @@ messageSchema.virtual('template', {
 });
 
 messageSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+
+messageSchema.index({
+  _notificationId: 1,
+  transactionId: 1,
+  _subscriberId: 1,
+  _messageTemplateId: 1,
+  _templateId: 1,
+  identifier: 1,
+  _environmentId: 1,
+  createdAt: -1,
+});
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Message =

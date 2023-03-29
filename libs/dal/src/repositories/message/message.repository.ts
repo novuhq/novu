@@ -7,10 +7,11 @@ import { MessageEntity, MessageDBModel } from './message.entity';
 import { Message } from './message.schema';
 import { FeedRepository } from '../feed';
 import { DalException } from '../../shared';
+import { EnforceEnvId } from '../../types/enforce';
 
 type MessageQuery = FilterQuery<MessageDBModel>;
 
-export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity> {
+export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity, EnforceEnvId> {
   private message: SoftDeleteModel;
   private feedRepository = new FeedRepository();
   constructor() {
@@ -22,10 +23,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
-    options: { limit: number; skip?: number } = { limit: 10 }
-  ): Promise<MessageQuery> {
-    const requestQuery: MessageQuery = {
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
+  ): Promise<MessageQuery & EnforceEnvId> {
+    const requestQuery: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       channel,
@@ -206,52 +206,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       },
       { $sort: { _id: -1 } },
     ]);
-  }
-
-  async getFeed(
-    environmentId: string,
-    query: { channels?: ChannelTypeEnum[]; templates?: string[]; emails?: string[]; _subscriberId?: string } = {},
-    skip = 0,
-    limit = 10
-  ) {
-    const requestQuery: MessageQuery = {
-      _environmentId: environmentId,
-    };
-
-    if (query?.channels) {
-      requestQuery.channel = {
-        $in: query.channels,
-      };
-    }
-
-    if (query?.templates) {
-      requestQuery._templateId = {
-        $in: query.templates,
-      };
-    }
-
-    if (query?.emails) {
-      requestQuery.email = {
-        $in: query.emails,
-      };
-    }
-
-    if (query?._subscriberId) {
-      requestQuery._subscriberId = query?._subscriberId;
-    }
-
-    const totalCount = await this.count(requestQuery);
-    const response = await this.MongooseModel.find(requestQuery)
-      .populate('subscriber', 'firstName _id lastName email')
-      .populate('template', 'name _id')
-      .skip(skip)
-      .limit(limit)
-      .sort('-createdAt');
-
-    return {
-      totalCount,
-      data: this.mapEntities(response),
-    };
   }
 
   async changeStatus(

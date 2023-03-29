@@ -21,7 +21,7 @@ import {
   IActor,
 } from '@novu/shared';
 
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { CreateLog } from '../../../logs/usecases';
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
 import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
@@ -131,7 +131,6 @@ export class SendMessageInApp extends SendMessageBase {
     const oldMessage = await this.messageRepository.findOne({
       _notificationId: notification._id,
       _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
       _subscriberId: command.subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: inAppChannel.template._id,

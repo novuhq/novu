@@ -15,7 +15,6 @@ export class GetMessages {
 
     const query: Partial<MessageEntity> & { _environmentId: string } = {
       _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
     };
 
     if (command.subscriberId) {
