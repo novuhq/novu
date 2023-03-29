@@ -17,7 +17,7 @@ export const ShouldStopOnFailSwitch = ({ control, index }) => {
             {...field}
             disabled={readonly}
             checked={value}
-            label="Stop workflow if this step fails?"
+            label="Stop if step fails"
             data-test-id="step-should-stop-on-fail-switch"
           />
         );

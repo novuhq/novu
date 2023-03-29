@@ -1,5 +1,5 @@
 import React, { ChangeEvent, FocusEvent } from 'react';
-import { TextInputProps, TextInput as MantineTextInput } from '@mantine/core';
+import { TextInputProps, TextInput as MantineTextInput, Sx, Styles } from '@mantine/core';
 import { inputStyles } from '../config/inputs.styles';
 import { SpacingProps } from '../shared/spacing.props';
 
@@ -18,6 +18,7 @@ interface IInputProps extends SpacingProps {
   min?: string | number;
   max?: string | number;
   onBlur?: (event: FocusEvent<HTMLInputElement>) => void;
+  styles?: Styles<string, Record<string, any>>;
 }
 
 /**

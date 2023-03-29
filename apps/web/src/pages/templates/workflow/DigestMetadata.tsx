@@ -1,15 +1,15 @@
-import { Grid, Input as MantineInput } from '@mantine/core';
+import { Grid, Group, Input as MantineInput, Stack } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { DigestTypeEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
-import { Input, Select, Switch, Button } from '../../../design-system';
+import { colors, Input, SegmentedControl, Switch, Tooltip } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../hooks';
-import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
-import { useNavigate } from 'react-router-dom';
-import { useBasePath } from '../hooks/useBasePath';
+import { IntervalRadios } from './IntervalRadios';
+import { InfoCircle } from '../../../design-system/icons/general/InfoCircle';
+import { LabelWithTooltip } from './LabelWithTooltip';
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;
@@ -17,26 +17,58 @@ const StyledSwitch = styled(Switch)`
 `;
 
 export const DigestMetadata = ({ control, index }) => {
-  const { isCreating, isUpdating, isLoading } = useTemplateEditorForm();
   const { readonly } = useEnvController();
   const {
     formState: { errors, isSubmitted, isDirty },
     watch,
     trigger,
   } = useFormContext();
-  const isSubmitDisabled = readonly || isLoading || isCreating || !isDirty;
-  const navigate = useNavigate();
-  const basePath = useBasePath();
 
   const type = watch(`steps.${index}.metadata.type`);
   const showErrors = isSubmitted && errors?.steps;
 
   return (
     <>
+      <div
+        style={{
+          marginBottom: '15px',
+        }}
+      >
+        <Controller
+          control={control}
+          defaultValue={DigestTypeEnum.REGULAR}
+          name={`steps.${index}.metadata.type`}
+          render={({ field }) => {
+            return (
+              <SegmentedControl
+                {...field}
+                sx={{
+                  maxWidth: '100% !important',
+                }}
+                fullWidth
+                disabled={readonly}
+                data={[
+                  { value: DigestTypeEnum.REGULAR, label: 'Regular' },
+                  { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
+                ]}
+                onChange={async (segmentValue) => {
+                  field.onChange(segmentValue);
+                  await trigger(`steps.${index}.metadata`);
+                }}
+                data-test-id="digest-type"
+              />
+            );
+          }}
+        />
+      </div>
       <div data-test-id="digest-step-settings-interval">
         <MantineInput.Wrapper
-          label="Time Interval"
-          description="Once triggered, for how long the digest should collect events"
+          label={
+            <LabelWithTooltip
+              label="Time Interval"
+              tooltip="Once triggered, for how long the digest should collect events"
+            />
+          }
           styles={inputStyles}
         >
           <Grid
@@ -61,72 +93,32 @@ export const DigestMetadata = ({ control, index }) => {
                       data-test-id="time-amount"
                       placeholder="0"
                       disabled={readonly}
+                      styles={(theme) => ({
+                        ...inputStyles(theme),
+                        input: {
+                          textAlign: 'center',
+                          ...inputStyles(theme).input,
+                        },
+                      })}
                     />
                   );
                 }}
               />
             </Grid.Col>
             <Grid.Col span={8}>
-              <Controller
-                control={control}
-                name={`steps.${index}.metadata.unit`}
-                defaultValue=""
-                render={({ field, fieldState }) => {
-                  return (
-                    <Select
-                      disabled={readonly}
-                      error={showErrors && fieldState.error?.message}
-                      placeholder="Interval"
-                      data={[
-                        { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
-                        { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
-                        { value: DigestUnitEnum.HOURS, label: 'Hours' },
-                        { value: DigestUnitEnum.DAYS, label: 'Days' },
-                      ]}
-                      data-test-id="time-unit"
-                      {...field}
-                    />
-                  );
-                }}
-              />
+              <IntervalRadios control={control} name={`steps.${index}.metadata.unit`} showErrors={showErrors} />
             </Grid.Col>
           </Grid>
         </MantineInput.Wrapper>
       </div>
-      <div
-        style={{
-          marginBottom: '15px',
-        }}
-      >
-        <Controller
-          control={control}
-          defaultValue={DigestTypeEnum.REGULAR}
-          name={`steps.${index}.metadata.type`}
-          render={({ field }) => {
-            return (
-              <Select
-                {...field}
-                label="Type of digest"
-                disabled={readonly}
-                data={[
-                  { value: DigestTypeEnum.REGULAR, label: 'Regular' },
-                  { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
-                ]}
-                onChange={async (value) => {
-                  field.onChange(value);
-                  await trigger(`steps.${index}.metadata`);
-                }}
-                data-test-id="digest-type"
-              />
-            );
-          }}
-        />
-      </div>
-
       <When truthy={type === DigestTypeEnum.BACKOFF}>
         <MantineInput.Wrapper
-          label="Backoff Time Interval"
-          description="A digest will only be created if a message was previously sent in this time interval"
+          label={
+            <LabelWithTooltip
+              label="Backoff Time Interval"
+              tooltip="A digest will only be created if a message was previously sent in this time interval"
+            />
+          }
           styles={inputStyles}
         >
           <Grid
@@ -152,35 +144,20 @@ export const DigestMetadata = ({ control, index }) => {
                       placeholder="0"
                       required
                       disabled={readonly}
+                      styles={(theme) => ({
+                        ...inputStyles(theme),
+                        input: {
+                          textAlign: 'center',
+                          ...inputStyles(theme).input,
+                        },
+                      })}
                     />
                   );
                 }}
               />
             </Grid.Col>
             <Grid.Col span={8}>
-              <Controller
-                control={control}
-                name={`steps.${index}.metadata.backoffUnit`}
-                defaultValue=""
-                render={({ field, fieldState }) => {
-                  return (
-                    <Select
-                      disabled={readonly}
-                      error={showErrors && fieldState.error?.message}
-                      placeholder="Interval"
-                      data={[
-                        { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
-                        { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
-                        { value: DigestUnitEnum.HOURS, label: 'Hours' },
-                        { value: DigestUnitEnum.DAYS, label: 'Days' },
-                      ]}
-                      data-test-id="backoff-unit"
-                      required
-                      {...field}
-                    />
-                  );
-                }}
-              />
+              <IntervalRadios control={control} name={`steps.${index}.metadata.backoffUnit`} showErrors={showErrors} />
             </Grid.Col>
           </Grid>
         </MantineInput.Wrapper>
@@ -223,9 +200,13 @@ export const DigestMetadata = ({ control, index }) => {
               <Input
                 {...field}
                 value={field.value || ''}
-                label="Digest Key (Optional)"
+                label={
+                  <LabelWithTooltip
+                    label="Digest Key (Optional)"
+                    tooltip="Used to group messages using this payload key, by default only subscriberId is used"
+                  />
+                }
                 placeholder="For example: post_id"
-                description="Used to group messages using this payload key, by default only subscriberId is used"
                 error={fieldState.error?.message}
                 type="text"
                 data-test-id="batch-key"
@@ -235,20 +216,6 @@ export const DigestMetadata = ({ control, index }) => {
           }}
         />
       </div>
-      <Button
-        fullWidth
-        mt={10}
-        mb={15}
-        variant="outline"
-        data-test-id="delete-step-button"
-        loading={isCreating || isUpdating}
-        disabled={isSubmitDisabled}
-        onClick={() => {
-          navigate(basePath);
-        }}
-      >
-        Save
-      </Button>
     </>
   );
 };

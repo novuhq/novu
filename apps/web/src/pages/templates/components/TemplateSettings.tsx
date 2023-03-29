@@ -13,6 +13,8 @@ import { deleteTemplateById } from '../../../api/notification-templates';
 import { ROUTES } from '../../../constants/routes.enum';
 import { SubPageWrapper } from './SubPageWrapper';
 import { WorkflowSettingsTabs } from './WorkflowSettingsTabs';
+import { useFormContext } from 'react-hook-form';
+import { IForm } from './formTypes';
 
 export const TemplateSettings = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -22,6 +24,9 @@ export const TemplateSettings = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isError, setIsError] = useState<string | undefined>(undefined);
   const navigate = useNavigate();
+  const { watch } = useFormContext<IForm>();
+
+  const name = watch('name');
 
   const confirmDelete = async () => {
     setIsDeleting(true);
@@ -75,6 +80,17 @@ export const TemplateSettings = () => {
         cancel={cancelDelete}
         isLoading={isDeleting}
         error={isError}
+      />
+      <DeleteConfirmModal
+        title={`Delete ${name} workflow?`}
+        description={`This cannot be undone. The trigger code generated based on this workflow will be disabled and the notification will no longer be sent.`}
+        isOpen={toDelete}
+        isLoading={isDeleting}
+        error={isError}
+        confirm={confirmDelete}
+        cancel={cancelDelete}
+        confirmButtonText="Delete Workflow"
+        cancelButtonText="Cancel"
       />
     </SubPageWrapper>
   );

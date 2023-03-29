@@ -4,18 +4,26 @@ import { Button, colors, shadows, Title, Text } from '../../../design-system';
 
 export function DeleteConfirmModal({
   target,
+  title,
+  description,
   isOpen,
   cancel,
   confirm,
+  confirmButtonText = 'Yes',
+  cancelButtonText = 'No',
   isLoading,
   error,
 }: {
-  target: string;
+  target?: string;
   isOpen: boolean;
   cancel: () => void;
   confirm: () => void;
   isLoading?: boolean;
   error?: string;
+  title?: string;
+  description?: string;
+  confirmButtonText?: string;
+  cancelButtonText?: string;
 }) {
   const theme = useMantineTheme();
 
@@ -36,7 +44,7 @@ export function DeleteConfirmModal({
             paddingTop: '180px',
           },
         }}
-        title={<Title size={2}>Delete {target}</Title>}
+        title={<Title size={2}>{title ? title : `Delete${target ? ' ' + target : ''}`}</Title>}
         sx={{ backdropFilter: 'blur(10px)' }}
         shadow={theme.colorScheme === 'dark' ? shadows.dark : shadows.medium}
         radius="md"
@@ -56,13 +64,13 @@ export function DeleteConfirmModal({
               {error}
             </Alert>
           )}
-          <Text>Would you like to delete this {target}?</Text>
+          <Text>{description ? description : `Would you like to delete this${target ? ' ' + target : ''}?`}</Text>
           <Group position="right">
             <Button variant="outline" size="md" mt={30} onClick={() => cancel()}>
-              No
+              {cancelButtonText}
             </Button>
             <Button mt={30} size="md" onClick={() => confirm()} loading={isLoading} data-autofocus>
-              Yes
+              {confirmButtonText}
             </Button>
           </Group>
         </div>

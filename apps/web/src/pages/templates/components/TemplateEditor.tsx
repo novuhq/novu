@@ -8,15 +8,17 @@ import type { IForm } from './formTypes';
 import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
 import { useActiveIntegrations, useEnvController } from '../../../hooks';
-import { useOutletContext, useParams } from 'react-router-dom';
+import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { SubPageWrapper } from './SubPageWrapper';
 import { DigestMetadata } from '../workflow/DigestMetadata';
 import { DelayMetadata } from '../workflow/DelayMetadata';
 import { Button, colors } from '../../../design-system';
 import styled from '@emotion/styled';
 import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient, Trash } from '../../../design-system/icons';
-import { getChannel, NodeTypeEnum } from '../shared/channels';
 import { Group } from '@mantine/core';
+import { When } from '../../../components/utils/When';
+import { useEffect, useMemo } from 'react';
+import { useBasePath } from '../hooks/useBasePath';
 
 const getPageTitle = (channel: StepTypeEnum) => {
   if (channel === StepTypeEnum.EMAIL) {
@@ -78,6 +80,70 @@ const getPageTitle = (channel: StepTypeEnum) => {
   return channel;
 };
 
+const DeleteRow = () => {
+  const { channel, stepUuid = '' } = useParams<{
+    channel: StepTypeEnum;
+    stepUuid: string;
+  }>();
+  const { readonly } = useEnvController();
+  const { onDelete }: any = useOutletContext();
+
+  if (!channel) {
+    return null;
+  }
+
+  return (
+    <Group
+      position="apart"
+      sx={{
+        position: 'absolute',
+        bottom: 24,
+        left: 24,
+        right: 24,
+      }}
+    >
+      <When truthy={![StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(channel)}>
+        <div />
+      </When>
+      <When truthy={channel === StepTypeEnum.DIGEST}>
+        <a
+          target={'_blank'}
+          style={{ color: 'rgb(221, 36, 118)', textDecoration: 'underline', fontSize: '18px' }}
+          rel="noopener noreferrer"
+          href={'https://docs.novu.co/platform/digest'}
+        >
+          Learn more in the docs
+        </a>
+      </When>
+      <When truthy={channel === StepTypeEnum.DELAY}>
+        <a
+          target={'_blank'}
+          style={{ color: 'rgb(221, 36, 118)', textDecoration: 'underline', fontSize: '18px' }}
+          rel="noopener noreferrer"
+          href={'https://docs.novu.co/platform/delay'}
+        >
+          Learn more in the docs
+        </a>
+      </When>
+      <DeleteStepButton
+        variant="outline"
+        data-test-id="delete-step-button"
+        onClick={() => {
+          onDelete(stepUuid);
+        }}
+        disabled={readonly}
+      >
+        <Trash
+          style={{
+            marginRight: '5px',
+          }}
+        />
+        Delete Step
+      </DeleteStepButton>
+    </Group>
+  );
+};
+
 export const TemplateEditor = () => {
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum | undefined;
@@ -90,11 +156,23 @@ export const TemplateEditor = () => {
     watch,
   } = useFormContext<IForm>();
   const steps = watch('steps');
-  const { readonly } = useEnvController();
 
-  const { onDelete }: any = useOutletContext();
+  const index = useMemo(
+    () => steps.findIndex((message) => message.template.type === channel && message.uuid === stepUuid),
+    [channel, stepUuid, steps]
+  );
 
-  if (channel === undefined) {
+  const navigate = useNavigate();
+  const basePath = useBasePath();
+
+  useEffect(() => {
+    if (index > -1) {
+      return;
+    }
+    navigate(basePath);
+  }, [index]);
+
+  if (index === -1 || channel === undefined) {
     return null;
   }
 
@@ -103,13 +181,10 @@ export const TemplateEditor = () => {
       <SubPageWrapper
         color={colors.white}
         title={getPageTitle(channel)}
-        style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7 }}
+        style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
       >
-        {steps.map((message, index) => {
-          return message.template.type === StepTypeEnum.IN_APP && message.uuid === stepUuid ? (
-            <TemplateInAppEditor key={message._id} errors={errors} control={control} index={index} />
-          ) : null;
-        })}
+        <TemplateInAppEditor errors={errors} control={control} index={index} />
+        <DeleteRow />
       </SubPageWrapper>
     );
   }
@@ -119,92 +194,49 @@ export const TemplateEditor = () => {
       <SubPageWrapper
         color={colors.white}
         title={getPageTitle(channel)}
-        style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7 }}
+        style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
       >
-        {steps.map((message, index) => {
-          return message.template.type === StepTypeEnum.EMAIL && message.uuid === stepUuid ? (
-            <EmailMessagesCards
-              key={message._id}
-              index={index}
-              isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)}
-            />
-          ) : null;
-        })}
+        <EmailMessagesCards
+          index={index}
+          isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)}
+        />
+
+        <DeleteRow />
       </SubPageWrapper>
     );
   }
 
   return (
     <>
-      <SubPageWrapper color={colors.white} title={getPageTitle(channel)}>
-        {channel === StepTypeEnum.SMS &&
-          steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.SMS && message.uuid === stepUuid ? (
-              <TemplateSMSEditor
-                key={message._id}
-                control={control}
-                index={index}
-                errors={errors}
-                isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)}
-              />
-            ) : null;
-          })}
-        {channel === StepTypeEnum.PUSH &&
-          steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.PUSH && message.uuid === stepUuid ? (
-              <TemplatePushEditor
-                key={message._id}
-                control={control}
-                index={index}
-                errors={errors}
-                isIntegrationActive={
-                  !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.PUSH)
-                }
-              />
-            ) : null;
-          })}
-        {channel === StepTypeEnum.CHAT &&
-          steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.CHAT && message.uuid === stepUuid ? (
-              <TemplateChatEditor
-                key={index}
-                errors={errors}
-                control={control}
-                index={index}
-                isIntegrationActive={
-                  !!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)
-                }
-              />
-            ) : null;
-          })}
-        {channel === StepTypeEnum.DIGEST &&
-          steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.DIGEST && message.uuid === stepUuid ? (
-              <DigestMetadata control={control} index={index} />
-            ) : null;
-          })}
-        {channel === StepTypeEnum.DELAY &&
-          steps.map((message, index) => {
-            return message.template.type === StepTypeEnum.DELAY && message.uuid === stepUuid ? (
-              <DelayMetadata control={control} index={index} />
-            ) : null;
-          })}
-        <DeleteStepButton
-          mt={10}
-          variant="outline"
-          data-test-id="delete-step-button"
-          onClick={() => {
-            onDelete(stepUuid);
-          }}
-          disabled={readonly}
-        >
-          <Trash
-            style={{
-              marginRight: '5px',
-            }}
+      <SubPageWrapper color={colors.white} title={getPageTitle(channel)} style={{ paddingBottom: 96 }}>
+        {channel === StepTypeEnum.SMS && (
+          <TemplateSMSEditor
+            control={control}
+            index={index}
+            errors={errors}
+            isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.SMS)}
           />
-          Delete {getChannel(channel?.toString() ?? '')?.type === NodeTypeEnum.CHANNEL ? 'Step' : 'Action'}
-        </DeleteStepButton>
+        )}
+        {channel === StepTypeEnum.PUSH && (
+          <TemplatePushEditor
+            control={control}
+            index={index}
+            errors={errors}
+            isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.PUSH)}
+          />
+        )}
+        {channel === StepTypeEnum.CHAT && (
+          <TemplateChatEditor
+            key={index}
+            errors={errors}
+            control={control}
+            index={index}
+            isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)}
+          />
+        )}
+        {channel === StepTypeEnum.DIGEST && <DigestMetadata control={control} index={index} />}
+        {channel === StepTypeEnum.DELAY && <DelayMetadata control={control} index={index} />}
+        <DeleteRow />
       </SubPageWrapper>
     </>
   );

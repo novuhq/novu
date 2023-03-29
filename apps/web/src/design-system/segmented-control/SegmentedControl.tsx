@@ -18,6 +18,7 @@ interface ISegmentedControlProps {
   loading?: boolean;
   fullWidth?: boolean;
   sx?: Sx | (Sx | undefined)[];
+  disabled?: boolean;
 }
 
 /**

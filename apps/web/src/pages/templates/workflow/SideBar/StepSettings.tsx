@@ -28,8 +28,8 @@ export function StepSettings({ index }: { index: number }) {
 
   return (
     <>
-      <Group position="apart">
-        <Group>
+      <Group position="apart" spacing={8}>
+        <Group spacing={12}>
           <StepActiveSwitch index={index} control={control} />
           <ShouldStopOnFailSwitch index={index} control={control} />
           <When truthy={channel === StepTypeEnum.EMAIL}>

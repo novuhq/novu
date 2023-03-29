@@ -28,6 +28,7 @@ export const SubPageWrapper = ({
         borderRadius: '0 7px 7px 0 ',
         height: '100%',
         width: 460,
+        position: 'relative',
         ...style,
       }}
     >

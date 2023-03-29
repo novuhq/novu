@@ -1,11 +1,13 @@
 import { Grid, Input as MantineInput } from '@mantine/core';
-import { DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
+import { DelayTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Input, Select } from '../../../design-system';
+import { Input, SegmentedControl, Select } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
+import { IntervalRadios } from './IntervalRadios';
+import { LabelWithTooltip } from './LabelWithTooltip';
 
 export const DelayMetadata = ({ control, index }) => {
   const { readonly } = useEnvController();
@@ -30,19 +32,22 @@ export const DelayMetadata = ({ control, index }) => {
           name={`steps.${index}.metadata.type`}
           render={({ field }) => {
             return (
-              <Select
+              <SegmentedControl
                 {...field}
-                label="Delay Type"
+                sx={{
+                  maxWidth: '100% !important',
+                }}
+                fullWidth
                 disabled={readonly}
                 data={[
                   { value: DelayTypeEnum.REGULAR, label: 'Regular' },
                   { value: DelayTypeEnum.SCHEDULED, label: 'Scheduled' },
                 ]}
-                data-test-id="delay-type"
-                onChange={async (value) => {
-                  field.onChange(value);
+                onChange={async (segmentValue) => {
+                  field.onChange(segmentValue);
                   await trigger(`steps.${index}.metadata`);
                 }}
+                data-test-id="delay-type"
               />
             );
           }}
@@ -50,8 +55,12 @@ export const DelayMetadata = ({ control, index }) => {
       </div>
       <When truthy={type === DelayTypeEnum.REGULAR}>
         <MantineInput.Wrapper
-          label="Time Interval"
-          description="Once triggered, for how long should delay before next step execution."
+          label={
+            <LabelWithTooltip
+              label="Time Interval"
+              tooltip="Once triggered, for how long should delay before next step execution."
+            />
+          }
           styles={inputStyles}
         >
           <Grid
@@ -76,34 +85,20 @@ export const DelayMetadata = ({ control, index }) => {
                       data-test-id="time-amount"
                       placeholder="0"
                       disabled={readonly}
+                      styles={(theme) => ({
+                        ...inputStyles(theme),
+                        input: {
+                          textAlign: 'center',
+                          ...inputStyles(theme).input,
+                        },
+                      })}
                     />
                   );
                 }}
               />
             </Grid.Col>
             <Grid.Col span={8}>
-              <Controller
-                control={control}
-                name={`steps.${index}.metadata.unit`}
-                defaultValue=""
-                render={({ field, fieldState }) => {
-                  return (
-                    <Select
-                      disabled={readonly}
-                      error={showErrors && fieldState.error?.message}
-                      placeholder="Interval"
-                      data={[
-                        { value: DigestUnitEnum.SECONDS, label: 'Seconds' },
-                        { value: DigestUnitEnum.MINUTES, label: 'Minutes' },
-                        { value: DigestUnitEnum.HOURS, label: 'Hours' },
-                        { value: DigestUnitEnum.DAYS, label: 'Days' },
-                      ]}
-                      data-test-id="time-unit"
-                      {...field}
-                    />
-                  );
-                }}
-              />
+              <IntervalRadios control={control} name={`steps.${index}.metadata.unit`} showErrors={showErrors} />
             </Grid.Col>
           </Grid>
         </MantineInput.Wrapper>
@@ -120,9 +115,13 @@ export const DelayMetadata = ({ control, index }) => {
                 {...field}
                 value={field.value || ''}
                 disabled={readonly}
-                label="Path for scheduled date"
+                label={
+                  <LabelWithTooltip
+                    label="Path for scheduled date"
+                    tooltip="The path in payload for the scheduled delay date"
+                  />
+                }
                 placeholder="For example: sendAt"
-                description="The path in payload for the scheduled delay date"
                 error={showErrors && fieldState.error?.message}
                 type="text"
                 data-test-id="batch-key"

@@ -10,7 +10,7 @@ import type { IForm } from '../components/formTypes';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 import { Outlet, useParams } from 'react-router-dom';
-import { Container, TextInput } from '@mantine/core';
+import { Container, TextInput, useMantineColorScheme } from '@mantine/core';
 import { useEnvController } from '../../../hooks';
 
 const WorkflowEditor = () => {
@@ -31,6 +31,8 @@ const WorkflowEditor = () => {
 
   const [toDelete, setToDelete] = useState<string>('');
 
+  const { colorScheme } = useMantineColorScheme();
+
   const confirmDelete = () => {
     const index = steps.findIndex((item) => item.uuid === toDelete);
     deleteStep(index);
@@ -42,9 +44,9 @@ const WorkflowEditor = () => {
   };
 
   const onDelete = (uuid) => {
-    const currentStep = steps.find((step) => step.uuid === uuid);
+    const stepToDelete = steps.find((step) => step.uuid === uuid);
 
-    if (!currentStep) {
+    if (!stepToDelete) {
       setToDelete(uuid);
 
       return;
@@ -55,7 +57,7 @@ const WorkflowEditor = () => {
         step.filters?.find(
           (filter) =>
             filter.children?.find(
-              (item) => item.on === FilterPartTypeEnum.PREVIOUS_STEP && item.step === currentStep.uuid
+              (item) => item.on === FilterPartTypeEnum.PREVIOUS_STEP && item.step === stepToDelete.uuid
             ) !== undefined
         ) !== undefined
       );
@@ -117,21 +119,27 @@ const WorkflowEditor = () => {
               render={({ field, fieldState }) => {
                 return (
                   <TextInput
-                    styles={() => ({
+                    styles={(theme) => ({
                       wrapper: {
                         background: 'transparent',
                         width: '100%',
                       },
                       input: {
                         background: 'transparent',
-                        border: 'none',
+                        borderStyle: 'solid',
+                        borderColor: colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5],
+                        borderWidth: '1px',
                         fontSize: '20px',
                         fontWeight: 'bolder',
-                        padding: 0,
+                        padding: 9,
                         lineHeight: '28px',
                         minHeight: 'auto',
                         height: 'auto',
                         width: '100%',
+                        '&:not(:placeholder-shown)': {
+                          borderStyle: `none`,
+                          padding: 10,
+                        },
                       },
                     })}
                     {...field}
@@ -164,12 +172,7 @@ const WorkflowEditor = () => {
           />
         </div>
       </div>
-      <DeleteConfirmModal
-        target={channel !== null && getChannel(channel ?? '')?.type === NodeTypeEnum.CHANNEL ? 'step' : 'action'}
-        isOpen={toDelete.length > 0}
-        confirm={confirmDelete}
-        cancel={cancelDelete}
-      />
+      <DeleteConfirmModal target="step" isOpen={toDelete.length > 0} confirm={confirmDelete} cancel={cancelDelete} />
     </>
   );
 };
