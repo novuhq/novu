@@ -1,0 +1,6 @@
+{
+  "extends": "../../.eslintrc.js",
+  "rules": {
+    "@cspell/spellchecker": "off"
+  }
+}
