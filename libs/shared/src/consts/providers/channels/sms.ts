@@ -109,8 +109,8 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
   },
   {
-    id: SmsProviderIdEnum.BulkSMS,
-    displayName: 'BulkSMS',
+    id: SmsProviderIdEnum.Bulksms,
+    displayName: 'Bulksms',
     channel: ChannelTypeEnum.SMS,
     credentials: bulksmsConfig,
     docReference: 'http://login.bulksmsoffers.com/apidoc/textsms/send-sms.php',

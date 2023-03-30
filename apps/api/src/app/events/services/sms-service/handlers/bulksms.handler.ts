@@ -1,6 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
-import { BulkSmsSmsProvider } from '@novu/bulkSms';
+import { BulkSmsSmsProvider } from '@novu/bulksms';
 import { BaseSmsHandler } from './base.handler';
 
 export class BulkSmsSmsHandler extends BaseSmsHandler {
@@ -17,7 +17,7 @@ export class BulkSmsSmsHandler extends BaseSmsHandler {
       authKey: credentials.apiKey,
       sender: credentials.from,
       route: credentials.route,
-      dltEntity: credentials.dltEntity,
+      dltEntity: credentials.dltEntityId,
     };
 
     this.provider = new BulkSmsSmsProvider(config);

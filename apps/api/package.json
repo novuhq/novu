@@ -44,7 +44,7 @@
     "@novu/clickatell": "^0.12.0",
     "@novu/dal": "^0.12.0",
     "@novu/discord": "^0.12.0",
-    "@novu/bulk-sms": "^0.12.0",
+    "@novu/bulksms": "^0.12.0",
     "@novu/emailjs": "^0.12.0",
     "@novu/expo": "^0.12.0",
     "@novu/fcm": "^0.12.0",
