@@ -1,7 +1,7 @@
 import Redis from 'ioredis';
 import { ConnectionOptions } from 'tls';
-import { QUERY_PREFIX } from './keys';
 import { Logger } from '@nestjs/common';
+import { QUERY_PREFIX } from './key-builders/shared';
 
 const STORE_CONNECTED = 'ready';
 

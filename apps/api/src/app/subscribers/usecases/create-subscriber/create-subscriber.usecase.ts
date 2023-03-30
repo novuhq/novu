@@ -4,8 +4,8 @@ import { CreateSubscriberCommand } from './create-subscriber.command';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { SubscriberEntity } from '@novu/dal';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
-import { buildCommonKey, CacheKeyTypeEnum, entityBuilder } from '../../../shared/services/cache/keys';
+import { InvalidateCacheService } from '../../../shared/services/cache';
+import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class CreateSubscriber {
@@ -22,7 +22,7 @@ export class CreateSubscriber {
 
     if (!subscriber) {
       await this.invalidateCache.invalidateByKey({
-        key: entityBuilder().subscriber({
+        key: buildSubscriberKey({
           subscriberId: command.subscriberId,
           _environmentId: command.environmentId,
         }),
@@ -63,12 +63,9 @@ export class CreateSubscriber {
 
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildCommonKey({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
-        environmentId: command._environmentId,
-        identifier: command.subscriberId,
-        identifierPrefix: 's',
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
       }),
   })
   private async fetchSubscriber({

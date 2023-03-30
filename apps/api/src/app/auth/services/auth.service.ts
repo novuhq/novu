@@ -23,7 +23,11 @@ import { ANALYTICS_SERVICE } from '../../shared/shared.module';
 import { CachedEntity } from '../../shared/interceptors/cached-entity.interceptor';
 import { normalizeEmail } from '../../shared/helpers/email-normalization.service';
 import { ApiException } from '../../shared/exceptions/api.exception';
-import { buildCommonKey, buildKeyById, CacheKeyPrefixEnum, CacheKeyTypeEnum } from '../../shared/services/cache/keys';
+import {
+  buildEnvironmentByApiKey,
+  buildSubscriberKey,
+  buildUserKey,
+} from '../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class AuthService {
@@ -127,7 +131,7 @@ export class AuthService {
   }
 
   async apiKeyAuthenticate(apiKey: string) {
-    const environment = await this.getEnvironment({ _id: apiKey });
+    const environment = await this.getEnvironment({ apiKey: apiKey });
     if (!environment) throw new UnauthorizedException('API Key not found');
 
     const key = environment.apiKeys.find((i) => i.key === apiKey);
@@ -287,10 +291,8 @@ export class AuthService {
 
   @CachedEntity({
     builder: (command: { _id: string }) =>
-      buildKeyById({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.USER,
-        identifier: command._id,
+      buildUserKey({
+        _id: command._id,
       }),
   })
   private async getUser({ _id }: { _id: string }) {
@@ -298,25 +300,20 @@ export class AuthService {
   }
 
   @CachedEntity({
-    builder: (command: { _id: string }) =>
-      buildKeyById({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY,
-        identifier: command._id,
+    builder: ({ apiKey }: { apiKey: string }) =>
+      buildEnvironmentByApiKey({
+        apiKey: apiKey,
       }),
   })
-  private async getEnvironment({ _id }: { _id: string }) {
-    return await this.environmentRepository.findByApiKey(_id);
+  private async getEnvironment({ apiKey }: { apiKey: string }) {
+    return await this.environmentRepository.findByApiKey(apiKey);
   }
 
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildCommonKey({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
-        environmentId: command._environmentId,
-        identifier: command.subscriberId,
-        identifierPrefix: 's',
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
       }),
   })
   private async getSubscriber({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }) {
