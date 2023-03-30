@@ -1,10 +1,10 @@
 import { InfobipSmsProvider } from '@novu/infobip';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, SmsProviderIdEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
 export class InfobipSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('infobip-sms', ChannelTypeEnum.SMS);
+    super(SmsProviderIdEnum.Infobip, ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
     this.provider = new InfobipSmsProvider({
