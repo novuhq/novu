@@ -1,3 +1,7 @@
+---
+sidebar_position: 6
+---
+
 # Postmark
 
 It is possible to use [Postmark](https://postmarkapp.com/) as a provider to send transactional emails to the customers using the Novu Platform with a single API.

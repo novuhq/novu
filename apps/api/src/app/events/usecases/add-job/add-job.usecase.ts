@@ -15,6 +15,10 @@ import {
 import { DetailEnum } from '../../../execution-details/types';
 import { WorkflowQueueProducerService } from '../../services/workflow-queue/workflow-queue-producer.service';
 
+export enum BackoffStrategiesEnum {
+  WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
+}
+
 @Injectable()
 export class AddJob {
   constructor(
@@ -49,7 +53,7 @@ export class AddJob {
     Logger.debug('delayAmount is: ' + delayAmount);
 
     if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
-      Logger.error('Digest Amount does not exist on a digest job');
+      Logger.warn('Digest Amount does not exist on a digest job');
 
       return;
     }
@@ -84,7 +88,7 @@ export class AddJob {
     };
     if (stepContainsWebhookFilter) {
       options.backoff = {
-        type: 'webhookFilterBackoff',
+        type: BackoffStrategiesEnum.WEBHOOK_FILTER_BACKOFF,
       };
       options.attempts = this.workflowQueueProducerService.DEFAULT_ATTEMPTS;
     }

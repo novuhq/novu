@@ -39,6 +39,7 @@ import {
   SetJobAsCompleted,
   SetJobAsFailed,
   UpdateJobStatus,
+  WebhookFilterBackoffStrategy,
 } from './usecases';
 
 const USE_CASES = [
@@ -76,6 +77,7 @@ const USE_CASES = [
   SetJobAsCompleted,
   SetJobAsFailed,
   UpdateJobStatus,
+  WebhookFilterBackoffStrategy,
 ];
 
 const SERVICES = [WorkflowQueueService, EventsDistributedLockService, EventsPerformanceService];

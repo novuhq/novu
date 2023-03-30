@@ -1,4 +1,4 @@
-import { addAndEditChannel, clickWorkflow, dragAndDrop, goBack } from '.';
+import { addAndEditChannel, clickWorkflow, dragAndDrop, fillBasicNotificationDetails, goBack } from '.';
 
 describe('Creation functionality', function () {
   beforeEach(function () {
@@ -322,6 +322,18 @@ describe('Creation functionality', function () {
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
+  });
+
+  it('should show delay settings in side menu', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/templates/create');
+    });
+    fillBasicNotificationDetails('Test Added Delay');
+    clickWorkflow();
+    cy.getByTestId('button-add').click();
+    cy.getByTestId('add-delay-node').click();
+    cy.clickWorkflowNode('node-delaySelector');
+    cy.getByTestId('delay-type').should('be.visible');
   });
 });
 

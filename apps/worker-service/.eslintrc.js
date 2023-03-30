@@ -3,5 +3,4 @@ module.exports = {
   rules: {
     'func-names': 'off',
   },
-  ignorePatterns: '*.spec.ts',
 };

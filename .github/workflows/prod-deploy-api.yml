@@ -11,7 +11,7 @@ jobs:
       matrix:
         name: ['novu/api', 'novu/api-ee']
     uses: ./.github/workflows/reusable-api-e2e.yml
-    with: 
+    with:
       ee: ${{ contains (matrix.name,'ee') }}
 
   build_prod_image:
@@ -68,6 +68,7 @@ jobs:
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
   deploy_prod_api_eu:
+    if: contains( ${{ matrix.name }} , 'ee')
     needs: build_prod_image
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
@@ -77,6 +78,7 @@ jobs:
       docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
 
   deploy_prod_api_us:
+    if: contains( ${{ matrix.name }} , 'ee')
     needs:
       - deploy_prod_api_eu
       - build_prod_image
@@ -90,6 +92,7 @@ jobs:
       sentry_project: api
 
   deploy_docs:
+    if: contains( ${{ matrix.name }} , 'ee')
     needs: deploy_prod_api_us
     runs-on: ubuntu-latest
     environment: Production
