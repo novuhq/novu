@@ -129,6 +129,10 @@
       "path": "providers/nodemailer"
     },
     {
+      "name": "🔔 @novu/pinpoint",
+      "path": "providers/pinpoint"
+    },
+    {
       "name": "🔔 @novu/plivo",
       "path": "providers/plivo"
     },
