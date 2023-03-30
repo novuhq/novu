@@ -15,7 +15,7 @@ export const useBlueprint = () => {
     const token = getToken();
 
     if (id && token !== null) {
-      navigate(`/templates/create`, {
+      navigate('/templates/create', {
         replace: true,
       });
     }

@@ -16,9 +16,9 @@ describe('TestWorkflowModal Component', function () {
       </QueryClientProvider>
     );
 
-    cy.getByTestId('test-trigger-to-param').contains(`"subscriberId": "<REPLACE_WITH_DATA>"`);
-    cy.getByTestId('test-trigger-payload-param').contains(`{ }`);
-    cy.getByTestId('test-trigger-overrides-param').contains(`{ }`);
+    cy.getByTestId('test-trigger-to-param').contains('"subscriberId": "<REPLACE_WITH_DATA>"');
+    cy.getByTestId('test-trigger-payload-param').contains('{ }');
+    cy.getByTestId('test-trigger-overrides-param').contains('{ }');
   });
 
   it('should add variables and subscriber variables to input fields', function () {
@@ -30,10 +30,10 @@ describe('TestWorkflowModal Component', function () {
       </QueryClientProvider>
     );
 
-    cy.getByTestId('test-trigger-to-param').contains(`"subscriberId": "<REPLACE_WITH_DATA>",`);
-    cy.getByTestId('test-trigger-to-param').contains(`"email": "<REPLACE_WITH_DATA>"`);
-    cy.getByTestId('test-trigger-payload-param').contains(`"firstVariable": "<REPLACE_WITH_DATA>",`);
-    cy.getByTestId('test-trigger-payload-param').contains(`"secondVariable": "<REPLACE_WITH_DATA>"`);
-    cy.getByTestId('test-trigger-overrides-param').contains(`{ }`);
+    cy.getByTestId('test-trigger-to-param').contains('"subscriberId": "<REPLACE_WITH_DATA>",');
+    cy.getByTestId('test-trigger-to-param').contains('"email": "<REPLACE_WITH_DATA>"');
+    cy.getByTestId('test-trigger-payload-param').contains('"firstVariable": "<REPLACE_WITH_DATA>",');
+    cy.getByTestId('test-trigger-payload-param').contains('"secondVariable": "<REPLACE_WITH_DATA>"');
+    cy.getByTestId('test-trigger-overrides-param').contains('{ }');
   });
 });

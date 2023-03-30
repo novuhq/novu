@@ -50,7 +50,7 @@ export function TestWorkflow() {
   }, [trigger]);
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
 
-  const overridesTrigger = `{\n\n}`;
+  const overridesTrigger = '{\n\n}';
 
   function jsonValidator(value: string) {
     try {
@@ -63,7 +63,7 @@ export function TestWorkflow() {
   const form = useForm({
     initialValues: {
       toValue: makeToValue(subscriberVariables, currentUser),
-      payloadValue: makePayloadValue(variables) === '{}' ? `{\n\n}` : makePayloadValue(variables),
+      payloadValue: makePayloadValue(variables) === '{}' ? '{\n\n}' : makePayloadValue(variables),
       overridesValue: overridesTrigger,
     },
     validate: {

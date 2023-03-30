@@ -11,7 +11,7 @@ export default memo(({ selected }: { selected: boolean }) => {
   const noChildStyle = isParent ? {} : { border: 'none', background: 'transparent' };
 
   return (
-    <div data-test-id={`node-triggerSelector`} style={{ pointerEvents: 'none' }}>
+    <div data-test-id={'node-triggerSelector'} style={{ pointerEvents: 'none' }}>
       <WorkflowNode
         showDelete={false}
         Icon={TapeGradient}

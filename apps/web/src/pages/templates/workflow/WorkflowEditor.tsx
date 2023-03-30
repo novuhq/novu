@@ -133,7 +133,7 @@ const WorkflowEditor = () => {
                           height: 'auto',
                           width: '100%',
                           '&:not(:placeholder-shown)': {
-                            borderStyle: `none`,
+                            borderStyle: 'none',
                             padding: 10,
                           },
                         },

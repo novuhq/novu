@@ -39,7 +39,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
     {
       name: string;
     }
-  >((data) => api.post(`/v1/notification-groups`, data), {
+  >((data) => api.post('/v1/notification-groups', data), {
     onSuccess: (data) => {
       queryClient.setQueryData(['notificationGroups'], [...groups, data]);
     },

@@ -144,7 +144,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
             Send Test Email
           </Button>
           {!isIntegrationActive && (
-            <Text color={colors.error}>{`* Looks like you haven’t configured your email provider yet`}</Text>
+            <Text color={colors.error}>* Looks like you haven’t configured your email provider yet</Text>
           )}
         </span>
       </div>

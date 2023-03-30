@@ -59,7 +59,7 @@ export const useCreateDigestDemoWorkflow = () => {
               contentType: 'customHtml',
               variables: [{ type: 'String', name: 'step.digest', defaultValue: '1', required: false }],
               preheader: '',
-              content: `Hi {{subscriber.firstName}}! 👋 You've sent {{step.total_count}} events!`,
+              content: "Hi {{subscriber.firstName}}! 👋 You've sent {{step.total_count}} events!",
             },
             uuid: uuid4(),
             active: true,

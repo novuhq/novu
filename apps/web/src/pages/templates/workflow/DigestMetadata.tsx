@@ -179,7 +179,7 @@ export const DigestMetadata = ({ control, index }) => {
                   data-test-id="updateMode"
                   disabled={readonly}
                   checked={value}
-                  label={`Update in app notifications`}
+                  label="Update in app notifications"
                 />
               );
             }}
