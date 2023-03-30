@@ -13,7 +13,6 @@ import {
 } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { QueueService } from './queue';
 import { SubscriberOnlineService } from './subscriber-online';
 
 export const ANALYTICS_SERVICE = 'AnalyticsService';
@@ -32,12 +31,6 @@ const DAL_MODELS = [
 const dalService = new DalService();
 
 const PROVIDERS = [
-  {
-    provide: QueueService,
-    useFactory: () => {
-      return new QueueService();
-    },
-  },
   {
     provide: DalService,
     useFactory: async () => {

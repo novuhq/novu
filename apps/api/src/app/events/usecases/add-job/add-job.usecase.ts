@@ -78,7 +78,7 @@ export class AddJob {
     }
 
     Logger.verbose('Adding Job to Queue');
-    await this.workflowQueueService.addToQueue(job._id, job, delay);
+    await this.workflowQueueService.addToQueue(job._id, job, delay, command.organizationId);
 
     if (delay) {
       Logger.verbose('Delay is active, Creating execution details');
