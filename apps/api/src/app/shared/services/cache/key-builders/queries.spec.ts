@@ -34,7 +34,7 @@ describe('Key builder for queries', () => {
 
       const expectedKey = `${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.MESSAGE_COUNT}:e=${command.environmentId}:s=${
         command.subscriberId
-      }::${QUERY_PREFIX}==${JSON.stringify(command)}`;
+      }:${QUERY_PREFIX}=${JSON.stringify(command)}`;
       expect(buildMessageCountKey().cache(command)).equal(expectedKey);
     });
 
