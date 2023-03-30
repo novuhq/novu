@@ -1,11 +1,34 @@
 import { UserRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { stub, SinonStubbedMember } from 'sinon';
 import { subDays, subMinutes } from 'date-fns';
 
 describe('Password reset - /auth/reset (POST)', async () => {
   let session: UserSession;
   const userRepository = new UserRepository();
+
+  const requestResetToken = async (payload) => {
+    let plainToken: string;
+    /*
+     * Wrapper for method to obtain plain reset token before hashing.
+     * Stub is created on Prototype because API and tests use different UserRepository instances.
+     */
+    stub(UserRepository.prototype, 'updatePasswordResetToken').callsFake((...args) => {
+      plainToken = args[1];
+      (
+        UserRepository.prototype.updatePasswordResetToken as SinonStubbedMember<
+          typeof UserRepository.prototype.updatePasswordResetToken
+        >
+      ).restore();
+
+      return userRepository.updatePasswordResetToken(...args);
+    });
+
+    const { body } = await session.testAgent.post('/v1/auth/reset/request').send(payload);
+
+    return { body, plainToken: plainToken! };
+  };
 
   beforeEach(async () => {
     session = new UserSession();
@@ -35,16 +58,18 @@ describe('Password reset - /auth/reset (POST)', async () => {
   });
 
   it('should change a password after reset', async () => {
-    const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
+    const { body, plainToken } = await requestResetToken({
       email: session.user.email,
     });
 
     expect(body.data.success).to.equal(true);
-    const foundUser = await userRepository.findById(session.user._id);
+
+    const found = await userRepository.findById(session.user._id);
+    expect(plainToken).to.not.equal(found.resetToken);
 
     const { body: resetChange } = await session.testAgent.post('/v1/auth/reset').send({
       password: 'ASd3ASD$Fdfdf',
-      token: foundUser.resetToken,
+      token: plainToken,
     });
 
     expect(resetChange.data.token).to.be.ok;
@@ -75,7 +100,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
   });
 
   it('should fail to change password for bad token', async () => {
-    const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
+    const { body, plainToken } = await requestResetToken({
       email: session.user.email,
     });
 
@@ -91,11 +116,9 @@ describe('Password reset - /auth/reset (POST)', async () => {
       }
     );
 
-    const foundUser = await userRepository.findById(session.user._id);
-
     const { body: resetChange } = await session.testAgent.post('/v1/auth/reset').send({
       password: 'ASd3ASD$Fdfdf',
-      token: foundUser.resetToken,
+      token: plainToken,
     });
 
     expect(resetChange.message).to.contain('Token has expired');
@@ -222,7 +245,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
   });
 
   it("should throw error when the password doesn't meets the requirements", async () => {
-    const { body } = await session.testAgent.post('/v1/auth/reset/request').send({
+    const { body, plainToken } = await requestResetToken({
       email: session.user.email,
     });
 
@@ -232,9 +255,10 @@ describe('Password reset - /auth/reset (POST)', async () => {
 
     const { body: resetChange } = await session.testAgent.post('/v1/auth/reset').send({
       password: 'password',
-      token: foundUser.resetToken,
+      token: plainToken,
     });
 
+    expect(plainToken).to.not.equal(foundUser.resetToken);
     expect(resetChange.message[0]).to.contain(
       // eslint-disable-next-line max-len
       'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-'

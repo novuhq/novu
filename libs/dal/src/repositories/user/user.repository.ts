@@ -1,5 +1,5 @@
 import { AuthProviderEnum } from '@novu/shared';
-
+import { createHash } from 'crypto';
 import { BaseRepository } from '../base-repository';
 import { IUserResetTokenCount, UserEntity, UserDBModel } from './user.entity';
 import { User } from './user.schema';
@@ -15,9 +15,13 @@ export class UserRepository extends BaseRepository<UserDBModel, UserEntity> {
     });
   }
 
+  private hashResetToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
   async findUserByToken(token: string) {
     return await this.findOne({
-      resetToken: token,
+      resetToken: this.hashResetToken(token),
     });
   }
 
@@ -28,7 +32,7 @@ export class UserRepository extends BaseRepository<UserDBModel, UserEntity> {
       },
       {
         $set: {
-          resetToken: token,
+          resetToken: this.hashResetToken(token),
           resetTokenDate: new Date(),
           resetTokenCount,
         },
