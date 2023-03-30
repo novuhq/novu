@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Popover as MantinePopover, createStyles } from '@mantine/core';
+import { Popover as MantinePopover, createStyles, UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
@@ -167,14 +167,22 @@ export function WorkflowNode({
               <Switch checked={checked} onChange={(e) => switchButton && switchButton(e.target.checked)} />
             )}
             <When truthy={showDelete && !readonlyEnv && !dragging && hover}>
-              <UnstyledButtonStyled
+              <UnstyledButton
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete();
                 }}
+                sx={{
+                  lineHeight: 1,
+                  zIndex: 9999,
+                }}
               >
-                <Trash />
-              </UnstyledButtonStyled>
+                <Trash
+                  style={{
+                    background: 'transparent',
+                  }}
+                />
+              </UnstyledButton>
             </When>
           </ActionWrapper>
         </ButtonWrapper>

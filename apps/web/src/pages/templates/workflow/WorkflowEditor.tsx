@@ -136,6 +136,10 @@ const WorkflowEditor = () => {
                             borderStyle: 'none',
                             padding: 10,
                           },
+                          '&:hover, &:focus': {
+                            borderStyle: 'solid',
+                            padding: 9,
+                          },
                         },
                       })}
                       {...field}
