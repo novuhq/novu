@@ -14,6 +14,10 @@ COPY ./meta .
 COPY ./deps .
 COPY ./pkg .
 
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then echo 'enterprise edition' ; fi
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then cp .npmrc-cloud .npmrc  ; fi
+
 RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  pnpm install --reporter=silent --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
  --frozen-lockfile\
@@ -62,6 +66,8 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  --reporter=silent
 
 RUN chown -R 1000:root .
+
+RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
 
 WORKDIR /usr/src/app/apps/inbound-mail
 CMD [ "pm2-runtime", "dist/src/main.js" ]
