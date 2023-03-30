@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -12,8 +13,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
@@ -39,6 +42,8 @@ import {
   AddSubscribersUseCase,
   CreateTopicCommand,
   CreateTopicUseCase,
+  DeleteTopicCommand,
+  DeleteTopicUseCase,
   FilterTopicsCommand,
   FilterTopicsUseCase,
   GetTopicCommand,
@@ -62,6 +67,7 @@ export class TopicsController {
   constructor(
     private addSubscribersUseCase: AddSubscribersUseCase,
     private createTopicUseCase: CreateTopicUseCase,
+    private deleteTopicUseCase: DeleteTopicUseCase,
     private filterTopicsUseCase: FilterTopicsUseCase,
     private getTopicSubscriberUseCase: GetTopicSubscriberUseCase,
     private getTopicUseCase: GetTopicUseCase,
@@ -207,6 +213,30 @@ export class TopicsController {
         organizationId: user.organizationId,
         page: query?.page,
         pageSize: query?.pageSize,
+      })
+    );
+  }
+
+  @Delete('/:topicKey')
+  @ExternalApiAccessible()
+  @ApiNoContentResponse({
+    description: 'The topic has been deleted correctly',
+  })
+  @ApiNotFoundResponse({
+    description: 'The topic with the key provided does not exist in the database so it can not be deleted.',
+  })
+  @ApiConflictResponse({
+    description:
+      'The topic you are trying to delete has subscribers assigned to it. Delete the subscribers before deleting the topic.',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete topic', description: 'Delete a topic by its topic key if it has no subscribers' })
+  async deleteTopic(@UserSession() user: IJwtPayload, @Param('topicKey') topicKey: TopicKey): Promise<void> {
+    return await this.deleteTopicUseCase.execute(
+      DeleteTopicCommand.create({
+        environmentId: user.environmentId,
+        topicKey,
+        organizationId: user.organizationId,
       })
     );
   }

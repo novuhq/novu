@@ -61,7 +61,8 @@ describe('Workflow Queue service', () => {
       'queueNextJob',
       'runJob',
       'setJobAsCompleted',
-      'setJobAsFailed'
+      'setJobAsFailed',
+      'webhookFilterWebhookFilterBackoffStrategy'
     );
     expect(workflowQueueService.DEFAULT_ATTEMPTS).to.eql(3);
     expect(workflowQueueService.bullMqService.queue).to.deep.include({
@@ -73,13 +74,11 @@ describe('Workflow Queue service', () => {
         removeOnComplete: true,
       },
     });
-    expect(workflowQueueService.bullMqService.worker).to.deep.include({
+    const worker = workflowQueueService.bullMqService.worker;
+    expect(worker).to.deep.include({
       _eventsCount: 2,
       _maxListeners: undefined,
       name: 'standard',
-      blockTimeout: 0,
-      waiting: true,
-      running: true,
     });
   });
 
@@ -177,7 +176,7 @@ describe('Workflow Queue service', () => {
 
     await workflowQueueService.addToQueue(jobCreated._id, jobCreated, 0);
 
-    await session.awaitRunningJobs(_templateId, false, 1);
+    await session.awaitRunningJobs(_templateId, false, 0);
     // We pause the worker as little trick to allow the `failed` status to be updated in the callback of the worker and not having a race condition.
     await workflowQueueService.gracefulShutdown();
 

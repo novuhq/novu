@@ -49,7 +49,7 @@ export class AddJob {
     Logger.debug('delayAmount is: ' + delayAmount);
 
     if (job.type === StepTypeEnum.DIGEST && digestAmount === undefined) {
-      Logger.error('Digest Amount does not exist on a digest job');
+      Logger.warn('Digest Amount does not exist on a digest job');
 
       return;
     }

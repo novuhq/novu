@@ -32,7 +32,9 @@ jobs:
       id-token: write
     strategy:
       matrix:
-        name: ['novu/inbound-mail', 'novu/inbound-mail-ee']
+        # Only should be deploying inbound-mail-ee to dev
+        #name: ['novu/inbound-mail', 'novu/inbound-mail-ee']
+        name: ['novu/inbound-mail-ee']
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3

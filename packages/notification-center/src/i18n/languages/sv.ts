@@ -6,6 +6,9 @@ export const SV: ITranslationEntry = {
     markAllAsRead: 'Markera alla som lästa',
     poweredBy: 'Använder',
     settings: 'Inställningar',
+    removeMessage: 'Ta bort meddelande',
+    markAsRead: 'Markera som läst',
+    markAsUnRead: 'Markera som oläst',
   },
   lang: 'sv',
 };
