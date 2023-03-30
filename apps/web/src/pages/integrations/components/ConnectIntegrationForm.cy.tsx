@@ -95,7 +95,7 @@ it('shows the configuration for the selected provider', () => {
     {
       key: CredentialsKeyEnum.RequireTls,
       displayName: 'Require Tls',
-      type: 'boolean',
+      type: 'switch',
       required: true,
     },
   ];
