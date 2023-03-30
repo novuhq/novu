@@ -145,7 +145,7 @@ const TemplateEditorFormProvider = ({ children }) => {
       const notificationId = 'savingOnNavigation';
 
       showNotification({
-        message: `We are saving your template please wait until we are done`,
+        message: 'We are saving your template please wait until we are done',
         color: 'blue',
         id: notificationId,
         autoClose: false,
@@ -154,7 +154,7 @@ const TemplateEditorFormProvider = ({ children }) => {
         .then((value) => {
           interval.stop();
           hideNotification(notificationId);
-          successMessage('Template updated successfully');
+          successMessage('Trigger code is updated successfully');
           navigate(nextLocation.location.pathname);
 
           return value;
@@ -248,7 +248,7 @@ const TemplateEditorFormProvider = ({ children }) => {
         setTrigger(response.triggers[0]);
         reset(form);
         if (showMessage) {
-          successMessage('Template updated successfully');
+          successMessage('Trigger code is updated successfully');
         }
       } catch (e: any) {
         Sentry.captureException(e);
