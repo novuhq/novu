@@ -4,7 +4,7 @@ import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
 export class InfobipSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('infobip', ChannelTypeEnum.SMS);
+    super('infobip-sms', ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
     this.provider = new InfobipSmsProvider({
