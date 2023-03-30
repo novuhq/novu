@@ -1,3 +1,8 @@
+---
+sidebar_label: APNS
+sidebar_position: 3
+---
+
 # Apple Push Notification Service
 
 [Apple Push Notification Service](https://docs.expo.dev/push-notifications/overview/) is a notification delivery service provided by Apple.

@@ -87,13 +87,18 @@ export class MarkMessageAs {
     const eventMessage = `un${mark}_count_changed`;
     const countKey = `un${mark}Count`;
 
-    this.queueService.wsSocketQueue.add({
-      event: eventMessage,
-      userId: subscriber._id,
-      payload: {
-        [countKey]: count,
+    this.queueService.bullMqService.add(
+      'sendMessage',
+      {
+        event: eventMessage,
+        userId: subscriber._id,
+        payload: {
+          [countKey]: count,
+        },
       },
-    });
+      {},
+      subscriber._organizationId
+    );
   }
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>

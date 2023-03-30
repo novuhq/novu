@@ -38,7 +38,9 @@ import { v4 as uuid } from 'uuid';
 
 const axiosInstance = axios.create();
 
-describe('Trigger event - /v1/events/trigger (POST)', function () {
+const eventTriggerPath = '/v1/events/trigger';
+
+describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -68,7 +70,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should trigger an event successfully', async function () {
     const response = await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -101,7 +103,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       locale: 'en',
     };
     const { data: body } = await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: {
@@ -131,7 +133,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
   it('should override subscriber email based on event data', async function () {
     const subscriberId = SubscriberRepository.createObjectId();
     const { data: body } = await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: [
@@ -184,7 +186,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should generate message and notification based on event', async function () {
     const { data: body } = await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: {
@@ -264,7 +266,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     const { data: body } = await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
@@ -303,7 +305,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     const { data: body } = await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: [{ subscriberId: subscriber.subscriberId }, { subscriberId: subscriberId, phone: '+972541111111' }],
@@ -349,7 +351,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       ],
     });
     const { data: body } = await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -674,7 +676,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     let response = await session.testAgent
-      .post(`/v1/events/trigger`)
+      .post(eventTriggerPath)
       .send({
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -687,7 +689,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     );
 
     response = await session.testAgent
-      .post(`/v1/events/trigger`)
+      .post(eventTriggerPath)
       .send({
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -706,7 +708,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     );
 
     response = await session.testAgent
-      .post(`/v1/events/trigger`)
+      .post(eventTriggerPath)
       .send({
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -756,7 +758,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     await session.testAgent
-      .post(`/v1/events/trigger`)
+      .post(eventTriggerPath)
       .send({
         name: template.triggers[0].identifier,
         to: newSubscriberIdInAppNotification,
@@ -786,7 +788,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
 
   it('should throw an error when workflow identifier provided is not in the database', async () => {
     const response = await session.testAgent
-      .post(`/v1/events/trigger`)
+      .post(eventTriggerPath)
       .send({
         name: 'non-existent-template-identifier',
         to: subscriber.subscriberId,
@@ -813,7 +815,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     const response = await session.testAgent
-      .post(`/v1/events/trigger`)
+      .post(eventTriggerPath)
       .send({
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -849,7 +851,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     await session.testAgent
-      .post(`/v1/events/trigger`)
+      .post(eventTriggerPath)
       .send({
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -888,7 +890,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger/broadcast`,
+      `${session.serverUrl}${eventTriggerPath}/broadcast`,
       {
         name: template.triggers[0].identifier,
         payload: {
@@ -986,7 +988,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     });
 
     await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -1057,7 +1059,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     );
 
     await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -1087,7 +1089,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     );
 
     await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -1151,7 +1153,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
     const axiosPostStub = sinon.stub(axios, 'post').throws(new Error('Users remote error'));
 
     await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -1223,7 +1225,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       });
 
     await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -1261,7 +1263,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       );
 
     await axiosInstance.post(
-      `${session.serverUrl}/v1/events/trigger`,
+      `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
         to: subscriber.subscriberId,
@@ -1326,7 +1328,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       });
 
       await axiosInstance.post(
-        `${session.serverUrl}/v1/events/trigger`,
+        `${session.serverUrl}${eventTriggerPath}`,
         {
           name: template.triggers[0].identifier,
           to: [subscriber.subscriberId],
@@ -1426,7 +1428,7 @@ describe('Trigger event - /v1/events/trigger (POST)', function () {
       });
 
       await axiosInstance.post(
-        `${session.serverUrl}/v1/events/trigger`,
+        `${session.serverUrl}${eventTriggerPath}`,
         {
           name: template.triggers[0].identifier,
           to: [subscriber.subscriberId],
@@ -1510,7 +1512,7 @@ export async function sendTrigger(
   payload: Record<string, unknown> = {}
 ) {
   await axiosInstance.post(
-    `${session.serverUrl}/v1/events/trigger`,
+    `${session.serverUrl}${eventTriggerPath}`,
     {
       name: template.triggers[0].identifier,
       to: [{ subscriberId: newSubscriberIdInAppNotification, lastName: 'Smith', email: 'test@email.novu' }],

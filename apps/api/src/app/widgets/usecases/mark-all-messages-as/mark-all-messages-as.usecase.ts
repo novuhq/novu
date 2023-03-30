@@ -48,22 +48,32 @@ export class MarkAllMessagesAs {
       command.feedIds
     );
 
-    this.queueService.wsSocketQueue.add({
-      event: 'unseen_count_changed',
-      userId: subscriber._id,
-      payload: {
-        unseenCount: 0,
-      },
-    });
-
-    if (command.markAs === 'read') {
-      await this.queueService.wsSocketQueue.add({
-        event: 'unread_count_changed',
+    this.queueService.bullMqService.add(
+      'sendMessage',
+      {
+        event: 'unseen_count_changed',
         userId: subscriber._id,
         payload: {
-          unreadCount: 0,
+          unseenCount: 0,
         },
-      });
+      },
+      {},
+      subscriber._organizationId
+    );
+
+    if (command.markAs === 'read') {
+      await this.queueService.bullMqService.add(
+        'sendMessage',
+        {
+          event: 'unread_count_changed',
+          userId: subscriber._id,
+          payload: {
+            unreadCount: 0,
+          },
+        },
+        {},
+        subscriber._organizationId
+      );
     }
 
     this.analyticsService.track(

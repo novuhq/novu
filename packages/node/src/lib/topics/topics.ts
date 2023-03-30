@@ -9,21 +9,22 @@ import {
 
 import { WithHttp } from '../novu.interface';
 
+const BASE_PATH = '/topics';
+
 export class Topics extends WithHttp implements ITopics {
   async addSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload) {
-    return await this.http.post(`/topics/${topicKey}/subscribers`, {
-      ...data,
-    });
+    return await this.http.post(`${BASE_PATH}/${topicKey}/subscribers`, data);
   }
 
   async removeSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload) {
-    return await this.http.post(`/topics/${topicKey}/subscribers/removal`, {
-      ...data,
-    });
+    return await this.http.post(
+      `${BASE_PATH}/${topicKey}/subscribers/removal`,
+      data
+    );
   }
 
   async list(data: ITopicPaginationPayload) {
-    return await this.http.get(`/topics`, {
+    return await this.http.get(BASE_PATH, {
       params: {
         page: data.page,
         ...(data?.pageSize && { pageSize: data.pageSize }),
@@ -31,8 +32,12 @@ export class Topics extends WithHttp implements ITopics {
     });
   }
 
+  async delete(topicKey: TopicKey) {
+    return await this.http.delete(`${BASE_PATH}/${topicKey}`);
+  }
+
   async get(topicKey: TopicKey) {
-    return await this.http.get(`/topics/${topicKey}`);
+    return await this.http.get(`${BASE_PATH}/${topicKey}`);
   }
 
   async getSubscriber(
@@ -40,18 +45,18 @@ export class Topics extends WithHttp implements ITopics {
     externalSubscriberId: ExternalSubscriberId
   ) {
     return await this.http.get(
-      `/topics/${topicKey}/subscribers/${externalSubscriberId}`
+      `${BASE_PATH}/${topicKey}/subscribers/${externalSubscriberId}`
     );
   }
 
   async rename(topicKey: TopicKey, newName: TopicName) {
-    return await this.http.patch(`/topics/${topicKey}`, {
+    return await this.http.patch(`${BASE_PATH}/${topicKey}`, {
       name: newName,
     });
   }
 
   async create(data: ITopicPayload) {
-    return await this.http.post(`/topics`, {
+    return await this.http.post(BASE_PATH, {
       key: data.key,
       name: data.name,
     });
