@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { buildFeedKey, buildMessageCountKey } from './queries';
-import { CacheKeyPrefixEnum, CacheKeyTypeEnum } from './shared';
+import { CacheKeyPrefixEnum, CacheKeyTypeEnum, QUERY_PREFIX } from './shared';
 
 describe('Key builder for queries', () => {
   describe('buildFeedKey', () => {
@@ -12,7 +12,7 @@ describe('Key builder for queries', () => {
       };
       const expectedKey = `${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.FEED}:e=${command.environmentId}:s=${
         command.subscriberId
-      }:#query#=${JSON.stringify(command)}`;
+      }:${QUERY_PREFIX}=${JSON.stringify(command)}`;
       expect(buildFeedKey().cache(command)).equal(expectedKey);
     });
 
@@ -34,7 +34,7 @@ describe('Key builder for queries', () => {
 
       const expectedKey = `${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.MESSAGE_COUNT}:e=${command.environmentId}:s=${
         command.subscriberId
-      }:#query#=${JSON.stringify(command)}`;
+      }::${QUERY_PREFIX}==${JSON.stringify(command)}`;
       expect(buildMessageCountKey().cache(command)).equal(expectedKey);
     });
 

@@ -23,7 +23,7 @@ describe('Key builder for entities', () => {
   describe('buildUserKey', () => {
     it('should build a user key with the given _id', () => {
       const _id = '123';
-      const expectedKey = `${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.USER}:i=${_id}`;
+      const expectedKey = `${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.USER}:${IdentifierPrefixEnum.ID}=${_id}`;
       const actualKey = buildUserKey({ _id });
       expect(actualKey).to.equal(expectedKey);
     });
@@ -32,7 +32,7 @@ describe('Key builder for entities', () => {
   describe('buildEnvironmentByApiKey', () => {
     it('should build an environment by api key with the given _id', () => {
       const _id = '123';
-      const expectedKey = `${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY}:i=${_id}`;
+      const expectedKey = `${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY}:${IdentifierPrefixEnum.API_KEY}=${_id}`;
       const actualKey = buildEnvironmentByApiKey({ apiKey: _id });
       expect(actualKey).to.equal(expectedKey);
     });
