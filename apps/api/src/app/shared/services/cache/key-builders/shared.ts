@@ -1,14 +1,14 @@
 export const buildCommonKey = ({
   type,
   keyEntity,
-  environmentIdPrefix = 'e',
+  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
   environmentId,
   identifierPrefix = IdentifierPrefixEnum.ID,
   identifier,
 }: {
   type: CacheKeyTypeEnum;
   keyEntity: CacheKeyPrefixEnum;
-  environmentIdPrefix?: string;
+  environmentIdPrefix?: OrgScopePrefixEnum;
   environmentId: string;
   identifierPrefix?: IdentifierPrefixEnum;
   identifier: string;
