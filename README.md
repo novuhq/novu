@@ -192,7 +192,6 @@ We are more than happy to help you. If you are getting any errors or facing prob
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
 
-
 ## 🔗 Links
 
 - [Home page](https://novu.co/)
