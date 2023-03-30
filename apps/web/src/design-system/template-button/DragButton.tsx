@@ -6,6 +6,7 @@ import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
 import { When } from '../../components/utils/When';
 import { Drag } from '../icons/general/Drag';
+import { useOutletContext } from 'react-router-dom';
 
 interface IDragButtonProps {
   Icon: React.FC<any>;
@@ -28,8 +29,12 @@ export function DragButton({ description, label, Icon }: IDragButtonProps) {
           position: 'relative',
         }}
         className={cx(classes.button, { [classes.active]: false })}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
+        onMouseEnter={() => {
+          setHover(true);
+        }}
+        onMouseLeave={() => {
+          setHover(false);
+        }}
       >
         <When truthy={hover}>
           <Drag

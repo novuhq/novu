@@ -77,7 +77,7 @@ export function FlowEditor({
     const clientWidth = reactFlowWrapper.current?.clientWidth;
     const middle = clientWidth ? clientWidth / 2 - 100 : 0;
     const zoomView = 1;
-    const xyPos = reactFlowInstance?.project({ x: middle, y: 2 });
+    const xyPos = reactFlowInstance?.project({ x: middle, y: 10 });
     setViewport({ x: xyPos?.x ?? middle, y: xyPos?.y ?? 0, zoom: zoomView }, { duration: 800 });
   }, [reactFlowInstance]);
 

@@ -5,14 +5,16 @@ import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient } from '..
 export const ChannelTitle = ({
   channel,
   spacing = 16,
+  color = undefined,
 }: {
   channel: StepTypeEnum | ChannelTypeEnum;
   spacing?: number;
+  color?: any;
 }) => {
   if (channel === StepTypeEnum.EMAIL || channel === ChannelTypeEnum.EMAIL) {
     return (
       <Group align="center" spacing={spacing}>
-        <Mail /> <span>Email</span>
+        <Mail color={color} /> <span>Email</span>
       </Group>
     );
   }
@@ -20,7 +22,7 @@ export const ChannelTitle = ({
   if (channel === StepTypeEnum.IN_APP || channel === ChannelTypeEnum.IN_APP) {
     return (
       <Group align="center" spacing={spacing}>
-        <Bell /> <span>In-App</span>
+        <Bell color={color} /> <span>In-App</span>
       </Group>
     );
   }
@@ -28,7 +30,7 @@ export const ChannelTitle = ({
   if (channel === StepTypeEnum.CHAT || channel === ChannelTypeEnum.CHAT) {
     return (
       <Group align="center" spacing={spacing}>
-        <Chat /> <span>Chat</span>
+        <Chat color={color} /> <span>Chat</span>
       </Group>
     );
   }
@@ -36,7 +38,7 @@ export const ChannelTitle = ({
   if (channel === StepTypeEnum.PUSH || channel === ChannelTypeEnum.PUSH) {
     return (
       <Group align="center" spacing={spacing}>
-        <Mobile /> <span>Push</span>
+        <Mobile color={color} /> <span>Push</span>
       </Group>
     );
   }
@@ -44,7 +46,7 @@ export const ChannelTitle = ({
   if (channel === StepTypeEnum.SMS || channel === ChannelTypeEnum.SMS) {
     return (
       <Group align="center" spacing={spacing}>
-        <Sms /> <span>SMS</span>
+        <Sms color={color} /> <span>SMS</span>
       </Group>
     );
   }

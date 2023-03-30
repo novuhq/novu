@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { MouseEventHandler } from 'react';
 import { Button as MantineButton, Sx } from '@mantine/core';
 
 import useStyles from './Button.styles';
@@ -15,6 +15,8 @@ interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
   fullWidth?: boolean;
   submit?: boolean;
   onClick?: (e: any) => void;
+  onMouseEnter?: MouseEventHandler<any> | undefined;
+  onMouseLeave?: MouseEventHandler<any> | undefined;
   inherit?: boolean;
   pulse?: boolean;
   sx?: Sx;

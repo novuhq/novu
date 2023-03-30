@@ -94,6 +94,7 @@ const WorkflowEditor = () => {
         <Outlet
           context={{
             setDragging,
+            onDelete,
           }}
         />
       </When>
@@ -132,6 +133,7 @@ const WorkflowEditor = () => {
                           minHeight: 'auto',
                           height: 'auto',
                           width: '100%',
+                          textOverflow: 'ellipsis',
                           '&:not(:placeholder-shown)': {
                             borderStyle: 'none',
                             padding: 10,

@@ -7,6 +7,10 @@ import { Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { Button } from '../../../../design-system';
 import { Settings } from '../../../../design-system/icons';
 import { useBasePath } from '../../hooks/useBasePath';
+import { useFormContext } from 'react-hook-form';
+import { IForm } from '../../components/formTypes';
+import { useDidUpdate, useTimeout } from '@mantine/hooks';
+import { useState } from 'react';
 
 export const Sidebar = () => {
   const { colorScheme } = useMantineColorScheme();
@@ -17,6 +21,22 @@ export const Sidebar = () => {
   const { setDragging }: any = useOutletContext();
   const navigate = useNavigate();
   const basePath = useBasePath();
+  const {
+    formState: { isDirty, touchedFields },
+  } = useFormContext<IForm>();
+  const [shouldPulse, setShouldPulse] = useState(false);
+
+  useDidUpdate(() => {
+    if (isDirty) {
+      return;
+    }
+    setShouldPulse(true);
+    start();
+  }, [isDirty]);
+
+  const { start } = useTimeout(() => {
+    setShouldPulse(false);
+  }, 5000);
 
   return (
     <>
@@ -30,6 +50,7 @@ export const Sidebar = () => {
           <Stack align="center">
             <Group position="apart">
               <Button
+                pulse={shouldPulse}
                 onClick={() => {
                   navigate(basePath + '/snippet');
                 }}

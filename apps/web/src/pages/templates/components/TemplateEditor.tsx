@@ -121,7 +121,7 @@ export const TemplateEditor = () => {
     return (
       <SubPageWrapper
         color={colors.white}
-        title={<ChannelTitle channel={channel} />}
+        title={<ChannelTitle color={colors.B60} channel={channel} />}
         style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
       >
         <TemplateInAppEditor errors={errors} control={control} index={index} />
@@ -134,7 +134,7 @@ export const TemplateEditor = () => {
     return (
       <SubPageWrapper
         color={colors.white}
-        title={<ChannelTitle channel={channel} />}
+        title={<ChannelTitle color={colors.B60} channel={channel} />}
         style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
       >
         <EmailMessagesCards
@@ -149,7 +149,11 @@ export const TemplateEditor = () => {
 
   return (
     <>
-      <SubPageWrapper color={colors.white} title={<ChannelTitle channel={channel} />} style={{ paddingBottom: 96 }}>
+      <SubPageWrapper
+        color={colors.white}
+        title={<ChannelTitle color={colors.B60} channel={channel} />}
+        style={{ paddingBottom: 96 }}
+      >
         {channel === StepTypeEnum.SMS && (
           <TemplateSMSEditor
             control={control}

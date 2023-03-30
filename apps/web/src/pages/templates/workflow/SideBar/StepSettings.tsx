@@ -14,6 +14,7 @@ import { FilterModal } from '../../filter/FilterModal';
 import { useState } from 'react';
 import { Filter } from '../../../../design-system/icons/actions/Filter';
 import { FilterGradient } from '../../../../design-system/icons/gradient/FilterGradient';
+import { FilterOutlined } from '../../../../design-system/icons/gradient/FilterOutlined';
 
 export function StepSettings({ index }: { index: number }) {
   const { readonly } = useEnvController();
@@ -22,6 +23,7 @@ export function StepSettings({ index }: { index: number }) {
   const { channel } = useParams<{
     channel: StepTypeEnum;
   }>();
+  const [filterHover, setFilterHover] = useState(false);
 
   const filters = watch(`steps.${index}.filters.0.children`);
 
@@ -42,13 +44,28 @@ export function StepSettings({ index }: { index: number }) {
           }}
           disabled={readonly}
           data-test-id="add-filter-btn"
+          onMouseEnter={() => {
+            setFilterHover(true);
+          }}
+          onMouseLeave={() => {
+            setFilterHover(false);
+          }}
         >
           <When truthy={filters && filters?.length > 0}>
-            <FilterGradient
-              style={{
-                marginRight: '7px',
-              }}
-            />
+            <When truthy={filterHover}>
+              <FilterGradient
+                style={{
+                  marginRight: '7px',
+                }}
+              />
+            </When>
+            <When truthy={!filterHover}>
+              <FilterOutlined
+                style={{
+                  marginRight: '7px',
+                }}
+              />
+            </When>
             {filters?.length} filter{filters && filters?.length < 2 ? '' : 's'}
           </When>
           <When truthy={filters && filters?.length === 0}>

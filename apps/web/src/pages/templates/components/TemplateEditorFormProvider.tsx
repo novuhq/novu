@@ -1,7 +1,7 @@
 import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
 import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { DigestTypeEnum, INotificationTemplate, INotificationTrigger } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
@@ -12,8 +12,8 @@ import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } fr
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
-import { useBlocker, useNotificationGroup } from '../../../hooks';
-import { useInterval } from '@mantine/hooks';
+import { useNotificationGroup } from '../../../hooks';
+import { useTimeout } from '@mantine/hooks';
 import { useBasePath } from '../hooks/useBasePath';
 import { hideNotification, showNotification } from '@mantine/notifications';
 
@@ -62,6 +62,8 @@ const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => ({
     },
   }),
 });
+
+const notificationId = 'savingOnNavigation';
 
 interface ITemplateEditorFormContext {
   template?: INotificationTemplate;
@@ -125,52 +127,33 @@ const TemplateEditorFormProvider = ({ children }) => {
 
   const basePath = useBasePath();
 
-  const handleBlockedNavigation = useCallback((nextLocation) => {
-    if (!nextLocation.location.pathname.includes(basePath)) {
-      const notificationId = 'savingOnNavigation';
-
-      showNotification({
-        message: 'We are saving your template please wait until we are done',
-        color: 'blue',
-        id: notificationId,
-        autoClose: false,
-      });
-      onSubmit(methods.getValues(), false)
-        .then((value) => {
-          interval.stop();
-          hideNotification(notificationId);
-          successMessage('Trigger code is updated successfully');
-          navigate(nextLocation.location.pathname);
-
-          return value;
-        })
-        .catch(() => {
-          interval.stop();
-        });
-
-      return false;
-    }
-
-    return true;
-  }, []);
-
-  useBlocker(handleBlockedNavigation, methods.formState.isDirty);
-
-  const interval = useInterval(() => {
-    if (!methods.formState.isDirty) {
-      return;
-    }
-    interval.stop();
-    onSubmit(methods.getValues()).finally(() => {
-      interval.start();
+  const { start, clear } = useTimeout(() => {
+    showNotification({
+      message: 'We are saving your changes...',
+      color: 'blue',
+      id: notificationId,
+      autoClose: false,
     });
-  }, 10000);
+  }, 3000);
+
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    interval.start();
+    const isTouring = localStorage.getItem('tour-digest') !== null;
 
-    return interval.stop;
-  }, []);
+    if (!methods.formState.isDirty || isTouring) {
+      return;
+    }
+    start();
+    onSubmit(methods.getValues())
+      .then((value) => {
+        clear();
+        hideNotification(notificationId);
+
+        return value;
+      })
+      .catch(() => {});
+  }, [pathname]);
 
   const {
     template,
@@ -230,6 +213,7 @@ const TemplateEditorFormProvider = ({ children }) => {
           },
         });
         setTrigger(response.triggers[0]);
+
         reset(form);
         if (showMessage) {
           successMessage('Trigger code is updated successfully');
