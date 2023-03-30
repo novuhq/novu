@@ -72,7 +72,7 @@ export class CacheService implements ICacheService {
   }
 
   public async setQuery(key: string, value: string, options?: CachingConfig) {
-    const { credentials, query } = this.splitKey(key);
+    const { credentials, query } = splitKey(key);
 
     const pipeline = this.client.pipeline();
 
@@ -152,15 +152,15 @@ export class CacheService implements ICacheService {
 
     return Math.floor(num - (this.TTL_VARIANT_PERCENTAGE * num) / 2 + variant);
   }
+}
 
-  private splitKey(key: string) {
-    const keyDelimiter = `:${QUERY_PREFIX}=`;
-    const keyParts = key.split(keyDelimiter);
-    const credentials = keyParts[0];
-    const query = keyParts[1];
+export function splitKey(key: string) {
+  const keyDelimiter = `:${QUERY_PREFIX}=`;
+  const keyParts = key.split(keyDelimiter);
+  const credentials = keyParts[0];
+  const query = keyParts[1];
 
-    return { credentials, query };
-  }
+  return { credentials, query };
 }
 
 export interface ICacheServiceConfig {
