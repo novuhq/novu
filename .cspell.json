@@ -414,7 +414,13 @@
     "stddev",
     "shortid",
     "upsert",
-    "cond"
+    "cond",
+    "TASKFORCESH",
+    "monorepository",
+    "Metafiles",
+    "Metas",
+    "Webpush",
+    "maqsam"
   ],
   "flagWords": [],
   "patterns": [
