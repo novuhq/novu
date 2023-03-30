@@ -175,6 +175,10 @@
     {
       "name": "🔔 @novu/twilio",
       "path": "providers/twilio"
+    },
+    {
+      "name": "🔔 @novu/maqsam",
+      "path": "providers/maqsam"
     }
   ],
   "settings": {

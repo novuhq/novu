@@ -56,6 +56,7 @@ jobs:
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
   deploy_prod_inbound_mail_eu:
+    if: contains( ${{ matrix.name }} , 'ee')
     needs:
       - build_prod_image
     uses: ./.github/workflows/reusable-app-service-deploy.yml
@@ -66,6 +67,7 @@ jobs:
       docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
 
   deploy_prod_inbound_mail_us:
+    if: contains( ${{ matrix.name }} , 'ee')
     needs:
       - deploy_prod_inbound_mail_eu
       - build_prod_image

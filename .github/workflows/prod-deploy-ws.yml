@@ -45,6 +45,7 @@ jobs:
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
   deploy_prod_ws_eu:
+    if: contains( ${{ matrix.name }} , 'ee')
     needs:
       - build_prod_image
     uses: ./.github/workflows/reusable-app-service-deploy.yml
@@ -57,6 +58,7 @@ jobs:
       sentry_project: ws
 
   deploy_prod_ws_us:
+    if: contains( ${{ matrix.name }} , 'ee')
     needs:
       - deploy_prod_ws_eu
       - build_prod_image
