@@ -139,8 +139,7 @@ export class SESEmailProvider implements IEmailProvider {
         return EmailEventStatusEnum.CLICKED;
       case 'DeliveryDelay':
         return EmailEventStatusEnum.DELAYED;
-      case 'Subscription':
-        return EmailEventStatusEnum.UNSUBSCRIBED;
+      // case 'Subscription':
     }
   }
 
