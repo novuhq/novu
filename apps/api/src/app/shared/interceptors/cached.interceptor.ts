@@ -1,6 +1,7 @@
 import { buildCachedQuery, buildKey, CacheInterceptorTypeEnum } from './shared-cache';
 import { Inject } from '@nestjs/common';
-import { CacheKeyPrefixEnum, CacheService } from '../services/cache';
+import { CacheKeyPrefixEnum } from '../services/cache/key-builders/shared';
+import { CacheService } from '../services/cache';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {

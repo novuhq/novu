@@ -37,13 +37,7 @@ import {
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import {
-  buildCommonKey,
-  CacheKeyPrefixEnum,
-  CacheKeyTypeEnum,
-  notificationTemplateQueryKeyBuild,
-} from '../../../shared/services/cache/keys';
-import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
+import { buildNotificationTemplateKey, buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class SendMessage {
@@ -179,12 +173,9 @@ export class SendMessage {
 
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildCommonKey({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
-        environmentId: command._environmentId,
-        identifier: command.subscriberId,
-        identifierPrefix: 's',
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
       }),
   })
   private async getSubscriberBySubscriberId({
@@ -239,11 +230,11 @@ export class SendMessage {
     return result || template.critical;
   }
 
-  @CachedQuery({
+  @CachedEntity({
     builder: (command: { _id: string; environmentId: string }) =>
-      notificationTemplateQueryKeyBuild().cache({
+      buildNotificationTemplateKey({
         _environmentId: command.environmentId,
-        identifiers: { id: command._id },
+        _id: command._id,
       }),
   })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {

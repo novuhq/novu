@@ -14,8 +14,8 @@ import { StorageHelperService } from '../../services/storage-helper-service/stor
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
-import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
-import { notificationTemplateQueryKeyBuild } from '../../../shared/services/cache/keys';
+import { buildNotificationTemplateIdentifierKey } from '../../../shared/services/cache/key-builders/entities';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class ParseEventRequest {
@@ -137,11 +137,11 @@ export class ParseEventRequest {
     };
   }
 
-  @CachedQuery({
+  @CachedEntity({
     builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      notificationTemplateQueryKeyBuild().cache({
+      buildNotificationTemplateIdentifierKey({
         _environmentId: command.environmentId,
-        identifiers: { triggerIdentifier: command.triggerIdentifier },
+        templateIdentifier: command.triggerIdentifier,
       }),
   })
   private async getNotificationTemplateByTriggerIdentifier(command: {

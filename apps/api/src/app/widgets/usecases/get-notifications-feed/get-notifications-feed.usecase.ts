@@ -1,19 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
-import { MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
+import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
-import {
-  buildCommonKey,
-  buildQueryKey,
-  CacheKeyPrefixEnum,
-  CacheKeyTypeEnum,
-} from '../../../shared/services/cache/keys';
+import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
+import { buildFeedKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class GetNotificationsFeed {
@@ -24,14 +20,11 @@ export class GetNotificationsFeed {
   ) {}
 
   @CachedQuery({
-    builder: (command: GetNotificationsFeedCommand) =>
-      buildQueryKey({
-        type: CacheKeyTypeEnum.QUERY,
-        keyEntity: CacheKeyPrefixEnum.FEED,
-        environmentId: command.environmentId,
-        identifierPrefix: 's',
-        identifier: command.subscriberId,
-        query: command as any,
+    builder: ({ environmentId, subscriberId, ...command }: GetNotificationsFeedCommand) =>
+      buildFeedKey().cache({
+        environmentId: environmentId,
+        subscriberId: subscriberId,
+        ...command,
       }),
   })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
@@ -89,12 +82,9 @@ export class GetNotificationsFeed {
 
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildCommonKey({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
-        environmentId: command._environmentId,
-        identifier: command.subscriberId,
-        identifierPrefix: 's',
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
       }),
   })
   private async fetchSubscriber({

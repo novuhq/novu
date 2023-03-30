@@ -22,7 +22,10 @@ import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { CacheService, InvalidateCacheService } from '../../../shared/services/cache';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { NotificationStep } from '../../../shared/dtos/notification-step';
-import { notificationTemplateQueryKeyBuild } from '../../../shared/services/cache/keys';
+import {
+  buildNotificationTemplateIdentifierKey,
+  buildNotificationTemplateKey,
+} from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -38,11 +41,6 @@ export class UpdateNotificationTemplate {
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
-    await this.invalidateCache.invalidateQuery({
-      key: notificationTemplateQueryKeyBuild().invalidate({
-        _environmentId: command.environmentId,
-      }),
-    });
     const existingTemplate = await this.notificationTemplateRepository.findById(command.id, command.environmentId);
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
 
@@ -198,6 +196,20 @@ export class UpdateNotificationTemplate {
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
+
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateKey({
+        _id: existingTemplate._id,
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateIdentifierKey({
+        templateIdentifier: existingTemplate.triggers[0].identifier,
+        _environmentId: command.environmentId,
+      }),
+    });
 
     await this.notificationTemplateRepository.update(
       {

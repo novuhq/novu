@@ -6,7 +6,7 @@ import { UpdateProfileEmailCommand } from './update-profile-email.command';
 import { InvalidateCacheService } from '../../../shared/services/cache';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { entityBuilder } from '../../../shared/services/cache/keys';
+import { buildUserKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class UpdateProfileEmail {
@@ -33,7 +33,7 @@ export class UpdateProfileEmail {
     );
 
     await this.invalidateCache.invalidateByKey({
-      key: entityBuilder().user({
+      key: buildUserKey({
         _id: command.userId,
       }),
     });

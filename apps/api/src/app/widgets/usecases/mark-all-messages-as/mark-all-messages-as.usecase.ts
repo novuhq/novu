@@ -6,7 +6,7 @@ import { InvalidateCacheService } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkAllMessagesAsCommand } from './mark-all-messages-as.command';
-import { queryBuilder } from '../../../shared/services/cache/keys';
+import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class MarkAllMessagesAs {
@@ -20,14 +20,14 @@ export class MarkAllMessagesAs {
 
   async execute(command: MarkAllMessagesAsCommand): Promise<number> {
     await this.invalidateCache.invalidateQuery({
-      key: queryBuilder().feed().invalidate({
+      key: buildFeedKey().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
     await this.invalidateCache.invalidateQuery({
-      key: queryBuilder().messageCount().invalidate({
+      key: buildMessageCountKey().invalidate({
         subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),

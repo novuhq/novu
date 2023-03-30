@@ -13,13 +13,9 @@ import {
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import {
-  buildCommonKey,
-  buildQueryKey,
-  CacheKeyPrefixEnum,
-  CacheKeyTypeEnum,
-} from '../../../shared/services/cache/keys';
+import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
+import { buildIntegrationKey } from '../../../shared/services/cache/key-builders/queries';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -35,12 +31,9 @@ export abstract class SendMessageBase extends SendMessageType {
 
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
-      buildCommonKey({
-        type: CacheKeyTypeEnum.ENTITY,
-        keyEntity: CacheKeyPrefixEnum.SUBSCRIBER,
-        environmentId: command._environmentId,
-        identifier: command.subscriberId,
-        identifierPrefix: 's',
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
       }),
   })
   protected async getSubscriberBySubscriberId({
@@ -57,13 +50,10 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   @CachedQuery({
-    builder: (command: GetDecryptedIntegrationsCommand) =>
-      buildQueryKey({
-        type: CacheKeyTypeEnum.QUERY,
-        keyEntity: CacheKeyPrefixEnum.INTEGRATION,
-        environmentId: command.environmentId,
-        identifier: command.userId,
-        query: command as any,
+    builder: ({ environmentId, ...command }: GetDecryptedIntegrationsCommand) =>
+      buildIntegrationKey().cache({
+        _environmentId: environmentId,
+        ...command,
       }),
   })
   protected async getIntegration(getDecryptedIntegrationsCommand: GetDecryptedIntegrationsCommand) {
