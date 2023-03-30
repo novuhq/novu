@@ -13,7 +13,12 @@ const codeTheme = require('./src/utils/prism');
     favicon: 'img/favicon.ico',
     organizationName: 'novuhq', // Usually your GitHub org/user name.
     projectName: 'novu', // Usually your repo name.
-    plugins: ['docusaurus-plugin-sass'],
+    plugins: ['docusaurus-plugin-sass', [
+      'docusaurus-plugin-plausible',
+      {
+        domain: 'docs.novu.co',
+      },
+    ]],
     presets: [
       [
         '@docusaurus/preset-classic',
@@ -24,7 +29,7 @@ const codeTheme = require('./src/utils/prism');
             sidebarPath: require.resolve('./sidebars.js'),
             // Please change this to your repo.
             editUrl: 'https://github.com/novuhq/novu/blob/main/docs/',
-            breadcrumbs: false,
+            breadcrumbs: true,
             routeBasePath: '/',
             showLastUpdateAuthor: true,
             showLastUpdateTime: true,

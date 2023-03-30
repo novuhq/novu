@@ -1,3 +1,7 @@
+---
+sidebar_position: 1
+---
+
 # SendGrid
 
 You can use the [SendGrid](https://sendgrid.com/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.

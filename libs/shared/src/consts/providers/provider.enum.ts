@@ -59,6 +59,7 @@ export enum SmsProviderIdEnum {
   Clickatell = 'clickatell',
   FortySixElks = 'forty-six-elks',
   Kannel = 'kannel',
+  Maqsam = 'maqsam',
 }
 
 export enum ChatProviderIdEnum {
