@@ -28,7 +28,7 @@ export function TemplateSMSEditor({
 
   return (
     <>
-      {!isIntegrationActive ? <LackIntegrationError channel="SMS" channelType={ChannelTypeEnum.SMS} /> : null}
+      {!isIntegrationActive ? <LackIntegrationError channelType={ChannelTypeEnum.SMS} /> : null}
       <StepSettings index={index} />
       <Controller
         name={`steps.${index}.template.content` as any}

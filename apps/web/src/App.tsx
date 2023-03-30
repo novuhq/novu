@@ -44,6 +44,7 @@ import { UserPreference } from './pages/templates/components/UserPreference';
 import { TestWorkflow } from './pages/templates/components/TestWorkflow';
 import { SnippetPage } from './pages/templates/components/SnippetPage';
 import { TemplateEditor } from './pages/templates/components/TemplateEditor';
+import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -186,6 +187,7 @@ function App() {
                     <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/channels'} element={<UserPreference />} />
                     <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/testworkflow'} element={<TestWorkflow />} />
                     <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/snippet'} element={<SnippetPage />} />
+                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/providers'} element={<ProvidersPage />} />
                     <Route
                       path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/:channel/:stepUuid'}
                       element={<TemplateEditor />}

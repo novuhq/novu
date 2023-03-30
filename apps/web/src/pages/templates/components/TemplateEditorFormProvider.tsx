@@ -70,7 +70,6 @@ interface ITemplateEditorFormContext {
   isUpdating: boolean;
   isDeleting: boolean;
   trigger?: INotificationTrigger;
-  createdTemplateId?: string;
   onSubmit: (data: IForm) => Promise<void>;
   addStep: (channelType: StepTypeEnum, id: string, stepIndex?: number) => void;
   deleteStep: (index: number) => void;
@@ -82,7 +81,6 @@ const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
   isUpdating: false,
   isDeleting: false,
   trigger: undefined,
-  createdTemplateId: undefined,
   onSubmit: (() => {}) as any,
   addStep: () => {},
   deleteStep: () => {},
@@ -113,20 +111,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     mode: 'onChange',
   });
   const navigate = useNavigate();
-  const [{ trigger, createdTemplateId }, setState] = useState<{
-    trigger?: INotificationTrigger;
-    createdTemplateId?: string;
-  }>({});
-
-  const setTrigger = useCallback(
-    (newTrigger: INotificationTrigger) => setState((old) => ({ ...old, trigger: newTrigger })),
-    [setState]
-  );
-
-  const setCreatedTemplateId = useCallback(
-    (newCreatedTemplateId: string) => setState((old) => ({ ...old, createdTemplateId: newCreatedTemplateId })),
-    [setState]
-  );
+  const [trigger, setTrigger] = useState<INotificationTrigger>();
 
   const {
     reset,
@@ -179,7 +164,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     onSubmit(methods.getValues()).finally(() => {
       interval.start();
     });
-  }, 1000);
+  }, 10000);
 
   useEffect(() => {
     interval.start();
@@ -225,7 +210,6 @@ const TemplateEditorFormProvider = ({ children }) => {
       const payloadToCreate = mapFormToCreateNotificationTemplate(values);
       const response = await createNotificationTemplate({ ...payloadToCreate, active: true, draft: false });
       setTrigger(response.triggers[0]);
-      setCreatedTemplateId(response._id || '');
       reset(payloadToCreate);
       navigate(`/templates/edit/${response._id || ''}`);
     };
@@ -287,25 +271,11 @@ const TemplateEditorFormProvider = ({ children }) => {
       isUpdating,
       isDeleting,
       trigger: trigger,
-      createdTemplateId: createdTemplateId,
       onSubmit,
       addStep,
       deleteStep,
     }),
-    [
-      template,
-      isLoading,
-      isCreating,
-      isUpdating,
-      isDeleting,
-
-      trigger,
-      createdTemplateId,
-      onSubmit,
-      addStep,
-      deleteStep,
-      loadingGroups,
-    ]
+    [template, isLoading, isCreating, isUpdating, isDeleting, trigger, onSubmit, addStep, deleteStep, loadingGroups]
   );
 
   return (

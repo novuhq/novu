@@ -65,7 +65,6 @@ export function EmailContentCard({
     <>
       {!isIntegrationActive && isLimitReached && (
         <LackIntegrationError
-          channel="E-Mail"
           channelType={ChannelTypeEnum.EMAIL}
           text="Looks like you haven’t configured your E-Mail provider yet, visit the integrations page to configure."
         />

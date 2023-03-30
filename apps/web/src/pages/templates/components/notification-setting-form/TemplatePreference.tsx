@@ -7,9 +7,9 @@ import { useEnvController } from '../../../../hooks';
 import { Checkbox, colors, Switch } from '../../../../design-system';
 import { channels } from '../../shared/channels';
 import type { IForm } from '../formTypes';
-import { getPageTitle } from '../TemplateEditor';
 import { StepTypeEnum } from '../../../../../../../libs/shared/src/types/channel/index';
 import { LabelWithTooltip } from '../../workflow/LabelWithTooltip';
+import { ChannelTitle } from '../ChannelTitle';
 
 export function TemplatePreference() {
   return (
@@ -57,7 +57,7 @@ export function ChannelPreference() {
                   mb={24}
                   position="apart"
                 >
-                  <Text>{getPageTitle(key as StepTypeEnum)}</Text>
+                  <Text>{<ChannelTitle channel={key as StepTypeEnum} />}</Text>
                   <div>
                     <Switch
                       checked={checked}

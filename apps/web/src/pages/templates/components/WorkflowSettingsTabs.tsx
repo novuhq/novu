@@ -28,6 +28,7 @@ export const WorkflowSettingsTabs = () => {
       <Tabs.List>
         <Tabs.Tab value="settings">General</Tabs.Tab>
         <Tabs.Tab value="channels">Channels</Tabs.Tab>
+        <Tabs.Tab value="providers">Providers</Tabs.Tab>
       </Tabs.List>
     </Tabs>
   );

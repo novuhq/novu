@@ -14,71 +14,12 @@ import { DigestMetadata } from '../workflow/DigestMetadata';
 import { DelayMetadata } from '../workflow/DelayMetadata';
 import { Button, colors } from '../../../design-system';
 import styled from '@emotion/styled';
-import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient, Trash } from '../../../design-system/icons';
+import { Trash } from '../../../design-system/icons';
 import { Group } from '@mantine/core';
 import { When } from '../../../components/utils/When';
 import { useEffect, useMemo } from 'react';
 import { useBasePath } from '../hooks/useBasePath';
-
-export const getPageTitle = (channel: StepTypeEnum) => {
-  if (channel === StepTypeEnum.EMAIL) {
-    return (
-      <Group align="center" spacing={16}>
-        <Mail /> <span>Email</span>
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.IN_APP) {
-    return (
-      <Group align="center" spacing={16}>
-        <Bell /> <span>In-App</span>
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.CHAT) {
-    return (
-      <Group align="center" spacing={16}>
-        <Chat /> <span>Chat</span>
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.PUSH) {
-    return (
-      <Group align="center" spacing={16}>
-        <Mobile /> <span>Push</span>
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.SMS) {
-    return (
-      <Group align="center" spacing={16}>
-        <Sms /> <span>SMS</span>
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.DELAY) {
-    return (
-      <Group align="center" spacing={16}>
-        <TimerGradient /> <span>Delay</span>
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.DIGEST) {
-    return (
-      <Group align="center" spacing={16}>
-        <DigestGradient /> <span>Digest</span>
-      </Group>
-    );
-  }
-
-  return channel;
-};
+import { ChannelTitle } from './ChannelTitle';
 
 const DeleteRow = () => {
   const { channel, stepUuid = '' } = useParams<{
@@ -180,7 +121,7 @@ export const TemplateEditor = () => {
     return (
       <SubPageWrapper
         color={colors.white}
-        title={getPageTitle(channel)}
+        title={<ChannelTitle channel={channel} />}
         style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
       >
         <TemplateInAppEditor errors={errors} control={control} index={index} />
@@ -193,7 +134,7 @@ export const TemplateEditor = () => {
     return (
       <SubPageWrapper
         color={colors.white}
-        title={getPageTitle(channel)}
+        title={<ChannelTitle channel={channel} />}
         style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
       >
         <EmailMessagesCards
@@ -208,7 +149,7 @@ export const TemplateEditor = () => {
 
   return (
     <>
-      <SubPageWrapper color={colors.white} title={getPageTitle(channel)} style={{ paddingBottom: 96 }}>
+      <SubPageWrapper color={colors.white} title={<ChannelTitle channel={channel} />} style={{ paddingBottom: 96 }}>
         {channel === StepTypeEnum.SMS && (
           <TemplateSMSEditor
             control={control}

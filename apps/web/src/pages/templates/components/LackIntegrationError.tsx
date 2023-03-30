@@ -12,15 +12,22 @@ const DoubleArrowRightStyled = styled(DoubleArrowRight)`
   cursor: pointer;
 `;
 
-export function LackIntegrationError({
-  channel,
-  channelType,
-  text,
-}: {
-  channel: string;
-  channelType: ChannelTypeEnum;
-  text?: string;
-}) {
+export const getChannelCopy = (channelType: ChannelTypeEnum) => {
+  switch (channelType) {
+    case ChannelTypeEnum.SMS:
+      return 'SMS';
+    case ChannelTypeEnum.EMAIL:
+      return 'E-Mail';
+    case ChannelTypeEnum.PUSH:
+      return 'Push';
+    case ChannelTypeEnum.CHAT:
+      return 'Chat';
+    default:
+      return '';
+  }
+};
+
+export function LackIntegrationError({ channelType, text }: { channelType: ChannelTypeEnum; text?: string }) {
   const segment = useSegment();
   const [isIntegrationsModalOpened, openIntegrationsModal] = useState(false);
 
@@ -30,7 +37,9 @@ export function LackIntegrationError({
         <Text>
           {text
             ? text
-            : `Looks like you haven’t configured your ${channel} provider yet, this channel will be disabled until you configure it.`}
+            : `Looks like you haven’t configured your ${getChannelCopy(
+                channelType
+              )} provider yet, this channel will be disabled until you configure it.`}
         </Text>
         <DoubleArrowRightStyled
           onClick={() => {

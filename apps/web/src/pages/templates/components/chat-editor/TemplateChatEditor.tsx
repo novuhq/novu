@@ -28,7 +28,7 @@ export function TemplateChatEditor({
 
   return (
     <>
-      {!isIntegrationActive ? <LackIntegrationError channel="Chat" channelType={ChannelTypeEnum.CHAT} /> : null}
+      {!isIntegrationActive ? <LackIntegrationError channelType={ChannelTypeEnum.CHAT} /> : null}
       <StepSettings index={index} />
       <Controller
         name={`steps.${index}.template.content`}
