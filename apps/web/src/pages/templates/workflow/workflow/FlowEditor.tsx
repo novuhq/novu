@@ -218,6 +218,7 @@ export function FlowEditor({
         error: getFormattedStepErrors(i, errors),
         onDelete,
         uuid: step.uuid,
+        name: step.name,
       },
     };
   }

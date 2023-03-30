@@ -17,6 +17,7 @@ interface NodeData {
   active?: boolean;
   channelType: StepTypeEnum;
   uuid: string;
+  name?: string;
 }
 
 export default memo(
@@ -63,7 +64,7 @@ export default memo(
           tabKey={data.tabKey}
           channelType={data.channelType}
           Icon={data.Icon}
-          label={data.label + (count > 0 ? ` (${count})` : '')}
+          label={data.name ? data.name : data.label + (count > 0 ? ` (${count})` : '')}
           active={stepUuid === data.uuid}
           disabled={!data.active}
           id={id}

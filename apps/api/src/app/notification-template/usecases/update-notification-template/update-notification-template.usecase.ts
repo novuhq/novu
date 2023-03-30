@@ -264,6 +264,10 @@ export class UpdateNotificationTemplate {
       partialNotificationStep.uuid = message.uuid;
     }
 
+    if (message.name) {
+      partialNotificationStep.name = message.name;
+    }
+
     return partialNotificationStep;
   }
 

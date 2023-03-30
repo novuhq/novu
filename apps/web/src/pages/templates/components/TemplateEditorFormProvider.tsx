@@ -30,6 +30,7 @@ const defaultEmailBlocks: IEmailBlock[] = [
 const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => ({
   _id: id,
   uuid: uuid4(),
+  name: undefined,
   template: {
     type: channelType,
     content: channelType === StepTypeEnum.EMAIL ? defaultEmailBlocks : '',

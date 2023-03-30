@@ -1,4 +1,4 @@
-import { Group, Stack, Title, UnstyledButton, useMantineColorScheme } from '@mantine/core';
+import { Grid, Group, Stack, Title, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { colors } from '../../../design-system';
@@ -33,18 +33,36 @@ export const SubPageWrapper = ({
       }}
     >
       <Stack mb={24}>
-        <Group position="apart">
-          <Title color={color} size={20} weight="bold">
-            {title}
-          </Title>
-          <UnstyledButton
-            onClick={() => {
-              navigate(path);
-            }}
-          >
-            <Close color={colors.B60} />
-          </UnstyledButton>
-        </Group>
+        <Grid gutter={0}>
+          <Grid.Col span={11}>
+            <Title
+              sx={{
+                width: '90%',
+              }}
+              color={color}
+              size={20}
+              weight="bold"
+            >
+              {title}
+            </Title>
+          </Grid.Col>
+          <Grid.Col span={1}>
+            <Stack
+              justify="center"
+              sx={{
+                height: '100%',
+              }}
+            >
+              <UnstyledButton
+                onClick={() => {
+                  navigate(path);
+                }}
+              >
+                <Close color={colors.B60} />
+              </UnstyledButton>
+            </Stack>
+          </Grid.Col>
+        </Grid>
       </Stack>
       {children}
     </div>
