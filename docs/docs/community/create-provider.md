@@ -173,7 +173,7 @@ This part is made up of two parts:
 
 We need to add the credentials that are needed in order to create integration with the provider. For example, if you
 added email provider like SendGrid and the credentials are 'From', 'SenderName' and 'ApiKey' you will need to add
-a config object in `libs/shared/src/consts/providers/provider-credentials.ts` like below.
+a config object in `libs/shared/src/consts/providers/credentials/provider-credentials.ts` like below.
 
 ```typescript
 export const sendgridConfig: IConfigCredentials[] = [

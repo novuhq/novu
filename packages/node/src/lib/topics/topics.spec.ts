@@ -73,6 +73,19 @@ describe('Novu Node.js package - Topics class', () => {
     expect(result).toBe(mockedResponse);
   });
 
+  test('should delete topic by the key', async () => {
+    const key = 'topic-key';
+
+    const mockedResponse = {};
+    mockedAxios.delete.mockResolvedValue(mockedResponse);
+
+    const result = await novu.topics.delete(key);
+
+    expect(mockedAxios.delete).toHaveBeenCalled();
+    expect(mockedAxios.delete).toHaveBeenCalledWith(`/topics/${key}`);
+    expect(result).toStrictEqual(mockedResponse);
+  });
+
   test('should get topic by the key', async () => {
     const key = 'topic-key';
     const name = 'topic-name';

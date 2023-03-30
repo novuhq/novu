@@ -1,3 +1,7 @@
+---
+sidebar_position: 7
+---
+
 # Mailjet
 
 You can use the [Mailjet](https://mailjet.com/) provider to send transactional emails to your customers using the Novu Platform with a single API.

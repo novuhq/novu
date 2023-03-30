@@ -158,7 +158,9 @@ export function StepSettings({
               </Text>
             </NavSection>
             <NavSection>
-              {activeStepIndex > 0 && <DelayMetadata control={control} index={activeStepIndex} />}
+              <When truthy={hasActiveStepSelected}>
+                <DelayMetadata control={control} index={activeStepIndex} />
+              </When>
             </NavSection>
           </When>
         </Stack>
