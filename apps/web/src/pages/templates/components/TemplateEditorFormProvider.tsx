@@ -13,7 +13,7 @@ import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
 import { useNotificationGroup } from '../../../hooks';
-import { useTimeout } from '@mantine/hooks';
+import { useDocumentVisibility, useTimeout } from '@mantine/hooks';
 import { useBasePath } from '../hooks/useBasePath';
 import { hideNotification, showNotification } from '@mantine/notifications';
 
@@ -138,8 +138,9 @@ const TemplateEditorFormProvider = ({ children }) => {
   }, 3000);
 
   const { pathname } = useLocation();
+  const documentVisibility = useDocumentVisibility();
 
-  useEffect(() => {
+  const save = () => {
     const isTouring = localStorage.getItem('tour-digest') !== null;
 
     if (!methods.formState.isDirty || isTouring) {
@@ -154,6 +155,25 @@ const TemplateEditorFormProvider = ({ children }) => {
         return value;
       })
       .catch(() => {});
+  };
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', save);
+
+    return () => {
+      window.removeEventListener('beforeunload', save);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (documentVisibility === 'visible') {
+      return;
+    }
+    save();
+  }, [documentVisibility]);
+
+  useEffect(() => {
+    save();
   }, [pathname]);
 
   const {

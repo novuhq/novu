@@ -24,13 +24,10 @@ const Input = ({ index, defaultValue }: { index: number; defaultValue: string })
           <TextInput
             styles={(theme) => ({
               root: {
-                flex: '1 1 auto',
-                display: 'flex',
-                flexFlow: 'Column',
+                width: '95%',
               },
               wrapper: {
                 background: 'transparent',
-                width: '100%',
               },
               input: {
                 background: 'transparent',
