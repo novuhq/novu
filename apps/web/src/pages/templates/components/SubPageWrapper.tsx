@@ -31,6 +31,7 @@ export const SubPageWrapper = ({
         position: 'relative',
         ...style,
       }}
+      data-test-id="step-page-wrapper"
     >
       <div style={{ display: 'flex', marginBottom: 24 }}>
         <Stack
@@ -57,6 +58,7 @@ export const SubPageWrapper = ({
           onClick={() => {
             navigate(path);
           }}
+          data-test-id="close-step-page"
         >
           <Close color={colors.B60} />
         </UnstyledButton>

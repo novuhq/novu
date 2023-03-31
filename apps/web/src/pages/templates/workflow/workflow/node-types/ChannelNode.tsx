@@ -69,6 +69,7 @@ export default memo(
           disabled={!data.active}
           id={id}
           index={data.index}
+          testId={'channel-node'}
           dragging={dragging}
         />
         <Handle type="target" id="b" position={Position.Top} />

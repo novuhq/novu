@@ -57,7 +57,7 @@ export const Sidebar = () => {
               >
                 Get Snippet
               </Button>
-              <Link to="settings">
+              <Link data-test-id="settings-page" to="settings">
                 <Settings />
               </Link>
             </Group>

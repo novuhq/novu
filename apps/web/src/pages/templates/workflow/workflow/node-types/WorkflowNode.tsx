@@ -176,6 +176,7 @@ export function WorkflowNode({
                   lineHeight: 1,
                   zIndex: 9999,
                 }}
+                data-test-id="delete-step-action"
               >
                 <Trash
                   style={{

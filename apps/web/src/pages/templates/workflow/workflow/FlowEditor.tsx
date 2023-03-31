@@ -102,16 +102,19 @@ export function FlowEditor({
   const basePath = useBasePath();
   const navigate = useNavigate();
 
-  const onNodeClick = useCallback((event, node) => {
-    event.preventDefault();
+  const onNodeClick = useCallback(
+    (event, node) => {
+      event.preventDefault();
 
-    if (node.type === 'channelNode') {
-      navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
-    }
-    if (node.type === 'triggerNode') {
-      navigate(basePath + '/testworkflow');
-    }
-  }, []);
+      if (node.type === 'channelNode') {
+        navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
+      }
+      if (node.type === 'triggerNode') {
+        navigate(basePath + '/testworkflow');
+      }
+    },
+    [basePath]
+  );
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();

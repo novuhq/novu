@@ -200,7 +200,7 @@ const TemplateEditorFormProvider = ({ children }) => {
   }, [isDirtyForm, template]);
 
   useEffect(() => {
-    if (!!templateId || groups.length === 0 || localStorage.getItem('blueprintId') !== null) {
+    if (!!templateId || !groups || groups.length === 0 || localStorage.getItem('blueprintId') !== null) {
       return;
     }
 
