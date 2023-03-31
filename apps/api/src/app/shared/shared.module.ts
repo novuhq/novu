@@ -92,14 +92,19 @@ const cacheService = {
   },
 };
 
+const distributedLockService = {
+  provide: DistributedLockService,
+  useFactory: () => {
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+
+    return new DistributedLockService(factoryInMemoryProviderService);
+  },
+};
+
 const PROVIDERS = [
   inMemoryProviderService,
-  {
-    provide: DistributedLockService,
-    useFactory: () => {
-      return new DistributedLockService();
-    },
-  },
+  cacheService,
+  distributedLockService,
   {
     provide: QueueService,
     useFactory: () => {
@@ -120,7 +125,6 @@ const PROVIDERS = [
       return new PerformanceService();
     },
   },
-  cacheService,
   InvalidateCacheService,
   ...DAL_MODELS,
   {

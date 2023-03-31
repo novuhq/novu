@@ -45,10 +45,9 @@ export class InMemoryProviderService {
       Logger.log('Missing host for in-memory provider', LOG_CONTEXT);
     }
 
-    if (host) {
+    const inMemoryProviderClient = getRedisInstance();
+    if (host && inMemoryProviderClient) {
       Logger.log(`Connecting to ${host}:${port}`, LOG_CONTEXT);
-
-      const inMemoryProviderClient = getRedisInstance();
 
       inMemoryProviderClient.on('connect', () => {
         Logger.log('REDIS CONNECTED', LOG_CONTEXT);
