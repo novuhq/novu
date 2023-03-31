@@ -148,13 +148,13 @@ export const nodemailerConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.RequireTls,
     displayName: 'Require TLS',
-    type: 'boolean',
+    type: 'switch',
     required: false,
   },
   {
     key: CredentialsKeyEnum.IgnoreTls,
     displayName: 'Ignore TLS',
-    type: 'boolean',
+    type: 'switch',
     required: false,
   },
   {
