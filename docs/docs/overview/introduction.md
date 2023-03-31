@@ -32,6 +32,6 @@ After a couple of conversations with fellow engineers, we decided to open-source
 
 The seed exploded and thousands of developers from around the world started reaching out to tell us their stories of building such systems in-house.
 
-It was then that we realized: Building Novu was not going to be an act of an individual alone. Rather it’s a collaborative work of many.
+It was then that we realized: Building Novu was not going to be an act of an individual alone. Rather it was going to be a collaborative work of many.
 
 That's why we invite you to join us in building the future of notification experiences. Let's work together to create a better way to keep users informed and engaged.
