@@ -566,7 +566,6 @@ export const kannelConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
-
 export const maqsamConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -575,7 +574,6 @@ export const maqsamConfig: IConfigCredentials[] = [
     required: true,
   },
   {
-
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Access Secret',
     type: 'string',
@@ -583,7 +581,6 @@ export const maqsamConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
-
 
 export const smsCentralConfig: IConfigCredentials[] = [
   {
