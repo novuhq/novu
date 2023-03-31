@@ -8,6 +8,7 @@ import {
   TermiiSmsHandler,
   PlivoHandler,
   GupshupSmsHandler,
+  SmsCentralHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -19,6 +20,7 @@ export class SmsFactory implements ISmsFactory {
     new TermiiSmsHandler(),
     new PlivoHandler(),
     new GupshupSmsHandler(),
+    new SmsCentralHandler(),
   ];
 
   getHandler(integration: IntegrationEntity): ISmsHandler {
