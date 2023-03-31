@@ -20,9 +20,9 @@ As developers, we tend to create abstractions. However with growing number of in
 
 Novu provides a single API to manage all your customer communication. With Novu, managing your customer communication is now easier than ever. Our powerful API allows you to seamlessly integrate multiple communication providers and switch between them effortlessly.
 
-So, whether your email provider is experiencing downtime or there's some other issues, you won't have to worry about losing contact with your customers. We'll make sure you're covered. Pinky promise!
+So, whether your email provider is experiencing downtime or there's some other issues, you won't have to worry about losing contact with your customers. With Novu, you can focus on delivering the best experience to your customers, and leave the communication logistics to us.
 
-With Novu, you can focus on delivering the best experience to your customers, and leave the communication logistics to us.
+We'll make sure you're covered. Pinky promise!
 
 ## Community Driven
 
