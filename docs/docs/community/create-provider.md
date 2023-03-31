@@ -46,10 +46,10 @@ $ npx hygen provider new
   SMS
 ```
 
-For this example, we will be selecting `EMAIL` as our provider type. The name for our provider will be exampleProvider.
+For this example, we will be selecting `EMAIL` as our provider type. The name for our provider will be example-provider.
 
 ```zsh
-? Write the provider name camelCased: › exampleProvider
+? Write the provider name `kebab-cased` (e.g. proton-mail, outlook365, yahoo-mail): example-provider
 ```
 
 Once our exampleProvider is generated we will need to begin working from within `/providers/exampleProvider` to begin adding our provider. Be sure to write the test alongside your provider. See below for template examples for our `exampleProvider`.
