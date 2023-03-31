@@ -79,4 +79,56 @@ describe('Update Integration - /integrations/:integrationId (PUT)', function () 
     expect(secondProviderIntegration.active).to.equal(true);
     expect(irrelevantProviderIntegration.active).to.equal(true);
   });
+
+  it('should update custom SMTP integration with TLS options successfully', async function () {
+    const nodeMailerProviderPayload = {
+      providerId: 'nodemailer',
+      channel: 'email',
+      credentials: {
+        host: 'smtp.example.com',
+        port: '587',
+        secure: 'true',
+        requireTls: true,
+        tlsOptions: { rejectUnauthorized: false },
+      },
+      active: true,
+      check: false,
+    };
+
+    // create integration
+    const nodeMailerIntegrationId = (await session.testAgent.post('/v1/integrations').send(nodeMailerProviderPayload))
+      .body.data._id;
+
+    // update integration
+    const updatedNodeMailerProviderPayload = {
+      providerId: 'nodemailer',
+      channel: 'email',
+      credentials: {
+        host: 'smtp.example.com',
+        port: '587',
+        secure: 'true',
+        requireTls: false,
+        tlsOptions: { rejectUnauthorized: false, enableTrace: true },
+      },
+      active: true,
+      check: false,
+    };
+    await session.testAgent.put(`/v1/integrations/${nodeMailerIntegrationId}`).send(updatedNodeMailerProviderPayload);
+
+    const integrations = await integrationRepository.findByEnvironmentId(session.environment._id);
+
+    const nodeMailerIntegration = integrations.find((i) => i.providerId.toString() === 'nodemailer');
+
+    expect(nodeMailerIntegration?.credentials?.host).to.equal(updatedNodeMailerProviderPayload.credentials.host);
+    expect(nodeMailerIntegration?.credentials?.port).to.equal(updatedNodeMailerProviderPayload.credentials.port);
+    expect(nodeMailerIntegration?.credentials?.secure).to.equal(updatedNodeMailerProviderPayload.credentials.secure);
+    expect(nodeMailerIntegration?.credentials?.requireTls).to.equal(
+      updatedNodeMailerProviderPayload.credentials.requireTls
+    );
+    expect(nodeMailerIntegration?.credentials?.tlsOptions).to.instanceOf(Object);
+    expect(nodeMailerIntegration?.credentials?.tlsOptions).to.eql(
+      updatedNodeMailerProviderPayload.credentials.tlsOptions
+    );
+    expect(nodeMailerIntegration?.active).to.equal(true);
+  });
 });
