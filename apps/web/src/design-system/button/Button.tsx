@@ -15,8 +15,8 @@ interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
   fullWidth?: boolean;
   submit?: boolean;
   onClick?: (e: any) => void;
-  onMouseEnter?: MouseEventHandler<any> | undefined;
-  onMouseLeave?: MouseEventHandler<any> | undefined;
+  onMouseEnter?: MouseEventHandler<any>;
+  onMouseLeave?: MouseEventHandler<any>;
   inherit?: boolean;
   pulse?: boolean;
   sx?: Sx;
