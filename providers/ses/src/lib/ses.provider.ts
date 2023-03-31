@@ -121,6 +121,10 @@ export class SESEmailProvider implements IEmailProvider {
     };
   }
 
+  /**
+   * The `Subscription` event status is not considered since it is not an action
+   * or outcome of the event but the state of the subscriber preferences.
+   */
   private getStatus(event: string): EmailEventStatusEnum | undefined {
     switch (event) {
       case 'Bounce':
@@ -139,7 +143,6 @@ export class SESEmailProvider implements IEmailProvider {
         return EmailEventStatusEnum.CLICKED;
       case 'DeliveryDelay':
         return EmailEventStatusEnum.DELAYED;
-      // case 'Subscription':
     }
   }
 
