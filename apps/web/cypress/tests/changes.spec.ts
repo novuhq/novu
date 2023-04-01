@@ -1,3 +1,6 @@
+import { dragAndDrop } from './notification-editor';
+import { goBack } from './notification-editor/index';
+
 describe('Changes Screen', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
@@ -84,28 +87,30 @@ function switchEnvironment(environment: 'Production' | 'Development') {
 }
 
 function createNotification() {
-  const dataTransfer = new DataTransfer();
+  cy.intercept('**/notification-groups').as('getNotificationGroups');
   cy.visit('/templates/create');
   cy.waitForNetworkIdle(500);
+  cy.wait('@getNotificationGroups');
 
-  cy.getByTestId('title').type('Test Notification Title');
-  cy.getByTestId('description').type('This is a test description for a test title');
+  cy.getByTestId('title').clear().type('Test Notification Title');
+
+  cy.getByTestId('settings-page').click();
+  cy.waitForNetworkIdle(500);
+
+  cy.getByTestId('description').clear().type('This is a test description for a test title');
   cy.get('body').click();
 
-  cy.getByTestId('workflowButton').click();
+  goBack();
 
-  cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer });
+  dragAndDrop('email');
+  cy.waitForNetworkIdle(500);
 
-  cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer });
-
-  cy.getByTestId('node-emailSelector').parent().click({ force: true });
-  cy.getByTestId('edit-template-channel').click({ force: true });
+  cy.clickWorkflowNode(`node-emailSelector`);
+  cy.waitForNetworkIdle(500);
 
   cy.getByTestId('emailSubject').type('this is email subject');
 
-  cy.getByTestId('notification-template-submit-btn').click();
-  cy.waitForNetworkIdle(500);
-  cy.getByTestId('trigger-snippet-btn').click();
+  goBack();
 }
 
 function promoteNotification() {

@@ -14,7 +14,6 @@ import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
 import { useNotificationGroup } from '../../../hooks';
 import { useDocumentVisibility, useTimeout } from '@mantine/hooks';
-import { useBasePath } from '../hooks/useBasePath';
 import { hideNotification, showNotification } from '@mantine/notifications';
 
 const defaultEmailBlocks: IEmailBlock[] = [
@@ -63,8 +62,6 @@ const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => ({
     },
   }),
 });
-
-const notificationId = 'savingOnNavigation';
 
 interface ITemplateEditorFormContext {
   template?: INotificationTemplate;
@@ -126,13 +123,11 @@ const TemplateEditorFormProvider = ({ children }) => {
     name: 'steps',
   });
 
-  const basePath = useBasePath();
-
   const { start, clear } = useTimeout(() => {
     showNotification({
       message: 'We are saving your changes...',
       color: 'blue',
-      id: notificationId,
+      id: 'savingOnNavigation',
       autoClose: false,
     });
   }, 3000);
@@ -150,7 +145,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     onSubmit(methods.getValues())
       .then((value) => {
         clear();
-        hideNotification(notificationId);
+        hideNotification('savingOnNavigation');
 
         return value;
       })
@@ -237,7 +232,7 @@ const TemplateEditorFormProvider = ({ children }) => {
 
         reset(form);
         if (showMessage) {
-          successMessage('Trigger code is updated successfully');
+          successMessage('Trigger code is updated successfully', 'workflowSaved');
         }
       } catch (e: any) {
         Sentry.captureException(e);

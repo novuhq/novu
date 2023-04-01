@@ -1,4 +1,4 @@
-import { clickWorkflow, dragAndDrop, editChannel } from '.';
+import { clickWorkflow, dragAndDrop, editChannel, goBack } from '.';
 
 describe('Workflow Editor - Steps Actions', function () {
   beforeEach(function () {
@@ -22,20 +22,17 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.visit('/templates/edit/' + template._id);
     waitForEditTemplateRequests();
 
-    clickWorkflow();
-
     cy.get('.react-flow__node').should('have.length', 4);
-    cy.getByTestId('step-actions-dropdown').first().click().getByTestId('delete-step-action').click();
-    cy.get('.mantine-Modal-modal button').contains('Yes').click();
+    cy.getByTestId('node-inAppSelector').getByTestId('channel-node').first().trigger('mouseover', { force: true });
+    cy.getByTestId('delete-step-action').click();
+    cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
     cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'Email');
-    cy.getByTestId('notification-template-submit-btn').click();
+    cy.getByTestId('settings-page').click();
 
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
-
-    clickWorkflow();
 
     cy.get('.react-flow__node').should('have.length', 3);
   });
@@ -47,16 +44,17 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.visit('/templates/edit/' + template._id);
     waitForEditTemplateRequests();
 
-    cy.waitLoadEnv(() => {
-      clickWorkflow();
-    });
-
     cy.get('.react-flow__node').should('have.length', 4);
-    cy.getByTestId('step-actions-dropdown').first().click().getByTestId('delete-step-action').click();
-    cy.get('.mantine-Modal-modal button').contains('Yes').click();
+    cy.getByTestId('node-inAppSelector')
+      .getByTestId('channel-node')
+      .first()
+      .trigger('mouseover', { force: true })
+      .getByTestId('delete-step-action')
+      .click();
+    cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
-    cy.getByTestId('drag-side-menu').contains('Steps to add');
+    cy.getByTestId('drag-side-menu').contains('Channels');
   });
 
   it('should keep steps order on reload', function () {
@@ -66,18 +64,14 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.visit('/templates/edit/' + template._id);
     waitForEditTemplateRequests();
 
-    clickWorkflow();
-
     dragAndDrop('sms');
 
     editChannel('sms');
     cy.getByTestId('smsNotificationContent').type('new content for sms');
-    cy.getByTestId('notification-template-submit-btn').click();
+    goBack();
 
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
-
-    clickWorkflow();
 
     cy.get('.react-flow__node').should('have.length', 5);
     cy.get('.react-flow__node')
@@ -98,15 +92,13 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.waitForNetworkIdle(500);
 
-    clickWorkflow();
-
     cy.clickWorkflowNode(`node-inAppSelector`);
-    cy.getByTestId(`step-active-switch`).get('label').contains('Step is active');
+    cy.getByTestId(`step-active-switch`).get('label').contains('Active');
     cy.getByTestId(`step-active-switch`).click({ force: true });
-    cy.getByTestId('notification-template-submit-btn').click();
+    goBack();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
-    cy.getByTestId(`step-active-switch`).get('label').contains('Step is not active');
+    cy.getByTestId(`step-active-switch`).get('label').contains('Inactive');
   });
 
   it('should be able to toggle ShouldStopOnFailSwitch', function () {
@@ -116,12 +108,10 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.waitForNetworkIdle(500);
 
-    clickWorkflow();
-
     cy.clickWorkflowNode(`node-inAppSelector`);
-    cy.getByTestId(`step-should-stop-on-fail-switch`).get('label').contains('Stop workflow if this step fails?');
+    cy.getByTestId(`step-should-stop-on-fail-switch`).get('label').contains('Stop if step fails');
     cy.getByTestId(`step-should-stop-on-fail-switch`).click({ force: true });
-    cy.getByTestId('notification-template-submit-btn').click();
+    goBack();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-should-stop-on-fail-switch`).should('be.checked');
@@ -133,8 +123,6 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.visit('/templates/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
-
-    clickWorkflow();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
@@ -153,10 +141,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('filter-confirm-btn').click();
 
-    cy.get('.filter-item').should('have.length', 1);
-
-    cy.get('.filter-item').contains('subscriber filter-key equal');
-    cy.get('.filter-item-value').contains('filter-value');
+    cy.getByTestId('add-filter-btn').contains('1 filter');
   });
 
   it('should be able to add read/seen filters to a particular step', function () {
@@ -165,8 +150,6 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.visit('/templates/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
-
-    clickWorkflow();
 
     cy.clickWorkflowNode(`node-emailSelector`);
 
@@ -185,10 +168,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('filter-confirm-btn').click();
 
-    cy.get('.filter-item').should('have.length', 1);
-
-    cy.get('.filter-item').contains('Previous step - In-App');
-    cy.get('.filter-item-value').contains('read');
+    cy.getByTestId('add-filter-btn').contains('1 filter');
   });
 
   it('should be able to not add read/seen filters to first step', function () {
@@ -197,8 +177,6 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.visit('/templates/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
-
-    clickWorkflow();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
@@ -218,8 +196,6 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.waitForNetworkIdle(500);
 
-    clickWorkflow();
-
     cy.clickWorkflowNode(`node-inAppSelector`);
 
     cy.getByTestId('add-filter-btn').click();
@@ -235,16 +211,13 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('filter-confirm-btn').click();
 
-    cy.get('.filter-item').should('have.length', 1);
-
-    cy.get('.filter-item').contains('payload filter-key equal');
-    cy.get('.filter-item-value').contains('filter-value');
+    cy.getByTestId('add-filter-btn').contains('1 filter');
 
     cy.getByTestId('add-filter-btn').click();
     cy.getByTestId('filter-remove-btn').click();
     cy.getByTestId('filter-confirm-btn').click();
 
-    cy.get('.filter-item').should('have.length', 0);
+    cy.getByTestId('add-filter-btn').contains('Add filter');
   });
 
   it('should be able to add webhook filter for a particular step', function () {
@@ -253,8 +226,6 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.visit('/templates/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
-
-    clickWorkflow();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
@@ -275,9 +246,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('filter-confirm-btn').click();
 
-    cy.get('.filter-item').should('have.length', 1);
-    cy.get('.filter-item').contains('webhook filter-key equal');
-    cy.get('.filter-item-value').contains('filter-value');
+    cy.getByTestId('add-filter-btn').contains('1 filter');
   });
 
   it('should be able to add online right now filter for a particular step', function () {
@@ -286,8 +255,6 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.visit('/templates/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
-
-    clickWorkflow();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
@@ -304,9 +271,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('filter-confirm-btn').click();
 
-    cy.get('.filter-item').should('have.length', 1);
-    cy.get('.filter-item').contains('is online right now equal');
-    cy.get('.filter-item-value').contains('Yes');
+    cy.getByTestId('add-filter-btn').contains('1 filter');
   });
 
   it('should be able to add online in the last X time period filter for a particular step', function () {
@@ -315,8 +280,6 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.visit('/templates/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
-
-    clickWorkflow();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
@@ -334,9 +297,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('filter-confirm-btn').click();
 
-    cy.get('.filter-item').should('have.length', 1);
-    cy.get('.filter-item').contains('online in the last "X" hours');
-    cy.get('.filter-item-value').contains('1');
+    cy.getByTestId('add-filter-btn').contains('1 filter');
   });
 
   it('should be able to add multiple filters to a particular step', function () {
@@ -345,8 +306,6 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.visit('/templates/edit/' + template._id);
 
     cy.waitForNetworkIdle(500);
-
-    clickWorkflow();
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
@@ -371,9 +330,6 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('filter-confirm-btn').click();
 
-    cy.get('.filter-item').should('have.length', 2);
-
-    cy.get('.filter-item').contains('subscriber filter-key equal');
-    cy.get('.filter-item-value').contains('filter-value');
+    cy.getByTestId('add-filter-btn').contains('2 filters');
   });
 });

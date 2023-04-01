@@ -54,6 +54,7 @@ export const Sidebar = () => {
                 onClick={() => {
                   navigate(basePath + '/snippet');
                 }}
+                data-test-id="get-snippet-btn"
               >
                 Get Snippet
               </Button>

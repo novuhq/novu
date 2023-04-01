@@ -182,16 +182,13 @@ function App() {
                   <Route path={ROUTES.TEMPLATES_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
                   <Route path={ROUTES.TEMPLATES_CREATE} element={<TemplateEditorPage />} />
                   <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
-                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID} element={<Sidebar />} />
-                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/settings'} element={<TemplateSettings />} />
-                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/channels'} element={<UserPreference />} />
-                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/testworkflow'} element={<TestWorkflow />} />
-                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/snippet'} element={<SnippetPage />} />
-                    <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/providers'} element={<ProvidersPage />} />
-                    <Route
-                      path={ROUTES.TEMPLATES_EDIT_TEMPLATEID + '/:channel/:stepUuid'}
-                      element={<TemplateEditor />}
-                    />
+                    <Route path="" element={<Sidebar />} />
+                    <Route path="settings" element={<TemplateSettings />} />
+                    <Route path="channels" element={<UserPreference />} />
+                    <Route path="testworkflow" element={<TestWorkflow />} />
+                    <Route path="snippet" element={<SnippetPage />} />
+                    <Route path="providers" element={<ProvidersPage />} />
+                    <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
                   </Route>
                   <Route path={ROUTES.TEMPLATES} element={<NotificationList />} />
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
