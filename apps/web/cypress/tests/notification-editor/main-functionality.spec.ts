@@ -10,7 +10,7 @@ describe('Workflow Editor - Main Functionality', function () {
       cy.visit('/templates/create');
     });
     fillBasicNotificationDetails('Test not reset data when switching channel types');
-
+    cy.waitForNetworkIdle(500);
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
     cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {

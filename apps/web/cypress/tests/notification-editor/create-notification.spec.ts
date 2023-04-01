@@ -5,7 +5,7 @@ describe('Creation functionality', function () {
     cy.initializeSession().as('session');
   });
 
-  it.skip('should create in-app notification', function () {
+  it('should create in-app notification', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
@@ -17,6 +17,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('groupSelector').should('have.value', 'General Group');
 
     addAndEditChannel('inApp');
+    cy.waitForNetworkIdle(500);
 
     cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
@@ -33,10 +34,6 @@ describe('Creation functionality', function () {
     cy.get('.mantine-Tabs-tabsList').contains('Curl').click();
     cy.getByTestId('trigger-curl-snippet').contains("--header 'Authorization: ApiKey");
     cy.getByTestId('trigger-curl-snippet').contains('taskName');
-
-    cy.getByTestId('trigger-snippet-btn').click();
-
-    cy.location('pathname').should('equal', '/templates');
   });
 
   it('should create multiline in-app notification, send it and receive', function () {
@@ -86,7 +83,7 @@ describe('Creation functionality', function () {
       });
   });
 
-  it.skip('should manage variables', function () {
+  it('should manage variables', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });

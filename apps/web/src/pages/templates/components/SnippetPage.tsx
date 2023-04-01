@@ -4,9 +4,10 @@ import { TriggerSnippetTabs } from './TriggerSnippetTabs';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { SubPageWrapper } from './SubPageWrapper';
 import { TriggerSegmentControl } from './TriggerSegmentControl';
+import { When } from '../../../components/utils/When';
 
 export function SnippetPage() {
-  const { trigger } = useTemplateEditorForm();
+  const { trigger, isCreating, isUpdating } = useTemplateEditorForm();
 
   return (
     <>
@@ -15,8 +16,10 @@ export function SnippetPage() {
           Test trigger as if you sent it from your API or implement it by copy/pasting it into the codebase of your
           application
         </Text>
-        <TriggerSegmentControl />
-        {trigger && <TriggerSnippetTabs trigger={trigger} />}
+        <When truthy={!isCreating && !isUpdating}>
+          <TriggerSegmentControl />
+          {trigger && <TriggerSnippetTabs trigger={trigger} />}
+        </When>
       </SubPageWrapper>
     </>
   );
