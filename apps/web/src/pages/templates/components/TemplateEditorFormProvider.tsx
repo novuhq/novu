@@ -15,6 +15,7 @@ import { v4 as uuid4 } from 'uuid';
 import { useNotificationGroup } from '../../../hooks';
 import { useDocumentVisibility, useTimeout } from '@mantine/hooks';
 import { hideNotification, showNotification } from '@mantine/notifications';
+import { useBasePath } from '../hooks/useBasePath';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
@@ -112,6 +113,8 @@ const TemplateEditorFormProvider = ({ children }) => {
   });
   const navigate = useNavigate();
   const [trigger, setTrigger] = useState<INotificationTrigger>();
+  const { pathname } = useLocation();
+  const [previousPath, setPreviousPath] = useState(pathname);
 
   const {
     reset,
@@ -132,7 +135,6 @@ const TemplateEditorFormProvider = ({ children }) => {
     });
   }, 3000);
 
-  const { pathname } = useLocation();
   const documentVisibility = useDocumentVisibility();
 
   const save = () => {
@@ -167,7 +169,15 @@ const TemplateEditorFormProvider = ({ children }) => {
     save();
   }, [documentVisibility]);
 
+  const basePath = useBasePath();
+
   useEffect(() => {
+    if (previousPath === basePath) {
+      setPreviousPath(pathname);
+
+      return;
+    }
+    setPreviousPath(pathname);
     save();
   }, [pathname]);
 

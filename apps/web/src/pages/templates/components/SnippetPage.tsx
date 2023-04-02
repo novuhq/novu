@@ -10,17 +10,15 @@ export function SnippetPage() {
   const { trigger, isCreating, isUpdating } = useTemplateEditorForm();
 
   return (
-    <>
-      <SubPageWrapper title="Trigger">
-        <Text color={colors.B60} mt={-16} mb={24}>
-          Test trigger as if you sent it from your API or implement it by copy/pasting it into the codebase of your
-          application
-        </Text>
-        <When truthy={!isCreating && !isUpdating}>
-          <TriggerSegmentControl />
-          {trigger && <TriggerSnippetTabs trigger={trigger} />}
-        </When>
-      </SubPageWrapper>
-    </>
+    <SubPageWrapper title="Trigger">
+      <Text color={colors.B60} mt={-16} mb={24}>
+        Test trigger as if you sent it from your API or implement it by copy/pasting it into the codebase of your
+        application
+      </Text>
+      <When truthy={!isCreating && !isUpdating}>
+        <TriggerSegmentControl />
+        {trigger && <TriggerSnippetTabs trigger={trigger} />}
+      </When>
+    </SubPageWrapper>
   );
 }
