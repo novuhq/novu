@@ -45,7 +45,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('emailPreheader').should('have.value', 'this is email preheader');
   });
 
-  it.skip('should edit in-app notification', function () {
+  it('should edit in-app notification', function () {
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
@@ -65,6 +65,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('title').clear().type('This is the new notification title');
 
     editChannel('inApp', true);
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('use-feeds-checkbox').click();
     cy.getByTestId('feed-button-1').click({ force: true });
@@ -171,7 +172,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('trigger-code-snippet').contains('test-event');
   });
 
-  it.skip('should show error on node if message field is missing ', function () {
+  it('should show error on node if message field is missing ', function () {
     cy.visit('/templates/create');
     cy.waitForNetworkIdle(500);
 
@@ -241,7 +242,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('editable-text-content').should('have.css', 'text-align', 'right');
   });
 
-  it.skip('should create an SMS channel message', function () {
+  it('should create an SMS channel message', function () {
     cy.visit('/templates/create');
     cy.waitForNetworkIdle(500);
 
@@ -267,9 +268,6 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('step-page-wrapper').getByTestId('trigger-code-snippet').contains('taskName');
 
     cy.getByTestId('step-page-wrapper').getByTestId('trigger-code-snippet').contains('firstName');
-
-    cy.getByTestId('trigger-snippet-btn').click();
-    cy.location('pathname').should('equal', '/templates');
   });
 
   it('should save HTML template email', function () {

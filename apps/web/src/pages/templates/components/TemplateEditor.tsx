@@ -113,7 +113,7 @@ export const TemplateEditor = () => {
     // navigate(basePath);
   }, [index, steps]);
 
-  if (channel === undefined) {
+  if (index === -1 || channel === undefined) {
     return null;
   }
 

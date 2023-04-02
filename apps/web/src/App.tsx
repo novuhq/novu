@@ -41,7 +41,7 @@ import { TemplatesDigestPlaygroundPage } from './pages/templates/TemplatesDigest
 import { Sidebar } from './pages/templates/workflow/SideBar/Sidebar';
 import { TemplateSettings } from './pages/templates/components/TemplateSettings';
 import { UserPreference } from './pages/templates/components/UserPreference';
-import { TestWorkflow, TestWorkflowPage } from './pages/templates/components/TestWorkflowPage';
+import { TestWorkflowPage } from './pages/templates/components/TestWorkflowPage';
 import { SnippetPage } from './pages/templates/components/SnippetPage';
 import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
