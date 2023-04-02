@@ -32,7 +32,7 @@ export class MaqsamSmsProvider implements ISmsProvider {
   async sendMessage(
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const mapsamResponse = await this.axiosInstance.request({
+    const maqsamResponse = await this.axiosInstance.request({
       method: 'POST',
       data: {
         to: options.to,
@@ -42,8 +42,8 @@ export class MaqsamSmsProvider implements ISmsProvider {
     });
 
     return {
-      id: mapsamResponse.data.message.identifier,
-      date: fromUnixTime(mapsamResponse.data.message.timestamp).toISOString(),
+      id: maqsamResponse.data.message.identifier,
+      date: fromUnixTime(maqsamResponse.data.message.timestamp).toISOString(),
     };
   }
 }

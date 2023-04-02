@@ -148,13 +148,13 @@ export const nodemailerConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.RequireTls,
     displayName: 'Require TLS',
-    type: 'boolean',
+    type: 'switch',
     required: false,
   },
   {
     key: CredentialsKeyEnum.IgnoreTls,
     displayName: 'Ignore TLS',
-    type: 'boolean',
+    type: 'switch',
     required: false,
   },
   {
@@ -578,6 +578,28 @@ export const maqsamConfig: IConfigCredentials[] = [
     displayName: 'Access Secret',
     type: 'string',
     required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const smsCentralConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: false,
   },
   ...smsConfigBase,
 ];

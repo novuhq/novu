@@ -147,6 +147,13 @@ export function ConnectIntegrationForm({
           },
         });
       }
+      if (credentials.tlsOptions) {
+        try {
+          credentials.tlsOptions = JSON.parse(String(credentials.tlsOptions));
+        } catch (err) {
+          throw new Error('Invalid JSON format for TLS Options');
+        }
+      }
       if (createModel) {
         await createIntegrationApi({
           providerId: provider?.providerId ? provider?.providerId : '',
@@ -340,7 +347,6 @@ const CloseButton = styled.button`
   border: none;
   color: ${colors.B40};
   outline: none;
-
   &:hover {
     cursor: pointer;
   }
