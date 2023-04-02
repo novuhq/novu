@@ -3,7 +3,8 @@ import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } f
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum } from '@novu/shared';
-import { CacheKeyPrefixEnum, CacheService, InvalidateCacheService } from '../../shared/services/cache';
+import { CacheService, InvalidateCacheService } from '../../shared/services/cache';
+import { buildFeedKey, buildMessageCountKey } from '../../shared/services/cache/key-builders/queries';
 
 describe('Unseen Count - GET /widget/notifications/unseen', function () {
   const messageRepository = new MessageRepository();
@@ -127,12 +128,18 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     let seenCount = (await getFeedCount({ seen: false })).data.count;
     expect(seenCount).to.equal(3);
 
-    await invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT],
-      credentials: {
+    await invalidateCache.invalidateQuery({
+      key: buildFeedKey().invalidate({
         subscriberId: subscriberId,
-        environmentId: session.environment._id,
-      },
+        _environmentId: session.environment._id,
+      }),
+    });
+
+    await invalidateCache.invalidateQuery({
+      key: buildMessageCountKey().invalidate({
+        subscriberId: subscriberId,
+        _environmentId: session.environment._id,
+      }),
     });
 
     await axios.post(

@@ -15,5 +15,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll": true
   },
-  "cSpell.words": ["mantine"]
+  "cSpell.words": ["mantine"],
+  "vsicons.presets.nestjs": true
 }

@@ -3,7 +3,8 @@ import { isEqual } from 'lodash';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
+import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class UpdateSubscriber {
@@ -53,9 +54,11 @@ export class UpdateSubscriber {
       };
     }
 
-    await this.invalidateCache.clearCache({
-      storeKeyPrefix: CacheKeyPrefixEnum.SUBSCRIBER,
-      credentials: { _id: foundSubscriber._id, _environmentId: foundSubscriber._environmentId },
+    await this.invalidateCache.invalidateByKey({
+      key: buildSubscriberKey({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
     });
 
     await this.subscriberRepository.update(

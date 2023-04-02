@@ -91,6 +91,8 @@ export enum EmailEventStatusEnum {
   BLOCKED = 'blocked',
   SPAM = 'spam',
   UNSUBSCRIBED = 'unsubscribed',
+  DELAYED = 'delayed',
+  COMPLAINT = 'complaint',
 }
 
 export enum SmsEventStatusEnum {

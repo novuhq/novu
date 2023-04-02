@@ -3,6 +3,9 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "maqsam",
+    "sadd",
+    "smembers",
     "verifyspf",
     "gethostname",
     "spftxt",
@@ -419,7 +422,8 @@
     "monorepository",
     "Metafiles",
     "Metas",
-    "Webpush"
+    "Webpush",
+    "maqsam"
   ],
   "flagWords": [],
   "patterns": [
