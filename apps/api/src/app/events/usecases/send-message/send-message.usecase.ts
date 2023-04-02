@@ -88,6 +88,7 @@ export class SendMessage {
         filterPassed: shouldRun,
         preferencesPassed: preferred,
         ...(usedFilters || {}),
+        source: command.payload.__source || 'api',
       });
     }
 
