@@ -74,6 +74,8 @@ export class AnalyticsService {
           email: user.email,
           avatar: user.profilePicture,
           createdAt: user.createdAt,
+          // For segment auto mapping
+          created: user.createdAt,
           githubProfile: githubToken?.username,
         },
       });
