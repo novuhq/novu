@@ -133,7 +133,6 @@ messageSchema.index({
   _subscriberId: 1,
   _messageTemplateId: 1,
   _templateId: 1,
-  identifier: 1,
   _environmentId: 1,
   createdAt: -1,
 });

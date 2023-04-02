@@ -136,7 +136,7 @@ export class SendMessageInApp extends SendMessageBase {
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
-      providerId: 'novu',
+      providerId: InAppProviderIdEnum.Novu,
       _feedId: inAppChannel.template._feedId,
     });
 
