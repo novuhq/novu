@@ -4,6 +4,7 @@ import { TestWrapper } from '../../../testing';
 import { TestWorkflow } from './TestWorkflow';
 import { BrowserRouter } from 'react-router-dom';
 import { CONTEXT_PATH } from '../../../config';
+import { TriggerTypeEnum } from '@novu/shared';
 
 const queryClient = new QueryClient();
 
@@ -13,7 +14,9 @@ describe('TestWorkflow Component', function () {
       <BrowserRouter basename={CONTEXT_PATH}>
         <QueryClientProvider client={queryClient}>
           <TestWrapper>
-            <TestWorkflow />
+            <TestWorkflow
+              trigger={{ variables: [], type: TriggerTypeEnum.EVENT, identifier: '1234', subscriberVariables: [] }}
+            />
           </TestWrapper>
         </QueryClientProvider>
       </BrowserRouter>
@@ -24,12 +27,19 @@ describe('TestWorkflow Component', function () {
     cy.getByTestId('test-trigger-overrides-param').contains('{ }');
   });
 
-  it.skip('should add variables and subscriber variables to input fields', function () {
+  it('should add variables and subscriber variables to input fields', function () {
     cy.mount(
       <BrowserRouter basename={CONTEXT_PATH}>
         <QueryClientProvider client={queryClient}>
           <TestWrapper>
-            <TestWorkflow />
+            <TestWorkflow
+              trigger={{
+                variables: [{ name: 'firstVariable' }, { name: 'secondVariable' }],
+                type: TriggerTypeEnum.EVENT,
+                identifier: '1234',
+                subscriberVariables: [{ name: 'email' }],
+              }}
+            />
           </TestWrapper>
         </QueryClientProvider>
       </BrowserRouter>

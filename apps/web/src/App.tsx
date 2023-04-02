@@ -41,7 +41,7 @@ import { TemplatesDigestPlaygroundPage } from './pages/templates/TemplatesDigest
 import { Sidebar } from './pages/templates/workflow/SideBar/Sidebar';
 import { TemplateSettings } from './pages/templates/components/TemplateSettings';
 import { UserPreference } from './pages/templates/components/UserPreference';
-import { TestWorkflow } from './pages/templates/components/TestWorkflow';
+import { TestWorkflow, TestWorkflowPage } from './pages/templates/components/TestWorkflowPage';
 import { SnippetPage } from './pages/templates/components/SnippetPage';
 import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
@@ -185,7 +185,7 @@ function App() {
                     <Route path="" element={<Sidebar />} />
                     <Route path="settings" element={<TemplateSettings />} />
                     <Route path="channels" element={<UserPreference />} />
-                    <Route path="testworkflow" element={<TestWorkflow />} />
+                    <Route path="testworkflow" element={<TestWorkflowPage />} />
                     <Route path="snippet" element={<SnippetPage />} />
                     <Route path="providers" element={<ProvidersPage />} />
                     <Route path=":channel/:stepUuid" element={<TemplateEditor />} />

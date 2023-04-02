@@ -34,9 +34,8 @@ function subscriberExist(subscriberVariables: INotificationTriggerVariable[]) {
   return subscriberVariables?.some((variable) => variable.name === 'subscriberId');
 }
 
-export function TestWorkflow() {
+export function TestWorkflow({ trigger }) {
   const [transactionId, setTransactionId] = useState<string>('');
-  const { trigger } = useTemplateEditorForm();
   const { currentUser } = useAuthContext();
   const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
