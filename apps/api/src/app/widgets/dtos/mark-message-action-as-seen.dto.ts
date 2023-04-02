@@ -16,5 +16,5 @@ export class MarkMessageActionAsSeenDto {
   })
   @IsOptional()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  payload: any;
+  payload: Record<string, unknown>;
 }
