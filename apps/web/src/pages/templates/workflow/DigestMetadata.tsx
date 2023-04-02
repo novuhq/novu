@@ -157,7 +157,12 @@ export const DigestMetadata = ({ control, index }) => {
               />
             </Grid.Col>
             <Grid.Col span={8}>
-              <IntervalRadios control={control} name={`steps.${index}.metadata.backoffUnit`} showErrors={showErrors} />
+              <IntervalRadios
+                control={control}
+                name={`steps.${index}.metadata.backoffUnit`}
+                testId="backoff-unit"
+                showErrors={showErrors}
+              />
             </Grid.Col>
           </Grid>
         </MantineInput.Wrapper>

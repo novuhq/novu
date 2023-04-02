@@ -5,7 +5,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.initializeSession().as('session');
   });
 
-  it.skip('should not reset data when switching channel types', function () {
+  it('should not reset data when switching channel types', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/templates/create');
     });
@@ -53,10 +53,6 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.getByTestId('settings-page').click();
     cy.getByTestId('title').should('have.value', template.name);
-
-    addAndEditChannel('inApp');
-
-    cy.waitForNetworkIdle(500);
 
     editChannel('inApp');
     cy.waitForNetworkIdle(500);
@@ -250,13 +246,16 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.waitForNetworkIdle(500);
 
     fillBasicNotificationDetails('Test SMS Notification Title');
+    cy.waitForNetworkIdle(500);
 
     addAndEditChannel('sms');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('smsNotificationContent').type('{{firstName}} someone assigned you to {{taskName}}', {
       parseSpecialCharSequences: false,
     });
     goBack();
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('get-snippet-btn').click();
     cy.getByTestId('step-page-wrapper').should('be.visible');

@@ -10,7 +10,7 @@ const options = [
   { value: DigestUnitEnum.DAYS, label: 'Days' },
 ];
 
-export const IntervalRadios = ({ control, name, showErrors }) => {
+export const IntervalRadios = ({ control, name, showErrors, testId = 'time-unit' }) => {
   const { readonly } = useEnvController();
 
   return (
@@ -23,7 +23,7 @@ export const IntervalRadios = ({ control, name, showErrors }) => {
           <Radio.Group
             spacing={16}
             error={showErrors && fieldState.error?.message}
-            data-test-id="time-unit"
+            data-test-id={testId}
             withAsterisk
             {...field}
           >
@@ -34,6 +34,7 @@ export const IntervalRadios = ({ control, name, showErrors }) => {
                     paddingLeft: 8,
                   },
                 })}
+                data-test-id={`${testId}-${option.value}`}
                 disabled={readonly}
                 value={option.value}
                 label={option.label}

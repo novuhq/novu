@@ -110,10 +110,10 @@ export const TemplateEditor = () => {
     if (index > -1 || steps.length === 0) {
       return;
     }
-    navigate(basePath);
+    // navigate(basePath);
   }, [index, steps]);
 
-  if (index === -1 || channel === undefined) {
+  if (channel === undefined) {
     return null;
   }
 
