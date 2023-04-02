@@ -122,11 +122,8 @@ export class ParseEventRequest {
         _template: template._id,
         _organization: command.organizationId,
         channels: steps.map((step) => step.template?.type),
+        source: command.payload.__source || 'api',
       });
-    }
-
-    if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
-      return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
     }
 
     return {

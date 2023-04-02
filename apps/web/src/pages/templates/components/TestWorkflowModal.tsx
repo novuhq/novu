@@ -90,7 +90,10 @@ export function TestWorkflowModal({
       const response = await triggerTestEvent({
         name: trigger?.identifier,
         to,
-        payload,
+        payload: {
+          ...payload,
+          __source: 'test-workflow',
+        },
         overrides,
       });
 
