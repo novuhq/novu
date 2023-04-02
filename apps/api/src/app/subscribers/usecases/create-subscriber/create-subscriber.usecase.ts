@@ -2,17 +2,32 @@ import { Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
 import { CreateSubscriberCommand } from './create-subscriber.command';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
+import { SubscriberEntity } from '@novu/dal';
+import { InvalidateCacheService } from '../../../shared/services/cache';
+import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class CreateSubscriber {
-  constructor(private subscriberRepository: SubscriberRepository, private updateSubscriber: UpdateSubscriber) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private subscriberRepository: SubscriberRepository,
+    private updateSubscriber: UpdateSubscriber
+  ) {}
 
   async execute(command: CreateSubscriberCommand) {
     let subscriber =
       command.subscriber ??
-      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
+      (await this.fetchSubscriber({ _environmentId: command.environmentId, subscriberId: command.subscriberId }));
 
     if (!subscriber) {
+      await this.invalidateCache.invalidateByKey({
+        key: buildSubscriberKey({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        }),
+      });
+
       subscriber = await this.subscriberRepository.create({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
@@ -44,5 +59,22 @@ export class CreateSubscriber {
     }
 
     return subscriber;
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  private async fetchSubscriber({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity | null> {
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 }

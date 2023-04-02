@@ -2,15 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { GetFeedCountCommand } from './get-feed-count.command';
-import { Cached } from '../../../shared/interceptors';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
+import { buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class GetFeedCount {
   constructor(private messageRepository: MessageRepository, private subscriberRepository: SubscriberRepository) {}
 
-  @Cached(CacheKeyPrefixEnum.MESSAGE_COUNT)
+  @CachedQuery({
+    builder: ({ environmentId, subscriberId, ...command }: GetFeedCountCommand) =>
+      buildMessageCountKey().cache({
+        environmentId: environmentId,
+        subscriberId: subscriberId,
+        ...command,
+      }),
+  })
   async execute(command: GetFeedCountCommand): Promise<{ count: number }> {
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 

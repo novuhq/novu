@@ -1,10 +1,8 @@
-import { buildCachedQuery, buildKey, CacheInterceptorTypeEnum } from './shared-cache';
 import { Inject } from '@nestjs/common';
-import { CacheKeyPrefixEnum } from '../services/cache/key-builders/shared';
 import { CacheService } from '../services/cache';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
+export function CachedQuery({ builder }: { builder: (...args) => string }) {
   const injectCache = Inject(CacheService);
 
   return (target: any, key: string, descriptor: any) => {
@@ -15,16 +13,16 @@ function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
     descriptor.value = async function (...args: any[]) {
       if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
 
-      const query = buildCachedQuery(args);
+      const cacheService = this.cacheService as CacheService;
 
-      const cacheKey = buildKey(storeKeyPrefix, query, CacheInterceptorTypeEnum.CACHED);
+      const cacheKey = builder(...args);
 
       if (!cacheKey) {
         return await originalMethod.apply(this, args);
       }
 
       try {
-        const value = await this.cacheService.get(cacheKey);
+        const value = await cacheService.get(cacheKey);
         if (value) {
           return JSON.parse(value);
         }
@@ -36,7 +34,7 @@ function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
       const response = await originalMethod.apply(this, args);
 
       try {
-        await this.cacheService.set(cacheKey, JSON.stringify(response));
+        await cacheService.setQuery(cacheKey, JSON.stringify(response));
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(

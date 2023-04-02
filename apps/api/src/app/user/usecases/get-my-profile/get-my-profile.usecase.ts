@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger, ExecutionContext } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
 import { GetMyProfileCommand } from './get-my-profile.dto';
 import { createHash } from '../../../shared/helpers/hmac.service';

@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 import axios from 'axios';
 import { Duration, sub } from 'date-fns';
 import { FilterParts, FilterPartTypeEnum, FILTER_TO_LABEL, StepTypeEnum, TimeOperatorEnum } from '@novu/shared';
-import { JobEntity, MessageTemplateEntity, NotificationStepEntity, SubscriberRepository } from '@novu/dal';
+import { JobEntity, MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
 
 import { MessageMatcher } from './message-matcher.usecase';
 import type { SendMessageCommand } from '../send-message/send-message.command';
@@ -1128,7 +1128,8 @@ function sendMessageCommand({ step }: { step: NotificationStepEntity }): SendMes
     userId: '123',
     transactionId: '123',
     notificationId: '123',
-    subscriberId: '123',
+    subscriberId: '1234',
+    _subscriberId: '123',
     jobId: '123',
     job: {
       _notificationId: '123',
@@ -1136,6 +1137,7 @@ function sendMessageCommand({ step }: { step: NotificationStepEntity }): SendMes
       _environmentId: '123',
       _organizationId: '123',
       _subscriberId: '123',
+      subscriberId: '1234',
     } as JobEntity,
   };
 }

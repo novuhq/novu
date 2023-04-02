@@ -20,6 +20,8 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
 import { PinoLogger } from '@novu/application-generic';
+import { buildNotificationTemplateIdentifierKey } from '../../../shared/services/cache/key-builders/entities';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class TriggerEvent {
@@ -54,10 +56,10 @@ export class TriggerEvent {
       organizationId: command.organizationId,
     });
 
-    const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.environmentId,
-      command.identifier
-    );
+    const template = await this.getNotificationTemplateByTriggerIdentifier({
+      environmentId: command.environmentId,
+      triggerIdentifier: command.identifier,
+    });
 
     /*
      * Makes no sense to execute anything if template doesn't exist
@@ -78,7 +80,7 @@ export class TriggerEvent {
 
     const subscribersJobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[][] = [];
 
-    // We might have a single actor for every trigger so we only need to check for it once
+    // We might have a single actor for every trigger, so we only need to check for it once
     let actorProcessed;
     if (actor) {
       actorProcessed = await this.processSubscriber.execute(
@@ -134,6 +136,23 @@ export class TriggerEvent {
     }
 
     this.performanceService.setEnd(mark);
+  }
+
+  @CachedEntity({
+    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
+      buildNotificationTemplateIdentifierKey({
+        _environmentId: command.environmentId,
+        templateIdentifier: command.triggerIdentifier,
+      }),
+  })
+  private async getNotificationTemplateByTriggerIdentifier(command: {
+    triggerIdentifier: string;
+    environmentId: string;
+  }) {
+    return await this.notificationTemplateRepository.findByTriggerIdentifier(
+      command.environmentId,
+      command.triggerIdentifier
+    );
   }
 
   private async validateTransactionIdProperty(

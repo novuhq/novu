@@ -56,7 +56,10 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const subscriber = await this.getSubscriberBySubscriberId({
+      subscriberId: command.subscriberId,
+      _environmentId: command.environmentId,
+    });
     if (!subscriber) throw new ApiException('Subscriber not found');
 
     Sentry.addBreadcrumb({
@@ -155,7 +158,7 @@ export class SendMessageChat extends SendMessageBase {
       _notificationId: notification._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: chatChannel.template._id,
       channel: ChannelTypeEnum.CHAT,
