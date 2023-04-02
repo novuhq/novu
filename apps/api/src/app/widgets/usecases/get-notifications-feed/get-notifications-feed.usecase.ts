@@ -69,12 +69,13 @@ export class GetNotificationsFeed {
       {
         feedId: command.feedId,
         seen: command.query.seen,
+        read: command.query.read,
       }
     );
 
     return {
       data: feed || [],
-      totalCount: totalCount,
+      totalCount: totalCount || 0,
       pageSize: LIMIT,
       page: command.page,
     };
