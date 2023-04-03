@@ -109,7 +109,9 @@ export const DigestDemoFlowProvider = ({
             email: currentUser.email,
           },
         ],
-        payload: {},
+        payload: {
+          __source: 'digest-playground',
+        },
         overrides: {},
       });
 

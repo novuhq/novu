@@ -1,4 +1,3 @@
-import { AxiosInstance } from 'axios';
 import { ExternalSubscriberId, TopicKey, TopicName } from '@novu/shared';
 
 import {

@@ -245,7 +245,8 @@ export class MessageMatcher {
   ): Promise<boolean> {
     const job = await this.jobRepository.findOne({
       transactionId: command.transactionId,
-      _subscriberId: command.subscriberId,
+      // backward compatibility - ternary needed to be removed once the queue renewed
+      _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       'step.uuid': filter.step,
@@ -258,7 +259,8 @@ export class MessageMatcher {
     const message = await this.messageRepository.findOne({
       _jobId: job._id,
       _environmentId: command.environmentId,
-      _subscriberId: command.subscriberId,
+      // backward compatibility - ternary needed to be removed once the queue renewed
+      _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
       transactionId: command.transactionId,
     });
 
