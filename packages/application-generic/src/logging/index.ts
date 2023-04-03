@@ -94,6 +94,15 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings) {
     );
   }
 
+  const transport = ['local', 'test', 'debug'].includes(process.env.NODE_ENV)
+    ? { target: 'pino-pretty' }
+    : undefined;
+
+  // eslint-disable-next-line no-console
+  console.log(
+    'Selected Log Transport ' + (!transport ? 'None' : 'pino-pretty')
+  );
+
   return {
     pinoHttp: {
       customLevels: loggingLevelSet,
@@ -110,9 +119,7 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings) {
         platform: values.hostingPlatform,
         tenant: values.tenant,
       },
-      transport: ['local', 'test', 'debug'].includes(process.env.NODE_ENV)
-        ? { target: 'pino-pretty' }
-        : undefined,
+      transport: transport,
       autoLogging: !['test'].includes(process.env.NODE_ENV),
     },
   };

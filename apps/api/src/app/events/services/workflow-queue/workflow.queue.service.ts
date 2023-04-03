@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { Job, JobsOptions, Queue, QueueBaseOptions, QueueScheduler, Worker } from 'bullmq';
+import { Job, JobsOptions, QueueBaseOptions, WorkerOptions } from 'bullmq';
 // TODO: Remove this DAL dependency, maybe through a DTO or shared entity
 import { JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
@@ -13,10 +13,7 @@ import {
   SetJobAsFailed,
   SetJobAsFailedCommand,
 } from '../../usecases/update-job-status';
-import {
-  WebhookFilterBackoffStrategy,
-  WebhookFilterBackoffStrategyCommand,
-} from '../../usecases/webhook-filter-backoff-strategy';
+import { WebhookFilterBackoffStrategy } from '../../usecases/webhook-filter-backoff-strategy';
 
 import {
   CreateExecutionDetails,
@@ -77,8 +74,6 @@ export class WorkflowQueueService {
     this.bullMqService.worker.on('failed', async (job, error) => {
       await this.jobHasFailed(job, error);
     });
-
-    this.bullMqService.createScheduler(WORKER_NAME, this.bullConfig);
   }
 
   public async gracefulShutdown() {
@@ -89,15 +84,15 @@ export class WorkflowQueueService {
     }
   }
 
-  private getWorkerOpts() {
+  private getWorkerOpts(): WorkerOptions {
     return {
       ...this.bullConfig,
       lockDuration: 90000,
       concurrency: 200,
       settings: {
-        backoffStrategies: this.getBackoffStrategies(),
+        backoffStrategy: this.getBackoffStrategies(),
       },
-    };
+    } as WorkerOptions;
   }
 
   private getWorkerProcessor() {
@@ -214,24 +209,18 @@ export class WorkflowQueueService {
   }
 
   private getBackoffStrategies = () => {
-    return {
-      [BackoffStrategiesEnum.WEBHOOK_FILTER_BACKOFF]: async (
-        attemptsMade: number,
-        eventError: Error,
-        eventJob: Job
-      ): Promise<number> => {
-        // TODO: Review why when using `Command.create` class-transformer fails with `undefined has no property toKey()`
-        const command = {
-          attemptsMade,
-          environmentId: eventJob?.data?._environmentId,
-          eventError,
-          eventJob,
-          organizationId: eventJob?.data?._organizationId,
-          userId: eventJob?.data?._userId,
-        };
+    return async (attemptsMade: number, type: string, eventError: Error, eventJob: Job): Promise<number> => {
+      // TODO: Review why when using `Command.create` class-transformer fails with `undefined has no property toKey()`
+      const command = {
+        attemptsMade,
+        environmentId: eventJob?.data?._environmentId,
+        eventError,
+        eventJob,
+        organizationId: eventJob?.data?._organizationId,
+        userId: eventJob?.data?._userId,
+      };
 
-        return await this.webhookFilterWebhookFilterBackoffStrategy.execute(command);
-      },
+      return await this.webhookFilterWebhookFilterBackoffStrategy.execute(command);
     };
   };
 }

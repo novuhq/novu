@@ -189,6 +189,7 @@ importers:
       '@novu/mailgun': ^0.13.0
       '@novu/mailjet': ^0.13.0
       '@novu/mandrill': ^0.13.0
+      '@novu/maqsam': ^0.13.0
       '@novu/mattermost': ^0.13.0
       '@novu/ms-teams': ^0.13.0
       '@novu/netcore': ^0.13.0
@@ -203,6 +204,7 @@ importers:
       '@novu/ses': ^0.13.0
       '@novu/shared': ^0.13.0
       '@novu/slack': ^0.13.0
+      '@novu/sms-central': ^0.13.0
       '@novu/sms77': ^0.13.0
       '@novu/sns': ^0.13.0
       '@novu/stateless': ^0.13.0
@@ -231,7 +233,7 @@ importers:
       bcrypt: ^5.0.0
       body-parser: ^1.20.0
       bull: ^4.2.1
-      bullmq: ^1.81.4
+      bullmq: ^3.10.2
       chai: ^4.2.0
       class-transformer: ^0.5.1
       class-validator: ^0.14.0
@@ -304,6 +306,7 @@ importers:
       '@novu/mailgun': link:../../providers/mailgun
       '@novu/mailjet': link:../../providers/mailjet
       '@novu/mandrill': link:../../providers/mandrill
+      '@novu/maqsam': link:../../providers/maqsam
       '@novu/mattermost': link:../../providers/mattermost
       '@novu/ms-teams': link:../../providers/ms-teams
       '@novu/netcore': link:../../providers/netcore
@@ -318,6 +321,7 @@ importers:
       '@novu/ses': link:../../providers/ses
       '@novu/shared': link:../../libs/shared
       '@novu/slack': link:../../providers/slack
+      '@novu/sms-central': link:../../providers/sms-central
       '@novu/sms77': link:../../providers/sms77
       '@novu/sns': link:../../providers/sns
       '@novu/stateless': link:../../packages/stateless
@@ -335,7 +339,7 @@ importers:
       bcrypt: 5.0.1
       body-parser: 1.20.0
       bull: 4.8.1
-      bullmq: 1.86.2
+      bullmq: 3.10.2
       class-transformer: 0.5.1
       class-validator: 0.14.0
       compression: 1.7.4
@@ -402,7 +406,7 @@ importers:
       '@types/node': ^14.14.6
       '@types/smtp-server': ^3.5.7
       bluebird: ^2.9.30
-      bullmq: ^3.5.8
+      bullmq: ^3.10.2
       cross-env: ^7.0.3
       dotenv: ^8.6.0
       envalid: ^7.1.0
@@ -430,7 +434,7 @@ importers:
       '@novu/shared': link:../../libs/shared
       '@sentry/node': 7.30.0
       bluebird: 2.11.0
-      bullmq: 3.5.9
+      bullmq: 3.10.2
       dotenv: 8.6.0
       envalid: 7.3.0
       extend: 2.0.2
@@ -720,7 +724,7 @@ importers:
       '@types/supertest': ^2.0.10
       axios: ^1.3.3
       bull: ^4.4.0
-      bullmq: ^3.5.8
+      bullmq: ^3.10.2
       chai: ^4.2.0
       class-transformer: ^0.5.1
       class-validator: ^0.14.0
@@ -763,7 +767,7 @@ importers:
       '@sentry/node': 6.19.3
       axios: 1.3.3
       bull: 4.8.1
-      bullmq: 3.5.9
+      bullmq: 3.10.2
       class-transformer: 0.5.1
       class-validator: 0.14.0
       dotenv: 8.6.0
@@ -1365,7 +1369,7 @@ importers:
       async: ^3.2.0
       axios: ^1.3.3
       bcrypt: ~5.0.0
-      bullmq: ^3.5.6
+      bullmq: ^3.10.2
       class-transformer: 0.5.1
       cross-fetch: ^3.0.4
       eslint-plugin-prettier: ^4.2.1
@@ -1392,7 +1396,7 @@ importers:
       async: 3.2.3
       axios: 1.3.3
       bcrypt: 5.0.1
-      bullmq: 3.5.6
+      bullmq: 3.10.2
       class-transformer: 0.5.1
       cross-fetch: 3.1.5
       event-stream: 4.0.1
@@ -1441,6 +1445,7 @@ importers:
       '@novu/ses': ^0.13.0
       '@novu/shared': ^0.13.0
       '@novu/slack': ^0.13.0
+      '@novu/sms-central': ^0.13.0
       '@novu/sms77': ^0.13.0
       '@novu/sns': ^0.13.0
       '@novu/stateless': ^0.13.0
@@ -1453,7 +1458,7 @@ importers:
       '@types/jest': 27.5.2
       '@types/sinon': ^9.0.0
       analytics-node: ^6.2.0
-      bullmq: ^1.81.4
+      bullmq: ^3.10.2
       class-transformer: ^0.5.1
       class-validator: ^0.14.0
       codecov: ^3.5.0
@@ -1499,6 +1504,7 @@ importers:
       '@novu/ses': link:../../providers/ses
       '@novu/shared': link:../../libs/shared
       '@novu/slack': link:../../providers/slack
+      '@novu/sms-central': link:../../providers/sms-central
       '@novu/sms77': link:../../providers/sms77
       '@novu/sns': link:../../providers/sns
       '@novu/stateless': link:../stateless
@@ -1508,7 +1514,7 @@ importers:
       '@novu/twilio': link:../../providers/twilio
       '@sentry/node': 7.12.1
       analytics-node: 6.2.0
-      bullmq: 1.86.2
+      bullmq: 3.10.2
       class-transformer: 0.5.1
       class-validator: 0.14.0
       decorate-all: 1.2.1_reflect-metadata@0.1.13
@@ -2647,6 +2653,43 @@ importers:
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
+  providers/maqsam:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ~1.0.1
+      '@novu/stateless': ^0.13.0
+      '@types/jest': ~27.5.2
+      axios: ^1.3.4
+      cspell: ~6.19.2
+      cz-conventional-changelog: ~3.3.0
+      date-fns: 2.29.3
+      jest: ~27.5.1
+      moment: ^2.29.4
+      npm-run-all: ^4.1.5
+      nyc: ~15.1.0
+      prettier: ~2.8.0
+      rimraf: ~3.0.2
+      ts-jest: ~27.1.5
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@novu/stateless': link:../../packages/stateless
+      axios: 1.3.4
+      date-fns: 2.29.3
+      moment: 2.29.4
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.5.2
+      cspell: 6.19.2
+      cz-conventional-changelog: 3.3.0
+      jest: 27.5.1_ts-node@10.9.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      prettier: 2.8.4
+      rimraf: 3.0.2
+      ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
+      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
+      typescript: 4.9.5
+
   providers/mattermost:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ~1.0.1
@@ -3180,6 +3223,39 @@ importers:
       ts-jest: 27.1.4_rx2nkp4acdg4mhmzm5oop3yrke
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
+      typescript: 4.9.5
+
+  providers/sms-central:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ~1.0.1
+      '@novu/stateless': ^0.12.0
+      '@types/jest': ~27.5.2
+      axios: ^1.3.3
+      cspell: ~6.19.2
+      cz-conventional-changelog: ~3.3.0
+      jest: ~27.5.1
+      npm-run-all: ^4.1.5
+      nyc: ~15.1.0
+      prettier: ~2.8.0
+      rimraf: ~3.0.2
+      ts-jest: ~27.1.5
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@novu/stateless': 0.12.0
+      axios: 1.3.4
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.5.2
+      cspell: 6.19.2
+      cz-conventional-changelog: 3.3.0
+      jest: 27.5.1_ts-node@10.9.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      prettier: 2.8.4
+      rimraf: 3.0.2
+      ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typescript: 4.9.5
 
   providers/sms77:
@@ -14073,8 +14149,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-plugin-utils': 7.16.7
-      '@babel/helper-validator-option': 7.16.7
+      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/helper-validator-option': 7.18.6
       '@babel/plugin-transform-react-display-name': 7.18.6_@babel+core@7.17.8
       '@babel/plugin-transform-react-jsx': 7.17.3_@babel+core@7.17.8
       '@babel/plugin-transform-react-jsx-development': 7.16.7_@babel+core@7.17.8
@@ -14088,8 +14164,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.18.5
-      '@babel/helper-plugin-utils': 7.16.7
-      '@babel/helper-validator-option': 7.16.7
+      '@babel/helper-plugin-utils': 7.20.2
+      '@babel/helper-validator-option': 7.18.6
       '@babel/plugin-transform-react-display-name': 7.18.6_@babel+core@7.18.5
       '@babel/plugin-transform-react-jsx': 7.17.3_@babel+core@7.18.5
       '@babel/plugin-transform-react-jsx-development': 7.16.7_@babel+core@7.18.5
@@ -20905,6 +20981,15 @@ packages:
       '@floating-ui/dom': 0.1.10
       vue: 3.2.45
       vue-resize: 2.0.0-alpha.1_vue@3.2.45
+    dev: false
+
+  /@novu/stateless/0.12.0:
+    resolution: {integrity: sha512-2GVX07XtR3owk8Dg/66l+kyUvgYR5+uKMheiFCVRuTCqiDfVFww1G3ixIEs2FGIajtLfDdNyuH+PV25EoqmKVg==}
+    engines: {node: '>=10'}
+    dependencies:
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
     dev: false
 
   /@novu/stateless/0.7.2:
@@ -32747,47 +32832,16 @@ packages:
       - supports-color
     dev: false
 
-  /bullmq/1.86.2:
-    resolution: {integrity: sha512-QMrRCw4RDu9+OZJN9mVojdEXEA9Rj45jicfpKY9UlTJE0BnkZqr02+CB2w9YY+F7QO1KCaMK/uBcoZ+A2dnFFQ==}
-    dependencies:
-      cron-parser: 4.3.0
-      get-port: 5.1.1
-      glob: 7.2.0
-      ioredis: 4.28.5
-      lodash: 4.17.21
-      msgpackr: 1.5.5
-      semver: 7.3.7
-      tslib: 1.14.1
-      uuid: 8.3.2
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
-  /bullmq/3.5.6:
-    resolution: {integrity: sha512-2/Ta6Iitf3Bgx0+y57T720FmoJi7BCRW40ww6j+foKJBAiGc+u3Vkme7GqvRH6zLatt1Bm+2wx74R88qbAXO5A==}
+  /bullmq/3.10.2:
+    resolution: {integrity: sha512-GyunDkMdGJRUIo3n+jjQH9Uxz0Z+DLLbuz/7uxcQ+tFss1zB/zmn33D3l+rHaO8I52vz8C7hhEa2lCJ0GIhGgA==}
     dependencies:
       cron-parser: 4.7.1
-      glob: 8.0.3
-      ioredis: 5.2.4
+      glob: 8.1.0
+      ioredis: 5.3.1
       lodash: 4.17.21
       msgpackr: 1.8.1
       semver: 7.3.8
-      tslib: 2.4.1
-      uuid: 9.0.0
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
-  /bullmq/3.5.9:
-    resolution: {integrity: sha512-zdjann4YHfOpb2RbVmSIU0i4742H3omLQfXjBR4T0DIIV+S0Lduej0uPwLtcuFL0THgxohRWAnZluiNh4f1H6A==}
-    dependencies:
-      cron-parser: 4.7.1
-      glob: 8.0.3
-      ioredis: 5.2.4
-      lodash: 4.17.21
-      msgpackr: 1.8.1
-      semver: 7.3.8
-      tslib: 2.4.1
+      tslib: 2.5.0
       uuid: 9.0.0
     transitivePeerDependencies:
       - supports-color
@@ -35695,6 +35749,11 @@ packages:
     resolution: {integrity: sha512-0VNbwmWJDS/G3ySwFSJA3ayhbURMTJLtwM2DTxf9CWondCnh6DTNlO9JgRSq6ibf4eD0lfMJNBxUdEAHHix+bA==}
     engines: {node: '>=0.11'}
 
+  /date-fns/2.29.3:
+    resolution: {integrity: sha512-dDCnyH2WnnKusqvZZ6+jA1O51Ibt8ZMRNkDZdyAyK4YfbDwa/cEmuztzG5pk6hqlp9aSBPYcjOlktquahGwGeA==}
+    engines: {node: '>=0.11'}
+    dev: false
+
   /date-format/4.0.14:
     resolution: {integrity: sha512-39BOQLs9ZjKh0/patS9nrT8wc3ioX3/eA/zgbKNopnF2wCqJEoxywwwElATYvRsXdnOxA/OQeQoFZ3rFjVajhg==}
     engines: {node: '>=4.0'}
@@ -36043,7 +36102,6 @@ packages:
     resolution: {integrity: sha512-HVQE3AAb/pxF8fQAoiqpvg9i3evqug3hoiwakOyZAwJm+6vZehbkYXZ0l4JxS+I3QxM97v5aaRNhj8v5oBhekw==}
     engines: {node: '>=0.10'}
     dev: false
-    optional: true
 
   /depd/1.1.2:
     resolution: {integrity: sha512-7emPTl6Dpo6JRXOXjLRxck+FlLRX5847cLKEn00PLAgc3g2hTZZgr+e4c2v6QpSmLeFP3n5yUo7ft6avBK/5jQ==}
@@ -37420,7 +37478,7 @@ packages:
     dependencies:
       confusing-browser-globals: 1.0.11
       eslint: 8.33.0
-      eslint-plugin-import: 2.26.0_ufewo3pl5nnmz6lltvjrdi2hii
+      eslint-plugin-import: 2.26.0_le6bq4wixy3va5oryeliptrdgy
       object.assign: 4.1.4
       object.entries: 1.1.6
       semver: 6.3.0
@@ -37438,7 +37496,7 @@ packages:
       '@typescript-eslint/parser': 5.50.0_4vsywjlpuriuw3tl5oq6zy5a64
       eslint: 8.33.0
       eslint-config-airbnb-base: 15.0.0_ga4sep7loct7ajt7pxcme7xdqu
-      eslint-plugin-import: 2.26.0_ufewo3pl5nnmz6lltvjrdi2hii
+      eslint-plugin-import: 2.26.0_le6bq4wixy3va5oryeliptrdgy
     dev: true
 
   /eslint-config-prettier/8.5.0_eslint@8.30.0:
@@ -40180,6 +40238,7 @@ packages:
       minimatch: 3.1.2
       once: 1.4.0
       path-is-absolute: 1.0.1
+    dev: true
 
   /glob/7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
@@ -40200,6 +40259,7 @@ packages:
       inherits: 2.0.4
       minimatch: 5.1.6
       once: 1.4.0
+    dev: true
 
   /glob/8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
@@ -40967,7 +41027,7 @@ packages:
     resolution: {integrity: sha512-r0EI+HBMcXadMrugk0GCQ+6BQV39PiWAZVfq7oIckeGiN7sjRGyQxPdft3nQekFTCQbYxLBH+/axZMeH8UX6+w==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dependencies:
-      lru-cache: 7.12.0
+      lru-cache: 7.18.3
     dev: true
 
   /hpack.js/2.1.6:
@@ -41874,7 +41934,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: false
-    optional: true
 
   /ip/1.1.5:
     resolution: {integrity: sha512-rBtCAQAJm8A110nbwn6YdveUnuZH3WrC36IwkRXxDnq53JvXA2NVQvB7IHyKomxK1MJ4VDNw3UtFDdXQ+AvLYA==}
@@ -42974,7 +43033,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
+      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -45337,11 +45396,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       yallist: 4.0.0
-
-  /lru-cache/7.12.0:
-    resolution: {integrity: sha512-OIP3DwzRZDfLg9B9VP/huWBlpvbkmbfiBy8xmsXp4RPmE4A3MhwNozc5ZJ3fWnSg8fDcdlE/neRTPG2ycEKliw==}
-    engines: {node: '>=12'}
-    dev: true
 
   /lru-cache/7.18.3:
     resolution: {integrity: sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==}

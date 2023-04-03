@@ -419,7 +419,8 @@
     "monorepository",
     "Metafiles",
     "Metas",
-    "Webpush"
+    "Webpush",
+    "maqsam"
   ],
   "flagWords": [],
   "patterns": [
