@@ -130,6 +130,7 @@ messageSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrid
 messageSchema.index({
   _notificationId: 1,
   transactionId: 1,
+  _jobId: 1,
   _subscriberId: 1,
   _messageTemplateId: 1,
   _templateId: 1,
