@@ -1,6 +1,7 @@
 import Redis from 'ioredis';
 import { ConnectionOptions } from 'tls';
 import { Logger } from '@nestjs/common';
+import { QUERY_PREFIX } from './key-builders/shared';
 
 const STORE_CONNECTED = 'ready';
 
@@ -38,7 +39,7 @@ export class CacheService implements ICacheService {
       console.log('Connecting to ' + this.config.host + ':' + this.config.port);
 
       this.client = new Redis(Number(this.config.port || 6379), this.config.host, {
-        password: this.config.password,
+        password: this.config.password ?? undefined,
         connectTimeout: this.config.connectTimeout ? Number(this.config.connectTimeout) : this.DEFAULT_CONNECT_TIMEOUT,
         keepAlive: this.config.keepAlive ? Number(this.config.keepAlive) : this.DEFAULT_KEEP_ALIVE,
         family: this.config.family ? Number(this.config.family) : this.DEFAULT_FAMILY,
@@ -67,8 +68,19 @@ export class CacheService implements ICacheService {
   }
 
   public async set(key: string, value: string, options?: CachingConfig) {
-    this.client.set(key, value);
-    this.updateTtl(key, options);
+    this.client.set(key, value, 'EX', this.getTtlInSeconds(options));
+  }
+
+  public async setQuery(key: string, value: string, options?: CachingConfig) {
+    const { credentials, query } = splitKey(key);
+
+    const pipeline = this.client.pipeline();
+
+    pipeline.sadd(credentials, query);
+    pipeline.expire(credentials, this.DEFAULT_TTL_SECONDS + this.getTtlInSeconds(options));
+
+    pipeline.set(key, value, 'EX', this.getTtlInSeconds(options));
+    await pipeline.exec();
   }
 
   public async keys(pattern?: string) {
@@ -82,8 +94,26 @@ export class CacheService implements ICacheService {
     return this.client.get(key);
   }
 
-  public async del(key: string) {
-    return this.client.del([key]);
+  public async del(key: string | string[]) {
+    const keys = Array.isArray(key) ? key : [key];
+
+    return this.client.del(keys);
+  }
+
+  public async delQuery(key: string) {
+    const queries = await this.client.smembers(key);
+
+    if (queries.length === 0) return;
+
+    const pipeline = this.client.pipeline();
+    // invalidate queries
+    queries.forEach(function (query) {
+      const fullKey = `${key}:${QUERY_PREFIX}=${query}`;
+      pipeline.del(fullKey);
+    });
+    // invalidate queries set
+    pipeline.del(key);
+    await pipeline.exec();
   }
 
   public delByPattern(pattern: string) {
@@ -111,17 +141,26 @@ export class CacheService implements ICacheService {
     });
   }
 
-  private updateTtl(key: string, options?: CachingConfig) {
+  private getTtlInSeconds(options?: CachingConfig): number {
     const seconds = options?.ttl || this.cacheTtl;
 
-    return this.client.expire(key, this.ttlVariant(seconds));
+    return this.ttlVariant(seconds);
   }
 
-  private ttlVariant(num) {
+  private ttlVariant(num): number {
     const variant = this.TTL_VARIANT_PERCENTAGE * num * Math.random();
 
     return Math.floor(num - (this.TTL_VARIANT_PERCENTAGE * num) / 2 + variant);
   }
+}
+
+export function splitKey(key: string) {
+  const keyDelimiter = `:${QUERY_PREFIX}=`;
+  const keyParts = key.split(keyDelimiter);
+  const credentials = keyParts[0];
+  const query = keyParts[1];
+
+  return { credentials, query };
 }
 
 export interface ICacheServiceConfig {
