@@ -36,6 +36,10 @@ import { EmailEventStatusEnum } from '@novu/stateless';
 import { v4 as uuid } from 'uuid';
 import { differenceInMilliseconds, subMonths } from 'date-fns';
 
+const IN_APP_MESSAGE_EXPIRE_MONTHS = 6;
+const MESSAGE_EXPIRE_MONTHS = 1;
+const NOTIFICATION_EXPIRE_MONTHS = 1;
+
 const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
@@ -285,7 +289,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     let expireAt = new Date(notification?.expireAt as string);
     let createdAt = new Date(notification?.createdAt as string);
 
-    let subExpireMonths = subMonths(expireAt, 1);
+    let subExpireMonths = subMonths(expireAt, NOTIFICATION_EXPIRE_MONTHS);
     let diff = differenceInMilliseconds(subExpireMonths, createdAt);
 
     expect(diff).to.approximately(0, 1);
@@ -302,7 +306,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     expireAt = new Date(message?.expireAt as string);
     createdAt = new Date(message?.createdAt as string);
 
-    subExpireMonths = subMonths(expireAt, 6);
+    subExpireMonths = subMonths(expireAt, IN_APP_MESSAGE_EXPIRE_MONTHS);
     diff = differenceInMilliseconds(subExpireMonths, createdAt);
 
     expect(diff).to.approximately(0, 1);
@@ -319,7 +323,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     expireAt = new Date(email?.expireAt as string);
     createdAt = new Date(email?.createdAt as string);
 
-    subExpireMonths = subMonths(expireAt, 1);
+    subExpireMonths = subMonths(expireAt, MESSAGE_EXPIRE_MONTHS);
     diff = differenceInMilliseconds(subExpireMonths, createdAt);
 
     expect(diff).to.approximately(0, 1);
