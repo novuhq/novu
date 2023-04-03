@@ -12,17 +12,11 @@ import {
   InfobipSmsHandler,
   BurstSmsHandler,
   ClickatellHandler,
-<<<<<<< HEAD
   BulkSmsSmsHandler,
-=======
   FortySixElksHandler,
   KannelSmsHandler,
-<<<<<<< HEAD
->>>>>>> main
-=======
   MaqsamHandler,
   SmsCentralHandler,
->>>>>>> next
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -38,17 +32,11 @@ export class SmsFactory implements ISmsFactory {
     new FiretextSmsHandler(),
     new InfobipSmsHandler(),
     new BurstSmsHandler(),
-<<<<<<< HEAD
     new BulkSmsSmsHandler(),
-=======
     new FortySixElksHandler(),
     new KannelSmsHandler(),
-<<<<<<< HEAD
->>>>>>> main
-=======
     new MaqsamHandler(),
     new SmsCentralHandler(),
->>>>>>> next
   ];
 
   getHandler(integration: IntegrationEntity) {

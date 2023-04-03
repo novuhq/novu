@@ -15373,8 +15373,6 @@ packages:
       - '@algolia/client-search'
     dev: false
 
-<<<<<<< HEAD
-=======
   /@docusaurus/core/2.1.0_p3q3m6xshzly52odv3nos3rsyq:
     resolution: {integrity: sha512-/ZJ6xmm+VB9Izbn0/s6h6289cbPy2k4iYFwWDhjiLsVqwa/Y0YBBcXvStfaHccudUC3OfP+26hMk7UCjc50J6Q==}
     engines: {node: '>=16.14'}
@@ -15694,8 +15692,6 @@ packages:
       tslib: 2.5.0
     dev: false
 
-<<<<<<< HEAD
-=======
   /@docusaurus/mdx-loader/2.1.0_ny44vnc5t4rlukh2kzmv2f2kze:
     resolution: {integrity: sha512-i97hi7hbQjsD3/8OSFhLy7dbKGH8ryjEzOfyhQIn2CFBYOY3ko0vMVEf3IY9nD3Ld7amYzsZ8153RPkcnXA+Lg==}
     engines: {node: '>=16.14'}
@@ -16310,8 +16306,6 @@ packages:
       tslib: 2.5.0
     dev: false
 
-<<<<<<< HEAD
-=======
   /@docusaurus/types/2.1.0_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-BS1ebpJZnGG6esKqsjtEC9U9qSaPylPwlO7cQ1GaIE7J/kMZI3FITnNn0otXXu7c7ZTqhb6+8dOrG6fZn6fqzQ==}
     peerDependencies:
@@ -16335,7 +16329,6 @@ packages:
       - webpack-cli
     dev: false
 
->>>>>>> next
   /@docusaurus/types/2.3.1_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-PREbIRhTaNNY042qmfSE372Jb7djZt+oVTZkoqHJ8eff8vOIc2zqqDqBVc5BhOfpZGPTrE078yy/torUEZy08A==}
     peerDependencies:
@@ -16419,8 +16412,6 @@ packages:
       - webpack-cli
     dev: false
 
-<<<<<<< HEAD
-=======
   /@docusaurus/utils/2.1.0_@docusaurus+types@2.1.0:
     resolution: {integrity: sha512-fPvrfmAuC54n8MjZuG4IysaMdmvN5A/qr7iFLbSGSyDrsbP4fnui6KdZZIa/YOLIPLec8vjZ8RIITJqF18mx4A==}
     engines: {node: '>=16.14'}
@@ -16454,7 +16445,6 @@ packages:
       - webpack-cli
     dev: false
 
->>>>>>> next
   /@docusaurus/utils/2.3.1:
     resolution: {integrity: sha512-9WcQROCV0MmrpOQDXDGhtGMd52DHpSFbKLfkyaYumzbTstrbA5pPOtiGtxK1nqUHkiIv8UwexS54p0Vod2I1lg==}
     engines: {node: '>=16.14'}
