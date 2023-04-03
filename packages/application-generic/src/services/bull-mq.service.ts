@@ -1,5 +1,6 @@
 import {
   JobsOptions,
+  MetricsTime,
   Processor,
   Queue,
   QueueOptions,
@@ -51,8 +52,15 @@ export class BullmqService {
     const WorkerClass = !BullmqService.pro
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;
+
+    let internalOptions: WorkerOptions;
+    if (options) {
+      internalOptions = options;
+    }
+    internalOptions.metrics = { maxDataPoints: MetricsTime.ONE_MONTH };
+
     this._worker = new WorkerClass(name, processor, {
-      ...options,
+      ...internalOptions,
       ...(BullmqService.pro
         ? {
             group: {},
