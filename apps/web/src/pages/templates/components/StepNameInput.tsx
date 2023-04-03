@@ -24,7 +24,7 @@ const Input = ({ index, defaultValue }: { index: number; defaultValue: string })
           <TextInput
             styles={(theme) => ({
               root: {
-                width: '90%',
+                width: '85%',
               },
               wrapper: {
                 background: 'transparent',

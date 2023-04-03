@@ -1,89 +1,21 @@
 import { useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-
 import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
 import { TemplateSMSEditor } from './TemplateSMSEditor';
 import type { IForm } from './formTypes';
 import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
-import { useActiveIntegrations, useEnvController } from '../../../hooks';
-import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { useActiveIntegrations } from '../../../hooks';
+import { useNavigate, useParams } from 'react-router-dom';
 import { SubPageWrapper } from './SubPageWrapper';
 import { DigestMetadata } from '../workflow/DigestMetadata';
 import { DelayMetadata } from '../workflow/DelayMetadata';
-import { Button, colors } from '../../../design-system';
-import styled from '@emotion/styled';
-import { Trash } from '../../../design-system/icons';
-import { Group } from '@mantine/core';
-import { When } from '../../../components/utils/When';
+import { colors } from '../../../design-system';
 import { useEffect, useMemo } from 'react';
 import { useBasePath } from '../hooks/useBasePath';
 import { StepNameInput } from './StepNameInput';
-
-const DeleteRow = () => {
-  const { channel, stepUuid = '' } = useParams<{
-    channel: StepTypeEnum;
-    stepUuid: string;
-  }>();
-  const { readonly } = useEnvController();
-  const { onDelete }: any = useOutletContext();
-
-  if (!channel) {
-    return null;
-  }
-
-  return (
-    <Group
-      position="apart"
-      sx={{
-        position: 'absolute',
-        bottom: 24,
-        left: 24,
-        right: 24,
-      }}
-    >
-      <When truthy={![StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(channel)}>
-        <div />
-      </When>
-      <When truthy={channel === StepTypeEnum.DIGEST}>
-        <a
-          target={'_blank'}
-          style={{ color: 'rgb(221, 36, 118)', textDecoration: 'underline', fontSize: '18px' }}
-          rel="noopener noreferrer"
-          href={'https://docs.novu.co/platform/digest'}
-        >
-          Learn more in the docs
-        </a>
-      </When>
-      <When truthy={channel === StepTypeEnum.DELAY}>
-        <a
-          target={'_blank'}
-          style={{ color: 'rgb(221, 36, 118)', textDecoration: 'underline', fontSize: '18px' }}
-          rel="noopener noreferrer"
-          href={'https://docs.novu.co/platform/delay'}
-        >
-          Learn more in the docs
-        </a>
-      </When>
-      <DeleteStepButton
-        variant="outline"
-        data-test-id="delete-step-button"
-        onClick={() => {
-          onDelete(stepUuid);
-        }}
-        disabled={readonly}
-      >
-        <Trash
-          style={{
-            marginRight: '5px',
-          }}
-        />
-        Delete Step
-      </DeleteStepButton>
-    </Group>
-  );
-};
+import { DeleteStepRow } from './DeleteStepRow';
 
 export const TemplateEditor = () => {
   const { channel, stepUuid = '' } = useParams<{
@@ -125,7 +57,7 @@ export const TemplateEditor = () => {
         style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
       >
         <TemplateInAppEditor errors={errors} control={control} index={index} />
-        <DeleteRow />
+        <DeleteStepRow />
       </SubPageWrapper>
     );
   }
@@ -141,8 +73,7 @@ export const TemplateEditor = () => {
           index={index}
           isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.EMAIL)}
         />
-
-        <DeleteRow />
+        <DeleteStepRow />
       </SubPageWrapper>
     );
   }
@@ -181,22 +112,8 @@ export const TemplateEditor = () => {
         )}
         {channel === StepTypeEnum.DIGEST && <DigestMetadata control={control} index={index} />}
         {channel === StepTypeEnum.DELAY && <DelayMetadata control={control} index={index} />}
-        <DeleteRow />
+        <DeleteStepRow />
       </SubPageWrapper>
     </>
   );
 };
-
-const DeleteStepButton = styled(Button)`
-  //display: flex;
-  //position: inherit;
-  //bottom: 15px;
-  //left: 20px;
-  //right: 20px;
-  background: rgba(229, 69, 69, 0.15);
-  color: ${colors.error};
-  box-shadow: none;
-  :hover {
-    background: rgba(229, 69, 69, 0.15);
-  }
-`;
