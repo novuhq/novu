@@ -51,7 +51,7 @@ runs:
 
 
     - name: Build with Depot, tag, and test
-      if: ${{ inputs.fork == 'false' && !contains( ${{ input.docker_name }} , 'ee') }} # Don't run image builds with Depot for forks as forks can't access secrets
+      if: ${{ inputs.fork }} == 'false' && !contains( ${{ input.docker_name }} , 'ee')  # Don't run image builds with Depot for forks as forks can't access secrets
       shell: bash
       env:
         REGISTRY_OWNER: novuhq
@@ -66,7 +66,7 @@ runs:
 
 
     - name: Build with Depot, tag, and test
-      if: ${{ inputs.fork == 'false' && contains( ${{ input.docker_name }} , 'ee') }} # Don't run image builds with Depot for forks as forks can't access secrets
+      if: ${{ inputs.fork }} == 'false' && contains( ${{ input.docker_name }} , 'ee') # Don't run image builds with Depot for forks as forks can't access secrets
       shell: bash
       env:
         REGISTRY_OWNER: novuhq
