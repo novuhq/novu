@@ -1,6 +1,6 @@
 import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
 import slugify from 'slugify';
-import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
+import { FormProvider, useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { DigestTypeEnum, INotificationTemplate, INotificationTrigger } from '@novu/shared';
@@ -132,7 +132,7 @@ const TemplateEditorFormProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    if (identifier !== 'untitled') {
+    if (!template?.triggers[0].identifier.includes('untitled')) {
       return;
     }
     const newIdentifier = slugify(name, {
@@ -144,7 +144,7 @@ const TemplateEditorFormProvider = ({ children }) => {
       return;
     }
 
-    methods.setValue('identifier', identifier);
+    methods.setValue('identifier', newIdentifier);
   }, [name, identifier]);
 
   const { start, clear } = useTimeout(() => {
