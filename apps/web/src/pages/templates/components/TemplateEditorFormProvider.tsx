@@ -1,4 +1,5 @@
 import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
+import slugify from 'slugify';
 import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -117,14 +118,33 @@ const TemplateEditorFormProvider = ({ children }) => {
   const [previousPath, setPreviousPath] = useState(pathname);
 
   const {
-    reset,
     formState: { isDirty: isDirtyForm },
+    watch,
   } = methods;
+
+  const name = watch('name');
+  const identifier = watch('identifier');
 
   const steps = useFieldArray({
     control: methods.control,
     name: 'steps',
   });
+
+  useEffect(() => {
+    if (identifier !== 'untitled') {
+      return;
+    }
+    const newIdentifier = slugify(name, {
+      lower: true,
+      strict: true,
+    });
+
+    if (newIdentifier === identifier) {
+      return;
+    }
+
+    methods.setValue('identifier', identifier);
+  }, [name, identifier]);
 
   const { start, clear } = useTimeout(() => {
     showNotification({
@@ -198,8 +218,6 @@ const TemplateEditorFormProvider = ({ children }) => {
     }
 
     if (template && template.steps) {
-      const form = mapNotificationTemplateToForm(template);
-      reset(form);
       setTrigger(template.triggers[0]);
     }
   }, [isDirtyForm, template]);
@@ -219,7 +237,6 @@ const TemplateEditorFormProvider = ({ children }) => {
       const payloadToCreate = mapFormToCreateNotificationTemplate(values);
       const response = await createNotificationTemplate({ ...payloadToCreate, active: true, draft: false });
       setTrigger(response.triggers[0]);
-      reset(payloadToCreate);
       navigate(`/templates/edit/${response._id || ''}`);
     };
 
@@ -240,7 +257,6 @@ const TemplateEditorFormProvider = ({ children }) => {
         });
         setTrigger(response.triggers[0]);
 
-        reset(form);
         if (showMessage) {
           successMessage('Trigger code is updated successfully', 'workflowSaved');
         }
@@ -250,7 +266,7 @@ const TemplateEditorFormProvider = ({ children }) => {
         errorMessage(e.message || 'Unexpected error occurred');
       }
     },
-    [templateId, updateNotificationTemplate, reset, setTrigger]
+    [templateId, updateNotificationTemplate, setTrigger]
   );
 
   const addStep = useCallback(
