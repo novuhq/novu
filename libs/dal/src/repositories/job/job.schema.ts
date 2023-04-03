@@ -25,11 +25,9 @@ const jobSchema = new Schema<JobDBModel>(
     _templateId: {
       type: Schema.Types.String,
       ref: 'NotificationTemplate',
-      index: true,
     },
     transactionId: {
       type: Schema.Types.String,
-      index: true,
     },
     delay: {
       type: Schema.Types.Number,
@@ -37,16 +35,13 @@ const jobSchema = new Schema<JobDBModel>(
     _notificationId: {
       type: Schema.Types.ObjectId,
       ref: 'Notification',
-      index: true,
     },
     subscriberId: {
       type: Schema.Types.String,
-      index: true,
     },
     _subscriberId: {
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
-      index: true,
     },
     _userId: {
       type: Schema.Types.ObjectId,
@@ -55,17 +50,14 @@ const jobSchema = new Schema<JobDBModel>(
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      index: true,
     },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
-      index: true,
     },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Job',
-      index: true,
     },
     error: {
       type: Schema.Types.Mixed,
@@ -96,7 +88,6 @@ const jobSchema = new Schema<JobDBModel>(
     },
     type: {
       type: Schema.Types.String,
-      index: true,
     },
     providerId: {
       type: Schema.Types.String,
@@ -142,6 +133,81 @@ jobSchema.virtual('environment', {
   foreignField: '_id',
   justOne: true,
 });
+
+/*
+ * This index was initially created to optimize:
+ * apps/api/src/app/events/usecases/add-job/add-delay-job.usecase.ts
+ */
+jobSchema.index({
+  transactionId: 1,
+  _subscriberId: 1,
+  _templateId: 1,
+  _environmentId: 1,
+  status: 1,
+  type: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ * apps/api/src/app/events/usecases/message-matcher/message-matcher.usecase.ts
+ */
+jobSchema.index({
+  transactionId: 1,
+  _subscriberId: 1,
+  'step.uuid': 1,
+  _environmentId: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ * apps/api/src/app/events/usecases/queue-next-job/queue-next-job.usecase.ts
+ */
+jobSchema.index({
+  _parentId: 1,
+  _environmentId: 1,
+  _organizationId: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ * apps/api/src/app/events/usecases/send-message/digest/get-digest-events.usecase.ts
+ * apps/api/src/app/events/usecases/trigger-event/trigger-event.usecase.ts
+ * repo
+ * apps/api/src/app/events/usecases/send-message/digest/digest.usecase.ts * _id is the last on because it is used with $ne which means it is a range operator
+ * apps/api/src/app/events/usecases/cancel-delayed/cancel-delayed.usecase.ts * but OMIT 'status'
+ */
+jobSchema.index({
+  transactionId: 1,
+  _environmentId: 1,
+  type: 1,
+  _id: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ * apps/api/src/app/events/usecases/send-message/digest/get-digest-events-backoff.usecase.ts * updatedAt should be first range operator
+ * repo
+ * repo
+ * repo
+ * repo
+ * apps/api/src/app/events/usecases/digest-filter-steps/digest-filter-steps-backoff.usecase.ts
+ * apps/api/src/app/events/usecases/digest-filter-steps/digest-filter-steps-backoff.usecase.ts * type should be after _environmentId
+ * apps/api/src/app/events/usecases/digest-filter-steps/digest-filter-steps-regular.usecase.ts
+ */
+jobSchema.index({
+  _templateId: 1,
+  _subscriberId: 1,
+  _environmentId: 1,
+  type: 1,
+  status: 1,
+  updatedAt: 1,
+  transactionId: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ */
+jobSchema.index({});
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Job = (mongoose.models.Job as mongoose.Model<JobDBModel>) || mongoose.model<JobDBModel>('Job', jobSchema);
