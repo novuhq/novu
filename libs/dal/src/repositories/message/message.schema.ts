@@ -127,15 +127,52 @@ messageSchema.virtual('template', {
 
 messageSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
+/*
+ * This index was initially created to optimize:
+ * in app widget - feed query
+ */
 messageSchema.index({
-  _notificationId: 1,
-  transactionId: 1,
-  _jobId: 1,
   _subscriberId: 1,
+  _environmentId: 1,
+  seen: 1,
+  read: 1,
+  createdAt: -1,
+});
+
+/*
+ * This index was initially created to optimize:
+ * message-matcher in the trigger flow
+ * send message in app in the trigger flow
+ * inbound parse query
+ */
+messageSchema.index({
+  transactionId: 1,
+  _subscriberId: 1,
+  _environmentId: 1,
   _messageTemplateId: 1,
   _templateId: 1,
+  providerId: 1,
+  channel: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ * webhook app query
+ */
+messageSchema.index({
+  identifier: 1,
   _environmentId: 1,
-  createdAt: -1,
+  _organizationId: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ * get messages usecase
+ */
+messageSchema.index({
+  _subscriberId: 1,
+  _environmentId: 1,
+  channel: 1,
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

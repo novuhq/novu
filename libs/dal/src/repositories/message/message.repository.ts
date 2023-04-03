@@ -52,10 +52,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (query.seen != null) {
       requestQuery.seen = query.seen;
+    } else {
+      requestQuery.seen = { $in: [true, false] };
     }
 
     if (query.read != null) {
       requestQuery.read = query.read;
+    } else {
+      requestQuery.read = { $in: [true, false] };
     }
 
     return requestQuery;
