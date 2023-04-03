@@ -25,13 +25,12 @@ import {
   ExecutionDetailsRepository,
   MessageRepository,
   JobRepository,
-  MessageEntity,
 } from '@novu/dal';
 
 import { IFilterVariables } from './types';
 import { FilterProcessingDetails } from './filter-processing-details';
 import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details';
-import { SendMessageCommand } from '../send-message/send-message.command';
+import { SendMessageCommand } from '../send-message';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
 import { createHash } from '../../../shared/helpers/hmac.service';
 import { CreateExecutionDetailsCommand } from '../../../execution-details/usecases/create-execution-details';
@@ -259,7 +258,6 @@ export class MessageMatcher {
     const message = await this.messageRepository.findOne({
       _jobId: job._id,
       _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
       _subscriberId: command.subscriberId,
       transactionId: command.transactionId,
     });
