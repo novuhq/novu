@@ -12,7 +12,6 @@ import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { ChannelTypeEnum } from '@novu/shared';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class UpdateIntegration {
@@ -22,7 +21,7 @@ export class UpdateIntegration {
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {

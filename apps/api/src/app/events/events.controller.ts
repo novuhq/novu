@@ -3,7 +3,7 @@ import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, Ap
 import { v4 as uuidv4 } from 'uuid';
 import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
 import { TriggerRecipientSubscriber } from '@novu/node';
-import { EventsPerformanceService } from '@novu/application-generic';
+import { EventsPerformanceService, SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
@@ -13,7 +13,6 @@ import {
   TriggerEventToAllRequestDto,
 } from './dtos';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
-import { SendTestEmail, SendTestEmailCommand } from './usecases/send-message';
 import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
 import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';

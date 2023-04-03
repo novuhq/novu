@@ -1,22 +1,33 @@
 import { Module } from '@nestjs/common';
-import { EventsPerformanceService } from '@novu/application-generic';
-
-import { SharedModule } from '../shared/shared.module';
-import { EventsDistributedLockService } from './services/events-distributed-lock.service';
-import { WorkflowQueueService } from './services/workflow-queue.service';
 import {
-  AddJob,
-  AddDelayJob,
-  AddDigestJob,
-  CalculateLimitNovuIntegration,
+  EventsPerformanceService,
   CreateExecutionDetails,
+  CalculateLimitNovuIntegration,
+  DigestFilterSteps,
+  DigestFilterStepsRegular,
+  DigestFilterStepsBackoff,
   GetDecryptedIntegrations,
   GetNovuIntegration,
   GetSubscriberPreference,
   GetSubscriberTemplatePreference,
+  CompileEmailTemplate,
+  CompileTemplate,
+  GetLayoutUseCase,
+  GetNovuLayout,
+  QueueService,
+  AddJob,
+  AddDelayJob,
+  AddDigestJob,
+  EventsDistributedLockService,
+  SendTestEmail,
+  SendTestEmailCommand,
+} from '@novu/application-generic';
+import { JobRepository } from '@novu/dal';
+
+import { SharedModule } from '../shared/shared.module';
+import { WorkflowQueueService } from './services/workflow-queue.service';
+import {
   MessageMatcher,
-  QueueNextJob,
-  RunJob,
   SendMessage,
   SendMessageChat,
   SendMessageDelay,
@@ -24,23 +35,16 @@ import {
   SendMessageInApp,
   SendMessagePush,
   SendMessageSms,
-  SendTestEmail,
-  SendTestEmailCommand,
-  CompileEmailTemplate,
-  CompileTemplate,
   Digest,
   GetDigestEventsBackoff,
   GetDigestEventsRegular,
-  GetLayoutUseCase,
-  GetNovuLayout,
-  DigestFilterSteps,
-  DigestFilterStepsRegular,
-  DigestFilterStepsBackoff,
+  QueueNextJob,
+  RunJob,
   SetJobAsCompleted,
   SetJobAsFailed,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
-} from './usecases';
+} from './usecases2';
 
 const USE_CASES = [
   AddJob,
@@ -80,11 +84,20 @@ const USE_CASES = [
   WebhookFilterBackoffStrategy,
 ];
 
-const SERVICES = [WorkflowQueueService, EventsDistributedLockService, EventsPerformanceService];
+const REPOSITORIES = [JobRepository];
+
+const SERVICES = [
+  {
+    provide: QueueService,
+    useClass: WorkflowQueueService,
+  },
+  EventsDistributedLockService,
+  EventsPerformanceService,
+];
 
 @Module({
   imports: [SharedModule],
   controllers: [],
-  providers: [...USE_CASES, ...SERVICES],
+  providers: [...USE_CASES, ...REPOSITORIES, ...SERVICES],
 })
 export class WorkflowModule {}

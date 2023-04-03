@@ -8,6 +8,13 @@ import {
   TermiiSmsHandler,
   PlivoHandler,
   GupshupSmsHandler,
+  FiretextSmsHandler,
+  InfobipSmsHandler,
+  BurstSmsHandler,
+  ClickatellHandler,
+  FortySixElksHandler,
+  KannelSmsHandler,
+  MaqsamHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -18,10 +25,17 @@ export class SmsFactory implements ISmsFactory {
     new Sms77Handler(),
     new TermiiSmsHandler(),
     new PlivoHandler(),
+    new ClickatellHandler(),
     new GupshupSmsHandler(),
+    new FiretextSmsHandler(),
+    new InfobipSmsHandler(),
+    new BurstSmsHandler(),
+    new FortySixElksHandler(),
+    new KannelSmsHandler(),
+    new MaqsamHandler(),
   ];
 
-  getHandler(integration: IntegrationEntity): ISmsHandler {
+  getHandler(integration: IntegrationEntity) {
     try {
       const handler =
         this.handlers.find((handlerItem) =>

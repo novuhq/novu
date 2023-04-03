@@ -3,6 +3,8 @@
   "compilerOptions": {
     "strictNullChecks": false,
     "types": ["mocha", "node"],
-    "esModuleInterop": false
-  }
+    "esModuleInterop": false,
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules"]
 }

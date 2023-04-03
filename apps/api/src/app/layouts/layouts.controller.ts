@@ -6,14 +6,12 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Inject,
   Param,
   Patch,
   Post,
   Query,
   UseGuards,
   Logger,
-  ExecutionContext,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -27,6 +25,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
+import { GetLayoutCommand, GetLayoutUseCase } from '@novu/application-generic';
 
 import {
   CreateLayoutRequestDto,
@@ -44,8 +43,6 @@ import {
   DeleteLayoutUseCase,
   FilterLayoutsCommand,
   FilterLayoutsUseCase,
-  GetLayoutCommand,
-  GetLayoutUseCase,
   SetDefaultLayoutCommand,
   SetDefaultLayoutUseCase,
   UpdateLayoutCommand,
@@ -56,8 +53,6 @@ import { LayoutId } from './types';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { AnalyticsService } from '@novu/application-generic';
-import { ANALYTICS_SERVICE } from '../shared/shared.module';
 
 @Controller('/layouts')
 @ApiTags('Layouts')
@@ -69,8 +64,7 @@ export class LayoutsController {
     private filterLayoutsUseCase: FilterLayoutsUseCase,
     private getLayoutUseCase: GetLayoutUseCase,
     private setDefaultLayoutUseCase: SetDefaultLayoutUseCase,
-    private updateLayoutUseCase: UpdateLayoutUseCase,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private updateLayoutUseCase: UpdateLayoutUseCase
   ) {}
 
   @Post('')

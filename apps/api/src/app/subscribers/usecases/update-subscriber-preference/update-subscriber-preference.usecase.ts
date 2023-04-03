@@ -7,16 +7,15 @@ import {
   SubscriberRepository,
   MemberRepository,
 } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  ISubscriberPreferenceResponse,
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
+} from '@novu/application-generic';
 
 import { UpdateSubscriberPreferenceCommand } from './update-subscriber-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { ISubscriberPreferenceResponse } from '../get-subscriber-preference/get-subscriber-preference.usecase';
-import {
-  GetSubscriberTemplatePreference,
-  GetSubscriberTemplatePreferenceCommand,
-} from '../get-subscriber-template-preference';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class UpdateSubscriberPreference {
@@ -24,7 +23,7 @@ export class UpdateSubscriberPreference {
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
     private getSubscriberTemplatePreference: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private memberRepository: MemberRepository
   ) {}

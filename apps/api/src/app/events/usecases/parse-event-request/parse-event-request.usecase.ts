@@ -8,7 +8,6 @@ import { NotificationTemplateRepository } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
 import { StorageHelperService } from '@novu/application-generic';
 
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
 import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
@@ -21,7 +20,7 @@ export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private storageHelperService: StorageHelperService,
     private triggerHandlerQueueService: TriggerHandlerQueueService,
     private mapTriggerRecipients: MapTriggerRecipients

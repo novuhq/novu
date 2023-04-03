@@ -11,8 +11,7 @@ import {
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
-
-import { WorkflowQueueProducerService } from '../services/workflow-queue/workflow-queue-producer.service';
+import { QueueService } from '@novu/application-generic';
 
 const axiosInstance = axios.create();
 
@@ -22,7 +21,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
-  let workflowQueueProducerService: WorkflowQueueProducerService;
+  let queueService: QueueService;
   const messageRepository = new MessageRepository();
 
   const triggerEvent = async (payload, transactionId?: string, overrides = {}) => {
@@ -49,7 +48,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-    workflowQueueProducerService = session?.testServer?.getService(WorkflowQueueProducerService);
+    queueService = session?.testServer?.getService(QueueService);
   });
 
   it('should delay event for time interval', async function () {
@@ -183,7 +182,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const updatedAt = delayedJob?.updatedAt as string;
     const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(updatedAt));
 
-    const delay = await workflowQueueProducerService.bullMqService.queue.getDelayed();
+    const delay = await queueService.bullMqService.queue.getDelayed();
     expect(delay[0].opts.delay).to.approximately(diff, 1000);
   });
 

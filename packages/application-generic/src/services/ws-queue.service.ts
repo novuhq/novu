@@ -5,7 +5,7 @@ import { QueueOptions } from 'bullmq';
 import { BullmqService } from './bull-mq.service';
 
 export class WsQueueService {
-  private name = 'ws_socket_queue';
+  public static queueName = 'ws_socket_queue';
   private bullConfig: QueueOptions = {
     connection: {
       db: Number(process.env.REDIS_DB_INDEX),
@@ -27,13 +27,13 @@ export class WsQueueService {
 
   constructor() {
     this.bullMqService = new BullmqService();
-    this.bullMqService.createQueue(this.name, this.bullConfig);
+    this.bullMqService.createQueue(WsQueueService.queueName, this.bullConfig);
   }
 
   async getJobStats(
     type: string
   ): Promise<{ waiting: number; active: number }> {
-    if (type === this.name) {
+    if (type === WsQueueService.queueName) {
       return {
         waiting: await this.bullMqService.queue.getWaitingCount(),
         active: await this.bullMqService.queue.getActiveCount(),

@@ -8,10 +8,8 @@ import {
   MemberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { AnalyticsService, CacheKeyPrefixEnum, InvalidateCache } from '@novu/application-generic';
+import { WsQueueService, AnalyticsService, CacheKeyPrefixEnum, InvalidateCache } from '@novu/application-generic';
 
-import { QueueService } from '../../../shared/services/queue';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
@@ -20,8 +18,8 @@ import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 export class RemoveMessage {
   constructor(
     private messageRepository: MessageRepository,
-    private queueService: QueueService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private wsQueueService: WsQueueService,
+    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private memberRepository: MemberRepository
   ) {}
@@ -84,7 +82,7 @@ export class RemoveMessage {
     const eventMessage = `un${mark}_count_changed`;
     const countKey = `un${mark}Count`;
 
-    this.queueService.bullMqService.add(
+    this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
         event: eventMessage,

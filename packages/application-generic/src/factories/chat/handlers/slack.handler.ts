@@ -1,7 +1,8 @@
 import { ICredentials } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
-import { BaseChatHandler } from './base.handler';
 import { SlackProvider } from '@novu/slack';
+
+import { BaseChatHandler } from './base.handler';
 
 export class SlackHandler extends BaseChatHandler {
   constructor() {

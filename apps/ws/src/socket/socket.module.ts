@@ -1,10 +1,9 @@
 import { Module, OnModuleInit } from '@nestjs/common';
-import { WSGateway } from './ws.gateway';
-import { SharedModule } from '../shared/shared.module';
-import { BullmqService } from '@novu/application-generic';
+import { BullmqService, WsQueueService } from '@novu/application-generic';
 import { getRedisPrefix } from '@novu/shared';
 
-export const WS_SOCKET_QUEUE = 'ws_socket_queue';
+import { WSGateway } from './ws.gateway';
+import { SharedModule } from '../shared/shared.module';
 
 @Module({
   imports: [SharedModule],
@@ -20,7 +19,7 @@ export class SocketModule implements OnModuleInit {
 
   async onModuleInit() {
     this.bullMqService.createWorker(
-      WS_SOCKET_QUEUE,
+      WsQueueService.queueName,
       async (job) => {
         this.wsGateway.sendMessage(job.data.userId, job.data.event, job.data.payload);
       },

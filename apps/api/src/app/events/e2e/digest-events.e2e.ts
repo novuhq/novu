@@ -7,13 +7,15 @@ import {
   SubscriberEntity,
   JobRepository,
   JobStatusEnum,
+  JobEntity,
 } from '@novu/dal';
 import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { UserSession, SubscribersService } from '@novu/testing';
-
-import { WorkflowQueueProducerService } from '../services/workflow-queue/workflow-queue-producer.service';
+import { QueueService } from '@novu/application-generic';
 
 const axiosInstance = axios.create();
+
+const promiseTimeout = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', function () {
   let session: UserSession;
@@ -21,7 +23,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
-  let workflowQueueProducerService: WorkflowQueueProducerService;
+  let queueService: QueueService;
   const messageRepository = new MessageRepository();
 
   const triggerEvent = async (payload, transactionId?: string): Promise<void> => {
@@ -47,7 +49,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-    workflowQueueProducerService = session.testServer?.getService(WorkflowQueueProducerService);
+    queueService = session.testServer?.getService(QueueService);
   });
 
   it('should digest events within time interval', async function () {
@@ -1226,8 +1228,15 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
     expect(mergedJobs.length).to.eql(9);
 
-    const delayedJobUpdateTime = delayedJobs[0].updatedAt;
+    let delayedJobUpdateTime = delayedJobs[0].updatedAt;
     expect(delayedJobUpdateTime).to.be.ok;
+
+    let delayed = delayedJobs[0];
+    do {
+      delayed = (await jobRepository.findById(delayedJobs[0]._id)) as JobEntity;
+      delayedJobUpdateTime = delayed.updatedAt;
+      await promiseTimeout(100);
+    } while (delayed.status !== JobStatusEnum.COMPLETED);
 
     /*
      * As the only one digest job delayed, because it is updated after creation, its update time has to be greater than the other jobs

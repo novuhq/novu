@@ -57,7 +57,7 @@ export async function bootstrap(): Promise<INestApplication> {
   );
 
   app.useGlobalInterceptors(new ResponseInterceptor());
-  app.useGlobalInterceptors(getErrorInterceptor());
+  app.useGlobalInterceptors(getErrorInterceptor() as any);
 
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
