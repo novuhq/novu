@@ -1,6 +1,7 @@
 export * from './sns.handler';
 export * from './telnyx.handler';
 export * from './twilio.handler';
+export * from './maqsam.handler';
 export * from './plivo.handler';
 export * from './sms77.handler';
 export * from './clickatell.handler';
@@ -14,4 +15,8 @@ export * from './bulksms.handler';
 =======
 export * from './forty-six-elks.handler';
 export * from './kannel.handler';
+<<<<<<< HEAD
 >>>>>>> main
+=======
+export * from './sms-central.handler';
+>>>>>>> next

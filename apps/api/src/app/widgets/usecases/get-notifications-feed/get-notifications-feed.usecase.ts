@@ -1,14 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
-import { MessageRepository, SubscriberRepository } from '@novu/dal';
-
+import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { Cached } from '../../../shared/interceptors';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
+import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
+import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
+import { buildFeedKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class GetNotificationsFeed {
@@ -18,11 +19,22 @@ export class GetNotificationsFeed {
     private subscriberRepository: SubscriberRepository
   ) {}
 
-  @Cached(CacheKeyPrefixEnum.FEED)
+  @CachedQuery({
+    builder: ({ environmentId, subscriberId, ...command }: GetNotificationsFeedCommand) =>
+      buildFeedKey().cache({
+        environmentId: environmentId,
+        subscriberId: subscriberId,
+        ...command,
+      }),
+  })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
     const LIMIT = 10;
 
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    const subscriber = await this.fetchSubscriber({
+      _environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+    });
+
     if (!subscriber) {
       throw new ApiException(
         'Subscriber not found for this environment with the id: ' +
@@ -57,14 +69,32 @@ export class GetNotificationsFeed {
       {
         feedId: command.feedId,
         seen: command.query.seen,
+        read: command.query.read,
       }
     );
 
     return {
       data: feed || [],
-      totalCount: totalCount,
+      totalCount: totalCount || 0,
       pageSize: LIMIT,
       page: command.page,
     };
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  private async fetchSubscriber({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity | null> {
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 }

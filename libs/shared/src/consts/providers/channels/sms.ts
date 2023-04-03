@@ -16,7 +16,12 @@ import {
 =======
   fortySixElksConfig,
   kannelConfig,
+<<<<<<< HEAD
 >>>>>>> main
+=======
+  maqsamConfig,
+  smsCentralConfig,
+>>>>>>> next
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -138,5 +143,21 @@ export const smsProviders: IProviderConfig[] = [
     docReference: 'https://www.kannel.org/doc.shtml',
     logoFileName: { light: 'kannel.png', dark: 'kannel.png' },
 >>>>>>> main
+  },
+  {
+    id: SmsProviderIdEnum.Maqsam,
+    displayName: 'Maqsam',
+    channel: ChannelTypeEnum.SMS,
+    credentials: maqsamConfig,
+    docReference: 'https://portal.maqsam.com/docs/v2/sms',
+    logoFileName: { light: 'maqsam.png', dark: 'maqsam.png' },
+  },
+  {
+    id: SmsProviderIdEnum.SmsCentral,
+    displayName: 'SMS Central',
+    channel: ChannelTypeEnum.SMS,
+    credentials: smsCentralConfig,
+    docReference: 'https://www.smscentral.com.au/sms-api/',
+    logoFileName: { light: 'sms-central.png', dark: 'sms-central.png' },
   },
 ];

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { CachingConfig, ICacheService } from './cache.service';
+import { CachingConfig, ICacheService, splitKey } from './cache.service';
 
 describe('cache-service', function () {
   let cacheService: ICacheService;
@@ -36,6 +36,30 @@ describe('cache-service', function () {
     expect(res2).to.be.equal(undefined);
     expect(res3).to.be.equal(undefined);
   });
+
+  describe('splitKey', () => {
+    it('should split the key into credentials and query parts', () => {
+      const key =
+        'query:integration:e=642578cea9684e9ebea5b04c:#query#={\\"channelType\\":\\"email\\",\\"findOne\\":true}';
+      const result = splitKey(key);
+      expect(result.credentials).to.equal('query:integration:e=642578cea9684e9ebea5b04c');
+      expect(result.query).to.equal('{\\"channelType\\":\\"email\\",\\"findOne\\":true}');
+    });
+
+    it('should handle keys without a query part', () => {
+      const key = 'query:integration:e=642578cea9684e9ebea5b04c:#query#=';
+      const result = splitKey(key);
+      expect(result.credentials).to.equal('query:integration:e=642578cea9684e9ebea5b04c');
+      expect(result.query).to.equal('');
+    });
+
+    it('should handle keys without a credentials part', () => {
+      const key = ':#query#={\\"channelType\\":\\"email\\",\\"findOne\\":true}';
+      const result = splitKey(key);
+      expect(result.credentials).to.equal('');
+      expect(result.query).to.equal('{\\"channelType\\":\\"email\\",\\"findOne\\":true}');
+    });
+  });
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -56,7 +80,9 @@ export const CacheService = {
         return;
       },
       delByPattern(pattern?: string) {
-        const preFixSuffixTuple = pattern.split('*');
+        const preFixSuffixTuple = pattern?.split('*');
+
+        if (!preFixSuffixTuple) return;
 
         for (const key in data) {
           if (key.startsWith(preFixSuffixTuple[0]) && key.endsWith(preFixSuffixTuple[1])) delete data[key];

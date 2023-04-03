@@ -34,8 +34,7 @@
     "node": ">=10"
   },
   "peerDependencies": {
-    "@nestjs/common": "^9.3.9",
-    "rxjs": "7.5.6"
+    "@nestjs/common": "^9.3.9"
   },
   "dependencies": {
     "@novu/dal": "^0.13.0",
@@ -59,6 +58,7 @@
     "@novu/shared": "^0.13.0",
     "@novu/slack": "^0.13.0",
     "@novu/sms77": "^0.13.0",
+    "@novu/sms-central": "^0.13.0",
     "@novu/sns": "^0.13.0",
     "@novu/stateless": "^0.13.0",
     "@novu/telnyx": "^0.13.0",
@@ -69,6 +69,7 @@
     "analytics-node": "^6.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "bullmq": "^3.10.2",
     "decorate-all": "^1.2.1",
     "maskdata": "^1.2.0",
     "nestjs-pino": "^3.1.2",

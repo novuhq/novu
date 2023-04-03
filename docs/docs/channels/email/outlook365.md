@@ -1,3 +1,8 @@
+---
+sidebar_label: Outlook 365
+sidebar_position: 9
+---
+
 # Outlook365 ( based in custom SMTP server)
 
 You can use the [Outlook 365](https://office.com) provider to send transactional emails through your instance of Office 365 to your customers using the Novu Platform with a single API.

@@ -53,6 +53,7 @@ export enum SmsProviderIdEnum {
   Nexmo = 'nexmo',
   Plivo = 'plivo',
   Sms77 = 'sms77',
+  SmsCentral = 'sms-central',
   SNS = 'sns',
   Telnyx = 'telnyx',
   Twilio = 'twilio',
@@ -66,7 +67,11 @@ export enum SmsProviderIdEnum {
 =======
   FortySixElks = 'forty-six-elks',
   Kannel = 'kannel',
+<<<<<<< HEAD
 >>>>>>> main
+=======
+  Maqsam = 'maqsam',
+>>>>>>> next
 }
 
 export enum ChatProviderIdEnum {
