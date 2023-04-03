@@ -21,6 +21,7 @@ export interface ICredentialsDto {
   requireTls?: boolean;
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;
+  baseUrl?: string;
 }
 export interface IConstructIntegrationDto {
   credentials: ICredentialsDto;

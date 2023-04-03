@@ -21,14 +21,15 @@ export class MailService {
   private sendgrid = sgApi;
 
   constructor() {
-    this.sendgrid.setApiKey(process.env.SENDGRID_API_KEY);
+    this.sendgrid.setApiKey(process.env.SENDGRID_API_KEY ?? '');
   }
 
   async sendMail(mail: ISendMail) {
     if (!mail.templateId && !mail.subject) throw new Error('Either templateId or subject must be present');
     if (process.env.NODE_ENV === 'test') return null;
 
-    const mailObject: sgApi.MailDataRequired = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mailObject: any = {
       subject: mail.subject,
       dynamicTemplateData: mail.params,
       to: mail.to,
@@ -51,6 +52,6 @@ export class MailService {
       mailObject.html = mail.html;
     }
 
-    return await this.sendgrid.send(mailObject as never, false);
+    return await this.sendgrid.send(mailObject, false);
   }
 }

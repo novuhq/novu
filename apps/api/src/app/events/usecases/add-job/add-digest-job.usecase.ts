@@ -7,10 +7,10 @@ import { AddJob } from './add-job.usecase';
 import { DigestFilterSteps } from '../digest-filter-steps/digest-filter-steps.usecase';
 
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { EventsDistributedLockService } from '../../services/distributed-lock-service';
 
@@ -83,7 +83,7 @@ export class AddDigestJob {
     digestKey?: string,
     digestValue?: string | number
   ): Promise<IFindAndUpdateResponse> {
-    const TTL = 500;
+    const TTL = 1500;
     let resource = `environment:${job._environmentId}:template:${job._templateId}:subscriber:${job._subscriberId}`;
     if (digestKey && digestValue) {
       resource = `${resource}:digestKey:${digestKey}:digestValue:${digestValue}`;

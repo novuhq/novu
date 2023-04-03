@@ -59,13 +59,13 @@ export function ContentRow({
           <TextAlignmentWrapper colorScheme={theme.colorScheme}>
             {textAlignments.map(([dir, icon], i) => (
               <Button
-                key={`align-${dir}-btn`}
+                key={`align-${dir as string}-btn`}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   field.onChange(dir);
                 }}
-                data-test-id={`align-${dir}-btn`}
+                data-test-id={`align-${dir as string}-btn`}
                 variant={dir === field.value ? 'gradient' : 'outline'}
               >
                 {icon}
@@ -102,6 +102,7 @@ export function ContentRow({
                   </ActionIcon>
                 </SettingsButton>
               }
+              position="top"
             >
               {rowStyleMenu}
             </Dropdown>

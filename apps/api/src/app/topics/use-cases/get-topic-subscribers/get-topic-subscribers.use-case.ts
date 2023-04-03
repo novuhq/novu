@@ -3,7 +3,7 @@ import { TopicSubscribersEntity, TopicSubscribersRepository, TopicRepository } f
 
 import { GetTopicSubscribersCommand } from './get-topic-subscribers.command';
 
-import { TopicSubscribersDto } from '../../dtos/topic-subscribers.dto';
+import { TopicSubscriberDto } from '../../dtos/topic-subscriber.dto';
 
 @Injectable()
 export class GetTopicSubscribersUseCase {
@@ -37,14 +37,14 @@ export class GetTopicSubscribersUseCase {
     return topicSubscribers.map(this.mapFromEntity);
   }
 
-  private mapFromEntity(topicSubscribers: TopicSubscribersEntity): TopicSubscribersDto {
+  private mapFromEntity(topicSubscriber: TopicSubscribersEntity): TopicSubscriberDto {
     return {
-      ...topicSubscribers,
-      topicKey: topicSubscribers.topicKey,
-      _topicId: topicSubscribers._topicId,
-      _organizationId: topicSubscribers._organizationId,
-      _environmentId: topicSubscribers._environmentId,
-      _subscriberId: topicSubscribers._subscriberId,
+      ...topicSubscriber,
+      topicKey: topicSubscriber.topicKey,
+      _topicId: topicSubscriber._topicId,
+      _organizationId: topicSubscriber._organizationId,
+      _environmentId: topicSubscriber._environmentId,
+      _subscriberId: topicSubscriber._subscriberId,
     };
   }
 }

@@ -11,7 +11,12 @@ import {
   infobipSMSConfig,
   burstSmsConfig,
   clickatellConfig,
+<<<<<<< HEAD
   bulksmsConfig,
+=======
+  fortySixElksConfig,
+  kannelConfig,
+>>>>>>> main
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -109,11 +114,29 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
   },
   {
+<<<<<<< HEAD
     id: SmsProviderIdEnum.Bulksms,
     displayName: 'Bulksms',
     channel: ChannelTypeEnum.SMS,
     credentials: bulksmsConfig,
     docReference: 'http://login.bulksmsoffers.com/apidoc/textsms/send-sms.php',
     logoFileName: { light: 'bulksms.png', dark: 'bulksms.png' },
+=======
+    id: SmsProviderIdEnum.FortySixElks,
+    displayName: '46elks',
+    channel: ChannelTypeEnum.SMS,
+    credentials: fortySixElksConfig,
+    docReference: 'https://46elks.com/docs/send-sms',
+    logoFileName: { light: '46elks.png', dark: '46elks.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Kannel,
+    displayName: 'Kannel SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: kannelConfig,
+    betaVersion: true,
+    docReference: 'https://www.kannel.org/doc.shtml',
+    logoFileName: { light: 'kannel.png', dark: 'kannel.png' },
+>>>>>>> main
   },
 ];

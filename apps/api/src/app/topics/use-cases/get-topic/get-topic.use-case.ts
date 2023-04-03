@@ -3,7 +3,7 @@ import { TopicEntity, TopicRepository } from '@novu/dal';
 
 import { GetTopicCommand } from './get-topic.command';
 
-import { TopicDto } from '../../dtos/topic.dto';
+import { TopicDto } from '../../dtos';
 import { ExternalSubscriberId } from '../../types';
 
 @Injectable()

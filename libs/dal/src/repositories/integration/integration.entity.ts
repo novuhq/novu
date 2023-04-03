@@ -1,4 +1,9 @@
+import { Types } from 'mongoose';
 import { ChannelTypeEnum } from '@novu/shared';
+
+import type { EnvironmentId } from '../environment';
+import type { OrganizationId } from '../organization';
+import { ChangePropsValueType } from '../../types/helpers';
 
 export interface ICredentials {
   route?: string;
@@ -29,11 +34,11 @@ export interface ICredentials {
 }
 
 export class IntegrationEntity {
-  _id?: string;
+  _id: string;
 
-  _environmentId: string;
+  _environmentId: EnvironmentId;
 
-  _organizationId: string;
+  _organizationId: OrganizationId;
 
   providerId: string;
 
@@ -49,3 +54,5 @@ export class IntegrationEntity {
 
   deletedBy: string;
 }
+
+export type IntegrationDBModel = ChangePropsValueType<IntegrationEntity, '_environmentId' | '_organizationId'>;

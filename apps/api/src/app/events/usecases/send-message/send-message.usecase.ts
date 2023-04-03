@@ -27,11 +27,11 @@ import { Digest } from './digest/digest.usecase';
 
 import { MessageMatcher } from '../message-matcher';
 
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -88,6 +88,7 @@ export class SendMessage {
         filterPassed: shouldRun,
         preferencesPassed: preferred,
         ...(usedFilters || {}),
+        source: command.payload.__source || 'api',
       });
     }
 
@@ -176,6 +177,7 @@ export class SendMessage {
       _id: job._templateId,
       environmentId: job._environmentId,
     });
+    if (!template) throw new ApiException(`Notification template ${job._templateId} is not found`);
 
     const subscriber = await this.subscriberRepository.findById(job._subscriberId);
     if (!subscriber) throw new ApiException('Subscriber not found with id ' + job._subscriberId);

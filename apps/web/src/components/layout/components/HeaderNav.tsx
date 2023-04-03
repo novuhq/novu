@@ -39,13 +39,14 @@ export function HeaderNav({}: Props) {
     useEffect(() => {
       if (currentUser && currentOrganization) {
         boot({
-          email: currentUser?.email,
+          email: currentUser?.email ?? '',
           name: currentUser?.firstName + ' ' + currentUser?.lastName,
           createdAt: currentUser?.createdAt,
           company: {
             name: currentOrganization?.name,
             companyId: currentOrganization?._id as string,
           },
+          userHash: currentUser.servicesHashes?.intercom,
         });
       }
     }, [currentUser, currentOrganization]);
@@ -53,7 +54,6 @@ export function HeaderNav({}: Props) {
 
   useEffect(() => {
     if (!LOGROCKET_ID) return;
-
     if (currentUser && currentOrganization) {
       let logrocketTraits;
 

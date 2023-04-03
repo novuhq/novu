@@ -16,6 +16,7 @@ interface IButtonProps extends JSX.ElementChildrenAttribute, SpacingProps {
   submit?: boolean;
   onClick?: (e: any) => void;
   inherit?: boolean;
+  pulse?: boolean;
 }
 
 /**
@@ -33,9 +34,10 @@ export function Button({
   inherit = false,
   onClick,
   variant = 'gradient',
+  pulse,
   ...props
 }: IButtonProps) {
-  const { classes } = useStyles({ disabled, inherit, variant });
+  const { classes } = useStyles({ disabled, inherit, variant, pulse });
   const withIconProps = icon ? { leftIcon: icon } : {};
 
   return (

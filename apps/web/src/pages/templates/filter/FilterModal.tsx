@@ -1,12 +1,14 @@
 import { Divider, Grid, Group, Modal, useMantineTheme } from '@mantine/core';
 import { Controller, useFieldArray } from 'react-hook-form';
-import { FILTER_TO_LABEL, FilterPartTypeEnum } from '@novu/shared';
+import { FILTER_TO_LABEL, FilterPartTypeEnum, ChannelTypeEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
 import { Button, colors, Input, Select, shadows, Title } from '../../../design-system';
 import { Trash } from '../../../design-system/icons';
 import { DeleteStepButton, FilterButton } from './FilterModal.styles';
 import { OnlineFiltersForms } from './OnlineFiltersForms';
+import { PreviousStepFiltersForm } from './PreviousStepFiltersForm';
+import { useMemo } from 'react';
 
 export function FilterModal({
   isOpen,
@@ -27,6 +29,47 @@ export function FilterModal({
     control,
     name: `steps.${stepIndex}.filters.0.children`,
   });
+
+  const { fields: steps } = useFieldArray({
+    control,
+    name: `steps`,
+  });
+
+  const FilterPartTypeList = useMemo(() => {
+    const list = [
+      { value: FilterPartTypeEnum.PAYLOAD, label: FILTER_TO_LABEL[FilterPartTypeEnum.PAYLOAD] },
+      {
+        value: FilterPartTypeEnum.SUBSCRIBER,
+        label: FILTER_TO_LABEL[FilterPartTypeEnum.SUBSCRIBER],
+      },
+      { value: FilterPartTypeEnum.WEBHOOK, label: FILTER_TO_LABEL[FilterPartTypeEnum.WEBHOOK] },
+      { value: FilterPartTypeEnum.IS_ONLINE, label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE] },
+      {
+        value: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
+        label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE_IN_LAST],
+      },
+    ];
+
+    if (steps.length < 2) {
+      return list;
+    }
+
+    const stepsBeforeSelectedStep = steps.slice(0, stepIndex);
+    const selectableSteps = stepsBeforeSelectedStep.filter((step: any) => {
+      return [ChannelTypeEnum.EMAIL, ChannelTypeEnum.IN_APP].includes(step.template.type);
+    });
+
+    if (selectableSteps.length === 0) {
+      return list;
+    }
+
+    list.push({
+      value: FilterPartTypeEnum.PREVIOUS_STEP,
+      label: FILTER_TO_LABEL[FilterPartTypeEnum.PREVIOUS_STEP],
+    });
+
+    return list;
+  }, [steps, stepIndex]);
 
   function handleOnChildOnChange(index: number) {
     return (data) => {
@@ -120,19 +163,7 @@ export function FilterModal({
                     return (
                       <Select
                         placeholder="On"
-                        data={[
-                          { value: FilterPartTypeEnum.PAYLOAD, label: FILTER_TO_LABEL[FilterPartTypeEnum.PAYLOAD] },
-                          {
-                            value: FilterPartTypeEnum.SUBSCRIBER,
-                            label: FILTER_TO_LABEL[FilterPartTypeEnum.SUBSCRIBER],
-                          },
-                          { value: FilterPartTypeEnum.WEBHOOK, label: FILTER_TO_LABEL[FilterPartTypeEnum.WEBHOOK] },
-                          { value: FilterPartTypeEnum.IS_ONLINE, label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE] },
-                          {
-                            value: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
-                            label: FILTER_TO_LABEL[FilterPartTypeEnum.IS_ONLINE_IN_LAST],
-                          },
-                        ]}
+                        data={FilterPartTypeList}
                         {...field}
                         onChange={handleOnChildOnChange(index)}
                         data-test-id="filter-on-dropdown"
@@ -142,7 +173,7 @@ export function FilterModal({
                 />
               </Grid.Col>
 
-              <When truthy={filterFieldOn === 'webhook'}>
+              <When truthy={filterFieldOn === FilterPartTypeEnum.WEBHOOK}>
                 <WebHookUrlForm control={control} stepIndex={stepIndex} index={index} />
                 <EqualityForm
                   fieldOn={filterFieldOn}
@@ -153,7 +184,12 @@ export function FilterModal({
                 />
               </When>
 
-              <When truthy={filterFieldOn === 'isOnline' || filterFieldOn === 'isOnlineInLast'}>
+              <When
+                truthy={
+                  filterFieldOn === FilterPartTypeEnum.IS_ONLINE ||
+                  filterFieldOn === FilterPartTypeEnum.IS_ONLINE_IN_LAST
+                }
+              >
                 <OnlineFiltersForms
                   fieldOn={filterFieldOn}
                   control={control}
@@ -162,7 +198,9 @@ export function FilterModal({
                   remove={remove}
                 />
               </When>
-              <When truthy={filterFieldOn === 'payload' || filterFieldOn === 'subscriber'}>
+              <When
+                truthy={filterFieldOn === FilterPartTypeEnum.PAYLOAD || filterFieldOn === FilterPartTypeEnum.SUBSCRIBER}
+              >
                 <EqualityForm
                   fieldOn={filterFieldOn}
                   control={control}
@@ -170,6 +208,9 @@ export function FilterModal({
                   index={index}
                   remove={remove}
                 />
+              </When>
+              <When truthy={filterFieldOn === FilterPartTypeEnum.PREVIOUS_STEP}>
+                <PreviousStepFiltersForm control={control} stepIndex={stepIndex} index={index} remove={remove} />
               </When>
             </Grid>
             <When truthy={fields.length > index + 1}>

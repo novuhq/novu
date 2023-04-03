@@ -57,7 +57,7 @@ export interface INotificationCenterContext {
   isLoading: boolean;
   header: ({ setScreen }: { setScreen: (screen: ScreensEnum) => void }) => JSX.Element;
   footer: () => JSX.Element;
-  emptyState: () => JSX.Element;
+  emptyState: JSX.Element;
   listItem: ListItem;
   actionsResultBlock: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   tabs?: ITab[];
@@ -111,6 +111,7 @@ export interface INotificationsContext {
   removeMessage: (messageId: string) => void;
   markAllNotificationsAsRead: () => void;
   markAllNotificationsAsSeen: () => void;
+  markAllNotificationsAsReadByFeed: () => void;
 }
 
 export interface ITab {

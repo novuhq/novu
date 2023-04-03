@@ -148,6 +148,13 @@ To send an email notification to all subscribers who were active within the last
 - Select "Online in the last X time period" and choose "minutes" as the time period.
 - Enter "30" in the input field.
 
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="/img/platform/filter/dark-is-online-filter.gif"/>
+    <img src="/img/platform/filter/light-is-online-filter.gif" alt="is-online-filter"/>
+  </picture>
+</div>
+
 By applying this filter, the notification will only be delivered to subscribers who have been active within the last 30 minutes, ensuring that the message is reaching engaged and active recipients.
 
 ### Online filter Mechanism

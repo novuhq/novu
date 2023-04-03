@@ -39,7 +39,9 @@ export function TestNotificationTrigger() {
       await testTrigger({
         name: onboardingNotificationTemplate?.triggers[0].identifier,
         to: { subscriberId: onBoardingSubscriberId },
-        payload: {},
+        payload: {
+          __source: 'in-app-onboarding',
+        },
       });
 
       successMessage('Template triggered successfully');

@@ -66,6 +66,13 @@ export class Subscribers extends WithHttp implements ISubscribers {
     });
   }
 
+  async unsetCredentials(subscriberId: string, providerId: string) {
+    return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
+      providerId,
+      credentials: { webhookUrl: undefined },
+    });
+  }
+
   async delete(subscriberId: string) {
     return await this.http.delete(`/subscribers/${subscriberId}`);
   }

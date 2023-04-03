@@ -5,11 +5,22 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.initializeSession().as('session');
   });
 
+  const interceptEditTemplateRequests = () => {
+    cy.intercept('**/notification-templates/**').as('getTemplateToEdit');
+    cy.intercept('**/notification-groups').as('getNotificationGroups');
+  };
+
+  const waitForEditTemplateRequests = () => {
+    cy.wait('@getTemplateToEdit');
+    cy.wait('@getNotificationGroups');
+  };
+
   it('should be able to delete a step', function () {
+    interceptEditTemplateRequests();
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
-    cy.waitForNetworkIdle(500);
+    waitForEditTemplateRequests();
 
     clickWorkflow();
 
@@ -30,11 +41,11 @@ describe('Workflow Editor - Steps Actions', function () {
   });
 
   it('should show add step in sidebar after delete', function () {
+    interceptEditTemplateRequests();
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
-
-    cy.waitForNetworkIdle(500);
+    waitForEditTemplateRequests();
 
     cy.waitLoadEnv(() => {
       clickWorkflow();
@@ -49,10 +60,12 @@ describe('Workflow Editor - Steps Actions', function () {
   });
 
   it('should keep steps order on reload', function () {
+    interceptEditTemplateRequests();
     const template = this.session.templates[0];
 
     cy.visit('/templates/edit/' + template._id);
-    cy.waitForNetworkIdle(500);
+    waitForEditTemplateRequests();
+
     clickWorkflow();
 
     dragAndDrop('sms');
@@ -144,6 +157,58 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.get('.filter-item').contains('subscriber filter-key equal');
     cy.get('.filter-item-value').contains('filter-value');
+  });
+
+  it('should be able to add read/seen filters to a particular step', function () {
+    const template = this.session.templates[0];
+
+    cy.visit('/templates/edit/' + template._id);
+
+    cy.waitForNetworkIdle(500);
+
+    clickWorkflow();
+
+    cy.clickWorkflowNode(`node-emailSelector`);
+
+    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('group-rules-dropdown').click();
+    cy.get('.mantine-Select-item').contains('And').click();
+
+    cy.getByTestId('create-rule-btn').click();
+    cy.getByTestId('filter-on-dropdown').click();
+    cy.get('.mantine-Select-item').contains('Previous step').click();
+
+    cy.getByTestId('previous-step-dropdown').click();
+    cy.get('.mantine-Select-item').contains('In-App').click();
+    cy.getByTestId('previous-step-type-dropdown').click();
+    cy.get('.mantine-Select-item').contains('Read').click();
+
+    cy.getByTestId('filter-confirm-btn').click();
+
+    cy.get('.filter-item').should('have.length', 1);
+
+    cy.get('.filter-item').contains('Previous step - In-App');
+    cy.get('.filter-item-value').contains('read');
+  });
+
+  it('should be able to not add read/seen filters to first step', function () {
+    const template = this.session.templates[0];
+
+    cy.visit('/templates/edit/' + template._id);
+
+    cy.waitForNetworkIdle(500);
+
+    clickWorkflow();
+
+    cy.clickWorkflowNode(`node-inAppSelector`);
+
+    cy.getByTestId('add-filter-btn').click();
+    cy.getByTestId('group-rules-dropdown').click();
+    cy.get('.mantine-Select-item').contains('And').click();
+
+    cy.getByTestId('create-rule-btn').click();
+    cy.getByTestId('filter-on-dropdown').click();
+    cy.get('.mantine-Select-item').contains('Previous step').should('not.exist');
   });
 
   it('should be able to remove filters for a particular step', function () {

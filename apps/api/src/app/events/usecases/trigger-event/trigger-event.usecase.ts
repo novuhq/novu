@@ -1,32 +1,16 @@
-import {
-  JobEntity,
-  JobRepository,
-  NotificationTemplateEntity,
-  NotificationTemplateRepository,
-  NotificationRepository,
-} from '@novu/dal';
+import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  ChannelTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  InAppProviderIdEnum,
-  StepTypeEnum,
-  STEP_TYPE_TO_CHANNEL_TYPE,
-} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 
 import { TriggerEventCommand } from './trigger-event.command';
 
-import { AddJob } from '../add-job/add-job.usecase';
+import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { CreateNotificationJobsCommand, CreateNotificationJobs } from '../create-notification-jobs';
 import { ProcessSubscriber, ProcessSubscriberCommand } from '../process-subscriber';
 
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
-import {
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+import { EventsPerformanceService } from '../../services/performance-service';
+
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -35,20 +19,24 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
+import { PinoLogger } from '@novu/application-generic';
+
 @Injectable()
 export class TriggerEvent {
   constructor(
-    private addJobUsecase: AddJob,
+    private storeSubscriberJobs: StoreSubscriberJobs,
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
-    private jobRepository: JobRepository,
-    private notificationRepository: NotificationRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository,
     private getDecryptedIntegrations: GetDecryptedIntegrations,
-    protected createExecutionDetails: CreateExecutionDetails
+    protected performanceService: EventsPerformanceService,
+    private jobRepository: JobRepository,
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    private logger: PinoLogger
   ) {}
 
   async execute(command: TriggerEventCommand) {
+    const mark = this.performanceService.buildTriggerEventMark(command.identifier, command.transactionId);
+
     const { actor, environmentId, identifier, organizationId, to, userId } = command;
 
     await this.validateTransactionIdProperty(command.transactionId, organizationId, environmentId);
@@ -58,6 +46,12 @@ export class TriggerEvent {
       data: {
         triggerIdentifier: identifier,
       },
+    });
+
+    this.logger.assign({
+      transactionId: command.transactionId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
     });
 
     const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
@@ -82,7 +76,7 @@ export class TriggerEvent {
       template
     );
 
-    const jobs: Omit<JobEntity, '_id'>[][] = [];
+    const subscribersJobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[][] = [];
 
     // We might have a single actor for every trigger so we only need to check for it once
     let actorProcessed;
@@ -126,62 +120,20 @@ export class TriggerEvent {
 
         const notificationJobs = await this.createNotificationJobs.execute(createNotificationJobsCommand);
 
-        jobs.push(notificationJobs);
+        subscribersJobs.push(notificationJobs);
       }
     }
 
-    for (const job of jobs) {
-      await this.storeAndAddJob(job);
-    }
-  }
-
-  private async storeAndAddJob(jobs: Omit<JobEntity, '_id'>[]) {
-    const storedJobs = await this.jobRepository.storeJobs(jobs);
-    const channels = storedJobs
-      .map((item) => item.type as StepTypeEnum)
-      .reduce<StepTypeEnum[]>((list, channel) => {
-        if (list.includes(channel) || channel === StepTypeEnum.TRIGGER) {
-          return list;
-        }
-        list.push(channel);
-
-        return list;
-      }, []);
-
-    for (const job of storedJobs) {
-      this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEP_CREATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: false,
-        })
-      );
+    for (const subscriberJobs of subscribersJobs) {
+      const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
+        environmentId: command.environmentId,
+        jobs: subscriberJobs,
+        organizationId: command.organizationId,
+      });
+      await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
     }
 
-    const firstJob = storedJobs[0];
-
-    await this.notificationRepository.update(
-      {
-        _organizationId: firstJob._organizationId,
-        _id: firstJob._notificationId,
-      },
-      {
-        $set: {
-          channels: channels,
-        },
-      }
-    );
-
-    await this.addJobUsecase.execute({
-      userId: firstJob._userId,
-      environmentId: firstJob._environmentId,
-      organizationId: firstJob._organizationId,
-      jobId: firstJob._id,
-      job: firstJob,
-    });
+    this.performanceService.setEnd(mark);
   }
 
   private async validateTransactionIdProperty(

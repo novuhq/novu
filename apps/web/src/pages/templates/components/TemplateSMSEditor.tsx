@@ -1,4 +1,5 @@
 import { Control, Controller, useFormContext } from 'react-hook-form';
+import { ChannelTypeEnum } from '@novu/shared';
 
 import { LackIntegrationError } from './LackIntegrationError';
 import type { IForm } from './formTypes';
@@ -26,7 +27,7 @@ export function TemplateSMSEditor({
 
   return (
     <>
-      {!isIntegrationActive ? <LackIntegrationError channelType="SMS" /> : null}
+      {!isIntegrationActive ? <LackIntegrationError channel="SMS" channelType={ChannelTypeEnum.SMS} /> : null}
       <Controller
         name={`steps.${index}.template.content` as any}
         defaultValue=""

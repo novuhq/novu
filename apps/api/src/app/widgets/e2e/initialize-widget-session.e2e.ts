@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { EnvironmentRepository } from '@novu/dal';
-import { createHmac } from 'crypto';
+import { createHash } from '../../shared/helpers/hmac.service';
 
 describe('Initialize Session - /widgets/session/initialize (POST)', async () => {
   let session: UserSession;
@@ -51,7 +51,7 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
 
     await enableWidgetSecurityEncryption(environmentRepository, session);
 
-    const hmacHash = createHmac('sha256', secretKey).update(subscriberId).digest('hex');
+    const hmacHash = createHash(secretKey, subscriberId);
     const response = await initWidgetSession(subscriberId, session, hmacHash);
 
     expect(response.status).to.equal(201);
@@ -65,11 +65,12 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     await enableWidgetSecurityEncryption(environmentRepository, session);
 
     const invalidSubscriberId = validSubscriberId + '0';
-    hmacHash = createHmac('sha256', validSecretKey).update(invalidSubscriberId).digest('hex');
+    hmacHash = createHash(validSecretKey, invalidSubscriberId);
+
     const responseInvalidSubscriberId = await initWidgetSession(validSubscriberId, session, hmacHash);
 
     const invalidSecretKey = validSecretKey + '0';
-    hmacHash = createHmac('sha256', invalidSecretKey).update(validSubscriberId).digest('hex');
+    hmacHash = createHash(invalidSecretKey, validSubscriberId);
     const responseInvalidSecretKey = await initWidgetSession(validSubscriberId, session, hmacHash);
 
     expect(responseInvalidSubscriberId.body.message).to.contain('Please provide a valid HMAC hash');

@@ -12,7 +12,12 @@ import {
   InfobipSmsHandler,
   BurstSmsHandler,
   ClickatellHandler,
+<<<<<<< HEAD
   BulkSmsSmsHandler,
+=======
+  FortySixElksHandler,
+  KannelSmsHandler,
+>>>>>>> main
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -28,10 +33,15 @@ export class SmsFactory implements ISmsFactory {
     new FiretextSmsHandler(),
     new InfobipSmsHandler(),
     new BurstSmsHandler(),
+<<<<<<< HEAD
     new BulkSmsSmsHandler(),
+=======
+    new FortySixElksHandler(),
+    new KannelSmsHandler(),
+>>>>>>> main
   ];
 
-  getHandler(integration: IntegrationEntity): ISmsHandler {
+  getHandler(integration: IntegrationEntity) {
     try {
       const handler =
         this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;

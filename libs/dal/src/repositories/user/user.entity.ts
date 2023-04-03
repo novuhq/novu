@@ -9,6 +9,7 @@ export interface IUserToken {
   accessToken: string;
   refreshToken: string;
   valid: boolean;
+  username?: string;
 }
 
 export interface IUserResetTokenCount {
@@ -47,4 +48,8 @@ export class UserEntity {
     times: number;
     lastFailedAttempt: string;
   };
+
+  servicesHashes?: { intercom?: string };
 }
+
+export type UserDBModel = UserEntity;

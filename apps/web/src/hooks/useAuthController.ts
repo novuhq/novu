@@ -75,7 +75,7 @@ export function useAuthController() {
       segment.identify(user);
 
       Sentry.setUser({
-        email: user.email,
+        email: user.email ?? '',
         username: `${user.firstName} ${user.lastName}`,
         id: user._id,
         organizationId: organization._id,

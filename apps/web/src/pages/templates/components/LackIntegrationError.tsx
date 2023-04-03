@@ -1,12 +1,28 @@
-import React from 'react';
+import { useState } from 'react';
 import styled from '@emotion/styled';
+import { ChannelTypeEnum } from '@novu/shared';
+
 import { Text } from '../../../design-system';
 import { DoubleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../../constants/routes.enum';
+import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { TemplateEditorAnalyticsEnum } from '../constants';
 
-export function LackIntegrationError({ channelType, text }: { channelType: string; text?: string }) {
-  const navigate = useNavigate();
+const DoubleArrowRightStyled = styled(DoubleArrowRight)`
+  cursor: pointer;
+`;
+
+export function LackIntegrationError({
+  channel,
+  channelType,
+  text,
+}: {
+  channel: string;
+  channelType: ChannelTypeEnum;
+  text?: string;
+}) {
+  const segment = useSegment();
+  const [isIntegrationsModalOpened, openIntegrationsModal] = useState(false);
 
   return (
     <>
@@ -14,10 +30,20 @@ export function LackIntegrationError({ channelType, text }: { channelType: strin
         <Text>
           {text
             ? text
-            : `Looks like you haven’t configured your ${channelType} provider yet, this channel will be disabled until you configure it.`}
+            : `Looks like you haven’t configured your ${channel} provider yet, this channel will be disabled until you configure it.`}
         </Text>
-        <DoubleArrowRight onClick={() => navigate(ROUTES.INTEGRATIONS)} />
+        <DoubleArrowRightStyled
+          onClick={() => {
+            openIntegrationsModal(true);
+            segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
+          }}
+        />
       </WarningMessage>
+      <IntegrationsStoreModal
+        openIntegration={isIntegrationsModalOpened}
+        closeIntegration={() => openIntegrationsModal(false)}
+        scrollTo={channelType}
+      />
     </>
   );
 }

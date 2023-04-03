@@ -103,7 +103,7 @@ export function getQueryParams(keysConfig: Record<string, unknown>): string {
 
     const elementValue = typeof value === 'object' ? JSON.stringify(value) : value;
 
-    const elementKey = `${key}=${elementValue}`;
+    const elementKey = `${key}=${elementValue as string}`;
 
     if (elementKey) {
       result += ':' + elementKey;
@@ -124,9 +124,9 @@ export function getCredentialsKeys() {
  */
 export function buildCachedQuery(args: unknown[]): Record<string, unknown> {
   const fromStringArray = { id: args[0], environmentId: args[1] };
-  const fromObjectArray = args.reduce((obj, item) => Object.assign(obj, item), {});
+  const fromObjectArray = args.reduce<Record<string, unknown>>((obj, item) => Object.assign(obj, item), {});
 
-  return (typeof args[0] === 'string' ? fromStringArray : fromObjectArray) as Record<string, unknown>;
+  return typeof args[0] === 'string' ? fromStringArray : fromObjectArray;
 }
 
 /**

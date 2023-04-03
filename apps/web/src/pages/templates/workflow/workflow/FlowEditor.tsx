@@ -27,10 +27,10 @@ import type { IForm, IStepEntity } from '../../components/formTypes';
 import AddNode from './node-types/AddNode';
 import { useEnvController } from '../../../../hooks';
 import { MinimalTemplatesSideBar } from './layout/MinimalTemplatesSideBar';
-import { ActivePageEnum } from '../../editor/TemplateEditorPage';
 import { getFormattedStepErrors } from '../../shared/errors';
 import { AddNodeEdge, IAddNodeEdge } from './edge-types/AddNodeEdge';
-import { useTemplateEditor } from '../../components/TemplateEditorProvider';
+import { useTemplateEditorForm } from '../../components/TemplateEditorFormProvider';
+import { ActivePageEnum } from '../../../../constants/editorEnums';
 
 const nodeTypes = {
   channelNode: ChannelNode,
@@ -60,7 +60,6 @@ export function FlowEditor({
   dragging,
   errors,
   onDelete,
-  templateId,
 }: {
   activePage: ActivePageEnum;
   setActivePage: (string) => void;
@@ -70,7 +69,6 @@ export function FlowEditor({
   addStep: (channelType: StepTypeEnum, id: string, index?: number) => void;
   dragging: boolean;
   errors: any;
-  templateId: string;
 }) {
   const { colorScheme } = useMantineColorScheme();
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
@@ -79,18 +77,16 @@ export function FlowEditor({
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance>();
   const { setViewport } = useReactFlow();
   const { readonly } = useEnvController();
-  const { template, trigger } = useTemplateEditor();
+  const { template, trigger } = useTemplateEditorForm();
   const { trigger: triggerErrors } = useFormContext<IForm>();
   const [displayEdgeTimeout, setDisplayEdgeTimeout] = useState<Map<string, NodeJS.Timeout | null>>(new Map());
 
   useEffect(() => {
-    if (reactFlowWrapper) {
-      const clientWidth = reactFlowWrapper.current?.clientWidth;
-      const middle = clientWidth ? clientWidth / 2 - 100 : 0;
-      const zoomView = nodes.length > 4 ? 0.75 : 1;
-      const xyPos = reactFlowInstance?.project({ x: middle, y: 0 });
-      setViewport({ x: xyPos?.x ?? 0, y: xyPos?.y ?? 0, zoom: zoomView }, { duration: 800 });
-    }
+    const clientWidth = reactFlowWrapper.current?.clientWidth;
+    const middle = clientWidth ? clientWidth / 2 - 100 : 0;
+    const zoomView = nodes.length > 4 ? 0.75 : 1;
+    const xyPos = reactFlowInstance?.project({ x: middle, y: 0 });
+    setViewport({ x: xyPos?.x ?? middle, y: xyPos?.y ?? 0, zoom: zoomView }, { duration: 800 });
   }, [reactFlowInstance]);
 
   useEffect(() => {
@@ -210,13 +206,15 @@ export function FlowEditor({
     step: IStepEntity,
     i: number
   ): Node {
+    const channel = getChannel(step.template.type);
+
     return {
       id: newId,
       type: 'channelNode',
       position: { x: oldNode.position.x, y: oldNode.position.y },
       parentNode: parentId,
       data: {
-        ...getChannel(step.template.type),
+        ...channel,
         active: step.active,
         index: i,
         error: getFormattedStepErrors(i, errors),
@@ -318,6 +316,14 @@ export function FlowEditor({
                 handleDisplayAddNodeOnEdge(`edge-button-${edge.source}`);
               }
             }}
+            onPaneClick={() => setSelectedNodeId('')}
+            /*
+             * TODO: for now this disables the deletion of a step using delete/backspace keys
+             * as it will require some sort of refactoring of how we save the workflow state
+             * to properly support keyboard delete events
+             * Remove this line once we tackle the workflow state handling
+             */
+            deleteKeyCode={null}
             {...reactFlowDefaultProps}
           >
             <MinimalTemplatesSideBar

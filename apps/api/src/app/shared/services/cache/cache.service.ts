@@ -1,5 +1,6 @@
 import Redis from 'ioredis';
 import { ConnectionOptions } from 'tls';
+import { Logger } from '@nestjs/common';
 
 const STORE_CONNECTED = 'ready';
 
@@ -37,7 +38,7 @@ export class CacheService implements ICacheService {
       console.log('Connecting to ' + this.config.host + ':' + this.config.port);
 
       this.client = new Redis(Number(this.config.port || 6379), this.config.host, {
-        password: this.config.password ?? null,
+        password: this.config.password,
         connectTimeout: this.config.connectTimeout ? Number(this.config.connectTimeout) : this.DEFAULT_CONNECT_TIMEOUT,
         keepAlive: this.config.keepAlive ? Number(this.config.keepAlive) : this.DEFAULT_KEEP_ALIVE,
         family: this.config.family ? Number(this.config.family) : this.DEFAULT_FAMILY,
@@ -46,11 +47,11 @@ export class CacheService implements ICacheService {
       });
 
       this.client.on('connect', () => {
-        console.log('REDIS CONNECTED');
+        Logger.log('REDIS CONNECTED');
       });
 
       this.client.on('error', (error) => {
-        console.error(error);
+        Logger.error(error);
       });
 
       this.cacheTtl = this.config.ttl ? Number(this.config.ttl) : this.DEFAULT_TTL_SECONDS;
@@ -124,7 +125,7 @@ export class CacheService implements ICacheService {
 }
 
 export interface ICacheServiceConfig {
-  host: string;
+  host?: string;
   port: string;
   ttl?: string;
   password?: string;

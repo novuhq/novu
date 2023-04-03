@@ -148,6 +148,7 @@ export class IntegrationsController {
   ): Promise<IntegrationResponseDto> {
     return this.updateIntegrationUsecase.execute(
       UpdateIntegrationCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,

@@ -15,13 +15,17 @@ export const LimitBar = ({
   channel?: ChannelTypeEnum;
   label?: string | null;
 }) => {
-  const { limit: { limit, count } = { limit: 0, count: 0 }, loading, enabled } = useIntegrationLimit(channel);
+  const {
+    data: { limit, count },
+    loading,
+    isLimitFetchingEnabled,
+  } = useIntegrationLimit(channel);
 
   if (channel !== ChannelTypeEnum.EMAIL && channel !== ChannelTypeEnum.SMS) {
     return null;
   }
 
-  if (loading || !enabled) {
+  if (loading || !isLimitFetchingEnabled) {
     return null;
   }
 

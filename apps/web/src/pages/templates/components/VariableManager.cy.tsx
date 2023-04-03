@@ -3,16 +3,16 @@ import { mount } from 'cypress/react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { TestWrapper } from '../../../testing';
 import { VariableManager } from './VariableManager';
-import { TemplateFormProvider } from './TemplateFormProvider';
+import { TemplateEditorFormProvider } from './TemplateEditorFormProvider';
 import { useVariablesManager } from '../../../hooks';
 
 it('should show available variables - string', function () {
   mount(
     <TestWrapper>
-      <TemplateFormProvider>
+      <TemplateEditorFormProvider>
         <FormTester content={'Hello, {{ name }}'} />
         <VariableManagerTester />
-      </TemplateFormProvider>
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
@@ -24,10 +24,10 @@ it('should show available variables - string', function () {
 it('should show available variables - array', function () {
   mount(
     <TestWrapper>
-      <TemplateFormProvider>
+      <TemplateEditorFormProvider>
         <VariableManagerTester />
         <FormTester content={'Hello, {{#each name}} {{/each}}'} />
-      </TemplateFormProvider>
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
@@ -39,10 +39,10 @@ it('should show available variables - array', function () {
 it('should show available variables including nested - array', function () {
   mount(
     <TestWrapper>
-      <TemplateFormProvider>
+      <TemplateEditorFormProvider>
         <VariableManagerTester />
         <FormTester content={'Hello, {{#each name}} {{nested_variable}} {{/each}}'} />
-      </TemplateFormProvider>
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
@@ -56,10 +56,10 @@ it('should show available variables including nested - array', function () {
 it('should show available variables - boolean', function () {
   mount(
     <TestWrapper>
-      <TemplateFormProvider>
+      <TemplateEditorFormProvider>
         <VariableManagerTester />
         <FormTester content={'Hello, {{#if name}} {{/if}}'} />
-      </TemplateFormProvider>
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
@@ -71,10 +71,10 @@ it('should show available variables - boolean', function () {
 it('should show available variables including nested - boolean', function () {
   mount(
     <TestWrapper>
-      <TemplateFormProvider>
+      <TemplateEditorFormProvider>
         <VariableManagerTester />
         <FormTester content={'Hello, {{#if name}} {{nested_variable}} {{/if}}'} />
-      </TemplateFormProvider>
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
@@ -88,14 +88,14 @@ it('should show available variables including nested - boolean', function () {
 it('should show available variables including deeply nested', function () {
   mount(
     <TestWrapper>
-      <TemplateFormProvider>
+      <TemplateEditorFormProvider>
         <VariableManagerTester />
         <FormTester
           content={
             'Hello, {{#if name}} {{nested_variable}} {{#each nested_name}} {{deeply_nested_variable}} {{/each}} {{/if}}'
           }
         />
-      </TemplateFormProvider>
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
@@ -113,10 +113,10 @@ it('should show available variables including deeply nested', function () {
 it('should show reserved variables', function () {
   mount(
     <TestWrapper>
-      <TemplateFormProvider>
+      <TemplateEditorFormProvider>
         <VariableManagerTester />
         <FormTester content={'Hello, {{ subscriber }}'} />
-      </TemplateFormProvider>
+      </TemplateEditorFormProvider>
     </TestWrapper>
   );
 
