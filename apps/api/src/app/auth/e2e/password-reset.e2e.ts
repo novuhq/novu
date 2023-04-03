@@ -1,5 +1,6 @@
 import { UserRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
+import { v4 as uuidv4 } from 'uuid';
 import { expect } from 'chai';
 import { stub, SinonStubbedMember } from 'sinon';
 import { subDays, subMinutes } from 'date-fns';
@@ -27,6 +28,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
 
     const { body } = await session.testAgent.post('/v1/auth/reset/request').send(payload);
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return { body, plainToken: plainToken! };
   };
 
@@ -100,6 +102,21 @@ describe('Password reset - /auth/reset (POST)', async () => {
   });
 
   it('should fail to change password for bad token', async () => {
+    const { body } = await requestResetToken({
+      email: session.user.email,
+    });
+
+    expect(body.data.success).to.equal(true);
+
+    const { body: resetChange } = await session.testAgent.post('/v1/auth/reset').send({
+      password: 'ASd3ASD$Fdfdf',
+      token: uuidv4(),
+    });
+
+    expect(resetChange.message).to.contain('Bad token provided');
+  });
+
+  it('should fail to change password for expired token', async () => {
     const { body, plainToken } = await requestResetToken({
       email: session.user.email,
     });

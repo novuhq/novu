@@ -21,7 +21,11 @@ export class UserRepository extends BaseRepository<UserDBModel, UserEntity> {
 
   async findUserByToken(token: string) {
     return await this.findOne({
-      resetToken: this.hashResetToken(token),
+      /*
+       * NOTE: $in operator is used to provide backward compatibility for users with active reset token in old (plain) format
+       * in a next minor version query should be set to: { resetToken: this.hashResetToken(token) }
+       */
+      resetToken: { $in: [this.hashResetToken(token), token] },
     });
   }
 
