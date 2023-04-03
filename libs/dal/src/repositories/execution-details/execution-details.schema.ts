@@ -70,10 +70,25 @@ const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
   schemaOptions
 );
 
+/*
+ * This index was initially created to optimize:
+ * message matcher use case
+ */
 executionDetailsSchema.index({
   _messageId: 1,
   _jobId: 1,
   _environmentId: 1,
+  webhookStatus: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ * get execution details use case
+ */
+executionDetailsSchema.index({
+  _notificationId: 1,
+  _environmentId: 1,
+  _subscriberId: 1,
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
