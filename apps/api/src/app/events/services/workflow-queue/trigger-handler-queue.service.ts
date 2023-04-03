@@ -1,11 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { QueueBaseOptions } from 'bullmq';
 import { getRedisPrefix } from '@novu/shared';
 import { ConnectionOptions } from 'tls';
-import { PinoLogger, storage, Store } from '@novu/application-generic';
+import { BullmqService, PinoLogger, storage, Store } from '@novu/application-generic';
 
 import { TriggerEvent, TriggerEventCommand } from '../../usecases/trigger-event';
-import { BullmqService } from '@novu/application-generic';
 
 @Injectable()
 export class TriggerHandlerQueueService {
@@ -56,6 +55,8 @@ export class TriggerHandlerQueueService {
   }
 
   public add(id: string, data: any, organizationId: string) {
+    Logger.log(`TriggerHandlerQueueService.add: ${id} Group: ${organizationId}`);
+
     this.bullMqService.add(
       id,
       data,
