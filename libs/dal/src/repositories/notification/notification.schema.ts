@@ -49,7 +49,7 @@ const notificationSchema = new Schema<NotificationDBModel>(
   schemaOptions
 );
 
-notificationSchema.index({ expireAt: 1 }, { expires: '1h' });
+notificationSchema.index({ expireAt: 1 }, { expires: '48h' });
 
 notificationSchema.virtual('environment', {
   ref: 'Environment',

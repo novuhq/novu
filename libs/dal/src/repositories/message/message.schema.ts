@@ -117,7 +117,7 @@ const messageSchema = new Schema<MessageDBModel>(
   schemaOptions
 );
 
-messageSchema.index({ expireAt: 1 }, { expires: '1h' });
+messageSchema.index({ expireAt: 1 }, { expires: '48h' });
 
 messageSchema.virtual('subscriber', {
   ref: 'Subscriber',
