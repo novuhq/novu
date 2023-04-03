@@ -205,7 +205,7 @@ export class SendMessageEmail extends SendMessageBase {
         to: email,
         subject,
         html,
-        from: 'no-reply@paweltymczuk.dev',
+        from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
         id: message._id,
       },
