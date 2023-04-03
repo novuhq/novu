@@ -21,7 +21,7 @@ import {
   SetJobAsFailed,
   SetJobAsFailedCommand,
   WebhookFilterBackoffStrategy,
-} from '../usecases2';
+} from '../usecases';
 
 interface IJobData {
   _id: string;

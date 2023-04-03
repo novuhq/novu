@@ -44,7 +44,7 @@ import {
   SetJobAsFailed,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
-} from './usecases2';
+} from './usecases';
 
 const USE_CASES = [
   AddJob,
