@@ -118,6 +118,7 @@ const TemplateEditorFormProvider = ({ children }) => {
   const [previousPath, setPreviousPath] = useState(pathname);
 
   const {
+    reset,
     formState: { isDirty: isDirtyForm },
     watch,
   } = methods;
@@ -219,6 +220,8 @@ const TemplateEditorFormProvider = ({ children }) => {
 
     if (template && template.steps) {
       setTrigger(template.triggers[0]);
+      const form = mapNotificationTemplateToForm(template);
+      reset(form);
     }
   }, [isDirtyForm, template]);
 

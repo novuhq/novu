@@ -52,7 +52,8 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('settings-page').click();
-    cy.getByTestId('title').should('have.value', template.name);
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('title').first().should('have.value', template.name);
 
     editChannel('inApp');
     cy.waitForNetworkIdle(500);
