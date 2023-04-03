@@ -101,8 +101,15 @@ const jobSchema = new Schema<JobDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
     },
+    expireAt: Schema.Types.Date,
   },
   schemaOptions
+);
+
+jobSchema.index(
+  { expireAt: 1 },
+  // { expires: '1s' }
+  { expires: '1s', partialFilterExpression: { status: { $eq: JobStatusEnum.COMPLETED } } }
 );
 
 jobSchema.virtual('executionDetails', {
@@ -138,6 +145,8 @@ jobSchema.virtual('environment', {
   foreignField: '_id',
   justOne: true,
 });
+
+// jobSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 5 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Job = (mongoose.models.Job as mongoose.Model<JobDBModel>) || mongoose.model<JobDBModel>('Job', jobSchema);

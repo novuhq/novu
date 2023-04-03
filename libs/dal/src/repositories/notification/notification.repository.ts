@@ -95,7 +95,7 @@ export class NotificationRepository extends BaseRepository<
             $nin: [StepTypeEnum.TRIGGER],
           },
         },
-        select: 'createdAt digest payload overrides to providerId step status type updatedAt',
+        select: 'createdAt digest payload overrides to providerId step status type updatedAt expireAt',
         populate: [
           {
             path: 'executionDetails',

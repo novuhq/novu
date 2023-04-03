@@ -10,6 +10,7 @@ import { NotificationEntity } from '../notification';
 import { EnvironmentEntity } from '../environment';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { DalException } from '../../shared';
+import { addMinutes } from 'date-fns';
 
 type JobEntityPopulated = JobEntity & {
   template: NotificationTemplateEntity;
@@ -50,6 +51,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       {
         $set: {
           status,
+          expireAt: addMinutes(Date.now(), 2),
         },
       }
     );

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { addMonths } from 'date-fns';
+import { addMinutes, addMonths } from 'date-fns';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery } from 'mongoose';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
@@ -93,6 +93,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
         }
       case 'Notification':
         return addMonths(now, 1);
+      case 'Job':
+        return addMinutes(now, 1);
       default:
         return null;
     }
