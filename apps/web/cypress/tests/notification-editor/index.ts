@@ -29,6 +29,7 @@ export function fillBasicNotificationDetails(title?: string) {
   cy.getByTestId('settings-page').click();
   cy.getByTestId('title')
     .first()
+    .clear()
     .type(title || 'Test Notification Title')
     .blur();
   cy.getByTestId('description').type('This is a test description for a test title').blur();

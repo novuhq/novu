@@ -341,7 +341,9 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.waitForNetworkIdle(500);
 
     fillBasicNotificationDetails('In App CTA Button');
+    cy.waitForNetworkIdle(500);
     addAndEditChannel('inApp');
+    cy.waitForNetworkIdle(500);
 
     cy.get('.ace_text-input').first().type('Text content', {
       force: true,
@@ -351,6 +353,7 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('template-container-click-area').eq(0).click();
 
     goBack();
+    cy.waitForNetworkIdle(500);
 
     cy.visit('/templates');
     cy.waitForNetworkIdle(500);
@@ -365,12 +368,14 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.waitForNetworkIdle(500);
 
     editChannel('inApp');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('template-container').first().find('input').should('have.length', 1);
 
     cy.getByTestId('remove-button-icon').click();
 
     goBack();
+    cy.waitForNetworkIdle(500);
 
     editChannel('inApp');
     cy.waitForNetworkIdle(500);
