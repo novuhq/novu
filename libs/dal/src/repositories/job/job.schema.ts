@@ -137,34 +137,6 @@ jobSchema.virtual('environment', {
 /*
  * This index was initially created to optimize:
  *
- * Path : apps/api/src/app/events/usecases/add-job/add-delay-job.usecase.ts
- *    Context : noExistingDelayedJobForDate()
- *       Query : findOne(
- *          {
- *            status: JobStatusEnum.DELAYED,
- *            type: StepTypeEnum.DELAY,
- *            _subscriberId: data._subscriberId,
- *            _templateId: data._templateId,
- *            _environmentId: data._environmentId,
- *            transactionId: { $ne: data.transactionId },
- *            'step.metadata.type': DelayTypeEnum.SCHEDULED,
- *            'step.metadata.delayPath': currentDelayPath,
- *            [`payload.${currentDelayPath}`]: currentDelayDate,
- *          },
- *          '_subscriberId'
- *       )
- */
-jobSchema.index({
-  _subscriberId: 1,
-  _templateId: 1,
-  status: 1,
-  type: 1,
-  transactionId: 1,
-});
-
-/*
- * This index was initially created to optimize:
- *
  * Path : apps/api/src/app/events/usecases/send-message/digest/get-digest-events.usecase.ts
  *    Context : filterJobs()
  *       Query : findOne.(
@@ -345,6 +317,23 @@ jobSchema.index({
  *          type: StepTypeEnum.DIGEST,
  *          ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
  *        }
+ *
+ * Path : apps/api/src/app/events/usecases/add-job/add-delay-job.usecase.ts
+ *    Context : noExistingDelayedJobForDate()
+ *       Query : findOne(
+ *          {
+ *            status: JobStatusEnum.DELAYED,
+ *            type: StepTypeEnum.DELAY,
+ *            _subscriberId: data._subscriberId,
+ *            _templateId: data._templateId,
+ *            _environmentId: data._environmentId,
+ *            transactionId: { $ne: data.transactionId },
+ *            'step.metadata.type': DelayTypeEnum.SCHEDULED,
+ *            'step.metadata.delayPath': currentDelayPath,
+ *            [`payload.${currentDelayPath}`]: currentDelayDate,
+ *          },
+ *          '_subscriberId'
+ *       )
  */
 jobSchema.index({
   _subscriberId: 1,
