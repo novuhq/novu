@@ -61,9 +61,9 @@ export class NotificationRepository extends BaseRepository<
       };
     }
 
-    const totalCount = await this.MongooseModel.countDocuments(requestQuery);
+    const totalCount = await this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
 
-    const response = await this.populateFeed(this.MongooseModel.find(requestQuery))
+    const response = await this.populateFeed(this.MongooseModel.find(requestQuery).read('secondaryPreferred'))
       .skip(skip)
       .limit(limit)
       .sort('-createdAt');
