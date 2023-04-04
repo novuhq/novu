@@ -72,15 +72,7 @@ export const DeleteStepRow = () => {
 };
 
 const DeleteStepButton = styled(Button)`
-  //display: flex;
-  //position: inherit;
-  //bottom: 15px;
-  //left: 20px;
-  //right: 20px;
   background: rgba(229, 69, 69, 0.15);
   color: ${colors.error};
   box-shadow: none;
-  :hover {
-    background: rgba(229, 69, 69, 0.15);
-  }
 `;

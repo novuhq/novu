@@ -4,6 +4,29 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient } from '../../../design-system/icons';
 import { useEnvController } from '../../../hooks';
 import { IForm } from './formTypes';
+import { useMemo } from 'react';
+
+const stepNames: Record<StepTypeEnum | ChannelTypeEnum, string> = {
+  email: 'Email',
+  chat: 'Chat',
+  in_app: 'In-App',
+  sms: 'SMS',
+  push: 'Push',
+  digest: 'Digest',
+  delay: 'Delay',
+  trigger: 'Trigger',
+};
+
+const stepIcon: Record<StepTypeEnum | ChannelTypeEnum, (...args: any[]) => JSX.Element> = {
+  email: Mail,
+  chat: Chat,
+  in_app: Bell,
+  sms: Sms,
+  push: Mobile,
+  digest: DigestGradient,
+  delay: TimerGradient,
+  trigger: () => <></>,
+};
 
 const Input = ({ index, defaultValue }: { index: number; defaultValue: string }) => {
   const {
@@ -75,61 +98,12 @@ export const StepNameInput = ({
   index: number;
   color?: any;
 }) => {
-  if (channel === StepTypeEnum.EMAIL || channel === ChannelTypeEnum.EMAIL) {
-    return (
-      <Group align="center" spacing={16}>
-        <Mail color={color} /> <Input defaultValue="Email" index={index} />
-      </Group>
-    );
-  }
+  const stepName = useMemo(() => stepNames[channel], [channel]);
+  const Icon = useMemo(() => stepIcon[channel], [channel]);
 
-  if (channel === StepTypeEnum.IN_APP || channel === ChannelTypeEnum.IN_APP) {
-    return (
-      <Group align="center" spacing={16}>
-        <Bell color={color} /> <Input defaultValue="In-App" index={index} />
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.CHAT || channel === ChannelTypeEnum.CHAT) {
-    return (
-      <Group align="center" spacing={16}>
-        <Chat color={color} /> <Input defaultValue="Chat" index={index} />
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.PUSH || channel === ChannelTypeEnum.PUSH) {
-    return (
-      <Group align="center" spacing={16}>
-        <Mobile color={color} /> <Input defaultValue="Push" index={index} />
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.SMS || channel === ChannelTypeEnum.SMS) {
-    return (
-      <Group align="center" spacing={16}>
-        <Sms color={color} /> <Input defaultValue="SMS" index={index} />
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.DELAY) {
-    return (
-      <Group align="center" spacing={16}>
-        <TimerGradient /> <Input defaultValue="Delay" index={index} />
-      </Group>
-    );
-  }
-
-  if (channel === StepTypeEnum.DIGEST) {
-    return (
-      <Group align="center" spacing={16}>
-        <DigestGradient /> <Input defaultValue="Digest" index={index} />
-      </Group>
-    );
-  }
-
-  return <>{channel}</>;
+  return (
+    <Group align="center" spacing={16}>
+      <Icon color={color} /> <Input defaultValue={stepName} index={index} />
+    </Group>
+  );
 };

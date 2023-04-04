@@ -172,7 +172,10 @@ const TemplateEditorFormProvider = ({ children }) => {
 
         return value;
       })
-      .catch(() => {});
+      .catch(() => {
+        clear();
+        hideNotification('savingOnNavigation');
+      });
   };
 
   useEffect(() => {

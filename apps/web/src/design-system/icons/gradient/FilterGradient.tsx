@@ -17,8 +17,8 @@ export function FilterGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
           y2="7.99979"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#DD2476" />
-          <stop offset="1" stop-color="#FF512F" />
+          <stop stopColor="#DD2476" />
+          <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
         <linearGradient
           id="paint1_linear_1041_41139"
@@ -28,8 +28,8 @@ export function FilterGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
           y2="7.99979"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#DD2476" />
-          <stop offset="1" stop-color="#FF512F" />
+          <stop stopColor="#DD2476" />
+          <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
       </defs>
     </svg>

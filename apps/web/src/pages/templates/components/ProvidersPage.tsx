@@ -88,6 +88,7 @@ const ListProviders = ({
                   alt={provider.displayName}
                   style={{
                     height: '24px',
+                    maxWidth: '140px',
                   }}
                 />
                 <Text color={provider.active ? colors.success : colors.B60}>
