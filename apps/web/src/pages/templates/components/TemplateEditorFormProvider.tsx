@@ -1,8 +1,8 @@
 import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
 import slugify from 'slugify';
-import { FormProvider, useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { DigestTypeEnum, INotificationTemplate, INotificationTrigger } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
@@ -14,9 +14,8 @@ import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
 import { useNotificationGroup } from '../../../hooks';
-import { useDocumentVisibility, useTimeout } from '@mantine/hooks';
-import { hideNotification, showNotification } from '@mantine/notifications';
-import { useBasePath } from '../hooks/useBasePath';
+import { useSave } from '../hooks/useSave';
+import { useCreate } from '../hooks/useCreate';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
@@ -112,10 +111,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     defaultValues,
     mode: 'onChange',
   });
-  const navigate = useNavigate();
   const [trigger, setTrigger] = useState<INotificationTrigger>();
-  const { pathname } = useLocation();
-  const [previousPath, setPreviousPath] = useState(pathname);
 
   const {
     reset,
@@ -147,63 +143,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     methods.setValue('identifier', newIdentifier);
   }, [name, identifier]);
 
-  const { start, clear } = useTimeout(() => {
-    showNotification({
-      message: 'We are saving your changes...',
-      color: 'blue',
-      id: 'savingOnNavigation',
-      autoClose: false,
-    });
-  }, 3000);
-
-  const documentVisibility = useDocumentVisibility();
-
-  const save = () => {
-    const isTouring = localStorage.getItem('tour-digest') !== null;
-
-    if (!methods.formState.isDirty || isTouring) {
-      return;
-    }
-    start();
-    onSubmit(methods.getValues())
-      .then((value) => {
-        clear();
-        hideNotification('savingOnNavigation');
-
-        return value;
-      })
-      .catch(() => {
-        clear();
-        hideNotification('savingOnNavigation');
-      });
-  };
-
-  useEffect(() => {
-    window.addEventListener('beforeunload', save);
-
-    return () => {
-      window.removeEventListener('beforeunload', save);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (documentVisibility === 'visible') {
-      return;
-    }
-    save();
-  }, [documentVisibility]);
-
-  const basePath = useBasePath();
-
-  useEffect(() => {
-    if (previousPath === basePath) {
-      setPreviousPath(pathname);
-
-      return;
-    }
-    setPreviousPath(pathname);
-    save();
-  }, [pathname]);
+  useSave(methods.formState.isDirty, () => onSubmit(methods.getValues()));
 
   const {
     template,
@@ -228,26 +168,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     }
   }, [isDirtyForm, template]);
 
-  useEffect(() => {
-    if (!!templateId || !groups || groups.length === 0 || localStorage.getItem('blueprintId') !== null) {
-      return;
-    }
-
-    const values = methods.getValues();
-
-    if (!values.notificationGroupId) {
-      values.notificationGroupId = groups[0]._id;
-    }
-
-    const submit = async () => {
-      const payloadToCreate = mapFormToCreateNotificationTemplate(values);
-      const response = await createNotificationTemplate({ ...payloadToCreate, active: true, draft: false });
-      setTrigger(response.triggers[0]);
-      navigate(`/templates/edit/${response._id || ''}`);
-    };
-
-    submit();
-  }, [templateId, groups, localStorage.getItem('blueprintId')]);
+  useCreate(templateId, groups, setTrigger, methods.getValues);
 
   const onSubmit = useCallback(
     async (form: IForm, showMessage = true) => {
