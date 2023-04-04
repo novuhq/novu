@@ -18,6 +18,14 @@
       {
         "include": ".env.production",
         "outDir": "dist/src"
+      },
+      {
+        "include": "app/workflow/usecases/send-message/get-novu-layout/templates/layout.handlebars",
+        "outDir": "dist/src"
+      },
+      {
+        "include": "app/workflow/usecases/send-message/compile-email-template/templates/basic.handlebars",
+        "outDir": "dist/src"
       }
     ],
     "plugins": [],

@@ -8,3 +8,4 @@ export { SendMessagePush } from './send-message-push.usecase';
 export { SendMessageSms } from './send-message-sms.usecase';
 export { SendTestEmail } from './send-test-email.usecase';
 export { SendTestEmailCommand } from './send-test-email.command';
+// TODO remove?

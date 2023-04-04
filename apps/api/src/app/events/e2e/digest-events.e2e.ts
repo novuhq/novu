@@ -13,7 +13,7 @@ import { getTime, parseISO } from 'date-fns';
 import mongoose from 'mongoose';
 import { setTimeout } from 'timers/promises';
 
-import { WorkflowQueueService } from '../services/workflow-queue/workflow.queue.service';
+import { WorkflowQueueProducerService } from '../services/workflow-queue/workflow-queue-producer.service';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { QueueNextJob } from '../usecases/queue-next-job/queue-next-job.usecase';
 import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
@@ -27,7 +27,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
-  let workflowQueueService: WorkflowQueueService;
+  let workflowQueueProducerService: WorkflowQueueProducerService;
   const messageRepository = new MessageRepository();
   let runJob: RunJob;
 
@@ -54,7 +54,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-    workflowQueueService = session.testServer?.getService(WorkflowQueueService);
+    workflowQueueProducerService = session.testServer?.getService(WorkflowQueueProducerService);
 
     runJob = new RunJob(
       jobRepository,

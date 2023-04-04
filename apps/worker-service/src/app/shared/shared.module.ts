@@ -22,9 +22,23 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { AnalyticsService, createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  WsQueueService,
+  createNestLoggingModuleOptions,
+  LoggerModule,
+} from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
+import { InvalidateCacheService, CacheService } from './cache';
+import { CreateLog } from './logs';
+import {
+  StorageHelperService,
+  StorageService,
+  GCSStorageService,
+  AzureBlobStorageService,
+  S3StorageService,
+} from './storage';
 
 const DAL_MODELS = [
   UserRepository,
@@ -53,6 +67,17 @@ const dalService = new DalService();
 
 export const ANALYTICS_SERVICE = 'AnalyticsService';
 
+function getStorageServiceClass() {
+  switch (process.env.STORAGE_SERVICE) {
+    case 'GCS':
+      return GCSStorageService;
+    case 'AZURE':
+      return AzureBlobStorageService;
+    default:
+      return S3StorageService;
+  }
+}
+
 const PROVIDERS = [
   {
     provide: ANALYTICS_SERVICE,
@@ -72,6 +97,30 @@ const PROVIDERS = [
       return dalService;
     },
   },
+  {
+    provide: CacheService,
+    useFactory: async () => {
+      return new CacheService({
+        host: process.env.REDIS_CACHE_SERVICE_HOST,
+        port: process.env.REDIS_CACHE_SERVICE_PORT || '6379',
+        ttl: process.env.REDIS_CACHE_TTL,
+        password: process.env.REDIS_CACHE_PASSWORD,
+        connectTimeout: process.env.REDIS_CACHE_CONNECTION_TIMEOUT,
+        keepAlive: process.env.REDIS_CACHE_KEEP_ALIVE,
+        family: process.env.REDIS_CACHE_FAMILY,
+        keyPrefix: process.env.REDIS_CACHE_KEY_PREFIX,
+        tls: process.env.REDIS_CACHE_SERVICE_TLS,
+      });
+    },
+  },
+  InvalidateCacheService,
+  CreateLog,
+  WsQueueService,
+  {
+    provide: StorageService,
+    useClass: getStorageServiceClass(),
+  },
+  StorageHelperService,
   ...DAL_MODELS,
 ];
 

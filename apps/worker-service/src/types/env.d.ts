@@ -6,10 +6,24 @@ declare global {
     export interface ProcessEnv {
       NODE_ENV: 'test' | 'prod' | 'dev' | 'ci' | 'local';
       PORT: string;
+      MAX_NOVU_INTEGRATION_MAIL_REQUESTS?: string;
+      NOVU_EMAIL_INTEGRATION_API_KEY?: string;
+      STORAGE_SERVICE?: string;
       REDIS_HOST: string;
       REDIS_PORT: number;
+      REDIS_PASSWORD?: string;
       REDIS_TLS?: ConnectionOptions;
       REDIS_DB_INDEX: number;
+      REDIS_CACHE_SERVICE_HOST?: string;
+      REDIS_CACHE_SERVICE_PORT?: string;
+      REDIS_CACHE_DB_INDEX?: string;
+      REDIS_CACHE_TTL?: string;
+      REDIS_CACHE_PASSWORD?: string;
+      REDIS_CACHE_CONNECTION_TIMEOUT?: string;
+      REDIS_CACHE_KEEP_ALIVE?: string;
+      REDIS_CACHE_FAMILY?: string;
+      REDIS_CACHE_KEY_PREFIX?: string;
+      REDIS_CACHE_SERVICE_TLS?: ConnectionOptions;
       MONGO_URL: string;
       NEW_RELIC_APP_NAME: string;
       NEW_RELIC_LICENSE_KEY: string;

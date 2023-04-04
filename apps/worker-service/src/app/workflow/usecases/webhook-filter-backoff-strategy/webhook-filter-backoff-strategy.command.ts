@@ -1,8 +1,8 @@
 import { IsDefined, IsNumber, IsOptional } from 'class-validator';
 
-import { EventJobDto } from '../../dtos';
+import { EventJobDto } from '../../../../../../api/src/app/events/dtos';
 
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../../../../api/src/app/shared/commands/project.command';
 
 export class WebhookFilterBackoffStrategyCommand extends EnvironmentWithUserCommand {
   @IsDefined()

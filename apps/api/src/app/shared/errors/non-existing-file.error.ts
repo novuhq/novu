@@ -4,3 +4,4 @@ export class NonExistingFileError extends Error {
     this.name = 'NonExistingFileError';
   }
 }
+// TODO remove?

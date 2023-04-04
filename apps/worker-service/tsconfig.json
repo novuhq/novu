@@ -11,6 +11,5 @@
     "allowJs": false,
     "esModuleInterop": false,
     "declarationMap": true
-  },
-  "include": ["src/**/*", "src/**/*.d.ts"]
+  }
 }

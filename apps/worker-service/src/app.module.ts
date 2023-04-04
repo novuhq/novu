@@ -6,8 +6,13 @@ import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-refe
 
 import { SharedModule } from './app/shared/shared.module';
 import { HealthModule } from './app/health/health.module';
+import { WorkflowModule } from './app/workflow/workflow.module';
 
-const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [SharedModule, HealthModule];
+const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+  SharedModule,
+  HealthModule,
+  WorkflowModule,
+];
 
 const providers: Provider[] = [];
 

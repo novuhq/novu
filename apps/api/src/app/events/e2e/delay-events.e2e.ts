@@ -11,7 +11,7 @@ import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@no
 import axios from 'axios';
 import { addSeconds, differenceInMilliseconds } from 'date-fns';
 
-import { WorkflowQueueService } from '../services/workflow-queue/workflow.queue.service';
+import { WorkflowQueueProducerService } from '../services/workflow-queue/workflow-queue-producer.service';
 import { RunJob, RunJobCommand } from '../usecases/run-job';
 import { SendMessage } from '../usecases/send-message/send-message.usecase';
 import { QueueNextJob } from '../usecases/queue-next-job';
@@ -25,7 +25,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
-  let workflowQueueService: WorkflowQueueService;
+  let workflowQueueProducerService: WorkflowQueueProducerService;
   const messageRepository = new MessageRepository();
   let runJob: RunJob;
 
@@ -53,7 +53,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-    workflowQueueService = session?.testServer?.getService(WorkflowQueueService);
+    workflowQueueProducerService = session?.testServer?.getService(WorkflowQueueProducerService);
 
     runJob = new RunJob(
       jobRepository,
@@ -202,7 +202,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const updatedAt = delayedJob?.updatedAt as string;
     const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(updatedAt));
 
-    const delay = await workflowQueueService.bullMqService.queue.getDelayed();
+    const delay = await workflowQueueProducerService.bullMqService.queue.getDelayed();
     expect(delay[0].opts.delay).to.approximately(diff, 1000);
   });
 

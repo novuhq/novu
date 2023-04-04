@@ -27,7 +27,6 @@ import { ParseEventRequest } from './parse-event-request';
 import { ProcessBulkTrigger } from './process-bulk-trigger';
 import { StoreSubscriberJobs } from './store-subscriber-jobs';
 import { SetJobAsCompleted, SetJobAsFailed, UpdateJobStatus } from './update-job-status';
-import { WebhookFilterBackoffStrategy } from './webhook-filter-backoff-strategy';
 
 export const USE_CASES = [
   MessageMatcher,
@@ -63,5 +62,4 @@ export const USE_CASES = [
   SetJobAsCompleted,
   SetJobAsFailed,
   UpdateJobStatus,
-  WebhookFilterBackoffStrategy,
 ];

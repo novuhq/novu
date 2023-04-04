@@ -3,11 +3,11 @@ import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/sh
 
 import { WebhookFilterBackoffStrategyCommand } from './webhook-filter-backoff-strategy.command';
 
-import { DetailEnum } from '../../../execution-details/types';
+import { DetailEnum } from '../../../../../../api/src/app/execution-details/types';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-} from '../../../execution-details/usecases/create-execution-details';
+} from '../../../../../../api/src/app/execution-details/usecases/create-execution-details';
 
 @Injectable()
 export class WebhookFilterBackoffStrategy {
