@@ -300,7 +300,7 @@ export function FlowEditor({
           style={{
             height: '100%',
             width: '100%',
-            minHeight: '500px',
+            minHeight: '600px',
           }}
           ref={reactFlowWrapper}
         >

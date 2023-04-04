@@ -99,10 +99,9 @@ const WorkflowEditor = () => {
         />
       </When>
       <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
-        <div style={{ minHeight: '100%', display: 'flex', flexFlow: 'row' }}>
+        <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row' }}>
           <div
             style={{
-              minHeight: 'calc(100vh - var(--mantine-header-height, 0px) - 60px)',
               flex: '1 1 auto',
               display: 'flex',
               flexFlow: 'Column',
@@ -163,7 +162,7 @@ const WorkflowEditor = () => {
               position: 'relative',
               minWidth: '260px',
               width: 'auto',
-              minHeight: 'calc(100vh - var(--mantine-header-height, 0px) - 60px)',
+              minHeight: '600px',
             }}
           >
             <Outlet

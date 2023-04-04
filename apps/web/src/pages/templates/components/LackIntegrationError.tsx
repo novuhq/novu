@@ -46,6 +46,8 @@ export function LackIntegrationError({ channelType, text }: { channelType: Chann
             openIntegrationsModal(true);
             segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
           }}
+          height={34}
+          width={34}
         />
       </WarningMessage>
       <IntegrationsStoreModal

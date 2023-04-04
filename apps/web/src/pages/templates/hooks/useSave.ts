@@ -8,6 +8,12 @@ export const useSave = (isDirty: boolean, onSave: () => Promise<any>) => {
   const { pathname } = useLocation();
   const [previousPath, setPreviousPath] = useState(pathname);
 
+  useEffect(() => {
+    return () => {
+      save();
+    };
+  }, []);
+
   const { start, clear } = useTimeout(() => {
     showNotification({
       message: 'We are saving your changes...',
@@ -57,7 +63,7 @@ export const useSave = (isDirty: boolean, onSave: () => Promise<any>) => {
   const basePath = useBasePath();
 
   useEffect(() => {
-    if (previousPath === basePath) {
+    if (previousPath === basePath && pathname.includes(basePath)) {
       setPreviousPath(pathname);
 
       return;
