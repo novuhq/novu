@@ -150,6 +150,16 @@ const TemplateEditorFormProvider = ({ children }) => {
   const { groups, loading: loadingGroups } = useNotificationGroup();
 
   useEffect(() => {
+    return () => {
+      if (!template) {
+        return;
+      }
+      const form = mapNotificationTemplateToForm(template);
+      reset(form);
+    };
+  }, [template]);
+
+  useEffect(() => {
     if (isDirtyForm) {
       return;
     }
