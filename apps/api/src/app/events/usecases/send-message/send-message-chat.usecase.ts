@@ -115,7 +115,14 @@ export class SendMessageChat extends SendMessageBase {
     }
 
     for (const channel of chatChannels) {
-      await this.sendChannelMessage(command, channel, notification, chatChannel, content);
+      try {
+        await this.sendChannelMessage(command, channel, notification, chatChannel, content);
+      } catch (e) {
+        /*
+         * Do nothing, one chat channel failed, perhaps another one succeeds
+         * The failed message has been created
+         */
+      }
     }
   }
 
