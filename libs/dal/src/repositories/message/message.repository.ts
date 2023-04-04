@@ -88,7 +88,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
 
-    return await this.count(requestQuery);
+    return this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
   }
 
   async getCount(
@@ -103,7 +103,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read: query.read,
     });
 
-    return await this.count(requestQuery);
+    return this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
   }
 
   async markAllMessagesAs(
