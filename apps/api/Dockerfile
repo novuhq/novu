@@ -17,11 +17,11 @@ COPY ./pkg .
 ARG BULL_MQ_PRO_TOKEN=""
 ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
 
-RUN echo "${BULL_MQ_PRO_NPM_TOKEN: -1}"
+RUN echo "Token is: ${BULL_MQ_PRO_NPM_TOKEN: -1}"
 
-RUN if [ -n $BULL_MQ_PRO_NPM_TOKEN ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
-RUN if [ -n $BULL_MQ_PRO_NPM_TOKEN ]; then rm -f .npmrc ; fi
-RUN if [ -n $BULL_MQ_PRO_NPM_TOKEN ]; then cp .npmrc-cloud .npmrc  ; fi
+RUN if [ -z "$BULL_MQ_PRO_NPM_TOKEN" ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
+RUN if [ -z "$BULL_MQ_PRO_NPM_TOKEN" ]; then rm -f .npmrc ; fi
+RUN if [ -z "$BULL_MQ_PRO_NPM_TOKEN" ]; then cp .npmrc-cloud .npmrc  ; fi
 RUN cat .npmrc
 
 RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
