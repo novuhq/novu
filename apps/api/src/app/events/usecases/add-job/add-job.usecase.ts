@@ -14,6 +14,7 @@ import {
 import { DetailEnum } from '../../../execution-details/types';
 import { WorkflowQueueService } from '../../services/workflow-queue/workflow.queue.service';
 import { LogDecorator } from '@novu/application-generic';
+import { addMilliseconds } from 'date-fns';
 
 @Injectable()
 export class AddJob {
@@ -78,6 +79,17 @@ export class AddJob {
     }
 
     Logger.verbose('Adding Job to Queue');
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    if (delay !== undefined) {
+      await this.jobRepository.update(
+        { _organizationId: job._organizationId, _notificationId: job._notificationId },
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        { $set: { expireAt: addMilliseconds(new Date(job.expireAt), delay as number) } }
+      );
+    }
+
     await this.workflowQueueService.addToQueue(job._id, job, delay, command.organizationId);
 
     if (delay) {
