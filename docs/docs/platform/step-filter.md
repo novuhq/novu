@@ -171,6 +171,26 @@ The online filter feature can be used to determine if a subscriber is online rig
 
 For example, to determine if a subscriber has been online in the last 5 minutes, Novu checks if the subscriber is currently online or if the `lastOnlineAt` timestamp value is less than or equal to 5 minutes ago. If either of these conditions are met, the filter is applied.
 
+## Subscriber Seen / Read filters
+This filter gives the flexibility of executing successive notifications based on the status of previous notifications. It currently works for in-app and email notifications.
+
+Typical Use Case:
+
+You have a set of customers that you need to send a 2-step email to them. However, they should only get the second email if they have read/seen the first email.
+
+With the new seen/read filter, you can do the following in a notification workflow:
+
+- Set the first email step.
+- Set a delay.
+- Set the second email step.
+- Create a filter on the second email step that indicates if the previous step needs to be seen/read before it should be executed.
+
+<div align="center">
+  ![Untitled design (27)](https://user-images.githubusercontent.com/63902456/229841958-b3cf8ebc-b9cc-451d-9f23-81c675f7fb8a.gif)
+</div>
+
+Note: For this to work with emails, the webhook url needs to be set up for the active email provider you're using on Novu. It's very essential for the filter to work. No extra set up is needed for in-app notifications.
+
 ## Monitoring the filter's status inside Activity Feed
 
 To check if the notification sent was filtered or not, visit the `Activity Feed` page.
