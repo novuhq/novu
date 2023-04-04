@@ -7,7 +7,6 @@ For a full guide on running novu locally for development needs, please read our 
 Novu has support for redis cluster, however you must set the following env variables to enable it:
 // To be determined
 
-
 In the local development example in the docker-compose.redis-cluster.yml file, the primary nodes are hard coded to 6391 through 6393 and
 the secondary (read) node to 6394 through 6396 on localhost.
 In addition, for the queue service there is a redis sentinel cluster that has ones primary and two read nodes
