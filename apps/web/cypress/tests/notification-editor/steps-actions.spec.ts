@@ -23,8 +23,9 @@ describe('Workflow Editor - Steps Actions', function () {
     waitForEditTemplateRequests();
 
     cy.get('.react-flow__node').should('have.length', 4);
-    cy.getByTestId('node-inAppSelector').getByTestId('channel-node').first().trigger('mouseover', { force: true });
-    cy.getByTestId('delete-step-action').click();
+    cy.clickWorkflowNode(`node-inAppSelector`);
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('delete-step-button').click();
     cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
