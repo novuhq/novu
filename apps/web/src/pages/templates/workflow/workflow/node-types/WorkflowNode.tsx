@@ -284,6 +284,7 @@ const ActionWrapper = styled.div`
 const LeftContainerWrapper = styled.div`
   display: flex;
   align-items: center;
+  overflow: hidden;
 `;
 
 const ButtonWrapper = styled.div`
