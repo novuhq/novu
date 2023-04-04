@@ -73,7 +73,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       limit: options.limit,
       skip: options.skip,
       sort: '-createdAt',
-    }).populate('subscriber', '_id firstName lastName avatar subscriberId');
+    })
+      .read('secondaryPreferred')
+      .populate('subscriber', '_id firstName lastName avatar subscriberId');
 
     return this.mapEntities(messages);
   }
@@ -82,11 +84,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean } = {}
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
 
-    return await this.count(requestQuery);
+    return this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
   }
 
   async getCount(
@@ -101,7 +103,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read: query.read,
     });
 
-    return await this.count(requestQuery);
+    return this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
   }
 
   async markAllMessagesAs(

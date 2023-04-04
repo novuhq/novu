@@ -10,17 +10,18 @@ import {
 import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { RemoveMessageCommand } from './remove-message.command';
-import { InvalidateCache } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
+import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class RemoveMessage {
   constructor(
+    private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
     private queueService: QueueService,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
@@ -28,8 +29,21 @@ export class RemoveMessage {
     private memberRepository: MemberRepository
   ) {}
 
-  @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED])
   async execute(command: RemoveMessageCommand): Promise<MessageEntity> {
+    await this.invalidateCache.invalidateQuery({
+      key: buildFeedKey().invalidate({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateQuery({
+      key: buildMessageCountKey().invalidate({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
 
@@ -86,12 +100,17 @@ export class RemoveMessage {
     const eventMessage = `un${mark}_count_changed`;
     const countKey = `un${mark}Count`;
 
-    this.queueService.wsSocketQueue.add({
-      event: eventMessage,
-      userId: subscriber._id,
-      payload: {
-        [countKey]: count,
+    this.queueService.bullMqService.add(
+      'sendMessage',
+      {
+        event: eventMessage,
+        userId: subscriber._id,
+        payload: {
+          [countKey]: count,
+        },
       },
-    });
+      {},
+      subscriber._organizationId
+    );
   }
 }

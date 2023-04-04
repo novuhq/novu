@@ -1,4 +1,4 @@
-import { CacheKeyPrefixEnum } from '../services/cache';
+import { CacheKeyPrefixEnum } from '../services/cache/key-builders/shared';
 
 export function validateCredentials(keyPrefix: CacheKeyPrefixEnum, credentials: string) {
   const entitiesEnvironmentLevel = [

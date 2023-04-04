@@ -20,10 +20,14 @@ import { SwitchEnvironment } from '../usecases/switch-environment/switch-environ
 import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
 import { ANALYTICS_SERVICE } from '../../shared/shared.module';
-import { CacheKeyPrefixEnum } from '../../shared/services/cache';
-import { Cached } from '../../shared/interceptors';
+import { CachedEntity } from '../../shared/interceptors/cached-entity.interceptor';
 import { normalizeEmail } from '../../shared/helpers/email-normalization.service';
 import { ApiException } from '../../shared/exceptions/api.exception';
+import {
+  buildEnvironmentByApiKey,
+  buildSubscriberKey,
+  buildUserKey,
+} from '../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class AuthService {
@@ -127,7 +131,7 @@ export class AuthService {
   }
 
   async apiKeyAuthenticate(apiKey: string) {
-    const environment = await this.getEnvironment({ _id: apiKey });
+    const environment = await this.getEnvironment({ apiKey: apiKey });
     if (!environment) throw new UnauthorizedException('API Key not found');
 
     const key = environment.apiKeys.find((i) => i.key === apiKey);
@@ -139,7 +143,7 @@ export class AuthService {
     return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
   }
 
-  async getSubscriberWidgetToken(subscriber: SubscriberEntity, userId: string): Promise<string> {
+  async getSubscriberWidgetToken(subscriber: SubscriberEntity): Promise<string> {
     return this.jwtService.sign(
       {
         _id: subscriber._id,
@@ -149,7 +153,6 @@ export class AuthService {
         organizationId: subscriber._organizationId,
         environmentId: subscriber._environmentId,
         subscriberId: subscriber.subscriberId,
-        organizationAdminId: userId,
       },
       {
         expiresIn: '15 day',
@@ -265,12 +268,7 @@ export class AuthService {
   }
 
   async validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity | null> {
-    const subscriber = await this.getSubscriber({
-      environmentId: payload.environmentId,
-      _id: payload._id,
-    });
-
-    return subscriber;
+    return await this.getSubscriber({ _environmentId: payload.environmentId, subscriberId: payload.subscriberId });
   }
 
   async decodeJwt<T>(token: string) {
@@ -290,27 +288,34 @@ export class AuthService {
     return !!environment._parentId;
   }
 
-  @Cached(CacheKeyPrefixEnum.SUBSCRIBER)
-  private async getSubscriber({ _id, environmentId }: { _id: string; environmentId: string }) {
-    const subscriber = await this.subscriberRepository.findOne({
-      _environmentId: environmentId,
-      _id: _id,
-    });
-
-    return subscriber;
-  }
-
-  @Cached(CacheKeyPrefixEnum.USER)
+  @CachedEntity({
+    builder: (command: { _id: string }) =>
+      buildUserKey({
+        _id: command._id,
+      }),
+  })
   private async getUser({ _id }: { _id: string }) {
     return await this.userRepository.findById(_id);
   }
 
-  @Cached(CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY)
-  private async getEnvironment({ _id }: { _id: string }) {
-    /**
-     * _id is used here because the Cached decorator needs and it.
-     * TODO: Refactor cached decorator to support custom keys
-     */
-    return await this.environmentRepository.findByApiKey(_id);
+  @CachedEntity({
+    builder: ({ apiKey }: { apiKey: string }) =>
+      buildEnvironmentByApiKey({
+        apiKey: apiKey,
+      }),
+  })
+  private async getEnvironment({ apiKey }: { apiKey: string }) {
+    return await this.environmentRepository.findByApiKey(apiKey);
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  private async getSubscriber({ subscriberId, _environmentId }: { subscriberId: string; _environmentId: string }) {
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 }

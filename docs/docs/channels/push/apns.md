@@ -1,3 +1,8 @@
+---
+sidebar_label: APNS
+sidebar_position: 3
+---
+
 # Apple Push Notification Service
 
 [Apple Push Notification Service](https://docs.expo.dev/push-notifications/overview/) is a notification delivery service provided by Apple.
@@ -67,23 +72,23 @@ novu.trigger('event-name', {
   },
   payload: {
     key1: 'val1',
-    key2: 'val2' // If the notification is a data notification, the payload will be sent as the data
+    key2: 'val2', // If the notification is a data notification, the payload will be sent as the data
   },
   overrides: {
     type: 'data',
     apns: {
       headers: {
-        'apns-priority' : '5',
-      }
+        'apns-priority': '5',
+      },
       payload: {
         aps: {
           alert: {
-            'loc-key' : 'GAME_PLAY_REQUEST_FORMAT',
-            'loc-args' : [ 'Shelly', 'Rick']
+            'loc-key': 'GAME_PLAY_REQUEST_FORMAT',
+            'loc-args': ['Shelly', 'Rick'],
           },
-          sound: 'demo.wav'
-        }
-      }
+          sound: 'demo.wav',
+        },
+      },
     },
   },
 });

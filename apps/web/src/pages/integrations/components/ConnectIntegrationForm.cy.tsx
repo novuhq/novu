@@ -92,6 +92,12 @@ it('shows the configuration for the selected provider', () => {
       type: 'string',
       required: true,
     },
+    {
+      key: CredentialsKeyEnum.RequireTls,
+      displayName: 'Require Tls',
+      type: 'switch',
+      required: true,
+    },
   ];
 
   const provider: IIntegratedProvider = {
@@ -116,7 +122,9 @@ it('shows the configuration for the selected provider', () => {
 
   // We may use a for-loop here since order of checks is not important
   for (const cred of credentials) {
-    cy.get(`input[name="${cred.key}"]`).should('have.attr', 'placeholder', cred.displayName);
+    if (cred.key === CredentialsKeyEnum.RequireTls)
+      cy.get(`input[name="${cred.key}"]`).should('have.attr', 'type', 'checkbox');
+    else cy.get(`input[name="${cred.key}"]`).should('have.attr', 'placeholder', cred.displayName);
   }
 
   cy.get('[data-test-id="connect-integration-form-active-text"]').should('have.text', 'Disabled');

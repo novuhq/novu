@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { JobsOptions, Queue, QueueBaseOptions, QueueScheduler, Worker } from 'bullmq';
+import { Job, JobsOptions, QueueBaseOptions, WorkerOptions } from 'bullmq';
 // TODO: Remove this DAL dependency, maybe through a DTO or shared entity
 import { JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
@@ -13,15 +13,21 @@ import {
   SetJobAsFailed,
   SetJobAsFailedCommand,
 } from '../../usecases/update-job-status';
+import { WebhookFilterBackoffStrategy } from '../../usecases/webhook-filter-backoff-strategy';
 
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
+import { BullmqService } from '@novu/application-generic';
 import { PinoLogger, storage, Store } from '@novu/application-generic';
 
 export const WORKER_NAME = 'standard';
+
+export enum BackoffStrategiesEnum {
+  WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
+}
 
 @Injectable()
 export class WorkflowQueueService {
@@ -38,55 +44,55 @@ export class WorkflowQueueService {
       tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
-  public readonly queue: Queue;
-  public readonly worker: Worker;
-  private readonly queueScheduler: QueueScheduler;
   readonly DEFAULT_ATTEMPTS = 3;
+
+  public readonly bullMqService: BullmqService;
 
   constructor(
     @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
     @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
     @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
+    @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
+    private webhookFilterWebhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
-    this.queue = new Queue(WORKER_NAME, {
+    this.bullMqService = new BullmqService();
+
+    this.bullMqService.createQueue(WORKER_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
+    this.bullMqService.createWorker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
 
-    this.worker = new Worker(WORKER_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
-
-    this.worker.on('completed', async (job) => {
+    this.bullMqService.worker.on('completed', async (job) => {
       await this.jobHasCompleted(job);
     });
 
-    this.worker.on('failed', async (job, error) => {
+    this.bullMqService.worker.on('failed', async (job, error) => {
       await this.jobHasFailed(job, error);
     });
-
-    this.queueScheduler = new QueueScheduler(WORKER_NAME, this.bullConfig);
   }
 
   public async gracefulShutdown() {
     // Right now we only want this for testing purposes
     if (process.env.NODE_ENV === 'test') {
-      await this.queue.drain();
-      await this.worker.close();
+      await this.bullMqService.queue.drain();
+      await this.bullMqService.worker.close();
     }
   }
 
-  private getWorkerOpts() {
+  private getWorkerOpts(): WorkerOptions {
     return {
       ...this.bullConfig,
       lockDuration: 90000,
       concurrency: 200,
       settings: {
-        backoffStrategies: this.getBackoffStrategies(),
+        backoffStrategy: this.getBackoffStrategies(),
       },
-    };
+    } as WorkerOptions;
   }
 
   private getWorkerProcessor() {
@@ -175,7 +181,7 @@ export class WorkflowQueueService {
     }
   }
 
-  public async addToQueue(id: string, data: JobEntity, delay?: number | undefined) {
+  public async addToQueue(id: string, data: JobEntity, delay?: number | undefined, organizationId?: string) {
     const options: JobsOptions = {
       removeOnComplete: true,
       removeOnFail: true,
@@ -186,12 +192,12 @@ export class WorkflowQueueService {
 
     if (stepContainsWebhookFilter) {
       options.backoff = {
-        type: 'webhookFilterBackoff',
+        type: BackoffStrategiesEnum.WEBHOOK_FILTER_BACKOFF,
       };
       options.attempts = this.DEFAULT_ATTEMPTS;
     }
 
-    await this.queue.add(id, data, options);
+    await this.bullMqService.add(id, data, options, organizationId);
   }
 
   private stepContainsFilter(data: JobEntity, onFilter: string) {
@@ -203,22 +209,18 @@ export class WorkflowQueueService {
   }
 
   private getBackoffStrategies = () => {
-    return {
-      webhookFilterBackoff: async (attemptsMade, err, job) => {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(job.data),
-            detail: DetailEnum.WEBHOOK_FILTER_FAILED_RETRY,
-            source: ExecutionDetailsSourceEnum.WEBHOOK,
-            status: ExecutionDetailsStatusEnum.PENDING,
-            isTest: false,
-            isRetry: true,
-            raw: JSON.stringify({ message: JSON.parse(err.message).message, attempt: attemptsMade }),
-          })
-        );
+    return async (attemptsMade: number, type: string, eventError: Error, eventJob: Job): Promise<number> => {
+      // TODO: Review why when using `Command.create` class-transformer fails with `undefined has no property toKey()`
+      const command = {
+        attemptsMade,
+        environmentId: eventJob?.data?._environmentId,
+        eventError,
+        eventJob,
+        organizationId: eventJob?.data?._organizationId,
+        userId: eventJob?.data?._userId,
+      };
 
-        return Math.round(Math.random() * Math.pow(2, attemptsMade) * 1000);
-      },
+      return await this.webhookFilterWebhookFilterBackoffStrategy.execute(command);
     };
   };
 }

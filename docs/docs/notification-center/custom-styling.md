@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 7
 ---
 
 # Custom styling
@@ -102,3 +102,7 @@ export class AppComponent {
   };
 }
 ```
+
+:::note
+Facing issues in using notification center? Check out FAQs [here](./FAQ)
+:::

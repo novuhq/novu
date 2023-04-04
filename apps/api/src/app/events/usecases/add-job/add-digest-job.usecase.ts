@@ -11,8 +11,9 @@ import {
   CreateExecutionDetailsCommand,
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { EventsDistributedLockService } from '../../services/distributed-lock-service';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { InMemoryProviderService } from '../../../shared/services/in-memory-provider';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -23,11 +24,15 @@ type AddDigestJobResult = number | undefined;
 
 @Injectable()
 export class AddDigestJob {
+  private eventsDistributedLockService: EventsDistributedLockService;
+
   constructor(
-    private distributedLockService: EventsDistributedLockService,
+    private inMemoryProviderService: InMemoryProviderService,
     private jobRepository: JobRepository,
     protected createExecutionDetails: CreateExecutionDetails
-  ) {}
+  ) {
+    this.eventsDistributedLockService = new EventsDistributedLockService(inMemoryProviderService);
+  }
 
   public async execute(command: AddDigestJobCommand): Promise<AddDigestJobResult> {
     const { job } = command;
@@ -83,7 +88,7 @@ export class AddDigestJob {
     digestKey?: string,
     digestValue?: string | number
   ): Promise<IFindAndUpdateResponse> {
-    const TTL = 500;
+    const TTL = 1500;
     let resource = `environment:${job._environmentId}:template:${job._templateId}:subscriber:${job._subscriberId}`;
     if (digestKey && digestValue) {
       resource = `${resource}:digestKey:${digestKey}:digestValue:${digestValue}`;
@@ -92,7 +97,7 @@ export class AddDigestJob {
     const shouldDelayDigestJobOrMerge = async () =>
       this.jobRepository.shouldDelayDigestJobOrMerge(job, digestKey, digestValue);
 
-    const result = await this.distributedLockService.applyLock<IFindAndUpdateResponse>(
+    const result = await this.eventsDistributedLockService.applyLock<IFindAndUpdateResponse>(
       {
         resource,
         ttl: TTL,

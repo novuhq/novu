@@ -13,7 +13,7 @@ import {
 } from './dtos';
 import { EventsPerformanceService } from './services/performance-service';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
-import { SendMessageCommand, SendTestEmail, SendTestEmailCommand } from './usecases/send-message';
+import { SendTestEmail, SendTestEmailCommand } from './usecases/send-message';
 import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
 import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
