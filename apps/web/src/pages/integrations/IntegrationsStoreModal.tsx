@@ -25,12 +25,12 @@ export function IntegrationsStoreModal({
   scrollTo,
   openIntegration,
   closeIntegration,
-  defaultProvider = null,
+  selectedProvider = null,
 }: {
   scrollTo?: ChannelTypeEnum;
   openIntegration: boolean;
   closeIntegration: () => void;
-  defaultProvider?: IIntegratedProvider | null;
+  selectedProvider?: IIntegratedProvider | null;
 }) {
   const segment = useSegment();
   const { environment } = useEnvController();
@@ -45,9 +45,9 @@ export function IntegrationsStoreModal({
   const { classes: drawerClasses } = useDrawerStyles();
 
   useEffect(() => {
-    setFormIsOpened(defaultProvider !== null);
-    setProvider(defaultProvider);
-  }, [defaultProvider]);
+    setFormIsOpened(selectedProvider !== null);
+    setProvider(selectedProvider);
+  }, [selectedProvider]);
 
   async function handleOnProviderClick(
     visible: boolean,

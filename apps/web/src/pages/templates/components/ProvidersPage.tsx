@@ -127,7 +127,7 @@ export function ProvidersPage() {
         <ListProviders setProvider={setProvider} setConfigureChannel={setConfigureChannel} providers={smsProvider} />
       </SubPageWrapper>
       <IntegrationsStoreModal
-        defaultProvider={provider}
+        selectedProvider={provider}
         openIntegration={configureChannel !== undefined}
         closeIntegration={() => {
           setProvider(null);
