@@ -1,12 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
 
 import { WebhookFilterBackoffStrategyCommand } from './webhook-filter-backoff-strategy.command';
-import { DetailEnum } from '../../../../../../api/src/app/execution-details/types';
-import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-} from '../../../../../../api/src/app/execution-details/usecases/create-execution-details';
 
 @Injectable()
 export class WebhookFilterBackoffStrategy {
@@ -17,7 +13,6 @@ export class WebhookFilterBackoffStrategy {
     const job = eventJob.data;
 
     try {
-      // TODO: Review why when using `Command.create` class-transformer fails with `undefined has no property toKey()`
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),

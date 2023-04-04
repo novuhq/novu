@@ -89,6 +89,8 @@ export class S3StorageService implements StorageService {
       ) {
         throw new NonExistingFileError();
       }
+
+      throw error;
     }
   }
 

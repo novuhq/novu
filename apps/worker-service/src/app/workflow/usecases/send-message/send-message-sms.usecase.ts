@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -9,17 +10,21 @@ import {
   IntegrationEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import * as Sentry from '@sentry/node';
+import {
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+  CompileTemplate,
+  CompileTemplateCommand,
+  SmsFactory,
+} from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
-import { SmsFactory } from './sms-service/sms.factory';
 import { SendMessageCommand } from './send-message.command';
-import { CompileTemplate, CompileTemplateCommand } from './compile-template';
-import { GetDecryptedIntegrations, GetDecryptedIntegrationsCommand } from '../get-decrypted-integrations';
-import { CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
-import { DetailEnum } from '../create-execution-details/types';
 import { SendMessageBase } from './send-message.base';
-import { PlatformException } from '../../../shared/utils';
+import { PlatformException } from '../../../shared/utils/exceptions';
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {

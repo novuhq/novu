@@ -17,16 +17,21 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
+import {
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+  CompileTemplate,
+  CompileTemplateCommand,
+  ChatFactory,
+} from '@novu/application-generic';
 
-import { ChatFactory } from './chat-service/chat.factory';
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
-import { CompileTemplate, CompileTemplateCommand } from './compile-template';
-import { GetDecryptedIntegrations, GetDecryptedIntegrationsCommand } from '../get-decrypted-integrations';
-import { CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
-import { DetailEnum } from '../create-execution-details/types';
 import { SendMessageBase } from './send-message.base';
-import { PlatformException } from '../../../shared/utils';
+import { PlatformException } from '../../../shared/utils/exceptions';
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {

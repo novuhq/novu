@@ -1,5 +1,6 @@
-import { decrypt, encrypt } from './cipher';
 import { ICredentialsDto, secureCredentials } from '@novu/shared';
+
+import { decrypt, encrypt } from './cipher';
 
 const NOVU_SUB_MASK = 'nvsk.';
 

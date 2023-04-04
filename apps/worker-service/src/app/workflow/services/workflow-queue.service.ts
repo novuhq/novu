@@ -1,6 +1,14 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { QueueService, PinoLogger, storage, Store } from '@novu/application-generic';
+import {
+  QueueService,
+  PinoLogger,
+  storage,
+  Store,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+} from '@novu/application-generic';
 import { Job, WorkerOptions } from 'bullmq';
 
 import {
@@ -8,9 +16,6 @@ import {
   RunJobCommand,
   QueueNextJob,
   QueueNextJobCommand,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
   SetJobAsCommand,
   SetJobAsCompleted,
   SetJobAsFailed,

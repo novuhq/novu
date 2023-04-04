@@ -1,9 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
-import { EventsPerformanceService, StorageHelperService } from '@novu/application-generic';
+import {
+  EventsDistributedLockService,
+  EventsPerformanceService,
+  StorageHelperService,
+  QueueService,
+  SendTestEmail,
+} from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
-import { EventsDistributedLockService } from './services/distributed-lock-service';
 import { TriggerHandlerQueueService } from './services/workflow-queue/trigger-handler-queue.service';
 import { WorkflowQueueProducerService } from './services/workflow-queue/workflow-queue-producer.service';
 import { USE_CASES } from './usecases';
@@ -36,11 +41,15 @@ import { LayoutsModule } from '../layouts/layouts.module';
   controllers: [EventsController],
   providers: [
     ...USE_CASES,
-    WorkflowQueueProducerService,
+    {
+      provide: QueueService,
+      useClass: WorkflowQueueProducerService,
+    },
     StorageHelperService,
     TriggerHandlerQueueService,
     EventsDistributedLockService,
     EventsPerformanceService,
+    SendTestEmail,
   ],
 })
 export class EventsModule {}

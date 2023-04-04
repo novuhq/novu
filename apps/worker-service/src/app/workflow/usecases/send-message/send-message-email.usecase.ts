@@ -14,17 +14,22 @@ import {
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
+import {
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+  GetNovuIntegration,
+  CompileEmailTemplate,
+  CompileEmailTemplateCommand,
+  MailFactory,
+} from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
-import { MailFactory } from './mail-service/mail.factory';
 import { SendMessageCommand } from './send-message.command';
-import { GetDecryptedIntegrations, GetDecryptedIntegrationsCommand } from '../get-decrypted-integrations';
-import { CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
-import { DetailEnum } from '../create-execution-details/types';
 import { SendMessageBase } from './send-message.base';
-import { PlatformException } from '../../../shared/utils';
-import { GetNovuIntegration } from '../get-novu-integration';
-import { CompileEmailTemplate, CompileEmailTemplateCommand } from './compile-email-template';
+import { PlatformException } from '../../../shared/utils/exceptions';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
@@ -320,7 +325,6 @@ export class SendMessageEmail extends SendMessageBase {
 
       return;
     }
-
     if (!integration) {
       const integrationError = `${errorMessage} active email integration not found`;
 

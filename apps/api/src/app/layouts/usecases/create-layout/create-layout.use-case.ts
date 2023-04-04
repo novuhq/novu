@@ -10,7 +10,6 @@ import { LayoutDto } from '../../dtos';
 import { ChannelTypeEnum, ITemplateVariable, LayoutId } from '../../types';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ContentService } from '../../../shared/helpers/content.service';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class CreateLayoutUseCase {
@@ -18,7 +17,7 @@ export class CreateLayoutUseCase {
     private createLayoutChange: CreateLayoutChangeUseCase,
     private setDefaultLayout: SetDefaultLayoutUseCase,
     private layoutRepository: LayoutRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateLayoutCommand): Promise<LayoutDto & { _id: string }> {

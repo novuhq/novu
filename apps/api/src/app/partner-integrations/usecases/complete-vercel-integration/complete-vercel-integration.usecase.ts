@@ -7,7 +7,6 @@ import { AnalyticsService } from '@novu/application-generic';
 import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
 import { GetVercelProjects } from '../get-vercel-projects/get-vercel-projects.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 interface ISetEnvironment {
   token: string;
@@ -30,7 +29,7 @@ export class CompleteVercelIntegration {
     private environmentRepository: EnvironmentRepository,
     private getVercelProjectsUsecase: GetVercelProjects,
     private organizationRepository: OrganizationRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CompleteVercelIntegrationCommand): Promise<{ success: boolean }> {

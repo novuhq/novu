@@ -32,11 +32,11 @@ import {
   GCSStorageService,
   S3StorageService,
   StorageService,
+  WsQueueService,
+  DistributedLockService,
 } from '@novu/application-generic';
 import { ConnectionOptions } from 'tls';
 
-import { DistributedLockService } from './services/distributed-lock';
-import { QueueService } from './services/queue';
 import * as packageJson from '../../../package.json';
 
 const DAL_MODELS = [
@@ -75,8 +75,6 @@ function getStorageServiceClass() {
 
 const dalService = new DalService();
 
-export const ANALYTICS_SERVICE = 'AnalyticsService';
-
 const cacheService = {
   provide: CacheService,
   useFactory: async () => {
@@ -102,10 +100,8 @@ const PROVIDERS = [
     },
   },
   {
-    provide: QueueService,
-    useFactory: () => {
-      return new QueueService();
-    },
+    provide: WsQueueService,
+    useClass: WsQueueService,
   },
   {
     provide: DalService,
@@ -123,7 +119,7 @@ const PROVIDERS = [
     useClass: getStorageServiceClass(),
   },
   {
-    provide: ANALYTICS_SERVICE,
+    provide: AnalyticsService,
     useFactory: async () => {
       const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
 

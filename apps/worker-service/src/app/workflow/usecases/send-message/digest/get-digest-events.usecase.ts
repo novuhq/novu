@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { JobRepository, JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
+import {
+  DigestFilterSteps,
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+} from '@novu/application-generic';
 
 import { PlatformException } from '../../../../shared/utils';
-import { CreateExecutionDetails, CreateExecutionDetailsCommand, DetailEnum } from '../../create-execution-details';
-import { DigestFilterSteps } from '../../digest-filter-steps';
 
 @Injectable()
 export abstract class GetDigestEvents {

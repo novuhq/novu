@@ -16,7 +16,7 @@ import { CreateMessageTemplateCommand } from '../../../message-template/usecases
 import { UpdateMessageTemplateCommand } from '../../../message-template/usecases/update-message-template/update-message-template.command';
 import { UpdateMessageTemplate } from '../../../message-template/usecases/update-message-template/update-message-template.usecase';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { NotificationStep } from '../../../shared/dtos/notification-step';
 
@@ -29,7 +29,7 @@ export class UpdateNotificationTemplate {
     private updateMessageTemplate: UpdateMessageTemplate,
     private createChange: CreateChange,
     private changeRepository: ChangeRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   @InvalidateCache(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)

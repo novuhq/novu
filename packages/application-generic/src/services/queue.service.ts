@@ -31,8 +31,6 @@ export class QueueService<T = unknown> {
         removeOnComplete: true,
       },
     });
-
-    this.bullMqService.createScheduler(this.name, this.bullConfig);
   }
 
   public async gracefulShutdown() {

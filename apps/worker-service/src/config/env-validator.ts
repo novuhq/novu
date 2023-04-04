@@ -41,6 +41,32 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
 };
 
+if (process.env.STORAGE_SERVICE === 'AZURE') {
+  validators.AZURE_ACCOUNT_NAME = str();
+  validators.AZURE_ACCOUNT_KEY = str();
+  validators.AZURE_HOST_NAME = str({
+    default: `https://${process.env.AZURE_ACCOUNT_NAME}.blob.core.windows.net`,
+  });
+  validators.AZURE_CONTAINER_NAME = str({
+    default: 'novu',
+  });
+}
+
+if (process.env.STORAGE_SERVICE === 'GCS') {
+  validators.GCS_BUCKET_NAME = str();
+  validators.GCS_DOMAIN = str();
+}
+
+if (process.env.STORAGE_SERVICE === 'AWS' || !process.env.STORAGE_SERVICE) {
+  validators.S3_LOCAL_STACK = str({
+    default: '',
+  });
+  validators.S3_BUCKET_NAME = str();
+  validators.S3_REGION = str();
+  validators.AWS_ACCESS_KEY_ID = str();
+  validators.AWS_SECRET_ACCESS_KEY = str();
+}
+
 if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
   validators.NEW_RELIC_APP_NAME = str({
     default: '',

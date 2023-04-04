@@ -6,7 +6,7 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { InitializeSessionCommand } from './initialize-session.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
 import { createHash } from '../../../shared/helpers/hmac.service';
 @Injectable()
@@ -16,7 +16,7 @@ export class InitializeSession {
     private createSubscriber: CreateSubscriber,
     private authService: AuthService,
     private feedRepository: FeedRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private membersRepository: MemberRepository
   ) {}
 

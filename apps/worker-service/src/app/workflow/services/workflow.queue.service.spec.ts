@@ -17,8 +17,7 @@ import { v4 as uuid } from 'uuid';
 
 import { WorkflowQueueService } from './workflow-queue.service';
 
-import { EventsModule } from '../../events.module';
-import { ExecutionDetailsModule } from '../../../execution-details/execution-details.module';
+import { WorkflowModule } from '../../workflow/workflow.module';
 
 let workflowQueueService: WorkflowQueueService;
 
@@ -31,7 +30,7 @@ describe('Workflow Queue service', () => {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [EventsModule, ExecutionDetailsModule],
+      imports: [WorkflowModule],
     }).compile();
 
     workflowQueueService = moduleRef.get<WorkflowQueueService>(WorkflowQueueService);

@@ -1,12 +1,17 @@
 import { MessageRepository, SubscriberRepository, JobEntity } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { Cached, CacheKeyPrefixEnum } from '@novu/application-generic';
+import {
+  CacheKeyPrefixEnum,
+  Cached,
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+} from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
 import { CreateLog } from '../../../shared/logs';
-import { GetDecryptedIntegrations, GetDecryptedIntegrationsCommand } from '../get-decrypted-integrations';
-import { CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
-import { DetailEnum } from '../create-execution-details/types';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;

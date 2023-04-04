@@ -64,8 +64,6 @@ const DAL_MODELS = [
 
 const dalService = new DalService();
 
-export const ANALYTICS_SERVICE = 'AnalyticsService';
-
 function getStorageServiceClass() {
   switch (process.env.STORAGE_SERVICE) {
     case 'GCS':
@@ -79,7 +77,7 @@ function getStorageServiceClass() {
 
 const PROVIDERS = [
   {
-    provide: ANALYTICS_SERVICE,
+    provide: AnalyticsService,
     useFactory: async () => {
       const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
 
@@ -114,7 +112,10 @@ const PROVIDERS = [
   },
   InvalidateCacheService,
   CreateLog,
-  WsQueueService,
+  {
+    provide: WsQueueService,
+    useClass: WsQueueService,
+  },
   {
     provide: StorageService,
     useClass: getStorageServiceClass(),

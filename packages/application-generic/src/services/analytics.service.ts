@@ -37,7 +37,7 @@ export class AnalyticsService {
   ) {
     if (this.segmentEnabled) {
       this.segment.group({
-        userId: user._id,
+        userId: user._id as any,
         groupId: organizationId,
         traits: {
           _organization: organizationId,

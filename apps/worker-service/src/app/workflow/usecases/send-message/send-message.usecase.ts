@@ -1,11 +1,20 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IPreferenceChannels,
   StepTypeEnum,
 } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  CacheKeyPrefixEnum,
+  Cached,
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
+} from '@novu/application-generic';
 import {
   JobEntity,
   SubscriberRepository,
@@ -13,7 +22,6 @@ import {
   JobRepository,
   JobStatusEnum,
 } from '@novu/dal';
-import { Cached, CacheKeyPrefixEnum } from '@novu/application-generic';
 
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageDelay } from './send-message-delay.usecase';
@@ -23,16 +31,8 @@ import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest/digest.usecase';
-
+import { PlatformException } from '../../../shared/utils/exceptions';
 import { MessageMatcher } from '../message-matcher';
-import { CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
-import { DetailEnum } from '../create-execution-details/types';
-import {
-  GetSubscriberTemplatePreference,
-  GetSubscriberTemplatePreferenceCommand,
-} from '../get-subscriber-template-preference';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { PlatformException } from '../../../shared/utils';
 
 @Injectable()
 export class SendMessage {
@@ -50,7 +50,7 @@ export class SendMessage {
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
     private matchMessage: MessageMatcher,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   public async execute(command: SendMessageCommand) {
@@ -203,7 +203,6 @@ export class SendMessage {
     return result || template.critical;
   }
 
-  // TODO use this annotation from shared library
   @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);

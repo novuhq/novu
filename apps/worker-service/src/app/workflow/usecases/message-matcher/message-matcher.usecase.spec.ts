@@ -3,7 +3,7 @@ import * as sinon from 'sinon';
 import axios from 'axios';
 import { Duration, sub } from 'date-fns';
 import { FilterParts, FilterPartTypeEnum, FILTER_TO_LABEL, StepTypeEnum, TimeOperatorEnum } from '@novu/shared';
-import { JobEntity, MessageTemplateEntity, NotificationStepEntity, SubscriberRepository } from '@novu/dal';
+import { JobEntity, MessageTemplateEntity, NotificationStepEntity } from '@novu/dal';
 
 import { MessageMatcher } from './message-matcher.usecase';
 import type { SendMessageCommand } from '../send-message/send-message.command';
@@ -12,7 +12,7 @@ describe('Message filter matcher', function () {
   const createExecutionDetails = {
     execute: sinon.stub(),
   };
-  let messageMatcher = new MessageMatcher(
+  const messageMatcher = new MessageMatcher(
     undefined as any,
     createExecutionDetails as any,
     undefined as any,
@@ -471,7 +471,7 @@ describe('Message filter matcher', function () {
       })
     );
 
-    let matchedMessage = await messageMatcher.filter(
+    const matchedMessage = await messageMatcher.filter(
       sendMessageCommand({
         step: makeStep('Correct Match', undefined, [
           {

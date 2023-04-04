@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository } from '@novu/dal';
+import { AddJob } from '@novu/application-generic';
 
-import { AddJob } from '../add-job';
 import { QueueNextJobCommand } from './queue-next-job.command';
 
 @Injectable()

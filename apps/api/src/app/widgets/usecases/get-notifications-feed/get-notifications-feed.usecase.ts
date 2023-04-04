@@ -3,7 +3,6 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { AnalyticsService, CacheKeyPrefixEnum, Cached } from '@novu/application-generic';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -12,7 +11,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 export class GetNotificationsFeed {
   constructor(
     private messageRepository: MessageRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository
   ) {}
 

@@ -27,14 +27,13 @@ import {
   MessageRepository,
   JobRepository,
 } from '@novu/dal';
+import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
 import { EmailEventStatusEnum } from '@novu/stateless';
 
 import { IFilterVariables } from './types';
 import { FilterProcessingDetails } from './filter-processing-details';
-import { CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
-import { DetailEnum } from '../create-execution-details/types';
 import { SendMessageCommand } from '../send-message/send-message.command';
-import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, createHash } from '../../../shared/utils';
+import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, createHash, PlatformException } from '../../../shared/utils';
 
 const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: TimeOperatorEnum) => {
   if (timeOperator === TimeOperatorEnum.MINUTES) {
