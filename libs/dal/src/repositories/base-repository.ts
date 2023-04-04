@@ -40,9 +40,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
 
   async findOne(
     query: FilterQuery<T_DBModel> & T_Enforcement,
-    select?: ProjectionType<T_MappedEntity>
+    select?: ProjectionType<T_MappedEntity>,
+    options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}
   ): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findOne(query, select);
+    const data = await this.MongooseModel.findOne(query, select).read(options.readPreference || 'primary');
     if (!data) return null;
 
     return this.mapEntity(data.toObject());

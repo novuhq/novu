@@ -10,7 +10,7 @@ export class CreateSubscriber {
   async execute(command: CreateSubscriberCommand) {
     let subscriber =
       command.subscriber ??
-      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId));
+      (await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId, true));
 
     if (!subscriber) {
       subscriber = await this.subscriberRepository.create({
