@@ -15,8 +15,9 @@ import {
   ChannelTypeEnum,
   IPreviousStepFilterPart,
   PreviousStepTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
 } from '@novu/shared';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
   SubscriberEntity,
   EnvironmentRepository,

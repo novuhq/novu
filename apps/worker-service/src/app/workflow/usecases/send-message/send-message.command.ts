@@ -1,5 +1,4 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
-import { IEmailBlock } from '@novu/shared';
 import { NotificationStepEntity, JobEntity } from '@novu/dal';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';

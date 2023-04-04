@@ -25,10 +25,10 @@
   },
   "dependencies": {
     "@nestjs/axios": "~2.0.0",
-    "@nestjs/common": "9.3.9",
-    "@nestjs/core": "9.3.9",
+    "@nestjs/common": "9.3.12",
+    "@nestjs/core": "9.3.12",
     "@nestjs/terminus": "9.2.1",
-    "@nestjs/platform-express": "9.3.9",
+    "@nestjs/platform-express": "9.3.12",
     "@nestjs/swagger": "6.0.1",
     "@novu/application-generic": "^0.13.0",
     "@novu/stateless": "^0.13.0",

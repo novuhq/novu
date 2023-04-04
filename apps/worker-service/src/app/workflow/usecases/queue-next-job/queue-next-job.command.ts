@@ -1,6 +1,6 @@
 import { IsDefined } from 'class-validator';
 
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../shared/commands';
 
 export class QueueNextJobCommand extends EnvironmentWithUserCommand {
   @IsDefined()

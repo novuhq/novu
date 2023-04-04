@@ -2,7 +2,7 @@ import { CONTEXT_PATH } from './config';
 import 'newrelic';
 import '@sentry/tracing';
 import helmet from 'helmet';
-import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
+import { INestApplication, Logger, NestInterceptor, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
@@ -57,7 +57,7 @@ export async function bootstrap(): Promise<INestApplication> {
   );
 
   app.useGlobalInterceptors(new ResponseInterceptor());
-  app.useGlobalInterceptors(getErrorInterceptor() as any);
+  app.useGlobalInterceptors(getErrorInterceptor());
 
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
