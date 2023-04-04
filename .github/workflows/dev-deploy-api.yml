@@ -19,12 +19,12 @@ env:
 
 jobs:
   test_api:
-    strategy:
-      matrix:
-        name: ['novu/api', 'novu/api-ee']
     uses: ./.github/workflows/reusable-api-e2e.yml
+<<<<<<< HEAD
     with:
       ee: ${{ contains (matrix.name,'ee') }}
+=======
+>>>>>>> parent of 6ad53b858 (feat: add matrix for dev deploy api)
 
   deploy_dev_api:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -38,15 +38,15 @@ jobs:
       packages: write
       deployments: write
       id-token: write
+<<<<<<< HEAD
     strategy:
       matrix:
         # Only should be deploying api-ee to dev
         # name: ['novu/api', 'novu/api-ee']
         name: ['novu/api-ee']
+=======
+>>>>>>> parent of 6ad53b858 (feat: add matrix for dev deploy api)
     steps:
-      - name: echo
-        run: echo ${{ matrix.name }} container
-
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-api
@@ -55,7 +55,14 @@ jobs:
           tag: dev
           push: 'true'
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          docker_name: ${{ matrix.name }}
+      
+      - uses: ./.github/actions/docker/build-api
+        id: docker_build
+        with:
+          tag: dev
+          push: 'true'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          docker_name: 'novu/api-ee'
 
       - name: Checkout cloud infra
         uses: actions/checkout@master
