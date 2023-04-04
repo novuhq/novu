@@ -1,34 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useDocumentVisibility, useTimeout } from '@mantine/hooks';
 import { hideNotification, showNotification } from '@mantine/notifications';
 import { useBasePath } from './useBasePath';
 import { useLocation } from 'react-router-dom';
+import { useTourStorage } from './useTourStorage';
+import { useParams } from 'react-router-dom';
 
-export const useSave = (isDirty: boolean, onSave: () => Promise<any>) => {
+export const useSave = (isDirty: boolean, isValid: boolean, onSave: () => Promise<any>) => {
   const { pathname } = useLocation();
   const [previousPath, setPreviousPath] = useState(pathname);
+  const tourStorage = useTourStorage();
+  const { templateId = '' } = useParams<{ templateId: string }>();
+  const isTouring = tourStorage.getCurrentTour('digest', templateId) > -1;
+  const saveRef = useRef<any>();
 
-  useEffect(() => {
-    return () => {
-      save();
-    };
-  }, []);
-
-  const { start, clear } = useTimeout(() => {
-    showNotification({
-      message: 'We are saving your changes...',
-      color: 'blue',
-      id: 'savingOnNavigation',
-      autoClose: false,
-    });
-  }, 3000);
-
-  const documentVisibility = useDocumentVisibility();
-
-  const save = () => {
-    const isTouring = localStorage.getItem('tour-digest') !== null;
-
-    if (!isDirty || isTouring) {
+  saveRef.current = () => {
+    if (!isDirty || isTouring || !isValid) {
       return;
     }
     start();
@@ -45,11 +32,28 @@ export const useSave = (isDirty: boolean, onSave: () => Promise<any>) => {
       });
   };
 
+  const { start, clear } = useTimeout(() => {
+    showNotification({
+      message: 'We are saving your changes...',
+      color: 'blue',
+      id: 'savingOnNavigation',
+      autoClose: false,
+    });
+  }, 3000);
+
+  const documentVisibility = useDocumentVisibility();
+
   useEffect(() => {
-    window.addEventListener('beforeunload', save);
+    return () => {
+      saveRef.current();
+    };
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('beforeunload', saveRef.current);
 
     return () => {
-      window.removeEventListener('beforeunload', save);
+      window.removeEventListener('beforeunload', saveRef.current);
     };
   }, []);
 
@@ -57,7 +61,7 @@ export const useSave = (isDirty: boolean, onSave: () => Promise<any>) => {
     if (documentVisibility === 'visible') {
       return;
     }
-    save();
+    saveRef.current();
   }, [documentVisibility]);
 
   const basePath = useBasePath();
@@ -69,6 +73,6 @@ export const useSave = (isDirty: boolean, onSave: () => Promise<any>) => {
       return;
     }
     setPreviousPath(pathname);
-    save();
+    saveRef.current();
   }, [pathname]);
 };

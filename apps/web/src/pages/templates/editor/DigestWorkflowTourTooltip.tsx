@@ -2,7 +2,7 @@ import { UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
 import { TooltipRenderProps } from 'react-joyride';
 import { useFormContext } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
 
 import { useTour } from './TourProvider';
@@ -12,6 +12,7 @@ import { IForm } from '../components/formTypes';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { DigestWorkflowTourAnalyticsEnum, HINT_INDEX_TO_CLICK_ANALYTICS, ordinalNumbers } from '../constants';
 import { useBasePath } from '../hooks/useBasePath';
+import { useTourStorage } from '../hooks/useTourStorage';
 
 const ICONS = [Clock, LetterOpened, BellWithNotification];
 const TITLE = ['Set-up time interval', 'Set-up email content', 'Test your workflow'];
@@ -78,6 +79,9 @@ export const DigestWorkflowTourTooltip = ({
   const navigate = useNavigate();
   const Icon = ICONS[index];
   const basePath = useBasePath();
+  const { templateId = '' } = useParams<{ templateId: string }>();
+
+  const tourStorage = useTourStorage();
 
   const handleOnClick = (tourStepIndex: number, isFromNavigation = false) => {
     if (tourStepIndex === 0) {
@@ -89,7 +93,7 @@ export const DigestWorkflowTourTooltip = ({
     } else if (tourStepIndex === 2) {
       navigate(basePath + '/testworkflow');
     }
-    localStorage.setItem('tour-digest', tourStepIndex + '');
+    tourStorage.setTour('digest', templateId, tourStepIndex);
     setStep(tourStepIndex);
 
     const stepIndex = isFromNavigation ? tourStepIndex : index;
@@ -102,7 +106,7 @@ export const DigestWorkflowTourTooltip = ({
 
   const stopTourCallback = () => {
     stopTour();
-    localStorage.removeItem('tour-digest');
+    tourStorage.deleteTour('digest', templateId);
   };
 
   const handleSkipClick = () => {

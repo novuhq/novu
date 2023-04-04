@@ -180,7 +180,7 @@ const WorkflowEditor = () => {
           'The trigger code will be updated and this step will no longer participate in the notification workflow.'
         }
         target="step"
-        title={`Delete ${currentStep?.template.type} step?`}
+        title={`Delete step?`}
         isOpen={toDelete.length > 0}
         confirm={confirmDelete}
         cancel={cancelDelete}

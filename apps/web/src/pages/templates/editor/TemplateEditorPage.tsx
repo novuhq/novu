@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useDisclosure } from '@mantine/hooks';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { FieldErrors, useFormContext } from 'react-hook-form';
 
@@ -8,22 +7,28 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import PageMeta from '../../../components/layout/components/PageMeta';
 import type { IForm } from '../components/formTypes';
 import WorkflowEditor from '../workflow/WorkflowEditor';
-import { useEnvController } from '../../../hooks';
-import { SaveChangesModal } from '../components/SaveChangesModal';
+import { useEnvController, usePrompt } from '../../../hooks';
 import { BlueprintModal } from '../components/BlueprintModal';
 import { TemplateEditorFormProvider, useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 import { errorMessage } from '../../../utils/notifications';
 import { getExplicitErrors } from '../shared/errors';
 import { ROUTES } from '../../../constants/routes.enum';
 import { TourProvider } from './TourProvider';
+import { NavigateValidatorModal } from '../components/NavigateValidatorModal';
+import { useTourStorage } from '../hooks/useTourStorage';
+import { useBasePath } from '../hooks/useBasePath';
 
 function BaseTemplateEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { environment } = useEnvController();
-  const { template, isCreating, isUpdating, onSubmit } = useTemplateEditorForm();
+  const { template, isCreating, onSubmit } = useTemplateEditorForm();
   const methods = useFormContext<IForm>();
   const { handleSubmit } = methods;
+  const tourStorage = useTourStorage();
+  const { templateId = '' } = useParams<{ templateId: string }>();
+  const isTouring = tourStorage.getCurrentTour('digest', templateId) > -1;
+  const basePath = useBasePath();
 
   const isCreateTemplatePage = location.pathname === ROUTES.TEMPLATES_CREATE;
 
@@ -31,12 +36,18 @@ function BaseTemplateEditorPage() {
     errorMessage(getExplicitErrors(errors));
   };
 
-  const [saveChangesModalOpened, { close: closeSaveChangesModal, open: openSaveChangesModal }] = useDisclosure(false);
+  const [showNavigateValidatorModal, confirmNavigate, cancelNavigate] = usePrompt(
+    !methods.formState.isValid && location.pathname !== ROUTES.TEMPLATES_CREATE && !isTouring,
+    (nextLocation) => {
+      if (nextLocation.location.pathname.includes(basePath)) {
+        nextLocation.retry();
 
-  const onConfirmSaveChanges = async (data: IForm) => {
-    await onSubmit(data);
-    closeSaveChangesModal();
-  };
+        return false;
+      }
+
+      return true;
+    }
+  );
 
   const onSubmitHandler = async (data: IForm) => {
     await onSubmit(data);
@@ -76,14 +87,12 @@ function BaseTemplateEditorPage() {
           </ReactFlowProvider>
         </form>
       </PageContainer>
-      <SaveChangesModal
-        onConfirm={onConfirmSaveChanges}
-        isVisible={saveChangesModalOpened}
-        onDismiss={closeSaveChangesModal}
-        loading={isCreating || isUpdating}
-        onInvalid={onInvalid}
-      />
       <BlueprintModal />
+      <NavigateValidatorModal
+        isOpen={showNavigateValidatorModal}
+        onConfirm={confirmNavigate}
+        onCancel={cancelNavigate}
+      />
     </>
   );
 }

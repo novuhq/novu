@@ -10,6 +10,7 @@ import { ROUTES } from '../../constants/routes.enum';
 import { DigestDemoFlow } from '../../components';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { DigestPlaygroundAnalyticsEnum } from './constants';
+import { useTourStorage } from './hooks/useTourStorage';
 
 const Heading = styled(Title)`
   color: ${colors.B40};
@@ -30,6 +31,7 @@ export const TemplatesDigestPlaygroundPage = () => {
   const segment = useSegment();
   const { templateId = '' } = useParams<{ templateId: string }>();
   const navigate = useNavigate();
+  const tourStorage = useTourStorage();
 
   const handleBackClick = () => {
     segment.track(DigestPlaygroundAnalyticsEnum.BACK_BUTTON_CLICK);
@@ -38,7 +40,7 @@ export const TemplatesDigestPlaygroundPage = () => {
 
   const handleSetupDigestWorkflowClick = () => {
     segment.track(DigestPlaygroundAnalyticsEnum.SETUP_DIGEST_WORKFLOW_CLICK);
-    localStorage.setItem('tour-digest', '0');
+    tourStorage.setTour('digest', templateId, 0);
     navigate(`${parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId })}`);
   };
 

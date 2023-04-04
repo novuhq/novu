@@ -115,7 +115,7 @@ const TemplateEditorFormProvider = ({ children }) => {
 
   const {
     reset,
-    formState: { isDirty: isDirtyForm },
+    formState: { isDirty: isDirtyForm, isValid },
     watch,
   } = methods;
 
@@ -143,17 +143,10 @@ const TemplateEditorFormProvider = ({ children }) => {
     methods.setValue('identifier', newIdentifier);
   }, [name, identifier]);
 
-  useSave(methods.formState.isDirty, () => onSubmit(methods.getValues()));
+  useSave(isDirtyForm, isValid, () => onSubmit(methods.getValues()));
 
-  const {
-    template,
-    isLoading,
-    isCreating,
-    isUpdating,
-    isDeleting,
-    updateNotificationTemplate,
-    createNotificationTemplate,
-  } = useTemplateController(templateId);
+  const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } =
+    useTemplateController(templateId);
   const { groups, loading: loadingGroups } = useNotificationGroup();
 
   useEffect(() => {
