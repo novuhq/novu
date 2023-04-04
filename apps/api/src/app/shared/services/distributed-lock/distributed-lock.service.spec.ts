@@ -10,6 +10,8 @@ import { DistributedLockService } from './distributed-lock.service';
 
 const originalRedisCacheServiceHost = process.env.REDIS_CACHE_SERVICE_HOST;
 const originalRedisCacheServicePort = process.env.REDIS_CACHE_SERVICE_PORT;
+const originalRedisClusterServiceHost = process.env.REDIS_CLUSTER_SERVICE_HOST;
+const originalRedisClusterServicePorts = process.env.REDIS_CLUSTER_SERVICE_PORTS;
 
 let spyDecreaseLockCounter: SinonSpy;
 let spyIncreaseLockCounter: SinonSpy;
@@ -34,22 +36,21 @@ describe('Distributed Lock Service', () => {
   describe('In-memory provider service set', () => {
     let inMemoryProviderService: InMemoryProviderService;
     let distributedLockService: DistributedLockService;
-    let client: InMemoryProviderClient;
 
     beforeEach(() => {
       inMemoryProviderService = new InMemoryProviderService();
       distributedLockService = new DistributedLockService(inMemoryProviderService);
-      client = distributedLockService.instances[0];
     });
 
     describe('Set up', () => {
       it('should have made a connection to the unique instance implemented', async () => {
         expect(distributedLockService.distributedLock).to.be.ok;
         expect(distributedLockService.instances.length).to.eql(1);
+
+        const client = distributedLockService.instances[0];
         expect(await client!.ping()).to.eql('PONG');
         expect(client!.status).to.eql('ready');
-        expect(client!.options.host).to.eql(process.env.REDIS_CACHE_SERVICE_HOST);
-        expect(client!.options.port).to.eql(Number(process.env.REDIS_CACHE_SERVICE_PORT));
+        expect(client!.isCluster).to.eql(process.env.IN_MEMORY_CLUSTER_MODE_ENABLED === 'true');
       });
 
       it('should have default settings', () => {
@@ -97,6 +98,7 @@ describe('Distributed Lock Service', () => {
 
         distributedLockService.applyLock({ resource, ttl: TTL }, handler);
 
+        const client = distributedLockService.instances[0];
         let resourceExists = await client!.exists(resource);
         expect(resourceExists).to.eql(1);
         // TTL + this time should be less than the handler set one to see that the self expiration works
@@ -112,6 +114,8 @@ describe('Distributed Lock Service', () => {
       });
 
       it('should create lock and it should expire if the handler throws', async () => {
+        const client = distributedLockService.instances[0];
+
         const resource = 'lock-created-but-handler-throws';
         const TTL = 100;
         const handler = async () => {
@@ -234,11 +238,12 @@ describe('Distributed Lock Service', () => {
   describe('Bypass - In-memory provider service not set', () => {
     let inMemoryProviderService: InMemoryProviderService;
     let distributedLockService: DistributedLockService;
-    let client: InMemoryProviderClient;
 
     beforeEach(() => {
       process.env.REDIS_CACHE_SERVICE_HOST = '';
-      process.env.REDIS_CACHE_SERVICE_URL = '0';
+      process.env.REDIS_CACHE_SERVICE_PORT = '0';
+      process.env.REDIS_CLUSTER_SERVICE_HOST = '';
+      process.env.REDIS_CLUSTER_SERVICE_PORTS = '';
 
       inMemoryProviderService = new InMemoryProviderService();
       expect(inMemoryProviderService.inMemoryProviderConfig.host).to.eql('');
@@ -247,7 +252,9 @@ describe('Distributed Lock Service', () => {
 
     afterEach(() => {
       process.env.REDIS_CACHE_SERVICE_HOST = originalRedisCacheServiceHost;
-      process.env.REDIS_CACHE_SERVICE_URL = originalRedisCacheServicePort;
+      process.env.REDIS_CACHE_SERVICE_PORT = originalRedisCacheServicePort;
+      process.env.REDIS_CLUSTER_SERVICE_HOST = originalRedisClusterServiceHost;
+      process.env.REDIS_CLUSTER_SERVICE_PORTS = originalRedisClusterServicePorts;
     });
 
     describe('No in-memory instance', () => {

@@ -431,7 +431,8 @@
     "Metas",
     "Webpush",
     "maqsam",
-    "Millis"
+    "Millis",
+    "sscan"
   ],
   "flagWords": [],
   "patterns": [
