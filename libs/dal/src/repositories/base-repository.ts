@@ -38,7 +38,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     return this.mapEntity(data.toObject());
   }
 
-  async findOne(query: FilterQuery<T_DBModel> & T_Enforcement, select?: ProjectionType<T_MappedEntity>) {
+  async findOne(
+    query: FilterQuery<T_DBModel> & T_Enforcement,
+    select?: ProjectionType<T_MappedEntity>
+  ): Promise<T_MappedEntity | null> {
     const data = await this.MongooseModel.findOne(query, select);
     if (!data) return null;
 
