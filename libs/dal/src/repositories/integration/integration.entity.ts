@@ -1,4 +1,3 @@
-import { Types } from 'mongoose';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import type { EnvironmentId } from '../environment';

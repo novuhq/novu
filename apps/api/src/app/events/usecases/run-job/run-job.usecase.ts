@@ -62,7 +62,9 @@ export class RunJob {
           environmentId: job._environmentId,
           organizationId: job._organizationId,
           userId: job._userId,
-          subscriberId: job._subscriberId,
+          subscriberId: job.subscriberId,
+          // backward compatibility - ternary needed to be removed once the queue renewed
+          _subscriberId: job._subscriberId ? job._subscriberId : job.subscriberId,
           jobId: job._id,
           events: job.digest?.events,
           job,

@@ -2,23 +2,37 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { InvalidateCache } from '../../../shared/interceptors';
 import { MarkAllMessagesAsCommand } from './mark-all-messages-as.command';
+import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class MarkAllMessagesAs {
   constructor(
+    private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
     private queueService: QueueService,
     private subscriberRepository: SubscriberRepository,
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
-  @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED])
   async execute(command: MarkAllMessagesAsCommand): Promise<number> {
+    await this.invalidateCache.invalidateQuery({
+      key: buildFeedKey().invalidate({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateQuery({
+      key: buildMessageCountKey().invalidate({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) {
       throw new NotFoundException(

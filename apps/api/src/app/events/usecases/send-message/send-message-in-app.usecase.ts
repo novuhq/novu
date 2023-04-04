@@ -21,7 +21,7 @@ import {
   IActor,
 } from '@novu/shared';
 
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { CreateLog } from '../../../logs/usecases';
 import { QueueService } from '../../../shared/services/queue';
 import { SendMessageCommand } from './send-message.command';
 import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
@@ -30,10 +30,11 @@ import {
   CreateExecutionDetailsCommand,
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
+import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -61,7 +62,10 @@ export class SendMessageInApp extends SendMessageBase {
   }
 
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const subscriber = await this.getSubscriberBySubscriberId({
+      subscriberId: command.subscriberId,
+      _environmentId: command.environmentId,
+    });
     if (!subscriber) throw new ApiException('Subscriber not found');
     if (!command.step.template) throw new ApiException('Template not found');
 
@@ -132,7 +136,7 @@ export class SendMessageInApp extends SendMessageBase {
       _notificationId: notification._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
@@ -143,12 +147,18 @@ export class SendMessageInApp extends SendMessageBase {
 
     let message: MessageEntity | null = null;
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
-      credentials: {
+    await this.invalidateCache.invalidateQuery({
+      key: buildFeedKey().invalidate({
         subscriberId: subscriber.subscriberId,
-        environmentId: command.environmentId,
-      },
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateQuery({
+      key: buildMessageCountKey().invalidate({
+        subscriberId: subscriber.subscriberId,
+        _environmentId: command.environmentId,
+      }),
     });
 
     if (!oldMessage) {
@@ -156,7 +166,7 @@ export class SendMessageInApp extends SendMessageBase {
         _notificationId: notification._id,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        _subscriberId: command.subscriberId,
+        _subscriberId: command._subscriberId,
         _templateId: notification._templateId,
         _messageTemplateId: inAppChannel.template._id,
         channel: ChannelTypeEnum.IN_APP,
@@ -196,7 +206,7 @@ export class SendMessageInApp extends SendMessageBase {
       'sendMessage',
       {
         event: 'notification_received',
-        userId: command.subscriberId,
+        userId: command._subscriberId,
         payload: {
           message,
         },
@@ -207,14 +217,14 @@ export class SendMessageInApp extends SendMessageBase {
 
     const unseenCount = await this.messageRepository.getCount(
       command.environmentId,
-      command.subscriberId,
+      command._subscriberId,
       ChannelTypeEnum.IN_APP,
       { seen: false }
     );
 
     const unreadCount = await this.messageRepository.getCount(
       command.environmentId,
-      command.subscriberId,
+      command._subscriberId,
       ChannelTypeEnum.IN_APP,
       { read: false }
     );
@@ -236,7 +246,7 @@ export class SendMessageInApp extends SendMessageBase {
       'sendMessage',
       {
         event: 'unseen_count_changed',
-        userId: command.subscriberId,
+        userId: command._subscriberId,
         payload: {
           unseenCount,
         },
@@ -249,7 +259,7 @@ export class SendMessageInApp extends SendMessageBase {
       'sendMessage',
       {
         event: 'unread_count_changed',
-        userId: command.subscriberId,
+        userId: command._subscriberId,
         payload: {
           unreadCount,
         },
