@@ -73,7 +73,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       limit: options.limit,
       skip: options.skip,
       sort: '-createdAt',
-    }).populate('subscriber', '_id firstName lastName avatar subscriberId');
+    })
+      .read('secondaryPreferred')
+      .populate('subscriber', '_id firstName lastName avatar subscriberId');
 
     return this.mapEntities(messages);
   }
