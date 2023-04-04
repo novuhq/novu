@@ -414,7 +414,13 @@
     "stddev",
     "shortid",
     "upsert",
-    "cond"
+    "cond",
+    "redismaster",
+    "appendonly",
+    "hostnames",
+    "ipam",
+    "slaveof",
+    "rediscommander"
   ],
   "flagWords": [],
   "patterns": [
