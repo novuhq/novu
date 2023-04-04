@@ -1,24 +1,39 @@
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
-import { CLIENT_READY, getRedisInstance, getRedisProviderConfig, IRedisProviderConfig, Redis } from './redis-provider';
+import {
+  CLIENT_READY,
+  getRedisInstance,
+  getRedisProviderConfig,
+  IRedisProviderConfig,
+  Redis,
+  RedisOptions,
+} from './redis-provider';
+import {
+  Cluster,
+  ClusterOptions,
+  getRedisCluster,
+  getRedisClusterProviderConfig,
+  IRedisClusterProviderConfig,
+} from './redis-cluster-provider';
 
 import { ApiException } from '../../exceptions/api.exception';
 
 const LOG_CONTEXT = 'InMemoryCluster';
 
-export type InMemoryProviderClient = Redis | undefined;
-type InMemoryProviderConfig = IRedisProviderConfig;
+export type InMemoryProviderClient = Redis | Cluster | undefined;
+type InMemoryProviderConfig = IRedisProviderConfig | IRedisClusterProviderConfig;
 
+@Injectable()
 export class InMemoryProviderService {
   public inMemoryProviderClient: InMemoryProviderClient;
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
   constructor() {
-    if (!this.inMemoryProviderClient) {
-      this.inMemoryProviderClient = process.env.IN_MEMORY_CLUSTER_MODE_ENABLED
-        ? this.inMemoryClusterProviderSetup()
-        : this.inMemoryProviderSetup();
-    }
+    this.inMemoryProviderClient = this.buildClient();
+  }
+
+  private buildClient(): Redis | Cluster | undefined {
+    return this.isClusterMode() ? this.inMemoryClusterProviderSetup() : this.inMemoryProviderSetup();
   }
 
   public isClientReady(): boolean {
@@ -26,16 +41,85 @@ export class InMemoryProviderService {
       return false;
     }
 
+    // TODO: Check this works for Cluster
     return this.inMemoryProviderClient.status === CLIENT_READY;
   }
 
-  private inMemoryClusterProviderSetup(): InMemoryProviderClient {
-    Logger.verbose('In-memory cluster service set up', LOG_CONTEXT);
-
-    return {} as InMemoryProviderClient;
+  public isClusterMode(): boolean {
+    return process.env.IN_MEMORY_CLUSTER_MODE_ENABLED === 'true';
   }
 
-  private inMemoryProviderSetup(): InMemoryProviderClient {
+  public getClusterOptions(): ClusterOptions | undefined {
+    if (this.inMemoryProviderClient && this.isClusterMode()) {
+      return this.inMemoryProviderClient.options;
+    }
+  }
+
+  public getOptions(): RedisOptions | undefined {
+    if (this.inMemoryProviderClient) {
+      if (this.isClusterMode()) {
+        const clusterOptions: ClusterOptions = this.inMemoryProviderClient.options;
+
+        return clusterOptions.redisOptions;
+      } else {
+        const options: RedisOptions = this.inMemoryProviderClient.options;
+
+        return options;
+      }
+    }
+  }
+
+  private inMemoryClusterProviderSetup(): Cluster | undefined {
+    Logger.verbose('In-memory cluster service set up', LOG_CONTEXT);
+
+    this.inMemoryProviderConfig = getRedisClusterProviderConfig();
+    const { host, ports, ttl } = getRedisClusterProviderConfig();
+
+    if (!host) {
+      Logger.log('Missing host for in-memory cluster provider', LOG_CONTEXT);
+    }
+
+    const inMemoryProviderClient = getRedisCluster();
+    if (host && inMemoryProviderClient) {
+      Logger.log(`Connecting to cluster at ${host} - Ports ${ports}`, LOG_CONTEXT);
+
+      inMemoryProviderClient.on('connect', () => {
+        Logger.error('In-memory cluster connected', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('connecting', () => {
+        Logger.error('In-memory cluster connecting', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('reconnecting', () => {
+        Logger.error('In-memory cluster reconnecting', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('close', () => {
+        Logger.error('In-memory cluster close', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('end', () => {
+        Logger.error('In-memory cluster end', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('error', (error) => {
+        Logger.error(error, LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('ready', () => {
+        Logger.error('In-memory cluster ready', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('wait', () => {
+        Logger.error('In-memory cluster wait', LOG_CONTEXT);
+      });
+
+      return inMemoryProviderClient;
+    }
+  }
+
+  private inMemoryProviderSetup(): Redis | undefined {
     Logger.verbose('In-memory service set up', LOG_CONTEXT);
 
     this.inMemoryProviderConfig = getRedisProviderConfig();
@@ -53,17 +137,49 @@ export class InMemoryProviderService {
         Logger.log('REDIS CONNECTED', LOG_CONTEXT);
       });
 
+      inMemoryProviderClient.on('reconnecting', () => {
+        Logger.error('Redis reconnecting', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('close', () => {
+        Logger.error('Redis close', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('end', () => {
+        Logger.error('Redis end', LOG_CONTEXT);
+      });
+
       inMemoryProviderClient.on('error', (error) => {
         Logger.error(error, LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('ready', () => {
+        Logger.error('Redis ready', LOG_CONTEXT);
+      });
+
+      inMemoryProviderClient.on('wait', () => {
+        Logger.error('Redis wait', LOG_CONTEXT);
       });
 
       return inMemoryProviderClient;
     }
   }
 
+  public inMemoryScan(pattern: string) {
+    if (this.isClusterMode()) {
+      const client = this.inMemoryProviderClient as Cluster;
+
+      return client.sscanStream(pattern);
+    }
+
+    const client = this.inMemoryProviderClient as Redis;
+
+    return client.scanStream({ match: pattern });
+  }
+
   public async shutdown(): Promise<void> {
     if (this.inMemoryProviderClient) {
-      Logger.verbose('In-memory cluster service shutdown', LOG_CONTEXT);
+      Logger.verbose('In-memory provider service shutdown', LOG_CONTEXT);
       await this.inMemoryProviderClient.quit();
     }
   }

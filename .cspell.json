@@ -430,7 +430,8 @@
     "Metafiles",
     "Metas",
     "Webpush",
-    "maqsam"
+    "maqsam",
+    "sscan"
   ],
   "flagWords": [],
   "patterns": [
