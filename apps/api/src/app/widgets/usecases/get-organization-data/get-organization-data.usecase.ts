@@ -8,15 +8,15 @@ export class GetOrganizationData {
   constructor(private organizationRepository: OrganizationRepository) {}
 
   async execute(command: GetOrganizationDataCommand): Promise<OrganizationResponseDto> {
-    const environment = await this.organizationRepository.findById(command.organizationId);
-    if (!environment) {
+    const organization = await this.organizationRepository.findOrganizationById(command.organizationId);
+    if (!organization) {
       throw new NotFoundException(`Organization with id ${command.organizationId} not found`);
     }
 
     return {
-      _id: environment._id,
-      name: environment.name,
-      branding: environment.branding,
+      _id: organization._id,
+      name: organization.name,
+      branding: organization.branding,
     };
   }
 }
