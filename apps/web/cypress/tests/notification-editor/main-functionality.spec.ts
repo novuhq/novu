@@ -261,7 +261,7 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.getByTestId('get-snippet-btn').click();
     cy.getByTestId('step-page-wrapper').should('be.visible');
-    cy.getByTestId('step-page-wrapper').getByTestId('trigger-code-snippet').contains('untitled');
+    cy.getByTestId('step-page-wrapper').getByTestId('trigger-code-snippet').contains('test-sms-notification-title');
     cy.getByTestId('step-page-wrapper')
       .getByTestId('trigger-code-snippet')
       .contains("import { Novu } from '@novu/node'");

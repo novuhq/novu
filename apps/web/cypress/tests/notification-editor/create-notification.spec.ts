@@ -28,7 +28,7 @@ describe('Creation functionality', function () {
     goBack();
     cy.getByTestId('get-snippet-btn').click();
     cy.getByTestId('trigger-code-snippet').should('be.visible');
-    cy.getByTestId('trigger-code-snippet').contains('untitled');
+    cy.getByTestId('trigger-code-snippet').contains('test-notification-title');
     cy.getByTestId('trigger-code-snippet').contains("import { Novu } from '@novu/node'");
 
     cy.get('.mantine-Tabs-tabsList').contains('Curl').click();
@@ -66,7 +66,7 @@ describe('Creation functionality', function () {
 
     // trigger the notification
     cy.task('createNotifications', {
-      identifier: 'untitled',
+      identifier: 'test-notification-title',
       token: this.session.token,
       subscriberId: this.session.user.id,
     });
@@ -216,7 +216,7 @@ describe('Creation functionality', function () {
     goBack();
     cy.getByTestId('get-snippet-btn').click();
     cy.getByTestId('trigger-code-snippet').should('be.visible');
-    cy.getByTestId('trigger-code-snippet').contains('untitled');
+    cy.getByTestId('trigger-code-snippet').contains('test-notification-title');
     cy.getByTestId('trigger-code-snippet').contains('firstName:');
     cy.getByTestId('trigger-code-snippet').contains('customVariable:');
   });
