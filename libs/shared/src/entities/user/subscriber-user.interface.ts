@@ -6,6 +6,5 @@ export interface ISubscriberJwt {
   subscriberId: string;
   organizationId: string;
   environmentId: string;
-  organizationAdminId: string;
   aud: 'widget_user';
 }

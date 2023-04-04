@@ -143,7 +143,7 @@ export class AuthService {
     return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
   }
 
-  async getSubscriberWidgetToken(subscriber: SubscriberEntity, userId: string): Promise<string> {
+  async getSubscriberWidgetToken(subscriber: SubscriberEntity): Promise<string> {
     return this.jwtService.sign(
       {
         _id: subscriber._id,
@@ -153,7 +153,6 @@ export class AuthService {
         organizationId: subscriber._organizationId,
         environmentId: subscriber._environmentId,
         subscriberId: subscriber.subscriberId,
-        organizationAdminId: userId,
       },
       {
         expiresIn: '15 day',

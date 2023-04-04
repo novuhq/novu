@@ -10,6 +10,13 @@ export class OrganizationRepository extends BaseRepository<OrganizationDBModel, 
     super(Organization, OrganizationEntity);
   }
 
+  async findOrganizationById(organizationId: string): Promise<OrganizationEntity | null> {
+    const data = await this.MongooseModel.findById(organizationId).read('secondaryPreferred');
+    if (!data) return null;
+
+    return this.mapEntity(data.toObject());
+  }
+
   async findUserActiveOrganizations(userId: string): Promise<OrganizationEntity[]> {
     const members = await this.memberRepository.findUserActiveMembers(userId);
 
