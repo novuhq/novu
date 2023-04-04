@@ -187,7 +187,10 @@ With the new seen/read filter, you can do the following in a notification workfl
 - Create a filter on the second email step that indicates if the previous step needs to be seen/read before it should be executed.
 
 <div align="center">
-  ![Untitled design (27)](https://user-images.githubusercontent.com/63902456/229841958-b3cf8ebc-b9cc-451d-9f23-81c675f7fb8a.gif)
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/63902456/229841958-b3cf8ebc-b9cc-451d-9f23-81c675f7fb8a.gif"/>
+    <img src="https://user-images.githubusercontent.com/63902456/229841958-b3cf8ebc-b9cc-451d-9f23-81c675f7fb8a.gif" alt="is-online-filter"/>
+  </picture>
 </div>
 
 Note: For this to work with emails, the webhook url needs to be set up for the active email provider you're using on Novu. It's very essential for the filter to work. No extra set up is needed for in-app notifications.
