@@ -139,23 +139,34 @@ jobSchema.virtual('environment', {
  * apps/api/src/app/events/usecases/add-job/add-delay-job.usecase.ts
  */
 jobSchema.index({
-  transactionId: 1,
   _subscriberId: 1,
   _templateId: 1,
-  _environmentId: 1,
   status: 1,
   type: 1,
+  transactionId: 1,
 });
 
 /*
  * This index was initially created to optimize:
+ * apps/api/src/app/events/usecases/send-message/digest/get-digest-events.usecase.ts
  * apps/api/src/app/events/usecases/message-matcher/message-matcher.usecase.ts
  */
 jobSchema.index({
   transactionId: 1,
   _subscriberId: 1,
-  'step.uuid': 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ * apps/api/src/app/events/usecases/trigger-event/trigger-event.usecase.ts
+ * repo
+ * apps/api/src/app/events/usecases/send-message/digest/digest.usecase.ts * _id is the last on because it is used with $ne which means it is a range operator
+ * apps/api/src/app/events/usecases/cancel-delayed/cancel-delayed.usecase.ts * but OMIT 'status'
+ */
+jobSchema.index({
+  transactionId: 1,
   _environmentId: 1,
+  _id: 1,
 });
 
 /*
@@ -165,22 +176,6 @@ jobSchema.index({
 jobSchema.index({
   _parentId: 1,
   _environmentId: 1,
-  _organizationId: 1,
-});
-
-/*
- * This index was initially created to optimize:
- * apps/api/src/app/events/usecases/send-message/digest/get-digest-events.usecase.ts
- * apps/api/src/app/events/usecases/trigger-event/trigger-event.usecase.ts
- * repo
- * apps/api/src/app/events/usecases/send-message/digest/digest.usecase.ts * _id is the last on because it is used with $ne which means it is a range operator
- * apps/api/src/app/events/usecases/cancel-delayed/cancel-delayed.usecase.ts * but OMIT 'status'
- */
-jobSchema.index({
-  transactionId: 1,
-  _environmentId: 1,
-  type: 1,
-  _id: 1,
 });
 
 /*
@@ -203,11 +198,6 @@ jobSchema.index({
   updatedAt: 1,
   transactionId: 1,
 });
-
-/*
- * This index was initially created to optimize:
- */
-jobSchema.index({});
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Job = (mongoose.models.Job as mongoose.Model<JobDBModel>) || mongoose.model<JobDBModel>('Job', jobSchema);

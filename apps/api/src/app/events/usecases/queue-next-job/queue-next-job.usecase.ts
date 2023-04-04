@@ -14,7 +14,6 @@ export class QueueNextJob {
   public async execute(command: QueueNextJobCommand): Promise<JobEntity | undefined> {
     const job = await this.jobRepository.findOne({
       _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
       _parentId: command.parentId,
     });
 
@@ -25,7 +24,7 @@ export class QueueNextJob {
     await this.addJobUsecase.execute({
       userId: job._userId,
       environmentId: job._environmentId,
-      organizationId: job._organizationId,
+      organizationId: command.organizationId,
       jobId: job._id,
       job,
     });
