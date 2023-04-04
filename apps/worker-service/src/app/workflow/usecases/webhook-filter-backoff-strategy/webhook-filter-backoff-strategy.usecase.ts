@@ -13,7 +13,6 @@ export class WebhookFilterBackoffStrategy {
     const job = eventJob.data;
 
     try {
-      // TODO: Review why when using `Command.create` class-transformer fails with `undefined has no property toKey()`
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),

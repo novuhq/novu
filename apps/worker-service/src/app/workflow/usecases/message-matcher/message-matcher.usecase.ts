@@ -33,9 +33,7 @@ import { EmailEventStatusEnum } from '@novu/stateless';
 import { IFilterVariables } from './types';
 import { FilterProcessingDetails } from './filter-processing-details';
 import { SendMessageCommand } from '../send-message/send-message.command';
-import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils/constants';
-import { createHash } from '../../../shared/utils/hmac';
-import { PlatformException } from '../../../shared/utils/exceptions';
+import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, createHash, PlatformException } from '../../../shared/utils';
 
 const differenceIn = (currentDate: Date, lastDate: Date, timeOperator: TimeOperatorEnum) => {
   if (timeOperator === TimeOperatorEnum.MINUTES) {
