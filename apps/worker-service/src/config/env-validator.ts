@@ -1,5 +1,13 @@
-import { json, port, str, num, ValidatorSpec } from 'envalid';
+import { json, port, str, num, ValidatorSpec, makeValidator } from 'envalid';
 import * as envalid from 'envalid';
+
+const str32 = makeValidator((variable) => {
+  if (!(typeof variable === 'string') || variable.length != 32) {
+    throw new Error('Expected to be string 32 char long');
+  }
+
+  return variable;
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
@@ -8,6 +16,10 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: 'local',
   }),
   PORT: port(),
+  STORE_ENCRYPTION_KEY: str32(),
+  STORE_NOTIFICATION_CONTENT: str({
+    default: 'false',
+  }),
   MAX_NOVU_INTEGRATION_MAIL_REQUESTS: num({
     default: 300,
   }),

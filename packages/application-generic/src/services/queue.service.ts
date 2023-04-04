@@ -5,7 +5,7 @@ import { getRedisPrefix } from '@novu/shared';
 import { BullmqService } from './bull-mq.service';
 
 export class QueueService<T = unknown> {
-  protected name = 'standard';
+  public readonly name = 'standard';
   protected bullConfig: QueueBaseOptions = {
     connection: {
       db: Number(process.env.REDIS_DB_INDEX),
@@ -19,7 +19,7 @@ export class QueueService<T = unknown> {
       tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
-  protected readonly bullMqService: BullmqService;
+  public readonly bullMqService: BullmqService;
   public readonly DEFAULT_ATTEMPTS = 3;
 
   constructor() {

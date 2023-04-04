@@ -6,6 +6,8 @@ declare global {
     export interface ProcessEnv {
       NODE_ENV: 'test' | 'prod' | 'dev' | 'ci' | 'local';
       PORT: string;
+      STORE_ENCRYPTION_KEY: string;
+      STORE_NOTIFICATION_CONTENT: string;
       MAX_NOVU_INTEGRATION_MAIL_REQUESTS?: string;
       NOVU_EMAIL_INTEGRATION_API_KEY?: string;
       STORAGE_SERVICE?: string;
