@@ -139,7 +139,7 @@ jobSchema.virtual('environment', {
  *
  * Path : apps/api/src/app/events/usecases/add-job/add-delay-job.usecase.ts
  *    Context : noExistingDelayedJobForDate()
- *       Query : (
+ *       Query : findOne(
  *          {
  *            status: JobStatusEnum.DELAYED,
  *            type: StepTypeEnum.DELAY,
@@ -349,7 +349,6 @@ jobSchema.index({
 jobSchema.index({
   _subscriberId: 1,
   _templateId: 1,
-  _environmentId: 1,
   type: 1,
   status: 1,
   updatedAt: 1,
