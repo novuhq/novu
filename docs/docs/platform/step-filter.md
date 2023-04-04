@@ -172,6 +172,7 @@ The online filter feature can be used to determine if a subscriber is online rig
 For example, to determine if a subscriber has been online in the last 5 minutes, Novu checks if the subscriber is currently online or if the `lastOnlineAt` timestamp value is less than or equal to 5 minutes ago. If either of these conditions are met, the filter is applied.
 
 ## Subscriber Seen / Read filters
+
 This filter gives the flexibility of executing successive notifications based on the status of previous notifications. It currently works for in-app and email notifications.
 
 Typical Use Case:
