@@ -13,6 +13,7 @@ import {
   JobRepository,
   JobStatusEnum,
 } from '@novu/dal';
+import { Cached, CacheKeyPrefixEnum } from '@novu/application-generic';
 
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageDelay } from './send-message-delay.usecase';
@@ -31,7 +32,6 @@ import {
   GetSubscriberTemplatePreferenceCommand,
 } from '../get-subscriber-template-preference';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { Cached, CacheKeyPrefixEnum } from '../../../shared/cache';
 import { PlatformException } from '../../../shared/utils';
 
 @Injectable()

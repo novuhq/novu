@@ -2,12 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  FILTER_TO_LABEL,
-  ICondition,
   IPreferenceChannels,
   StepTypeEnum,
 } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, CacheKeyPrefixEnum, Cached } from '@novu/application-generic';
 import {
   JobEntity,
   SubscriberRepository,
@@ -37,8 +35,6 @@ import {
   GetSubscriberTemplatePreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-template-preference';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { Cached } from '../../../shared/interceptors';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()

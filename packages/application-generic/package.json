@@ -37,6 +37,10 @@
     "@nestjs/common": "^9.3.9"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.234.0",
+    "@aws-sdk/s3-request-presigner": "^3.234.0",
+    "@azure/storage-blob": "^12.11.0",
+    "@google-cloud/storage": "^6.2.3",
     "@novu/dal": "^0.13.0",
     "@novu/discord": "^0.13.0",
     "@novu/emailjs": "^0.13.0",
@@ -74,7 +78,8 @@
     "nestjs-pino": "^3.1.2",
     "node-fetch": "^3.2.10",
     "pino-http": "^8.3.3",
-    "pino-pretty": "^9.4.0"
+    "pino-pretty": "^9.4.0",
+    "ioredis": "^5.2.4"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

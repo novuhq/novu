@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
+import { CacheKeyPrefixEnum, Cached } from '@novu/application-generic';
+
 import { GetFeedCountCommand } from './get-feed-count.command';
-import { Cached } from '../../../shared/interceptors';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()

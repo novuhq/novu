@@ -1614,6 +1614,10 @@ importers:
 
   packages/application-generic:
     specifiers:
+      '@aws-sdk/client-s3': ^3.234.0
+      '@aws-sdk/s3-request-presigner': ^3.234.0
+      '@azure/storage-blob': ^12.11.0
+      '@google-cloud/storage': ^6.2.3
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': ^9.3.9
       '@novu/dal': ^0.13.0
@@ -1656,6 +1660,7 @@ importers:
       cz-conventional-changelog: ^3.3.0
       decorate-all: ^1.2.1
       gh-pages: ^3.1.0
+      ioredis: ^5.2.4
       jest: ^27.1.0
       maskdata: ^1.2.0
       nestjs-pino: ^3.1.2
@@ -1673,6 +1678,10 @@ importers:
       typedoc: ^0.23.0
       typescript: 4.9.5
     dependencies:
+      '@aws-sdk/client-s3': 3.252.0
+      '@aws-sdk/s3-request-presigner': 3.252.0
+      '@azure/storage-blob': 12.11.0
+      '@google-cloud/storage': 6.2.3
       '@nestjs/common': 9.3.9_welcnyot5bzd5wa2aovbkxpi4i
       '@novu/dal': link:../../libs/dal
       '@novu/discord': link:../../providers/discord
@@ -1707,6 +1716,7 @@ importers:
       class-transformer: 0.5.1
       class-validator: 0.14.0
       decorate-all: 1.2.1_reflect-metadata@0.1.13
+      ioredis: 5.3.1
       maskdata: 1.2.0
       nestjs-pino: 3.1.2_atacoy3e24brwbzjtinj7jrj3e
       node-fetch: 3.2.10
@@ -8006,7 +8016,7 @@ packages:
       form-data: 4.0.0
       node-fetch: 2.6.9
       process: 0.11.10
-      tough-cookie: 4.0.0
+      tough-cookie: 4.1.2
       tslib: 2.5.0
       tunnel: 0.0.6
       uuid: 8.3.2
@@ -19909,9 +19919,9 @@ packages:
       apollo-server-fastify:
         optional: true
     dependencies:
-      '@nestjs/common': 9.3.9_ew7gazwbjf4vlpfvmmn4v2vvei
-      '@nestjs/core': 9.3.9_zhhjwb26e6iktgoouen2nchw7a
-      '@nestjs/graphql': 10.2.0_gtdhtb5xyvfytpfih2qvktw34a
+      '@nestjs/common': 9.3.9_r72jqgu3m7fr66qxp7vl4agwte
+      '@nestjs/core': 9.3.9_v3dwamjy3ezshn7kdlxqms6y6a
+      '@nestjs/graphql': 10.2.0_uwuouxk3e2njo4pgfhmk3zadcu
       graphql: 15.8.0
       iterall: 1.3.0
       lodash.omit: 4.5.0
@@ -20742,8 +20752,8 @@ packages:
       '@nestjs/common': ^9.0.0
       '@nestjs/core': ^9.0.0
     dependencies:
-      '@nestjs/common': 9.3.9_ew7gazwbjf4vlpfvmmn4v2vvei
-      '@nestjs/core': 9.3.9_zhhjwb26e6iktgoouen2nchw7a
+      '@nestjs/common': 9.3.9_r72jqgu3m7fr66qxp7vl4agwte
+      '@nestjs/core': 9.3.9_v3dwamjy3ezshn7kdlxqms6y6a
       body-parser: 1.20.1
       cors: 2.8.5
       express: 4.18.2
@@ -46878,7 +46888,7 @@ packages:
     engines: {node: '>=12.9.0'}
     dependencies:
       bson: 4.7.2
-      denque: 2.0.1
+      denque: 2.1.0
       mongodb-connection-string-url: 2.6.0
       socks: 2.7.1
     optionalDependencies:
@@ -56437,15 +56447,6 @@ packages:
     dependencies:
       psl: 1.8.0
       punycode: 2.1.1
-
-  /tough-cookie/4.0.0:
-    resolution: {integrity: sha512-tHdtEpQCMrc1YLrMaqXXcj6AxhYi/xgit6mZu1+EDWUn+qhUf8wMQoFIy9NXuq23zAwtcB0t/MjACGR18pcRbg==}
-    engines: {node: '>=6'}
-    dependencies:
-      psl: 1.8.0
-      punycode: 2.1.1
-      universalify: 0.1.2
-    dev: false
 
   /tough-cookie/4.1.2:
     resolution: {integrity: sha512-G9fqXWoYFZgTc2z8Q5zaHy/vJMjm+WV0AkAeHxVCQiEB1b+dGvWzFW6QV07cY5jQ5gRkeid2qIkzkxUnmoQZUQ==}

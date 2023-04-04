@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import axios from 'axios';
 import * as sinon from 'sinon';
+import { v4 as uuid } from 'uuid';
 import {
   LogRepository,
   MessageRepository,
@@ -29,12 +30,12 @@ import {
   DelayTypeEnum,
   PreviousStepTypeEnum,
 } from '@novu/shared';
+import { EmailEventStatusEnum } from '@novu/stateless';
+import { StorageHelperService } from '@novu/application-generic';
+
 import { RunJob, RunJobCommand } from '../usecases/run-job';
 import { SendMessage } from '../usecases/send-message';
 import { QueueNextJob } from '../usecases/queue-next-job';
-import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
-import { EmailEventStatusEnum } from '@novu/stateless';
-import { v4 as uuid } from 'uuid';
 
 const axiosInstance = axios.create();
 

@@ -27,18 +27,17 @@ import {
   WsQueueService,
   createNestLoggingModuleOptions,
   LoggerModule,
-} from '@novu/application-generic';
-
-import * as packageJson from '../../../package.json';
-import { InvalidateCacheService, CacheService } from './cache';
-import { CreateLog } from './logs';
-import {
+  InvalidateCacheService,
+  CacheService,
   StorageHelperService,
   StorageService,
   GCSStorageService,
   AzureBlobStorageService,
   S3StorageService,
-} from './storage';
+} from '@novu/application-generic';
+
+import * as packageJson from '../../../package.json';
+import { CreateLog } from './logs';
 
 const DAL_MODELS = [
   UserRepository,

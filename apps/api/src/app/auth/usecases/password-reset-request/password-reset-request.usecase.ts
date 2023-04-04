@@ -1,11 +1,12 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Novu } from '@novu/node';
-import { UserRepository, UserEntity, IUserResetTokenCount } from '@novu/dal';
 import { v4 as uuidv4 } from 'uuid';
 import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
+import { Novu } from '@novu/node';
+import { UserRepository, UserEntity, IUserResetTokenCount } from '@novu/dal';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
+
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class PasswordResetRequest {

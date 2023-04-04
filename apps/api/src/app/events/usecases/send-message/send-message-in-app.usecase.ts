@@ -20,6 +20,7 @@ import {
   ActorTypeEnum,
   IActor,
 } from '@novu/shared';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
 
 import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
 import { QueueService } from '../../../shared/services/queue';
@@ -30,7 +31,6 @@ import {
   CreateExecutionDetailsCommand,
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';

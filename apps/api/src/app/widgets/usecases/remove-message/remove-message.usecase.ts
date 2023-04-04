@@ -8,13 +8,11 @@ import {
   MemberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, CacheKeyPrefixEnum, InvalidateCache } from '@novu/application-generic';
 
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { RemoveMessageCommand } from './remove-message.command';
-import { InvalidateCache } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 

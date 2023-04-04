@@ -1,11 +1,17 @@
-import { getInvalidateQuery } from './shared-cache';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../services/cache';
 import { Inject } from '@nestjs/common';
+
+import { getInvalidateQuery } from './shared-cache';
+import {
+  CacheKeyPrefixEnum,
+  InvalidateCacheService,
+} from '../invalidate-cache.service';
 
 const USE_CASE_METHOD = 'execute';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function InvalidateCache(storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[]) {
+export function InvalidateCache(
+  storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[]
+) {
   const injectCache = Inject(InvalidateCacheService);
 
   return (target: any, key: string, descriptor: any) => {
@@ -34,6 +40,10 @@ export function InvalidateCache(storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPre
   };
 }
 
-function getStoreKeyPrefix(storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[]) {
-  return typeof storeKeyPrefix === 'string' || storeKeyPrefix instanceof String ? storeKeyPrefix : [...storeKeyPrefix];
+function getStoreKeyPrefix(
+  storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[]
+) {
+  return typeof storeKeyPrefix === 'string' || storeKeyPrefix instanceof String
+    ? storeKeyPrefix
+    : [...storeKeyPrefix];
 }

@@ -1,7 +1,10 @@
-import { CacheService } from './cache.service';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { buildKey, CacheInterceptorTypeEnum } from '../../shared/cache';
+import { CacheService } from './cache.service';
+import {
+  buildKey,
+  CacheInterceptorTypeEnum,
+} from './interceptors/shared-cache';
 
 @Injectable()
 export class InvalidateCacheService {
@@ -12,7 +15,9 @@ export class InvalidateCacheService {
     credentials,
   }: {
     storeKeyPrefix: CacheKeyPrefixEnum | CacheKeyPrefixEnum[];
-    credentials: { _id: string; _environmentId: string } | Record<string, unknown>;
+    credentials:
+      | { _id: string; _environmentId: string }
+      | Record<string, unknown>;
   }) {
     Logger.log('Clearing the cache of keys with the specified prefixes');
     Logger.debug('StoreKeyPrefix(s) are: ' + storeKeyPrefix);
@@ -38,11 +43,18 @@ export class InvalidateCacheService {
     }
   }
 
-  private async clearByPattern(storeKeyPrefix: CacheKeyPrefixEnum, credentials: Record<string, unknown>) {
+  private async clearByPattern(
+    storeKeyPrefix: CacheKeyPrefixEnum,
+    credentials: Record<string, unknown>
+  ) {
     Logger.verbose('Removing keys with prefix: ' + storeKeyPrefix);
     Logger.debug('storeKeyPrefix is: ' + storeKeyPrefix);
 
-    const cacheKey = buildKey(storeKeyPrefix, credentials, CacheInterceptorTypeEnum.INVALIDATE);
+    const cacheKey = buildKey(
+      storeKeyPrefix,
+      credentials,
+      CacheInterceptorTypeEnum.INVALIDATE
+    );
 
     if (!cacheKey) {
       Logger.warn('Cachekey does not exist');
@@ -55,7 +67,11 @@ export class InvalidateCacheService {
       await this.cacheService.delByPattern(cacheKey);
       Logger.verbose('Finished cache delete by pattern');
     } catch (err) {
-      Logger.error(`An error has occurred when deleting "key: ${cacheKey}",`, 'InvalidateCache', err);
+      Logger.error(
+        `An error has occurred when deleting "key: ${cacheKey}",`,
+        'InvalidateCache',
+        err
+      );
     }
   }
 }

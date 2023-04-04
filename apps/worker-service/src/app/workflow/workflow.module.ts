@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
+import { EventsPerformanceService } from '@novu/application-generic';
 
 import { SharedModule } from '../shared/shared.module';
 import { EventsDistributedLockService } from './services/events-distributed-lock.service';
 import { WorkflowQueueService } from './services/workflow-queue.service';
-import { EventsPerformanceService } from './services/events-performance.service';
 import {
   AddJob,
   AddDelayJob,

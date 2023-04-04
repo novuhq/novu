@@ -1,11 +1,9 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, CacheKeyPrefixEnum, InvalidateCache } from '@novu/application-generic';
 
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { InvalidateCache } from '../../../shared/interceptors';
 import { MarkAllMessagesAsCommand } from './mark-all-messages-as.command';
 
 @Injectable()

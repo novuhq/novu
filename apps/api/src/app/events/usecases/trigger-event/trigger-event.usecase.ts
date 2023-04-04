@@ -1,15 +1,13 @@
-import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
+import { EventsPerformanceService } from '@novu/application-generic';
 
 import { TriggerEventCommand } from './trigger-event.command';
-
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { CreateNotificationJobsCommand, CreateNotificationJobs } from '../create-notification-jobs';
 import { ProcessSubscriber, ProcessSubscriberCommand } from '../process-subscriber';
-
-import { EventsPerformanceService } from '../../services/performance-service';
 
 import {
   GetDecryptedIntegrations,

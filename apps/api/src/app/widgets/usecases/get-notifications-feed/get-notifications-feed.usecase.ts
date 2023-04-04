@@ -1,14 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ChannelTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, CacheKeyPrefixEnum, Cached } from '@novu/application-generic';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { Cached } from '../../../shared/interceptors';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 
 @Injectable()
 export class GetNotificationsFeed {

@@ -1,6 +1,12 @@
-import { buildCachedQuery, buildKey, CacheInterceptorTypeEnum } from './shared-cache';
 import { Inject } from '@nestjs/common';
-import { CacheKeyPrefixEnum, CacheService } from '../services/cache';
+
+import {
+  buildCachedQuery,
+  buildKey,
+  CacheInterceptorTypeEnum,
+} from './shared-cache';
+import { CacheService } from '../cache.service';
+import { CacheKeyPrefixEnum } from '../invalidate-cache.service';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
@@ -12,11 +18,16 @@ export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
     injectCache(target, 'cacheService');
 
     descriptor.value = async function (...args: any[]) {
-      if (!this.cacheService?.cacheEnabled()) return await originalMethod.apply(this, args);
+      if (!this.cacheService?.cacheEnabled())
+        return await originalMethod.apply(this, args);
 
       const query = buildCachedQuery(args);
 
-      const cacheKey = buildKey(storeKeyPrefix, query, CacheInterceptorTypeEnum.CACHED);
+      const cacheKey = buildKey(
+        storeKeyPrefix,
+        query,
+        CacheInterceptorTypeEnum.CACHED
+      );
 
       if (!cacheKey) {
         return await originalMethod.apply(this, args);
@@ -29,7 +40,11 @@ export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
         }
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.error(`An error has occurred when extracting "key: ${methodName}`, 'CacheInterceptor', err);
+        console.error(
+          `An error has occurred when extracting "key: ${methodName}`,
+          'CacheInterceptor',
+          err
+        );
       }
 
       const response = await originalMethod.apply(this, args);

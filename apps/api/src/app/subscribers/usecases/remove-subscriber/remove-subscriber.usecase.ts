@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberRepository, DalException } from '@novu/dal';
+import { CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
+
 import { RemoveSubscriberCommand } from './remove-subscriber.command';
 import { GetSubscriber } from '../get-subscriber';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class RemoveSubscriber {

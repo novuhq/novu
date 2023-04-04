@@ -20,14 +20,13 @@ import {
   ActorTypeEnum,
   IActor,
 } from '@novu/shared';
-import { WsQueueService } from '@novu/application-generic';
+import { WsQueueService, CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { CompileTemplate, CompileTemplateCommand } from './compile-template';
 import { CreateExecutionDetails, CreateExecutionDetailsCommand } from '../create-execution-details';
 import { DetailEnum } from '../create-execution-details/types';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/cache';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
