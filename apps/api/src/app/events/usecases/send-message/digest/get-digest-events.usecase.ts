@@ -8,7 +8,7 @@ import {
   CreateExecutionDetailsCommand,
 } from '../../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../../execution-details/types';
-import { DigestFilterSteps } from '../../digest-filter-steps/digest-filter-steps.usecase';
+import { DigestFilterSteps } from '../../digest-filter-steps';
 
 @Injectable()
 export abstract class GetDigestEvents {

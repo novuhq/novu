@@ -136,7 +136,23 @@ jobSchema.virtual('environment', {
 
 /*
  * This index was initially created to optimize:
- * apps/api/src/app/events/usecases/add-job/add-delay-job.usecase.ts
+ *
+ * Path : apps/api/src/app/events/usecases/add-job/add-delay-job.usecase.ts
+ *    Context : noExistingDelayedJobForDate()
+ *       Query : (
+ *          {
+ *            status: JobStatusEnum.DELAYED,
+ *            type: StepTypeEnum.DELAY,
+ *            _subscriberId: data._subscriberId,
+ *            _templateId: data._templateId,
+ *            _environmentId: data._environmentId,
+ *            transactionId: { $ne: data.transactionId },
+ *            'step.metadata.type': DelayTypeEnum.SCHEDULED,
+ *            'step.metadata.delayPath': currentDelayPath,
+ *            [`payload.${currentDelayPath}`]: currentDelayDate,
+ *          },
+ *          '_subscriberId'
+ *       )
  */
 jobSchema.index({
   _subscriberId: 1,
@@ -148,8 +164,30 @@ jobSchema.index({
 
 /*
  * This index was initially created to optimize:
- * apps/api/src/app/events/usecases/send-message/digest/get-digest-events.usecase.ts
- * apps/api/src/app/events/usecases/message-matcher/message-matcher.usecase.ts
+ *
+ * Path : apps/api/src/app/events/usecases/send-message/digest/get-digest-events.usecase.ts
+ *    Context : filterJobs()
+ *       Query : findOne.(
+ *          {
+ *            transactionId: transactionId,
+ *            _subscriberId: currentJob._subscriberId,
+ *            _environmentId: currentJob._environmentId,
+ *            type: StepTypeEnum.TRIGGER,
+ *          },
+ *          '_id'
+ *        )
+ *
+ * Path : apps/api/src/app/events/usecases/message-matcher/message-matcher.usecase.ts
+ *    Context : processPreviousStep()
+ *       Query : findOne({
+ *           transactionId: command.transactionId,
+ *           _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
+ *           _environmentId: command.environmentId,
+ *           _organizationId: command.organizationId,
+ *           'step.uuid': filter.step,
+ *        })
+ *
+ *
  */
 jobSchema.index({
   transactionId: 1,
@@ -158,10 +196,39 @@ jobSchema.index({
 
 /*
  * This index was initially created to optimize:
- * apps/api/src/app/events/usecases/trigger-event/trigger-event.usecase.ts
- * repo
- * apps/api/src/app/events/usecases/send-message/digest/digest.usecase.ts * _id is the last on because it is used with $ne which means it is a range operator
- * apps/api/src/app/events/usecases/cancel-delayed/cancel-delayed.usecase.ts * but OMIT 'status'
+ *
+ * Path : apps/api/src/app/events/usecases/trigger-event/trigger-event.usecase.ts
+ *    Context : validateTransactionIdProperty()
+ *       Query : findOne(
+ *          {
+ *            transactionId,
+ *            _environmentId: environmentId,
+ *          },
+ *          '_id'
+ *        )
+ *
+ * Path : apps/api/src/app/events/usecases/send-message/digest/digest.usecase.ts
+ *    Context : getJobsToUpdate()
+ *       Query : find({
+ *           transactionId: command.transactionId,
+ *           _environmentId: command.environmentId,
+ *           _id: {
+ *             $ne: command.jobId,
+ *           },
+ *         })
+ *
+ * Path : apps/api/src/app/events/usecases/cancel-delayed/cancel-delayed.usecase.ts
+ *    Context : execute()
+ *       Query : findOne({
+ *         transactionId: command.transactionId,
+ *         _environmentId: command.environmentId,
+ *         status: JobStatusEnum.DELAYED,
+ *        })
+ *
+ * Path : libs/dal/src/repositories/job/job.repository.ts
+ *    Context : findOnePopulate()
+ *       Query : findOne( { _environmentId: string; transactionId: string })
+ *
  */
 jobSchema.index({
   transactionId: 1,
@@ -171,7 +238,13 @@ jobSchema.index({
 
 /*
  * This index was initially created to optimize:
- * apps/api/src/app/events/usecases/queue-next-job/queue-next-job.usecase.ts
+ *
+ * Path : libs/dal/src/repositories/job/job.repository.ts
+ *    Context : execute()
+ *       Query : findOne({
+ *          _parentId: command.parentId,
+ *          _environmentId: command.environmentId,
+ *        })
  */
 jobSchema.index({
   _parentId: 1,
@@ -180,18 +253,102 @@ jobSchema.index({
 
 /*
  * This index was initially created to optimize:
- * apps/api/src/app/events/usecases/send-message/digest/get-digest-events-backoff.usecase.ts * updatedAt should be first range operator
- * repo
- * repo
- * repo
- * repo
- * apps/api/src/app/events/usecases/digest-filter-steps/digest-filter-steps-backoff.usecase.ts
- * apps/api/src/app/events/usecases/digest-filter-steps/digest-filter-steps-backoff.usecase.ts * type should be after _environmentId
- * apps/api/src/app/events/usecases/digest-filter-steps/digest-filter-steps-regular.usecase.ts
+ *
+ * Path : apps/api/src/app/events/usecases/send-message/digest/get-digest-events-backoff.usecase.ts
+ *    Context : execute()
+ *              **** createdAt is missing *
+ *       Query : find({
+ *          _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
+ *          _templateId: currentJob._templateId,
+ *          _environmentId: command.environmentId,
+ *          type: StepTypeEnum.TRIGGER,
+ *          status: JobStatusEnum.COMPLETED,
+ *          createdAt: {
+ *            $gte: currentJob.createdAt,
+ *          },
+ *        }
+ *
+ * Path : apps/api/src/app/events/usecases/digest-filter-steps/digest-filter-steps-backoff.usecase.ts
+ *    Context : getTrigger()
+ *       Query : findOne({
+ *          _subscriberId: command._subscriberId,
+ *          _templateId: command.templateId,
+ *          _environmentId: command.environmentId,
+ *          status: JobStatusEnum.COMPLETED,
+ *          type: StepTypeEnum.TRIGGER,
+ *          query['payload.' + digestKey] = DigestFilterSteps.getNestedValue(command.payload, digestKey);
+ *          updatedAt: {
+ *            $gte: this.getBackoffDate(step),
+ *          },
+ *        })
+ *    Context : alreadyHaveDigest()
+ *              type should be after _environmentId
+ *       Query : findOne({
+ *          _templateId: command.templateId,
+ *          _subscriberId: command._subscriberId,
+ *          _environmentId: command.environmentId,
+ *          type: StepTypeEnum.TRIGGER,
+ *          query['payload.' + digestKey] = DigestFilterSteps.getNestedValue(command.payload, digestKey);
+ *          updatedAt: {
+ *            $gte: this.getBackoffDate(step),
+ *          },
+ *        })
+ *
+ * Path: apps/api/src/app/events/usecases/digest-filter-steps/digest-filter-steps-regular.usecase.ts
+ *    Context : getDigest()
+ *       Query : findOne({
+ *         _templateId: command.templateId,
+ *         _subscriberId: command._subscriberId,
+ *         _environmentId: command.environmentId,
+ *         status: JobStatusEnum.DELAYED,
+ *         type: StepTypeEnum.DIGEST,
+ *          where['payload.' + digestKey] = DigestFilterSteps.getNestedValue(command.payload, digestKey);
+ *       })
+ *
+ * Path : libs/dal/src/repositories/job/job.repository.ts
+ *    Context : findJobsToDigest()
+ *       Query : find({
+ *          _templateId: templateId,
+ *          _subscriberId: subscriberId,
+ *          $or: [
+ *            { status: JobStatusEnum.COMPLETED, type: StepTypeEnum.DIGEST },
+ *            { status: JobStatusEnum.DELAYED, type: StepTypeEnum.DELAY },
+ *          ],
+ *          _environmentId: environmentId,
+ *          updatedAt: {
+ *            $gte: from,
+ *          },
+ *        })
+ *       Query : find({
+ *           updatedAt: {
+ *             $gte: from,
+ *           },
+ *           _templateId: templateId,
+ *           status: JobStatusEnum.COMPLETED,
+ *           type: StepTypeEnum.TRIGGER,
+ *           _environmentId: environmentId,
+ *           _subscriberId: subscriberId,
+ *           transactionId: {
+ *             $nin: transactionIds,
+ *           },
+ *         })
+ *       Query : update({
+ *            updatedAt: {
+ *              $gte: from,
+ *            }
+ *    Context : shouldDelayDigestJobOrMerge()
+ *       Query : find({
+ *          _subscriberId: this.convertStringToObjectId(job._subscriberId),
+ *          _templateId: job._templateId,
+ *          _environmentId: this.convertStringToObjectId(job._environmentId),
+ *          status: JobStatusEnum.DELAYED,
+ *          type: StepTypeEnum.DIGEST,
+ *          ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
+ *        }
  */
 jobSchema.index({
-  _templateId: 1,
   _subscriberId: 1,
+  _templateId: 1,
   _environmentId: 1,
   type: 1,
   status: 1,
