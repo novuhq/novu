@@ -10,6 +10,7 @@ import {
   CreateExecutionDetailsCommand,
 } from '../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../execution-details/types';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class SendMessageDelay extends SendMessageType {
@@ -21,6 +22,7 @@ export class SendMessageDelay extends SendMessageType {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
