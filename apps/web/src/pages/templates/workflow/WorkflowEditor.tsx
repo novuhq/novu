@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
@@ -9,10 +9,12 @@ import { channels } from '../shared/channels';
 import type { IForm } from '../components/formTypes';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
-import { Outlet, useParams } from 'react-router-dom';
-import { Container, TextInput, useMantineColorScheme } from '@mantine/core';
+import { Outlet, useLocation, useParams } from 'react-router-dom';
+import { Container, TextInput, useMantineColorScheme, Group, Stack } from '@mantine/core';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
+import { useBasePath } from '../hooks/useBasePath';
+import { UpdateButton } from '../components/UpdateButton';
 
 const WorkflowEditor = () => {
   const { addStep, deleteStep } = useTemplateEditorForm();
@@ -31,11 +33,8 @@ const WorkflowEditor = () => {
   const steps = watch('steps');
 
   const [toDelete, setToDelete] = useState<string>('');
-
-  const currentStep = useMemo(
-    () => steps.find((message) => message.template.type === channel && message.uuid === toDelete),
-    [channel, toDelete, steps]
-  );
+  const basePath = useBasePath();
+  const { pathname } = useLocation();
 
   const { colorScheme } = useMantineColorScheme();
 
@@ -107,53 +106,68 @@ const WorkflowEditor = () => {
               flexFlow: 'Column',
             }}
           >
-            <Container fluid sx={{ padding: '20px', width: '100%', height: '74px' }}>
-              <Controller
-                control={control}
-                name="name"
-                defaultValue="Untitled"
-                render={({ field, fieldState }) => {
-                  return (
-                    <TextInput
-                      styles={(theme) => ({
-                        wrapper: {
-                          background: 'transparent',
-                          width: '100%',
-                        },
-                        input: {
-                          background: 'transparent',
-                          borderStyle: 'solid',
-                          borderColor: colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5],
-                          borderWidth: '1px',
-                          fontSize: '20px',
-                          fontWeight: 'bolder',
-                          padding: 9,
-                          lineHeight: '28px',
-                          minHeight: 'auto',
-                          height: 'auto',
-                          width: '100%',
-                          textOverflow: 'ellipsis',
-                          '&:not(:placeholder-shown)': {
-                            borderStyle: 'none',
-                            padding: 10,
-                          },
-                          '&:hover, &:focus': {
-                            borderStyle: 'solid',
-                            padding: 9,
-                          },
-                        },
-                      })}
-                      {...field}
-                      value={field.value || ''}
-                      error={showErrors && fieldState.error?.message}
-                      type="text"
-                      data-test-id="title"
-                      placeholder="Enter notification name"
-                      disabled={readonly}
-                    />
-                  );
+            <Container fluid sx={{ width: '100%', height: '74px' }}>
+              <Stack
+                justify="center"
+                sx={{
+                  height: '100%',
                 }}
-              />
+              >
+                <Group>
+                  <Controller
+                    control={control}
+                    name="name"
+                    defaultValue="Untitled"
+                    render={({ field, fieldState }) => {
+                      return (
+                        <TextInput
+                          styles={(theme) => ({
+                            root: {
+                              flex: '1 1 auto',
+                            },
+                            wrapper: {
+                              background: 'transparent',
+                              width: '100%',
+                            },
+                            input: {
+                              background: 'transparent',
+                              borderStyle: 'solid',
+                              borderColor: colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5],
+                              borderWidth: '1px',
+                              fontSize: '20px',
+                              fontWeight: 'bolder',
+                              padding: 9,
+                              lineHeight: '28px',
+                              minHeight: 'auto',
+                              height: 'auto',
+                              width: '100%',
+                              textOverflow: 'ellipsis',
+                              '&:not(:placeholder-shown)': {
+                                borderStyle: 'none',
+                                padding: 10,
+                              },
+                              '&:hover, &:focus': {
+                                borderStyle: 'solid',
+                                padding: 9,
+                              },
+                            },
+                          })}
+                          {...field}
+                          value={field.value || ''}
+                          error={showErrors && fieldState.error?.message}
+                          type="text"
+                          data-test-id="title"
+                          placeholder="Enter notification name"
+                          disabled={readonly}
+                        />
+                      );
+                    }}
+                  />
+                  <When truthy={pathname !== basePath}>
+                    <UpdateButton />
+                  </When>
+                </Group>
+              </Stack>
             </Container>
             <FlowEditor onDelete={onDelete} dragging={dragging} errors={errors} steps={steps} addStep={addStep} />
           </div>

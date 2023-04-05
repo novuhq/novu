@@ -111,6 +111,7 @@ function createNotification() {
   cy.getByTestId('emailSubject').type('this is email subject');
 
   goBack();
+  cy.getByTestId('notification-template-submit-btn').click();
 }
 
 function promoteNotification() {

@@ -30,7 +30,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
     cy.get('.react-flow__node').first().should('contain', 'Trigger').next().should('contain', 'Email');
-    cy.getByTestId('settings-page').click();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
@@ -69,7 +69,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     editChannel('sms');
     cy.getByTestId('smsNotificationContent').type('new content for sms');
-    goBack();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);

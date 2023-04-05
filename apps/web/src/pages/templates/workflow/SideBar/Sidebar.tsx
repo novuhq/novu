@@ -11,6 +11,7 @@ import { useFormContext } from 'react-hook-form';
 import { IForm } from '../../components/formTypes';
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
 import { useState } from 'react';
+import { UpdateButton } from '../../components/UpdateButton';
 
 export const Sidebar = () => {
   const { colorScheme } = useMantineColorScheme();
@@ -22,7 +23,7 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const basePath = useBasePath();
   const {
-    formState: { isDirty, touchedFields },
+    formState: { isDirty },
   } = useFormContext<IForm>();
   const [shouldPulse, setShouldPulse] = useState(false);
 
@@ -40,32 +41,31 @@ export const Sidebar = () => {
 
   return (
     <>
-      <Container fluid sx={{ width: '100%', height: '74px' }}>
-        <Group
-          position="right"
+      <Container fluid sx={{ width: '100%', paddingLeft: 0, height: '74px' }}>
+        <Stack
+          justify="center"
           sx={{
             height: '100%',
           }}
         >
-          <Stack align="center">
-            <Group position="apart">
-              <Button
-                pulse={shouldPulse}
-                onClick={() => {
-                  navigate(basePath + '/snippet');
-                }}
-                data-test-id="get-snippet-btn"
-              >
-                Get Snippet
-              </Button>
-              <Link data-test-id="settings-page" to="settings">
-                <Settings />
-              </Link>
-            </Group>
-          </Stack>
-        </Group>
+          <Group>
+            <UpdateButton />
+            <Button
+              pulse={shouldPulse}
+              onClick={() => {
+                navigate(basePath + '/snippet');
+              }}
+              data-test-id="get-snippet-btn"
+            >
+              Get Snippet
+            </Button>
+            <Link data-test-id="settings-page" to="settings">
+              <Settings />
+            </Link>
+          </Group>
+        </Stack>
       </Container>
-      <div style={{ position: 'relative', padding: '12px' }}>
+      <div style={{ position: 'relative', padding: '12px', paddingLeft: 0 }}>
         <SideBarWrapper dark={colorScheme === 'dark'}>
           <AddStepMenu setDragging={setDragging} onDragStart={onDragStart} />
         </SideBarWrapper>

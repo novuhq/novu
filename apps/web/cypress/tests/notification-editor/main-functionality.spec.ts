@@ -80,6 +80,7 @@ describe('Workflow Editor - Main Functionality', function () {
         force: true,
       });
     goBack();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/templates');
     cy.waitForNetworkIdle(500);
@@ -211,6 +212,7 @@ describe('Workflow Editor - Main Functionality', function () {
     addAndEditChannel('email');
 
     cy.getByTestId('upload-image-button').click();
+    cy.get('.mantine-Modal-modal button').contains('Yes').click();
 
     cy.location('pathname').should('equal', '/brand');
   });
@@ -258,6 +260,7 @@ describe('Workflow Editor - Main Functionality', function () {
     });
     goBack();
     cy.waitForNetworkIdle(500);
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.getByTestId('get-snippet-btn').click();
     cy.getByTestId('step-page-wrapper').should('be.visible');
@@ -355,6 +358,7 @@ describe('Workflow Editor - Main Functionality', function () {
 
     goBack();
     cy.waitForNetworkIdle(500);
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/templates');
     cy.waitForNetworkIdle(500);

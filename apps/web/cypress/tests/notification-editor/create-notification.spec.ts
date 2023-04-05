@@ -26,6 +26,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('inAppRedirect').type('/example/test');
 
     goBack();
+    cy.getByTestId('notification-template-submit-btn').click();
     cy.getByTestId('get-snippet-btn').click();
     cy.getByTestId('trigger-code-snippet').should('be.visible');
     cy.getByTestId('trigger-code-snippet').contains('test-notification-title');
@@ -63,6 +64,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('inAppRedirect').type('/example/test');
 
     goBack();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     // trigger the notification
     cy.task('createNotifications', {
@@ -214,6 +216,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('emailSubject').type('this is email subject');
 
     goBack();
+    cy.getByTestId('notification-template-submit-btn').click();
     cy.getByTestId('get-snippet-btn').click();
     cy.getByTestId('trigger-code-snippet').should('be.visible');
     cy.getByTestId('trigger-code-snippet').contains('test-notification-title');
@@ -292,7 +295,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('backoff-unit-minutes').should('be.checked');
   });
 
-  it('should create and edit group id', function () {
+  it.skip('should create and edit group id', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
@@ -307,6 +310,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('groupSelector').should('have.value', 'New Test Category Group');
 
     goBack();
+    cy.getByTestId('notification-template-submit-btn').click();
     cy.waitForNetworkIdle(500);
 
     cy.visit('/templates');

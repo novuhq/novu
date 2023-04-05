@@ -5,6 +5,8 @@ import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient } from '..
 import { useEnvController } from '../../../hooks';
 import { IForm } from './formTypes';
 import { useMemo } from 'react';
+import { When } from '../../../components/utils/When';
+import { UpdateButton } from './UpdateButton';
 
 const stepNames: Record<StepTypeEnum | ChannelTypeEnum, string> = {
   email: 'Email',
@@ -47,10 +49,12 @@ const Input = ({ index, defaultValue }: { index: number; defaultValue: string })
           <TextInput
             styles={(theme) => ({
               root: {
-                width: '85%',
+                flex: '1 1 auto',
+                marginRight: 16,
               },
               wrapper: {
                 background: 'transparent',
+                width: '100%',
               },
               input: {
                 background: 'transparent',
@@ -102,8 +106,17 @@ export const StepNameInput = ({
   const Icon = useMemo(() => stepIcon[channel], [channel]);
 
   return (
-    <Group align="center" spacing={16}>
+    <Group spacing={16}>
       <Icon color={color} /> <Input defaultValue={stepName} index={index} />
+      <When truthy={['in_app', 'email'].includes(channel)}>
+        <div
+          style={{
+            marginRight: 32,
+          }}
+        >
+          <UpdateButton />
+        </div>
+      </When>
     </Group>
   );
 };

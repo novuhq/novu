@@ -21,7 +21,6 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
     formState: { errors },
     setValue,
     control,
-    getValues,
   } = useFormContext<IForm>();
 
   const { template } = useTemplateEditorForm();
@@ -97,9 +96,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
                     creatable
                     searchable
                     error={errors.notificationGroupId?.message}
-                    getCreateLabel={(newGroup) => (
-                      <div data-test-id="submit-category-btn">+ Create Group {newGroup}</div>
-                    )}
+                    getCreateLabel={(newGroup) => <div data-test-id="submit-category-btn">+ Create {newGroup}</div>}
                     onCreate={addGroupItem}
                     placeholder="Attach notification to group"
                     data={(groups || []).map((item) => ({ label: item.name + ' Group', value: item._id }))}

@@ -14,7 +14,7 @@ import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
 import { useNotificationGroup } from '../../../hooks';
-import { useSave } from '../hooks/useSave';
+
 import { useCreate } from '../hooks/useCreate';
 
 const defaultEmailBlocks: IEmailBlock[] = [
@@ -142,8 +142,6 @@ const TemplateEditorFormProvider = ({ children }) => {
 
     methods.setValue('identifier', newIdentifier);
   }, [name, identifier]);
-
-  useSave(isDirtyForm, isValid, () => onSubmit(methods.getValues()));
 
   const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } =
     useTemplateController(templateId);
