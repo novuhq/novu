@@ -146,6 +146,7 @@ jobs:
       - name: New Relic Application Deployment Marker
         uses: newrelic/deployment-marker-action@v2.3.0
         with:
+          region: EU
           apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
           guid: "[DEV] - API"
           version: "${{ env.RELEASE_VERSION }}"
