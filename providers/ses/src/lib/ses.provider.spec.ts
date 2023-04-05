@@ -12,6 +12,7 @@ const mockConfig = {
 
 const mockNovuMessage = {
   to: ['test@test2.com'],
+  replyTo: 'test@test1.com',
   subject: 'test subject',
   html: '<div> Mail Content </div>',
   attachments: [
