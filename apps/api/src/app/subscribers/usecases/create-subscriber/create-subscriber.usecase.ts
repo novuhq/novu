@@ -74,6 +74,6 @@ export class CreateSubscriber {
     subscriberId: string;
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId, true);
   }
 }

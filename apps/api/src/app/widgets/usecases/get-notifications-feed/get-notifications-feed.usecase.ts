@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, IActor, ActorTypeEnum } from '@novu/shared';
 import {
   AnalyticsService,
   buildFeedKey,
@@ -64,6 +64,12 @@ export class GetNotificationsFeed {
       });
     }
 
+    for (const message of feed) {
+      if (message._actorId && message.actor?.type === ActorTypeEnum.USER) {
+        message.actor.data = this.processUserAvatar(message.actorSubscriber);
+      }
+    }
+
     const totalCount = await this.messageRepository.getTotalCount(
       command.environmentId,
       subscriber._id,
@@ -98,5 +104,9 @@ export class GetNotificationsFeed {
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
     return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
+  }
+
+  private processUserAvatar(actorSubscriber?: SubscriberEntity): string | null {
+    return actorSubscriber?.avatar || null;
   }
 }

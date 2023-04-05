@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ConnectionOptions } from 'tls';
 import {
   DalService,
   UserRepository,
@@ -36,6 +35,7 @@ import {
   StorageService,
   WsQueueService,
   DistributedLockService,
+  PerformanceService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -92,14 +92,19 @@ const cacheService = {
   },
 };
 
+const distributedLockService = {
+  provide: DistributedLockService,
+  useFactory: () => {
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+
+    return new DistributedLockService(factoryInMemoryProviderService);
+  },
+};
+
 const PROVIDERS = [
   inMemoryProviderService,
-  {
-    provide: DistributedLockService,
-    useFactory: () => {
-      return new DistributedLockService();
-    },
-  },
+  cacheService,
+  distributedLockService,
   {
     provide: WsQueueService,
     useClass: WsQueueService,
@@ -113,6 +118,12 @@ const PROVIDERS = [
     },
   },
   cacheService,
+  {
+    provide: PerformanceService,
+    useFactory: () => {
+      return new PerformanceService();
+    },
+  },
   InvalidateCacheService,
   ...DAL_MODELS,
   {

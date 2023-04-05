@@ -1,30 +1,13 @@
-import Redis from 'ioredis';
 import Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
 import { Logger } from '@nestjs/common';
-import { getRedisPrefix } from '@novu/shared';
-import { ConnectionOptions } from 'tls';
 
-import { PlatformException } from '../../utils/exceptions';
+import {
+  InMemoryProviderClient,
+  InMemoryProviderService,
+} from '../in-memory-provider';
 
 const LOG_CONTEXT = 'DistributedLock';
-
-const getRedisObject = () => {
-  if (!process.env.REDIS_HOST || !process.env.REDIS_PORT) {
-    throw new PlatformException(
-      'Missing needed environment variables for Redis instance configuration for the distributed lock service'
-    );
-  }
-
-  return {
-    db: Number(process.env.REDIS_DB_INDEX),
-    port: Number(process.env.REDIS_PORT),
-    host: process.env.REDIS_HOST,
-    password: process.env.REDIS_PASSWORD,
-    keyPrefix: getRedisPrefix(),
-    tls: process.env.REDIS_TLS as ConnectionOptions,
-  };
-};
 
 interface ILockOptions {
   resource: string;
@@ -33,15 +16,16 @@ interface ILockOptions {
 
 export class DistributedLockService {
   public distributedLock: Redlock;
-  public instances: Redis[];
+  public instances: InMemoryProviderClient[];
   public lockCounter = {};
   public shuttingDown = false;
 
-  constructor() {
-    this.startup();
+  constructor(private inMemoryProviderService: InMemoryProviderService) {
+    this.startup(inMemoryProviderService.inMemoryProviderClient);
   }
 
   public startup(
+    client: InMemoryProviderClient,
     settings = {
       driftFactor: 0.01,
       retryCount: 50,
@@ -53,29 +37,39 @@ export class DistributedLockService {
       return;
     }
 
-    // TODO: Implement distributed nodes (at least 3 Redis instances)
-    this.instances = [getRedisObject()]
-      .filter((instanceSettings) => !!instanceSettings)
-      .map((redisSettings) => new Redis(redisSettings));
-    this.distributedLock = new Redlock(this.instances, settings);
-    Logger.verbose('Redlock started', LOG_CONTEXT);
+    if (client) {
+      // TODO: Implement distributed nodes (at least 3 Redis instances)
+      this.instances = [client];
+      this.distributedLock = new Redlock(this.instances, settings);
+      Logger.verbose('Redlock started', LOG_CONTEXT);
 
-    /**
-     * https://github.com/mike-marcacci/node-redlock/blob/dc7bcd923f70f66abc325d23ae618f7caf01ad75/src/index.ts#L192
-     *
-     * Because Redlock is designed for high availability, it does not care if
-     * a minority of redis instances/clusters fail at an operation.
-     *
-     * However, it can be helpful to monitor and log such cases. Redlock emits
-     * an "error" event whenever it encounters an error, even if the error is
-     * ignored in its normal operation.
-     *
-     * This function serves to prevent Node's default behavior of crashing
-     * when an "error" event is emitted in the absence of listeners.
-     */
-    this.distributedLock.on('error', (error) => {
-      Logger.error(error, LOG_CONTEXT);
-    });
+      /**
+       * https://github.com/mike-marcacci/node-redlock/blob/dc7bcd923f70f66abc325d23ae618f7caf01ad75/src/index.ts#L192
+       *
+       * Because Redlock is designed for high availability, it does not care if
+       * a minority of redis instances/clusters fail at an operation.
+       *
+       * However, it can be helpful to monitor and log such cases. Redlock emits
+       * an "error" event whenever it encounters an error, even if the error is
+       * ignored in its normal operation.
+       *
+       * This function serves to prevent Node's default behavior of crashing
+       * when an "error" event is emitted in the absence of listeners.
+       */
+      this.distributedLock.on('error', (error) => {
+        Logger.error(error, LOG_CONTEXT);
+      });
+    }
+  }
+
+  public isDistributedLockEnabled(): boolean {
+    if (!this.distributedLock) {
+      Logger.log('Distributed lock service is not enabled', LOG_CONTEXT);
+
+      return false;
+    } else {
+      return true;
+    }
   }
 
   public areAllLocksReleased(): boolean {
@@ -124,6 +118,10 @@ export class DistributedLockService {
     { resource, ttl }: ILockOptions,
     handler: () => Promise<T>
   ): Promise<T> {
+    if (!this.isDistributedLockEnabled()) {
+      return await handler();
+    }
+
     const releaseLock = await this.lock(resource, ttl);
 
     try {
@@ -145,14 +143,6 @@ export class DistributedLockService {
     resource: string,
     ttl: number
   ): Promise<() => Promise<void>> {
-    if (!this.distributedLock) {
-      Logger.verbose(
-        `Redlock was not started. Starting after calling lock ${resource} for ${ttl} ms`,
-        LOG_CONTEXT
-      );
-      this.startup();
-    }
-
     try {
       const acquiredLock = await this.distributedLock.acquire([resource], ttl);
       Logger.verbose(`Lock ${resource} acquired for ${ttl} ms`, LOG_CONTEXT);

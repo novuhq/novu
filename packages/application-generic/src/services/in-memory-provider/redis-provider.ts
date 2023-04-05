@@ -14,7 +14,7 @@ const TTL_VARIANT_PERCENTAGE = 0.1;
 interface IRedisConfig {
   connectTimeout?: string;
   family?: string;
-  host: string;
+  host?: string;
   keepAlive?: string;
   keyPrefix?: string;
   password?: string;
@@ -26,29 +26,29 @@ interface IRedisConfig {
 export interface IRedisProviderConfig {
   connectTimeout: number;
   family: number;
-  host: string;
+  host?: string;
   keepAlive: number;
   keyPrefix: string;
   password?: string;
-  port: number;
+  port?: number;
   tls?: ConnectionOptions;
   ttl: number;
 }
 
-const redisConfig: IRedisConfig = {
-  host: process.env.REDIS_CACHE_SERVICE_HOST || 'localhost',
-  port: process.env.REDIS_CACHE_SERVICE_PORT || '6379',
-  ttl: process.env.REDIS_CACHE_TTL,
-  password: process.env.REDIS_CACHE_PASSWORD,
-  connectTimeout: process.env.REDIS_CACHE_CONNECTION_TIMEOUT,
-  keepAlive: process.env.REDIS_CACHE_KEEP_ALIVE,
-  family: process.env.REDIS_CACHE_FAMILY,
-  keyPrefix: process.env.REDIS_CACHE_KEY_PREFIX,
-  tls: process.env.REDIS_CACHE_SERVICE_TLS as ConnectionOptions,
-};
-
 export const getRedisProviderConfig = (): IRedisProviderConfig => {
-  const port = Number(redisConfig.port || 6379);
+  const redisConfig: IRedisConfig = {
+    host: process.env.REDIS_CACHE_SERVICE_HOST,
+    port: process.env.REDIS_CACHE_SERVICE_PORT,
+    ttl: process.env.REDIS_CACHE_TTL,
+    password: process.env.REDIS_CACHE_PASSWORD,
+    connectTimeout: process.env.REDIS_CACHE_CONNECTION_TIMEOUT,
+    keepAlive: process.env.REDIS_CACHE_KEEP_ALIVE,
+    family: process.env.REDIS_CACHE_FAMILY,
+    keyPrefix: process.env.REDIS_CACHE_KEY_PREFIX,
+    tls: process.env.REDIS_CACHE_SERVICE_TLS as ConnectionOptions,
+  };
+
+  const port = Number(redisConfig.port);
   const host = redisConfig.host;
   const password = redisConfig.password;
   const connectTimeout = redisConfig.connectTimeout
@@ -75,8 +75,12 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
   };
 };
 
-export const getRedisInstance = (): Redis => {
+export const getRedisInstance = (): Redis | undefined => {
   const { port, host, ...options } = getRedisProviderConfig();
 
-  return new Redis(port, host, options);
+  if (port && host) {
+    return new Redis(port, host, options);
+  }
+
+  return undefined;
 };

@@ -41,20 +41,16 @@ export class InitializeSession {
       email: command.email,
       phone: command.phone,
     });
-
     const subscriber = await this.createSubscriber.execute(commandos);
 
-    const organizationAdmin = await this.membersRepository.getOrganizationAdminAccount(environment._organizationId);
-    if (!organizationAdmin) throw new NotFoundException('Organization admin not found');
-
-    this.analyticsService.track('Initialize Widget Session - [Notification Center]', organizationAdmin._userId, {
+    this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
       _organization: environment._organizationId,
       environmentName: environment.name,
       _subscriber: subscriber._id,
     });
 
     return {
-      token: await this.authService.getSubscriberWidgetToken(subscriber, organizationAdmin._userId),
+      token: await this.authService.getSubscriberWidgetToken(subscriber),
       profile: {
         _id: subscriber._id,
         firstName: subscriber.firstName,
