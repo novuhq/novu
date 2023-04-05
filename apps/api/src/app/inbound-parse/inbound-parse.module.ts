@@ -4,11 +4,12 @@ import { InboundParseQueueService } from './services/inbound-parse.queue.service
 import { InboundParseController } from './inbound-parse.controller';
 import { GetMxRecord } from './usecases/get-mx-record/get-mx-record.usecase';
 import { SharedModule } from '../shared/shared.module';
+import { AuthModule } from '../auth/auth.module';
 
 const PROVIDERS = [InboundParseQueueService, GetMxRecord];
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, AuthModule],
   controllers: [InboundParseController],
   providers: [...USE_CASES, ...PROVIDERS],
   exports: [...USE_CASES],
