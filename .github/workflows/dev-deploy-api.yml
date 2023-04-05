@@ -50,7 +50,7 @@ jobs:
       - name: Output Test secret
         shell: bash
         env:
-          value: ${{ inputs.bullmq_secret }}
+          value: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
         run: |
           echo "${value:0:4}"
 
