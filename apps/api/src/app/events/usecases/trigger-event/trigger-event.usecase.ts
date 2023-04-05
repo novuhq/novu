@@ -19,7 +19,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
-import { PinoLogger } from '@novu/application-generic';
+import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class TriggerEvent {
@@ -154,6 +154,7 @@ export class TriggerEvent {
     }
   }
 
+  @InstrumentUsecase()
   private async getProviderIdsForTemplate(
     userId: string,
     organizationId: string,

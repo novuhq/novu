@@ -7,7 +7,7 @@ import {
   IPreferenceChannels,
   StepTypeEnum,
 } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
 import {
   JobEntity,
   SubscriberRepository,
@@ -60,6 +60,7 @@ export class SendMessage {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const shouldRun = await this.filter(command);
     const preferred = await this.filterPreferredChannels(command.job);
