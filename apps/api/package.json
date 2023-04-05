@@ -34,7 +34,7 @@
     "@nestjs/jwt": "9.0.0",
     "@nestjs/passport": "9.0.3",
     "@nestjs/platform-express": "9.3.12",
-    "@nestjs/swagger": "6.0.1",
+    "@nestjs/swagger": "^6.3.0",
     "@nestjs/terminus": "9.2.1",
     "@novu/application-generic": "^0.13.0",
     "@novu/dal": "^0.13.0",
@@ -67,7 +67,7 @@
     "jsonwebtoken": "9.0.0",
     "lodash": "^4.17.15",
     "nanoid": "^3.1.20",
-    "nest-raven": "8.2.0",
+    "nest-raven": "^9.2.0",
     "newrelic": "9.10.2",
     "passport": "0.6.0",
     "passport-github2": "^0.1.12",
@@ -84,9 +84,6 @@
     "swagger-ui-express": "^4.4.0",
     "twilio": "^3.72.0",
     "uuid": "^8.3.2"
-  },
-  "optionalDependencies": {
-    "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {
     "@faker-js/faker": "^6.0.0",

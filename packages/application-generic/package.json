@@ -35,9 +35,9 @@
     "node": ">=10"
   },
   "peerDependencies": {
-    "@nestjs/common": "^9.3.12",
-    "@nestjs/swagger": "^6.0.1",
-    "@nestjs/testing": "^9.3.12",
+    "@nestjs/common": ">=9.3.12",
+    "@nestjs/swagger": ">=6.3.0",
+    "@nestjs/testing": ">=9.3.12",
     "newrelic": ">=9"
   },
   "dependencies": {
@@ -48,27 +48,27 @@
     "@novu/apns": "^0.13.0",
     "@novu/burst-sms": "^0.13.0",
     "@novu/clickatell": "^0.13.0",
-    "@novu/expo": "^0.13.0",
-    "@novu/firetext": "^0.13.0",
-    "@novu/forty-six-elks": "^0.13.0",
-    "@novu/infobip": "^0.13.0",
-    "@novu/kannel": "^0.13.0",
-    "@novu/mattermost": "^0.13.0",
-    "@novu/ms-teams": "^0.13.0",
-    "@novu/outlook365": "^0.13.0",
-    "@novu/maqsam": "^0.13.0",
     "@novu/dal": "^0.13.0",
     "@novu/discord": "^0.13.0",
     "@novu/emailjs": "^0.13.0",
+    "@novu/expo": "^0.13.0",
     "@novu/fcm": "^0.13.0",
+    "@novu/firetext": "^0.13.0",
+    "@novu/forty-six-elks": "^0.13.0",
     "@novu/gupshup": "^0.13.0",
+    "@novu/infobip": "^0.13.0",
+    "@novu/kannel": "^0.13.0",
     "@novu/mailersend": "^0.13.0",
     "@novu/mailgun": "^0.13.0",
     "@novu/mailjet": "^0.13.0",
     "@novu/mandrill": "^0.13.0",
+    "@novu/maqsam": "^0.13.0",
+    "@novu/mattermost": "^0.13.0",
+    "@novu/ms-teams": "^0.13.0",
     "@novu/netcore": "^0.13.0",
     "@novu/node": "^0.13.0",
     "@novu/nodemailer": "^0.13.0",
+    "@novu/outlook365": "^0.13.0",
     "@novu/plivo": "^0.13.0",
     "@novu/postmark": "^0.13.0",
     "@novu/resend": "^0.13.0",
@@ -77,8 +77,8 @@
     "@novu/ses": "^0.13.0",
     "@novu/shared": "^0.13.0",
     "@novu/slack": "^0.13.0",
-    "@novu/sms77": "^0.13.0",
     "@novu/sms-central": "^0.13.0",
+    "@novu/sms77": "^0.13.0",
     "@novu/sns": "^0.13.0",
     "@novu/stateless": "^0.13.0",
     "@novu/telnyx": "^0.13.0",
@@ -87,7 +87,6 @@
     "@novu/twilio": "^0.13.0",
     "@sentry/node": "^7.12.1",
     "analytics-node": "^6.2.0",
-    "reflect-metadata": "^0.1.13",
     "bullmq": "^3.10.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
@@ -101,7 +100,8 @@
     "node-fetch": "^3.2.10",
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0",
-    "redlock": "4.2.0"
+    "redlock": "4.2.0",
+    "reflect-metadata": "^0.1.13"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
@@ -156,5 +156,8 @@
       "**/*.spec.js"
     ]
   },
-  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
+  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0",
+  "optionalDependencies": {
+    "@taskforcesh/bullmq-pro": "5.1.14"
+  }
 }
