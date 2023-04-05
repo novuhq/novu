@@ -42,7 +42,7 @@ jobs:
       matrix:
         # Only should be deploying api-ee to dev
         # name: ['novu/api', 'novu/api-ee']
-        name: ['novu/api-ee']
+        name: ['novu/api']
     steps:
       - name: echo
         run: echo ${{ matrix.name }} container

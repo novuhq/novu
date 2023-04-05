@@ -34,10 +34,11 @@ The ultimate service for managing multi-channel notifications with a single API.
   
   <p align="center">
   Available in: <a href="https://github.com/novuhq/novu/tree/next/packages/node">Node.js</a>
-  · <a href="https://github.com/unicodeveloper/novu">PHP</a>
+  · <a href="https://github.com/novuhq/novu-php">PHP</a>
   · <a href="https://github.com/novuhq/elixir">Elixir</a>
   · <a href="https://github.com/novuhq/rust">Rust</a>
   · <a href="https://github.com/novuhq/go-novu">Go</a>
+  <a href="https://github.com/novuhq/novu-ruby">Ruby</a>
   </p>
 
 ## ⭐️ Why Novu?
