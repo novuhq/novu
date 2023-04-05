@@ -135,8 +135,9 @@ jobs:
 
   newrelic:
     runs-on: ubuntu-latest
-    name: New Relic
+    name: New Relic Deploy
     needs: deploy_dev_api
+    environment: Development
     steps:
       # This step builds a var with the release tag value to use later
       - name: Set Release Version from Tag
