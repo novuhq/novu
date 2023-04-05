@@ -179,7 +179,7 @@ describe('Workflow Queue service', () => {
 
     await workflowQueueService.addToQueue(jobCreated._id, jobCreated, 0);
 
-    await session.awaitRunningJobs(_templateId, false, 1);
+    await session.awaitRunningJobs(_templateId, false, 0);
     // We pause the worker as little trick to allow the `failed` status to be updated in the callback of the worker and not having a race condition.
     await workflowQueueService.gracefulShutdown();
 
