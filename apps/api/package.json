@@ -39,6 +39,7 @@
     "@nestjs/platform-express": "9.3.12",
     "@nestjs/swagger": "6.0.1",
     "@nestjs/terminus": "9.2.1",
+    "@novu/onesignal": "^0.12.0",
     "@novu/apns": "^0.13.0",
     "@novu/application-generic": "^0.13.0",
     "@novu/burst-sms": "^0.13.0",

@@ -1,5 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  IMessageButton,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IEmailBlock,
+  InAppProviderIdEnum,
+  ActorTypeEnum,
+  IActor,
+} from '@novu/shared';
 import { GetMessagesCommand } from './get-messages.command';
 import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
@@ -37,10 +47,16 @@ export class GetMessages {
 
     const totalCount = await this.messageRepository.count(query);
 
-    const data = await this.messageRepository.find(query, '', {
+    const data = await this.messageRepository.getMessages(query, '', {
       limit: LIMIT,
       skip: command.page * LIMIT,
     });
+
+    for (const message of data) {
+      if (message._actorId && message.actor?.type === ActorTypeEnum.USER) {
+        message.actor.data = this.processUserAvatar(message.actorSubscriber);
+      }
+    }
 
     return {
       page: command.page,
@@ -65,5 +81,9 @@ export class GetMessages {
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
     return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
+  }
+
+  private processUserAvatar(actorSubscriber?: SubscriberEntity): string | null {
+    return actorSubscriber?.avatar || null;
   }
 }

@@ -1,10 +1,18 @@
-import { apnsConfig, fcmConfig, expoConfig } from '../credentials';
+import { apnsConfig, fcmConfig, expoConfig, onesignalConfig } from '../credentials';
 import { PushProviderIdEnum } from '../provider.enum';
 import { IProviderConfig } from '../provider.interface';
 
 import { ChannelTypeEnum } from '../../../types';
 
 export const pushProviders: IProviderConfig[] = [
+  {
+    id: PushProviderIdEnum.ONESIGNAL,
+    displayName: 'OneSignal',
+    channel: ChannelTypeEnum.PUSH,
+    credentials: onesignalConfig,
+    docReference: 'https://documentation.onesignal.com/reference/create-notification',
+    logoFileName: { light: 'onesignal.svg', dark: 'onesignal.svg' },
+  },
   {
     id: PushProviderIdEnum.FCM,
     displayName: 'Firebase Cloud Messaging',
