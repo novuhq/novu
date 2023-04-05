@@ -23,7 +23,7 @@ export class BullmqService {
   }
 
   public static haveProInstalled() {
-    if (!BullmqService.pro) {
+    if (true || !BullmqService.pro) {
       return;
     }
 
