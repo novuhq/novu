@@ -35,6 +35,7 @@ import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
 import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -61,6 +62,7 @@ export class SendMessageInApp extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriberBySubscriberId({
       subscriberId: command.subscriberId,
