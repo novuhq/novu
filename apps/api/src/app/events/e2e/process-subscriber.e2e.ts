@@ -9,7 +9,13 @@ import {
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { ChannelTypeEnum, ISubscribersDefine, StepTypeEnum } from '@novu/shared';
-import { CacheKeyPrefixEnum, InvalidateCacheService, CacheService } from '@novu/application-generic';
+import {
+  InMemoryProviderService,
+  buildNotificationTemplateIdentifierKey,
+  buildNotificationTemplateKey,
+  InvalidateCacheService,
+  CacheService,
+} from '@novu/application-generic';
 
 import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
 
@@ -21,12 +27,8 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
-  const invalidateCache = new InvalidateCacheService(
-    new CacheService({
-      host: process.env.REDIS_CACHE_SERVICE_HOST as string,
-      port: process.env.REDIS_CACHE_SERVICE_PORT as string,
-    })
-  );
+  const inMemoryProviderService = new InMemoryProviderService();
+  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
 
   const subscriberRepository = new SubscriberRepository();
   const messageRepository = new MessageRepository();
@@ -194,12 +196,18 @@ describe('Trigger event - process subscriber /v1/events/trigger (POST)', functio
 
     await updateSubscriberPreference(updateData, session.subscriberToken, template._id);
 
-    await invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
-      credentials: {
+    await invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateKey({
         _id: template._id,
-        environmentId: session.environment._id,
-      },
+        _environmentId: session.environment._id,
+      }),
+    });
+
+    await invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateIdentifierKey({
+        templateIdentifier: template.triggers[0].identifier,
+        _environmentId: session.environment._id,
+      }),
     });
 
     await notificationTemplateRepository.update(

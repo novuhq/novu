@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { isBefore, subDays } from 'date-fns';
 import { UserRepository } from '@novu/dal';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
+import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { PasswordResetCommand } from './password-reset.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -28,11 +28,10 @@ export class PasswordReset {
 
     const passwordHash = await bcrypt.hash(command.password, 10);
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.USER],
-      credentials: {
+    await this.invalidateCache.invalidateByKey({
+      key: buildUserKey({
         _id: user._id,
-      },
+      }),
     });
 
     await this.userRepository.update(

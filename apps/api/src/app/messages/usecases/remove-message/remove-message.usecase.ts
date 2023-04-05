@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
+import { buildFeedKey, buildMessageCountKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -20,12 +20,18 @@ export class RemoveMessage {
 
     if (!message.subscriber) throw new ApiException(`A subscriber was not found for message ${command.messageId}`);
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED],
-      credentials: {
+    await this.invalidateCache.invalidateQuery({
+      key: buildFeedKey().invalidate({
         subscriberId: message.subscriber.subscriberId,
-        environmentId: command.environmentId,
-      },
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateQuery({
+      key: buildMessageCountKey().invalidate({
+        subscriberId: message.subscriber.subscriberId,
+        _environmentId: command.environmentId,
+      }),
     });
 
     await this.messageRepository.delete({

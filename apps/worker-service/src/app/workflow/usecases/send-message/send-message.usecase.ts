@@ -7,8 +7,9 @@ import {
 } from '@novu/shared';
 import {
   AnalyticsService,
-  CacheKeyPrefixEnum,
-  Cached,
+  buildNotificationTemplateKey,
+  buildSubscriberKey,
+  CachedEntity,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -81,6 +82,7 @@ export class SendMessage {
         filterPassed: shouldRun,
         preferencesPassed: preferred,
         ...(usedFilters || {}),
+        source: command.payload.__source || 'api',
       });
     }
 
@@ -147,21 +149,43 @@ export class SendMessage {
   }
 
   private async getFilterData(command: SendMessageCommand) {
-    const fetchSubscriber = command.step?.filters?.find((filter) => {
+    const subscriberFilterExist = command.step?.filters?.find((filter) => {
       return filter?.children?.find((item) => item?.on === 'subscriber');
     });
 
     let subscriber;
 
-    if (fetchSubscriber) {
-      /// TODO: refactor command.subscriberId to command._subscriberId
-      subscriber = await this.subscriberRepository.findById(command.subscriberId);
+    if (subscriberFilterExist) {
+      subscriber = await this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      });
     }
 
     return {
       subscriber,
       payload: command.payload,
     };
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  private async getSubscriberBySubscriberId({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      subscriberId,
+    });
   }
 
   private async filterPreferredChannels(job: JobEntity): Promise<boolean> {
@@ -203,7 +227,13 @@ export class SendMessage {
     return result || template.critical;
   }
 
-  @Cached(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
+  @CachedEntity({
+    builder: (command: { _id: string; environmentId: string }) =>
+      buildNotificationTemplateKey({
+        _environmentId: command.environmentId,
+        _id: command._id,
+      }),
+  })
   private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }

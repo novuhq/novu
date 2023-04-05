@@ -8,7 +8,11 @@ import {
   NotificationGroupRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
+import {
+  buildNotificationTemplateIdentifierKey,
+  buildNotificationTemplateKey,
+  InvalidateCacheService,
+} from '@novu/application-generic';
 
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
@@ -135,12 +139,18 @@ export class PromoteNotificationTemplateChange {
       return;
     }
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
-      credentials: {
-        _id: item._id,
-        environmentId: command.environmentId,
-      },
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateKey({
+        _id: newItem._id,
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateIdentifierKey({
+        templateIdentifier: newItem.triggers[0].identifier,
+        _environmentId: command.environmentId,
+      }),
     });
 
     return await this.notificationTemplateRepository.update(

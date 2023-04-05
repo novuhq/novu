@@ -121,7 +121,7 @@ export function createNestLoggingModuleOptions(settings: ILoggerSettings) {
         tenant: values.tenant,
       },
       transport: transport,
-      autoLogging: !['test'].includes(process.env.NODE_ENV),
+      autoLogging: !['test', 'local'].includes(process.env.NODE_ENV),
     },
   };
 }

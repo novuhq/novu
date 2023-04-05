@@ -14,7 +14,6 @@ import { CreateNotificationJobsCommand } from './create-notification-jobs.comman
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
-
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
 
 @Injectable()
@@ -69,6 +68,7 @@ export class CreateNotificationJobs {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _userId: command.userId,
+        subscriberId: command.subscriber.subscriberId,
         _subscriberId: command.subscriber._id,
         status: JobStatusEnum.PENDING,
         _templateId: notification._templateId,
@@ -123,7 +123,7 @@ export class CreateNotificationJobs {
     if (digestStep && digestStep.metadata?.type) {
       return await this.digestFilterSteps.execute(
         DigestFilterStepsCommand.create({
-          subscriberId: command.subscriber._id,
+          _subscriberId: command.subscriber._id,
           payload: command.payload,
           steps: command.template.steps,
           environmentId: command.environmentId,

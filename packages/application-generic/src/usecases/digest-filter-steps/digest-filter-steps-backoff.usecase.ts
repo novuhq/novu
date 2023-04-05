@@ -63,7 +63,7 @@ export class DigestFilterStepsBackoff {
       status: JobStatusEnum.COMPLETED,
       type: StepTypeEnum.TRIGGER,
       _environmentId: command.environmentId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
     };
 
     const digestKey = step?.metadata?.digestKey;
@@ -88,7 +88,7 @@ export class DigestFilterStepsBackoff {
       _templateId: command.templateId,
       type: StepTypeEnum.DIGEST,
       _environmentId: command.environmentId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
     };
 
     if (step.metadata?.digestKey) {

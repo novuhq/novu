@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
@@ -6,11 +6,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { AnalyticsService } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
-import { StorageHelperService } from '@novu/application-generic';
+import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
-import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
@@ -47,10 +46,10 @@ export class ParseEventRequest {
 
     await this.validateSubscriberIdProperty(mappedRecipients);
 
-    const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.environmentId,
-      command.identifier
-    );
+    const template = await this.getNotificationTemplateByTriggerIdentifier({
+      environmentId: command.environmentId,
+      triggerIdentifier: command.identifier,
+    });
 
     if (!template) {
       throw new UnprocessableEntityException('template_not_found');
@@ -118,11 +117,8 @@ export class ParseEventRequest {
         _template: template._id,
         _organization: command.organizationId,
         channels: steps.map((step) => step.template?.type),
+        source: command.payload.__source || 'api',
       });
-    }
-
-    if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
-      return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
     }
 
     return {
@@ -130,6 +126,23 @@ export class ParseEventRequest {
       status: 'processed',
       transactionId: transactionId,
     };
+  }
+
+  @CachedEntity({
+    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
+      buildNotificationTemplateIdentifierKey({
+        _environmentId: command.environmentId,
+        templateIdentifier: command.triggerIdentifier,
+      }),
+  })
+  private async getNotificationTemplateByTriggerIdentifier(command: {
+    triggerIdentifier: string;
+    environmentId: string;
+  }) {
+    return await this.notificationTemplateRepository.findByTriggerIdentifier(
+      command.environmentId,
+      command.triggerIdentifier
+    );
   }
 
   private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {

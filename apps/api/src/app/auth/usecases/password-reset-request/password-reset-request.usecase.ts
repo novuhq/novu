@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
 import { Novu } from '@novu/node';
 import { UserRepository, UserEntity, IUserResetTokenCount } from '@novu/dal';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
+import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
@@ -26,11 +26,10 @@ export class PasswordResetRequest {
       }
       const token = uuidv4();
 
-      this.invalidateCache.clearCache({
-        storeKeyPrefix: [CacheKeyPrefixEnum.USER],
-        credentials: {
+      await this.invalidateCache.invalidateByKey({
+        key: buildUserKey({
           _id: foundUser._id,
-        },
+        }),
       });
 
       const resetTokenCount = this.getUpdatedRequestCount(foundUser);

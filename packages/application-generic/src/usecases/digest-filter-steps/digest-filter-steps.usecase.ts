@@ -23,7 +23,7 @@ export class DigestFilterSteps {
       command.transactionId,
       command.templateId,
       command.notificationId,
-      command.subscriberId
+      command._subscriberId
     );
 
     const actions = {

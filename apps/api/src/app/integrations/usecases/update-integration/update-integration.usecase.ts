@@ -3,15 +3,15 @@ import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import {
   AnalyticsService,
   encryptCredentials,
-  CacheKeyPrefixEnum,
+  buildIntegrationKey,
   InvalidateCacheService,
 } from '@novu/application-generic';
+import { ChannelTypeEnum } from '@novu/shared';
 
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
-import { ChannelTypeEnum } from '@novu/shared';
 
 @Injectable()
 export class UpdateIntegration {
@@ -39,11 +39,10 @@ export class UpdateIntegration {
       active: command.active,
     });
 
-    await this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
-      credentials: {
-        environmentId: command.environmentId,
-      },
+    await this.invalidateCache.invalidateQuery({
+      key: buildIntegrationKey().invalidate({
+        _environmentId: command.environmentId,
+      }),
     });
 
     if (command.check) {

@@ -20,7 +20,8 @@ export class GetDigestEventsBackoff extends GetDigestEvents {
       status: JobStatusEnum.COMPLETED,
       type: StepTypeEnum.TRIGGER,
       _environmentId: command.environmentId,
-      _subscriberId: command.subscriberId,
+      // backward compatibility - ternary needed to be removed once the queue renewed
+      _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
     });
 
     return this.filterJobs(currentJob, command.transactionId, jobs);

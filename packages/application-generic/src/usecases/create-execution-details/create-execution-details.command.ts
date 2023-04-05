@@ -50,6 +50,10 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsString()
   raw?: string | null;
 
+  @IsOptional()
+  @IsString()
+  _subscriberId?: string;
+
   webhookStatus?: EmailEventStatusEnum | SmsEventStatusEnum;
 
   static getDetailsFromJob(
@@ -59,6 +63,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
     | 'environmentId'
     | 'organizationId'
     | 'subscriberId'
+    | '_subscriberId'
     | 'jobId'
     | 'notificationId'
     | 'notificationTemplateId'
@@ -69,7 +74,9 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
     return {
       environmentId: job._environmentId,
       organizationId: job._organizationId,
-      subscriberId: job._subscriberId,
+      subscriberId: job.subscriberId,
+      // backward compatibility - ternary needed to be removed once the queue renewed
+      _subscriberId: job._subscriberId ? job._subscriberId : job.subscriberId,
       jobId: job._id,
       notificationId: job._notificationId,
       notificationTemplateId: job._templateId,

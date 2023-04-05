@@ -6,6 +6,7 @@ import {
   Worker,
   WorkerOptions,
 } from 'bullmq';
+import { Logger } from '@nestjs/common';
 
 export class BullmqService {
   private _queue: Queue;
@@ -34,6 +35,12 @@ export class BullmqService {
     const QueueClass = !BullmqService.pro
       ? Queue
       : require('@taskforcesh/bullmq-pro').QueuePro;
+
+    Logger.log(
+      `Creating queue ${name} bullmq pro is ${
+        BullmqService.pro ? 'Enabled' : 'Disabled'
+      }`
+    );
 
     this._queue = new QueueClass(name, {
       ...config,

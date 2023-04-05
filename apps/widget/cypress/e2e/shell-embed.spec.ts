@@ -102,6 +102,8 @@ describe('Shell Embed - Seen Read', function () {
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
     });
+    cy.intercept('**/notifications/feed?page=0&seen=true').as('seen');
+    cy.intercept('**/notifications/feed?page=0&seen=false').as('unseen');
 
     cy.get('#notification-bell').click();
 
@@ -109,7 +111,11 @@ describe('Shell Embed - Seen Read', function () {
 
     clickOnTab('unseen');
 
+    cy.wait('@unseen');
+
     clickOnTab('seen');
+
+    cy.wait('@seen');
 
     getNotifications(5);
   });

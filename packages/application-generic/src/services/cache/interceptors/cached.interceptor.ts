@@ -6,10 +6,10 @@ import {
   CacheInterceptorTypeEnum,
 } from './shared-cache';
 import { CacheService } from '../cache.service';
-import { CacheKeyPrefixEnum } from '../invalidate-cache.service';
+import { CacheKeyPrefixEnum } from '../key-builders';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
+function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
   const injectCache = Inject(CacheService);
 
   return (target: any, key: string, descriptor: any) => {

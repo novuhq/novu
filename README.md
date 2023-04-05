@@ -33,7 +33,7 @@ The ultimate service for managing multi-channel notifications with a single API.
   </p>
   
   <p align="center">
-  Available in: <a href="https://github.com/novuhq/novu/tree/next/packages/node">Node.js<a/>
+  Available in: <a href="https://github.com/novuhq/novu/tree/next/packages/node">Node.js</a>
   · <a href="https://github.com/unicodeveloper/novu">PHP</a>
   · <a href="https://github.com/novuhq/elixir">Elixir</a>
   · <a href="https://github.com/novuhq/rust">Rust</a>
@@ -191,7 +191,6 @@ We are more than happy to help you. If you are getting any errors or facing prob
 ## ⚡ Immediate working space with Gitpod
 
 [![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
-
 
 ## 🔗 Links
 

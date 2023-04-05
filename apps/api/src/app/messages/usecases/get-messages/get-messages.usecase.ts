@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
+import { CachedEntity, buildSubscriberKey } from '@novu/application-generic';
+
 import { GetMessagesCommand } from './get-messages.command';
 
 @Injectable()
@@ -19,10 +21,10 @@ export class GetMessages {
     };
 
     if (command.subscriberId) {
-      const subscriber = await this.subscriberRepository.findBySubscriberId(
-        command.environmentId,
-        command.subscriberId
-      );
+      const subscriber = await this.fetchSubscriber({
+        _environmentId: command.environmentId,
+        subscriberId: command.subscriberId,
+      });
 
       if (subscriber) {
         query._subscriberId = subscriber._id;
@@ -46,5 +48,22 @@ export class GetMessages {
       pageSize: LIMIT,
       data,
     };
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  private async fetchSubscriber({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity | null> {
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 }

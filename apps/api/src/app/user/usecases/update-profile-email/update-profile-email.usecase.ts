@@ -1,6 +1,6 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
-import { AnalyticsService, CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
+import { AnalyticsService, buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { UpdateProfileEmailCommand } from './update-profile-email.command';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
@@ -30,11 +30,10 @@ export class UpdateProfileEmail {
       }
     );
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.USER],
-      credentials: {
+    await this.invalidateCache.invalidateByKey({
+      key: buildUserKey({
         _id: command.userId,
-      },
+      }),
     });
 
     const updatedUser = await this.userRepository.findById(command.userId);

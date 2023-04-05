@@ -1128,7 +1128,8 @@ function sendMessageCommand({ step }: { step: NotificationStepEntity }): SendMes
     userId: '123',
     transactionId: '123',
     notificationId: '123',
-    subscriberId: '123',
+    subscriberId: '1234',
+    _subscriberId: '123',
     jobId: '123',
     job: {
       _notificationId: '123',
@@ -1136,6 +1137,7 @@ function sendMessageCommand({ step }: { step: NotificationStepEntity }): SendMes
       _environmentId: '123',
       _organizationId: '123',
       _subscriberId: '123',
+      subscriberId: '1234',
     } as JobEntity,
   };
 }

@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   MessageEntity,
   DalException,
@@ -8,7 +8,13 @@ import {
   MemberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { WsQueueService, AnalyticsService, CacheKeyPrefixEnum, InvalidateCache } from '@novu/application-generic';
+import {
+  WsQueueService,
+  AnalyticsService,
+  InvalidateCacheService,
+  buildFeedKey,
+  buildMessageCountKey,
+} from '@novu/application-generic';
 
 import { RemoveMessageCommand } from './remove-message.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -17,6 +23,7 @@ import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 @Injectable()
 export class RemoveMessage {
   constructor(
+    private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
     private wsQueueService: WsQueueService,
     private analyticsService: AnalyticsService,
@@ -24,8 +31,21 @@ export class RemoveMessage {
     private memberRepository: MemberRepository
   ) {}
 
-  @InvalidateCache([CacheKeyPrefixEnum.MESSAGE_COUNT, CacheKeyPrefixEnum.FEED])
   async execute(command: RemoveMessageCommand): Promise<MessageEntity> {
+    await this.invalidateCache.invalidateQuery({
+      key: buildFeedKey().invalidate({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateQuery({
+      key: buildMessageCountKey().invalidate({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
 

@@ -1,8 +1,10 @@
-import { MessageRepository, SubscriberRepository, JobEntity } from '@novu/dal';
+import { JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
-  CacheKeyPrefixEnum,
-  Cached,
+  buildSubscriberKey,
+  buildIntegrationKey,
+  CachedEntity,
+  CachedQuery,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -25,15 +27,33 @@ export abstract class SendMessageBase extends SendMessageType {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
-  @Cached(CacheKeyPrefixEnum.SUBSCRIBER)
-  protected async getSubscriber({ _id, environmentId }: { _id: string; environmentId: string }) {
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  protected async getSubscriberBySubscriberId({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }) {
     return await this.subscriberRepository.findOne({
-      _environmentId: environmentId,
-      _id: _id,
+      _environmentId,
+      subscriberId,
     });
   }
 
-  @Cached(CacheKeyPrefixEnum.INTEGRATION)
+  @CachedQuery({
+    builder: ({ environmentId, ...command }: GetDecryptedIntegrationsCommand) =>
+      buildIntegrationKey().cache({
+        _environmentId: environmentId,
+        ...command,
+      }),
+  })
   protected async getIntegration(getDecryptedIntegrationsCommand: GetDecryptedIntegrationsCommand) {
     return (
       await this.getDecryptedIntegrationsUsecase.execute(

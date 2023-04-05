@@ -1,4 +1,4 @@
-import { CacheKeyPrefixEnum } from '../invalidate-cache.service';
+import { CacheKeyPrefixEnum } from '../key-builders';
 
 export function validateCredentials(
   keyPrefix: CacheKeyPrefixEnum,

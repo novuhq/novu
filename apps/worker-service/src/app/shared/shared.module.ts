@@ -29,6 +29,7 @@ import {
   LoggerModule,
   InvalidateCacheService,
   CacheService,
+  InMemoryProviderService,
   StorageHelperService,
   StorageService,
   GCSStorageService,
@@ -75,7 +76,25 @@ function getStorageServiceClass() {
   }
 }
 
+const inMemoryProviderService = {
+  provide: InMemoryProviderService,
+  useFactory: () => {
+    return new InMemoryProviderService();
+  },
+};
+
+const cacheService = {
+  provide: CacheService,
+  useFactory: () => {
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+
+    return new CacheService(factoryInMemoryProviderService);
+  },
+};
+
 const PROVIDERS = [
+  inMemoryProviderService,
+  cacheService,
   {
     provide: AnalyticsService,
     useFactory: async () => {
@@ -92,22 +111,6 @@ const PROVIDERS = [
       await dalService.connect(process.env.MONGO_URL);
 
       return dalService;
-    },
-  },
-  {
-    provide: CacheService,
-    useFactory: async () => {
-      return new CacheService({
-        host: process.env.REDIS_CACHE_SERVICE_HOST,
-        port: process.env.REDIS_CACHE_SERVICE_PORT || '6379',
-        ttl: process.env.REDIS_CACHE_TTL,
-        password: process.env.REDIS_CACHE_PASSWORD,
-        connectTimeout: process.env.REDIS_CACHE_CONNECTION_TIMEOUT,
-        keepAlive: process.env.REDIS_CACHE_KEEP_ALIVE,
-        family: process.env.REDIS_CACHE_FAMILY,
-        keyPrefix: process.env.REDIS_CACHE_KEY_PREFIX,
-        tls: process.env.REDIS_CACHE_SERVICE_TLS,
-      });
     },
   },
   InvalidateCacheService,

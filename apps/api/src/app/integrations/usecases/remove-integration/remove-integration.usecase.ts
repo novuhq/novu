@@ -1,6 +1,6 @@
 import { Injectable, Scope } from '@nestjs/common';
 import { IntegrationRepository, DalException } from '@novu/dal';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '@novu/application-generic';
+import { buildIntegrationKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { RemoveIntegrationCommand } from './remove-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -13,11 +13,10 @@ export class RemoveIntegration {
 
   async execute(command: RemoveIntegrationCommand) {
     try {
-      this.invalidateCache.clearCache({
-        storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
-        credentials: {
-          environmentId: command.environmentId,
-        },
+      await this.invalidateCache.invalidateQuery({
+        key: buildIntegrationKey().invalidate({
+          _environmentId: command.environmentId,
+        }),
       });
 
       await this.integrationRepository.delete({ _environmentId: command.environmentId, _id: command.integrationId });
