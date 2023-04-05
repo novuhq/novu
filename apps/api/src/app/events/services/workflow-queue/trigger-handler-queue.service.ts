@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { QueueBaseOptions } from 'bullmq';
 import { getRedisPrefix } from '@novu/shared';
+const nr = require('newrelic');
 import { ConnectionOptions } from 'tls';
 import { BullmqService, PinoLogger, storage, Store } from '@novu/application-generic';
 
@@ -47,8 +48,21 @@ export class TriggerHandlerQueueService {
   public getWorkerProcessor() {
     return async ({ data }: { data: TriggerEventCommand }) => {
       return await new Promise(async (resolve, reject) => {
-        storage.run(new Store(PinoLogger.root), () => {
-          this.triggerEventUsecase.execute(data).then(resolve).catch(reject);
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const _this = this;
+
+        nr.startBackgroundTransaction('trigger-handler-queue', 'Trigger Engine', function () {
+          const transaction = nr.getTransaction();
+
+          storage.run(new Store(PinoLogger.root), () => {
+            _this.triggerEventUsecase
+              .execute(data)
+              .then(resolve)
+              .catch(reject)
+              .finally(() => {
+                transaction.end();
+              });
+          });
         });
       });
     };
