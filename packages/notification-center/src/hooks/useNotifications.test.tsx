@@ -32,7 +32,6 @@ const mockSession: ISession = {
     subscriberId: 'subscriberId_1234',
     organizationId: 'organizationId?',
     environmentId: 'environmentId',
-    organizationAdminId: 'organizationAdminId',
     aud: 'widget_user',
   },
 };
