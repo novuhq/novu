@@ -93,7 +93,12 @@ test('should trigger ses library correctly', async () => {
   const provider = new SESEmailProvider(mockConfig);
   const response = await provider.sendMessage(mockNovuMessage);
 
+  const bufferArray = spy.mock.calls[0][0].input.RawMessage.Data;
+  const buffer = Buffer.from(bufferArray);
+  const emailContent = buffer.toString();
+
   expect(spy).toHaveBeenCalled();
+  expect(emailContent.includes('Reply-To: test@test1.com')).toBe(true);
   expect(response.id).toEqual('<mock-message-id@test-1.amazonses.com>');
 });
 
