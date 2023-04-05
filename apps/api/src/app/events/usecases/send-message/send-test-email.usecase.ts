@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node';
 import { OrganizationRepository, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { IEmailOptions } from '@novu/stateless';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
 
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { SendTestEmailCommand } from './send-test-email.command';
@@ -26,6 +26,7 @@ export class SendTestEmail {
     @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
+  @InstrumentUsecase()
   public async execute(command: SendTestEmailCommand) {
     const mailFactory = new MailFactory();
     const organization = await this.organizationRepository.findById(command.organizationId);

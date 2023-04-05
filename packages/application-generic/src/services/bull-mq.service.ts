@@ -11,8 +11,8 @@ import { Logger } from '@nestjs/common';
 export class BullmqService {
   private _queue: Queue;
   private _worker: Worker;
-  public static readonly pro: boolean =
-    process.env.NOVU_MANAGED_SERVICE !== undefined;
+  public static readonly pro: boolean = false;
+  // Todo revert: process.env.NOVU_MANAGED_SERVICE !== undefined;
 
   get worker() {
     return this._worker;

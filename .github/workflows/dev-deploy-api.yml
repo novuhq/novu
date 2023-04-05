@@ -42,7 +42,7 @@ jobs:
       matrix:
         # Only should be deploying api-ee to dev
         # name: ['novu/api', 'novu/api-ee']
-        name: ['novu/api-ee']
+        name: ['novu/api']
     steps:
       - name: echo
         run: echo ${{ matrix.name }} container
@@ -140,3 +140,22 @@ jobs:
           ignore_empty: true
           ignore_missing: true
           url_prefix: "~"
+
+  newrelic:
+    runs-on: ubuntu-latest
+    name: New Relic Deploy
+    needs: deploy_dev_api
+    environment: Development
+    steps:
+      # This step builds a var with the release tag value to use later
+      - name: Set Release Version from Tag
+        run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+      # This step creates a new Change Tracking Marker
+      - name: New Relic Application Deployment Marker
+        uses: newrelic/deployment-marker-action@v2.3.0
+        with:
+          region: EU
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          guid: "MzgxMjQwOHxBUE18QVBQTElDQVRJT058NDk3NjQzODIy"
+          version: "${{ env.RELEASE_VERSION }}"
+          user: "${{ github.actor }}"
