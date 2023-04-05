@@ -91,3 +91,22 @@ jobs:
         with:
           url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
           method: 'POST'
+
+  newrelic:
+    runs-on: ubuntu-latest
+    name: New Relic Deploy
+    needs: deploy_prod_api_us
+    environment: Production
+    steps:
+      # This step builds a var with the release tag value to use later
+      - name: Set Release Version from Tag
+        run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+      # This step creates a new Change Tracking Marker
+      - name: New Relic Application Deployment Marker
+        uses: newrelic/deployment-marker-action@v2.3.0
+        with:
+          region: EU
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          guid: "MzgxMjQwOHxBUE18QVBQTElDQVRJT058NDk3NzA2ODk2"
+          version: "${{ env.RELEASE_VERSION }}"
+          user: "${{ github.actor }}"
