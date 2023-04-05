@@ -46,7 +46,6 @@
     "@azure/storage-blob": "^12.11.0",
     "@google-cloud/storage": "^6.2.3",
     "@novu/apns": "^0.13.0",
-    "@novu/application-generic": "^0.13.0",
     "@novu/burst-sms": "^0.13.0",
     "@novu/clickatell": "^0.13.0",
     "@novu/expo": "^0.13.0",

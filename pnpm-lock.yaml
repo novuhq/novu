@@ -153,9 +153,6 @@ importers:
 
   apps/api:
     specifiers:
-      '@aws-sdk/client-s3': ^3.234.0
-      '@aws-sdk/s3-request-presigner': ^3.234.0
-      '@azure/storage-blob': ^12.11.0
       '@faker-js/faker': ^6.0.0
       '@godaddy/terminus': ^4.10.2
       '@google-cloud/storage': ^6.2.3
@@ -238,9 +235,6 @@ importers:
       typescript: 4.9.5
       uuid: ^8.3.2
     dependencies:
-      '@aws-sdk/client-s3': 3.306.0
-      '@aws-sdk/s3-request-presigner': 3.306.0
-      '@azure/storage-blob': 12.13.0
       '@godaddy/terminus': 4.11.2
       '@google-cloud/storage': 6.9.5
       '@nestjs/axios': 2.0.0_v6tjnoiqsnib5jtos4nrpuzpyu
@@ -1470,7 +1464,6 @@ importers:
       '@nestjs/swagger': ^6.0.1
       '@nestjs/testing': ^9.3.12
       '@novu/apns': ^0.13.0
-      '@novu/application-generic': ^0.13.0
       '@novu/burst-sms': ^0.13.0
       '@novu/clickatell': ^0.13.0
       '@novu/dal': ^0.13.0
@@ -1557,7 +1550,6 @@ importers:
       '@nestjs/swagger': 6.3.0_56wskrocvqeup2a4dyvgnvm62u
       '@nestjs/testing': 9.3.12_ge4qplnzbmfyi5znl534zhtkn4
       '@novu/apns': link:../../providers/apns
-      '@novu/application-generic': 'link:'
       '@novu/burst-sms': link:../../providers/burst-sms
       '@novu/clickatell': link:../../providers/clickatell
       '@novu/dal': link:../../libs/dal

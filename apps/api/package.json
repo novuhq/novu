@@ -25,9 +25,6 @@
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./migrations/normalize-users-email/normalize-users-email.migration.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.234.0",
-    "@aws-sdk/s3-request-presigner": "^3.234.0",
-    "@azure/storage-blob": "^12.11.0",
     "@godaddy/terminus": "^4.10.2",
     "@google-cloud/storage": "^6.2.3",
     "@nestjs/axios": "~2.0.0",
