@@ -93,7 +93,8 @@ test('should trigger ses library correctly', async () => {
   const provider = new SESEmailProvider(mockConfig);
   const response = await provider.sendMessage(mockNovuMessage);
 
-  const bufferArray = spy.mock.calls[0][0].input.RawMessage.Data;
+  // eslint-disable-next-line
+  const bufferArray = spy.mock.calls[0][0].input['RawMessage']['Data'];
   const buffer = Buffer.from(bufferArray);
   const emailContent = buffer.toString();
 
