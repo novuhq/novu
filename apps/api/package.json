@@ -11,7 +11,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
     "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | docker buildx build --build-arg PACKAGE_PATH=apps/api --build-arg BULL_MQ_PRO_TOKEN=$BULL_MQ_PRO_TOKEN --no-cache - -t novu-api",
-    "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api --build-arg BULL_MQ_PRO_TOKEN=BULL_MQ_PRO_TOKEN --no-cache - -t novu-api --load",
+    "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api --build-arg BULL_MQ_PRO_TOKEN=$BULL_MQ_PRO_TOKEN --no-cache - -t novu-api --load",
     "start": "pnpm start:dev",
     "start:dev": "cross-env TZ=UTC nest start --watch",
     "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nest start --watch",
