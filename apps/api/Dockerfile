@@ -20,9 +20,9 @@ ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
 RUN echo "Token start is: ${BULL_MQ_PRO_NPM_TOKEN:0:2}"
 RUN echo "Token end is: ${BULL_MQ_PRO_NPM_TOKEN: -2}"
 
-RUN if [ -z '$BULL_MQ_PRO_NPM_TOKEN' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
-RUN if [ -z '$BULL_MQ_PRO_NPM_TOKEN' ]; then rm -f .npmrc ; fi
-RUN if [ -z '$BULL_MQ_PRO_NPM_TOKEN' ]; then cp .npmrc-cloud .npmrc  ; fi
+RUN if [ -z '${BULL_MQ_PRO_NPM_TOKEN}' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
+RUN if [ -z '${BULL_MQ_PRO_NPM_TOKEN}' ]; then rm -f .npmrc ; fi
+RUN if [ -z '${BULL_MQ_PRO_NPM_TOKEN}' ]; then cp .npmrc-cloud .npmrc  ; fi
 RUN cat .npmrc
 
 RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
