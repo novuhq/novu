@@ -58,7 +58,7 @@ runs:
       env:
         value: ${{ inputs.bullmq_secret }}
       run: |
-        echo "${BULL_MQ_PRO_NPM_TOKEN:0:4}"
+        echo "${value:0:4}"
 
     - name: Build with Depot, tag, and test - Regular
       if:  (inputs.fork  == 'false')  && (!contains( inputs.docker_name  , 'ee'))  # Don't run image builds with Depot for forks as forks can't access secrets
