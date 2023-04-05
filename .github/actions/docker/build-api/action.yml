@@ -54,7 +54,7 @@ runs:
         echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
 
-    - name: Build with Depot, tag, and test
+    - name: Build with Depot, tag, and test - Regular
       if:  (inputs.fork  == 'false')  && (!contains( inputs.docker_name  , 'ee'))  # Don't run image builds with Depot for forks as forks can't access secrets
       shell: bash
       env:
@@ -65,11 +65,12 @@ runs:
         GH_ACTOR: ${{ github.actor }}
         GH_PASSWORD: ${{ inputs.github_token }}
       run: |
+        echo "running regular build"
         set -x
         cd apps/api && pnpm run docker:build:depot
 
 
-    - name: Build with Depot, tag, and test
+    - name: Build with Depot, tag, and test - EE
       if:  (  inputs.fork == 'false') && (contains(  ${{ inputs.docker_name }} , 'ee'))  # Don't run image builds with Depot for forks as forks can't access secrets
       shell: bash
       env:
@@ -81,6 +82,7 @@ runs:
         GH_PASSWORD: ${{ inputs.github_token }}
         BULL_MQ_PRO_NPM_TOKEN: ${{ inputs.bullmq_secret}}
       run: |
+        echo "running ee build"
         set -x
         cd apps/api && pnpm run docker:build:depot
 
