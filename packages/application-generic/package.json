@@ -73,6 +73,7 @@
     "maskdata": "^1.2.0",
     "nestjs-pino": "^3.1.2",
     "node-fetch": "^3.2.10",
+    "reflect-metadata": "^0.1.13",
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0"
   },
