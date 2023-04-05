@@ -61,9 +61,9 @@ export class NotificationRepository extends BaseRepository<
       };
     }
 
-    const totalCount = await this.MongooseModel.countDocuments(requestQuery);
-
-    const response = await this.populateFeed(this.MongooseModel.find(requestQuery))
+    const totalCount = await this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
+    const response = await this.populateFeed(this.MongooseModel.find(requestQuery), environmentId)
+      .read('secondaryPreferred')
       .skip(skip)
       .limit(limit)
       .sort('-createdAt');
@@ -81,16 +81,32 @@ export class NotificationRepository extends BaseRepository<
       _organizationId,
     };
 
-    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery)));
+    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery), _environmentId));
   }
 
-  private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>) {
+  private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>, environmentId: string) {
     return query
-      .populate('subscriber', 'firstName _id lastName email phone')
-      .populate('template', '_id name triggers')
       .populate({
+        options: {
+          readPreference: 'secondaryPreferred',
+        },
+        path: 'subscriber',
+        select: 'firstName _id lastName email phone',
+      })
+      .populate({
+        options: {
+          readPreference: 'secondaryPreferred',
+        },
+        path: 'template',
+        select: '_id name triggers',
+      })
+      .populate({
+        options: {
+          readPreference: 'secondaryPreferred',
+        },
         path: 'jobs',
         match: {
+          _environmentId: new Types.ObjectId(environmentId),
           type: {
             $nin: [StepTypeEnum.TRIGGER],
           },
