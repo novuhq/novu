@@ -35,7 +35,9 @@
   },
   "peerDependencies": {
     "@nestjs/common": "^9.3.9",
-    "rxjs": "7.5.6"
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "7.5.6",
+    "newrelic": ">=9.0.0"
   },
   "dependencies": {
     "@novu/dal": "^0.13.0",
@@ -73,7 +75,6 @@
     "maskdata": "^1.2.0",
     "nestjs-pino": "^3.1.2",
     "node-fetch": "^3.2.10",
-    "reflect-metadata": "^0.1.13",
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0"
   },
