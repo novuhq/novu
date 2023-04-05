@@ -63,13 +63,18 @@ COPY ./meta .
 # Get the build artifacts that only include dist folders
 COPY --from=assets /usr/src/app .
 
+ARG BULL_MQ_PRO_TOKEN
+ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
+
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then rm -f .npmrc ; fi
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then cp .npmrc-cloud .npmrc  ; fi
+
 RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  pnpm install --filter "{${PACKAGE_PATH}}..." \
  --frozen-lockfile \
  --unsafe-perm \
  --reporter=silent
-
-RUN if [ -z $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
