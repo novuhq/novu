@@ -1535,6 +1535,7 @@ importers:
       lodash: ^4.17.15
       maskdata: ^1.2.0
       nestjs-pino: ^3.1.2
+      newrelic: '>=9'
       node-fetch: ^3.2.10
       npm-run-all: ^4.1.5
       nyc: ^15.1.0
@@ -1543,6 +1544,7 @@ importers:
       pino-pretty: ^9.4.0
       prettier: ~2.8.0
       redlock: 4.2.0
+      reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       sinon: ^9.2.4
       ts-jest: ^27.0.5
@@ -1610,10 +1612,12 @@ importers:
       lodash: 4.17.21
       maskdata: 1.2.0
       nestjs-pino: 3.1.2_g2cqd4mgcg63o5mvxc7l66lzja
+      newrelic: 9.10.2
       node-fetch: 3.2.10
       pino-http: 8.3.3
       pino-pretty: 9.4.0
       redlock: 4.2.0
+      reflect-metadata: 0.1.13
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/analytics-node': 3.1.9

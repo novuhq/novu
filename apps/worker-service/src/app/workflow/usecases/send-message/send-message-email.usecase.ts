@@ -15,6 +15,7 @@ import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import {
+  InstrumentUsecase,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -55,6 +56,7 @@ export class SendMessageEmail extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriberBySubscriberId({
       subscriberId: command.subscriberId,

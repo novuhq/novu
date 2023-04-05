@@ -18,9 +18,9 @@ import {
   IEmailBlock,
   InAppProviderIdEnum,
   ActorTypeEnum,
-  IActor,
 } from '@novu/shared';
 import {
+  InstrumentUsecase,
   InvalidateCacheService,
   DetailEnum,
   CreateExecutionDetails,
@@ -63,6 +63,7 @@ export class SendMessageInApp extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriberBySubscriberId({
       subscriberId: command.subscriberId,

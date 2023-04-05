@@ -17,6 +17,7 @@ import {
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
 import {
+  InstrumentUsecase,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -54,6 +55,7 @@ export class SendMessagePush extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriberBySubscriberId({
       subscriberId: command.subscriberId,

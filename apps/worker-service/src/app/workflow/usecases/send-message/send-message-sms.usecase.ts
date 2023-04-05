@@ -11,6 +11,7 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, LogCodeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
+  InstrumentUsecase,
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
@@ -48,6 +49,7 @@ export class SendMessageSms extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriberBySubscriberId({
       subscriberId: command.subscriberId,

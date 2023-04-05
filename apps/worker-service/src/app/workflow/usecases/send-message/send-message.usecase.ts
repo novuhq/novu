@@ -6,6 +6,7 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import {
+  InstrumentUsecase,
   AnalyticsService,
   buildNotificationTemplateKey,
   buildSubscriberKey,
@@ -54,6 +55,7 @@ export class SendMessage {
     private analyticsService: AnalyticsService
   ) {}
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const shouldRun = await this.filter(command);
     const preferred = await this.filterPreferredChannels(command.job);

@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
+import {
+  InstrumentUsecase,
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+} from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
 import { CreateLog } from '../../../shared/logs';
@@ -17,6 +22,7 @@ export class SendMessageDelay extends SendMessageType {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({

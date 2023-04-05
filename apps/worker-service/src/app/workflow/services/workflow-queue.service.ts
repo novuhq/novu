@@ -1,5 +1,7 @@
+const nr = require('newrelic');
+import { Job, WorkerOptions } from 'bullmq';
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
 import {
   QueueService,
   PinoLogger,
@@ -9,7 +11,6 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
 } from '@novu/application-generic';
-import { Job, WorkerOptions } from 'bullmq';
 
 import {
   RunJob,
@@ -75,18 +76,28 @@ export class WorkflowQueueService extends QueueService<IJobData> {
   private getWorkerProcessor() {
     return async ({ data }: { data: IJobData }) => {
       return await new Promise(async (resolve, reject) => {
-        storage.run(new Store(PinoLogger.root), () => {
-          this.runJob
-            .execute(
-              RunJobCommand.create({
-                jobId: data._id,
-                environmentId: data._environmentId,
-                organizationId: data._organizationId,
-                userId: data._userId,
-              })
-            )
-            .then(resolve)
-            .catch(reject);
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const _this = this;
+
+        nr.startBackgroundTransaction('job-processing-queue', 'Trigger Engine', function () {
+          const transaction = nr.getTransaction();
+
+          storage.run(new Store(PinoLogger.root), () => {
+            _this.runJob
+              .execute(
+                RunJobCommand.create({
+                  jobId: data._id,
+                  environmentId: data._environmentId,
+                  organizationId: data._organizationId,
+                  userId: data._userId,
+                })
+              )
+              .then(resolve)
+              .catch(reject)
+              .finally(() => {
+                transaction.end();
+              });
+          });
         });
       });
     };

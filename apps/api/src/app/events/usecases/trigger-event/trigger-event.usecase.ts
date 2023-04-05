@@ -4,6 +4,7 @@ import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTempl
 import { ChannelTypeEnum, InAppProviderIdEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 import {
   PinoLogger,
+  InstrumentUsecase,
   EventsPerformanceService,
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -169,6 +170,7 @@ export class TriggerEvent {
     }
   }
 
+  @InstrumentUsecase()
   private async getProviderIdsForTemplate(
     userId: string,
     organizationId: string,

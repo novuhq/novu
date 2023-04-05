@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { PinoLogger, StorageHelperService } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, StorageHelperService } from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
@@ -20,6 +20,7 @@ export class RunJob {
     private logger?: PinoLogger
   ) {}
 
+  @InstrumentUsecase()
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
     Sentry.setUser({
       id: command.userId,

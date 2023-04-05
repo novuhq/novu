@@ -37,7 +37,8 @@
   "peerDependencies": {
     "@nestjs/common": "^9.3.12",
     "@nestjs/swagger": "^6.0.1",
-    "@nestjs/testing": "^9.3.12"
+    "@nestjs/testing": "^9.3.12",
+    "newrelic": ">=9"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.234.0",
@@ -87,6 +88,7 @@
     "@novu/twilio": "^0.13.0",
     "@sentry/node": "^7.12.1",
     "analytics-node": "^6.2.0",
+    "reflect-metadata": "^0.1.13",
     "bullmq": "^3.10.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",

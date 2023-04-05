@@ -5,6 +5,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { IEmailOptions } from '@novu/stateless';
 
 import { AnalyticsService } from '../../services/analytics.service';
+import { InstrumentUsecase } from '../../instrumentation';
 import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
@@ -27,6 +28,7 @@ export class SendTestEmail {
     private analyticsService: AnalyticsService
   ) {}
 
+  @InstrumentUsecase()
   public async execute(command: SendTestEmailCommand) {
     const mailFactory = new MailFactory();
     const organization = await this.organizationRepository.findById(
