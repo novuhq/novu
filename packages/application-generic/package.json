@@ -34,7 +34,8 @@
     "node": ">=10"
   },
   "peerDependencies": {
-    "@nestjs/common": "^9.3.9"
+    "@nestjs/common": "^9.3.9",
+    "newrelic": ">=9"
   },
   "dependencies": {
     "@novu/dal": "^0.13.0",
