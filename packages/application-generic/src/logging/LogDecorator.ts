@@ -24,14 +24,16 @@ export const LogDecorator = (options = DEFAULT_OPTIONS) => {
 
     descriptor.value = async function <T>(...args: unknown[]): Promise<T> {
       const currentTime = Date.now();
-      logger.debug(
-        {
-          input: {
-            ...((options?.transform ? options?.transform(args) : args) || {}),
-          },
-        },
-        `"${target?.constructor?.name}.${propertyName}" invoke`
-      );
+      /*
+       * logger.debug(
+       *   {
+       *     input: {
+       *       ...((options?.transform ? options?.transform(args) : args) || {}),
+       *     },
+       *   },
+       *   `"${target?.constructor?.name}.${propertyName}" invoke`
+       * );
+       */
 
       const data = await method.apply(this, args);
 
@@ -39,13 +41,15 @@ export const LogDecorator = (options = DEFAULT_OPTIONS) => {
         ? `${Date.now() - currentTime}`
         : '';
 
-      logger.debug(
-        {
-          executionTimeMs: executeTime,
-          result: { ...(options?.transform ? options?.transform(data) : data) },
-        },
-        `"${target?.constructor?.name}.${propertyName}" result`
-      );
+      /*
+       * logger.debug(
+       *   {
+       *     executionTimeMs: executeTime,
+       *     result: { ...(options?.transform ? options?.transform(data) : data) },
+       *   },
+       *   `"${target?.constructor?.name}.${propertyName}" result`
+       * );
+       */
 
       return data;
     };

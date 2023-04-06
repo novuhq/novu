@@ -23,7 +23,7 @@ export class EventsPerformanceService {
 
       this.performanceService.marks.forEach((mark) => {
         if (this.performanceService.filterMarks(mark, eventsMarks)) {
-          Logger.debug(mark, PerformanceContextEnum.CONTEXT_MARK);
+          Logger.warn(mark, PerformanceContextEnum.CONTEXT_MARK);
         }
       });
     }
@@ -43,7 +43,7 @@ export class EventsPerformanceService {
       measures[functionName].push(measure.duration);
 
       if (showLogs) {
-        Logger.debug(
+        Logger.warn(
           `Duration: ${measure.duration.toFixed(2)} ms| Id: ${measure.name}`,
           PerformanceContextEnum.CONTEXT_MEASURE
         );

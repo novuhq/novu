@@ -120,8 +120,8 @@ export class PerformanceService {
     const p75 = percentiles.get(75);
     const p99 = percentiles.get(99);
 
-    Logger.debug('EVENT LOOP DELAY STATS', PerformanceContextEnum.CONTEXT_EVENT_LOOP_DELAY);
-    Logger.debug(
+    Logger.warn('EVENT LOOP DELAY STATS', PerformanceContextEnum.CONTEXT_EVENT_LOOP_DELAY);
+    Logger.warn(
       `Min: ${min} | Max: ${max} | Mean: ${mean} | StdDev: ${stddev} | P50: ${p50} | P75: ${p75} | P99: ${p99}`,
       PerformanceContextEnum.CONTEXT_EVENT_LOOP_DELAY
     );
@@ -130,8 +130,8 @@ export class PerformanceService {
   private publishEventLoopUtilization(): void {
     const { idle, active, utilization } = performance.eventLoopUtilization(this.utilization);
 
-    Logger.debug('EVENT LOOP UTILIZATION', PerformanceContextEnum.CONTEXT_EVENT_LOOP_UTILIZATION);
-    Logger.debug(
+    Logger.warn('EVENT LOOP UTILIZATION', PerformanceContextEnum.CONTEXT_EVENT_LOOP_UTILIZATION);
+    Logger.warn(
       `Idle: ${idle} | Active: ${active} | Utilization: ${utilization}`,
       PerformanceContextEnum.CONTEXT_EVENT_LOOP_UTILIZATION
     );
@@ -142,14 +142,14 @@ export class PerformanceService {
   }
 
   private publishMarks(): void {
-    this.marks.forEach((mark) => Logger.debug(mark, PerformanceContextEnum.CONTEXT_MARK));
+    this.marks.forEach((mark) => Logger.warn(mark, PerformanceContextEnum.CONTEXT_MARK));
   }
 
   public calculateAverage(markFunctionName: string, durations: number[]): void {
     const sum = durations.reduce((a, b) => a + b, 0);
     const average = Number(sum) / Number(durations.length);
 
-    Logger.debug(
+    Logger.warn(
       `${markFunctionName} | Average: ${average.toFixed(2)} ms from a total of ${durations.length}`,
       PerformanceContextEnum.CONTEXT_MEASURE
     );
