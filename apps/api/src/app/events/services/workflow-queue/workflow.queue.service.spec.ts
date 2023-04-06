@@ -124,7 +124,7 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await workflowQueueProducerService.addToQueue(jobCreated._id, jobCreated, 0);
+    await workflowQueueProducerService.addToQueue(jobCreated._id, jobCreated, '0');
 
     await session.awaitRunningJobs(_templateId, false, 0);
 
@@ -176,7 +176,7 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await workflowQueueProducerService.addToQueue(jobCreated._id, jobCreated, 0);
+    await workflowQueueProducerService.addToQueue(jobCreated._id, jobCreated, '0');
 
     await session.awaitRunningJobs(_templateId, false, 0);
     // We pause the worker as little trick to allow the `failed` status to be updated in the callback of the worker and not having a race condition.

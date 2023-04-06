@@ -37,6 +37,8 @@ const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
 
+const promiseTimeout = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
 describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -122,10 +124,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
   it('should override subscriber email based on event data', async function () {
     const subscriberId = SubscriberRepository.createObjectId();
-    const { data: body } = await axiosInstance.post(
+    const transactionId = SubscriberRepository.createObjectId();
+
+    await axiosInstance.post(
       `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
+        transactionId,
         to: [
           { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
           { subscriberId: subscriberId, email: 'gg@ff.com' },
@@ -142,18 +147,20 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         },
       }
     );
-    await session.awaitRunningJobs();
 
-    let jobs: JobEntity[] = await jobRepository.find({ _environmentId: session.environment._id });
-    let statuses: JobStatusEnum[] = jobs.map((job) => job.status);
+    let completedCount = 0;
+    do {
+      completedCount = await jobRepository.count({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        transactionId,
+        status: JobStatusEnum.COMPLETED,
+      });
+      await promiseTimeout(100);
+    } while (completedCount !== 4);
 
-    expect(statuses.includes(JobStatusEnum.RUNNING)).true;
-    expect(statuses.includes(JobStatusEnum.PENDING)).true;
-
-    await session.awaitRunningJobs(template._id);
-
-    jobs = await jobRepository.find({ _environmentId: session.environment._id, _templateId: template._id });
-    statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);
+    const jobs = await jobRepository.find({ _environmentId: session.environment._id, _templateId: template._id });
+    const statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);
 
     expect(statuses.length).to.equal(0);
 

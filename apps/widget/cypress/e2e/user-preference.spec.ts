@@ -25,6 +25,8 @@ describe('User Preferences', function () {
   });
 
   it('should navigate between notifications and user preference screens', function () {
+    cy.intercept('**/notifications/feed?page=0').as('getNotifications');
+    cy.intercept('**/widgets/preferences').as('getPreferences');
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
@@ -38,6 +40,8 @@ describe('User Preferences', function () {
     cy.getByTestId('workflow-list-item').should('have.length', 5);
 
     cy.getByTestId('go-back-btn').click();
+    cy.wait('@getNotifications');
+    cy.wait('@getPreferences');
     cy.getByTestId('notification-list-item').should('have.length', 1);
   });
 

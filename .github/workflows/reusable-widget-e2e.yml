@@ -27,11 +27,11 @@ jobs:
           projects: '@novu/widget'
 
       # Runs a single command using the runners shell
-      - name: Build
+      - name: Build embed
         run: CI=false pnpm build:embed
 
       # Runs a single command using the runners shell
-      - name: Build
+      - name: Build widget
         run: CI=false pnpm build:widget
 
       - name: Build API
