@@ -60,11 +60,14 @@ jobs:
           docker-compose -f docker-compose.localstack.yml logs --tail="all"
           aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
 
-      - name: Start worker-service
-        run: pnpm start:worker-service:test
-
       - name: Install wait-on plugin
         run: npm i -g wait-on
+
+      - name: Build worker-service
+        run: CI='' pnpm build:worker-service
+
+      - name: Start worker-service
+        run: cd apps/worker-service && pnpm start:test &
 
       - name: Wait on worker-service
         run: wait-on --timeout=180000 http://localhost:1342/v1/health-check
