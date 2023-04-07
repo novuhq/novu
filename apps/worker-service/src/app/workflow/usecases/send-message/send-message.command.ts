@@ -1,7 +1,6 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { NotificationStepEntity, JobEntity } from '@novu/dal';
-
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()

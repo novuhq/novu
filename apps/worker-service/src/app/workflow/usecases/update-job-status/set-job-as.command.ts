@@ -1,6 +1,5 @@
 import { IsDefined } from 'class-validator';
-
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '@novu/application-generic';
 
 export class SetJobAsCommand extends EnvironmentCommand {
   @IsDefined()

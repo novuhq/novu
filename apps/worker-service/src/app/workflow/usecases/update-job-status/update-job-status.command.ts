@@ -1,7 +1,6 @@
 import { IsDefined, IsOptional } from 'class-validator';
 import { JobStatusEnum } from '@novu/dal';
-
-import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { EnvironmentCommand } from '@novu/application-generic';
 
 export class UpdateJobStatusCommand extends EnvironmentCommand {
   @IsDefined()

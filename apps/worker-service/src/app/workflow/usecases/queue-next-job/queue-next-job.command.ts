@@ -1,6 +1,5 @@
 import { IsDefined } from 'class-validator';
-
-import { EnvironmentWithUserCommand } from '../../../shared/commands';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 
 export class QueueNextJobCommand extends EnvironmentWithUserCommand {
   @IsDefined()

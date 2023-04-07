@@ -1,6 +1,5 @@
 import { IsDefined } from 'class-validator';
-
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 
 export class RunJobCommand extends EnvironmentWithUserCommand {
   @IsDefined()

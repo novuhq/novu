@@ -1,7 +1,7 @@
 import { IsDefined, IsNumber, IsOptional } from 'class-validator';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 
 import { EventJobDto } from './event-job.dto';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class WebhookFilterBackoffStrategyCommand extends EnvironmentWithUserCommand {
   @IsDefined()
