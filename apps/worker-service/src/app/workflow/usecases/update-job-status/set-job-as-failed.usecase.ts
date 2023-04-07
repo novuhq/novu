@@ -9,7 +9,7 @@ import { UpdateJobStatus } from './update-job-status.usecase';
 export class SetJobAsFailed {
   constructor(private updateJobStatus: UpdateJobStatus, private jobRepository: JobRepository) {}
 
-  public async execute(command: SetJobAsFailedCommand): Promise<void> {
+  public async execute(command: SetJobAsFailedCommand, error: Error): Promise<void> {
     await this.updateJobStatus.execute(
       UpdateJobStatusCommand.create({
         environmentId: command.environmentId,
@@ -18,6 +18,6 @@ export class SetJobAsFailed {
         status: JobStatusEnum.FAILED,
       })
     );
-    await this.jobRepository.setError(command.organizationId, command._jobId, command.error);
+    await this.jobRepository.setError(command.organizationId, command._jobId, error);
   }
 }

@@ -1,4 +1,7 @@
 import { Test } from '@nestjs/testing';
+import { expect } from 'chai';
+import { formatISO } from 'date-fns';
+import { v4 as uuid } from 'uuid';
 import {
   JobEntity,
   JobRepository,
@@ -11,16 +14,12 @@ import {
 } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
-import { expect } from 'chai';
-import { formatISO } from 'date-fns';
-import { v4 as uuid } from 'uuid';
-
-import { WorkflowQueueProducerService } from './workflow-queue-producer.service';
+import { QueueService } from '@novu/application-generic';
 
 import { EventsModule } from '../../events.module';
 import { ExecutionDetailsModule } from '../../../execution-details/execution-details.module';
 
-let workflowQueueProducerService: WorkflowQueueProducerService;
+let queueService: QueueService;
 
 describe('Workflow Queue service', () => {
   let jobRepository: JobRepository;
@@ -34,7 +33,7 @@ describe('Workflow Queue service', () => {
       imports: [EventsModule, ExecutionDetailsModule],
     }).compile();
 
-    workflowQueueProducerService = moduleRef.get<WorkflowQueueProducerService>(WorkflowQueueProducerService);
+    queueService = moduleRef.get<QueueService>(QueueService);
 
     jobRepository = new JobRepository();
     session = new UserSession();
@@ -47,25 +46,14 @@ describe('Workflow Queue service', () => {
   });
 
   afterEach(async () => {
-    await workflowQueueProducerService.gracefulShutdown();
+    await queueService.gracefulShutdown();
   });
 
   it('should be initialised properly', async () => {
-    expect(workflowQueueProducerService).to.be.ok;
-    expect(workflowQueueProducerService).to.have.all.keys(
-      'DEFAULT_ATTEMPTS',
-      'bullConfig',
-      'bullMqService',
-      'createExecutionDetails',
-      'getBackoffStrategies',
-      'queueNextJob',
-      'runJob',
-      'setJobAsCompleted',
-      'setJobAsFailed',
-      'webhookFilterWebhookFilterBackoffStrategy'
-    );
-    expect(workflowQueueProducerService.DEFAULT_ATTEMPTS).to.eql(3);
-    expect(workflowQueueProducerService.bullMqService.queue).to.deep.include({
+    expect(queueService).to.be.ok;
+    expect(queueService).to.have.all.keys('DEFAULT_ATTEMPTS', 'bullConfig', 'bullMqService', 'name');
+    expect(queueService.DEFAULT_ATTEMPTS).to.eql(3);
+    expect(queueService.bullMqService.queue).to.deep.include({
       _events: {},
       _eventsCount: 0,
       _maxListeners: undefined,
@@ -73,12 +61,6 @@ describe('Workflow Queue service', () => {
       jobsOpts: {
         removeOnComplete: true,
       },
-    });
-    const worker = workflowQueueProducerService.bullMqService.worker;
-    expect(worker).to.deep.include({
-      _eventsCount: 2,
-      _maxListeners: undefined,
-      name: 'standard',
     });
   });
 
@@ -124,7 +106,7 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await workflowQueueProducerService.addToQueue(jobCreated._id, jobCreated, '0');
+    await queueService.addToQueue(jobCreated._id, jobCreated, '0');
 
     await session.awaitRunningJobs(_templateId, false, 0);
 
@@ -176,21 +158,24 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await workflowQueueProducerService.addToQueue(jobCreated._id, jobCreated, '0');
+    await queueService.addToQueue(jobCreated._id, jobCreated, '0');
 
     await session.awaitRunningJobs(_templateId, false, 0);
     // We pause the worker as little trick to allow the `failed` status to be updated in the callback of the worker and not having a race condition.
-    await workflowQueueProducerService.gracefulShutdown();
+    await queueService.gracefulShutdown();
 
-    const jobs = await jobRepository.find({ _environmentId, _organizationId });
-    expect(jobs.length).to.eql(1);
+    let failedTrigger: JobEntity | null = null;
+    do {
+      failedTrigger = await jobRepository.findOne({
+        _environmentId,
+        _organizationId,
+        status: JobStatusEnum.FAILED,
+        type: StepTypeEnum.TRIGGER,
+      });
+    } while (!failedTrigger || !failedTrigger.error);
 
-    expect(jobs[0].status).to.eql(JobStatusEnum.FAILED);
-    expect(jobs[0].error).to.deep.include({
-      status: 400,
+    expect(failedTrigger!.error).to.deep.include({
       message: `Notification template ${_templateId} is not found`,
-      name: 'ApiException',
-      options: {},
     });
   });
 });

@@ -55,7 +55,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     );
   }
 
-  public async setError(organizationId: string, jobId: string, error: Error): Promise<void> {
+  public async setError(organizationId: string, jobId: string, error: any): Promise<void> {
     const result = await this._model.update(
       {
         _organizationId: this.convertStringToObjectId(organizationId),

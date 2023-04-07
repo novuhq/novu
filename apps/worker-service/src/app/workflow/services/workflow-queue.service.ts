@@ -125,15 +125,14 @@ export class WorkflowQueueService extends QueueService<IJobData> {
         await this.setJobAsFailed.execute(
           SetJobAsFailedCommand.create({
             environmentId: job.data._environmentId,
-            error,
             _jobId: job.data._id,
             organizationId: job.data._organizationId,
-          })
+          }),
+          error
         );
       }
 
       const lastWebhookFilterRetry = job.attemptsMade === this.DEFAULT_ATTEMPTS && hasToBackoff;
-
       if (lastWebhookFilterRetry) {
         await this.handleLastFailedWebhookFilter(job, error);
       }
@@ -147,10 +146,10 @@ export class WorkflowQueueService extends QueueService<IJobData> {
     await this.setJobAsFailed.execute(
       SetJobAsFailedCommand.create({
         environmentId: job.data._environmentId,
-        error,
         _jobId: job.data._id,
         organizationId: job.data._organizationId,
-      })
+      }),
+      error
     );
 
     await this.createExecutionDetails.execute(

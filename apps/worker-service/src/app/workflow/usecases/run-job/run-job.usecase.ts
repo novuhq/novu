@@ -70,11 +70,11 @@ export class RunJob {
       );
 
       await this.storageHelperService.deleteAttachments(job.payload?.attachments);
-    } catch (error) {
+    } catch (error: any) {
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {
         shouldQueueNextJob = false;
       }
-      throw new PlatformException(error);
+      throw new PlatformException(error.message);
     } finally {
       if (shouldQueueNextJob) {
         await this.queueNextJob.execute(

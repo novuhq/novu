@@ -1,4 +1,4 @@
-import { IsDefined, IsOptional } from 'class-validator';
+import { IsDefined } from 'class-validator';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
@@ -7,7 +7,4 @@ export class SetJobAsCommand extends EnvironmentCommand {
   _jobId: string;
 }
 
-export class SetJobAsFailedCommand extends SetJobAsCommand {
-  @IsOptional()
-  error: Error;
-}
+export class SetJobAsFailedCommand extends SetJobAsCommand {}
