@@ -836,6 +836,7 @@ importers:
 
   apps/worker-service:
     specifiers:
+      '@faker-js/faker': ^6.0.0
       '@nestjs/axios': ~2.0.0
       '@nestjs/cli': 9.3.0
       '@nestjs/common': 9.3.12
@@ -925,6 +926,7 @@ importers:
       shortid: 2.2.16
       uuid: 8.3.2
     devDependencies:
+      '@faker-js/faker': 6.1.1
       '@nestjs/cli': 9.3.0
       '@nestjs/schematics': 9.0.4_typescript@4.9.5
       '@nestjs/testing': 9.3.12_ckvy3xuqd5ydy3ipiq7jufha44
@@ -1629,7 +1631,7 @@ importers:
       rimraf: 3.0.2
       sinon: 9.2.4
       ts-jest: 27.1.4_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       typedoc: 0.23.24_typescript@4.9.5
       typescript: 4.9.5
 
@@ -37320,7 +37322,7 @@ packages:
     dependencies:
       confusing-browser-globals: 1.0.11
       eslint: 8.33.0
-      eslint-plugin-import: 2.26.0_le6bq4wixy3va5oryeliptrdgy
+      eslint-plugin-import: 2.26.0_ufewo3pl5nnmz6lltvjrdi2hii
       object.assign: 4.1.4
       object.entries: 1.1.6
       semver: 6.3.0
@@ -37338,7 +37340,7 @@ packages:
       '@typescript-eslint/parser': 5.50.0_4vsywjlpuriuw3tl5oq6zy5a64
       eslint: 8.33.0
       eslint-config-airbnb-base: 15.0.0_ga4sep7loct7ajt7pxcme7xdqu
-      eslint-plugin-import: 2.26.0_le6bq4wixy3va5oryeliptrdgy
+      eslint-plugin-import: 2.26.0_ufewo3pl5nnmz6lltvjrdi2hii
     dev: true
 
   /eslint-config-prettier/8.5.0_eslint@8.30.0:
@@ -42857,7 +42859,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
+      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
     transitivePeerDependencies:
       - bufferutil
       - canvas

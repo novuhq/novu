@@ -1,5 +1,7 @@
 '@novu/api':
   - apps/api/**/*
+'@novu/worker-service':
+  - apps/worker-service/**/*
 '@novu/web':
   - apps/web/**/*
 '@novu/ws':

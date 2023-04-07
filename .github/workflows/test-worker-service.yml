@@ -1,0 +1,20 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Test worker-service
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  pull_request:
+    paths:
+      - 'apps/worker-service/**'
+      - 'packages/application-generic/**'
+      - 'packages/stateless/**'
+      - 'packages/node/**'
+      - 'libs/dal/**'
+      - 'libs/testing/**'
+      - 'libs/shared/**'
+  workflow_dispatch:
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  test_webhook:
+    uses: ./.github/workflows/reusable-worker-service-e2e.yml
