@@ -30,8 +30,6 @@ const styles = {
 
 ### iframe
 
-<!-- prettier-ignore-start -->
-
 ```html
 <script>
   novu.init(
