@@ -31,6 +31,7 @@ import {
 import { DetailEnum } from '../../../execution-details/types';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
@@ -54,6 +55,7 @@ export class SendMessagePush extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriberBySubscriberId({
       subscriberId: command.subscriberId,
