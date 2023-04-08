@@ -2,6 +2,7 @@ import React from 'react';
 import clsx from 'clsx';
 import { useDocsSidebar } from '@docusaurus/theme-common/internal';
 import styles from './styles.module.css';
+import DocIssue from '../../../../components/DocIssue';
 
 export default function DocPageLayoutMain({ hiddenSidebarContainer, children }) {
   const sidebar = useDocsSidebar();
@@ -21,6 +22,7 @@ export default function DocPageLayoutMain({ hiddenSidebarContainer, children }) 
         )}
       >
         {children}
+        <DocIssue />
       </div>
     </main>
   );
