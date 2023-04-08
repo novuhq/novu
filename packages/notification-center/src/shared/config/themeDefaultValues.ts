@@ -116,7 +116,7 @@ const defaultDarkTheme: INovuTheme = {
 };
 
 const defaultCommonTheme: ICommonTheme = {
-  fontFamily: 'Lato',
+  fontFamily: 'inherit',
 };
 
 const defaultNotificationBellLightTheme: INotificationBellColors = {

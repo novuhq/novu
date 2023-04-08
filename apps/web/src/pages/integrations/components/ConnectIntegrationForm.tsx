@@ -13,9 +13,8 @@ import { IIntegratedProvider } from '../IntegrationsStorePage';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
 import { Close } from '../../../design-system/icons/actions/Close';
 import { IntegrationInput } from './IntegrationInput';
-import { API_ROOT } from '../../../config';
-import { useEnvController } from '../../../store/useEnvController';
-import { useAuthController } from '../../../store/useAuthController';
+import { IS_DOCKER_HOSTED, WEBHOOK_URL } from '../../../config';
+import { useEnvController, useAuthController } from '../../../hooks';
 import { Check, Copy } from '../../../design-system/icons';
 import { CONTEXT_PATH } from '../../../config';
 
@@ -201,7 +200,13 @@ export function ConnectIntegrationForm({
     : '';
 
   // eslint-disable-next-line max-len
-  const webhookUrl = `${API_ROOT}/v1/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
+  const webhookUrl = `${WEBHOOK_URL}/webhooks/organizations/${organization?._id}/environments/${environment?._id}/${provider?.channel}/${provider?.providerId}`;
+
+  const isWebhookEnabled =
+    IS_DOCKER_HOSTED &&
+    webhookSupportStatus &&
+    provider?.channel &&
+    [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel);
 
   return (
     <Form noValidate onSubmit={handleSubmit(onCreateIntegration)}>
@@ -229,22 +234,20 @@ export function ConnectIntegrationForm({
               />
             </InputWrapper>
           ))}
-          {webhookSupportStatus &&
-            provider?.channel &&
-            [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(provider?.channel) && (
-              <InputWrapper>
-                <Input
-                  label="Webhook URL"
-                  value={webhookUrl}
-                  readOnly
-                  rightSection={
-                    <CopyWrapper onClick={() => webhookUrlClipboard.copy(webhookUrl)}>
-                      {webhookUrlClipboard.copied ? <Check /> : <Copy />}
-                    </CopyWrapper>
-                  }
-                />
-              </InputWrapper>
-            )}
+          {isWebhookEnabled && (
+            <InputWrapper>
+              <Input
+                label="Webhook URL"
+                value={webhookUrl}
+                readOnly
+                rightSection={
+                  <CopyWrapper onClick={() => webhookUrlClipboard.copy(webhookUrl)}>
+                    {webhookUrlClipboard.copied ? <Check /> : <Copy />}
+                  </CopyWrapper>
+                }
+              />
+            </InputWrapper>
+          )}
           <Stack my={30}>
             <ActiveWrapper active={isActive}>
               <Controller

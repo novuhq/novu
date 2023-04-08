@@ -35,6 +35,7 @@ declare namespace Cypress {
     initializeSession(settings?: {
       noEnvironment?: boolean;
       disableLocalStorage?: boolean;
+      noTemplates?: boolean;
       partialTemplate?: Partial<ICreateNotificationTemplateDto>;
     }): Chainable<Response>;
 

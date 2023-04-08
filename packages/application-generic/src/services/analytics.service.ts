@@ -1,4 +1,5 @@
 import Analytics from 'analytics-node';
+import { Logger } from '@nestjs/common';
 
 // Due to problematic analytics-node types, we need to use require
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -21,11 +22,13 @@ interface IUser {
 export class AnalyticsService {
   private segment: Analytics;
 
-  constructor(private segmentToken?: string | null) {}
+  constructor(private segmentToken?: string | null, private batchSize = 100) {}
 
   async initialize() {
     if (this.segmentToken) {
-      this.segment = new AnalyticsClass(this.segmentToken);
+      this.segment = new AnalyticsClass(this.segmentToken, {
+        flushAt: this.batchSize,
+      });
     }
   }
 
@@ -73,6 +76,8 @@ export class AnalyticsService {
           email: user.email,
           avatar: user.profilePicture,
           createdAt: user.createdAt,
+          // For segment auto mapping
+          created: user.createdAt,
           githubProfile: githubToken?.username,
         },
       });
@@ -92,6 +97,11 @@ export class AnalyticsService {
 
   track(name: string, userId: string, data: Record<string, unknown> = {}) {
     if (this.segmentEnabled) {
+      Logger.log('Tracking event: ' + name, {
+        name,
+        data,
+      });
+
       this.segment.track({
         userId: userId,
         event: name,

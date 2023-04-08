@@ -1,63 +1,17 @@
-export function localNavigate() {
-  const localStorageRouteStack = 'localStorageRouteStack';
+import { ROUTES } from '../../../../constants/routes.enum';
 
-  function localSet(stack: string[]) {
-    localStorage.setItem(localStorageRouteStack, JSON.stringify(stack));
-  }
+export function currentOnboardingStep() {
+  const LOCAL_STORAGE_STEP = 'onboarding-step';
 
-  function localGet(): string[] | null {
-    const res = localStorage.getItem(localStorageRouteStack);
-
-    return res ? JSON.parse(res) : null;
-  }
-
-  function push(location: string) {
-    const routeStack = localGet();
-
-    if (!routeStack) {
-      localSet([location]);
-
-      return;
+  function localSet(path: string) {
+    if (path.startsWith(ROUTES.GET_STARTED) || path.startsWith(ROUTES.QUICKSTART)) {
+      localStorage.setItem(LOCAL_STORAGE_STEP, path);
     }
-
-    const index = routeStack.indexOf(location);
-    const locationExistInStack = index !== -1;
-
-    if (!locationExistInStack) {
-      routeStack.push(location);
-      localSet(routeStack);
-
-      return;
-    }
-    normalizeRouteStack(routeStack, index);
   }
 
-  function pop(): string[] | undefined {
-    const stack = localGet();
-
-    if (!stack || stack.length <= 1) return undefined;
-
-    stack.pop();
-    localSet(stack);
-
-    return stack;
+  function localGet(): string | null {
+    return localStorage.getItem(LOCAL_STORAGE_STEP);
   }
 
-  function peek(): string | undefined {
-    const stack = localGet();
-
-    if (!stack) return undefined;
-
-    return stack.at(-1);
-  }
-
-  function normalizeRouteStack(routeStack: string[], index: number) {
-    if (routeStack.length === index + 1) return;
-
-    const res = routeStack.slice(0, index + 1);
-
-    localSet(res);
-  }
-
-  return { push, pop, peek };
+  return { get: localGet, set: localSet };
 }

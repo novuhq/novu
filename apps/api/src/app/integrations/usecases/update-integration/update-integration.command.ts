@@ -4,6 +4,9 @@ import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class UpdateIntegrationCommand extends EnvironmentCommand {
   @IsDefined()
+  userId: string;
+
+  @IsDefined()
   integrationId: string;
 
   @IsDefined()

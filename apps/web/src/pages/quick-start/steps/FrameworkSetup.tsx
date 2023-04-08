@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import { Stack } from '@mantine/core';
 
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { OnBoardingAnalyticsEnum, welcomeDescription } from '../consts';
-import { Stack } from '@mantine/core';
-import { Cards } from '../components/Cards';
-import { useSegment } from '../../../hooks/useSegment';
+import { Cards } from '../../../design-system';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export function FrameworkSetup() {
   const segment = useSegment();
@@ -14,7 +15,12 @@ export function FrameworkSetup() {
   }, []);
 
   return (
-    <QuickStartWrapper title={welcomeDescription} secondaryTitle={<ImplementationDescription />} faq={true}>
+    <QuickStartWrapper
+      title={welcomeDescription}
+      secondaryTitle={<ImplementationDescription />}
+      faq={true}
+      goBackPath={ROUTES.QUICK_START_NOTIFICATION_CENTER}
+    >
       <Cards
         cells={[
           {
@@ -41,7 +47,7 @@ export function FrameworkSetup() {
 
 export function ImplementationDescription() {
   return (
-    <Stack align="center">
+    <Stack align="center" sx={{ gap: '20px' }}>
       <span>A fully functional notification center is now at your fingertips.</span>
       <span>What's your go-to frontend framework?</span>
     </Stack>

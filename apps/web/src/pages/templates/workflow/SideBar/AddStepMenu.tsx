@@ -2,10 +2,10 @@ import React from 'react';
 import { Stack } from '@mantine/core';
 import { colors, DragButton, Text, Title } from '../../../../design-system';
 import { channels, NodeTypeEnum } from '../../shared/channels';
-import { useEnvController } from '../../../../store/useEnvController';
+import { useEnvController } from '../../../../hooks';
 import { When } from '../../../../components/utils/When';
-import { NavSection } from '../../../../components/templates/TemplatesSideBar';
-import { StyledNav } from '../WorkflowEditorPage';
+import { NavSection } from '../../components/TemplatesSideBar';
+import { StyledNav } from '../WorkflowEditor';
 
 export function AddStepMenu({
   setDragging,
@@ -20,7 +20,7 @@ export function AddStepMenu({
     <StyledNav data-test-id="drag-side-menu">
       <NavSection>
         <Title size={2}>Steps to add</Title>
-        <Text color={colors.B60} mt={5}>
+        <Text color={colors.B60} mt={5} mb={5}>
           <When truthy={!readonly}>Drag and drop new steps to the canvas</When>
           <When truthy={readonly}>You can not drag and drop new steps in Production</When>
         </Text>
@@ -40,7 +40,7 @@ export function AddStepMenu({
         }}
       >
         <Title size={2}>Actions</Title>
-        <Text color={colors.B60} mt={5}>
+        <Text color={colors.B60} mt={5} mb={5}>
           <When truthy={!readonly}>Add actions to the flow</When>
           <When truthy={readonly}>You can not drag and drop new actions in Production</When>
         </Text>

@@ -1,11 +1,25 @@
 import type { BuilderFieldOperator } from './builder.types';
 
+export enum TimeOperatorEnum {
+  DAYS = 'days',
+  HOURS = 'hours',
+  MINUTES = 'minutes',
+}
+
 export enum FilterPartTypeEnum {
   PAYLOAD = 'payload',
   SUBSCRIBER = 'subscriber',
   WEBHOOK = 'webhook',
   IS_ONLINE = 'isOnline',
   IS_ONLINE_IN_LAST = 'isOnlineInLast',
+  PREVIOUS_STEP = 'previousStep',
+}
+
+export enum PreviousStepTypeEnum {
+  READ = 'read',
+  UNREAD = 'unread',
+  SEEN = 'seen',
+  UNSEEN = 'unseen',
 }
 
 export interface IBaseFilterPart {
@@ -22,6 +36,16 @@ export interface IFieldFilterPart extends IBaseFieldFilterPart {
   on: FilterPartTypeEnum.SUBSCRIBER | FilterPartTypeEnum.PAYLOAD;
 }
 
+export interface IPreviousStepFilterPart extends IBaseFilterPart {
+  on: FilterPartTypeEnum.PREVIOUS_STEP;
+  step: string;
+  stepType:
+    | PreviousStepTypeEnum.READ
+    | PreviousStepTypeEnum.SEEN
+    | PreviousStepTypeEnum.UNREAD
+    | PreviousStepTypeEnum.UNSEEN;
+}
+
 export interface IWebhookFilterPart extends IBaseFieldFilterPart {
   on: FilterPartTypeEnum.WEBHOOK;
   webhookUrl: string;
@@ -32,21 +56,26 @@ export interface IRealtimeOnlineFilterPart extends IBaseFilterPart {
   value: boolean;
 }
 
-export type OnlineTimeOperator = 'minutes' | 'hours' | 'days';
-
 export interface IOnlineInLastFilterPart extends IBaseFilterPart {
   on: FilterPartTypeEnum.IS_ONLINE_IN_LAST;
-  timeOperator: OnlineTimeOperator;
+  timeOperator: TimeOperatorEnum;
   value: number;
 }
 
-export type FilterParts = IFieldFilterPart | IWebhookFilterPart | IRealtimeOnlineFilterPart | IOnlineInLastFilterPart;
+export type FilterParts =
+  | IFieldFilterPart
+  | IWebhookFilterPart
+  | IRealtimeOnlineFilterPart
+  | IOnlineInLastFilterPart
+  | IPreviousStepFilterPart;
+
+export type Operator = BuilderFieldOperator | TimeOperatorEnum;
 
 export interface ICondition {
   filter: string;
   field: string;
   expected: string;
   actual: string;
-  operator: BuilderFieldOperator | OnlineTimeOperator;
+  operator: Operator;
   passed: boolean;
 }

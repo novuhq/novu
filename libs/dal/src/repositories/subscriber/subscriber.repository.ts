@@ -1,30 +1,35 @@
 import { SoftDeleteModel } from 'mongoose-delete';
-import { Document, FilterQuery } from 'mongoose';
+import { FilterQuery } from 'mongoose';
 
-import { SubscriberEntity } from './subscriber.entity';
+import { SubscriberEntity, SubscriberDBModel } from './subscriber.entity';
 import { Subscriber } from './subscriber.schema';
 import { IExternalSubscribersEntity } from './types';
-
-import { BaseRepository, Omit } from '../base-repository';
+import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-class PartialSubscriberEntity extends Omit(SubscriberEntity, ['_environmentId', '_organizationId']) {}
+type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
 
-type EnforceEnvironmentQuery = FilterQuery<PartialSubscriberEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery, SubscriberEntity> {
+export class SubscriberRepository extends BaseRepository<SubscriberDBModel, SubscriberEntity, EnforceEnvOrOrgIds> {
   private subscriber: SoftDeleteModel;
   constructor() {
     super(Subscriber, SubscriberEntity);
     this.subscriber = Subscriber;
   }
 
-  async findBySubscriberId(environmentId: string, subscriberId: string): Promise<SubscriberEntity | null> {
-    return await this.findOne({
-      _environmentId: environmentId,
-      subscriberId,
-    });
+  async findBySubscriberId(
+    environmentId: string,
+    subscriberId: string,
+    secondaryRead = false
+  ): Promise<SubscriberEntity | null> {
+    return await this.findOne(
+      {
+        _environmentId: environmentId,
+        subscriberId,
+      },
+      undefined,
+      { readPreference: secondaryRead ? 'secondaryPreferred' : 'primary' }
+    );
   }
 
   async searchByExternalSubscriberIds(
@@ -41,7 +46,7 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     });
   }
 
-  async searchSubscribers(environmentId: string, search: string, emails: string[] = []) {
+  async searchSubscribers(environmentId: string, search?: string | null, emails: string[] | null = []) {
     const filters: any = [
       {
         email: {
@@ -70,7 +75,7 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     });
   }
 
-  async delete(query: EnforceEnvironmentQuery) {
+  async delete(query: SubscriberQuery) {
     const foundSubscriber = await this.findOne({
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
@@ -80,7 +85,7 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
       throw new DalException(`Could not find subscriber ${query.subscriberId} to delete`);
     }
 
-    const requestQuery: EnforceEnvironmentQuery = {
+    const requestQuery: SubscriberQuery = {
       _environmentId: foundSubscriber._environmentId,
       subscriberId: foundSubscriber.subscriberId,
     };
@@ -88,8 +93,8 @@ export class SubscriberRepository extends BaseRepository<EnforceEnvironmentQuery
     await this.subscriber.delete(requestQuery);
   }
 
-  async findDeleted(query: EnforceEnvironmentQuery) {
-    const requestQuery: EnforceEnvironmentQuery = {
+  async findDeleted(query: SubscriberQuery) {
+    const requestQuery: SubscriberQuery = {
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
     };

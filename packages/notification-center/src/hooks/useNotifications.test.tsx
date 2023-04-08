@@ -31,7 +31,6 @@ const mockSession: ISession = {
     email: 'email',
     organizationId: 'organizationId?',
     environmentId: 'environmentId',
-    organizationAdminId: 'organizationAdminId',
     aud: 'widget_user',
   },
 };

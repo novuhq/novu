@@ -50,13 +50,13 @@ jobs:
       - name: Install wait-on plugin
         run: npm i -g wait-on
       - name: Wait on API
-        run: wait-on --timeout=120000 http://localhost:1336/v1/health-check
+        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
 
-      - name: Wait on API
-        run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
+      - name: Wait on WS
+        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check
 
       - name: Wait on WIDGET
-        run: wait-on --timeout=90000 http://localhost:3500
+        run: wait-on --timeout=180000 http://localhost:3500
 
       - name: Cypress install
         if: steps.setup-project.outputs.cypress_cache_hit != 'true'

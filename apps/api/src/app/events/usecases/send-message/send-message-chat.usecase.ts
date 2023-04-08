@@ -11,6 +11,7 @@ import {
   MessageEntity,
   NotificationEntity,
   IntegrationEntity,
+  IChannelSettings,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -24,13 +25,14 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
@@ -54,6 +56,7 @@ export class SendMessageChat extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
     if (!subscriber) throw new ApiException('Subscriber not found');
@@ -117,7 +120,7 @@ export class SendMessageChat extends SendMessageBase {
 
   private async sendChannelMessage(
     command: SendMessageCommand,
-    subscriberChannel,
+    subscriberChannel: IChannelSettings,
     notification,
     chatChannel,
     content: string
@@ -135,6 +138,7 @@ export class SendMessageChat extends SendMessageBase {
     );
 
     const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+    const channelSpecification = subscriberChannel.credentials?.channel;
 
     if (!chatWebhookUrl) {
       await this.createExecutionDetails.execute(
@@ -193,7 +197,15 @@ export class SendMessageChat extends SendMessageBase {
     );
 
     if (chatWebhookUrl && integration) {
-      await this.sendMessage(chatWebhookUrl, integration, content, message, command, notification);
+      await this.sendMessage(
+        chatWebhookUrl,
+        integration,
+        content,
+        message,
+        command,
+        notification,
+        channelSpecification
+      );
 
       return;
     }
@@ -264,14 +276,19 @@ export class SendMessageChat extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity
+    notification: NotificationEntity,
+    channelSpecification?: string | undefined
   ) {
     try {
       const chatFactory = new ChatFactory();
       const chatHandler = chatFactory.getHandler(integration);
+      if (!chatHandler) {
+        throw new ApiException(`Chat handler for provider ${integration.providerId} is  not found`);
+      }
 
       const result = await chatHandler.send({
         webhookUrl: chatWebhookUrl,
+        channel: channelSpecification,
         content,
       });
 

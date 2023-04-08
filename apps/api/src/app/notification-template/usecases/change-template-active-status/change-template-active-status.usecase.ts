@@ -50,6 +50,7 @@ export class ChangeTemplateActiveStatus {
     );
 
     const item = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
+    if (!item) throw new NotFoundException(`Notification template ${command.templateId} is not found`);
 
     await this.createChange.execute(
       CreateChangeCommand.create({

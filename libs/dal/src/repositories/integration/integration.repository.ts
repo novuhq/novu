@@ -1,16 +1,15 @@
-import { Document, FilterQuery } from 'mongoose';
+import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
-import { BaseRepository, Omit } from '../base-repository';
-import { IntegrationEntity } from './integration.entity';
+
+import { BaseRepository } from '../base-repository';
+import { IntegrationEntity, IntegrationDBModel } from './integration.entity';
 import { Integration } from './integration.schema';
 import { DalException } from '../../shared';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
-class PartialIntegrationEntity extends Omit(IntegrationEntity, ['_environmentId', '_organizationId']) {}
+type IntegrationQuery = FilterQuery<IntegrationDBModel> & EnforceEnvOrOrgIds;
 
-type EnforceEnvironmentQuery = FilterQuery<PartialIntegrationEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
-
-export class IntegrationRepository extends BaseRepository<EnforceEnvironmentQuery, IntegrationEntity> {
+export class IntegrationRepository extends BaseRepository<IntegrationDBModel, IntegrationEntity, EnforceEnvOrOrgIds> {
   private integration: SoftDeleteModel;
   constructor() {
     super(Integration, IntegrationEntity);
@@ -18,7 +17,7 @@ export class IntegrationRepository extends BaseRepository<EnforceEnvironmentQuer
   }
 
   async find(
-    query: EnforceEnvironmentQuery,
+    query: IntegrationQuery,
     select = '',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     options: { limit?: number; sort?: any; skip?: number } = {}
@@ -32,7 +31,7 @@ export class IntegrationRepository extends BaseRepository<EnforceEnvironmentQuer
     });
   }
 
-  async create(data: EnforceEnvironmentQuery): Promise<IntegrationEntity> {
+  async create(data: IntegrationQuery): Promise<IntegrationEntity> {
     const existingIntegration = await this.findOne({
       _environmentId: data._environmentId,
       providerId: data.providerId,
@@ -44,17 +43,15 @@ export class IntegrationRepository extends BaseRepository<EnforceEnvironmentQuer
 
     return await super.create(data);
   }
-  async delete(query: EnforceEnvironmentQuery) {
+  async delete(query: IntegrationQuery) {
     const integration = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
     if (!integration) throw new DalException(`Could not find integration with id ${query._id}`);
 
-    const requestQuery: EnforceEnvironmentQuery = { _id: integration._id, _environmentId: integration._environmentId };
-
-    await this.integration.delete(requestQuery);
+    await this.integration.delete({ _id: integration._id, _environmentId: integration._environmentId });
   }
 
-  async findDeleted(query: EnforceEnvironmentQuery): Promise<IntegrationEntity> {
-    const res = await this.integration.findDeleted(query);
+  async findDeleted(query: IntegrationQuery): Promise<IntegrationEntity> {
+    const res: IntegrationEntity = await this.integration.findDeleted(query);
 
     return this.mapEntity(res);
   }

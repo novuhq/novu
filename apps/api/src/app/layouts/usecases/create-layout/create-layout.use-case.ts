@@ -1,7 +1,7 @@
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { isReservedVariableName } from '@novu/shared';
-
+import { AnalyticsService } from '@novu/application-generic';
 import { CreateLayoutCommand } from './create-layout.command';
 
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
@@ -10,16 +10,18 @@ import { LayoutDto } from '../../dtos';
 import { ChannelTypeEnum, ITemplateVariable, LayoutId } from '../../types';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ContentService } from '../../../shared/helpers/content.service';
+import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class CreateLayoutUseCase {
   constructor(
     private createLayoutChange: CreateLayoutChangeUseCase,
     private setDefaultLayout: SetDefaultLayoutUseCase,
-    private layoutRepository: LayoutRepository
+    private layoutRepository: LayoutRepository,
+    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: CreateLayoutCommand): Promise<LayoutDto> {
+  async execute(command: CreateLayoutCommand): Promise<LayoutDto & { _id: string }> {
     const variables = this.getExtractedVariables(command.variables as ITemplateVariable[], command.content);
     const hasBody = command.content.includes('{{{body}}}');
     if (!hasBody) {
@@ -31,7 +33,7 @@ export class CreateLayoutUseCase {
 
     const dto = this.mapFromEntity(layout);
 
-    if (dto._id && dto.isDefault === true) {
+    if (dto._id && dto.isDefault) {
       const setDefaultLayoutCommand = SetDefaultLayoutCommand.create({
         environmentId: dto._environmentId,
         layoutId: dto._id,
@@ -42,6 +44,12 @@ export class CreateLayoutUseCase {
     } else {
       await this.createChange(command, dto._id);
     }
+
+    this.analyticsService.track('[Layout] - Create', command.userId, {
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      layoutId: dto._id,
+    });
 
     return dto;
   }
@@ -73,7 +81,7 @@ export class CreateLayoutUseCase {
     };
   }
 
-  private mapFromEntity(layout: LayoutEntity): LayoutDto {
+  private mapFromEntity(layout: LayoutEntity): LayoutDto & { _id: string } {
     return {
       ...layout,
       _id: layout._id,

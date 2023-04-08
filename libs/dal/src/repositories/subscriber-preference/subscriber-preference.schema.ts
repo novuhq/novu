@@ -1,9 +1,10 @@
 import * as mongoose from 'mongoose';
-import { Schema, Document } from 'mongoose';
-import { schemaOptions } from '../schema-default.options';
-import { SubscriberPreferenceEntity } from './subscriber-preference.entity';
+import { Schema } from 'mongoose';
 
-const subscriberPreferenceSchema = new Schema(
+import { schemaOptions } from '../schema-default.options';
+import { SubscriberPreferenceDBModel } from './subscriber-preference.entity';
+
+const subscriberPreferenceSchema = new Schema<SubscriberPreferenceDBModel>(
   {
     _organizationId: {
       type: Schema.Types.ObjectId,
@@ -50,11 +51,7 @@ const subscriberPreferenceSchema = new Schema(
   schemaOptions
 );
 
-export interface ISubscriberPreferenceDocument extends SubscriberPreferenceEntity, Document {
-  _id: string;
-}
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const SubscriberPreference =
-  mongoose.models.SubscriberPreference ||
-  mongoose.model<ISubscriberPreferenceDocument>('SubscriberPreference', subscriberPreferenceSchema);
+  (mongoose.models.SubscriberPreference as mongoose.Model<SubscriberPreferenceDBModel>) ||
+  mongoose.model<SubscriberPreferenceDBModel>('SubscriberPreference', subscriberPreferenceSchema);

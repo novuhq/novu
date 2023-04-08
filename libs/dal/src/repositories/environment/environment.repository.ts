@@ -1,20 +1,17 @@
 import { BaseRepository } from '../base-repository';
-import { IApiKey, EnvironmentEntity } from './environment.entity';
+import { IApiKey, EnvironmentEntity, EnvironmentDBModel } from './environment.entity';
 import { Environment } from './environment.schema';
-import { Document, FilterQuery } from 'mongoose';
 
-export class EnvironmentRepository extends BaseRepository<
-  FilterQuery<EnvironmentEntity & Document>,
-  EnvironmentEntity
-> {
+export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, EnvironmentEntity> {
   constructor() {
     super(Environment, EnvironmentEntity);
   }
 
   async findEnvironmentByIdentifier(identifier: string) {
-    return await this.findOne({
-      identifier,
-    });
+    const data = await this.MongooseModel.findOne({ identifier }).read('secondaryPreferred');
+    if (!data) return null;
+
+    return this.mapEntity(data.toObject());
   }
 
   async updateApiKeyUserId(organizationId: string, oldUserId: string, newUserId: string) {

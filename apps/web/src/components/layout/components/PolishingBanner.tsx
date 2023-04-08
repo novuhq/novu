@@ -1,5 +1,5 @@
 import { useMantineTheme } from '@mantine/core';
-import { useSegment } from '../../../hooks/useSegment';
+import { useSegment } from '../../providers/SegmentProvider';
 import { Close } from '../../../design-system/icons/actions/Close';
 import styled from '@emotion/styled';
 import { useLocalStorage } from '@mantine/hooks';

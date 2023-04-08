@@ -48,4 +48,8 @@ export class UserEntity {
     times: number;
     lastFailedAttempt: string;
   };
+
+  servicesHashes?: { intercom?: string };
 }
+
+export type UserDBModel = UserEntity;

@@ -21,16 +21,17 @@ import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
 } from '../../../integrations/usecases/get-decrypted-integrations';
-import { CreateExecutionDetails } from '../../../execution-details/usecases/create-execution-details/create-execution-details.usecase';
 import {
+  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../../../execution-details/usecases/create-execution-details/create-execution-details.command';
+} from '../../../execution-details/usecases/create-execution-details';
+import { DetailEnum } from '../../../execution-details/types';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration';
 import { CompileEmailTemplate } from '../../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
 import { CompileEmailTemplateCommand } from '../../../content-templates/usecases/compile-email-template/compile-email-template.command';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
@@ -56,6 +57,7 @@ export class SendMessageEmail extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
     if (!subscriber) throw new ApiException(`Subscriber ${command.subscriberId} not found`);
@@ -258,6 +260,9 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     const environment = await this.environmentRepository.findOne({ _id: command.environmentId });
+    if (!environment) {
+      throw new ApiException(`Environment ${command.environmentId} is not found`);
+    }
 
     if (environment.dns?.mxRecordConfigured && environment.dns?.inboundParseDomain) {
       return getReplyToAddress(command.transactionId, environment._id, environment?.dns?.inboundParseDomain);

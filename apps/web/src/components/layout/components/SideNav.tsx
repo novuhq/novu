@@ -13,15 +13,15 @@ import styled from '@emotion/styled';
 
 import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import { Activity, Bolt, Box, Settings, Team, Repeat, CheckCircleOutlined, Brand } from '../../../design-system/icons';
-import { ChangesCountBadge } from '../../changes/ChangesCountBadge';
-import { useEnvController } from '../../../store/useEnvController';
-import { useAuthContext } from '../../../store/authContext';
+import { ChangesCountBadge } from './ChangesCountBadge';
+import { useEnvController } from '../../../hooks';
+import { useAuthContext } from '../../providers/AuthProvider';
 import OrganizationSelect from './OrganizationSelect';
-import { useSpotlightContext } from '../../../store/spotlightContext';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
 import { LimitBar } from '../../../pages/integrations/components/LimitBar';
-import { localNavigate } from '../../../pages/quick-start/components/route/store';
 import { ROUTES } from '../../../constants/routes.enum';
+import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -72,14 +72,15 @@ export function SideNav({}: Props) {
     ]);
   }, [environment]);
 
-  const lastRoute = localNavigate().peek();
+  const lastStep = currentOnboardingStep().get();
+  const getStartedRoute = lastStep === ROUTES.GET_STARTED_PREVIEW ? ROUTES.GET_STARTED : lastStep;
 
   const menuItems = [
     {
-      condition: !readonly && currentUser?.showOnBoarding,
+      condition: !readonly,
       icon: <CheckCircleOutlined />,
-      link: lastRoute ?? ROUTES.QUICKSTART,
-      label: 'Getting Started',
+      link: getStartedRoute ?? ROUTES.GET_STARTED,
+      label: 'Get Started',
       testId: 'side-nav-quickstart-link',
     },
     { icon: <Bolt />, link: ROUTES.TEMPLATES, label: 'Notifications', testId: 'side-nav-templates-link' },

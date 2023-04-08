@@ -5,7 +5,7 @@ import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Tabs } from '../../design-system';
 import { ApiKeysCard, InAppCenterCard } from './tabs';
-import { useAuthContext } from '../../store/authContext';
+import { useAuthContext } from '../../components/providers/AuthProvider';
 import { EmailSettings } from './tabs/EmailSettings';
 
 enum MenuTitleEnum {

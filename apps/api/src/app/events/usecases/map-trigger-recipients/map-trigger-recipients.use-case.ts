@@ -16,6 +16,7 @@ import { MapTriggerRecipientsCommand } from './map-trigger-recipients.command';
 
 import { CreateLog, CreateLogCommand } from '../../../logs/usecases/create-log';
 import { GetTopicSubscribersCommand, GetTopicSubscribersUseCase } from '../../../topics/use-cases';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 interface ILogTopicSubscribersPayload {
   environmentId: EnvironmentId;
@@ -34,6 +35,7 @@ const isTopic = (recipient: ITopic): recipient is ITopic => recipient?.type === 
 export class MapTriggerRecipients {
   constructor(private createLog: CreateLog, private getTopicSubscribers: GetTopicSubscribersUseCase) {}
 
+  @InstrumentUsecase()
   async execute(command: MapTriggerRecipientsCommand): Promise<ISubscribersDefine[]> {
     const { environmentId, organizationId, recipients, transactionId, userId, actor } = command;
 

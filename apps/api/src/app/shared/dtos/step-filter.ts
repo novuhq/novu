@@ -1,4 +1,11 @@
-import { BuilderFieldOperator, BuilderFieldType, BuilderGroupValues, FilterPartTypeEnum } from '@novu/shared';
+import {
+  BuilderFieldOperator,
+  BuilderFieldType,
+  BuilderGroupValues,
+  FilterPartTypeEnum,
+  PreviousStepTypeEnum,
+  TimeOperatorEnum,
+} from '@novu/shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class BaseFilterPart {
@@ -67,15 +74,35 @@ class OnlineInLastFilterPart extends BaseFilterPart {
   on: FilterPartTypeEnum.IS_ONLINE_IN_LAST;
 
   @ApiProperty({
-    enum: ['minutes', 'hours', 'days'],
+    enum: TimeOperatorEnum,
   })
-  timeOperator: 'minutes' | 'hours' | 'days';
+  timeOperator: TimeOperatorEnum;
 
   @ApiProperty()
   value: number;
 }
 
-type FilterParts = FieldFilterPart | WebhookFilterPart | RealtimeOnlineFilterPart | OnlineInLastFilterPart;
+class PreviousStepFilterPart extends BaseFilterPart {
+  @ApiProperty({
+    enum: [FilterPartTypeEnum.PREVIOUS_STEP],
+  })
+  on: FilterPartTypeEnum.PREVIOUS_STEP;
+
+  @ApiProperty()
+  step: string;
+
+  @ApiProperty({
+    enum: PreviousStepTypeEnum,
+  })
+  stepType: PreviousStepTypeEnum;
+}
+
+type FilterParts =
+  | FieldFilterPart
+  | WebhookFilterPart
+  | RealtimeOnlineFilterPart
+  | OnlineInLastFilterPart
+  | PreviousStepFilterPart;
 
 export class StepFilter {
   @ApiProperty()
@@ -92,7 +119,13 @@ export class StepFilter {
   value: BuilderGroupValues;
 
   @ApiProperty({
-    type: [FieldFilterPart, WebhookFilterPart, RealtimeOnlineFilterPart, OnlineInLastFilterPart],
+    type: [
+      FieldFilterPart,
+      WebhookFilterPart,
+      RealtimeOnlineFilterPart,
+      OnlineInLastFilterPart,
+      PreviousStepFilterPart,
+    ],
   })
   children: FilterParts[];
 }

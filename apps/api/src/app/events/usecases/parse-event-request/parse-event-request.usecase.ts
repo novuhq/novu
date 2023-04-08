@@ -1,4 +1,4 @@
-import { Inject, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { Inject, Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
@@ -29,8 +29,12 @@ export class ParseEventRequest {
 
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
+    Logger.log('Starting Trigger');
 
     const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
+
+    Logger.debug(mappedActor);
+
     const mappedRecipients = await this.mapTriggerRecipients.execute(
       MapTriggerRecipientsCommand.create({
         environmentId: command.environmentId,
@@ -118,11 +122,8 @@ export class ParseEventRequest {
         _template: template._id,
         _organization: command.organizationId,
         channels: steps.map((step) => step.template?.type),
+        source: command.payload.__source || 'api',
       });
-    }
-
-    if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
-      return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
     }
 
     return {
