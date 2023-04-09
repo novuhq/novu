@@ -453,7 +453,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.15
       prettier: 2.8.4
-      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
+      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
       ts-loader: 9.4.2_a37q6j7dwawz22saey2vgkpwqm
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -1449,6 +1449,7 @@ importers:
       '@novu/testing': ^0.13.0
       '@novu/twilio': ^0.13.0
       '@sentry/node': ^7.12.1
+      '@taskforcesh/bullmq-pro': 5.1.14
       '@types/analytics-node': ^3.1.9
       '@types/jest': 27.5.2
       '@types/sinon': ^9.0.0
@@ -1524,6 +1525,8 @@ importers:
       pino-pretty: 9.4.0
       reflect-metadata: 0.1.13
       rxjs: 7.5.6
+    optionalDependencies:
+      '@taskforcesh/bullmq-pro': 5.1.14
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/analytics-node': 3.1.9
@@ -28123,6 +28126,21 @@ packages:
       use-sync-external-store: 1.2.0_react@17.0.2
     dev: false
 
+  /@taskforcesh/bullmq-pro/5.1.14:
+    resolution: {integrity: sha512-J/83Q1GTFWbUWn1bpsiX+CcQXktp7ADg/d1oID+wQ8ZwSB2W5l/1FV4yR1BEi3sO+UFEo+rK3qfXQuDml7aBYA==, tarball: '@taskforcesh/bullmq-pro/-/@taskforcesh/bullmq-pro-5.1.14.tgz'}
+    requiresBuild: true
+    dependencies:
+      bullmq: 3.6.6
+      lodash: 4.17.21
+      msgpackr: 1.8.1
+      rxjs: 6.6.7
+      tslib: 2.5.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+    optional: true
+
   /@testing-library/dom/7.31.2:
     resolution: {integrity: sha512-3UqjCpey6HiTZT92vODYLPxTBWlM8ZOOjr3LX5F37/VRipW2M1kX6I/Cm4VXzteZqfGfagg8yXywpcOgQBlNsQ==}
     engines: {node: '>=10'}
@@ -32548,6 +32566,22 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: false
+
+  /bullmq/3.6.6:
+    resolution: {integrity: sha512-W71jXrcTdcT3Y5tzMyTx22Cd8O3dTML7vl6KG3YdGVGrO3+UmKRLYfGLn1QwIhIoTQJVvIrSB4qfGs1hgqYRVw==}
+    dependencies:
+      cron-parser: 4.7.1
+      glob: 8.1.0
+      ioredis: 5.3.1
+      lodash: 4.17.21
+      msgpackr: 1.8.1
+      semver: 7.3.8
+      tslib: 2.5.0
+      uuid: 9.0.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+    optional: true
 
   /busboy/1.6.0:
     resolution: {integrity: sha512-8SFQbg/0hQ9xy3UNTB0YEnsNBbWfhf7RtnzpL7TkBiTBRfrQ9Fxcnz7VJsleJpyp6rVLvXiuORqjlHi5q+PYuA==}
@@ -52632,7 +52666,6 @@ packages:
     engines: {npm: '>=2.0.0'}
     dependencies:
       tslib: 1.14.1
-    dev: true
 
   /rxjs/7.5.6:
     resolution: {integrity: sha512-dnyv2/YsXhnm461G+R/Pe5bWP41Nm6LBXEYWI6eiFP4fiwx6WRI/CD0zbdVAudd9xwLEF2IDcKXLHit0FYjUzw==}
@@ -55603,7 +55636,7 @@ packages:
       tslib: 1.14.1
     dev: true
 
-  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
+  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -55624,7 +55657,6 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
