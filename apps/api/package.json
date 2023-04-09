@@ -10,7 +10,6 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
-    "testVal": "cross-env-shell echo 'value: ${test}'",
     "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | cross-env-shell docker buildx build --progress=plain --build-arg PACKAGE_PATH=apps/api - -t novu-api",
     "docker:build:tag": "pnpm run docker:build  pnpm run docker:tag",
     "docker:tag": "- -t novu-api",
