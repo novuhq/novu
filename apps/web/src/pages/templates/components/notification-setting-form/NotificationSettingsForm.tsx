@@ -96,10 +96,12 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
                     creatable
                     searchable
                     error={errors.notificationGroupId?.message}
-                    getCreateLabel={(newGroup) => <div data-test-id="submit-category-btn">+ Create {newGroup}</div>}
+                    getCreateLabel={(newGroup) => (
+                      <div data-test-id="submit-category-btn">+ Create group {newGroup}</div>
+                    )}
                     onCreate={addGroupItem}
                     placeholder="Attach notification to group"
-                    data={(groups || []).map((item) => ({ label: item.name + ' Group', value: item._id }))}
+                    data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}
                   />
                 </>
               );

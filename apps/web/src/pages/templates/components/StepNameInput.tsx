@@ -43,7 +43,6 @@ const Input = ({ index, defaultValue }: { index: number; defaultValue: string })
     <Controller
       control={control}
       name={`steps.${index}.name`}
-      defaultValue={defaultValue}
       render={({ field, fieldState }) => {
         return (
           <TextInput
@@ -80,7 +79,7 @@ const Input = ({ index, defaultValue }: { index: number; defaultValue: string })
               },
             })}
             {...field}
-            value={field.value || ''}
+            value={field.value || defaultValue}
             error={showErrors && fieldState.error?.message}
             type="text"
             data-test-id="step-name"
@@ -102,12 +101,11 @@ export const StepNameInput = ({
   index: number;
   color?: any;
 }) => {
-  const stepName = useMemo(() => stepNames[channel], [channel]);
-  const Icon = useMemo(() => stepIcon[channel], [channel]);
+  const Icon = stepIcon[channel];
 
   return (
     <Group spacing={16}>
-      <Icon color={color} /> <Input defaultValue={stepName} index={index} />
+      <Icon color={color} /> <Input defaultValue={stepNames[channel]} index={index} />
       <When truthy={['in_app', 'email'].includes(channel)}>
         <div
           style={{

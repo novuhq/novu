@@ -14,7 +14,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('description').type('This is a test description for a test title');
     cy.get('body').click();
     cy.getByTestId('trigger-code-snippet').should('not.exist');
-    cy.getByTestId('groupSelector').should('have.value', 'General Group');
+    cy.getByTestId('groupSelector').should('have.value', 'General');
 
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
@@ -307,7 +307,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('submit-category-btn').click();
     cy.waitForNetworkIdle(500);
 
-    cy.getByTestId('groupSelector').should('have.value', 'New Test Category Group');
+    cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
 
     goBack();
     cy.getByTestId('notification-template-submit-btn').click();
@@ -318,7 +318,7 @@ describe('Creation functionality', function () {
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
-    cy.getByTestId('groupSelector').should('have.value', 'New Test Category Group');
+    cy.getByTestId('groupSelector').should('have.value', 'New Test Category');
   });
 
   it('should show delay settings in side menu', function () {

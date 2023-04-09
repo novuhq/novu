@@ -108,61 +108,57 @@ export function TestWorkflow({ trigger }) {
           application
         </Text>
         <TriggerSegmentControl />
-        <form
-          onSubmit={(e) => {
-            form.onSubmit(onTrigger)(e);
-            e.stopPropagation();
-          }}
-        >
-          <JsonInput
-            data-test-id="test-trigger-to-param"
-            formatOnBlur
-            autosize
-            styles={inputStyles}
-            label="To"
-            {...form.getInputProps('toValue')}
-            minRows={3}
-            mb={15}
-            validationError="Invalid JSON"
-          />
-          <JsonInput
-            data-test-id="test-trigger-payload-param"
-            formatOnBlur
-            autosize
-            styles={inputStyles}
-            label="Payload"
-            {...form.getInputProps('payloadValue')}
-            minRows={3}
-            validationError="Invalid JSON"
-            mb={15}
-          />
-          <JsonInput
-            data-test-id="test-trigger-overrides-param"
-            formatOnBlur
-            autosize
-            styles={inputStyles}
-            label="Overrides (optional)"
-            {...form.getInputProps('overridesValue')}
-            minRows={3}
-            validationError="Invalid JSON"
-          />
-          <Group mt={30} position="right">
-            <div data-test-id="test-workflow-btn">
-              <Button
-                sx={{
-                  width: 'auto',
-                }}
-                fullWidth={false}
-                disabled={!form.isValid()}
-                data-test-id="test-trigger-btn"
-                inherit
-                submit
-              >
-                Run Trigger
-              </Button>
-            </div>
-          </Group>
-        </form>
+
+        <JsonInput
+          data-test-id="test-trigger-to-param"
+          formatOnBlur
+          autosize
+          styles={inputStyles}
+          label="To"
+          {...form.getInputProps('toValue')}
+          minRows={3}
+          mb={15}
+          validationError="Invalid JSON"
+        />
+        <JsonInput
+          data-test-id="test-trigger-payload-param"
+          formatOnBlur
+          autosize
+          styles={inputStyles}
+          label="Payload"
+          {...form.getInputProps('payloadValue')}
+          minRows={3}
+          validationError="Invalid JSON"
+          mb={15}
+        />
+        <JsonInput
+          data-test-id="test-trigger-overrides-param"
+          formatOnBlur
+          autosize
+          styles={inputStyles}
+          label="Overrides (optional)"
+          {...form.getInputProps('overridesValue')}
+          minRows={3}
+          validationError="Invalid JSON"
+        />
+        <Group mt={30} position="right">
+          <div data-test-id="test-workflow-btn">
+            <Button
+              sx={{
+                width: 'auto',
+              }}
+              fullWidth={false}
+              disabled={!form.isValid()}
+              data-test-id="test-trigger-btn"
+              inherit
+              onClick={() => {
+                onTrigger(form.values);
+              }}
+            >
+              Run Trigger
+            </Button>
+          </div>
+        </Group>
       </SubPageWrapper>
       <ExecutionDetailsModalWrapper
         transactionId={transactionId}
