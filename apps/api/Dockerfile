@@ -65,7 +65,8 @@ COPY --from=assets /usr/src/app .
 RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  pnpm install --filter "{${PACKAGE_PATH}}..." \
  --frozen-lockfile \
- --unsafe-perm
+ --unsafe-perm \
+ --reporter=silent \
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
