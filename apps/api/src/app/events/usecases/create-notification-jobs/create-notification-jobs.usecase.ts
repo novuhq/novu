@@ -13,6 +13,7 @@ import { CreateNotificationJobsCommand } from './create-notification-jobs.comman
 import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 import { EventsPerformanceService } from '../../services/performance-service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -25,6 +26,7 @@ export class CreateNotificationJobs {
     protected performanceService: EventsPerformanceService
   ) {}
 
+  @InstrumentUsecase()
   public async execute(command: CreateNotificationJobsCommand): Promise<NotificationJob[]> {
     const mark = this.performanceService.buildCreateNotificationJobsMark(
       command.identifier,
