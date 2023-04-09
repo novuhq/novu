@@ -56,7 +56,6 @@ jobs:
         working-directory: cloud-infra/terraform
         run: terraform init
 
-
       - name: Terraform get output
         working-directory: cloud-infra/terraform
         id: terraform
@@ -71,6 +70,13 @@ jobs:
           aws ecs describe-task-definition --task-definition ${{ env.ws_task_name }} \
           --query taskDefinition > task-definition.json
 
+
+      - name: Set Bull MQ Env variable for EE
+        shell: bash
+        run: |
+          echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
+        if: ${{contains(matrix.name, 'ee')}}
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
@@ -81,7 +87,7 @@ jobs:
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          docker build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/ws/Dockerfile .
+          docker build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} -f apps/ws/Dockerfile . 
           docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1340/v1/health-check | grep 'ok'
           docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev

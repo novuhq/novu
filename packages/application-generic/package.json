@@ -79,6 +79,9 @@
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0"
   },
+  "optionalDependencies": {
+    "@taskforcesh/bullmq-pro": "5.1.14"
+  },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/analytics-node": "^3.1.9",
