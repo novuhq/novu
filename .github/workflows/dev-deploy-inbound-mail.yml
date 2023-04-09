@@ -36,9 +36,6 @@ jobs:
         #name: ['novu/inbound-mail', 'novu/inbound-mail-ee']
         name: ['novu/inbound-mail-ee']
     steps:
-      - run: echo ${{matrix.name}}
-      - run: echo ${{contains(matrix.name , 'ee')}}
-
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
