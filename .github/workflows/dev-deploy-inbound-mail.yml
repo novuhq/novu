@@ -45,6 +45,13 @@ jobs:
         with:
           oidc: true
 
+
+      - name: Set Bull MQ Env variable for EE
+        shell: bash
+        run: |
+          echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
+        if: ${{contains(matrix.name, 'ee')}}
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
@@ -56,7 +63,7 @@ jobs:
           DEPOT_PROJECT_ID: 6sj0jfv0n7
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/inbound-mail && pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/inbound-mail - -t novu-inbound-mail --load
+          cd apps/inbound-mail && pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | depot build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/inbound-mail - -t novu-inbound-mail --load
           docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
 
