@@ -75,9 +75,12 @@ const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
     webhookStatus: {
       type: Schema.Types.String,
     },
+    expireAt: Schema.Types.Date,
   },
   schemaOptions
 );
+
+executionDetailsSchema.index({ expireAt: 1 }, { expires: '48h' });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ExecutionDetails =

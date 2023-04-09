@@ -106,11 +106,7 @@ const jobSchema = new Schema<JobDBModel>(
   schemaOptions
 );
 
-jobSchema.index(
-  { expireAt: 1 },
-  // { expires: '1s' }
-  { expires: '1s', partialFilterExpression: { status: { $eq: JobStatusEnum.COMPLETED } } }
-);
+jobSchema.index({ expireAt: 1 }, { expires: '48h' });
 
 jobSchema.virtual('executionDetails', {
   ref: 'ExecutionDetails',

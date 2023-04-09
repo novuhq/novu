@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
-import { addMinutes, addMonths } from 'date-fns';
+import { addMonths } from 'date-fns';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery } from 'mongoose';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
@@ -83,7 +83,11 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   }
 
   private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & T_Enforcement) {
-    const now: number = Date.now();
+    let now: Date = new Date();
+    if (data.expireAt) {
+      now = new Date(data.expireAt);
+    }
+
     switch (modelName) {
       case 'Message':
         if (data.channel === 'in_app') {
@@ -93,8 +97,6 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
         }
       case 'Notification':
         return addMonths(now, 1);
-      case 'Job':
-        return addMinutes(now, 1);
       default:
         return null;
     }

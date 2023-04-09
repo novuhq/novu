@@ -7,7 +7,14 @@ import {
   NotificationRepository,
   NotificationStepEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, DigestTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE, StepTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  DelayTypeEnum,
+  DigestTypeEnum,
+  DigestUnitEnum,
+  STEP_TYPE_TO_CHANNEL_TYPE,
+  StepTypeEnum,
+} from '@novu/shared';
 
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
@@ -15,6 +22,8 @@ import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-st
 import { EventsPerformanceService } from '../../services/performance-service';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { addMilliseconds, differenceInMilliseconds } from 'date-fns';
+import { AddJob } from '../add-job';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 
@@ -43,6 +52,7 @@ export class CreateNotificationJobs {
       transactionId: command.transactionId,
       to: command.to,
       payload: command.payload,
+      expireAt: this.calculateExpireAt(command),
     });
 
     if (!notification) {
@@ -78,6 +88,7 @@ export class CreateNotificationJobs {
         digest: step.metadata,
         type: step.template.type,
         providerId: providerId,
+        expireAt: notification.expireAt,
         ...(command.actor && { _actorId: command.actor?._id }),
       };
 
@@ -100,19 +111,6 @@ export class CreateNotificationJobs {
 
   private filterActiveSteps(steps: NotificationStepEntity[]): NotificationStepEntity[] {
     return steps.filter((step) => step.active === true);
-  }
-
-  private createTriggerStep(command: CreateNotificationJobsCommand): NotificationStepEntity {
-    return {
-      template: {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _creatorId: command.userId,
-        type: StepTypeEnum.TRIGGER,
-        content: '',
-      } as MessageTemplateEntity,
-      _templateId: command.template._id,
-    };
   }
 
   private async filterDigestSteps(
@@ -141,5 +139,52 @@ export class CreateNotificationJobs {
     }
 
     return steps;
+  }
+
+  private calculateExpireAt(command: CreateNotificationJobsCommand) {
+    const delayedSteps = command.template.steps.filter(
+      (step) => step.template?.type === StepTypeEnum.DIGEST || step.template?.type === StepTypeEnum.DELAY
+    );
+
+    const delay = delayedSteps
+      .map((step) => this.calculateDelayAmount(step, command.payload, command.overrides))
+      .reduce((partialSum, a) => partialSum + a, 0);
+
+    return addMilliseconds(Date.now(), delay);
+  }
+
+  private calculateDelayAmount(step: NotificationStepEntity, payload: any, overrides: any): number {
+    if (!step.metadata) throw new ApiException(`Step metadata not found`);
+
+    if (step.metadata.type === DelayTypeEnum.SCHEDULED) {
+      const delayPath = step.metadata.delayPath;
+      if (!delayPath) throw new ApiException(`Delay path not found`);
+
+      const delayDate = payload[delayPath];
+
+      const delay = differenceInMilliseconds(new Date(delayDate), new Date());
+
+      if (delay < 0) {
+        throw new ApiException(`Delay date at path ${delayPath} must be a future date`);
+      }
+
+      return delay;
+    }
+
+    if (this.checkValidDelayOverride(overrides)) {
+      return AddJob.toMilliseconds(overrides.delay.amount as number, overrides.delay.unit as DigestUnitEnum);
+    }
+
+    return AddJob.toMilliseconds(step.metadata.amount as number, step.metadata.unit as DigestUnitEnum);
+  }
+  private checkValidDelayOverride(overrides: any): boolean {
+    if (!overrides?.delay) {
+      return false;
+    }
+    const values = Object.values(DigestUnitEnum);
+
+    return (
+      typeof overrides.delay.amount === 'number' && values.includes(overrides.delay.unit as unknown as DigestUnitEnum)
+    );
   }
 }
