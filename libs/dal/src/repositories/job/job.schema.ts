@@ -142,7 +142,5 @@ jobSchema.virtual('environment', {
   justOne: true,
 });
 
-// jobSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 5 });
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Job = (mongoose.models.Job as mongoose.Model<JobDBModel>) || mongoose.model<JobDBModel>('Job', jobSchema);
