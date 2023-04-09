@@ -42,16 +42,6 @@ jobs:
       matrix:
         name: ['novu/api-ee']
     steps:
-      - name: echo
-        run: echo ${{ matrix.name }} container
-
-      - name: Output Test secret
-        shell: bash
-        env:
-          value: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
-        run: |
-          echo "${value:0:4}"
-
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-api
