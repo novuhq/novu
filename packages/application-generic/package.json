@@ -80,7 +80,7 @@
     "pino-pretty": "^9.4.0"
   },
   "optionalDependencies": {
-    "@taskforcesh/bullmq-pro": "~5.1.14"
+    "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

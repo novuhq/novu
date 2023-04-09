@@ -216,7 +216,6 @@ importers:
       '@sentry/hub': ^7.40.0
       '@sentry/node': ^7.40.0
       '@sentry/tracing': ^7.40.0
-      '@taskforcesh/bullmq-pro': 5.1.14
       '@types/bcrypt': ^3.0.0
       '@types/bull': ^3.15.8
       '@types/chai': ^4.2.11
@@ -371,8 +370,6 @@ importers:
       swagger-ui-express: 4.4.0_express@4.18.2
       twilio: 3.76.0
       uuid: 8.3.2
-    optionalDependencies:
-      '@taskforcesh/bullmq-pro': 5.1.14
     devDependencies:
       '@faker-js/faker': 6.1.1
       '@nestjs/cli': 9.3.0
@@ -1452,6 +1449,7 @@ importers:
       '@novu/testing': ^0.13.0
       '@novu/twilio': ^0.13.0
       '@sentry/node': ^7.12.1
+      '@taskforcesh/bullmq-pro': 5.1.14
       '@types/analytics-node': ^3.1.9
       '@types/jest': 27.5.2
       '@types/sinon': ^9.0.0
@@ -1483,7 +1481,7 @@ importers:
       typedoc: ^0.23.0
       typescript: 4.9.5
     dependencies:
-      '@nestjs/common': 9.3.9_welcnyot5bzd5wa2aovbkxpi4i
+      '@nestjs/common': 9.3.12_welcnyot5bzd5wa2aovbkxpi4i
       '@novu/dal': link:../../libs/dal
       '@novu/discord': link:../../providers/discord
       '@novu/emailjs': link:../../providers/emailjs
@@ -1519,12 +1517,14 @@ importers:
       class-validator: 0.14.0
       decorate-all: 1.2.1_reflect-metadata@0.1.13
       maskdata: 1.2.0
-      nestjs-pino: 3.1.2_atacoy3e24brwbzjtinj7jrj3e
+      nestjs-pino: 3.1.2_g2cqd4mgcg63o5mvxc7l66lzja
       newrelic: 9.10.2
       node-fetch: 3.2.10
       pino-http: 8.3.3
       pino-pretty: 9.4.0
       reflect-metadata: 0.1.13
+    optionalDependencies:
+      '@taskforcesh/bullmq-pro': 5.1.14
     devDependencies:
       '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
       '@types/analytics-node': 3.1.9
@@ -14153,8 +14153,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.17.8
-      '@babel/helper-plugin-utils': 7.20.2
-      '@babel/helper-validator-option': 7.18.6
+      '@babel/helper-plugin-utils': 7.16.7
+      '@babel/helper-validator-option': 7.16.7
       '@babel/plugin-transform-react-display-name': 7.18.6_@babel+core@7.17.8
       '@babel/plugin-transform-react-jsx': 7.17.3_@babel+core@7.17.8
       '@babel/plugin-transform-react-jsx-development': 7.16.7_@babel+core@7.17.8
@@ -14168,8 +14168,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.18.5
-      '@babel/helper-plugin-utils': 7.20.2
-      '@babel/helper-validator-option': 7.18.6
+      '@babel/helper-plugin-utils': 7.16.7
+      '@babel/helper-validator-option': 7.16.7
       '@babel/plugin-transform-react-display-name': 7.18.6_@babel+core@7.18.5
       '@babel/plugin-transform-react-jsx': 7.17.3_@babel+core@7.18.5
       '@babel/plugin-transform-react-jsx-development': 7.16.7_@babel+core@7.18.5
@@ -19722,31 +19722,6 @@ packages:
       rxjs: 7.8.0
       tslib: 2.5.0
       uid: 2.0.1
-
-  /@nestjs/common/9.3.9_welcnyot5bzd5wa2aovbkxpi4i:
-    resolution: {integrity: sha512-GshTD9Xz+wD2em6NyzU4NXw5IXMUmapgDgD+iuj6XL0258hvDwODmNk37mBBnZvTZlqER+krvIUKnS34etqF/A==}
-    peerDependencies:
-      cache-manager: <=5
-      class-transformer: '*'
-      class-validator: '*'
-      reflect-metadata: ^0.1.12
-      rxjs: ^7.1.0
-    peerDependenciesMeta:
-      cache-manager:
-        optional: true
-      class-transformer:
-        optional: true
-      class-validator:
-        optional: true
-    dependencies:
-      class-transformer: 0.5.1
-      class-validator: 0.14.0
-      iterare: 1.2.1
-      reflect-metadata: 0.1.13
-      rxjs: 7.8.0
-      tslib: 2.5.0
-      uid: 2.0.1
-    dev: false
 
   /@nestjs/core/9.2.1_zvpstgepgwp7kp445nj6zi44ia:
     resolution: {integrity: sha512-a9GkXuu8uXgNgCVW+17iI8kLCltO+HwHpU2IhR+32JKnN2WEQ1YEWU4t3GJ2MNq44YkjIw9zrKvFkjJBlYrNbQ==}
@@ -37418,7 +37393,7 @@ packages:
       minimatch: 3.1.2
       object.values: 1.1.6
       resolve: 1.22.1
-      tsconfig-paths: 3.14.1
+      tsconfig-paths: 3.14.2
     transitivePeerDependencies:
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
@@ -46465,7 +46440,7 @@ packages:
   /nested-error-stacks/2.1.1:
     resolution: {integrity: sha512-9iN1ka/9zmX1ZvLV9ewJYEk9h7RyRRtqdK0woXcqohu8EWIerfPUjYJPg0ULy0UqP7cslmdGc8xKDJcojlKiaw==}
 
-  /nestjs-pino/3.1.2_atacoy3e24brwbzjtinj7jrj3e:
+  /nestjs-pino/3.1.2_g2cqd4mgcg63o5mvxc7l66lzja:
     resolution: {integrity: sha512-Rxt9v/OlHwurE2GPyBlHVjzCLCnxIPxGa+Esligij412zEcqqB6kka5MhKAk3l61u1jyTLx3Mzol+HQrR6/f9w==}
     engines: {node: '>= 14'}
     requiresBuild: true
@@ -46473,7 +46448,7 @@ packages:
       '@nestjs/common': ^8.0.0 || ^9.0.0
       pino-http: ^6.4.0 || ^7.0.0 || ^8.0.0
     dependencies:
-      '@nestjs/common': 9.3.9_welcnyot5bzd5wa2aovbkxpi4i
+      '@nestjs/common': 9.3.12_welcnyot5bzd5wa2aovbkxpi4i
       pino-http: 8.3.3
     dev: false
 
@@ -56008,7 +55983,6 @@ packages:
       json5: 1.0.2
       minimist: 1.2.7
       strip-bom: 3.0.0
-    dev: true
 
   /tsconfig-paths/4.1.2:
     resolution: {integrity: sha512-uhxiMgnXQp1IR622dUXI+9Ehnws7i/y6xvpZB9IbUVOPy0muvdvgXeZOn88UcGPiT98Vp3rJPTa8bFoalZ3Qhw==}
