@@ -1,14 +1,13 @@
-import { Grid, Group, Input as MantineInput, Stack } from '@mantine/core';
+import { Grid } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { DigestTypeEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
-import { colors, Input, SegmentedControl, Switch, Tooltip } from '../../../design-system';
+import { Input, SegmentedControl, Switch } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../hooks';
 import { IntervalRadios } from './IntervalRadios';
-import { InfoCircle } from '../../../design-system/icons/general/InfoCircle';
 import { LabelWithTooltip } from './LabelWithTooltip';
 
 const StyledSwitch = styled(Switch)`
@@ -62,110 +61,98 @@ export const DigestMetadata = ({ control, index }) => {
         />
       </div>
       <div data-test-id="digest-step-settings-interval">
-        <MantineInput.Wrapper
-          label={
-            <LabelWithTooltip
-              label="Time Interval"
-              tooltip="Once triggered, for how long the digest should collect events"
-            />
-          }
-          styles={inputStyles}
+        <LabelWithTooltip
+          label="Time Interval"
+          tooltip="Once triggered, for how long the digest should collect events"
+        />
+        <Grid
+          sx={{
+            marginBottom: '2px',
+          }}
         >
-          <Grid
-            sx={{
-              marginBottom: '2px',
-            }}
-          >
-            <Grid.Col span={4}>
-              <Controller
-                control={control}
-                name={`steps.${index}.metadata.amount`}
-                defaultValue=""
-                render={({ field, fieldState }) => {
-                  return (
-                    <Input
-                      {...field}
-                      value={field.value || ''}
-                      error={showErrors && fieldState.error?.message}
-                      min={0}
-                      max={100}
-                      type="number"
-                      data-test-id="time-amount"
-                      placeholder="0"
-                      disabled={readonly}
-                      styles={(theme) => ({
-                        ...inputStyles(theme),
-                        input: {
-                          textAlign: 'center',
-                          ...inputStyles(theme).input,
-                        },
-                      })}
-                    />
-                  );
-                }}
-              />
-            </Grid.Col>
-            <Grid.Col span={8}>
-              <IntervalRadios control={control} name={`steps.${index}.metadata.unit`} showErrors={showErrors} />
-            </Grid.Col>
-          </Grid>
-        </MantineInput.Wrapper>
+          <Grid.Col span={4}>
+            <Controller
+              control={control}
+              name={`steps.${index}.metadata.amount`}
+              defaultValue=""
+              render={({ field, fieldState }) => {
+                return (
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    error={showErrors && fieldState.error?.message}
+                    min={0}
+                    max={100}
+                    type="number"
+                    data-test-id="time-amount"
+                    placeholder="0"
+                    disabled={readonly}
+                    styles={(theme) => ({
+                      ...inputStyles(theme),
+                      input: {
+                        textAlign: 'center',
+                        ...inputStyles(theme).input,
+                      },
+                    })}
+                  />
+                );
+              }}
+            />
+          </Grid.Col>
+          <Grid.Col span={8}>
+            <IntervalRadios control={control} name={`steps.${index}.metadata.unit`} showErrors={showErrors} />
+          </Grid.Col>
+        </Grid>
       </div>
       <When truthy={type === DigestTypeEnum.BACKOFF}>
-        <MantineInput.Wrapper
-          label={
-            <LabelWithTooltip
-              label="Backoff Time Interval"
-              tooltip="A digest will only be created if a message was previously sent in this time interval"
-            />
-          }
-          styles={inputStyles}
+        <LabelWithTooltip
+          label="Backoff Time Interval"
+          tooltip="A digest will only be created if a message was previously sent in this time interval"
+        />
+        <Grid
+          sx={{
+            marginBottom: '5px',
+          }}
         >
-          <Grid
-            sx={{
-              marginBottom: '5px',
-            }}
-          >
-            <Grid.Col span={4}>
-              <Controller
-                control={control}
-                name={`steps.${index}.metadata.backoffAmount`}
-                defaultValue=""
-                render={({ field, fieldState }) => {
-                  return (
-                    <Input
-                      {...field}
-                      value={field.value || ''}
-                      error={showErrors && fieldState.error?.message}
-                      min={0}
-                      max={100}
-                      type="number"
-                      data-test-id="backoff-amount"
-                      placeholder="0"
-                      required
-                      disabled={readonly}
-                      styles={(theme) => ({
-                        ...inputStyles(theme),
-                        input: {
-                          textAlign: 'center',
-                          ...inputStyles(theme).input,
-                        },
-                      })}
-                    />
-                  );
-                }}
-              />
-            </Grid.Col>
-            <Grid.Col span={8}>
-              <IntervalRadios
-                control={control}
-                name={`steps.${index}.metadata.backoffUnit`}
-                testId="backoff-unit"
-                showErrors={showErrors}
-              />
-            </Grid.Col>
-          </Grid>
-        </MantineInput.Wrapper>
+          <Grid.Col span={4}>
+            <Controller
+              control={control}
+              name={`steps.${index}.metadata.backoffAmount`}
+              defaultValue=""
+              render={({ field, fieldState }) => {
+                return (
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    error={showErrors && fieldState.error?.message}
+                    min={0}
+                    max={100}
+                    type="number"
+                    data-test-id="backoff-amount"
+                    placeholder="0"
+                    required
+                    disabled={readonly}
+                    styles={(theme) => ({
+                      ...inputStyles(theme),
+                      input: {
+                        textAlign: 'center',
+                        ...inputStyles(theme).input,
+                      },
+                    })}
+                  />
+                );
+              }}
+            />
+          </Grid.Col>
+          <Grid.Col span={8}>
+            <IntervalRadios
+              control={control}
+              name={`steps.${index}.metadata.backoffUnit`}
+              testId="backoff-unit"
+              showErrors={showErrors}
+            />
+          </Grid.Col>
+        </Grid>
       </When>
       <When truthy={false}>
         <div

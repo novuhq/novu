@@ -34,6 +34,7 @@ export const IntervalRadios = ({ control, name, showErrors, testId = 'time-unit'
                     paddingLeft: 8,
                   },
                 })}
+                key={option.value}
                 data-test-id={`${testId}-${option.value}`}
                 disabled={readonly}
                 value={option.value}

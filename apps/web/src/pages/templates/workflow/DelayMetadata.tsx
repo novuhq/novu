@@ -1,8 +1,8 @@
-import { Grid, Input as MantineInput } from '@mantine/core';
+import { Grid } from '@mantine/core';
 import { DelayTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Input, SegmentedControl, Select } from '../../../design-system';
+import { Input, SegmentedControl } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
@@ -54,54 +54,48 @@ export const DelayMetadata = ({ control, index }) => {
         />
       </div>
       <When truthy={type === DelayTypeEnum.REGULAR}>
-        <MantineInput.Wrapper
-          label={
-            <LabelWithTooltip
-              label="Time Interval"
-              tooltip="Once triggered, for how long should delay before next step execution."
-            />
-          }
-          styles={inputStyles}
+        <LabelWithTooltip
+          label="Time Interval"
+          tooltip="Once triggered, for how long should delay before next step execution."
+        />
+        <Grid
+          sx={{
+            marginBottom: '2px',
+          }}
         >
-          <Grid
-            sx={{
-              marginBottom: '2px',
-            }}
-          >
-            <Grid.Col span={4}>
-              <Controller
-                control={control}
-                name={`steps.${index}.metadata.amount`}
-                defaultValue=""
-                render={({ field, fieldState }) => {
-                  return (
-                    <Input
-                      {...field}
-                      value={field.value || ''}
-                      error={showErrors && fieldState.error?.message}
-                      min={0}
-                      max={100}
-                      type="number"
-                      data-test-id="time-amount"
-                      placeholder="0"
-                      disabled={readonly}
-                      styles={(theme) => ({
-                        ...inputStyles(theme),
-                        input: {
-                          textAlign: 'center',
-                          ...inputStyles(theme).input,
-                        },
-                      })}
-                    />
-                  );
-                }}
-              />
-            </Grid.Col>
-            <Grid.Col span={8}>
-              <IntervalRadios control={control} name={`steps.${index}.metadata.unit`} showErrors={showErrors} />
-            </Grid.Col>
-          </Grid>
-        </MantineInput.Wrapper>
+          <Grid.Col span={4}>
+            <Controller
+              control={control}
+              name={`steps.${index}.metadata.amount`}
+              defaultValue=""
+              render={({ field, fieldState }) => {
+                return (
+                  <Input
+                    {...field}
+                    value={field.value || ''}
+                    error={showErrors && fieldState.error?.message}
+                    min={0}
+                    max={100}
+                    type="number"
+                    data-test-id="time-amount"
+                    placeholder="0"
+                    disabled={readonly}
+                    styles={(theme) => ({
+                      ...inputStyles(theme),
+                      input: {
+                        textAlign: 'center',
+                        ...inputStyles(theme).input,
+                      },
+                    })}
+                  />
+                );
+              }}
+            />
+          </Grid.Col>
+          <Grid.Col span={8}>
+            <IntervalRadios control={control} name={`steps.${index}.metadata.unit`} showErrors={showErrors} />
+          </Grid.Col>
+        </Grid>
       </When>
 
       <When truthy={type === DelayTypeEnum.SCHEDULED}>
