@@ -40,9 +40,7 @@ jobs:
       id-token: write
     strategy:
       matrix:
-        # Only should be deploying api-ee to dev
-        # name: ['novu/api', 'novu/api-ee']
-        name: ['novu/api']
+        name: ['novu/api-ee']
     steps:
       - name: echo
         run: echo ${{ matrix.name }} container
