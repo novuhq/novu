@@ -159,16 +159,6 @@ jobSchema.virtual('environment', {
  *           'step.uuid': filter.step,
  *        })
  *
- *
- */
-jobSchema.index({
-  transactionId: 1,
-  _subscriberId: 1,
-});
-
-/*
- * This index was initially created to optimize:
- *
  * Path : apps/api/src/app/events/usecases/trigger-event/trigger-event.usecase.ts
  *    Context : validateTransactionIdProperty()
  *       Query : findOne(
@@ -204,8 +194,7 @@ jobSchema.index({
  */
 jobSchema.index({
   transactionId: 1,
-  _environmentId: 1,
-  _id: 1,
+  _subscriberId: 1,
 });
 
 /*
@@ -225,20 +214,6 @@ jobSchema.index({
 
 /*
  * This index was initially created to optimize:
- *
- * Path : apps/api/src/app/events/usecases/send-message/digest/get-digest-events-backoff.usecase.ts
- *    Context : execute()
- *              **** createdAt is missing *
- *       Query : find({
- *          _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
- *          _templateId: currentJob._templateId,
- *          _environmentId: command.environmentId,
- *          type: StepTypeEnum.TRIGGER,
- *          status: JobStatusEnum.COMPLETED,
- *          createdAt: {
- *            $gte: currentJob.createdAt,
- *          },
- *        }
  *
  * Path : apps/api/src/app/events/usecases/digest-filter-steps/digest-filter-steps-backoff.usecase.ts
  *    Context : getTrigger()
@@ -341,7 +316,41 @@ jobSchema.index({
   type: 1,
   status: 1,
   updatedAt: 1,
-  transactionId: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ *
+ * Path : apps/api/src/app/events/usecases/send-message/digest/get-digest-events-backoff.usecase.ts
+ *    Context : execute()
+ *       Query : find({
+ *          _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
+ *          _templateId: currentJob._templateId,
+ *          _environmentId: command.environmentId,
+ *          type: StepTypeEnum.TRIGGER,
+ *          status: JobStatusEnum.COMPLETED,
+ *          createdAt: {
+ *            $gte: currentJob.createdAt,
+ *          },
+ *        }
+ */
+jobSchema.index({
+  _subscriberId: 1,
+  _templateId: 1,
+  type: 1,
+  status: 1,
+  createdAt: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ *
+ * Path : apps/api/src/app/events/usecases/send-message/send-message<CHANNEL>.usecase.ts
+ *    Context : The reason for this Index is because of
+ *              Notification scheme virtual localField: '_id', foreignField: '_notificationId', one to many
+ */
+jobSchema.index({
+  _notificationId: 1,
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
