@@ -207,6 +207,7 @@ importers:
       '@novu/sms-central': ^0.13.0
       '@novu/sms77': ^0.13.0
       '@novu/sns': ^0.13.0
+      '@novu/sparkpost': ^0.13.0
       '@novu/stateless': ^0.13.0
       '@novu/telnyx': ^0.13.0
       '@novu/termii': ^0.13.0
@@ -323,6 +324,7 @@ importers:
       '@novu/sms-central': link:../../providers/sms-central
       '@novu/sms77': link:../../providers/sms77
       '@novu/sns': link:../../providers/sns
+      '@novu/sparkpost': link:../../providers/sparkpost
       '@novu/stateless': link:../../packages/stateless
       '@novu/telnyx': link:../../providers/telnyx
       '@novu/termii': link:../../providers/termii
