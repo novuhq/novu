@@ -67,6 +67,8 @@ export function EmailContentCard({
         <LackIntegrationError
           channelType={ChannelTypeEnum.EMAIL}
           text="Looks like you haven’t configured your E-Mail provider yet, visit the integrations page to configure."
+          iconHeight={34}
+          iconWidth={34}
         />
       )}
       <EmailInboxContent integration={integration} index={index} readonly={readonly} />

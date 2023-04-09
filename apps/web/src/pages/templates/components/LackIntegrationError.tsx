@@ -27,7 +27,17 @@ export const getChannelCopy = (channelType: ChannelTypeEnum) => {
   }
 };
 
-export function LackIntegrationError({ channelType, text }: { channelType: ChannelTypeEnum; text?: string }) {
+export function LackIntegrationError({
+  channelType,
+  text,
+  iconHeight = 18,
+  iconWidth = 18,
+}: {
+  channelType: ChannelTypeEnum;
+  text?: string;
+  iconHeight?: number | string | undefined;
+  iconWidth?: number | string | undefined;
+}) {
   const segment = useSegment();
   const [isIntegrationsModalOpened, openIntegrationsModal] = useState(false);
 
@@ -46,8 +56,8 @@ export function LackIntegrationError({ channelType, text }: { channelType: Chann
             openIntegrationsModal(true);
             segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
           }}
-          height={34}
-          width={34}
+          height={iconHeight}
+          width={iconWidth}
         />
       </WarningMessage>
       <IntegrationsStoreModal
