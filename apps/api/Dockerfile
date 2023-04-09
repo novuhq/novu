@@ -17,9 +17,6 @@ COPY ./meta .
 COPY ./deps .
 COPY ./pkg .
 
-RUN echo "Token start is: ${BULL_MQ_PRO_NPM_TOKEN:0:2}"
-RUN echo "Token end is: ${BULL_MQ_PRO_NPM_TOKEN: -2}"
-
 RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
 RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then rm -f .npmrc ; fi
 RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then cp .npmrc-cloud .npmrc  ; fi
