@@ -74,8 +74,7 @@ RUN cat .npmrc
 RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  pnpm install --filter "{${PACKAGE_PATH}}..." \
  --frozen-lockfile \
- --unsafe-perm \
- --reporter=silent
+ --unsafe-perm
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 
