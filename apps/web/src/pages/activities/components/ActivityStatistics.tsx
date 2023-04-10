@@ -8,14 +8,12 @@ import { colors } from '../../../design-system';
 
 export function ActivityStatistics() {
   const { data: activityStats } = useQuery<{
-    yearlySent: number;
     monthlySent: number;
     weeklySent: number;
   }>(['activityStats'], getActivityStats);
   const isDark = useMantineTheme().colorScheme === 'dark';
   const weekCount = typeof activityStats?.weeklySent == 'number' ? formatNumber(activityStats.weeklySent, 0) : null;
   const monthCount = typeof activityStats?.monthlySent == 'number' ? formatNumber(activityStats.monthlySent, 0) : null;
-  const yearCount = typeof activityStats?.yearlySent == 'number' ? formatNumber(activityStats.yearlySent, 0) : null;
 
   return (
     <>
@@ -36,12 +34,6 @@ export function ActivityStatistics() {
           </StyledNumber>
           <StatsLabel isColored isDark={isDark}>
             This month
-          </StatsLabel>
-        </StatisticsBox>
-        <StatisticsBox>
-          <StyledNumber isColored={false}>{yearCount ? yearCount : <Skeleton height={30} width="60%" />}</StyledNumber>
-          <StatsLabel isColored={false} isDark={isDark}>
-            This year
           </StatsLabel>
         </StatisticsBox>
       </ContentWrapper>

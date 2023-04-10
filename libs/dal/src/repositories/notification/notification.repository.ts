@@ -150,9 +150,8 @@ export class NotificationRepository extends BaseRepository<
     ]);
   }
 
-  async getStats(environmentId: EnvironmentId): Promise<{ weekly: number; monthly: number; yearly: number }> {
+  async getStats(environmentId: EnvironmentId): Promise<{ weekly: number; monthly: number }> {
     const now: number = Date.now();
-    const yearBefore = subYears(now, 1);
     const monthBefore = subMonths(now, 1);
     const weekBefore = subWeeks(now, 1);
 
@@ -161,7 +160,7 @@ export class NotificationRepository extends BaseRepository<
         $match: {
           _environmentId: this.convertStringToObjectId(environmentId),
           createdAt: {
-            $gte: yearBefore,
+            $gte: monthBefore,
           },
         },
       },
@@ -170,7 +169,6 @@ export class NotificationRepository extends BaseRepository<
           _id: null,
           weekly: { $sum: { $cond: [{ $gte: ['$createdAt', weekBefore] }, 1, 0] } },
           monthly: { $sum: { $cond: [{ $gte: ['$createdAt', monthBefore] }, 1, 0] } },
-          yearly: { $sum: 1 },
         },
       },
     ]);
@@ -180,7 +178,6 @@ export class NotificationRepository extends BaseRepository<
     return {
       weekly: stats.weekly || 0,
       monthly: stats.monthly || 0,
-      yearly: stats.yearly || 0,
     };
   }
 }
