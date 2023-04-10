@@ -43,6 +43,12 @@ jobs:
         with:
           oidc: true
 
+      - name: Set Bull MQ Env variable for EE
+        shell: bash
+        run: |
+          echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
+        if: ${{contains(matrix.name, 'ee')}}
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
@@ -54,7 +60,7 @@ jobs:
           DEPOT_PROJECT_ID: 6sj0jfv0n7
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api - -t novu-api --load
+          cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/api - -t novu-api --load
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
@@ -102,3 +108,22 @@ jobs:
         with:
           url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
           method: 'POST'
+
+  newrelic:
+    runs-on: ubuntu-latest
+    name: New Relic Deploy
+    needs: deploy_prod_api_us
+    environment: Production
+    steps:
+      # This step builds a var with the release tag value to use later
+      - name: Set Release Version from Tag
+        run: echo "RELEASE_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+      # This step creates a new Change Tracking Marker
+      - name: New Relic Application Deployment Marker
+        uses: newrelic/deployment-marker-action@v2.3.0
+        with:
+          region: EU
+          apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+          guid: "MzgxMjQwOHxBUE18QVBQTElDQVRJT058NDk3NzA2ODk2"
+          version: "${{ env.RELEASE_VERSION }}"
+          user: "${{ github.actor }}"

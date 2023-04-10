@@ -31,6 +31,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetNovuIntegration } from '../../../integrations/usecases/get-novu-integration';
 import { CompileEmailTemplate } from '../../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
 import { CompileEmailTemplateCommand } from '../../../content-templates/usecases/compile-email-template/compile-email-template.command';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class SendMessageEmail extends SendMessageBase {
@@ -56,8 +57,12 @@ export class SendMessageEmail extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const subscriber = await this.getSubscriberBySubscriberId({
+      subscriberId: command.subscriberId,
+      _environmentId: command.environmentId,
+    });
     if (!subscriber) throw new ApiException(`Subscriber ${command.subscriberId} not found`);
 
     let integration: IntegrationEntity | undefined = undefined;
@@ -163,7 +168,7 @@ export class SendMessageEmail extends SendMessageBase {
       _notificationId: command.notificationId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
       content: this.storeContent() ? content : null,

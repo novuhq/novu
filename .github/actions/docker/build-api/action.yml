@@ -17,8 +17,12 @@ inputs:
     description: 'Whether this is being triggered from a forked repo'
     required: false
     default: 'false'
-  docker_name: 
+  docker_name:
     description: 'Name for docker image'
+    required: true
+
+  bullmq_secret:
+    description: 'Bullmq secret api token'
     required: true
 
 outputs:
@@ -49,8 +53,14 @@ runs:
       run: |
         echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
-    - name: Build with Depot, tag, and test
-      if: ${{ inputs.fork == 'false' }} # Don't run image builds with Depot for forks as forks can't access secrets
+    - name: Set Bull MQ Env variable for EE
+      shell: bash
+      run: |
+        echo "BULL_MQ_PRO_NPM_TOKEN=${{ inputs.bullmq_secret }}" >> $GITHUB_ENV
+      if: contains( inputs.docker_name  , 'ee')
+
+    - name: Build with Depot, tag, and test - Regular
+      if: ${{ inputs.fork == 'false' }} # Use buildx for forks as they can't access secrets
       shell: bash
       env:
         REGISTRY_OWNER: novuhq
@@ -61,7 +71,7 @@ runs:
         GH_PASSWORD: ${{ inputs.github_token }}
       run: |
         set -x
-        cd apps/api && pnpm run docker:build:depot
+        cd apps/api && pnpm run docker:build:depot --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN}
 
     - name: Build with Buildx, tag, and test
       if: ${{ inputs.fork == 'true' }} # Use buildx for forks as they can't access secrets

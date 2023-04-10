@@ -4,6 +4,7 @@ import {
   NotificationTemplateEntity,
   SubscriberPreferenceRepository,
   SubscriberRepository,
+  SubscriberEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IPreferenceChannels } from '@novu/shared';
@@ -13,6 +14,8 @@ import {
 } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
+import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class GetSubscriberTemplatePreference {
@@ -72,6 +75,23 @@ export class GetSubscriberTemplatePreference {
     return [
       ...new Set(messageTemplates.map((messageTemplate) => messageTemplate.type) as unknown as ChannelTypeEnum[]),
     ];
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  private async fetchSubscriber({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity | null> {
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
   }
 }
 
