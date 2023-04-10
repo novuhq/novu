@@ -214,6 +214,23 @@ export const resendConfig: IConfigCredentials[] = [
   ...mailConfigBase,
 ];
 
+export const sparkpostConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'EU',
+    description: 'Use `eu` if your account is registered to SparkPost EU',
+    type: 'boolean',
+    required: false,
+  },
+  ...mailConfigBase,
+];
+
 export const netCoreConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,

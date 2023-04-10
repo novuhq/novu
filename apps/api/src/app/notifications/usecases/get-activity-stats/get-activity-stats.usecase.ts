@@ -15,7 +15,6 @@ export class GetActivityStats {
     return {
       weeklySent: result.weekly,
       monthlySent: result.monthly,
-      yearlySent: result.yearly,
     };
   }
 }

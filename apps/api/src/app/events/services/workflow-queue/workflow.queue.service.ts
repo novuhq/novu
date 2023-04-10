@@ -4,6 +4,7 @@ import { Job, JobsOptions, QueueBaseOptions, WorkerOptions } from 'bullmq';
 import { JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
 import { ConnectionOptions } from 'tls';
+const nr = require('newrelic');
 
 import { RunJob, RunJobCommand } from '../../usecases/run-job';
 import { QueueNextJob, QueueNextJobCommand } from '../../usecases/queue-next-job';
@@ -98,18 +99,28 @@ export class WorkflowQueueService {
   private getWorkerProcessor() {
     return async ({ data }: { data: JobEntity }) => {
       return await new Promise(async (resolve, reject) => {
-        storage.run(new Store(PinoLogger.root), () => {
-          this.runJob
-            .execute(
-              RunJobCommand.create({
-                jobId: data._id,
-                environmentId: data._environmentId,
-                organizationId: data._organizationId,
-                userId: data._userId,
-              })
-            )
-            .then(resolve)
-            .catch(reject);
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const _this = this;
+
+        nr.startBackgroundTransaction('job-processing-queue', 'Trigger Engine', function () {
+          const transaction = nr.getTransaction();
+
+          storage.run(new Store(PinoLogger.root), () => {
+            _this.runJob
+              .execute(
+                RunJobCommand.create({
+                  jobId: data._id,
+                  environmentId: data._environmentId,
+                  organizationId: data._organizationId,
+                  userId: data._userId,
+                })
+              )
+              .then(resolve)
+              .catch(reject)
+              .finally(() => {
+                transaction.end();
+              });
+          });
         });
       });
     };
