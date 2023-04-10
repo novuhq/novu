@@ -10,44 +10,35 @@ const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
   {
     _jobId: {
       type: Schema.Types.String,
-      index: true,
     },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
-      index: true,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      index: true,
     },
     _notificationId: {
       type: Schema.Types.ObjectId,
       ref: 'Notification',
-      index: true,
     },
     _notificationTemplateId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
-      index: false,
     },
     _subscriberId: {
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
-      index: false,
     },
     _messageId: {
       type: Schema.Types.String,
-      index: false,
     },
     providerId: {
       type: Schema.Types.String,
-      index: false,
     },
     transactionId: {
       type: Schema.Types.String,
-      index: false,
     },
     channel: {
       type: Schema.Types.String,
@@ -78,6 +69,43 @@ const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
   },
   schemaOptions
 );
+
+/*
+ * This index was initially created to optimize:
+ *
+ * Path : libs/dal/src/repositories/job/job.schema.ts
+ *    Context : The _jobId is here because of JobSchema
+ *                                            ref: 'ExecutionDetails',
+ *                                            foreignField: '_jobId',
+ *
+ *
+ *  Path : apps/api/src/app/events/usecases/message-matcher/message-matcher.usecase.ts
+ *    Context : processPreviousStep
+ *    Query : count({
+ *      _jobId: command.job._parentId,
+ *      _messageId: message._id,
+ *      _environmentId: command.environmentId,
+ *      webhookStatus: EmailEventStatusEnum.OPENED,
+ *    });
+ */
+executionDetailsSchema.index({
+  _jobId: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ *
+ * Path : apps/api/src/app/execution-details/usecases/get-execution-details/get-execution-details.usecase.ts
+ *    Context : execute()
+ *        Query : find({
+ *         _notificationId: command.notificationId,
+ *         _environmentId: command.environmentId,
+ *         _subscriberId: command.subscriberId,
+ *      });
+ */
+executionDetailsSchema.index({
+  _notificationId: 1,
+});
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ExecutionDetails =
