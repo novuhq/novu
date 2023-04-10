@@ -12,7 +12,7 @@
 
 [[redirects]]
   from = "/api/:splat/"
-  to = "https://novu-api-docs.netlify.app/api/:splat/"
+  to = "https://novu.co/:splat/"
   status = 200
   force = true
   headers = {X-From = "Netlify"}
