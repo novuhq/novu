@@ -345,8 +345,7 @@ jobSchema.index({
 /*
  * This index was initially created to optimize:
  *
- * Path : apps/api/src/app/events/usecases/send-message/send-message<CHANNEL>.usecase.ts
- *    Context : The reason for this Index is because of
+ *    Context : The reason for this Index is that it used by the activity feed with populate,
  *              Notification scheme virtual localField: '_id', foreignField: '_notificationId', one to many
  */
 jobSchema.index({
