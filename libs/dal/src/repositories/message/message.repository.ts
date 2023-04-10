@@ -108,12 +108,19 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return await this.count(requestQuery);
   }
 
-  async markAllMessagesAs(
-    subscriberId: string,
-    environmentId: string,
-    markAs: 'read' | 'seen',
-    feedIdentifiers?: string[]
-  ) {
+  async markAllMessagesAs({
+    subscriberId,
+    environmentId,
+    markAs,
+    channel,
+    feedIdentifiers,
+  }: {
+    subscriberId: string;
+    environmentId: string;
+    markAs: 'read' | 'seen';
+    channel?: ChannelTypeEnum;
+    feedIdentifiers?: string[];
+  }) {
     let feedQuery;
 
     if (feedIdentifiers) {
@@ -132,12 +139,19 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       };
     }
 
-    const updateQuery = {
+    const updateQuery: Partial<MessageEntity> & EnforceEnvId = {
       _subscriberId: subscriberId,
       _environmentId: environmentId,
       [markAs]: false,
-      ...(feedQuery && { _feedId: feedQuery }),
     };
+
+    if (feedQuery != null) {
+      updateQuery._feedId = feedQuery;
+    }
+
+    if (channel != null) {
+      updateQuery.channel = channel;
+    }
 
     const now = new Date();
     const updatePayload = {
@@ -188,28 +202,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         },
       }
     );
-  }
-
-  async getActivityGraphStats(date: Date, environmentId: string) {
-    return await this.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: date },
-          _environmentId: new Types.ObjectId(environmentId),
-        },
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
-          },
-          count: {
-            $sum: 1,
-          },
-        },
-      },
-      { $sort: { _id: -1 } },
-    ]);
   }
 
   async changeStatus(
