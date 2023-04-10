@@ -53,6 +53,7 @@ export class AnalyticService {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        created: (user as any).createdAt,
       },
     });
   }

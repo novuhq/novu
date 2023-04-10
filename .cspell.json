@@ -3,6 +3,9 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "maqsam",
+    "sadd",
+    "smembers",
     "verifyspf",
     "gethostname",
     "spftxt",
@@ -415,11 +418,20 @@
     "shortid",
     "upsert",
     "cond",
+    "redismaster",
+    "appendonly",
+    "hostnames",
+    "ipam",
+    "slaveof",
+    "rediscommander",
+    "cond",
     "TASKFORCESH",
     "monorepository",
     "Metafiles",
     "Metas",
-    "Webpush"
+    "Webpush",
+    "maqsam",
+    "Millis"
   ],
   "flagWords": [],
   "patterns": [

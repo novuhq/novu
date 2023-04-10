@@ -11,7 +11,7 @@ import { SendMessage, SendMessageCommand } from '../send-message';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/constants';
-import { PinoLogger } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 
 @Injectable()
 export class RunJob {
@@ -23,6 +23,7 @@ export class RunJob {
     private logger?: PinoLogger
   ) {}
 
+  @InstrumentUsecase()
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
     Sentry.setUser({
       id: command.userId,
@@ -62,7 +63,9 @@ export class RunJob {
           environmentId: job._environmentId,
           organizationId: job._organizationId,
           userId: job._userId,
-          subscriberId: job._subscriberId,
+          subscriberId: job.subscriberId,
+          // backward compatibility - ternary needed to be removed once the queue renewed
+          _subscriberId: job._subscriberId ? job._subscriberId : job.subscriberId,
           jobId: job._id,
           events: job.digest?.events,
           job,

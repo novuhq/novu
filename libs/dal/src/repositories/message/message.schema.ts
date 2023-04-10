@@ -113,6 +113,10 @@ const messageSchema = new Schema<MessageDBModel>(
       },
       data: Schema.Types.Mixed,
     },
+    _actorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Subscriber',
+    },
     expireAt: Schema.Types.Date,
   },
   schemaOptions
@@ -130,6 +134,13 @@ messageSchema.virtual('subscriber', {
 messageSchema.virtual('template', {
   ref: 'NotificationTemplate',
   localField: '_templateId',
+  foreignField: '_id',
+  justOne: true,
+});
+
+messageSchema.virtual('actorSubscriber', {
+  ref: 'Subscriber',
+  localField: '_actorId',
   foreignField: '_id',
   justOne: true,
 });

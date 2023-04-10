@@ -16,7 +16,7 @@ import {
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { CreateLog } from '../../../logs/usecases/create-log/create-log.usecase';
+import { CreateLog } from '../../../logs/usecases';
 import { PushFactory } from '../../services/push-service/push.factory';
 import { SendMessageCommand } from './send-message.command';
 import { CompileTemplate, CompileTemplateCommand } from '../../../content-templates/usecases';
@@ -31,6 +31,7 @@ import {
 import { DetailEnum } from '../../../execution-details/types';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
@@ -54,8 +55,12 @@ export class SendMessagePush extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const subscriber = await this.getSubscriberBySubscriberId({
+      subscriberId: command.subscriberId,
+      _environmentId: command.environmentId,
+    });
     if (!subscriber) throw new ApiException(`Subscriber not found`);
 
     Sentry.addBreadcrumb({
@@ -221,7 +226,7 @@ export class SendMessagePush extends SendMessageBase {
       _notificationId: notification._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: command.step?.template?._id,
       channel: ChannelTypeEnum.PUSH,

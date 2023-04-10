@@ -32,6 +32,7 @@ import {
 import { DetailEnum } from '../../../execution-details/types';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
@@ -55,8 +56,12 @@ export class SendMessageChat extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriber({ _id: command.subscriberId, environmentId: command.environmentId });
+    const subscriber = await this.getSubscriberBySubscriberId({
+      subscriberId: command.subscriberId,
+      _environmentId: command.environmentId,
+    });
     if (!subscriber) throw new ApiException('Subscriber not found');
 
     Sentry.addBreadcrumb({
@@ -155,7 +160,7 @@ export class SendMessageChat extends SendMessageBase {
       _notificationId: notification._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: chatChannel.template._id,
       channel: ChannelTypeEnum.CHAT,

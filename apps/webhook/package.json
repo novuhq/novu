@@ -22,7 +22,7 @@
   "dependencies": {
     "@godaddy/terminus": "^4.3.1",
     "@nestjs/axios": "^2.0.0",
-    "@nestjs/common": "^9.2.1",
+    "@nestjs/common": "9.3.12",
     "@nestjs/core": "^9.2.1",
     "@nestjs/platform-express": "^9.2.1",
     "@nestjs/platform-socket.io": "^9.2.1",

@@ -58,6 +58,7 @@ export function GetStarted() {
           closeIntegration={() => {
             setClickedChannel({ open: false });
           }}
+          scrollTo={clickedChannel.channelType}
         />
         <ChannelsConfiguration setClickedChannel={setClickedChannel} />
       </ChannelsConfigurationHolder>

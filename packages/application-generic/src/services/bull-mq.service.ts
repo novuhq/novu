@@ -6,6 +6,7 @@ import {
   Worker,
   WorkerOptions,
 } from 'bullmq';
+import { Logger } from '@nestjs/common';
 
 export class BullmqService {
   private _queue: Queue;
@@ -21,12 +22,18 @@ export class BullmqService {
     return this._queue;
   }
 
-  public static haveProInstalled() {
+  public static haveProInstalled(): boolean {
     if (!BullmqService.pro) {
-      return;
+      return false;
     }
 
     require('@taskforcesh/bullmq-pro');
+
+    return true;
+  }
+
+  private runningWithProQueue() {
+    return BullmqService.pro && BullmqService.haveProInstalled();
   }
 
   public createQueue(name: string, config: QueueOptions) {
@@ -34,6 +41,12 @@ export class BullmqService {
     const QueueClass = !BullmqService.pro
       ? Queue
       : require('@taskforcesh/bullmq-pro').QueuePro;
+
+    Logger.log(
+      `Creating queue ${name} bullmq pro is ${
+        this.runningWithProQueue() ? 'Enabled' : 'Disabled'
+      }`
+    );
 
     this._queue = new QueueClass(name, {
       ...config,

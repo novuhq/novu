@@ -34,7 +34,10 @@
     "node": ">=10"
   },
   "peerDependencies": {
-    "@nestjs/common": "^9.3.9"
+    "@nestjs/common": "9.3.12",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "7.5.6",
+    "newrelic": ">=9.0.0"
   },
   "dependencies": {
     "@novu/dal": "^0.13.0",
@@ -58,6 +61,7 @@
     "@novu/shared": "^0.13.0",
     "@novu/slack": "^0.13.0",
     "@novu/sms77": "^0.13.0",
+    "@novu/sms-central": "^0.13.0",
     "@novu/sns": "^0.13.0",
     "@novu/stateless": "^0.13.0",
     "@novu/telnyx": "^0.13.0",
@@ -68,6 +72,7 @@
     "analytics-node": "^6.2.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "reflect-metadata": "^0.1.13",
     "bullmq": "^3.10.2",
     "decorate-all": "^1.2.1",
     "maskdata": "^1.2.0",
@@ -75,6 +80,9 @@
     "node-fetch": "^3.2.10",
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0"
+  },
+  "optionalDependencies": {
+    "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
