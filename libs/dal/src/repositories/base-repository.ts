@@ -95,8 +95,6 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
         } else {
           return addMonths(now, 1);
         }
-      case 'Notification':
-        return addMonths(now, 1);
       default:
         return null;
     }
