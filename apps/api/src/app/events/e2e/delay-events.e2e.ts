@@ -9,7 +9,7 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { expect } from 'chai';
 import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
 import axios from 'axios';
-import { addSeconds, differenceInMilliseconds } from 'date-fns';
+import { addSeconds, differenceInMilliseconds, subMonths } from 'date-fns';
 
 import { WorkflowQueueService } from '../services/workflow-queue/workflow.queue.service';
 import { RunJob, RunJobCommand } from '../usecases/run-job';
@@ -99,6 +99,14 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     });
 
     expect(delayedJob.status).to.equal(JobStatusEnum.DELAYED);
+
+    const expireAt = new Date(delayedJob?.expireAt as string);
+    const createdAt = new Date(delayedJob?.createdAt as string);
+
+    const subExpireMonths = subMonths(expireAt, 1);
+    const diff = differenceInMilliseconds(subExpireMonths, createdAt);
+
+    expect(diff).to.approximately(300000, 100);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
