@@ -14,6 +14,8 @@ export class InMemoryProviderService {
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
   constructor() {
+    Logger.log('Initiated in-memory service', LOG_CONTEXT);
+
     if (!this.inMemoryProviderClient) {
       this.inMemoryProviderClient = process.env.IN_MEMORY_CLUSTER_MODE_ENABLED
         ? this.inMemoryClusterProviderSetup()
@@ -36,7 +38,7 @@ export class InMemoryProviderService {
   }
 
   private inMemoryProviderSetup(): InMemoryProviderClient {
-    Logger.verbose('In-memory service set up', LOG_CONTEXT);
+    Logger.log('In-memory service set up', LOG_CONTEXT);
 
     this.inMemoryProviderConfig = getRedisProviderConfig();
     const { host, port, ttl } = getRedisProviderConfig();
@@ -45,7 +47,12 @@ export class InMemoryProviderService {
       Logger.log('Missing host for in-memory provider', LOG_CONTEXT);
     }
 
+    Logger.log(`Connecting to ${host}:${port}`, LOG_CONTEXT);
+
     const inMemoryProviderClient = getRedisInstance();
+
+    Logger.log(`Provider client exists: ${!!inMemoryProviderClient}`, LOG_CONTEXT);
+
     if (host && inMemoryProviderClient) {
       Logger.log(`Connecting to ${host}:${port}`, LOG_CONTEXT);
 
