@@ -21,20 +21,26 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
 
     socket.on(
       'unseen_count_changed',
-      debounce((data?: { unseenCount: number }) => {
-        if (Number.isInteger(data?.unseenCount)) {
-          queryClient.setQueryData<{ count: number }>(UNSEEN_COUNT_QUERY_KEY, (oldData) => ({
-            count: data?.unseenCount ?? oldData.count,
-          }));
-          queryClient.refetchQueries(INFINITE_NOTIFICATIONS_QUERY_KEY, {
-            exact: false,
-          });
-          queryClient.refetchQueries(FEED_UNSEEN_COUNT_QUERY_KEY, {
-            exact: false,
-          });
-          dispatchUnseenCountEvent(data.unseenCount);
+      debounce(
+        (data?: { unseenCount: number }) => {
+          if (Number.isInteger(data?.unseenCount)) {
+            queryClient.setQueryData<{ count: number }>(UNSEEN_COUNT_QUERY_KEY, (oldData) => ({
+              count: data?.unseenCount ?? oldData.count,
+            }));
+            queryClient.refetchQueries(INFINITE_NOTIFICATIONS_QUERY_KEY, {
+              exact: false,
+            });
+            queryClient.refetchQueries(FEED_UNSEEN_COUNT_QUERY_KEY, {
+              exact: false,
+            });
+            dispatchUnseenCountEvent(data.unseenCount);
+          }
+        },
+        300,
+        {
+          leading: true,
         }
-      }, 100)
+      )
     );
 
     return () => {
