@@ -27,8 +27,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     });
   }
 
-  async aggregate(query: any[]): Promise<any> {
-    return await this.MongooseModel.aggregate(query);
+  async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
+    return await this.MongooseModel.aggregate(query).read(options.readPreference || 'primary');
   }
 
   async findById(id: string, select?: string): Promise<T_MappedEntity | null> {
