@@ -5,6 +5,7 @@ import { ActorTypeEnum } from '@novu/shared';
 
 import { schemaOptions } from '../schema-default.options';
 import { MessageDBModel } from './message.entity';
+import { TTL_EXPIRE_AFTER_AMOUNT } from '../../shared';
 
 const messageSchema = new Schema<MessageDBModel>(
   {
@@ -117,7 +118,7 @@ const messageSchema = new Schema<MessageDBModel>(
   schemaOptions
 );
 
-messageSchema.index({ expireAt: 1 }, { expires: '48h' });
+messageSchema.index({ expireAt: 1 }, { expires: TTL_EXPIRE_AFTER_AMOUNT });
 
 messageSchema.virtual('subscriber', {
   ref: 'Subscriber',

@@ -5,6 +5,7 @@ import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/sh
 import { ExecutionDetailsDBModel } from './execution-details.entity';
 
 import { schemaOptions } from '../schema-default.options';
+import { TTL_EXPIRE_AFTER_AMOUNT } from '../../shared';
 
 const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
   {
@@ -80,7 +81,7 @@ const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
   schemaOptions
 );
 
-executionDetailsSchema.index({ expireAt: 1 }, { expires: '48h' });
+executionDetailsSchema.index({ expireAt: 1 }, { expires: TTL_EXPIRE_AFTER_AMOUNT });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ExecutionDetails =
