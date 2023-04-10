@@ -112,9 +112,12 @@ const messageSchema = new Schema<MessageDBModel>(
       },
       data: Schema.Types.Mixed,
     },
+    expireAt: Schema.Types.Date,
   },
-  { ...schemaOptions }
+  schemaOptions
 );
+
+messageSchema.index({ expireAt: 1 }, { expires: '48h' });
 
 messageSchema.virtual('subscriber', {
   ref: 'Subscriber',

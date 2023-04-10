@@ -44,9 +44,12 @@ const notificationSchema = new Schema<NotificationDBModel>(
     payload: {
       type: Schema.Types.Mixed,
     },
+    expireAt: Schema.Types.Date,
   },
   schemaOptions
 );
+
+notificationSchema.index({ expireAt: 1 }, { expires: '48h' });
 
 notificationSchema.virtual('environment', {
   ref: 'Environment',

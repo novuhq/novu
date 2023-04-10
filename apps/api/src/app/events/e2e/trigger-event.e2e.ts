@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import axios from 'axios';
 import * as sinon from 'sinon';
 import {
-  LogRepository,
   MessageRepository,
   NotificationRepository,
   NotificationTemplateEntity,
@@ -35,6 +34,11 @@ import { QueueNextJob } from '../usecases/queue-next-job';
 import { StorageHelperService } from '../services/storage-helper-service/storage-helper.service';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { v4 as uuid } from 'uuid';
+import { differenceInMilliseconds, subMonths } from 'date-fns';
+
+const IN_APP_MESSAGE_EXPIRE_MONTHS = 6;
+const MESSAGE_EXPIRE_MONTHS = 1;
+const NOTIFICATION_EXPIRE_MONTHS = 1;
 
 const axiosInstance = axios.create();
 
@@ -50,7 +54,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
   const integrationRepository = new IntegrationRepository();
-  const logRepository = new LogRepository();
   const jobRepository = new JobRepository();
   const executionDetailsRepository = new ExecutionDetailsRepository();
 
@@ -253,6 +256,77 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     const email = emails[0];
 
     expect(email.channel).to.equal(ChannelTypeEnum.EMAIL);
+  });
+
+  it('should correctly set expiration date (TTL) for notification and messages', async function () {
+    const { data: body } = await axiosInstance.post(
+      `${session.serverUrl}${eventTriggerPath}`,
+      {
+        name: template.triggers[0].identifier,
+        to: {
+          subscriberId: subscriber.subscriberId,
+        },
+        payload: {
+          firstName: 'Testing of User Name',
+          urlVar: '/test/url/path',
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
+
+    expect(notifications.length).to.equal(1);
+
+    const notification = notifications[0];
+
+    let expireAt = new Date(notification?.expireAt as string);
+    let createdAt = new Date(notification?.createdAt as string);
+
+    let subExpireMonths = subMonths(expireAt, NOTIFICATION_EXPIRE_MONTHS);
+    let diff = differenceInMilliseconds(subExpireMonths, createdAt);
+
+    expect(diff).to.approximately(0, 1);
+
+    const messages = await messageRepository.findBySubscriberChannel(
+      session.environment._id,
+      subscriber._id,
+      ChannelTypeEnum.IN_APP
+    );
+
+    expect(messages.length).to.equal(1);
+    const message = messages[0];
+
+    expireAt = new Date(message?.expireAt as string);
+    createdAt = new Date(message?.createdAt as string);
+
+    subExpireMonths = subMonths(expireAt, IN_APP_MESSAGE_EXPIRE_MONTHS);
+    diff = differenceInMilliseconds(subExpireMonths, createdAt);
+
+    expect(diff).to.approximately(0, 1);
+
+    const emails = await messageRepository.findBySubscriberChannel(
+      session.environment._id,
+      subscriber._id,
+      ChannelTypeEnum.EMAIL
+    );
+
+    expect(emails.length).to.equal(1);
+    const email = emails[0];
+
+    expireAt = new Date(email?.expireAt as string);
+    createdAt = new Date(email?.createdAt as string);
+
+    subExpireMonths = subMonths(expireAt, MESSAGE_EXPIRE_MONTHS);
+    diff = differenceInMilliseconds(subExpireMonths, createdAt);
+
+    expect(diff).to.approximately(0, 1);
   });
 
   it('should trigger SMS notification', async function () {
