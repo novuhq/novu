@@ -128,6 +128,24 @@ const response = await novu.topics.getSubscriber(topicKey, externalSubscriberId)
 The subscriber ID to use in this API call is the one used as subscriber identifier. The choice was done to make easier for the user to use this endpoint without extra calls to Novu.
 :::
 
+## Delete a topic
+
+A topic can be deleted by its key by doing:
+
+```typescript
+import { Novu } from '@novu/node';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+const key = 'unique-topic-identifier';
+
+const result = await novu.topics.delete(key);
+```
+
+:::warning
+A topic can only be deleted if it doesn't have any subscriber added. When trying to delete a topic with subscribers a conflict error will be returned. This is done to prevent accidental topic deletions.
+:::
+
 ## Sending a notification to a topic
 
 In the section [Quick Start](/overview/quick-start#trigger-the-notification) it is explained how to trigger a notification for a single subscriber either by passing the subscribers identifier or by passing the full subscriber information if user wants to skip the identify step.

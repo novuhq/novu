@@ -44,6 +44,14 @@ export class TopicRepository extends BaseRepository<TopicDBModel, TopicEntity, E
     });
   }
 
+  async deleteTopic(key: TopicKey, environmentId: EnvironmentId, organizationId: OrganizationId): Promise<void> {
+    await this.delete({
+      key,
+      _organizationId: organizationId,
+      _environmentId: environmentId,
+    });
+  }
+
   async filterTopics(
     query: FilterQuery<TopicDBModel>,
     pagination: { limit: number; skip: number }

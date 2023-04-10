@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { JobEntity, JobStatusEnum, JobRepository, NotificationStepEntity, NotificationRepository } from '@novu/dal';
+import { JobStatusEnum, JobRepository, NotificationStepEntity, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterSteps } from './digest-filter-steps.usecase';
@@ -41,7 +41,7 @@ export class DigestFilterStepsRegular {
     const where = {
       status: JobStatusEnum.DELAYED,
       type: StepTypeEnum.DIGEST,
-      _subscriberId: command.subscriberId,
+      _subscriberId: command._subscriberId,
       _templateId: command.templateId,
       _environmentId: command.environmentId,
     };

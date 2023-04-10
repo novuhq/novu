@@ -4,6 +4,13 @@ name: E2E API Tests
 on:
   workflow_call:
 
+    inputs:
+      ee:
+        description: 'use the ee version of api'
+        required: false
+        default: false
+        type: boolean
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
@@ -15,7 +22,6 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v3
-
       - uses: ./.github/actions/setup-project
 
       - uses: mansagroup/nrwl-nx-action@v3
