@@ -23,10 +23,9 @@ Need help installing the requirements? Read more [here](https://novuhq.notion.si
 After installing the required services on your machine, you can clone and set up your forked version of the project:
 
 - Fork [Novu's repository](https://github.com/novuhq/novu). Clone or download your fork to your local machine.
-- Run the initial setup command `npm run setup:project` to install and build all dependencies.
 - Run the project locally using `npm run start`.
 
-The `npm run start` will start all the services in parallel including the APIs and web clients.
+The `npm run start` will start the Jarvis CLI tool which allows you to run the whole project with an ease.
 If you only want to run parts of the platform, you can use the following run commands from the root project:
 
 - **start:dev** - Synonym to `npm run start`
@@ -34,12 +33,15 @@ If you only want to run parts of the platform, you can use the following run com
 - **start:ws** - Only starts the WebSocket service for notification center updates
 - **start:widget** - Starts the widget wrapper project that hosts the notification center inside an iframe
 - **start:api** - Runs the API in watch mode
+- **start:worker** - Runs the worker application in watch mode
 - **start:dal** - Runs the Data Access Layer package in watch mode
 - **start:shared** - Starts the watch mode for the shared client and API library
 - **start:node** - Runs the `@novu/node` package in watch mode
 - **start:notification-center** - Runs and builds the React package for the Novu notification center
 
 ## Set up your environment variables
+
+If you have used Jarvis CLI tool from the previous step you don't need to setup the env variables as Jarvis will do that on the first run if setup wasn't done before.
 
 The command `npm run setup:project` creates default environment variables that are required to run Novu in a development environment.
 However, if you want to test certain parts of Novu or run it in production mode, you need to change some of them. These are all the available environment variables:
@@ -63,6 +65,48 @@ However, if you want to test certain parts of Novu or run it in production mode,
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
         <li><code>NOVU_API_KEY</code><br />The api key of web.novu.co used to send various emails</li>
         <li><code>SENTRY_DSN</code><br />The DSN of sentry.io used to report errors happening in production</li>
+      </ul>
+    </div>
+</details>
+
+<details>
+    <summary>Worker</summary>
+    <div>
+      <ul>
+        <li><code>NODE_ENV</code> (default: local)<br />The environment of the app. Possible values are: dev, test, prod, ci, local</li>
+        <li><code>PORT</code><br />The port on which the Worker app should listen on</li>
+        <li><code>STORE_ENCRYPTION_KEY</code><br />The encryption key used to encrypt/decrypt provider credentials</li>
+        <li><code>MAX_NOVU_INTEGRATION_MAIL_REQUESTS</code><br />The number of free emails that can be sent with the Novu email provider</li>
+        <li><code>NOVU_EMAIL_INTEGRATION_API_KEY</code><br />The Novu email provider Sentry API key</li>
+        <li><code>STORAGE_SERVICE</code><br />The storage service name: AWS, GCS, or AZURE</li>
+        <li><code>S3_LOCAL_STACK</code><br />The LocalStack service URL</li>
+        <li><code>S3_BUCKET_NAME</code><br />The name of the S3 Bucket</li>
+        <li><code>S3_REGION</code><br />The AWS region of the S3 Bucket</li>
+        <li><code>GCS_BUCKET_NAME</code><br />The name of the GCS Bucket</li>
+        <li><code>AZURE_ACCOUNT_NAME</code><br />The name of the Azure account</li>
+        <li><code>AZURE_ACCOUNT_KEY</code><br />The Azure account key</li>
+        <li><code>AZURE_HOST_NAME</code><br />The Azure host name</li>
+        <li><code>AZURE_CONTAINER_NAME</code><br />The Azure container name</li>
+        <li><code>AWS_ACCESS_KEY_ID</code><br />The AWS access key</li>
+        <li><code>AWS_SECRET_ACCESS_KEY</code><br />The AWS secret access key</li>
+        <li><code>REDIS_HOST</code><br />The domain / IP of your redis instance</li>
+        <li><code>REDIS_PORT</code><br />The port of your redis instance</li>
+        <li><code>REDIS_PASSWORD</code><br />Optional password of your redis instance</li>
+        <li><code>REDIS_DB_INDEX</code><br />The Redis database index</li>
+        <li><code>REDIS_CACHE_SERVICE_HOST</code><br />The domain / IP of your redis instance for caching</li>
+        <li><code>REDIS_CACHE_SERVICE_PORT</code><br />The port of your redis instance for caching</li>
+        <li><code>REDIS_DB_INDEX</code><br />The Redis cache database index</li>
+        <li><code>REDIS_CACHE_TTL</code><br />The Redis cache ttl</li>
+        <li><code>REDIS_CACHE_PASSWORD</code><br />The Redis cache password</li>
+        <li><code>REDIS_CACHE_CONNECTION_TIMEOUT</code><br />The Redis cache connection timeout</li>
+        <li><code>REDIS_CACHE_KEEP_ALIVE</code><br />The Redis cache TCP keep alive on the socket timeout</li>
+        <li><code>REDIS_CACHE_FAMILY</code><br />The Redis cache IP stack version</li>
+        <li><code>REDIS_CACHE_KEY_PREFIX</code><br />The Redis cache prefix prepend to all keys</li>
+        <li><code>REDIS_CACHE_SERVICE_TLS</code><br />The Redis cache TLS connection support</li>
+        <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
+        <li><code>NEW_RELIC_APP_NAME</code><br />The New Relic app name</li>
+        <li><code>NEW_RELIC_LICENSE_KEY</code><br />The New Relic license key</li>
+        <li><code>SEGMENT_TOKEN</code><br />The Segment Analytics token</li>
       </ul>
     </div>
 </details>
@@ -113,6 +157,7 @@ After making changes, you can run the tests for the respective package using the
 To run the API tests, run the following command:
 
 ```shell
+npm run start:worker:test
 npm run start:e2e:api
 ```
 
@@ -126,7 +171,9 @@ The cypress tests perform E2E tests. To be able to perform E2E tests, you need t
 Run the services in test env with the following commands:
 
 ```shell
-npm run start:e2e:api
+npm run start:web
+npm run start:api:test
+npm run start:worker:test
 npm run start:ws:test
 ```
 
@@ -146,6 +193,7 @@ cd apps/web && npm run cypress:open
 
 - **3000** - API
 - **3002** - WebSocket Service
+- **3004** - Worker application
 - **4200** - Web Management UI
 - **4701** - Iframe embed for notification center
 - **4500** - Widget Service
