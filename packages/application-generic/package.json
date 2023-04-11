@@ -34,8 +34,10 @@
     "node": ">=10"
   },
   "peerDependencies": {
-    "@nestjs/common": "^9.3.9",
-    "newrelic": ">=9"
+    "@nestjs/common": "9.3.12",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": "7.5.6",
+    "newrelic": ">=9.0.0"
   },
   "dependencies": {
     "@novu/dal": "^0.13.0",
@@ -78,6 +80,9 @@
     "node-fetch": "^3.2.10",
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0"
+  },
+  "optionalDependencies": {
+    "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
