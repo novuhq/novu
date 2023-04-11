@@ -105,7 +105,7 @@ export class InMemoryProviderService {
     const { host, ttl } = getConfig();
 
     if (!host) {
-      Logger.log('Missing host for in-memory cluster provider', LOG_CONTEXT);
+      Logger.warn('Missing host for in-memory cluster provider', LOG_CONTEXT);
     }
 
     const inMemoryProviderClient = getClient();
@@ -137,7 +137,7 @@ export class InMemoryProviderService {
       });
 
       inMemoryProviderClient.on('ready', () => {
-        Logger.warn('In-memory cluster ready', LOG_CONTEXT);
+        Logger.log('In-memory cluster ready', LOG_CONTEXT);
       });
 
       inMemoryProviderClient.on('wait', () => {
@@ -183,7 +183,7 @@ export class InMemoryProviderService {
       });
 
       inMemoryProviderClient.on('ready', () => {
-        Logger.warn('Redis ready', LOG_CONTEXT);
+        Logger.log('Redis ready', LOG_CONTEXT);
       });
 
       inMemoryProviderClient.on('wait', () => {
