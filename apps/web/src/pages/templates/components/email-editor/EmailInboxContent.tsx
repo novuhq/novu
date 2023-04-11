@@ -42,7 +42,7 @@ export const EmailInboxContent = ({
         borderRadius: '7px',
         marginBottom: '24px',
         padding: '16px',
-        background: colors.B20,
+        background: theme.colorScheme === 'dark' ? colors.B20 : colors.B98,
       }}
     >
       <Grid grow justify="center" align="stretch">

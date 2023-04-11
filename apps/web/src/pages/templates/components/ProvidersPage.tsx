@@ -72,10 +72,11 @@ const ListProviders = ({
               style={{
                 width: '100%',
                 padding: 15,
-                background: colors.B20,
+                background: colorScheme === 'dark' ? colors.B20 : colors.B98,
                 borderRadius: 8,
                 marginBottom: 12,
                 lineHeight: 1,
+                opacity: provider.active ? 1 : colorScheme === 'dark' ? 1 : 0.4,
               }}
               onClick={() => {
                 setProvider(provider);
@@ -89,6 +90,7 @@ const ListProviders = ({
                   style={{
                     height: '24px',
                     maxWidth: '140px',
+                    opacity: provider.active ? 1 : colorScheme === 'dark' ? 0.4 : 1,
                   }}
                 />
                 <Text color={provider.active ? colors.success : colors.B60}>
