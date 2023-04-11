@@ -11,19 +11,19 @@ const DEFAULT_FAMILY = 4;
 const DEFAULT_KEY_PREFIX = '';
 const TTL_VARIANT_PERCENTAGE = 0.1;
 
-interface IRedisClusterConfig {
+interface IElasticacheClusterConfig {
   connectTimeout?: string;
   family?: string;
   host?: string;
   keepAlive?: string;
   keyPrefix?: string;
   password?: string;
-  ports?: string;
+  port?: string;
   tls?: ConnectionOptions;
   ttl?: string;
 }
 
-export interface IRedisClusterProviderConfig {
+export interface IElasticacheClusterProviderConfig {
   connectTimeout: number;
   family: number;
   host?: string;
@@ -31,15 +31,15 @@ export interface IRedisClusterProviderConfig {
   keepAlive: number;
   keyPrefix: string;
   password?: string;
-  ports?: number[];
+  port?: number;
   tls?: ConnectionOptions;
   ttl: number;
 }
 
-export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => {
-  const redisClusterConfig: IRedisClusterConfig = {
-    host: process.env.REDIS_CLUSTER_SERVICE_HOST,
-    ports: process.env.REDIS_CLUSTER_SERVICE_PORTS,
+export const getElasticacheClusterProviderConfig = (): IElasticacheClusterProviderConfig => {
+  const redisClusterConfig: IElasticacheClusterConfig = {
+    host: process.env.ELASTICACHE_CLUSTER_SERVICE_HOST,
+    port: process.env.ELASTICACHE_CLUSTER_SERVICE_PORT,
     ttl: process.env.REDIS_CLUSTER_TTL,
     password: process.env.REDIS_CLUSTER_PASSWORD,
     connectTimeout: process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT,
@@ -50,7 +50,7 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
   };
 
   const host = redisClusterConfig.host;
-  const ports = redisClusterConfig.ports ? JSON.parse(redisClusterConfig.ports) : [];
+  const port = Number(redisClusterConfig.port);
   const password = redisClusterConfig.password;
   const connectTimeout = redisClusterConfig.connectTimeout
     ? Number(redisClusterConfig.connectTimeout)
@@ -60,11 +60,11 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
   const keyPrefix = redisClusterConfig.keyPrefix ?? DEFAULT_KEY_PREFIX;
   const ttl = redisClusterConfig.ttl ? Number(redisClusterConfig.ttl) : DEFAULT_TTL_SECONDS;
 
-  const instances: ClusterNode[] = ports.map((port: number): ClusterNode => ({ host, port }));
+  const instances: ClusterNode[] = [{ host, port }];
 
   return {
     host,
-    ports,
+    port,
     instances,
     password,
     connectTimeout,
@@ -75,10 +75,14 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
   };
 };
 
-export const getRedisCluster = (): Cluster | undefined => {
-  const { instances } = getRedisClusterProviderConfig();
+export const getElasticacheCluster = (): Cluster | undefined => {
+  const { instances } = getElasticacheClusterProviderConfig();
 
   const options: ClusterOptions = {
+    dnsLookup: (address, callback) => callback(null, address),
+    redisOptions: {
+      tls: {},
+    },
     /*
      *  Disabled in Prod as affects performance
      */

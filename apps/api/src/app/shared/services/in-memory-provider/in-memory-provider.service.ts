@@ -1,6 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
+  getElasticacheCluster,
+  getElasticacheClusterProviderConfig,
+  IElasticacheClusterProviderConfig,
+} from './elasticache-cluster-provider';
+import {
   CLIENT_READY,
   getRedisInstance,
   getRedisProviderConfig,
@@ -21,7 +26,7 @@ import { ApiException } from '../../exceptions/api.exception';
 const LOG_CONTEXT = 'InMemoryCluster';
 
 export type InMemoryProviderClient = Redis | Cluster | undefined;
-type InMemoryProviderConfig = IRedisProviderConfig | IRedisClusterProviderConfig;
+type InMemoryProviderConfig = IElasticacheClusterProviderConfig | IRedisProviderConfig | IRedisClusterProviderConfig;
 
 @Injectable()
 export class InMemoryProviderService {
@@ -69,19 +74,43 @@ export class InMemoryProviderService {
     }
   }
 
+  private isElasticacheEnabled(): boolean {
+    return !!process.env.ELASTICACHE_CLUSTER_SERVICE_HOST && !!process.env.ELASTICACHE_CLUSTER_SERVICE_PORT;
+  }
+
+  private getClientAndConfigForCluster(): {
+    getClient: () => Cluster | undefined;
+    getConfig: () => InMemoryProviderConfig;
+  } {
+    const clusterProviders = {
+      elasticache: {
+        getClient: getElasticacheCluster,
+        getConfig: getElasticacheClusterProviderConfig,
+      },
+      redis: {
+        getClient: getRedisCluster,
+        getConfig: getRedisClusterProviderConfig,
+      },
+    };
+
+    return this.isElasticacheEnabled() ? clusterProviders.elasticache : clusterProviders.redis;
+  }
+
   private inMemoryClusterProviderSetup(): Cluster | undefined {
     Logger.verbose('In-memory cluster service set up', LOG_CONTEXT);
 
-    this.inMemoryProviderConfig = getRedisClusterProviderConfig();
-    const { host, ports, ttl } = getRedisClusterProviderConfig();
+    const { getConfig, getClient } = this.getClientAndConfigForCluster();
+
+    this.inMemoryProviderConfig = getConfig();
+    const { host, ttl } = getConfig();
 
     if (!host) {
       Logger.log('Missing host for in-memory cluster provider', LOG_CONTEXT);
     }
 
-    const inMemoryProviderClient = getRedisCluster();
+    const inMemoryProviderClient = getClient();
     if (host && inMemoryProviderClient) {
-      Logger.log(`Connecting to cluster at ${host} - Ports ${ports}`, LOG_CONTEXT);
+      Logger.log(`Connecting to cluster at ${host}`, LOG_CONTEXT);
 
       inMemoryProviderClient.on('connect', () => {
         Logger.log('In-memory cluster connected', LOG_CONTEXT);
