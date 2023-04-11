@@ -10,6 +10,7 @@ describe('Creation functionality', function () {
       cy.visit('/templates/create');
     });
     cy.getByTestId('settings-page').click();
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('title').clear().first().type('Test Notification Title');
     cy.getByTestId('description').type('This is a test description for a test title');
     cy.get('body').click();

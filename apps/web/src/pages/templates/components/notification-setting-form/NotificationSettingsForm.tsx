@@ -112,7 +112,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
       <Controller
         control={control}
         name="name"
-        defaultValue=""
+        defaultValue="Untitled"
         render={({ field }) => (
           <Input
             {...field}

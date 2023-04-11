@@ -141,7 +141,13 @@ const TemplateEditorFormProvider = ({ children }) => {
     }
 
     methods.setValue('identifier', newIdentifier);
-  }, [name, identifier]);
+    if (trigger) {
+      setTrigger({
+        ...trigger,
+        identifier: newIdentifier,
+      });
+    }
+  }, [name]);
 
   const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } =
     useTemplateController(templateId);
