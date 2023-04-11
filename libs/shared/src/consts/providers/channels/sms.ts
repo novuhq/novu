@@ -115,7 +115,7 @@ export const smsProviders: IProviderConfig[] = [
   },
   {
     id: SmsProviderIdEnum.Bulksms,
-    displayName: 'Bulksms',
+    displayName: 'BulkSms',
     channel: ChannelTypeEnum.SMS,
     credentials: bulksmsConfig,
     docReference: 'http://login.bulksmsoffers.com/apidoc/textsms/send-sms.php',

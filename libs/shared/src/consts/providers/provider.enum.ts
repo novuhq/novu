@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 export enum CredentialsKeyEnum {
-  AuthKey = 'authKey',
-  Sender = 'sender',
   Route = 'route',
   DltEntityId = 'dltEntityId',
   ApiKey = 'apiKey',

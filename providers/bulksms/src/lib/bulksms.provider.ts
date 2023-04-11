@@ -49,12 +49,15 @@ export class BulkSmsSmsProvider implements ISmsProvider {
       baseMessage.to +
       '&message=' +
       baseMessage.message +
-      '&sender=' + baseMessage.sender + '&route=' + baseMessage.route ;
+      '&sender=' +
+      baseMessage.sender +
+      '&route=' +
+      baseMessage.route;
 
     const response = await fetch(url.toString());
 
     const body = await response.text();
-    
+
     const date = this.parseHeaderDate(response.headers);
 
     return {
