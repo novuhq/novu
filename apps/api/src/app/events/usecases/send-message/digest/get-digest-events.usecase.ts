@@ -8,7 +8,7 @@ import {
   CreateExecutionDetailsCommand,
 } from '../../../../execution-details/usecases/create-execution-details';
 import { DetailEnum } from '../../../../execution-details/types';
-import { DigestFilterSteps } from '../../digest-filter-steps/digest-filter-steps.usecase';
+import { DigestFilterSteps } from '../../digest-filter-steps';
 
 @Injectable()
 export abstract class GetDigestEvents {
@@ -22,11 +22,16 @@ export abstract class GetDigestEvents {
       return DigestFilterSteps.getNestedValue(job.payload, currentJob.digest?.digestKey) === batchValue;
     });
 
-    const currentTrigger = await this.jobRepository.findOne({
-      _environmentId: currentJob._environmentId,
-      transactionId: transactionId,
-      type: StepTypeEnum.TRIGGER,
-    });
+    const currentTrigger = (await this.jobRepository.findOne(
+      {
+        _environmentId: currentJob._environmentId,
+        _subscriberId: currentJob._subscriberId,
+        transactionId: transactionId,
+        type: StepTypeEnum.TRIGGER,
+      },
+      '_id'
+    )) as Pick<JobEntity, '_id'>;
+
     if (!currentTrigger) {
       this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
