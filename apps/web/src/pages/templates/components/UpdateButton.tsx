@@ -1,25 +1,15 @@
-import { Button, Tooltip } from '../../../design-system';
+import { Button } from '../../../design-system';
 import { IForm } from './formTypes';
 import { useFormContext } from 'react-hook-form';
+import { useEnvController } from '../../../hooks';
 
 export const UpdateButton = () => {
   const { formState } = useFormContext<IForm>();
+  const { readonly } = useEnvController();
 
   return (
-    <Tooltip
-      label={
-        !formState.isValid ? 'Your workflow is not valid' : !formState.isDirty ? 'Workflow saved' : 'Save workflow'
-      }
-    >
-      <div>
-        <Button
-          data-test-id="notification-template-submit-btn"
-          disabled={!formState.isDirty || !formState.isValid}
-          submit={true}
-        >
-          Update
-        </Button>
-      </div>
-    </Tooltip>
+    <Button data-test-id="notification-template-submit-btn" disabled={readonly || !formState.isDirty} submit={true}>
+      Update
+    </Button>
   );
 };
