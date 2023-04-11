@@ -1,4 +1,4 @@
-import Redis, { Cluster, ClusterNode, ClusterOptions, NatMap } from 'ioredis';
+import Redis, { Cluster, ClusterNode, ClusterOptions } from 'ioredis';
 import { ConnectionOptions } from 'tls';
 
 export { Cluster, ClusterOptions };
