@@ -4,7 +4,6 @@ import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
 import { v4 as uuid } from 'uuid';
-import { Queue } from 'bullmq';
 import { Novu, TriggerRecipientsPayload } from '@novu/node';
 import { EmailBlockTypeEnum, IEmailBlock, StepTypeEnum } from '@novu/shared';
 import {
@@ -14,46 +13,21 @@ import {
   NotificationGroupEntity,
   EnvironmentRepository,
   NotificationGroupRepository,
-  JobRepository,
-  JobStatusEnum,
   FeedRepository,
   ChangeRepository,
   ChangeEntity,
   SubscriberRepository,
   LayoutRepository,
 } from '@novu/dal';
-import { ConnectionOptions } from 'tls';
 
 import { NotificationTemplateService } from './notification-template.service';
 import { TestServer, testServer } from './test-server.service';
-
 import { OrganizationService } from './organization.service';
 import { EnvironmentService } from './environment.service';
 import { CreateTemplatePayload } from './create-notification-template.interface';
 import { IntegrationService } from './integration.service';
 import { UserService } from './user.service';
-
-/**
- * TODO: move this to a reusable area
- */
-const queue = new Queue('trigger-handler', {
-  connection: {
-    db: Number(process.env.REDIS_DB_INDEX || '1'),
-    port: Number(process.env.REDIS_PORT || 6379),
-    host: process.env.REDIS_HOST,
-    password: process.env.REDIS_PASSWORD,
-    connectTimeout: 50000,
-    keepAlive: 30000,
-    tls: process.env.REDIS_TLS as ConnectionOptions,
-  },
-  defaultJobOptions: {
-    removeOnComplete: true,
-  },
-});
-
-if (process.env.NODE_ENV === 'test') {
-  queue.obliterate({ force: true });
-}
+import { JobsService } from './jobs.service';
 
 const EMAIL_BLOCK: IEmailBlock[] = [
   {
@@ -65,10 +39,10 @@ const EMAIL_BLOCK: IEmailBlock[] = [
 export class UserSession {
   private environmentRepository = new EnvironmentRepository();
   private notificationGroupRepository = new NotificationGroupRepository();
-  private jobRepository = new JobRepository();
   private feedRepository = new FeedRepository();
   private layoutRepository = new LayoutRepository();
   private changeRepository: ChangeRepository = new ChangeRepository();
+  private jobsService: JobsService;
 
   token: string;
 
@@ -99,6 +73,7 @@ export class UserSession {
   constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {}
 
   async initialize(options: { noOrganization?: boolean; noEnvironment?: boolean; noIntegrations?: boolean } = {}) {
+    this.jobsService = new JobsService();
     const card = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
@@ -327,32 +302,16 @@ export class UserSession {
   }
 
   public async awaitParsingEvents() {
-    let waitingCount = 0;
-    let parsedEvents = 0;
-    do {
-      waitingCount = await queue.getWaitingCount();
-      parsedEvents = await queue.getActiveCount();
-    } while (parsedEvents > 0 || waitingCount > 0);
+    await this.jobsService.awaitParsingEvents();
   }
 
   public async awaitRunningJobs(templateId?: string | string[], delay?: boolean, unfinishedJobs = 0) {
-    let runningJobs = 0;
-    let waitingCount = 0;
-    let parsedEvents = 0;
-    do {
-      waitingCount = await queue.getWaitingCount();
-      parsedEvents = await queue.getActiveCount();
-      runningJobs = await this.jobRepository.count({
-        _organizationId: this.organization._id,
-        type: {
-          $nin: [delay ? StepTypeEnum.DELAY : StepTypeEnum.DIGEST],
-        },
-        _templateId: Array.isArray(templateId) ? { $in: templateId } : templateId,
-        status: {
-          $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
-        },
-      });
-    } while (parsedEvents > 0 || waitingCount > 0 || runningJobs > unfinishedJobs);
+    await this.jobsService.awaitRunningJobs({
+      templateId,
+      organizationId: this.organization._id,
+      delay,
+      unfinishedJobs,
+    });
   }
 
   public async applyChanges(where: Partial<ChangeEntity> = {}) {

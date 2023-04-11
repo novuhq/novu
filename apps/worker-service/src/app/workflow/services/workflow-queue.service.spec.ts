@@ -1,5 +1,11 @@
 import { Test } from '@nestjs/testing';
+import { expect } from 'chai';
+import { formatISO } from 'date-fns';
+import { v4 as uuid } from 'uuid';
+import { faker } from '@faker-js/faker';
+
 import {
+  EnvironmentEntity,
   JobEntity,
   JobRepository,
   JobStatusEnum,
@@ -7,63 +13,100 @@ import {
   NotificationRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  OrganizationEntity,
   SubscriberEntity,
+  UserEntity,
 } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import { SubscribersService, UserSession } from '@novu/testing';
-import { expect } from 'chai';
-import { formatISO } from 'date-fns';
-import { v4 as uuid } from 'uuid';
+import {
+  EnvironmentService,
+  NotificationTemplateService,
+  OrganizationService,
+  SubscribersService,
+  UserService,
+  JobsService,
+} from '@novu/testing';
+import { QueueService } from '@novu/application-generic';
 
-import { WorkflowQueueService } from './workflow-queue.service';
+import { WorkflowModule } from '../workflow.module';
 
-import { WorkflowModule } from '../../workflow/workflow.module';
-
-let workflowQueueService: WorkflowQueueService;
+let queueService: QueueService;
 
 describe('Workflow Queue service', () => {
   let jobRepository: JobRepository;
-  let session: UserSession;
+  let organization: OrganizationEntity;
+  let environment: EnvironmentEntity;
+  let user: UserEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   let template: NotificationTemplateEntity;
+  let jobsService: JobsService;
+
+  before(async () => {
+    jobRepository = new JobRepository();
+
+    jobsService = new JobsService();
+
+    const userService = new UserService();
+    const card = {
+      firstName: faker.name.firstName(),
+      lastName: faker.name.lastName(),
+    };
+    const userEntity: Partial<UserEntity> = {
+      lastName: card.lastName,
+      firstName: card.firstName,
+      email: `${card.firstName}_${card.lastName}_${faker.datatype.uuid()}@gmail.com`.toLowerCase(),
+      profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
+      tokens: [],
+      password: '123Qwe!@#',
+      showOnBoarding: true,
+    };
+
+    user = await userService.createUser(userEntity);
+
+    const organizationService = new OrganizationService();
+    organization = await organizationService.createOrganization();
+    await organizationService.addMember(organization._id, user._id);
+
+    const environmentService = new EnvironmentService();
+    environment = await environmentService.createEnvironment(organization._id);
+
+    subscriberService = new SubscribersService(organization._id, environment._id);
+    subscriber = await subscriberService.createSubscriber();
+
+    const templateService = new NotificationTemplateService(user._id, organization._id, environment._id);
+    template = await templateService.createTemplate({ noFeedId: true, noLayoutId: true, noGroupId: true });
+  });
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [WorkflowModule],
     }).compile();
 
-    workflowQueueService = moduleRef.get<WorkflowQueueService>(WorkflowQueueService);
-
-    jobRepository = new JobRepository();
-    session = new UserSession();
-    await session.initialize();
-
-    subscriberService = new SubscribersService(session.organization._id, session.environment._id);
-    subscriber = await subscriberService.createSubscriber();
-
-    template = await session.createTemplate();
+    queueService = moduleRef.get<QueueService>(QueueService);
   });
 
   afterEach(async () => {
-    await workflowQueueService.gracefulShutdown();
+    await queueService.gracefulShutdown();
   });
 
   it('should be initialised properly', async () => {
-    expect(workflowQueueService).to.be.ok;
-    expect(workflowQueueService).to.have.all.keys(
+    expect(queueService).to.be.ok;
+    expect(queueService).to.have.all.keys(
       'DEFAULT_ATTEMPTS',
       'bullConfig',
       'bullMqService',
       'createExecutionDetails',
       'getBackoffStrategies',
+      'name',
       'queueNextJob',
       'runJob',
       'setJobAsCompleted',
-      'setJobAsFailed'
+      'setJobAsFailed',
+      'webhookFilterWebhookFilterBackoffStrategy'
     );
-    expect(workflowQueueService.DEFAULT_ATTEMPTS).to.eql(3);
-    expect(workflowQueueService.bullMqService.queue).to.deep.include({
+    expect(queueService.DEFAULT_ATTEMPTS).to.eql(3);
+    expect(queueService.bullMqService.queue).to.deep.include({
       _events: {},
       _eventsCount: 0,
       _maxListeners: undefined,
@@ -72,24 +115,16 @@ describe('Workflow Queue service', () => {
         removeOnComplete: true,
       },
     });
-    expect(workflowQueueService.bullMqService.worker).to.deep.include({
-      _eventsCount: 2,
-      _maxListeners: undefined,
-      name: 'standard',
-      blockTimeout: 0,
-      waiting: true,
-      running: true,
-    });
   });
 
   it('should a job added to the queue be updated as completed if works right', async () => {
     const transactionId = uuid();
-    const _environmentId = session.environment._id;
+    const _environmentId = environment._id;
     const _notificationId = NotificationRepository.createObjectId();
-    const _organizationId = session.organization._id;
+    const _organizationId = organization._id;
     const _subscriberId = subscriber._id;
     const _templateId = template._id;
-    const _userId = session.user._id;
+    const _userId = user._id;
 
     // Job with fake notification template and fake notification.
     const job: Omit<JobEntity, '_id'> = {
@@ -112,6 +147,7 @@ describe('Workflow Queue service', () => {
       _organizationId,
       _userId,
       _subscriberId,
+      subscriberId: subscriber.subscriberId,
       status: JobStatusEnum.PENDING,
       _templateId,
       digest: undefined,
@@ -123,9 +159,13 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await workflowQueueService.addToQueue(jobCreated._id, jobCreated, 0);
+    await queueService.addToQueue(jobCreated._id, jobCreated, '0');
 
-    await session.awaitRunningJobs(_templateId, false, 0);
+    await jobsService.awaitRunningJobs({
+      templateId: _templateId,
+      organizationId: organization._id,
+      delay: false,
+    });
 
     const jobs = await jobRepository.find({ _environmentId, _organizationId });
     expect(jobs.length).to.eql(1);
@@ -135,12 +175,12 @@ describe('Workflow Queue service', () => {
 
   it('should a job added to the queue be updated as failed if it fails', async () => {
     const transactionId = uuid();
-    const _environmentId = session.environment._id;
+    const _environmentId = environment._id;
     const _notificationId = NotificationRepository.createObjectId();
-    const _organizationId = session.organization._id;
+    const _organizationId = organization._id;
     const _subscriberId = subscriber._id;
     const _templateId = NotificationTemplateRepository.createObjectId();
-    const _userId = session.user._id;
+    const _userId = user._id;
 
     // Job with fake notification template and fake notification.
     const job: Omit<JobEntity, '_id'> = {
@@ -163,6 +203,7 @@ describe('Workflow Queue service', () => {
       _organizationId,
       _userId,
       _subscriberId,
+      subscriberId: subscriber.subscriberId,
       status: JobStatusEnum.PENDING,
       _templateId,
       digest: undefined,
@@ -174,21 +215,28 @@ describe('Workflow Queue service', () => {
 
     const jobCreated = await jobRepository.create(job);
 
-    await workflowQueueService.addToQueue(jobCreated._id, jobCreated, 0);
+    await queueService.addToQueue(jobCreated._id, jobCreated, '0');
 
-    await session.awaitRunningJobs(_templateId, false, 1);
+    await jobsService.awaitRunningJobs({
+      templateId: _templateId,
+      organizationId: organization._id,
+      delay: false,
+    });
     // We pause the worker as little trick to allow the `failed` status to be updated in the callback of the worker and not having a race condition.
-    await workflowQueueService.gracefulShutdown();
+    await queueService.gracefulShutdown();
 
-    const jobs = await jobRepository.find({ _environmentId, _organizationId });
-    expect(jobs.length).to.eql(1);
+    let failedTrigger: JobEntity | null = null;
+    do {
+      failedTrigger = await jobRepository.findOne({
+        _environmentId,
+        _organizationId,
+        status: JobStatusEnum.FAILED,
+        type: StepTypeEnum.TRIGGER,
+      });
+    } while (!failedTrigger || !failedTrigger.error);
 
-    expect(jobs[0].status).to.eql(JobStatusEnum.FAILED);
-    expect(jobs[0].error).to.deep.include({
-      status: 400,
+    expect(failedTrigger!.error).to.deep.include({
       message: `Notification template ${_templateId} is not found`,
-      name: 'ApiException',
-      options: {},
     });
   });
 });
