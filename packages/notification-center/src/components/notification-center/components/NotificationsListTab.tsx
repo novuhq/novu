@@ -1,15 +1,17 @@
 import React from 'react';
 import { IMessage, ChannelCTATypeEnum } from '@novu/shared';
 
-import { useNotifications, useNotificationCenter, useNovuContext } from '../../../hooks';
+import { useNotifications, useNotificationCenter, useNovuContext, useTranslations } from '../../../hooks';
 import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
 import { Loader } from './Loader';
+import { colors } from 'src/shared/config/colors';
 
 export function NotificationsListTab() {
   const { apiService } = useNovuContext();
   const { onNotificationClick, onUrlChange, emptyState } = useNotificationCenter();
   const { notifications, isLoading, hasNextPage, markNotificationAsRead, fetchNextPage } = useNotifications();
+  const { t } = useTranslations();
 
   async function fetchNext() {
     await fetchNextPage();
@@ -45,13 +47,15 @@ export function NotificationsListTab() {
             <div
               style={{
                 textAlign: 'center',
+                flexDirection: 'column',
                 minHeight: 350,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <img src={image as any} alt="logo" style={{ maxWidth: 200 }} />
+              <img src={image as any} alt="logo" style={{ maxWidth: 200, marginBottom: 15 }} />
+              <span style={{ color: colors.B70, fontSize: 15 }}>{t('noNewNotification')}</span>
             </div>
           )}
         </>

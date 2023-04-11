@@ -6,6 +6,7 @@ export const ES: ITranslationEntry = {
     markAllAsRead: 'marcar todo como leído',
     poweredBy: 'Con tecnología de',
     settings: 'Configuración',
+    noNewNotification: 'Nada nuevo que ver aquí todavía',
   },
   lang: 'es',
 };

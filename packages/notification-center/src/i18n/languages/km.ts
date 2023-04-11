@@ -6,6 +6,7 @@ export const KM: ITranslationEntry = {
     markAllAsRead: 'បានអានទាំងអស់',
     poweredBy: 'ដំណើរការដោយ',
     settings: 'ការកំណត់',
+    noNewNotification: 'មិនមានអ្វីថ្មីដើម្បីមើលនៅទីនេះនៅឡើយទេ',
   },
   lang: 'km',
 };
