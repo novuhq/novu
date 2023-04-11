@@ -105,7 +105,7 @@ export function TestWorkflow({ trigger }) {
       <SubPageWrapper title="Trigger">
         <Text color={colors.B60} mt={-16} mb={24}>
           Test trigger as if you sent it from your API or implement it by copy/pasting it into the codebase of your
-          application
+          application.
         </Text>
         <TriggerSegmentControl />
 

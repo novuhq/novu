@@ -41,7 +41,7 @@ export function ChannelPreference() {
         return (
           <>
             <Text mb={16} color={colors.B60}>
-              Default subscriptions
+              Default Channels On:
             </Text>
             {Object.keys(preferences).map((key) => {
               const label = channels.find((channel) => channel.tabKey === key)?.label;
@@ -89,8 +89,8 @@ export function CriticalPreference() {
         return (
           <Group mb={24} align="center" position="apart">
             <LabelWithTooltip
-              label="Users will be able to manage subscriptions"
-              tooltip="Users will receive notifications in the channels activated below. It will be able to opt out of those channels"
+              label="Users will be able to toggle on/off specific channels for this workflow."
+              tooltip="Users will receive notifications in the channels activated below. THEY be able to opt out of SPECIFIC channels."
             />
             <Switch {...field} checked={field.value || false} disabled={readonly} data-test-id="critical" />
           </Group>
