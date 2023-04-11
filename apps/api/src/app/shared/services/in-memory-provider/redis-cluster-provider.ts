@@ -60,7 +60,7 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
   const keyPrefix = redisClusterConfig.keyPrefix ?? DEFAULT_KEY_PREFIX;
   const ttl = redisClusterConfig.ttl ? Number(redisClusterConfig.ttl) : DEFAULT_TTL_SECONDS;
 
-  const instances: ClusterNode[] = ports.map((port: number): ClusterNode => ({ host, port }));
+  const instances: ClusterNode[] = [process.env.REDIS_CACHE_CLUSTER_URL as string];
 
   return {
     host,
