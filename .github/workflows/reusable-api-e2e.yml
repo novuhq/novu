@@ -29,12 +29,13 @@ jobs:
           cp .npmrc-cloud .npmrc
 
       - uses: ./.github/actions/setup-project
-      - uses: ./.github/actions/start-localstack
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint
           projects: "@novu/api"
+
+      - uses: ./.github/actions/start-localstack
 
       - name: Install wait-on plugin
         run: npm i -g wait-on

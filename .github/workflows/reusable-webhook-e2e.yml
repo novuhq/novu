@@ -15,13 +15,15 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - uses: actions/checkout@v3
+
     - uses: ./.github/actions/setup-project
-    - uses: ./.github/actions/start-localstack
 
     - uses: mansagroup/nrwl-nx-action@v3
       with:
         targets: lint
         projects: '@novu/webhook'
+
+    - uses: ./.github/actions/start-localstack
 
       # Runs a single command using the runners shell
     - name: Build API
