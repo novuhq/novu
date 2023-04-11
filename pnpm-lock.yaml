@@ -832,7 +832,7 @@ importers:
       typescript: 4.9.5
       webpack-dev-server: 4.11.1_webpack@5.78.0
 
-  apps/worker-service:
+  apps/worker:
     specifiers:
       '@faker-js/faker': ^6.0.0
       '@nestjs/axios': ~2.0.0

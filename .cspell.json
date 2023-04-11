@@ -504,7 +504,7 @@
     ".vscode/settings.json",
     "*/**/.vscode/settings.json",
     "docs/src/usage-examples.md",
-    "apps/worker-service/README.md",
+    "apps/worker/README.md",
     ".gitignore",
     "angular.json",
     "ng-package.json"

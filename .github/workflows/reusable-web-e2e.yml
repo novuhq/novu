@@ -47,8 +47,8 @@ jobs:
       - name: Build API
         run: CI='' pnpm build:api
 
-      - name: Build worker-service
-        run: CI='' pnpm build:worker-service
+      - name: Build worker
+        run: CI='' pnpm build:worker
 
       - name: Start Client
         working-directory: apps/web
@@ -68,8 +68,8 @@ jobs:
           GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
         run: cd apps/api && pnpm start:test &
 
-      - name: Start worker-service
-        run: cd apps/worker-service && pnpm start:test &
+      - name: Start worker
+        run: cd apps/worker && pnpm start:test &
 
       - name: Install wait-on plugin
         run: npm i -g wait-on
@@ -77,7 +77,7 @@ jobs:
       - name: Wait on API
         run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
 
-      - name: Wait on worker-service
+      - name: Wait on worker
         run: wait-on --timeout=180000 http://localhost:1342/v1/health-check
 
       - name: Wait on WS

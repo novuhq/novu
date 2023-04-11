@@ -1,4 +1,4 @@
-name: E2E worker-service Tests
+name: E2E worker Tests
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
@@ -21,16 +21,16 @@ jobs:
     - uses: mansagroup/nrwl-nx-action@v3
       with:
         targets: lint
-        projects: '@novu/worker-service'
+        projects: '@novu/worker'
 
     - uses: ./.github/actions/start-localstack
 
       # Runs a single command using the runners shell
-    - name: Build worker-service
-      run: CI='' pnpm build:worker-service
+    - name: Build worker
+      run: CI='' pnpm build:worker
 
     # Runs a set of commands using the runners shell
     - name: Run a test
       run: | 
-        cd apps/worker-service && pnpm test:e2e
+        cd apps/worker && pnpm test:e2e
         pnpm test
