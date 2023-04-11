@@ -74,6 +74,7 @@
     "@novu/sms77": "^0.13.0",
     "@novu/sms-central": "^0.13.0",
     "@novu/sns": "^0.13.0",
+    "@novu/sparkpost": "^0.13.0",
     "@novu/stateless": "^0.13.0",
     "@novu/telnyx": "^0.13.0",
     "@novu/termii": "^0.13.0",
@@ -122,9 +123,6 @@
     "swagger-ui-express": "^4.4.0",
     "twilio": "^3.72.0",
     "uuid": "^8.3.2"
-  },
-  "optionalDependencies": {
-    "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {
     "@faker-js/faker": "^6.0.0",

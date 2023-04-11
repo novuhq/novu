@@ -6,11 +6,13 @@ import { ProcessSubscriberCommand } from './process-subscriber.command';
 
 import { subscriberNeedUpdate } from '../../../subscribers/usecases/update-subscriber';
 import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class ProcessSubscriber {
   constructor(private createSubscriberUsecase: CreateSubscriber, private subscriberRepository: SubscriberRepository) {}
 
+  @InstrumentUsecase()
   public async execute(command: ProcessSubscriberCommand): Promise<SubscriberEntity | undefined> {
     const { environmentId, organizationId, subscriber } = command;
 
