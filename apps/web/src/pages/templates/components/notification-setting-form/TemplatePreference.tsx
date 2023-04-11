@@ -89,8 +89,8 @@ export function CriticalPreference() {
         return (
           <Group mb={24} align="center" position="apart">
             <LabelWithTooltip
-              label="Users will be able to toggle on/off specific channels for this workflow."
-              tooltip="Users will receive notifications in the channels activated below. THEY be able to opt out of SPECIFIC channels."
+              label="Users will be able to manage subscriptions"
+              tooltip="Allow opting out of the specific channel. Users will receive notifications in the active channels."
             />
             <Switch {...field} checked={field.value || false} disabled={readonly} data-test-id="critical" />
           </Group>
