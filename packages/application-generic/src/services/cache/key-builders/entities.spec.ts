@@ -18,7 +18,7 @@ describe('Key builder for entities', () => {
     it('should build a subscriber key with the given subscriberId and environmentId', () => {
       const subscriberId = '123';
       const environmentId = 'test-env';
-      const expectedKey = `${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.SUBSCRIBER}:e=${environmentId}:s=${subscriberId}`;
+      const expectedKey = `{${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.SUBSCRIBER}:e=${environmentId}:s=${subscriberId}}`;
       const actualKey = buildSubscriberKey({
         subscriberId,
         _environmentId: environmentId,
@@ -30,7 +30,7 @@ describe('Key builder for entities', () => {
   describe('buildUserKey', () => {
     it('should build a user key with the given _id', () => {
       const _id = '123';
-      const expectedKey = `${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.USER}:${IdentifierPrefixEnum.ID}=${_id}`;
+      const expectedKey = `{${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.USER}:${IdentifierPrefixEnum.ID}=${_id}}`;
       const actualKey = buildUserKey({ _id });
       expect(actualKey).toEqual(expectedKey);
     });
@@ -39,7 +39,7 @@ describe('Key builder for entities', () => {
   describe('buildEnvironmentByApiKey', () => {
     it('should build an environment by api key with the given _id', () => {
       const _id = '123';
-      const expectedKey = `${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY}:${IdentifierPrefixEnum.API_KEY}=${_id}`;
+      const expectedKey = `{${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY}:${IdentifierPrefixEnum.API_KEY}=${_id}}`;
       const actualKey = buildEnvironmentByApiKey({ apiKey: _id });
       expect(actualKey).toEqual(expectedKey);
     });
@@ -51,7 +51,7 @@ describe('Key builder for entities', () => {
       const keyEntity = CacheKeyPrefixEnum.SUBSCRIBER;
       const identifierPrefix = IdentifierPrefixEnum.SUBSCRIBER_ID;
       const identifier = '123';
-      const expectedKey = `${type}:${keyEntity}:${identifierPrefix}=${identifier}`;
+      const expectedKey = `{${type}:${keyEntity}:${identifierPrefix}=${identifier}}`;
       const actualKey = buildKeyById({
         type,
         keyEntity,
@@ -69,7 +69,7 @@ describe('Key builder for entities', () => {
       const identifierPrefix = IdentifierPrefixEnum.ID;
       const identifier = '123';
       const environmentId = '456';
-      const expectedKey = `${type}:${keyEntity}:${OrgScopePrefixEnum.ENVIRONMENT_ID}=${environmentId}:${identifierPrefix}=${identifier}`;
+      const expectedKey = `{${type}:${keyEntity}:${OrgScopePrefixEnum.ENVIRONMENT_ID}=${environmentId}:${identifierPrefix}=${identifier}}`;
       const result = buildNotificationTemplateKey({
         _id: identifier,
         _environmentId: environmentId,
@@ -85,7 +85,7 @@ describe('Key builder for entities', () => {
       const identifierPrefix = IdentifierPrefixEnum.TEMPLATE_IDENTIFIER;
       const identifier = '123';
       const environmentId = '456';
-      const expectedKey = `${type}:${keyEntity}:${OrgScopePrefixEnum.ENVIRONMENT_ID}=${environmentId}:${identifierPrefix}=${identifier}`;
+      const expectedKey = `{${type}:${keyEntity}:${OrgScopePrefixEnum.ENVIRONMENT_ID}=${environmentId}:${identifierPrefix}=${identifier}}`;
       const result = buildNotificationTemplateIdentifierKey({
         templateIdentifier: identifier,
         _environmentId: environmentId,
