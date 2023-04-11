@@ -194,7 +194,6 @@ jobSchema.virtual('environment', {
  */
 jobSchema.index({
   transactionId: 1,
-  _subscriberId: 1,
 });
 
 /*
@@ -209,7 +208,6 @@ jobSchema.index({
  */
 jobSchema.index({
   _parentId: 1,
-  _environmentId: 1,
 });
 
 /*
