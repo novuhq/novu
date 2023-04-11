@@ -372,7 +372,7 @@ export class HeadlessService {
     onError,
   }: {
     listener: (result: FetchResult<IUserPreferenceSettings[]>) => void;
-    onSuccess?: (messages: IUserPreferenceSettings[]) => void;
+    onSuccess?: (settings: IUserPreferenceSettings[]) => void;
     onError?: (error: unknown) => void;
   }) {
     this.assertSessionInitialized();
