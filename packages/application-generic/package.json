@@ -38,6 +38,8 @@
     "@nestjs/common": ">=9.3.12",
     "@nestjs/swagger": ">=6.3.0",
     "@nestjs/testing": ">=9.3.12",
+    "reflect-metadata": "^0.1.13",
+    "rxjs": ">=7.8.0",
     "newrelic": ">=9"
   },
   "dependencies": {
@@ -80,6 +82,7 @@
     "@novu/sms-central": "^0.13.0",
     "@novu/sms77": "^0.13.0",
     "@novu/sns": "^0.13.0",
+    "@novu/sparkpost": "^0.13.0",
     "@novu/stateless": "^0.13.0",
     "@novu/telnyx": "^0.13.0",
     "@novu/termii": "^0.13.0",
@@ -102,6 +105,9 @@
     "pino-pretty": "^9.4.0",
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13"
+  },
+  "optionalDependencies": {
+    "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
@@ -156,8 +162,5 @@
       "**/*.spec.js"
     ]
   },
-  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0",
-  "optionalDependencies": {
-    "@taskforcesh/bullmq-pro": "5.1.14"
-  }
+  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
 }

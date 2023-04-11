@@ -11,8 +11,8 @@ import { Logger } from '@nestjs/common';
 export class BullmqService {
   private _queue: Queue;
   private _worker: Worker;
-  public static readonly pro: boolean = false;
-  // Todo revert: process.env.NOVU_MANAGED_SERVICE !== undefined;
+  public static readonly pro: boolean =
+    process.env.NOVU_MANAGED_SERVICE !== undefined;
 
   get worker() {
     return this._worker;
@@ -22,12 +22,18 @@ export class BullmqService {
     return this._queue;
   }
 
-  public static haveProInstalled() {
+  public static haveProInstalled(): boolean {
     if (!BullmqService.pro) {
-      return;
+      return false;
     }
 
     require('@taskforcesh/bullmq-pro');
+
+    return true;
+  }
+
+  private runningWithProQueue() {
+    return BullmqService.pro && BullmqService.haveProInstalled();
   }
 
   public createQueue(name: string, config: QueueOptions) {
@@ -38,7 +44,7 @@ export class BullmqService {
 
     Logger.log(
       `Creating queue ${name} bullmq pro is ${
-        BullmqService.pro ? 'Enabled' : 'Disabled'
+        this.runningWithProQueue() ? 'Enabled' : 'Disabled'
       }`
     );
 

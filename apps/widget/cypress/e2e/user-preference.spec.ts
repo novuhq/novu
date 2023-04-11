@@ -21,7 +21,20 @@ describe('User Preferences', function () {
         res.send({ body: res.body });
       });
     });
-    cy.initializeSession().as('session');
+    cy.initializeSession()
+      .as('session')
+      .then((session: any) => {
+        cy.wait(500);
+
+        cy.task('createNotifications', {
+          identifier: session.templates[0].triggers[0].identifier,
+          token: session.token,
+          subscriberId: session.subscriber.subscriberId,
+          count: 1,
+        });
+
+        cy.wait(1000);
+      });
   });
 
   it('should navigate between notifications and user preference screens', function () {

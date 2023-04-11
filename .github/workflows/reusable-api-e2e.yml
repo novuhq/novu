@@ -22,12 +22,6 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v3
-
-      - if: ${{ inputs.ee }}
-        run: |
-          rm -f .npmrc
-          cp .npmrc-cloud .npmrc
-
       - uses: ./.github/actions/setup-project
 
       - uses: mansagroup/nrwl-nx-action@v3

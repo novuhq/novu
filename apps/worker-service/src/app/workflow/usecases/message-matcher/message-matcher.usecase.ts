@@ -276,7 +276,6 @@ export class MessageMatcher {
         _jobId: command.job._parentId,
         _messageId: message._id,
         _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
         webhookStatus: EmailEventStatusEnum.OPENED,
       });
 

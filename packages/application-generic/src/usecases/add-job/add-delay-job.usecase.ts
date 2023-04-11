@@ -94,16 +94,19 @@ export class AddDelayJob {
     currentDelayPath: string,
     currentDelayDate: string
   ): Promise<boolean> {
-    return !(await this.jobRepository.findOne({
-      status: JobStatusEnum.DELAYED,
-      type: StepTypeEnum.DELAY,
-      _subscriberId: data._subscriberId,
-      _templateId: data._templateId,
-      _environmentId: data._environmentId,
-      transactionId: { $ne: data.transactionId },
-      'step.metadata.type': DelayTypeEnum.SCHEDULED,
-      'step.metadata.delayPath': currentDelayPath,
-      [`payload.${currentDelayPath}`]: currentDelayDate,
-    }));
+    return !((await this.jobRepository.findOne(
+      {
+        status: JobStatusEnum.DELAYED,
+        type: StepTypeEnum.DELAY,
+        _subscriberId: data._subscriberId,
+        _templateId: data._templateId,
+        _environmentId: data._environmentId,
+        transactionId: { $ne: data.transactionId },
+        'step.metadata.type': DelayTypeEnum.SCHEDULED,
+        'step.metadata.delayPath': currentDelayPath,
+        [`payload.${currentDelayPath}`]: currentDelayDate,
+      },
+      '_subscriberId'
+    )) as Pick<JobEntity, '_subscriberId'>);
   }
 }
