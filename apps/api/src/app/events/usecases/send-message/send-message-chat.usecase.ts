@@ -116,15 +116,30 @@ export class SendMessageChat extends SendMessageBase {
       return;
     }
 
+    let allFailed = true;
     for (const channel of chatChannels) {
       try {
         await this.sendChannelMessage(command, channel, notification, chatChannel, content);
+        allFailed = false;
       } catch (e) {
         /*
          * Do nothing, one chat channel failed, perhaps another one succeeds
          * The failed message has been created
          */
       }
+    }
+
+    if (allFailed) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
     }
   }
 
