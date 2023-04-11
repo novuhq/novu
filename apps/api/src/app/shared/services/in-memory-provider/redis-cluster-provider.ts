@@ -60,7 +60,7 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
   const keyPrefix = redisClusterConfig.keyPrefix ?? DEFAULT_KEY_PREFIX;
   const ttl = redisClusterConfig.ttl ? Number(redisClusterConfig.ttl) : DEFAULT_TTL_SECONDS;
 
-  const instances: ClusterNode[] = [process.env.REDIS_CACHE_CLUSTER_URL as string];
+  const instances: ClusterNode[] = [{ host: process.env.REDIS_CACHE_CLUSTER_URL as string, port: 6379 }];
 
   return {
     host,
@@ -80,6 +80,10 @@ export const getRedisCluster = (): Cluster | undefined => {
 
   const options: ClusterOptions = {
     showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
+    dnsLookup: (address, callback) => callback(null, address),
+    redisOptions: {
+      tls: {},
+    },
   };
 
   if (instances && instances.length > 0) {
