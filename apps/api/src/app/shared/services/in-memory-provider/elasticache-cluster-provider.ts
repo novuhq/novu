@@ -81,6 +81,7 @@ export const getElasticacheCluster = (): Cluster | undefined => {
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
     enableOfflineQueue: false,
+    enableReadyCheck: true,
     redisOptions: {
       tls: {},
     },
@@ -89,7 +90,7 @@ export const getElasticacheCluster = (): Cluster | undefined => {
      *  Disabled in Prod as affects performance
      */
     showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
-    slotsRefreshTimeout: 2000,
+    slotsRefreshTimeout: 5000,
   };
 
   if (instances && instances.length > 0) {
