@@ -10,16 +10,16 @@ describe('Key builder for queries', () => {
         subscriberId: 'sub456',
         someOtherParam: 'value',
       };
-      const expectedKey = `${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.FEED}:e=${command.environmentId}:s=${
+      const expectedKey = `{${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.FEED}:e=${command.environmentId}:s=${
         command.subscriberId
-      }:${QUERY_PREFIX}=${JSON.stringify(command)}`;
+      }}:${QUERY_PREFIX}=${JSON.stringify(command)}`;
       expect(buildFeedKey().cache(command)).equal(expectedKey);
     });
 
     it('should return the correct invalidation key', () => {
       const subscriberId = 'sub789';
       const environmentId = 'env456';
-      const expectedKey = `${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.FEED}:e=${environmentId}:s=${subscriberId}`;
+      const expectedKey = `{${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.FEED}:e=${environmentId}:s=${subscriberId}}`;
       expect(buildFeedKey().invalidate({ subscriberId, _environmentId: environmentId })).equal(expectedKey);
     });
   });
@@ -32,16 +32,16 @@ describe('Key builder for queries', () => {
         someOtherParam: 'value',
       };
 
-      const expectedKey = `${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.MESSAGE_COUNT}:e=${command.environmentId}:s=${
-        command.subscriberId
-      }:${QUERY_PREFIX}=${JSON.stringify(command)}`;
+      const expectedKey = `{${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.MESSAGE_COUNT}:e=${
+        command.environmentId
+      }:s=${command.subscriberId}}:${QUERY_PREFIX}=${JSON.stringify(command)}`;
       expect(buildMessageCountKey().cache(command)).equal(expectedKey);
     });
 
     it('should return the correct invalidation key for GetFeedCountCommand', () => {
       const subscriberId = 'sub789';
       const environmentId = 'env456';
-      const expectedKey = `${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.MESSAGE_COUNT}:e=${environmentId}:s=${subscriberId}`;
+      const expectedKey = `{${CacheKeyTypeEnum.QUERY}:${CacheKeyPrefixEnum.MESSAGE_COUNT}:e=${environmentId}:s=${subscriberId}}`;
       expect(buildMessageCountKey().invalidate({ subscriberId, _environmentId: environmentId })).equal(expectedKey);
     });
   });
