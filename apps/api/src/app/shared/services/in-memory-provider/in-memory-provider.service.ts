@@ -154,11 +154,11 @@ export class InMemoryProviderService {
       });
 
       inMemoryProviderClient.on('ready', () => {
-        Logger.error('Redis ready', LOG_CONTEXT);
+        Logger.log('Redis ready', LOG_CONTEXT);
       });
 
       inMemoryProviderClient.on('wait', () => {
-        Logger.error('Redis wait', LOG_CONTEXT);
+        Logger.log('Redis wait', LOG_CONTEXT);
       });
 
       return inMemoryProviderClient;

@@ -78,18 +78,7 @@ export const getRedisClusterProviderConfig = (): IRedisClusterProviderConfig => 
 export const getRedisCluster = (): Cluster | undefined => {
   const { instances } = getRedisClusterProviderConfig();
 
-  const natMap = instances?.reduce((acc: NatMap, instance: any): NatMap => {
-    return {
-      ...acc,
-      [`${instance.host}:${instance.port}`]: { host: instance.host as string, port: instance.port as number },
-    };
-  }, {});
-
   const options: ClusterOptions = {
-    /*
-     * natMap,
-     *  Disabled in Prod as affects performance
-     */
     showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
   };
 
