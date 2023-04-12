@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ChatFactory } from '../../services/chat-service/chat.factory';
 import { CreateLog } from '../../../logs/usecases';
 import { SendMessageCommand } from './send-message.command';
@@ -33,6 +33,8 @@ import { DetailEnum } from '../../../execution-details/types';
 import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InstrumentUsecase } from '@novu/application-generic';
+
+const LOG_CONTEXT = 'SendMessageChat';
 
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
@@ -126,6 +128,7 @@ export class SendMessageChat extends SendMessageBase {
          * Do nothing, one chat channel failed, perhaps another one succeeds
          * The failed message has been created
          */
+        Logger.error(`Sending chat message to the chat channel ${channel.providerId} failed`, LOG_CONTEXT);
       }
     }
 
