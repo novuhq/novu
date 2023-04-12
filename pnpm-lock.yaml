@@ -206,7 +206,7 @@ importers:
       handlebars: ^4.7.7
       hat: ^0.0.3
       helmet: ^6.0.1
-      ioredis: ^5.2.4
+      ioredis: 5.3.1
       jsonwebtoken: 9.0.0
       lodash: ^4.17.15
       mocha: ^8.1.1
@@ -981,7 +981,7 @@ importers:
       dotenv: ^8.2.0
       envalid: ^7.1.0
       helmet: ^6.0.1
-      ioredis: ^5.2.4
+      ioredis: 5.3.1
       jest: ^27.0.6
       jsonwebtoken: 9.0.0
       lodash: ^4.17.15
@@ -46927,6 +46927,7 @@ packages:
       typescript: 4.9.5
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+    dev: true
 
   /ts-node/9.1.1_typescript@4.9.5:
     resolution: {integrity: sha512-hPlt7ZACERQGf03M253ytLY3dHbGNGrAq9qIHWUY9XHYl1z7wYngSr3OQ5xmui8o2AaxsONxIzjafLUiWBo1Fg==}
