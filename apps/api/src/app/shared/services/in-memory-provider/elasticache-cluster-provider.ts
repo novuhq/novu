@@ -95,7 +95,8 @@ export const getElasticacheCluster = (): Cluster | undefined => {
     slotsRefreshTimeout: 10000,
   };
 
-  Logger.log(`Initializing Elasticache Cluster with ${instances?.length} instances`);
+  Logger.log(`Initializing Elasticache Cluster service`);
+
   if (instances && instances.length > 0) {
     return new Redis.Cluster(instances, options);
   }
