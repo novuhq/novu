@@ -104,9 +104,7 @@ export class CacheService implements ICacheService {
 
     if (client) {
       return new Promise((resolve, reject) => {
-        const stream = client.scanStream({
-          match: pattern,
-        });
+        const stream = this.inMemoryProviderService.inMemoryScan(pattern);
 
         stream.on('data', function (keys) {
           if (keys.length) {
