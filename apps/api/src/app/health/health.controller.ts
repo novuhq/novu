@@ -4,6 +4,8 @@ import { HealthCheck, HealthCheckService, HttpHealthIndicator } from '@nestjs/te
 import { DalService } from '@novu/dal';
 import { version } from '../../../package.json';
 import { CacheService } from '../shared/services/cache';
+import { CacheServiceHealthIndicator } from './cache-health-indicator';
+import { HealthIndicatorFunction } from '@nestjs/terminus/dist/health-indicator';
 
 @Controller('health-check')
 @ApiExcludeController()
@@ -12,18 +14,15 @@ export class HealthController {
     private healthCheckService: HealthCheckService,
     private healthIndicator: HttpHealthIndicator,
     private dalService: DalService,
-    private cacheService: CacheService
+    private cacheHealthIndicator: CacheServiceHealthIndicator
   ) {}
 
   @Get()
   @HealthCheck()
   healthCheck() {
-    return this.healthCheckService.check([
+    const checks: HealthIndicatorFunction[] = [
       async () => {
         return {
-          cache: {
-            status: this.cacheService.cacheEnabled() ? 'up' : 'down',
-          },
           db: {
             status: this.dalService.connection.readyState === 1 ? 'up' : 'down',
           },
@@ -37,6 +36,12 @@ export class HealthController {
           },
         };
       },
-    ]);
+    ];
+
+    if (process.env.ELASTICACHE_CLUSTER_SERVICE_HOST) {
+      checks.push(() => this.cacheHealthIndicator.isHealthy());
+    }
+
+    return this.healthCheckService.check(checks);
   }
 }
