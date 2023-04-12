@@ -32,7 +32,7 @@ describe('Changes Screen', function () {
     cy.getByTestId('notifications-template').find('tbody tr').first().click({ force: true });
   });
 
-  it.skip('should show correct count of pending changes and update real time', function () {
+  it('should show correct count of pending changes and update real time', function () {
     createNotification();
     cy.getByTestId('side-nav-changes-count').contains('1');
 
