@@ -5,7 +5,7 @@ import { useNotifications, useNotificationCenter, useNovuContext, useTranslation
 import image from '../../../images/no-new-notifications.png';
 import { NotificationsList } from './NotificationsList';
 import { Loader } from './Loader';
-import { colors } from 'src/shared/config/colors';
+import { colors } from '../../../shared/config/colors';
 
 export function NotificationsListTab() {
   const { apiService } = useNovuContext();
