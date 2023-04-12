@@ -1,5 +1,6 @@
 import Redis, { Cluster, ClusterNode, ClusterOptions, NodeRole } from 'ioredis';
 import { ConnectionOptions } from 'tls';
+import { Logger } from '@nestjs/common';
 
 export { Cluster, ClusterOptions };
 
@@ -84,15 +85,17 @@ export const getElasticacheCluster = (): Cluster | undefined => {
     enableReadyCheck: true,
     redisOptions: {
       tls: {},
+      connectTimeout: 10000,
     },
     // scaleReads: 'slave' as NodeRole, // Enable it for improved performance to read only in replicas
     /*
      *  Disabled in Prod as affects performance
      */
     showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
-    slotsRefreshTimeout: 5000,
+    slotsRefreshTimeout: 10000,
   };
 
+  Logger.log(`Initializing Elasticache Cluster with ${instances?.length} instances`);
   if (instances && instances.length > 0) {
     return new Redis.Cluster(instances, options);
   }

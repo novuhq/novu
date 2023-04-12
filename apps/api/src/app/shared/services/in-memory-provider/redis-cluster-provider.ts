@@ -1,5 +1,6 @@
 import Redis, { Cluster, ClusterNode, ClusterOptions } from 'ioredis';
 import { ConnectionOptions } from 'tls';
+import { Logger } from '@nestjs/common';
 
 export { Cluster, ClusterOptions };
 
@@ -85,6 +86,8 @@ export const getRedisCluster = (): Cluster | undefined => {
     showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
     slotsRefreshTimeout: 2000,
   };
+
+  Logger.log(`Initializing Redis Cluster Provider with ${instances?.length} instances`);
 
   if (instances && instances.length > 0) {
     return new Redis.Cluster(instances, options);
