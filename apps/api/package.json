@@ -102,7 +102,7 @@
     "handlebars": "^4.7.7",
     "hat": "^0.0.3",
     "helmet": "^6.0.1",
-    "ioredis": "^5.2.4",
+    "ioredis": "5.3.1",
     "jsonwebtoken": "9.0.0",
     "lodash": "^4.17.15",
     "nanoid": "^3.1.20",
