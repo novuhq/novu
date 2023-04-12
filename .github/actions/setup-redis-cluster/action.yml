@@ -1,0 +1,15 @@
+name: Setup Novu Redis Cluster
+
+description: Sets up a Redis Cluster instance needed to run the tests 
+
+runs:
+  using: composite
+  steps:
+    - uses: vishnudxb/redis-cluster@1.0.5
+      with:
+        master1-port: 7000
+        master2-port: 7001
+        master3-port: 7002
+        slave1-port: 7003
+        slave2-port: 7004
+        slave3-port: 7005
