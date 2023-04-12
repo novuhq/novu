@@ -6,6 +6,7 @@ export const LT: ITranslationEntry = {
     markAllAsRead: 'Pažymėti visus kaip skaitytus',
     poweredBy: 'Sukurta',
     settings: 'Nustatymai',
+    noNewNotification: 'Čia dar nieko naujo nematyti',
   },
   lang: 'lt',
 };

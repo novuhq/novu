@@ -6,6 +6,7 @@ export const NL: ITranslationEntry = {
     markAllAsRead: 'Markeer alles als gelezen',
     poweredBy: 'Aangedreven door',
     settings: 'Instellingen',
+    noNewNotification: 'Hier is nog niets nieuws te zien',
   },
   lang: 'nl',
 };

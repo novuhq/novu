@@ -6,6 +6,7 @@ export const GL: ITranslationEntry = {
     markAllAsRead: 'Marcar todo coma lido',
     poweredBy: 'Coa tecnoloxía de',
     settings: 'Axustes',
+    noNewNotification: 'Aínda non hai nada novo que ver aquí',
   },
   lang: 'gl',
 };

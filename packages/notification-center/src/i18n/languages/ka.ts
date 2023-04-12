@@ -6,6 +6,7 @@ export const KA: ITranslationEntry = {
     markAllAsRead: 'ಎಲ್ಲವನ್ನು ಓದಲಾಗಿದೆ ಎಂದು ಗುರುತಿಸಿ',
     poweredBy: 'ಮೂಲಕ ನಡೆಸಲ್ಪಡುತ್ತಿದೆ',
     settings: 'ಸಂಯೋಜನೆಗಳು',
+    noNewNotification: 'აქ ახალი სანახავი ჯერ არაფერია',
   },
   lang: 'ka',
 };

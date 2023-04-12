@@ -6,6 +6,7 @@ export const AZ: ITranslationEntry = {
     markAllAsRead: 'Hamısını oxunmuş olaraq işarələ',
     poweredBy: 'tərəfindən təchiz edilmişdir',
     settings: 'Qəbulu',
+    noNewNotification: 'Hələ burada görmək üçün yeni heç nə yoxdur',
   },
   lang: 'az',
 };
