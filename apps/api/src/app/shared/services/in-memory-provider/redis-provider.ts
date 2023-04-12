@@ -38,7 +38,7 @@ export interface IRedisProviderConfig {
 export const getRedisProviderConfig = (): IRedisProviderConfig => {
   const redisConfig: IRedisConfig = {
     host: process.env.REDIS_CACHE_SERVICE_HOST,
-    port: process.env.REDIS_CACHE_SERVICE_PORT,
+    port: process.env.REDIS_CACHE_SERVICE_PORT || String(6379),
     ttl: process.env.REDIS_CACHE_TTL,
     password: process.env.REDIS_CACHE_PASSWORD,
     connectTimeout: process.env.REDIS_CACHE_CONNECTION_TIMEOUT,
