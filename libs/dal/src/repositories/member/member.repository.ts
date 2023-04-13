@@ -44,10 +44,9 @@ export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity
       _organizationId: organizationId,
     };
 
-    const members = await this.MongooseModel.find(requestQuery).populate(
-      '_userId',
-      'firstName lastName email _id profilePicture createdAt'
-    );
+    const members = await this.MongooseModel.find(requestQuery)
+      .lean()
+      .populate('_userId', 'firstName lastName email _id profilePicture createdAt');
     if (!members) return [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,7 +69,7 @@ export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity
       roles: MemberRoleEnum.ADMIN,
     };
 
-    const member = await this.MongooseModel.findOne(requestQuery);
+    const member = await this.MongooseModel.findOne(requestQuery).lean();
 
     return this.mapEntity(member);
   }
@@ -80,7 +79,9 @@ export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity
       _organizationId: organizationId,
     };
 
-    const members = await this.MongooseModel.find(requestQuery).populate('_userId', 'firstName lastName email _id');
+    const members = await this.MongooseModel.find(requestQuery)
+      .lean()
+      .populate('_userId', 'firstName lastName email _id');
     if (!members) return [];
 
     const membersEntity = this.mapEntities(members);

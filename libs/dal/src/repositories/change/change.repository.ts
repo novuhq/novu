@@ -57,6 +57,7 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
       enabled,
       _parentId: { $exists: false, $eq: null },
     })
+      .lean()
       .skip(skip)
       .limit(limit)
       .populate('user');

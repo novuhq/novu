@@ -61,8 +61,9 @@ export class NotificationRepository extends BaseRepository<
       };
     }
 
-    const totalCount = await this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
+    const totalCount = await this.MongooseModel.countDocuments(requestQuery).lean().read('secondaryPreferred');
     const response = await this.populateFeed(this.MongooseModel.find(requestQuery), environmentId)
+      .lean()
       .read('secondaryPreferred')
       .skip(skip)
       .limit(limit)
@@ -81,7 +82,7 @@ export class NotificationRepository extends BaseRepository<
       _organizationId,
     };
 
-    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery), _environmentId));
+    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery), _environmentId)).lean();
   }
 
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>, environmentId: string) {

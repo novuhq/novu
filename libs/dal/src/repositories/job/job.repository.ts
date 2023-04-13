@@ -174,14 +174,16 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       modified: 0,
     };
 
-    const delayedDigestJobs = await this._model.find({
-      status: JobStatusEnum.DELAYED,
-      type: StepTypeEnum.DIGEST,
-      _templateId: job._templateId,
-      _environmentId: this.convertStringToObjectId(job._environmentId),
-      _subscriberId: this.convertStringToObjectId(job._subscriberId),
-      ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
-    });
+    const delayedDigestJobs = await this._model
+      .find({
+        status: JobStatusEnum.DELAYED,
+        type: StepTypeEnum.DIGEST,
+        _templateId: job._templateId,
+        _environmentId: this.convertStringToObjectId(job._environmentId),
+        _subscriberId: this.convertStringToObjectId(job._subscriberId),
+        ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
+      })
+      .lean();
 
     const matched = delayedDigestJobs.length;
     execution.matched = matched;

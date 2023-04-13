@@ -79,6 +79,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       skip: options.skip,
       sort: '-createdAt',
     })
+      .lean()
       .read('secondaryPreferred')
       .populate('subscriber', '_id firstName lastName avatar subscriberId')
       .populate('actorSubscriber', '_id firstName lastName avatar subscriberId');
@@ -271,7 +272,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
           _actorId: { $exists: true },
         },
         select: '_id firstName lastName avatar subscriberId',
-      });
+      })
+      .lean();
 
     return this.mapEntity(res);
   }
@@ -288,6 +290,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       limit: options?.limit,
       skip: options?.skip,
     })
+      .lean()
       .populate('subscriber', '_id firstName lastName avatar subscriberId')
       .populate('actorSubscriber', '_id firstName lastName avatar subscriberId');
 

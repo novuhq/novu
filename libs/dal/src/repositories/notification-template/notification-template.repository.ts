@@ -26,7 +26,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       'triggers.identifier': identifier,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
+    const item = await this.MongooseModel.findOne(requestQuery).lean().populate('steps.template');
 
     return this.mapEntity(item);
   }
@@ -37,7 +37,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       _environmentId: environmentId,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
+    const item = await this.MongooseModel.findOne(requestQuery).lean().populate('steps.template');
 
     return this.mapEntity(item);
   }
@@ -49,7 +49,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       _organizationId: NotificationTemplateRepository.getBlueprintOrganizationId() as string,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
+    const item = await this.MongooseModel.findOne(requestQuery).lean().populate('steps.template');
 
     return this.mapEntity(item);
   }
@@ -68,6 +68,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     const items = await this.MongooseModel.find(requestQuery)
       .sort({ createdAt: -1 })
       .skip(skip)
+      .lean()
       .limit(limit)
       .populate({ path: 'notificationGroup' });
 
@@ -85,6 +86,7 @@ export class NotificationTemplateRepository extends BaseRepository<
     const items = await this.MongooseModel.find(requestQuery)
       .sort({ createdAt: -1 })
       .skip(skip)
+      .lean()
       .limit(limit)
       .populate({ path: 'notificationGroup' });
 
@@ -98,7 +100,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       active: active,
     };
 
-    const items = await this.MongooseModel.find(requestQuery).populate('notificationGroup');
+    const items = await this.MongooseModel.find(requestQuery).lean().populate('notificationGroup');
 
     return this.mapEntities(items);
   }

@@ -82,6 +82,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
       .find(query, select, {
         sort: options.sort || null,
       })
+      .lean()
       .batchSize(batchSize)
       .cursor()) {
       yield this.mapEntity(doc);

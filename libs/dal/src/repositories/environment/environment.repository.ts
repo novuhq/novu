@@ -8,10 +8,10 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
   }
 
   async findEnvironmentByIdentifier(identifier: string) {
-    const data = await this.MongooseModel.findOne({ identifier }).read('secondaryPreferred');
+    const data = await this.MongooseModel.findOne({ identifier }).lean().read('secondaryPreferred');
     if (!data) return null;
 
-    return this.mapEntity(data.toObject());
+    return this.mapEntity(data);
   }
 
   async updateApiKeyUserId(organizationId: string, oldUserId: string, newUserId: string) {
