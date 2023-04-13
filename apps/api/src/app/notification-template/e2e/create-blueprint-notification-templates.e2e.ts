@@ -84,7 +84,7 @@ describe('Create Notification template from blueprint - /notification-templates/
 
     expect(fetchedTemplate.isBlueprint).to.equal(true);
     expect(testTemplate.name).to.equal(fetchedTemplate.name);
-    expect(data.data.blueprintId).to.equal(fetchedTemplate.id);
+    expect(data.data.blueprintId).to.equal(fetchedTemplate._id);
 
     response = await session.testAgent.get(`/v1/notification-templates/${normalTemplate.data._id}/blueprint`).send();
 
