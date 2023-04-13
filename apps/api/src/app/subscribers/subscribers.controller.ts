@@ -29,7 +29,14 @@ import {
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+  ApiExcludeEndpoint,
+} from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
@@ -386,6 +393,7 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @UseGuards(JwtAuthGuard)
   @Post('/:subscriberId/messages/:messageId/seen')
   @ApiOperation({
