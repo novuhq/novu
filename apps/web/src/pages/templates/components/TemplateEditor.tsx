@@ -14,7 +14,7 @@ import { DelayMetadata } from '../workflow/DelayMetadata';
 import { colors } from '../../../design-system';
 import { useEffect, useMemo } from 'react';
 import { useBasePath } from '../hooks/useBasePath';
-import { StepNameInput } from './StepNameInput';
+import { StepName } from './StepName';
 import { DeleteStepRow } from './DeleteStepRow';
 
 export const TemplateEditor = () => {
@@ -53,7 +53,7 @@ export const TemplateEditor = () => {
     return (
       <SubPageWrapper
         color={colors.white}
-        title={<StepNameInput index={index} color={colors.B60} channel={channel} />}
+        title={<StepName index={index} color={colors.B60} channel={channel} />}
         style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
       >
         <TemplateInAppEditor errors={errors} control={control} index={index} />
@@ -66,7 +66,7 @@ export const TemplateEditor = () => {
     return (
       <SubPageWrapper
         color={colors.white}
-        title={<StepNameInput index={index} color={colors.B60} channel={channel} />}
+        title={<StepName index={index} color={colors.B60} channel={channel} />}
         style={{ width: '100%', borderTopLeftRadius: 7, borderBottomLeftRadius: 7, paddingBottom: 96 }}
       >
         <EmailMessagesCards
@@ -82,7 +82,7 @@ export const TemplateEditor = () => {
     <>
       <SubPageWrapper
         color={colors.white}
-        title={<StepNameInput index={index} color={colors.B60} channel={channel} />}
+        title={<StepName index={index} color={colors.B60} channel={channel} />}
         style={{ paddingBottom: 96 }}
       >
         {channel === StepTypeEnum.SMS && (

@@ -1,10 +1,10 @@
 import { TextInput, useMantineColorScheme } from '@mantine/core';
+import { colors } from '@novu/notification-center';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../../hooks';
-import { IForm } from './formTypes';
-import { colors } from '@novu/notification-center';
+import { IForm } from '../components/formTypes';
 
-export const StepNameInput = ({ index, defaultValue }: { index: number; defaultValue: string }) => {
+export const NameInput = () => {
   const {
     control,
     formState: { errors, isSubmitted },
@@ -16,14 +16,14 @@ export const StepNameInput = ({ index, defaultValue }: { index: number; defaultV
   return (
     <Controller
       control={control}
-      name={`steps.${index}.name`}
+      name="name"
+      defaultValue="Untitled"
       render={({ field, fieldState }) => {
         return (
           <TextInput
             styles={(theme) => ({
               root: {
                 flex: '1 1 auto',
-                marginRight: 16,
               },
               wrapper: {
                 background: 'transparent',
@@ -51,18 +51,18 @@ export const StepNameInput = ({ index, defaultValue }: { index: number; defaultV
                   padding: 9,
                 },
                 '&:disabled': {
-                  backgroundColor: colorScheme === 'dark' ? colors.B17 : theme.white,
+                  backgroundColor: colorScheme === 'dark' ? colors.B15 : theme.white,
                   color: colorScheme === 'dark' ? theme.white : theme.black,
                   opacity: 1,
                 },
               },
             })}
             {...field}
-            value={field.value || defaultValue}
+            value={field.value || ''}
             error={showErrors && fieldState.error?.message}
             type="text"
-            data-test-id="step-name"
-            placeholder="Enter step name"
+            data-test-id="title"
+            placeholder="Enter notification name"
             disabled={readonly}
           />
         );
