@@ -26,10 +26,15 @@ jobs:
       packages: write
       deployments: write
       id-token: write
+    strategy:
+      matrix:
+        name: ['novu/api', 'novu/api-ee']
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/setup-redis-cluster
       - uses: ./.github/actions/docker/build-api
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fork: ${{ github.event.pull_request.head.repo.fork }}
+          docker_name: ${{ matrix.name }}

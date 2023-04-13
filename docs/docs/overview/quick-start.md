@@ -10,7 +10,7 @@ To create your free managed, or docker-based Novu environment use our CLI tool:
 npx novu init
 ```
 
-After creating your cloud or self-hosted account, the next steps to sending your first notification are outlined in this guide.
+After creating your cloud or self-hosted account, the next steps to sending your first notification are outlined in this guide:
 
 - Connect your providers
 - Create a notification template

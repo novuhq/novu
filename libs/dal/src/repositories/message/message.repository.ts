@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, ActorTypeEnum } from '@novu/shared';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { FilterQuery, Types } from 'mongoose';
 
@@ -69,13 +69,15 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     options: { limit: number; skip?: number } = { limit: 10 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
+
     const messages = await this.MongooseModel.find(requestQuery, '', {
       limit: options.limit,
       skip: options.skip,
       sort: '-createdAt',
     })
       .read('secondaryPreferred')
-      .populate('subscriber', '_id firstName lastName avatar subscriberId');
+      .populate('subscriber', '_id firstName lastName avatar subscriberId')
+      .populate('actorSubscriber', '_id firstName lastName avatar subscriberId');
 
     return this.mapEntities(messages);
   }
@@ -84,7 +86,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean } = {}
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
 
@@ -310,10 +312,35 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   }
 
   async findMessageById(query: { _id: string; _environmentId: string }): Promise<MessageEntity | null> {
-    const res = await this.MongooseModel.findOne({ _id: query._id, _environmentId: query._environmentId }).populate(
-      'subscriber'
-    );
+    const res = await this.MongooseModel.findOne({ _id: query._id, _environmentId: query._environmentId })
+      .populate('subscriber')
+      .populate({
+        path: 'actorSubscriber',
+        match: {
+          'actor.type': ActorTypeEnum.USER,
+          _actorId: { $exists: true },
+        },
+        select: '_id firstName lastName avatar subscriberId',
+      });
 
     return this.mapEntity(res);
+  }
+
+  async getMessages(
+    query: Partial<MessageEntity> & { _environmentId: string },
+    select = '',
+    options?: {
+      limit?: number;
+      skip?: number;
+    }
+  ) {
+    const data = await this.MongooseModel.find(query, select, {
+      limit: options?.limit,
+      skip: options?.skip,
+    })
+      .populate('subscriber', '_id firstName lastName avatar subscriberId')
+      .populate('actorSubscriber', '_id firstName lastName avatar subscriberId');
+
+    return this.mapEntities(data);
   }
 }

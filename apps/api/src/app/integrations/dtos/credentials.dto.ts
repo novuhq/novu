@@ -35,4 +35,10 @@ export class CredentialsDto {
   applicationId?: string;
   @ApiPropertyOptional()
   clientId?: string;
+  @ApiPropertyOptional()
+  requireTls?: boolean;
+  @ApiPropertyOptional()
+  ignoreTls?: boolean;
+  @ApiPropertyOptional()
+  tlsOptions?: Record<string, unknown>;
 }

@@ -3,7 +3,10 @@ import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } f
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum } from '@novu/shared';
-import { CacheKeyPrefixEnum, CacheService, InvalidateCacheService } from '../../shared/services/cache';
+
+import { CacheService, InvalidateCacheService } from '../../shared/services/cache';
+import { buildFeedKey, buildMessageCountKey } from '../../shared/services/cache/key-builders/queries';
+import { InMemoryProviderService } from '../../shared/services/in-memory-provider';
 
 describe('Unseen Count - GET /widget/notifications/unseen', function () {
   const messageRepository = new MessageRepository();
@@ -14,12 +17,9 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
   let subscriberProfile: {
     _id: string;
   } | null = null;
-  const invalidateCache = new InvalidateCacheService(
-    new CacheService({
-      host: process.env.REDIS_CACHE_SERVICE_HOST as string,
-      port: process.env.REDIS_CACHE_SERVICE_PORT as string,
-    })
-  );
+
+  const inMemoryProviderService = new InMemoryProviderService();
+  const invalidateCache = new InvalidateCacheService(new CacheService(inMemoryProviderService));
 
   beforeEach(async () => {
     session = new UserSession();
@@ -56,7 +56,7 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile._id,
+      subscriberProfile!._id,
       ChannelTypeEnum.IN_APP
     );
     const messageId = messages[0]._id;
@@ -119,7 +119,7 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
 
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
-      subscriberProfile._id,
+      subscriberProfile!._id,
       ChannelTypeEnum.IN_APP
     );
     const messageId = messages[0]._id;
@@ -127,12 +127,18 @@ describe('Unseen Count - GET /widget/notifications/unseen', function () {
     let seenCount = (await getFeedCount({ seen: false })).data.count;
     expect(seenCount).to.equal(3);
 
-    await invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.MESSAGE_COUNT],
-      credentials: {
+    await invalidateCache.invalidateQuery({
+      key: buildFeedKey().invalidate({
         subscriberId: subscriberId,
-        environmentId: session.environment._id,
-      },
+        _environmentId: session.environment._id,
+      }),
+    });
+
+    await invalidateCache.invalidateQuery({
+      key: buildMessageCountKey().invalidate({
+        subscriberId: subscriberId,
+        _environmentId: session.environment._id,
+      }),
     });
 
     await axios.post(

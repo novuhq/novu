@@ -1,3 +1,7 @@
+---
+sidebar_position: 2
+---
+
 # Amazon SES
 
 You can use the [Amazon SES](https://aws.amazon.com/ses/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.

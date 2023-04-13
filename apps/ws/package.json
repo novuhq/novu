@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@godaddy/terminus": "^4.3.1",
-    "@nestjs/common": "^9.3.9",
+    "@nestjs/common": "9.3.12",
     "@nestjs/core": "^9.3.9",
     "@nestjs/jwt": "^9.0.0",
     "@nestjs/platform-express": "^9.3.9",
@@ -43,14 +43,14 @@
     "dotenv": "^8.2.0",
     "envalid": "^7.1.0",
     "helmet": "^6.0.1",
-    "ioredis": "^5.2.4",
+    "ioredis": "5.3.1",
     "jsonwebtoken": "9.0.0",
     "lodash": "^4.17.15",
     "nest-raven": "^9.1.0",
     "newrelic": "9.10.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "7.5.6",
+    "rxjs": "7.8.0",
     "socket.io": "^4.5.4"
   },
   "devDependencies": {
