@@ -82,7 +82,7 @@ export class NotificationRepository extends BaseRepository<
       _organizationId,
     };
 
-    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery), _environmentId)).lean();
+    return this.mapEntity(await this.populateFeed(this.MongooseModel.findOne(requestQuery).lean(), _environmentId));
   }
 
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>, environmentId: string) {
