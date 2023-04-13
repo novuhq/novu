@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, IActor, ActorTypeEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
-import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
+
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
@@ -62,6 +63,12 @@ export class GetNotificationsFeed {
       });
     }
 
+    for (const message of feed) {
+      if (message._actorId && message.actor?.type === ActorTypeEnum.USER) {
+        message.actor.data = this.processUserAvatar(message.actorSubscriber);
+      }
+    }
+
     const totalCount = await this.messageRepository.getTotalCount(
       command.environmentId,
       subscriber._id,
@@ -96,5 +103,9 @@ export class GetNotificationsFeed {
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
     return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
+  }
+
+  private processUserAvatar(actorSubscriber?: SubscriberEntity): string | null {
+    return actorSubscriber?.avatar || null;
   }
 }

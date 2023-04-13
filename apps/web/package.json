@@ -97,7 +97,7 @@
     "react-flow-renderer": "^10.2.2",
     "react-frame-component": "^5.2.3",
     "react-helmet-async": "^1.3.0",
-    "react-hook-form": "7.34.0",
+    "react-hook-form": "7.43.9",
     "react-is": "^18.2.0",
     "react-password-strength-bar": "^0.4.1",
     "react-router-dom": "^6.2.2",

@@ -27,11 +27,14 @@ export class MessageEntity {
 
   subscriber?: SubscriberEntity;
 
+  actorSubscriber?: SubscriberEntity;
+
   template?: NotificationTemplateEntity;
 
   templateIdentifier?: string;
 
   createdAt?: string;
+  expireAt?: string;
 
   content: string | IEmailBlock[];
 
@@ -83,6 +86,8 @@ export class MessageEntity {
   identifier?: string;
 
   actor?: IActor;
+
+  _actorId?: string;
 }
 
 export type MessageDBModel = ChangePropsValueType<
@@ -95,6 +100,7 @@ export type MessageDBModel = ChangePropsValueType<
   | '_jobId'
   | '_subscriberId'
   | '_feedId'
+  | '_actorId'
 > & {
   createdAt?: Date;
 };

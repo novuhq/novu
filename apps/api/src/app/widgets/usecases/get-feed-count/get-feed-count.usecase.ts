@@ -19,7 +19,11 @@ export class GetFeedCount {
       }),
   })
   async execute(command: GetFeedCountCommand): Promise<{ count: number }> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+    const subscriber = await this.subscriberRepository.findBySubscriberId(
+      command.environmentId,
+      command.subscriberId,
+      true
+    );
 
     if (!subscriber) {
       throw new ApiException(

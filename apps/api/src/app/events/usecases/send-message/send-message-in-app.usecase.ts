@@ -35,6 +35,7 @@ import { SendMessageBase } from './send-message.base';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetDecryptedIntegrations } from '../../../integrations/usecases/get-decrypted-integrations';
 import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -61,6 +62,7 @@ export class SendMessageInApp extends SendMessageBase {
     );
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const subscriber = await this.getSubscriberBySubscriberId({
       subscriberId: command.subscriberId,
@@ -81,10 +83,6 @@ export class SendMessageInApp extends SendMessageBase {
     let content = '';
 
     const { actor } = command.step.template;
-
-    if (actor && actor.type !== ActorTypeEnum.NONE) {
-      actor.data = await this.processAvatar(actor, command);
-    }
 
     const organization = await this.organizationRepository.findById(command.organizationId);
 
@@ -179,6 +177,7 @@ export class SendMessageInApp extends SendMessageBase {
         ...(actor &&
           actor.type !== ActorTypeEnum.NONE && {
             actor,
+            _actorId: command.job?._actorId,
           }),
       });
     }
@@ -306,22 +305,5 @@ export class SendMessageInApp extends SendMessageBase {
         },
       })
     );
-  }
-
-  private async processAvatar(actor: IActor, command: SendMessageCommand): Promise<string | null> {
-    const actorId = command.job?._actorId;
-    if (actor.type === ActorTypeEnum.USER && actorId) {
-      const actorSubscriber: SubscriberEntity | null = await this.subscriberRepository.findOne(
-        {
-          _environmentId: command.environmentId,
-          _id: actorId,
-        },
-        'avatar'
-      );
-
-      return actorSubscriber?.avatar || null;
-    }
-
-    return actor.data || null;
   }
 }

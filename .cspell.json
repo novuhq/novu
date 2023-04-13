@@ -419,12 +419,22 @@
     "shortid",
     "upsert",
     "cond",
+    "redismaster",
+    "appendonly",
+    "hostnames",
+    "ipam",
+    "slaveof",
+    "rediscommander",
+    "cond",
     "TASKFORCESH",
     "monorepository",
     "Metafiles",
     "Metas",
     "Webpush",
-    "maqsam"
+    "maqsam",
+    "Millis",
+    "sscan",
+    "vishnudxb"
   ],
   "flagWords": [],
   "patterns": [
