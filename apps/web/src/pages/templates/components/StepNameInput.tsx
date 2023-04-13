@@ -58,7 +58,7 @@ export const StepNameInput = ({ index, defaultValue }: { index: number; defaultV
               },
             })}
             {...field}
-            value={field.value || defaultValue}
+            value={field.value !== undefined ? field.value : defaultValue}
             error={showErrors && fieldState.error?.message}
             type="text"
             data-test-id="step-name"
