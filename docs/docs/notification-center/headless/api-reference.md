@@ -138,7 +138,7 @@ interface IListenUnseenCountChanget {
 
 ## fetchNotifications
 
-Retreives the list of notifications for the subscriber.
+Retrieves the list of notifications for the subscriber.
 Can also be used to get the notifications of a particular tab.
 
 ```ts
