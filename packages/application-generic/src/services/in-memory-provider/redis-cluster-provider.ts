@@ -96,6 +96,7 @@ export const getRedisCluster = (): Cluster | undefined => {
      */
     showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
     slotsRefreshTimeout: 2000,
+    scaleReads: 'slave',
   };
 
   Logger.log(
