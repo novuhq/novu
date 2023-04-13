@@ -236,7 +236,7 @@ export class SendMessageEmail extends SendMessageBase {
         message,
         command,
         notification,
-        emailChannel.template.senderName || overrides?.email?.senderName
+        overrides?.email?.senderName || emailChannel.template.senderName
       );
 
       return;

@@ -32,7 +32,6 @@ export class CalculateLimitNovuIntegration {
     const messagesCount = await this.messageRepository.count(
       {
         channel: command.channelType,
-        _organizationId: command.organizationId,
         _environmentId: command.environmentId,
         providerId,
         createdAt: {
