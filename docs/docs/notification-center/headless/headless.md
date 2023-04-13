@@ -20,7 +20,7 @@ import { HeadlessService } from '@novu/headless';
 
 ## Initialize the session
 
-To use the headless service and it's features, you'll need to first initialize the session:
+To use the headless service and its features, you'll need to first initialize the session:
 
 ```js
 const headlessService = new HeadlessService({
