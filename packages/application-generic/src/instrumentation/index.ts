@@ -36,11 +36,21 @@ function instrumentationWrapper(
     }
 
     if (nr) {
-      descriptor.value = async function (...args) {
-        return nr.startSegment(transactionIdentifier, true, async () => {
-          return await method.apply(this, args);
-        });
-      };
+      const isAsync = method.constructor.name === 'AsyncFunction';
+
+      if (!isAsync) {
+        descriptor.value = function (...args) {
+          return nr.startSegment(transactionIdentifier, true, () => {
+            return method.apply(this, args);
+          });
+        };
+      } else {
+        descriptor.value = async function (...args) {
+          return nr.startSegment(transactionIdentifier, true, async () => {
+            return await method.apply(this, args);
+          });
+        };
+      }
 
       copyMetadata(method, descriptor.value);
     }
