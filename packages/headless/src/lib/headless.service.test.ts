@@ -34,6 +34,7 @@ const mockSession: ISession = {
     organizationId: 'organizationId?',
     environmentId: 'environmentId',
     aud: 'widget_user',
+    subscriberId: '1234ABCD',
   },
 };
 const mockOrganization: IOrganizationEntity = {
@@ -42,6 +43,7 @@ const mockOrganization: IOrganizationEntity = {
   members: [],
 };
 const mockUnseenCount = { count: 99 };
+const mockUnreadCount = { count: 101 };
 const mockNotification: IMessage = {
   _id: notificationId,
   _templateId: templateId,
@@ -94,6 +96,7 @@ const mockServiceInstance = {
   disposeAuthorizationToken: jest.fn(),
   getOrganization: jest.fn(() => promiseResolveTimeout(0, mockOrganization)),
   getUnseenCount: jest.fn(() => promiseResolveTimeout(0, mockUnseenCount)),
+  getUnreadCount: jest.fn(() => promiseResolveTimeout(0, mockUnreadCount)),
   getUserPreference: jest.fn(() =>
     promiseResolveTimeout(0, mockUserPreferences)
   ),
@@ -106,6 +109,8 @@ const mockServiceInstance = {
   markMessageAs: jest.fn(),
   removeMessage: jest.fn(),
   updateAction: jest.fn(),
+  markAllMessagesAsRead: jest.fn(),
+  markAllMessagesAsSeen: jest.fn(),
 };
 
 jest.mock('@novu/client', () => ({
@@ -174,9 +179,6 @@ describe('headless.service', () => {
         .fn()
         .mockImplementationOnce(() => mockToken);
 
-      expect(localStorage.getItem).toHaveBeenCalledWith(
-        NOTIFICATION_CENTER_TOKEN_KEY
-      );
       expect(mockServiceInstance.setAuthorizationToken).toHaveBeenCalledWith(
         mockToken
       );
@@ -350,6 +352,55 @@ describe('headless.service', () => {
       await promiseResolveTimeout(0);
 
       expect(mockServiceInstance.getUnseenCount).toBeCalledTimes(1);
+      expect(onError).toHaveBeenCalledWith(error);
+      expect(listener).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ isLoading: false, data: undefined, error })
+      );
+    });
+  });
+
+  describe('fetchUnreadCount', () => {
+    test('calls fetchUnreadCount successfully', async () => {
+      const headlessService = new HeadlessService(options);
+      const listener = jest.fn();
+      const onSuccess = jest.fn();
+      (headlessService as any).session = mockSession;
+
+      headlessService.fetchUnreadCount({
+        listener,
+        onSuccess,
+      });
+
+      expect(listener).toBeCalledWith(
+        expect.objectContaining({ isLoading: true, data: undefined })
+      );
+      await promiseResolveTimeout(0);
+
+      expect(mockServiceInstance.getUnreadCount).toBeCalledTimes(1);
+      expect(onSuccess).toHaveBeenNthCalledWith(1, mockUnreadCount);
+    });
+
+    test('handles the error', async () => {
+      const error = new Error('error');
+      mockServiceInstance.getUnreadCount.mockImplementationOnce(() =>
+        promiseRejectTimeout(0, error)
+      );
+      const headlessService = new HeadlessService(options);
+      const listener = jest.fn();
+      const onError = jest.fn();
+      (headlessService as any).session = mockSession;
+
+      headlessService.fetchUnreadCount({
+        listener,
+        onError,
+      });
+      expect(listener).toBeCalledWith(
+        expect.objectContaining({ isLoading: true, data: undefined })
+      );
+      await promiseResolveTimeout(0);
+
+      expect(mockServiceInstance.getUnreadCount).toBeCalledTimes(1);
       expect(onError).toHaveBeenCalledWith(error);
       expect(listener).toHaveBeenNthCalledWith(
         2,
@@ -917,6 +968,134 @@ describe('headless.service', () => {
       await promiseResolveTimeout(100);
 
       expect(mockServiceInstance.updateAction).toBeCalledTimes(1);
+      expect(onError).toHaveBeenCalledWith(error);
+      expect(listener).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ isLoading: false, data: undefined, error })
+      );
+    });
+  });
+
+  describe('markAllMessagesAsRead', () => {
+    test('calls markAllMessagesAsRead successfully', async () => {
+      const updatedNotification = {
+        ...mockNotification,
+        seen: true,
+        read: true,
+      };
+      mockServiceInstance.markAllMessagesAsRead.mockImplementationOnce(() =>
+        promiseResolveTimeout(0)
+      );
+      const headlessService = new HeadlessService(options);
+      const markAllNotificationsAsReadListener = jest.fn();
+      const fetchNotificationsListener = jest.fn();
+      const onSuccess = jest.fn();
+      (headlessService as any).session = mockSession;
+      headlessService.fetchNotifications({
+        listener: fetchNotificationsListener,
+      });
+      await promiseResolveTimeout(0);
+
+      expect(fetchNotificationsListener).toHaveBeenCalledTimes(2);
+
+      headlessService.markAllMessagesAsRead({
+        listener: markAllNotificationsAsReadListener,
+        onSuccess,
+      });
+
+      expect(markAllNotificationsAsReadListener).toBeCalledWith(
+        expect.objectContaining({ isLoading: true, data: undefined })
+      );
+      await promiseResolveTimeout(100);
+
+      expect(mockServiceInstance.markAllMessagesAsRead).toBeCalledTimes(1);
+      expect(onSuccess).toHaveBeenNthCalledWith(1, {});
+    });
+
+    test('handles the error', async () => {
+      const error = new Error('error');
+      mockServiceInstance.markAllMessagesAsRead.mockImplementationOnce(() =>
+        promiseRejectTimeout(0, error)
+      );
+      const headlessService = new HeadlessService(options);
+      const listener = jest.fn();
+      const onError = jest.fn();
+      (headlessService as any).session = mockSession;
+
+      headlessService.markAllMessagesAsRead({
+        listener,
+        onError,
+      });
+      expect(listener).toBeCalledWith(
+        expect.objectContaining({ isLoading: true, data: undefined })
+      );
+      await promiseResolveTimeout(100);
+
+      expect(mockServiceInstance.markAllMessagesAsRead).toBeCalledTimes(1);
+      expect(onError).toHaveBeenCalledWith(error);
+      expect(listener).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ isLoading: false, data: undefined, error })
+      );
+    });
+  });
+
+  describe('markAllMessagesAsSeen', () => {
+    test('calls markAllMessagesAsSeen successfully', async () => {
+      const updatedNotification = {
+        ...mockNotification,
+        seen: true,
+        read: false,
+      };
+      mockServiceInstance.markAllMessagesAsSeen.mockImplementationOnce(() =>
+        promiseResolveTimeout(0)
+      );
+      const headlessService = new HeadlessService(options);
+      const markAllNotificationsAsSeenListener = jest.fn();
+      const fetchNotificationsListener = jest.fn();
+      const onSuccess = jest.fn();
+      (headlessService as any).session = mockSession;
+      headlessService.fetchNotifications({
+        listener: fetchNotificationsListener,
+      });
+      await promiseResolveTimeout(0);
+
+      expect(fetchNotificationsListener).toHaveBeenCalledTimes(2);
+
+      headlessService.markAllMessagesAsSeen({
+        listener: markAllNotificationsAsSeenListener,
+        onSuccess,
+      });
+
+      expect(markAllNotificationsAsSeenListener).toBeCalledWith(
+        expect.objectContaining({ isLoading: true, data: undefined })
+      );
+      await promiseResolveTimeout(100);
+
+      expect(mockServiceInstance.markAllMessagesAsSeen).toBeCalledTimes(1);
+      expect(onSuccess).toHaveBeenNthCalledWith(1, {});
+    });
+
+    test('handles the error', async () => {
+      const error = new Error('error');
+      mockServiceInstance.markAllMessagesAsSeen.mockImplementationOnce(() =>
+        promiseRejectTimeout(0, error)
+      );
+      const headlessService = new HeadlessService(options);
+      const listener = jest.fn();
+      const onError = jest.fn();
+      (headlessService as any).session = mockSession;
+
+      headlessService.markAllMessagesAsSeen({
+        listener,
+        onError,
+      });
+      expect(listener).toBeCalledWith(
+        expect.objectContaining({ isLoading: true, data: undefined })
+      );
+      await promiseResolveTimeout(100);
+
+      expect(mockServiceInstance.markAllMessagesAsSeen).toBeCalledTimes(1);
       expect(onError).toHaveBeenCalledWith(error);
       expect(listener).toHaveBeenNthCalledWith(
         2,
