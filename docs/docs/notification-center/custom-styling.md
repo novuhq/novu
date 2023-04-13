@@ -28,6 +28,32 @@ const styles = {
 
 ## Example usage
 
+### iframe
+
+```html
+<script>
+  novu.init(
+    '<REPLACE_APPLICATION_ID>',
+    {
+      unseenBadgeSelector: '#unseen-badge',
+      bellSelector: '#notification-bell',
+      // add your custom style here
+      styles: {
+        header: {
+          root: { backgroundColor: 'red' },
+          title: {
+            color: 'blue',
+          },
+        },
+      },
+    },
+    {
+      subscriberId: '<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>',
+    }
+  );
+</script>
+```
+
 ### Web component
 
 ```html
