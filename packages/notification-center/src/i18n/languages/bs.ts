@@ -6,6 +6,7 @@ export const BS: ITranslationEntry = {
     markAllAsRead: 'Označi sve kao pročitano',
     poweredBy: 'Pokreće',
     settings: 'Postavke',
+    noNewNotification: 'Ovdje još nema ništa novo za vidjeti',
   },
   lang: 'bs',
 };

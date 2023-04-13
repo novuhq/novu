@@ -128,6 +128,26 @@ export class WidgetsController {
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
+  @Get('/notifications/unread')
+  async getUnreadCount(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Query('feedIdentifier') feedId: string[] | string,
+    @Query('read') read: boolean
+  ): Promise<UnseenCountResponse> {
+    const feedsQuery = this.toArray(feedId);
+
+    const command = GetFeedCountCommand.create({
+      organizationId: subscriberSession._organizationId,
+      subscriberId: subscriberSession.subscriberId,
+      environmentId: subscriberSession._environmentId,
+      feedId: feedsQuery,
+      read,
+    });
+
+    return await this.getFeedCountUsecase.execute(command);
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
   @Get('/notifications/count')
   async getCount(
     @SubscriberSession() subscriberSession: SubscriberEntity,

@@ -1,6 +1,6 @@
 import Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 import {
   InMemoryProviderClient,
@@ -14,6 +14,7 @@ interface ILockOptions {
   ttl: number;
 }
 
+@Injectable()
 export class DistributedLockService {
   public distributedLock: Redlock;
   public instances: InMemoryProviderClient[];
@@ -38,7 +39,6 @@ export class DistributedLockService {
     }
 
     if (client) {
-      // TODO: Implement distributed nodes (at least 3 Redis instances)
       this.instances = [client];
       this.distributedLock = new Redlock(this.instances, settings);
       Logger.verbose('Redlock started', LOG_CONTEXT);
