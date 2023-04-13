@@ -7,6 +7,8 @@ STORE_ENCRYPTION_KEY=ekwUKf9yLjGPLOz939Y1GM0nJckVoVyF
 NODE_ENV=dev
 MONGO_URL=mongodb://mongodb:27017/novu-db
 REDIS_HOST=novu-redis-dev
+REDIS_CACHE_SERVICE_HOST=novu-redis-dev
+REDIS_CACHE_SERVICE_PORT=6379
 
 # AWS
 S3_LOCAL_STACK=http://localhost:4566
