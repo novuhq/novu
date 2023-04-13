@@ -137,18 +137,6 @@ messageSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrid
  *    _environmentId: command.environmentId,
  *    _organizationId: command.organizationId,
  *  });
- *
- * Path : libs/dal/src/repositories/message/message.repository.ts
- * Context : markAllMessagesAs()
- * Query : find(
- *   {
- *     _environmentId: environmentId,
- *     identifier: {
- *       $in: feedIdentifiers,
- *     },
- *   },
- *   '_id'
- * );
  */
 messageSchema.index({
   identifier: 1,
@@ -206,7 +194,6 @@ messageSchema.index({
   _subscriberId: 1,
   _environmentId: 1,
   channel: 1,
-  _feedId: 1,
   seen: 1,
   read: 1,
   createdAt: -1,
@@ -219,21 +206,6 @@ messageSchema.index({
  */
 messageSchema.index({
   _messageTemplateId: 1,
-  _environmentId: 1,
-});
-
-/*
- * This index was initially created to optimize:
- *
- * Path : libs/dal/src/repositories/job/job.repository.ts
- *    Context : execute()
- *       Query : findOne({
- *          _parentId: command.parentId,
- *          _environmentId: command.environmentId,
- *        })
- */
-messageSchema.index({
-  _parentId: 1,
   _environmentId: 1,
 });
 
@@ -276,11 +248,7 @@ messageSchema.index({
   transactionId: 1,
   _subscriberId: 1,
   _environmentId: 1,
-  _messageTemplateId: 1,
-  _templateId: 1,
   providerId: 1,
-  channel: 1,
-  _feedId: 1,
 });
 
 /*
@@ -299,7 +267,6 @@ messageSchema.index({
 messageSchema.index({
   _environmentId: 1,
   providerId: 1,
-  channel: 1,
   createdAt: 1,
 });
 
