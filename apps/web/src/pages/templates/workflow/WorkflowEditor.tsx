@@ -3,19 +3,20 @@ import { useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
 import { showNotification } from '@mantine/notifications';
-
 import FlowEditor from './workflow/FlowEditor';
 import { channels } from '../shared/channels';
 import type { IForm } from '../components/formTypes';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
-import { Outlet, useLocation, useParams } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Container, Group, Stack } from '@mantine/core';
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
 import { useBasePath } from '../hooks/useBasePath';
 import { UpdateButton } from '../components/UpdateButton';
 import { NameInput } from './NameInput';
+import { Settings } from '../../../design-system/icons';
+import { Button } from '../../../design-system';
 
 const WorkflowEditor = () => {
   const { addStep, deleteStep } = useTemplateEditorForm();
@@ -34,6 +35,7 @@ const WorkflowEditor = () => {
   const [toDelete, setToDelete] = useState<string>('');
   const basePath = useBasePath();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const confirmDelete = () => {
     const index = steps.findIndex((item) => item.uuid === toDelete);
@@ -83,6 +85,46 @@ const WorkflowEditor = () => {
 
     setToDelete(uuid);
   };
+
+  if (readonly && pathname === basePath) {
+    return (
+      <div style={{ minHeight: '600px', display: 'flex', flexFlow: 'row' }}>
+        <div
+          style={{
+            flex: '1 1 auto',
+            display: 'flex',
+            flexFlow: 'Column',
+          }}
+        >
+          <Container fluid sx={{ width: '100%', height: '74px' }}>
+            <Stack
+              justify="center"
+              sx={{
+                height: '100%',
+              }}
+            >
+              <Group>
+                <NameInput />
+                <UpdateButton />
+                <Button
+                  onClick={() => {
+                    navigate(basePath + '/snippet');
+                  }}
+                  data-test-id="get-snippet-btn"
+                >
+                  Get Snippet
+                </Button>
+                <Link data-test-id="settings-page" to="settings">
+                  <Settings />
+                </Link>
+              </Group>
+            </Stack>
+          </Container>
+          <FlowEditor onDelete={onDelete} dragging={dragging} errors={errors} steps={steps} addStep={addStep} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
