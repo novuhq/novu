@@ -13,6 +13,7 @@ import {
 import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum, SignUpOriginEnum } from '@novu/shared';
 import {
   AnalyticsService,
+  Instrument,
   CachedEntity,
   buildEnvironmentByApiKey,
   buildSubscriberKey,
@@ -125,10 +126,12 @@ export class AuthService {
     return this.getSignedToken(user);
   }
 
+  @Instrument()
   async isAuthenticatedForOrganization(userId: string, organizationId: string): Promise<boolean> {
     return !!(await this.memberRepository.isMemberOfOrganization(organizationId, userId));
   }
 
+  @Instrument()
   async apiKeyAuthenticate(apiKey: string) {
     const environment = await this.getEnvironment({ apiKey: apiKey });
     if (!environment) throw new UnauthorizedException('API Key not found');
@@ -254,6 +257,7 @@ export class AuthService {
     );
   }
 
+  @Instrument()
   async validateUser(payload: IJwtPayload): Promise<UserEntity> {
     const user = await this.getUser({ _id: payload._id });
     if (!user) throw new UnauthorizedException('User not found');
@@ -287,6 +291,7 @@ export class AuthService {
     return !!environment._parentId;
   }
 
+  @Instrument()
   @CachedEntity({
     builder: (command: { _id: string }) =>
       buildUserKey({
@@ -297,6 +302,7 @@ export class AuthService {
     return await this.userRepository.findById(_id);
   }
 
+  @Instrument()
   @CachedEntity({
     builder: ({ apiKey }: { apiKey: string }) =>
       buildEnvironmentByApiKey({
