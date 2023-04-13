@@ -1,3 +1,8 @@
+---
+sidebar_position: 2
+sidebar_label: API Reference
+---
+
 # Headless Notification Center API Reference
 
 This page contains the complete documentation about the Headless Notification Center package. You can find here the list of all the methods that you can use.
