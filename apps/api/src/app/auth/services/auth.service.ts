@@ -14,6 +14,7 @@ import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum, SignUpOr
 import {
   AnalyticsService,
   Instrument,
+  PinoLogger,
   CachedEntity,
   buildEnvironmentByApiKey,
   buildSubscriberKey,
@@ -32,6 +33,7 @@ import { ApiException } from '../../shared/exceptions/api.exception';
 @Injectable()
 export class AuthService {
   constructor(
+    private logger: PinoLogger,
     private userRepository: UserRepository,
     private subscriberRepository: SubscriberRepository,
     private createUserUsecase: CreateUser,
@@ -141,6 +143,12 @@ export class AuthService {
 
     const user = await this.getUser({ _id: key._userId });
     if (!user) throw new UnauthorizedException('User not found');
+
+    this.logger.assign({
+      userId: user._id,
+      environmentId: environment._id,
+      organizationId: environment._organizationId,
+    });
 
     return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
   }
@@ -259,12 +267,16 @@ export class AuthService {
 
   @Instrument()
   async validateUser(payload: IJwtPayload): Promise<UserEntity> {
-    const user = await this.getUser({ _id: payload._id });
-    if (!user) throw new UnauthorizedException('User not found');
+    // We run these in parallel to speed up the query time
+    const userPromise = this.getUser({ _id: payload._id });
+    const isMemberPromise = payload.organizationId
+      ? this.isAuthenticatedForOrganization(payload._id, payload.organizationId)
+      : Promise.resolve(true);
+    const [user, isMember] = await Promise.all([userPromise, isMemberPromise]);
 
-    if (payload.organizationId) {
-      const isMember = await this.isAuthenticatedForOrganization(payload._id, payload.organizationId);
-      if (!isMember) throw new UnauthorizedException(`No authorized for organization ${payload.organizationId}`);
+    if (!user) throw new UnauthorizedException('User not found');
+    if (payload.organizationId && !isMember) {
+      throw new UnauthorizedException(`No authorized for organization ${payload.organizationId}`);
     }
 
     return user;
