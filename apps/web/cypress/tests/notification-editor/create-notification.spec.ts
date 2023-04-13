@@ -296,12 +296,12 @@ describe('Creation functionality', function () {
     cy.getByTestId('backoff-unit-minutes').should('be.checked');
   });
 
-  it.skip('should create and edit group id', function () {
+  it('should create and edit group id', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
     cy.getByTestId('settings-page').click();
-
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('groupSelector').click();
     cy.getByTestId('groupSelector').clear();
     cy.getByTestId('groupSelector').type('New Test Category');
