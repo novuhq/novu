@@ -105,6 +105,11 @@ jobs:
         if: steps.setup-project.outputs.cypress_cache_hit != 'true'
         working-directory: apps/web
         run: pnpm cypress install
+      
+      - name: Install chrome
+        uses: browser-actions/setup-chrome@latest
+        run: |
+          echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
 
       - name: Cypress run e2e
         uses: cypress-io/github-action@v4
@@ -117,7 +122,7 @@ jobs:
           CYPRESS_IS_CI: true
         with:
           working-directory: apps/web
-          browser: chrome
+          browser: "${{ env.BROWSER_PATH }}"
           record: true
           parallel: true
           install: false
