@@ -9,6 +9,7 @@ export const NB: ITranslationEntry = {
     removeMessage: 'Fjern melding',
     markAsRead: 'Merk som lest',
     markAsUnRead: 'Merk som ulest',
+    noNewNotification: 'Ikke noe nytt å se her ennå',
   },
   lang: 'nb',
 };

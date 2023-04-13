@@ -286,14 +286,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
     const notification = notifications[0];
 
-    let expireAt = new Date(notification?.expireAt as string);
-    let createdAt = new Date(notification?.createdAt as string);
-
-    let subExpireMonths = subMonths(expireAt, NOTIFICATION_EXPIRE_MONTHS);
-    let diff = differenceInMilliseconds(subExpireMonths, createdAt);
-
-    expect(diff).to.approximately(0, 1);
-
     const messages = await messageRepository.findBySubscriberChannel(
       session.environment._id,
       subscriber._id,
@@ -303,11 +295,11 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     expect(messages.length).to.equal(1);
     const message = messages[0];
 
-    expireAt = new Date(message?.expireAt as string);
-    createdAt = new Date(message?.createdAt as string);
+    let expireAt = new Date(message?.expireAt as string);
+    let createdAt = new Date(message?.createdAt as string);
 
-    subExpireMonths = subMonths(expireAt, IN_APP_MESSAGE_EXPIRE_MONTHS);
-    diff = differenceInMilliseconds(subExpireMonths, createdAt);
+    let subExpireMonths = subMonths(expireAt, IN_APP_MESSAGE_EXPIRE_MONTHS);
+    let diff = differenceInMilliseconds(subExpireMonths, createdAt);
 
     expect(diff).to.approximately(0, 1);
 

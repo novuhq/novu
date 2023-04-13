@@ -36,6 +36,7 @@ export class SESEmailProvider implements IEmailProvider {
     attachments,
     cc,
     bcc,
+    replyTo,
   }) {
     const transporter = nodemailer.createTransport({
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
@@ -53,6 +54,7 @@ export class SESEmailProvider implements IEmailProvider {
       },
       cc,
       bcc,
+      replyTo,
     });
   }
 
@@ -65,6 +67,7 @@ export class SESEmailProvider implements IEmailProvider {
     attachments,
     cc,
     bcc,
+    replyTo,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
     const info = await this.sendMail({
       from: from || this.config.from,
@@ -79,6 +82,7 @@ export class SESEmailProvider implements IEmailProvider {
       })),
       cc,
       bcc,
+      replyTo,
     });
 
     return {
@@ -157,6 +161,7 @@ export class SESEmailProvider implements IEmailProvider {
         attachments: {},
         bcc: [],
         cc: [],
+        replyTo: 'support@novu.co',
       });
 
       return {

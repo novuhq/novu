@@ -1,4 +1,4 @@
-import { buildCommonKey, CacheKeyPrefixEnum, CacheKeyTypeEnum, IdentifierPrefixEnum } from './shared';
+import { buildCommonKey, CacheKeyPrefixEnum, CacheKeyTypeEnum, IdentifierPrefixEnum, prefixWrapper } from './shared';
 
 const buildSubscriberKey = ({
   subscriberId,
@@ -64,7 +64,7 @@ const buildKeyById = ({
   keyEntity: CacheKeyPrefixEnum;
   identifierPrefix?: IdentifierPrefixEnum;
   identifier: string;
-}): string => `${type}:${keyEntity}:${identifierPrefix}=${identifier}`;
+}): string => prefixWrapper(`${type}:${keyEntity}:${identifierPrefix}=${identifier}`);
 
 export {
   buildUserKey,

@@ -36,16 +36,18 @@ import { UserService } from './user.service';
 /**
  * TODO: move this to a reusable area
  */
+const connection = {
+  db: Number(process.env.REDIS_DB_INDEX || '1'),
+  port: Number(process.env.REDIS_PORT || 6379),
+  host: process.env.REDIS_HOST,
+  password: process.env.REDIS_PASSWORD,
+  connectTimeout: 50000,
+  keepAlive: 30000,
+  tls: process.env.REDIS_TLS as ConnectionOptions,
+};
+
 const queue = new Queue('trigger-handler', {
-  connection: {
-    db: Number(process.env.REDIS_DB_INDEX || '1'),
-    port: Number(process.env.REDIS_PORT || 6379),
-    host: process.env.REDIS_HOST,
-    password: process.env.REDIS_PASSWORD,
-    connectTimeout: 50000,
-    keepAlive: 30000,
-    tls: process.env.REDIS_TLS as ConnectionOptions,
-  },
+  connection,
   defaultJobOptions: {
     removeOnComplete: true,
   },
