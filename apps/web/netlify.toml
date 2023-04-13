@@ -2,6 +2,7 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
