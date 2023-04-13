@@ -141,6 +141,27 @@ interface IListenUnseenCountChanget {
 }
 ```
 
+## listenUnreadCountChange
+
+Listens to the changes of the unread count.
+Can be used to get real time count of the unread messages.
+
+```ts
+headlessService.listenUnreadCountChange({
+  listener: (unreadCount: number) => {
+    console.log(unreadCount);
+  },
+});
+```
+
+### method args interface
+
+```ts
+interface IListenUnreadCountChanget {
+  listener: (unreadCount: number) => void;
+}
+```
+
 ## fetchNotifications
 
 Retrieves the list of notifications for the subscriber.
