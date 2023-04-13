@@ -14,8 +14,8 @@ import { errorMessage, successMessage } from '../../../utils/notifications';
 import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
 import { useNotificationGroup } from '../../../hooks';
-
 import { useCreate } from '../hooks/useCreate';
+import { stepNames } from './StepName';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
@@ -27,42 +27,45 @@ const defaultEmailBlocks: IEmailBlock[] = [
   },
 ];
 
-const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => ({
-  _id: id,
-  uuid: uuid4(),
-  name: undefined,
-  template: {
-    type: channelType,
-    content: channelType === StepTypeEnum.EMAIL ? defaultEmailBlocks : '',
-    contentType: 'editor',
-    variables: [],
-    ...(channelType === StepTypeEnum.IN_APP && {
-      actor: {
-        type: ActorTypeEnum.NONE,
-        data: null,
+const makeStep = (channelType: StepTypeEnum, id: string): IStepEntity => {
+  return {
+    _id: id,
+    uuid: uuid4(),
+    name: stepNames[channelType],
+    template: {
+      subject: '',
+      type: channelType,
+      content: channelType === StepTypeEnum.EMAIL ? defaultEmailBlocks : '',
+      contentType: 'editor',
+      variables: [],
+      ...(channelType === StepTypeEnum.IN_APP && {
+        actor: {
+          type: ActorTypeEnum.NONE,
+          data: null,
+        },
+        enableAvatar: false,
+      }),
+    },
+    active: true,
+    shouldStopOnFail: false,
+    filters: [],
+    ...(channelType === StepTypeEnum.EMAIL && {
+      replyCallback: {
+        active: false,
       },
-      enableAvatar: false,
     }),
-  },
-  active: true,
-  shouldStopOnFail: false,
-  filters: [],
-  ...(channelType === StepTypeEnum.EMAIL && {
-    replyCallback: {
-      active: false,
-    },
-  }),
-  ...(channelType === StepTypeEnum.DIGEST && {
-    metadata: {
-      type: DigestTypeEnum.REGULAR,
-    },
-  }),
-  ...(channelType === StepTypeEnum.DELAY && {
-    metadata: {
-      type: DigestTypeEnum.REGULAR,
-    },
-  }),
-});
+    ...(channelType === StepTypeEnum.DIGEST && {
+      metadata: {
+        type: DigestTypeEnum.REGULAR,
+      },
+    }),
+    ...(channelType === StepTypeEnum.DELAY && {
+      metadata: {
+        type: DigestTypeEnum.REGULAR,
+      },
+    }),
+  };
+};
 
 interface ITemplateEditorFormContext {
   template?: INotificationTemplate;
@@ -154,16 +157,6 @@ const TemplateEditorFormProvider = ({ children }) => {
   const { groups, loading: loadingGroups } = useNotificationGroup();
 
   useEffect(() => {
-    return () => {
-      if (!template) {
-        return;
-      }
-      const form = mapNotificationTemplateToForm(template);
-      reset(form);
-    };
-  }, [template]);
-
-  useEffect(() => {
     if (isDirtyForm) {
       return;
     }
@@ -190,7 +183,7 @@ const TemplateEditorFormProvider = ({ children }) => {
           },
         });
         setTrigger(response.triggers[0]);
-
+        reset(payloadToCreate);
         if (showMessage) {
           successMessage('Trigger code is updated successfully', 'workflowSaved');
         }

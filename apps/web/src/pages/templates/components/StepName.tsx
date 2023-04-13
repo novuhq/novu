@@ -5,7 +5,7 @@ import { When } from '../../../components/utils/When';
 import { UpdateButton } from './UpdateButton';
 import { StepNameInput } from './StepNameInput';
 
-const stepNames: Record<StepTypeEnum | ChannelTypeEnum, string> = {
+export const stepNames: Record<StepTypeEnum | ChannelTypeEnum, string> = {
   email: 'Email',
   chat: 'Chat',
   in_app: 'In-App',
