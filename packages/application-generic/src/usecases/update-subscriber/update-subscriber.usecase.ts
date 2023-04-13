@@ -32,12 +32,7 @@ export class UpdateSubscriber {
     }
 
     const updatePayload: Partial<SubscriberEntity> = {};
-    const unsetPayload: Partial<SubscriberEntity> = {};
-    if (command.email) {
-      updatePayload.email = command.email;
-    } else {
-      unsetPayload.email = '';
-    }
+    updatePayload.email = command.email;
 
     if (command.phone != null) {
       updatePayload.phone = command.phone;
@@ -83,7 +78,6 @@ export class UpdateSubscriber {
       },
       {
         $set: updatePayload,
-        $unset: unsetPayload,
       }
     );
 
