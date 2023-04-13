@@ -29,7 +29,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return this.authService.apiKeyAuthenticate(key).then<any>((result) => {
         request.headers.authorization = `Bearer ${result}`;
 
-        return super.canActivate(context);
+        return true;
       });
     }
 
