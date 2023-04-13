@@ -60,6 +60,29 @@ However, if you want to test certain parts of Novu or run it in production mode,
         <li><code>REDIS_HOST</code><br />The domain / IP of your redis instance</li>
         <li><code>REDIS_PORT</code><br />The port of your redis instance</li>
         <li><code>REDIS_PASSWORD</code><br />Optional password of your redis instance</li>
+        <li><code>REDIS_DB_INDEX</code><br />The Redis database index</li>
+        <li><code>REDIS_CACHE_SERVICE_HOST</code><br />The domain / IP of your redis instance for caching</li>
+        <li><code>REDIS_CACHE_SERVICE_PORT</code><br />The port of your redis instance for caching</li>
+        <li><code>REDIS_DB_INDEX</code><br />The Redis cache database index</li>
+        <li><code>REDIS_CACHE_TTL</code><br />The Redis cache ttl</li>
+        <li><code>REDIS_CACHE_PASSWORD</code><br />The Redis cache password</li>
+        <li><code>REDIS_CACHE_CONNECTION_TIMEOUT</code><br />The Redis cache connection timeout</li>
+        <li><code>REDIS_CACHE_KEEP_ALIVE</code><br />The Redis cache TCP keep alive on the socket timeout</li>
+        <li><code>REDIS_CACHE_FAMILY</code><br />The Redis cache IP stack version</li>
+        <li><code>REDIS_CACHE_KEY_PREFIX</code><br />The Redis cache prefix prepend to all keys</li>
+        <li><code>REDIS_CACHE_SERVICE_TLS</code><br />The Redis cache TLS connection support</li>
+        <li><code>IN_MEMORY_CLUSTER_MODE_ENABLED</code><br />The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.</li>
+        <li><code>ELASTICACHE_CLUSTER_SERVICE_HOST</code><br />ElastiCache cluster host</li>
+        <li><code>ELASTICACHE_CLUSTER_SERVICE_PORT</code><br />ElastiCache cluster port</li>
+        <li><code>REDIS_CLUSTER_SERVICE_HOST</code><br />Redis cluster host</li>
+        <li><code>REDIS_CLUSTER_SERVICE_PORTS</code><br />Redis cluster ports</li>
+        <li><code>REDIS_CLUSTER_DB_INDEX</code><br />Redis cluster database index</li>
+        <li><code>REDIS_CLUSTER_TTL</code><br />Redis cluster ttl</li>
+        <li><code>REDIS_CLUSTER_PASSWORD</code><br />Redis cluster password</li>
+        <li><code>REDIS_CLUSTER_CONNECTION_TIMEOUT</code><br />Redis cluster connection timeout</li>
+        <li><code>REDIS_CLUSTER_KEEP_ALIVE</code><br />Redis cluster TCP keep alive on the socket timeout</li>
+        <li><code>REDIS_CLUSTER_FAMILY</code><br />Redis cluster IP stack version</li>
+        <li><code>REDIS_CLUSTER_KEY_PREFIX</code><br />Redis cluster prefix prepend to all keys</li>
         <li><code>JWT_SECRET</code><br />The secret keybase which is used to encrypt / verify the tokens issued for authentication</li>
         <li><code>SENDGRID_API_KEY</code><br />The api key of the Sendgrid account used to send various emails</li>
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
@@ -103,6 +126,18 @@ However, if you want to test certain parts of Novu or run it in production mode,
         <li><code>REDIS_CACHE_FAMILY</code><br />The Redis cache IP stack version</li>
         <li><code>REDIS_CACHE_KEY_PREFIX</code><br />The Redis cache prefix prepend to all keys</li>
         <li><code>REDIS_CACHE_SERVICE_TLS</code><br />The Redis cache TLS connection support</li>
+        <li><code>IN_MEMORY_CLUSTER_MODE_ENABLED</code><br />The flag that enables the cluster mode. It might be Redis or ElastiCache cluster, depending on the env variables set for either service.</li>
+        <li><code>ELASTICACHE_CLUSTER_SERVICE_HOST</code><br />ElastiCache cluster host</li>
+        <li><code>ELASTICACHE_CLUSTER_SERVICE_PORT</code><br />ElastiCache cluster port</li>
+        <li><code>REDIS_CLUSTER_SERVICE_HOST</code><br />Redis cluster host</li>
+        <li><code>REDIS_CLUSTER_SERVICE_PORTS</code><br />Redis cluster ports</li>
+        <li><code>REDIS_CLUSTER_DB_INDEX</code><br />Redis cluster database index</li>
+        <li><code>REDIS_CLUSTER_TTL</code><br />Redis cluster ttl</li>
+        <li><code>REDIS_CLUSTER_PASSWORD</code><br />Redis cluster password</li>
+        <li><code>REDIS_CLUSTER_CONNECTION_TIMEOUT</code><br />Redis cluster connection timeout</li>
+        <li><code>REDIS_CLUSTER_KEEP_ALIVE</code><br />Redis cluster TCP keep alive on the socket timeout</li>
+        <li><code>REDIS_CLUSTER_FAMILY</code><br />Redis cluster IP stack version</li>
+        <li><code>REDIS_CLUSTER_KEY_PREFIX</code><br />Redis cluster prefix prepend to all keys</li>
         <li><code>MONGO_URL</code><br />The URL of your MongoDB instance</li>
         <li><code>NEW_RELIC_APP_NAME</code><br />The New Relic app name</li>
         <li><code>NEW_RELIC_LICENSE_KEY</code><br />The New Relic license key</li>
