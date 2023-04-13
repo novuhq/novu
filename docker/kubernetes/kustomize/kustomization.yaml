@@ -7,6 +7,7 @@ resources:
 - embed-deployment.yaml
 - embed-service.yaml
 - redis-deployment.yaml
+- redis-service.yaml
 - web-deployment.yaml
 - web-service.yaml
 - widget-deployment.yaml
