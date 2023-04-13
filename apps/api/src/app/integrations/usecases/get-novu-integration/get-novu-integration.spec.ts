@@ -9,7 +9,7 @@ import { IntegrationModule } from '../../integrations.module';
 import { GetNovuIntegration } from './get-novu-integration.usecase';
 import { GetNovuIntegrationCommand } from './get-novu-integration.command';
 import { endOfMonth, startOfMonth } from 'date-fns';
-import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration/calculate-limit-novu-integration.usecase';
+import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
 describe('Get Novu Integration', function () {
@@ -133,7 +133,6 @@ describe('Get Novu Integration', function () {
 
     sinon.assert.calledWith(stub, {
       channel: ChannelTypeEnum.EMAIL,
-      _organizationId: session.organization._id,
       _environmentId: session.environment._id,
       providerId: EmailProviderIdEnum.Novu,
       createdAt: { $gte: startOfMonth(new Date()), $lte: endOfMonth(new Date()) },

@@ -133,13 +133,12 @@ export class SendMessageInApp extends SendMessageBase {
     const oldMessage = await this.messageRepository.findOne({
       _notificationId: notification._id,
       _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
-      providerId: 'novu',
+      providerId: InAppProviderIdEnum.Novu,
       _feedId: inAppChannel.template._feedId,
     });
 

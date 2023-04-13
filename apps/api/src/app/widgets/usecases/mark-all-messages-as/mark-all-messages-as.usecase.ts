@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
+import { ChannelTypeEnum } from '@novu/shared';
 
 import { InvalidateCacheService } from '../../../shared/services/cache';
 import { QueueService } from '../../../shared/services/queue';
@@ -41,12 +42,13 @@ export class MarkAllMessagesAs {
       );
     }
 
-    const response = await this.messageRepository.markAllMessagesAs(
-      subscriber._id,
-      command.environmentId,
-      command.markAs,
-      command.feedIds
-    );
+    const response = await this.messageRepository.markAllMessagesAs({
+      subscriberId: subscriber._id,
+      environmentId: command.environmentId,
+      markAs: command.markAs,
+      feedIdentifiers: command.feedIds,
+      channel: ChannelTypeEnum.IN_APP,
+    });
 
     this.queueService.bullMqService.add(
       'sendMessage',

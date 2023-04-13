@@ -335,6 +335,38 @@ export class HeadlessService {
     };
   }
 
+  public listenUnreadCountChange({
+    listener,
+  }: {
+    listener: (unreadCount: number) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    if (this.socket) {
+      this.socket.on(
+        'unread_count_changed',
+        (data?: { unreadCount: number }) => {
+          if (Number.isInteger(data?.unreadCount)) {
+            this.queryClient.removeQueries(NOTIFICATIONS_QUERY_KEY, {
+              exact: false,
+            });
+            this.queryClient.setQueryData<{ count: number }>(
+              UNREAD_COUNT_QUERY_KEY,
+              (oldData) => ({ count: data?.unreadCount ?? oldData.count })
+            );
+            listener(data.unreadCount);
+          }
+        }
+      );
+    }
+
+    return () => {
+      if (this.socket) {
+        this.socket.off('unread_count_changed');
+      }
+    };
+  }
+
   public fetchNotifications({
     page = 0,
     storeId = 'default_store',
