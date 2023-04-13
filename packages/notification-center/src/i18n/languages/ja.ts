@@ -6,6 +6,7 @@ export const JA: ITranslationEntry = {
     markAllAsRead: 'すべて既読にする',
     poweredBy: '搭載',
     settings: '設定',
+    noNewNotification: 'ここにはまだ新しいものはありません',
   },
   lang: 'ja',
 };

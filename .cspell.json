@@ -3,6 +3,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "Millis",
     "maqsam",
     "sadd",
     "smembers",
@@ -430,7 +431,10 @@
     "Metafiles",
     "Metas",
     "Webpush",
-    "maqsam"
+    "maqsam",
+    "Millis",
+    "sscan",
+    "vishnudxb"
   ],
   "flagWords": [],
   "patterns": [

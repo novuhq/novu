@@ -35,7 +35,7 @@
     "event-stream": "^4.0.1",
     "fs-extra": "^9.0.0",
     "jsonfile": "^6.0.1",
-    "mongoose": "6.10.4",
+    "mongoose": "6.10.5",
     "ng-intercom": "^8.0.2",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

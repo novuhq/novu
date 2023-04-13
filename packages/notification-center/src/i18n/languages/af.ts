@@ -6,6 +6,7 @@ export const AF: ITranslationEntry = {
     markAllAsRead: 'Merk alles as gelees',
     poweredBy: 'Aangedryf deur',
     settings: 'Instellings',
+    noNewNotification: 'Nog niks nuuts om hier te sien nie',
   },
   lang: 'af',
 };

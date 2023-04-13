@@ -1,5 +1,8 @@
 FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as dev_base
 
+ARG BULL_MQ_PRO_TOKEN
+ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
+
 RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@7.28.0
 RUN pnpm --version
@@ -14,9 +17,9 @@ COPY ./meta .
 COPY ./deps .
 COPY ./pkg .
 
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then echo 'enterprise edition' ; fi
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then cp .npmrc-cloud .npmrc  ; fi
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then rm -f .npmrc ; fi
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then cp .npmrc-cloud .npmrc; fi
 
 RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  pnpm install --reporter=silent --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
@@ -66,8 +69,6 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  --reporter=silent
 
 RUN chown -R 1000:root .
-
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
 
 WORKDIR /usr/src/app/apps/inbound-mail
 CMD [ "pm2-runtime", "dist/src/main.js" ]
