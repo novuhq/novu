@@ -141,10 +141,6 @@ export class InMemoryProviderService {
         Logger.warn('In-memory cluster end', LOG_CONTEXT);
       });
 
-      inMemoryProviderClient.on('node error', (error) => {
-        Logger.error(error, LOG_CONTEXT);
-      });
-
       inMemoryProviderClient.on('error', (error) => {
         Logger.error(error, LOG_CONTEXT);
       });
