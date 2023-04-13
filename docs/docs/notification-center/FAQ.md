@@ -50,3 +50,20 @@ Add a in-app step in template workflow. Click on this step and then click on edi
 Everything can be customized in Novu. <b>useNotification</b> hook in react component provides few functions to customize. <b>Header</b>, <b>Footer</b>, <b>Bell</b> etc can also be customized. Read more about customization [here](./react/react-components#custom-ui)
 
 </details>
+
+<details>
+ <summary>Notification bell is not showing in iframe</summary>
+
+We use font awesome bell icon. Make sure you have added font awesome css cdn link in head tag.
+
+```html
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+/>
+```
+
+</details>
