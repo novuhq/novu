@@ -600,6 +600,102 @@ describe('headless.service', () => {
     });
   });
 
+  describe('listenUnreadCountChange', () => {
+    test('calls listenUnreadCountChange successfully', async () => {
+      // when
+      const mockedUnreadCount = { unreadCount: 101 };
+      const headlessService = new HeadlessService(options);
+      const listener = jest.fn();
+      const unreadCountListener = jest.fn();
+      const notificationsListener = jest.fn();
+      const mockedSocket = {
+        on: jest.fn((type, callback) => {
+          if (type === 'unread_count_changed') {
+            callback(mockedUnreadCount);
+          }
+        }),
+        off: jest.fn(),
+      };
+      (headlessService as any).session = mockSession;
+      (headlessService as any).socket = mockedSocket;
+      // fetch unseen count before, the listenUnreadCountChange will update it later
+      headlessService.fetchUnreadCount({
+        listener: unreadCountListener,
+      });
+      await promiseResolveTimeout(0);
+      // fetch notifications before, the listenUnreadCountChange will clear notifications cache
+      headlessService.fetchNotifications({
+        listener: notificationsListener,
+      });
+      await promiseResolveTimeout(0);
+
+      // then
+      headlessService.listenUnreadCountChange({
+        listener,
+      });
+      await promiseResolveTimeout(0);
+
+      // check results
+      expect(mockedSocket.on).toHaveBeenNthCalledWith(
+        1,
+        'unread_count_changed',
+        expect.any(Function)
+      );
+      expect(listener).toHaveBeenCalledWith(mockedUnreadCount.unreadCount);
+      expect(unreadCountListener).toHaveBeenNthCalledWith(
+        3,
+        expect.objectContaining({
+          data: { count: mockedUnreadCount.unreadCount },
+        })
+      );
+
+      // should fetch the notifications again, because the cache should be cleared
+      const onNotificationsListSuccess = jest.fn();
+      headlessService.fetchNotifications({
+        listener: notificationsListener,
+        onSuccess: onNotificationsListSuccess,
+        onError: (error) => {
+          console.log({ error });
+        },
+      });
+      await promiseResolveTimeout(0);
+
+      expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(2);
+      expect(notificationsListener).toHaveBeenCalledTimes(4);
+      expect(notificationsListener).toHaveBeenNthCalledWith(
+        4,
+        expect.objectContaining({
+          isLoading: false,
+          data: mockNotificationsList,
+        })
+      );
+      expect(onNotificationsListSuccess).toHaveBeenNthCalledWith(
+        1,
+        mockNotificationsList
+      );
+    });
+
+    test('should unsubscribe', async () => {
+      // when
+      const headlessService = new HeadlessService(options);
+      const listener = jest.fn();
+      const mockedSocket = {
+        on: jest.fn(),
+        off: jest.fn(),
+      };
+      (headlessService as any).session = mockSession;
+      (headlessService as any).socket = mockedSocket;
+
+      // then
+      const unsubscribe = headlessService.listenUnreadCountChange({
+        listener,
+      });
+      unsubscribe();
+
+      expect(mockedSocket.off).toHaveBeenCalledWith('unread_count_changed');
+    });
+  });
+
   describe('fetchUserPreferences', () => {
     test('calls fetchUserPreferences successfully', async () => {
       const headlessService = new HeadlessService(options);

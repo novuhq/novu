@@ -1,5 +1,6 @@
 ---
-sidebar_position: 8
+sidebar_position: 1
+sidebar_label: Headless Notification Center
 ---
 
 # Headless Notification Center
@@ -100,3 +101,29 @@ const headlessService = new HeadlessService({
 :::info
 To read more about HMAC Encryption, visit [here](../react/react-components#hmac-encryption)
 :::
+
+## Realtime Sockets
+
+Novu headless library provides `listenUnseenCountChange` API to listen to real-time socket changes and get updates about new notifications added to the user's feed.
+
+### unseen count changes
+
+```js
+headlessService.listenUnseenCountChange({
+  // this will run every time there's a change in the `unseen_count` in real-time
+  listener: (unseenCount: number) => {
+    console.log(unseenCount);
+  },
+});
+```
+
+### unread count changes
+
+```js
+headlessService.listenUnreadCountChange({
+  // this will run every time there's a change in the `unread_count` in real-time
+  listener: (unreadCount: number) => {
+    console.log(unreadCount);
+  },
+});
+```

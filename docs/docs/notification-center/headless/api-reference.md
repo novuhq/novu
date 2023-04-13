@@ -1,3 +1,8 @@
+---
+sidebar_position: 2
+sidebar_label: API Reference
+---
+
 # Headless Notification Center API Reference
 
 This page contains the complete documentation about the Headless Notification Center package. You can find here the list of all the methods that you can use.
@@ -133,6 +138,27 @@ headlessService.listenUnseenCountChange({
 ```ts
 interface IListenUnseenCountChanget {
   listener: (unseenCount: number) => void;
+}
+```
+
+## listenUnreadCountChange
+
+Listens to the changes of the unread count.
+Can be used to get real time count of the unread messages.
+
+```ts
+headlessService.listenUnreadCountChange({
+  listener: (unreadCount: number) => {
+    console.log(unreadCount);
+  },
+});
+```
+
+### method args interface
+
+```ts
+interface IListenUnreadCountChanget {
+  listener: (unreadCount: number) => void;
 }
 ```
 
