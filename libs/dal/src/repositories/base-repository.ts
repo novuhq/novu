@@ -33,10 +33,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   }
 
   async findById(id: string, select?: string): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findById(id, select);
+    const data = await this.MongooseModel.findById(id, select).lean();
     if (!data) return null;
 
-    return this.mapEntity(data.toObject());
+    return this.mapEntity(data);
   }
 
   async findOne(
@@ -44,10 +44,12 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     select?: ProjectionType<T_MappedEntity>,
     options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}
   ): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findOne(query, select).read(options.readPreference || 'primary');
+    const data = await this.MongooseModel.findOne(query, select)
+      .lean()
+      .read(options.readPreference || 'primary');
     if (!data) return null;
 
-    return this.mapEntity(data.toObject());
+    return this.mapEntity(data);
   }
 
   async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<void> {
@@ -153,10 +155,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   }
 
   protected mapEntity<TData>(data: TData): TData extends null ? null : T_MappedEntity {
-    return plainToInstance(this.entity, JSON.parse(JSON.stringify(data))) as any;
+    return plainToInstance(this.entity, data) as any;
   }
 
   protected mapEntities(data: any): T_MappedEntity[] {
-    return plainToInstance<T_MappedEntity, T_MappedEntity[]>(this.entity, JSON.parse(JSON.stringify(data)));
+    return plainToInstance<T_MappedEntity, T_MappedEntity[]>(this.entity, data);
   }
 }
