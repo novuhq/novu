@@ -6,10 +6,14 @@ let inMemoryProviderService: InMemoryProviderService;
 
 describe('In-memory Provider Service', () => {
   describe('Non cluster mode', () => {
-    beforeEach(() => {
+    before(async () => {
       process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
       inMemoryProviderService = new InMemoryProviderService();
+
+      await inMemoryProviderService.delayUntilReadiness();
+
+      expect(inMemoryProviderService.getStatus()).to.eql('ready');
     });
 
     describe('Set up', () => {
@@ -35,7 +39,7 @@ describe('In-memory Provider Service', () => {
 
         const { inMemoryProviderClient } = inMemoryProviderService;
 
-        expect(inMemoryProviderClient!.status).to.eql('connecting');
+        expect(inMemoryProviderClient!.status).to.eql('ready');
         expect(inMemoryProviderClient!.isCluster).to.eql(false);
 
         const options = inMemoryProviderService.getOptions();
@@ -61,10 +65,14 @@ describe('In-memory Provider Service', () => {
   });
 
   describe('Cluster mode', () => {
-    beforeEach(() => {
+    before(async () => {
       process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       inMemoryProviderService = new InMemoryProviderService();
+
+      await inMemoryProviderService.delayUntilReadiness();
+
+      expect(inMemoryProviderService.getStatus()).to.eql('ready');
     });
 
     describe('Set up', () => {
@@ -100,14 +108,14 @@ describe('In-memory Provider Service', () => {
 
         const { inMemoryProviderClient } = inMemoryProviderService;
 
-        expect(inMemoryProviderClient!.status).to.eql('connecting');
+        expect(inMemoryProviderClient!.status).to.eql('ready');
         expect(inMemoryProviderClient!.isCluster).to.eql(true);
 
         const options = inMemoryProviderService.getOptions();
         expect(options).to.eql(undefined);
 
         const clusterOptions = inMemoryProviderService.getClusterOptions();
-        expect(clusterOptions!.enableOfflineQueue).to.eql(true);
+        expect(clusterOptions!.enableOfflineQueue).to.eql(false);
         expect(clusterOptions!.enableReadyCheck).to.eql(true);
         expect(clusterOptions!.maxRedirections).to.eql(16);
         expect(clusterOptions!.retryDelayOnClusterDown).to.eql(100);
