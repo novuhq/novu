@@ -74,7 +74,7 @@ runs:
     #     cd apps/worker && pnpm run docker:build:depot --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN}
 
     - name: Build with Buildx, tag, and test
-      if: ${{ inputs.fork == 'true' }} # Use buildx for forks as they can't access secrets
+      # if: ${{ inputs.fork == 'true' }} # Use buildx for forks as they can't access secrets
       shell: bash
       env:
         REGISTRY_OWNER: novuhq
