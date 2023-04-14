@@ -10,7 +10,7 @@ export const schema = z
         required_error: 'Required - Notification Name',
       })
       .superRefine((data, ctx) => {
-        if (data.length === 0) {
+        if (data.replaceAll(/\s/g, '').length === 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.too_small,
             minimum: 1,
@@ -86,6 +86,21 @@ export const schema = z
                     inclusive: true,
                     message: 'Required - Push Title',
                     path: ['title'],
+                  });
+                }
+              }),
+            name: z
+              .string({
+                required_error: 'Required - Step Name',
+              })
+              .superRefine((data, ctx) => {
+                if (data.replaceAll(/\s/g, '').length === 0) {
+                  ctx.addIssue({
+                    code: z.ZodIssueCode.too_small,
+                    minimum: 1,
+                    type: 'string',
+                    inclusive: true,
+                    message: 'Required - Step Name',
                   });
                 }
               }),
