@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { IAttachmentOptionsExtended } from '@novu/stateless';
 import { NonExistingFileError } from '../../../shared/errors/non-existing-file.error';
 import { StorageService } from '../../../shared/services/storage/storage.service';
+import { Instrument } from '@novu/application-generic';
 
 @Injectable()
 export class StorageHelperService {
@@ -11,6 +12,7 @@ export class StorageHelperService {
     return !(Array.isArray(attachments) && attachments.length > 0);
   }
 
+  @Instrument()
   async uploadAttachments(attachments?: IAttachmentOptionsExtended[]) {
     if (!attachments || this.areAttachmentsMissing(attachments)) {
       return;
