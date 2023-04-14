@@ -80,13 +80,15 @@ export const getRedisCluster = (): Cluster | undefined => {
   const { instances } = getRedisClusterProviderConfig();
 
   const options: ClusterOptions = {
+    enableAutoPipelining: true,
+    enableOfflineQueue: false,
+    enableReadyCheck: true,
+    scaleReads: 'slave',
     /*
      *  Disabled in Prod as affects performance
      */
     showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
     slotsRefreshTimeout: 2000,
-    scaleReads: 'slave',
-    enableAutoPipelining: true,
   };
 
   Logger.log(`Initializing Redis Cluster Provider with ${instances?.length} instances`);
