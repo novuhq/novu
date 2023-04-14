@@ -34,6 +34,8 @@ export class InMemoryProviderService {
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
   constructor() {
+    Logger.log('In-memory provider service initialized', LOG_CONTEXT);
+
     this.inMemoryProviderClient = this.buildClient();
   }
 
