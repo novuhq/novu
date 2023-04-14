@@ -39,7 +39,7 @@ describe('Distributed Lock Service', () => {
     let inMemoryProviderService: InMemoryProviderService;
     let distributedLockService: DistributedLockService;
 
-    before(async () => {
+    beforeEach(async () => {
       inMemoryProviderService = new InMemoryProviderService();
 
       await inMemoryProviderService.delayUntilReadiness();
