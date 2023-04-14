@@ -3,8 +3,9 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';
 import { Button, colors } from '../../../design-system';
 import { IIntegratedProvider } from '../../integrations/IntegrationsStoreModal';
+import { stepNames } from '../constants';
 import { ChannelTitle } from './ChannelTitle';
-import { getChannelCopy, LackIntegrationError } from './LackIntegrationError';
+import { LackIntegrationError } from './LackIntegrationError';
 
 export const ListProviders = ({
   providers,
@@ -54,7 +55,7 @@ export const ListProviders = ({
           }}
         >
           <LackIntegrationError
-            text={`Please configure ${getChannelCopy(providers[0].channel)} provider to activate the channel`}
+            text={`Please configure ${stepNames[providers[0].channel]} provider to activate the channel`}
             channelType={providers[0].channel}
           />
         </div>
