@@ -62,26 +62,26 @@ describe('Changes Screen', function () {
     cy.getByTestId('promote-btn').should('be.disabled');
   });
 
-  it.skip('should promote all changes with promote all btn', function () {
+  it('should promote all changes with promote all btn', function () {
     createNotification();
     cy.waitForNetworkIdle(500);
     createNotification();
     cy.waitForNetworkIdle(500);
 
     cy.visit('/changes');
-    cy.waitForNetworkIdle(500);
+    cy.waitForNetworkIdle(1000);
     cy.getByTestId('pending-changes-table').find('tbody tr').should('have.length', 2);
 
     cy.getByTestId('promote-all-btn').click({ force: true });
-    cy.waitForNetworkIdle(500);
+    cy.waitForNetworkIdle(1000);
 
     cy.getByTestId('pending-changes-table').find('tbody tr').should('not.exist');
 
     switchEnvironment('Production');
-    cy.waitForNetworkIdle(500);
+    cy.waitForNetworkIdle(1000);
 
     cy.visit('/templates');
-    cy.waitForNetworkIdle(500);
+    cy.waitForNetworkIdle(1000);
     cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 2);
   });
 });
