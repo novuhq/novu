@@ -64,9 +64,9 @@ describe('Changes Screen', function () {
 
   it('should promote all changes with promote all btn', function () {
     createNotification();
-    cy.waitForNetworkIdle(500);
+    cy.waitForNetworkIdle(1000);
     createNotification();
-    cy.waitForNetworkIdle(500);
+    cy.waitForNetworkIdle(1000);
 
     cy.visit('/changes');
     cy.waitForNetworkIdle(1000);
