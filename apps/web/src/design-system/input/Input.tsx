@@ -1,5 +1,5 @@
 import React, { ChangeEvent, FocusEvent } from 'react';
-import { TextInputProps, TextInput as MantineTextInput, Sx, Styles } from '@mantine/core';
+import { TextInputProps, TextInput as MantineTextInput, Styles } from '@mantine/core';
 import { inputStyles } from '../config/inputs.styles';
 import { SpacingProps } from '../shared/spacing.props';
 

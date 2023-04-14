@@ -91,7 +91,7 @@ export const DigestWorkflowTourTooltip = ({
       const emailStep = steps.find((el) => el.template?.type === StepTypeEnum.EMAIL);
       navigate(basePath + '/' + StepTypeEnum.EMAIL + '/' + emailStep?.uuid);
     } else if (tourStepIndex === 2) {
-      navigate(basePath + '/testworkflow');
+      navigate(basePath + '/test-workflow');
     }
     tourStorage.setTour('digest', templateId, tourStepIndex);
     setStep(tourStepIndex);

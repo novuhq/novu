@@ -90,7 +90,6 @@ function createNotification() {
   cy.intercept('**/notification-groups').as('getNotificationGroups');
   cy.visit('/templates/create');
   cy.waitForNetworkIdle(500);
-  cy.wait('@getNotificationGroups');
 
   cy.getByTestId('title').clear().type('Test Notification Title');
 

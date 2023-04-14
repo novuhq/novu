@@ -102,7 +102,6 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('create-feed-input').type('test4');
     cy.getByTestId('add-feed-button').click();
     cy.getByTestId('feed-button-2-checked');
-    goBack();
   });
 
   it('should edit email notification', function () {

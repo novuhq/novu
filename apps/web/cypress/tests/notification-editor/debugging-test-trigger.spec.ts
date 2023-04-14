@@ -1,5 +1,3 @@
-import { addAndEditChannel, clickWorkflow, fillBasicNotificationDetails, goBack } from '.';
-
 describe('Debugging - test trigger', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
@@ -22,7 +20,7 @@ describe('Debugging - test trigger', function () {
     cy.getByTestId('step-page-wrapper').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
   });
 
-  it.only('should not test trigger on error ', function () {
+  it('should not test trigger on error ', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);

@@ -20,7 +20,7 @@ export const TriggerSegmentControl = () => {
       data={[
         {
           label: 'Run a Test',
-          value: 'testworkflow',
+          value: 'test-workflow',
         },
         {
           label: 'Get Snippet',

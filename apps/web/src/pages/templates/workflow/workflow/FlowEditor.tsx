@@ -110,7 +110,7 @@ export function FlowEditor({
         navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
       }
       if (node.type === 'triggerNode') {
-        navigate(basePath + '/testworkflow');
+        navigate(basePath + '/test-workflow');
       }
     },
     [basePath]

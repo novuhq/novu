@@ -185,7 +185,7 @@ function App() {
                     <Route path="" element={<Sidebar />} />
                     <Route path="settings" element={<TemplateSettings />} />
                     <Route path="channels" element={<UserPreference />} />
-                    <Route path="testworkflow" element={<TestWorkflowPage />} />
+                    <Route path="test-workflow" element={<TestWorkflowPage />} />
                     <Route path="snippet" element={<SnippetPage />} />
                     <Route path="providers" element={<ProvidersPage />} />
                     <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
