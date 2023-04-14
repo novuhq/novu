@@ -36,7 +36,7 @@ function subscriberExist(subscriberVariables: INotificationTriggerVariable[]) {
 export function TestWorkflow({ trigger }) {
   const [transactionId, setTransactionId] = useState<string>('');
   const { currentUser } = useAuthContext();
-  const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
+  const { mutateAsync: triggerTestEvent, isLoading } = useMutation(testTrigger);
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
 
   const subscriberVariables = useMemo(() => {
@@ -151,6 +151,7 @@ export function TestWorkflow({ trigger }) {
               disabled={!form.isValid()}
               data-test-id="test-trigger-btn"
               inherit
+              loading={isLoading}
               onClick={() => {
                 onTrigger(form.values);
               }}
