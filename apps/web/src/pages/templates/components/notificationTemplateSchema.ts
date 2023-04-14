@@ -89,21 +89,6 @@ export const schema = z
                   });
                 }
               }),
-            name: z
-              .string({
-                required_error: 'Required - Step Name',
-              })
-              .superRefine((data, ctx) => {
-                if (data.replaceAll(/\s/g, '').length === 0) {
-                  ctx.addIssue({
-                    code: z.ZodIssueCode.too_small,
-                    minimum: 1,
-                    type: 'string',
-                    inclusive: true,
-                    message: 'Required - Step Name',
-                  });
-                }
-              }),
             metadata: z
               .object({
                 amount: z.any().optional(),
