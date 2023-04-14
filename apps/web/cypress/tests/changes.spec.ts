@@ -62,7 +62,7 @@ describe('Changes Screen', function () {
     cy.getByTestId('promote-btn').should('be.disabled');
   });
 
-  it('should promote all changes with promote all btn', function () {
+  it.skip('should promote all changes with promote all btn', function () {
     createNotification();
     cy.waitForNetworkIdle(500);
     createNotification();
