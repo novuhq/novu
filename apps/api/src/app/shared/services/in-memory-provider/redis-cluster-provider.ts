@@ -86,7 +86,7 @@ export const getRedisCluster = (): Cluster | undefined => {
     showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
     slotsRefreshTimeout: 2000,
     scaleReads: 'slave',
-    enableAutoPipelining: true,
+    enableAutoPipelining: false,
   };
 
   Logger.log(`Initializing Redis Cluster Provider with ${instances?.length} instances`);

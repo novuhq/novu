@@ -94,7 +94,7 @@ export const getElasticacheCluster = (): Cluster | undefined => {
      */
     showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
     slotsRefreshTimeout: 10000,
-    enableAutoPipelining: true,
+    enableAutoPipelining: false,
   };
 
   Logger.log(`Initializing Elasticache Cluster service`);
