@@ -41,6 +41,9 @@ jobs:
       contents: read
       packages: write
       deployments: write
+    strategy:
+      matrix:
+        name: ['novu/worker-ee']
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
