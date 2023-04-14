@@ -6,26 +6,11 @@ import { Text } from '../../../design-system';
 import { DoubleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { TemplateEditorAnalyticsEnum } from '../constants';
+import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';
 
 const DoubleArrowRightStyled = styled(DoubleArrowRight)`
   cursor: pointer;
 `;
-
-export const getChannelCopy = (channelType: ChannelTypeEnum) => {
-  switch (channelType) {
-    case ChannelTypeEnum.SMS:
-      return 'SMS';
-    case ChannelTypeEnum.EMAIL:
-      return 'E-Mail';
-    case ChannelTypeEnum.PUSH:
-      return 'Push';
-    case ChannelTypeEnum.CHAT:
-      return 'Chat';
-    default:
-      return '';
-  }
-};
 
 export function LackIntegrationError({
   channelType,
@@ -47,9 +32,9 @@ export function LackIntegrationError({
         <Text>
           {text
             ? text
-            : `Looks like you haven’t configured your ${getChannelCopy(
-                channelType
-              )} provider yet, this channel will be disabled until you configure it.`}
+            : 'Looks like you haven’t configured your ' +
+              stepNames[channelType] +
+              ' provider yet, this channel will be disabled until you configure it.'}
         </Text>
         <DoubleArrowRightStyled
           onClick={() => {

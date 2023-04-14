@@ -15,7 +15,7 @@ import { schema } from './notificationTemplateSchema';
 import { v4 as uuid4 } from 'uuid';
 import { useNotificationGroup } from '../../../hooks';
 import { useCreate } from '../hooks/useCreate';
-import { stepNames } from './StepName';
+import { stepNames } from '../constants';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
