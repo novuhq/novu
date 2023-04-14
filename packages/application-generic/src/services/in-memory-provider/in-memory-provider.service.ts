@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { setTimeout } from 'timers/promises';
 
 import {
   getElasticacheCluster,
@@ -44,13 +45,35 @@ export class InMemoryProviderService {
       : this.inMemoryProviderSetup();
   }
 
-  public isClientReady(): boolean {
-    if (!this.inMemoryProviderClient) {
-      return false;
+  public async delayUntilReadiness(): Promise<void> {
+    let times = 0;
+    const retries = process.env
+      .IN_MEMORY_PROVIDER_SERVICE_READINESS_TIMEOUT_RETRIES
+      ? Number(process.env.IN_MEMORY_PROVIDER_SERVICE_READINESS_TIMEOUT_RETRIES)
+      : 10;
+    const timeout = process.env.IN_MEMORY_PROVIDER_SERVICE_READINESS_TIMEOUT
+      ? Number(process.env.IN_MEMORY_PROVIDER_SERVICE_READINESS_TIMEOUT)
+      : 100;
+
+    while (times < retries && !this.isClientReady()) {
+      times += 1;
+      await setTimeout(timeout);
     }
 
-    // TODO: Check this works for Cluster
-    return this.inMemoryProviderClient.status === CLIENT_READY;
+    Logger.log(
+      `Delayed ${times} times up to a total of ${times * retries}`,
+      LOG_CONTEXT
+    );
+  }
+
+  public getStatus(): string | unknown {
+    if (this.inMemoryProviderClient) {
+      return this.inMemoryProviderClient.status;
+    }
+  }
+
+  public isClientReady(): boolean {
+    return this.getStatus() === CLIENT_READY;
   }
 
   public isClusterMode(): boolean {

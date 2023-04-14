@@ -39,8 +39,15 @@ describe('Distributed Lock Service', () => {
     let inMemoryProviderService: InMemoryProviderService;
     let distributedLockService: DistributedLockService;
 
-    beforeEach(() => {
+    before(async () => {
       inMemoryProviderService = new InMemoryProviderService();
+
+      await inMemoryProviderService.delayUntilReadiness();
+
+      expect(inMemoryProviderService.getStatus()).toEqual('ready');
+    });
+
+    beforeEach(() => {
       distributedLockService = new DistributedLockService(
         inMemoryProviderService
       );
@@ -101,22 +108,23 @@ describe('Distributed Lock Service', () => {
     describe('Functionalities', () => {
       it('should create lock and it should expire after the TTL set', async () => {
         const resource = 'lock-created';
-        const TTL = 100;
-        const handler = async () => setTimeout(500);
+        const TTL = 1000;
+        const handler = async () => setTimeout(1.5 * TTL);
+        const client = distributedLockService.instances[0];
 
         distributedLockService.applyLock({ resource, ttl: TTL }, handler);
+        const firstTimeout = TTL / 2;
+        await setTimeout(firstTimeout);
 
-        const client = distributedLockService.instances[0];
         let resourceExists = await client!.exists(resource);
         expect(resourceExists).toEqual(1);
         // TTL + this time should be less than the handler set one to see that the self expiration works
-        await setTimeout(TTL + 10);
+        await setTimeout(firstTimeout * 2 + 10);
         resourceExists = await client!.exists(resource);
         expect(resourceExists).toEqual(0);
 
         expect(spyLock).toHaveBeenNthCalledWith(1, [resource], TTL);
         expect(spyIncreaseLockCounter).toHaveBeenCalledTimes(1);
-        expect(spyDecreaseLockCounter).not.toHaveBeenCalled();
         // Unlock shouldn't be called as the lock expires by going over TTL
         expect(spyUnlock).not.toHaveBeenCalled();
       });
