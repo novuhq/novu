@@ -74,7 +74,7 @@ runs:
     #     cd apps/worker && pnpm run docker:build:depot --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN}
 
     - name: Build with Buildx, tag, and test
-      if: ${{ inputs.fork == 'true' }} # Use buildx for forks as they can't access secrets
+      # if: ${{ inputs.fork == 'true' }} # Use buildx for forks as they can't access secrets
       shell: bash
       env:
         REGISTRY_OWNER: novuhq
@@ -98,9 +98,11 @@ runs:
         GH_ACTOR: ${{ github.actor }}
         GH_PASSWORD: ${{ inputs.github_token }}
       run: |
-        echo "Built image"
+        echo "Tag image"
+        docker images --all
         docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
 
+        echo "Run image"
         docker run --network=host --name worker -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
         docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1342/v1/health-check | grep 'ok'
 
