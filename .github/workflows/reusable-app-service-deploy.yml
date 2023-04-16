@@ -33,6 +33,7 @@ jobs:
       contents: read
       deployments: write
     steps:
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
       - name: Checkout cloud infra
         uses: actions/checkout@master
         with:
