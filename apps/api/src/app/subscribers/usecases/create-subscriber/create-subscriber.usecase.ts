@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
+import { SubscriberEntity } from '@novu/dal';
+import { CachedEntity, InvalidateCacheService, buildSubscriberKey } from '@novu/application-generic';
+
 import { CreateSubscriberCommand } from './create-subscriber.command';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
-import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { SubscriberEntity } from '@novu/dal';
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class CreateSubscriber {

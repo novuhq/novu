@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { isEqual } from 'lodash';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
+
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class UpdateSubscriber {

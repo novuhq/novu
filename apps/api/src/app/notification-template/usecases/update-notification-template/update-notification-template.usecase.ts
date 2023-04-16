@@ -1,5 +1,5 @@
 // eslint-ignore max-len
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ChangeRepository,
   NotificationStepEntity,
@@ -7,7 +7,13 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  InvalidateCacheService,
+  CacheService,
+  buildNotificationTemplateIdentifierKey,
+  buildNotificationTemplateKey,
+} from '@novu/application-generic';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
@@ -18,14 +24,8 @@ import {
   UpdateMessageTemplate,
 } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { CacheService, InvalidateCacheService } from '../../../shared/services/cache';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { NotificationStep } from '../../../shared/dtos/notification-step';
-import {
-  buildNotificationTemplateIdentifierKey,
-  buildNotificationTemplateKey,
-} from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class UpdateNotificationTemplate {
@@ -36,8 +36,8 @@ export class UpdateNotificationTemplate {
     private updateMessageTemplate: UpdateMessageTemplate,
     private createChange: CreateChange,
     private changeRepository: ChangeRepository,
-    private invalidateCache: InvalidateCacheService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private invalidateCache: InvalidateCacheService
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {

@@ -1,18 +1,9 @@
-import { JobEntity, JobRepository, NotificationTemplateRepository, NotificationRepository } from '@novu/dal';
-import { Injectable, Logger } from '@nestjs/common';
+import { JobRepository, NotificationRepository } from '@novu/dal';
+import { Injectable } from '@nestjs/common';
 import { StepTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import * as Sentry from '@sentry/node';
+import { AddJob, DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
 
 import { StoreSubscriberJobsCommand } from './store-subscriber-jobs.command';
-
-import { AddJob } from '../add-job/add-job.usecase';
-
-import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-} from '../../../execution-details/usecases/create-execution-details';
-import { DetailEnum } from '../../../execution-details/types';
-import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
 export class StoreSubscriberJobs {

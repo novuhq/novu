@@ -38,30 +38,7 @@ jobs:
           targets: lint
           projects: '@novu/web'
 
-      - name: Start Local Stack
-        env:
-          DEFAULT_REGION: us-east-1
-          AWS_DEFAULT_REGION: us-east-1
-          AWS_ACCOUNT_ID: '000000000000'
-          AWS_ACCESS_KEY_ID: test
-          AWS_SECRET_ACCESS_KEY: test
-          AWS_EC2_METADATA_DISABLED: true
-        working-directory: docker/local
-        run: |
-          docker-compose -f docker-compose.localstack.yml up -d
-          sleep 5
-          max_retry=30
-          counter=0
-          until $command
-          do
-             sleep 1
-             [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
-             aws --endpoint-url=http://localhost:4566 s3 ls
-             echo "Trying again. Try #$counter"
-             ((counter++))
-          done
-          sleep 1
-          aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
+      - uses: ./.github/actions/start-localstack
 
       # Runs a single command using the runners shell
       - name: Build
@@ -69,6 +46,9 @@ jobs:
 
       - name: Build API
         run: CI='' pnpm build:api
+
+      - name: Build worker
+        run: CI='' pnpm build:worker
 
       - name: Start Client
         working-directory: apps/web
@@ -88,11 +68,17 @@ jobs:
           GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
         run: cd apps/api && pnpm start:test &
 
+      - name: Start worker
+        run: cd apps/worker && pnpm start:test &
+
       - name: Install wait-on plugin
         run: npm i -g wait-on
 
       - name: Wait on API
         run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
+
+      - name: Wait on worker
+        run: wait-on --timeout=180000 http://localhost:1342/v1/health-check
 
       - name: Wait on WS
         run: wait-on --timeout=180000 http://localhost:1340/v1/health-check

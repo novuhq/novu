@@ -1,28 +1,25 @@
-import { Inject, Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 import { AnalyticsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
-import { v4 as uuidv4 } from 'uuid';
+import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
 
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
-import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
-import { buildNotificationTemplateIdentifierKey } from '../../../shared/services/cache/key-builders/entities';
-import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private storageHelperService: StorageHelperService,
     private triggerHandlerQueueService: TriggerHandlerQueueService,
     private mapTriggerRecipients: MapTriggerRecipients
