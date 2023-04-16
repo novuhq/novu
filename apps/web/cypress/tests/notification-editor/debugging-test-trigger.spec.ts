@@ -15,7 +15,7 @@ describe('Debugging - test trigger', function () {
 
     cy.wait('@notification-templates');
 
-    cy.getByTestId('node-triggerSelector').click();
+    cy.getByTestId('node-triggerSelector').click({ force: true });
     cy.getByTestId('step-page-wrapper').should('be.visible');
     cy.getByTestId('step-page-wrapper').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
   });
