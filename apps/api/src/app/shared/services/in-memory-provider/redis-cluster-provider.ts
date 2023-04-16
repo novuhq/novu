@@ -80,7 +80,7 @@ export const getRedisCluster = (): Cluster | undefined => {
   const { instances } = getRedisClusterProviderConfig();
 
   const options: ClusterOptions = {
-    enableAutoPipelining: true,
+    enableAutoPipelining: false,
     enableOfflineQueue: false,
     enableReadyCheck: true,
     scaleReads: 'slave',
