@@ -8,16 +8,10 @@ export class PlivoHandler extends BaseSmsHandler {
     super('plivo', ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
-    const config: {
-      accountSid: string;
-      authToken: string;
-      from: string;
-    } = {
+    this.provider = new PlivoSmsProvider({
       accountSid: credentials.accountSid,
       authToken: credentials.token,
       from: credentials.from,
-    };
-
-    this.provider = new PlivoSmsProvider(config);
+    });
   }
 }

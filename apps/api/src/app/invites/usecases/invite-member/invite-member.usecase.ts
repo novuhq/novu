@@ -7,7 +7,7 @@ import { AnalyticsService } from '@novu/application-generic';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InviteMemberCommand } from './invite-member.command';
 import { capitalize, createGuid } from '../../../shared/services/helper/helper.service';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 
 @Injectable({
@@ -18,7 +18,7 @@ export class InviteMember {
     private organizationRepository: OrganizationRepository,
     private userRepository: UserRepository,
     private memberRepository: MemberRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: InviteMemberCommand) {

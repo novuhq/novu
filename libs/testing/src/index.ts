@@ -7,3 +7,5 @@ export * from './integration.service';
 export * from './environment.service';
 export * from './organization.service';
 export * from './user.service';
+export * from './jobs.service';
+export * from './queue.service';

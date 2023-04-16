@@ -1,8 +1,8 @@
+import { GetSubscriberPreference, GetSubscriberTemplatePreference } from '@novu/application-generic';
+
 import { CreateSubscriber } from './create-subscriber';
 import { GetSubscribers } from './get-subscribers';
 import { GetSubscriber } from './get-subscriber';
-import { GetSubscriberPreference } from './get-subscriber-preference/get-subscriber-preference.usecase';
-import { GetSubscriberTemplatePreference } from './get-subscriber-template-preference';
 import { GetPreferences } from './get-preferences/get-preferences.usecase';
 import { RemoveSubscriber } from './remove-subscriber';
 import { SearchByExternalSubscriberIds } from './search-by-external-subscriber-ids';

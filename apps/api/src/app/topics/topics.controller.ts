@@ -5,7 +5,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Inject,
   Param,
   Patch,
   Post,
@@ -23,7 +22,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
 
 import {
   AddSubscribersRequestDto,
@@ -58,7 +56,6 @@ import {
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { ANALYTICS_SERVICE } from '../shared/shared.module';
 
 @Controller('/topics')
 @ApiTags('Topics')
@@ -72,8 +69,7 @@ export class TopicsController {
     private getTopicSubscriberUseCase: GetTopicSubscriberUseCase,
     private getTopicUseCase: GetTopicUseCase,
     private removeSubscribersUseCase: RemoveSubscribersUseCase,
-    private renameTopicUseCase: RenameTopicUseCase,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private renameTopicUseCase: RenameTopicUseCase
   ) {}
 
   @Post('')
