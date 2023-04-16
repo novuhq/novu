@@ -81,7 +81,6 @@ export const getElasticacheCluster = (): Cluster | undefined => {
 
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
-    enableAutoPipelining: true,
     enableOfflineQueue: false,
     enableReadyCheck: true,
     redisOptions: {
