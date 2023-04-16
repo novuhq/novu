@@ -24,7 +24,7 @@ describe('Debugging - test trigger', function () {
     const template = this.session.templates[0];
     cy.visit('/templates/edit/' + template._id);
     cy.waitForNetworkIdle(500);
-    cy.getByTestId('node-triggerSelector').click();
+    cy.getByTestId('node-triggerSelector').click({ force: true });
 
     cy.getByTestId('step-page-wrapper').should('be.visible');
     cy.getByTestId('step-page-wrapper').getByTestId('test-trigger-to-param').type('{backspace}');
