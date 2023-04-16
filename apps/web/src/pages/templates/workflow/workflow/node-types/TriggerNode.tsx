@@ -70,7 +70,7 @@ export default memo(({ selected }: { selected: boolean }) => {
   }, [isDirty]);
 
   return (
-    <div data-test-id={'node-triggerSelector'} style={{ position: 'relative' }}>
+    <div data-test-id={'node-triggerSelector'} style={{ position: 'relative', pointerEvents: 'none' }}>
       <When truthy={!isDirty}>
         <Tooltip label="Workflow is saved">
           <div className={classes.savedIcon}>
@@ -86,16 +86,14 @@ export default memo(({ selected }: { selected: boolean }) => {
           </div>
         </Tooltip>
       </When>
-      <div style={{ pointerEvents: 'none' }}>
-        <WorkflowNode
-          showDelete={false}
-          Icon={TapeGradient}
-          label={'Trigger'}
-          active={selected}
-          channelType={StepTypeEnum.TRIGGER}
-        />
-        <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
-      </div>
+      <WorkflowNode
+        showDelete={false}
+        Icon={TapeGradient}
+        label={'Trigger'}
+        active={selected}
+        channelType={StepTypeEnum.TRIGGER}
+      />
+      <Handle style={noChildStyle} type="source" id="a" position={Position.Bottom} />
     </div>
   );
 });
