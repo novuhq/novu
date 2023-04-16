@@ -21,6 +21,7 @@ import {
   EventsDistributedLockService,
   SendTestEmail,
   SendTestEmailCommand,
+  CalculateDelayService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -93,6 +94,7 @@ const SERVICES = [
   },
   EventsDistributedLockService,
   EventsPerformanceService,
+  CalculateDelayService,
 ];
 
 @Module({

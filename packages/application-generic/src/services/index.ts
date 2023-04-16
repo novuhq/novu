@@ -3,6 +3,7 @@ export { AnalyticsService } from './analytics.service';
 export { QueueService } from './queue.service';
 export { WsQueueService } from './ws-queue.service';
 export { VerifyPayloadService } from './verify-payload.service';
+export { CalculateDelayService } from './calculate-delay.service';
 export { EventsDistributedLockService } from './events-distributed-lock.service';
 export * from './cache';
 export * from './performance';

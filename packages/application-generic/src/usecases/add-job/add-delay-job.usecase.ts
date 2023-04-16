@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { DigestUnitEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
+import { JobRepository, JobStatusEnum } from '@novu/dal';
+import { StepTypeEnum } from '@novu/shared';
 
 import { ApiException } from '../../utils/exceptions';
 import { AddJobCommand } from './add-job.command';
-import { DelayService } from '../../services/calculate-delay/delay.service';
+import { CalculateDelayService } from '../../services';
 
 @Injectable()
 export class AddDelayJob {
   constructor(
     private jobRepository: JobRepository,
-    private delayService: DelayService
+    private calculateDelayService: CalculateDelayService
   ) {}
 
   public async execute(command: AddJobCommand): Promise<number | undefined> {
@@ -29,7 +29,7 @@ export class AddDelayJob {
       JobStatusEnum.DELAYED
     );
 
-    return this.delayService.calculateDelay(
+    return this.calculateDelayService.calculateDelay(
       data.step,
       data.payload,
       data.overrides

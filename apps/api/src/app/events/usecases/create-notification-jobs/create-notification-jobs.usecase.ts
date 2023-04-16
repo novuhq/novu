@@ -7,13 +7,17 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, DigestTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE, StepTypeEnum } from '@novu/shared';
-import { EventsPerformanceService, DigestFilterSteps, DigestFilterStepsCommand } from '@novu/application-generic';
+import {
+  EventsPerformanceService,
+  DigestFilterSteps,
+  DigestFilterStepsCommand,
+  CalculateDelayService,
+} from '@novu/application-generic';
 
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { addMilliseconds } from 'date-fns';
-import { DelayService } from '../../services/calculate-delay/delay.service';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -23,7 +27,7 @@ export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private notificationRepository: NotificationRepository,
-    private delayService: DelayService,
+    private calculateDelayService: CalculateDelayService,
     protected performanceService: EventsPerformanceService
   ) {}
 
@@ -139,7 +143,7 @@ export class CreateNotificationJobs {
     );
 
     const delay = delayedSteps
-      .map((step) => this.delayService.calculateDelay(step, command.payload, command.overrides))
+      .map((step) => this.calculateDelayService.calculateDelay(step, command.payload, command.overrides))
       .reduce((sum, delayAmount) => sum + delayAmount, 0);
 
     return addMilliseconds(Date.now(), delay);
