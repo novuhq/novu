@@ -4,10 +4,14 @@ let inMemoryProviderService: InMemoryProviderService;
 
 describe('In-memory Provider Service', () => {
   describe('Non cluster mode', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
       inMemoryProviderService = new InMemoryProviderService();
+
+      await inMemoryProviderService.delayUntilReadiness();
+
+      expect(inMemoryProviderService.getStatus()).toEqual('ready');
     });
 
     describe('Set up', () => {
@@ -37,7 +41,7 @@ describe('In-memory Provider Service', () => {
 
         const { inMemoryProviderClient } = inMemoryProviderService;
 
-        expect(inMemoryProviderClient!.status).toEqual('connecting');
+        expect(inMemoryProviderClient!.status).toEqual('ready');
         expect(inMemoryProviderClient!.isCluster).toEqual(false);
 
         const options = inMemoryProviderService.getOptions();
@@ -71,10 +75,14 @@ describe('In-memory Provider Service', () => {
   });
 
   describe('Cluster mode', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       inMemoryProviderService = new InMemoryProviderService();
+
+      await inMemoryProviderService.delayUntilReadiness();
+
+      expect(inMemoryProviderService.getStatus()).toEqual('ready');
     });
 
     describe('Set up', () => {
@@ -114,14 +122,14 @@ describe('In-memory Provider Service', () => {
 
         const { inMemoryProviderClient } = inMemoryProviderService;
 
-        expect(inMemoryProviderClient!.status).toEqual('connecting');
+        expect(inMemoryProviderClient!.status).toEqual('ready');
         expect(inMemoryProviderClient!.isCluster).toEqual(true);
 
         const options = inMemoryProviderService.getOptions();
         expect(options).toEqual(undefined);
 
         const clusterOptions = inMemoryProviderService.getClusterOptions();
-        expect(clusterOptions!.enableOfflineQueue).toEqual(true);
+        expect(clusterOptions!.enableOfflineQueue).toEqual(false);
         expect(clusterOptions!.enableReadyCheck).toEqual(true);
         expect(clusterOptions!.maxRedirections).toEqual(16);
         expect(clusterOptions!.retryDelayOnClusterDown).toEqual(100);

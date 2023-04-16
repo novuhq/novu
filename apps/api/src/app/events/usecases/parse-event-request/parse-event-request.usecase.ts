@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
 import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
@@ -25,6 +25,7 @@ export class ParseEventRequest {
     private mapTriggerRecipients: MapTriggerRecipients
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
     Logger.log('Starting Trigger');
@@ -128,6 +129,7 @@ export class ParseEventRequest {
     };
   }
 
+  @Instrument()
   @CachedEntity({
     builder: (command: { triggerIdentifier: string; environmentId: string }) =>
       buildNotificationTemplateIdentifierKey({
@@ -145,6 +147,7 @@ export class ParseEventRequest {
     );
   }
 
+  @Instrument()
   private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
     for (const subscriber of to) {
       const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;

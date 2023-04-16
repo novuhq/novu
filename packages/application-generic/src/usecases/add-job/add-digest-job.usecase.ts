@@ -16,7 +16,6 @@ import {
   CreateExecutionDetailsCommand,
   CreateExecutionDetails,
 } from '../create-execution-details';
-import { InMemoryProviderService } from '../../services/in-memory-provider';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -27,17 +26,11 @@ type AddDigestJobResult = number | undefined;
 
 @Injectable()
 export class AddDigestJob {
-  private eventsDistributedLockService: EventsDistributedLockService;
-
   constructor(
-    private inMemoryProviderService: InMemoryProviderService,
+    private eventsDistributedLockService: EventsDistributedLockService,
     private jobRepository: JobRepository,
     protected createExecutionDetails: CreateExecutionDetails
-  ) {
-    this.eventsDistributedLockService = new EventsDistributedLockService(
-      inMemoryProviderService
-    );
-  }
+  ) {}
 
   public async execute(
     command: AddDigestJobCommand

@@ -90,12 +90,11 @@ export const getElasticacheCluster = (): Cluster | undefined => {
     dnsLookup: (address, callback) => callback(null, address),
     enableOfflineQueue: false,
     enableReadyCheck: true,
-    scaleReads: 'slave',
     redisOptions: {
       tls: {},
       connectTimeout: 10000,
     },
-    // scaleReads: 'slave' as NodeRole, // Enable it for improved performance to read only in replicas
+    scaleReads: 'slave',
     /*
      *  Disabled in Prod as affects performance
      */

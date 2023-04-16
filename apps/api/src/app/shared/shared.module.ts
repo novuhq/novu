@@ -102,7 +102,6 @@ const distributedLockService = {
 };
 
 const PROVIDERS = [
-  inMemoryProviderService,
   cacheService,
   distributedLockService,
   {

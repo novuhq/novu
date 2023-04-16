@@ -29,6 +29,7 @@ import {
   LoggerModule,
   InvalidateCacheService,
   CacheService,
+  DistributedLockService,
   InMemoryProviderService,
   StorageHelperService,
   StorageService,
@@ -92,9 +93,18 @@ const cacheService = {
   },
 };
 
+const distributedLockService = {
+  provide: DistributedLockService,
+  useFactory: () => {
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+
+    return new DistributedLockService(factoryInMemoryProviderService);
+  },
+};
+
 const PROVIDERS = [
-  inMemoryProviderService,
   cacheService,
+  distributedLockService,
   {
     provide: AnalyticsService,
     useFactory: async () => {

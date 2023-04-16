@@ -10,7 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | docker buildx build --build-arg PACKAGE_PATH=apps/worker - -t novu-worker",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | docker buildx build --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load",
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load",
     "start": "pnpm start:dev",
     "start:dev": "cross-env TZ=UTC nest start --watch",

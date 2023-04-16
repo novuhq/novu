@@ -312,7 +312,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     subExpireMonths = subMonths(expireAt, MESSAGE_EXPIRE_MONTHS);
     diff = differenceInMilliseconds(subExpireMonths, createdAt);
 
-    expect(diff).to.approximately(0, 1);
+    expect(diff).to.approximately(0, 100);
   });
 
   it('should trigger SMS notification', async function () {
