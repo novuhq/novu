@@ -10,7 +10,6 @@ import { normalizeEmail } from '../../../shared/helpers/email-normalization.serv
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()
@@ -19,7 +18,7 @@ export class UserRegister {
     private authService: AuthService,
     private userRepository: UserRepository,
     private createOrganizationUsecase: CreateOrganization,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UserRegisterCommand) {

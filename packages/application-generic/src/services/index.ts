@@ -1,2 +1,11 @@
 export { BullmqService } from './bull-mq.service';
 export { AnalyticsService } from './analytics.service';
+export { QueueService } from './queue.service';
+export { WsQueueService } from './ws-queue.service';
+export { VerifyPayloadService } from './verify-payload.service';
+export { EventsDistributedLockService } from './events-distributed-lock.service';
+export * from './cache';
+export * from './performance';
+export * from './storage';
+export * from './distributed-lock';
+export * from './in-memory-provider';
