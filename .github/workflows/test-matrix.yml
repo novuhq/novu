@@ -1,0 +1,30 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Matrix Testing
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  push: next
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    strategy:
+      matrix:
+        name: [ 'test-1', 'test-2' ]
+    outputs:
+      output: ${{ steps.step2.outputs.test }}
+    steps:
+      - run: echo "Hello World"
+      - id: step2
+        run: echo "test=${{matrix.name}}-output" >> "$GITHUB_OUTPUT"
+
+  second:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Hello World"
+      - env:
+          OUTPUT1: ${{needs.test.outputs.output}}
+        run: echo "$OUTPUT1"
