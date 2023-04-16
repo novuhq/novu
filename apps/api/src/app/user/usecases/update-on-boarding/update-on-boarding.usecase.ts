@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository } from '@novu/dal';
+import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
+
 import { UpdateOnBoardingCommand } from './update-on-boarding.command';
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { buildUserKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class UpdateOnBoardingUsecase {

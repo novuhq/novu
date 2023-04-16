@@ -1,18 +1,17 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { HealthCheck, HealthCheckService, HttpHealthIndicator } from '@nestjs/terminus';
-import { DalService } from '@novu/dal';
-import { version } from '../../../package.json';
-import { CacheService } from '../shared/services/cache';
-import { CacheServiceHealthIndicator } from './cache-health-indicator';
+import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
 import { HealthIndicatorFunction } from '@nestjs/terminus/dist/health-indicator';
+import { DalService } from '@novu/dal';
+
+import { version } from '../../../package.json';
+import { CacheServiceHealthIndicator } from './cache-health-indicator';
 
 @Controller('health-check')
 @ApiExcludeController()
 export class HealthController {
   constructor(
     private healthCheckService: HealthCheckService,
-    private healthIndicator: HttpHealthIndicator,
     private dalService: DalService,
     private cacheHealthIndicator: CacheServiceHealthIndicator
   ) {}

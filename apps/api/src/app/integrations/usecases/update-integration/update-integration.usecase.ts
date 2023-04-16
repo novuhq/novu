@@ -1,15 +1,17 @@
 import { BadRequestException, Injectable, NotFoundException, Inject, Logger } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  AnalyticsService,
+  encryptCredentials,
+  buildIntegrationKey,
+  InvalidateCacheService,
+} from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
-import { AnalyticsService, encryptCredentials } from '@novu/application-generic';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { buildIntegrationKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class UpdateIntegration {
@@ -19,7 +21,7 @@ export class UpdateIntegration {
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {

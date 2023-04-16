@@ -1,22 +1,23 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ChannelTypeEnum, IActor, ActorTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
-import { MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
+import {
+  AnalyticsService,
+  buildFeedKey,
+  buildSubscriberKey,
+  CachedQuery,
+  CachedEntity,
+} from '@novu/application-generic';
+import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { CachedQuery } from '../../../shared/interceptors/cached-query.interceptor';
-import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
-import { buildFeedKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class GetNotificationsFeed {
   constructor(
     private messageRepository: MessageRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository
   ) {}
 

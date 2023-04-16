@@ -8,10 +8,9 @@ import {
   NotificationStepEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum, DigestTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE, StepTypeEnum } from '@novu/shared';
+import { EventsPerformanceService, DigestFilterSteps, DigestFilterStepsCommand } from '@novu/application-generic';
 
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
-import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
-import { EventsPerformanceService } from '../../services/performance-service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InstrumentUsecase } from '@novu/application-generic';
 

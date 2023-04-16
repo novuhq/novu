@@ -8,11 +8,9 @@ export class Sms77Handler extends BaseSmsHandler {
     super('sms77', ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
-    const config: { apiKey: string; from?: string } = {
+    this.provider = new Sms77SmsProvider({
       apiKey: credentials.apiKey,
       from: credentials.from,
-    };
-
-    this.provider = new Sms77SmsProvider(config);
+    });
   }
 }

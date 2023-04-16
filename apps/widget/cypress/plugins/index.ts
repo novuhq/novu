@@ -91,7 +91,6 @@ module.exports = (on, config) => {
         environment: session.environment,
         identifier: session.environment.identifier,
         templates,
-        session,
       };
     },
 
