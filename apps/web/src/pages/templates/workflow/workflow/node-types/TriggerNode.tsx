@@ -54,7 +54,7 @@ const useStyles = createStyles(
 
 export default memo(({ selected }: { selected: boolean }) => {
   const { getNodes } = useReactFlow();
-  const isParent = getNodes().length > 2;
+  const isParent = getNodes().length > 1;
   const noChildStyle = isParent ? {} : { border: 'none', background: 'transparent' };
   const {
     formState: { isDirty },
@@ -70,7 +70,7 @@ export default memo(({ selected }: { selected: boolean }) => {
   }, [isDirty]);
 
   return (
-    <div data-test-id={'node-triggerSelector'} style={{ position: 'relative', pointerEvents: 'none' }}>
+    <div data-test-id={'node-triggerSelector'} style={{ pointerEvents: 'none' }}>
       <When truthy={!isDirty}>
         <Tooltip label="Workflow is saved">
           <div className={classes.savedIcon}>
