@@ -3,6 +3,7 @@ import { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { NotificationDBModel } from './notification.entity';
+import { TTL_EXPIRE_AFTER_AMOUNT } from '../../shared';
 
 const notificationSchema = new Schema<NotificationDBModel>(
   {
@@ -44,9 +45,12 @@ const notificationSchema = new Schema<NotificationDBModel>(
     payload: {
       type: Schema.Types.Mixed,
     },
+    expireAt: Schema.Types.Date,
   },
   schemaOptions
 );
+
+notificationSchema.index({ expireAt: 1 }, { expires: TTL_EXPIRE_AFTER_AMOUNT });
 
 notificationSchema.virtual('environment', {
   ref: 'Environment',

@@ -23,6 +23,7 @@ import { IntegrationModule } from '../integrations/integrations.module';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
+import { DelayService } from './services/calculate-delay/delay.service';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { LayoutsModule } from '../layouts/layouts.module';
     EventsDistributedLockService,
     EventsPerformanceService,
     SendTestEmail,
+    DelayService,
   ],
 })
 export class EventsModule {}
