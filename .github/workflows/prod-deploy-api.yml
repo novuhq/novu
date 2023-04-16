@@ -7,9 +7,13 @@ on:
 
 jobs:
   test_api:
+    strategy:
+      # The order is important for ee to be first, otherwise outputs not work correctly
+      matrix:
+        name: [ 'novu/api-ee', 'novu/api' ]
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
-      ee: true
+      ee: ${{ contains (matrix.name,'ee') }}
 
   build_prod_image:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -18,6 +22,9 @@ jobs:
     needs: test_api
     timeout-minutes: 80
     environment: Production
+    strategy:
+      matrix:
+        name: [ 'novu/api-ee', 'novu/api' ]
     outputs:
       docker_image: ${{ steps.build-image.outputs.IMAGE }}
     permissions:
