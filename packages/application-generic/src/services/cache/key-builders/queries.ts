@@ -4,6 +4,7 @@ import {
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
   OrgScopePrefixEnum,
+  prefixWrapper,
   QUERY_PREFIX,
 } from './shared';
 
@@ -163,7 +164,8 @@ const buildKeyByEnvironment = ({
   keyEntity: CacheKeyPrefixEnum;
   environmentIdPrefix?: OrgScopePrefixEnum;
   environmentId: string;
-}): string => `${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}`;
+}): string =>
+  prefixWrapper(`${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}`);
 
 export interface IBuildNotificationTemplateByIdentifier {
   _environmentId: string;

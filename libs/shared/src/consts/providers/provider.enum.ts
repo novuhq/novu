@@ -43,6 +43,7 @@ export enum EmailProviderIdEnum {
   Clickatell = 'clickatell',
   Outlook365 = 'outlook365',
   Novu = 'novu-email',
+  SparkPost = 'sparkpost',
 }
 
 export enum SmsProviderIdEnum {
@@ -61,6 +62,7 @@ export enum SmsProviderIdEnum {
   FortySixElks = 'forty-six-elks',
   Kannel = 'kannel',
   Maqsam = 'maqsam',
+  Termii = 'termii',
 }
 
 export enum ChatProviderIdEnum {

@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { AuthService } from '../auth.service';
-import { PinoLogger } from '@novu/application-generic';
+import { Instrument, PinoLogger } from '@novu/application-generic';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -14,6 +14,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
+  @Instrument()
   async validate(payload: IJwtPayload) {
     const user = await this.authService.validateUser(payload);
     if (!user) {

@@ -89,7 +89,11 @@ export class InboundEmailParse {
       selectEnvironment: 'apiKeys dns',
     });
 
-    const message = await this.messageRepository.findOne({ transactionId, _environmentId: environment._id });
+    const message = await this.messageRepository.findOne({
+      transactionId,
+      _environmentId: environment._id,
+      _subscriberId: subscriber._id,
+    });
 
     return { transactionId, template, notification, subscriber, environment, job, message };
   }

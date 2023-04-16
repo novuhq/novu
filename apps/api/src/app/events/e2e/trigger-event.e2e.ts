@@ -1,17 +1,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect } from 'chai';
 import axios from 'axios';
-import * as sinon from 'sinon';
 import { v4 as uuid } from 'uuid';
+import { differenceInMilliseconds, subMonths } from 'date-fns';
 import {
-  LogRepository,
   MessageRepository,
   NotificationRepository,
   NotificationTemplateEntity,
   SubscriberEntity,
   SubscriberRepository,
   JobRepository,
-  JobEntity,
   JobStatusEnum,
   IntegrationRepository,
   ExecutionDetailsRepository,
@@ -33,9 +31,14 @@ import {
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
 
+const IN_APP_MESSAGE_EXPIRE_MONTHS = 6;
+const MESSAGE_EXPIRE_MONTHS = 1;
+
 const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
+
+const promiseTimeout = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   let session: UserSession;
@@ -46,7 +49,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
   const integrationRepository = new IntegrationRepository();
-  const logRepository = new LogRepository();
   const jobRepository = new JobRepository();
   const executionDetailsRepository = new ExecutionDetailsRepository();
 
@@ -122,10 +124,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
   it('should override subscriber email based on event data', async function () {
     const subscriberId = SubscriberRepository.createObjectId();
-    const { data: body } = await axiosInstance.post(
+    const transactionId = SubscriberRepository.createObjectId();
+
+    await axiosInstance.post(
       `${session.serverUrl}${eventTriggerPath}`,
       {
         name: template.triggers[0].identifier,
+        transactionId,
         to: [
           { subscriberId: subscriber.subscriberId, email: 'gg@ff.com' },
           { subscriberId: subscriberId, email: 'gg@ff.com' },
@@ -142,18 +147,20 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         },
       }
     );
-    await session.awaitRunningJobs();
 
-    let jobs: JobEntity[] = await jobRepository.find({ _environmentId: session.environment._id });
-    let statuses: JobStatusEnum[] = jobs.map((job) => job.status);
+    let completedCount = 0;
+    do {
+      completedCount = await jobRepository.count({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        transactionId,
+        status: JobStatusEnum.COMPLETED,
+      });
+      await promiseTimeout(100);
+    } while (completedCount !== 4);
 
-    expect(statuses.includes(JobStatusEnum.RUNNING)).true;
-    expect(statuses.includes(JobStatusEnum.PENDING)).true;
-
-    await session.awaitRunningJobs(template._id);
-
-    jobs = await jobRepository.find({ _environmentId: session.environment._id, _templateId: template._id });
-    statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);
+    const jobs = await jobRepository.find({ _environmentId: session.environment._id, _templateId: template._id });
+    const statuses = jobs.map((job) => job.status).filter((value) => value !== JobStatusEnum.COMPLETED);
 
     expect(statuses.length).to.equal(0);
 
@@ -243,6 +250,69 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     const email = emails[0];
 
     expect(email.channel).to.equal(ChannelTypeEnum.EMAIL);
+  });
+
+  it('should correctly set expiration date (TTL) for notification and messages', async function () {
+    const { data: body } = await axiosInstance.post(
+      `${session.serverUrl}${eventTriggerPath}`,
+      {
+        name: template.triggers[0].identifier,
+        to: {
+          subscriberId: subscriber.subscriberId,
+        },
+        payload: {
+          firstName: 'Testing of User Name',
+          urlVar: '/test/url/path',
+        },
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    await session.awaitRunningJobs(template._id);
+
+    const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
+
+    expect(notifications.length).to.equal(1);
+
+    const notification = notifications[0];
+
+    const messages = await messageRepository.findBySubscriberChannel(
+      session.environment._id,
+      subscriber._id,
+      ChannelTypeEnum.IN_APP
+    );
+
+    expect(messages.length).to.equal(1);
+    const message = messages[0];
+
+    let expireAt = new Date(message?.expireAt as string);
+    let createdAt = new Date(message?.createdAt as string);
+
+    let subExpireMonths = subMonths(expireAt, IN_APP_MESSAGE_EXPIRE_MONTHS);
+    let diff = differenceInMilliseconds(subExpireMonths, createdAt);
+
+    expect(diff).to.approximately(0, 1);
+
+    const emails = await messageRepository.findBySubscriberChannel(
+      session.environment._id,
+      subscriber._id,
+      ChannelTypeEnum.EMAIL
+    );
+
+    expect(emails.length).to.equal(1);
+    const email = emails[0];
+
+    expireAt = new Date(email?.expireAt as string);
+    createdAt = new Date(email?.createdAt as string);
+
+    subExpireMonths = subMonths(expireAt, MESSAGE_EXPIRE_MONTHS);
+    diff = differenceInMilliseconds(subExpireMonths, createdAt);
+
+    expect(diff).to.approximately(0, 100);
   });
 
   it('should trigger SMS notification', async function () {

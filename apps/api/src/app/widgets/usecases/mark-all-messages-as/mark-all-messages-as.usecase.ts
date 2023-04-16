@@ -7,6 +7,7 @@ import {
   buildFeedKey,
   buildMessageCountKey,
 } from '@novu/application-generic';
+import { ChannelTypeEnum } from '@novu/shared';
 
 import { MarkAllMessagesAsCommand } from './mark-all-messages-as.command';
 
@@ -43,12 +44,13 @@ export class MarkAllMessagesAs {
       );
     }
 
-    const response = await this.messageRepository.markAllMessagesAs(
-      subscriber._id,
-      command.environmentId,
-      command.markAs,
-      command.feedIds
-    );
+    const response = await this.messageRepository.markAllMessagesAs({
+      subscriberId: subscriber._id,
+      environmentId: command.environmentId,
+      markAs: command.markAs,
+      feedIdentifiers: command.feedIds,
+      channel: ChannelTypeEnum.IN_APP,
+    });
 
     this.wsQueueService.bullMqService.add(
       'sendMessage',

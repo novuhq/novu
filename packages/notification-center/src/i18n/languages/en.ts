@@ -9,6 +9,7 @@ export const EN: ITranslationEntry = {
     removeMessage: 'Remove Message',
     markAsRead: 'Mark as Read',
     markAsUnRead: 'Mark as Unread',
+    noNewNotification: 'Nothing new to see here yet',
   },
   lang: 'en',
 };

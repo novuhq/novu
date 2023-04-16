@@ -3,6 +3,7 @@ import { IAttachmentOptionsExtended } from '@novu/stateless';
 
 import { NonExistingFileError } from './non-existing-file.error';
 import { StorageService } from './storage.service';
+import { Instrument } from '../../instrumentation';
 
 @Injectable()
 export class StorageHelperService {
@@ -12,6 +13,7 @@ export class StorageHelperService {
     return !(Array.isArray(attachments) && attachments.length > 0);
   }
 
+  @Instrument()
   async uploadAttachments(attachments?: IAttachmentOptionsExtended[]) {
     if (!attachments || this.areAttachmentsMissing(attachments)) {
       return;

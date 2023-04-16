@@ -38,7 +38,7 @@ export class TriggerEvent {
 
     const { actor, environmentId, identifier, organizationId, to, userId } = command;
 
-    await this.validateTransactionIdProperty(command.transactionId, organizationId, environmentId);
+    await this.validateTransactionIdProperty(command.transactionId, environmentId);
 
     Sentry.addBreadcrumb({
       message: 'Sending trigger',
@@ -152,16 +152,14 @@ export class TriggerEvent {
     );
   }
 
-  private async validateTransactionIdProperty(
-    transactionId: string,
-    organizationId: string,
-    environmentId: string
-  ): Promise<void> {
-    const found = await this.jobRepository.count({
-      transactionId,
-      _organizationId: organizationId,
-      _environmentId: environmentId,
-    });
+  private async validateTransactionIdProperty(transactionId: string, environmentId: string): Promise<void> {
+    const found = (await this.jobRepository.findOne(
+      {
+        transactionId,
+        _environmentId: environmentId,
+      },
+      '_id'
+    )) as Pick<JobEntity, '_id'>;
 
     if (found) {
       throw new ApiException(

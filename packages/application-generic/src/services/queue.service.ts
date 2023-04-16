@@ -37,7 +37,9 @@ export class QueueService<T = unknown> {
     // Right now we only want this for testing purposes
     if (process.env.NODE_ENV === 'test') {
       await this.bullMqService.queue.drain();
-      await this.bullMqService.worker.close();
+      if (this.bullMqService.worker) {
+        await this.bullMqService.worker.close();
+      }
     }
   }
 

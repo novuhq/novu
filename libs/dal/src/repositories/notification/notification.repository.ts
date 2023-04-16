@@ -126,61 +126,68 @@ export class NotificationRepository extends BaseRepository<
   }
 
   async getActivityGraphStats(date: Date, environmentId: string) {
-    return await this.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: date },
-          _environmentId: new Types.ObjectId(environmentId),
-        },
-      },
-      { $unwind: '$channels' },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+    return await this.aggregate(
+      [
+        {
+          $match: {
+            createdAt: { $gte: date },
+            _environmentId: new Types.ObjectId(environmentId),
           },
-          count: {
-            $sum: 1,
-          },
-          templates: { $addToSet: '$_templateId' },
-          channels: { $addToSet: '$channels' },
         },
-      },
-      { $sort: { _id: -1 } },
-    ]);
+        { $unwind: '$channels' },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m-%d', date: '$createdAt' },
+            },
+            count: {
+              $sum: 1,
+            },
+            templates: { $addToSet: '$_templateId' },
+            channels: { $addToSet: '$channels' },
+          },
+        },
+        { $sort: { _id: -1 } },
+      ],
+      {
+        readPreference: 'secondaryPreferred',
+      }
+    );
   }
 
-  async getStats(environmentId: EnvironmentId): Promise<{ weekly: number; monthly: number; yearly: number }> {
+  async getStats(environmentId: EnvironmentId): Promise<{ weekly: number; monthly: number }> {
     const now: number = Date.now();
-    const yearBefore = subYears(now, 1);
     const monthBefore = subMonths(now, 1);
     const weekBefore = subWeeks(now, 1);
 
-    const result = await this.aggregate([
-      {
-        $match: {
-          _environmentId: this.convertStringToObjectId(environmentId),
-          createdAt: {
-            $gte: yearBefore,
+    const result = await this.aggregate(
+      [
+        {
+          $match: {
+            _environmentId: this.convertStringToObjectId(environmentId),
+            createdAt: {
+              $gte: monthBefore,
+            },
           },
         },
-      },
-      {
-        $group: {
-          _id: null,
-          weekly: { $sum: { $cond: [{ $gte: ['$createdAt', weekBefore] }, 1, 0] } },
-          monthly: { $sum: { $cond: [{ $gte: ['$createdAt', monthBefore] }, 1, 0] } },
-          yearly: { $sum: 1 },
+        {
+          $group: {
+            _id: null,
+            weekly: { $sum: { $cond: [{ $gte: ['$createdAt', weekBefore] }, 1, 0] } },
+            monthly: { $sum: 1 },
+          },
         },
-      },
-    ]);
+      ],
+      {
+        readPreference: 'secondaryPreferred',
+      }
+    );
 
     const stats = result[0] || {};
 
     return {
       weekly: stats.weekly || 0,
       monthly: stats.monthly || 0,
-      yearly: stats.yearly || 0,
     };
   }
 }

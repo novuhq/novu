@@ -13,7 +13,13 @@ export const buildCommonKey = ({
   identifierPrefix?: IdentifierPrefixEnum;
   identifier: string;
 }): string =>
-  `${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}:${identifierPrefix}=${identifier}`;
+  prefixWrapper(
+    `${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}:${identifierPrefix}=${identifier}`
+  );
+
+export function prefixWrapper(prefixString: string) {
+  return `{${prefixString}}`;
+}
 
 export const QUERY_PREFIX = '#query#';
 

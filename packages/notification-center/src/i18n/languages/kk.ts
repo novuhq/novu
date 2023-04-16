@@ -6,6 +6,7 @@ export const KK: ITranslationEntry = {
     markAllAsRead: 'барлығын оқылған деп белгілеңіз',
     poweredBy: 'задвижвани от',
     settings: 'көмегімен',
+    noNewNotification: 'Мұнда әлі көретін жаңа ештеңе жоқМұнда әлі көретін жаңа ештеңе жоқ',
   },
   lang: 'kk',
 };

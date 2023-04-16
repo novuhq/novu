@@ -1,5 +1,5 @@
 import { ProjectionType } from 'mongoose';
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 
 import { BaseRepository } from '../base-repository';
 import { JobEntity, JobDBModel, JobStatusEnum } from './job.entity';
@@ -55,7 +55,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     );
   }
 
-  public async setError(organizationId: string, jobId: string, error: Error): Promise<void> {
+  public async setError(organizationId: string, jobId: string, error: any): Promise<void> {
     const result = await this._model.update(
       {
         _organizationId: this.convertStringToObjectId(organizationId),
@@ -73,15 +73,6 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         `There was a problem when trying to set an error for the job ${jobId} in the organization ${organizationId}`
       );
     }
-  }
-
-  public async findInAppsForDigest(organizationId: string, transactionId: string, subscriberId: string) {
-    return await this.find({
-      _organizationId: organizationId,
-      type: ChannelTypeEnum.IN_APP,
-      _subscriberId: subscriberId,
-      transactionId,
-    });
   }
 
   public async findJobsToDigest(from: Date, templateId: string, environmentId: string, subscriberId: string) {
