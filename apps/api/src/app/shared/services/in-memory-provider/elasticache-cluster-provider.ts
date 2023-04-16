@@ -81,19 +81,20 @@ export const getElasticacheCluster = (): Cluster | undefined => {
 
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
+    enableAutoPipelining: true,
     enableOfflineQueue: false,
     enableReadyCheck: true,
-    scaleReads: 'slave',
     redisOptions: {
       tls: {},
       connectTimeout: 10000,
     },
-    // scaleReads: 'slave' as NodeRole, // Enable it for improved performance to read only in replicas
+    scaleReads: 'slave',
     /*
      *  Disabled in Prod as affects performance
      */
     showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
     slotsRefreshTimeout: 10000,
+    enableAutoPipelining: false,
   };
 
   Logger.log(`Initializing Elasticache Cluster service`);
