@@ -124,7 +124,11 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    const overrides: Record<string, any> = command.overrides || {};
+    const overrides: Record<string, any> = Object.assign(
+      {},
+      command.overrides,
+      command.overrides[integration?.providerId]
+    );
     let html;
     let subject = '';
     let content;
