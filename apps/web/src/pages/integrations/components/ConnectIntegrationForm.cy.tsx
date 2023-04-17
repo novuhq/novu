@@ -68,14 +68,15 @@ it('close button calls onClose', () => {
     </Router>
   );
 
-  cy.get('[data-test-id="connection-integration-form-close"]');
-  cy.should('have.attr', 'type', 'button');
   // eslint-disable-next-line cypress/unsafe-to-chain-command
-  cy.click().then((e) => {
-    expect(onCloseStub).to.be.called;
+  cy.get('[data-test-id="connection-integration-form-close"]')
+    .should('have.attr', 'type', 'button')
+    .click()
+    .then((e) => {
+      expect(onCloseStub).to.be.called;
 
-    return e;
-  });
+      return e;
+    });
 });
 
 it('shows the configuration for the selected provider', () => {
