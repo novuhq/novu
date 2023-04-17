@@ -107,6 +107,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
             leftIcon={<GitHub />}
             sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
             data-test-id="github-button"
+            className="plausible-event-name=Signup"
           >
             Sign In with GitHub
           </GitHubButton>
@@ -178,6 +179,7 @@ const GitHubButton = styled(MantineButton)<{
   component: 'a';
   my: number;
   href: string;
+  className?: string;
   variant: 'white';
   fullWidth: boolean;
   radius: 'md';
