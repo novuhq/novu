@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { expect } from 'chai';
 import axios from 'axios';
-import { addSeconds, differenceInMilliseconds } from 'date-fns';
+import { addSeconds, differenceInMilliseconds, subMonths } from 'date-fns';
 import {
   MessageRepository,
   NotificationTemplateEntity,
@@ -87,6 +87,14 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     });
 
     expect(delayedJob!.status).to.equal(JobStatusEnum.DELAYED);
+
+    const expireAt = new Date(delayedJob?.expireAt as string);
+    const createdAt = new Date(delayedJob?.createdAt as string);
+
+    const subExpireMonths = subMonths(expireAt, 1);
+    const diff = differenceInMilliseconds(subExpireMonths, createdAt);
+
+    expect(diff).to.approximately(100, 100);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,

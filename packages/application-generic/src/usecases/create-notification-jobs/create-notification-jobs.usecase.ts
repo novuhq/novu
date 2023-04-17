@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { addMilliseconds } from 'date-fns';
 import {
   JobEntity,
   JobStatusEnum,
-  MessageTemplateEntity,
   NotificationEntity,
   NotificationRepository,
   NotificationStepEntity,
@@ -19,9 +19,12 @@ import {
   DigestFilterStepsCommand,
 } from '../digest-filter-steps';
 import { InstrumentUsecase } from '../../instrumentation';
-import { EventsPerformanceService } from '../../services/performance';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 import { PlatformException } from '../../utils/exceptions';
+import {
+  CalculateDelayService,
+  EventsPerformanceService,
+} from '../../services';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -31,6 +34,7 @@ export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private notificationRepository: NotificationRepository,
+    private calculateDelayService: CalculateDelayService,
     protected performanceService: EventsPerformanceService
   ) {}
 
@@ -52,6 +56,7 @@ export class CreateNotificationJobs {
       transactionId: command.transactionId,
       to: command.to,
       payload: command.payload,
+      expireAt: this.calculateExpireAt(command),
     });
 
     if (!notification) {
@@ -89,6 +94,7 @@ export class CreateNotificationJobs {
         digest: step.metadata,
         type: step.template.type,
         providerId: providerId,
+        expireAt: notification.expireAt,
         ...(command.actor && { _actorId: command.actor?._id }),
       };
 
@@ -113,21 +119,6 @@ export class CreateNotificationJobs {
     steps: NotificationStepEntity[]
   ): NotificationStepEntity[] {
     return steps.filter((step) => step.active === true);
-  }
-
-  private createTriggerStep(
-    command: CreateNotificationJobsCommand
-  ): NotificationStepEntity {
-    return {
-      template: {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        _creatorId: command.userId,
-        type: StepTypeEnum.TRIGGER,
-        content: '',
-      } as MessageTemplateEntity,
-      _templateId: command.template._id,
-    };
   }
 
   private async filterDigestSteps(
@@ -158,5 +149,25 @@ export class CreateNotificationJobs {
     }
 
     return steps;
+  }
+
+  private calculateExpireAt(command: CreateNotificationJobsCommand) {
+    const delayedSteps = command.template.steps.filter(
+      (step) =>
+        step.template?.type === StepTypeEnum.DIGEST ||
+        step.template?.type === StepTypeEnum.DELAY
+    );
+
+    const delay = delayedSteps
+      .map((step) =>
+        this.calculateDelayService.calculateDelay(
+          step,
+          command.payload,
+          command.overrides
+        )
+      )
+      .reduce((sum, delayAmount) => sum + delayAmount, 0);
+
+    return addMilliseconds(Date.now(), delay);
   }
 }

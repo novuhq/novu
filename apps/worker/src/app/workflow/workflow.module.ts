@@ -28,6 +28,7 @@ import {
   CreateNotificationJobs,
   ProcessSubscriber,
   StoreSubscriberJobs,
+  CalculateDelayService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -111,6 +112,7 @@ const SERVICES = [
   },
   EventsDistributedLockService,
   EventsPerformanceService,
+  CalculateDelayService,
 ];
 
 @Module({

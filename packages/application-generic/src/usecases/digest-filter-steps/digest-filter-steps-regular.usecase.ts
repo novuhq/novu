@@ -40,6 +40,7 @@ export class DigestFilterStepsRegular {
         {
           $set: {
             _digestedNotificationId: delayedDigests._notificationId,
+            expireAt: delayedDigests.expireAt,
           },
         }
       );

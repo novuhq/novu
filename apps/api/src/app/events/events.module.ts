@@ -6,6 +6,7 @@ import {
   StorageHelperService,
   SendTestEmail,
   QueueService,
+  CalculateDelayService,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -49,6 +50,7 @@ import { LayoutsModule } from '../layouts/layouts.module';
     EventsDistributedLockService,
     EventsPerformanceService,
     SendTestEmail,
+    CalculateDelayService,
   ],
 })
 export class EventsModule {}

@@ -7,9 +7,11 @@ import {
 } from '@novu/shared';
 
 import { AddDigestJobCommand } from './add-digest-job.command';
-import { AddJob } from './add-job.usecase';
 import { ApiException } from '../../utils/exceptions';
-import { EventsDistributedLockService } from '../../services';
+import {
+  EventsDistributedLockService,
+  CalculateDelayService,
+} from '../../services';
 import { DigestFilterSteps } from '../digest-filter-steps';
 import {
   DetailEnum,
@@ -29,7 +31,8 @@ export class AddDigestJob {
   constructor(
     private eventsDistributedLockService: EventsDistributedLockService,
     private jobRepository: JobRepository,
-    protected createExecutionDetails: CreateExecutionDetails
+    protected createExecutionDetails: CreateExecutionDetails,
+    private calculateDelayService: CalculateDelayService
   ) {}
 
   public async execute(
@@ -88,7 +91,10 @@ export class AddDigestJob {
         );
       }
 
-      return AddJob.toMilliseconds(digest.amount, digest.unit);
+      return this.calculateDelayService.toMilliseconds(
+        digest.amount,
+        digest.unit
+      );
     }
 
     return undefined;

@@ -1,9 +1,8 @@
-import { Logger, Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Logger, Injectable } from '@nestjs/common';
 import { JobsOptions } from 'bullmq';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import {
   StepTypeEnum,
-  DigestUnitEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
 } from '@novu/shared';
@@ -17,7 +16,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
 } from '../create-execution-details';
-import { QueueService } from '../../services/queue.service';
+import { QueueService } from '../../services';
 import { LogDecorator } from '../../logging';
 
 export enum BackoffStrategiesEnum {
@@ -31,7 +30,6 @@ export class AddJob {
     private queueService: QueueService,
     private createExecutionDetails: CreateExecutionDetails,
     private addDigestJob: AddDigestJob,
-    @Inject(forwardRef(() => AddDelayJob))
     private addDelayJob: AddDelayJob
   ) {}
 
@@ -139,26 +137,5 @@ export class AddJob {
         return child.on === onFilter;
       });
     });
-  }
-
-  public static toMilliseconds(amount: number, unit: DigestUnitEnum): number {
-    Logger.debug('Amount is: ' + amount);
-    Logger.debug('Unit is: ' + unit);
-    Logger.verbose('Converting to milliseconds');
-
-    let delay = 1000 * amount;
-    if (unit === DigestUnitEnum.DAYS) {
-      delay = 60 * 60 * 24 * delay;
-    }
-    if (unit === DigestUnitEnum.HOURS) {
-      delay = 60 * 60 * delay;
-    }
-    if (unit === DigestUnitEnum.MINUTES) {
-      delay = 60 * delay;
-    }
-
-    Logger.verbose('Amount of delay is: ' + delay + 'ms.');
-
-    return delay;
   }
 }

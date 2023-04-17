@@ -5,6 +5,7 @@ import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/sh
 import { ExecutionDetailsDBModel } from './execution-details.entity';
 
 import { schemaOptions } from '../schema-default.options';
+import { getTTLOptions } from '../../shared';
 
 const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
   {
@@ -66,6 +67,7 @@ const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
     webhookStatus: {
       type: Schema.Types.String,
     },
+    expireAt: Schema.Types.Date,
   },
   schemaOptions
 );
@@ -106,6 +108,8 @@ executionDetailsSchema.index({
 executionDetailsSchema.index({
   _notificationId: 1,
 });
+
+executionDetailsSchema.index({ expireAt: 1 }, getTTLOptions());
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ExecutionDetails =
