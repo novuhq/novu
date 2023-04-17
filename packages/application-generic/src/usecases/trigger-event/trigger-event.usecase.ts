@@ -1,22 +1,42 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 import {
-  PinoLogger,
-  InstrumentUsecase,
-  EventsPerformanceService,
+  JobEntity,
+  JobRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+} from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  InAppProviderIdEnum,
+  STEP_TYPE_TO_CHANNEL_TYPE,
+} from '@novu/shared';
+
+import { PinoLogger } from '../../logging';
+import { InstrumentUsecase } from '../../instrumentation';
+import { EventsPerformanceService } from '../../services/performance';
+import {
   GetDecryptedIntegrations,
   GetDecryptedIntegrationsCommand,
+} from '../get-decrypted-integrations';
+import {
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
-} from '@novu/application-generic';
-
+} from '../../services/cache';
 import { TriggerEventCommand } from './trigger-event.command';
-import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
-import { CreateNotificationJobsCommand, CreateNotificationJobs } from '../create-notification-jobs';
-import { ProcessSubscriber, ProcessSubscriberCommand } from '../process-subscriber';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import {
+  StoreSubscriberJobs,
+  StoreSubscriberJobsCommand,
+} from '../store-subscriber-jobs';
+import {
+  CreateNotificationJobsCommand,
+  CreateNotificationJobs,
+} from '../create-notification-jobs';
+import {
+  ProcessSubscriber,
+  ProcessSubscriberCommand,
+} from '../process-subscriber';
+import { ApiException } from '../../utils/exceptions';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
@@ -34,11 +54,18 @@ export class TriggerEvent {
   ) {}
 
   async execute(command: TriggerEventCommand) {
-    const mark = this.performanceService.buildTriggerEventMark(command.identifier, command.transactionId);
+    const mark = this.performanceService.buildTriggerEventMark(
+      command.identifier,
+      command.transactionId
+    );
 
-    const { actor, environmentId, identifier, organizationId, to, userId } = command;
+    const { actor, environmentId, identifier, organizationId, to, userId } =
+      command;
 
-    await this.validateTransactionIdProperty(command.transactionId, environmentId);
+    await this.validateTransactionIdProperty(
+      command.transactionId,
+      environmentId
+    );
 
     Sentry.addBreadcrumb({
       message: 'Sending trigger',
@@ -75,7 +102,10 @@ export class TriggerEvent {
       template
     );
 
-    const subscribersJobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[][] = [];
+    const subscribersJobs: Omit<
+      JobEntity,
+      '_id' | 'createdAt' | 'updatedAt'
+    >[][] = [];
 
     // We might have a single actor for every trigger, so we only need to check for it once
     let actorProcessed;
@@ -102,22 +132,25 @@ export class TriggerEvent {
 
       // If no subscriber makes no sense to try to create notification
       if (subscriberProcessed) {
-        const createNotificationJobsCommand = CreateNotificationJobsCommand.create({
-          environmentId,
-          identifier,
-          organizationId,
-          overrides: command.overrides,
-          payload: command.payload,
-          subscriber: subscriberProcessed,
-          template,
-          templateProviderIds,
-          to: subscriber,
-          transactionId: command.transactionId,
-          userId,
-          ...(actor && actorProcessed && { actor: actorProcessed }),
-        });
+        const createNotificationJobsCommand =
+          CreateNotificationJobsCommand.create({
+            environmentId,
+            identifier,
+            organizationId,
+            overrides: command.overrides,
+            payload: command.payload,
+            subscriber: subscriberProcessed,
+            template,
+            templateProviderIds,
+            to: subscriber,
+            transactionId: command.transactionId,
+            userId,
+            ...(actor && actorProcessed && { actor: actorProcessed }),
+          });
 
-        const notificationJobs = await this.createNotificationJobs.execute(createNotificationJobsCommand);
+        const notificationJobs = await this.createNotificationJobs.execute(
+          createNotificationJobsCommand
+        );
 
         subscribersJobs.push(notificationJobs);
       }
@@ -152,7 +185,10 @@ export class TriggerEvent {
     );
   }
 
-  private async validateTransactionIdProperty(transactionId: string, environmentId: string): Promise<void> {
+  private async validateTransactionIdProperty(
+    transactionId: string,
+    environmentId: string
+  ): Promise<void> {
     const found = (await this.jobRepository.findOne(
       {
         transactionId,
@@ -183,7 +219,12 @@ export class TriggerEvent {
         const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
 
         if (channelType) {
-          const provider = await this.getProviderId(userId, organizationId, environmentId, channelType);
+          const provider = await this.getProviderId(
+            userId,
+            organizationId,
+            environmentId,
+            channelType
+          );
           if (provider) {
             providers.set(channelType, provider);
           } else {

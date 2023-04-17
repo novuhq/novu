@@ -1,10 +1,28 @@
 import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
+import { SubscriberRepository } from '@novu/dal';
+
+import { CacheService, InvalidateCacheService } from '../../services/cache';
 import { CreateSubscriber } from './create-subscriber.usecase';
-import { SharedModule } from '../../../shared/shared.module';
 import { CreateSubscriberCommand } from './create-subscriber.command';
-import { SubscribersModule } from '../../subscribers.module';
+import { UpdateSubscriber } from '../update-subscriber';
+import { InMemoryProviderService } from '../../services';
+
+const inMemoryProviderService = {
+  provide: InMemoryProviderService,
+  useFactory: () => {
+    return new InMemoryProviderService();
+  },
+};
+
+const cacheService = {
+  provide: CacheService,
+  useFactory: () => {
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+
+    return new CacheService(factoryInMemoryProviderService);
+  },
+};
 
 describe('Create Subscriber', function () {
   let useCase: CreateSubscriber;
@@ -12,8 +30,8 @@ describe('Create Subscriber', function () {
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule, SubscribersModule],
-      providers: [],
+      imports: [SubscriberRepository, InvalidateCacheService],
+      providers: [UpdateSubscriber, inMemoryProviderService, cacheService],
     }).compile();
 
     session = new UserSession();
@@ -35,7 +53,7 @@ describe('Create Subscriber', function () {
       })
     );
 
-    expect(result.locale).to.equal(locale);
+    expect(result.locale).toEqual(locale);
   });
 
   it('should update the subscriber when same id provided', async function () {
@@ -65,7 +83,7 @@ describe('Create Subscriber', function () {
       })
     );
 
-    expect(result.firstName).to.equal('Second Name');
-    expect(result.locale).to.equal(noLocale);
+    expect(result.firstName).toEqual('Second Name');
+    expect(result.locale).toEqual(noLocale);
   });
 });

@@ -2,21 +2,32 @@ import { Injectable } from '@nestjs/common';
 import { SubscriberRepository, SubscriberEntity } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
 
+import {
+  CreateSubscriber,
+  CreateSubscriberCommand,
+} from '../create-subscriber';
+import { InstrumentUsecase } from '../../instrumentation';
+import { subscriberNeedUpdate } from '../../utils/subscriber';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
-
-import { subscriberNeedUpdate } from '../../../subscribers/usecases/update-subscriber';
-import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
-import { InstrumentUsecase } from '@novu/application-generic';
 
 @Injectable()
 export class ProcessSubscriber {
-  constructor(private createSubscriberUsecase: CreateSubscriber, private subscriberRepository: SubscriberRepository) {}
+  constructor(
+    private createSubscriberUsecase: CreateSubscriber,
+    private subscriberRepository: SubscriberRepository
+  ) {}
 
   @InstrumentUsecase()
-  public async execute(command: ProcessSubscriberCommand): Promise<SubscriberEntity | undefined> {
+  public async execute(
+    command: ProcessSubscriberCommand
+  ): Promise<SubscriberEntity | undefined> {
     const { environmentId, organizationId, subscriber } = command;
 
-    const subscriberEntity = await this.getSubscriber(environmentId, organizationId, subscriber);
+    const subscriberEntity = await this.getSubscriber(
+      environmentId,
+      organizationId,
+      subscriber
+    );
 
     if (subscriberEntity === null) {
       return undefined;
@@ -39,7 +50,12 @@ export class ProcessSubscriber {
       return subscriber;
     }
 
-    return await this.createOrUpdateSubscriber(environmentId, organizationId, subscriberPayload, subscriber);
+    return await this.createOrUpdateSubscriber(
+      environmentId,
+      organizationId,
+      subscriberPayload,
+      subscriber
+    );
   }
 
   private async createOrUpdateSubscriber(

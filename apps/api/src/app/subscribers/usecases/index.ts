@@ -1,13 +1,16 @@
-import { GetSubscriberPreference, GetSubscriberTemplatePreference } from '@novu/application-generic';
+import {
+  GetSubscriberPreference,
+  GetSubscriberTemplatePreference,
+  UpdateSubscriber,
+  CreateSubscriber,
+} from '@novu/application-generic';
 
-import { CreateSubscriber } from './create-subscriber';
 import { GetSubscribers } from './get-subscribers';
 import { GetSubscriber } from './get-subscriber';
 import { GetPreferences } from './get-preferences/get-preferences.usecase';
 import { RemoveSubscriber } from './remove-subscriber';
 import { SearchByExternalSubscriberIds } from './search-by-external-subscriber-ids';
 import { UpdatePreference } from './update-preference/update-preference.usecase';
-import { UpdateSubscriber } from './update-subscriber';
 import { UpdateSubscriberChannel } from './update-subscriber-channel';
 import { UpdateSubscriberPreference } from './update-subscriber-preference';
 import { UpdateSubscriberOnlineFlag } from './update-subscriber-online-flag';

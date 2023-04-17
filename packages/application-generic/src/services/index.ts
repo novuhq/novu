@@ -2,6 +2,7 @@ export { BullmqService } from './bull-mq.service';
 export { AnalyticsService } from './analytics.service';
 export { QueueService } from './queue.service';
 export { WsQueueService } from './ws-queue.service';
+export { TriggerQueueService } from './trigger-queue.service';
 export { VerifyPayloadService } from './verify-payload.service';
 export { EventsDistributedLockService } from './events-distributed-lock.service';
 export * from './cache';

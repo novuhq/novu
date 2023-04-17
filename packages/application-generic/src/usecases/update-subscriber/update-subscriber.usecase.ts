@@ -1,19 +1,31 @@
 import { Injectable } from '@nestjs/common';
-import { isEqual } from 'lodash';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
+
+import {
+  InvalidateCacheService,
+  buildSubscriberKey,
+} from '../../services/cache';
+import { subscriberNeedUpdate } from '../../utils/subscriber';
 
 import { UpdateSubscriberCommand } from './update-subscriber.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { ApiException } from '../../utils/exceptions';
 
 @Injectable()
 export class UpdateSubscriber {
-  constructor(private invalidateCache: InvalidateCacheService, private subscriberRepository: SubscriberRepository) {}
+  constructor(
+    private invalidateCache: InvalidateCacheService,
+    private subscriberRepository: SubscriberRepository
+  ) {}
 
-  async execute(command: UpdateSubscriberCommand) {
+  public async execute(
+    command: UpdateSubscriberCommand
+  ): Promise<SubscriberEntity> {
     const foundSubscriber = command.subscriber
       ? command.subscriber
-      : await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+      : await this.subscriberRepository.findBySubscriberId(
+          command.environmentId,
+          command.subscriberId
+        );
 
     if (!foundSubscriber) {
       throw new ApiException(`SubscriberId: ${command.subscriberId} not found`);
@@ -74,19 +86,4 @@ export class UpdateSubscriber {
       ...updatePayload,
     };
   }
-}
-
-export function subscriberNeedUpdate(
-  subscriber: SubscriberEntity,
-  subscriberPayload: Partial<SubscriberEntity>
-): boolean {
-  return (
-    !!(subscriberPayload?.email && subscriber?.email !== subscriberPayload?.email) ||
-    !!(subscriberPayload?.firstName && subscriber?.firstName !== subscriberPayload?.firstName) ||
-    !!(subscriberPayload?.lastName && subscriber?.lastName !== subscriberPayload?.lastName) ||
-    !!(subscriberPayload?.phone && subscriber?.phone !== subscriberPayload?.phone) ||
-    !!(subscriberPayload?.avatar && subscriber?.avatar !== subscriberPayload?.avatar) ||
-    !!(subscriberPayload?.locale && subscriber?.locale !== subscriberPayload?.locale) ||
-    !!(subscriberPayload?.data && !isEqual(subscriber?.data, subscriberPayload?.data))
-  );
 }

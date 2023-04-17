@@ -1,7 +1,7 @@
 import { IsDefined, IsString, IsOptional } from 'class-validator';
 import { ISubscribersDefine } from '@novu/shared';
 
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../commands';
 
 export class TriggerEventCommand extends EnvironmentWithUserCommand {
   @IsDefined()
