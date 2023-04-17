@@ -12,7 +12,7 @@ export class MailerSendHandler extends BaseHandler {
   buildProvider(credentials: ICredentials, from?: string) {
     this.provider = new MailersendEmailProvider({
       apiKey: credentials.apiKey as string,
-      from,
+      from: from as string,
       senderName: credentials.senderName,
     });
   }

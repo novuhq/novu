@@ -1,10 +1,12 @@
 import { DelayTypeEnum, StepTypeEnum } from '@novu/shared';
+import { BadRequestException } from '@nestjs/common';
+import { VerifyPayloadService, InstrumentUsecase } from '@novu/application-generic';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayloadCommand } from './verify-payload.command';
-import { BadRequestException } from '@nestjs/common';
-import { VerifyPayloadService } from '../../../shared/helpers/verify-payload.service';
 
 export class VerifyPayload {
+  @InstrumentUsecase()
   execute(command: VerifyPayloadCommand): Record<string, unknown> {
     const verifyPayloadService = new VerifyPayloadService();
 

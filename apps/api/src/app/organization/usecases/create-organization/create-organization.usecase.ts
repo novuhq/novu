@@ -10,7 +10,7 @@ import { GetOrganization } from '../get-organization/get-organization.usecase';
 import { AddMemberCommand } from '../membership/add-member/add-member.command';
 import { AddMember } from '../membership/add-member/add-member.usecase';
 import { CreateOrganizationCommand } from './create-organization.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable({
@@ -23,7 +23,7 @@ export class CreateOrganization {
     private readonly getOrganizationUsecase: GetOrganization,
     private readonly userRepository: UserRepository,
     private readonly createEnvironmentUsecase: CreateEnvironment,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
