@@ -19,9 +19,12 @@ import {
   DigestFilterStepsCommand,
 } from '../digest-filter-steps';
 import { InstrumentUsecase } from '../../instrumentation';
-import { EventsPerformanceService } from '../../services/performance';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 import { PlatformException } from '../../utils/exceptions';
+import {
+  CalculateDelayService,
+  EventsPerformanceService,
+} from '../../services';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
