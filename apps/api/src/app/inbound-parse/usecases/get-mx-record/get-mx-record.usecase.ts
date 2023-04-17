@@ -47,8 +47,12 @@ export class GetMxRecord {
 
   private async checkMxRecordExistence(inboundParseDomain: string) {
     const relativeDnsRecords = await this.getMxRecords(inboundParseDomain);
+    const INBOUND_DOMAIN = process.env.MAIL_SERVER_DOMAIN?.replace('https://', '').replace('/', '');
+    if (!INBOUND_DOMAIN) {
+      throw new ApiException('MAIL_SERVER_DOMAIN is not defined as an environment variable');
+    }
 
-    return relativeDnsRecords.some((record: dns.MxRecord) => record.exchange === process.env.MAIL_SERVER_DOMAIN);
+    return relativeDnsRecords.some((record: dns.MxRecord) => record.exchange === INBOUND_DOMAIN);
   }
 
   async getMxRecords(domain: string): Promise<dns.MxRecord[]> {
