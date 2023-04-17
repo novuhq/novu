@@ -70,19 +70,19 @@ describe('Changes Screen', function () {
 
     cy.visit('/changes');
     cy.waitForNetworkIdle(1000);
-    cy.getByTestId('pending-changes-table').find('tbody tr').should('have.length', 2);
+    cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('have.length', 2);
 
-    cy.getByTestId('promote-all-btn').click({ force: true });
+    cy.awaitAttachedGetByTestId('promote-all-btn').click({ force: true });
     cy.waitForNetworkIdle(1000);
 
-    cy.getByTestId('pending-changes-table').find('tbody tr').should('not.exist');
+    cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('not.exist');
 
     switchEnvironment('Production');
     cy.waitForNetworkIdle(1000);
 
     cy.visit('/templates');
-    cy.waitForNetworkIdle(1000);
-    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 2);
+
+    cy.awaitAttachedGetByTestId('notifications-template').find('tbody tr').should('have.length', 2);
   });
 });
 
