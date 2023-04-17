@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
+
 import { GetPreferencesCommand } from './get-preferences.command';
-import { GetSubscriberPreferenceCommand } from '../get-subscriber-preference/get-subscriber-preference.command';
-import { GetSubscriberPreference } from '../get-subscriber-preference/get-subscriber-preference.usecase';
 
 @Injectable()
 export class GetPreferences {

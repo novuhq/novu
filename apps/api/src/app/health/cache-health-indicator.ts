@@ -1,6 +1,6 @@
 import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
-import { CacheService } from '../shared/services/cache';
 import { Injectable } from '@nestjs/common';
+import { CacheService } from '@novu/application-generic';
 
 @Injectable()
 export class CacheServiceHealthIndicator extends HealthIndicator {

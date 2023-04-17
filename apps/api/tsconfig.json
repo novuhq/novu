@@ -10,6 +10,8 @@
     "target": "es2017",
     "allowJs": false,
     "esModuleInterop": false,
-    "declarationMap": true
-  }
+    "declarationMap": true,
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules"]
 }

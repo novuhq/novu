@@ -1,15 +1,12 @@
-import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { ConflictException, Injectable, Inject } from '@nestjs/common';
+import { LayoutEntity, LayoutRepository } from '@novu/dal';
+import { AnalyticsService, GetLayoutCommand, GetLayoutUseCase } from '@novu/application-generic';
 
 import { UpdateLayoutCommand } from './update-layout.command';
-
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
-import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos/layout.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { AnalyticsService } from '@novu/application-generic';
 
 @Injectable()
 export class UpdateLayoutUseCase {
@@ -18,7 +15,7 @@ export class UpdateLayoutUseCase {
     private createLayoutChange: CreateLayoutChangeUseCase,
     private setDefaultLayout: SetDefaultLayoutUseCase,
     private layoutRepository: LayoutRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateLayoutCommand): Promise<LayoutDto> {

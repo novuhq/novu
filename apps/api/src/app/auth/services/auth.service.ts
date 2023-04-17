@@ -11,7 +11,15 @@ import {
   UserRepository,
 } from '@novu/dal';
 import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum, SignUpOriginEnum } from '@novu/shared';
-import { AnalyticsService, Instrument, PinoLogger } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  Instrument,
+  PinoLogger,
+  CachedEntity,
+  buildEnvironmentByApiKey,
+  buildSubscriberKey,
+  buildUserKey,
+} from '@novu/application-generic';
 
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
@@ -19,15 +27,8 @@ import { SwitchEnvironmentCommand } from '../usecases/switch-environment/switch-
 import { SwitchEnvironment } from '../usecases/switch-environment/switch-environment.usecase';
 import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
-import { ANALYTICS_SERVICE } from '../../shared/shared.module';
-import { CachedEntity } from '../../shared/interceptors/cached-entity.interceptor';
 import { normalizeEmail } from '../../shared/helpers/email-normalization.service';
 import { ApiException } from '../../shared/exceptions/api.exception';
-import {
-  buildEnvironmentByApiKey,
-  buildSubscriberKey,
-  buildUserKey,
-} from '../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class AuthService {
@@ -37,7 +38,7 @@ export class AuthService {
     private subscriberRepository: SubscriberRepository,
     private createUserUsecase: CreateUser,
     private jwtService: JwtService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     private memberRepository: MemberRepository,

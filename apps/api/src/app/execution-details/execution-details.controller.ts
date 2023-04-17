@@ -1,12 +1,12 @@
 import { ClassSerializerInterceptor, Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
+import { ExecutionDetailsResponseDto } from '@novu/application-generic';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetExecutionDetails, GetExecutionDetailsCommand } from './usecases/get-execution-details';
-import { ExecutionDetailsResponseDto } from './dtos/execution-details-response.dto';
 
 @Controller('/execution-details')
 @UseInterceptors(ClassSerializerInterceptor)

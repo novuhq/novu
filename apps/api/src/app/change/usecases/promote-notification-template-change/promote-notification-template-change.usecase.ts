@@ -8,14 +8,14 @@ import {
   NotificationGroupRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-
-import { ApplyChange, ApplyChangeCommand } from '../apply-change';
-import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { InvalidateCacheService } from '../../../shared/services/cache';
 import {
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
-} from '../../../shared/services/cache/key-builders/entities';
+  InvalidateCacheService,
+} from '@novu/application-generic';
+
+import { ApplyChange, ApplyChangeCommand } from '../apply-change';
+import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {

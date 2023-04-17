@@ -1,18 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  IMessageButton,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IEmailBlock,
-  InAppProviderIdEnum,
-  ActorTypeEnum,
-  IActor,
-} from '@novu/shared';
+import { CachedEntity, buildSubscriberKey } from '@novu/application-generic';
+import { ActorTypeEnum } from '@novu/shared';
+
 import { GetMessagesCommand } from './get-messages.command';
-import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class GetMessages {
