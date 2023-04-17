@@ -46,6 +46,7 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      API_CONTEXT_PATH: ${API_CONTEXT_PATH}
     ports:
       - '3000:3000'
   ws:
@@ -61,6 +62,7 @@ services:
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       JWT_SECRET: ${JWT_SECRET}
+      WS_CONTEXT_PATH: ${WS_CONTEXT_PATH}
     ports:
       - '3002:3002'
   web:
@@ -86,6 +88,7 @@ services:
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_WS_URL: ${REACT_APP_WS_URL}
       REACT_APP_ENVIRONMENT: ${NODE_ENV}
+      WIDGET_CONTEXT_PATH: ${WIDGET_CONTEXT_PATH}
     ports:
       - 4500:4500
   embed:
