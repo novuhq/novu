@@ -123,7 +123,11 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    const overrides: Record<string, any> = command.overrides[integration?.providerId] || {};
+    const overrides: Record<string, any> = Object.assign(
+      {},
+      command.overrides.email || {},
+      command.overrides[integration?.providerId] || {}
+    );
     let html;
     let subject = '';
     let content;
@@ -236,7 +240,7 @@ export class SendMessageEmail extends SendMessageBase {
         message,
         command,
         notification,
-        overrides?.email?.senderName || emailChannel.template.senderName
+        overrides?.senderName || emailChannel.template.senderName
       );
 
       return;
