@@ -155,17 +155,17 @@
   "lint-staged": {
     "apps/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ],
     "packages/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ],
     "providers/**/*.{ts,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ],
     "docs/**/*.{md,mdx}": [
@@ -174,7 +174,7 @@
     ],
     "libs/**/*.{ts,js,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ]
   },
