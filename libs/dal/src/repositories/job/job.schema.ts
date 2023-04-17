@@ -3,7 +3,7 @@ import { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { JobDBModel, JobStatusEnum } from './job.entity';
-import { TTL_EXPIRE_AFTER_AMOUNT } from '../../shared';
+import { getTTLOptions } from '../../shared';
 
 const jobSchema = new Schema<JobDBModel>(
   {
@@ -102,7 +102,7 @@ const jobSchema = new Schema<JobDBModel>(
   schemaOptions
 );
 
-jobSchema.index({ expireAt: 1 }, { expires: TTL_EXPIRE_AFTER_AMOUNT });
+jobSchema.index({ expireAt: 1 }, getTTLOptions());
 
 jobSchema.virtual('executionDetails', {
   ref: 'ExecutionDetails',

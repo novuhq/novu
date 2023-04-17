@@ -5,7 +5,7 @@ import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/sh
 import { ExecutionDetailsDBModel } from './execution-details.entity';
 
 import { schemaOptions } from '../schema-default.options';
-import { TTL_EXPIRE_AFTER_AMOUNT } from '../../shared';
+import { getTTLOptions } from '../../shared';
 
 const executionDetailsSchema = new Schema<ExecutionDetailsDBModel>(
   {
@@ -109,7 +109,7 @@ executionDetailsSchema.index({
   _notificationId: 1,
 });
 
-executionDetailsSchema.index({ expireAt: 1 }, { expires: TTL_EXPIRE_AFTER_AMOUNT });
+executionDetailsSchema.index({ expireAt: 1 }, getTTLOptions());
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const ExecutionDetails =
