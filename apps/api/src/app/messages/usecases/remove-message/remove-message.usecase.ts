@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
+import { buildFeedKey, buildMessageCountKey, InvalidateCacheService } from '@novu/application-generic';
+
 import { RemoveMessageCommand } from './remove-message.command';
-import { InvalidateCacheService } from '../../../shared/services/cache';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class RemoveMessage {

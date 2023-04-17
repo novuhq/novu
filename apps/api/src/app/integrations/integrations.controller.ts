@@ -11,6 +11,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { CalculateLimitNovuIntegration, CalculateLimitNovuIntegrationCommand } from '@novu/application-generic';
+
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
@@ -30,8 +32,6 @@ import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
-import { CalculateLimitNovuIntegration } from './usecases/calculate-limit-novu-integration';
-import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit-novu-integration';
 import { GetInAppActivatedCommand } from './usecases/get-In-app-activated/get-In-app-activated.command';
 import { GetInAppActivated } from './usecases/get-In-app-activated/get-In-app-activated.usecase';
 

@@ -161,10 +161,16 @@ export class MemberRepository extends BaseRepository<MemberDBModel, MemberEntity
   }
 
   async isMemberOfOrganization(organizationId: string, userId: string): Promise<boolean> {
-    return !!(await this.count({
-      _organizationId: organizationId,
-      _userId: userId,
-    }));
+    return !!(await this.findOne(
+      {
+        _organizationId: organizationId,
+        _userId: userId,
+      },
+      '_id',
+      {
+        readPreference: 'secondaryPreferred',
+      }
+    ));
   }
 
   async findMemberByUserId(organizationId: string, userId: string): Promise<MemberEntity | null> {

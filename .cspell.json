@@ -3,6 +3,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "Millis",
     "maqsam",
     "sadd",
     "smembers",
@@ -504,7 +505,9 @@
     "apps/widget/public/iframeResizer.contentWindow.js",
     ".eslintrc.js",
     ".vscode/settings.json",
+    "*/**/.vscode/settings.json",
     "docs/src/usage-examples.md",
+    "apps/worker/README.md",
     ".gitignore",
     "angular.json",
     "ng-package.json"

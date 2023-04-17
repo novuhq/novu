@@ -11,7 +11,15 @@ import {
   UserRepository,
 } from '@novu/dal';
 import { AuthProviderEnum, IJwtPayload, ISubscriberJwt, MemberRoleEnum, SignUpOriginEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  Instrument,
+  PinoLogger,
+  CachedEntity,
+  buildEnvironmentByApiKey,
+  buildSubscriberKey,
+  buildUserKey,
+} from '@novu/application-generic';
 
 import { CreateUserCommand } from '../../user/usecases/create-user/create-user.dto';
 import { CreateUser } from '../../user/usecases/create-user/create-user.usecase';
@@ -19,24 +27,18 @@ import { SwitchEnvironmentCommand } from '../usecases/switch-environment/switch-
 import { SwitchEnvironment } from '../usecases/switch-environment/switch-environment.usecase';
 import { SwitchOrganization } from '../usecases/switch-organization/switch-organization.usecase';
 import { SwitchOrganizationCommand } from '../usecases/switch-organization/switch-organization.command';
-import { ANALYTICS_SERVICE } from '../../shared/shared.module';
-import { CachedEntity } from '../../shared/interceptors/cached-entity.interceptor';
 import { normalizeEmail } from '../../shared/helpers/email-normalization.service';
 import { ApiException } from '../../shared/exceptions/api.exception';
-import {
-  buildEnvironmentByApiKey,
-  buildSubscriberKey,
-  buildUserKey,
-} from '../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class AuthService {
   constructor(
+    private logger: PinoLogger,
     private userRepository: UserRepository,
     private subscriberRepository: SubscriberRepository,
     private createUserUsecase: CreateUser,
     private jwtService: JwtService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private organizationRepository: OrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     private memberRepository: MemberRepository,
@@ -126,10 +128,12 @@ export class AuthService {
     return this.getSignedToken(user);
   }
 
+  @Instrument()
   async isAuthenticatedForOrganization(userId: string, organizationId: string): Promise<boolean> {
     return !!(await this.memberRepository.isMemberOfOrganization(organizationId, userId));
   }
 
+  @Instrument()
   async apiKeyAuthenticate(apiKey: string) {
     const environment = await this.getEnvironment({ apiKey: apiKey });
     if (!environment) throw new UnauthorizedException('API Key not found');
@@ -139,6 +143,12 @@ export class AuthService {
 
     const user = await this.getUser({ _id: key._userId });
     if (!user) throw new UnauthorizedException('User not found');
+
+    this.logger.assign({
+      userId: user._id,
+      environmentId: environment._id,
+      organizationId: environment._organizationId,
+    });
 
     return await this.getApiSignedToken(user, environment._organizationId, environment._id, key.key);
   }
@@ -255,13 +265,18 @@ export class AuthService {
     );
   }
 
+  @Instrument()
   async validateUser(payload: IJwtPayload): Promise<UserEntity> {
-    const user = await this.getUser({ _id: payload._id });
-    if (!user) throw new UnauthorizedException('User not found');
+    // We run these in parallel to speed up the query time
+    const userPromise = this.getUser({ _id: payload._id });
+    const isMemberPromise = payload.organizationId
+      ? this.isAuthenticatedForOrganization(payload._id, payload.organizationId)
+      : Promise.resolve(true);
+    const [user, isMember] = await Promise.all([userPromise, isMemberPromise]);
 
-    if (payload.organizationId) {
-      const isMember = await this.isAuthenticatedForOrganization(payload._id, payload.organizationId);
-      if (!isMember) throw new UnauthorizedException(`No authorized for organization ${payload.organizationId}`);
+    if (!user) throw new UnauthorizedException('User not found');
+    if (payload.organizationId && !isMember) {
+      throw new UnauthorizedException(`No authorized for organization ${payload.organizationId}`);
     }
 
     return user;
@@ -288,6 +303,7 @@ export class AuthService {
     return !!environment._parentId;
   }
 
+  @Instrument()
   @CachedEntity({
     builder: (command: { _id: string }) =>
       buildUserKey({
@@ -298,6 +314,7 @@ export class AuthService {
     return await this.userRepository.findById(_id);
   }
 
+  @Instrument()
   @CachedEntity({
     builder: ({ apiKey }: { apiKey: string }) =>
       buildEnvironmentByApiKey({

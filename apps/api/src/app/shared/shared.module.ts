@@ -22,20 +22,22 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { AnalyticsService, createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
-import { ConnectionOptions } from 'tls';
-
-import { DistributedLockService } from './services/distributed-lock';
-import { InMemoryProviderService } from './services/in-memory-provider';
-import { PerformanceService } from './services/performance';
-import { QueueService } from './services/queue';
 import {
+  InMemoryProviderService,
+  AnalyticsService,
+  createNestLoggingModuleOptions,
+  LoggerModule,
+  CacheService,
+  InvalidateCacheService,
   AzureBlobStorageService,
   GCSStorageService,
   S3StorageService,
   StorageService,
-} from './services/storage/storage.service';
-import { CacheService, InvalidateCacheService } from './services/cache';
+  WsQueueService,
+  DistributedLockService,
+  PerformanceService,
+} from '@novu/application-generic';
+
 import * as packageJson from '../../../package.json';
 
 const DAL_MODELS = [
@@ -74,8 +76,6 @@ function getStorageServiceClass() {
 
 const dalService = new DalService();
 
-export const ANALYTICS_SERVICE = 'AnalyticsService';
-
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
   useFactory: () => {
@@ -102,14 +102,11 @@ const distributedLockService = {
 };
 
 const PROVIDERS = [
-  inMemoryProviderService,
   cacheService,
   distributedLockService,
   {
-    provide: QueueService,
-    useFactory: () => {
-      return new QueueService();
-    },
+    provide: WsQueueService,
+    useClass: WsQueueService,
   },
   {
     provide: DalService,
@@ -119,6 +116,7 @@ const PROVIDERS = [
       return dalService;
     },
   },
+  cacheService,
   {
     provide: PerformanceService,
     useFactory: () => {
@@ -132,7 +130,7 @@ const PROVIDERS = [
     useClass: getStorageServiceClass(),
   },
   {
-    provide: ANALYTICS_SERVICE,
+    provide: AnalyticsService,
     useFactory: async () => {
       const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
 

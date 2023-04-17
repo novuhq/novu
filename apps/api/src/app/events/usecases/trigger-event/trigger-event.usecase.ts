@@ -1,27 +1,24 @@
-import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { JobEntity, JobRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
+import {
+  PinoLogger,
+  InstrumentUsecase,
+  EventsPerformanceService,
+  GetDecryptedIntegrations,
+  GetDecryptedIntegrationsCommand,
+  buildNotificationTemplateIdentifierKey,
+  CachedEntity,
+} from '@novu/application-generic';
 
 import { TriggerEventCommand } from './trigger-event.command';
-
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { CreateNotificationJobsCommand, CreateNotificationJobs } from '../create-notification-jobs';
 import { ProcessSubscriber, ProcessSubscriberCommand } from '../process-subscriber';
-
-import { EventsPerformanceService } from '../../services/performance-service';
-
-import {
-  GetDecryptedIntegrations,
-  GetDecryptedIntegrationsCommand,
-} from '../../../integrations/usecases/get-decrypted-integrations';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
-
-import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
-import { buildNotificationTemplateIdentifierKey } from '../../../shared/services/cache/key-builders/entities';
-import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class TriggerEvent {
