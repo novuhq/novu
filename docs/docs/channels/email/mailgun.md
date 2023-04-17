@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 10
 ---
 
 # Mailgun
@@ -16,7 +16,7 @@ To generate a new API key in Mailgun, you can follow these steps:
 
 - [Sign up](https://signup.mailgun.com/new/signup) or [Log in](https://login.mailgun.com/login/) to your Mailgun account.
 - Click on the **Profile** section in the top right corner of the screen, and then click "API Keys" from the drop-down menu.
-- On the [API Keys](https://app.sparkpost.com/account/api-keys) page, copy the generated **Private API Key**
+- On the [API Keys](https://app.mailgun.com/app/account/security/api_keys) page, copy the generated **Private API Key**
 
 ## Add new domain name
 
