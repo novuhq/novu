@@ -30,7 +30,9 @@ To get started, you’ll need to add the domain that you want to send messages f
 
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate Mandrill and click on the **Connect** button.
-- Enter API key.
+- Enter your Mandrill API key.
+- Fill the `From email address` field using the authenticated email from the previous step.
+- Fill the `Sender name`.
 - Click on the `Disabled` button and mark as `Active`.
 - Click on the **Connect** button.
 - You should now be able to send notifications using Mandrill in Novu.
