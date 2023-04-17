@@ -7,12 +7,21 @@ import {
   NotificationRepository,
   NotificationStepEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, DigestTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE, StepTypeEnum } from '@novu/shared';
-import { EventsPerformanceService, DigestFilterSteps, DigestFilterStepsCommand } from '@novu/application-generic';
+import {
+  ChannelTypeEnum,
+  DigestTypeEnum,
+  STEP_TYPE_TO_CHANNEL_TYPE,
+  StepTypeEnum,
+} from '@novu/shared';
 
+import {
+  DigestFilterSteps,
+  DigestFilterStepsCommand,
+} from '../digest-filter-steps';
+import { InstrumentUsecase } from '../../instrumentation';
+import { EventsPerformanceService } from '../../services/performance';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { PlatformException } from '../../utils/exceptions';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -26,7 +35,9 @@ export class CreateNotificationJobs {
   ) {}
 
   @InstrumentUsecase()
-  public async execute(command: CreateNotificationJobsCommand): Promise<NotificationJob[]> {
+  public async execute(
+    command: CreateNotificationJobsCommand
+  ): Promise<NotificationJob[]> {
     const mark = this.performanceService.buildCreateNotificationJobsMark(
       command.identifier,
       command.transactionId,
@@ -46,7 +57,7 @@ export class CreateNotificationJobs {
     if (!notification) {
       const message = 'Notification could not be created';
       Logger.error(message, LOG_CONTEXT);
-      throw new ApiException(message);
+      throw new PlatformException(message);
     }
 
     const jobs: NotificationJob[] = [];
@@ -54,7 +65,8 @@ export class CreateNotificationJobs {
     const steps = await this.createSteps(command, notification);
 
     for (const step of steps) {
-      if (!step.template) throw new ApiException('Step template was not found');
+      if (!step.template)
+        throw new PlatformException('Step template was not found');
 
       const providerId = command.templateProviderIds.get(
         STEP_TYPE_TO_CHANNEL_TYPE.get(step.template.type) as ChannelTypeEnum
@@ -97,11 +109,15 @@ export class CreateNotificationJobs {
     return await this.filterDigestSteps(command, notification, activeSteps);
   }
 
-  private filterActiveSteps(steps: NotificationStepEntity[]): NotificationStepEntity[] {
+  private filterActiveSteps(
+    steps: NotificationStepEntity[]
+  ): NotificationStepEntity[] {
     return steps.filter((step) => step.active === true);
   }
 
-  private createTriggerStep(command: CreateNotificationJobsCommand): NotificationStepEntity {
+  private createTriggerStep(
+    command: CreateNotificationJobsCommand
+  ): NotificationStepEntity {
     return {
       template: {
         _environmentId: command.environmentId,
@@ -120,7 +136,9 @@ export class CreateNotificationJobs {
     steps: NotificationStepEntity[]
   ): Promise<NotificationStepEntity[]> {
     // TODO: Review this for workflows with more than one digest as this will return the first element found
-    const digestStep = steps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
+    const digestStep = steps.find(
+      (step) => step.template?.type === StepTypeEnum.DIGEST
+    );
 
     if (digestStep && digestStep.metadata?.type) {
       return await this.digestFilterSteps.execute(
