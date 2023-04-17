@@ -1,7 +1,7 @@
 import { DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
 
 import { Logger } from '@nestjs/common';
-import { ApiException } from '../utils/exceptions';
+import { ApiException } from '../../utils/exceptions';
 import { differenceInMilliseconds } from 'date-fns';
 import { NotificationStepEntity } from '@novu/dal';
 
