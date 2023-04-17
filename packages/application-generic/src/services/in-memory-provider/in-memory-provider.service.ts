@@ -150,7 +150,10 @@ export class InMemoryProviderService {
         try {
           inMemoryProviderClient.nodes('all')?.forEach((node) => {
             Logger.log(
-              { commandQueueLength: node.commandQueue?.length, host: node.options?.host },
+              {
+                commandQueueLength: node.commandQueue?.length,
+                host: node.options?.host,
+              },
               `Node ${node.options?.host}:${node.options.port} commandQueue length is ${node.commandQueue.length}`,
               LOG_CONTEXT
             );
