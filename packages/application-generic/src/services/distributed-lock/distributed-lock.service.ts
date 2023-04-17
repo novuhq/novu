@@ -114,6 +114,29 @@ export class DistributedLockService {
     await this.shutdown();
   }
 
+  /*
+   * This method checks if a resource contains environmentId in the key
+   * and build a Redis prefix `{prefix}resource-key` that helps to
+   * automatically shard through the different nodes in Cluster mode
+   * No sharding will be done if the key is not found.
+   *
+   * Reference: https://redis.io/docs/reference/cluster-spec/ (`Hash tags` entry)
+   */
+  public buildResourceWithPrefix(resource: string): string {
+    const resourceParts = resource.split(':');
+    const environmentResourceIndex = resourceParts.findIndex(
+      (el) => el === 'environment'
+    );
+
+    if (environmentResourceIndex === -1) {
+      return resource;
+    }
+
+    const environmentId = resourceParts[environmentResourceIndex + 1];
+
+    return `{environmentId:${environmentId}}${resource}`;
+  }
+
   public async applyLock<T>(
     { resource, ttl }: ILockOptions,
     handler: () => Promise<T>
@@ -122,10 +145,20 @@ export class DistributedLockService {
       return await handler();
     }
 
-    const releaseLock = await this.lock(resource, ttl);
+    /**
+     * Add prefix to allow autopipelining functionality of ioredis
+     * We add it here instead where the resource name creation is as this is the single entry point
+     * and all the DistributedLock functionalities take the value from here.
+     */
+    const resourceWithPrefix = this.buildResourceWithPrefix(resource);
+
+    const releaseLock = await this.lock(resourceWithPrefix, ttl);
 
     try {
-      Logger.debug(`Lock ${resource} for ${handler.name}`, LOG_CONTEXT);
+      Logger.debug(
+        `Lock ${resourceWithPrefix} for ${handler.name}`,
+        LOG_CONTEXT
+      );
 
       const result = await handler();
 
@@ -133,7 +166,7 @@ export class DistributedLockService {
     } finally {
       await releaseLock();
       Logger.debug(
-        `Lock ${resource} released for ${handler.name}`,
+        `Lock ${resourceWithPrefix} released for ${handler.name}`,
         LOG_CONTEXT
       );
     }
