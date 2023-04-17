@@ -15,17 +15,25 @@ import {
   GetLayoutUseCase,
   GetNovuLayout,
   QueueService,
+  TriggerQueueService,
   AddJob,
   AddDelayJob,
   AddDigestJob,
   EventsDistributedLockService,
   SendTestEmail,
   SendTestEmailCommand,
+  CreateSubscriber,
+  UpdateSubscriber,
+  TriggerEvent,
+  CreateNotificationJobs,
+  ProcessSubscriber,
+  StoreSubscriberJobs,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
 import { SharedModule } from '../shared/shared.module';
 import { WorkflowQueueService } from './services/workflow-queue.service';
+import { TriggerProcessorQueueService } from './services/trigger-processor-queue.service';
 import {
   MessageMatcher,
   SendMessage,
@@ -82,6 +90,12 @@ const USE_CASES = [
   SetJobAsFailed,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
+  StoreSubscriberJobs,
+  TriggerEvent,
+  CreateNotificationJobs,
+  ProcessSubscriber,
+  CreateSubscriber,
+  UpdateSubscriber,
 ];
 
 const REPOSITORIES = [JobRepository];
@@ -90,6 +104,10 @@ const SERVICES = [
   {
     provide: QueueService,
     useClass: WorkflowQueueService,
+  },
+  {
+    provide: TriggerQueueService,
+    useClass: TriggerProcessorQueueService,
   },
   EventsDistributedLockService,
   EventsPerformanceService,

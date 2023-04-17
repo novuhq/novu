@@ -1,9 +1,9 @@
+import { IsDefined, IsString, IsOptional } from 'class-validator';
 // TODO: We shouldn't be importing from DAL here. Needs big refactor throughout monorepo.
 import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { ChannelTypeEnum, ISubscribersDefine } from '@novu/shared';
-import { IsDefined, IsString, IsOptional } from 'class-validator';
 
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../commands';
 
 export class CreateNotificationJobsCommand extends EnvironmentWithUserCommand {
   @IsDefined()
