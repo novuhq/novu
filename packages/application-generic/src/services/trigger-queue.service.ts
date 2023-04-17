@@ -34,9 +34,7 @@ export class TriggerQueueService {
   }
 
   public add(id: string, data: any, organizationId: string) {
-    Logger.log(
-      `TriggerHandlerQueueService.add: ${id} Group: ${organizationId}`
-    );
+    Logger.log(`TriggerQueueService.add: ${id} Group: ${organizationId}`);
 
     this.bullMqService.add(
       id,
