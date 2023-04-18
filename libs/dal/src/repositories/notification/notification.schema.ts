@@ -115,21 +115,10 @@ notificationSchema.index({
  *                 _subscriberId = {$in: query._subscriberIds};
  *                 channels = {$in: query.channels}});
  *
- *  * Path: libs/dal/src/repositories/notification/notification.repository.ts
- *     Context: getFeed()
- *         Query: MongooseModel.countDocuments({
- *                 transactionId: subscriberId,
- *                 _environmentId: environmentId,
- *                 _templateId = {$in: query.templates};
- *                 _subscriberId = {$in: query._subscriberIds};
- *                 channels = {$in: query.channels}});
  */
 notificationSchema.index({
   transactionId: 1,
   _environmentId: 1,
-  _subscriberId: 1,
-  _templateId: 1,
-  channels: 1,
   createdAt: -1,
 });
 
@@ -139,7 +128,7 @@ notificationSchema.index({
  *    Context: getActivityGraphStats()
  *        Query: aggregate(
  *                {createdAt: { $gte: date }_environmentId: new Types.ObjectId(environmentId),
- *                { $sort: { _id: -1 } }})
+ *                { $sort: { createdAt: -1 } }})
  *
  * Path: libs/dal/src/repositories/notification/notification.repository.ts
  *    Context: getStats()
@@ -150,8 +139,7 @@ notificationSchema.index({
  */
 notificationSchema.index({
   _environmentId: 1,
-  createdAt: 1,
-  _id: -1,
+  createdAt: -1,
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
