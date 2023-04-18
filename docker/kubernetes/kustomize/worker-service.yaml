@@ -9,7 +9,7 @@ metadata:
   name: worker
 spec:
   ports:
-    - name: "3004"
+    - name: '3004'
       port: 3004
       targetPort: 3004
   selector:
