@@ -31,6 +31,20 @@
       "type": "pwa-node"
     },
     {
+      "name": "worker",
+      "request": "launch",
+      "runtimeArgs": [
+        "run-script",
+        "start"
+      ],
+      "runtimeExecutable": "npm",
+      "cwd": "${workspaceFolder}/apps/worker",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "pwa-node"
+    },
+    {
       "name": "WEB",
       "request": "launch",
       "runtimeArgs": [

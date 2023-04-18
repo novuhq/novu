@@ -11,8 +11,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
-import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
+import {
+  CreateSubscriber,
+  CreateSubscriberCommand,
+  UpdateSubscriber,
+  UpdateSubscriberCommand,
+} from '@novu/application-generic';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';

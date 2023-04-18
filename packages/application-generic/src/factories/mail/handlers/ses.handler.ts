@@ -8,6 +8,7 @@ export class SESHandler extends BaseHandler {
   constructor() {
     super('ses', ChannelTypeEnum.EMAIL);
   }
+
   buildProvider(credentials: ICredentials, from?: string) {
     const config: SESConfig = {
       region: credentials.region as string,

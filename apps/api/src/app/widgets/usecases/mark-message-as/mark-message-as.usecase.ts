@@ -1,23 +1,25 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  WsQueueService,
+  AnalyticsService,
+  InvalidateCacheService,
+  CachedEntity,
+  buildFeedKey,
+  buildMessageCountKey,
+  buildSubscriberKey,
+} from '@novu/application-generic';
 
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { QueueService } from '../../../shared/services/queue';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
-import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
-import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
-import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class MarkMessageAs {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
-    private queueService: QueueService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private wsQueueService: WsQueueService,
+    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private memberRepository: MemberRepository
   ) {}
@@ -87,7 +89,7 @@ export class MarkMessageAs {
     const eventMessage = `un${mark}_count_changed`;
     const countKey = `un${mark}Count`;
 
-    this.queueService.bullMqService.add(
+    this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
         event: eventMessage,

@@ -434,7 +434,8 @@
     "maqsam",
     "Millis",
     "sscan",
-    "vishnudxb"
+    "vishnudxb",
+    "autopipelining"
   ],
   "flagWords": [],
   "patterns": [
@@ -505,7 +506,9 @@
     "apps/widget/public/iframeResizer.contentWindow.js",
     ".eslintrc.js",
     ".vscode/settings.json",
+    "*/**/.vscode/settings.json",
     "docs/src/usage-examples.md",
+    "apps/worker/README.md",
     ".gitignore",
     "angular.json",
     "ng-package.json"

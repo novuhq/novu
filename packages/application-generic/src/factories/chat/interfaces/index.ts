@@ -9,5 +9,5 @@ export interface IChatHandler {
 }
 
 export interface IChatFactory {
-  getHandler(integration: IntegrationEntity): IChatHandler;
+  getHandler(integration: IntegrationEntity): IChatHandler | null;
 }
