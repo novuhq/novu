@@ -44,6 +44,7 @@ export enum EmailProviderIdEnum {
   Outlook365 = 'outlook365',
   Novu = 'novu-email',
   SparkPost = 'sparkpost',
+  EmailWebhook = 'email-webhook',
 }
 
 export enum SmsProviderIdEnum {

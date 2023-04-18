@@ -1394,6 +1394,7 @@ importers:
       '@novu/clickatell': ^0.13.0
       '@novu/dal': ^0.13.0
       '@novu/discord': ^0.13.0
+      '@novu/email-webhook': ^0.13.0
       '@novu/emailjs': ^0.13.0
       '@novu/expo': ^0.13.0
       '@novu/fcm': ^0.13.0
@@ -1477,6 +1478,7 @@ importers:
       '@novu/clickatell': link:../../providers/clickatell
       '@novu/dal': link:../../libs/dal
       '@novu/discord': link:../../providers/discord
+      '@novu/email-webhook': link:../../providers/email-webhook
       '@novu/emailjs': link:../../providers/emailjs
       '@novu/expo': link:../../providers/expo
       '@novu/fcm': link:../../providers/fcm
@@ -2152,6 +2154,41 @@ importers:
       ts-jest: 27.1.5_d5we6thvweerisoz5puaw7xkku
       ts-node: 10.9.1_o6avl3oodj6mwqsx3rm2wfkgv4
       typedoc: 0.23.28_typescript@4.9.5
+      typescript: 4.9.5
+
+  providers/email-webhook:
+    specifiers:
+      '@istanbuljs/nyc-config-typescript': ~1.0.1
+      '@novu/stateless': ^0.13.0
+      '@types/jest': ~27.5.2
+      axios: ^1.3.5
+      cspell: ~6.19.2
+      cz-conventional-changelog: ~3.3.0
+      hat: ^0.0.3
+      jest: ~27.5.1
+      npm-run-all: ^4.1.5
+      nyc: ~15.1.0
+      prettier: ~2.8.0
+      rimraf: ~3.0.2
+      ts-jest: ~27.1.5
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      '@novu/stateless': link:../../packages/stateless
+      axios: 1.3.5
+      hat: 0.0.3
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript': 1.0.2_nyc@15.1.0
+      '@types/jest': 27.5.2
+      cspell: 6.19.2
+      cz-conventional-changelog: 3.3.0
+      jest: 27.5.1_ts-node@10.9.1
+      npm-run-all: 4.1.5
+      nyc: 15.1.0
+      prettier: 2.8.7
+      rimraf: 3.0.2
+      ts-jest: 27.1.5_d5we6thvweerisoz5puaw7xkku
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       typescript: 4.9.5
 
   providers/emailjs:
@@ -6741,7 +6778,7 @@ packages:
     resolution: {integrity: sha512-O4KCvQA6lLiMU9l2eawBPMf1xPP8xPfB3iEQw150hOVTqj/rfXz0ThTb4HEzqQfs2Bmo5Ay8BzxfzVtBrr9dVg==}
 
   /@babel/helper-plugin-utils/7.20.2:
-    resolution: {integrity: sha512-8RvlJG2mj4huQ4pZ+rU9lqKi9ZKiRmuvGuM2HlWmkmgOhbs6zEAw6IEiJ5cQqGbDzGZOhwuOQNtZMi/ENLjZoQ==}
+    resolution: {integrity: sha512-8RvlJG2mj4huQ4pZ+rU9lqKi9ZKiRmuvGuM2HlWmkmgOhbs6zEAw6IEiJ5cQqGbDzGZOhwuOQNtZMi/ENLjZoQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@babel/helper-plugin-utils/-/helper-plugin-utils-7.20.2.tgz}
     engines: {node: '>=6.9.0'}
 
   /@babel/helper-remap-async-to-generator/7.18.9_@babel+core@7.20.12:
@@ -9194,7 +9231,7 @@ packages:
     dev: true
 
   /@cspell/dict-aws/1.0.14:
-    resolution: {integrity: sha512-K21CfB4ZpKYwwDQiPfic2zJA/uxkbsd4IQGejEvDAhE3z8wBs6g6BwwqdVO767M9NgZqc021yAVpr79N5pWe3w==}
+    resolution: {integrity: sha512-K21CfB4ZpKYwwDQiPfic2zJA/uxkbsd4IQGejEvDAhE3z8wBs6g6BwwqdVO767M9NgZqc021yAVpr79N5pWe3w==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-aws/-/dict-aws-1.0.14.tgz}
     dev: true
 
   /@cspell/dict-aws/3.0.0:
@@ -9202,7 +9239,7 @@ packages:
     dev: true
 
   /@cspell/dict-bash/1.0.18:
-    resolution: {integrity: sha512-kJIqQ+FD2TCSgaaP5XLEDgy222+pVWTc+VhveNO++gnTWU3BCVjkD5LjfW7g/CmGONnz+nwXDueWspProaSdJw==}
+    resolution: {integrity: sha512-kJIqQ+FD2TCSgaaP5XLEDgy222+pVWTc+VhveNO++gnTWU3BCVjkD5LjfW7g/CmGONnz+nwXDueWspProaSdJw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-bash/-/dict-bash-1.0.18.tgz}
     dev: true
 
   /@cspell/dict-bash/4.1.1:
@@ -9210,7 +9247,7 @@ packages:
     dev: true
 
   /@cspell/dict-companies/1.0.40:
-    resolution: {integrity: sha512-Aw07qiTroqSST2P5joSrC4uOA05zTXzI2wMb+me3q4Davv1D9sCkzXY0TGoC2vzhNv5ooemRi9KATGaBSdU1sw==}
+    resolution: {integrity: sha512-Aw07qiTroqSST2P5joSrC4uOA05zTXzI2wMb+me3q4Davv1D9sCkzXY0TGoC2vzhNv5ooemRi9KATGaBSdU1sw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-companies/-/dict-companies-1.0.40.tgz}
     dev: true
 
   /@cspell/dict-companies/3.0.9:
@@ -9218,7 +9255,7 @@ packages:
     dev: true
 
   /@cspell/dict-cpp/1.1.40:
-    resolution: {integrity: sha512-sscfB3woNDNj60/yGXAdwNtIRWZ89y35xnIaJVDMk5TPMMpaDvuk0a34iOPIq0g4V+Y8e3RyAg71SH6ADwSjGw==}
+    resolution: {integrity: sha512-sscfB3woNDNj60/yGXAdwNtIRWZ89y35xnIaJVDMk5TPMMpaDvuk0a34iOPIq0g4V+Y8e3RyAg71SH6ADwSjGw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-cpp/-/dict-cpp-1.1.40.tgz}
     dev: true
 
   /@cspell/dict-cpp/4.0.3:
@@ -9230,7 +9267,7 @@ packages:
     dev: true
 
   /@cspell/dict-cryptocurrencies/1.0.10:
-    resolution: {integrity: sha512-47ABvDJOkaST/rXipNMfNvneHUzASvmL6K/CbOFpYKfsd0x23Jc9k1yaOC7JAm82XSC/8a7+3Yu+Fk2jVJNnsA==}
+    resolution: {integrity: sha512-47ABvDJOkaST/rXipNMfNvneHUzASvmL6K/CbOFpYKfsd0x23Jc9k1yaOC7JAm82XSC/8a7+3Yu+Fk2jVJNnsA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-cryptocurrencies/-/dict-cryptocurrencies-1.0.10.tgz}
     dev: true
 
   /@cspell/dict-cryptocurrencies/3.0.1:
@@ -9238,7 +9275,7 @@ packages:
     dev: true
 
   /@cspell/dict-csharp/1.0.11:
-    resolution: {integrity: sha512-nub+ZCiTgmT87O+swI+FIAzNwaZPWUGckJU4GN402wBq420V+F4ZFqNV7dVALJrGaWH7LvADRtJxi6cZVHJKeA==}
+    resolution: {integrity: sha512-nub+ZCiTgmT87O+swI+FIAzNwaZPWUGckJU4GN402wBq420V+F4ZFqNV7dVALJrGaWH7LvADRtJxi6cZVHJKeA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-csharp/-/dict-csharp-1.0.11.tgz}
     dev: true
 
   /@cspell/dict-csharp/4.0.2:
@@ -9246,7 +9283,7 @@ packages:
     dev: true
 
   /@cspell/dict-css/1.0.13:
-    resolution: {integrity: sha512-HU8RbFRoGanFH85mT01Ot/Ay48ixr/gG25VPLtdq56QTrmPsw79gxYm/5Qay16eQbpoPIxaj5CAWNam+DX4GbA==}
+    resolution: {integrity: sha512-HU8RbFRoGanFH85mT01Ot/Ay48ixr/gG25VPLtdq56QTrmPsw79gxYm/5Qay16eQbpoPIxaj5CAWNam+DX4GbA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-css/-/dict-css-1.0.13.tgz}
     dev: true
 
   /@cspell/dict-css/4.0.5:
@@ -9258,7 +9295,7 @@ packages:
     dev: true
 
   /@cspell/dict-django/1.0.26:
-    resolution: {integrity: sha512-mn9bd7Et1L2zuibc08GVHTiD2Go3/hdjyX5KLukXDklBkq06r+tb0OtKtf1zKodtFDTIaYekGADhNhA6AnKLkg==}
+    resolution: {integrity: sha512-mn9bd7Et1L2zuibc08GVHTiD2Go3/hdjyX5KLukXDklBkq06r+tb0OtKtf1zKodtFDTIaYekGADhNhA6AnKLkg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-django/-/dict-django-1.0.26.tgz}
     dev: true
 
   /@cspell/dict-django/4.0.2:
@@ -9270,7 +9307,7 @@ packages:
     dev: true
 
   /@cspell/dict-dotnet/1.0.32:
-    resolution: {integrity: sha512-9H9vXrgJB4KF8xsyTToXO53cXD33iyfrpT4mhCds+YLUw3P3x3E9myszgJzshnrxYBvQZ+QMII57Qr6SjZVk4Q==}
+    resolution: {integrity: sha512-9H9vXrgJB4KF8xsyTToXO53cXD33iyfrpT4mhCds+YLUw3P3x3E9myszgJzshnrxYBvQZ+QMII57Qr6SjZVk4Q==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-dotnet/-/dict-dotnet-1.0.32.tgz}
     dev: true
 
   /@cspell/dict-dotnet/4.0.2:
@@ -9282,7 +9319,7 @@ packages:
     dev: true
 
   /@cspell/dict-elixir/1.0.26:
-    resolution: {integrity: sha512-hz1yETUiRJM7yjN3mITSnxcmZaEyaBbyJhpZPpg+cKUil+xhHeZ2wwfbRc83QHGmlqEuDWbdCFqKSpCDJYpYhg==}
+    resolution: {integrity: sha512-hz1yETUiRJM7yjN3mITSnxcmZaEyaBbyJhpZPpg+cKUil+xhHeZ2wwfbRc83QHGmlqEuDWbdCFqKSpCDJYpYhg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-elixir/-/dict-elixir-1.0.26.tgz}
     dev: true
 
   /@cspell/dict-elixir/4.0.2:
@@ -9298,7 +9335,7 @@ packages:
     dev: true
 
   /@cspell/dict-en_us/1.2.45:
-    resolution: {integrity: sha512-UPwR4rfiJCxnS+Py+EK9E4AUj3aPZE4p/yBRSHN+5aBQConlI0lLDtMceH5wlupA/sQTU1ERZGPJA9L96jVSyQ==}
+    resolution: {integrity: sha512-UPwR4rfiJCxnS+Py+EK9E4AUj3aPZE4p/yBRSHN+5aBQConlI0lLDtMceH5wlupA/sQTU1ERZGPJA9L96jVSyQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-en_us/-/dict-en_us-1.2.45.tgz}
     dev: true
 
   /@cspell/dict-en_us/4.3.2:
@@ -9306,7 +9343,7 @@ packages:
     dev: true
 
   /@cspell/dict-filetypes/1.1.8:
-    resolution: {integrity: sha512-EllahNkhzvLWo0ptwu0l3oEeAJOQSUpZnDfnKRIh6mJVehuSovNHwA9vrdZ8jBUjuqcfaN2e7c32zN0D/qvWJQ==}
+    resolution: {integrity: sha512-EllahNkhzvLWo0ptwu0l3oEeAJOQSUpZnDfnKRIh6mJVehuSovNHwA9vrdZ8jBUjuqcfaN2e7c32zN0D/qvWJQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-filetypes/-/dict-filetypes-1.1.8.tgz}
     dev: true
 
   /@cspell/dict-filetypes/3.0.0:
@@ -9314,7 +9351,7 @@ packages:
     dev: true
 
   /@cspell/dict-fonts/1.0.14:
-    resolution: {integrity: sha512-VhIX+FVYAnqQrOuoFEtya6+H72J82cIicz9QddgknsTqZQ3dvgp6lmVnsQXPM3EnzA8n1peTGpLDwHzT7ociLA==}
+    resolution: {integrity: sha512-VhIX+FVYAnqQrOuoFEtya6+H72J82cIicz9QddgknsTqZQ3dvgp6lmVnsQXPM3EnzA8n1peTGpLDwHzT7ociLA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-fonts/-/dict-fonts-1.0.14.tgz}
     dev: true
 
   /@cspell/dict-fonts/3.0.2:
@@ -9322,7 +9359,7 @@ packages:
     dev: true
 
   /@cspell/dict-fullstack/1.0.39:
-    resolution: {integrity: sha512-Mbi+zWdiP9yzL+X4YD9Tgcm5YQ95Ql+Y3vF2LRnOY6g2QWaijTRN1rgksVuxzpFqHi//+bx2uoUb0XEKBYDi8g==}
+    resolution: {integrity: sha512-Mbi+zWdiP9yzL+X4YD9Tgcm5YQ95Ql+Y3vF2LRnOY6g2QWaijTRN1rgksVuxzpFqHi//+bx2uoUb0XEKBYDi8g==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-fullstack/-/dict-fullstack-1.0.39.tgz}
     dev: true
 
   /@cspell/dict-fullstack/3.1.5:
@@ -9338,7 +9375,7 @@ packages:
     dev: true
 
   /@cspell/dict-golang/1.1.24:
-    resolution: {integrity: sha512-qq3Cjnx2U1jpeWAGJL1GL0ylEhUMqyaR36Xij6Y6Aq4bViCRp+HRRqk0x5/IHHbOrti45h3yy7ii1itRFo+Xkg==}
+    resolution: {integrity: sha512-qq3Cjnx2U1jpeWAGJL1GL0ylEhUMqyaR36Xij6Y6Aq4bViCRp+HRRqk0x5/IHHbOrti45h3yy7ii1itRFo+Xkg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-golang/-/dict-golang-1.1.24.tgz}
     dev: true
 
   /@cspell/dict-golang/5.0.2:
@@ -9350,7 +9387,7 @@ packages:
     dev: true
 
   /@cspell/dict-haskell/1.0.13:
-    resolution: {integrity: sha512-kvl8T84cnYRPpND/P3D86P6WRSqebsbk0FnMfy27zo15L5MLAb3d3MOiT1kW3vEWfQgzUD7uddX/vUiuroQ8TA==}
+    resolution: {integrity: sha512-kvl8T84cnYRPpND/P3D86P6WRSqebsbk0FnMfy27zo15L5MLAb3d3MOiT1kW3vEWfQgzUD7uddX/vUiuroQ8TA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-haskell/-/dict-haskell-1.0.13.tgz}
     dev: true
 
   /@cspell/dict-haskell/4.0.1:
@@ -9358,7 +9395,7 @@ packages:
     dev: true
 
   /@cspell/dict-html-symbol-entities/1.0.23:
-    resolution: {integrity: sha512-PV0UBgcBFbBLf/m1wfkVMM8w96kvfHoiCGLWO6BR3Q9v70IXoE4ae0+T+f0CkxcEkacMqEQk/I7vuE9MzrjaNw==}
+    resolution: {integrity: sha512-PV0UBgcBFbBLf/m1wfkVMM8w96kvfHoiCGLWO6BR3Q9v70IXoE4ae0+T+f0CkxcEkacMqEQk/I7vuE9MzrjaNw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-html-symbol-entities/-/dict-html-symbol-entities-1.0.23.tgz}
     dev: true
 
   /@cspell/dict-html-symbol-entities/4.0.0:
@@ -9366,7 +9403,7 @@ packages:
     dev: true
 
   /@cspell/dict-html/1.1.9:
-    resolution: {integrity: sha512-vvnYia0tyIS5Fdoz+gEQm77MGZZE66kOJjuNpIYyRHCXFAhWdYz3SmkRm6YKJSWSvuO+WBJYTKDvkOxSh3Fx/w==}
+    resolution: {integrity: sha512-vvnYia0tyIS5Fdoz+gEQm77MGZZE66kOJjuNpIYyRHCXFAhWdYz3SmkRm6YKJSWSvuO+WBJYTKDvkOxSh3Fx/w==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-html/-/dict-html-1.1.9.tgz}
     dev: true
 
   /@cspell/dict-html/4.0.3:
@@ -9374,7 +9411,7 @@ packages:
     dev: true
 
   /@cspell/dict-java/1.0.23:
-    resolution: {integrity: sha512-LcOg9srYLDoNGd8n3kbfDBlZD+LOC9IVcnFCdua1b/luCHNVmlgBx7e677qPu7olpMYOD5TQIVW2OmM1+/6MFA==}
+    resolution: {integrity: sha512-LcOg9srYLDoNGd8n3kbfDBlZD+LOC9IVcnFCdua1b/luCHNVmlgBx7e677qPu7olpMYOD5TQIVW2OmM1+/6MFA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-java/-/dict-java-1.0.23.tgz}
     dev: true
 
   /@cspell/dict-java/5.0.5:
@@ -9386,7 +9423,7 @@ packages:
     dev: true
 
   /@cspell/dict-latex/1.0.25:
-    resolution: {integrity: sha512-cEgg91Migqcp1SdVV7dUeMxbPDhxdNo6Fgq2eygAXQjIOFK520FFvh/qxyBvW90qdZbIRoU2AJpchyHfGuwZFA==}
+    resolution: {integrity: sha512-cEgg91Migqcp1SdVV7dUeMxbPDhxdNo6Fgq2eygAXQjIOFK520FFvh/qxyBvW90qdZbIRoU2AJpchyHfGuwZFA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-latex/-/dict-latex-1.0.25.tgz}
     dev: true
 
   /@cspell/dict-latex/3.1.0:
@@ -9398,7 +9435,7 @@ packages:
     dev: true
 
   /@cspell/dict-lorem-ipsum/1.0.22:
-    resolution: {integrity: sha512-yqzspR+2ADeAGUxLTfZ4pXvPl7FmkENMRcGDECmddkOiuEwBCWMZdMP5fng9B0Q6j91hQ8w9CLvJKBz10TqNYg==}
+    resolution: {integrity: sha512-yqzspR+2ADeAGUxLTfZ4pXvPl7FmkENMRcGDECmddkOiuEwBCWMZdMP5fng9B0Q6j91hQ8w9CLvJKBz10TqNYg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-lorem-ipsum/-/dict-lorem-ipsum-1.0.22.tgz}
     dev: true
 
   /@cspell/dict-lorem-ipsum/3.0.0:
@@ -9406,7 +9443,7 @@ packages:
     dev: true
 
   /@cspell/dict-lua/1.0.16:
-    resolution: {integrity: sha512-YiHDt8kmHJ8nSBy0tHzaxiuitYp+oJ66ffCYuFWTNB3//Y0SI4OGHU3omLsQVeXIfCeVrO4DrVvRDoCls9B5zQ==}
+    resolution: {integrity: sha512-YiHDt8kmHJ8nSBy0tHzaxiuitYp+oJ66ffCYuFWTNB3//Y0SI4OGHU3omLsQVeXIfCeVrO4DrVvRDoCls9B5zQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-lua/-/dict-lua-1.0.16.tgz}
     dev: true
 
   /@cspell/dict-lua/4.0.1:
@@ -9414,7 +9451,7 @@ packages:
     dev: true
 
   /@cspell/dict-node/1.0.12:
-    resolution: {integrity: sha512-RPNn/7CSkflAWk0sbSoOkg0ORrgBARUjOW3QjB11KwV1gSu8f5W/ij/S50uIXtlrfoBLqd4OyE04jyON+g/Xfg==}
+    resolution: {integrity: sha512-RPNn/7CSkflAWk0sbSoOkg0ORrgBARUjOW3QjB11KwV1gSu8f5W/ij/S50uIXtlrfoBLqd4OyE04jyON+g/Xfg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-node/-/dict-node-1.0.12.tgz}
     dev: true
 
   /@cspell/dict-node/4.0.2:
@@ -9422,7 +9459,7 @@ packages:
     dev: true
 
   /@cspell/dict-npm/1.0.16:
-    resolution: {integrity: sha512-RwkuZGcYBxL3Yux3cSG/IOWGlQ1e9HLCpHeyMtTVGYKAIkFAVUnGrz20l16/Q7zUG7IEktBz5O42kAozrEnqMQ==}
+    resolution: {integrity: sha512-RwkuZGcYBxL3Yux3cSG/IOWGlQ1e9HLCpHeyMtTVGYKAIkFAVUnGrz20l16/Q7zUG7IEktBz5O42kAozrEnqMQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-npm/-/dict-npm-1.0.16.tgz}
     dev: true
 
   /@cspell/dict-npm/5.0.5:
@@ -9442,7 +9479,7 @@ packages:
     dev: true
 
   /@cspell/dict-powershell/1.0.19:
-    resolution: {integrity: sha512-zF/raM/lkhXeHf4I43OtK0gP9rBeEJFArscTVwLWOCIvNk21MJcNoTYoaGw+c056+Q+hJL0psGLO7QN+mxYH1A==}
+    resolution: {integrity: sha512-zF/raM/lkhXeHf4I43OtK0gP9rBeEJFArscTVwLWOCIvNk21MJcNoTYoaGw+c056+Q+hJL0psGLO7QN+mxYH1A==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-powershell/-/dict-powershell-1.0.19.tgz}
     dev: true
 
   /@cspell/dict-powershell/4.0.2:
@@ -9458,7 +9495,7 @@ packages:
     dev: true
 
   /@cspell/dict-python/1.0.38:
-    resolution: {integrity: sha512-KuyOQaby9NID/pn7EkXilpUxjVIvvyLzhr7BPsDS6FcvUE8Yhss6bJowEDHSv6pa+W2387phoqbDf2rTicquAA==}
+    resolution: {integrity: sha512-KuyOQaby9NID/pn7EkXilpUxjVIvvyLzhr7BPsDS6FcvUE8Yhss6bJowEDHSv6pa+W2387phoqbDf2rTicquAA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-python/-/dict-python-1.0.38.tgz}
     dev: true
 
   /@cspell/dict-python/4.0.2:
@@ -9470,7 +9507,7 @@ packages:
     dev: true
 
   /@cspell/dict-ruby/1.0.15:
-    resolution: {integrity: sha512-I76hJA///lc1pgmDTGUFHN/O8KLIZIU/8TgIYIGI6Ix/YzSEvWNdQYbANn6JbCynS0X+7IbZ2Ft+QqvmGtIWuA==}
+    resolution: {integrity: sha512-I76hJA///lc1pgmDTGUFHN/O8KLIZIU/8TgIYIGI6Ix/YzSEvWNdQYbANn6JbCynS0X+7IbZ2Ft+QqvmGtIWuA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-ruby/-/dict-ruby-1.0.15.tgz}
     dev: true
 
   /@cspell/dict-ruby/4.0.2:
@@ -9482,7 +9519,7 @@ packages:
     dev: true
 
   /@cspell/dict-rust/1.0.23:
-    resolution: {integrity: sha512-lR4boDzs79YD6+30mmiSGAMMdwh7HTBAPUFSB0obR3Kidibfc3GZ+MHWZXay5dxZ4nBKM06vyjtanF9VJ8q1Iw==}
+    resolution: {integrity: sha512-lR4boDzs79YD6+30mmiSGAMMdwh7HTBAPUFSB0obR3Kidibfc3GZ+MHWZXay5dxZ4nBKM06vyjtanF9VJ8q1Iw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-rust/-/dict-rust-1.0.23.tgz}
     dev: true
 
   /@cspell/dict-rust/4.0.1:
@@ -9490,7 +9527,7 @@ packages:
     dev: true
 
   /@cspell/dict-scala/1.0.21:
-    resolution: {integrity: sha512-5V/R7PRbbminTpPS3ywgdAalI9BHzcEjEj9ug4kWYvBIGwSnS7T6QCFCiu+e9LvEGUqQC+NHgLY4zs1NaBj2vA==}
+    resolution: {integrity: sha512-5V/R7PRbbminTpPS3ywgdAalI9BHzcEjEj9ug4kWYvBIGwSnS7T6QCFCiu+e9LvEGUqQC+NHgLY4zs1NaBj2vA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-scala/-/dict-scala-1.0.21.tgz}
     dev: true
 
   /@cspell/dict-scala/4.0.1:
@@ -9502,7 +9539,7 @@ packages:
     dev: true
 
   /@cspell/dict-software-terms/1.0.48:
-    resolution: {integrity: sha512-pfF3Ys2gRffu5ElqkH7FQMDMi/iZMyOzpGMb3FSH0PJ2AnRQ5rRNWght1h2L36YxvXl0mWVaFrrfwiOyRIc8ZQ==}
+    resolution: {integrity: sha512-pfF3Ys2gRffu5ElqkH7FQMDMi/iZMyOzpGMb3FSH0PJ2AnRQ5rRNWght1h2L36YxvXl0mWVaFrrfwiOyRIc8ZQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-software-terms/-/dict-software-terms-1.0.48.tgz}
     dev: true
 
   /@cspell/dict-software-terms/3.1.6:
@@ -9522,7 +9559,7 @@ packages:
     dev: true
 
   /@cspell/dict-typescript/1.0.20:
-    resolution: {integrity: sha512-yIuGeeZtQA2gqpGefGjZqBl8iGJpIYWz0QzDqsscNi2qfSnLsbjM0RkRbTehM8y9gGGe7xfgUP5adxceJa5Krg==}
+    resolution: {integrity: sha512-yIuGeeZtQA2gqpGefGjZqBl8iGJpIYWz0QzDqsscNi2qfSnLsbjM0RkRbTehM8y9gGGe7xfgUP5adxceJa5Krg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@cspell/dict-typescript/-/dict-typescript-1.0.20.tgz}
     dev: true
 
   /@cspell/dict-typescript/3.1.1:
@@ -12232,7 +12269,7 @@ packages:
       istanbul-reports: 3.1.5
       jest-haste-map: 27.5.1
       jest-resolve: 27.2.2
-      jest-util: 27.2.0
+      jest-util: 27.5.1
       jest-worker: 27.5.1
       slash: 3.0.0
       source-map: 0.6.1
@@ -21205,7 +21242,7 @@ packages:
       '@types/istanbul-lib-coverage': 2.0.4
 
   /@types/istanbul-reports/1.1.2:
-    resolution: {integrity: sha512-P/W9yOX/3oPZSpaYOCQzGqgCQRXn0FFO/V8bWrCQs+wLmvVVxk6CRBXALEvNs9OHIatlnlFokfhuDo2ug01ciw==}
+    resolution: {integrity: sha512-P/W9yOX/3oPZSpaYOCQzGqgCQRXn0FFO/V8bWrCQs+wLmvVVxk6CRBXALEvNs9OHIatlnlFokfhuDo2ug01ciw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@types/istanbul-reports/-/istanbul-reports-1.1.2.tgz}
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-lib-report': 3.0.0
@@ -21741,7 +21778,7 @@ packages:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
 
   /@types/yargs/13.0.12:
-    resolution: {integrity: sha512-qCxJE1qgz2y0hA4pIxjBR+PelCH0U5CK1XJXFwCNqfmliatKp47UCXXE9Dyk1OXBDLvsCF57TqQEJaeLfDYEOQ==}
+    resolution: {integrity: sha512-qCxJE1qgz2y0hA4pIxjBR+PelCH0U5CK1XJXFwCNqfmliatKp47UCXXE9Dyk1OXBDLvsCF57TqQEJaeLfDYEOQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/@types/yargs/-/yargs-13.0.12.tgz}
     dependencies:
       '@types/yargs-parser': 21.0.0
     dev: true
@@ -26141,7 +26178,7 @@ packages:
     requiresBuild: true
 
   /core-util-is/1.0.2:
-    resolution: {integrity: sha512-3lqz5YjWTYnW6dlDa5TLaTCcShfar1e40rmcJVwCBJC6mWlFuj0eCHIElmG1g5kyuJ/GD+8Wn4FFCcz4gJPfaQ==}
+    resolution: {integrity: sha512-3lqz5YjWTYnW6dlDa5TLaTCcShfar1e40rmcJVwCBJC6mWlFuj0eCHIElmG1g5kyuJ/GD+8Wn4FFCcz4gJPfaQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz}
 
   /core-util-is/1.0.3:
     resolution: {integrity: sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==}
@@ -26514,7 +26551,7 @@ packages:
       randomfill: 1.0.4
 
   /crypto-random-string/1.0.0:
-    resolution: {integrity: sha512-GsVpkFPlycH7/fRR7Dhcmnoii54gV1nz7y4CWyeFS14N+JVBBhY+r8amRHE4BwSYal7BPTDp8isvAlCxyFt3Hg==}
+    resolution: {integrity: sha512-GsVpkFPlycH7/fRR7Dhcmnoii54gV1nz7y4CWyeFS14N+JVBBhY+r8amRHE4BwSYal7BPTDp8isvAlCxyFt3Hg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/crypto-random-string/-/crypto-random-string-1.0.0.tgz}
     engines: {node: '>=4'}
     dev: true
 
@@ -26777,7 +26814,7 @@ packages:
     dev: true
 
   /cspell/6.19.2:
-    resolution: {integrity: sha512-nyrxnTcv1UzzdElZe96OMU8mxJGaLBnmPCR/HOaFE367EZD+WS5fcpoDBHC9tfD7yJv4+q5sjByYZltcV6jo0A==}
+    resolution: {integrity: sha512-nyrxnTcv1UzzdElZe96OMU8mxJGaLBnmPCR/HOaFE367EZD+WS5fcpoDBHC9tfD7yJv4+q5sjByYZltcV6jo0A==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/cspell/-/cspell-6.19.2.tgz}
     engines: {node: '>=14'}
     hasBin: true
     dependencies:
@@ -28101,7 +28138,7 @@ packages:
       tslib: 2.5.0
 
   /dot-prop/4.2.1:
-    resolution: {integrity: sha512-l0p4+mIuJIua0mhxGoh4a+iNL9bmeK5DvnSVQa6T0OhrVmaEa1XScX5Etc673FePCJOArq/4Pa2cLGODUWTPOQ==}
+    resolution: {integrity: sha512-l0p4+mIuJIua0mhxGoh4a+iNL9bmeK5DvnSVQa6T0OhrVmaEa1XScX5Etc673FePCJOArq/4Pa2cLGODUWTPOQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/dot-prop/-/dot-prop-4.2.1.tgz}
     engines: {node: '>=4'}
     dependencies:
       is-obj: 1.0.1
@@ -28114,7 +28151,7 @@ packages:
       is-obj: 2.0.0
 
   /dot-prop/6.0.1:
-    resolution: {integrity: sha512-tE7ztYzXHIeyvc7N+hR3oi7FIbf/NIjVP9hmAt3yMXzrQ072/fpjGLx2GxNxGxUl5V73MEqYzioOMoVhGMJ5cA==}
+    resolution: {integrity: sha512-tE7ztYzXHIeyvc7N+hR3oi7FIbf/NIjVP9hmAt3yMXzrQ072/fpjGLx2GxNxGxUl5V73MEqYzioOMoVhGMJ5cA==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/dot-prop/-/dot-prop-6.0.1.tgz}
     engines: {node: '>=10'}
     dependencies:
       is-obj: 2.0.0
@@ -30361,7 +30398,7 @@ packages:
     dev: true
 
   /findup-sync/3.0.0:
-    resolution: {integrity: sha512-YbffarhcicEhOrm4CtrwdKBdCuz576RLdhJDsIfvNtxUuhdRet1qZcsMjqbePtAseKdAnDyM/IyXbu7PRPRLYg==}
+    resolution: {integrity: sha512-YbffarhcicEhOrm4CtrwdKBdCuz576RLdhJDsIfvNtxUuhdRet1qZcsMjqbePtAseKdAnDyM/IyXbu7PRPRLYg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/findup-sync/-/findup-sync-3.0.0.tgz}
     engines: {node: '>= 0.10'}
     dependencies:
       detect-file: 1.0.0
@@ -32955,7 +32992,7 @@ packages:
     resolution: {integrity: sha512-zz06S8t0ozoDXMG+ube26zeCTNXcKIPJZJi8hBrF4idCLms4CG9QtK7qBl1boi5ODzFpjswb5JPmHCbMpjaYzg==}
 
   /is-arrayish/0.3.2:
-    resolution: {integrity: sha512-eVRqCvVlZbuw3GrM63ovNSNAeA1K16kaR/LRY/92w0zxQ5/1YzwblUX652i4Xs9RwAGjW9d9y6X88t8OaAJfWQ==}
+    resolution: {integrity: sha512-eVRqCvVlZbuw3GrM63ovNSNAeA1K16kaR/LRY/92w0zxQ5/1YzwblUX652i4Xs9RwAGjW9d9y6X88t8OaAJfWQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/is-arrayish/-/is-arrayish-0.3.2.tgz}
     dev: false
 
   /is-bigint/1.0.4:
@@ -33905,7 +33942,7 @@ packages:
       jest-regex-util: 27.5.1
       jest-resolve: 27.2.2
       jest-runner: 27.5.1
-      jest-util: 27.2.0
+      jest-util: 27.5.1
       jest-validate: 27.5.1
       micromatch: 4.0.5
       pretty-format: 27.5.1
@@ -34211,12 +34248,12 @@ packages:
     dev: true
 
   /jest-get-type/24.9.0:
-    resolution: {integrity: sha512-lUseMzAley4LhIcpSP9Jf+fTrQ4a1yHQwLNeeVa2cEmbCGeoZAtYPOIv8JaxLD/sUpKxetKGP+gsHl8f8TSj8Q==}
+    resolution: {integrity: sha512-lUseMzAley4LhIcpSP9Jf+fTrQ4a1yHQwLNeeVa2cEmbCGeoZAtYPOIv8JaxLD/sUpKxetKGP+gsHl8f8TSj8Q==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/jest-get-type/-/jest-get-type-24.9.0.tgz}
     engines: {node: '>= 6'}
     dev: true
 
   /jest-get-type/26.3.0:
-    resolution: {integrity: sha512-TpfaviN1R2pQWkIihlfEanwOXK0zcxrKEE4MlU6Tn7keoXdN6/3gK/xl0yEh8DOunn5pOVGKf8hB4R9gVh04ig==}
+    resolution: {integrity: sha512-TpfaviN1R2pQWkIihlfEanwOXK0zcxrKEE4MlU6Tn7keoXdN6/3gK/xl0yEh8DOunn5pOVGKf8hB4R9gVh04ig==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/jest-get-type/-/jest-get-type-26.3.0.tgz}
     engines: {node: '>= 10.14.2'}
 
   /jest-get-type/27.5.1:
@@ -34501,7 +34538,7 @@ packages:
       graceful-fs: 4.2.11
       jest-haste-map: 27.5.1
       jest-pnp-resolver: 1.2.3_jest-resolve@27.2.2
-      jest-util: 27.2.0
+      jest-util: 27.5.1
       jest-validate: 27.5.1
       resolve: 1.22.2
       slash: 3.0.0
@@ -36946,7 +36983,7 @@ packages:
     resolution: {integrity: sha512-abv/qOcuPfk3URPfDzmZU1LKmuw8kT+0nIHvKrKgFrwifol/doWcdA4ZqsWQ8ENrFKkd67Mfpo/LovbIUsbt3w==}
 
   /merge/1.2.1:
-    resolution: {integrity: sha512-VjFo4P5Whtj4vsLzsYBu5ayHhoHJ0UqNm7ibvShmbmoz7tGi0vXaoJbGdB+GmDMLUdg8DpQXEIeVDAe8MaABvQ==}
+    resolution: {integrity: sha512-VjFo4P5Whtj4vsLzsYBu5ayHhoHJ0UqNm7ibvShmbmoz7tGi0vXaoJbGdB+GmDMLUdg8DpQXEIeVDAe8MaABvQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/merge/-/merge-1.2.1.tgz}
     dev: true
 
   /merge/2.1.1:
@@ -37046,7 +37083,7 @@ packages:
     hasBin: true
 
   /mime/2.5.2:
-    resolution: {integrity: sha512-tqkh47FzKeCPD2PUiPB6pkbMzsCasjxAfC62/Wap5qrUWcb+sFasXUC5I3gYM5iBM8v/Qpn4UK0x+j0iHyFPDg==}
+    resolution: {integrity: sha512-tqkh47FzKeCPD2PUiPB6pkbMzsCasjxAfC62/Wap5qrUWcb+sFasXUC5I3gYM5iBM8v/Qpn4UK0x+j0iHyFPDg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/mime/-/mime-2.5.2.tgz}
     engines: {node: '>=4.0.0'}
     hasBin: true
     dev: true
@@ -37084,7 +37121,7 @@ packages:
     dev: true
 
   /mimic-fn/4.0.0:
-    resolution: {integrity: sha512-vqiC06CuhBTUdZH+RYl8sFrL096vA45Ok5ISO6sE/Mr1jRbGH4Csnhi8f3wKVl7x8mO4Au7Ir9D3Oyv1VYMFJw==}
+    resolution: {integrity: sha512-vqiC06CuhBTUdZH+RYl8sFrL096vA45Ok5ISO6sE/Mr1jRbGH4Csnhi8f3wKVl7x8mO4Au7Ir9D3Oyv1VYMFJw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/mimic-fn/-/mimic-fn-4.0.0.tgz}
     engines: {node: '>=12'}
     dev: true
 
@@ -37209,7 +37246,7 @@ packages:
       kind-of: 6.0.3
 
   /minimist/0.0.10:
-    resolution: {integrity: sha512-iotkTvxc+TwOm5Ieim8VnSNvCDjCK9S8G3scJ50ZthspSxa7jx50jkhYduuAtAjvfDUwSgOwf8+If99AlOEhyw==}
+    resolution: {integrity: sha512-iotkTvxc+TwOm5Ieim8VnSNvCDjCK9S8G3scJ50ZthspSxa7jx50jkhYduuAtAjvfDUwSgOwf8+If99AlOEhyw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/minimist/-/minimist-0.0.10.tgz}
     dev: false
 
   /minimist/1.2.0:
@@ -43834,7 +43871,7 @@ packages:
     dev: true
 
   /rxjs/6.6.3:
-    resolution: {integrity: sha512-trsQc+xYYXZ3urjOiJOuCOa5N3jAZ3eiSpQB5hIT8zGlL2QfnHLJ2r7GMkBGuIausdJN1OneaI6gQlsqNHHmZQ==}
+    resolution: {integrity: sha512-trsQc+xYYXZ3urjOiJOuCOa5N3jAZ3eiSpQB5hIT8zGlL2QfnHLJ2r7GMkBGuIausdJN1OneaI6gQlsqNHHmZQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/rxjs/-/rxjs-6.6.3.tgz}
     engines: {npm: '>=2.0.0'}
     dependencies:
       tslib: 1.14.1
@@ -47172,7 +47209,7 @@ packages:
     engines: {node: '>=10'}
 
   /type-fest/0.18.1:
-    resolution: {integrity: sha512-OIAYXk8+ISY+qTOwkHtKqzAuxchoMiD9Udx+FSGQDuiRR+PJKJHc2NJAXlbhkGwTt/4/nKZxELY1w3ReWOL8mw==}
+    resolution: {integrity: sha512-OIAYXk8+ISY+qTOwkHtKqzAuxchoMiD9Udx+FSGQDuiRR+PJKJHc2NJAXlbhkGwTt/4/nKZxELY1w3ReWOL8mw==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/type-fest/-/type-fest-0.18.1.tgz}
     engines: {node: '>=10'}
 
   /type-fest/0.20.2:
@@ -47450,7 +47487,7 @@ packages:
     dev: true
 
   /unique-string/1.0.0:
-    resolution: {integrity: sha512-ODgiYu03y5g76A1I9Gt0/chLCzQjvzDy7DsZGsLOE/1MrF6wriEskSncj1+/C58Xk/kPZDppSctDybCwOSaGAg==}
+    resolution: {integrity: sha512-ODgiYu03y5g76A1I9Gt0/chLCzQjvzDy7DsZGsLOE/1MrF6wriEskSncj1+/C58Xk/kPZDppSctDybCwOSaGAg==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/unique-string/-/unique-string-1.0.0.tgz}
     engines: {node: '>=4'}
     dependencies:
       crypto-random-string: 1.0.0
@@ -49326,7 +49363,7 @@ packages:
     dev: true
 
   /xdg-basedir/3.0.0:
-    resolution: {integrity: sha512-1Dly4xqlulvPD3fZUQJLY+FUIeqN3N2MM3uqe4rCJftAvOjFa3jFGfctOgluGx4ahPbUCsZkmJILiP0Vi4T6lQ==}
+    resolution: {integrity: sha512-1Dly4xqlulvPD3fZUQJLY+FUIeqN3N2MM3uqe4rCJftAvOjFa3jFGfctOgluGx4ahPbUCsZkmJILiP0Vi4T6lQ==, registry: https://registry.yarnpkg.com/, tarball: https://registry.yarnpkg.com/xdg-basedir/-/xdg-basedir-3.0.0.tgz}
     engines: {node: '>=4'}
     dev: true
 

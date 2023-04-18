@@ -233,6 +233,11 @@ export class SendMessageEmail extends SendMessageBase {
       mailData.replyTo = command.overrides?.email?.replyTo as string;
     }
 
+    if (integration.providerId === 'email-webhook') {
+      mailData.payloadDetails = payload;
+      mailData.notificationDetails = notification;
+    }
+
     if (email && integration) {
       await this.sendMessage(
         integration,

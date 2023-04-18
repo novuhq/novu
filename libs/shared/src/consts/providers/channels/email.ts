@@ -14,6 +14,7 @@ import {
   infobipEmailConfig,
   resendConfig,
   sparkpostConfig,
+  emailWebhookConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { EmailProviderIdEnum } from '../provider.enum';
@@ -132,5 +133,14 @@ export const emailProviders: IProviderConfig[] = [
     credentials: sparkpostConfig,
     docReference: 'https://developers.sparkpost.com/',
     logoFileName: { light: 'sparkpost.svg', dark: 'sparkpost.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.EmailWebhook,
+    displayName: 'Email Webhook',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: emailWebhookConfig,
+    betaVersion: true,
+    docReference: 'https://docs.novu.co/channels/email/email-webhook/',
+    logoFileName: { light: 'email_webhook.svg', dark: 'email_webhook.svg' },
   },
 ];

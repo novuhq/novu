@@ -620,3 +620,21 @@ export const smsCentralConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const emailWebhookConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Webhook URL',
+    type: 'string',
+    description: 'the webhook URL to call instead of sending the email',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'the secret used to sign webhooks calls',
+    required: true,
+  },
+  ...mailConfigBase,
+];

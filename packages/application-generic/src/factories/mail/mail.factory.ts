@@ -15,6 +15,7 @@ import {
   Outlook365Handler,
   ResendHandler,
   SparkPostHandler,
+  EmailWebhookHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -35,6 +36,7 @@ export class MailFactory {
     new Outlook365Handler(),
     new ResendHandler(),
     new SparkPostHandler(),
+    new EmailWebhookHandler(),
   ];
 
   getHandler(
