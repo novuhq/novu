@@ -3,7 +3,8 @@ import { SubscriberRepository, DalException } from '@novu/dal';
 import { RemoveSubscriberCommand } from './remove-subscriber.command';
 import { GetSubscriber } from '../get-subscriber';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
+import { InvalidateCacheService } from '../../../shared/services/cache';
+import { buildSubscriberKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class RemoveSubscriber {
@@ -22,12 +23,11 @@ export class RemoveSubscriber {
         subscriberId,
       });
 
-      this.invalidateCache.clearCache({
-        storeKeyPrefix: [CacheKeyPrefixEnum.SUBSCRIBER],
-        credentials: {
-          _id: subscriber._id,
-          environmentId: command.environmentId,
-        },
+      await this.invalidateCache.invalidateByKey({
+        key: buildSubscriberKey({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        }),
       });
 
       await this.subscriberRepository.delete({

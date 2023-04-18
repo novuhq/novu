@@ -17,7 +17,7 @@ import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-sub
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { ButtonTypeEnum, IJwtPayload, MessageActionStatusEnum } from '@novu/shared';
+import { ButtonTypeEnum, IJwtPayload } from '@novu/shared';
 import {
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
@@ -29,7 +29,14 @@ import {
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+  ApiExcludeEndpoint,
+} from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
@@ -54,6 +61,7 @@ import {
   UpdateSubscriberOnlineFlagCommand,
 } from './usecases/update-subscriber-online-flag';
 import { MarkMessageAsRequestDto } from '../widgets/dtos/mark-message-as-request.dto';
+import { MarkMessageActionAsSeenDto } from '../widgets/dtos/mark-message-action-as-seen.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -385,6 +393,7 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @UseGuards(JwtAuthGuard)
   @Post('/:subscriberId/messages/:messageId/seen')
   @ApiOperation({
@@ -457,7 +466,7 @@ export class SubscribersController {
     @UserSession() user: IJwtPayload,
     @Param('messageId') messageId: string,
     @Param('type') type: ButtonTypeEnum,
-    @Body() body: { payload: any; status: MessageActionStatusEnum }, // eslint-disable-line @typescript-eslint/no-explicit-any
+    @Body() body: MarkMessageActionAsSeenDto,
     @Param('subscriberId') subscriberId: string
   ): Promise<MessageEntity> {
     return await this.updateMessageActionsUsecase.execute(

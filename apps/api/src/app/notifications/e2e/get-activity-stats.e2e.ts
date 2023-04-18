@@ -38,14 +38,13 @@ describe('Get activity stats - /notifications/stats (GET)', async () => {
       .expect(201);
   });
 
-  it('should retrieve zero for yearly, monthly and weekly stats if no notifications', async () => {
+  it('should retrieve zero for monthly and weekly stats if no notifications', async () => {
     const {
       body: { data },
     } = await session.testAgent.get('/v1/notifications/stats');
 
     expect(data.weeklySent).to.equal(0);
     expect(data.monthlySent).to.equal(0);
-    expect(data.yearlySent).to.equal(0);
   });
 
   it('should retrieve last month and last week activity', async function () {
@@ -90,7 +89,7 @@ describe('Get activity stats - /notifications/stats (GET)', async () => {
     expect(data.monthlySent).to.equal(2);
   });
 
-  it('should retrieve the expected yearly, monthly and weekly stats', async () => {
+  it('should retrieve the expected monthly and weekly stats', async () => {
     const _environmentId = session.environment._id;
     const _organizationId = session.organization._id;
     const _subscriberId = subscriberId;
@@ -190,6 +189,5 @@ describe('Get activity stats - /notifications/stats (GET)', async () => {
 
     expect(data.weeklySent).to.equal(7);
     expect(data.monthlySent).to.equal(18);
-    expect(data.yearlySent).to.equal(27);
   });
 });

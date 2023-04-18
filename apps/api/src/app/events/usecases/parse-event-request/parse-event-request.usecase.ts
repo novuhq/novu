@@ -2,19 +2,20 @@ import { Inject, Injectable, UnprocessableEntityException, Logger } from '@nestj
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
 import { v4 as uuidv4 } from 'uuid';
 
 import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
-import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
+import { buildNotificationTemplateIdentifierKey } from '../../../shared/services/cache/key-builders/entities';
+import { CachedEntity } from '../../../shared/interceptors/cached-entity.interceptor';
 
 @Injectable()
 export class ParseEventRequest {
@@ -27,6 +28,7 @@ export class ParseEventRequest {
     private mapTriggerRecipients: MapTriggerRecipients
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
     Logger.log('Starting Trigger');
@@ -48,10 +50,10 @@ export class ParseEventRequest {
 
     await this.validateSubscriberIdProperty(mappedRecipients);
 
-    const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.environmentId,
-      command.identifier
-    );
+    const template = await this.getNotificationTemplateByTriggerIdentifier({
+      environmentId: command.environmentId,
+      triggerIdentifier: command.identifier,
+    });
 
     if (!template) {
       throw new UnprocessableEntityException('template_not_found');
@@ -101,7 +103,7 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    await this.triggerHandlerQueueService.queue.add(
+    await this.triggerHandlerQueueService.add(
       transactionId,
       {
         ...command,
@@ -109,10 +111,7 @@ export class ParseEventRequest {
         actor: mappedActor,
         transactionId,
       },
-      {
-        removeOnComplete: true,
-        removeOnFail: true,
-      }
+      command.organizationId
     );
 
     const steps = template.steps;
@@ -133,6 +132,25 @@ export class ParseEventRequest {
     };
   }
 
+  @Instrument()
+  @CachedEntity({
+    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
+      buildNotificationTemplateIdentifierKey({
+        _environmentId: command.environmentId,
+        templateIdentifier: command.triggerIdentifier,
+      }),
+  })
+  private async getNotificationTemplateByTriggerIdentifier(command: {
+    triggerIdentifier: string;
+    environmentId: string;
+  }) {
+    return await this.notificationTemplateRepository.findByTriggerIdentifier(
+      command.environmentId,
+      command.triggerIdentifier
+    );
+  }
+
+  @Instrument()
   private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
     for (const subscriber of to) {
       const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
