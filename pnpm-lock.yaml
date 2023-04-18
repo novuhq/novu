@@ -455,7 +455,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.15
       prettier: 2.8.4
-      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
+      ts-jest: 27.1.4_cnngzrja2umb46xxazlucyx2qu
       ts-loader: 9.4.2_a37q6j7dwawz22saey2vgkpwqm
       ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
       tsconfig-paths: 3.14.1
@@ -1017,16 +1017,18 @@ importers:
     specifiers:
       '@docusaurus/core': 2.3.1
       '@docusaurus/module-type-aliases': 2.3.1
+      '@docusaurus/plugin-google-gtag': 2.3.1
       '@docusaurus/preset-classic': 2.3.1
+      '@docusaurus/theme-common': 2.3.1
       '@mdx-js/react': ^1.6.21
       '@svgr/webpack': ^6.2.1
-      '@tsconfig/docusaurus': ^1.0.5
+      '@tsconfig/docusaurus': 1.0.6
       '@types/react': ^17.0.14
       '@types/react-helmet': 6.1.6
       '@types/react-router-dom': 5.3.3
       clsx: ^1.1.1
       docusaurus-plugin-plausible: ^0.0.5
-      docusaurus-plugin-sass: ^0.2.2
+      docusaurus-plugin-sass: 0.2.3
       eslint-config-airbnb-typescript: ^17.0.0
       eslint-config-prettier: ^8.5.0
       file-loader: ^6.2.0
@@ -1052,12 +1054,14 @@ importers:
       url-loader: ^4.1.1
     dependencies:
       '@docusaurus/core': 2.3.1_vbe2hoxdjfdd2vbinf7446vzmi
+      '@docusaurus/plugin-google-gtag': 2.3.1_vbe2hoxdjfdd2vbinf7446vzmi
       '@docusaurus/preset-classic': 2.3.1_a4vju5kzbaxzahb2s6vdiax3py
+      '@docusaurus/theme-common': 2.3.1_vbe2hoxdjfdd2vbinf7446vzmi
       '@mdx-js/react': 1.6.22_react@17.0.2
       '@svgr/webpack': 6.2.1
       clsx: 1.1.1
       docusaurus-plugin-plausible: 0.0.5
-      docusaurus-plugin-sass: 0.2.2_o7qxlk2mqxiuc7asocjwcey5hq
+      docusaurus-plugin-sass: 0.2.3_o7qxlk2mqxiuc7asocjwcey5hq
       file-loader: 6.2.0_webpack@5.76.2
       prism-react-renderer: 1.3.1_react@17.0.2
       react: 17.0.2
@@ -1069,7 +1073,7 @@ importers:
       url-loader: 4.1.1_35ful32yo3wjb53le3l6xb5doy
     devDependencies:
       '@docusaurus/module-type-aliases': 2.3.1_sfoxds7t5ydpegc3knd667wn6m
-      '@tsconfig/docusaurus': 1.0.5
+      '@tsconfig/docusaurus': 1.0.6
       '@types/react': 17.0.43
       '@types/react-helmet': 6.1.6
       '@types/react-router-dom': 5.3.3
@@ -13486,7 +13490,7 @@ packages:
       '@babel/compat-data': 7.17.7
       '@babel/core': 7.17.8
       '@babel/helper-compilation-targets': 7.17.7_@babel+core@7.17.8
-      '@babel/helper-plugin-utils': 7.16.7
+      '@babel/helper-plugin-utils': 7.20.2
       '@babel/helper-validator-option': 7.16.7
       '@babel/plugin-bugfix-safari-id-destructuring-collision-in-function-expression': 7.16.7_@babel+core@7.17.8
       '@babel/plugin-bugfix-v8-spread-parameters-in-optional-chaining': 7.16.7_@babel+core@7.17.8
@@ -14581,6 +14585,7 @@ packages:
   /@commitlint/load/17.5.0:
     resolution: {integrity: sha512-l+4W8Sx4CD5rYFsrhHH8HP01/8jEP7kKf33Xlx2Uk2out/UKoKPYMOIRcDH5ppT8UXLMV+x6Wm5osdRKKgaD1Q==}
     engines: {node: '>=v14'}
+    requiresBuild: true
     dependencies:
       '@commitlint/config-validator': 17.4.4
       '@commitlint/execute-rule': 17.4.0
@@ -16104,6 +16109,49 @@ packages:
       '@docusaurus/plugin-content-docs': 2.3.1_vbe2hoxdjfdd2vbinf7446vzmi
       '@docusaurus/plugin-content-pages': 2.3.1_vbe2hoxdjfdd2vbinf7446vzmi
       '@docusaurus/utils': 2.3.1_@docusaurus+types@2.3.1
+      '@types/history': 4.7.11
+      '@types/react': 17.0.53
+      '@types/react-router-config': 5.0.6
+      clsx: 1.2.1
+      parse-numeric-range: 1.3.0
+      prism-react-renderer: 1.3.5_react@17.0.2
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 2.5.0
+      use-sync-external-store: 1.2.0_react@17.0.2
+      utility-types: 3.10.0
+    transitivePeerDependencies:
+      - '@docusaurus/types'
+      - '@parcel/css'
+      - '@swc/core'
+      - '@swc/css'
+      - bufferutil
+      - csso
+      - debug
+      - esbuild
+      - eslint
+      - lightningcss
+      - supports-color
+      - typescript
+      - uglify-js
+      - utf-8-validate
+      - vue-template-compiler
+      - webpack-cli
+    dev: false
+
+  /@docusaurus/theme-common/2.3.1_vbe2hoxdjfdd2vbinf7446vzmi:
+    resolution: {integrity: sha512-RYmYl2OR2biO+yhmW1aS5FyEvnrItPINa+0U2dMxcHpah8reSCjQ9eJGRmAgkZFchV1+aIQzXOI1K7LCW38O0g==}
+    engines: {node: '>=16.14'}
+    peerDependencies:
+      react: ^16.8.4 || ^17.0.0
+      react-dom: ^16.8.4 || ^17.0.0
+    dependencies:
+      '@docusaurus/mdx-loader': 2.3.1_sfoxds7t5ydpegc3knd667wn6m
+      '@docusaurus/module-type-aliases': 2.3.1_sfoxds7t5ydpegc3knd667wn6m
+      '@docusaurus/plugin-content-blog': 2.3.1_vbe2hoxdjfdd2vbinf7446vzmi
+      '@docusaurus/plugin-content-docs': 2.3.1_vbe2hoxdjfdd2vbinf7446vzmi
+      '@docusaurus/plugin-content-pages': 2.3.1_vbe2hoxdjfdd2vbinf7446vzmi
+      '@docusaurus/utils': 2.3.1
       '@types/history': 4.7.11
       '@types/react': 17.0.53
       '@types/react-router-config': 5.0.6
@@ -28219,8 +28267,8 @@ packages:
     resolution: {integrity: sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==}
     engines: {node: '>=10.13.0'}
 
-  /@tsconfig/docusaurus/1.0.5:
-    resolution: {integrity: sha512-KM/TuJa9fugo67dTGx+ktIqf3fVc077J6jwHu845Hex4EQf7LABlNonP/mohDKT0cmncdtlYVHHF74xR/YpThg==}
+  /@tsconfig/docusaurus/1.0.6:
+    resolution: {integrity: sha512-1QxDaP54hpzM6bq9E+yFEo4F9WbWHhsDe4vktZXF/iDlc9FqGr9qlg+3X/nuKQXx8QxHV7ue8NXFazzajsxFBA==}
     dev: true
 
   /@tsconfig/node10/1.0.8:
@@ -35886,8 +35934,8 @@ packages:
     resolution: {integrity: sha512-8wiglvMjkGjhGUnBYgJM87V1Ip0wr8AbIHiC5YHNar3DOfXX+JL0nBoThlnvaX1ib/emraWgimR5QiMDOgMJjA==}
     dev: false
 
-  /docusaurus-plugin-sass/0.2.2_o7qxlk2mqxiuc7asocjwcey5hq:
-    resolution: {integrity: sha512-ZZBpj3PrhGpYE2kAnkZB9NRwy/CDi4rGun1oec6PYR8YvGzqxYGtXvLgHi6FFbu8/N483klk8udqyYMh6Ted+A==}
+  /docusaurus-plugin-sass/0.2.3_o7qxlk2mqxiuc7asocjwcey5hq:
+    resolution: {integrity: sha512-FbaE06K8NF8SPUYTwiG+83/jkXrwHJ/Afjqz3SUIGon6QvFwSSoKOcoxGQmUBnjTOk+deUONDx8jNWsegFJcBQ==}
     peerDependencies:
       '@docusaurus/core': ^2.0.0-beta
       sass: ^1.30.0
@@ -55537,6 +55585,7 @@ packages:
 
   /trim/0.0.1:
     resolution: {integrity: sha512-YzQV+TZg4AxpKxaTHK3c3D+kRDCGVEE7LemdlQZoQXn0iennk10RsIoY6ikzAqJTc9Xjl9C1/waHom/J86ziAQ==}
+    deprecated: Use String.prototype.trim() instead
 
   /triple-beam/1.3.0:
     resolution: {integrity: sha512-XrHUvV5HpdLmIj4uVMxHggLbFSZYIn7HEWsqePZcI50pco+MPqJ50wMGY794X7AOOhxOBAjbkqfAbEe/QMp2Lw==}
@@ -55558,7 +55607,7 @@ packages:
       tslib: 1.14.1
     dev: true
 
-  /ts-jest/27.1.4_dwaltnofjt727p7olboxmdxrie:
+  /ts-jest/27.1.4_cnngzrja2umb46xxazlucyx2qu:
     resolution: {integrity: sha512-qjkZlVPWVctAezwsOD1OPzbZ+k7zA5z3oxII4dGdZo5ggX/PL7kvwTM0pXTr10fAtbiVpJaL3bWd502zAhpgSQ==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
     hasBin: true
@@ -55579,7 +55628,6 @@ packages:
       esbuild:
         optional: true
     dependencies:
-      '@babel/core': 7.20.12
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
