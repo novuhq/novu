@@ -27,4 +27,4 @@ spec:
           image: ghcr.io/novuhq/novu/worker:0.13.0
           name: worker
           ports:
-            - containerPort: 3000
+            - containerPort: 3004
