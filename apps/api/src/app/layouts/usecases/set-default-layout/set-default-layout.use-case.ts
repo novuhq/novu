@@ -1,12 +1,11 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ChangeRepository, LayoutRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { AnalyticsService, GetLayoutUseCase } from '@novu/application-generic';
+
 import { EnvironmentId, LayoutId, OrganizationId } from '../../types';
 import { CreateDefaultLayoutChangeCommand } from '../create-default-layout-change/create-default-layout-change.command';
 import { CreateDefaultLayoutChangeUseCase } from '../create-default-layout-change/create-default-layout-change.usecase';
-import { GetLayoutUseCase } from '../get-layout';
 import { SetDefaultLayoutCommand } from './set-default-layout.command';
 
 @Injectable()
@@ -16,7 +15,7 @@ export class SetDefaultLayoutUseCase {
     private createDefaultLayoutChange: CreateDefaultLayoutChangeUseCase,
     private layoutRepository: LayoutRepository,
     private changeRepository: ChangeRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: SetDefaultLayoutCommand) {

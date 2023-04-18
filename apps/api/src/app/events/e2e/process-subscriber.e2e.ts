@@ -1,3 +1,5 @@
+import { expect } from 'chai';
+import axios from 'axios';
 import {
   NotificationTemplateEntity,
   SubscriberEntity,
@@ -6,17 +8,16 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-import { expect } from 'chai';
-import axios from 'axios';
 import { ChannelTypeEnum, ISubscribersDefine, StepTypeEnum } from '@novu/shared';
-
-import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
-import { CacheService, InvalidateCacheService } from '../../shared/services/cache';
 import {
+  InMemoryProviderService,
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
-} from '../../shared/services/cache/key-builders/entities';
-import { InMemoryProviderService } from '../../shared/services/in-memory-provider';
+  InvalidateCacheService,
+  CacheService,
+} from '@novu/application-generic';
+
+import { UpdateSubscriberPreferenceRequestDto } from '../../widgets/dtos/update-subscriber-preference-request.dto';
 
 const axiosInstance = axios.create();
 

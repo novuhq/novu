@@ -78,6 +78,7 @@ export interface ITranslationContent {
   readonly removeMessage: string;
   readonly markAsRead: string;
   readonly markAsUnRead: string;
+  readonly noNewNotification: string;
 }
 
 export interface ITranslationEntry {

@@ -9,7 +9,7 @@ import {
 import { AnalyticsService } from '@novu/application-generic';
 
 import { UpdateMessageActionsCommand } from './update-message-actions.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class UpdateMessageActions {
   constructor(
     private messageRepository: MessageRepository,
     private subscriberRepository: SubscriberRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private memberRepository: MemberRepository
   ) {}
 

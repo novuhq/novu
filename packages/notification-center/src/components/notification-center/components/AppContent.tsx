@@ -42,4 +42,8 @@ const wrapperClassName = (primaryColor: string, fontFamily: string, dir: string)
   *::selection {
     background: ${primaryColor};
   }
+
+  @media only screen and (max-width: 600px) {
+    width: 100vw;
+  } 
 `;

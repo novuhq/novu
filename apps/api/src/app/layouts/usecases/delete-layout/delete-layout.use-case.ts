@@ -1,12 +1,11 @@
 import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { LayoutRepository } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, GetLayoutCommand, GetLayoutUseCase } from '@novu/application-generic';
 
 import { DeleteLayoutCommand } from './delete-layout.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { CheckLayoutIsUsedCommand, CheckLayoutIsUsedUseCase } from '../check-layout-is-used';
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
-import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 
 @Injectable()
 export class DeleteLayoutUseCase {
@@ -15,7 +14,7 @@ export class DeleteLayoutUseCase {
     private checkLayoutIsUsed: CheckLayoutIsUsedUseCase,
     private createLayoutChange: CreateLayoutChangeUseCase,
     private layoutRepository: LayoutRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: DeleteLayoutCommand): Promise<void> {

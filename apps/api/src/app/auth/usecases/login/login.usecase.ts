@@ -1,5 +1,5 @@
 import * as bcrypt from 'bcrypt';
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { differenceInMinutes, parseISO } from 'date-fns';
 import { UserRepository, UserEntity, OrganizationRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
@@ -8,7 +8,6 @@ import { LoginCommand } from './login.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { AuthService } from '../../services/auth.service';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()
@@ -18,7 +17,7 @@ export class Login {
   constructor(
     private userRepository: UserRepository,
     private authService: AuthService,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private organizationRepository: OrganizationRepository
   ) {}
 

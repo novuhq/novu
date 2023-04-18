@@ -6,6 +6,7 @@ export const FI: ITranslationEntry = {
     markAllAsRead: 'Merkkaa luetuksi',
     poweredBy: 'Ilmoitukset mahdollistaa',
     settings: 'Asetukset',
+    noNewNotification: 'Täällä ei ole vielä mitään uutta nähtävää',
   },
   lang: 'fi',
 };

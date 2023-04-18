@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { TriggerEventCommand } from '../trigger-event/trigger-event.command';
-import { TriggerEvent } from '../trigger-event/trigger-event.usecase';
-import { TriggerEventToAllCommand } from './trigger-event-to-all.command';
 import * as _ from 'lodash';
+import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { TriggerEvent, TriggerEventCommand } from '@novu/application-generic';
+
+import { TriggerEventToAllCommand } from './trigger-event-to-all.command';
 
 @Injectable()
 export class TriggerEventToAll {

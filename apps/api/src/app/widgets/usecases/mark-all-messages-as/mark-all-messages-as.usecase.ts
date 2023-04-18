@@ -1,22 +1,24 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageRepository, SubscriberRepository } from '@novu/dal';
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  WsQueueService,
+  AnalyticsService,
+  InvalidateCacheService,
+  buildFeedKey,
+  buildMessageCountKey,
+} from '@novu/application-generic';
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { QueueService } from '../../../shared/services/queue';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { MarkAllMessagesAsCommand } from './mark-all-messages-as.command';
-import { buildFeedKey, buildMessageCountKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable()
 export class MarkAllMessagesAs {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private messageRepository: MessageRepository,
-    private queueService: QueueService,
+    private wsQueueService: WsQueueService,
     private subscriberRepository: SubscriberRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: MarkAllMessagesAsCommand): Promise<number> {
@@ -50,7 +52,7 @@ export class MarkAllMessagesAs {
       channel: ChannelTypeEnum.IN_APP,
     });
 
-    this.queueService.bullMqService.add(
+    this.wsQueueService.bullMqService.add(
       'sendMessage',
       {
         event: 'unseen_count_changed',
@@ -64,7 +66,7 @@ export class MarkAllMessagesAs {
     );
 
     if (command.markAs === 'read') {
-      await this.queueService.bullMqService.add(
+      await this.wsQueueService.bullMqService.add(
         'sendMessage',
         {
           event: 'unread_count_changed',

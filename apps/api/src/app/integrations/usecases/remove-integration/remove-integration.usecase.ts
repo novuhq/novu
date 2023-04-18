@@ -1,9 +1,9 @@
 import { Injectable, Scope } from '@nestjs/common';
 import { IntegrationRepository, DalException } from '@novu/dal';
+import { buildIntegrationKey, InvalidateCacheService } from '@novu/application-generic';
+
 import { RemoveIntegrationCommand } from './remove-integration.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { buildIntegrationKey } from '../../../shared/services/cache/key-builders/queries';
 
 @Injectable({
   scope: Scope.REQUEST,
