@@ -30,7 +30,9 @@ export class TriggerEventToAllRequestDto {
     description: 'This could be used to override provider specific configurations',
     example: {
       fcm: {
-        color: '#fff',
+        data: {
+          key: 'value',
+        },
       },
     },
   })
