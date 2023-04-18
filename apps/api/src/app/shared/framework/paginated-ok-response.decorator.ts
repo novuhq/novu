@@ -3,7 +3,7 @@ import { PaginatedResponseDto } from '../dtos/pagination-response';
 import { Type, applyDecorators } from '@nestjs/common';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export const ApiOkResponsePaginated = <DataDto extends Type<unknown>>(dataDto: DataDto) =>
+export const ApiOkPaginatedResponse = <DataDto extends Type<unknown>>(dataDto: DataDto) =>
   applyDecorators(
     ApiExtraModels(PaginatedResponseDto, dataDto),
     ApiOkResponse({

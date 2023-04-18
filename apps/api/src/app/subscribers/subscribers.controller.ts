@@ -65,9 +65,9 @@ import {
 } from './usecases/update-subscriber-online-flag';
 import { MarkMessageAsRequestDto } from '../widgets/dtos/mark-message-as-request.dto';
 import { MarkMessageActionAsSeenDto } from '../widgets/dtos/mark-message-action-as-seen.dto';
-import { ApiOkResponsePaginated } from '../shared/framework/paginated-ok-response.decorator';
+import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
 import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
-import { PaginationRequestDto } from '../shared/dtos/pagination-request';
+import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -91,14 +91,14 @@ export class SubscribersController {
   @Get('')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponsePaginated(SubscriberResponseDto)
+  @ApiOkPaginatedResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Get subscribers',
     description: 'Returns a list of subscribers, could paginated using the `page` and `limit` query parameter',
   })
   async getSubscribers(
     @UserSession() user: IJwtPayload,
-    @Query() query: PaginationRequestDto
+    @Query() query: GetSubscribersDto
   ): Promise<PaginatedResponseDto<SubscriberResponseDto>> {
     return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
@@ -326,7 +326,7 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Get a notification feed for a particular subscriber',
   })
-  @ApiOkResponsePaginated(MessageResponseDto)
+  @ApiOkPaginatedResponse(MessageResponseDto)
   @ApiQuery({
     name: 'seen',
     type: Boolean,
