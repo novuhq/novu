@@ -1,7 +1,17 @@
 import { JobRepository, NotificationRepository } from '@novu/dal';
 import { Injectable } from '@nestjs/common';
-import { StepTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { AddJob, DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
+import {
+  StepTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+} from '@novu/shared';
+
+import { AddJob } from '../add-job';
+import {
+  DetailEnum,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+} from '../create-execution-details';
 
 import { StoreSubscriberJobsCommand } from './store-subscriber-jobs.command';
 

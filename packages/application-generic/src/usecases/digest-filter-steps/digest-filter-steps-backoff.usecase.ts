@@ -109,6 +109,7 @@ export class DigestFilterStepsBackoff {
         {
           $set: {
             _digestedNotificationId: digest._notificationId,
+            expireAt: digest.expireAt,
           },
         }
       );

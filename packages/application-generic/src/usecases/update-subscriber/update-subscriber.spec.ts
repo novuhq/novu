@@ -1,10 +1,27 @@
 import { SubscriberRepository } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
-import { SharedModule } from '../../../shared/shared.module';
+
+import { CacheService, InvalidateCacheService } from '../../services/cache';
 import { UpdateSubscriber } from './update-subscriber.usecase';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
+import { InMemoryProviderService } from '../../services';
+
+const inMemoryProviderService = {
+  provide: InMemoryProviderService,
+  useFactory: () => {
+    return new InMemoryProviderService();
+  },
+};
+
+const cacheService = {
+  provide: CacheService,
+  useFactory: () => {
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+
+    return new CacheService(factoryInMemoryProviderService);
+  },
+};
 
 describe('Update Subscriber', function () {
   let updateUsecase: UpdateSubscriber;
@@ -12,8 +29,8 @@ describe('Update Subscriber', function () {
   const subscriberRepository = new SubscriberRepository();
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [SharedModule],
-      providers: [UpdateSubscriber],
+      imports: [SubscriberRepository, InvalidateCacheService],
+      providers: [UpdateSubscriber, inMemoryProviderService, cacheService],
     }).compile();
 
     session = new UserSession();
@@ -23,7 +40,10 @@ describe('Update Subscriber', function () {
   });
 
   it('should update subscribers name', async function () {
-    const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    const subscriberService = new SubscribersService(
+      session.organization._id,
+      session.environment._id
+    );
     const subscriber = await subscriberService.createSubscriber();
     await updateUsecase.execute(
       UpdateSubscriberCommand.create({
@@ -35,10 +55,12 @@ describe('Update Subscriber', function () {
       })
     );
 
-    const updatedSubscriber = await subscriberRepository.findById(subscriber._id);
-    expect(updatedSubscriber.lastName).to.equal('Test Last Name');
-    expect(updatedSubscriber.firstName).to.equal(subscriber.firstName);
-    expect(updatedSubscriber.email).to.equal(subscriber.email);
-    expect(updatedSubscriber.locale).to.equal('sv');
+    const updatedSubscriber = await subscriberRepository.findById(
+      subscriber._id
+    );
+    expect(updatedSubscriber.lastName).toEqual('Test Last Name');
+    expect(updatedSubscriber.firstName).toEqual(subscriber.firstName);
+    expect(updatedSubscriber.email).toEqual(subscriber.email);
+    expect(updatedSubscriber.locale).toEqual('sv');
   });
 });

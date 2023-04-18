@@ -1,10 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
 import { SubscriberEntity } from '@novu/dal';
-import { CachedEntity, InvalidateCacheService, buildSubscriberKey } from '@novu/application-generic';
 
+import {
+  CachedEntity,
+  InvalidateCacheService,
+  buildSubscriberKey,
+} from '../../services/cache';
 import { CreateSubscriberCommand } from './create-subscriber.command';
-import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
+import {
+  UpdateSubscriber,
+  UpdateSubscriberCommand,
+} from '../update-subscriber';
 
 @Injectable()
 export class CreateSubscriber {
@@ -17,7 +24,10 @@ export class CreateSubscriber {
   async execute(command: CreateSubscriberCommand) {
     let subscriber =
       command.subscriber ??
-      (await this.fetchSubscriber({ _environmentId: command.environmentId, subscriberId: command.subscriberId }));
+      (await this.fetchSubscriber({
+        _environmentId: command.environmentId,
+        subscriberId: command.subscriberId,
+      }));
 
     if (!subscriber) {
       await this.invalidateCache.invalidateByKey({
@@ -74,6 +84,10 @@ export class CreateSubscriber {
     subscriberId: string;
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId, true);
+    return await this.subscriberRepository.findBySubscriberId(
+      _environmentId,
+      subscriberId,
+      true
+    );
   }
 }

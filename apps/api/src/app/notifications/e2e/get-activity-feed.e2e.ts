@@ -135,6 +135,8 @@ describe('Get activity feed - /activity (GET)', async () => {
       }
     );
 
+    await session.awaitRunningJobs(template._id);
+
     const { body } = await session.testAgent.get(`/v1/activity?page=0&emails=test@email.coms`);
     const activities: IMessage[] = body.data;
 

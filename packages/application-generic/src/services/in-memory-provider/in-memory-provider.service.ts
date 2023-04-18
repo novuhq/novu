@@ -146,6 +146,23 @@ export class InMemoryProviderService {
     if (host && inMemoryProviderClient) {
       Logger.log(`Connecting to cluster at ${host}`, LOG_CONTEXT);
 
+      setInterval(() => {
+        try {
+          inMemoryProviderClient.nodes('all')?.forEach((node) => {
+            Logger.log(
+              {
+                commandQueueLength: node.commandQueue?.length,
+                host: node.options?.host,
+              },
+              `Node ${node.options?.host}:${node.options.port} commandQueue length is ${node.commandQueue.length}`,
+              LOG_CONTEXT
+            );
+          });
+        } catch (e) {
+          Logger.error(e);
+        }
+      }, 2000);
+
       inMemoryProviderClient.on('connect', () => {
         Logger.log('In-memory cluster connected', LOG_CONTEXT);
       });
