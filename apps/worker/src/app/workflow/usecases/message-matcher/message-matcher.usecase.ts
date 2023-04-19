@@ -453,8 +453,6 @@ export class MessageMatcher {
   }
 
   private async buildPayload(variables: IFilterVariables, command: SendMessageCommand) {
-    if (process.env.NODE_ENV === 'test') return variables;
-
     const payload: Partial<{
       subscriber: SubscriberEntity | null;
       payload: Record<string, unknown>;
@@ -507,8 +505,6 @@ export class MessageMatcher {
     let passed = false;
 
     if (child.on === FilterPartTypeEnum.WEBHOOK) {
-      if (process.env.NODE_ENV === 'test') return true;
-
       const res = await this.getWebhookResponse(child, variables, command);
       passed = this.processFilterEquality({ payload: undefined, webhook: res }, child, filterProcessingDetails);
     }
