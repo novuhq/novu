@@ -47,7 +47,7 @@ describe('Create Execution Details', function () {
 
     const result = await useCase.execute(command);
 
-    expect(result).toHaveProperty('id');
+    expect(result).toHaveProperty('_id');
     expect(result).toHaveProperty('createdAt');
   });
 });

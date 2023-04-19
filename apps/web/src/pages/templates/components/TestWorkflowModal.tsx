@@ -15,7 +15,7 @@ const makeToValue = (subscriberVariables: INotificationTriggerVariable[], curren
   const subsVars = getSubscriberValue(
     subscriberVariables,
     (variable) =>
-      (currentUser && currentUser[variable.name === 'subscriberId' ? 'id' : variable.name]) || '<REPLACE_WITH_DATA>'
+      (currentUser && currentUser[variable.name === 'subscriberId' ? '_id' : variable.name]) || '<REPLACE_WITH_DATA>'
   );
 
   return JSON.stringify(subsVars, null, 2);
