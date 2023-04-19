@@ -45,7 +45,7 @@ jobs:
           REACT_APP_API_URL: https://eu.api.novu.co
           REACT_APP_SENTRY_DSN: https://02189965b1bb4cf8bb4776f417f80b92@o1161119.ingest.sentry.io/625116
           REACT_APP_WS_URL: https://eu.ws.novu.co
-          REACT_APP_ENVIRONMENT: prod
+          REACT_APP_ENVIRONMENT: production
         working-directory: apps/widget
         run: npm run build
 
