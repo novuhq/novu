@@ -68,12 +68,16 @@ describe('Changes Screen', function () {
     createNotification();
     cy.waitForNetworkIdle(1000);
 
+    cy.intercept('/v1/changes?promoted=false&page=0&limit=10').as('changes');
+    cy.intercept('/v1/changes?promoted=true&page=0&limit=10').as('promoted-changes');
     cy.visit('/changes');
     cy.waitForNetworkIdle(1000);
+    cy.wait(['@changes']);
     cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('have.length', 2);
 
     cy.awaitAttachedGetByTestId('promote-all-btn').click({ force: true });
     cy.waitForNetworkIdle(1000);
+    cy.wait(['@promoted-changes']);
 
     cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('not.exist');
 
