@@ -2,8 +2,6 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { EmailWebhookProvider } from '@novu/email-webhook';
 import { ICredentials } from '@novu/dal';
 import { BaseHandler } from './base.handler';
-import { randomUUID } from 'crypto';
-
 export class EmailWebhookHandler extends BaseHandler {
   constructor() {
     super('email-webhook', ChannelTypeEnum.EMAIL);
