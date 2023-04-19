@@ -8,7 +8,7 @@ You can use the [Infobip](https://www.infobip.com/developers/) provider to send 
 
 ## Getting Started
 
-To use the Infobip channel, you will need to create a Infobip account and add your API key and Base URL to the Infobip integration on the Novu platform.
+To use the Infobip provider in the email channel, you will need to create a Infobip account and add your API key and Base URL to the Infobip integration on the Novu platform.
 
 ## Generate API Key
 
