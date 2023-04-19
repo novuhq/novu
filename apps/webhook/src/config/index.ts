@@ -7,7 +7,7 @@ dotenv.config();
 let path;
 
 switch (process.env.NODE_ENV) {
-  case 'prod':
+  case 'production':
     path = `${__dirname}/../.env.production`;
     break;
   case 'test':
@@ -32,7 +32,7 @@ if (error && !process.env.LAMBDA_TASK_ROOT) throw error;
 
 envalid.cleanEnv(process.env, {
   NODE_ENV: str({
-    choices: ['dev', 'test', 'prod', 'ci', 'local'],
+    choices: ['dev', 'test', 'production', 'ci', 'local'],
     default: 'local',
   }),
   PORT: port(),
