@@ -9,7 +9,7 @@ metadata:
   name: redis
 spec:
   ports:
-    - name: "6379"
+    - name: '6379'
       port: 6379
       targetPort: 6379
   selector:

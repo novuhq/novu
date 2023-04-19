@@ -63,7 +63,7 @@
     "@novu/testing": "^0.13.0",
     "@types/jest": "^26.0.15",
     "@types/node": "^12.0.0",
-    "@types/react": "17.0.56",
+    "@types/react": "17.0.58",
     "@types/react-dom": "17.0.19",
     "@types/react-router-dom": "^5.1.7",
     "craco-antd": "^1.19.0",
