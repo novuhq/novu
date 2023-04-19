@@ -1,37 +1,17 @@
-import {
-  ArrayMaxSize,
-  ArrayNotEmpty,
-  IsArray,
-  IsDefined,
-  IsObject,
-  IsOptional,
-  IsString,
-  MinLength,
-} from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { TriggerRecipientSubscriber, TriggerRecipients } from '@novu/node';
-import { TopicId, TopicKey, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { TopicKey, TriggerRecipientsTypeEnum } from '@novu/shared';
+import { CreateSubscriberRequestDto } from '../../subscribers/dtos/create-subscriber-request.dto';
 
-export class SubscriberPayloadDto {
-  @ApiProperty()
-  firstName?: string;
-  @ApiProperty()
-  lastName?: string;
-  @ApiProperty()
-  email?: string;
-  @ApiProperty()
-  phone?: string;
-  @ApiProperty()
-  avatar?: string;
-  @ApiProperty()
-  locale?: string;
-}
+export class SubscriberPayloadDto extends CreateSubscriberRequestDto {}
 
 export class TopicPayloadDto {
   @ApiProperty()
   topicKey: TopicKey;
-  @ApiProperty()
-  type: TriggerRecipientsTypeEnum.TOPIC;
+
+  @ApiProperty({ example: 'Topic', enum: TriggerRecipientsTypeEnum })
+  type: TriggerRecipientsTypeEnum;
 }
 
 export class BulkTriggerEventDto {
@@ -72,7 +52,9 @@ export class TriggerEventRequestDto {
     description: 'This could be used to override provider specific configurations',
     example: {
       fcm: {
-        color: '#fff',
+        data: {
+          key: 'value',
+        },
       },
     },
   })
@@ -87,22 +69,15 @@ export class TriggerEventRequestDto {
         $ref: getSchemaPath(SubscriberPayloadDto),
       },
       {
-        type: '[SubscriberPayloadDto]',
-        description: 'List of subscriber objects',
-      },
-      { type: 'string', description: 'Unique identifier of a subscriber in your systems' },
-      {
-        type: '[string]',
-        description: 'List of subscriber identifiers',
+        type: 'string',
+        description: 'Unique identifier of a subscriber in your systems',
+        example: 'SUBSCRIBER_ID',
       },
       {
         $ref: getSchemaPath(TopicPayloadDto),
       },
-      {
-        type: '[TopicPayloadDto]',
-        description: 'List of topics',
-      },
     ],
+    isArray: true,
   })
   @IsDefined()
   to: TriggerRecipients;

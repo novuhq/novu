@@ -105,6 +105,24 @@ describe('Distributed Lock Service', () => {
       });
     });
 
+    describe('Cluster sharding autopipelining', () => {
+      it('should build the resource with the right prefix if environment is in the key', () => {
+        const resource = 'user:1:template:1:environment:90210';
+        const resourceWithPrefix =
+          distributedLockService.buildResourceWithPrefix(resource);
+        expect(resourceWithPrefix).toEqual(
+          `{environmentId:90210}user:1:template:1:environment:90210`
+        );
+      });
+
+      it('should not build the resource with the right prefix if environment is not in the key', () => {
+        const resource = 'user:1:template:1';
+        const resourceWithoutPrefix =
+          distributedLockService.buildResourceWithPrefix(resource);
+        expect(resourceWithoutPrefix).toEqual(resource);
+      });
+    });
+
     describe('Functionalities', () => {
       it('should create lock and it should expire after the TTL set', async () => {
         const resource = 'lock-created';
@@ -125,8 +143,8 @@ describe('Distributed Lock Service', () => {
 
         expect(spyLock).toHaveBeenNthCalledWith(1, [resource], TTL);
         expect(spyIncreaseLockCounter).toHaveBeenCalledTimes(1);
-        // Unlock shouldn't be called as the lock expires by going over TTL
-        expect(spyUnlock).not.toHaveBeenCalled();
+        // Unlock is still called even when the lock expires by going over TTL but errors
+        expect(spyUnlock).toHaveBeenCalledTimes(1);
       });
 
       it('should create lock and it should expire if the handler throws', async () => {
@@ -227,7 +245,8 @@ describe('Distributed Lock Service', () => {
         expect(spyUnlock.mock.calls.length).toBeGreaterThanOrEqual(5);
       });
 
-      it('should create a lock and log a release lock error if any of the calls duration is longer than the TTL but still execute all calls', async () => {
+      it(`should create a lock and log a release lock error if any of the calls duration is longer than the TTL
+         but still execute all calls`, async () => {
         const resource = 'lock-created-and-concurrent-calls-one-over-ttl';
         const TTL = 500;
         let executed = 0;

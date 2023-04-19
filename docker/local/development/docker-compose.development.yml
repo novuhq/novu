@@ -4,6 +4,10 @@ services:
     build:
       dockerfile: "./apps/api/Dockerfile"
       context: "../../.."
+  worker:
+    build:
+      dockerfile: "./apps/worker/Dockerfile"
+      context: "../../.."
   web:
     build:
       dockerfile: "./apps/web/Dockerfile"

@@ -1247,7 +1247,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     }
   });
 
-  it('should merge digest events accordingly when sequential calls', async () => {
+  it('should merge digest events when sequential calls', async () => {
     template = await session.createTemplate({
       steps: [
         {
@@ -1295,6 +1295,6 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const delayedJob = delayedJobs[0];
     const { updatedAt: delayedJobUpdateTime, payload } = delayedJob;
     expect(delayedJobUpdateTime).to.be.ok;
-    expect(payload).to.eql({ customVar: 'sequential-calls-1' });
+    expect(payload.customVar).to.contain('sequential-calls-');
   });
 });

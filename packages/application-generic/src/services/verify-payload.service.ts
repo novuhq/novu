@@ -53,10 +53,10 @@ export class VerifyPayloadService {
     const payload = {};
 
     for (const variable of variables.filter(
-      (vari) =>
-        vari.defaultValue !== undefined &&
-        vari.defaultValue !== null &&
-        !this.isSystemVariable(vari.name)
+      (elem) =>
+        elem.defaultValue !== undefined &&
+        elem.defaultValue !== null &&
+        !this.isSystemVariable(elem.name)
     )) {
       this.setNestedKey(
         payload,

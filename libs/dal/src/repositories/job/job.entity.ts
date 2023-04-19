@@ -31,6 +31,7 @@ export class JobEntity {
   error?: any;
   createdAt: string;
   updatedAt: string;
+  expireAt?: string;
   _templateId: string;
   digest?: {
     events?: any[];

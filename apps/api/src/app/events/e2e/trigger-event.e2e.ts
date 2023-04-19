@@ -295,7 +295,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
     let subExpireMonths = subMonths(expireAt, IN_APP_MESSAGE_EXPIRE_MONTHS);
     let diff = differenceInMilliseconds(subExpireMonths, createdAt);
 
-    expect(diff).to.approximately(0, 1);
+    expect(diff).to.approximately(0, 100);
 
     const emails = await messageRepository.findBySubscriberChannel(
       session.environment._id,

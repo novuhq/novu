@@ -90,14 +90,20 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   }
 
   private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & T_Enforcement) {
-    const now: number = Date.now();
+    let startDate: Date = new Date();
+    if (data.expireAt) {
+      startDate = new Date(data.expireAt);
+    }
+
     switch (modelName) {
       case 'Message':
         if (data.channel === 'in_app') {
-          return addMonths(now, 6);
+          return addMonths(startDate, 6);
         } else {
-          return addMonths(now, 1);
+          return addMonths(startDate, 1);
         }
+      case 'Notification':
+        return addMonths(startDate, 1);
       default:
         return null;
     }

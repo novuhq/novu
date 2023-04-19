@@ -35,7 +35,7 @@ Mailgun recommends that you add a subdomain as a domain name. To do so:
   - For domains created in the EU region, the base URL is: `https://api.eu.mailgun.net/`
   - Otherwise, leave the base URL blank.
 - Fill the `Username`.
-- Fill the `Domain name` registered on Mailgun .
+- Fill the `Domain name` registered on Mailgun.
 - Fill the `From email address` field using the authenticated email from the previous step.
 - Fill the `Sender name`.
 - Click on the `Disabled` button and mark as `Active`.

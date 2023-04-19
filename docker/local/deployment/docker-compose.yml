@@ -48,6 +48,29 @@ services:
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
     ports:
       - '3000:3000'
+  worker:
+    image: 'ghcr.io/novuhq/novu/worker:0.13.0'
+    depends_on:
+      - mongodb
+      - redis
+    container_name: worker
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      MONGO_URL: ${MONGO_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB_INDEX: 2
+      REDIS_CACHE_SERVICE_HOST: ${REDIS_CACHE_SERVICE_HOST}
+      REDIS_CACHE_SERVICE_PORT: ${REDIS_CACHE_SERVICE_PORT}
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      S3_REGION: ${S3_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY}
+      SENTRY_DSN: ${SENTRY_DSN}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
   ws:
     image: 'ghcr.io/novuhq/novu/ws:0.13.0'
     depends_on:
@@ -67,6 +90,7 @@ services:
     image: 'ghcr.io/novuhq/novu/web:0.13.0'
     depends_on:
       - api
+      - worker
     container_name: web
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
@@ -80,6 +104,7 @@ services:
     image: 'ghcr.io/novuhq/novu/widget:0.13.0'
     depends_on:
       - api
+      - worker
       - web
     container_name: widget
     environment:

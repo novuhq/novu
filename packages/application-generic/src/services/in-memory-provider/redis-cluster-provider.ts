@@ -87,23 +87,25 @@ export const getRedisClusterProviderConfig =
     };
   };
 
-export const getRedisCluster = (): Cluster | undefined => {
+export const getRedisCluster = (
+  enableAutoPipelining?: boolean
+): Cluster | undefined => {
   const { instances } = getRedisClusterProviderConfig();
 
   const options: ClusterOptions = {
-    enableAutoPipelining: false,
+    enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     enableReadyCheck: true,
     scaleReads: 'slave',
     /*
      *  Disabled in Prod as affects performance
      */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
+    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
     slotsRefreshTimeout: 2000,
   };
 
   Logger.log(
-    `Initializing Redis Cluster Provider with ${instances?.length} instances`
+    `Initializing Redis Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
   );
 
   if (instances && instances.length > 0) {
