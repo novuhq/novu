@@ -20,7 +20,7 @@ To generate a new API key in Netcore, you can follow these steps:
 
 ## Set up sending domains
 
-To start sending emails, you need to add and verify your sending domains. You can either use your top-level domain (e.g. mycompany.com) or a sub-domain like email.mycompany.com. The verification is done to ensure your sending domain’s security.
+To start sending emails, you need to add and verify your sending domains. You can either use your top-level domain (e.g. my-company.com) or a sub-domain like email.my-company.com. The verification is done to ensure your sending domain’s security.
 
 Follow the instructions on this [page](https://emaildocs.netcorecloud.com/docs/what-is-a-sending-domain-how-to-set-up-sending-domains) to get started
 
