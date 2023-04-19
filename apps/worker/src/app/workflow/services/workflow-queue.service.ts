@@ -43,6 +43,7 @@ export class WorkflowQueueService extends QueueService<IJobData> {
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
     super();
+    Logger.warn('Workflow queue service created');
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.bullMqService.worker.on('completed', async (job) => {

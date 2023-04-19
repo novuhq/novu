@@ -54,6 +54,7 @@ import {
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
 } from './usecases';
+import { MetricQueueService } from './services/metric-queue.service';
 
 const USE_CASES = [
   AddJob,
@@ -102,6 +103,10 @@ const USE_CASES = [
 const REPOSITORIES = [JobRepository];
 
 const SERVICES = [
+  {
+    provide: MetricQueueService,
+    useClass: MetricQueueService,
+  },
   {
     provide: QueueService,
     useClass: WorkflowQueueService,

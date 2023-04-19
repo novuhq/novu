@@ -62,7 +62,7 @@ jobs:
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/api - -t novu-api --load
-          docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
+          docker tag novu-api ghcr.io/S$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
 
