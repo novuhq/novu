@@ -98,7 +98,7 @@ export const getElasticacheCluster = (): Cluster | undefined => {
     /*
      *  Disabled in Prod as affects performance
      */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
+    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
     slotsRefreshTimeout: 10000,
   };
 
