@@ -4,7 +4,7 @@ sidebar_position: 11
 
 # Mandrill
 
-You can use the [Mandrill](https://mandrillapp.com/) provider to send transactional emails to your customers using the Novu Platform with a single API.
+You can use the [Mandrill by Mailchimp](https://mandrillapp.com/) provider to send transactional emails to your customers using the Novu Platform with a single API.
 
 ## Getting Started
 
