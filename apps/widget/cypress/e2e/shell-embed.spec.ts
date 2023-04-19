@@ -97,10 +97,12 @@ describe('Shell Embed - Seen Read', function () {
 
   it('should display notification under seen after tab change', function () {
     cy.task('createNotifications', {
+      templateId: this.session.templates[0]._id,
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
     cy.intercept('**/notifications/feed?page=0&seen=true').as('seen');
     cy.intercept('**/notifications/feed?page=0&seen=false').as('unseen');
