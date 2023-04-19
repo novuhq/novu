@@ -67,15 +67,17 @@ export class MarkMessageAs {
   }
 
   private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: string) {
-    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    const count = await this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {
-      [marked]: false,
-    });
+    const [admin, count] = await Promise.all([
+      this.memberRepository.getOrganizationAdminAccount(command.organizationId),
+      this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {
+        [marked]: false,
+      }),
+    ]);
 
     this.updateSocketCount(subscriber, count, marked);
 
-    for (const message of messages) {
-      if (admin) {
+    if (admin) {
+      for (const message of messages) {
         this.analyticsService.track(`Mark as ${marked} - [Notification Center]`, admin._userId, {
           _subscriber: message._subscriberId,
           _organization: command.organizationId,
