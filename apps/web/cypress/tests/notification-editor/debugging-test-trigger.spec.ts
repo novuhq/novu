@@ -7,7 +7,7 @@ describe('Debugging - test trigger', function () {
 
   it('should open test trigger modal', function () {
     const template = this.session.templates[0];
-    const userId = this.session.user.id;
+    const userId = this.session.user._id;
 
     cy.intercept('GET', 'http://localhost:1336/v1/notification-templates/*').as('notification-templates');
 

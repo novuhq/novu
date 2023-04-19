@@ -16,7 +16,7 @@ describe('Organization Switch', function () {
 
   it('should use different jwt token after switches', function () {
     const originToken = this.session.token;
-    cy.task('addOrganization', this.session.user.id).then((newOrg: any) => {
+    cy.task('addOrganization', this.session.user._id).then((newOrg: any) => {
       cy.visit('/templates');
 
       cy.getByTestId('organization-switch').focus();

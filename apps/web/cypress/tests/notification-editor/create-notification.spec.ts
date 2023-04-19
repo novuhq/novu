@@ -73,7 +73,7 @@ describe('Creation functionality', function () {
     cy.task('createNotifications', {
       identifier: 'test-notification-title',
       token: this.session.token,
-      subscriberId: this.session.user.id,
+      subscriberId: this.session.user._id,
     });
 
     // click on the notifications bell
