@@ -12,7 +12,7 @@ const str32 = makeValidator((variable) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NODE_ENV: str({
-    choices: ['dev', 'test', 'prod', 'ci', 'local', 'staging'],
+    choices: ['dev', 'test', 'production', 'ci', 'local', 'staging'],
     default: 'local',
   }),
   PORT: port(),

@@ -33,7 +33,7 @@ export class ResendInvite {
 
     const token = createGuid();
 
-    if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'prod') {
+    if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') {
       const novu = new Novu(process.env.NOVU_API_KEY ?? '');
 
       // eslint-disable-next-line @cspell/spellchecker

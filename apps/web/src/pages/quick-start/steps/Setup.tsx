@@ -147,7 +147,7 @@ const LoaderWrapper = styled.div`
 `;
 
 function updateCodeSnippet(codeSnippet: string, environmentIdentifier: string, apiKey: string) {
-  const concatUrls = process.env.REACT_APP_ENVIRONMENT !== 'prod' || !!process.env.REACT_APP_DOCKER_HOSTED_ENV;
+  const concatUrls = process.env.REACT_APP_ENVIRONMENT !== 'production' || !!process.env.REACT_APP_DOCKER_HOSTED_ENV;
 
   return codeSnippet
     .replace(APPLICATION_IDENTIFIER, environmentIdentifier)
