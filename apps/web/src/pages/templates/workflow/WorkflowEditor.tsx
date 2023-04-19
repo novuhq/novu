@@ -82,7 +82,7 @@ const WorkflowEditor = ({
   };
 
   const onDelete = (id) => {
-    const currentStep = steps.find((step) => step.id === id);
+    const currentStep = steps.find((step) => step._id === id);
 
     if (!currentStep) {
       setToDelete(id);

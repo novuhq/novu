@@ -62,7 +62,7 @@ export const useDigestWorkflowTour = ({ startTour }: { startTour: () => void }) 
     const digestStep = steps.find((step) => step.template?.type === StepTypeEnum.DIGEST);
     if (digestStep) {
       setTimeout(() => {
-        setSelectedNodeId(digestStep.id || '');
+        setSelectedNodeId(digestStep._id || '');
         startTour();
       }, 0);
     }

@@ -84,11 +84,12 @@ export const DigestWorkflowTourTooltip = ({
     if (tourStepIndex === 0) {
       const digestStep = steps.find((el) => el.template?.type === StepTypeEnum.DIGEST);
       setStep(tourStepIndex);
-      setSelectedNodeId(digestStep?.id || '');
+      console.log(digestStep);
+      setSelectedNodeId(digestStep?._id || '');
     } else if (tourStepIndex === 1) {
       const emailStep = steps.find((el) => el.template?.type === StepTypeEnum.EMAIL);
       setStep(tourStepIndex);
-      setSelectedNodeId(emailStep?.id || '');
+      setSelectedNodeId(emailStep?._id || '');
     } else if (tourStepIndex === 2) {
       setStep(tourStepIndex);
       setSelectedNodeId('');
