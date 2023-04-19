@@ -22,7 +22,7 @@ webpack.output.devtoolModuleFilenameTemplate = '[name].js';
 export default defineConfig({
   viewportHeight: 700,
   viewportWidth: 1280,
-  video: false,
+  video: true,
 
   retries: {
     runMode: 2,
