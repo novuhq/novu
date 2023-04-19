@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import styled from '@emotion/styled';
-import { ReactFlowProvider } from 'react-flow-renderer';
+import { ReactFlowProvider } from 'reactflow';
 
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 import { DigestDemoFlow } from '../../../components';

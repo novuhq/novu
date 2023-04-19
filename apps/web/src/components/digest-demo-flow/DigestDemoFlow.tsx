@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import styled from '@emotion/styled';
 import { Skeleton, useMantineColorScheme } from '@mantine/core';
 import { useResizeObserver } from '@mantine/hooks';
-import ReactFlow, { Edge, Node, useReactFlow } from 'react-flow-renderer';
+import ReactFlow, { Edge, Node, useReactFlow } from 'reactflow';
 
 import { colors } from '../../design-system';
 import { TriggerNode } from './TriggerNode';

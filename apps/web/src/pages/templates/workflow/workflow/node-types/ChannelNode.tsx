@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useState } from 'react';
-import { Handle, Position, getOutgoers, useReactFlow, useNodes } from 'react-flow-renderer';
+import { Handle, Position, getOutgoers, useReactFlow, useNodes } from 'reactflow';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { WorkflowNode } from './WorkflowNode';

@@ -1,4 +1,4 @@
-import { Handle, Position } from 'react-flow-renderer';
+import { Handle, Position } from 'reactflow';
 
 import { NodeStep } from './NodeStep';
 import { TurnOnGradient } from '../../design-system/icons/gradient/TurnOnGradient';

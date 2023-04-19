@@ -12,7 +12,7 @@ import ReactFlow, {
   useEdgesState,
   useNodesState,
   useReactFlow,
-} from 'react-flow-renderer';
+} from 'reactflow';
 import { useFormContext } from 'react-hook-form';
 import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
@@ -414,5 +414,9 @@ const reactFlowDefaultProps: ReactFlowProps = {
   nodesDraggable: true,
   minZoom: 0.5,
   maxZoom: 1.5,
-  defaultZoom: 1,
+  defaultViewport: {
+    zoom: 1,
+    x: 0,
+    y: 10,
+  },
 };

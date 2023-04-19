@@ -1,6 +1,6 @@
 import { Container, Group, Stack, useMantineColorScheme } from '@mantine/core';
 import { colors } from '@novu/notification-center';
-import { Background, BackgroundVariant } from 'react-flow-renderer';
+import { Background, BackgroundVariant } from 'reactflow';
 import { AddStepMenu } from './AddStepMenu';
 import styled from '@emotion/styled';
 import { Link, useNavigate, useOutletContext } from 'react-router-dom';

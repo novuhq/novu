@@ -1,4 +1,4 @@
-import { Handle, Position } from 'react-flow-renderer';
+import { Handle, Position } from 'reactflow';
 
 import { NodeStep } from './NodeStep';
 import { MailGradient } from '../../design-system/icons';

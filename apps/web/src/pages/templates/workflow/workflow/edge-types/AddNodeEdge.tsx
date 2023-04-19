@@ -1,4 +1,4 @@
-import { EdgeProps, getBezierEdgeCenter, getBezierPath } from 'react-flow-renderer';
+import { EdgeProps, getBezierPath } from 'reactflow';
 import AddNode from '../node-types/AddNode';
 import styled from '@emotion/styled';
 
@@ -16,16 +16,7 @@ export function AddNodeEdge({
   data,
   markerEnd,
 }: EdgeProps) {
-  const [centerX, centerY] = getBezierEdgeCenter({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-  });
-
-  const edgePath = getBezierPath({
+  const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -44,8 +35,8 @@ export function AddNodeEdge({
         size={foreignObjectSize}
         width={foreignObjectSize}
         height={foreignObjectSize}
-        x={centerX - foreignObjectSize / 2}
-        y={centerY - foreignObjectSize / 2}
+        x={labelX - foreignObjectSize / 2}
+        y={labelY - foreignObjectSize / 2}
         requiredExtensions="http://www.w3.org/1999/xhtml"
         id={`edge-button-${parentId}`}
         className={id}

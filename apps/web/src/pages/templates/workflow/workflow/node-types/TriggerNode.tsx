@@ -1,6 +1,6 @@
 import { StepTypeEnum } from '@novu/shared';
 import { memo, useState } from 'react';
-import { Handle, Position, useReactFlow } from 'react-flow-renderer';
+import { Handle, Position, useReactFlow } from 'reactflow';
 
 import { WorkflowNode } from './WorkflowNode';
 import { Check, TapeGradient } from '../../../../../design-system/icons';

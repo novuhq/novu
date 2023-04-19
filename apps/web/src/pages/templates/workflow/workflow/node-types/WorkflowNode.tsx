@@ -10,7 +10,7 @@ import { colors } from '../../../../../design-system/config';
 import { Trash } from '../../../../../design-system/icons';
 import { When } from '../../../../../components/utils/When';
 import { useActiveIntegrations, useEnvController, useIntegrationLimit } from '../../../../../hooks';
-import { useViewport } from 'react-flow-renderer';
+import { useViewport } from 'reactflow';
 import { getFormattedStepErrors } from '../../../shared/errors';
 import { Popover } from '../../../../../design-system/popover';
 import { Button } from '../../../../../design-system/button/Button';

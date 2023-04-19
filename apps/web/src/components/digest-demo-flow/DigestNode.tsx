@@ -1,4 +1,4 @@
-import { Handle, Position } from 'react-flow-renderer';
+import { Handle, Position } from 'reactflow';
 import { createStyles, NumberInput, Loader } from '@mantine/core';
 import styled from '@emotion/styled';
 
