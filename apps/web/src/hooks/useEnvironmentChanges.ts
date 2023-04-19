@@ -12,7 +12,10 @@ export function usePromotedChanges(page = 0, limit = 10) {
     refetch: refetchHistory,
   } = useQuery(
     [QueryKeys.currentPromotedChanges, environment?._id, page, limit],
-    () => getPromotedChanges(page, limit),
+    () =>
+      getPromotedChanges(page, limit).catch((reason) => {
+        console.error(JSON.stringify(reason));
+      }),
     {
       keepPreviousData: true,
     }
