@@ -167,7 +167,7 @@ export class SendMessagePush extends SendMessageBase {
           })
         );
 
-        return;
+        continue;
       }
 
       const overrides = command.overrides[integration.providerId] || {};
