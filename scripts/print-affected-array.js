@@ -1,4 +1,4 @@
-const path = require("path");
+const path = require('path');
 
 const spawn = require("cross-spawn");
 
@@ -36,13 +36,14 @@ class CliLogs {
 function pnpmRun(...args) {
   const logData = new CliLogs();
   let pnpmProcess;
+
   return new Promise((resolve, reject) => {
     const processOptions = {
       cwd: ROOT_PATH,
-      env: process.env,
+      env: process.env
     };
 
-    pnpmProcess = spawn("pnpm", args, processOptions);
+    pnpmProcess = spawn('pnpm', args, processOptions);
 
     pnpmProcess.stdin.setEncoding(ENCODING_TYPE);
     pnpmProcess.stdout.setEncoding(ENCODING_TYPE);
@@ -66,7 +67,7 @@ function commaSeparatedListToArray(str) {
 
 function getAffectedCommandResult(str) {
   const outputLines = str.trim().split(/\r?\n/);
-  if(outputLines.length > 2) {
+  if (outputLines.length > 2) {
     return outputLines.slice(-1)[0];
   }
   return "";
@@ -75,14 +76,14 @@ function getAffectedCommandResult(str) {
 async function affectedProjectsContainingTask(taskName, baseBranch) {
   // pnpm nx print-affected --target=[task] --base [base branch] --select=tasks.target.project
   return commaSeparatedListToArray(getAffectedCommandResult(
-    await pnpmRun("nx", "print-affected",  "--target", taskName, "--base", baseBranch, "--select=tasks.target.project")
+    await pnpmRun("nx", "print-affected", "--target", taskName, "--base", baseBranch, "--select=tasks.target.project")
   ));
 }
 
 async function allProjectsContainingTask(taskName) {
   // pnpm nx print-affected --target=[task] --files package.json --select=tasks.target.project
   return commaSeparatedListToArray(getAffectedCommandResult(
-    await pnpmRun("nx", "print-affected",  "--target", taskName, "--files", "package.json", "--select=tasks.target.project")
+    await pnpmRun("nx", "print-affected", "--target", taskName, "--files", "package.json", "--select=tasks.target.project")
   ));
 }
 
