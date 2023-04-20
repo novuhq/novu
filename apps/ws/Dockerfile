@@ -10,6 +10,7 @@ RUN npm i pm2 -g
 
 COPY .npmrc .
 COPY .npmrc-cloud .
+
 COPY package.json .
 
 COPY providers ./providers
