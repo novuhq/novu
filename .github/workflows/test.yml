@@ -68,8 +68,6 @@ jobs:
     if:  ${{ fromJson(needs.get-affected.outputs.test-e2e)[0] }}
     timeout-minutes: 80
     strategy:
-      # Run in parallel
-      max-parallel: 10
       # One job for each different project and node version
       matrix:
         projectName: ${{ fromJson(needs.get-affected.outputs.test-e2e) }}
@@ -101,8 +99,6 @@ jobs:
     if:  ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
     timeout-minutes: 80
     strategy:
-      # Run in parallel
-      max-parallel: 10
       # One job for each different project and node version
       matrix:
         projectName: ${{ fromJson(needs.get-affected.outputs.test-unit) }}
