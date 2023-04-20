@@ -80,7 +80,7 @@ jobs:
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
         with:
-          targets: lint
+          targets: lint,build
           projects: ${{matrix.projectName}}
 
       - uses: ./.github/actions/start-localstack
