@@ -7,6 +7,7 @@ on:
   pull_request:
     paths:
       - 'apps/worker/**'
+      - 'apps/api/**'
       - 'packages/application-generic/**'
       - 'packages/stateless/**'
       - 'packages/node/**'
