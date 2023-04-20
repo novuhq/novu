@@ -242,7 +242,7 @@ export class SendMessagePush extends SendMessageBase {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: DetailEnum.MESSAGE_CREATED,
+        detail: `${DetailEnum.MESSAGE_CREATED}: ${integration.providerId}`,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
         messageId: message._id,
