@@ -69,7 +69,7 @@ describe('Changes Screen', function () {
     cy.waitForNetworkIdle(1000);
 
     cy.intercept('/v1/changes?promoted=false&page=0&limit=10').as('changes');
-    cy.intercept('/v1/changes?promoted=true&page=0&limit=10').as('promoted-changes');
+    cy.intercept('/v1/changes/bulk/apply').as('bulk-apply');
     cy.visit('/changes');
     cy.waitForNetworkIdle(1000);
     cy.wait(['@changes']);
@@ -77,7 +77,7 @@ describe('Changes Screen', function () {
 
     cy.awaitAttachedGetByTestId('promote-all-btn').click({ force: true });
     cy.waitForNetworkIdle(1000);
-    cy.wait(['@promoted-changes']);
+    cy.wait(['@bulk-apply']);
 
     cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('not.exist');
 
