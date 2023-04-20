@@ -11,8 +11,12 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { CreateSubscriber, CreateSubscriberCommand } from './usecases/create-subscriber';
-import { UpdateSubscriber, UpdateSubscriberCommand } from './usecases/update-subscriber';
+import {
+  CreateSubscriber,
+  CreateSubscriberCommand,
+  UpdateSubscriber,
+  UpdateSubscriberCommand,
+} from '@novu/application-generic';
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -22,14 +26,20 @@ import {
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
   SubscriberResponseDto,
-  SubscribersResponseDto,
   UpdateSubscriberChannelRequestDto,
   UpdateSubscriberRequestDto,
 } from './dtos';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+  ApiExcludeEndpoint,
+} from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
@@ -55,6 +65,9 @@ import {
 } from './usecases/update-subscriber-online-flag';
 import { MarkMessageAsRequestDto } from '../widgets/dtos/mark-message-as-request.dto';
 import { MarkMessageActionAsSeenDto } from '../widgets/dtos/mark-message-action-as-seen.dto';
+import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
+import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
+import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -78,25 +91,21 @@ export class SubscribersController {
   @Get('')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: SubscribersResponseDto,
-  })
+  @ApiOkPaginatedResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Get subscribers',
-    description: 'Returns a list of subscribers, could paginated using the `page` query parameter',
+    description: 'Returns a list of subscribers, could paginated using the `page` and `limit` query parameter',
   })
-  @ApiQuery({ name: 'page', type: Number, required: false, description: 'The page to fetch, defaults to 0' })
   async getSubscribers(
     @UserSession() user: IJwtPayload,
-    @Query('page') page = 0,
-    @Query('limit') limit = 10
-  ): Promise<SubscribersResponseDto> {
+    @Query() query: GetSubscribersDto
+  ): Promise<PaginatedResponseDto<SubscriberResponseDto>> {
     return await this.getSubscribersUsecase.execute(
       GetSubscribersCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        page: page ? Number(page) : 0,
-        limit: limit ? Number(limit) : 10,
+        page: query.page ? Number(query.page) : 0,
+        limit: query.limit ? Number(query.limit) : 10,
       })
     );
   }
@@ -317,9 +326,7 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Get a notification feed for a particular subscriber',
   })
-  @ApiOkResponse({
-    type: MessagesResponseDto,
-  })
+  @ApiOkPaginatedResponse(MessageResponseDto)
   @ApiQuery({
     name: 'seen',
     type: Boolean,
@@ -336,7 +343,7 @@ export class SubscribersController {
     @Query('page') page?: string,
     @Query('feedIdentifier') feedId?: string,
     @Query() query: StoreQuery = {}
-  ) {
+  ): Promise<PaginatedResponseDto<MessageResponseDto>> {
     let feedsQuery: string[] | undefined;
     if (feedId) {
       feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
@@ -386,6 +393,7 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @UseGuards(JwtAuthGuard)
   @Post('/:subscriberId/messages/:messageId/seen')
   @ApiOperation({
@@ -460,7 +468,7 @@ export class SubscribersController {
     @Param('type') type: ButtonTypeEnum,
     @Body() body: MarkMessageActionAsSeenDto,
     @Param('subscriberId') subscriberId: string
-  ): Promise<MessageEntity> {
+  ): Promise<MessageResponseDto> {
     return await this.updateMessageActionsUsecase.execute(
       UpdateMessageActionsCommand.create({
         organizationId: user.organizationId,

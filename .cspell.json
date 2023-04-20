@@ -3,6 +3,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "Millis",
     "maqsam",
     "sadd",
     "smembers",
@@ -430,7 +431,12 @@
     "Metafiles",
     "Metas",
     "Webpush",
-    "maqsam"
+    "maqsam",
+    "Millis",
+    "sscan",
+    "vishnudxb",
+    "autopipelining",
+    "clsx"
   ],
   "flagWords": [],
   "patterns": [
@@ -497,11 +503,14 @@
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
     "novu.code-workspace",
+    "packages/application-generic/src/.env.test",
     "packages/notification-center/src/i18n/languages/**",
     "apps/widget/public/iframeResizer.contentWindow.js",
     ".eslintrc.js",
     ".vscode/settings.json",
+    "*/**/.vscode/settings.json",
     "docs/src/usage-examples.md",
+    "apps/worker/README.md",
     ".gitignore",
     "angular.json",
     "ng-package.json"

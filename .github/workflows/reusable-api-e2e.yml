@@ -22,51 +22,43 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v3
-
-      - if: ${{ inputs.ee }}
-        run: |
-          rm -f .npmrc
-          cp .npmrc-cloud .npmrc
-
       - uses: ./.github/actions/setup-project
-
+      - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint
           projects: "@novu/api"
 
-      - name: Start Local Stack
+      - uses: ./.github/actions/start-localstack
+
+      - name: Install wait-on plugin
+        run: npm i -g wait-on
+
+      - name: Build worker
+        run: CI='' pnpm build:worker
+
+      - name: Start worker
         env:
-          AWS_DEFAULT_REGION: us-east-1
-          DEFAULT_REGION: us-east-1
-          AWS_ACCOUNT_ID: '000000000000'
-          AWS_ACCESS_KEY_ID: test
-          AWS_SECRET_ACCESS_KEY: test
-          AWS_EC2_METADATA_DISABLED: true
-        working-directory: docker/local
-        run: |
-          docker-compose -f docker-compose.localstack.yml up -d
-          sleep 10
-          max_retry=30
-          counter=0
-          until $command
-          do
-            sleep 1
-            [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
-            aws --endpoint-url=http://localhost:4566 s3 ls
-            echo "Trying again. Try #$counter"
-            ((counter++))
-          done
-          docker-compose -f docker-compose.localstack.yml logs --tail="all"
-          aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
+          IN_MEMORY_CLUSTER_MODE_ENABLED: true
+        run: cd apps/worker && pnpm start:test &
+
+      - name: Wait on worker
+        run: wait-on --timeout=180000 http://localhost:1342/v1/health-check
 
         # Runs a single command using the runners shell
       - name: Build API
         run: CI='' pnpm build:api
 
-      # Runs a set of commands using the runners shell
-      - name: Run a test
+      - name: Run E2E tests
+        env:
+          IN_MEMORY_CLUSTER_MODE_ENABLED: true
         run: |
           cd apps/api && pnpm test:e2e
-          pnpm test
+
+      - name: Run unit tests
+        env:
+          IN_MEMORY_CLUSTER_MODE_ENABLED: true
+        run: |
+          cd apps/api && pnpm test
+          
   

@@ -1,5 +1,8 @@
 FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as dev_base
 
+ARG BULL_MQ_PRO_TOKEN
+ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
+
 RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@7.28.0
 RUN pnpm --version
@@ -14,11 +17,9 @@ COPY ./meta .
 COPY ./deps .
 COPY ./pkg .
 
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then echo 'enterprise edition got it' ; fi
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then echo 'enterprise edition' ; fi
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then cp .npmrc-cloud .npmrc  ; fi
-RUN cat .npmrc
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then rm -f .npmrc ; fi
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then cp .npmrc-cloud .npmrc  ; fi
 
 RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  pnpm install --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
@@ -47,6 +48,7 @@ RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
 # ------- PRODUCTION BUILD ----------
 FROM dev_base AS prod
+
 ARG PACKAGE_PATH
 
 ENV CI=true
@@ -63,8 +65,6 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  --frozen-lockfile \
  --unsafe-perm \
  --reporter=silent
-
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 

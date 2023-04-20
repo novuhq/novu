@@ -12,7 +12,7 @@ const str32 = makeValidator((variable) => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NODE_ENV: str({
-    choices: ['dev', 'test', 'prod', 'ci', 'local', 'staging'],
+    choices: ['dev', 'test', 'production', 'ci', 'local', 'staging'],
     default: 'local',
   }),
   PORT: port(),
@@ -50,10 +50,16 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: '',
   }),
   REDIS_CACHE_SERVICE_PORT: str({
-    default: '6379',
+    default: '',
   }),
   REDIS_CACHE_SERVICE_TLS: json({
     default: undefined,
+  }),
+  REDIS_CLUSTER_SERVICE_HOST: str({
+    default: '',
+  }),
+  REDIS_CLUSTER_SERVICE_PORTS: str({
+    default: '',
   }),
   STORE_NOTIFICATION_CONTENT: str({
     default: 'false',

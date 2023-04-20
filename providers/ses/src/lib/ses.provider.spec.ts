@@ -12,6 +12,7 @@ const mockConfig = {
 
 const mockNovuMessage = {
   to: ['test@test2.com'],
+  replyTo: 'test@test1.com',
   subject: 'test subject',
   html: '<div> Mail Content </div>',
   attachments: [
@@ -92,7 +93,13 @@ test('should trigger ses library correctly', async () => {
   const provider = new SESEmailProvider(mockConfig);
   const response = await provider.sendMessage(mockNovuMessage);
 
+  // eslint-disable-next-line
+  const bufferArray = spy.mock.calls[0][0].input['RawMessage']['Data'];
+  const buffer = Buffer.from(bufferArray);
+  const emailContent = buffer.toString();
+
   expect(spy).toHaveBeenCalled();
+  expect(emailContent.includes('Reply-To: test@test1.com')).toBe(true);
   expect(response.id).toEqual('<mock-message-id@test-1.amazonses.com>');
 });
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as hat from 'hat';
-import { StorageService } from '../../../shared/services/storage/storage.service';
+import { StorageService } from '@novu/application-generic';
+
 import { UploadUrlResponse } from '../../dtos/upload-url-response.dto';
 import { GetSignedUrlCommand } from './get-signed-url.command';
 

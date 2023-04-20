@@ -1,17 +1,21 @@
 import { IntegrationEntity } from '@novu/dal';
 import { IPushFactory, IPushHandler } from './interfaces';
-import { FCMHandler } from './handlers';
+import { APNSHandler, FCMHandler, ExpoHandler, OneSignalHandler } from "./handlers";
 
 export class PushFactory implements IPushFactory {
-  handlers: IPushHandler[] = [new FCMHandler()];
+  handlers: IPushHandler[] = [
+    new FCMHandler(),
+    new ExpoHandler(),
+    new APNSHandler(),
+    new OneSignalHandler()
+  ];
 
-  getHandler(integration: IntegrationEntity): IPushHandler {
+  getHandler(integration: IntegrationEntity) {
     try {
       const handler =
         this.handlers.find((handlerItem) =>
           handlerItem.canHandle(integration.providerId, integration.channel)
         ) ?? null;
-
       if (!handler) return null;
 
       handler.buildProvider(integration.credentials);

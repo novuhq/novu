@@ -34,6 +34,7 @@ export class MessageEntity {
   templateIdentifier?: string;
 
   createdAt?: string;
+  expireAt?: string;
 
   content: string | IEmailBlock[];
 

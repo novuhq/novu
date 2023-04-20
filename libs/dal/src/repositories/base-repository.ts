@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ClassConstructor, plainToInstance } from 'class-transformer';
+import { addMonths } from 'date-fns';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery } from 'mongoose';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
@@ -27,8 +28,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     });
   }
 
-  async aggregate(query: any[]): Promise<any> {
-    return await this.MongooseModel.aggregate(query);
+  async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
+    return await this.MongooseModel.aggregate(query).read(options.readPreference || 'primary');
   }
 
   async findById(id: string, select?: string): Promise<T_MappedEntity | null> {
@@ -85,7 +86,31 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     }
   }
 
+  private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & T_Enforcement) {
+    let startDate: Date = new Date();
+    if (data.expireAt) {
+      startDate = new Date(data.expireAt);
+    }
+
+    switch (modelName) {
+      case 'Message':
+        if (data.channel === 'in_app') {
+          return addMonths(startDate, 6);
+        } else {
+          return addMonths(startDate, 1);
+        }
+      case 'Notification':
+        return addMonths(startDate, 1);
+      default:
+        return null;
+    }
+  }
+
   async create(data: FilterQuery<T_DBModel> & T_Enforcement): Promise<T_MappedEntity> {
+    const expireAt = this.calcExpireDate(this.MongooseModel.modelName, data);
+    if (expireAt) {
+      data = { ...data, expireAt };
+    }
     const newEntity = new this.MongooseModel(data);
     const saved = await newEntity.save();
 

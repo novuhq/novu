@@ -11,7 +11,7 @@ import { GetMxRecordResponseDto } from './dtos/get-mx-record.dto';
 @Controller('/inbound-parse')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
-@ApiTags('inbound-parse')
+@ApiTags('Inbound Parse')
 export class InboundParseController {
   constructor(private getMxRecordUsecase: GetMxRecord) {}
 
