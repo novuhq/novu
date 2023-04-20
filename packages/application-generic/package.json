@@ -69,7 +69,7 @@
     "@novu/netcore": "^0.13.0",
     "@novu/node": "^0.13.0",
     "@novu/nodemailer": "^0.13.0",
-    "@novu/onesignal": "^0.13.0",
+    "@novu/one-signal": "^0.13.0",
     "@novu/outlook365": "^0.13.0",
     "@novu/plivo": "^0.13.0",
     "@novu/postmark": "^0.13.0",
