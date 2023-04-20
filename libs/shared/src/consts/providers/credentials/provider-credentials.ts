@@ -452,6 +452,7 @@ export const pushWebhookConfig: IConfigCredentials[] = [
     description: 'the secret used to sign webhooks calls',
     required: true,
   },
+  ...pushConfigBase,
 ];
 
 export const apnsConfig: IConfigCredentials[] = [
