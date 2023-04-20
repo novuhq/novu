@@ -9,7 +9,7 @@ export class PushWebhookHandler extends BasePushHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    if (!credentials.apiKey) {
+    if (!credentials.baseUrl || !credentials.secretKey) {
       throw Error('Config is not valid for push-webhook provider');
     }
 
