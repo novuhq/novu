@@ -64,9 +64,7 @@ describe('Changes Screen', function () {
 
   it('should promote all changes with promote all btn', function () {
     cy.intercept('**/v1/changes?promoted=false&page=0&limit=10').as('changes');
-    cy.intercept('**/v1/changes/bulk/apply', (req) => {
-      cy.log(req.body);
-    }).as('bulk-apply');
+    cy.intercept('**/v1/changes/bulk/apply').as('bulk-apply');
 
     createNotification();
     cy.waitForNetworkIdle(1000);
@@ -78,7 +76,9 @@ describe('Changes Screen', function () {
     cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('have.length', 2);
     cy.wait(['@changes']);
     cy.awaitAttachedGetByTestId('promote-all-btn').click({ force: true });
-    cy.wait(['@bulk-apply']);
+    cy.wait(['@bulk-apply']).then((interception) => {
+      cy.log(interception[0].request.body);
+    });
 
     cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('not.exist');
 
