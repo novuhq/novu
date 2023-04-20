@@ -41,4 +41,6 @@ export class CredentialsDto {
   ignoreTls?: boolean;
   @ApiPropertyOptional()
   tlsOptions?: Record<string, unknown>;
+  @ApiPropertyOptional()
+  baseUrl?: string;
 }

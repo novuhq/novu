@@ -76,6 +76,7 @@ export enum PushProviderIdEnum {
   FCM = 'fcm',
   APNS = 'apns',
   EXPO = 'expo',
+  PushWebhook = 'push-webhook',
 }
 
 export enum InAppProviderIdEnum {
