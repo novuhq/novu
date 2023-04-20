@@ -9,6 +9,12 @@ on:
   # Execute it on opening any pull request
   pull_request:
 jobs:
+  spellcheck: # run the action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: streetsidesoftware/cspell-action@v2
+
   # Get branch info
   branch-info:
     runs-on: ubuntu-latest
