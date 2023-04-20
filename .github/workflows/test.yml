@@ -69,7 +69,7 @@ jobs:
     timeout-minutes: 80
     strategy:
       # Run in parallel
-      max-parallel: 4
+      max-parallel: 10
       # One job for each different project and node version
       matrix:
         projectName: ${{ fromJson(needs.get-affected.outputs.test-e2e) }}
@@ -84,7 +84,6 @@ jobs:
           projects: ${{matrix.projectName}}
 
       - uses: ./.github/actions/start-localstack
-        if: ${{matrix.projectName == '@novu/api' }}
 
       - uses: ./.github/actions/run-worker
         if: ${{matrix.projectName == '@novu/api' }}
