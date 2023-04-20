@@ -9,7 +9,7 @@ on:
   # Execute it on opening any pull request
   pull_request:
 jobs:
-  nx:
+  get-affected:
     name: Nx Affected
     runs-on: ubuntu-20.04
     outputs:
