@@ -149,7 +149,7 @@ export class CompileEmailTemplate {
   public static addPreheader(content: string): string {
     // "&nbsp;&zwnj;&nbsp;&zwnj;" is needed to spacing away the rest of the email from the preheader area in email clients
     return content?.replace(
-      /<body[^>]*>/,
+      /<body\b[^>]*>/,
       `$&{{#if preheader}}
           <div style="display: none; max-height: 0px; overflow: hidden;">
             {{preheader}}
