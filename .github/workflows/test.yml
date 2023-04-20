@@ -1,8 +1,5 @@
 name: Testing
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-# Events configuration
+
 on:
   # Execute it on pushing to next branches
   push:
