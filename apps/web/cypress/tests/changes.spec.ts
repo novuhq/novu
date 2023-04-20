@@ -88,13 +88,46 @@ describe('Changes Screen', function () {
 
       switchEnvironment('Production');
       cy.waitForNetworkIdle(1000);
-
-      cy.waitLoadTemplatePage(() => {
-        cy.visit('/templates');
-        cy.waitForNetworkIdle(1000);
-        cy.awaitAttachedGetByTestId('notifications-template').find('tbody tr').should('have.length', 2);
-      });
     });
+
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/templates');
+    });
+
+    cy.waitForNetworkIdle(1000);
+    cy.awaitAttachedGetByTestId('notifications-template').find('tbody tr').should('have.length', 2);
+  });
+  it('should promote all changes with promote all btn 2', function () {
+    cy.intercept('**/v1/changes?promoted=false&page=0&limit=10').as('changes');
+    cy.intercept('**/v1/changes/bulk/apply').as('bulk-apply');
+    cy.intercept('**/notification-templates**').as('notificationTemplates');
+
+    createNotification();
+    cy.waitForNetworkIdle(1000);
+    createNotification();
+    cy.waitForNetworkIdle(1000);
+
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/changes');
+      cy.waitForNetworkIdle(1000);
+      cy.wait(['@changes']);
+      cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('have.length', 2);
+      cy.wait(['@changes']);
+      cy.intercept('**/v1/changes?promoted=false&page=0&limit=10').as('changes-2');
+      cy.awaitAttachedGetByTestId('promote-all-btn').click({ force: true });
+      cy.wait(['@bulk-apply']);
+      cy.wait(['@changes-2']);
+      cy.wait(['@changes-2']);
+
+      cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('not.exist');
+
+      switchEnvironment('Production');
+      cy.waitForNetworkIdle(1000);
+    });
+
+    cy.visit('/templates');
+    cy.wait('@notificationTemplates');
+    cy.awaitAttachedGetByTestId('notifications-template').find('tbody tr').should('have.length', 2);
   });
 });
 
