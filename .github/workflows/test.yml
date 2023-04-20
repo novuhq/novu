@@ -9,6 +9,27 @@ on:
   # Execute it on opening any pull request
   pull_request:
 jobs:
+  # Get branch info
+  branch-info:
+    runs-on: ubuntu-latest
+    steps:
+      # Get current branch name
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.2
+      # Get base branch name to compare with. Base branch on a PR, "main" branch on pushing.
+      - name: Get base branch name
+        id: get-base-branch-name
+        run: |
+          if [[ "${{github.event.pull_request.base.ref}}" != "" ]]; then
+            echo "::set-output name=branch::${{github.event.pull_request.base.ref}}"
+          else
+            echo "::set-output name=branch::main"
+          fi
+    outputs:
+      # Export the branch names as output to be able to use it in other jobs
+      base-branch-name: ${{ steps.get-base-branch-name.outputs.branch }}
+      branch-name: ${{ steps.branch-name.outputs.current_branch }}
   get-affected:
     name: Nx Affected
     runs-on: ubuntu-20.04
