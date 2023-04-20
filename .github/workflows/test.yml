@@ -1,0 +1,18 @@
+name: Testing
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+# Events configuration
+on:
+  # Execute it on pushing to next branches
+  push:
+    branches:
+      - next
+      - main
+  # Execute it on opening any pull request
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'test'

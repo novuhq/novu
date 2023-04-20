@@ -466,10 +466,10 @@ export class MessageMatcher {
     if (variables.subscriber) {
       payload.subscriber = variables.subscriber;
     } else {
-      payload.subscriber = await this.subscriberRepository.findOne({
-        _id: command.subscriberId,
-        _environmentId: command.environmentId,
-      });
+      payload.subscriber = await this.subscriberRepository.findBySubscriberId(
+        command.environmentId,
+        command.subscriberId
+      );
     }
 
     if (variables.payload) {
