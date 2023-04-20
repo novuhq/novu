@@ -1,4 +1,4 @@
-import { apnsConfig, fcmConfig, expoConfig, onesignalConfig } from '../credentials';
+import { apnsConfig, fcmConfig, expoConfig, oneSignalConfig } from '../credentials';
 import { PushProviderIdEnum } from '../provider.enum';
 import { IProviderConfig } from '../provider.interface';
 
@@ -6,10 +6,10 @@ import { ChannelTypeEnum } from '../../../types';
 
 export const pushProviders: IProviderConfig[] = [
   {
-    id: PushProviderIdEnum.ONESIGNAL,
+    id: PushProviderIdEnum.OneSignal,
     displayName: 'OneSignal',
     channel: ChannelTypeEnum.PUSH,
-    credentials: onesignalConfig,
+    credentials: oneSignalConfig,
     docReference: 'https://documentation.onesignal.com/reference/create-notification',
     logoFileName: { light: 'onesignal.svg', dark: 'onesignal.svg' },
   },

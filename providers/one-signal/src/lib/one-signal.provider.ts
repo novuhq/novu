@@ -6,8 +6,8 @@ import {
 } from '@novu/stateless';
 import * as OneSignal from 'onesignal-node';
 
-export class OnesignalPushProvider implements IPushProvider {
-  id = 'onesignal';
+export class OneSignalPushProvider implements IPushProvider {
+  id = 'one-signal';
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
 
   private oneSignal: OneSignal.Client;

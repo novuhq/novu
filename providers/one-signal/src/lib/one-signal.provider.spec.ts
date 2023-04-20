@@ -1,7 +1,7 @@
-import { OnesignalPushProvider } from './onesignal.provider';
+import { OneSignalPushProvider } from './one-signal.provider';
 
-test('should trigger onesignal library correctly', async () => {
-  const provider = new OnesignalPushProvider({
+test('should trigger OneSignal library correctly', async () => {
+  const provider = new OneSignalPushProvider({
     appId: 'test-app-id',
     apiKey: 'test-key',
   });

@@ -420,7 +420,7 @@ export const expoConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
-export const onesignalConfig: IConfigCredentials[] = [
+export const oneSignalConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
     displayName: 'Application ID',

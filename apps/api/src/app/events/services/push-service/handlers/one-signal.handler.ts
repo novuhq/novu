@@ -1,5 +1,5 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { OnesignalPushProvider } from '@novu/onesignal';
+import { OneSignalPushProvider } from '@novu/one-signal';
 import { BasePushHandler } from './base.handler';
 import { ICredentials } from '@novu/dal';
 
@@ -13,7 +13,7 @@ export class OneSignalHandler extends BasePushHandler {
       throw Error('Config is not valid for onesignal');
     }
 
-    this.provider = new OnesignalPushProvider({
+    this.provider = new OneSignalPushProvider({
       appId: credentials.applicationId,
       apiKey: credentials.apiKey,
     });
