@@ -1,13 +1,11 @@
 import {
   ChannelTypeEnum,
-  ISendMessageSuccessResponse,
   IPushOptions,
   IPushProvider,
+  ISendMessageSuccessResponse,
 } from '@novu/stateless';
-
 import crypto from 'crypto';
-import axios, { AxiosResponse } from 'axios';
-import { setTimeout } from 'timers/promises';
+import axios from 'axios';
 
 export class PushWebhookPushProvider implements IPushProvider {
   readonly id = 'push-webhook';
@@ -27,31 +25,13 @@ export class PushWebhookPushProvider implements IPushProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const bodyData = this.createBody(options);
     const hmacValue = this.computeHmac(bodyData);
-    let sent = false;
 
-    let response: undefined | AxiosResponse;
-
-    for (
-      let retries = 0;
-      !sent && retries < this.config.retryCount;
-      retries++
-    ) {
-      try {
-        response = await axios.post(this.config.webhookUrl, bodyData, {
-          headers: {
-            'content-type': 'application/json',
-            'X-Novu-Signature': hmacValue,
-          },
-        });
-        sent = true;
-      } catch (error) {
-        await setTimeout(this.config.retryDelay);
-      }
-    }
-
-    if (!sent) {
-      throw new Error('webhook send failed !');
-    }
+    const response = await axios.post(this.config.webhookUrl, bodyData, {
+      headers: {
+        'content-type': 'application/json',
+        'X-Novu-Signature': hmacValue,
+      },
+    });
 
     return {
       id: response.data.id,
