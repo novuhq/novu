@@ -620,3 +620,19 @@ export const smsCentralConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const africastalkingConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
