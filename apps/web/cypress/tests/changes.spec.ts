@@ -63,7 +63,9 @@ describe('Changes Screen', function () {
   });
 
   it('should promote all changes with promote all btn', function () {
-    cy.intercept('**/v1/changes?promoted=false&page=0&limit=10').as('changes');
+    cy.intercept('**/v1/changes?promoted=false&page=0&limit=10', (req) => {
+      console.log(req.body);
+    }).as('changes');
     cy.intercept('**/v1/changes/bulk/apply').as('bulk-apply');
 
     createNotification();
