@@ -90,8 +90,9 @@ describe('Changes Screen', function () {
       cy.waitForNetworkIdle(1000);
 
       cy.visit('/templates');
-
-      cy.awaitAttachedGetByTestId('notifications-template').find('tbody tr').should('have.length', 2);
+      cy.waitLoadTemplatePage(() => {
+        cy.awaitAttachedGetByTestId('notifications-template').find('tbody tr').should('have.length', 2);
+      });
     });
   });
 });
