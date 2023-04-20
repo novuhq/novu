@@ -71,7 +71,7 @@ jobs:
       max-parallel: 4
       # One job for each different project and node version
       matrix:
-        projectName: ${{fromJson(needs.get-affected.outputs.test-unit)}}
+        projectName: ${{ fromJson(needs.get-affected.outputs.test-e2e) }}
     steps:
-      - run: echo ${{ fromJson(needs.get-affected.outputs.test-e2e)[0] }}
+      - run: echo ${{ fromJson(needs.get-affected.outputs.test-e2e) }}
 
