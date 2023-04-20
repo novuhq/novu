@@ -103,33 +103,6 @@ export class SendMessagePush extends SendMessageBase {
       return;
     }
 
-    const integration = await this.getIntegration(
-      GetDecryptedIntegrationsCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        channelType: ChannelTypeEnum.PUSH,
-        findOne: true,
-        active: true,
-        userId: command.userId,
-      })
-    );
-    if (!integration) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-
-      return;
-    }
-
-    const overrides = command.overrides[integration.providerId] || {};
-
     const pushChannels =
       subscriber.channels?.filter((chan) =>
         Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
@@ -153,48 +126,74 @@ export class SendMessagePush extends SendMessageBase {
       return;
     }
 
-    if (integration) {
-      for (const channel of pushChannels) {
-        if (!channel.credentials?.deviceTokens) {
-          await this.createExecutionDetails.execute(
-            CreateExecutionDetailsCommand.create({
-              ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-              detail: DetailEnum.PUSH_MISSING_DEVICE_TOKENS,
-              source: ExecutionDetailsSourceEnum.INTERNAL,
-              status: ExecutionDetailsStatusEnum.FAILED,
-              isTest: false,
-              isRetry: false,
-            })
-          );
-
-          continue;
-        }
-
-        await this.sendMessage(
-          integration,
-          channel.credentials.deviceTokens,
-          title,
-          content,
-          command,
-          notification,
-          command.payload,
-          overrides,
-          channel.providerId
+    let sent = false;
+    for (const channel of pushChannels) {
+      if (!channel.credentials?.deviceTokens) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.PUSH_MISSING_DEVICE_TOKENS,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+          })
         );
+
+        continue;
       }
 
+      const integration = await this.getIntegration(
+        GetDecryptedIntegrationsCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          channelType: ChannelTypeEnum.PUSH,
+          providerId: channel.providerId,
+          findOne: true,
+          active: true,
+          userId: command.userId,
+        })
+      );
+
+      if (!integration) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+          })
+        );
+
+        return;
+      }
+
+      const overrides = command.overrides[integration.providerId] || {};
+
+      sent = true;
+      await this.sendMessage(
+        integration,
+        channel.credentials.deviceTokens,
+        title,
+        content,
+        command,
+        notification,
+        command.payload,
+        overrides,
+        channel.providerId
+      );
+    }
+
+    if (sent) {
       return;
     }
 
-    await this.sendErrors(pushChannels, command, notification, integration);
+    await this.sendErrors(pushChannels, command, notification);
   }
 
-  private async sendErrors(
-    pushChannels,
-    command: SendMessageCommand,
-    notification: NotificationEntity,
-    integration: IntegrationEntity
-  ) {
+  private async sendErrors(pushChannels, command: SendMessageCommand, notification: NotificationEntity) {
     if (!pushChannels) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -272,7 +271,7 @@ export class SendMessagePush extends SendMessageBase {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: DetailEnum.MESSAGE_SENT,
+          detail: `${DetailEnum.MESSAGE_SENT}: ${integration.providerId}`,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
