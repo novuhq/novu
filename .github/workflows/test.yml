@@ -1,4 +1,7 @@
-name: Testing
+name: Testing Pipeline
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 on:
   # Execute it on pushing to next branches
