@@ -77,7 +77,7 @@ describe('Changes Screen', function () {
     cy.wait(['@changes']);
     cy.awaitAttachedGetByTestId('promote-all-btn').click({ force: true });
     cy.wait(['@bulk-apply']).then((interception) => {
-      cy.log(interception[0].request.body);
+      cy.log(JSON.stringify(interception));
     });
 
     cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('not.exist');
