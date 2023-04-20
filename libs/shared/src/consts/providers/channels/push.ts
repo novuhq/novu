@@ -11,7 +11,7 @@ export const pushProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.PUSH,
     credentials: oneSignalConfig,
     docReference: 'https://documentation.onesignal.com/reference/create-notification',
-    logoFileName: { light: 'onesignal.svg', dark: 'onesignal.svg' },
+    logoFileName: { light: 'one-signal.svg', dark: 'one-signal.svg' },
   },
   {
     id: PushProviderIdEnum.FCM,
