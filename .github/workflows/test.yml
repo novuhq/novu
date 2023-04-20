@@ -83,3 +83,9 @@ jobs:
           targets: lint
           projects: ${{matrix.projectName}}
 
+      - uses: ./.github/actions/start-localstack
+        if: ${{matrix.projectName === "@novu/api" }}
+
+      - uses: ./.github/actions/run-worker
+        if: ${{matrix.projectName === "@novu/api" }}
+
