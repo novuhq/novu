@@ -12,6 +12,14 @@ on:
   # Execute it on opening any pull request
   pull_request:
 jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v3
+      - name: 'Dependency Review'
+        uses: actions/dependency-review-action@v3
+
   spellcheck: # run the action
     runs-on: ubuntu-latest
     steps:

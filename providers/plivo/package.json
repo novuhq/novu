@@ -18,7 +18,7 @@
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
     "test": "run-s test:*",
-    "test:lint": "eslint src --ext .ts",
+    "lint": "eslint src --ext .ts",
     "test:unit": "jest src --passWithNoTests",
     "check-cli": "run-s test diff-integration-tests check-integration-tests",
     "check-integration-tests": "run-s check-integration-test:*",
