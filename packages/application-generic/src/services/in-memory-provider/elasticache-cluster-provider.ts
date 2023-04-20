@@ -83,11 +83,14 @@ export const getElasticacheClusterProviderConfig =
     };
   };
 
-export const getElasticacheCluster = (): Cluster | undefined => {
+export const getElasticacheCluster = (
+  enableAutoPipelining?: boolean
+): Cluster | undefined => {
   const { instances } = getElasticacheClusterProviderConfig();
 
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
+    enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     enableReadyCheck: true,
     redisOptions: {
@@ -98,11 +101,13 @@ export const getElasticacheCluster = (): Cluster | undefined => {
     /*
      *  Disabled in Prod as affects performance
      */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'prod',
+    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
     slotsRefreshTimeout: 10000,
   };
 
-  Logger.log(`Initializing Elasticache Cluster service`);
+  Logger.log(
+    `Initializing Elasticache Cluster Provider with ${instances?.length} instances and auto-pipelining as ${options.enableAutoPipelining}`
+  );
 
   if (instances && instances.length > 0) {
     return new Redis.Cluster(instances, options);
