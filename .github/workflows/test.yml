@@ -59,10 +59,10 @@ jobs:
             echo "::set-output name=test-e2e::$(node scripts/print-affected-array.js test:e2e --all)"
           else
             echo "Running PR origin/${{needs.branch-info.outputs.base-branch-name}}"
-            echo "::set-output name=test-unit::$(node scripts/print-affected-array.js test:unit origin/${{needs.branch-info.outputs.base-branch-name}})"
+            echo "::set-output name=test-unit::$(node scripts/print-affected-array.js test origin/${{needs.branch-info.outputs.base-branch-name}})"
             echo "::set-output name=test-e2e::$(node scripts/print-affected-array.js test:e2e origin/${{needs.branch-info.outputs.base-branch-name}})"
           fi
-  test:
+  test_e2e:
     runs-on: ubuntu-latest
     needs: [get-affected]
     if:  ${{ fromJson(needs.get-affected.outputs.test-e2e)[0] }}
@@ -95,3 +95,23 @@ jobs:
           targets: test:e2e, test
           projects: ${{matrix.projectName}}
 
+  test_unit:
+    runs-on: ubuntu-latest
+    needs: [get-affected]
+    if:  ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
+    timeout-minutes: 80
+    strategy:
+      # Run in parallel
+      max-parallel: 10
+      # One job for each different project and node version
+      matrix:
+        projectName: ${{ fromJson(needs.get-affected.outputs.test-unit) }}
+    steps:
+      - run: echo ${{ matrix.projectName }}
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/setup-redis-cluster
+      - uses: mansagroup/nrwl-nx-action@v3
+        with:
+          targets: lint,build,test
+          projects: ${{matrix.projectName}}
