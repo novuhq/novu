@@ -15,6 +15,7 @@ import {
   RedisOptions,
 } from './redis-provider';
 import {
+  ChainableCommander,
   Cluster,
   ClusterOptions,
   getRedisCluster,
@@ -29,6 +30,7 @@ type InMemoryProviderConfig =
   | IElasticacheClusterProviderConfig
   | IRedisProviderConfig
   | IRedisClusterProviderConfig;
+export type Pipeline = ChainableCommander;
 
 @Injectable()
 export class InMemoryProviderService {
