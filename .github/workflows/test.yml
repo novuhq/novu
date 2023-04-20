@@ -31,8 +31,9 @@ jobs:
       base-branch-name: ${{ steps.get-base-branch-name.outputs.branch }}
       branch-name: ${{ steps.branch-name.outputs.current_branch }}
   get-affected:
+    needs: [ branch-info ]
     name: Nx Affected
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
