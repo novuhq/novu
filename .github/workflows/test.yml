@@ -60,6 +60,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-project
+        with:
+          slim: 'true'
 
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
@@ -92,8 +94,10 @@ jobs:
       - run: echo '${{ needs.get-affected.outputs.test-providers }}'
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
-      - uses: ./.github/actions/setup-redis-cluster
-      - run: pnpm test:providers
+      - uses: mansagroup/nrwl-nx-action@v3
+        with:
+          targets: lint,build,test
+          projects: ${{join(fromJson(needs.get-affected.outputs.test-providers), ',')}}
 
   test_e2e:
     runs-on: ubuntu-latest
