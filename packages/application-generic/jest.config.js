@@ -5,4 +5,5 @@ module.exports = {
   moduleNameMapper: {
     axios: 'axios/dist/node/axios.cjs',
   },
+  setupFiles: ['./jest.setup.js'],
 };

@@ -85,6 +85,20 @@ describe('In-memory Provider Service', () => {
       expect(inMemoryProviderService.getStatus()).toEqual('ready');
     });
 
+    describe('TEMP: Check if enableAutoPipelining true is set properly in Cluster', () => {
+      it('enableAutoPipelining is enabled', async () => {
+        const clusterWithPipelining = new InMemoryProviderService(true);
+
+        await clusterWithPipelining.delayUntilReadiness();
+
+        expect(clusterWithPipelining.getStatus()).toEqual('ready');
+        expect(
+          clusterWithPipelining.inMemoryProviderClient.options
+            .enableAutoPipelining
+        ).toEqual(true);
+      });
+    });
+
     describe('Set up', () => {
       it('should have the right config', () => {
         const { inMemoryProviderConfig } = inMemoryProviderService;
@@ -124,6 +138,9 @@ describe('In-memory Provider Service', () => {
 
         expect(inMemoryProviderClient!.status).toEqual('ready');
         expect(inMemoryProviderClient!.isCluster).toEqual(true);
+        expect(inMemoryProviderClient.options.enableAutoPipelining).toEqual(
+          false
+        );
 
         const options = inMemoryProviderService.getOptions();
         expect(options).toEqual(undefined);

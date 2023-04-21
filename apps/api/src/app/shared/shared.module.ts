@@ -78,15 +78,17 @@ const dalService = new DalService();
 
 const inMemoryProviderService = {
   provide: InMemoryProviderService,
-  useFactory: () => {
-    return new InMemoryProviderService();
+  useFactory: (enableAutoPipelining?: boolean) => {
+    return new InMemoryProviderService(enableAutoPipelining);
   },
 };
 
 const cacheService = {
   provide: CacheService,
   useFactory: () => {
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+    // TODO: Temporary to test in Dev. Should be removed.
+    const enableAutoPipelining = process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(enableAutoPipelining);
 
     return new CacheService(factoryInMemoryProviderService);
   },

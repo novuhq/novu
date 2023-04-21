@@ -4,9 +4,15 @@ import { QUERY_PREFIX } from './key-builders';
 import {
   InMemoryProviderClient,
   InMemoryProviderService,
+  Pipeline,
 } from '../in-memory-provider';
 
 const LOG_CONTEXT = 'CacheService';
+
+enum CacheServiceActionsEnum {
+  DEL_QUERY = 'delQuery',
+  SET_QUERY = 'setQuery',
+}
 
 export interface ICacheService {
   set(key: string, value: string, options?: CachingConfig);
@@ -64,7 +70,8 @@ export class CacheService implements ICacheService {
       );
 
       pipeline.set(key, value, 'EX', this.getTtlInSeconds(options));
-      await pipeline.exec();
+
+      await this.capturedExec(pipeline, CacheServiceActionsEnum.SET_QUERY, key);
     }
   }
 
@@ -99,7 +106,25 @@ export class CacheService implements ICacheService {
       });
       // invalidate queries set
       pipeline.del(key);
+
+      await this.capturedExec(pipeline, CacheServiceActionsEnum.DEL_QUERY, key);
+    }
+  }
+
+  private async capturedExec(
+    pipeline: Pipeline,
+    action: CacheServiceActionsEnum,
+    key: string
+  ): Promise<void> {
+    try {
       await pipeline.exec();
+    } catch (error) {
+      Logger.error(
+        `Failed to execute pipeline action ${action} for key ${key}`,
+        LOG_CONTEXT,
+        error
+      );
+      throw error;
     }
   }
 

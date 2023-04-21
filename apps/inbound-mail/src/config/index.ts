@@ -3,7 +3,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const envFileMapper = {
-  prod: '.env.production',
+  production: '.env.production',
   test: '.env.test',
   ci: '.env.ci',
   local: '.env',
