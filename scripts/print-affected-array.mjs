@@ -1,7 +1,9 @@
-const path = require('path');
 import { getPackageFolders } from './get-packages-folder.mjs';
-const spawn = require('cross-spawn');
+import spawn from 'cross-spawn';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const processArguments = process.argv.slice(2);
 
 const ALL_FLAG = '--all';

@@ -65,7 +65,8 @@
     "pnpm-context": "node scripts/pnpm-context.mjs",
     "get-packages-folder": "node scripts/get-packages-folder.mjs",
     "jarvis": "node scripts/jarvis.js",
-    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh"
+    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
+    "get-affected": "node scripts/print-affected-array.mjs"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",

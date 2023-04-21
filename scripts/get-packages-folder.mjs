@@ -2,8 +2,7 @@ import { readProjects } from '@pnpm/filter-workspace-packages';
 
 (async () => {
   const results = await getPackageFolders();
-  console.log(JSON.stringify(results));
-})()
+})();
 
 
 export async function getPackageFolders() {
