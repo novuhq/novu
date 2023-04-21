@@ -1,10 +1,5 @@
 import { readProjects } from '@pnpm/filter-workspace-packages';
 
-(async () => {
-  const results = await getPackageFolders();
-})();
-
-
 export async function getPackageFolders() {
   const path = process.cwd();
   const content = await readProjects(path, [{

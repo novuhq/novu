@@ -22,6 +22,8 @@ class CliLogs {
   }
 
   log(log) {
+    if (log.includes('print-affected')) return;
+
     const cleanLog = log.trim();
     if (cleanLog.length) {
       this._logs.push(cleanLog);
