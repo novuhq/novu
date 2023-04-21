@@ -436,6 +436,7 @@
     "sscan",
     "vishnudxb",
     "autopipelining",
+    "maxtimeout",
     "clsx"
   ],
   "flagWords": [],

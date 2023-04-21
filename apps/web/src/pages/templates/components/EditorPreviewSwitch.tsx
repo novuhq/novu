@@ -13,6 +13,8 @@ export const EditorPreviewSwitch = ({ view, setView }) => {
           background: 'transparent',
           border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
           borderRadius: '30px',
+          width: '100%',
+          maxWidth: '300px',
         },
         label: {
           fontSize: '14px',

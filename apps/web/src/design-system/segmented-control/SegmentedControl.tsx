@@ -4,6 +4,7 @@ import {
   SegmentedControlProps,
   SegmentedControlItem,
   LoadingOverlay,
+  Sx,
 } from '@mantine/core';
 import useStyles from './SegmentedControl.styles';
 import { colors } from '../config';
@@ -15,6 +16,9 @@ interface ISegmentedControlProps {
   value?: string;
   onChange?(value: string): void;
   loading?: boolean;
+  fullWidth?: boolean;
+  sx?: Sx | (Sx | undefined)[];
+  disabled?: boolean;
 }
 
 /**

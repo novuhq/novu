@@ -6,6 +6,7 @@ import type { IForm } from './formTypes';
 import { Textarea } from '../../../design-system';
 import { useEnvController, useVariablesManager } from '../../../hooks';
 import { VariableManager } from './VariableManager';
+import { StepSettings } from '../workflow/SideBar/StepSettings';
 
 const templateFields = ['content', 'title'];
 
@@ -27,13 +28,18 @@ export function TemplatePushEditor({
 
   return (
     <>
-      {!isIntegrationActive ? <LackIntegrationError channel="Push" channelType={ChannelTypeEnum.PUSH} /> : null}
+      {!isIntegrationActive ? (
+        <LackIntegrationError channelType={ChannelTypeEnum.PUSH} iconHeight={34} iconWidth={34} />
+      ) : null}
+      <StepSettings index={index} />
       <Controller
         name={`steps.${index}.template.title` as any}
         defaultValue=""
         control={control}
         render={({ field }) => (
           <Textarea
+            mt={24}
+            mb={24}
             {...field}
             data-test-id="pushNotificationTitle"
             error={errors?.steps ? errors.steps[index]?.template?.title?.message : undefined}
