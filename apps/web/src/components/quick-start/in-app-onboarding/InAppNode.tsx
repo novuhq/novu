@@ -1,7 +1,6 @@
 import { Handle, Position } from 'react-flow-renderer';
 
 import { TurnOnGradient } from '../../../design-system/icons/gradient/TurnOnGradient';
-import { Button } from '../../../design-system';
 
 import { NodeStep } from '../common';
 

@@ -1,11 +1,9 @@
 import styled from '@emotion/styled';
-import { Popover, useMantineColorScheme } from '@mantine/core';
-import { NovuProvider, NotificationCenter } from '@novu/notification-center';
-import React from 'react';
+import { useMantineColorScheme } from '@mantine/core';
+import { NotificationCenter, NovuProvider } from '@novu/notification-center';
 import { API_ROOT, WS_URL } from '../../../config';
 import { useEnvController } from '../../../hooks';
 import { onBoardingSubscriberId } from '../../../pages/quick-start/consts';
-import { useAuthContext } from '../../providers/AuthProvider';
 
 export function SandboxNotificationCenter() {
   const { environment } = useEnvController();

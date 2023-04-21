@@ -1,32 +1,39 @@
-import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { Stack, Timeline } from '@mantine/core';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
-import { ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
+import {
+  ActorTypeEnum,
+  ICreateNotificationTemplateDto,
+  INotificationTemplate,
+  StepTypeEnum,
+  SystemAvatarIconEnum,
+} from '@novu/shared';
 
+import { getApiKeys } from '../../../api/environment';
+import { getInAppActivated } from '../../../api/integration';
+import { createTemplate } from '../../../api/notification-templates';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { When } from '../../../components/utils/When';
+import { API_ROOT, WS_URL } from '../../../config';
+import { ROUTES } from '../../../constants/routes.enum';
+import { colors } from '../../../design-system';
+import { useEnvController, useNotificationGroup, useTemplates } from '../../../hooks';
+import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
-import { useNotificationGroup, useTemplates, useEnvController } from '../../../hooks';
+import { SetupStatus } from '../components/SetupStatus';
 import {
   API_KEY,
   APPLICATION_IDENTIFIER,
   BACKEND_API_URL,
   BACKEND_SOCKET_URL,
+  demoSetupSecondaryTitle,
   frameworkInstructions,
   notificationTemplateName,
   OnBoardingAnalyticsEnum,
 } from '../consts';
-import { createTemplate } from '../../../api/notification-templates';
-import { LoaderProceedTernary } from '../components/LoaderProceedTernary';
-import { PrismOnCopy } from '../../settings/tabs/components/Prism';
-import { When } from '../../../components/utils/When';
-import { colors } from '../../../design-system';
-import { getInAppActivated } from '../../../api/integration';
-import { useSegment } from '../../../components/providers/SegmentProvider';
-import { getApiKeys } from '../../../api/environment';
-import { API_ROOT, WS_URL } from '../../../config';
-import { ROUTES } from '../../../constants/routes.enum';
 
 export function Setup() {
   const segment = useSegment();
@@ -45,7 +52,7 @@ export function Setup() {
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
   const goBackRoute = framework === 'demo' ? ROUTES.QUICK_START_NOTIFICATION_CENTER : ROUTES.QUICK_START_SETUP;
-
+  const secondaryTitle = framework === 'demo' ? demoSetupSecondaryTitle : '';
   const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
     INotificationTemplate,
     { error: string; message: string; statusCode: number },
@@ -78,13 +85,17 @@ export function Setup() {
         {
           template: {
             type: StepTypeEnum.IN_APP,
-            content: 'Welcome to Novu! <b>visit the cloud admin panel</b> managing this message',
+            content: 'Test notification {{number}}',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.SUCCESS,
+            },
           },
         },
       ],
-    } as ICreateNotificationTemplateDto;
+    };
 
-    await createNotificationTemplate(payloadToCreate);
+    await createNotificationTemplate(payloadToCreate as unknown as ICreateNotificationTemplateDto);
   }
 
   function handleOnCopy(copiedStepIndex: number) {
@@ -93,7 +104,7 @@ export function Setup() {
   }
 
   return (
-    <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true} goBackPath={goBackRoute}>
+    <QuickStartWrapper faq={true} secondaryTitle={secondaryTitle} goBackPath={goBackRoute}>
       <Stack align="center" sx={{ width: '100%' }}>
         <TimelineWrapper>
           <Timeline
@@ -124,11 +135,11 @@ export function Setup() {
                 </Timeline.Item>
               );
             })}
-            <Timeline.Item bullet={instructions?.length + 1} title={'Waiting for your application to connect to Novu'}>
+            <Timeline.Item bullet={instructions?.length + 1} title={'Render the components and run application'}>
               <LoaderWrapper>
-                <LoaderProceedTernary
+                <SetupStatus
                   appInitialized={inAppData.active}
-                  navigatePath={`/quickstart/notification-center/set-up/${framework}/trigger`}
+                  navigatePath={`/quickstart/notification-center/set-up/${framework}/success`}
                 />
               </LoaderWrapper>
             </Timeline.Item>
@@ -161,15 +172,6 @@ export function OpenBrowser() {
     <span style={{ color: colors.B60 }}>
       If your browser did not automatically open, go to localhost at http://localhost:3000
     </span>
-  );
-}
-
-export function TroubleshootingDescription() {
-  return (
-    <Stack align="center" sx={{ gap: '20px' }}>
-      <span>Follow the installation steps and then sit back while we</span>
-      <span>connect to your application</span>
-    </Stack>
   );
 }
 

@@ -1,14 +1,14 @@
 import { Handle, Position } from 'react-flow-renderer';
 
-import { TurnOnGradient } from '../../../design-system/icons/gradient/TurnOnGradient';
 import { Button, colors, shadows, Text, Title } from '../../../design-system';
+import { TurnOnGradient } from '../../../design-system/icons/gradient/TurnOnGradient';
 
-import { NodeStep } from '../common';
-import { Group, Stack, useMantineColorScheme, Popover, createStyles } from '@mantine/core';
-import { Playground } from '../../../design-system/icons/general/Playground';
 import styled from '@emotion/styled';
+import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Playground } from '../../../design-system/icons/general/Playground';
+import { NodeStep } from '../common';
 
 const useStyles = createStyles((theme) => ({
   dropdown: {
