@@ -16,8 +16,13 @@ export const BACKEND_SOCKET_URL = '<BACKEND_SOCKET_URL>';
 // eslint-disable-next-line max-len
 export const setupProject = `cd notification-center-demo && npm run setup:onboarding -- ${APPLICATION_IDENTIFIER} ${API_KEY} ${BACKEND_API_URL} ${BACKEND_SOCKET_URL}`;
 export const npmRunCommand = 'npm run dev';
-export const welcomeDescription = 'Welcome to Novu, let’s get started';
+export const frameworkSetupTitle = 'Choose your go-to framework';
 export const faqUrl = 'https://docs.novu.co/notification-center/FAQ';
+export const notificationCenterDocsUrl = 'https://docs.novu.co/notification-center/getting-started';
+export const discordInviteUrl = 'https://discord.novu.co';
+export const demoSetupSecondaryTitle = 'Follow the installation steps to connect your app';
+export const successScreenTitle = '🎉 Success, your application is connected!';
+export const successScreenSecondaryTitle = 'Create a workflow to start sending notifications.';
 export const getStartedSteps = { first: ROUTES.GET_STARTED, second: ROUTES.GET_STARTED_PREVIEW };
 
 interface ISnippetInstructions {
@@ -27,6 +32,8 @@ interface ISnippetInstructions {
 }
 
 const installReactNotificationCenter = 'npm install @novu/notification-center';
+const installAngularNotificationCenter = 'npm install @novu/notification-center-angular';
+const installVueNotificationCenter = 'npm install @novu/notification-center-vue';
 
 export const reactStarterSnippet = `import React from 'react';
 import {
@@ -163,6 +170,11 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
     key: 'angular',
     value: [
       {
+        instruction: 'First you have to install the package:',
+        snippet: installAngularNotificationCenter,
+        language: 'bash',
+      },
+      {
         instruction: angularInteractions,
         snippet: angularAppSnippet,
       },
@@ -179,6 +191,11 @@ export const frameworkInstructions: { key: string; value: ISnippetInstructions[]
   {
     key: 'vue',
     value: [
+      {
+        instruction: 'First you have to install the package:',
+        snippet: installVueNotificationCenter,
+        language: 'bash',
+      },
       {
         instruction: 'In the main.ts file import the plugin and styles and then use that plugin.',
         snippet: vuePluginSnippet,
@@ -232,6 +249,9 @@ export enum OnBoardingAnalyticsEnum {
   FLOW_SELECTED = 'Quick Start Flow Select',
   TRIGGER_VISIT = 'Trigger Page Visit',
   CLICKED_FAQ = 'Clicked On FAQ',
+  CLICKED_DOCS = 'Clicked On Our Docs',
+  CLICKED_HELP_REQUEST = 'Clicked On Help Request',
+  CLICKED_ASK_COMMUNITY = 'Clicked On Ask Community',
   CLICKED_CREATE_TEMPLATE = 'Clicked On Create Template',
   CLICKED_TRIGGER_EVENT = 'Clicked On Trigger Event',
   COPIED_STEP = 'Copied Snippet',
