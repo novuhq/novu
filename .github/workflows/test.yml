@@ -72,14 +72,14 @@ jobs:
         run: |
           if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{needs.branch-info.outputs.branch-name}}" == "main" ]]; then
             echo "Running ALL"
-            echo "::set-output name=test-unit::$(node scripts/print-affected-array.mjs test:unit --all)"
-            echo "::set-output name=test-e2e::$(node scripts/print-affected-array.mjs test:e2e --all)"
-            echo "::set-output name=test-providers::$(node scripts/print-affected-array.mjs test origin/${{needs.branch-info.outputs.base-branch-name}}) true"
+            echo "::set-output name=test-unit::$(pnpm get-affected test:unit --all)"
+            echo "::set-output name=test-e2e::$(pnpm get-affected test:e2e --all)"
+            echo "::set-output name=test-providers::$(pnpm get-affected test origin/${{needs.branch-info.outputs.base-branch-name}}) true"
           else
             echo "Running PR origin/${{needs.branch-info.outputs.base-branch-name}}"
-            echo "::set-output name=test-providers::$(node scripts/print-affected-array.mjs test origin/${{needs.branch-info.outputs.base-branch-name}}) true"
-            echo "::set-output name=test-unit::$(node scripts/print-affected-array.mjs test origin/${{needs.branch-info.outputs.base-branch-name}})"
-            echo "::set-output name=test-e2e::$(node scripts/print-affected-array.mjs test:e2e origin/${{needs.branch-info.outputs.base-branch-name}})"
+            echo "::set-output name=test-providers::$(pnpm get-affected test origin/${{needs.branch-info.outputs.base-branch-name}}) true"
+            echo "::set-output name=test-unit::$(pnpm get-affected test origin/${{needs.branch-info.outputs.base-branch-name}})"
+            echo "::set-output name=test-e2e::$(pnpm get-affected test:e2e origin/${{needs.branch-info.outputs.base-branch-name}})"
           fi
 
   test_providers:
