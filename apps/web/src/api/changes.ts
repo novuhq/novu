@@ -21,7 +21,5 @@ export async function promoteChange(changeId: string) {
 }
 
 export async function bulkPromoteChanges(changeIds: string[]) {
-  console.log(changeIds);
-
   return api.post(`/v1/changes/bulk/apply`, { changeIds });
 }
