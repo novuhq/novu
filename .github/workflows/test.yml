@@ -87,7 +87,7 @@ jobs:
     needs: [get-affected]
     timeout-minutes: 80
     steps:
-      - run: echo ${{ fromJson(needs.get-affected.outputs.test-providers) }}
+      - run: echo '${{ needs.get-affected.outputs.test-providers }}'
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
