@@ -162,7 +162,7 @@ importers:
       '@nestjs/cli': 9.3.0
       '@nestjs/common': 9.3.12
       '@nestjs/core': 9.3.12
-      '@nestjs/graphql': 10.2.0
+      '@nestjs/graphql': 10.2.1
       '@nestjs/jwt': 9.0.0
       '@nestjs/passport': 9.0.3
       '@nestjs/platform-express': 9.3.12
@@ -242,7 +242,7 @@ importers:
       '@nestjs/axios': 2.0.0_uhnffq3dkwzlnz66svmn6j7ydi
       '@nestjs/common': 9.3.12_welcnyot5bzd5wa2aovbkxpi4i
       '@nestjs/core': 9.3.12_qhubmme3ystyvorrsy6sfc2ome
-      '@nestjs/graphql': 10.2.0_vgnnqnzg3rzr5actpo4ly2om2q
+      '@nestjs/graphql': 10.2.1_vgnnqnzg3rzr5actpo4ly2om2q
       '@nestjs/jwt': 9.0.0_@nestjs+common@9.3.12
       '@nestjs/passport': 9.0.3_ajy2slul3age3kopk444psnhqq
       '@nestjs/platform-express': 9.3.12_ge4qplnzbmfyi5znl534zhtkn4
@@ -1737,7 +1737,7 @@ importers:
       axios: 1.3.5
       codecov: 3.8.3
       cz-conventional-changelog: 3.3.0
-      jest: 27.5.1_ts-node@10.9.1
+      jest: 27.5.1
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       rimraf: 3.0.2
@@ -1987,7 +1987,7 @@ importers:
       '@types/node': 14.18.42
       codecov: 3.8.3
       cz-conventional-changelog: 3.3.0
-      jest: 27.5.1_ts-node@10.9.1
+      jest: 27.5.1
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       rimraf: 3.0.2
@@ -13676,8 +13676,8 @@ packages:
     transitivePeerDependencies:
       - encoding
 
-  /@nestjs/graphql/10.2.0_vgnnqnzg3rzr5actpo4ly2om2q:
-    resolution: {integrity: sha512-N/sca0eZLJIyyvfusZh1eabGnKBYgQ4LmOCvhI7+oDMiWWK4HOhOEeT5MC11bmd0vq850frWW9qqg+3qRKpiXw==}
+  /@nestjs/graphql/10.2.1_vgnnqnzg3rzr5actpo4ly2om2q:
+    resolution: {integrity: sha512-FBzYTymT4oopiGMpej7GTRyhz1BgJxLlXZPUueamC5J9u1WxCwJyETkzBI/zeUkUydlklF/xd5zDd/Md6//hEw==}
     peerDependencies:
       '@apollo/subgraph': ^0.1.5 || ^0.3.0 || ^0.4.0 || ^2.0.0
       '@nestjs/common': ^8.2.3 || ^9.0.0

@@ -30,7 +30,7 @@
     "@nestjs/axios": "~2.0.0",
     "@nestjs/common": "9.3.12",
     "@nestjs/core": "9.3.12",
-    "@nestjs/graphql": "10.2.0",
+    "@nestjs/graphql": "10.2.1",
     "@nestjs/jwt": "9.0.0",
     "@nestjs/passport": "9.0.3",
     "@nestjs/platform-express": "9.3.12",
