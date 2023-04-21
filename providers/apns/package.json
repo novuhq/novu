@@ -24,6 +24,9 @@
     "reset-hard": "git clean -dfx && git reset --hard && yarn",
     "prepare-release": "run-s reset-hard test"
   },
+  "nx": {
+    "tags": ["providers"]
+  },
   "publishConfig": {
     "access": "public"
   },

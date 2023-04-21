@@ -9,6 +9,9 @@
   "repository": "https://github.com/novuhq/novu",
   "license": "MIT",
   "keywords": [],
+  "nx": {
+    "tags": ["scope:providers"]
+  },
   "scripts": {
     "prebuild": "rimraf build",
     "build": "run-p build:*",

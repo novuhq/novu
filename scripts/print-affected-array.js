@@ -1,15 +1,15 @@
 const path = require('path');
 
-const spawn = require("cross-spawn");
+const spawn = require('cross-spawn');
 
 const processArguments = process.argv.slice(2);
 
-const ALL_FLAG = "--all";
+const ALL_FLAG = '--all';
 const TASK_NAME = processArguments[0];
 const BASE_BRANCH_NAME = processArguments[1];
-const ROOT_PATH = path.resolve(__dirname, "..");
-const ENCODING_TYPE = "utf8";
-const NEW_LINE_CHAR = "\n";
+const ROOT_PATH = path.resolve(__dirname, '..');
+const ENCODING_TYPE = 'utf8';
+const NEW_LINE_CHAR = '\n';
 
 class CliLogs {
   constructor() {
@@ -40,7 +40,7 @@ function pnpmRun(...args) {
   return new Promise((resolve, reject) => {
     const processOptions = {
       cwd: ROOT_PATH,
-      env: process.env
+      env: process.env,
     };
 
     pnpmProcess = spawn('pnpm', args, processOptions);
@@ -48,10 +48,10 @@ function pnpmRun(...args) {
     pnpmProcess.stdin.setEncoding(ENCODING_TYPE);
     pnpmProcess.stdout.setEncoding(ENCODING_TYPE);
     pnpmProcess.stderr.setEncoding(ENCODING_TYPE);
-    pnpmProcess.stdout.on("data", logData.log);
-    pnpmProcess.stderr.on("data", logData.log);
+    pnpmProcess.stdout.on('data', logData.log);
+    pnpmProcess.stderr.on('data', logData.log);
 
-    pnpmProcess.on("close", (code) => {
+    pnpmProcess.on('close', (code) => {
       if (code !== 0) {
         reject(logData.joinedLogs);
       } else {
@@ -62,7 +62,11 @@ function pnpmRun(...args) {
 }
 
 function commaSeparatedListToArray(str) {
-  return str.trim().split(",").map(element => element.trim()).filter(element => !!element.length);
+  return str
+    .trim()
+    .split(',')
+    .map((element) => element.trim())
+    .filter((element) => !!element.length);
 }
 
 function getAffectedCommandResult(str) {
@@ -70,29 +74,45 @@ function getAffectedCommandResult(str) {
   if (outputLines.length > 2) {
     return outputLines.slice(-1)[0];
   }
-  return "";
+
+  return '';
 }
 
 async function affectedProjectsContainingTask(taskName, baseBranch) {
   // pnpm nx print-affected --target=[task] --base [base branch] --select=tasks.target.project
-  return commaSeparatedListToArray(getAffectedCommandResult(
-    await pnpmRun("nx", "print-affected", "--target", taskName, "--base", baseBranch, "--select=tasks.target.project")
-  ));
+  return commaSeparatedListToArray(
+    getAffectedCommandResult(
+      await pnpmRun('nx', 'print-affected', '--target', taskName, '--base', baseBranch, '--select=tasks.target.project')
+    )
+  );
 }
 
 async function allProjectsContainingTask(taskName) {
   // pnpm nx print-affected --target=[task] --files package.json --select=tasks.target.project
-  return commaSeparatedListToArray(getAffectedCommandResult(
-    await pnpmRun("nx", "print-affected", "--target", taskName, "--files", "package.json", "--select=tasks.target.project")
-  ));
+  return commaSeparatedListToArray(
+    getAffectedCommandResult(
+      await pnpmRun(
+        'nx',
+        'print-affected',
+        '--target',
+        taskName,
+        '--files',
+        'package.json',
+        '--select=tasks.target.project'
+      )
+    )
+  );
 }
 
 async function printAffectedProjectsContainingTask() {
-  const projects = BASE_BRANCH_NAME === ALL_FLAG ? await allProjectsContainingTask(TASK_NAME) : await affectedProjectsContainingTask(TASK_NAME, BASE_BRANCH_NAME);
+  const projects =
+    BASE_BRANCH_NAME === ALL_FLAG
+      ? await allProjectsContainingTask(TASK_NAME)
+      : await affectedProjectsContainingTask(TASK_NAME, BASE_BRANCH_NAME);
   console.log(JSON.stringify(projects));
 }
 
-printAffectedProjectsContainingTask().catch(error => {
+printAffectedProjectsContainingTask().catch((error) => {
   console.error(error);
   process.exit(1);
 });
