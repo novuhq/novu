@@ -120,6 +120,7 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint,build,test
+          parallel: 5
           projects: ${{join(fromJson(needs.get-affected.outputs.test-providers), ',')}}
 
   test_e2e:
