@@ -84,8 +84,8 @@ jobs:
 
   test_providers:
     runs-on: ubuntu-latest
-    needs: [ get-affected ]
-    if: ${{ fromJson(needs.get-affected.outputs.test-providers)[0] }}
+    needs: [get-affected]
+    if: ${{ fromJson(needs.get-affected.outputs.test-providers) }}
     timeout-minutes: 80
     steps:
       - run: echo ${{ fromJson(needs.get-affected.outputs.test-providers)[0] }}
