@@ -193,6 +193,20 @@ export class SendMessageEmail extends SendMessageBase {
           ...payload,
         })
       ));
+
+      if (this.storeContent()) {
+        await this.messageRepository.update(
+          {
+            _id: message._id,
+            _environmentId: command.environmentId,
+          },
+          {
+            $set: {
+              content,
+            },
+          }
+        );
+      }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 

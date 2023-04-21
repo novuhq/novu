@@ -63,7 +63,7 @@ describe('Should handler the new arrived mail', () => {
     const payload: IUserWebhookPayload = args[1];
 
     // Should compile the payload variables
-    expect(webhook).to.equal(USER_PARSE_WEBHOOK + '/test-env');
+    expect(webhook).to.equal(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
     expect(payload.mail).to.be.ok;
     expect(payload.payload).to.ok;
     expect(payload.template).to.ok;
