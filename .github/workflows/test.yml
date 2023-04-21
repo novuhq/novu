@@ -72,14 +72,14 @@ jobs:
         run: |
           if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{needs.branch-info.outputs.branch-name}}" == "main" ]]; then
             echo "Running ALL"
-            echo "::set-output name=test-unit::$(pnpm run get-affected test:unit --all | tail -n +4)"
-            echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e --all | tail -n +4)"
-            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +4)"
+            echo "::set-output name=test-unit::$(pnpm run get-affected test:unit --all | tail -n +5)"
+            echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e --all | tail -n +5)"
+            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +5)"
           else
             echo "Running PR origin/${{needs.branch-info.outputs.base-branch-name}}"
-            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +4)"
-            echo "::set-output name=test-unit::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} | tail -n +4)"
-            echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e origin/${{needs.branch-info.outputs.base-branch-name}} | tail -n +4)"
+            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +5)"
+            echo "::set-output name=test-unit::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} | tail -n +5)"
+            echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e origin/${{needs.branch-info.outputs.base-branch-name}} | tail -n +5)"
           fi
 
   test_providers:
