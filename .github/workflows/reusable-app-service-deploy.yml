@@ -4,6 +4,10 @@ name: Deploy Service Job
 on:
   workflow_call:
     inputs:
+      environment:
+        required: true
+        type: string
+        allowed: [ 'Development', 'Production' ]
       terraform_workspace:
         required: true
         type: string
@@ -26,7 +30,7 @@ jobs:
   deploy_service:
     runs-on: ubuntu-latest
     timeout-minutes: 80
-    environment: Production
+    environment: ${{ inputs.environment }}
     env:
       TF_WORKSPACE: ${{ inputs.terraform_workspace }}
     permissions:

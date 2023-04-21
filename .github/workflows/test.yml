@@ -181,3 +181,16 @@ jobs:
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
+
+  deploy_dev_api:
+    name: Deploy Dev API
+    needs: [test_e2e, test_unit, build_docker_api]
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') && github.ref == 'refs/heads/next' }}
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    secrets: inherit
+    with:
+      environment: Development
+      service_name: api
+      terraform_workspace: novu-dev
+      # This is a workaround to an issue with matrix outputs
+      docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
