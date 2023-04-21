@@ -87,11 +87,12 @@ jobs:
     needs: [ get-affected ]
     if: ${{ fromJson(needs.get-affected.outputs.test-providers)[0] }}
     timeout-minutes: 80
-  steps:
-    - uses: actions/checkout@v3
-    - uses: ./.github/actions/setup-project
-    - uses: ./.github/actions/setup-redis-cluster
-    - run: pnpm test:providers
+    steps:
+      - run: echo ${{ fromJson(needs.get-affected.outputs.test-providers)[0] }}
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/setup-redis-cluster
+      - run: pnpm test:providers
 
   test_e2e:
     runs-on: ubuntu-latest
