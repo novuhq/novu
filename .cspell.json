@@ -438,7 +438,8 @@
     "autopipelining",
     "maxtimeout",
     "clsx",
-    "africastalking"
+    "africastalking",
+    "africas"
   ],
   "flagWords": [],
   "patterns": [
