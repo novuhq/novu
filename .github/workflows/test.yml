@@ -76,6 +76,20 @@ jobs:
             echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} true | tail -n +5)"
           fi
 
+  test_web:
+    name: Test Web Cypress
+    needs: [ get-affected ]
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/web') }}
+    uses: ./.github/workflows/reusable-web-e2e.yml
+    secrets: inherit
+
+  test_widget:
+    name: Test Widget Cypress
+    needs: [ get-affected ]
+    uses: ./.github/workflows/reusable-widget-e2e.yml
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/notification-center') }}
+    secrets: inherit
+
   build_docker_api:
     name: Build Docker API
     runs-on: ubuntu-latest
