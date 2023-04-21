@@ -112,7 +112,7 @@ export class SendMessagePush extends SendMessageBase {
     delete messagePayload.attachments;
 
     if (!pushChannels.length) {
-      await this.sendErrors(pushChannels, command, notification);
+      await this.sendErrors(command, notification);
 
       return;
     }
@@ -175,21 +175,17 @@ export class SendMessagePush extends SendMessageBase {
     }
   }
 
-  private async sendErrors(pushChannels, command: SendMessageCommand, notification: NotificationEntity) {
-    if (!pushChannels) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-
-      return;
-    }
+  private async sendErrors(command: SendMessageCommand, notification: NotificationEntity) {
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.FAILED,
+        isTest: false,
+        isRetry: false,
+      })
+    );
   }
 
   private async sendMessage(
