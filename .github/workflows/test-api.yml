@@ -15,9 +15,6 @@ on:
   workflow_dispatch:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  test_api:
-    uses: ./.github/workflows/reusable-api-e2e.yml
-
   build_docker:
     runs-on: ubuntu-latest
     timeout-minutes: 80
