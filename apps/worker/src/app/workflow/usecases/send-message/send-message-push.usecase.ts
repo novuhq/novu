@@ -112,21 +112,11 @@ export class SendMessagePush extends SendMessageBase {
     delete messagePayload.attachments;
 
     if (!pushChannels.length) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-        })
-      );
+      await this.sendErrors(pushChannels, command, notification);
 
       return;
     }
 
-    let sent = false;
     for (const channel of pushChannels) {
       if (!channel.credentials?.deviceTokens) {
         await this.createExecutionDetails.execute(
@@ -172,7 +162,6 @@ export class SendMessagePush extends SendMessageBase {
 
       const overrides = command.overrides[integration.providerId] || {};
 
-      sent = true;
       await this.sendMessage(
         integration,
         channel.credentials.deviceTokens,
@@ -181,16 +170,9 @@ export class SendMessagePush extends SendMessageBase {
         command,
         notification,
         command.payload,
-        overrides,
-        channel.providerId
+        overrides
       );
     }
-
-    if (sent) {
-      return;
-    }
-
-    await this.sendErrors(pushChannels, command, notification);
   }
 
   private async sendErrors(pushChannels, command: SendMessageCommand, notification: NotificationEntity) {
@@ -218,8 +200,7 @@ export class SendMessagePush extends SendMessageBase {
     command: SendMessageCommand,
     notification: NotificationEntity,
     payload: object,
-    overrides: object,
-    providerId: string
+    overrides: object
   ) {
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: notification._id,
@@ -235,7 +216,7 @@ export class SendMessagePush extends SendMessageBase {
       title,
       payload: payload as never,
       overrides: overrides as never,
-      providerId,
+      providerId: integration.providerId,
       _jobId: command.jobId,
     });
 
