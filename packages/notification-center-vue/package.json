@@ -10,7 +10,8 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "vite build && vue-tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist -p tsconfig.json",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "lint": "echo \"No linting configured\""
   },
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
