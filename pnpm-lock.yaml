@@ -6,9 +6,9 @@ importers:
     specifiers:
       '@auto-it/npm': ^10.36.5
       '@auto-it/released': ^10.36.5
-      '@commitlint/cli': 17.5.1
+      '@commitlint/cli': 17.6.1
       '@commitlint/config-angular': ^17.0.0
-      '@commitlint/config-conventional': 17.4.4
+      '@commitlint/config-conventional': 17.6.1
       '@cspell/eslint-plugin': ^6.14.3
       '@nrwl/cli': 13.10.6
       '@nrwl/eslint-plugin-nx': 13.10.6
@@ -83,9 +83,9 @@ importers:
     devDependencies:
       '@auto-it/npm': 10.44.0_j6r65ghnzvzk7vhdh4hyogrm4a
       '@auto-it/released': 10.44.0_j6r65ghnzvzk7vhdh4hyogrm4a
-      '@commitlint/cli': 17.5.1_@swc+core@1.3.49
+      '@commitlint/cli': 17.6.1_@swc+core@1.3.49
       '@commitlint/config-angular': 17.4.4
-      '@commitlint/config-conventional': 17.4.4
+      '@commitlint/config-conventional': 17.6.1
       '@cspell/eslint-plugin': 6.31.1
       '@nrwl/cli': 13.10.6_typescript@4.9.5
       '@nrwl/eslint-plugin-nx': 13.10.6_xnlp5umsirvrotbydhrpt3qgym
@@ -8580,13 +8580,13 @@ packages:
       - '@swc/wasm'
     dev: true
 
-  /@commitlint/cli/17.5.1_@swc+core@1.3.49:
-    resolution: {integrity: sha512-pRRgGSzdHQHehxZbGA3qF6wVPyl+EEQgTe/t321rtMLFbuJ7nRj2waS17s/v5oEbyZtiY5S8PGB6XtEIm0I+Sg==}
+  /@commitlint/cli/17.6.1_@swc+core@1.3.49:
+    resolution: {integrity: sha512-kCnDD9LE2ySiTnj/VPaxy4/oRayRcdv4aCuVxtoum8SxIU7OADHc0nJPQfheE8bHcs3zZdWzDMWltRosuT13bg==}
     engines: {node: '>=v14'}
     hasBin: true
     dependencies:
       '@commitlint/format': 17.4.4
-      '@commitlint/lint': 17.4.4
+      '@commitlint/lint': 17.6.1
       '@commitlint/load': 17.5.0_@swc+core@1.3.49
       '@commitlint/read': 17.5.1
       '@commitlint/types': 17.4.4
@@ -8614,6 +8614,13 @@ packages:
 
   /@commitlint/config-conventional/17.4.4:
     resolution: {integrity: sha512-u6ztvxqzi6NuhrcEDR7a+z0yrh11elY66nRrQIpqsqW6sZmpxYkDLtpRH8jRML+mmxYQ8s4qqF06Q/IQx5aJeQ==}
+    engines: {node: '>=v14'}
+    dependencies:
+      conventional-changelog-conventionalcommits: 5.0.0
+    dev: true
+
+  /@commitlint/config-conventional/17.6.1:
+    resolution: {integrity: sha512-ng/ybaSLuTCH9F+7uavSOnEQ9EFMl7lHEjfAEgRh1hwmEe8SpLKpQeMo2aT1IWvHaGMuTb+gjfbzoRf2IR23NQ==}
     engines: {node: '>=v14'}
     dependencies:
       conventional-changelog-conventionalcommits: 5.0.0
@@ -8667,6 +8674,16 @@ packages:
       '@commitlint/is-ignored': 17.4.4
       '@commitlint/parse': 17.4.4
       '@commitlint/rules': 17.4.4
+      '@commitlint/types': 17.4.4
+    dev: true
+
+  /@commitlint/lint/17.6.1:
+    resolution: {integrity: sha512-VARJ9kxH64isgwVnC+ABPafCYzqxpsWJIpDaTuI0gh8aX4GQ0i7cn9tvxtFNfJj4ER2BAJeWJ0vURdNYjK2RQQ==}
+    engines: {node: '>=v14'}
+    dependencies:
+      '@commitlint/is-ignored': 17.4.4
+      '@commitlint/parse': 17.4.4
+      '@commitlint/rules': 17.6.1
       '@commitlint/types': 17.4.4
     dev: true
 
@@ -8757,6 +8774,17 @@ packages:
 
   /@commitlint/rules/17.4.4:
     resolution: {integrity: sha512-0tgvXnHi/mVcyR8Y8mjTFZIa/FEQXA4uEutXS/imH2v1UNkYDSEMsK/68wiXRpfW1euSgEdwRkvE1z23+yhNrQ==}
+    engines: {node: '>=v14'}
+    dependencies:
+      '@commitlint/ensure': 17.4.4
+      '@commitlint/message': 17.4.2
+      '@commitlint/to-lines': 17.4.0
+      '@commitlint/types': 17.4.4
+      execa: 5.1.1
+    dev: true
+
+  /@commitlint/rules/17.6.1:
+    resolution: {integrity: sha512-lUdHw6lYQ1RywExXDdLOKxhpp6857/4c95Dc/1BikrHgdysVUXz26yV0vp1GL7Gv+avx9WqZWTIVB7pNouxlfw==}
     engines: {node: '>=v14'}
     dependencies:
       '@commitlint/ensure': 17.4.4
