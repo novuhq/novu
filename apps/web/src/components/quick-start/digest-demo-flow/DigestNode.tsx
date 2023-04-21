@@ -2,12 +2,12 @@ import { Handle, Position } from 'react-flow-renderer';
 import { createStyles, NumberInput, Loader } from '@mantine/core';
 import styled from '@emotion/styled';
 
-import { NodeStep } from './NodeStep';
-import { DigestGradient } from '../../design-system/icons';
+import { NodeStepWithPopover } from './NodeStepWithPopover';
+import { DigestGradient } from '../../../design-system/icons';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
-import { CountdownTimer } from '../../design-system/icons';
-import { colors } from '../../design-system';
+import { CountdownTimer } from '../../../design-system/icons';
+import { colors } from '../../../design-system';
 import { useEffect, useState } from 'react';
 import { useInterval } from '@mantine/hooks';
 
@@ -67,7 +67,7 @@ export function DigestNode({ data, id }: { data: any; id: string }) {
   const digestIntervalDisplay = !isRunningDigest ? digestInterval : seconds;
 
   return (
-    <NodeStep
+    <NodeStepWithPopover
       data={data}
       id={id}
       Icon={DigestGradient}

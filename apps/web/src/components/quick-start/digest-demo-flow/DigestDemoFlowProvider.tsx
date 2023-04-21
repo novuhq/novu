@@ -2,10 +2,10 @@ import React, { ReactNode, useCallback, useContext, useEffect, useMemo, useState
 import { useMutation } from '@tanstack/react-query';
 import { INotificationTemplateStep, IUpdateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
 
-import { testTrigger } from '../../api/notification-templates';
-import { useAuthContext } from '../providers/AuthProvider';
-import { useDebounce } from '../../hooks';
-import { useTemplateFetcher, useUpdateTemplate } from '../../api/hooks';
+import { testTrigger } from '../../../api/notification-templates';
+import { useAuthContext } from '../../providers/AuthProvider';
+import { useDebounce } from '../../../hooks';
+import { useTemplateFetcher, useUpdateTemplate } from '../../../api/hooks';
 
 interface IDigestDemoFlowProviderState {
   isRunningDigest: boolean;
