@@ -6,6 +6,7 @@ import type { IForm } from './formTypes';
 import { Textarea } from '../../../design-system';
 import { useEnvController, useVariablesManager } from '../../../hooks';
 import { VariableManager } from './VariableManager';
+import { StepSettings } from '../workflow/SideBar/StepSettings';
 
 const templateFields = ['content'];
 
@@ -27,7 +28,10 @@ export function TemplateSMSEditor({
 
   return (
     <>
-      {!isIntegrationActive ? <LackIntegrationError channel="SMS" channelType={ChannelTypeEnum.SMS} /> : null}
+      {!isIntegrationActive ? (
+        <LackIntegrationError channelType={ChannelTypeEnum.SMS} iconHeight={34} iconWidth={34} />
+      ) : null}
+      <StepSettings index={index} />
       <Controller
         name={`steps.${index}.template.content` as any}
         defaultValue=""
@@ -39,6 +43,7 @@ export function TemplateSMSEditor({
             error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
             disabled={readonly}
             minRows={4}
+            mt={24}
             value={field.value || ''}
             label="SMS message content"
             placeholder="Add notification content here..."
