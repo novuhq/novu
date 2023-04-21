@@ -36,7 +36,7 @@ export const pushProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.PUSH,
     credentials: pushWebhookConfig,
     docReference: 'https://docs.novu.co/channels/push/webhook',
-    logoFileName: { light: 'push-webhook.png', dark: 'push-webhook.png' },
+    logoFileName: { light: 'push-webhook.svg', dark: 'push-webhook.svg' },
     betaVersion: true,
   },
 ];
