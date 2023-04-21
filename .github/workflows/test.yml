@@ -72,13 +72,28 @@ jobs:
         run: |
           if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{needs.branch-info.outputs.branch-name}}" == "main" ]]; then
             echo "Running ALL"
-            echo "::set-output name=test-unit::$(node scripts/print-affected-array.js test:unit --all)"
-            echo "::set-output name=test-e2e::$(node scripts/print-affected-array.js test:e2e --all)"
+            echo "::set-output name=test-unit::$(node scripts/print-affected-array.mjs test:unit --all)"
+            echo "::set-output name=test-e2e::$(node scripts/print-affected-array.mjs test:e2e --all)"
+            echo "::set-output name=test-providers::$(node scripts/print-affected-array.mjs test origin/${{needs.branch-info.outputs.base-branch-name}}) true"
           else
             echo "Running PR origin/${{needs.branch-info.outputs.base-branch-name}}"
-            echo "::set-output name=test-unit::$(node scripts/print-affected-array.js test origin/${{needs.branch-info.outputs.base-branch-name}})"
-            echo "::set-output name=test-e2e::$(node scripts/print-affected-array.js test:e2e origin/${{needs.branch-info.outputs.base-branch-name}})"
+            echo "::set-output name=test-providers::$(node scripts/print-affected-array.mjs test origin/${{needs.branch-info.outputs.base-branch-name}}) true"
+            echo "::set-output name=test-unit::$(node scripts/print-affected-array.mjs test origin/${{needs.branch-info.outputs.base-branch-name}})"
+            echo "::set-output name=test-e2e::$(node scripts/print-affected-array.mjs test:e2e origin/${{needs.branch-info.outputs.base-branch-name}})"
           fi
+
+  test_providers:
+    runs-on: ubuntu-latest
+    needs: [ get-affected ]
+    if: ${{ fromJson(needs.get-affected.outputs.test-providers)[0] }}
+    timeout-minutes: 80
+  steps:
+    - run: echo ${{ matrix.projectName }}
+    - uses: actions/checkout@v3
+    - uses: ./.github/actions/setup-project
+    - uses: ./.github/actions/setup-redis-cluster
+    - run: pnpm test:providers
+
   test_e2e:
     runs-on: ubuntu-latest
     needs: [get-affected]

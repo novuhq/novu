@@ -1,5 +1,5 @@
 const path = require('path');
-
+const { getPackageFolders } = require('./get-packages-folder.mjs');
 const spawn = require('cross-spawn');
 
 const processArguments = process.argv.slice(2);
@@ -7,6 +7,8 @@ const processArguments = process.argv.slice(2);
 const ALL_FLAG = '--all';
 const TASK_NAME = processArguments[0];
 const BASE_BRANCH_NAME = processArguments[1];
+const PROVIDERS = processArguments[2];
+
 const ROOT_PATH = path.resolve(__dirname, '..');
 const ENCODING_TYPE = 'utf8';
 const NEW_LINE_CHAR = '\n';
@@ -105,11 +107,23 @@ async function allProjectsContainingTask(taskName) {
 }
 
 async function printAffectedProjectsContainingTask() {
-  const projects =
+  const providers = await getPackageFolders();
+
+  let projects =
     BASE_BRANCH_NAME === ALL_FLAG
       ? await allProjectsContainingTask(TASK_NAME)
       : await affectedProjectsContainingTask(TASK_NAME, BASE_BRANCH_NAME);
-  console.log(JSON.stringify(projects));
+
+  const foundProviders = projects.filter((project) => providers.includes(project));
+  if (foundProviders.length) {
+    projects = projects.filter((project) => !providers.includes(project));
+  }
+
+  if (PROVIDERS) {
+    console.log(JSON.stringify(foundProviders));
+  } else {
+    console.log(JSON.stringify(projects));
+  }
 }
 
 printAffectedProjectsContainingTask().catch((error) => {
