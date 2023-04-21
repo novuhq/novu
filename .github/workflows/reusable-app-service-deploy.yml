@@ -6,8 +6,10 @@ on:
     inputs:
       environment:
         required: true
-        type: string
-        allowed: [ 'Development', 'Production' ]
+        type: choice
+        options:
+          - Development
+          - Production
       terraform_workspace:
         required: true
         type: string
