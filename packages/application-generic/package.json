@@ -87,7 +87,7 @@
     "@novu/termii": "^0.13.0",
     "@novu/testing": "^0.13.0",
     "@novu/twilio": "^0.13.0",
-    "@novu/africastalking": "^0.13.0",
+    "@novu/africas-talking": "^0.13.0",
     "@sentry/node": "^7.12.1",
     "analytics-node": "^6.2.0",
     "bullmq": "^3.10.2",

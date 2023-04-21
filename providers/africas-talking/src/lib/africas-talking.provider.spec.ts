@@ -1,7 +1,7 @@
-import { AfricastalkingSmsProvider } from './africastalking.provider';
+import { AfricasTalkingSmsProvider } from './africas-talking.provider';
 
-test('should trigger africastalking library correctly', async () => {
-  const provider = new AfricastalkingSmsProvider({
+test(`should trigger Africa's Talking library correctly`, async () => {
+  const provider = new AfricasTalkingSmsProvider({
     apiKey: 'b664b089f04b72c56ac3b0a8ffbb6f3d18a82eb40c29d17b49b84433439fb127',
     username: 'sandbox',
     from: '1234',
@@ -10,7 +10,7 @@ test('should trigger africastalking library correctly', async () => {
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    .spyOn(provider.africastalkingClient, 'send')
+    .spyOn(provider.africasTalkingClient, 'send')
     .mockImplementation(async () => {
       return {
         date: new Date().toISOString(),

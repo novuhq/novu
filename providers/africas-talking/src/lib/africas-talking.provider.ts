@@ -4,12 +4,12 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-import Africastalking from 'africasTalking';
+import AfricasTalking from 'africasTalking';
 
-export class AfricastalkingSmsProvider implements ISmsProvider {
+export class AfricasTalkingSmsProvider implements ISmsProvider {
   id: 'africastalking';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  private africastalkingClient: Africastalking;
+  private africasTalkingClient: AfricasTalking;
 
   constructor(
     private config: {
@@ -18,7 +18,7 @@ export class AfricastalkingSmsProvider implements ISmsProvider {
       from?: string;
     }
   ) {
-    this.africastalkingClient = new Africastalking({
+    this.africasTalkingClient = new AfricasTalking({
       apiKey: config.apiKey,
       username: config.username,
     }).SMS;
@@ -27,7 +27,7 @@ export class AfricastalkingSmsProvider implements ISmsProvider {
   async sendMessage(
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const response = await this.africastalkingClient.send({
+    const response = await this.africasTalkingClient.send({
       from: this.config.from,
       to: options.to,
       message: options.content,

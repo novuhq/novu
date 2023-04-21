@@ -63,7 +63,7 @@ export enum SmsProviderIdEnum {
   Kannel = 'kannel',
   Maqsam = 'maqsam',
   Termii = 'termii',
-  Africastalking = 'africastalking',
+  AfricasTalking = 'africas-talking',
 }
 
 export enum ChatProviderIdEnum {

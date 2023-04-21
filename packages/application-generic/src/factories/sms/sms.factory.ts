@@ -16,7 +16,7 @@ import {
   KannelSmsHandler,
   MaqsamHandler,
   SmsCentralHandler,
-  AfricastalkingSmsHandler,
+  AfricasTalkingSmsHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -36,7 +36,7 @@ export class SmsFactory implements ISmsFactory {
     new KannelSmsHandler(),
     new MaqsamHandler(),
     new SmsCentralHandler(),
-    new AfricastalkingSmsHandler(),
+    new AfricasTalkingSmsHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {
@@ -53,6 +53,7 @@ export class SmsFactory implements ISmsFactory {
       return handler;
     } catch (error) {
       throw new Error(
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         `Could not build mail handler id: ${integration._id}, error: ${error}`
       );
     }

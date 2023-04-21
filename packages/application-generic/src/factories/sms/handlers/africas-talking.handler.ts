@@ -1,9 +1,9 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { AfricastalkingSmsProvider } from '@novu/africastalking';
+import { AfricasTalkingSmsProvider } from '@novu/africas-talking';
 import { ICredentials } from '@novu/dal';
 import { BaseSmsHandler } from './base.handler';
 
-export class AfricastalkingSmsHandler extends BaseSmsHandler {
+export class AfricasTalkingSmsHandler extends BaseSmsHandler {
   constructor() {
     super('africastalking', ChannelTypeEnum.SMS);
   }
@@ -19,6 +19,6 @@ export class AfricastalkingSmsHandler extends BaseSmsHandler {
       from: credentials.from,
     };
 
-    this.provider = new AfricastalkingSmsProvider(config);
+    this.provider = new AfricasTalkingSmsProvider(config);
   }
 }
