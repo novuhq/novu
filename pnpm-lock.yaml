@@ -208,7 +208,7 @@ importers:
       handlebars: ^4.7.7
       hat: ^0.0.3
       helmet: ^6.0.1
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       jsonwebtoken: 9.0.0
       lodash: ^4.17.15
       mocha: ^8.1.1
@@ -275,7 +275,7 @@ importers:
       handlebars: 4.7.7
       hat: 0.0.3
       helmet: 6.1.4
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       nanoid: 3.3.6
@@ -985,7 +985,7 @@ importers:
       dotenv: ^8.2.0
       envalid: ^7.1.0
       helmet: ^6.0.1
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       jest: ^27.0.6
       jsonwebtoken: 9.0.0
       lodash: ^4.17.15
@@ -1024,7 +1024,7 @@ importers:
       dotenv: 8.6.0
       envalid: 7.3.1
       helmet: 6.1.4
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       nest-raven: 9.2.0_3xdevedh462rkaeyzloxkme63y
@@ -1739,7 +1739,7 @@ importers:
       axios: 1.3.5
       codecov: 3.8.3
       cz-conventional-changelog: 3.3.0
-      jest: 27.5.1
+      jest: 27.5.1_ts-node@10.9.1
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       rimraf: 3.0.2
@@ -1989,7 +1989,7 @@ importers:
       '@types/node': 14.18.42
       codecov: 3.8.3
       cz-conventional-changelog: 3.3.0
-      jest: 27.5.1
+      jest: 27.5.1_ts-node@10.9.1
       npm-run-all: 4.1.5
       open-cli: 6.0.1
       rimraf: 3.0.2
@@ -20966,7 +20966,7 @@ packages:
     resolution: {integrity: sha512-zJbJ3FVE17CNl5KXzdeSPtdltc4tMT3TzC6fxQS0sQngkbFZ6h+0uTafsRqu+eSLIugf6Yb0Ea0SUuRr42Nk9g==}
     deprecated: This is a stub types definition. ioredis provides its own type definitions, so you do not need this installed.
     dependencies:
-      ioredis: 5.3.1
+      ioredis: 5.3.2
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -24325,7 +24325,7 @@ packages:
       cron-parser: 4.8.1
       debuglog: 1.0.1
       get-port: 5.1.1
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       lodash: 4.17.21
       msgpackr: 1.8.5
       semver: 7.4.0
@@ -24339,7 +24339,7 @@ packages:
     dependencies:
       cron-parser: 4.8.1
       glob: 8.1.0
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       lodash: 4.17.21
       msgpackr: 1.8.5
       semver: 7.4.0
@@ -32414,6 +32414,23 @@ packages:
 
   /ioredis/5.3.1:
     resolution: {integrity: sha512-C+IBcMysM6v52pTLItYMeV4Hz7uriGtoJdz7SSBDX6u+zwSYGirLdQh3L7t/OItWITcw3gTFMjJReYUwS4zihg==}
+    engines: {node: '>=12.22.0'}
+    dependencies:
+      '@ioredis/commands': 1.2.0
+      cluster-key-slot: 1.1.2
+      debug: 4.3.4
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /ioredis/5.3.2:
+    resolution: {integrity: sha512-1DKMMzlIHM02eBBVOFQ1+AolGjs6+xEcM4PDL7NqOS6szq7H9jSaEkIUH6/a5Hl241LzW6JLSiAbNvTQjUupUA==}
     engines: {node: '>=12.22.0'}
     dependencies:
       '@ioredis/commands': 1.2.0
