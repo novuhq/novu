@@ -1,1 +1,1 @@
-export * from './digest-demo-flow';
+export * from './quick-start/digest-demo-flow';
