@@ -1,4 +1,3 @@
-/* eslint-disable @cspell/spellchecker */
 import React from 'react';
 import clsx from 'clsx';
 import { useDocsSidebar } from '@docusaurus/theme-common/internal';

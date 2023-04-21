@@ -48,6 +48,7 @@ RUN rm -rf node_modules && pnpm recursive exec -- rm -rf ./src ./node_modules
 
 # ------- PRODUCTION BUILD ----------
 FROM dev_base AS prod
+
 ARG PACKAGE_PATH
 
 ENV CI=true
