@@ -1,3 +1,6 @@
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient } from '../../design-system/icons';
+
 export enum TemplateAnalyticsEnum {
   CREATE_TEMPLATE_CLICK = 'Create Template Click - [Templates]',
   TRY_DIGEST_CLICK = 'Try Digest Click - [Templates]',
@@ -41,4 +44,26 @@ export const ordinalNumbers = {
   8: 'eighth',
   9: 'ninth',
   10: 'tenth',
+};
+
+export const stepNames: Record<StepTypeEnum | ChannelTypeEnum, string> = {
+  email: 'Email',
+  chat: 'Chat',
+  in_app: 'In-App',
+  sms: 'SMS',
+  push: 'Push',
+  digest: 'Digest',
+  delay: 'Delay',
+  trigger: 'Trigger',
+};
+
+export const stepIcon: Record<StepTypeEnum | ChannelTypeEnum, (...args: any[]) => JSX.Element> = {
+  email: Mail,
+  chat: Chat,
+  in_app: Bell,
+  sms: Sms,
+  push: Mobile,
+  digest: DigestGradient,
+  delay: TimerGradient,
+  trigger: () => <></>,
 };

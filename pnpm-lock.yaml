@@ -162,7 +162,7 @@ importers:
       '@nestjs/cli': 9.3.0
       '@nestjs/common': 9.3.12
       '@nestjs/core': 9.3.12
-      '@nestjs/graphql': 10.2.0
+      '@nestjs/graphql': 10.2.1
       '@nestjs/jwt': 9.0.0
       '@nestjs/passport': 9.0.3
       '@nestjs/platform-express': 9.3.12
@@ -208,7 +208,7 @@ importers:
       handlebars: ^4.7.7
       hat: ^0.0.3
       helmet: ^6.0.1
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       jsonwebtoken: 9.0.0
       lodash: ^4.17.15
       mocha: ^8.1.1
@@ -242,7 +242,7 @@ importers:
       '@nestjs/axios': 2.0.0_uhnffq3dkwzlnz66svmn6j7ydi
       '@nestjs/common': 9.3.12_welcnyot5bzd5wa2aovbkxpi4i
       '@nestjs/core': 9.3.12_qhubmme3ystyvorrsy6sfc2ome
-      '@nestjs/graphql': 10.2.0_vgnnqnzg3rzr5actpo4ly2om2q
+      '@nestjs/graphql': 10.2.1_vgnnqnzg3rzr5actpo4ly2om2q
       '@nestjs/jwt': 9.0.0_@nestjs+common@9.3.12
       '@nestjs/passport': 9.0.3_ajy2slul3age3kopk444psnhqq
       '@nestjs/platform-express': 9.3.12_ge4qplnzbmfyi5znl534zhtkn4
@@ -275,7 +275,7 @@ importers:
       handlebars: 4.7.7
       hat: 0.0.3
       helmet: 6.1.4
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       nanoid: 3.3.6
@@ -379,7 +379,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.22
       prettier: 2.8.7
-      ts-jest: 27.1.5_cnngzrja2umb46xxazlucyx2qu
+      ts-jest: 27.1.5_ik2qjjkgpajyhqxqenowswsmya
       ts-loader: 9.4.2_fejcc7gjbwtmwzggoernzojija
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 3.14.2
@@ -454,7 +454,7 @@ importers:
       eslint-plugin-cypress: ^2.12.1
       graphql: ^15.4.0
       handlebars: ^4.7.7
-      html-webpack-plugin: 5.5.0
+      html-webpack-plugin: 5.5.1
       http-server: ^0.13.0
       jwt-decode: ^3.1.2
       less: ^4.1.0
@@ -493,6 +493,7 @@ importers:
       react-table: ^7.7.0
       react-use-intercom: ^2.0.0
       rimraf: ^3.0.2
+      slugify: ^1.4.6
       storybook-dark-mode: ^1.0.8
       typescript: 4.9.5
       uniqid: ^5.3.0
@@ -549,7 +550,7 @@ importers:
       date-fns: 2.29.3
       graphql: 15.8.0
       handlebars: 4.7.7
-      html-webpack-plugin: 5.5.0_webpack@5.78.0
+      html-webpack-plugin: 5.5.1_webpack@5.78.0
       jwt-decode: 3.1.2
       less: 4.1.3
       lodash.capitalize: 4.2.1
@@ -583,6 +584,7 @@ importers:
       react-table: 7.8.0_react@17.0.2
       react-use-intercom: 2.1.0_sfoxds7t5ydpegc3knd667wn6m
       rimraf: 3.0.2
+      slugify: 1.6.6
       storybook-dark-mode: 1.1.2_sfoxds7t5ydpegc3knd667wn6m
       typescript: 4.9.5
       uniqid: 5.4.0
@@ -758,7 +760,7 @@ importers:
       cypress-intellij-reporter: ^0.0.7
       cypress-network-idle: ^1.10.0
       eslint-plugin-cypress: ^2.12.1
-      html-webpack-plugin: 5.5.0
+      html-webpack-plugin: 5.5.1
       http-server: ^0.13.0
       iframe-resizer: ^4.3.1
       jest: 27.5.1
@@ -826,7 +828,7 @@ importers:
       cypress: 12.9.0
       cypress-intellij-reporter: 0.0.7
       cypress-network-idle: 1.14.2
-      html-webpack-plugin: 5.5.0_webpack@5.78.0
+      html-webpack-plugin: 5.5.1_webpack@5.78.0
       http-server: 0.13.0
       jest: 27.5.1
       less: 4.1.3
@@ -983,7 +985,7 @@ importers:
       dotenv: ^8.2.0
       envalid: ^7.1.0
       helmet: ^6.0.1
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       jest: ^27.0.6
       jsonwebtoken: 9.0.0
       lodash: ^4.17.15
@@ -1022,7 +1024,7 @@ importers:
       dotenv: 8.6.0
       envalid: 7.3.1
       helmet: 6.1.4
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       nest-raven: 9.2.0_3xdevedh462rkaeyzloxkme63y
@@ -1061,7 +1063,7 @@ importers:
       '@docusaurus/theme-common': 2.3.1
       '@mdx-js/react': ^1.6.21
       '@svgr/webpack': ^6.2.1
-      '@tsconfig/docusaurus': 1.0.6
+      '@tsconfig/docusaurus': 1.0.7
       '@types/react': ^17.0.14
       '@types/react-helmet': 6.1.6
       '@types/react-router-dom': 5.3.3
@@ -1112,7 +1114,7 @@ importers:
       url-loader: 4.1.1_kl4i6u7bs444epxeue2qtwootq
     devDependencies:
       '@docusaurus/module-type-aliases': 2.3.1_sfoxds7t5ydpegc3knd667wn6m
-      '@tsconfig/docusaurus': 1.0.6
+      '@tsconfig/docusaurus': 1.0.7
       '@types/react': 17.0.53
       '@types/react-helmet': 6.1.6
       '@types/react-router-dom': 5.3.3
@@ -9546,7 +9548,7 @@ packages:
       find-up: 6.3.0
       fs-extra: 9.1.0
       html-webpack-plugin-4: /html-webpack-plugin/4.5.2_webpack@5.78.0
-      html-webpack-plugin-5: /html-webpack-plugin/5.5.0_webpack@5.78.0
+      html-webpack-plugin-5: /html-webpack-plugin/5.5.1_webpack@5.78.0
       local-pkg: 0.4.1
       speed-measure-webpack-plugin: 1.4.2_webpack@5.78.0
       tslib: 2.5.0
@@ -13711,8 +13713,8 @@ packages:
     transitivePeerDependencies:
       - encoding
 
-  /@nestjs/graphql/10.2.0_vgnnqnzg3rzr5actpo4ly2om2q:
-    resolution: {integrity: sha512-N/sca0eZLJIyyvfusZh1eabGnKBYgQ4LmOCvhI7+oDMiWWK4HOhOEeT5MC11bmd0vq850frWW9qqg+3qRKpiXw==}
+  /@nestjs/graphql/10.2.1_vgnnqnzg3rzr5actpo4ly2om2q:
+    resolution: {integrity: sha512-FBzYTymT4oopiGMpej7GTRyhz1BgJxLlXZPUueamC5J9u1WxCwJyETkzBI/zeUkUydlklF/xd5zDd/Md6//hEw==}
     peerDependencies:
       '@apollo/subgraph': ^0.1.5 || ^0.3.0 || ^0.4.0 || ^2.0.0
       '@nestjs/common': ^8.2.3 || ^9.0.0
@@ -18643,7 +18645,7 @@ packages:
       fork-ts-checker-webpack-plugin: 6.5.3_fejcc7gjbwtmwzggoernzojija
       glob: 7.2.3
       glob-promise: 3.4.0_glob@7.2.3
-      html-webpack-plugin: 5.5.0_webpack@5.78.0
+      html-webpack-plugin: 5.5.1_webpack@5.78.0
       path-browserify: 1.0.1
       process: 0.11.10
       react: 17.0.2
@@ -19448,7 +19450,7 @@ packages:
       express: 4.18.2
       find-up: 5.0.0
       fs-extra: 9.1.0
-      html-webpack-plugin: 5.5.0_webpack@5.78.0
+      html-webpack-plugin: 5.5.1_webpack@5.78.0
       node-fetch: 2.6.9
       process: 0.11.10
       react: 17.0.2
@@ -20584,8 +20586,8 @@ packages:
     resolution: {integrity: sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==}
     engines: {node: '>=10.13.0'}
 
-  /@tsconfig/docusaurus/1.0.6:
-    resolution: {integrity: sha512-1QxDaP54hpzM6bq9E+yFEo4F9WbWHhsDe4vktZXF/iDlc9FqGr9qlg+3X/nuKQXx8QxHV7ue8NXFazzajsxFBA==}
+  /@tsconfig/docusaurus/1.0.7:
+    resolution: {integrity: sha512-ffTXxGIP/IRMCjuzHd6M4/HdIrw1bMfC7Bv8hMkTadnePkpe0lG0oDSdbRpSDZb2rQMAgpbWiR10BvxvNYwYrg==}
     dev: true
 
   /@tsconfig/node10/1.0.9:
@@ -20658,7 +20660,7 @@ packages:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==}
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 12.20.55
+      '@types/node': 14.18.42
 
   /@types/bonjour/3.5.10:
     resolution: {integrity: sha512-p7ienRMiS41Nu2/igbJxxLDWrSZ0WxM8UQgCeO9KhoVF7cOVFkrKsiDr1EsJIla8vV3oEEjGcz11jc5yimhzZw==}
@@ -20999,7 +21001,7 @@ packages:
     resolution: {integrity: sha512-zJbJ3FVE17CNl5KXzdeSPtdltc4tMT3TzC6fxQS0sQngkbFZ6h+0uTafsRqu+eSLIugf6Yb0Ea0SUuRr42Nk9g==}
     deprecated: This is a stub types definition. ioredis provides its own type definitions, so you do not need this installed.
     dependencies:
-      ioredis: 5.3.1
+      ioredis: 5.3.2
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -24358,7 +24360,7 @@ packages:
       cron-parser: 4.8.1
       debuglog: 1.0.1
       get-port: 5.1.1
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       lodash: 4.17.21
       msgpackr: 1.8.5
       semver: 7.4.0
@@ -24372,7 +24374,7 @@ packages:
     dependencies:
       cron-parser: 4.8.1
       glob: 8.1.0
-      ioredis: 5.3.1
+      ioredis: 5.3.2
       lodash: 4.17.21
       msgpackr: 1.8.5
       semver: 7.4.0
@@ -31812,6 +31814,20 @@ packages:
       pretty-error: 4.0.0
       tapable: 2.2.1
       webpack: 5.78.0
+    dev: false
+
+  /html-webpack-plugin/5.5.1_webpack@5.78.0:
+    resolution: {integrity: sha512-cTUzZ1+NqjGEKjmVgZKLMdiFg3m9MdRXkZW2OEe69WYVi5ONLMmlnSZdXzGGMOq0C8jGDrL6EWyEDDUioHO/pA==}
+    engines: {node: '>=10.13.0'}
+    peerDependencies:
+      webpack: ^5.20.0
+    dependencies:
+      '@types/html-minifier-terser': 6.1.0
+      html-minifier-terser: 6.1.0
+      lodash: 4.17.21
+      pretty-error: 4.0.0
+      tapable: 2.2.1
+      webpack: 5.78.0
 
   /htmlencode/0.0.4:
     resolution: {integrity: sha512-0uDvNVpzj/E2TfvLLyyXhKBRvF1y84aZsyRxRXFsQobnHaL4pcaXk+Y9cnFlvnxrBLeXDNq/VJBD+ngdBgQG1w==}
@@ -32433,6 +32449,23 @@ packages:
 
   /ioredis/5.3.1:
     resolution: {integrity: sha512-C+IBcMysM6v52pTLItYMeV4Hz7uriGtoJdz7SSBDX6u+zwSYGirLdQh3L7t/OItWITcw3gTFMjJReYUwS4zihg==}
+    engines: {node: '>=12.22.0'}
+    dependencies:
+      '@ioredis/commands': 1.2.0
+      cluster-key-slot: 1.1.2
+      debug: 4.3.4
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /ioredis/5.3.2:
+    resolution: {integrity: sha512-1DKMMzlIHM02eBBVOFQ1+AolGjs6+xEcM4PDL7NqOS6szq7H9jSaEkIUH6/a5Hl241LzW6JLSiAbNvTQjUupUA==}
     engines: {node: '>=12.22.0'}
     dependencies:
       '@ioredis/commands': 1.2.0
@@ -33539,7 +33572,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      ts-node: 10.9.1_j6r65ghnzvzk7vhdh4hyogrm4a
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -42110,7 +42143,7 @@ packages:
       eslint-webpack-plugin: 3.2.0_rdwvrfvhmsyfoxui6a22qliowu
       file-loader: 6.2.0_webpack@5.78.0
       fs-extra: 10.1.0
-      html-webpack-plugin: 5.5.0_webpack@5.78.0
+      html-webpack-plugin: 5.5.1_webpack@5.78.0
       identity-obj-proxy: 3.0.0
       jest: 27.5.1
       jest-resolve: 27.5.1
@@ -46234,39 +46267,6 @@ packages:
       tslib: 1.14.1
     dev: true
 
-  /ts-jest/27.1.5_cnngzrja2umb46xxazlucyx2qu:
-    resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@10.9.1
-      jest-util: 27.5.1
-      json5: 2.2.3
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.4.0
-      typescript: 4.9.5
-      yargs-parser: 20.2.9
-    dev: true
-
   /ts-jest/27.1.5_d5we6thvweerisoz5puaw7xkku:
     resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -46290,6 +46290,40 @@ packages:
     dependencies:
       '@babel/core': 7.21.4
       '@types/jest': 27.5.2
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@10.9.1
+      jest-util: 27.5.1
+      json5: 2.2.3
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.4.0
+      typescript: 4.9.5
+      yargs-parser: 20.2.9
+    dev: true
+
+  /ts-jest/27.1.5_ik2qjjkgpajyhqxqenowswsmya:
+    resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@babel/core': 7.21.4
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
