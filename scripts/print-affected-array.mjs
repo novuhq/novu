@@ -110,7 +110,7 @@ async function allProjectsContainingTask(taskName) {
 }
 
 async function printAffectedProjectsContainingTask() {
-  const providers = PROVIDERS ? await getPackageFolders() : [];
+  const providers = await getPackageFolders();
 
   let projects =
     BASE_BRANCH_NAME === ALL_FLAG
