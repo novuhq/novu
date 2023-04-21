@@ -85,6 +85,29 @@ jobs:
             echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +5)"
           fi
 
+  build_docker_api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    needs: [ get-affected ]
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    strategy:
+      matrix:
+        name: [ 'novu/api', 'novu/api-ee' ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+      - uses: ./.github/actions/setup-redis-cluster
+      - uses: ./.github/actions/docker/build-api
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fork: ${{ github.event.pull_request.head.repo.fork }}
+          docker_name: ${{ matrix.name }}
+
   test_providers:
     runs-on: ubuntu-latest
     needs: [get-affected]
