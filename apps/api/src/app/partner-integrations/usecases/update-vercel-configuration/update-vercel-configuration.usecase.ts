@@ -139,20 +139,18 @@ export class UpdateVercelConfiguration {
     projectDetails: NewAndUpdatedProjectData
   ) {
     const { addProjectIds, updateProjectDetails } = projectDetails;
-    const mappedData = envData.reduce<Record<string, MapProjectkeys>>((acc, curr) => {
+
+    return envData.reduce<Record<string, MapProjectkeys>>((acc, curr) => {
       const projectIds = projectData[curr._organizationId];
-      const newData = {
+      acc[curr._organizationId] = {
         privateKey: curr.apiKeys[0].key,
         clientKey: curr.identifier,
         updateProjectDetails: updateProjectDetails.filter((detail) => projectIds.includes(detail.projectId)),
         addProjectIds: projectIds.filter((id) => addProjectIds.includes(id)),
       };
-      acc[curr._organizationId] = newData;
 
       return acc;
     }, {});
-
-    return mappedData;
   }
 
   private async setEnvironmentVariables({
@@ -178,6 +176,12 @@ export class UpdateVercelConfiguration {
         type,
         value: privateKey,
         key: 'NOVU_API_SECRET',
+      },
+      {
+        target,
+        type,
+        value: clientKey,
+        key: 'NEXT_PUBLIC_NOVU_CLIENT_APP_ID',
       },
     ];
 

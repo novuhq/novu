@@ -90,6 +90,7 @@
     "@typescript-eslint/parser": "^5.50.0",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
+    "cross-spawn": "^7.0.3",
     "chalk-animation": "^1.6.0",
     "commitizen": "^4.2.4",
     "cpx": "^1.5.0",
@@ -143,8 +144,7 @@
       "apps/*",
       "libs/*",
       "packages/*",
-      "providers/*",
-      "examples/*"
+      "providers/*"
     ]
   },
   "husky": {

@@ -72,7 +72,7 @@
     "date-fns": "^2.29.2",
     "graphql": "^15.4.0",
     "handlebars": "^4.7.7",
-    "html-webpack-plugin": "5.5.0",
+    "html-webpack-plugin": "5.5.1",
     "jwt-decode": "^3.1.2",
     "less": "^4.1.0",
     "lodash.capitalize": "^4.2.1",

@@ -70,10 +70,11 @@ export class UserSession {
 
   serverSdk: Novu;
 
-  constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {}
+  constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {
+    this.jobsService = new JobsService();
+  }
 
   async initialize(options: { noOrganization?: boolean; noEnvironment?: boolean; noIntegrations?: boolean } = {}) {
-    this.jobsService = new JobsService();
     const card = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
@@ -305,10 +306,15 @@ export class UserSession {
     await this.jobsService.awaitParsingEvents();
   }
 
-  public async awaitRunningJobs(templateId?: string | string[], delay?: boolean, unfinishedJobs = 0) {
+  public async awaitRunningJobs(
+    templateId?: string | string[],
+    delay?: boolean,
+    unfinishedJobs = 0,
+    organizationId = this.organization._id
+  ) {
     await this.jobsService.awaitRunningJobs({
       templateId,
-      organizationId: this.organization._id,
+      organizationId,
       delay,
       unfinishedJobs,
     });

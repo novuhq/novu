@@ -91,7 +91,7 @@ export class NotificationRepository extends BaseRepository<
           readPreference: 'secondaryPreferred',
         },
         path: 'subscriber',
-        select: 'firstName _id lastName email phone',
+        select: 'firstName _id lastName email phone subscriberId',
       })
       .populate({
         options: {

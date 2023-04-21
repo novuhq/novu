@@ -135,6 +135,7 @@ export class MessageResponseDto {
   @ApiProperty()
   transactionId: string;
 
+  @ApiProperty()
   subject?: string;
 
   @ApiProperty({

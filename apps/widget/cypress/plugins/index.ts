@@ -25,15 +25,20 @@ module.exports = (on, config) => {
   });
 
   on('task', {
-    async createNotifications({ identifier, token, subscriberId, count = 1 }) {
+    async createNotifications({ identifier, templateId, token, subscriberId, count = 1, organizationId }) {
       const triggerIdentifier = identifier;
       const service = new NotificationsService(token);
+      const session = new UserSession(config.env.API_URL);
 
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < count; i++) {
         await service.triggerEvent(triggerIdentifier, subscriberId, {
           firstName: 'John',
         });
+      }
+
+      if (organizationId) {
+        await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
       }
 
       return 'ok';
