@@ -202,6 +202,7 @@ export class SendMessageEmail extends SendMessageBase {
           },
           {
             $set: {
+              subject,
               content,
             },
           }
