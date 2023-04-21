@@ -26,9 +26,13 @@ jobs:
       - uses: actions/checkout@v3
       - uses: streetsidesoftware/cspell-action@v2
 
-  # Get branch info
-  branch-info:
+  get-affected:
+    name: Nx Affected
     runs-on: ubuntu-latest
+    outputs:
+      test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
+      test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
+      test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
     steps:
       # Get current branch name
       - name: Get branch name
@@ -43,19 +47,6 @@ jobs:
           else
             echo "::set-output name=branch::main"
           fi
-    outputs:
-      # Export the branch names as output to be able to use it in other jobs
-      base-branch-name: ${{ steps.get-base-branch-name.outputs.branch }}
-      branch-name: ${{ steps.branch-name.outputs.current_branch }}
-  get-affected:
-    needs: [ branch-info ]
-    name: Nx Affected
-    runs-on: ubuntu-latest
-    outputs:
-      test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
-      test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
-      test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
-    steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -67,22 +58,22 @@ jobs:
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
         with:
-          main-branch-name: ${{needs.branch-info.outputs.base-branch-name}}
+          main-branch-name: ${{steps.get-base-branch-name.outputs.branch}}
 
       - name: Get affected
         id: get-projects-arrays
         # When not in a PR and the current branch is main, pass --all flag. Otherwise pass the base branch
         run: |
-          if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{needs.branch-info.outputs.branch-name}}" == "main" ]]; then
+          if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{steps.branch-name.outputs.current_branch}}" == "main" ]]; then
             echo "Running ALL"
             echo "::set-output name=test-unit::$(pnpm run get-affected test:unit --all | tail -n +5)"
             echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e --all | tail -n +5)"
-            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +5)"
+            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} true | tail -n +5)"
           else
-            echo "Running PR origin/${{needs.branch-info.outputs.base-branch-name}}"
-            echo "::set-output name=test-unit::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} | tail -n +5)"
-            echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e origin/${{needs.branch-info.outputs.base-branch-name}} | tail -n +5)"
-            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +5)"
+            echo "Running PR origin/${{steps.get-base-branch-name.outputs.branch}}"
+            echo "::set-output name=test-unit::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)"
+            echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)"
+            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} true | tail -n +5)"
           fi
 
   build_docker_api:
