@@ -45,6 +45,7 @@ import { TestWorkflowPage } from './pages/templates/components/TestWorkflowPage'
 import { SnippetPage } from './pages/templates/components/SnippetPage';
 import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
+import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -197,6 +198,7 @@ function App() {
                   <Route path={ROUTES.QUICK_START_SETUP} element={<FrameworkSetup />} />
                   <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
                   <Route path={ROUTES.QUICK_START_SETUP_TRIGGER} element={<Trigger />} />
+                  <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
                   <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
                   <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsStore />} />
