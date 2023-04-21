@@ -1,5 +1,5 @@
 const path = require('path');
-const { getPackageFolders } = require('./get-packages-folder.mjs');
+import { getPackageFolders } from './get-packages-folder.mjs';
 const spawn = require('cross-spawn');
 
 const processArguments = process.argv.slice(2);
