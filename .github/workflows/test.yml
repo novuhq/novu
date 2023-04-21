@@ -79,7 +79,7 @@ jobs:
             echo "Running PR origin/${{needs.branch-info.outputs.base-branch-name}}"
             echo "::set-output name=test-unit::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} | tail -n +5)"
             echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e origin/${{needs.branch-info.outputs.base-branch-name}} | tail -n +5)"
-            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +4)"
+            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true)"
           fi
 
   test_providers:
