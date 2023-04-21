@@ -379,7 +379,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.22
       prettier: 2.8.7
-      ts-jest: 27.1.5_cnngzrja2umb46xxazlucyx2qu
+      ts-jest: 27.1.5_ik2qjjkgpajyhqxqenowswsmya
       ts-loader: 9.4.2_fejcc7gjbwtmwzggoernzojija
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 3.14.2
@@ -454,7 +454,7 @@ importers:
       eslint-plugin-cypress: ^2.12.1
       graphql: ^15.4.0
       handlebars: ^4.7.7
-      html-webpack-plugin: 5.5.0
+      html-webpack-plugin: 5.5.1
       http-server: ^0.13.0
       jwt-decode: ^3.1.2
       less: ^4.1.0
@@ -549,7 +549,7 @@ importers:
       date-fns: 2.29.3
       graphql: 15.8.0
       handlebars: 4.7.7
-      html-webpack-plugin: 5.5.0_webpack@5.78.0
+      html-webpack-plugin: 5.5.1_webpack@5.78.0
       jwt-decode: 3.1.2
       less: 4.1.3
       lodash.capitalize: 4.2.1
@@ -758,7 +758,7 @@ importers:
       cypress-intellij-reporter: ^0.0.7
       cypress-network-idle: ^1.10.0
       eslint-plugin-cypress: ^2.12.1
-      html-webpack-plugin: 5.5.0
+      html-webpack-plugin: 5.5.1
       http-server: ^0.13.0
       iframe-resizer: ^4.3.1
       jest: 27.5.1
@@ -826,7 +826,7 @@ importers:
       cypress: 12.9.0
       cypress-intellij-reporter: 0.0.7
       cypress-network-idle: 1.14.2
-      html-webpack-plugin: 5.5.0_webpack@5.78.0
+      html-webpack-plugin: 5.5.1_webpack@5.78.0
       http-server: 0.13.0
       jest: 27.5.1
       less: 4.1.3
@@ -9511,7 +9511,7 @@ packages:
       find-up: 6.3.0
       fs-extra: 9.1.0
       html-webpack-plugin-4: /html-webpack-plugin/4.5.2_webpack@5.78.0
-      html-webpack-plugin-5: /html-webpack-plugin/5.5.0_webpack@5.78.0
+      html-webpack-plugin-5: /html-webpack-plugin/5.5.1_webpack@5.78.0
       local-pkg: 0.4.1
       speed-measure-webpack-plugin: 1.4.2_webpack@5.78.0
       tslib: 2.5.0
@@ -18608,7 +18608,7 @@ packages:
       fork-ts-checker-webpack-plugin: 6.5.3_fejcc7gjbwtmwzggoernzojija
       glob: 7.2.3
       glob-promise: 3.4.0_glob@7.2.3
-      html-webpack-plugin: 5.5.0_webpack@5.78.0
+      html-webpack-plugin: 5.5.1_webpack@5.78.0
       path-browserify: 1.0.1
       process: 0.11.10
       react: 17.0.2
@@ -19413,7 +19413,7 @@ packages:
       express: 4.18.2
       find-up: 5.0.0
       fs-extra: 9.1.0
-      html-webpack-plugin: 5.5.0_webpack@5.78.0
+      html-webpack-plugin: 5.5.1_webpack@5.78.0
       node-fetch: 2.6.9
       process: 0.11.10
       react: 17.0.2
@@ -31777,6 +31777,20 @@ packages:
       pretty-error: 4.0.0
       tapable: 2.2.1
       webpack: 5.78.0
+    dev: false
+
+  /html-webpack-plugin/5.5.1_webpack@5.78.0:
+    resolution: {integrity: sha512-cTUzZ1+NqjGEKjmVgZKLMdiFg3m9MdRXkZW2OEe69WYVi5ONLMmlnSZdXzGGMOq0C8jGDrL6EWyEDDUioHO/pA==}
+    engines: {node: '>=10.13.0'}
+    peerDependencies:
+      webpack: ^5.20.0
+    dependencies:
+      '@types/html-minifier-terser': 6.1.0
+      html-minifier-terser: 6.1.0
+      lodash: 4.17.21
+      pretty-error: 4.0.0
+      tapable: 2.2.1
+      webpack: 5.78.0
 
   /htmlencode/0.0.4:
     resolution: {integrity: sha512-0uDvNVpzj/E2TfvLLyyXhKBRvF1y84aZsyRxRXFsQobnHaL4pcaXk+Y9cnFlvnxrBLeXDNq/VJBD+ngdBgQG1w==}
@@ -33504,7 +33518,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      ts-node: 10.9.1_j6r65ghnzvzk7vhdh4hyogrm4a
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -42075,7 +42089,7 @@ packages:
       eslint-webpack-plugin: 3.2.0_rdwvrfvhmsyfoxui6a22qliowu
       file-loader: 6.2.0_webpack@5.78.0
       fs-extra: 10.1.0
-      html-webpack-plugin: 5.5.0_webpack@5.78.0
+      html-webpack-plugin: 5.5.1_webpack@5.78.0
       identity-obj-proxy: 3.0.0
       jest: 27.5.1
       jest-resolve: 27.5.1
@@ -46199,39 +46213,6 @@ packages:
       tslib: 1.14.1
     dev: true
 
-  /ts-jest/27.1.5_cnngzrja2umb46xxazlucyx2qu:
-    resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
-    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
-    hasBin: true
-    peerDependencies:
-      '@babel/core': '>=7.0.0-beta.0 <8'
-      '@types/jest': ^27.0.0
-      babel-jest: '>=27.0.0 <28'
-      esbuild: '*'
-      jest: ^27.0.0
-      typescript: '>=3.8 <5.0'
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
-      '@types/jest':
-        optional: true
-      babel-jest:
-        optional: true
-      esbuild:
-        optional: true
-    dependencies:
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      jest: 27.5.1_ts-node@10.9.1
-      jest-util: 27.5.1
-      json5: 2.2.3
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.4.0
-      typescript: 4.9.5
-      yargs-parser: 20.2.9
-    dev: true
-
   /ts-jest/27.1.5_d5we6thvweerisoz5puaw7xkku:
     resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
     engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
@@ -46255,6 +46236,40 @@ packages:
     dependencies:
       '@babel/core': 7.21.4
       '@types/jest': 27.5.2
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1_ts-node@10.9.1
+      jest-util: 27.5.1
+      json5: 2.2.3
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.4.0
+      typescript: 4.9.5
+      yargs-parser: 20.2.9
+    dev: true
+
+  /ts-jest/27.1.5_ik2qjjkgpajyhqxqenowswsmya:
+    resolution: {integrity: sha512-Xv6jBQPoBEvBq/5i2TeSG9tt/nqkbpcurrEG1b+2yfBrcJelOZF9Ml6dmyMh7bcW9JyFbRYpR5rxROSlBLTZHA==}
+    engines: {node: ^10.13.0 || ^12.13.0 || ^14.15.0 || >=15.0.0}
+    hasBin: true
+    peerDependencies:
+      '@babel/core': '>=7.0.0-beta.0 <8'
+      '@types/jest': ^27.0.0
+      babel-jest: '>=27.0.0 <28'
+      esbuild: '*'
+      jest: ^27.0.0
+      typescript: '>=3.8 <5.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@types/jest':
+        optional: true
+      babel-jest:
+        optional: true
+      esbuild:
+        optional: true
+    dependencies:
+      '@babel/core': 7.21.4
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
       jest: 27.5.1_ts-node@10.9.1
