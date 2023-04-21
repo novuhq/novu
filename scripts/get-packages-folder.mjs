@@ -3,8 +3,10 @@ import { readProjects } from '@pnpm/filter-workspace-packages';
 export async function getPackageFolders() {
   const path = process.cwd();
   const content = await readProjects(path, [{
-    parentDir: 'providers'
-  }]);
+    parentDir: 'providers',
+  }], {
+    engineStrict: false
+  });
 
   const providers = content.allProjects.filter((project) => {
     const contains =  project.dir.includes('providers/');
