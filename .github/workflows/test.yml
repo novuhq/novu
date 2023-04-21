@@ -54,6 +54,7 @@ jobs:
     outputs:
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
+      test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -79,16 +80,16 @@ jobs:
             echo "Running PR origin/${{needs.branch-info.outputs.base-branch-name}}"
             echo "::set-output name=test-unit::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} | tail -n +5)"
             echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e origin/${{needs.branch-info.outputs.base-branch-name}} | tail -n +5)"
-            echo "::set-output name=providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +5)"
-            echo "output name=providers:$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +5)"
+            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{needs.branch-info.outputs.base-branch-name}} true | tail -n +5)"
           fi
 
   test_providers:
     runs-on: ubuntu-latest
     needs: [get-affected]
+    if: ${{ fromJson(needs.get-affected.outputs.test-providers)[0] }}
     timeout-minutes: 80
     steps:
-      - run: echo '${{ needs.get-affected.outputs.providers }}'
+      - run: echo '${{ needs.get-affected.outputs.test-providers }}'
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
