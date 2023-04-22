@@ -78,12 +78,17 @@ export class GetNotificationsFeed {
         feedId: command.feedId,
         seen: command.query.seen,
         read: command.query.read,
-      }
+      },
+      { limit: command.countLimit }
     );
+
+    const hasMore = command.countLimit === totalCount;
+    const count = hasMore ? totalCount - 1 : totalCount;
 
     return {
       data: feed || [],
-      totalCount: totalCount || 0,
+      totalCount: count || 0,
+      hasMore,
       pageSize: LIMIT,
       page: command.page,
     };

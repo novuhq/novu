@@ -35,7 +35,7 @@ export class GetMessages {
       query.channel = command.channel;
     }
 
-    const totalCount = await this.messageRepository.count(query);
+    const totalCount = await this.messageRepository.count(query, command.countLimit);
 
     const data = await this.messageRepository.getMessages(query, '', {
       limit: LIMIT,
@@ -48,9 +48,13 @@ export class GetMessages {
       }
     }
 
+    const hasMore = command.countLimit === totalCount;
+    const count = hasMore ? totalCount - 1 : totalCount;
+
     return {
       page: command.page,
-      totalCount,
+      totalCount: count,
+      hasMore,
       pageSize: LIMIT,
       data,
     };

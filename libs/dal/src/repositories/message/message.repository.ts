@@ -101,7 +101,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
+    options: { limit?: number } = {}
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
       feedId: query.feedId,
@@ -109,7 +110,9 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read: query.read,
     });
 
-    return this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
+    const optionsQuery = options.limit ? options : {};
+
+    return this.MongooseModel.countDocuments(requestQuery, optionsQuery).read('secondaryPreferred');
   }
 
   async markAllMessagesAs({

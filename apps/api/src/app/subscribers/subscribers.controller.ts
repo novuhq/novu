@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
@@ -68,6 +69,7 @@ import { MarkMessageActionAsSeenDto } from '../widgets/dtos/mark-message-action-
 import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
 import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
+import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -82,7 +84,7 @@ export class SubscribersController {
     private getPreferenceUsecase: GetPreferences,
     private updatePreferenceUsecase: UpdatePreference,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
-    private genFeedCountUsecase: GetFeedCount,
+    private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag
@@ -340,6 +342,8 @@ export class SubscribersController {
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
+    // todo update DefaultValuePipe to 100 in version 0.16
+    @Query('countLimit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) countLimit: number,
     @Query('page') page?: string,
     @Query('feedIdentifier') feedId?: string,
     @Query() query: StoreQuery = {}
@@ -356,6 +360,7 @@ export class SubscribersController {
       page: page != null ? parseInt(page) : 0,
       feedId: feedsQuery,
       query: query,
+      countLimit,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -374,7 +379,9 @@ export class SubscribersController {
     @UserSession() user: IJwtPayload,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean,
-    @Param('subscriberId') subscriberId: string
+    @Param('subscriberId') subscriberId: string,
+    // todo update DefaultValuePipe to 100 in version 0.16
+    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     let feedsQuery: string[] | undefined;
     if (feedId) {
@@ -387,9 +394,10 @@ export class SubscribersController {
       environmentId: user.environmentId,
       feedId: feedsQuery,
       seen,
+      limit,
     });
 
-    return await this.genFeedCountUsecase.execute(command);
+    return await this.getFeedCountUsecase.execute(command);
   }
 
   @ExternalApiAccessible()

@@ -10,6 +10,7 @@ import { ActivitiesResponseDto } from '../notifications/dtos/activities-response
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
 import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
 import { DeleteMessageParams } from './params/delete-message.param';
+import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
 
 @Controller('/messages')
 @ApiTags('Messages')
@@ -50,7 +51,9 @@ export class MessagesController {
     @Query('page') page = 0,
     @Query('limit') limit = 10,
     @Query('subscriberId') subscriberId,
-    @Query('channel') channel: ChannelTypeEnum
+    @Query('channel') channel: ChannelTypeEnum,
+    // todo add new DefaultValuePipe(100) to 'limit' Query in version 0.16
+    @Query('countLimit', new LimitPipe(1, 1000, true)) countLimit: number
   ): Promise<MessagesResponseDto> {
     return await this.getMessagesUsecase.execute(
       GetMessagesCommand.create({
