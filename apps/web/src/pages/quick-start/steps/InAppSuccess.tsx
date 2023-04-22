@@ -1,7 +1,9 @@
 import styled from '@emotion/styled';
 import { Group, Stack } from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import { SandBoxSetupSuccess } from '../../../components/quick-start/in-app-onboarding/SandboxSetupSuccess';
+import { ROUTES } from '../../../constants/routes.enum';
 import { Button, colors } from '../../../design-system';
 import { successScreenSecondaryTitle, successScreenTitle } from '../consts';
 
@@ -33,7 +35,18 @@ export function InAppSuccess() {
 }
 
 function ActionItem() {
-  return <Button variant="gradient">Create a Workflow</Button>;
+  const navigate = useNavigate();
+
+  return (
+    <Button
+      variant="gradient"
+      onClick={() => {
+        navigate(ROUTES.TEMPLATES_CREATE);
+      }}
+    >
+      Create a Workflow
+    </Button>
+  );
 }
 
 const Title = styled.div`
