@@ -23,6 +23,9 @@ import { NotificationGroupResponseDto } from './dtos/notification-group-response
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetNotificationGroup } from './usecases/get-notification-group/get-notification-group.usecase';
 import { GetNotificationGroupCommand } from './usecases/get-notification-group/get-notification-group.command';
+import { DeleteNotificationGroup } from './usecases/delete-notification-group/delete-notification-group.usecase';
+import { DeleteNotificationGroupCommand } from './usecases/delete-notification-group/delete-notification-group.command';
+import { DeleteNotificationGroupResponseDto } from './dtos/delete-notification-group-response.dto';
 
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -32,7 +35,8 @@ export class NotificationGroupsController {
   constructor(
     private createNotificationGroupUsecase: CreateNotificationGroup,
     private getNotificationGroupsUsecase: GetNotificationGroups,
-    private getNotificationGroupUsecase: GetNotificationGroup
+    private getNotificationGroupUsecase: GetNotificationGroup,
+    private deleteNotificationGroupUsecase: DeleteNotificationGroup
   ) {}
 
   @Post('')
@@ -89,6 +93,28 @@ export class NotificationGroupsController {
   ): Promise<NotificationGroupResponseDto> {
     return this.getNotificationGroupUsecase.execute(
       GetNotificationGroupCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        id,
+      })
+    );
+  }
+
+  @Delete('/:id')
+  @ExternalApiAccessible()
+  @ApiOkResponse({
+    type: DeleteNotificationGroupResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Delete notification group',
+  })
+  deleteNotificationGroup(
+    @UserSession() user: IJwtPayload,
+    @Param('id') id: string
+  ): Promise<DeleteNotificationGroupResponseDto> {
+    return this.deleteNotificationGroupUsecase.execute(
+      DeleteNotificationGroupCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
