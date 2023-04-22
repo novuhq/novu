@@ -1,20 +1,23 @@
 import styled from '@emotion/styled';
 import { Group, Stack } from '@mantine/core';
 import { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { SandBoxSetupSuccess } from '../../../components/quick-start/in-app-onboarding/SandboxSetupSuccess';
 import { ROUTES } from '../../../constants/routes.enum';
 import { Button, colors } from '../../../design-system';
+import { currentOnboardingStep } from '../components/route/store';
 import { FlowTypeEnum, OnBoardingAnalyticsEnum, successScreenSecondaryTitle, successScreenTitle } from '../consts';
 
 export function InAppSuccess() {
   const segment = useSegment();
   const { framework } = useParams();
+  const location = useLocation();
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.IN_APP_SANDBOX_SUCCESS_VISIT, { flow: FlowTypeEnum.IN_APP, framework });
+    currentOnboardingStep().set(location.pathname);
   }, []);
 
   return (
