@@ -268,6 +268,9 @@ export enum OnBoardingAnalyticsEnum {
   BUILD_WORKFLOW_CLICK = 'Build Workflow Click - [Get Started - Build WorkFlow]',
   BUILD_WORKFLOW_TRY_DIGEST_PLAYGROUND_CLICK = 'Try Digest Playground Click - [Get Started - Build WorkFlow]',
   BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK = 'Node Popover Learn More Click - [Get Started - Build WorkFlow]',
+  IN_APP_SANDBOX_SUCCESS_VISIT = 'Success Page Visit - [In-App Sandbox - Success]',
+  IN_APP_SANDBOX_RUN_TRIGGER_CLICK = 'Run Trigger Clicked - [In-App Sandbox]',
+  CONFIGURE_LATER_CLICK = 'Configure Later Click',
 }
 
 export enum FlowTypeEnum {

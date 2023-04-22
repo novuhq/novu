@@ -5,12 +5,24 @@ import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Button, colors, Text } from '../../../design-system';
 import { ROUTES } from '../../../constants/routes.enum';
+import { OnBoardingAnalyticsEnum } from '../consts';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
-export function SetupStatus({ appInitialized, navigatePath }: { appInitialized: boolean; navigatePath: string }) {
+export function SetupStatus({
+  appInitialized,
+  navigatePath,
+  framework,
+}: {
+  appInitialized: boolean;
+  navigatePath: string;
+  framework: string | undefined;
+}) {
   const navigate = useNavigate();
+  const segment = useSegment();
 
   function handleConfigureLater() {
     navigate(ROUTES.TEMPLATES);
+    segment.track(OnBoardingAnalyticsEnum.CONFIGURE_LATER_CLICK, { screen: 'framework instructions', framework });
   }
 
   useEffect(() => {

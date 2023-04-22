@@ -12,8 +12,13 @@ import { useParams } from 'react-router-dom';
 import { createTemplate, testTrigger } from '../../../api/notification-templates';
 import { Playground } from '../../../design-system/icons/general/Playground';
 import { useNotificationGroup, useTemplates } from '../../../hooks';
-import { inAppSandboxSubscriberId, notificationTemplateName } from '../../../pages/quick-start/consts';
+import {
+  inAppSandboxSubscriberId,
+  notificationTemplateName,
+  OnBoardingAnalyticsEnum,
+} from '../../../pages/quick-start/consts';
 import { NodeStep } from '../common';
+import { useSegment } from '../../providers/SegmentProvider';
 
 const useStyles = createStyles((theme) => ({
   dropdown: {
@@ -53,6 +58,8 @@ export function TriggerNode({ data }: { data: { label: string; email?: string } 
 function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
   const [notificationNumber, setNotificationNumber] = useState(1);
   const { templates = [], loading: templatesLoading } = useTemplates();
+
+  const segment = useSegment();
 
   const { groups, loading: notificationGroupLoading } = useNotificationGroup();
 
@@ -105,6 +112,7 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
     });
 
     setNotificationNumber((prev) => prev + 1);
+    segment.track(OnBoardingAnalyticsEnum.IN_APP_SANDBOX_RUN_TRIGGER_CLICK, { number: notificationNumber });
   }
 
   return (

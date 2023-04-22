@@ -88,6 +88,7 @@ export function Setup() {
                 <SetupStatus
                   appInitialized={inAppData.active}
                   navigatePath={`/quickstart/notification-center/set-up/${framework}/success`}
+                  framework={framework}
                 />
               </LoaderWrapper>
             </Timeline.Item>

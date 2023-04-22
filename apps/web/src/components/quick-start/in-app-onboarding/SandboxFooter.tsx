@@ -2,12 +2,16 @@ import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes.enum';
 import { Button, colors, shadows } from '../../../design-system';
+import { OnBoardingAnalyticsEnum } from '../../../pages/quick-start/consts';
+import { useSegment } from '../../providers/SegmentProvider';
 
 export function SandboxFooter() {
   const navigate = useNavigate();
+  const segment = useSegment();
 
   function handleConfigureLater() {
     navigate(ROUTES.TEMPLATES);
+    segment.track(OnBoardingAnalyticsEnum.CONFIGURE_LATER_CLICK, { screen: 'in-app sandbox' });
   }
 
   function handleTryDemoApp() {
