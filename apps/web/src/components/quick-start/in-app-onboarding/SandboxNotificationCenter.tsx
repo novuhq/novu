@@ -25,7 +25,7 @@ function PopoverWrapper() {
 
   return (
     <Wrapper>
-      <NotificationCenter colorScheme={colorScheme} footer={() => <>{null}</>} />
+      <NotificationCenter colorScheme={colorScheme} footer={() => <>{null}</>} showUserPreferences={false} />
     </Wrapper>
   );
 }
