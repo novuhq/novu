@@ -86,17 +86,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return this.mapEntities(messages);
   }
 
-  async getTotalCount(
-    environmentId: string,
-    subscriberId: string,
-    channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
-  ) {
-    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
-
-    return this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
-  }
-
   async getCount(
     environmentId: string,
     subscriberId: string,

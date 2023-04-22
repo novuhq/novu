@@ -70,7 +70,7 @@ export class GetNotificationsFeed {
       }
     }
 
-    const totalCount = await this.messageRepository.getTotalCount(
+    const totalCount = await this.messageRepository.getCount(
       command.environmentId,
       subscriber._id,
       ChannelTypeEnum.IN_APP,
