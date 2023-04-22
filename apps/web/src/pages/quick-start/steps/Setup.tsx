@@ -1,26 +1,17 @@
 import styled from '@emotion/styled';
 import { Stack, Timeline } from '@mantine/core';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
-import {
-  ActorTypeEnum,
-  ICreateNotificationTemplateDto,
-  INotificationTemplate,
-  StepTypeEnum,
-  SystemAvatarIconEnum,
-} from '@novu/shared';
-
 import { getApiKeys } from '../../../api/environment';
 import { getInAppActivated } from '../../../api/integration';
-import { createTemplate } from '../../../api/notification-templates';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { When } from '../../../components/utils/When';
 import { API_ROOT, WS_URL } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
 import { colors } from '../../../design-system';
-import { useEnvController, useNotificationGroup, useTemplates } from '../../../hooks';
+import { useEnvController } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { SetupStatus } from '../components/SetupStatus';
@@ -31,15 +22,12 @@ import {
   BACKEND_SOCKET_URL,
   demoSetupSecondaryTitle,
   frameworkInstructions,
-  notificationTemplateName,
   OnBoardingAnalyticsEnum,
 } from '../consts';
 
 export function Setup() {
   const segment = useSegment();
   const { framework } = useParams();
-  const { groups, loading: notificationGroupLoading } = useNotificationGroup();
-  const { templates = [], loading: templatesLoading } = useTemplates();
   const { environment } = useEnvController();
   const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
@@ -53,50 +41,10 @@ export function Setup() {
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
   const goBackRoute = framework === 'demo' ? ROUTES.QUICK_START_NOTIFICATION_CENTER : ROUTES.QUICK_START_SETUP;
   const secondaryTitle = framework === 'demo' ? demoSetupSecondaryTitle : '';
-  const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
-    INotificationTemplate,
-    { error: string; message: string; statusCode: number },
-    ICreateNotificationTemplateDto
-  >(createTemplate);
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.FRAMEWORK_SETUP_VISIT, { framework });
   }, []);
-
-  useEffect(() => {
-    if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading) {
-      const onboardingNotificationTemplate = templates.find((template) =>
-        template.name.includes(notificationTemplateName)
-      );
-
-      if (!onboardingNotificationTemplate) {
-        createOnBoardingTemplate();
-      }
-    }
-  }, [templates]);
-
-  async function createOnBoardingTemplate() {
-    const payloadToCreate = {
-      notificationGroupId: groups[0]._id,
-      name: notificationTemplateName,
-      active: true,
-      draft: false,
-      steps: [
-        {
-          template: {
-            type: StepTypeEnum.IN_APP,
-            content: 'Test notification {{number}}',
-            actor: {
-              type: ActorTypeEnum.SYSTEM_ICON,
-              data: SystemAvatarIconEnum.SUCCESS,
-            },
-          },
-        },
-      ],
-    };
-
-    await createNotificationTemplate(payloadToCreate as unknown as ICreateNotificationTemplateDto);
-  }
 
   function handleOnCopy(copiedStepIndex: number) {
     const stepNumber = (copiedStepIndex + 1).toString();
