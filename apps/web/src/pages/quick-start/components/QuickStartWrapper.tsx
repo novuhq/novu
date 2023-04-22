@@ -139,7 +139,7 @@ export function Faq() {
         <span style={{ fontWeight: 800 }}>Got stuck? </span>
         <span>Please send us a </span>
 
-        {!!INTERCOM_APP_ID ? (
+        {INTERCOM_APP_ID ? (
           <HelpRequestWithIntercom handleClick={handleOnHelpRequestClick} />
         ) : (
           <GradientSpan>help request, </GradientSpan>

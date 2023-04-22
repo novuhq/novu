@@ -3,10 +3,9 @@ import { createStyles, NumberInput, Loader } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { NodeStepWithPopover } from './NodeStepWithPopover';
-import { DigestGradient } from '../../../design-system/icons';
+import { DigestGradient, CountdownTimer } from '../../../design-system/icons';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
-import { CountdownTimer } from '../../../design-system/icons';
 import { colors } from '../../../design-system';
 import { useEffect, useState } from 'react';
 import { useInterval } from '@mantine/hooks';
