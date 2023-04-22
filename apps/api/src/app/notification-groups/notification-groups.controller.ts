@@ -1,4 +1,14 @@
-import { Body, ClassSerializerInterceptor, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
 import { Roles } from '../auth/framework/roles.decorator';
@@ -11,6 +21,8 @@ import { GetNotificationGroupsCommand } from './usecases/get-notification-groups
 import { ApiCreatedResponse, ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationGroupResponseDto } from './dtos/notification-group-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { GetNotificationGroup } from './usecases/get-notification-group/get-notification-group.usecase';
+import { GetNotificationGroupCommand } from './usecases/get-notification-group/get-notification-group.command';
 
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -19,7 +31,8 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 export class NotificationGroupsController {
   constructor(
     private createNotificationGroupUsecase: CreateNotificationGroup,
-    private getNotificationGroupsUsecase: GetNotificationGroups
+    private getNotificationGroupsUsecase: GetNotificationGroups,
+    private getNotificationGroupUsecase: GetNotificationGroup
   ) {}
 
   @Post('')
@@ -58,6 +71,28 @@ export class NotificationGroupsController {
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
+      })
+    );
+  }
+
+  @Get('/:id')
+  @ExternalApiAccessible()
+  @ApiOkResponse({
+    type: [NotificationGroupResponseDto],
+  })
+  @ApiOperation({
+    summary: 'Get notification group',
+  })
+  getNotificationGroup(
+    @UserSession() user: IJwtPayload,
+    @Param('id') id: string
+  ): Promise<NotificationGroupResponseDto> {
+    return this.getNotificationGroupUsecase.execute(
+      GetNotificationGroupCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        id,
       })
     );
   }
