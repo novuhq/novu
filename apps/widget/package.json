@@ -14,7 +14,6 @@
     "docker:build": "docker build -f ./Dockerfile -t novu-widget ./../..",
     "prebuild": "rimraf build",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 craco build",
-    "test": "craco test",
     "precommit": "lint-staged",
     "eject": "craco eject",
     "lint": "eslint src",
