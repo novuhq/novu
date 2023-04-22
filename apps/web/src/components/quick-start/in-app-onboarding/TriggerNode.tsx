@@ -9,6 +9,11 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Playground } from '../../../design-system/icons/general/Playground';
 import { NodeStep } from '../common';
+import { INotificationTemplate, StepTypeEnum, ActorTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
+import { useMutation } from '@tanstack/react-query';
+import { createTemplate, testTrigger } from '../../../api/notification-templates';
+import { notificationTemplateName, onBoardingSubscriberId } from '../../../pages/quick-start/consts';
+import { useNotificationGroup, useTemplates } from '../../../hooks';
 
 const useStyles = createStyles((theme) => ({
   dropdown: {
@@ -45,6 +50,70 @@ export function TriggerNode({ data }: { data: { label: string; email?: string } 
   );
 }
 
+function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
+  const [notificationNumber, setNotificationNumber] = useState(1);
+  const { templates = [], loading: templatesLoading } = useTemplates();
+
+  const { groups, loading: notificationGroupLoading } = useNotificationGroup();
+
+  const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
+    INotificationTemplate,
+    { error: string; message: string; statusCode: number },
+    ICreateNotificationTemplateDto
+  >(createTemplate);
+
+  const onboardingNotificationTemplate = templates.find((template) => template.name.includes(notificationTemplateName));
+
+  useEffect(() => {
+    if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading && !onboardingNotificationTemplate) {
+      createOnBoardingTemplate();
+    }
+  }, [templates, onboardingNotificationTemplate]);
+
+  async function createOnBoardingTemplate() {
+    const payloadToCreate = {
+      notificationGroupId: groups[0]._id,
+      name: notificationTemplateName,
+      active: true,
+      draft: false,
+      steps: [
+        {
+          template: {
+            type: StepTypeEnum.IN_APP,
+            content: 'Test notification {{number}}',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.SUCCESS,
+            },
+          },
+        },
+      ],
+    };
+
+    return await createNotificationTemplate(payloadToCreate as unknown as ICreateNotificationTemplateDto);
+  }
+
+  async function handleRunTrigger() {
+    setOpened(false);
+    await testTrigger({
+      name: onboardingNotificationTemplate?.triggers[0].identifier,
+      to: { subscriberId: onBoardingSubscriberId },
+      payload: {
+        __source: 'in-app-onboarding',
+        number: notificationNumber,
+      },
+    });
+
+    setNotificationNumber((prev) => prev + 1);
+  }
+
+  return (
+    <Button variant="outline" onClick={handleRunTrigger}>
+      Run Trigger
+    </Button>
+  );
+}
+
 function TriggerPopover() {
   const [opened, setOpened] = useState(false);
 
@@ -76,9 +145,7 @@ function TriggerPopover() {
     >
       <Popover.Target>
         <div>
-          <Button variant="outline" onClick={() => {}}>
-            Run Trigger
-          </Button>
+          <TriggerButton setOpened={setOpened} />
         </div>
       </Popover.Target>
       <Popover.Dropdown>
@@ -125,5 +192,4 @@ function PopoverContent({ setOpened }: { setOpened: (opened: boolean) => void })
 
 const ContentWrapper = styled.div`
   max-width: 356px;
-  max-height: 196px;
 `;
