@@ -5,15 +5,15 @@ import { TurnOnGradient } from '../../../design-system/icons/gradient/TurnOnGrad
 
 import styled from '@emotion/styled';
 import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
+import { ActorTypeEnum, INotificationTemplate, StepTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
+import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Playground } from '../../../design-system/icons/general/Playground';
-import { NodeStep } from '../common';
-import { INotificationTemplate, StepTypeEnum, ActorTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
 import { createTemplate, testTrigger } from '../../../api/notification-templates';
-import { notificationTemplateName, onBoardingSubscriberId } from '../../../pages/quick-start/consts';
+import { Playground } from '../../../design-system/icons/general/Playground';
 import { useNotificationGroup, useTemplates } from '../../../hooks';
+import { inAppSandboxSubscriberId, notificationTemplateName } from '../../../pages/quick-start/consts';
+import { NodeStep } from '../common';
 
 const useStyles = createStyles((theme) => ({
   dropdown: {
@@ -97,7 +97,7 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
     setOpened(false);
     await testTrigger({
       name: onboardingNotificationTemplate?.triggers[0].identifier,
-      to: { subscriberId: onBoardingSubscriberId },
+      to: { subscriberId: inAppSandboxSubscriberId },
       payload: {
         __source: 'in-app-onboarding',
         number: notificationNumber,

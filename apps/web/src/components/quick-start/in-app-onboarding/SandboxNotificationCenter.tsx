@@ -3,7 +3,7 @@ import { useMantineColorScheme } from '@mantine/core';
 import { NotificationCenter, NovuProvider } from '@novu/notification-center';
 import { API_ROOT, WS_URL } from '../../../config';
 import { useEnvController } from '../../../hooks';
-import { onBoardingSubscriberId } from '../../../pages/quick-start/consts';
+import { inAppSandboxSubscriberId } from '../../../pages/quick-start/consts';
 
 export function SandboxNotificationCenter() {
   const { environment } = useEnvController();
@@ -12,7 +12,7 @@ export function SandboxNotificationCenter() {
     <NovuProvider
       backendUrl={API_ROOT}
       socketUrl={WS_URL}
-      subscriberId={onBoardingSubscriberId}
+      subscriberId={inAppSandboxSubscriberId}
       applicationIdentifier={environment?.identifier as string}
     >
       <PopoverWrapper />

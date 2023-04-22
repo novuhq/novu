@@ -7,6 +7,7 @@ import { Bell, Chat, Mail, Mobile, Sms } from '../../design-system/icons';
 import { ROUTES } from '../../constants/routes.enum';
 
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
+export const inAppSandboxSubscriberId = 'in-app-sandbox-subscriber-id-123';
 export const notificationTemplateName = 'On-boarding notification';
 export const cloneDemoRepo = 'git clone https://github.com/novuhq/notification-center-demo.git';
 export const APPLICATION_IDENTIFIER = '<APPLICATION_IDENTIFIER>';
