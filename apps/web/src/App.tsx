@@ -33,7 +33,6 @@ import { SegmentProvider } from './components/providers/SegmentProvider';
 import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
 import { Setup } from './pages/quick-start/steps/Setup';
-import { Trigger } from './pages/quick-start/steps/Trigger';
 import { RequiredAuth } from './components/layout/RequiredAuth';
 import { GetStarted } from './pages/quick-start/steps/GetStarted';
 import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
@@ -197,7 +196,6 @@ function App() {
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
                   <Route path={ROUTES.QUICK_START_SETUP} element={<FrameworkSetup />} />
                   <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
-                  <Route path={ROUTES.QUICK_START_SETUP_TRIGGER} element={<Trigger />} />
                   <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
                   <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
