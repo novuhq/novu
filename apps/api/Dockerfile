@@ -2,6 +2,7 @@ FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as dev_base
 
 ARG BULL_MQ_PRO_TOKEN
 ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
+ENV NX_DAEMON=false
 
 RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@7.28.0
