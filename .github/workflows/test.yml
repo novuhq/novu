@@ -162,7 +162,7 @@ jobs:
         env:
           IN_MEMORY_CLUSTER_MODE_ENABLED: true
         with:
-          targets: test:e2e, test
+          targets: test:e2e
           projects: ${{matrix.projectName}}
 
   test_unit:
