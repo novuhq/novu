@@ -62,7 +62,7 @@ For Novu cloud users - notifications and activity feed data will be saved for 1 
 In-app messages will be saved for 6 months.
 After that time - the records will be archived.
 
-For self-hosted - the same timeframe applies before records will be deleted. A TTL expiration date will be set for them.  
+For self-hosted - the same time frame applies before records will be deleted. A TTL expiration date will be set for them.  
 Self-hosted users can disable ttl setting by adding environment variable `DISABLE_TTL=true`.
 
 Affected schemes:
