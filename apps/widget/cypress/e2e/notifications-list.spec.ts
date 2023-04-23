@@ -81,11 +81,11 @@ describe('Notifications List', function () {
     cy.wait('@firstPage');
     cy.getByTestId('notification-list-item').should('have.length', 10);
 
-    scrollToBotton();
+    scrollToBottom();
     cy.wait('@secondPage');
     cy.getByTestId('notification-list-item').should('have.length', 20);
 
-    scrollToBotton();
+    scrollToBottom();
     cy.wait('@thirdPage');
     cy.getByTestId('notification-list-item').should('have.length', 25);
   });
@@ -135,10 +135,10 @@ describe('Notifications List', function () {
 
     cy.getByTestId('notification-list-item').should('have.length', 10);
 
-    scrollToBotton();
+    scrollToBottom();
     cy.getByTestId('notification-list-item').should('have.length', 20);
 
-    scrollToBotton();
+    scrollToBottom();
     cy.getByTestId('notification-list-item').should('have.length', 26);
 
     cy.getByTestId('notification-list-item')
@@ -156,6 +156,6 @@ describe('Notifications List', function () {
   });
 });
 
-function scrollToBotton() {
+function scrollToBottom() {
   cy.getByTestId('notifications-scroll-area').get('.infinite-scroll-component').scrollTo('bottom');
 }
