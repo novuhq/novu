@@ -1,15 +1,19 @@
-import { useMemo, useEffect } from 'react';
-import { JsonInput } from '@mantine/core';
+import { useMemo, useEffect, useState } from 'react';
+import { Group, JsonInput, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
-import { INotificationTrigger, IUserEntity, INotificationTriggerVariable } from '@novu/shared';
-import { Button, Title, Modal } from '../../../design-system';
+import { IUserEntity, INotificationTriggerVariable } from '@novu/shared';
+import { Button, colors } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
 import { testTrigger } from '../../../api/notification-templates';
+import { ExecutionDetailsModalWrapper } from './ExecutionDetailsModalWrapper';
+import { useDisclosure } from '@mantine/hooks';
+import { SubPageWrapper } from './SubPageWrapper';
+import { TriggerSegmentControl } from './TriggerSegmentControl';
 
 const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
   const subsVars = getSubscriberValue(
@@ -29,21 +33,11 @@ function subscriberExist(subscriberVariables: INotificationTriggerVariable[]) {
   return subscriberVariables?.some((variable) => variable.name === 'subscriberId');
 }
 
-export function TestWorkflowModal({
-  isVisible,
-  onDismiss,
-  trigger,
-  setTransactionId,
-  openExecutionModal,
-}: {
-  isVisible: boolean;
-  onDismiss: () => void;
-  openExecutionModal: () => void;
-  setTransactionId: (id: string) => void;
-  trigger: INotificationTrigger;
-}) {
+export function TestWorkflow({ trigger }) {
+  const [transactionId, setTransactionId] = useState<string>('');
   const { currentUser } = useAuthContext();
-  const { mutateAsync: triggerTestEvent } = useMutation(testTrigger);
+  const { mutateAsync: triggerTestEvent, isLoading } = useMutation(testTrigger);
+  const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
 
   const subscriberVariables = useMemo(() => {
     if (trigger?.subscriberVariables && subscriberExist(trigger?.subscriberVariables)) {
@@ -54,7 +48,7 @@ export function TestWorkflowModal({
   }, [trigger]);
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
 
-  const overridesTrigger = `{\n\n}`;
+  const overridesTrigger = '{\n\n}';
 
   function jsonValidator(value: string) {
     try {
@@ -67,7 +61,7 @@ export function TestWorkflowModal({
   const form = useForm({
     initialValues: {
       toValue: makeToValue(subscriberVariables, currentUser),
-      payloadValue: makePayloadValue(variables) === '{}' ? `{\n\n}` : makePayloadValue(variables),
+      payloadValue: makePayloadValue(variables) === '{}' ? '{\n\n}' : makePayloadValue(variables),
       overridesValue: overridesTrigger,
     },
     validate: {
@@ -97,11 +91,8 @@ export function TestWorkflowModal({
         overrides,
       });
 
-      const { transactionId = '' } = response;
-
-      setTransactionId(transactionId);
+      setTransactionId(response.transactionId || '');
       successMessage('Template triggered successfully');
-      onDismiss();
       openExecutionModal();
     } catch (e: any) {
       Sentry.captureException(e);
@@ -110,18 +101,14 @@ export function TestWorkflowModal({
   };
 
   return (
-    <Modal
-      onClose={onDismiss}
-      opened={isVisible}
-      title={<Title>Test Trigger </Title>}
-      data-test-id="test-trigger-modal"
-    >
-      <form
-        onSubmit={(e) => {
-          form.onSubmit(onTrigger)(e);
-          e.stopPropagation();
-        }}
-      >
+    <>
+      <SubPageWrapper title="Trigger">
+        <Text color={colors.B60} mt={-16} mb={24}>
+          Test trigger as if you sent it from your API or implement it by copy/pasting it into the codebase of your
+          application.
+        </Text>
+        <TriggerSegmentControl />
+
         <JsonInput
           data-test-id="test-trigger-to-param"
           formatOnBlur
@@ -154,12 +141,31 @@ export function TestWorkflowModal({
           minRows={3}
           validationError="Invalid JSON"
         />
-        <div style={{ alignItems: 'end' }}>
-          <Button disabled={!form.isValid()} data-test-id="test-trigger-btn" mt={30} inherit submit>
-            Trigger
-          </Button>
-        </div>
-      </form>
-    </Modal>
+        <Group mt={30} position="right">
+          <div data-test-id="test-workflow-btn">
+            <Button
+              sx={{
+                width: 'auto',
+              }}
+              fullWidth={false}
+              disabled={!form.isValid()}
+              data-test-id="test-trigger-btn"
+              inherit
+              loading={isLoading}
+              onClick={() => {
+                onTrigger(form.values);
+              }}
+            >
+              Run Trigger
+            </Button>
+          </div>
+        </Group>
+      </SubPageWrapper>
+      <ExecutionDetailsModalWrapper
+        transactionId={transactionId}
+        isOpen={executionModalOpened}
+        onClose={closeExecutionModal}
+      />
+    </>
   );
 }

@@ -23,7 +23,12 @@ export function useBlocker(blocker, when = true) {
   }, [navigator, blocker, when]);
 }
 
-export const usePrompt = (when: boolean): [boolean, () => void, () => void] => {
+export const usePrompt = (
+  when: boolean,
+  checkNextLocation = (nextLocation, location) => {
+    return nextLocation.location.pathname !== location.pathname;
+  }
+): [boolean, () => void, () => void] => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showPrompt, setShowPrompt] = useState(false);
@@ -36,7 +41,7 @@ export const usePrompt = (when: boolean): [boolean, () => void, () => void] => {
 
   const handleBlockedNavigation = useCallback(
     (nextLocation) => {
-      if (!confirmedNavigation && nextLocation.location.pathname !== location.pathname) {
+      if (!confirmedNavigation && checkNextLocation(nextLocation, location)) {
         setShowPrompt(true);
         setLastLocation(nextLocation);
 
@@ -45,7 +50,7 @@ export const usePrompt = (when: boolean): [boolean, () => void, () => void] => {
 
       return true;
     },
-    [confirmedNavigation]
+    [confirmedNavigation, checkNextLocation]
   );
 
   const confirmNavigation = useCallback(() => {
