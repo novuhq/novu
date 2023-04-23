@@ -156,28 +156,6 @@
       "last 1 safari version"
     ]
   },
-  "workspaces": {
-    "nohoist": [
-      "**/@ant-design/icons",
-      "**/@ant-design/icons/**",
-      "**/antd",
-      "**/antd/**",
-      "**/react-scripts",
-      "**/react-scripts/**",
-      "**/react",
-      "**/react-dom",
-      "**/react/**",
-      "**/react-router",
-      "**/react-router/**",
-      "**/react-router-dom",
-      "**/react-router-dom/**",
-      "**/@cypress",
-      "**/@storybook/**",
-      "**/@storybook",
-      "**/@babel",
-      "**/@babel/**"
-    ]
-  },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
       "eslint"

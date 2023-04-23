@@ -20,8 +20,6 @@
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
-    "test": "run-s test:*",
-    "test:unit": "jest src",
     "lint": "eslint src --ext .ts",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest src --watch",

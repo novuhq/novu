@@ -22,7 +22,7 @@ jobs:
         id: setup-project
         with:
           cypress_version: 10.1.0
-
+          cypress: true
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint

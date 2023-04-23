@@ -34,6 +34,8 @@ jobs:
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
       test-cypress: ${{ steps.get-projects-arrays.outputs.test-cypress }}
       test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
+      test-packages: ${{ steps.get-projects-arrays.outputs.test-packages }}
+      test-libs: ${{ steps.get-projects-arrays.outputs.test-libs }}
     steps:
       # Get current branch name
       - name: Get branch name
@@ -70,13 +72,17 @@ jobs:
             echo "::set-output name=test-unit::$(pnpm run get-affected test:unit --all | tail -n +5)"
             echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e --all | tail -n +5)"
             echo "::set-output name=test-cypress::$(pnpm run get-affected cypress:run --all | tail -n +5)"
-            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} true | tail -n +5)"
+            echo "::set-output name=test-providers::$(pnpm run get-affected test --all providers | tail -n +5)"
+            echo "::set-output name=test-packages::$(pnpm run get-affected test --all packages | tail -n +5)"
+            echo "::set-output name=test-libs::$(pnpm run get-affected test --all libs | tail -n +5)"
           else
             echo "Running PR origin/${{steps.get-base-branch-name.outputs.branch}}"
             echo "::set-output name=test-unit::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)"
             echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)"
             echo "::set-output name=test-cypress::$(pnpm run get-affected cypress:run origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)"
-            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} true | tail -n +5)"
+            echo "::set-output name=test-providers::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} providers | tail -n +5)"
+            echo "::set-output name=test-packages::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)"
+            echo "::set-output name=test-libs::$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)"
           fi
 
   test_web:
@@ -118,7 +124,7 @@ jobs:
           docker_name: ${{ matrix.name }}
 
   test_providers:
-    name: Test Providers
+    name: Unit Test Providers
     runs-on: ubuntu-latest
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-providers)[0] }}
@@ -127,11 +133,44 @@ jobs:
       - run: echo '${{ needs.get-affected.outputs.test-providers }}'
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
+        with:
+          slim: 'true'
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint,build,test
           parallel: 5
           projects: ${{join(fromJson(needs.get-affected.outputs.test-providers), ',')}}
+
+  test_packages:
+    name: Unit Test Packages
+    runs-on: ubuntu-latest
+    needs: [get-affected]
+    if: ${{ fromJson(needs.get-affected.outputs.test-packages)[0] }}
+    timeout-minutes: 80
+    steps:
+      - run: echo '${{ needs.get-affected.outputs.test-packages }}'
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+      - uses: mansagroup/nrwl-nx-action@v3
+        if: ${{matrix.projectName == '@novu/application-generic' }}
+        with:
+          targets: lint,build,test
+          projects: ${{join(fromJson(needs.get-affected.outputs.test-providers), ',')}}
+
+  test_libs:
+    name: Unit Test Libs
+    runs-on: ubuntu-latest
+    needs: [get-affected]
+    if: ${{ fromJson(needs.get-affected.outputs.test-libs)[0] }}
+    timeout-minutes: 80
+    steps:
+      - run: echo '${{ needs.get-affected.outputs.test-libs }}'
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+      - uses: mansagroup/nrwl-nx-action@v3
+        with:
+          targets: lint,build,test
+          projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
 
   test_e2e:
     name: Test E2E
@@ -166,7 +205,7 @@ jobs:
           projects: ${{matrix.projectName}}
 
   test_unit:
-    name: Test Unit
+    name: Unit Test
     runs-on: ubuntu-latest
     needs: [get-affected]
     if:  ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
@@ -179,27 +218,12 @@ jobs:
       - run: echo ${{ matrix.projectName }}
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
+        with:
+          # Don't run redis and etc... for other unit tests
+          slim: ${{ !contains(matrix.projectName, '@novu/api') && !contains(matrix.projectName, '@novu/worker') }}
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
-        if: ${{matrix.projectName == '@novu/application-generic' }}
-        with:
-          targets: lint,build
-          projects: ${{matrix.projectName}}
-      - uses: mansagroup/nrwl-nx-action@v3
-        if: ${{matrix.projectName != '@novu/application-generic' }}
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
 
-  deploy_dev_api:
-    name: Deploy Dev API
-    needs: [test_e2e, test_unit, build_docker_api]
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') && github.ref == 'refs/heads/next' }}
-    uses: ./.github/workflows/reusable-app-service-deploy.yml
-    secrets: inherit
-    with:
-      environment: Development
-      service_name: api
-      terraform_workspace: novu-dev
-      # This is a workaround to an issue with matrix outputs
-      docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}

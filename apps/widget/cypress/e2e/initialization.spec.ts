@@ -2,6 +2,7 @@ describe('Initialization', function () {
   beforeEach(function () {
     cy.intercept('**/widgets/session/initialize**').as('sessionInitialize');
     cy.initializeSession();
+    cy.waitForNetworkIdle(500);
   });
 
   it('should initialize a session', function () {
@@ -37,6 +38,7 @@ describe('Initialization with enabled HMAC encryption in shell', function () {
         return cy.forceVisit(WidgetURL);
       });
     cy.wait('@sessionInitialize');
+    cy.waitForNetworkIdle(500);
 
     cy.window().then((w) => {
       expect(w.localStorage.getItem('widget_user_auth_token')).to.be.ok;

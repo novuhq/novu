@@ -11,7 +11,9 @@
 
 import { DalService, EnvironmentEntity } from '@novu/dal';
 import { EnvironmentService, NotificationsService, NotificationTemplateService, UserSession } from '@novu/testing';
+import { JobsService } from '@novu/testing/src';
 
+const jobsService = new JobsService();
 /**
  * @type {Cypress.PluginConfig}
  */
@@ -39,6 +41,13 @@ module.exports = (on, config) => {
 
       if (organizationId) {
         await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
+      }
+
+      while (
+        (await jobsService.jobQueue.queue.getWaitingCount()) ||
+        (await jobsService.jobQueue.queue.getActiveCount())
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
 
       return 'ok';

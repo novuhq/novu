@@ -2,14 +2,14 @@ import { getPackageFolders } from './get-packages-folder.mjs';
 import spawn from 'cross-spawn';
 import { fileURLToPath } from 'url';
 import path from 'path';
-
+import * as fs from 'fs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const processArguments = process.argv.slice(2);
 
 const ALL_FLAG = '--all';
 const TASK_NAME = processArguments[0];
 const BASE_BRANCH_NAME = processArguments[1];
-const PROVIDERS = processArguments[2];
+const GROUP = processArguments[2];
 
 const ROOT_PATH = path.resolve(__dirname, '..');
 const ENCODING_TYPE = 'utf8';
@@ -84,17 +84,38 @@ function getAffectedCommandResult(str) {
 }
 
 async function affectedProjectsContainingTask(taskName, baseBranch) {
+  const cachePath = taskName + baseBranch.replace('/', '').replace('/', '') + '-contain-task-cache.json';
+
+  const isCacheExists = fs.existsSync(cachePath);
+  if (isCacheExists) {
+    const cache = fs.readFileSync(cachePath, 'utf8');
+
+    return JSON.parse(cache);
+  }
   // pnpm nx print-affected --target=[task] --base [base branch] --select=tasks.target.project
-  return commaSeparatedListToArray(
+  const result = commaSeparatedListToArray(
     getAffectedCommandResult(
       await pnpmRun('nx', 'print-affected', '--target', taskName, '--base', baseBranch, '--select=tasks.target.project')
     )
   );
+
+  fs.writeFileSync(cachePath, JSON.stringify(result));
+
+  return result;
 }
 
 async function allProjectsContainingTask(taskName) {
+  const cachePath = taskName + '-all-contain-task-cache.json';
+
+  const isCacheExists = fs.existsSync(cachePath);
+  if (isCacheExists) {
+    const cache = fs.readFileSync(cachePath, 'utf8');
+
+    return JSON.parse(cache);
+  }
+
   // pnpm nx print-affected --target=[task] --files package.json --select=tasks.target.project
-  return commaSeparatedListToArray(
+  const result = commaSeparatedListToArray(
     getAffectedCommandResult(
       await pnpmRun(
         'nx',
@@ -107,10 +128,14 @@ async function allProjectsContainingTask(taskName) {
       )
     )
   );
+
+  fs.writeFileSync(cachePath, JSON.stringify(result));
+
+  return result;
 }
 
 async function printAffectedProjectsContainingTask() {
-  const providers = await getPackageFolders();
+  const { providers, packages , libs } = await getPackageFolders(['providers', 'packages', 'libs']);
 
   let projects =
     BASE_BRANCH_NAME === ALL_FLAG
@@ -122,9 +147,24 @@ async function printAffectedProjectsContainingTask() {
     projects = projects.filter((project) => !providers.includes(project));
   }
 
-  if (PROVIDERS) {
+  const foundPackages = projects.filter((project) => packages.includes(project));
+  if (foundPackages.length) {
+    projects = projects.filter((project) => !packages.includes(project));
+  }
+
+  const foundLibs = projects.filter((project) => libs.includes(project));
+  if (foundLibs.length) {
+    projects = projects.filter((project) => !libs.includes(project));
+  }
+
+
+  if (GROUP === 'providers') {
     console.log(JSON.stringify(foundProviders));
-  } else {
+  } else if (GROUP === 'packages') {
+    console.log(JSON.stringify(foundPackages));
+  } else if (GROUP === 'libs') {
+    console.log(JSON.stringify(foundLibs));
+  }  else {
     console.log(JSON.stringify(projects));
   }
 }
