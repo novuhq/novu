@@ -16,7 +16,7 @@ export class UpdateNotificationGroup {
     });
 
     if (!item) {
-      throw new NotFoundException(`Notification group with id ${id} not found`);
+      throw new NotFoundException();
     }
 
     await await this.notificationGroupRepository.update(

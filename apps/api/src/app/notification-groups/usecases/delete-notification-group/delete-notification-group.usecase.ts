@@ -7,22 +7,19 @@ export class DeleteNotificationGroup {
   constructor(private notificationGroupRepository: NotificationGroupRepository) {}
 
   async execute(command: DeleteNotificationGroupCommand) {
-    const { environmentId, organizationId, id } = command;
+    const { environmentId, id } = command;
     try {
       const group = await this.notificationGroupRepository.findOne({
-        _organizationId: organizationId,
-      });
-
-      const result = await this.notificationGroupRepository.delete({
         _environmentId: environmentId,
-        _organizationId: organizationId,
         _id: id,
-        _parentId: group?._id,
       });
 
-      if (result === null) throw new NotFoundException();
+      if (group === null) throw new NotFoundException();
 
-      // return result;
+      await this.notificationGroupRepository.delete({
+        _environmentId: environmentId,
+        _id: id,
+      });
     } catch (e) {
       if (e instanceof DalException) {
         throw new ApiException(e.message);
