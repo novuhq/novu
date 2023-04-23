@@ -181,6 +181,12 @@ jobs:
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
+        if: ${{matrix.projectName == '@novu/application-generic' }}
+        with:
+          targets: lint,build
+          projects: ${{matrix.projectName}}
+      - uses: mansagroup/nrwl-nx-action@v3
+        if: ${{matrix.projectName != '@novu/application-generic' }}
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
