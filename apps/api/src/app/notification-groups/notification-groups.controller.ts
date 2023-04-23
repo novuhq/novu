@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
   UseInterceptors,
@@ -26,6 +27,8 @@ import { GetNotificationGroupCommand } from './usecases/get-notification-group/g
 import { DeleteNotificationGroup } from './usecases/delete-notification-group/delete-notification-group.usecase';
 import { DeleteNotificationGroupCommand } from './usecases/delete-notification-group/delete-notification-group.command';
 import { DeleteNotificationGroupResponseDto } from './dtos/delete-notification-group-response.dto';
+import { UpdateNotificationGroupCommand } from './usecases/update-notification-group/update-notification-group.command';
+import { UpdateNotificationGroup } from './usecases/update-notification-group/update-notification-group.usecase';
 
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -36,7 +39,8 @@ export class NotificationGroupsController {
     private createNotificationGroupUsecase: CreateNotificationGroup,
     private getNotificationGroupsUsecase: GetNotificationGroups,
     private getNotificationGroupUsecase: GetNotificationGroup,
-    private deleteNotificationGroupUsecase: DeleteNotificationGroup
+    private deleteNotificationGroupUsecase: DeleteNotificationGroup,
+    private updateNotificationGroupUsecase: UpdateNotificationGroup
   ) {}
 
   @Post('')
@@ -96,6 +100,30 @@ export class NotificationGroupsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
+        id,
+      })
+    );
+  }
+
+  @Patch('/:id')
+  @ExternalApiAccessible()
+  @ApiCreatedResponse({
+    type: NotificationGroupResponseDto,
+  })
+  @ApiOperation({
+    summary: 'Update notification group',
+  })
+  updateNotificationGroup(
+    @UserSession() user: IJwtPayload,
+    @Param('id') id: string,
+    @Body() body: CreateNotificationGroupRequestDto
+  ): Promise<NotificationGroupResponseDto> {
+    return this.updateNotificationGroupUsecase.execute(
+      UpdateNotificationGroupCommand.create({
+        organizationId: user.organizationId,
+        userId: user._id,
+        environmentId: user.environmentId,
+        name: body.name,
         id,
       })
     );
