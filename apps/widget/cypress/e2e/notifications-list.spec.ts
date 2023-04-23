@@ -1,6 +1,8 @@
 describe('Notifications List', function () {
   beforeEach(function () {
     cy.intercept('**/notifications/feed?page=0').as('getNotificationsFirstPage');
+    cy.intercept('**/notifications/feed?page=1').as('getSecondPage');
+    cy.intercept('GET', '**/notifications/unseen?**limit=100**').as('unseenCountRequest');
 
     cy.initializeSession()
       .as('session')
@@ -8,6 +10,7 @@ describe('Notifications List', function () {
         cy.wait(500);
 
         cy.task('createNotifications', {
+          organizationId: this.session.organization._id,
           identifier: session.templates[0].triggers[0].identifier,
           token: session.token,
           subscriberId: session.subscriber.subscriberId,
@@ -17,7 +20,6 @@ describe('Notifications List', function () {
         cy.wait(1000);
       });
   });
-
   it('should show list of current notifications', function () {
     cy.wait('@getNotificationsFirstPage');
 
@@ -38,6 +40,7 @@ describe('Notifications List', function () {
     cy.wait('@getNotificationsFirstPage');
 
     cy.task('createNotifications', {
+      organizationId: this.session.organization._id,
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
@@ -65,6 +68,7 @@ describe('Notifications List', function () {
    */
   it.skip('should lazy-load notifications on scroll', function () {
     cy.task('createNotifications', {
+      organizationId: this.session.organization._id,
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
@@ -77,11 +81,11 @@ describe('Notifications List', function () {
     cy.wait('@firstPage');
     cy.getByTestId('notification-list-item').should('have.length', 10);
 
-    cy.getByTestId('notifications-scroll-area').get('.infinite-scroll-component').scrollTo('bottom');
+    scrollToBotton();
     cy.wait('@secondPage');
     cy.getByTestId('notification-list-item').should('have.length', 20);
 
-    cy.getByTestId('notifications-scroll-area').get('.infinite-scroll-component').scrollTo('bottom');
+    scrollToBotton();
     cy.wait('@thirdPage');
     cy.getByTestId('notification-list-item').should('have.length', 25);
   });
@@ -100,4 +104,58 @@ describe('Notifications List', function () {
     cy.getByTestId('unseen-count-label').contains('5');
     cy.getByTestId('notification-list-item').should('have.length', 5);
   });
+
+  it('show 99+ count on if more then 99 notifications', function () {
+    cy.task('createNotifications', {
+      identifier: this.session.templates[0].triggers[0].identifier,
+      token: this.session.token,
+      subscriberId: this.session.subscriber.subscriberId,
+      count: 100,
+      organizationId: this.session.organization._id,
+    });
+
+    cy.wait('@unseenCountRequest').then(({ request, response }) => {
+      expect(response?.statusCode).to.eq(304);
+      expect(request?.query?.limit).to.eq('100');
+    });
+
+    cy.getByTestId('unseen-count-label').contains('99+');
+  });
+
+  it('pagination check', async function () {
+    cy.wait('@getNotificationsFirstPage');
+    cy.task('createNotifications', {
+      organizationId: this.session.organization._id,
+      enumerate: true,
+      identifier: this.session.templates[0].triggers[0].identifier,
+      token: this.session.token,
+      subscriberId: this.session.subscriber.subscriberId,
+      count: 21,
+    });
+
+    cy.getByTestId('notification-list-item').should('have.length', 10);
+
+    scrollToBotton();
+    cy.getByTestId('notification-list-item').should('have.length', 20);
+
+    scrollToBotton();
+    cy.getByTestId('notification-list-item').should('have.length', 26);
+
+    cy.getByTestId('notification-list-item')
+      .should('exist')
+      .each(($item, $index) => {
+        const notificationContentNumber = 20 - $index > 0 ? ' ' + (20 - $index).toString() : '';
+        cy.wrap($item)
+          .invoke('text')
+          .then((text) => {
+            if ($index !== 0) {
+              expect(text).to.contains(`John${notificationContentNumber}`);
+            }
+          });
+      });
+  });
 });
+
+function scrollToBotton() {
+  cy.getByTestId('notifications-scroll-area').get('.infinite-scroll-component').scrollTo('bottom');
+}

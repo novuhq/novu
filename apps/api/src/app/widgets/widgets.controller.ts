@@ -93,9 +93,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('page') page: number,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query() query: StoreQuery,
-    // todo update DefaultValuePipe to 100 in version 0.16
-    @Query('countLimit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) countLimit: number
+    @Query() query: StoreQuery
   ) {
     const feedsQuery = this.toArray(feedId);
 
@@ -106,7 +104,6 @@ export class WidgetsController {
       page,
       feedId: feedsQuery,
       query,
-      countLimit,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);

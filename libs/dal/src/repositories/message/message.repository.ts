@@ -91,7 +91,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     subscriberId: string,
     channel: ChannelTypeEnum,
     query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
-    options: { limit?: number } = {}
+    options: { limit: number } = { limit: 1000 } // todo NV-2161 update to 100 in version 0.16
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
       feedId: query.feedId,
@@ -99,9 +99,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read: query.read,
     });
 
-    const optionsQuery = options.limit ? options : {};
-
-    return this.MongooseModel.countDocuments(requestQuery, optionsQuery).read('secondaryPreferred');
+    return this.MongooseModel.countDocuments(requestQuery, options).read('secondaryPreferred');
   }
 
   async markAllMessagesAs({

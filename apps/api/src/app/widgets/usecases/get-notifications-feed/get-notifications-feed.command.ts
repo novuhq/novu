@@ -14,17 +14,4 @@ export class GetNotificationsFeedCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   query: StoreQuery;
-
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (isNaN(value) || value == null) {
-      // todo update the limit default to 100 to in version 0.16
-      return 1000;
-    }
-
-    return value;
-  })
-  @Min(1)
-  @Max(1000)
-  countLimit?: number;
 }

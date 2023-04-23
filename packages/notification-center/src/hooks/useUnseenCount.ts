@@ -51,14 +51,18 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
     };
   }, [socket, queryClient]);
 
-  const result = useQuery<ICountData, Error, ICountData>(UNSEEN_COUNT_QUERY_KEY, () => apiService.getUnseenCount(), {
-    ...restOptions,
-    enabled: isSessionInitialized && fetchingStrategy.fetchUnseenCount,
-    onSuccess: (data) => {
-      dispatchUnseenCountEvent(data.count);
-      onSuccess?.(data);
-    },
-  });
+  const result = useQuery<ICountData, Error, ICountData>(
+    UNSEEN_COUNT_QUERY_KEY,
+    () => apiService.getUnseenCount({ limit: 100 }),
+    {
+      ...restOptions,
+      enabled: isSessionInitialized && fetchingStrategy.fetchUnseenCount,
+      onSuccess: (data) => {
+        dispatchUnseenCountEvent(data.count);
+        onSuccess?.(data);
+      },
+    }
+  );
 
   return result;
 };

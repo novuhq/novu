@@ -342,8 +342,6 @@ export class SubscribersController {
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    // todo update DefaultValuePipe to 100 in version 0.16
-    @Query('countLimit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) countLimit: number,
     @Query('page') page?: string,
     @Query('feedIdentifier') feedId?: string,
     @Query() query: StoreQuery = {}
@@ -360,7 +358,6 @@ export class SubscribersController {
       page: page != null ? parseInt(page) : 0,
       feedId: feedsQuery,
       query: query,
-      countLimit,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -380,7 +377,7 @@ export class SubscribersController {
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean,
     @Param('subscriberId') subscriberId: string,
-    // todo update DefaultValuePipe to 100 in version 0.16
+    // todo NV-2161 update DefaultValuePipe to 100 in version 0.16
     @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     let feedsQuery: string[] | undefined;

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, IActor, ActorTypeEnum } from '@novu/shared';
+import { ActorTypeEnum, ChannelTypeEnum } from '@novu/shared';
 import {
   AnalyticsService,
   buildFeedKey,
   buildSubscriberKey,
-  CachedQuery,
   CachedEntity,
+  CachedQuery,
 } from '@novu/application-generic';
 import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
@@ -31,6 +31,7 @@ export class GetNotificationsFeed {
   })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
     const LIMIT = 10;
+    const COUNT_LIMIT = 1000;
 
     const subscriber = await this.fetchSubscriber({
       _environmentId: command.environmentId,
@@ -79,19 +80,31 @@ export class GetNotificationsFeed {
         seen: command.query.seen,
         read: command.query.read,
       },
-      { limit: command.countLimit }
+      { limit: COUNT_LIMIT }
+      /*
+       * todo NV-2161 in version 0.16
+       *  update option as below,
+       *  update below:  hasMore = feed.length < totalCount
+       *  remove totalCount
+       * { skip: command.page * LIMIT, limit: LIMIT + 1 }
+       */
     );
 
-    const hasMore = command.countLimit === totalCount;
-    const count = hasMore ? totalCount - 1 : totalCount;
+    const hasMore = this.getHasMore(command.page, LIMIT, feed, totalCount);
 
     return {
       data: feed || [],
-      totalCount: count || 0,
+      totalCount: totalCount || 0,
       hasMore,
       pageSize: LIMIT,
       page: command.page,
     };
+  }
+
+  private getHasMore(page: number, LIMIT: number, feed, totalCount) {
+    const currentPaginationTotal = page * LIMIT + feed.length;
+
+    return currentPaginationTotal < totalCount;
   }
 
   @CachedEntity({

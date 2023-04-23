@@ -51,9 +51,7 @@ export class MessagesController {
     @Query('page') page = 0,
     @Query('limit') limit = 10,
     @Query('subscriberId') subscriberId,
-    @Query('channel') channel: ChannelTypeEnum,
-    // todo add new DefaultValuePipe(100) to 'limit' Query in version 0.16
-    @Query('countLimit', new LimitPipe(1, 1000, true)) countLimit: number
+    @Query('channel') channel: ChannelTypeEnum
   ): Promise<MessagesResponseDto> {
     return await this.getMessagesUsecase.execute(
       GetMessagesCommand.create({

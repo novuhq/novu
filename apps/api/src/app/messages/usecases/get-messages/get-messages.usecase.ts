@@ -11,6 +11,7 @@ export class GetMessages {
 
   async execute(command: GetMessagesCommand) {
     const LIMIT = command.limit;
+    const COUNT_LIMIT = 1000;
 
     if (LIMIT > 1000) {
       throw new BadRequestException('Limit can not be larger then 1000');
@@ -35,8 +36,6 @@ export class GetMessages {
       query.channel = command.channel;
     }
 
-    const totalCount = await this.messageRepository.count(query, command.countLimit);
-
     const data = await this.messageRepository.getMessages(query, '', {
       limit: LIMIT,
       skip: command.page * LIMIT,
@@ -48,16 +47,33 @@ export class GetMessages {
       }
     }
 
-    const hasMore = command.countLimit === totalCount;
-    const count = hasMore ? totalCount - 1 : totalCount;
+    const totalCount = await this.messageRepository.count(
+      query,
+      COUNT_LIMIT
+      /*
+       * todo NV-2161 in version 0.16:
+       *  update option as below,
+       *  update below:  hasMore = feed.length < totalCount
+       *  remove totalCount
+       * { skip: command.page * LIMIT, limit: LIMIT + 1 }
+       */
+    );
+
+    const hasMore = this.getHasMore(command.page, LIMIT, data, totalCount);
 
     return {
       page: command.page,
-      totalCount: count,
+      totalCount,
       hasMore,
       pageSize: LIMIT,
       data,
     };
+  }
+
+  private getHasMore(page: number, LIMIT: number, feed, totalCount) {
+    const currentPaginationTotal = page * LIMIT + feed.length;
+
+    return currentPaginationTotal < totalCount;
   }
 
   @CachedEntity({

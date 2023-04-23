@@ -25,24 +25,43 @@ module.exports = (on, config) => {
   });
 
   on('task', {
-    async createNotifications({ identifier, templateId, token, subscriberId, count = 1, organizationId }) {
+    async createNotifications({
+      identifier,
+      templateId,
+      token,
+      subscriberId,
+      count = 1,
+      organizationId,
+      enumerate = false,
+    }) {
       const triggerIdentifier = identifier;
       const service = new NotificationsService(token);
       const session = new UserSession(config.env.API_URL);
 
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < count; i++) {
+        const num = enumerate ? ` ${i}` : '';
         await service.triggerEvent(triggerIdentifier, subscriberId, {
-          firstName: 'John',
+          firstName: 'John' + num,
         });
+        if (enumerate && organizationId) {
+          await awaitRunningJobs({ apiKey: config.env.API_URL, templateId, organizationId });
+        }
       }
 
       if (organizationId) {
-        await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
+        await awaitRunningJobs({ apiKey: config.env.API_URL, templateId, organizationId });
       }
 
       return 'ok';
     },
+
+    async awaitRunningJobs({ templateId, organizationId }: { templateId: string; organizationId: string }) {
+      await awaitRunningJobs({ apiKey: config.env.API_URL, templateId, organizationId });
+
+      return true;
+    },
+
     async clearDatabase() {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
@@ -109,3 +128,16 @@ module.exports = (on, config) => {
     },
   });
 };
+
+async function awaitRunningJobs({
+  apiKey,
+  templateId,
+  organizationId,
+}: {
+  apiKey: string;
+  templateId: string;
+  organizationId: string;
+}) {
+  const session = new UserSession(apiKey);
+  await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
+}
