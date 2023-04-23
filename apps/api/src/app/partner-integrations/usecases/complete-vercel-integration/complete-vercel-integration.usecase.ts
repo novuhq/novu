@@ -1,7 +1,7 @@
 import { HttpService } from '@nestjs/axios';
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { lastValueFrom } from 'rxjs';
-import { EnvironmentRepository, EnvironmentEntity, OrganizationRepository } from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { CompleteVercelIntegrationCommand } from './complete-vercel-integration.command';
@@ -79,18 +79,15 @@ export class CompleteVercelIntegration {
   }
 
   private mapProjectKeys(envData: EnvironmentEntity[], projectData: Record<string, string[]>) {
-    const mappedData = envData.reduce<Record<string, MapProjectkeys>>((acc, curr) => {
-      const newData = {
+    return envData.reduce<Record<string, MapProjectkeys>>((acc, curr) => {
+      acc[curr._organizationId] = {
         privateKey: curr.apiKeys[0].key,
         clientKey: curr.identifier,
         projectIds: projectData[curr._organizationId],
       };
-      acc[curr._organizationId] = newData;
 
       return acc;
     }, {});
-
-    return mappedData;
   }
 
   private async setEnvironments({ clientKey, projectIds, privateKey, teamId, token }: ISetEnvironment): Promise<void> {
@@ -99,6 +96,12 @@ export class CompleteVercelIntegration {
     const type = 'encrypted';
 
     const apiKeys = [
+      {
+        target,
+        type,
+        value: clientKey,
+        key: 'NEXT_PUBLIC_NOVU_CLIENT_APP_ID',
+      },
       {
         target,
         type,

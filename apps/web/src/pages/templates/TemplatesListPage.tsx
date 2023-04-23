@@ -129,7 +129,7 @@ function NotificationList() {
             icon={<PlusCircle />}
             data-test-id="create-template-btn"
           >
-            New
+            Create Workflow
           </Button>
         }
       />
