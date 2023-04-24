@@ -72,7 +72,7 @@ function NotificationList() {
     {
       accessor: 'createdAt',
       Header: 'Created At',
-      Cell: ({ createdAt }: any) => format(new Date(createdAt), 'dd/MM/yyyy HH:mm'),
+      Cell: ({ createdAt }: any) => <Text rows={1}>{format(new Date(createdAt), 'dd/MM/yyyy HH:mm')}</Text>,
     },
     {
       accessor: 'status',
