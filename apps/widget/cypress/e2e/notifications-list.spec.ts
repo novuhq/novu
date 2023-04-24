@@ -106,6 +106,8 @@ describe('Notifications List', function () {
   it('count seen-unseen notification', function () {
     cy.wait('@getNotificationsFirstPage');
 
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('unseen-count-label').contains('5');
     cy.getByTestId('notification-list-item').should('have.length', 5);
   });
@@ -133,6 +135,7 @@ describe('Notifications List', function () {
     });
 
     cy.wait('@getNotificationsFirstPage');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('unseen-count-label').should('contain', '99+');
   });
