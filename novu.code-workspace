@@ -89,6 +89,10 @@
       "path": "packages/application-generic"
     },
     {
+      "name": "📦 @novu/is-even",
+      "path": "packages/is-even"
+    },
+    {
       "name": "🔔 @novu/apns",
       "path": "providers/apns"
     },
