@@ -56,12 +56,6 @@ module.exports = (on, config) => {
       return 'ok';
     },
 
-    async awaitRunningJobs({ templateId, organizationId }: { templateId: string; organizationId: string }) {
-      await awaitRunningJobs({ apiKey: config.env.API_URL, templateId, organizationId });
-
-      return true;
-    },
-
     async clearDatabase() {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');

@@ -105,18 +105,21 @@ describe('Notifications List', function () {
   });
 
   it('show 99+ count on if more then 99 notifications', function () {
+    cy.wait('@getNotificationsFirstPage');
+
     cy.task('createNotifications', {
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 100,
-      organizationId: this.session.organization._id,
     });
 
     cy.wait('@unseenCountRequest').then(({ request, response }) => {
       expect(response?.statusCode).to.eq(304);
       expect(request?.query?.limit).to.eq('100');
     });
+
+    cy.wait('@getNotificationsFirstPage');
 
     cy.getByTestId('unseen-count-label').contains('99+');
   });
