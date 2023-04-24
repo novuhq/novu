@@ -22,7 +22,7 @@ import { isSameDay } from 'date-fns';
 import { CreateNotificationTemplateRequestDto } from '../dto';
 
 import axios from 'axios';
-// import { SendMessageEmail } from '../../events/usecases/send-message/send-message-email.usecase';
+// import { SendMessageEmail } from '../../events/usecases/send-message';
 
 describe('Create Notification template - /notification-templates (POST)', async () => {
   let session: UserSession;
@@ -103,21 +103,25 @@ describe('Create Notification template - /notification-templates (POST)', async 
 
     expect(template._notificationGroupId).to.equal(testTemplate.notificationGroupId);
     const message = template.steps[0];
+    const filters = message?.filters ? message?.filters[0] : null;
 
-    const children: IFieldFilterPart = testTemplate.steps[0].filters[0].children[0] as IFieldFilterPart;
+    const messageTest = testTemplate?.steps ? testTemplate?.steps[0] : null;
+    const filtersTest = messageTest?.filters ? messageTest.filters[0] : null;
 
-    expect(message.template.name).to.equal(`${testTemplate.steps[0].template.name}`);
-    expect(message.template.active).to.equal(defaultMessageIsActive);
-    expect(message.template.subject).to.equal(`${testTemplate.steps[0].template.subject}`);
-    expect(message.template.preheader).to.equal(`${testTemplate.steps[0].template.preheader}`);
-    expect(message.filters[0].type).to.equal(testTemplate.steps[0].filters[0].type);
-    expect(message.filters[0].children.length).to.equal(testTemplate.steps[0].filters[0].children.length);
+    const children: IFieldFilterPart = filtersTest?.children[0] as IFieldFilterPart;
+
+    expect(message?.template?.name).to.equal(`${messageTest?.template?.name}`);
+    expect(message?.template?.active).to.equal(defaultMessageIsActive);
+    expect(message?.template?.subject).to.equal(`${messageTest?.template?.subject}`);
+    expect(message?.template?.preheader).to.equal(`${messageTest?.template?.preheader}`);
+    expect(filters?.type).to.equal(filtersTest?.type);
+    expect(filters?.children.length).to.equal(filtersTest?.children?.length);
     expect(children.value).to.equal(children.value);
     expect(children.operator).to.equal(children.operator);
     expect(template.tags[0]).to.equal('test-tag');
 
-    if (Array.isArray(message.template.content) && Array.isArray(testTemplate.steps[0].template.content)) {
-      expect(message.template.content[0].type).to.equal(testTemplate.steps[0].template.content[0].type);
+    if (Array.isArray(message?.template?.content) && Array.isArray(messageTest?.template?.content)) {
+      expect(message?.template?.content[0].type).to.equal(messageTest?.template?.content[0].type);
     } else {
       throw new Error('content must be an array');
     }
@@ -126,10 +130,10 @@ describe('Create Notification template - /notification-templates (POST)', async 
       _environmentId: session.environment._id,
       _entityId: message._templateId,
     });
-    await session.testAgent.post(`/v1/changes/${change._id}/apply`);
+    await session.testAgent.post(`/v1/changes/${change?._id}/apply`);
 
     change = await changeRepository.findOne({ _environmentId: session.environment._id, _entityId: template._id });
-    await session.testAgent.post(`/v1/changes/${change._id}/apply`);
+    await session.testAgent.post(`/v1/changes/${change?._id}/apply`);
 
     const prodEnv = await getProductionEnvironment();
 
@@ -138,25 +142,25 @@ describe('Create Notification template - /notification-templates (POST)', async 
       _parentId: template._id,
     });
 
-    expect(prodVersionNotification.tags[0]).to.equal(template.tags[0]);
-    expect(prodVersionNotification.steps.length).to.equal(template.steps.length);
-    expect(prodVersionNotification.triggers[0].type).to.equal(template.triggers[0].type);
-    expect(prodVersionNotification.triggers[0].identifier).to.equal(template.triggers[0].identifier);
-    expect(prodVersionNotification.active).to.equal(template.active);
-    expect(prodVersionNotification.draft).to.equal(template.draft);
-    expect(prodVersionNotification.name).to.equal(template.name);
-    expect(prodVersionNotification.description).to.equal(template.description);
+    expect(prodVersionNotification?.tags[0]).to.equal(template.tags[0]);
+    expect(prodVersionNotification?.steps.length).to.equal(template.steps.length);
+    expect(prodVersionNotification?.triggers[0].type).to.equal(template.triggers[0].type);
+    expect(prodVersionNotification?.triggers[0].identifier).to.equal(template.triggers[0].identifier);
+    expect(prodVersionNotification?.active).to.equal(template.active);
+    expect(prodVersionNotification?.draft).to.equal(template.draft);
+    expect(prodVersionNotification?.name).to.equal(template.name);
+    expect(prodVersionNotification?.description).to.equal(template.description);
 
     const prodVersionMessage = await messageTemplateRepository.findOne({
       _environmentId: prodEnv._id,
       _parentId: message._templateId,
     });
 
-    expect(message.template.name).to.equal(prodVersionMessage.name);
-    expect(message.template.subject).to.equal(prodVersionMessage.subject);
-    expect(message.template.type).to.equal(prodVersionMessage.type);
-    expect(message.template.content).to.deep.equal(prodVersionMessage.content);
-    expect(message.template.active).to.equal(prodVersionMessage.active);
+    expect(message?.template?.name).to.equal(prodVersionMessage?.name);
+    expect(message?.template?.subject).to.equal(prodVersionMessage?.subject);
+    expect(message?.template?.type).to.equal(prodVersionMessage?.type);
+    expect(message?.template?.content).to.deep.equal(prodVersionMessage?.content);
+    expect(message?.template?.active).to.equal(prodVersionMessage?.active);
   });
 
   it('should create a valid notification', async () => {
@@ -191,12 +195,12 @@ describe('Create Notification template - /notification-templates (POST)', async 
     expect(template.name).to.equal(testTemplate.name);
     expect(template.draft).to.equal(true);
     expect(template.active).to.equal(false);
-    expect(isSameDay(new Date(template.createdAt), new Date()));
+    expect(isSameDay(new Date(template?.createdAt ? template?.createdAt : '1970'), new Date()));
 
     expect(template.steps.length).to.equal(1);
-    expect(template.steps[0].template.type).to.equal(ChannelTypeEnum.IN_APP);
-    expect(template.steps[0].template.content).to.equal(testTemplate.steps[0].template.content);
-    expect(template.steps[0].template.cta.data.url).to.equal(testTemplate.steps[0].template.cta.data.url);
+    expect(template?.steps?.[0]?.template?.type).to.equal(ChannelTypeEnum.IN_APP);
+    expect(template?.steps?.[0]?.template?.content).to.equal(testTemplate?.steps?.[0]?.template?.content);
+    expect(template?.steps?.[0]?.template?.cta?.data.url).to.equal(testTemplate?.steps?.[0]?.template?.cta?.data.url);
   });
 
   it('should create event trigger', async () => {
@@ -392,6 +396,35 @@ describe('Create Notification template - /notification-templates (POST)', async 
     );
 
     expect(result.credentials.senderName).to.equal('senderName');
+  });
+
+  it('should not promote deleted template that is not existing in prod', async function () {
+    const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+      name: 'test email template',
+      description: 'This is a test description',
+      tags: ['test-tag'],
+      notificationGroupId: session.notificationGroups[0]._id,
+      steps: [],
+    };
+
+    const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+
+    expect(body.data).to.be.ok;
+    const template: INotificationTemplate = body.data;
+
+    await session.testAgent.delete(`/v1/notification-templates/${template._id}`).send();
+
+    const change = await changeRepository.findOne({ _environmentId: session.environment._id, _entityId: template._id });
+    await session.testAgent.post(`/v1/changes/${change?._id}/apply`);
+
+    const prodEnv = await getProductionEnvironment();
+
+    const prodVersionNotification = await notificationTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
+      _parentId: template._id,
+    });
+
+    expect(prodVersionNotification).to.equal(null);
   });
 
   async function getProductionEnvironment() {

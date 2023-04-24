@@ -1,6 +1,6 @@
 import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { subYears, subMonths, subWeeks } from 'date-fns';
+import { subMonths, subWeeks } from 'date-fns';
 
 import { BaseRepository } from '../base-repository';
 import { NotificationEntity, NotificationDBModel } from './notification.entity';
@@ -147,7 +147,7 @@ export class NotificationRepository extends BaseRepository<
             channels: { $addToSet: '$channels' },
           },
         },
-        { $sort: { _id: -1 } },
+        { $sort: { createdAt: -1 } },
       ],
       {
         readPreference: 'secondaryPreferred',
