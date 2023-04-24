@@ -14,6 +14,8 @@ describe('Notifications List', function () {
           token: session.token,
           subscriberId: session.subscriber.subscriberId,
           count: 5,
+          organizationId: session.organization._id,
+          templateId: session.templates[0]._id,
         });
 
         cy.wait(1000);
@@ -39,14 +41,16 @@ describe('Notifications List', function () {
     cy.wait('@getNotificationsFirstPage');
 
     cy.task('createNotifications', {
-      organizationId: this.session.organization._id,
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 3,
+      organizationId: this.session.organization._id,
+      templateId: this.session.templates[0]._id,
     });
 
     cy.wait('@getNotificationsFirstPage');
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('unseen-count-label').contains('8');
 
@@ -58,6 +62,8 @@ describe('Notifications List', function () {
       subscriberId: this.session.subscriber.subscriberId,
       count: 1,
     });
+
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('unseen-count-label').contains('9');
   });
@@ -112,6 +118,8 @@ describe('Notifications List', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 100,
+      organizationId: this.session.organization._id,
+      templateId: this.session.templates[0]._id,
     });
 
     cy.task('awaitRunningJobs', {
