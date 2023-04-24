@@ -1,0 +1,3 @@
+[submodule "packages-enterprise"]
+	path = packages-enterprise
+	url = https://github.com/novuhq/packages-enterprise.git
