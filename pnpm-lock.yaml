@@ -861,6 +861,7 @@ importers:
       '@types/chai': ^4.2.11
       '@types/express': 4.17.17
       '@types/mocha': ^8.0.1
+      '@types/newrelic': ^9.13.0
       '@types/node': ^14.6.0
       '@types/sinon': ^9.0.0
       '@types/supertest': ^2.0.8
@@ -872,6 +873,7 @@ importers:
       class-transformer: ^0.5.1
       class-validator: ^0.14.0
       cross-env: ^7.0.3
+      d: ^1.0.1
       date-fns: ^2.29.2
       dotenv: ^8.2.0
       envalid: ^6.0.1
@@ -880,12 +882,13 @@ importers:
       lodash: ^4.17.15
       mocha: ^8.1.1
       nest-raven: ^9.2.0
-      newrelic: 9.10.2
+      newrelic: 9.13.0
       nodemon: ^2.0.3
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
       rxjs: 7.8.0
       shortid: ^2.2.16
+      simple-statistics: ^7.8.3
       sinon: ^9.2.4
       superagent-defaults: ^0.1.14
       supertest: ^5.0.0
@@ -909,6 +912,7 @@ importers:
       '@novu/testing': link:../../libs/testing
       '@sentry/node': 7.47.0
       '@sentry/tracing': 7.47.0
+      '@types/newrelic': 9.13.0
       axios: 1.3.5
       body-parser: 1.20.2
       bull: 4.10.4
@@ -916,6 +920,7 @@ importers:
       class-transformer: 0.5.1
       class-validator: 0.14.0
       cross-env: 7.0.3
+      d: 1.0.1
       date-fns: 2.29.3
       dotenv: 8.6.0
       envalid: 6.0.2
@@ -923,11 +928,12 @@ importers:
       ioredis: 5.3.1
       lodash: 4.17.21
       nest-raven: 9.2.0_uihfglb4mjux3kkp222vo5hzku
-      newrelic: 9.10.2
+      newrelic: 9.13.0
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
       rxjs: 7.8.0
       shortid: 2.2.16
+      simple-statistics: 7.8.3
       uuid: 8.3.2
     devDependencies:
       '@faker-js/faker': 6.3.1
@@ -14391,6 +14397,15 @@ packages:
       newrelic: 9.10.2
     dev: false
 
+  /@newrelic/aws-sdk/5.0.4_newrelic@9.13.0:
+    resolution: {integrity: sha512-543TkE+irlcXjxMeQV37d3JSSAn8mGTbRV9EWQEcXagDM7EVFaBtsUodU/P7H6Zp6issmxBA3z2XGLcpbgkbVQ==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      newrelic: '>=8.7.0'
+    dependencies:
+      newrelic: 9.13.0
+    dev: false
+
   /@newrelic/aws-sdk/5.0.4_newrelic@9.7.5:
     resolution: {integrity: sha512-543TkE+irlcXjxMeQV37d3JSSAn8mGTbRV9EWQEcXagDM7EVFaBtsUodU/P7H6Zp6issmxBA3z2XGLcpbgkbVQ==}
     engines: {node: '>=14.0.0'}
@@ -14407,6 +14422,15 @@ packages:
       newrelic: '>=6.11.0'
     dependencies:
       newrelic: 9.10.2
+    dev: false
+
+  /@newrelic/koa/7.1.1_newrelic@9.13.0:
+    resolution: {integrity: sha512-QvO6Wmz+wws0vtrpqsZz3KVMbDySY7VbdIu99f9fuWd775yNCTz2n2VfQhdkBxWlSQSlR4gO0Uh8RWa4HUzb3g==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      newrelic: '>=6.11.0'
+    dependencies:
+      newrelic: 9.13.0
     dev: false
 
   /@newrelic/koa/7.1.1_newrelic@9.7.5:
@@ -14438,6 +14462,15 @@ packages:
       newrelic: '>=6.11.0'
     dependencies:
       newrelic: 9.10.2
+    dev: false
+
+  /@newrelic/superagent/6.0.0_newrelic@9.13.0:
+    resolution: {integrity: sha512-5nClQp9ACd4BvLusAgFHjjKLDgAaC+dKmIsRNOPC82LOLFaoOgxxtbecnDIJ0NWCKQS+WOdmXdgYutwH+e5dsA==}
+    engines: {node: '>=14.0'}
+    peerDependencies:
+      newrelic: '>=6.11.0'
+    dependencies:
+      newrelic: 9.13.0
     dev: false
 
   /@newrelic/superagent/6.0.0_newrelic@9.7.5:
@@ -25394,7 +25427,7 @@ packages:
     hasBin: true
     dependencies:
       cachedir: 2.3.0
-      cz-conventional-changelog: 3.3.0
+      cz-conventional-changelog: 3.3.0_@swc+core@1.3.49
       dedent: 0.7.0
       detect-indent: 6.1.0
       find-node-modules: 2.1.3
@@ -25407,9 +25440,6 @@ packages:
       minimist: 1.2.7
       strip-bom: 4.0.0
       strip-json-comments: 3.1.1
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@swc/wasm'
     dev: true
 
   /commitizen/4.3.0_@swc+core@1.3.49:
@@ -25879,7 +25909,7 @@ packages:
     dependencies:
       '@types/node': 18.15.11
       cosmiconfig: 8.1.3
-      ts-node: 10.9.1_o6avl3oodj6mwqsx3rm2wfkgv4
+      ts-node: 10.9.1_faublg25f7qpbcz6w4cw6yyzse
       typescript: 4.9.5
 
   /cosmiconfig/5.2.1:
@@ -28366,7 +28396,7 @@ packages:
     dependencies:
       confusing-browser-globals: 1.0.11
       eslint: 8.38.0
-      eslint-plugin-import: 2.27.5_jxoc3dvo7nghy7jji4tzdzgpey
+      eslint-plugin-import: 2.27.5_ow2j3yqjjpzplq4flnkwqs3k4u
       object.assign: 4.1.4
       object.entries: 1.1.6
       semver: 6.3.0
@@ -28384,7 +28414,7 @@ packages:
       '@typescript-eslint/parser': 5.58.0_ze6bmax3gcsfve3yrzu6npguhe
       eslint: 8.38.0
       eslint-config-airbnb-base: 15.0.0_cshkc2qhcu55b7r3t6b6lfgcxm
-      eslint-plugin-import: 2.27.5_jxoc3dvo7nghy7jji4tzdzgpey
+      eslint-plugin-import: 2.27.5_ow2j3yqjjpzplq4flnkwqs3k4u
     dev: true
 
   /eslint-config-prettier/8.8.0_eslint@8.38.0:
@@ -33490,7 +33520,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      ts-node: 10.9.1_j6r65ghnzvzk7vhdh4hyogrm4a
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -37313,6 +37343,31 @@ packages:
       '@newrelic/aws-sdk': 5.0.4_newrelic@9.10.2
       '@newrelic/koa': 7.1.1_newrelic@9.10.2
       '@newrelic/superagent': 6.0.0_newrelic@9.10.2
+      '@tyriar/fibonacci-heap': 2.0.9
+      concat-stream: 2.0.0
+      https-proxy-agent: 5.0.1
+      json-bigint: 1.0.0
+      json-stringify-safe: 5.0.1
+      readable-stream: 3.6.2
+      semver: 5.7.1
+      winston-transport: 4.5.0
+    optionalDependencies:
+      '@contrast/fn-inspect': 3.3.0
+      '@newrelic/native-metrics': 9.0.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /newrelic/9.13.0:
+    resolution: {integrity: sha512-wJfmtNH7T0IzfQ/6L9KWZW/kcRNHXrWGUARiekhdAGv/nBOO49OBP6VBQwhaTKk84yyMt0qevExYtutrmfuE3w==}
+    engines: {node: '>=14', npm: '>=6.0.0'}
+    hasBin: true
+    dependencies:
+      '@grpc/grpc-js': 1.8.13
+      '@grpc/proto-loader': 0.7.6
+      '@newrelic/aws-sdk': 5.0.4_newrelic@9.13.0
+      '@newrelic/koa': 7.1.1_newrelic@9.13.0
+      '@newrelic/superagent': 6.0.0_newrelic@9.13.0
       '@tyriar/fibonacci-heap': 2.0.9
       concat-stream: 2.0.0
       https-proxy-agent: 5.0.1
@@ -43987,6 +44042,10 @@ packages:
       - supports-color
     dev: true
 
+  /simple-statistics/7.8.3:
+    resolution: {integrity: sha512-JFvMY00t6SBGtwMuJ+nqgsx9ylkMiJ5JlK9bkj8AdvniIe5615wWQYkKHXe84XtSuc40G/tlrPu0A5/NlJvv8A==}
+    dev: false
+
   /simple-swizzle/0.2.2:
     resolution: {integrity: sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg==}
     dependencies:
@@ -46337,7 +46396,6 @@ packages:
       typescript: 4.9.5
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
-    dev: true
 
   /ts-node/10.9.1_j6r65ghnzvzk7vhdh4hyogrm4a:
     resolution: {integrity: sha512-NtVysVPkxxrwFGUUxGYhfux8k78pQB3JqYBXlLRZgdGUqTO5wU/UyHop5p70iEbGhB7q5KmiZiU0Y3KlJrScEw==}

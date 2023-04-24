@@ -1,33 +1,28 @@
 const nr = require('newrelic');
-import { Job, WorkerOptions } from 'bullmq';
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, getRedisPrefix } from '@novu/shared';
-import {
-  QueueService,
-  PinoLogger,
-  storage,
-  Store,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '@novu/application-generic';
+import { WorkerOptions } from 'bullmq';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { QueueService } from '@novu/application-generic';
+import { min, max, sum, mean } from 'simple-statistics';
 
-import {
-  RunJob,
-  RunJobCommand,
-  QueueNextJob,
-  QueueNextJobCommand,
-  SetJobAsCommand,
-  SetJobAsCompleted,
-  SetJobAsFailed,
-  SetJobAsFailedCommand,
-  WebhookFilterBackoffStrategy,
-} from '../usecases';
+interface IMetric {
+  count: number;
+  total: number;
+  min: number;
+  max: number;
+  sumOfSquares: number;
+}
+
+function sumOfSquares(values: number[]): number {
+  const meanVal = mean(values);
+
+  return sum(values.map((value) => (value - meanVal) ** 2));
+}
 
 @Injectable()
 export class MetricQueueService extends QueueService<Record<string, never>> {
-  constructor() {
-    super('cron');
+  constructor(@Inject('BULLMQ_LIST') private token_list: QueueService[]) {
+    super('metric');
+
     Logger.warn('Metric queue service created');
 
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
@@ -40,7 +35,12 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
       await this.jobHasFailed(job, error);
     });
 
-    void this.addToQueue('metric-job', {}, '', { repeat: { pattern: '* * * * * *' } });
+    void this.addToQueue('metric-job', {}, '', {
+      repeat: {
+        immediately: true,
+        pattern: '* * * * * *',
+      },
+    });
   }
 
   public async gracefulShutdown() {
@@ -63,23 +63,53 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   private getWorkerProcessor() {
     return async () => {
       return await new Promise(async (resolve, reject) => {
-        // eslint-disable-next-line @typescript-eslint/no-this-alias
-        const _this = this;
-
-        nr.startBackgroundTransaction('job-processing-queue', 'Trigger Engine', function () {
-          const transaction = nr.getTransaction();
-
-          storage.run(new Store(PinoLogger.root), () => {
-            Logger.log('Metric job started');
+        for (const queueService of this.token_list) {
+          this.bullMqService.createQueue(queueService.name, {
+            ...this.bullConfig,
+            defaultJobOptions: {
+              removeOnComplete: true,
+            },
           });
-        });
+
+          const metrics = await this.bullMqService.getQueueMetrics();
+
+          const completeNumber = metrics.completed.count;
+          const failNumber = metrics.failed.count;
+
+          const successMetric: IMetric = {
+            count: metrics.completed.count,
+            total: completeNumber == 0 ? 0 : sum(metrics.completed.data),
+            min: completeNumber == 0 ? 0 : min(metrics.completed.data),
+            max: completeNumber == 0 ? 0 : max(metrics.completed.data),
+            sumOfSquares: completeNumber == 0 ? 0 : sumOfSquares(metrics.completed.data),
+          };
+
+          const failMetric: IMetric = {
+            count: metrics.failed.count,
+            total: failNumber == 0 ? 0 : sum(metrics.failed.data),
+            min: failNumber == 0 ? 0 : min(metrics.failed.data),
+            max: failNumber == 0 ? 0 : max(metrics.failed.data),
+            sumOfSquares: failNumber == 0 ? 0 : sumOfSquares(metrics.failed.data),
+          };
+
+          Logger.log(`${process.env.NOVU_MANAGED_SERVICE}: managed`);
+          Logger.log(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(successMetric));
+          Logger.log(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(failMetric));
+          if (process.env.NOVU_MANAGED_SERVICE === 'true') {
+            Logger.log(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(successMetric));
+            Logger.log(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(failMetric));
+          } else {
+            nr.recordMetric(`MetricQueueService/${queueService.name}/completed`, successMetric);
+            nr.recordMetric(`MetricQueueService/${queueService.name}/failed`, failMetric);
+          }
+        }
       });
     };
   }
 
   private async jobHasCompleted(job): Promise<void> {
     try {
-      Logger.error('Metric job Completed');
+      Logger.log('Metric job Completed');
     } catch (error) {
       Logger.error('Failed to set job as completed', error);
     }
@@ -87,9 +117,9 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
 
   private async jobHasFailed(job, error): Promise<void> {
     try {
-      Logger.error('Metric job failed', error);
+      Logger.log('Metric job failed', error);
     } catch (anotherError) {
-      Logger.error('Failed to set job as failed', anotherError);
+      Logger.error(`Failed to set job as failed ${anotherError}`);
     }
   }
 }

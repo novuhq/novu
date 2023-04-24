@@ -29,6 +29,7 @@ import {
   ProcessSubscriber,
   StoreSubscriberJobs,
   CalculateDelayService,
+  WsQueueService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -114,6 +115,17 @@ const SERVICES = [
   {
     provide: TriggerQueueService,
     useClass: TriggerProcessorQueueService,
+  },
+  {
+    provide: WsQueueService,
+    useClass: WsQueueService,
+  },
+  {
+    provide: 'BULLMQ_LIST',
+    useFactory: (workflowQueue: QueueService, triggerQueue: TriggerQueueService, wsQueue: WsQueueService) => {
+      return [workflowQueue, triggerQueue, wsQueue];
+    },
+    inject: [QueueService, TriggerQueueService, WsQueueService],
   },
   EventsDistributedLockService,
   EventsPerformanceService,
