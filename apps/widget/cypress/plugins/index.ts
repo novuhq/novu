@@ -112,6 +112,12 @@ module.exports = (on, config) => {
       };
     },
 
+    async awaitRunningJobs({ templateId, organizationId }: { templateId: string; organizationId: string }) {
+      await awaitRunningJobs({ apiKey: config.env.API_URL, templateId, organizationId });
+
+      return true;
+    },
+
     async enableEnvironmentHmac({
       environment,
     }: {

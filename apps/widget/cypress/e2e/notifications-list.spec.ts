@@ -114,6 +114,11 @@ describe('Notifications List', function () {
       count: 100,
     });
 
+    cy.task('awaitRunningJobs', {
+      organizationId: this.session.organization._id,
+      templateId: this.session.templates[0].triggers[0].identifier,
+    });
+
     cy.wait('@unseenCountRequest').then(({ request, response }) => {
       expect(response?.statusCode).to.eq(304);
       expect(request?.query?.limit).to.eq('100');
@@ -121,7 +126,7 @@ describe('Notifications List', function () {
 
     cy.wait('@getNotificationsFirstPage');
 
-    cy.getByTestId('unseen-count-label').contains('99+');
+    cy.getByTestId('unseen-count-label').should('contain', '99+');
   });
 
   it('pagination check', async function () {
