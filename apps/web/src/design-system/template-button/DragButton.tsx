@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UnstyledButton } from '@mantine/core';
 import styled from '@emotion/styled';
 import { Text } from '../typography/text/Text';
 import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
 import { When } from '../../components/utils/When';
+import { Drag } from '../icons/general/Drag';
+import { useOutletContext } from 'react-router-dom';
 
 interface IDragButtonProps {
   Icon: React.FC<any>;
@@ -14,6 +16,7 @@ interface IDragButtonProps {
 
 export function DragButton({ description, label, Icon }: IDragButtonProps) {
   const { cx, classes, theme } = useStyles();
+  const [hover, setHover] = useState(false);
 
   return (
     <>
@@ -23,9 +26,26 @@ export function DragButton({ description, label, Icon }: IDragButtonProps) {
           background: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
           border: `1px dashed ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80}`,
           height: description.length > 0 ? '75px' : '50px',
+          position: 'relative',
         }}
         className={cx(classes.button, { [classes.active]: false })}
+        onMouseEnter={() => {
+          setHover(true);
+        }}
+        onMouseLeave={() => {
+          setHover(false);
+        }}
       >
+        <When truthy={hover}>
+          <Drag
+            style={{
+              position: 'absolute',
+              left: -17,
+              top: 15,
+            }}
+            color={colors.B80}
+          />
+        </When>
         <ButtonWrapper>
           <LeftContainerWrapper>
             <IconWrapper className={classes.linkIcon}>

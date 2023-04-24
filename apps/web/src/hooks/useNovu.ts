@@ -6,7 +6,7 @@ export function useNovu() {
   const authContext = useAuthContext();
 
   useEffect(() => {
-    if ((ENV === 'dev' || ENV === 'prod') && authContext.currentUser) {
+    if ((ENV === 'dev' || ENV === 'production') && authContext.currentUser) {
       // eslint-disable-next-line func-names,id-length
       (function (n, o, t, i, f) {
         /* eslint-disable */

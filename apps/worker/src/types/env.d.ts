@@ -4,7 +4,7 @@ declare global {
   declare namespace NodeJS {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     export interface ProcessEnv {
-      NODE_ENV: 'test' | 'prod' | 'dev' | 'ci' | 'local';
+      NODE_ENV: 'test' | 'production' | 'dev' | 'ci' | 'local';
       PORT: string;
       STORE_ENCRYPTION_KEY: string;
       STORE_NOTIFICATION_CONTENT: string;

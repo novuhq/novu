@@ -64,7 +64,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^6.0.0",
-    "@nestjs/cli": "9.3.0",
+    "@nestjs/cli": "9.4.0",
     "@nestjs/schematics": "9.0.4",
     "@nestjs/testing": "9.3.12",
     "@types/bcrypt": "^3.0.0",
@@ -88,7 +88,7 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
-      "eslint --fix"
+      "eslint"
     ]
   }
 }

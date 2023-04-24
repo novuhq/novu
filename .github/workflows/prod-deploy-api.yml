@@ -81,6 +81,7 @@ jobs:
     with:
       service_name: api
       terraform_workspace: novu-prod-eu
+      # This is a workaround to an issue with matrix outputs
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
 
   deploy_prod_api_us:
@@ -92,6 +93,7 @@ jobs:
     with:
       service_name: api
       terraform_workspace: novu-prod
+      # This is a workaround to an issue with matrix outputs
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
       deploy_sentry_release: true
       sentry_project: api

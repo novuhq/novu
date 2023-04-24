@@ -10,7 +10,7 @@ export const schema = z
         required_error: 'Required - Notification Name',
       })
       .superRefine((data, ctx) => {
-        if (data.length === 0) {
+        if (data.replaceAll(/\s/g, '').length === 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.too_small,
             minimum: 1,

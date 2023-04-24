@@ -7,6 +7,8 @@ import {
   CacheInterceptorTypeEnum,
 } from './interceptors/shared-cache';
 
+const LOG_CONTEXT = 'InvalidateCache';
+
 @Injectable()
 export class InvalidateCacheService {
   constructor(private cacheService: CacheService) {}
@@ -17,10 +19,9 @@ export class InvalidateCacheService {
     try {
       await this.cacheService.del(key);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(
+      Logger.error(
         `An error has occurred when deleting "key: ${key}",`,
-        'InvalidateCache',
+        LOG_CONTEXT,
         err
       );
     }
@@ -32,10 +33,9 @@ export class InvalidateCacheService {
     try {
       await this.cacheService.delQuery(key);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(
+      Logger.error(
         `An error has occurred when deleting "key: ${key}",`,
-        'InvalidateCache',
+        LOG_CONTEXT,
         err
       );
     }
@@ -55,7 +55,7 @@ export class InvalidateCacheService {
     );
 
     if (!cacheKey) {
-      Logger.warn('Cachekey does not exist');
+      Logger.warn('Cachekey does not exist', LOG_CONTEXT);
 
       return;
     }
@@ -67,7 +67,7 @@ export class InvalidateCacheService {
     } catch (err) {
       Logger.error(
         `An error has occurred when deleting "key: ${cacheKey}",`,
-        'InvalidateCache',
+        LOG_CONTEXT,
         err
       );
     }
