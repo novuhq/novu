@@ -10,7 +10,6 @@ describe('Notifications List', function () {
         cy.wait(500);
 
         cy.task('createNotifications', {
-          organizationId: this.session.organization._id,
           identifier: session.templates[0].triggers[0].identifier,
           token: session.token,
           subscriberId: session.subscriber.subscriberId,
