@@ -28,47 +28,43 @@ jobs:
           targets: lint
           projects: '@novu/widget'
 
-      # Runs a single command using the runners shell
-      - name: Build embed
-        run: CI=false pnpm build:embed
-
-      # Runs a single command using the runners shell
-      - name: Build widget
-        run: CI=false pnpm build:widget
-
-      - name: Build API
-        run: CI='' pnpm build:api
-
-      - name: Build worker
-        run: CI='' pnpm build:worker
+      - uses: mansagroup/nrwl-nx-action@v3
+        with:
+          targets: build
+          projects: '@novu/widget, @novu/embed, @novu/api, @novu/worker'
 
       # Runs a single command using the runners shell
       - name: Start Client
         run: pnpm start:widget:test &
 
       - name: Start WS
-        run: pnpm start:ws:test &
+        env:
+          NODE_ENV: 'test'
+          TZ: 'UTC'
+        run: cd apps/ws && pnpm start:prod &
 
       - name: Start API in TEST
-        run: cd apps/api && pnpm start:test &
+        env:
+          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
+          GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
+          NODE_ENV: "test"
+          PORT: "1336"
+          TZ: "UTC"
+          GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
+        run: cd apps/api && pnpm start:build &
 
       - name: Start worker
-        run: cd apps/worker && pnpm start:test &
+        env:
+          NODE_ENV: "test"
+          PORT: 1342
+          TZ: "UTC"
+        run: cd apps/worker && pnpm start:prod &
 
       - name: Install wait-on plugin
         run: npm i -g wait-on
 
-      - name: Wait on API
-        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
-
-      - name: Wait on worker
-        run: wait-on --timeout=180000 http://localhost:1342/v1/health-check
-
-      - name: Wait on WS
-        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check
-
-      - name: Wait on WIDGET
-        run: wait-on --timeout=180000 http://localhost:3500
+      - name: Wait on Services
+        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check http://localhost:1342/v1/health-check http://localhost:1340/v1/health-check http://localhost:3500
 
       - name: Cypress install
         if: steps.setup-project.outputs.cypress_cache_hit != 'true'
