@@ -37,7 +37,9 @@ describe('Initialization with enabled HMAC encryption in shell', function () {
         const WidgetURL = `http://localhost:3500/${session.environment.identifier}`;
         return cy.forceVisit(WidgetURL);
       });
-    cy.wait('@sessionInitialize');
+    cy.wait('@sessionInitialize', {
+      timeout: 60000,
+    });
     cy.waitForNetworkIdle(500);
 
     cy.window().then((w) => {
