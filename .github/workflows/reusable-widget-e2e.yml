@@ -31,7 +31,7 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: build
-          projects: '@novu/widget, @novu/embed, @novu/api, @novu/worker'
+          projects: '@novu/widget,@novu/embed,@novu/api,@novu/worker,@novu/ws'
 
       # Runs a single command using the runners shell
       - name: Start Client
