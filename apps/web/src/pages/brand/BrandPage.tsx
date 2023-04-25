@@ -15,10 +15,10 @@ const LAYOUT = 'Layouts';
 export function BrandPage() {
   const { currentOrganization, currentUser } = useAuthContext();
   const { environment } = useEnvController();
-  const { isSegmentEnabled, track } = useSegment();
+  const segment = useSegment();
 
   const handleLayoutAnalytics = (event: string, data?: Record<string, unknown>) => {
-    track(`[Layout] - ${event}`, {
+    segment.track(`[Layout] - ${event}`, {
       _organizationId: currentOrganization?._id,
       _environmentId: environment?._id,
       userId: currentUser?._id,
@@ -27,7 +27,7 @@ export function BrandPage() {
   };
 
   const trackLayoutFocus = (value: TabsValue) => {
-    if (value === LAYOUT && isSegmentEnabled()) {
+    if (value === LAYOUT && segment.isSegmentEnabled()) {
       handleLayoutAnalytics('Layout tab clicked');
     }
   };
