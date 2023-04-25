@@ -32,7 +32,7 @@ import {
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
+import { ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
@@ -61,6 +61,7 @@ import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-respons
 import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -106,9 +107,7 @@ export class SubscribersController {
   @Get('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: SubscriberResponseDto,
-  })
+  @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Get subscriber',
     description: 'Get subscriber by your internal id used to identify the subscriber',
@@ -129,9 +128,7 @@ export class SubscribersController {
   @Post('/')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiCreatedResponse({
-    type: SubscriberResponseDto,
-  })
+  @ApiResponse(SubscriberResponseDto, 201)
   @ApiOperation({
     summary: 'Create subscriber',
     description:
@@ -162,9 +159,7 @@ export class SubscribersController {
   @Put('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: SubscriberResponseDto,
-  })
+  @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber',
     description: 'Used to update the subscriber entity with new information',
@@ -193,9 +188,7 @@ export class SubscribersController {
   @Put('/:subscriberId/credentials')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: SubscriberResponseDto,
-  })
+  @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber credentials',
     description: 'Subscriber credentials associated to the delivery methods such as slack and push tokens.',
@@ -219,9 +212,7 @@ export class SubscribersController {
   @Patch('/:subscriberId/online-status')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: SubscriberResponseDto,
-  })
+  @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber online status',
     description: 'Used to update the subscriber isOnline flag.',
@@ -244,9 +235,7 @@ export class SubscribersController {
   @Delete('/:subscriberId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: DeleteSubscriberResponseDto,
-  })
+  @ApiResponse(DeleteSubscriberResponseDto)
   @ApiOperation({
     summary: 'Delete subscriber',
     description: 'Deletes a subscriber entity from the Novu platform',
@@ -267,9 +256,7 @@ export class SubscribersController {
   @Get('/:subscriberId/preferences')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: [UpdateSubscriberPreferenceResponseDto],
-  })
+  @ApiResponse(UpdateSubscriberPreferenceResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get subscriber preferences',
   })
@@ -289,9 +276,7 @@ export class SubscribersController {
   @Patch('/:subscriberId/preferences/:templateId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: UpdateSubscriberPreferenceResponseDto,
-  })
+  @ApiResponse(UpdateSubscriberPreferenceResponseDto)
   @ApiOperation({
     summary: 'Update subscriber preference',
   })
@@ -346,9 +331,7 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Get('/:subscriberId/notifications/unseen')
-  @ApiOkResponse({
-    type: UnseenCountResponse,
-  })
+  @ApiResponse(UnseenCountResponse)
   @ApiOperation({
     summary: 'Get the unseen in-app notifications count for subscribers feed',
   })
@@ -383,9 +366,7 @@ export class SubscribersController {
     description: 'This endpoint is deprecated please address /:subscriberId/messages/markAs instead',
     deprecated: true,
   })
-  @ApiCreatedResponse({
-    type: MessageResponseDto,
-  })
+  @ApiResponse(MessageResponseDto, 201)
   async markMessageAsSeen(
     @UserSession() user: IJwtPayload,
     @Param('messageId') messageId: string,
@@ -411,9 +392,7 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Mark a subscriber feed message as seen',
   })
-  @ApiCreatedResponse({
-    type: MessageResponseDto,
-  })
+  @ApiResponse(MessageResponseDto, 201, true)
   async markMessageAs(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
@@ -441,9 +420,7 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Mark message action as seen',
   })
-  @ApiCreatedResponse({
-    type: MessageResponseDto,
-  })
+  @ApiResponse(MessageResponseDto, 201)
   async markActionAsSeen(
     @UserSession() user: IJwtPayload,
     @Param('messageId') messageId: string,

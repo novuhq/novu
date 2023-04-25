@@ -17,6 +17,7 @@ import { GetActivityCommand } from './usecases/get-activity/get-activity.command
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/notifications')
 @ApiTags('Notification')
@@ -72,9 +73,7 @@ export class NotificationsController {
     );
   }
 
-  @ApiOkResponse({
-    type: ActivityStatsResponseDto,
-  })
+  @ApiResponse(ActivityStatsResponseDto)
   @ApiOperation({
     summary: 'Get notification statistics',
   })
@@ -93,9 +92,7 @@ export class NotificationsController {
   @Get('/graph/stats')
   @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: [ActivityGraphStatesResponse],
-  })
+  @ApiResponse(ActivityGraphStatesResponse, 200, true)
   @ApiOperation({
     summary: 'Get notification graph statistics',
   })
@@ -119,9 +116,7 @@ export class NotificationsController {
   }
 
   @Get('/:notificationId')
-  @ApiOkResponse({
-    type: ActivityNotificationResponseDto,
-  })
+  @ApiResponse(ActivityNotificationResponseDto)
   @ApiOperation({
     summary: 'Get notification',
   })

@@ -19,11 +19,11 @@ import { BulkApplyChange } from './usecases/bulk-apply-change/bulk-apply-change.
 import { BulkApplyChangeCommand } from './usecases/bulk-apply-change/bulk-apply-change.command';
 import { CountChanges } from './usecases/count-changes/count-changes.usecase';
 import { CountChangesCommand } from './usecases/count-changes/count-changes.command';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChangesResponseDto, ChangeResponseDto } from './dtos/change-response.dto';
 import { ChangesRequestDto } from './dtos/change-request.dto';
-
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -59,9 +59,7 @@ export class ChangesController {
   }
 
   @Get('/count')
-  @ApiOkResponse({
-    type: Number,
-  })
+  @ApiResponse(Number)
   @ApiOperation({
     summary: 'Get changes count',
   })
@@ -77,9 +75,7 @@ export class ChangesController {
   }
 
   @Post('/bulk/apply')
-  @ApiCreatedResponse({
-    type: [ChangeResponseDto],
-  })
+  @ApiResponse(ChangeResponseDto, 201, true)
   @ApiOperation({
     summary: 'Apply changes',
   })
@@ -99,9 +95,7 @@ export class ChangesController {
   }
 
   @Post('/:changeId/apply')
-  @ApiCreatedResponse({
-    type: [ChangeResponseDto],
-  })
+  @ApiResponse(ChangeResponseDto, 201, true)
   @ApiOperation({
     summary: 'Apply change',
   })
