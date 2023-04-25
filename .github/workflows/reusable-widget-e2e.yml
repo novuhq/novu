@@ -41,7 +41,9 @@ jobs:
         env:
           NODE_ENV: 'test'
           TZ: 'UTC'
-        run: cd apps/ws && pnpm start:prod &
+        run: |
+          cp apps/ws/src/.env.test apps/ws/dist/src/.env.test
+          cd apps/ws && pnpm start:prod &
 
       - name: Start API in TEST
         env:
