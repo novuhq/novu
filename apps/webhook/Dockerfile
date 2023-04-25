@@ -1,4 +1,5 @@
 FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as dev_base
+ENV NX_DAEMON=false
 
 RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@7.28.0

@@ -1,4 +1,5 @@
 FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine
+ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
 
