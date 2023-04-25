@@ -4,14 +4,10 @@ import { AnalyticsService } from '@novu/application-generic';
 
 import { ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
 import { GetActivityCommand } from './get-activity.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class GetActivity {
-  constructor(
-    private notificationRepository: NotificationRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
-  ) {}
+  constructor(private notificationRepository: NotificationRepository, private analyticsService: AnalyticsService) {}
 
   async execute(command: GetActivityCommand): Promise<ActivityNotificationResponseDto> {
     this.analyticsService.track('Get Activity Feed Item - [Activity Feed]', command.userId, {

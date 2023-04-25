@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsObject, IsString } from 'class-validator';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
 

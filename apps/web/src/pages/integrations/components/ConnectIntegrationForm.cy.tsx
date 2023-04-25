@@ -68,6 +68,7 @@ it('close button calls onClose', () => {
     </Router>
   );
 
+  // eslint-disable-next-line cypress/unsafe-to-chain-command
   cy.get('[data-test-id="connection-integration-form-close"]')
     .should('have.attr', 'type', 'button')
     .click()

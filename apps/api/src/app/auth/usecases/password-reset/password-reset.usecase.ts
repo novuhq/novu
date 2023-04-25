@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
 import { isBefore, subDays } from 'date-fns';
+import { UserRepository } from '@novu/dal';
+import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
+
 import { PasswordResetCommand } from './password-reset.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { AuthService } from '../../services/auth.service';
-import { InvalidateCacheService } from '../../../shared/services/cache';
-import { buildUserKey } from '../../../shared/services/cache/key-builders/entities';
 
 @Injectable()
 export class PasswordReset {

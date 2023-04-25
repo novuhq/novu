@@ -1,0 +1,77 @@
+name: Testing
+
+on:
+  # Execute it on pushing to next branches
+  push:
+    branches:
+      - next
+      - main
+  # Execute it on opening any pull request
+  pull_request:
+jobs:
+  # Get branch info
+  branch-info:
+    runs-on: ubuntu-latest
+    steps:
+      # Get current branch name
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.2
+      # Get base branch name to compare with. Base branch on a PR, "main" branch on pushing.
+      - name: Get base branch name
+        id: get-base-branch-name
+        run: |
+          if [[ "${{github.event.pull_request.base.ref}}" != "" ]]; then
+            echo "::set-output name=branch::${{github.event.pull_request.base.ref}}"
+          else
+            echo "::set-output name=branch::main"
+          fi
+    outputs:
+      # Export the branch names as output to be able to use it in other jobs
+      base-branch-name: ${{ steps.get-base-branch-name.outputs.branch }}
+      branch-name: ${{ steps.branch-name.outputs.current_branch }}
+  get-affected:
+    needs: [ branch-info ]
+    name: Nx Affected
+    runs-on: ubuntu-latest
+    outputs:
+      test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
+      test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-project
+
+      # Configure Nx to be able to detect changes between branches when we are in a PR
+      - name: Derive appropriate SHAs for base and head for `nx affected` commands
+        uses: nrwl/nx-set-shas@v2
+        with:
+          main-branch-name: ${{needs.branch-info.outputs.base-branch-name}}
+
+      - name: Get affected
+        id: get-projects-arrays
+        # When not in a PR and the current branch is main, pass --all flag. Otherwise pass the base branch
+        run: |
+          if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{needs.branch-info.outputs.branch-name}}" == "main" ]]; then
+            echo "Running ALL"
+            echo "::set-output name=test-unit::$(node scripts/print-affected-array.js test:unit --all)"
+            echo "::set-output name=test-e2e::$(node scripts/print-affected-array.js test:e2e --all)"
+          else
+            echo "Running PR origin/${{needs.branch-info.outputs.base-branch-name}}"
+            echo "::set-output name=test-unit::$(node scripts/print-affected-array.js test:unit origin/${{needs.branch-info.outputs.base-branch-name}})"
+            echo "::set-output name=test-e2e::$(node scripts/print-affected-array.js test:e2e origin/${{needs.branch-info.outputs.base-branch-name}})"
+          fi
+  test:
+    runs-on: ubuntu-latest
+    needs: [get-affected]
+    if:  ${{ fromJson(needs.get-affected.outputs.test-e2e)[0] }}
+    strategy:
+      # Run in parallel
+      max-parallel: 4
+      # One job for each different project and node version
+      matrix:
+        projectName: ${{ fromJson(needs.get-affected.outputs.test-e2e) }}
+    steps:
+      - run: echo ${{ fromJson(needs.get-affected.outputs.test-e2e) }}
+

@@ -1,8 +1,9 @@
-import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
-import { TriggerRecipientSubscriber } from '@novu/node';
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
+import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
+import { TriggerRecipientSubscriber } from '@novu/node';
+import { EventsPerformanceService, SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
@@ -11,9 +12,7 @@ import {
   TriggerEventResponseDto,
   TriggerEventToAllRequestDto,
 } from './dtos';
-import { EventsPerformanceService } from './services/performance-service';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
-import { SendTestEmail, SendTestEmailCommand } from './usecases/send-message';
 import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
 import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';

@@ -143,8 +143,10 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
 - [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
 - [x] [MailerSend](https://github.com/novuhq/novu/tree/main/providers/mailersend)
+- [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
 - [x] [Resend](https://github.com/novuhq/novu/tree/main/providers/resend)
-- [ ] SparkPost
+- [x] [SparkPost](https://github.com/novuhq/novu/tree/main/providers/sparkpost)
+- [x] [Outlook 365](https://github.com/novuhq/novu/tree/main/providers/outlook365)
 
 #### 📞 SMS
 
@@ -156,6 +158,14 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
 - [x] [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
+- [x] [SMS Central](https://github.com/novuhq/novu/tree/main/providers/sms-central)
+- [x] [Maqsam](https://github.com/novuhq/novu/tree/main/providers/maqsam)
+- [x] [46elks](https://github.com/novuhq/novu/tree/main/providers/forty-six-elks)
+- [x] [Clickatell](https://github.com/novuhq/novu/tree/main/providers/clickatell)
+- [x] [Burst SMS](https://github.com/novuhq/novu/tree/main/providers/burst-sms)
+- [x] [Firetext](https://github.com/novuhq/novu/tree/main/providers/firetext)
+- [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
+- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Bandwidth
 - [ ] RingCentral
 
@@ -163,7 +173,8 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
-- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
+- [x] [APNS](https://github.com/novuhq/novu/tree/main/providers/apns)
+- [ ] OneSignal
 - [ ] Pushwoosh
 
 #### 👇 Chat

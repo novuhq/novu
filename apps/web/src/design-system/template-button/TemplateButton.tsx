@@ -9,7 +9,6 @@ import { useStyles } from './TemplateButton.styles';
 import { colors } from '../config';
 import { Button } from './Button';
 import { IconWrapper } from './IconWrapper';
-import { ActivePageEnum } from '../../constants/editorEnums';
 
 const usePopoverStyles = createStyles(() => ({
   dropdown: {
@@ -73,14 +72,6 @@ export function TemplateButton({
       onClick={async () => {
         if (active) {
           return;
-        }
-
-        if (tabKey === ActivePageEnum.WORKFLOW) {
-          const valid = await trigger(['name', 'notificationGroupId'], { shouldFocus: true });
-
-          if (!valid) {
-            return;
-          }
         }
 
         changeTab(tabKey);

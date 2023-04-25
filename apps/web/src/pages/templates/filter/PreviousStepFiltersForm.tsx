@@ -54,7 +54,7 @@ export const PreviousStepFiltersForm = ({
                       const label = channels.find((channel) => channel.channelType === item.template.type)?.label;
 
                       return {
-                        label: label + (itemNumber > 0 ? ` (${itemNumber})` : ''),
+                        label: item.name ? item.name : label + (itemNumber > 0 ? ` (${itemNumber})` : ''),
                         value: item.uuid,
                       };
                     })

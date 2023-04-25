@@ -44,6 +44,12 @@ export function getStepErrors(index: number | string, errors: FieldErrors<IForm>
 
       return keys.map((key) => actionErrors[key]?.message);
     }
+
+    const nameError = errors.steps[index]?.name;
+
+    if (nameError) {
+      return [nameError?.message];
+    }
   }
 
   return [];
