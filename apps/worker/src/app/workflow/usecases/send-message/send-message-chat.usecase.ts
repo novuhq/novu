@@ -70,7 +70,7 @@ export class SendMessageChat extends SendMessageBase {
       message: 'Sending Chat',
     });
     const chatChannel: NotificationStepEntity = command.step;
-    if (!chatChannel || !chatChannel.template) throw new PlatformException('Chat channel template not found');
+    if (!chatChannel?.template) throw new PlatformException('Chat channel template not found');
 
     const notification = await this.notificationRepository.findById(command.notificationId);
 
