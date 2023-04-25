@@ -63,8 +63,10 @@
     "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
     "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env",
     "pnpm-context": "node scripts/pnpm-context.mjs",
+    "get-packages-folder": "node scripts/get-packages-folder.mjs",
     "jarvis": "node scripts/jarvis.js",
-    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh"
+    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
+    "get-affected": "node scripts/print-affected-array.mjs"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
@@ -73,16 +75,16 @@
     "@commitlint/config-angular": "^17.0.0",
     "@commitlint/config-conventional": "17.6.1",
     "@cspell/eslint-plugin": "^6.14.3",
-    "@nrwl/cli": "13.10.6",
-    "@nrwl/eslint-plugin-nx": "13.10.6",
-    "@nrwl/jest": "13.10.6",
-    "@nrwl/linter": "13.10.6",
-    "@nrwl/nx-cloud": "^15.0.0",
-    "@nrwl/tao": "13.10.6",
+    "@nrwl/cli": "15.9.2",
+    "@nrwl/eslint-plugin-nx": "15.9.2",
+    "@nrwl/jest": "15.9.2",
+    "@nrwl/linter": "15.9.2",
+    "@nrwl/nx-cloud": "^15.3.5",
+    "@nrwl/tao": "^15.9.2",
     "@nrwl/workspace": "13.10.6",
     "@octokit/core": "^3.6.0",
-    "@pnpm/filter-workspace-packages": "^4.4.35",
-    "@pnpm/logger": "^4.0.0",
+    "@pnpm/filter-workspace-packages": "^7.0.6",
+    "@pnpm/logger": "^5.0.0",
     "@types/inquirer": "8.2.6",
     "@types/jest": "27.5.2",
     "@types/node": "16.11.7",
@@ -188,7 +190,7 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "nx": "^14.5.10",
+    "nx": "^15.9.2",
     "tslib": "^2.4.0"
   }
 }
