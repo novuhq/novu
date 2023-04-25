@@ -63,7 +63,9 @@ export class PromoteNotificationTemplateChange {
       return step;
     };
 
-    const steps = newItem.steps ? newItem.steps.map(mapNewStepItem).filter((step) => step !== undefined) : [];
+    const steps = newItem.steps
+      ? newItem.steps.map(mapNewStepItem).filter((step): step is NotificationStepEntity => step !== undefined)
+      : [];
 
     if (missingMessages.length > 0 && steps.length > 0 && item) {
       Logger.error(
@@ -108,7 +110,11 @@ export class PromoteNotificationTemplateChange {
     }
 
     if (!item) {
-      return this.notificationTemplateRepository.create({
+      if (newItem.deleted === true) {
+        return;
+      }
+
+      const newNotificationTemplate: Partial<NotificationTemplateEntity> = {
         name: newItem.name,
         active: newItem.active,
         draft: newItem.draft,
@@ -125,7 +131,9 @@ export class PromoteNotificationTemplateChange {
         _notificationGroupId: notificationGroup._id,
         isBlueprint: command.organizationId === this.blueprintOrganizationId,
         blueprintId: newItem.blueprintId,
-      });
+      };
+
+      return this.notificationTemplateRepository.create(newNotificationTemplate as NotificationTemplateEntity);
     }
 
     const count = await this.notificationTemplateRepository.count({
