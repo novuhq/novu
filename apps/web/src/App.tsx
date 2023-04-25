@@ -34,12 +34,17 @@ import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
 import { Setup } from './pages/quick-start/steps/Setup';
 import { Trigger } from './pages/quick-start/steps/Trigger';
-import { TemplateEditorProvider } from './pages/templates/editor/TemplateEditorProvider';
-import { TemplateEditorFormProvider } from './pages/templates/components/TemplateEditorFormProvider';
 import { RequiredAuth } from './components/layout/RequiredAuth';
 import { GetStarted } from './pages/quick-start/steps/GetStarted';
 import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
 import { TemplatesDigestPlaygroundPage } from './pages/templates/TemplatesDigestPlaygroundPage';
+import { Sidebar } from './pages/templates/workflow/SideBar/Sidebar';
+import { TemplateSettings } from './pages/templates/components/TemplateSettings';
+import { UserPreference } from './pages/templates/components/UserPreference';
+import { TestWorkflowPage } from './pages/templates/components/TestWorkflowPage';
+import { SnippetPage } from './pages/templates/components/SnippetPage';
+import { TemplateEditor } from './pages/templates/components/TemplateEditor';
+import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
@@ -175,26 +180,16 @@ function App() {
                 <Route element={<AppLayout />}>
                   <Route path={ROUTES.ANY} element={<HomePage />} />
                   <Route path={ROUTES.TEMPLATES_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
-                  <Route
-                    path={ROUTES.TEMPLATES_CREATE}
-                    element={
-                      <TemplateEditorFormProvider>
-                        <TemplateEditorProvider>
-                          <TemplateEditorPage />
-                        </TemplateEditorProvider>
-                      </TemplateEditorFormProvider>
-                    }
-                  />
-                  <Route
-                    path={ROUTES.TEMPLATES_EDIT_TEMPLATEID}
-                    element={
-                      <TemplateEditorFormProvider>
-                        <TemplateEditorProvider>
-                          <TemplateEditorPage />
-                        </TemplateEditorProvider>
-                      </TemplateEditorFormProvider>
-                    }
-                  />
+                  <Route path={ROUTES.TEMPLATES_CREATE} element={<TemplateEditorPage />} />
+                  <Route path={ROUTES.TEMPLATES_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
+                    <Route path="" element={<Sidebar />} />
+                    <Route path="settings" element={<TemplateSettings />} />
+                    <Route path="channels" element={<UserPreference />} />
+                    <Route path="test-workflow" element={<TestWorkflowPage />} />
+                    <Route path="snippet" element={<SnippetPage />} />
+                    <Route path="providers" element={<ProvidersPage />} />
+                    <Route path=":channel/:stepUuid" element={<TemplateEditor />} />
+                  </Route>
                   <Route path={ROUTES.TEMPLATES} element={<NotificationList />} />
                   <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />

@@ -4,7 +4,7 @@ import { useAuthContext } from '../../../../components/providers/AuthProvider';
 import { When } from '../../../../components/utils/When';
 import { Preview } from '../../editor/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
-import { Grid, SegmentedControl, useMantineTheme } from '@mantine/core';
+import { Grid, Group, SegmentedControl, useMantineTheme } from '@mantine/core';
 import { TestSendEmail } from './TestSendEmail';
 import { colors } from '../../../../design-system';
 import { MobileIcon } from '../../editor/PreviewSegment/MobileIcon';
@@ -13,6 +13,7 @@ import { useHotkeys } from '@mantine/hooks';
 import { VariablesManagement } from './variables-management/VariablesManagement';
 import { useVariablesManager } from '../../../../hooks';
 import { VariableManagerModal } from '../VariableManagerModal';
+import { StepSettings } from '../../workflow/SideBar/StepSettings';
 
 export enum ViewEnum {
   EDIT = 'Edit',
@@ -65,13 +66,12 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
           position: 'relative',
         }}
       >
-        <Grid mb={view === ViewEnum.PREVIEW ? 40 : 20}>
-          <Grid.Col span={6}>
-            <Grid justify="right" mr={7}>
-              <EditorPreviewSwitch view={view} setView={setView} />
-            </Grid>
+        <StepSettings index={index} />
+        <Grid m={0} mb={24} mt={24}>
+          <Grid.Col p={0} mr={20} span={7}>
+            <EditorPreviewSwitch view={view} setView={setView} />
           </Grid.Col>
-          <Grid.Col p={0} span={6}>
+          <Grid.Col p={0} span={2}>
             <When truthy={view === ViewEnum.PREVIEW}>
               <SegmentedControl
                 data-test-id="preview-mode-switch"
@@ -97,11 +97,13 @@ export function EmailMessagesCards({ index, isIntegrationActive }: { index: numb
                 data={[
                   {
                     value: 'web',
-                    label: <WebIcon />,
+                    label: <WebIcon color={preview !== 'web' ? colors.B40 : undefined} />,
                   },
                   {
                     value: 'mobile',
-                    label: <MobileIcon />,
+                    label: (
+                      <MobileIcon style={{ marginTop: 3 }} color={preview !== 'mobile' ? colors.B40 : undefined} />
+                    ),
                   },
                 ]}
                 value={preview}

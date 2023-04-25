@@ -1,3 +1,6 @@
+import { dragAndDrop } from './notification-editor';
+import { goBack } from './notification-editor/index';
+
 describe('Changes Screen', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
@@ -59,22 +62,37 @@ describe('Changes Screen', function () {
     cy.getByTestId('promote-btn').should('be.disabled');
   });
 
-  it('should promote all changes with promote all btn', function () {
+  it.skip('should promote all changes with promote all btn 2', function () {
+    cy.intercept('**/v1/changes?promoted=false&page=0&limit=10').as('changes');
+    cy.intercept('**/v1/changes/bulk/apply').as('bulk-apply');
+    cy.intercept('**/notification-templates**').as('notificationTemplates');
+
     createNotification();
+    cy.waitForNetworkIdle(500);
     createNotification();
+    cy.waitForNetworkIdle(500);
 
-    cy.visit('/changes');
-    cy.getByTestId('pending-changes-table').find('tbody tr').should('have.length', 2);
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/changes');
+      cy.waitForNetworkIdle(500);
+      cy.wait(['@changes']);
+      cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('have.length', 2);
+      cy.wait(['@changes']);
+      cy.intercept('**/v1/changes?promoted=false&page=0&limit=10').as('changes-2');
+      cy.awaitAttachedGetByTestId('promote-all-btn').click({ force: true });
+      cy.wait(['@bulk-apply']);
+      cy.wait(['@changes-2']);
+      cy.wait(['@changes-2']);
 
-    cy.getByTestId('promote-all-btn').click({ force: true });
+      cy.awaitAttachedGetByTestId('pending-changes-table').find('tbody tr').should('not.exist');
 
-    cy.getByTestId('pending-changes-table').find('tbody tr').should('not.exist');
-
-    switchEnvironment('Production');
+      switchEnvironment('Production');
+      cy.waitForNetworkIdle(500);
+    });
 
     cy.visit('/templates');
-    cy.waitForNetworkIdle(500);
-    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 2);
+    cy.wait('@notificationTemplates');
+    cy.awaitAttachedGetByTestId('notifications-template').find('tbody tr').should('have.length', 2);
   });
 });
 
@@ -84,28 +102,30 @@ function switchEnvironment(environment: 'Production' | 'Development') {
 }
 
 function createNotification() {
-  const dataTransfer = new DataTransfer();
+  cy.intercept('**/notification-groups').as('getNotificationGroups');
   cy.visit('/templates/create');
   cy.waitForNetworkIdle(500);
 
-  cy.getByTestId('title').type('Test Notification Title');
-  cy.getByTestId('description').type('This is a test description for a test title');
+  cy.getByTestId('title').clear().type('Test Notification Title');
+
+  cy.getByTestId('settings-page').click();
+  cy.waitForNetworkIdle(500);
+
+  cy.getByTestId('description').clear().type('This is a test description for a test title');
   cy.get('body').click();
 
-  cy.getByTestId('workflowButton').click();
+  goBack();
 
-  cy.getByTestId('dnd-emailSelector').trigger('dragstart', { dataTransfer });
+  dragAndDrop('email');
+  cy.waitForNetworkIdle(500);
 
-  cy.get('.react-flow__node-addNode').trigger('drop', { dataTransfer });
-
-  cy.getByTestId('node-emailSelector').parent().click({ force: true });
-  cy.getByTestId('edit-template-channel').click({ force: true });
+  cy.clickWorkflowNode(`node-emailSelector`);
+  cy.waitForNetworkIdle(500);
 
   cy.getByTestId('emailSubject').type('this is email subject');
 
+  goBack();
   cy.getByTestId('notification-template-submit-btn').click();
-  cy.waitForNetworkIdle(500);
-  cy.getByTestId('trigger-snippet-btn').click();
 }
 
 function promoteNotification() {

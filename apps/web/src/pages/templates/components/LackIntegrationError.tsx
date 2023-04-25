@@ -6,20 +6,22 @@ import { Text } from '../../../design-system';
 import { DoubleArrowRight } from '../../../design-system/icons/arrows/CircleArrowRight';
 import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { TemplateEditorAnalyticsEnum } from '../constants';
+import { stepNames, TemplateEditorAnalyticsEnum } from '../constants';
 
 const DoubleArrowRightStyled = styled(DoubleArrowRight)`
   cursor: pointer;
 `;
 
 export function LackIntegrationError({
-  channel,
   channelType,
   text,
+  iconHeight = 18,
+  iconWidth = 18,
 }: {
-  channel: string;
   channelType: ChannelTypeEnum;
   text?: string;
+  iconHeight?: number | string | undefined;
+  iconWidth?: number | string | undefined;
 }) {
   const segment = useSegment();
   const [isIntegrationsModalOpened, openIntegrationsModal] = useState(false);
@@ -30,13 +32,17 @@ export function LackIntegrationError({
         <Text>
           {text
             ? text
-            : `Looks like you haven’t configured your ${channel} provider yet, this channel will be disabled until you configure it.`}
+            : 'Looks like you haven’t configured your ' +
+              stepNames[channelType] +
+              ' provider yet, this channel will be disabled until you configure it.'}
         </Text>
         <DoubleArrowRightStyled
           onClick={() => {
             openIntegrationsModal(true);
             segment.track(TemplateEditorAnalyticsEnum.CONFIGURE_PROVIDER_BANNER_CLICK);
           }}
+          height={iconHeight}
+          width={iconWidth}
         />
       </WarningMessage>
       <IntegrationsStoreModal

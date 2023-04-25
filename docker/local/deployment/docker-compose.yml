@@ -19,7 +19,7 @@ services:
       - 27017:27017
     restart: unless-stopped
   api:
-    image: 'ghcr.io/novuhq/novu/api:0.13.0'
+    image: 'ghcr.io/novuhq/novu/api:0.14.0'
     depends_on:
       - mongodb
       - redis
@@ -46,10 +46,11 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      API_CONTEXT_PATH: ${API_CONTEXT_PATH}
     ports:
       - '3000:3000'
   worker:
-    image: 'ghcr.io/novuhq/novu/worker:0.13.0'
+    image: 'ghcr.io/novuhq/novu/worker:0.14.0'
     depends_on:
       - mongodb
       - redis
@@ -72,7 +73,7 @@ services:
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:0.13.0'
+    image: 'ghcr.io/novuhq/novu/ws:0.14.0'
     depends_on:
       - mongodb
       - redis
@@ -84,10 +85,11 @@ services:
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       JWT_SECRET: ${JWT_SECRET}
+      WS_CONTEXT_PATH: ${WS_CONTEXT_PATH}
     ports:
       - '3002:3002'
   web:
-    image: 'ghcr.io/novuhq/novu/web:0.13.0'
+    image: 'ghcr.io/novuhq/novu/web:0.14.0'
     depends_on:
       - api
       - worker
@@ -101,7 +103,7 @@ services:
     ports:
       - 4200:4200
   widget:
-    image: 'ghcr.io/novuhq/novu/widget:0.13.0'
+    image: 'ghcr.io/novuhq/novu/widget:0.14.0'
     depends_on:
       - api
       - worker
@@ -111,12 +113,13 @@ services:
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_WS_URL: ${REACT_APP_WS_URL}
       REACT_APP_ENVIRONMENT: ${NODE_ENV}
+      WIDGET_CONTEXT_PATH: ${WIDGET_CONTEXT_PATH}
     ports:
       - 4500:4500
   embed:
     depends_on:
       - widget
-    image: 'ghcr.io/novuhq/novu/embed:0.13.0'
+    image: 'ghcr.io/novuhq/novu/embed:0.14.0'
     container_name: embed
     environment:
       WIDGET_URL: ${WIDGET_URL}

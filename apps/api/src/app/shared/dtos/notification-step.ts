@@ -44,6 +44,9 @@ export class NotificationStep {
   uuid?: string;
 
   @ApiPropertyOptional()
+  name?: string;
+
+  @ApiPropertyOptional()
   @ApiProperty()
   _templateId?: string;
 
