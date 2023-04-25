@@ -79,7 +79,7 @@ export class BullmqService {
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;
 
-    let internalOptions: WorkerOptions;
+    let internalOptions: WorkerOptions = {};
     if (options) {
       internalOptions = options;
     }
