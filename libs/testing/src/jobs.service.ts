@@ -8,10 +8,13 @@ export class JobsService {
   private jobRepository = new JobRepository();
   public queueService: QueueService;
   public queue: Queue;
+  public jobQueue: QueueService;
 
   constructor() {
     this.queueService = new QueueService('trigger-handler');
     this.queue = this.queueService.queue;
+
+    this.jobQueue = new QueueService('standard');
   }
 
   public async awaitParsingEvents() {
@@ -37,9 +40,17 @@ export class JobsService {
     let runningJobs = 0;
     let waitingCount = 0;
     let parsedEvents = 0;
+
+    let waitingCountJobs = 0;
+    let activeCountJobs = 0;
+
     do {
       waitingCount = await this.queue.getWaitingCount();
       parsedEvents = await this.queue.getActiveCount();
+
+      waitingCountJobs = await this.jobQueue.queue.getWaitingCount();
+      activeCountJobs = await this.jobQueue.queue.getActiveCount();
+
       runningJobs = await this.jobRepository.count({
         _organizationId: organizationId,
         type: {

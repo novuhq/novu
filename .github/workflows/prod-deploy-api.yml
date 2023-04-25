@@ -79,6 +79,7 @@ jobs:
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
+      environment: Production
       service_name: api
       terraform_workspace: novu-prod-eu
       # This is a workaround to an issue with matrix outputs
@@ -91,6 +92,7 @@ jobs:
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
+      environment: Production
       service_name: api
       terraform_workspace: novu-prod
       # This is a workaround to an issue with matrix outputs
