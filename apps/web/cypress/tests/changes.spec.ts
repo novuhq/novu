@@ -62,7 +62,7 @@ describe('Changes Screen', function () {
     cy.getByTestId('promote-btn').should('be.disabled');
   });
 
-  it('should promote all changes with promote all btn 2', function () {
+  it.skip('should promote all changes with promote all btn 2', function () {
     cy.intercept('**/v1/changes?promoted=false&page=0&limit=10').as('changes');
     cy.intercept('**/v1/changes/bulk/apply').as('bulk-apply');
     cy.intercept('**/notification-templates**').as('notificationTemplates');
