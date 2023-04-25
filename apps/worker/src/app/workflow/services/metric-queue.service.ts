@@ -108,11 +108,7 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   }
 
   private async jobHasCompleted(job): Promise<void> {
-    try {
       Logger.log('Metric job Completed');
-    } catch (error) {
-      Logger.error('Failed to set job as completed', error);
-    }
   }
 
   private async jobHasFailed(job, error): Promise<void> {
