@@ -32,14 +32,7 @@ import {
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import {
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiQuery,
-  ApiTags,
-  ApiExcludeEndpoint,
-} from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
 import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
@@ -55,7 +48,6 @@ import { GetNotificationsFeedCommand } from '../widgets/usecases/get-notificatio
 import { GetNotificationsFeed } from '../widgets/usecases/get-notifications-feed/get-notifications-feed.usecase';
 import { MarkMessageAs } from '../widgets/usecases/mark-message-as/mark-message-as.usecase';
 import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecase';
-import { StoreQuery } from '../widgets/queries/store.query';
 import { GetFeedCount } from '../widgets/usecases/get-feed-count/get-feed-count.usecase';
 import { GetFeedCountCommand } from '../widgets/usecases/get-feed-count/get-feed-count.command';
 import { UpdateSubscriberOnlineFlagRequestDto } from './dtos/update-subscriber-online-flag-request.dto';
@@ -68,6 +60,7 @@ import { MarkMessageActionAsSeenDto } from '../widgets/dtos/mark-message-action-
 import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
 import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
+import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -324,38 +317,27 @@ export class SubscribersController {
   @UseGuards(JwtAuthGuard)
   @Get('/:subscriberId/notifications/feed')
   @ApiOperation({
-    summary: 'Get a notification feed for a particular subscriber',
+    summary: 'Get in-app notification feed for a particular subscriber',
   })
   @ApiOkPaginatedResponse(MessageResponseDto)
-  @ApiQuery({
-    name: 'seen',
-    type: Boolean,
-    required: false,
-  })
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    required: false,
-  })
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Query('page') page?: string,
-    @Query('feedIdentifier') feedId?: string,
-    @Query() query: StoreQuery = {}
+    @Query() query: GetInAppNotificationsFeedForSubscriberDto
   ): Promise<PaginatedResponseDto<MessageResponseDto>> {
     let feedsQuery: string[] | undefined;
-    if (feedId) {
-      feedsQuery = Array.isArray(feedId) ? feedId : [feedId];
+    if (query.feedIdentifier) {
+      feedsQuery = Array.isArray(query.feedIdentifier) ? query.feedIdentifier : [query.feedIdentifier];
     }
 
     const command = GetNotificationsFeedCommand.create({
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      page: page != null ? parseInt(page) : 0,
+      page: query.page != null ? parseInt(query.page) : 0,
       feedId: feedsQuery,
-      query: query,
+      query: { seen: query.seen, read: query.read },
+      limit: query.limit != null ? parseInt(query.limit) : 10,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -368,7 +350,7 @@ export class SubscribersController {
     type: UnseenCountResponse,
   })
   @ApiOperation({
-    summary: 'Get the unseen notification count for subscribers feed',
+    summary: 'Get the unseen in-app notifications count for subscribers feed',
   })
   async getUnseenCount(
     @UserSession() user: IJwtPayload,
