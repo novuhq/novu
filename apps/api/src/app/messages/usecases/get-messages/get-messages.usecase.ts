@@ -59,7 +59,7 @@ export class GetMessages {
        */
     );
 
-    const hasMore = this.getHasMore(command.page, LIMIT, data, totalCount);
+    const hasMore = this.getHasMore(command.page, LIMIT, data.length, totalCount);
 
     return {
       page: command.page,
@@ -70,8 +70,8 @@ export class GetMessages {
     };
   }
 
-  private getHasMore(page: number, LIMIT: number, feed, totalCount) {
-    const currentPaginationTotal = page * LIMIT + feed.length;
+  private getHasMore(page: number, limit: number, feedLength: number, totalCount: number) {
+    const currentPaginationTotal = page * limit + feedLength;
 
     return currentPaginationTotal < totalCount;
   }

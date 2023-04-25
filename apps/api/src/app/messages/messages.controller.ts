@@ -10,7 +10,6 @@ import { ActivitiesResponseDto } from '../notifications/dtos/activities-response
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
 import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
 import { DeleteMessageParams } from './params/delete-message.param';
-import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
 
 @Controller('/messages')
 @ApiTags('Messages')

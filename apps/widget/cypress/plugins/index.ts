@@ -45,12 +45,12 @@ module.exports = (on, config) => {
           firstName: 'John' + num,
         });
         if (enumerate && organizationId) {
-          await awaitRunningJobs({ apiKey: config.env.API_URL, templateId, organizationId });
+          await awaitRunningJobs({ serverUrl: config.env.API_URL, templateId, organizationId });
         }
       }
 
       if (organizationId) {
-        await awaitRunningJobs({ apiKey: config.env.API_URL, templateId, organizationId });
+        await awaitRunningJobs({ serverUrl: config.env.API_URL, templateId, organizationId });
       }
 
       return 'ok';
@@ -113,7 +113,7 @@ module.exports = (on, config) => {
     },
 
     async awaitRunningJobs({ templateId, organizationId }: { templateId: string; organizationId: string }) {
-      await awaitRunningJobs({ apiKey: config.env.API_URL, templateId, organizationId });
+      await awaitRunningJobs({ serverUrl: config.env.API_URL, templateId, organizationId });
 
       return true;
     },
@@ -130,14 +130,14 @@ module.exports = (on, config) => {
 };
 
 async function awaitRunningJobs({
-  apiKey,
+  serverUrl,
   templateId,
   organizationId,
 }: {
-  apiKey: string;
+  serverUrl: string;
   templateId: string;
   organizationId: string;
 }) {
-  const session = new UserSession(apiKey);
+  const session = new UserSession(serverUrl);
   await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
 }

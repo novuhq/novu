@@ -1,7 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { IsNumber, IsOptional, Max, Min } from 'class-validator';
+import { IsNumber, IsOptional } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
-import { Transform } from 'class-transformer';
 
 export class GetMessagesCommand extends EnvironmentCommand {
   @IsNumber()

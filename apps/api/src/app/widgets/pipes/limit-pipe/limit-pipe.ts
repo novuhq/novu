@@ -1,18 +1,17 @@
-import { ArgumentMetadata, BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
+import { ArgumentMetadata, BadRequestException, PipeTransform } from '@nestjs/common';
 
-@Injectable()
 export class LimitPipe implements PipeTransform {
   private readonly minInt: number;
   private readonly maxInt: number;
-  private readonly isOptional: boolean = false;
-  constructor(minInt: number, maxInt: number, isOptional?: boolean) {
+  private readonly isOptional: boolean;
+
+  constructor(minInt: number, maxInt: number, isOptional = false) {
     this.minInt = minInt;
     this.maxInt = maxInt;
-    if (isOptional != null) {
-      this.isOptional = isOptional;
-    }
+    this.isOptional = isOptional;
   }
-  transform(value: number | undefined, metadata: ArgumentMetadata) {
+
+  transform(value: number | undefined | null, metadata: ArgumentMetadata) {
     if (this.isOptional && value == null) {
       return value;
     }
