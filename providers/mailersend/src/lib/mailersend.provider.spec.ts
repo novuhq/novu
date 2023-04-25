@@ -71,7 +71,11 @@ test('should trigger mailerSend correctly', async () => {
       to: [recipient1, recipient2],
       cc: undefined,
       bcc: undefined,
-      reply_to: undefined,
+      reply_to: {
+        email: undefined,
+        name: undefined,
+      },
+      sendAt: undefined,
       attachments: [attachment],
       subject: mockNovuMessage.subject,
       text: mockNovuMessage.text,

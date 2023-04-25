@@ -10,6 +10,7 @@ WORKDIR /usr/src/app
 FROM dev_base AS dev
 ARG PACKAGE_PATH
 
+
 COPY ./meta .
 COPY ./deps .
 COPY ./pkg .

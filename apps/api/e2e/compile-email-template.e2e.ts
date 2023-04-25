@@ -1,29 +1,41 @@
+import { expect } from 'chai';
 import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum, EmailBlockTypeEnum } from '@novu/shared';
-import { LayoutRepository, OrganizationRepository } from '@novu/dal';
+import { LayoutRepository, OrganizationRepository, DalService } from '@novu/dal';
 
-import { CompileEmailTemplate } from './compile-email-template.usecase';
-import { CompileEmailTemplateCommand } from './compile-email-template.command';
-import { CompileTemplate } from '../compile-template';
-import { GetLayoutUseCase } from '../get-layout';
-import { GetNovuLayout } from '../get-novu-layout';
+import { CompileEmailTemplate } from '@novu/application-generic';
+import { CompileEmailTemplateCommand } from '@novu/application-generic';
+import { CompileTemplate } from '@novu/application-generic';
+import { GetLayoutUseCase } from '@novu/application-generic';
+import { GetNovuLayout } from '@novu/application-generic';
+
+const dalService = new DalService();
 
 describe('Compile E-mail Template', function () {
   let useCase: CompileEmailTemplate;
   let session: UserSession;
   const layoutRepository = new LayoutRepository();
+
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [
+      imports: [],
+      providers: [
         CompileEmailTemplate,
         CompileTemplate,
         GetLayoutUseCase,
         GetNovuLayout,
         OrganizationRepository,
         LayoutRepository,
+        {
+          provide: DalService,
+          useFactory: async () => {
+            await dalService.connect(process.env.MONGO_URL);
+
+            return dalService;
+          },
+        },
       ],
-      providers: [],
     }).compile();
 
     session = new UserSession();
@@ -58,10 +70,8 @@ describe('Compile E-mail Template', function () {
       })
     );
 
-    expect(html).toEqual(
-      '<div>An layout wrapper <div><div>Test</div></div></div>'
-    );
-    expect(subject).toEqual('A title for Header Test');
+    expect(html).to.equal('<div>An layout wrapper <div><div>Test</div></div></div>');
+    expect(subject).to.equal('A title for Header Test');
   });
 
   it('should compile a template with custom layout defined for visual editor', async function () {
@@ -95,11 +105,11 @@ describe('Compile E-mail Template', function () {
       })
     );
 
-    expect(html).toContain('<div>An layout wrapper <div>');
-    expect(html).toContain('<div>Test</div>');
-    expect(html).not.toContain('{{');
+    expect(html).to.contain('<div>An layout wrapper <div>');
+    expect(html).to.contain('<div>Test</div>');
+    expect(html).not.to.contain('{{');
 
-    expect(subject).toEqual('A title for Header Test');
+    expect(subject).to.equal('A title for Header Test');
   });
 
   it('should apply subject variable if provided', async function () {
@@ -123,11 +133,11 @@ describe('Compile E-mail Template', function () {
       })
     );
 
-    expect(html).toContain('<!DOCTYPE html');
-    expect(html).not.toContain('{{subject}}');
-    expect(html).toContain(`<p>${subjectText}</p>`);
+    expect(html).to.contain('<!DOCTYPE html');
+    expect(html).not.to.contain('{{subject}}');
+    expect(html).to.contain(`<p>${subjectText}</p>`);
 
-    expect(subject).toEqual(subjectText);
+    expect(subject).to.equal(subjectText);
   });
 
   describe('Backwards compatability', function () {
@@ -146,8 +156,8 @@ describe('Compile E-mail Template', function () {
         })
       );
 
-      expect(html).toEqual('<div>Test</div>');
-      expect(subject).toEqual('A title for Header Test');
+      expect(html).to.equal('<div>Test</div>');
+      expect(subject).to.equal('A title for Header Test');
     });
 
     it('should add default novu layout for visual editor templates', async function () {
@@ -170,11 +180,11 @@ describe('Compile E-mail Template', function () {
         })
       );
 
-      expect(html).toContain('<!DOCTYPE html');
-      expect(html).not.toContain('{{name}}');
-      expect(html).toContain('<div>Test</div>');
+      expect(html).to.contain('<!DOCTYPE html');
+      expect(html).not.to.contain('{{name}}');
+      expect(html).to.contain('<div>Test</div>');
 
-      expect(subject).toEqual('A title for Header Test');
+      expect(subject).to.equal('A title for Header Test');
     });
   });
 });

@@ -3,6 +3,7 @@ describe('Notifications List', function () {
     cy.intercept('**/notifications/feed?page=0').as('getNotificationsFirstPage');
     cy.intercept('**/notifications/feed?page=1').as('getSecondPage');
     cy.intercept('GET', '**/notifications/unseen?**limit=100**').as('unseenCountRequest');
+    cy.intercept('**/notifications/unseen').as('unseenRequest');
 
     cy.initializeSession()
       .as('session')
@@ -61,8 +62,11 @@ describe('Notifications List', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 1,
+      organizationId: this.session.organization._id,
+      templateId: this.session.templates[0]._id,
     });
 
+    cy.wait(['@getNotificationsFirstPage', '@unseenRequest']);
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('unseen-count-label').contains('9');
