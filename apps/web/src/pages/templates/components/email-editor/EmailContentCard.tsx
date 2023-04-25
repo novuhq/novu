@@ -65,15 +65,17 @@ export function EmailContentCard({
     <>
       {!isIntegrationActive && isLimitReached && (
         <LackIntegrationError
-          channel="E-Mail"
           channelType={ChannelTypeEnum.EMAIL}
           text="Looks like you haven’t configured your E-Mail provider yet, visit the integrations page to configure."
+          iconHeight={34}
+          iconWidth={34}
         />
       )}
       <EmailInboxContent integration={integration} index={index} readonly={readonly} />
-
-      <div data-test-id="editor-type-selector">
-        <Tabs value={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} keepMounted={false} />
+      <div data-test-id="email-step-settings-edit">
+        <div data-test-id="editor-type-selector">
+          <Tabs value={activeTab} onTabChange={onTabChange} menuTabs={menuTabs} keepMounted={false} />
+        </div>
       </div>
     </>
   );

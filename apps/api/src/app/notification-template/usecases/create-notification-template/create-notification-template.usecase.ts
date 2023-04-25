@@ -91,6 +91,7 @@ export class CreateNotificationTemplate {
         shouldStopOnFail: message.shouldStopOnFail,
         replyCallback: message.replyCallback,
         uuid: message.uuid,
+        name: message.name,
       });
 
       if (stepId) {

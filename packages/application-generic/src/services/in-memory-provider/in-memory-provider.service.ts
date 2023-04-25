@@ -15,6 +15,7 @@ import {
   RedisOptions,
 } from './redis-provider';
 import {
+  ChainableCommander,
   Cluster,
   ClusterOptions,
   getRedisCluster,
@@ -29,13 +30,14 @@ type InMemoryProviderConfig =
   | IElasticacheClusterProviderConfig
   | IRedisProviderConfig
   | IRedisClusterProviderConfig;
+export type Pipeline = ChainableCommander;
 
 @Injectable()
 export class InMemoryProviderService {
   public inMemoryProviderClient: InMemoryProviderClient;
   public inMemoryProviderConfig: InMemoryProviderConfig;
 
-  constructor() {
+  constructor(private enableAutoPipelining?: boolean) {
     Logger.log('In-memory provider service initialized', LOG_CONTEXT);
 
     this.inMemoryProviderClient = this.buildClient();
@@ -111,7 +113,7 @@ export class InMemoryProviderService {
   }
 
   private getClientAndConfigForCluster(): {
-    getClient: () => Cluster | undefined;
+    getClient: (enableAutoPipelining?: boolean) => Cluster | undefined;
     getConfig: () => InMemoryProviderConfig;
   } {
     const clusterProviders = {
@@ -142,7 +144,7 @@ export class InMemoryProviderService {
       Logger.warn('Missing host for in-memory cluster provider', LOG_CONTEXT);
     }
 
-    const inMemoryProviderClient = getClient();
+    const inMemoryProviderClient = getClient(this.enableAutoPipelining);
     if (host && inMemoryProviderClient) {
       Logger.log(`Connecting to cluster at ${host}`, LOG_CONTEXT);
 

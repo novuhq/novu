@@ -11,8 +11,6 @@ import { EmailIntegrationInfo } from './EmailIntegrationInfo';
 const useStyles = createStyles((theme) => ({
   browser: {
     background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
-    marginLeft: '30px',
-    marginRight: '30px',
     borderRadius: '7px',
   },
   bar: {

@@ -435,7 +435,9 @@
     "Millis",
     "sscan",
     "vishnudxb",
-    "autopipelining"
+    "autopipelining",
+    "maxtimeout",
+    "clsx"
   ],
   "flagWords": [],
   "patterns": [
@@ -502,6 +504,7 @@
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
     "novu.code-workspace",
+    "packages/application-generic/src/.env.test",
     "packages/notification-center/src/i18n/languages/**",
     "apps/widget/public/iframeResizer.contentWindow.js",
     ".eslintrc.js",
