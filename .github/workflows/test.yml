@@ -4,13 +4,8 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  # Execute it on pushing to next branches
-  push:
-    branches:
-      - next
-      - main
-  # Execute it on opening any pull request
   pull_request:
+    
 jobs:
   dependency-review:
     runs-on: ubuntu-latest
