@@ -3204,7 +3204,6 @@ importers:
   providers/slack:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
-      '@novu/node': ^0.14.0
       '@novu/stateless': ^0.14.0
       '@types/jest': ^27.0.1
       axios: ^1.3.3
@@ -3223,7 +3222,6 @@ importers:
       typedoc: ^0.23.0
       typescript: 4.9.5
     dependencies:
-      '@novu/node': link:../../packages/node
       '@novu/stateless': link:../../packages/stateless
       axios: 1.3.5
     devDependencies:
