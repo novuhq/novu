@@ -24,14 +24,14 @@ test('send chat should call the provider method correctly', async () => {
     $channel_id: '+1333322214',
     $user_id: '1234',
     firstName: 'test name',
+    $webhookUrl: 'https://test.com',
     $access_token: '123',
   });
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     content: 'Name: test name',
-    channelId: '+1333322214',
-    accessToken: '123',
+    webhookUrl: 'https://test.com',
   });
   spy.mockRestore();
 });
@@ -58,6 +58,7 @@ test('send chat should template method correctly', async () => {
   );
 
   await chatHandler.send({
+    $webhookUrl: 'https://test.com',
     $channel_id: '+1333322214',
     $user_id: '1234',
     firstName: 'test name',
@@ -67,6 +68,7 @@ test('send chat should template method correctly', async () => {
   expect(spyTemplateFunction).toBeCalledWith({
     $channel_id: '+1333322214',
     $user_id: '1234',
+    $webhookUrl: 'https://test.com',
     firstName: 'test name',
   });
 });

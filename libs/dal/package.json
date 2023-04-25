@@ -13,7 +13,7 @@
     "precommit": "lint-staged",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "",
+    "test": "echo \"No test specified\"",
     "test:watch": ""
   },
   "author": "",
