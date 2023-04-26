@@ -526,8 +526,6 @@
     "apps/worker/README.md",
     ".gitignore",
     "angular.json",
-    "ng-package.json",
-    "docs/src/components/CSBIFrameEmbed.tsx",
-    "docs/docs/notification-center/react/custom-styling.md"
+    "ng-package.json"
   ]
 }
