@@ -8,7 +8,7 @@ You can use the [SparkPost](https://messagebird.com/email/cloud-sending) provide
 
 ## Getting Started
 
-To use the SparkPost channel, you will need to create a SparkPost account and add your API key to the SparkPost integration on the Novu platform.
+To use the SparkPost provider in the email channel, you will need to create a SparkPost account and add your API key to the SparkPost integration on the Novu platform.
 
 ## Generate API Key
 
