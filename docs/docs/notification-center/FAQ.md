@@ -71,6 +71,6 @@ We use font awesome bell icon. Make sure you have added font awesome css cdn lin
 <details>
  <summary>Notification center is not loading in Angular SSR.</summary>
 
-Instead of loading Novu notification center <b>notification-center-component</b> in AppModule, intialize it in a standalone child component so that it will load lazy.
+Instead of loading Novu notification center <b>notification-center-component</b> in AppModule, initialize it in a standalone child component so that it will load lazy.
 
 </details>
