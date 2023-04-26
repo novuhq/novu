@@ -30,7 +30,7 @@ const styles = {
 
 ## Live Demo
 
-<CSBIframeEmbed sandBoxId="novu-notification-center-style-customize-zlovp9" title="Novu Notification Center Styles Customize" module="/styles.ts,/App.tsx,/Novu.tsx" highlights="7,9,10" />
+<CSBIframeEmbed sandBoxId="novu-notification-center-style-customize-zlovp9" title="Novu Notification Center Styles Customize" module="/styles.ts,/App.tsx,/Novu.tsx"/>
 
 ## Example usage
 

@@ -437,7 +437,19 @@
     "vishnudxb",
     "autopipelining",
     "maxtimeout",
-    "clsx"
+    "clsx",
+    "ICSB",
+    "autoresize",
+    "codemirror",
+    "editorsize",
+    "expanddevtools",
+    "hidedevtools",
+    "forcerefresh",
+    "hidenavigation",
+    "initialpath",
+    "moduleview",
+    "previewwindow",
+    "runonclick"
   ],
   "flagWords": [],
   "patterns": [
@@ -514,6 +526,8 @@
     "apps/worker/README.md",
     ".gitignore",
     "angular.json",
-    "ng-package.json"
+    "ng-package.json",
+    "docs/src/components/CSBIFrameEmbed.tsx",
+    "docs/docs/notification-center/react/custom-styling.md"
   ]
 }
