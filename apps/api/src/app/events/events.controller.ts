@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
-import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
 import { TriggerRecipientSubscriber } from '@novu/node';
@@ -22,7 +22,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiResponse } from '../shared/framework/response.decorator';
-
+import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -154,7 +154,9 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Delete('/trigger/:transactionId')
-  @ApiResponse(Boolean)
+  @ApiOkResponse({
+    type: DataBooleanDto,
+  })
   @ApiOperation({
     summary: 'Cancel triggered event',
     description: `

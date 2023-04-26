@@ -30,7 +30,7 @@ import { ChangeTemplateActiveStatus } from './usecases/change-template-active-st
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationTemplateResponse } from './dto/notification-template-response.dto';
 import { NotificationTemplatesResponseDto } from './dto/notification-templates.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -40,6 +40,7 @@ import { GetBlueprintNotificationTemplate } from './usecases/get-blueprint-notif
 import { GetBlueprintNotificationTemplateCommand } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.command';
 import { CreateBlueprintNotificationTemplate } from './usecases/create-blueprint-notification-template/create-blueprint-notification-template.usecase';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -110,7 +111,9 @@ export class NotificationTemplateController {
   @Delete('/:templateId')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
-  @ApiResponse(Boolean)
+  @ApiOkResponse({
+    type: DataBooleanDto,
+  })
   @ApiOperation({
     summary: 'Delete notification template',
   })

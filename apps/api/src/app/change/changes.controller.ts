@@ -12,7 +12,7 @@ import {
 import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ApplyChange, ApplyChangeCommand } from '../change/usecases';
+import { ApplyChange, ApplyChangeCommand } from './usecases';
 import { GetChanges } from './usecases/get-changes/get-changes.usecase';
 import { GetChangesCommand } from './usecases/get-changes/get-changes.command';
 import { BulkApplyChange } from './usecases/bulk-apply-change/bulk-apply-change.usecase';
@@ -24,6 +24,7 @@ import { ChangesResponseDto, ChangeResponseDto } from './dtos/change-response.dt
 import { ChangesRequestDto } from './dtos/change-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { DataNumberDto } from '../shared/dtos/data-wrapper-dto';
 
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -59,7 +60,9 @@ export class ChangesController {
   }
 
   @Get('/count')
-  @ApiResponse(Number)
+  @ApiOkResponse({
+    type: DataNumberDto,
+  })
   @ApiOperation({
     summary: 'Get changes count',
   })
