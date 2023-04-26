@@ -5,10 +5,10 @@ import { DataWrapperDto } from '../dtos/data-wrapper-dto';
 
 export const ApiResponse = <DataDto extends Type<unknown>>(
   dataDto: DataDto,
-  type: 200 | 201 = 200,
+  statusCode: 200 | 201 = 200,
   isResponseArray = false
 ) => {
-  const Response = type === 201 ? ApiCreatedResponse : ApiOkResponse;
+  const Response = statusCode === 201 ? ApiCreatedResponse : ApiOkResponse;
 
   return applyDecorators(
     ApiExtraModels(DataWrapperDto, dataDto),
