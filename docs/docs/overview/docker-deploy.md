@@ -26,7 +26,7 @@ cd novu/docker
 cp .env.example ./local/deployment/.env
 
 # Go to the deployment folder
-cd /local/deployment
+cd local/deployment
 
 # Start Novu
 docker-compose up
