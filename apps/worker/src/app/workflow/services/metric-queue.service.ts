@@ -23,8 +23,6 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   constructor(@Inject('BULLMQ_LIST') private token_list: QueueService[]) {
     super('metric');
 
-    Logger.warn('Metric queue service created');
-
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.bullMqService.worker.on('completed', async (job) => {
@@ -35,11 +33,38 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
       await this.jobHasFailed(job, error);
     });
 
-    void this.addToQueue('metric-job', {}, '', {
-      repeat: {
-        immediately: true,
-        pattern: '* * * * * *',
-      },
+    const metricJobExists = Promise.resolve(
+      this.bullMqService.queue.getRepeatableJobs().then(async (job) => {
+        let exists = false;
+        for (const jobElement of job) {
+          if (jobElement.id === 'metric-job') {
+            exists = true;
+          }
+        }
+
+        return exists;
+      })
+    );
+
+    metricJobExists.then((exists) => {
+      Logger.log('metric job exists: ' + exists);
+
+      if (!exists) {
+        Logger.warn("metricJob doesn't exist, creating it");
+        void this.addToQueue('metric-job', {}, '', {
+          jobId: 'metric-job',
+          repeatJobKey: 'metric-job',
+          repeat: {
+            immediately: true,
+            pattern: '* * * * * *',
+          },
+          removeOnFail: true,
+          removeOnComplete: true,
+          attempts: 1,
+        });
+      }
+
+      return true;
     });
   }
 
@@ -54,24 +79,19 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   private getWorkerOpts(): WorkerOptions {
     return {
       ...this.bullConfig,
-      lockDuration: 90000,
-      concurrency: 200,
+      lockDuration: 500,
+      concurrency: 1,
       settings: {},
     } as WorkerOptions;
   }
 
   private getWorkerProcessor() {
     return async () => {
-      return await new Promise(async (resolve, reject) => {
-        for (const queueService of this.token_list) {
-          this.bullMqService.createQueue(queueService.name, {
-            ...this.bullConfig,
-            defaultJobOptions: {
-              removeOnComplete: true,
-            },
-          });
+      return await new Promise<void>(async (resolve, reject): Promise<void> => {
+        Logger.log('metric job started');
 
-          const metrics = await this.bullMqService.getQueueMetrics();
+        for (const queueService of this.token_list) {
+          const metrics = await queueService.bullMqService.getQueueMetrics();
 
           const completeNumber = metrics.completed.count;
           const failNumber = metrics.failed.count;
@@ -92,26 +112,24 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
             sumOfSquares: failNumber == 0 ? 0 : sumOfSquares(metrics.failed.data),
           };
 
-          Logger.log(`${process.env.NOVU_MANAGED_SERVICE}: managed`);
-          Logger.log(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(successMetric));
-          Logger.log(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(failMetric));
           if (process.env.NOVU_MANAGED_SERVICE === 'true') {
-            Logger.log(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(successMetric));
-            Logger.log(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(failMetric));
-          } else {
             nr.recordMetric(`MetricQueueService/${queueService.name}/completed`, successMetric);
             nr.recordMetric(`MetricQueueService/${queueService.name}/failed`, failMetric);
+          } else {
+            Logger.log(`MetricQueueService/${queueService.name}/completed`, JSON.stringify(successMetric));
+            Logger.log(`MetricQueueService/${queueService.name}/failed`, JSON.stringify(failMetric));
           }
         }
+        resolve();
       });
     };
   }
 
   private async jobHasCompleted(job): Promise<void> {
-      Logger.log('Metric job Completed');
+    Logger.log('Metric job Completed');
   }
 
   private async jobHasFailed(job, error): Promise<void> {
-      Logger.error('Metric job failed', error);
+    Logger.error('Metric job failed', error);
   }
 }

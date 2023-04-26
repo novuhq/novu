@@ -58,7 +58,6 @@
     "class-validator": "^0.14.0",
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",
-    "d": "^1.0.1",
     "date-fns": "^2.29.2",
     "dotenv": "^8.2.0",
     "envalid": "^6.0.1",
