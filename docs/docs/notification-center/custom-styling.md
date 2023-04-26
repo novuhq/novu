@@ -2,6 +2,8 @@
 sidebar_position: 8
 ---
 
+import CSBIframeEmbed from "@site/src/components/CSBIframeEmbed"
+
 # Custom styling
 
 The Notification Center Component allows you to customize the look of the component. You can do that by using the `styles` property, but depending on the wrapper UI library we support, the styles prop will be applied to different components, check the [examples](#example-usage). The styles object interface and all the props can be found [here](./react/api-reference#styles-interface).
@@ -25,6 +27,10 @@ const styles = {
   ...
 };
 ```
+
+## Live Demo
+
+<CSBIframeEmbed sandBoxId="novu-notification-center-style-customize-zlovp9" title="Novu Notification Center Styles Customize" module="/styles.ts,/App.tsx,/Novu.tsx" highlights="7,9,10" />
 
 ## Example usage
 

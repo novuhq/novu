@@ -52,7 +52,7 @@ Everything can be customized in Novu. <b>useNotification</b> hook in react compo
 </details>
 
 <details>
- <summary>Notification bell is not showing in iframe</summary>
+ <summary>Notification bell is not showing in iframe.</summary>
 
 We use font awesome bell icon. Make sure you have added font awesome css cdn link in head tag.
 
@@ -65,5 +65,12 @@ We use font awesome bell icon. Make sure you have added font awesome css cdn lin
   referrerpolicy="no-referrer"
 />
 ```
+
+</details>
+
+<details>
+ <summary>Notification center is not loading in Angular SSR.</summary>
+
+Instead of loading Novu notification center <b>notification-center-component</b> in AppModule, intialize it in a standalone child component so that it will load lazy.
 
 </details>
