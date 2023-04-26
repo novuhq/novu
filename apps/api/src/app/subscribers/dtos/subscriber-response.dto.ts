@@ -16,13 +16,13 @@ export class SubscriberResponseDto {
   _id?: string;
 
   @ApiProperty()
-  firstName: string;
+  firstName?: string;
 
   @ApiProperty()
-  lastName: string;
+  lastName?: string;
 
   @ApiProperty()
-  email: string;
+  email?: string;
 
   @ApiPropertyOptional()
   phone?: string;

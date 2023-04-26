@@ -1,6 +1,6 @@
 {
   "name": "@novu/testing",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "",
   "private": true,
   "scripts": {
@@ -13,7 +13,7 @@
     "precommit": "lint-staged",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "",
+    "test": "echo \"no tests yet\"",
     "test:watch": ""
   },
   "author": "",
@@ -22,9 +22,9 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@faker-js/faker": "^6.0.0",
-    "@novu/dal": "^0.13.0",
-    "@novu/node": "^0.13.0",
-    "@novu/shared": "^0.13.0",
+    "@novu/dal": "^0.14.0",
+    "@novu/node": "^0.14.0",
+    "@novu/shared": "^0.14.0",
     "JSONStream": "^1.3.5",
     "async": "^3.2.0",
     "axios": "^1.3.3",

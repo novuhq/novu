@@ -44,21 +44,15 @@ export class MailFactory {
     >,
     from?: string
   ): IMailHandler {
-    try {
-      const handler =
-        this.handlers.find((handlerItem) =>
-          handlerItem.canHandle(integration.providerId, integration.channel)
-        ) ?? null;
+    const handler =
+      this.handlers.find((handlerItem) =>
+        handlerItem.canHandle(integration.providerId, integration.channel)
+      ) ?? null;
 
-      if (!handler) throw new Error('Handler for provider was not found');
+    if (!handler) throw new Error('Handler for provider was not found');
 
-      handler.buildProvider(integration.credentials, from);
+    handler.buildProvider(integration.credentials, from);
 
-      return handler;
-    } catch (error) {
-      throw new Error(
-        `Could not build mail handler for provider: ${integration.providerId} error ${error}`
-      );
-    }
+    return handler;
   }
 }

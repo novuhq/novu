@@ -20,7 +20,7 @@ export class InboundParseController {
     summary: 'Validate the mx record setup for the inbound parse functionality',
   })
   @ApiOkResponse({
-    type: [GetMxRecordResponseDto],
+    type: GetMxRecordResponseDto,
   })
   @ExternalApiAccessible()
   async getMxRecordStatus(@UserSession() user: IJwtPayload): Promise<GetMxRecordResponseDto> {
