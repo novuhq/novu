@@ -53,6 +53,7 @@ import { LayoutId } from './types';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/layouts')
 @ApiTags('Layouts')
@@ -69,10 +70,7 @@ export class LayoutsController {
 
   @Post('')
   @ExternalApiAccessible()
-  @ApiCreatedResponse({
-    type: CreateLayoutResponseDto,
-    description: 'The layout has been successfully created.',
-  })
+  @ApiResponse(CreateLayoutResponseDto, 201)
   @ApiOperation({ summary: 'Layout creation', description: 'Create a layout' })
   async createLayout(
     @UserSession() user: IJwtPayload,
@@ -156,10 +154,7 @@ export class LayoutsController {
 
   @Get('/:layoutId')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: GetLayoutResponseDto,
-    description: 'The layout with the layoutId provided exists in the database.',
-  })
+  @ApiResponse(GetLayoutResponseDto)
   @ApiNotFoundResponse({
     description: 'The layout with the layoutId provided does not exist in the database.',
   })
@@ -204,10 +199,7 @@ export class LayoutsController {
 
   @Patch('/:layoutId')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: UpdateLayoutResponseDto,
-    description: 'The layout with the layoutId provided has been updated correctly.',
-  })
+  @ApiResponse(UpdateLayoutResponseDto)
   @ApiBadRequestResponse({
     description: 'The payload provided or the URL param are not right.',
   })
