@@ -14,14 +14,9 @@ export const ApiResponse = <DataDto extends Type<unknown>>(
     ApiExtraModels(DataWrapperDto, dataDto),
     Response({
       schema: {
-        allOf: [
-          { $ref: getSchemaPath(DataWrapperDto) },
-          {
-            properties: isResponseArray
-              ? { data: { type: 'array', items: { $ref: getSchemaPath(dataDto) } } }
-              : { data: { $ref: getSchemaPath(dataDto) } },
-          },
-        ],
+        properties: isResponseArray
+          ? { data: { type: 'array', items: { $ref: getSchemaPath(dataDto) } } }
+          : { data: { $ref: getSchemaPath(dataDto) } },
       },
     })
   );
