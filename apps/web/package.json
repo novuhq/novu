@@ -1,12 +1,11 @@
 {
   "name": "@novu/web",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "private": true,
   "scripts": {
     "start": "cross-env PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 react-app-rewired --max_old_space_size=4096 build",
-    "test": "react-app-rewired test",
     "precommit": "lint-staged",
     "docker:build": "docker buildx build -f ./Dockerfile -t novu-web ./../..",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
@@ -46,8 +45,8 @@
     "@mantine/notifications": "^5.7.1",
     "@mantine/prism": "^5.7.1",
     "@mantine/spotlight": "^5.7.1",
-    "@novu/notification-center": "^0.13.0",
-    "@novu/shared": "^0.13.0",
+    "@novu/notification-center": "^0.14.0",
+    "@novu/shared": "^0.14.0",
     "@segment/analytics-next": "^1.48.0",
     "@sentry/react": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
@@ -121,8 +120,8 @@
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
     "@babel/runtime": "^7.20.13",
-    "@novu/dal": "^0.13.0",
-    "@novu/testing": "^0.13.0",
+    "@novu/dal": "^0.14.0",
+    "@novu/testing": "^0.14.0",
     "@storybook/addon-actions": "^6.4.14",
     "@storybook/addon-essentials": "^6.4.14",
     "@storybook/addon-links": "^6.4.14",
@@ -155,28 +154,6 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
-    ]
-  },
-  "workspaces": {
-    "nohoist": [
-      "**/@ant-design/icons",
-      "**/@ant-design/icons/**",
-      "**/antd",
-      "**/antd/**",
-      "**/react-scripts",
-      "**/react-scripts/**",
-      "**/react",
-      "**/react-dom",
-      "**/react/**",
-      "**/react-router",
-      "**/react-router/**",
-      "**/react-router-dom",
-      "**/react-router-dom/**",
-      "**/@cypress",
-      "**/@storybook/**",
-      "**/@storybook",
-      "**/@babel",
-      "**/@babel/**"
     ]
   },
   "lint-staged": {
