@@ -10,6 +10,7 @@ import { ActivitiesResponseDto } from '../notifications/dtos/activities-response
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
 import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
 import { DeleteMessageParams } from './params/delete-message.param';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/messages')
 @ApiTags('Messages')
@@ -67,9 +68,7 @@ export class MessagesController {
   @Delete('/:messageId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: DeleteMessageResponseDto,
-  })
+  @ApiResponse(DeleteMessageResponseDto)
   @ApiOperation({
     summary: 'Delete message',
     description: 'Deletes a message entity from the Novu platform',
