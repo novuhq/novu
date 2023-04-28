@@ -5,8 +5,9 @@ import { InboundParseController } from './inbound-parse.controller';
 import { GetMxRecord } from './usecases/get-mx-record/get-mx-record.usecase';
 import { SharedModule } from '../shared/shared.module';
 import { AuthModule } from '../auth/auth.module';
+import { CompileTemplate } from '@novu/application-generic';
 
-const PROVIDERS = [InboundParseQueueService, GetMxRecord];
+const PROVIDERS = [InboundParseQueueService, GetMxRecord, CompileTemplate];
 
 @Module({
   imports: [SharedModule, AuthModule],

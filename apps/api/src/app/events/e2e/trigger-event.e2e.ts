@@ -1568,6 +1568,7 @@ export async function sendTrigger(
       to: [{ subscriberId: newSubscriberIdInAppNotification, lastName: 'Smith', email: 'test@email.novu' }],
       payload: {
         organizationName: 'Umbrella Corp',
+        compiledVariable: 'test-env',
         ...payload,
       },
     },

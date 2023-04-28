@@ -14,7 +14,10 @@ export const useInitializeSocket: IUseInitializeSocket = ({ socketUrl }) => {
 
   const disconnectSocket = useCallback(() => {
     if (socketRef.current) {
-      socketRef.current.disconnect();
+      if (socketRef.current.disconnect) {
+        socketRef.current.disconnect();
+      }
+
       socketRef.current = null;
     }
   }, [socketRef]);
