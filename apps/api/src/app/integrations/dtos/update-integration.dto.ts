@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IUpdateIntegrationBodyDto } from '@novu/shared';
 import { IsBoolean, IsDefined, ValidateNested } from 'class-validator';
 import { CredentialsDto } from './credentials.dto';
+import { Type } from 'class-transformer';
 
 export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
   @ApiProperty()
@@ -13,6 +14,7 @@ export class UpdateIntegrationRequestDto implements IUpdateIntegrationBodyDto {
     type: CredentialsDto,
   })
   @IsDefined()
+  @Type(() => CredentialsDto)
   @ValidateNested()
   credentials: CredentialsDto;
 

@@ -2,6 +2,7 @@ import { IsBoolean, IsDefined, IsEnum, IsString, ValidateNested } from 'class-va
 import { ChannelTypeEnum, ICreateIntegrationBodyDto } from '@novu/shared';
 import { CredentialsDto } from './credentials.dto';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @ApiProperty()
@@ -20,6 +21,7 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
     type: CredentialsDto,
   })
   @IsDefined()
+  @Type(() => CredentialsDto)
   @ValidateNested()
   credentials: CredentialsDto;
 
