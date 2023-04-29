@@ -121,6 +121,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
 - [x] [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
+- [x] [Pinpoint](https://github.com/novuhq/novu/tree/main/providers/pinpoint)
 - [ ] Bandwidth
 - [ ] RingCentral
 

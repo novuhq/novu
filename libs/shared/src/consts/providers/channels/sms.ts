@@ -16,6 +16,7 @@ import {
   maqsamConfig,
   smsCentralConfig,
   termiiConfig,
+  pinpointConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -151,6 +152,14 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: termiiConfig,
     docReference: 'https://developers.termii.com/authentication',
+    logoFileName: { light: 'termii.png', dark: 'termii.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Pinpoint,
+    displayName: 'Pinpoint',
+    channel: ChannelTypeEnum.SMS,
+    credentials: pinpointConfig,
+    docReference: 'https://docs.aws.amazon.com/pinpoint/index.html',
     logoFileName: { light: 'termii.png', dark: 'termii.png' },
   },
 ];

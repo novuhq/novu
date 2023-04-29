@@ -16,6 +16,7 @@ import {
   KannelSmsHandler,
   MaqsamHandler,
   SmsCentralHandler,
+  PinpointHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -35,6 +36,7 @@ export class SmsFactory implements ISmsFactory {
     new KannelSmsHandler(),
     new MaqsamHandler(),
     new SmsCentralHandler(),
+    new PinpointHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

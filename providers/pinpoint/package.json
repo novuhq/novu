@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-pinpoint-sms-voice-v2": "3.231.0",
-    "@novu/stateless": "^0.9.0"
+    "@novu/stateless": "^0.14.0"
   },
   "description": "A pinpoint wrapper for novu",
   "devDependencies": {
@@ -84,5 +84,5 @@
     "watch:test": "jest src --watch"
   },
   "typings": "build/main/index.d.ts",
-  "version": "0.9.0"
+  "version": "0.14.0"
 }

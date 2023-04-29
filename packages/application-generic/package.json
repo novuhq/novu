@@ -1,43 +1,15 @@
 {
-  "name": "@novu/application-generic",
-  "version": "0.14.0",
-  "description": "Generic backend code used inside of Novu's different services",
-  "main": "build/main/index.js",
-  "typings": "build/main/index.d.ts",
-  "module": "build/module/index.js",
-  "private": false,
-  "repository": {
-    "url": "https://github.com/novuhq/novu",
-    "directory": "packages/nest"
-  },
-  "license": "MIT",
-  "keywords": [],
-  "scripts": {
-    "prebuild": "rimraf build",
-    "build": "run-p build:*",
-    "build:main": "tsc -p tsconfig.json",
-    "build:copy-template": "cpx \"src/**/*.handlebars\" build/main",
-    "fix": "run-s fix:*",
-    "fix:prettier": "prettier \"src/**/*.ts\" --write",
-    "fix:lint": "eslint src --ext .ts --fix",
-    "lint": "eslint src --ext .ts",
-    "watch:build": "tsc -p tsconfig.json -w",
-    "watch:test": "jest src --watch",
-    "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
-    "prepare-release": "run-s reset-hard test"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "engines": {
-    "node": ">=10"
-  },
-  "peerDependencies": {
-    "@nestjs/common": ">=9.3.x",
-    "@nestjs/swagger": ">=6.3.x",
-    "@nestjs/testing": ">=9.3.x",
-    "newrelic": ">=9",
-    "reflect-metadata": "^0.1.13"
+  "ava": {
+    "failFast": true,
+    "files": [
+      "!build/module/**"
+    ],
+    "timeout": "60s",
+    "typescript": {
+      "rewritePaths": {
+        "src/": "build/main/"
+      }
+    }
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.234.0",
@@ -68,6 +40,7 @@
     "@novu/node": "^0.14.0",
     "@novu/nodemailer": "^0.14.0",
     "@novu/outlook365": "^0.14.0",
+    "@novu/pinpoint": "^0.14.0",
     "@novu/plivo": "^0.14.0",
     "@novu/postmark": "^0.14.0",
     "@novu/resend": "^0.14.0",
@@ -101,9 +74,7 @@
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13"
   },
-  "optionalDependencies": {
-    "@taskforcesh/bullmq-pro": "5.1.14"
-  },
+  "description": "Generic backend code used inside of Novu's different services",
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/analytics-node": "^3.1.9",
@@ -124,6 +95,9 @@
     "ts-node": "~10.9.1",
     "typescript": "4.9.5"
   },
+  "engines": {
+    "node": ">=10"
+  },
   "files": [
     "build/main",
     "build/module",
@@ -133,26 +107,53 @@
     "LICENSE",
     "README.md"
   ],
-  "ava": {
-    "failFast": true,
-    "timeout": "60s",
-    "typescript": {
-      "rewritePaths": {
-        "src/": "build/main/"
-      }
-    },
-    "files": [
-      "!build/module/**"
-    ]
+  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0",
+  "keywords": [],
+  "license": "MIT",
+  "main": "build/main/index.js",
+  "module": "build/module/index.js",
+  "name": "@novu/application-generic",
+  "nyc": {
+    "exclude": [
+      "**/*.spec.js"
+    ],
+    "extends": "@istanbuljs/nyc-config-typescript"
+  },
+  "optionalDependencies": {
+    "@taskforcesh/bullmq-pro": "5.1.14"
+  },
+  "peerDependencies": {
+    "@nestjs/common": ">=9.3.x",
+    "@nestjs/swagger": ">=6.3.x",
+    "@nestjs/testing": ">=9.3.x",
+    "newrelic": ">=9",
+    "reflect-metadata": "^0.1.13"
   },
   "prettier": {
     "singleQuote": true
   },
-  "nyc": {
-    "extends": "@istanbuljs/nyc-config-typescript",
-    "exclude": [
-      "**/*.spec.js"
-    ]
+  "private": false,
+  "publishConfig": {
+    "access": "public"
   },
-  "gitHead": "e1055f2fd2f0ec9a85d64b271c7d5824bdb381d0"
+  "repository": {
+    "directory": "packages/nest",
+    "url": "https://github.com/novuhq/novu"
+  },
+  "scripts": {
+    "build": "run-p build:*",
+    "build:copy-template": "cpx \"src/**/*.handlebars\" build/main",
+    "build:main": "tsc -p tsconfig.json",
+    "fix": "run-s fix:*",
+    "fix:lint": "eslint src --ext .ts --fix",
+    "fix:prettier": "prettier \"src/**/*.ts\" --write",
+    "lint": "eslint src --ext .ts",
+    "prebuild": "rimraf build",
+    "prepare-release": "run-s reset-hard test",
+    "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
+    "watch:build": "tsc -p tsconfig.json -w",
+    "watch:test": "jest src --watch"
+  },
+  "typings": "build/main/index.d.ts",
+  "version": "0.14.0"
 }

@@ -110,6 +110,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
 - [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
+- [Pinpoint](https://github.com/novuhq/novu/tree/main/providers/pinpoint)
 
 ### 📱 Push
 
