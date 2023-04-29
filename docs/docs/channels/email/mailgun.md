@@ -8,7 +8,7 @@ You can use the [Mailgun](https://mailgun.com/) provider to send transactional e
 
 ## Getting Started
 
-To use the Mailgun channel, you will need to create a Mailgun account and add your API key and domain name to the Mailgun integration on the Novu platform.
+To use the Mailgun provider in the email channel, you will need to create a Mailgun account and add your API key and domain name to the Mailgun integration on the Novu platform.
 
 ## Generate API Key
 
