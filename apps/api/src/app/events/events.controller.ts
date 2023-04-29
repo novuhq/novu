@@ -1,8 +1,9 @@
+import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
+import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { v4 as uuidv4 } from 'uuid';
 import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
 import { TriggerRecipientSubscriber } from '@novu/node';
-import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
-import { ApiCreatedResponse, ApiExcludeEndpoint, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { v4 as uuidv4 } from 'uuid';
+import { EventsPerformanceService, SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
@@ -11,9 +12,7 @@ import {
   TriggerEventResponseDto,
   TriggerEventToAllRequestDto,
 } from './dtos';
-import { EventsPerformanceService } from './services/performance-service';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
-import { SendMessageCommand, SendTestEmail, SendTestEmailCommand } from './usecases/send-message';
 import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
 import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
@@ -22,7 +21,8 @@ import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-
+import { ApiResponse } from '../shared/framework/response.decorator';
+import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -42,18 +42,7 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger')
-  @ApiCreatedResponse({
-    type: TriggerEventResponseDto,
-    content: {
-      '200': {
-        example: {
-          acknowledged: true,
-          status: 'processed',
-          transactionId: 'd2239acb-e879-4bdb-ab6f-365b43278d8f',
-        },
-      },
-    },
-  })
+  @ApiResponse(TriggerEventResponseDto, 201)
   @ApiOperation({
     summary: 'Trigger event',
     description: `
@@ -90,26 +79,7 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/bulk')
-  @ApiCreatedResponse({
-    type: TriggerEventResponseDto,
-    isArray: true,
-    content: {
-      '200': {
-        example: [
-          {
-            acknowledged: true,
-            status: 'processed',
-            transactionId: 'd2239acb-e879-4bdb-ab6f-365b43278d8f',
-          },
-          {
-            acknowledged: true,
-            status: 'processed',
-            transactionId: 'd2239acb-e879-4bdb-ab6f-115b43278d12',
-          },
-        ],
-      },
-    },
-  })
+  @ApiResponse(TriggerEventResponseDto, 201, true)
   @ApiOperation({
     summary: 'Bulk trigger event',
     description: `
@@ -134,18 +104,7 @@ export class EventsController {
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
   @Post('/trigger/broadcast')
-  @ApiCreatedResponse({
-    type: TriggerEventResponseDto,
-    content: {
-      '200': {
-        example: {
-          acknowledged: true,
-          status: 'processed',
-          transactionId: 'd2239acb-e879-4bdb-ab6f-365b43278d8f',
-        },
-      },
-    },
-  })
+  @ApiResponse(TriggerEventResponseDto)
   @ApiOperation({
     summary: 'Broadcast event to all',
     description: `Trigger a broadcast event to all existing subscribers, could be used to send announcements, etc.
@@ -196,7 +155,7 @@ export class EventsController {
   @UseGuards(JwtAuthGuard)
   @Delete('/trigger/:transactionId')
   @ApiOkResponse({
-    type: Boolean,
+    type: DataBooleanDto,
   })
   @ApiOperation({
     summary: 'Cancel triggered event',

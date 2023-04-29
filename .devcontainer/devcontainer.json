@@ -1,6 +1,6 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.208.0/containers/javascript-node-mongo
-// Update the VARIANT arg in docker-compose.yml to pick a Node.js version
+// Update the VARIANT arg in docker-compose.redis-cluster.yml to pick a Node.js version
 {
   "name": "Novu",
   "dockerComposeFile": "docker-compose.yml",

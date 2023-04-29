@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberRepository, DalException } from '@novu/dal';
+import { buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
+
 import { RemoveSubscriberCommand } from './remove-subscriber.command';
 import { GetSubscriber } from '../get-subscriber';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class RemoveSubscriber {
@@ -22,12 +23,11 @@ export class RemoveSubscriber {
         subscriberId,
       });
 
-      this.invalidateCache.clearCache({
-        storeKeyPrefix: [CacheKeyPrefixEnum.SUBSCRIBER],
-        credentials: {
-          _id: subscriber._id,
-          environmentId: command.environmentId,
-        },
+      await this.invalidateCache.invalidateByKey({
+        key: buildSubscriberKey({
+          subscriberId: command.subscriberId,
+          _environmentId: command.environmentId,
+        }),
       });
 
       await this.subscriberRepository.delete({

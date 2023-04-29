@@ -3,13 +3,12 @@ import { SubscriberEntity, SubscriberRepository, MemberRepository } from '@novu/
 import { AnalyticsService } from '@novu/application-generic';
 
 import { UpdateSubscriberOnlineFlagCommand } from './update-subscriber-online-flag.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class UpdateSubscriberOnlineFlag {
   constructor(
     private subscriberRepository: SubscriberRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private memberRepository: MemberRepository
   ) {}
 

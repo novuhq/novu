@@ -43,12 +43,14 @@ export enum EmailProviderIdEnum {
   Clickatell = 'clickatell',
   Outlook365 = 'outlook365',
   Novu = 'novu-email',
+  SparkPost = 'sparkpost',
 }
 
 export enum SmsProviderIdEnum {
   Nexmo = 'nexmo',
   Plivo = 'plivo',
   Sms77 = 'sms77',
+  SmsCentral = 'sms-central',
   SNS = 'sns',
   Telnyx = 'telnyx',
   Twilio = 'twilio',
@@ -60,6 +62,7 @@ export enum SmsProviderIdEnum {
   FortySixElks = 'forty-six-elks',
   Kannel = 'kannel',
   Maqsam = 'maqsam',
+  Termii = 'termii',
 }
 
 export enum ChatProviderIdEnum {

@@ -99,6 +99,12 @@ export class ApiService {
     });
   }
 
+  async markAllMessagesAsSeen(feedId?: string | string[]): Promise<any> {
+    return await this.httpClient.post(`/widgets/messages/seen`, {
+      feedId,
+    });
+  }
+
   async getNotificationsList(
     page: number,
     query: IStoreQuery = {}
@@ -137,6 +143,13 @@ export class ApiService {
   async getUnseenCount(query: IUnseenCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/unseen',
+      query as unknown as IParamObject
+    );
+  }
+
+  async getUnreadCount(query: IUnseenCountQuery = {}) {
+    return await this.httpClient.get(
+      '/widgets/notifications/unread',
       query as unknown as IParamObject
     );
   }

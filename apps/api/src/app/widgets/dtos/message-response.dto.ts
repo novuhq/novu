@@ -1,4 +1,4 @@
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   ButtonTypeEnum,
   ChannelCTATypeEnum,
@@ -57,14 +57,17 @@ class MessageAction {
     enum: MessageActionStatusEnum,
   })
   status?: MessageActionStatusEnum;
+
   @ApiPropertyOptional({
-    type: MessageButton,
+    type: [MessageButton],
+    isArray: true,
   })
   buttons?: MessageButton[];
-  @ApiProperty({
+
+  @ApiPropertyOptional({
     type: MessageActionResult,
   })
-  result: MessageActionResult;
+  result?: MessageActionResult;
 }
 
 class MessageCTAData {
@@ -73,8 +76,8 @@ class MessageCTAData {
 }
 
 class MessageCTA {
-  @ApiProperty()
-  type: ChannelCTATypeEnum;
+  @ApiPropertyOptional()
+  type?: ChannelCTATypeEnum;
   @ApiProperty()
   data: MessageCTAData;
   @ApiPropertyOptional()
@@ -123,7 +126,7 @@ export class MessageResponseDto {
   @ApiProperty({
     oneOf: [
       {
-        type: '[EmailBlock]',
+        $ref: getSchemaPath(EmailBlock),
       },
       {
         type: 'string',
@@ -135,6 +138,7 @@ export class MessageResponseDto {
   @ApiProperty()
   transactionId: string;
 
+  @ApiProperty()
   subject?: string;
 
   @ApiProperty({
@@ -172,7 +176,7 @@ export class MessageResponseDto {
   cta: MessageCTA;
 
   @ApiProperty()
-  _feedId: string;
+  _feedId?: string;
 
   @ApiProperty({
     enum: ['sent', 'error', 'warning'],

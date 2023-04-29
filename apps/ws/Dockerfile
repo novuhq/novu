@@ -1,5 +1,9 @@
 FROM node:16-alpine3.16
 
+ARG BULL_MQ_PRO_TOKEN
+ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
+ENV NX_DAEMON=false
+
 WORKDIR /usr/src/app
 
 RUN npm install -g pnpm@7.28.0 --loglevel notice
@@ -7,6 +11,7 @@ RUN npm i pm2 -g
 
 COPY .npmrc .
 COPY .npmrc-cloud .
+
 COPY package.json .
 
 COPY providers ./providers
@@ -21,9 +26,9 @@ COPY packages/application-generic ./packages/application-generic
 
 COPY ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
 
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then echo 'enterprise edition' ; fi
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then cp .npmrc-cloud .npmrc  ; fi
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then rm -f .npmrc ; fi
+RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then cp .npmrc-cloud .npmrc; fi
 
 RUN pnpm install --reporter=silent
 RUN pnpm build:ws

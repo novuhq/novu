@@ -1,28 +1,40 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ChannelTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
-import { MessageRepository, SubscriberRepository } from '@novu/dal';
+import { Injectable } from '@nestjs/common';
+import { ChannelTypeEnum, IActor, ActorTypeEnum } from '@novu/shared';
+import {
+  AnalyticsService,
+  buildFeedKey,
+  buildSubscriberKey,
+  CachedQuery,
+  CachedEntity,
+} from '@novu/application-generic';
+import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { Cached } from '../../../shared/interceptors';
-import { CacheKeyPrefixEnum } from '../../../shared/services/cache';
 
 @Injectable()
 export class GetNotificationsFeed {
   constructor(
     private messageRepository: MessageRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository
   ) {}
 
-  @Cached(CacheKeyPrefixEnum.FEED)
+  @CachedQuery({
+    builder: ({ environmentId, subscriberId, ...command }: GetNotificationsFeedCommand) =>
+      buildFeedKey().cache({
+        environmentId: environmentId,
+        subscriberId: subscriberId,
+        ...command,
+      }),
+  })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
-    const LIMIT = 10;
+    const subscriber = await this.fetchSubscriber({
+      _environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+    });
 
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
     if (!subscriber) {
       throw new ApiException(
         'Subscriber not found for this environment with the id: ' +
@@ -37,8 +49,8 @@ export class GetNotificationsFeed {
       ChannelTypeEnum.IN_APP,
       { feedId: command.feedId, seen: command.query.seen, read: command.query.read },
       {
-        limit: LIMIT,
-        skip: command.page * LIMIT,
+        limit: command.limit,
+        skip: command.page * command.limit,
       }
     );
 
@@ -50,6 +62,12 @@ export class GetNotificationsFeed {
       });
     }
 
+    for (const message of feed) {
+      if (message._actorId && message.actor?.type === ActorTypeEnum.USER) {
+        message.actor.data = this.processUserAvatar(message.actorSubscriber);
+      }
+    }
+
     const totalCount = await this.messageRepository.getTotalCount(
       command.environmentId,
       subscriber._id,
@@ -57,14 +75,36 @@ export class GetNotificationsFeed {
       {
         feedId: command.feedId,
         seen: command.query.seen,
+        read: command.query.read,
       }
     );
 
     return {
       data: feed || [],
-      totalCount: totalCount,
-      pageSize: LIMIT,
+      totalCount: totalCount || 0,
+      pageSize: command.limit,
       page: command.page,
     };
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  private async fetchSubscriber({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity | null> {
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId);
+  }
+
+  private processUserAvatar(actorSubscriber?: SubscriberEntity): string | null {
+    return actorSubscriber?.avatar || null;
   }
 }

@@ -50,7 +50,6 @@ describe('Digest Playground Workflow Page', function () {
 
     // in the template workflow editor
     cy.url().should('include', '/templates/edit');
-    cy.url().should('include', '?tour=digest');
 
     // check the digest hint
     cy.getByTestId('digest-workflow-tooltip').contains('Set-up time interval');
@@ -64,8 +63,8 @@ describe('Digest Playground Workflow Page', function () {
     // check if has digest step
     cy.getByTestId('node-digestSelector').should('be.visible');
     // check if digest step settings opened
-    cy.getByTestId('step-properties-side-menu').should('be.visible');
-    cy.getByTestId('step-properties-side-menu').contains('Digest Properties');
+    cy.getByTestId('step-page-wrapper').should('be.visible');
+    cy.getByTestId('step-page-wrapper').contains('Digest');
 
     // click next on hint
     cy.getByTestId('digest-workflow-tooltip-primary-button').contains('Next').click();
@@ -79,11 +78,9 @@ describe('Digest Playground Workflow Page', function () {
     cy.getByTestId('digest-workflow-tooltip-skip-button').contains('Skip tour');
     cy.getByTestId('digest-workflow-tooltip-dots-navigation').should('be.visible');
 
-    // check if has email step
-    cy.getByTestId('node-digestSelector').should('be.visible');
     // check if email step settings opened
-    cy.getByTestId('step-properties-side-menu').should('be.visible');
-    cy.getByTestId('step-properties-side-menu').contains('Email Properties');
+    cy.getByTestId('step-page-wrapper').should('be.visible');
+    cy.getByTestId('step-page-wrapper').contains('Email');
 
     // click next on hint
     cy.getByTestId('digest-workflow-tooltip-primary-button').contains('Next').click();
@@ -98,7 +95,8 @@ describe('Digest Playground Workflow Page', function () {
     cy.getByTestId('digest-workflow-tooltip-dots-navigation').should('be.visible');
 
     // the step settings should be hidden
-    cy.getByTestId('drag-side-menu').contains('Steps to add');
+    cy.getByTestId('step-page-wrapper').should('be.visible');
+    cy.getByTestId('step-page-wrapper').contains('Trigger');
 
     // click got it should hide the hint
     cy.getByTestId('digest-workflow-tooltip-primary-button').contains('Got it').click();
@@ -123,7 +121,6 @@ describe('Digest Playground Workflow Page', function () {
 
     // in the template workflow editor
     cy.url().should('include', '/templates/edit');
-    cy.url().should('include', '?tour=digest');
 
     // check the digest hint
     cy.getByTestId('digest-workflow-tooltip').contains('Set-up time interval');

@@ -14,6 +14,8 @@ import {
   fortySixElksConfig,
   kannelConfig,
   maqsamConfig,
+  smsCentralConfig,
+  termiiConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -134,5 +136,21 @@ export const smsProviders: IProviderConfig[] = [
     credentials: maqsamConfig,
     docReference: 'https://portal.maqsam.com/docs/v2/sms',
     logoFileName: { light: 'maqsam.png', dark: 'maqsam.png' },
+  },
+  {
+    id: SmsProviderIdEnum.SmsCentral,
+    displayName: 'SMS Central',
+    channel: ChannelTypeEnum.SMS,
+    credentials: smsCentralConfig,
+    docReference: 'https://www.smscentral.com.au/sms-api/',
+    logoFileName: { light: 'sms-central.png', dark: 'sms-central.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Termii,
+    displayName: 'Termii',
+    channel: ChannelTypeEnum.SMS,
+    credentials: termiiConfig,
+    docReference: 'https://developers.termii.com/authentication',
+    logoFileName: { light: 'termii.png', dark: 'termii.png' },
   },
 ];

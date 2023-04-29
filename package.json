@@ -17,7 +17,7 @@
     "generate:provider": "npx hygen provider new",
     "lint": "nx run-many --target=lint --all",
     "test": "cross-env CI=true lerna run test:watch --parallel",
-    "start:dev": "cross-env TZ=UTC lerna run start:dev --parallel --concurrency=20 --scope=@novu/{api,web,widget,ws,notification-center}",
+    "start:dev": "cross-env TZ=UTC lerna run start:dev --parallel --concurrency=20 --scope=@novu/{api,worker,web,widget,ws,notification-center}",
     "start:web": "cross-env nx run @novu/web:start",
     "start:ws": "cross-env nx run @novu/ws:start",
     "start:webhook": "cross-env nx run @novu/webhook:start",
@@ -25,6 +25,7 @@
     "start:widget": "cross-env nx run @novu/widget:start",
     "start:api": "cross-env nx run @novu/api:start",
     "start:api:dev": "cross-env nx run @novu/api:start:dev",
+    "start:worker": "cross-env nx run @novu/worker:start",
     "start:dal": "cross-env nx run @novu/dal:start",
     "start:node": "cross-env nx run @novu/node:start",
     "start:shared": "cross-env nx run @novu/shared:start",
@@ -33,6 +34,7 @@
     "start:ws:test": "cross-env nx run-many --target=start:test --projects=@novu/ws",
     "start:webhook:test": "cross-env nx run-many --target=start:test --projects=@novu/webhook",
     "start:api:test": "cross-env nx run-many --target=start:test --projects=@novu/api",
+    "start:worker:test": "cross-env nx run-many --target=start:test --projects=@novu/worker",
     "start:static:web": "cross-env nx run-many --target=start:static:build --projects=@novu/web",
     "start:static:widget": "cross-env nx run-many --target=start:static:build --projects=@novu/widget",
     "start:docker:web": "cross-env nx run-many --target=start:docker --projects=@novu/web",
@@ -42,6 +44,7 @@
     "build": "nx run-many --target=build --exclude=angular-notification-center-example,vue-notification-center-example --all",
     "prebuild": "nx run-many --target=prebuild --all",
     "build:api": "nx build @novu/api",
+    "build:worker": "nx build @novu/worker",
     "build:ws": "nx build @novu/ws",
     "build:webhook": "nx build @novu/webhook",
     "build:inbound-mail": "nx build @novu/inbound-mail",
@@ -60,26 +63,28 @@
     "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
     "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env",
     "pnpm-context": "node scripts/pnpm-context.mjs",
+    "get-packages-folder": "node scripts/get-packages-folder.mjs",
     "jarvis": "node scripts/jarvis.js",
-    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh"
+    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
+    "get-affected": "node scripts/print-affected-array.mjs"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
     "@auto-it/released": "^10.36.5",
-    "@commitlint/cli": "17.5.0",
+    "@commitlint/cli": "17.6.1",
     "@commitlint/config-angular": "^17.0.0",
-    "@commitlint/config-conventional": "17.4.4",
+    "@commitlint/config-conventional": "17.6.1",
     "@cspell/eslint-plugin": "^6.14.3",
-    "@nrwl/cli": "13.10.6",
-    "@nrwl/eslint-plugin-nx": "13.10.6",
-    "@nrwl/jest": "13.10.6",
-    "@nrwl/linter": "13.10.6",
-    "@nrwl/nx-cloud": "^15.0.0",
-    "@nrwl/tao": "13.10.6",
+    "@nrwl/cli": "15.9.2",
+    "@nrwl/eslint-plugin-nx": "15.9.2",
+    "@nrwl/jest": "15.9.2",
+    "@nrwl/linter": "15.9.2",
+    "@nrwl/nx-cloud": "^15.3.5",
+    "@nrwl/tao": "^15.9.2",
     "@nrwl/workspace": "13.10.6",
     "@octokit/core": "^3.6.0",
-    "@pnpm/filter-workspace-packages": "^4.4.35",
-    "@pnpm/logger": "^4.0.0",
+    "@pnpm/filter-workspace-packages": "^7.0.6",
+    "@pnpm/logger": "^5.0.0",
     "@types/inquirer": "8.2.6",
     "@types/jest": "27.5.2",
     "@types/node": "16.11.7",
@@ -87,6 +92,7 @@
     "@typescript-eslint/parser": "^5.50.0",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
+    "cross-spawn": "^7.0.3",
     "chalk-animation": "^1.6.0",
     "commitizen": "^4.2.4",
     "cpx": "^1.5.0",
@@ -140,8 +146,7 @@
       "apps/*",
       "libs/*",
       "packages/*",
-      "providers/*",
-      "examples/*"
+      "providers/*"
     ]
   },
   "husky": {
@@ -152,17 +157,17 @@
   "lint-staged": {
     "apps/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ],
     "packages/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ],
     "providers/**/*.{ts,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ],
     "docs/**/*.{md,mdx}": [
@@ -171,7 +176,7 @@
     ],
     "libs/**/*.{ts,js,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ]
   },
@@ -185,7 +190,7 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "nx": "^14.5.10",
+    "nx": "^15.9.2",
     "tslib": "^2.4.0"
   }
 }

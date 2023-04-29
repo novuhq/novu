@@ -17,7 +17,7 @@ export const StepActiveSwitch = ({ control, index }) => {
             {...field}
             disabled={readonly}
             checked={value}
-            label={`Step is ${value ? 'active' : 'not active'}`}
+            label={value ? 'Active' : 'Inactive'}
             data-test-id="step-active-switch"
           />
         );
@@ -28,4 +28,5 @@ export const StepActiveSwitch = ({ control, index }) => {
 
 const StyledSwitch = styled(Switch)`
   max-width: 100% !important;
+  width: auto;
 `;

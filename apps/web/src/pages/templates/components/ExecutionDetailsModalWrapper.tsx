@@ -30,9 +30,9 @@ export const ExecutionDetailsModalWrapper = ({ transactionId, isOpen, onClose }:
           color: colors.error,
         }}
       />
-      {notification?.data?.length && (
+      {notification?.data?.length && notification?.data?.length > 0 ? (
         <ExecutionDetailsModal notificationId={notification?.data[0]._id} modalVisibility={isOpen} onClose={onClose} />
-      )}
+      ) : null}
     </>
   );
 };

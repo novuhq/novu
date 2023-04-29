@@ -25,10 +25,12 @@ export function IntegrationsStoreModal({
   scrollTo,
   openIntegration,
   closeIntegration,
+  selectedProvider = null,
 }: {
   scrollTo?: ChannelTypeEnum;
   openIntegration: boolean;
   closeIntegration: () => void;
+  selectedProvider?: IIntegratedProvider | null;
 }) {
   const segment = useSegment();
   const { environment } = useEnvController();
@@ -41,6 +43,11 @@ export function IntegrationsStoreModal({
 
   const { classes } = useModalStyles();
   const { classes: drawerClasses } = useDrawerStyles();
+
+  useEffect(() => {
+    setFormIsOpened(selectedProvider !== null);
+    setProvider(selectedProvider);
+  }, [selectedProvider]);
 
   async function handleOnProviderClick(
     visible: boolean,
@@ -315,6 +322,9 @@ export interface ICredentials {
   clientId?: string;
   projectName?: string;
   serviceAccount?: string;
+  requireTls?: boolean;
+  ignoreTls?: boolean;
+  tlsOptions?: Record<string, unknown>;
 }
 
 export interface IntegrationEntity {

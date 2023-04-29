@@ -1,5 +1,6 @@
-import { decrypt, encrypt } from './cipher';
 import { ICredentialsDto, secureCredentials } from '@novu/shared';
+
+import { decrypt, encrypt } from './cipher';
 
 const NOVU_SUB_MASK = 'nvsk.';
 
@@ -39,9 +40,11 @@ export function decryptCredentials(
   const decryptedCredentials: ICredentialsDto = {};
 
   for (const key in credentials) {
-    decryptedCredentials[key] = isEncryptedCredential(credentials[key])
-      ? decryptProviderSecret(credentials[key])
-      : credentials[key];
+    decryptedCredentials[key] =
+      typeof credentials[key] === 'string' &&
+      isEncryptedCredential(credentials[key])
+        ? decryptProviderSecret(credentials[key])
+        : credentials[key];
   }
 
   return decryptedCredentials;

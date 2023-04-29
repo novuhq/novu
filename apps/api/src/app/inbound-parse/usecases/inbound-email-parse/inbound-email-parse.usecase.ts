@@ -10,10 +10,15 @@ import {
 } from '@novu/dal';
 import axios from 'axios';
 import { createHash } from '../../../shared/helpers/hmac.service';
+import { CompileTemplate, CompileTemplateCommand } from '@novu/application-generic';
 
 @Injectable()
 export class InboundEmailParse {
-  constructor(private jobRepository: JobRepository, private messageRepository: MessageRepository) {}
+  constructor(
+    private jobRepository: JobRepository,
+    private messageRepository: MessageRepository,
+    private compileTemplate: CompileTemplate
+  ) {}
 
   async execute(command: InboundEmailParseCommand) {
     const { toDomain, toTransactionId, toEnvironmentId } = this.splitTo(command.to[0].address);
@@ -55,6 +60,13 @@ export class InboundEmailParse {
       return;
     }
 
+    const compiledDomain = await this.compileTemplate.execute(
+      CompileTemplateCommand.create({
+        template: currentParseWebhook,
+        data: job.payload,
+      })
+    );
+
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId),
       transactionId: toTransactionId,
@@ -66,7 +78,7 @@ export class InboundEmailParse {
       mail: command,
     };
 
-    await axios.post(currentParseWebhook, userPayload);
+    await axios.post(compiledDomain, userPayload);
   }
 
   private splitTo(address: string) {
@@ -89,7 +101,11 @@ export class InboundEmailParse {
       selectEnvironment: 'apiKeys dns',
     });
 
-    const message = await this.messageRepository.findOne({ transactionId, _environmentId: environment._id });
+    const message = await this.messageRepository.findOne({
+      transactionId,
+      _environmentId: environment._id,
+      _subscriberId: subscriber._id,
+    });
 
     return { transactionId, template, notification, subscriber, environment, job, message };
   }

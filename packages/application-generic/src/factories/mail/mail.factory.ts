@@ -10,8 +10,11 @@ import {
   SendinblueHandler,
   SESHandler,
   NetCoreHandler,
+  InfobipEmailHandler,
   MailerSendHandler,
+  Outlook365Handler,
   ResendHandler,
+  SparkPostHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
 
@@ -27,28 +30,29 @@ export class MailFactory {
     new PostmarkHandler(),
     new SendinblueHandler(),
     new SESHandler(),
+    new InfobipEmailHandler(),
     new MailerSendHandler(),
+    new Outlook365Handler(),
     new ResendHandler(),
+    new SparkPostHandler(),
   ];
 
-  getHandler(integration: IntegrationEntity, from?: string): IMailHandler {
-    try {
-      const handler =
-        this.handlers.find((handlerItem) =>
-          handlerItem.canHandle(integration.providerId, integration.channel)
-        ) ?? null;
+  getHandler(
+    integration: Pick<
+      IntegrationEntity,
+      'credentials' | 'channel' | 'providerId'
+    >,
+    from?: string
+  ): IMailHandler {
+    const handler =
+      this.handlers.find((handlerItem) =>
+        handlerItem.canHandle(integration.providerId, integration.channel)
+      ) ?? null;
 
-      if (!handler) {
-        throw new Error('Handler for provider was not found');
-      }
+    if (!handler) throw new Error('Handler for provider was not found');
 
-      handler.buildProvider(integration.credentials, from);
+    handler.buildProvider(integration.credentials, from);
 
-      return handler;
-    } catch (error) {
-      throw new Error(
-        `Could not build mail handler id: ${integration._id} error ${error}`
-      );
-    }
+    return handler;
   }
 }

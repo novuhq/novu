@@ -88,7 +88,7 @@ export class NotificationTemplateService {
         title: message.title,
         name: message.name,
         _feedId: override.noFeedId ? undefined : feeds[0]._id,
-        _layoutId: layouts[0]._id,
+        _layoutId: override.noLayoutId ? undefined : layouts[0]._id,
         _creatorId: this.userId,
         _organizationId: this.organizationId,
         _environmentId: this.environmentId,
@@ -105,7 +105,7 @@ export class NotificationTemplateService {
     }
 
     const data = {
-      _notificationGroupId: groups[0]._id,
+      _notificationGroupId: override.noGroupId ? undefined : groups[0]._id,
       _environmentId: this.environmentId,
       name: faker.name.jobTitle(),
       _organizationId: this.organizationId,

@@ -1,6 +1,23 @@
 import { expect } from 'chai';
-import { CompileEmailTemplate } from '../../content-templates/usecases/compile-email-template/compile-email-template.usecase';
-import { createMailData } from '../usecases/send-message/send-message-email.usecase';
+import { CompileEmailTemplate } from '@novu/application-generic';
+import { IEmailOptions } from '@novu/stateless';
+
+export const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
+  const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
+
+  let to = Array.isArray(options.to) ? options.to : [options.to];
+  to = [...to, ...(overrides?.to || [])];
+  to = to.reduce(filterDuplicate, []);
+
+  return {
+    ...options,
+    to,
+    from: overrides?.from || options.from,
+    text: overrides?.text,
+    cc: overrides?.cc || [],
+    bcc: overrides?.bcc || [],
+  };
+};
 
 describe('Trigger event - Send message email - /v1/events/trigger (POST)', function () {
   it('should merge mail data', function () {

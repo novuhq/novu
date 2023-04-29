@@ -3,7 +3,7 @@ import { ExecutionDetailsStatusEnum } from '@novu/shared';
 import { ExecutionDetailsEntity, ExecutionDetailsDBModel } from './execution-details.entity';
 import { ExecutionDetails } from './execution-details.schema';
 import { BaseRepository } from '../base-repository';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { EnforceEnvId } from '../../types/enforce';
 
 /**
  * Execution details is meant to be read only almost exclusively as a log history of the Jobs executions.
@@ -11,7 +11,7 @@ import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 export class ExecutionDetailsRepository extends BaseRepository<
   ExecutionDetailsDBModel,
   ExecutionDetailsEntity,
-  EnforceEnvOrOrgIds
+  EnforceEnvId
 > {
   constructor() {
     super(ExecutionDetails, ExecutionDetailsEntity);
@@ -40,7 +40,6 @@ export class ExecutionDetailsRepository extends BaseRepository<
    */
   public async findAllNotificationExecutions(organizationId: string, environmentId: string, notificationId: string) {
     return await this.find({
-      _organizationId: organizationId,
       _environmentId: environmentId,
       _notificationId: notificationId,
     });

@@ -22,11 +22,13 @@ interface IUser {
 export class AnalyticsService {
   private segment: Analytics;
 
-  constructor(private segmentToken?: string | null) {}
+  constructor(private segmentToken?: string | null, private batchSize = 100) {}
 
   async initialize() {
     if (this.segmentToken) {
-      this.segment = new AnalyticsClass(this.segmentToken);
+      this.segment = new AnalyticsClass(this.segmentToken, {
+        flushAt: this.batchSize,
+      });
     }
   }
 
@@ -37,7 +39,7 @@ export class AnalyticsService {
   ) {
     if (this.segmentEnabled) {
       this.segment.group({
-        userId: user._id,
+        userId: user._id as any,
         groupId: organizationId,
         traits: {
           _organization: organizationId,
@@ -74,6 +76,8 @@ export class AnalyticsService {
           email: user.email,
           avatar: user.profilePicture,
           createdAt: user.createdAt,
+          // For segment auto mapping
+          created: user.createdAt,
           githubProfile: githubToken?.username,
         },
       });

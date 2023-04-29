@@ -11,7 +11,7 @@ import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
@@ -20,7 +20,7 @@ export class CreateNotificationTemplate {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
     private createChange: CreateChange,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateNotificationTemplateCommand) {
@@ -91,6 +91,7 @@ export class CreateNotificationTemplate {
         shouldStopOnFail: message.shouldStopOnFail,
         replyCallback: message.replyCallback,
         uuid: message.uuid,
+        name: message.name,
       });
 
       if (stepId) {

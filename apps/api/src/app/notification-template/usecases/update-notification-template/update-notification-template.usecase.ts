@@ -1,5 +1,5 @@
 // eslint-ignore max-len
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   ChangeRepository,
   NotificationStepEntity,
@@ -7,18 +7,23 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  InvalidateCacheService,
+  CacheService,
+  buildNotificationTemplateIdentifierKey,
+  buildNotificationTemplateKey,
+} from '@novu/application-generic';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
-import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
-import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
-import { UpdateMessageTemplateCommand } from '../../../message-template/usecases/update-message-template/update-message-template.command';
-import { UpdateMessageTemplate } from '../../../message-template/usecases/update-message-template/update-message-template.usecase';
+import {
+  CreateMessageTemplate,
+  CreateMessageTemplateCommand,
+  UpdateMessageTemplateCommand,
+  UpdateMessageTemplate,
+} from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
-import { CacheKeyPrefixEnum, CacheService } from '../../../shared/services/cache';
-import { InvalidateCache } from '../../../shared/interceptors';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { NotificationStep } from '../../../shared/dtos/notification-step';
 
@@ -31,10 +36,10 @@ export class UpdateNotificationTemplate {
     private updateMessageTemplate: UpdateMessageTemplate,
     private createChange: CreateChange,
     private changeRepository: ChangeRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private invalidateCache: InvalidateCacheService
   ) {}
 
-  @InvalidateCache(CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE)
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
     const existingTemplate = await this.notificationTemplateRepository.findById(command.id, command.environmentId);
     if (!existingTemplate) throw new NotFoundException(`Notification template with id ${command.id} not found`);
@@ -192,6 +197,20 @@ export class UpdateNotificationTemplate {
       throw new BadRequestException('No properties found for update');
     }
 
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateKey({
+        _id: existingTemplate._id,
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateIdentifierKey({
+        templateIdentifier: existingTemplate.triggers[0].identifier,
+        _environmentId: command.environmentId,
+      }),
+    });
+
     await this.notificationTemplateRepository.update(
       {
         _id: command.id,
@@ -262,6 +281,10 @@ export class UpdateNotificationTemplate {
 
     if (message.uuid) {
       partialNotificationStep.uuid = message.uuid;
+    }
+
+    if (message.name) {
+      partialNotificationStep.name = message.name;
     }
 
     return partialNotificationStep;
