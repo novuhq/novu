@@ -109,7 +109,6 @@
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/analytics-node": "^3.1.9",
-    "@types/handlebars": "^4.1.0",
     "@types/jest": "27.5.2",
     "@types/sinon": "^9.0.0",
     "codecov": "^3.5.0",
