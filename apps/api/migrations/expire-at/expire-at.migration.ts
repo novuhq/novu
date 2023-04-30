@@ -7,7 +7,7 @@ import {
   EnvironmentRepository,
   JobStatusEnum,
 } from '@novu/dal';
-import { addMonths } from 'date-fns';
+import { addMinutes, addMonths } from 'date-fns';
 
 const messageRepository = new MessageRepository();
 const notificationRepository = new NotificationRepository();
@@ -15,7 +15,7 @@ const jobRepository = new JobRepository();
 const executionDetailsRepository = new ExecutionDetailsRepository();
 const organizationRepository = new OrganizationRepository();
 const environmentRepository = new EnvironmentRepository();
-let now = Date.now();
+const now = Date.now();
 let expireAtOneMonth = addMonths(now, 1);
 let expireAtSixMonths = addMonths(now, 6);
 
@@ -35,9 +35,9 @@ export async function createExpireAt() {
         _environmentId: environment._id,
         expireAt: { $exists: false },
       };
-      now = Date.now();
-      expireAtOneMonth = addMonths(now, 1);
-      expireAtSixMonths = addMonths(now, 6);
+      expireAtOneMonth = addMinutes(expireAtOneMonth, Math.floor(Math.random() * 4320));
+      expireAtSixMonths = addMinutes(expireAtSixMonths, Math.floor(Math.random() * 4320));
+
       await messagesSetExpireAt(query);
       await notificationExpireAt(query);
     }
