@@ -4,6 +4,7 @@ import { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
 import { ChangeEntity, ChangeDBModel } from './change.entity';
 import { Change } from './change.schema';
+import { UserEntity } from '../user';
 
 export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity, EnforceEnvOrOrgIds> {
   constructor() {
@@ -51,6 +52,8 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
       _parentId: { $exists: false, $eq: null },
     });
 
+    const userSelect: (keyof UserEntity)[] = ['_id', 'firstName', 'lastName', 'profilePicture'];
+
     const items = await this.MongooseModel.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
@@ -59,7 +62,7 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
     })
       .skip(skip)
       .limit(limit)
-      .populate('user');
+      .populate('user', userSelect);
 
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }

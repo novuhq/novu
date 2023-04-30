@@ -4,6 +4,8 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 import type { ChangePropsValueType } from '../../types/helpers';
+import { UserEntity } from '../user';
+import { Type } from 'class-transformer';
 
 export class ChangeEntity {
   _id: string;
@@ -11,6 +13,9 @@ export class ChangeEntity {
   _creatorId: string;
 
   _environmentId: EnvironmentId;
+
+  @Type(() => UserEntity)
+  user: Pick<UserEntity, '_id' | 'firstName' | 'lastName' | 'profilePicture'>;
 
   _organizationId: OrganizationId;
 
