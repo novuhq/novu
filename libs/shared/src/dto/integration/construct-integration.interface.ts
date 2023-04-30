@@ -13,11 +13,15 @@ export interface ICredentialsDto {
   token?: string;
   from?: string;
   senderName?: string;
+  applicationId?: string;
+  clientId?: string;
   projectName?: string;
+  serviceAccount?: string;
+  baseUrl?: string;
   requireTls?: boolean;
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;
-  baseUrl?: string;
+  redirectUrl?: string;
 }
 export interface IConstructIntegrationDto {
   credentials: ICredentialsDto;

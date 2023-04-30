@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -21,7 +22,7 @@ import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-sub
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { ButtonTypeEnum, IJwtPayload } from '@novu/shared';
+import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
 import {
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
@@ -62,6 +63,9 @@ import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { HandleCharOauth } from './usecases/handle-chat-oauth/handle-char-oauth.usecase';
+import { HandleCharOauthCommand } from './usecases/handle-chat-oauth/handle-char-oauth.command';
+import { HandleChatOauthRequestDto } from './dtos/handle-chat-oauth.request.dto';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -79,7 +83,8 @@ export class SubscribersController {
     private genFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions,
-    private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag
+    private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
+    private handleCharOauthUsecase: HandleCharOauth
   ) {}
 
   @Get('')
@@ -439,6 +444,37 @@ export class SubscribersController {
         status: body.status,
       })
     );
+  }
+
+  @ExternalApiAccessible()
+  @Get('/:subscriberId/:providerId/:environmentId')
+  @ApiOperation({
+    summary: 'Handle chat OAuth',
+  })
+  async chatAccessOauth(
+    // @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Param('providerId') providerId: string,
+    @Param('environmentId') environmentId: string,
+    @Query() query: HandleChatOauthRequestDto,
+    @Res() res
+  ): Promise<any> {
+    const data = await this.handleCharOauthUsecase.execute(
+      HandleCharOauthCommand.create({
+        providerCode: query.code,
+        environmentId,
+        subscriberId,
+        providerId: providerId as ChatProviderIdEnum,
+      })
+    );
+
+    if (data.redirect) {
+      res.redirect(data.action);
+    } else {
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+      res.send(data.action);
+    }
   }
 
   private toArray(param: string[] | string): string[] | undefined {
