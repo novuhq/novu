@@ -85,11 +85,11 @@ export class GetNotificationsFeed {
        *  update option as below,
        *  update below:  hasMore = feed.length < totalCount
        *  remove totalCount
-       * { skip: command.page * LIMIT, limit: LIMIT + 1 }
+       * { skip: command.page * command.limit, limit: command.limit + 1 }
        */
     );
 
-    const hasMore = this.getHasMore(command.page, LIMIT, feed, totalCount);
+    const hasMore = this.getHasMore(command.page, command.limit, feed, totalCount);
 
     return {
       data: feed || [],
