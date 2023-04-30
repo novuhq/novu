@@ -8,7 +8,7 @@ You can use the [Netcore](https://netcorecloud.com/) provider to send transactio
 
 ## Getting Started
 
-To use the Netcore channel, you will need to create a Netcore account and add your API key to the Netcore integration on the Novu platform.
+To use the Netcore provider in the email channel, you will need to create a Netcore account and add your API key to the Netcore integration on the Novu platform.
 
 ## Generate API Key
 

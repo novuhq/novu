@@ -4,7 +4,7 @@ It is possible to use the [SMS77](https://www.sms77.io/en) provider to send SMS 
 
 ## Getting Started
 
-To use the SMS77 channel, the first step is to create a SMS77 account and add the personal API key to the SMS77 integration on the Novu platform.
+To use the SMS77 provider in the SMS channel, the first step is to create a SMS77 account and add the personal API key to the SMS77 integration on the Novu platform.
 
 ## Find the API key
 
