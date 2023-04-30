@@ -15,9 +15,9 @@ const jobRepository = new JobRepository();
 const executionDetailsRepository = new ExecutionDetailsRepository();
 const organizationRepository = new OrganizationRepository();
 const environmentRepository = new EnvironmentRepository();
-const now = Date.now();
-const expireAtOneMonth = addMonths(now, 1);
-const expireAtSixMonths = addMonths(now, 6);
+let now = Date.now();
+let expireAtOneMonth = addMonths(now, 1);
+let expireAtSixMonths = addMonths(now, 6);
 
 export async function createExpireAt() {
   // eslint-disable-next-line no-console
@@ -35,6 +35,9 @@ export async function createExpireAt() {
         _environmentId: environment._id,
         expireAt: { $exists: false },
       };
+      now = Date.now();
+      expireAtOneMonth = addMonths(now, 1);
+      expireAtSixMonths = addMonths(now, 6);
       await messagesSetExpireAt(query);
       await notificationExpireAt(query);
     }
@@ -69,10 +72,12 @@ export async function notificationExpireAt(query) {
     { ...query, _id: { $nin: excludedIds } },
     { $set: { expireAt: expireAtOneMonth } }
   );
+
   await jobRepository.update(
     { ...query, _notificationId: { $nin: excludedIds } },
     { $set: { expireAt: expireAtOneMonth } }
   );
+
   await executionDetailsRepository.update(
     { ...query, _notificationId: { $nin: excludedIds } },
     { $set: { expireAt: expireAtOneMonth } }
@@ -80,15 +85,19 @@ export async function notificationExpireAt(query) {
 }
 
 export async function getExcludedNotificationIds(query) {
-  const pendingNotifications = await jobRepository._model.distinct('_notificationId', {
-    ...query,
-    status: JobStatusEnum.PENDING,
-  });
+  const pendingNotifications = await jobRepository._model
+    .distinct('_notificationId', {
+      ...query,
+      status: JobStatusEnum.PENDING,
+    })
+    .read('secondaryPreferred');
 
   // digested events stays pending, leaving the notification and deleting the actually digested could cause errors
-  return await notificationRepository._model.distinct('_id', {
-    ...query,
-    _id: { $in: pendingNotifications },
-    _digestedNotificationId: { $exists: false, $eq: null },
-  });
+  return await notificationRepository._model
+    .distinct('_id', {
+      ...query,
+      _id: { $in: pendingNotifications },
+      _digestedNotificationId: { $exists: false, $eq: null },
+    })
+    .read('secondaryPreferred');
 }
