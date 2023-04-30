@@ -8,7 +8,7 @@ You can use the [Sendinblue](https://www.sendinblue.com/) provider to send trans
 
 ## Getting Started
 
-To use the Sendinblue channel, you will need to create a Sendinblue account and add your API key to the Sendinblue integration on the Novu platform.
+To use the Sendinblue provider in the email channel, you will need to create a Sendinblue account and add your API key to the Sendinblue integration on the Novu platform.
 
 ## Find the API Key
 

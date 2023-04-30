@@ -5,7 +5,7 @@ concurrency:
 
 on:
   pull_request:
-    
+
 jobs:
   dependency-review:
     runs-on: ubuntu-latest

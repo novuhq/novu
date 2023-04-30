@@ -8,6 +8,10 @@ export class GetNotificationsFeedCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   page = 0;
 
+  @IsNumber()
+  @IsOptional()
+  limit = 10;
+
   @IsOptional()
   @IsArray()
   feedId?: string[];
