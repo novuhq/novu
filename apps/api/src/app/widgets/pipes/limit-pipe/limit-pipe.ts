@@ -12,11 +12,11 @@ export class LimitPipe implements PipeTransform {
   }
 
   transform(value: number | undefined | null, metadata: ArgumentMetadata) {
-    if (this.isOptional && value == null) {
+    if (this.isOptional && (value === null || value === undefined)) {
       return value;
     }
 
-    if (!this.isOptional && value == null) {
+    if (!this.isOptional && (value === null || value === undefined)) {
       throw new BadRequestException(`${metadata.data} must be a number conforming to the specified constraints`);
     }
 
