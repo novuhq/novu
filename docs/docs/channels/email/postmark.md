@@ -8,7 +8,7 @@ It is possible to use [Postmark](https://postmarkapp.com/) as a provider to send
 
 ## Getting Started
 
-The first step to use the Postmark provider is to create a Postmark account and add the personal API key to the Postmark integration on the Novu platform.
+The first step to use the Postmark provider in the email channel is to create a Postmark account and add the personal API key to the Postmark integration on the Novu platform.
 
 ## Find the API Key
 

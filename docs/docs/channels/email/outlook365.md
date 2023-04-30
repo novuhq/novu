@@ -9,7 +9,7 @@ You can use the [Outlook 365](https://office.com) provider to send transactional
 
 ## Getting Started
 
-To use the Outlook 365 channel, you will need to have the sender's email (user) and the password for the account. This account cannot be a shared mailbox or distribution list. It will need to be properly licensed to send email via Office 365.
+To use the Outlook 365 provider in the email channel, you will need to have the sender's email (user) and the password for the account. This account cannot be a shared mailbox or distribution list. It will need to be properly licensed to send email via Office 365.
 
 ## Create the Outlook 365 integration with Novu
 
