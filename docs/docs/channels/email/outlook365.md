@@ -1,10 +1,15 @@
+---
+sidebar_label: Outlook 365
+sidebar_position: 9
+---
+
 # Outlook365 ( based in custom SMTP server)
 
 You can use the [Outlook 365](https://office.com) provider to send transactional emails through your instance of Office 365 to your customers using the Novu Platform with a single API.
 
 ## Getting Started
 
-To use the Outlook 365 channel, you will need to have the sender's email (user) and the password for the account. This account cannot be a shared mailbox or distribution list. It will need to be properly licensed to send email via Office 365.
+To use the Outlook 365 provider in the email channel, you will need to have the sender's email (user) and the password for the account. This account cannot be a shared mailbox or distribution list. It will need to be properly licensed to send email via Office 365.
 
 ## Create the Outlook 365 integration with Novu
 

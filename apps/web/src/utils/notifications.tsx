@@ -3,8 +3,9 @@ import { Check } from '../design-system/icons/general/Check';
 import { ErrorIcon } from '../design-system/icons';
 import { colors } from '../design-system';
 
-export function successMessage(message: string) {
+export function successMessage(message: string, id?: string) {
   showNotification({
+    id,
     message,
     icon: <Check />,
     styles: (theme) => ({

@@ -56,6 +56,7 @@ jobs:
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
+      environment: Production
       service_name: webhook
       terraform_workspace: novu-prod-eu
       docker_image: ${{ needs.build_prod_image.outputs.docker_image }}
@@ -67,6 +68,7 @@ jobs:
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
+      environment: Production
       service_name: webhook
       terraform_workspace: novu-prod
       docker_image: ${{ needs.build_prod_image.outputs.docker_image }}

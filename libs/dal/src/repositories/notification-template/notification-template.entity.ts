@@ -91,6 +91,8 @@ export class NotificationStepEntity {
 
   uuid?: string;
 
+  name?: string;
+
   _templateId: string;
 
   active?: boolean;

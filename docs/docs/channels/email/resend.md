@@ -1,10 +1,14 @@
+---
+sidebar_position: 4
+---
+
 # Resend
 
 You can use the [Resend](https://resend.com/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
 
 ## Getting Started
 
-To use the Resend channel, you will need to create a Resend account and add your API key to the Resend integration on the Novu platform.
+To use the Resend provider in the email channel, you will need to create a Resend account and add your API key to the Resend integration on the Novu platform.
 
 ## Generate API Key
 

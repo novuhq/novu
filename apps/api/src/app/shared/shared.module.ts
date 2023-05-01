@@ -22,19 +22,22 @@ import {
   TopicRepository,
   TopicSubscribersRepository,
 } from '@novu/dal';
-import { AnalyticsService, createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
-import { ConnectionOptions } from 'tls';
-
-import { DistributedLockService } from './services/distributed-lock';
-import { PerformanceService } from './services/performance';
-import { QueueService } from './services/queue';
 import {
+  InMemoryProviderService,
+  AnalyticsService,
+  createNestLoggingModuleOptions,
+  LoggerModule,
+  CacheService,
+  InvalidateCacheService,
   AzureBlobStorageService,
   GCSStorageService,
   S3StorageService,
   StorageService,
-} from './services/storage/storage.service';
-import { CacheService, InvalidateCacheService } from './services/cache';
+  WsQueueService,
+  DistributedLockService,
+  PerformanceService,
+} from '@novu/application-generic';
+
 import * as packageJson from '../../../package.json';
 
 const DAL_MODELS = [
@@ -73,37 +76,39 @@ function getStorageServiceClass() {
 
 const dalService = new DalService();
 
-export const ANALYTICS_SERVICE = 'AnalyticsService';
+const inMemoryProviderService = {
+  provide: InMemoryProviderService,
+  useFactory: (enableAutoPipelining?: boolean) => {
+    return new InMemoryProviderService(enableAutoPipelining);
+  },
+};
 
 const cacheService = {
   provide: CacheService,
-  useFactory: async () => {
-    return new CacheService({
-      host: process.env.REDIS_CACHE_SERVICE_HOST,
-      port: process.env.REDIS_CACHE_SERVICE_PORT || '6379',
-      ttl: process.env.REDIS_CACHE_TTL,
-      password: process.env.REDIS_CACHE_PASSWORD,
-      connectTimeout: process.env.REDIS_CACHE_CONNECTION_TIMEOUT,
-      keepAlive: process.env.REDIS_CACHE_KEEP_ALIVE,
-      family: process.env.REDIS_CACHE_FAMILY,
-      keyPrefix: process.env.REDIS_CACHE_KEY_PREFIX,
-      tls: process.env.REDIS_CACHE_SERVICE_TLS as ConnectionOptions,
-    });
+  useFactory: () => {
+    // TODO: Temporary to test in Dev. Should be removed.
+    const enableAutoPipelining = process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(enableAutoPipelining);
+
+    return new CacheService(factoryInMemoryProviderService);
+  },
+};
+
+const distributedLockService = {
+  provide: DistributedLockService,
+  useFactory: () => {
+    const factoryInMemoryProviderService = inMemoryProviderService.useFactory();
+
+    return new DistributedLockService(factoryInMemoryProviderService);
   },
 };
 
 const PROVIDERS = [
+  cacheService,
+  distributedLockService,
   {
-    provide: DistributedLockService,
-    useFactory: () => {
-      return new DistributedLockService();
-    },
-  },
-  {
-    provide: QueueService,
-    useFactory: () => {
-      return new QueueService();
-    },
+    provide: WsQueueService,
+    useClass: WsQueueService,
   },
   {
     provide: DalService,
@@ -113,13 +118,13 @@ const PROVIDERS = [
       return dalService;
     },
   },
+  cacheService,
   {
     provide: PerformanceService,
     useFactory: () => {
       return new PerformanceService();
     },
   },
-  cacheService,
   InvalidateCacheService,
   ...DAL_MODELS,
   {
@@ -127,7 +132,7 @@ const PROVIDERS = [
     useClass: getStorageServiceClass(),
   },
   {
-    provide: ANALYTICS_SERVICE,
+    provide: AnalyticsService,
     useFactory: async () => {
       const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
 

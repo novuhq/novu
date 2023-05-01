@@ -18,6 +18,7 @@ export class JobEntity {
   step: NotificationStepEntity;
   transactionId: string;
   _notificationId: string;
+  subscriberId: string;
   _subscriberId: string;
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;
@@ -30,6 +31,7 @@ export class JobEntity {
   error?: any;
   createdAt: string;
   updatedAt: string;
+  expireAt?: string;
   _templateId: string;
   digest?: {
     events?: any[];

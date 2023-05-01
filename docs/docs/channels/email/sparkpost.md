@@ -1,10 +1,14 @@
+---
+sidebar_position: 5
+---
+
 # SparkPost
 
 You can use the [SparkPost](https://messagebird.com/email/cloud-sending) provider to send transactional emails to your customers using the Novu Platform with a single API.
 
 ## Getting Started
 
-To use the SparkPost channel, you will need to create a SparkPost account and add your API key to the SparkPost integration on the Novu platform.
+To use the SparkPost provider in the email channel, you will need to create a SparkPost account and add your API key to the SparkPost integration on the Novu platform.
 
 ## Generate API Key
 

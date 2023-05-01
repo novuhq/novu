@@ -45,3 +45,4 @@ export type UpdateResult<
 >;
 
 export type IMessageId = string | string[];
+export type IFeedId = string | string[];

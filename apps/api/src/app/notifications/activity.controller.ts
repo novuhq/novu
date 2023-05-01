@@ -8,7 +8,7 @@ import { GetActivityStats } from './usecases/get-activity-stats/get-activity-sta
 import { GetActivityStatsCommand } from './usecases/get-activity-stats/get-activity-stats.command';
 import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
 import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
-import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags, ApiExcludeController } from '@nestjs/swagger';
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
 import { ActivitiesResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
@@ -17,6 +17,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 
 @Controller('/activity')
 @ApiTags('Activity')
+@ApiExcludeController()
 export class ActivityController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,

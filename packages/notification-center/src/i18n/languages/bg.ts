@@ -6,6 +6,7 @@ export const BG: ITranslationEntry = {
     markAllAsRead: 'маркирай всички като прочетени',
     poweredBy: 'задвижвани от',
     settings: 'настройки',
+    noNewNotification: 'Все още няма нищо ново за гледане тук',
   },
   lang: 'bg',
 };

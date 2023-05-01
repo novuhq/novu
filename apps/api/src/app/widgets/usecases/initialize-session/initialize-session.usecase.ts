@@ -1,23 +1,21 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { EnvironmentRepository, FeedRepository, MemberRepository } from '@novu/dal';
-import { AnalyticsService, LogDecorator } from '@novu/application-generic';
+import { Injectable } from '@nestjs/common';
+import { EnvironmentRepository } from '@novu/dal';
+import { AnalyticsService, LogDecorator, CreateSubscriber, CreateSubscriberCommand } from '@novu/application-generic';
 
 import { AuthService } from '../../../auth/services/auth.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CreateSubscriber, CreateSubscriberCommand } from '../../../subscribers/usecases/create-subscriber';
 import { InitializeSessionCommand } from './initialize-session.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
 import { createHash } from '../../../shared/helpers/hmac.service';
+
 @Injectable()
 export class InitializeSession {
   constructor(
     private environmentRepository: EnvironmentRepository,
     private createSubscriber: CreateSubscriber,
     private authService: AuthService,
-    private feedRepository: FeedRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
-    private membersRepository: MemberRepository
+    private analyticsService: AnalyticsService
   ) {}
 
   @LogDecorator()
@@ -41,20 +39,16 @@ export class InitializeSession {
       email: command.email,
       phone: command.phone,
     });
-
     const subscriber = await this.createSubscriber.execute(commandos);
 
-    const organizationAdmin = await this.membersRepository.getOrganizationAdminAccount(environment._organizationId);
-    if (!organizationAdmin) throw new NotFoundException('Organization admin not found');
-
-    this.analyticsService.track('Initialize Widget Session - [Notification Center]', organizationAdmin._userId, {
+    this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
       _organization: environment._organizationId,
       environmentName: environment.name,
       _subscriber: subscriber._id,
     });
 
     return {
-      token: await this.authService.getSubscriberWidgetToken(subscriber, organizationAdmin._userId),
+      token: await this.authService.getSubscriberWidgetToken(subscriber),
       profile: {
         _id: subscriber._id,
         firstName: subscriber.firstName,

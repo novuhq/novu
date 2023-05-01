@@ -18,7 +18,7 @@ export abstract class BaseChatHandler implements IChatHandler {
 
   async send(chatContent: IChatOptions) {
     if (process.env.NODE_ENV === 'test') {
-      return null;
+      return {};
     }
 
     return await this.provider.sendMessage(chatContent);

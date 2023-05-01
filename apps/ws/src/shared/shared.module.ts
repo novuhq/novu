@@ -13,7 +13,6 @@ import {
 } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
 
-import { QueueService } from './queue';
 import { SubscriberOnlineService } from './subscriber-online';
 
 export const ANALYTICS_SERVICE = 'AnalyticsService';
@@ -33,12 +32,6 @@ const dalService = new DalService();
 
 const PROVIDERS = [
   {
-    provide: QueueService,
-    useFactory: () => {
-      return new QueueService();
-    },
-  },
-  {
     provide: DalService,
     useFactory: async () => {
       await dalService.connect(process.env.MONGO_URL as string);
@@ -51,7 +44,7 @@ const PROVIDERS = [
   {
     provide: AnalyticsService,
     useFactory: async () => {
-      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN);
+      const analyticsService = new AnalyticsService(process.env.SEGMENT_TOKEN, 500);
 
       await analyticsService.initialize();
 

@@ -9,16 +9,10 @@ export class TelnyxHandler extends BaseSmsHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    const config: {
-      apiKey: string;
-      from: string;
-      messageProfileId: string;
-    } = {
+    this.provider = new TelnyxSmsProvider({
       apiKey: credentials.apiKey,
       from: credentials.from,
       messageProfileId: credentials.messageProfileId,
-    };
-
-    this.provider = new TelnyxSmsProvider(config);
+    });
   }
 }

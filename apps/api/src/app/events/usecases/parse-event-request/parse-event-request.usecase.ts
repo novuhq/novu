@@ -1,17 +1,15 @@
-import { Inject, Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
+import { Injectable, UnprocessableEntityException, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import * as hat from 'hat';
 import { merge } from 'lodash';
-import { AnalyticsService } from '@novu/application-generic';
+import { v4 as uuidv4 } from 'uuid';
+import { AnalyticsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { ISubscribersDefine } from '@novu/shared';
-import { v4 as uuidv4 } from 'uuid';
+import { StorageHelperService, CachedEntity, buildNotificationTemplateIdentifierKey } from '@novu/application-generic';
 
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { VerifyPayload } from '../verify-payload/verify-payload.usecase';
-import { VerifyPayloadCommand } from '../verify-payload/verify-payload.command';
-import { StorageHelperService } from '../../services/storage-helper-service/storage-helper.service';
+import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { TriggerHandlerQueueService } from '../../services/workflow-queue/trigger-handler-queue.service';
 import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
@@ -21,12 +19,13 @@ export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private verifyPayload: VerifyPayload,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService,
+    private analyticsService: AnalyticsService,
     private storageHelperService: StorageHelperService,
     private triggerHandlerQueueService: TriggerHandlerQueueService,
     private mapTriggerRecipients: MapTriggerRecipients
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
     Logger.log('Starting Trigger');
@@ -48,10 +47,10 @@ export class ParseEventRequest {
 
     await this.validateSubscriberIdProperty(mappedRecipients);
 
-    const template = await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.environmentId,
-      command.identifier
-    );
+    const template = await this.getNotificationTemplateByTriggerIdentifier({
+      environmentId: command.environmentId,
+      triggerIdentifier: command.identifier,
+    });
 
     if (!template) {
       throw new UnprocessableEntityException('template_not_found');
@@ -101,7 +100,7 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    await this.triggerHandlerQueueService.queue.add(
+    await this.triggerHandlerQueueService.add(
       transactionId,
       {
         ...command,
@@ -109,10 +108,7 @@ export class ParseEventRequest {
         actor: mappedActor,
         transactionId,
       },
-      {
-        removeOnComplete: true,
-        removeOnFail: true,
-      }
+      command.organizationId
     );
 
     const steps = template.steps;
@@ -122,11 +118,8 @@ export class ParseEventRequest {
         _template: template._id,
         _organization: command.organizationId,
         channels: steps.map((step) => step.template?.type),
+        source: command.payload.__source || 'api',
       });
-    }
-
-    if (command.payload.$on_boarding_trigger && template.name.toLowerCase().includes('on-boarding')) {
-      return 'Your first notification was sent! Check your notification bell in the demo dashboard to Continue.';
     }
 
     return {
@@ -136,6 +129,25 @@ export class ParseEventRequest {
     };
   }
 
+  @Instrument()
+  @CachedEntity({
+    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
+      buildNotificationTemplateIdentifierKey({
+        _environmentId: command.environmentId,
+        templateIdentifier: command.triggerIdentifier,
+      }),
+  })
+  private async getNotificationTemplateByTriggerIdentifier(command: {
+    triggerIdentifier: string;
+    environmentId: string;
+  }) {
+    return await this.notificationTemplateRepository.findByTriggerIdentifier(
+      command.environmentId,
+      command.triggerIdentifier
+    );
+  }
+
+  @Instrument()
   private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
     for (const subscriber of to) {
       const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;

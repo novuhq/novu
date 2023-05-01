@@ -1,10 +1,14 @@
+---
+sidebar_position: 1
+---
+
 # SendGrid
 
 You can use the [SendGrid](https://sendgrid.com/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
 
 ## Getting Started
 
-To use the Sendgrid channel, you will need to create a Sendgrid account and add your API key to the SendGrid integration on the Novu platform.
+To use the Sendgrid provider in the email channel, you will need to create a Sendgrid account and add your API key to the SendGrid integration on the Novu platform.
 
 ## Generate API Key
 

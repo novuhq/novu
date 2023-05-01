@@ -8,15 +8,16 @@ import { ROUTES } from '../../constants/routes.enum';
 
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';
 export const notificationTemplateName = 'On-boarding notification';
-export const cloneDemoRepo = `git clone git@github.com:novuhq/notification-center-demo.git`;
+export const cloneDemoRepo = 'git clone https://github.com/novuhq/notification-center-demo.git';
 export const APPLICATION_IDENTIFIER = '<APPLICATION_IDENTIFIER>';
 export const API_KEY = '<API_KEY>';
 export const BACKEND_API_URL = '<BACKEND_API_URL>';
 export const BACKEND_SOCKET_URL = '<BACKEND_SOCKET_URL>';
-export const setupProject = `npm run setup:onboarding -- ${APPLICATION_IDENTIFIER} ${API_KEY} ${BACKEND_API_URL} ${BACKEND_SOCKET_URL}`;
-export const npmRunCommand = `npm run dev`;
+// eslint-disable-next-line max-len
+export const setupProject = `cd notification-center-demo && npm run setup:onboarding -- ${APPLICATION_IDENTIFIER} ${API_KEY} ${BACKEND_API_URL} ${BACKEND_SOCKET_URL}`;
+export const npmRunCommand = 'npm run dev';
 export const welcomeDescription = 'Welcome to Novu, let’s get started';
-export const faqUrl = 'https://docs.novu.co/notification-center/react/react-components/#faq';
+export const faqUrl = 'https://docs.novu.co/notification-center/FAQ';
 export const getStartedSteps = { first: ROUTES.GET_STARTED, second: ROUTES.GET_STARTED_PREVIEW };
 
 interface ISnippetInstructions {
@@ -234,18 +235,18 @@ export enum OnBoardingAnalyticsEnum {
   CLICKED_CREATE_TEMPLATE = 'Clicked On Create Template',
   CLICKED_TRIGGER_EVENT = 'Clicked On Trigger Event',
   COPIED_STEP = 'Copied Snippet',
-  CONFIGURE_PROVIDER_VISIT = '[Get Started - Configure Provider] Page Visit',
-  CONFIGURE_PROVIDER_LEARN_MORE_CLICK = '[Get Started - Configure Provider] Learn More Click',
-  CONFIGURE_PROVIDER_CLICK = '[Get Started - Configure Provider] Configure Provider Click',
-  UPDATE_PROVIDER_CLICK = '[Get Started - Configure Provider] Update Provider Click',
-  CONFIGURE_PROVIDER_NAVIGATION_NEXT_PAGE_CLICK = '[Get Started - Configure Provider] Next Page Click',
-  NAVIGATION_CONFIGURE_PROVIDER_CLICK = '[Get Started] Navigation Configure Provider Click',
-  NAVIGATION_BUILD_WORKFLOW_CLICK = '[Get Started] Navigation Build Workflow Click',
-  BUILD_WORKFLOW_VISIT = '[Get Started - Build WorkFlow] Page Visit',
-  BUILD_WORKFLOW_PREVIOUS_PAGE_CLICK = '[Get Started - Build WorkFlow] Previous Page Click',
-  BUILD_WORKFLOW_CLICK = '[Get Started - Build WorkFlow] Build Workflow Click',
-  BUILD_WORKFLOW_TRY_DIGEST_PLAYGROUND_CLICK = '[Get Started - Build WorkFlow] Try Digest Playground Click',
-  BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK = '[Get Started - Build WorkFlow] Node Popover Learn More Click',
+  CONFIGURE_PROVIDER_VISIT = 'Page Visit - [Get Started - Configure Provider]',
+  CONFIGURE_PROVIDER_LEARN_MORE_CLICK = 'Learn More Click - [Get Started - Configure Provider]',
+  CONFIGURE_PROVIDER_CLICK = 'Configure Provider Click - [Get Started - Configure Provider]',
+  UPDATE_PROVIDER_CLICK = 'Update Provider Click - [Get Started - Configure Provider]',
+  CONFIGURE_PROVIDER_NAVIGATION_NEXT_PAGE_CLICK = 'Next Page Click - [Get Started - Configure Provider]',
+  NAVIGATION_CONFIGURE_PROVIDER_CLICK = 'Navigation Configure Provider Click - [Get Started]',
+  NAVIGATION_BUILD_WORKFLOW_CLICK = 'Navigation Build Workflow Click - [Get Started]',
+  BUILD_WORKFLOW_VISIT = 'Page Visit - [Get Started - Build WorkFlow]',
+  BUILD_WORKFLOW_PREVIOUS_PAGE_CLICK = 'Previous Page Click - [Get Started - Build WorkFlow]',
+  BUILD_WORKFLOW_CLICK = 'Build Workflow Click - [Get Started - Build WorkFlow]',
+  BUILD_WORKFLOW_TRY_DIGEST_PLAYGROUND_CLICK = 'Try Digest Playground Click - [Get Started - Build WorkFlow]',
+  BUILD_WORKFLOW_NODE_POPOVER_LEARN_MORE_CLICK = 'Node Popover Learn More Click - [Get Started - Build WorkFlow]',
 }
 
 export enum FlowTypeEnum {

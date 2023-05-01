@@ -8,7 +8,7 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from '../create-notification-template';
 import { CreateBlueprintNotificationTemplateCommand } from './create-blueprint-notification-template.command';
 
@@ -19,7 +19,7 @@ export class CreateBlueprintNotificationTemplate {
     private createNotificationTemplateUsecase: CreateNotificationTemplate,
     private notificationGroupRepository: NotificationGroupRepository,
     private feedRepository: FeedRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateBlueprintNotificationTemplateCommand): Promise<NotificationTemplateEntity> {

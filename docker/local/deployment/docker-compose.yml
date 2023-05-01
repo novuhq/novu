@@ -19,7 +19,7 @@ services:
       - 27017:27017
     restart: unless-stopped
   api:
-    image: 'ghcr.io/novuhq/novu/api:0.12.0'
+    image: 'ghcr.io/novuhq/novu/api:0.14.0'
     depends_on:
       - mongodb
       - redis
@@ -46,10 +46,34 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      API_CONTEXT_PATH: ${API_CONTEXT_PATH}
     ports:
       - '3000:3000'
+  worker:
+    image: 'ghcr.io/novuhq/novu/worker:0.14.0'
+    depends_on:
+      - mongodb
+      - redis
+    container_name: worker
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      MONGO_URL: ${MONGO_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DB_INDEX: 2
+      REDIS_CACHE_SERVICE_HOST: ${REDIS_CACHE_SERVICE_HOST}
+      REDIS_CACHE_SERVICE_PORT: ${REDIS_CACHE_SERVICE_PORT}
+      S3_LOCAL_STACK: ${S3_LOCAL_STACK}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      S3_REGION: ${S3_REGION}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY}
+      SENTRY_DSN: ${SENTRY_DSN}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:0.12.0'
+    image: 'ghcr.io/novuhq/novu/ws:0.14.0'
     depends_on:
       - mongodb
       - redis
@@ -61,36 +85,41 @@ services:
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       JWT_SECRET: ${JWT_SECRET}
+      WS_CONTEXT_PATH: ${WS_CONTEXT_PATH}
     ports:
       - '3002:3002'
   web:
-    image: 'ghcr.io/novuhq/novu/web:0.12.0'
+    image: 'ghcr.io/novuhq/novu/web:0.14.0'
     depends_on:
       - api
+      - worker
     container_name: web
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_ENVIRONMENT: ${NODE_ENV}
       REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
       REACT_APP_DOCKER_HOSTED_ENV: 'true'
+      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
     ports:
       - 4200:4200
   widget:
-    image: 'ghcr.io/novuhq/novu/widget:0.12.0'
+    image: 'ghcr.io/novuhq/novu/widget:0.14.0'
     depends_on:
       - api
+      - worker
       - web
     container_name: widget
     environment:
       REACT_APP_API_URL: ${API_ROOT_URL}
       REACT_APP_WS_URL: ${REACT_APP_WS_URL}
       REACT_APP_ENVIRONMENT: ${NODE_ENV}
+      WIDGET_CONTEXT_PATH: ${WIDGET_CONTEXT_PATH}
     ports:
       - 4500:4500
   embed:
     depends_on:
       - widget
-    image: 'ghcr.io/novuhq/novu/embed:0.12.0'
+    image: 'ghcr.io/novuhq/novu/embed:0.14.0'
     container_name: embed
     environment:
       WIDGET_URL: ${WIDGET_URL}

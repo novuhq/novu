@@ -13,6 +13,7 @@ import {
   outlook365Config,
   infobipEmailConfig,
   resendConfig,
+  sparkpostConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { EmailProviderIdEnum } from '../provider.enum';
@@ -123,5 +124,13 @@ export const emailProviders: IProviderConfig[] = [
     credentials: resendConfig,
     docReference: 'https://resend.com/docs',
     logoFileName: { light: 'resend.svg', dark: 'resend.svg' },
+  },
+  {
+    id: EmailProviderIdEnum.SparkPost,
+    displayName: 'SparkPost',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: sparkpostConfig,
+    docReference: 'https://developers.sparkpost.com/',
+    logoFileName: { light: 'sparkpost.svg', dark: 'sparkpost.svg' },
   },
 ];

@@ -17,11 +17,19 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     this.subscriber = Subscriber;
   }
 
-  async findBySubscriberId(environmentId: string, subscriberId: string): Promise<SubscriberEntity | null> {
-    return await this.findOne({
-      _environmentId: environmentId,
-      subscriberId,
-    });
+  async findBySubscriberId(
+    environmentId: string,
+    subscriberId: string,
+    secondaryRead = false
+  ): Promise<SubscriberEntity | null> {
+    return await this.findOne(
+      {
+        _environmentId: environmentId,
+        subscriberId,
+      },
+      undefined,
+      { readPreference: secondaryRead ? 'secondaryPreferred' : 'primary' }
+    );
   }
 
   async searchByExternalSubscriberIds(

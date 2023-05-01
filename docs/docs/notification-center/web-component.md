@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 4
 ---
 
 # Web Component
@@ -103,3 +103,7 @@ It's important to note that there are some limitations when using the Web Compon
 - you get all in one component
 - it doesn't support the `children, header, footer, emptyState, listItem` props
 - it's a wrapped react component, which means a bigger bundle size (we are working on it to make it smaller)
+
+:::note
+Facing issues in using notification center? Check out FAQs [here](./FAQ)
+:::

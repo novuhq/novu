@@ -1,13 +1,17 @@
 import { BadRequestException, Injectable, NotFoundException, Inject, Logger } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  AnalyticsService,
+  encryptCredentials,
+  buildIntegrationKey,
+  InvalidateCacheService,
+} from '@novu/application-generic';
+import { ChannelTypeEnum } from '@novu/shared';
+
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
-import { AnalyticsService, encryptCredentials } from '@novu/application-generic';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
-import { ChannelTypeEnum } from '@novu/shared';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
 
 @Injectable()
 export class UpdateIntegration {
@@ -17,7 +21,7 @@ export class UpdateIntegration {
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
     private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
@@ -35,11 +39,10 @@ export class UpdateIntegration {
       active: command.active,
     });
 
-    await this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.INTEGRATION],
-      credentials: {
-        environmentId: command.environmentId,
-      },
+    await this.invalidateCache.invalidateQuery({
+      key: buildIntegrationKey().invalidate({
+        _environmentId: command.environmentId,
+      }),
     });
 
     if (command.check) {
