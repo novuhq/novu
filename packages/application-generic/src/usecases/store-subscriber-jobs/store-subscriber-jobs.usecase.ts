@@ -29,7 +29,7 @@ export class StoreSubscriberJobs {
   async execute(command: StoreSubscriberJobsCommand) {
     const storedJobs = await this.jobRepository.storeJobs(command.jobs);
 
-    this.createJobsExecutionDetalis(storedJobs);
+    this.createJobsExecutionDetails(storedJobs);
 
     const firstJob = storedJobs[0];
 
@@ -67,7 +67,7 @@ export class StoreSubscriberJobs {
   }
 
   @Instrument()
-  private createJobsExecutionDetalis(storedJobs: JobEntity[]) {
+  private createJobsExecutionDetails(storedJobs: JobEntity[]) {
     for (const job of storedJobs) {
       this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
