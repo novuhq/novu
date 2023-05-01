@@ -8,7 +8,7 @@ test('should trigger OneSignal library correctly', async () => {
 
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    // @ts-expect-error
     .spyOn(provider.oneSignal, 'createNotification')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,7 +24,7 @@ test('should trigger OneSignal library correctly', async () => {
     },
   });
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
+  // @ts-expect-error
   expect(provider.oneSignal).toBeDefined();
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
