@@ -18,6 +18,7 @@ import {
   CreateExecutionDetailsCommand,
   CreateExecutionDetails,
 } from '../create-execution-details';
+import { Instrument, InstrumentUsecase } from '../../instrumentation';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -35,6 +36,7 @@ export class AddDigestJob {
     private calculateDelayService: CalculateDelayService
   ) {}
 
+  @InstrumentUsecase()
   public async execute(
     command: AddDigestJobCommand
   ): Promise<AddDigestJobResult> {
@@ -59,6 +61,7 @@ export class AddDigestJob {
     }
   }
 
+  @Instrument()
   private async shouldDelayDigestOrMerge(
     job: JobEntity
   ): Promise<AddDigestJobResult> {
