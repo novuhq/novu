@@ -1,5 +1,8 @@
 # start build stage
-FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as builder
+FROM node:16-alpine3.16 as dev_base
+
+RUN apk add g++ make py3-pip
+
 ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app

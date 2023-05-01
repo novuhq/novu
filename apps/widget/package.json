@@ -11,7 +11,7 @@
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
     "start:static:build": "pnpm envsetup:docker && http-server build -p 4500 --proxy http://localhost:4500?",
     "start:docker": "pnpm build && pnpm start:static:build",
-    "docker:build": "docker build -f ./Dockerfile -t novu-widget ./../..",
+    "docker:build": "docker buildx build --platform=linux/amd64,linux/arm64 -f ./Dockerfile -t novu-widget ./../..",
     "prebuild": "rimraf build",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 craco build",
     "precommit": "lint-staged",

@@ -1,4 +1,6 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as dev_base
+FROM node:16-alpine3.16 as dev_base
+
+RUN apk add g++ make py3-pip
 RUN apk --update --no-cache add curl
 ENV NX_DAEMON=false
 

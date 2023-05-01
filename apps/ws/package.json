@@ -8,7 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "docker:build": "docker build -f ./Dockerfile -t novu-ws ./../..",
+    "docker:build": "docker buildx build --platform=linux/amd64,linux/arm64 -f ./Dockerfile -t novu-ws ./../..",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nodemon",
     "start:dev": "nodemon",

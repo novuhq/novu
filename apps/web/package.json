@@ -7,7 +7,7 @@
     "prebuild": "rimraf build",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 react-app-rewired --max_old_space_size=4096 build",
     "precommit": "lint-staged",
-    "docker:build": "docker buildx build -f ./Dockerfile -t novu-web ./../..",
+    "docker:build": "docker buildx build --platform=linux/amd64,linux/arm64 -f ./Dockerfile -t novu-web ./../..",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
     "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
     "start:static:build": "pnpm envsetup:docker && http-server build -p 4200 --proxy http://localhost:4200?",

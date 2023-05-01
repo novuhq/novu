@@ -1,5 +1,7 @@
 FROM node:16-alpine3.16
 
+RUN apk add g++ make py3-pip
+
 ARG BULL_MQ_PRO_TOKEN
 ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
 ENV NX_DAEMON=false
