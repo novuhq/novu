@@ -162,7 +162,7 @@ describe('Notifications List', function () {
 
     cy.task('awaitRunningJobs', {
       organizationId: this.session.organization._id,
-      templateId: this.session.templates[0].triggers[0].identifier,
+      templateId: this.session.templates[0]._id,
     });
 
     cy.wait('@unseenCountRequest').then(({ request, response }) => {

@@ -61,6 +61,12 @@ export class JobsService {
           $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
         },
       });
+      console.log({
+        runningJobs,
+        waitingCount,
+        parsedEvents,
+        waitingCountJobs,
+      });
     } while (parsedEvents > 0 || waitingCount > 0 || runningJobs > unfinishedJobs);
   }
 }
