@@ -215,11 +215,6 @@ describe('Notifications List', function () {
       templateId: this.session.templates[0]._id,
     });
 
-    cy.task('awaitRunningJobs', {
-      organizationId: this.session.organization._id,
-      templateId: this.session.templates[0]._id,
-    });
-
     cy.wait('@unseenCountRequest').then(({ request, response }) => {
       expect(request?.query?.limit).to.eq('100');
     });
