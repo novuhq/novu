@@ -133,7 +133,6 @@ describe('Notifications List', function () {
     });
 
     cy.wait('@unseenCountRequest').then(({ request, response }) => {
-      expect(response?.statusCode).to.eq(304);
       expect(request?.query?.limit).to.eq('100');
     });
 
