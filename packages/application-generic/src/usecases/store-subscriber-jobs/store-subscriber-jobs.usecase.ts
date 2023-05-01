@@ -1,4 +1,4 @@
-import { JobRepository, NotificationRepository } from '@novu/dal';
+import { JobRepository, NotificationRepository, JobEntity } from '@novu/dal';
 import { Injectable } from '@nestjs/common';
 import {
   StepTypeEnum,
@@ -14,6 +14,7 @@ import {
 } from '../create-execution-details';
 
 import { StoreSubscriberJobsCommand } from './store-subscriber-jobs.command';
+import { Instrument, InstrumentUsecase } from '../../instrumentation';
 
 @Injectable()
 export class StoreSubscriberJobs {
@@ -24,21 +25,11 @@ export class StoreSubscriberJobs {
     protected createExecutionDetails: CreateExecutionDetails
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: StoreSubscriberJobsCommand) {
     const storedJobs = await this.jobRepository.storeJobs(command.jobs);
 
-    for (const job of storedJobs) {
-      this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEP_CREATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-    }
+    this.createJobsExecutionDetalis(storedJobs);
 
     const firstJob = storedJobs[0];
 
@@ -53,24 +44,41 @@ export class StoreSubscriberJobs {
         return list;
       }, []);
 
-    await this.notificationRepository.update(
-      {
-        _organizationId: firstJob._organizationId,
-        _id: firstJob._notificationId,
-      },
-      {
-        $set: {
-          channels: channels,
+    await Promise.all([
+      this.notificationRepository.update(
+        {
+          _organizationId: firstJob._organizationId,
+          _id: firstJob._notificationId,
         },
-      }
-    );
+        {
+          $set: {
+            channels: channels,
+          },
+        }
+      ),
+      this.addJob.execute({
+        userId: firstJob._userId,
+        environmentId: firstJob._environmentId,
+        organizationId: firstJob._organizationId,
+        jobId: firstJob._id,
+        job: firstJob,
+      }),
+    ]);
+  }
 
-    await this.addJob.execute({
-      userId: firstJob._userId,
-      environmentId: firstJob._environmentId,
-      organizationId: firstJob._organizationId,
-      jobId: firstJob._id,
-      job: firstJob,
-    });
+  @Instrument()
+  private createJobsExecutionDetalis(storedJobs: JobEntity[]) {
+    for (const job of storedJobs) {
+      this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+          detail: DetailEnum.STEP_CREATED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+    }
   }
 }
