@@ -46,20 +46,18 @@ module.exports = (on, config) => {
         await service.triggerEvent(triggerIdentifier, subscriberId, {
           firstName: 'John' + num,
         });
-        if (enumerate && organizationId) {
+
+        if (organizationId) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+
           await awaitRunningJobs({ serverUrl: config.env.API_URL, templateId, organizationId });
+          while (
+            (await jobsService.jobQueue.queue.getWaitingCount()) ||
+            (await jobsService.jobQueue.queue.getActiveCount())
+          ) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+          }
         }
-      }
-
-      if (organizationId) {
-        await awaitRunningJobs({ serverUrl: config.env.API_URL, templateId, organizationId });
-      }
-
-      while (
-        (await jobsService.jobQueue.queue.getWaitingCount()) ||
-        (await jobsService.jobQueue.queue.getActiveCount())
-      ) {
-        await new Promise((resolve) => setTimeout(resolve, 50));
       }
 
       return 'ok';
