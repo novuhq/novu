@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '@novu/application-generic';
 import { Injectable } from '@nestjs/common';
 import { MessageRepository, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum, DigestTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
@@ -22,6 +23,7 @@ export class Digest extends SendMessageType {
     super(messageRepository, createLogUsecase, createExecutionDetails);
   }
 
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const events = await this.getEvents(command);
     const nextJobs = await this.getJobsToUpdate(command);

@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { IEmailBlock, ITemplateVariable } from '@novu/shared';
@@ -9,6 +10,7 @@ import { LayoutDto } from './layout.dto';
 export class GetLayoutUseCase {
   constructor(private layoutRepository: LayoutRepository) {}
 
+  @InstrumentUsecase()
   async execute(command: GetLayoutCommand): Promise<LayoutDto> {
     const layout = await this.layoutRepository.findOne({
       _id: command.layoutId,

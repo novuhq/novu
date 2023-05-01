@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable } from '@nestjs/common';
 import {
   NotificationTemplateRepository,
@@ -22,6 +23,7 @@ export class GetSubscriberPreference {
     private analyticsService: AnalyticsService
   ) {}
 
+  @InstrumentUsecase()
   async execute(
     command: GetSubscriberPreferenceCommand
   ): Promise<ISubscriberPreferenceResponse[]> {

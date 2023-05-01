@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
@@ -14,6 +15,7 @@ export class CalculateLimitNovuIntegration {
     10
   );
 
+  @InstrumentUsecase()
   async execute(
     command: CalculateLimitNovuIntegrationCommand
   ): Promise<{ limit: number; count: number } | undefined> {

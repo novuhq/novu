@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Logger, Injectable } from '@nestjs/common';
 import { JobsOptions } from 'bullmq';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
@@ -34,6 +35,7 @@ export class AddJob {
   ) {}
 
   @LogDecorator()
+  @InstrumentUsecase()
   public async execute(command: AddJobCommand): Promise<void> {
     Logger.verbose('Getting Job');
     const job =

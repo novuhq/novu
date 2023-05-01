@@ -14,6 +14,9 @@ import {
 } from '../create-execution-details';
 
 import { StoreSubscriberJobsCommand } from './store-subscriber-jobs.command';
+import { InstrumentUsecase } from '../../instrumentation';
+import { BulkCreateExecutionDetails } from '../bulk-create-execution-details/bulk-create-execution-details.usecase';
+import { BulkCreateExecutionDetailsCommand } from '../bulk-create-execution-details';
 
 @Injectable()
 export class StoreSubscriberJobs {
@@ -21,24 +24,32 @@ export class StoreSubscriberJobs {
     private addJob: AddJob,
     private jobRepository: JobRepository,
     private notificationRepository: NotificationRepository,
-    protected createExecutionDetails: CreateExecutionDetails
+    protected createExecutionDetails: BulkCreateExecutionDetails
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: StoreSubscriberJobsCommand) {
     const storedJobs = await this.jobRepository.storeJobs(command.jobs);
 
-    for (const job of storedJobs) {
-      this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          detail: DetailEnum.STEP_CREATED,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.PENDING,
-          isTest: false,
-          isRetry: false,
-        })
-      );
-    }
+    console.log('storedJobs', storedJobs);
+
+    this.createExecutionDetails.execute(
+      BulkCreateExecutionDetailsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        subscriberId: storedJobs[0].subscriberId,
+        details: storedJobs.map((job) => {
+          return {
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+            detail: DetailEnum.STEP_CREATED,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.PENDING,
+            isTest: false,
+            isRetry: false,
+          };
+        }),
+      })
+    );
 
     const firstJob = storedJobs[0];
 
@@ -52,6 +63,8 @@ export class StoreSubscriberJobs {
 
         return list;
       }, []);
+
+    console.log('channels', channels);
 
     await this.notificationRepository.update(
       {

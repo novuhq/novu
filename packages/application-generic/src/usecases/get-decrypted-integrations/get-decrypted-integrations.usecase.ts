@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
@@ -15,6 +16,7 @@ export class GetDecryptedIntegrations {
     private getNovuIntegration: GetNovuIntegration
   ) {}
 
+  @InstrumentUsecase()
   async execute(
     command: GetDecryptedIntegrationsCommand
   ): Promise<IntegrationEntity[]> {

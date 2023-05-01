@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
@@ -17,6 +18,7 @@ export class UpdateSubscriber {
     private subscriberRepository: SubscriberRepository
   ) {}
 
+  @InstrumentUsecase()
   public async execute(
     command: UpdateSubscriberCommand
   ): Promise<SubscriberEntity> {

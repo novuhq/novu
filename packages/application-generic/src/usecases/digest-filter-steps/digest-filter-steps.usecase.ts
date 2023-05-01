@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable, Logger } from '@nestjs/common';
 import { NotificationStepEntity } from '@novu/dal';
 import { DigestTypeEnum, StepTypeEnum } from '@novu/shared';
@@ -16,6 +17,7 @@ export class DigestFilterSteps {
     protected performanceService: EventsPerformanceService
   ) {}
 
+  @InstrumentUsecase()
   public async execute(
     command: DigestFilterStepsCommand
   ): Promise<NotificationStepEntity[]> {

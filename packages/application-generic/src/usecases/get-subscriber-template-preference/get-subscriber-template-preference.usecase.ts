@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable } from '@nestjs/common';
 import {
   MessageTemplateRepository,
@@ -25,6 +26,7 @@ export class GetSubscriberTemplatePreference {
     private subscriberRepository: SubscriberRepository
   ) {}
 
+  @InstrumentUsecase()
   async execute(
     command: GetSubscriberTemplatePreferenceCommand
   ): Promise<ISubscriberPreferenceResponse> {

@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '@novu/application-generic';
 import { Injectable, Logger } from '@nestjs/common';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
@@ -8,6 +9,7 @@ import { WebhookFilterBackoffStrategyCommand } from './webhook-filter-backoff-st
 export class WebhookFilterBackoffStrategy {
   constructor(private createExecutionDetails: CreateExecutionDetails) {}
 
+  @InstrumentUsecase()
   public async execute(command: WebhookFilterBackoffStrategyCommand): Promise<number> {
     const { attemptsMade, eventError: error, eventJob } = command;
     const job = eventJob.data;

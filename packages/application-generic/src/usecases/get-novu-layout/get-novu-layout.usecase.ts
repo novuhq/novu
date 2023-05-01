@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable } from '@nestjs/common';
 import { readFile } from 'fs/promises';
 
@@ -6,6 +7,7 @@ import { ApiException } from '../../utils/exceptions';
 
 @Injectable()
 export class GetNovuLayout {
+  @InstrumentUsecase()
   async execute(command: GetNovuLayoutCommand): Promise<string> {
     const template = await this.loadTemplateContent('layout.handlebars');
     if (!template) throw new ApiException('Novu default template not found');

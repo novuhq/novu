@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
 import { format } from 'date-fns';
@@ -52,6 +53,7 @@ Handlebars.registerHelper(
 
 @Injectable()
 export class CompileTemplate {
+  @InstrumentUsecase()
   async execute(command: CompileTemplateCommand): Promise<string> {
     const templateContent = command.template;
 

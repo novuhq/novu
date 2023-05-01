@@ -9,6 +9,7 @@ import {
 import { InstrumentUsecase } from '../../instrumentation';
 import { subscriberNeedUpdate } from '../../utils/subscriber';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
+import { buildSubscriberKey, CachedEntity } from '../../services';
 
 @Injectable()
 export class ProcessSubscriber {
@@ -41,10 +42,17 @@ export class ProcessSubscriber {
     organizationId: string,
     subscriberPayload: ISubscribersDefine
   ): Promise<SubscriberEntity> {
-    const subscriber = await this.subscriberRepository.findBySubscriberId(
-      environmentId,
-      subscriberPayload.subscriberId
-    );
+    /*
+     * const subscriber = await this.subscriberRepository.findBySubscriberId(
+     *   environmentId,
+     *   subscriberPayload.subscriberId
+     * );
+     */
+
+    const subscriber = await this.fetchSubscriber({
+      subscriberId: subscriberPayload.subscriberId,
+      _environmentId: environmentId,
+    });
 
     if (subscriber && !subscriberNeedUpdate(subscriber, subscriberPayload)) {
       return subscriber;
@@ -78,6 +86,26 @@ export class ProcessSubscriber {
         locale: subscriberPayload?.locale,
         subscriber: subscriber ?? undefined,
       })
+    );
+  }
+
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  private async fetchSubscriber({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }): Promise<SubscriberEntity | null> {
+    return await this.subscriberRepository.findBySubscriberId(
+      _environmentId,
+      subscriberId
     );
   }
 }

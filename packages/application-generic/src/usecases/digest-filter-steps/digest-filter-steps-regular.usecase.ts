@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable } from '@nestjs/common';
 import {
   JobStatusEnum,
@@ -17,6 +18,7 @@ export class DigestFilterStepsRegular {
     private notificationRepository: NotificationRepository
   ) {}
 
+  @InstrumentUsecase()
   public async execute(
     command: DigestFilterStepsCommand
   ): Promise<NotificationStepEntity[]> {

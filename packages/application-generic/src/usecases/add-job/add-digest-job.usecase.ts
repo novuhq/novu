@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository } from '@novu/dal';
 import {
@@ -35,6 +36,7 @@ export class AddDigestJob {
     private calculateDelayService: CalculateDelayService
   ) {}
 
+  @InstrumentUsecase()
   public async execute(
     command: AddDigestJobCommand
   ): Promise<AddDigestJobResult> {

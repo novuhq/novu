@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { merge } from 'lodash';
 import { readFile } from 'fs/promises';
@@ -20,6 +21,7 @@ export class CompileEmailTemplate {
     private getNovuLayoutUsecase: GetNovuLayout
   ) {}
 
+  @InstrumentUsecase()
   public async execute(command: CompileEmailTemplateCommand) {
     const verifyPayloadService = new VerifyPayloadService();
     const organization = await this.organizationRepository.findById(

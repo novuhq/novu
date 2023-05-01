@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '../../instrumentation';
 import { ConflictException, Injectable } from '@nestjs/common';
 import {
   IntegrationEntity,
@@ -23,6 +24,7 @@ export class GetNovuIntegration {
     private analyticsService: AnalyticsService
   ) {}
 
+  @InstrumentUsecase()
   async execute(
     command: GetNovuIntegrationCommand
   ): Promise<IntegrationEntity | undefined> {

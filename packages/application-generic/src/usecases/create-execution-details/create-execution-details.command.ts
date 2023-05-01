@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { JobEntity } from '@novu/dal';
 import {
   ExecutionDetailsSourceEnum,
@@ -52,6 +52,10 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @IsString()
   raw?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  bulk?: boolean;
 
   @IsOptional()
   @IsString()

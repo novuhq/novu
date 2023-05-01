@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '@novu/application-generic';
 import { Injectable } from '@nestjs/common';
 import { LogEntity, LogRepository } from '@novu/dal';
 
@@ -7,6 +8,7 @@ import { CreateLogCommand } from './create-log.command';
 export class CreateLog {
   constructor(private logRepository: LogRepository) {}
 
+  @InstrumentUsecase()
   async execute(command: CreateLogCommand): Promise<LogEntity> {
     let rawData: string | undefined;
     if (command.raw) {

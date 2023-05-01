@@ -1,3 +1,4 @@
+import { InstrumentUsecase } from '@novu/application-generic';
 import { Injectable } from '@nestjs/common';
 import { JobStatusEnum } from '@novu/dal';
 
@@ -9,6 +10,7 @@ import { UpdateJobStatus } from './update-job-status.usecase';
 export class SetJobAsCompleted {
   constructor(private updateJobStatus: UpdateJobStatus) {}
 
+  @InstrumentUsecase()
   public async execute(command: SetJobAsCommand): Promise<void> {
     await this.updateJobStatus.execute(
       UpdateJobStatusCommand.create({

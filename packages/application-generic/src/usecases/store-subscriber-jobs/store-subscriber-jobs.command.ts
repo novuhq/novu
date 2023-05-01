@@ -6,5 +6,6 @@ import { EnvironmentCommand } from '../../commands';
 
 export class StoreSubscriberJobsCommand extends EnvironmentCommand {
   @IsDefined()
+  // jobs: JobEntity[];
   jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[];
 }

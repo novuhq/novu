@@ -53,6 +53,7 @@ export class TriggerEvent {
     private logger: PinoLogger
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
     const mark = this.performanceService.buildTriggerEventMark(
       command.identifier,
