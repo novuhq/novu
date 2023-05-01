@@ -332,13 +332,13 @@ class Novu {
 
   runPriorCalls = () => {
     const allowedCalls: string[] = [];
-    const priorCalls = window.novu && window.novu._c && typeof window.novu._c === 'object' ? window.novu._c : [];
+    const priorCalls = window?.novu?._c && typeof window?.novu?._c === 'object' ? window.novu._c : [];
     priorCalls.forEach((call: string[]) => {
       const method: any = call[0];
       const args = call[1];
       if (allowedCalls.includes(method)) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
+        // @ts-expect-error
         (this[method as any] as any).apply(this, args);
       }
     });
@@ -365,7 +365,7 @@ class Novu {
 
 export default ((window: any) => {
   const onloadFunc =
-    window.novu && window.novu.onload && typeof window.novu.onload === 'function' ? window.novu.onload : function () {};
+    window?.novu?.onload && typeof window?.novu?.onload === 'function' ? window.novu.onload : function () {};
 
   const initCall = window.novu._c.find((call: string[]) => call[0] === 'init');
   const novuApi: any = () => {};
