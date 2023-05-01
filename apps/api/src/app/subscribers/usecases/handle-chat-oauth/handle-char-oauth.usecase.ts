@@ -5,6 +5,7 @@ import { CreateSubscriber, CreateSubscriberCommand, decryptCredentials } from '@
 import { HandleCharOauthCommand } from './handle-char-oauth.command';
 import {
   IChannelCredentialsCommand,
+  OAuthHandlerEnum,
   UpdateSubscriberChannel,
   UpdateSubscriberChannelCommand,
 } from '../update-subscriber-channel';
@@ -52,6 +53,7 @@ export class HandleCharOauth {
         subscriberId: command.subscriberId,
         providerId: command.providerId,
         credentials: subscriberCredentials,
+        oauthHandler: OAuthHandlerEnum.NOVU,
       })
     );
 

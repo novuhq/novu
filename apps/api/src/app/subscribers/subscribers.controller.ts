@@ -30,7 +30,11 @@ import {
   UpdateSubscriberChannelRequestDto,
   UpdateSubscriberRequestDto,
 } from './dtos';
-import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
+import {
+  OAuthHandlerEnum,
+  UpdateSubscriberChannel,
+  UpdateSubscriberChannelCommand,
+} from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
 import { ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
@@ -210,6 +214,7 @@ export class SubscribersController {
         subscriberId,
         providerId: body.providerId,
         credentials: body.credentials,
+        oauthHandler: OAuthHandlerEnum.EXTERNAL,
       })
     );
   }
