@@ -27,7 +27,7 @@ export class Outlook365Provider implements IEmailProvider {
       connectionTImeout: 30000,
       auth: {
         user: this.config.from,
-        password: this.config.password,
+        pass: this.config.password,
       },
       tls: {
         ciphers: 'SSLv3',
@@ -86,6 +86,6 @@ export class Outlook365Provider implements IEmailProvider {
       sendMailOptions.replyTo = options.replyTo;
     }
 
-    return;
+    return sendMailOptions;
   }
 }

@@ -30,8 +30,6 @@ export class GetNotificationsFeed {
       }),
   })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
-    const LIMIT = 10;
-
     const subscriber = await this.fetchSubscriber({
       _environmentId: command.environmentId,
       subscriberId: command.subscriberId,
@@ -51,8 +49,8 @@ export class GetNotificationsFeed {
       ChannelTypeEnum.IN_APP,
       { feedId: command.feedId, seen: command.query.seen, read: command.query.read },
       {
-        limit: LIMIT,
-        skip: command.page * LIMIT,
+        limit: command.limit,
+        skip: command.page * command.limit,
       }
     );
 
@@ -84,7 +82,7 @@ export class GetNotificationsFeed {
     return {
       data: feed || [],
       totalCount: totalCount || 0,
-      pageSize: LIMIT,
+      pageSize: command.limit,
       page: command.page,
     };
   }

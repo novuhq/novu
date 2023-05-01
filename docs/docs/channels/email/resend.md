@@ -8,7 +8,7 @@ You can use the [Resend](https://resend.com/) provider to send transactional ema
 
 ## Getting Started
 
-To use the Resend channel, you will need to create a Resend account and add your API key to the Resend integration on the Novu platform.
+To use the Resend provider in the email channel, you will need to create a Resend account and add your API key to the Resend integration on the Novu platform.
 
 ## Generate API Key
 

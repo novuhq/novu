@@ -435,7 +435,9 @@
     "Millis",
     "sscan",
     "vishnudxb",
-    "autopipelining"
+    "autopipelining",
+    "maxtimeout",
+    "clsx"
   ],
   "flagWords": [],
   "patterns": [

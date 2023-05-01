@@ -8,7 +8,7 @@ You can use the [Mandrill by Mailchimp](https://mandrillapp.com/) provider to se
 
 ## Getting Started
 
-To use the Mandrill provider, you will need to create a Mandrill account and add your API key to the Mandrill integration on the Novu platform.
+To use the Mandrill provider in the email channel, you will need to create a Mandrill account and add your API key to the Mandrill integration on the Novu platform.
 
 ## Generate API Key
 

@@ -20,7 +20,6 @@ export class UpdateEnvironmentCommand extends OrganizationCommand {
   @IsMongoId()
   _parentId?: string;
 
-  @ApiPropertyOptional()
   @IsOptional()
-  dns?: { inboundParseDomain: string };
+  dns?: { inboundParseDomain?: string };
 }

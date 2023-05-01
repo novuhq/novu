@@ -12,6 +12,8 @@ build
 coverage
 .DS_Store
 dist
+**-changes-cache.json
+
 .idea/workspace.xml
 .idea/usage.statistics.xml
 .idea/tasks.xml

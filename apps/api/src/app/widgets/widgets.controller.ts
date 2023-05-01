@@ -47,6 +47,7 @@ import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-
 import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
 import { MarkAllMessagesAsCommand } from './usecases/mark-all-messages-as/mark-all-messages-as.command';
 import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-messages-as.usecase';
+import { GetNotificationsFeedDto } from './dtos/get-notifications-feed-request.dto';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -89,19 +90,21 @@ export class WidgetsController {
   })
   async getNotificationsFeed(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Query('page') page: number,
-    @Query('feedIdentifier') feedId: string[] | string,
-    @Query() query: StoreQuery
+    @Query() query: GetNotificationsFeedDto
   ) {
-    const feedsQuery = this.toArray(feedId);
+    let feedsQuery: string[] | undefined;
+    if (query.feedIdentifier) {
+      feedsQuery = Array.isArray(query.feedIdentifier) ? query.feedIdentifier : [query.feedIdentifier];
+    }
 
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      page,
+      page: query.page != null ? parseInt(query.page) : 0,
       feedId: feedsQuery,
-      query,
+      query: { seen: query.seen, read: query.read },
+      limit: query.limit != null ? parseInt(query.limit) : 10,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);

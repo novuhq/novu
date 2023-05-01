@@ -55,3 +55,21 @@ No, switching organization will only switch organization in UI, from API side al
 Multiple active providers are only supported in [push](../channels/push) and [chat](../channels/chat) channels.
 
 </details>
+<details>
+<summary>Does Novu have expiration dates for records? (TTL)</summary>
+
+For Novu cloud users - notifications and activity feed data will be saved for 1 month.
+In-app messages will be saved for 6 months.
+After that time - the records will be archived.
+
+For self-hosted - the same time frame applies before records will be deleted. A TTL expiration date will be set for them.  
+Self-hosted users can disable ttl setting by adding environment variable `DISABLE_TTL=true`.
+
+Affected schemes:
+
+- Notification (1 month)
+- Job (1 month)
+- Message (in app - 6 months, all others - 1 month)
+- ExecutionDetails (1 month)
+
+</details>

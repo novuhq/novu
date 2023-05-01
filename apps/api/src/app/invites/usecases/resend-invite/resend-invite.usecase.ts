@@ -36,7 +36,6 @@ export class ResendInvite {
     if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') {
       const novu = new Novu(process.env.NOVU_API_KEY ?? '');
 
-      // eslint-disable-next-line @cspell/spellchecker
       // cspell:disable-next
       await novu.trigger(process.env.NOVU_TEMPLATEID_INVITE_TO_ORGANISATION || 'invite-to-organization-wBnO8NpDn', {
         to: {
