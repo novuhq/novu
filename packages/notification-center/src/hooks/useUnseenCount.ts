@@ -35,12 +35,17 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
           queryClient.setQueryData<{ count: number }>(UNSEEN_COUNT_QUERY_KEY, (oldData) => ({
             count: data?.unseenCount ?? oldData.count,
           }));
+
+          queryClient.refetchQueries(UNSEEN_COUNT_QUERY_KEY, {
+            exact: false,
+          });
           queryClient.refetchQueries(INFINITE_NOTIFICATIONS_QUERY_KEY, {
             exact: false,
           });
           queryClient.refetchQueries(FEED_UNSEEN_COUNT_QUERY_KEY, {
             exact: false,
           });
+
           dispatchUnseenCountEvent(data.unseenCount);
         }
       }, DEBOUNCE_TIME)
