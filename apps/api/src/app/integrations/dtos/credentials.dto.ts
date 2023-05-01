@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsObject, IsOptional, IsString } from 'class-validator';
+import { IsBooleanAny } from '../../shared/validators';
 
 export class CredentialsDto {
   @ApiPropertyOptional()
@@ -38,8 +39,8 @@ export class CredentialsDto {
   port?: string;
 
   @ApiPropertyOptional()
-  @IsBoolean()
   @IsOptional()
+  @IsBooleanAny()
   secure?: boolean;
 
   @ApiPropertyOptional()
@@ -88,13 +89,13 @@ export class CredentialsDto {
   clientId?: string;
 
   @ApiPropertyOptional()
-  @IsBoolean()
   @IsOptional()
+  @IsBooleanAny()
   requireTls?: boolean;
 
   @ApiPropertyOptional()
-  @IsBoolean()
   @IsOptional()
+  @IsBooleanAny()
   ignoreTls?: boolean;
 
   @ApiPropertyOptional()
