@@ -415,6 +415,13 @@ export const slackConfig: IConfigCredentials[] = [
     type: 'string',
     required: false,
   },
+  {
+    key: CredentialsKeyEnum.RedirectUrl,
+    displayName: 'Redirect URL',
+    description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
+    type: 'string',
+    required: false,
+  },
 ];
 
 export const fcmConfig: IConfigCredentials[] = [

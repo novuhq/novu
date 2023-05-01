@@ -41,6 +41,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       requireTls: Schema.Types.Boolean,
       ignoreTls: Schema.Types.Boolean,
       tlsOptions: Schema.Types.Mixed,
+      redirectUrl: Schema.Types.String,
     },
 
     active: {
