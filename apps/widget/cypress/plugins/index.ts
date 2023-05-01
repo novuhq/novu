@@ -53,6 +53,8 @@ module.exports = (on, config) => {
 
           console.log('Await job services');
           while (
+            (await jobsService.queueService.queue.getWaitingCount()) ||
+            (await jobsService.queueService.queue.getActiveCount()) ||
             (await jobsService.jobQueue.queue.getWaitingCount()) ||
             (await jobsService.jobQueue.queue.getActiveCount())
           ) {

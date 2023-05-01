@@ -1,55 +1,110 @@
+import { ChannelCTATypeEnum, ChannelTypeEnum } from '@novu/shared';
+
 describe('Notifications List', function () {
   beforeEach(function () {
     cy.intercept('**/notifications/feed?page=0').as('getNotificationsFirstPage');
     cy.intercept('**/notifications/feed?page=1').as('getSecondPage');
     cy.intercept('GET', '**/notifications/unseen?**limit=100**').as('unseenCountRequest');
 
-    cy.initializeSession()
+    cy.initializeSession({
+      partialTemplate: {
+        steps: [
+          {
+            type: ChannelTypeEnum.IN_APP,
+            content: 'Test content for <b>{{firstName}}</b>',
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: '/cypress/test-shell/example/test?test-param=true',
+              },
+            },
+            variables: [
+              {
+                defaultValue: '',
+                name: 'firstName',
+                required: false,
+                type: 'String',
+              },
+            ],
+          },
+        ],
+      },
+    })
       .as('session')
       .then((session: any) => {
         cy.wait(500);
 
-        cy.task('createNotifications', {
-          identifier: session.templates[0].triggers[0].identifier,
-          token: session.token,
-          subscriberId: session.subscriber.subscriberId,
-          count: 1,
-          organizationId: session.organization._id,
-          templateId: session.templates[0]._id,
-        });
+        cy.task(
+          'createNotifications',
+          {
+            identifier: session.templates[0].triggers[0].identifier,
+            token: session.token,
+            subscriberId: session.subscriber.subscriberId,
+            count: 1,
+            organizationId: session.organization._id,
+            templateId: session.templates[0]._id,
+          },
+          {
+            timeout: 60000 * 2,
+          }
+        );
 
-        cy.task('createNotifications', {
-          identifier: session.templates[0].triggers[0].identifier,
-          token: session.token,
-          subscriberId: session.subscriber.subscriberId,
-          count: 1,
-          organizationId: session.organization._id,
-          templateId: session.templates[0]._id,
-        });
-        cy.task('createNotifications', {
-          identifier: session.templates[0].triggers[0].identifier,
-          token: session.token,
-          subscriberId: session.subscriber.subscriberId,
-          count: 1,
-          organizationId: session.organization._id,
-          templateId: session.templates[0]._id,
-        });
-        cy.task('createNotifications', {
-          identifier: session.templates[0].triggers[0].identifier,
-          token: session.token,
-          subscriberId: session.subscriber.subscriberId,
-          count: 1,
-          organizationId: session.organization._id,
-          templateId: session.templates[0]._id,
-        });
-        cy.task('createNotifications', {
-          identifier: session.templates[0].triggers[0].identifier,
-          token: session.token,
-          subscriberId: session.subscriber.subscriberId,
-          count: 1,
-          organizationId: session.organization._id,
-          templateId: session.templates[0]._id,
-        });
+        cy.task(
+          'createNotifications',
+          {
+            identifier: session.templates[0].triggers[0].identifier,
+            token: session.token,
+            subscriberId: session.subscriber.subscriberId,
+            count: 1,
+            organizationId: session.organization._id,
+            templateId: session.templates[0]._id,
+          },
+          {
+            timeout: 60000 * 2,
+          }
+        );
+        cy.task(
+          'createNotifications',
+          {
+            identifier: session.templates[0].triggers[0].identifier,
+            token: session.token,
+            subscriberId: session.subscriber.subscriberId,
+            count: 1,
+            organizationId: session.organization._id,
+            templateId: session.templates[0]._id,
+          },
+          {
+            timeout: 60000 * 2,
+          }
+        );
+        cy.task(
+          'createNotifications',
+          {
+            identifier: session.templates[0].triggers[0].identifier,
+            token: session.token,
+            subscriberId: session.subscriber.subscriberId,
+            count: 1,
+            organizationId: session.organization._id,
+            templateId: session.templates[0]._id,
+          },
+          {
+            timeout: 60000 * 2,
+          }
+        );
+        cy.task(
+          'createNotifications',
+          {
+            identifier: session.templates[0].triggers[0].identifier,
+            token: session.token,
+            subscriberId: session.subscriber.subscriberId,
+            count: 1,
+            organizationId: session.organization._id,
+            templateId: session.templates[0]._id,
+          },
+          {
+            timeout: 60000 * 2,
+          }
+        );
 
         cy.wait(1000);
       });
