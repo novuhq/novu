@@ -10,8 +10,13 @@
 // ***********************************************************
 
 import { DalService, EnvironmentEntity } from '@novu/dal';
-import { EnvironmentService, NotificationsService, NotificationTemplateService, UserSession } from '@novu/testing';
-import { JobsService } from '@novu/testing/src';
+import {
+  EnvironmentService,
+  NotificationsService,
+  NotificationTemplateService,
+  UserSession,
+  JobsService,
+} from '@novu/testing';
 
 const jobsService = new JobsService();
 /**
@@ -48,20 +53,7 @@ module.exports = (on, config) => {
         });
 
         if (organizationId) {
-          console.log('awaiting running jobs for ' + i);
-          await awaitRunningJobs({ serverUrl: config.env.API_URL, templateId, organizationId });
-
-          console.log('Await job services');
-          while (
-            (await jobsService.queueService.queue.getWaitingCount()) ||
-            (await jobsService.queueService.queue.getActiveCount()) ||
-            (await jobsService.jobQueue.queue.getWaitingCount()) ||
-            (await jobsService.jobQueue.queue.getActiveCount())
-          ) {
-            await new Promise((resolve) => setTimeout(resolve, 50));
-          }
-
-          console.log('finished await job services for ' + i);
+          await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
         }
       }
       console.log('Finished creating');
@@ -125,12 +117,6 @@ module.exports = (on, config) => {
       };
     },
 
-    async awaitRunningJobs({ templateId, organizationId }: { templateId: string; organizationId: string }) {
-      await awaitRunningJobs({ serverUrl: config.env.API_URL, templateId, organizationId });
-
-      return true;
-    },
-
     async enableEnvironmentHmac({
       environment,
     }: {
@@ -141,16 +127,3 @@ module.exports = (on, config) => {
     },
   });
 };
-
-async function awaitRunningJobs({
-  serverUrl,
-  templateId,
-  organizationId,
-}: {
-  serverUrl: string;
-  templateId: string;
-  organizationId: string;
-}) {
-  const session = new UserSession(serverUrl);
-  await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
-}
