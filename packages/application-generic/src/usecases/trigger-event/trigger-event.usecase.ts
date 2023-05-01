@@ -53,6 +53,7 @@ export class TriggerEvent {
     private logger: PinoLogger
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
     const mark = this.performanceService.buildTriggerEventMark(
       command.identifier,
@@ -102,11 +103,6 @@ export class TriggerEvent {
       template
     );
 
-    const subscribersJobs: Omit<
-      JobEntity,
-      '_id' | 'createdAt' | 'updatedAt'
-    >[][] = [];
-
     // We might have a single actor for every trigger, so we only need to check for it once
     let actorProcessed;
     if (actor) {
@@ -152,17 +148,13 @@ export class TriggerEvent {
           createNotificationJobsCommand
         );
 
-        subscribersJobs.push(notificationJobs);
+        const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
+          environmentId: command.environmentId,
+          jobs: notificationJobs,
+          organizationId: command.organizationId,
+        });
+        await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
       }
-    }
-
-    for (const subscriberJobs of subscribersJobs) {
-      const storeSubscriberJobsCommand = StoreSubscriberJobsCommand.create({
-        environmentId: command.environmentId,
-        jobs: subscriberJobs,
-        organizationId: command.organizationId,
-      });
-      await this.storeSubscriberJobs.execute(storeSubscriberJobsCommand);
     }
 
     this.performanceService.setEnd(mark);

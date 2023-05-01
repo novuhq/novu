@@ -4,6 +4,7 @@ export enum DetailEnum {
   REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION = 'Inbound mail - Missing MX Record configuration',
   REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION = 'Inbound mail - Missing MX route domain configuration',
   CHAT_WEBHOOK_URL_MISSING = 'Webhook URL for the chat channel is missing',
+  CHAT_ALL_CHANNELS_FAILED = 'All chat channels failed to send the message',
   STEP_CREATED = 'Step created',
   STEP_QUEUED = 'Step queued',
   STEP_DELAYED = 'Step delayed',
