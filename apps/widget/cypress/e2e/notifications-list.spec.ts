@@ -13,7 +13,40 @@ describe('Notifications List', function () {
           identifier: session.templates[0].triggers[0].identifier,
           token: session.token,
           subscriberId: session.subscriber.subscriberId,
-          count: 5,
+          count: 1,
+          organizationId: session.organization._id,
+          templateId: session.templates[0]._id,
+        });
+
+        cy.task('createNotifications', {
+          identifier: session.templates[0].triggers[0].identifier,
+          token: session.token,
+          subscriberId: session.subscriber.subscriberId,
+          count: 1,
+          organizationId: session.organization._id,
+          templateId: session.templates[0]._id,
+        });
+        cy.task('createNotifications', {
+          identifier: session.templates[0].triggers[0].identifier,
+          token: session.token,
+          subscriberId: session.subscriber.subscriberId,
+          count: 1,
+          organizationId: session.organization._id,
+          templateId: session.templates[0]._id,
+        });
+        cy.task('createNotifications', {
+          identifier: session.templates[0].triggers[0].identifier,
+          token: session.token,
+          subscriberId: session.subscriber.subscriberId,
+          count: 1,
+          organizationId: session.organization._id,
+          templateId: session.templates[0]._id,
+        });
+        cy.task('createNotifications', {
+          identifier: session.templates[0].triggers[0].identifier,
+          token: session.token,
+          subscriberId: session.subscriber.subscriberId,
+          count: 1,
           organizationId: session.organization._id,
           templateId: session.templates[0]._id,
         });
