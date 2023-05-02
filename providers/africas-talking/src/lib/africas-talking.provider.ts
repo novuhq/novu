@@ -7,7 +7,7 @@ import {
 import AfricasTalking from 'africasTalking';
 
 export class AfricasTalkingSmsProvider implements ISmsProvider {
-  id: 'africastalking';
+  id: 'africas-talking';
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private africasTalkingClient: AfricasTalking;
 

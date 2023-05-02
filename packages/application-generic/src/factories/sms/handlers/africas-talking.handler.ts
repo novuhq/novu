@@ -5,7 +5,7 @@ import { BaseSmsHandler } from './base.handler';
 
 export class AfricasTalkingSmsHandler extends BaseSmsHandler {
   constructor() {
-    super('africastalking', ChannelTypeEnum.SMS);
+    super('africas-talking', ChannelTypeEnum.SMS);
   }
 
   buildProvider(credentials: ICredentials) {

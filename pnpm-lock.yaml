@@ -1395,6 +1395,7 @@ importers:
       '@nestjs/common': '>=9.3.x'
       '@nestjs/swagger': '>=6.3.x'
       '@nestjs/testing': '>=9.3.x'
+      '@novu/africas-talking': ^0.14.0
       '@novu/apns': ^0.14.0
       '@novu/burst-sms': ^0.14.0
       '@novu/clickatell': ^0.14.0
@@ -2000,7 +2001,7 @@ importers:
   providers/africas-talking:
     specifiers:
       '@istanbuljs/nyc-config-typescript': ~1.0.1
-      '@novu/stateless': ^0.13.0
+      '@novu/stateless': ^0.14.0
       '@types/jest': ~27.5.2
       africastalking: ^0.6.2
       cspell: ~6.19.2
