@@ -2,7 +2,7 @@ import { defineConfig } from 'cypress';
 
 export default defineConfig({
   chromeWebSecurity: false,
-  video: true,
+  video: false,
   projectId: 'kedzap',
   env: {
     NODE_ENV: 'test',
