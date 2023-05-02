@@ -51,12 +51,11 @@ module.exports = (on, config) => {
         await service.triggerEvent(triggerIdentifier, subscriberId, {
           firstName: 'John' + num,
         });
-
-        if (organizationId) {
-          await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
-        }
       }
-      console.log('Finished creating');
+
+      if (organizationId) {
+        await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
+      }
 
       return 'ok';
     },
