@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, IActor, ActorTypeEnum } from '@novu/shared';
+import { ActorTypeEnum, ChannelTypeEnum } from '@novu/shared';
 import {
   AnalyticsService,
   buildFeedKey,
   buildSubscriberKey,
-  CachedQuery,
   CachedEntity,
+  CachedQuery,
 } from '@novu/application-generic';
 import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
@@ -30,7 +30,7 @@ export class GetNotificationsFeed {
       }),
   })
   async execute(command: GetNotificationsFeedCommand): Promise<MessagesResponseDto> {
-    const LIMIT = 10;
+    const COUNT_LIMIT = 1000;
 
     const subscriber = await this.fetchSubscriber({
       _environmentId: command.environmentId,
@@ -51,8 +51,8 @@ export class GetNotificationsFeed {
       ChannelTypeEnum.IN_APP,
       { feedId: command.feedId, seen: command.query.seen, read: command.query.read },
       {
-        limit: LIMIT,
-        skip: command.page * LIMIT,
+        limit: command.limit,
+        skip: command.page * command.limit,
       }
     );
 
@@ -70,7 +70,7 @@ export class GetNotificationsFeed {
       }
     }
 
-    const totalCount = await this.messageRepository.getTotalCount(
+    const totalCount = await this.messageRepository.getCount(
       command.environmentId,
       subscriber._id,
       ChannelTypeEnum.IN_APP,
@@ -78,15 +78,32 @@ export class GetNotificationsFeed {
         feedId: command.feedId,
         seen: command.query.seen,
         read: command.query.read,
-      }
+      },
+      { limit: COUNT_LIMIT }
+      /*
+       * todo NV-2161 in version 0.16
+       *  update option as below,
+       *  update below:  hasMore = feed.length < totalCount
+       *  remove totalCount
+       * { skip: command.page * command.limit, limit: command.limit + 1 }
+       */
     );
+
+    const hasMore = this.getHasMore(command.page, command.limit, feed, totalCount);
 
     return {
       data: feed || [],
       totalCount: totalCount || 0,
-      pageSize: LIMIT,
+      hasMore,
+      pageSize: command.limit,
       page: command.page,
     };
+  }
+
+  private getHasMore(page: number, LIMIT: number, feed, totalCount) {
+    const currentPaginationTotal = page * LIMIT + feed.length;
+
+    return currentPaginationTotal < totalCount;
   }
 
   @CachedEntity({

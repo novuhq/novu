@@ -7,6 +7,7 @@ export interface IParamObject {
 
 export interface IPaginatedResponse<T = unknown> {
   data: T[];
+  hasMore: boolean;
   totalCount: number;
   pageSize: number;
   page: number;

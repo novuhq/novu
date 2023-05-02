@@ -10,10 +10,13 @@
 # supported CodeQL languages.
 #
 name: "CodeQL"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "next" ]
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "main", "next" ]
