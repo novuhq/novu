@@ -118,7 +118,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean,
-    // todo update DefaultValuePipe to 100 in version 0.16
+    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
     @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
@@ -141,7 +141,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('read') read: boolean,
-    // todo update DefaultValuePipe to 100 in version 0.16
+    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
     @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
@@ -163,7 +163,7 @@ export class WidgetsController {
   async getCount(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query() query: GetCountQuery,
-    // todo update DefaultValuePipe to 100 in version 0.16
+    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
     @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(query.feedIdentifier);
