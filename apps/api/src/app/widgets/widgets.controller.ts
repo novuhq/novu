@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
@@ -47,6 +48,8 @@ import { MarkEnum, MarkMessageAsCommand } from './usecases/mark-message-as/mark-
 import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
 import { MarkAllMessagesAsCommand } from './usecases/mark-all-messages-as/mark-all-messages-as.command';
 import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-messages-as.usecase';
+import { GetNotificationsFeedDto } from './dtos/get-notifications-feed-request.dto';
+import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -89,19 +92,21 @@ export class WidgetsController {
   })
   async getNotificationsFeed(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Query('page') page: number,
-    @Query('feedIdentifier') feedId: string[] | string,
-    @Query() query: StoreQuery
+    @Query() query: GetNotificationsFeedDto
   ) {
-    const feedsQuery = this.toArray(feedId);
+    let feedsQuery: string[] | undefined;
+    if (query.feedIdentifier) {
+      feedsQuery = Array.isArray(query.feedIdentifier) ? query.feedIdentifier : [query.feedIdentifier];
+    }
 
     const command = GetNotificationsFeedCommand.create({
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      page,
+      page: query.page != null ? parseInt(query.page) : 0,
       feedId: feedsQuery,
-      query,
+      query: { seen: query.seen, read: query.read },
+      limit: query.limit != null ? parseInt(query.limit) : 10,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);
@@ -112,7 +117,9 @@ export class WidgetsController {
   async getUnseenCount(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('seen') seen: boolean
+    @Query('seen') seen: boolean,
+    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
+    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
 
@@ -122,6 +129,7 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       feedId: feedsQuery,
       seen,
+      limit,
     });
 
     return await this.getFeedCountUsecase.execute(command);
@@ -132,7 +140,9 @@ export class WidgetsController {
   async getUnreadCount(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('read') read: boolean
+    @Query('read') read: boolean,
+    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
+    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
 
@@ -142,6 +152,7 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       feedId: feedsQuery,
       read,
+      limit,
     });
 
     return await this.getFeedCountUsecase.execute(command);
@@ -151,12 +162,14 @@ export class WidgetsController {
   @Get('/notifications/count')
   async getCount(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Query() query: GetCountQuery
+    @Query() query: GetCountQuery,
+    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
+    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(query.feedIdentifier);
 
     if (query.seen === undefined && query.read === undefined) {
-      query.seen = true;
+      query.seen = false;
     }
 
     const command = GetFeedCountCommand.create({
@@ -166,6 +179,7 @@ export class WidgetsController {
       feedId: feedsQuery,
       seen: query.seen,
       read: query.read,
+      limit: limit,
     });
 
     return await this.getFeedCountUsecase.execute(command);

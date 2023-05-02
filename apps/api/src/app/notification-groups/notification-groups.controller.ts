@@ -2,15 +2,15 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
-  Delete,
   Get,
-  Param,
-  Patch,
   Post,
+  Patch,
+  Delete,
+  Param,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { IJwtPayload } from '@novu/shared';
 import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -19,7 +19,7 @@ import { CreateNotificationGroupRequestDto } from './dtos/create-notification-gr
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { GetNotificationGroups } from './usecases/get-notification-groups/get-notification-groups.usecase';
 import { GetNotificationGroupsCommand } from './usecases/get-notification-groups/get-notification-groups.command';
-import { ApiCreatedResponse, ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationGroupResponseDto } from './dtos/notification-group-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetNotificationGroup } from './usecases/get-notification-group/get-notification-group.usecase';
@@ -29,6 +29,7 @@ import { DeleteNotificationGroupCommand } from './usecases/delete-notification-g
 import { DeleteNotificationGroupResponseDto } from './dtos/delete-notification-group-response.dto';
 import { UpdateNotificationGroupCommand } from './usecases/update-notification-group/update-notification-group.command';
 import { UpdateNotificationGroup } from './usecases/update-notification-group/update-notification-group.usecase';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -45,9 +46,7 @@ export class NotificationGroupsController {
 
   @Post('')
   @ExternalApiAccessible()
-  @ApiCreatedResponse({
-    type: NotificationGroupResponseDto,
-  })
+  @ApiResponse(NotificationGroupResponseDto, 201)
   @ApiOperation({
     summary: 'Create notification group',
   })
@@ -67,9 +66,7 @@ export class NotificationGroupsController {
 
   @Get('')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: [NotificationGroupResponseDto],
-  })
+  @ApiResponse(NotificationGroupResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get notification groups',
   })
@@ -85,9 +82,7 @@ export class NotificationGroupsController {
 
   @Get('/:id')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: [NotificationGroupResponseDto],
-  })
+  @ApiResponse(NotificationGroupResponseDto, 200)
   @ApiOperation({
     summary: 'Get notification group',
   })
@@ -107,9 +102,7 @@ export class NotificationGroupsController {
 
   @Patch('/:id')
   @ExternalApiAccessible()
-  @ApiCreatedResponse({
-    type: NotificationGroupResponseDto,
-  })
+  @ApiResponse(NotificationGroupResponseDto, 200)
   @ApiOperation({
     summary: 'Update notification group',
   })
@@ -131,9 +124,7 @@ export class NotificationGroupsController {
 
   @Delete('/:id')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: DeleteNotificationGroupResponseDto,
-  })
+  @ApiResponse(DeleteNotificationGroupResponseDto, 200)
   @ApiOperation({
     summary: 'Delete notification group',
   })

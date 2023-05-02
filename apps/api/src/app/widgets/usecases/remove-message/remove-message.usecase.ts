@@ -83,9 +83,15 @@ export class RemoveMessage {
 
   private async updateServices(command: RemoveMessageCommand, subscriber, message, marked: string) {
     const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-    const count = await this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {
-      [marked]: false,
-    });
+    const count = await this.messageRepository.getCount(
+      command.environmentId,
+      subscriber._id,
+      ChannelTypeEnum.IN_APP,
+      {
+        [marked]: false,
+      },
+      { limit: 1000 }
+    );
 
     this.updateSocketCount(subscriber, count, marked);
 
