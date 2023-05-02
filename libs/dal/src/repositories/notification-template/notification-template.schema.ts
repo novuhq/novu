@@ -123,6 +123,14 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
           updateMode: {
             type: Schema.Types.Boolean,
           },
+          timed: {
+            startDate: Schema.Types.Date,
+            pattern: Schema.Types.String,
+            at: Schema.Types.String,
+            every: Schema.Types.Number,
+            dayOfWeek: [Schema.Types.String],
+            day: [Schema.Types.Number],
+          },
         },
       },
     ],

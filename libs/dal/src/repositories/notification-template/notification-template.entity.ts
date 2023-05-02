@@ -8,6 +8,7 @@ import {
   IPreferenceChannels,
   DelayTypeEnum,
   TemplateVariableTypeEnum,
+  DaysEnum,
 } from '@novu/shared';
 
 import { MessageTemplateEntity } from '../message-template';
@@ -117,6 +118,14 @@ export class NotificationStepEntity {
     backoffUnit?: DigestUnitEnum;
     backoffAmount?: number;
     updateMode?: boolean;
+    timed?: {
+      startDate: Date;
+      pattern: 'daily' | 'weekly' | 'monthly';
+      at: string;
+      every: number;
+      dayOfWeek?: DaysEnum[];
+      day?: number[];
+    };
   };
 
   shouldStopOnFail?: boolean;

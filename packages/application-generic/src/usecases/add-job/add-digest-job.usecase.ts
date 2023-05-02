@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository } from '@novu/dal';
 import {
+  DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   StepTypeEnum,
@@ -87,6 +88,10 @@ export class AddDigestJob {
     // We delayed the job and created the digest
     if (matched === 0 && modified === 1) {
       const { digest } = job;
+
+      if (job.digest.type === DigestTypeEnum.TIMED) {
+        return 0;
+      }
 
       if (!digest?.amount || !digest?.unit) {
         throw new ApiException(

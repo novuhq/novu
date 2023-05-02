@@ -1,4 +1,4 @@
-import { DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
+import { DigestUnitEnum, DelayTypeEnum, DigestTypeEnum } from '@novu/shared';
 
 import { Logger } from '@nestjs/common';
 import { ApiException } from '../../utils/exceptions';
@@ -28,6 +28,15 @@ export class CalculateDelayService {
       }
 
       return delay;
+    }
+
+    if (step.metadata.type === DigestTypeEnum.TIMED) {
+      const timedObject = step.metadata.timed;
+      if (!timedObject) {
+        throw new ApiException(`Time information not found`);
+      }
+
+      return 0;
     }
 
     if (this.checkValidDelayOverride(overrides)) {

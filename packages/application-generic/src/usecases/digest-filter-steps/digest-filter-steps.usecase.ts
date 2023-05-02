@@ -29,6 +29,7 @@ export class DigestFilterSteps {
     const actions = {
       [DigestTypeEnum.BACKOFF]: this.filterStepsBackoff,
       [DigestTypeEnum.REGULAR]: this.filterStepsRegular,
+      [DigestTypeEnum.TIMED]: this.filterStepsRegular,
     };
 
     const action = actions[command.type];
