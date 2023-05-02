@@ -10,7 +10,6 @@ import { createTemplateFromBluePrintId, getBlueprintTemplateById } from '../../.
 import { errorMessage } from '../../../utils/notifications';
 import { When } from '../../../components/utils/When';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { ActivePageEnum } from '../../../constants/editorEnums';
 
 export function BlueprintModal() {
   const theme = useMantineTheme();
@@ -20,10 +19,10 @@ export function BlueprintModal() {
     segment.track('Blueprint canceled', {
       blueprintId: localStorage.getItem('blueprintId'),
     });
-    localStorage.removeItem('blueprintId');
     navigate('/templates', {
       replace: true,
     });
+    localStorage.removeItem('blueprintId');
   };
 
   const { mutateAsync: updateOnBoardingStatus } = useMutation<
@@ -54,13 +53,13 @@ export function BlueprintModal() {
 
   const { mutate, isLoading: isCreating } = useMutation(createTemplateFromBluePrintId, {
     onSuccess: (template) => {
-      localStorage.removeItem('blueprintId');
       if (template) {
         disableOnboarding();
-        navigate(`/templates/edit/${template?._id}?page=${ActivePageEnum.WORKFLOW}`, {
+        navigate(`/templates/edit/${template?._id}`, {
           replace: true,
         });
       }
+      localStorage.removeItem('blueprintId');
     },
     onError: (err: any) => {
       if (err?.message) {

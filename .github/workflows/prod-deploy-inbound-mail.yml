@@ -67,6 +67,7 @@ jobs:
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
+      environment: Production
       service_name: inbound_mail
       terraform_workspace: novu-prod-eu
       docker_image: ghcr.io/novuhq/novu/inbound-mail-ee:${{ github.sha }}
@@ -78,6 +79,7 @@ jobs:
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
+      environment: Production
       service_name: inbound_mail
       terraform_workspace: novu-prod
       docker_image: ghcr.io/novuhq/novu/inbound-mail-ee:${{ github.sha }}

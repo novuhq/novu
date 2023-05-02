@@ -12,18 +12,19 @@ import {
 import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ApplyChange, ApplyChangeCommand } from '../change/usecases';
+import { ApplyChange, ApplyChangeCommand } from './usecases';
 import { GetChanges } from './usecases/get-changes/get-changes.usecase';
 import { GetChangesCommand } from './usecases/get-changes/get-changes.command';
 import { BulkApplyChange } from './usecases/bulk-apply-change/bulk-apply-change.usecase';
 import { BulkApplyChangeCommand } from './usecases/bulk-apply-change/bulk-apply-change.command';
 import { CountChanges } from './usecases/count-changes/count-changes.usecase';
 import { CountChangesCommand } from './usecases/count-changes/count-changes.command';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChangesResponseDto, ChangeResponseDto } from './dtos/change-response.dto';
 import { ChangesRequestDto } from './dtos/change-request.dto';
-
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ApiResponse } from '../shared/framework/response.decorator';
+import { DataNumberDto } from '../shared/dtos/data-wrapper-dto';
 
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -60,7 +61,7 @@ export class ChangesController {
 
   @Get('/count')
   @ApiOkResponse({
-    type: Number,
+    type: DataNumberDto,
   })
   @ApiOperation({
     summary: 'Get changes count',
@@ -77,9 +78,7 @@ export class ChangesController {
   }
 
   @Post('/bulk/apply')
-  @ApiCreatedResponse({
-    type: [ChangeResponseDto],
-  })
+  @ApiResponse(ChangeResponseDto, 201, true)
   @ApiOperation({
     summary: 'Apply changes',
   })
@@ -99,9 +98,7 @@ export class ChangesController {
   }
 
   @Post('/:changeId/apply')
-  @ApiCreatedResponse({
-    type: [ChangeResponseDto],
-  })
+  @ApiResponse(ChangeResponseDto, 201, true)
   @ApiOperation({
     summary: 'Apply change',
   })

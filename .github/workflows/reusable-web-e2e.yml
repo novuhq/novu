@@ -32,23 +32,15 @@ jobs:
 
       - uses: ./.github/actions/setup-project
         id: setup-project
+        with:
+          cypress: true
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
-          targets: lint
-          projects: '@novu/web'
+          targets: lint,build
+          projects: '@novu/web,@novu/api,@novu/worker'
 
       - uses: ./.github/actions/start-localstack
-
-      # Runs a single command using the runners shell
-      - name: Build
-        run: CI='' pnpm build:web
-
-      - name: Build API
-        run: CI='' pnpm build:api
-
-      - name: Build worker
-        run: CI='' pnpm build:worker
 
       - name: Start Client
         working-directory: apps/web
@@ -56,7 +48,7 @@ jobs:
           REACT_APP_API_URL: http://localhost:1336
           REACT_APP_WS_URL: http://localhost:1340
           REACT_APP_WEBHOOK_URL: http://localhost:1341
-        run: pnpm pnpm start:static:build &
+        run: pnpm start:static:build &
 
       - name: Start WS
         run: pnpm start:ws:test &
@@ -65,26 +57,24 @@ jobs:
         env:
           GITHUB_OAUTH_CLIENT_ID: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
           GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
+          NODE_ENV: "test"
+          PORT: "1336"
+          TZ: "UTC"
           GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
-        run: cd apps/api && pnpm start:test &
+        run: cd apps/api && pnpm start:build &
 
       - name: Start worker
-        run: cd apps/worker && pnpm start:test &
+        env:
+          NODE_ENV: "test"
+          PORT: 1342
+          TZ: "UTC"
+        run: cd apps/worker && pnpm start:prod &
 
       - name: Install wait-on plugin
         run: npm i -g wait-on
 
-      - name: Wait on API
-        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
-
-      - name: Wait on worker
-        run: wait-on --timeout=180000 http://localhost:1342/v1/health-check
-
-      - name: Wait on WS
-        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check
-
-      - name: Wait on WEB
-        run: wait-on --timeout=180000 http://localhost:4200
+      - name: Wait on Services
+        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check http://localhost:1342/v1/health-check http://localhost:1340/v1/health-check http://localhost:4200
 
       # run cypress install only when cache was not hit
       - name: Cypress install
@@ -92,8 +82,12 @@ jobs:
         working-directory: apps/web
         run: pnpm cypress install
 
+      - uses: browser-actions/setup-chrome@latest
+      - run: |
+          echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
+
       - name: Cypress run e2e
-        uses: cypress-io/github-action@v4
+        uses: cypress-io/github-action@v5
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -103,7 +97,7 @@ jobs:
           CYPRESS_IS_CI: true
         with:
           working-directory: apps/web
-          browser: chrome
+          browser: "${{ env.BROWSER_PATH }}"
           record: true
           parallel: true
           install: false

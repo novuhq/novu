@@ -128,6 +128,7 @@ export class SendMessageEmail extends SendMessageBase {
       command.overrides.email || {},
       command.overrides[integration?.providerId] || {}
     );
+
     let html;
     let subject = '';
     let content;
@@ -149,21 +150,6 @@ export class SendMessageEmail extends SendMessageBase {
       },
     };
 
-    try {
-      ({ html, content, subject } = await this.compileEmailTemplateUsecase.execute(
-        CompileEmailTemplateCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-          ...payload,
-        })
-      ));
-    } catch (e) {
-      await this.sendErrorHandlebars(command.job, e.message);
-
-      return;
-    }
-
     const messagePayload = Object.assign({}, command.payload);
     delete messagePayload.attachments;
 
@@ -174,7 +160,6 @@ export class SendMessageEmail extends SendMessageBase {
       _subscriberId: command._subscriberId,
       _templateId: notification._templateId,
       _messageTemplateId: emailChannel.template._id,
-      content: this.storeContent() ? content : null,
       subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
@@ -185,6 +170,49 @@ export class SendMessageEmail extends SendMessageBase {
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
     });
+
+    let replyToAddress: string | undefined;
+    if (command.step.replyCallback?.active) {
+      const replyTo = await this.getReplyTo(command, message._id);
+
+      if (replyTo) {
+        replyToAddress = replyTo;
+
+        if (payload.payload.step) {
+          payload.payload.step.reply_to_address = replyTo;
+        }
+      }
+    }
+
+    try {
+      ({ html, content, subject } = await this.compileEmailTemplateUsecase.execute(
+        CompileEmailTemplateCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          ...payload,
+        })
+      ));
+
+      if (this.storeContent()) {
+        await this.messageRepository.update(
+          {
+            _id: message._id,
+            _environmentId: command.environmentId,
+          },
+          {
+            $set: {
+              subject,
+              content,
+            },
+          }
+        );
+      }
+    } catch (e) {
+      await this.sendErrorHandlebars(command.job, e.message);
+
+      return;
+    }
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
@@ -217,17 +245,10 @@ export class SendMessageEmail extends SendMessageBase {
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
         id: message._id,
+        replyTo: replyToAddress,
       },
       command.overrides?.email || {}
     );
-
-    if (command.step.replyCallback?.active) {
-      const replyTo = await this.getReplyTo(command, message._id);
-
-      if (replyTo) {
-        mailData.replyTo = replyTo;
-      }
-    }
 
     if (command.overrides?.email?.replyTo) {
       mailData.replyTo = command.overrides?.email?.replyTo as string;

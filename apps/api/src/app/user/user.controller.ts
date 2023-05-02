@@ -7,7 +7,6 @@ import {
   UseGuards,
   UseInterceptors,
   Logger,
-  ExecutionContext,
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -23,6 +22,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ChangeProfileEmailDto } from './dtos/change-profile-email.dto';
 import { UpdateProfileEmail } from './usecases/update-profile-email/update-profile-email.usecase';
 import { UpdateProfileEmailCommand } from './usecases/update-profile-email/update-profile-email.command';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/users')
 @ApiTags('Users')
@@ -37,9 +37,7 @@ export class UsersController {
   ) {}
 
   @Get('/me')
-  @ApiOkResponse({
-    type: UserResponseDto,
-  })
+  @ApiResponse(UserResponseDto)
   @ApiOperation({
     summary: 'Get User',
   })
@@ -70,9 +68,7 @@ export class UsersController {
   }
 
   @Put('/onboarding')
-  @ApiOkResponse({
-    type: UserResponseDto,
-  })
+  @ApiResponse(UserResponseDto)
   @ApiOperation({
     summary: 'Update onboarding',
   })
