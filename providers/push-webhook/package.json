@@ -33,7 +33,7 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "@novu/stateless": "^0.13.0",
+    "@novu/stateless": "^0.14.0",
     "axios": "^1.3.5"
   },
   "devDependencies": {
