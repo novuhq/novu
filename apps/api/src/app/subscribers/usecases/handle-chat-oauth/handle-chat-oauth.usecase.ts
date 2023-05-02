@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { CreateSubscriber, CreateSubscriberCommand, decryptCredentials } from '@novu/application-generic';
 
-import { HandleCharOauthCommand } from './handle-char-oauth.command';
+import { HandleChatOauthCommand } from './handle-chat-oauth.command';
 import {
   IChannelCredentialsCommand,
   OAuthHandlerEnum,
@@ -14,7 +14,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ICredentialsDto } from '@novu/shared';
 
 @Injectable()
-export class HandleCharOauth {
+export class HandleChatOauth {
   readonly SLACK_ACCESS_URL = 'https://slack.com/api/oauth.v2.access';
   readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
 
@@ -25,17 +25,22 @@ export class HandleCharOauth {
     private createSubscriberUsecase: CreateSubscriber
   ) {}
 
-  async execute(command: HandleCharOauthCommand) {
+  async execute(command: HandleChatOauthCommand) {
     const { credentials: integrationCredentials } = await this.getIntegration(command);
 
     const webhookUrl = await this.getWebhook(command, integrationCredentials);
 
-    const environment = await this.environmentRepository.findById(command.environmentId);
+    const environment = await this.getEnvironment(command);
 
-    if (environment == null) {
-      throw new ApiException(`Environment ID: ${command.environmentId} not found`);
-    }
+    await this.createSubscriber(environment, command, webhookUrl);
 
+    const redirect = integrationCredentials.redirectUrl != null && integrationCredentials.redirectUrl != '';
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return { redirect, action: redirect ? integrationCredentials.redirectUrl! : this.SCRIPT_CLOSE_TAB };
+  }
+
+  private async createSubscriber(environment, command: HandleChatOauthCommand, webhookUrl) {
     await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
         organizationId: environment._organizationId,
@@ -56,14 +61,19 @@ export class HandleCharOauth {
         oauthHandler: OAuthHandlerEnum.NOVU,
       })
     );
-
-    const redirect = integrationCredentials.redirectUrl != null && integrationCredentials.redirectUrl != '';
-
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return { redirect, action: redirect ? integrationCredentials.redirectUrl! : this.SCRIPT_CLOSE_TAB };
   }
 
-  private async getWebhook(command: HandleCharOauthCommand, integrationCredentials: ICredentialsDto) {
+  private async getEnvironment(command: HandleChatOauthCommand) {
+    const environment = await this.environmentRepository.findById(command.environmentId);
+
+    if (environment == null) {
+      throw new ApiException(`Environment ID: ${command.environmentId} not found`);
+    }
+
+    return environment;
+  }
+
+  private async getWebhook(command: HandleChatOauthCommand, integrationCredentials: ICredentialsDto) {
     const redirectUri =
       process.env.API_ROOT_URL +
       `/v1/subscribers/${command.subscriberId}/${command.providerId}/${command.environmentId}`;
@@ -93,7 +103,7 @@ export class HandleCharOauth {
     return webhook;
   }
 
-  private async getIntegration(command: HandleCharOauthCommand) {
+  private async getIntegration(command: HandleChatOauthCommand) {
     const query: Partial<IntegrationEntity> & { _environmentId: string } = {
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.CHAT,
@@ -104,8 +114,8 @@ export class HandleCharOauth {
 
     if (integration == null) {
       throw new ApiException(
-        `Integration in environment ${command.environmentId} was not found, channel: ${ChannelTypeEnum.CHAT},
-         providerId: ${command.providerId}`
+        `Integration in environment ${command.environmentId} was not found, channel: ${ChannelTypeEnum.CHAT}, ` +
+          `providerId: ${command.providerId}`
       );
     }
 

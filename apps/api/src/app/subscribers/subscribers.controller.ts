@@ -67,8 +67,8 @@ import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 import { ApiResponse } from '../shared/framework/response.decorator';
-import { HandleCharOauth } from './usecases/handle-chat-oauth/handle-char-oauth.usecase';
-import { HandleCharOauthCommand } from './usecases/handle-chat-oauth/handle-char-oauth.command';
+import { HandleChatOauth } from './usecases/handle-chat-oauth/handle-chat-oauth.usecase';
+import { HandleChatOauthCommand } from './usecases/handle-chat-oauth/handle-chat-oauth.command';
 import { HandleChatOauthRequestDto } from './dtos/handle-chat-oauth.request.dto';
 
 @Controller('/subscribers')
@@ -88,7 +88,7 @@ export class SubscribersController {
     private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
-    private handleCharOauthUsecase: HandleCharOauth
+    private handleChatOauthUsecase: HandleChatOauth
   ) {}
 
   @Get('')
@@ -457,19 +457,18 @@ export class SubscribersController {
     summary: 'Handle chat OAuth',
   })
   async chatAccessOauth(
-    // @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Param('providerId') providerId: string,
+    @Param('providerId') providerId: ChatProviderIdEnum,
     @Param('environmentId') environmentId: string,
     @Query() query: HandleChatOauthRequestDto,
     @Res() res
   ): Promise<any> {
-    const data = await this.handleCharOauthUsecase.execute(
-      HandleCharOauthCommand.create({
+    const data = await this.handleChatOauthUsecase.execute(
+      HandleChatOauthCommand.create({
         providerCode: query.code,
         environmentId,
         subscriberId,
-        providerId: providerId as ChatProviderIdEnum,
+        providerId: providerId,
       })
     );
 
