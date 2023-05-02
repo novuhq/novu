@@ -91,3 +91,5 @@ Total events in digest:
   Not a digested template
 {{/if}}
 ```
+
+Note that if only one matching trigger activates a regular digest during its period, that single item will still come through as a digest with `step.total_count` as 1.

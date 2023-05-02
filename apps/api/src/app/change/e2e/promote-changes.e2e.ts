@@ -593,6 +593,41 @@ describe('Promote changes', () => {
 
       expect(prodVersion.isBlueprint).to.equal(true);
     });
+
+    it('should merge creation, and status changes to one change', async () => {
+      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+        name: 'test email template',
+        description: 'This is a test description',
+        tags: ['test-tag'],
+        notificationGroupId: session.notificationGroups[0]._id,
+        steps: [],
+      };
+
+      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+
+      const notificationTemplateId = body.data._id;
+
+      await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}/status`).send({ active: true });
+
+      await session.testAgent
+        .put(`/v1/notification-templates/${notificationTemplateId}/status`)
+        .send({ active: false });
+
+      const changes = await changeRepository.find(
+        {
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+          _parentId: { $exists: false, $eq: null },
+          enabled: false,
+        },
+        '',
+        {
+          sort: { createdAt: 1 },
+        }
+      );
+
+      expect(changes.length).to.eq(1);
+    });
   });
 
   describe('Layout changes', () => {
