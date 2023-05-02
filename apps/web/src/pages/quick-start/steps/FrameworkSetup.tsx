@@ -6,6 +6,7 @@ import { OnBoardingAnalyticsEnum, frameworkSetupTitle } from '../consts';
 import { Cards } from '../../../design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes.enum';
+import styled from '@emotion/styled';
 
 export function FrameworkSetup() {
   const segment = useSegment();
@@ -16,34 +17,45 @@ export function FrameworkSetup() {
 
   return (
     <QuickStartWrapper title={frameworkSetupTitle} goBackPath={ROUTES.QUICK_START_NOTIFICATION_CENTER}>
-      <Stack>
-        <Cards
-          cells={[
-            {
-              imagePath: `/static/images/frameworks/react.png`,
-              navigateTo: '/quickstart/notification-center/set-up/react',
-            },
-            {
-              imagePath: `/static/images/frameworks/angular.png`,
-              navigateTo: '/quickstart/notification-center/set-up/angular',
-            },
-            {
-              imagePath: `/static/images/frameworks/vue.png`,
-              navigateTo: '/quickstart/notification-center/set-up/vue',
-            },
-          ]}
-        />
-        <Group position="center">
+      <ChildrenWrapper>
+        <Stack>
           <Cards
             cells={[
               {
-                imagePath: `/static/images/frameworks/js.png`,
-                navigateTo: '/quickstart/notification-center/set-up/js',
+                imagePath: `/static/images/frameworks/react.png`,
+                navigateTo: '/quickstart/notification-center/set-up/react',
+              },
+              {
+                imagePath: `/static/images/frameworks/angular.png`,
+                navigateTo: '/quickstart/notification-center/set-up/angular',
+              },
+              {
+                imagePath: `/static/images/frameworks/vue.png`,
+                navigateTo: '/quickstart/notification-center/set-up/vue',
               },
             ]}
           />
-        </Group>
-      </Stack>
+          <Group position="center">
+            <Cards
+              cells={[
+                {
+                  imagePath: `/static/images/frameworks/js.png`,
+                  navigateTo: '/quickstart/notification-center/set-up/js',
+                },
+              ]}
+            />
+          </Group>
+        </Stack>
+      </ChildrenWrapper>
     </QuickStartWrapper>
   );
 }
+
+const ChildrenWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  height: 100%;
+  width: 100%;
+`;

@@ -105,7 +105,7 @@ export function QuickStartWrapper({
             </When>
           </Stack>
 
-          <ChildrenWrapper>{children}</ChildrenWrapper>
+          {children}
           <When truthy={faq}>
             <Faq />
           </When>
@@ -210,18 +210,6 @@ const PageWrapper = styled.div`
   min-height: 100%;
   display: flex;
   flex-direction: column;
-`;
-
-const ChildrenWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
 `;
 
 const GradientSpan = styled.span`

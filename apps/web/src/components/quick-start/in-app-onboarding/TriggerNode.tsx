@@ -76,12 +76,6 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
 
   const onboardingNotificationTemplate = templates.find((template) => template.name.includes(notificationTemplateName));
 
-  useEffect(() => {
-    if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading && !onboardingNotificationTemplate) {
-      createOnBoardingTemplate();
-    }
-  }, [templates, onboardingNotificationTemplate]);
-
   async function createOnBoardingTemplate() {
     const payloadToCreate = {
       notificationGroupId: groups[0]._id,
@@ -102,8 +96,14 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
       ],
     };
 
-    return await createNotificationTemplate(payloadToCreate as unknown as ICreateNotificationTemplateDto);
+    await createNotificationTemplate(payloadToCreate as unknown as ICreateNotificationTemplateDto);
   }
+
+  useEffect(() => {
+    if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading && !onboardingNotificationTemplate) {
+      createOnBoardingTemplate();
+    }
+  }, [templates, onboardingNotificationTemplate]);
 
   async function handleRunTrigger() {
     setOpened(false);
