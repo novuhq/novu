@@ -18,6 +18,7 @@ import {
 } from '../create-execution-details';
 import { QueueService } from '../../services';
 import { LogDecorator } from '../../logging';
+import { InstrumentUsecase } from '../../instrumentation';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -33,6 +34,7 @@ export class AddJob {
     private addDelayJob: AddDelayJob
   ) {}
 
+  @InstrumentUsecase()
   @LogDecorator()
   public async execute(command: AddJobCommand): Promise<void> {
     Logger.verbose('Getting Job');
