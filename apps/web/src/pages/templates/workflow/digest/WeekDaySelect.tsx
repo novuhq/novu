@@ -1,7 +1,7 @@
 import { Group, UnstyledButton } from '@mantine/core';
 import { DaysEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
-import { colors } from '../../../design-system';
+import { colors } from '../../../../design-system';
 
 const Day = ({ last, label, value, onClick, active, disabled = false }) => {
   return (
@@ -11,7 +11,7 @@ const Day = ({ last, label, value, onClick, active, disabled = false }) => {
       }}
       style={{
         borderRight: last ? undefined : `1px solid ${colors.B30}`,
-        padding: '7px 14px',
+        padding: '8px',
         textAlign: 'center',
         background: active ? colors.B60 : undefined,
         color: active ? colors.white : colors.B80,

@@ -1,22 +1,17 @@
-import { Accordion, Grid, Group } from '@mantine/core';
+import { Accordion, Group } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
-import styled from '@emotion/styled';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
-import { colors, Input, SegmentedControl, Select, Switch } from '../../../design-system';
+import { colors, Input, SegmentedControl, Select } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../hooks';
-import { IntervalRadios } from './IntervalRadios';
-import { LabelWithTooltip } from './LabelWithTooltip';
-import { WeekDaySelect } from './WeekDaySelect';
-import { DaySelect } from './DaySelect';
+import { WeekDaySelect } from './digest/WeekDaySelect';
+import { DaySelect } from './digest/DaySelect';
 import { Bell, Digest, Timer } from '../../../design-system/icons';
-
-const StyledSwitch = styled(Switch)`
-  max-width: 100% !important;
-  margin-top: 15px;
-`;
+import { TypeSegmented } from './digest/TypeSegment';
+import { IntervalSelect } from './digest/IntervalSelect';
+import { BackOffFields } from './digest/BackOffFields';
 
 const convertUnitToLabel = (unit: DigestUnitEnum) => {
   switch (unit) {
@@ -38,7 +33,7 @@ const convertUnitToLabel = (unit: DigestUnitEnum) => {
 export const DigestMetadata = ({ control, index }) => {
   const { readonly } = useEnvController();
   const {
-    formState: { errors, isSubmitted, isDirty },
+    formState: { errors, isSubmitted },
     watch,
     trigger,
   } = useFormContext();
@@ -135,7 +130,7 @@ export const DigestMetadata = ({ control, index }) => {
               name={`steps.${index}.metadata.type`}
               render={({ field }) => {
                 return (
-                  <SegmentedControl
+                  <TypeSegmented
                     {...field}
                     sx={{
                       maxWidth: '100% !important',
@@ -144,9 +139,8 @@ export const DigestMetadata = ({ control, index }) => {
                     fullWidth
                     disabled={readonly}
                     data={[
-                      { value: DigestTypeEnum.REGULAR, label: 'Regular' },
-                      { value: DigestTypeEnum.BACKOFF, label: 'Backoff' },
-                      { value: DigestTypeEnum.TIMED, label: 'Scheduled' },
+                      { value: DigestTypeEnum.REGULAR, label: 'Started on an event' },
+                      { value: DigestTypeEnum.TIMED, label: 'Scheduled send' },
                     ]}
                     onChange={async (segmentValue) => {
                       field.onChange(segmentValue);
@@ -180,6 +174,8 @@ export const DigestMetadata = ({ control, index }) => {
                         fullWidth
                         disabled={readonly}
                         data={[
+                          { value: DigestUnitEnum.MINUTES, label: 'Min' },
+                          { value: DigestUnitEnum.HOURS, label: 'Hour' },
                           { value: DigestUnitEnum.DAYS, label: 'Daily' },
                           { value: DigestUnitEnum.WEEKS, label: 'Weekly' },
                           { value: DigestUnitEnum.MONTHS, label: 'Monthly' },
@@ -296,153 +292,51 @@ export const DigestMetadata = ({ control, index }) => {
               </When>
               <When truthy={type !== DigestTypeEnum.TIMED}>
                 <div data-test-id="digest-step-settings-interval">
-                  <LabelWithTooltip
-                    label="Time Interval"
-                    tooltip="Once triggered, for how long the digest should collect events"
-                  />
-                  <Grid
-                    sx={{
-                      marginBottom: '2px',
-                    }}
-                  >
-                    <Grid.Col span={4}>
-                      <Controller
-                        control={control}
-                        name={`steps.${index}.metadata.amount`}
-                        defaultValue=""
-                        render={({ field, fieldState }) => {
-                          return (
-                            <Input
-                              {...field}
-                              value={field.value || ''}
-                              error={showErrors && fieldState.error?.message}
-                              min={0}
-                              max={100}
-                              type="number"
-                              data-test-id="time-amount"
-                              placeholder="0"
-                              disabled={readonly}
-                              styles={(theme) => ({
-                                ...inputStyles(theme),
-                                input: {
-                                  textAlign: 'center',
-                                  ...inputStyles(theme).input,
-                                },
-                              })}
-                            />
-                          );
-                        }}
-                      />
-                    </Grid.Col>
-                    <Grid.Col span={8}>
-                      <IntervalRadios control={control} name={`steps.${index}.metadata.unit`} showErrors={showErrors} />
-                    </Grid.Col>
-                  </Grid>
-                </div>
-                <When truthy={type === DigestTypeEnum.BACKOFF}>
-                  <LabelWithTooltip
-                    label="Backoff Time Interval"
-                    tooltip="A digest will only be created if a message was previously sent in this time interval"
-                  />
-                  <Grid
-                    sx={{
-                      marginBottom: '5px',
-                    }}
-                  >
-                    <Grid.Col span={4}>
-                      <Controller
-                        control={control}
-                        name={`steps.${index}.metadata.backoffAmount`}
-                        defaultValue=""
-                        render={({ field, fieldState }) => {
-                          return (
-                            <Input
-                              {...field}
-                              value={field.value || ''}
-                              error={showErrors && fieldState.error?.message}
-                              min={0}
-                              max={100}
-                              type="number"
-                              data-test-id="backoff-amount"
-                              placeholder="0"
-                              required
-                              disabled={readonly}
-                              styles={(theme) => ({
-                                ...inputStyles(theme),
-                                input: {
-                                  textAlign: 'center',
-                                  ...inputStyles(theme).input,
-                                },
-                              })}
-                            />
-                          );
-                        }}
-                      />
-                    </Grid.Col>
-                    <Grid.Col span={8}>
-                      <IntervalRadios
-                        control={control}
-                        name={`steps.${index}.metadata.backoffUnit`}
-                        testId="backoff-unit"
-                        showErrors={showErrors}
-                      />
-                    </Grid.Col>
-                  </Grid>
-                </When>
-                <When truthy={false}>
-                  <div
-                    style={{
-                      marginBottom: '15px',
-                    }}
-                  >
+                  <Group spacing={8} sx={{ color: colors.B60 }}>
+                    <span>digest events for</span>
                     <Controller
                       control={control}
-                      name={`steps.${index}.metadata.updateMode`}
-                      defaultValue={false}
-                      render={({ field: { value, ...field } }) => {
+                      name={`steps.${index}.metadata.amount`}
+                      defaultValue=""
+                      render={({ field, fieldState }) => {
                         return (
-                          <StyledSwitch
+                          <Input
                             {...field}
-                            data-test-id="updateMode"
+                            value={field.value || ''}
+                            error={showErrors && fieldState.error?.message}
+                            min={0}
+                            max={100}
+                            type="number"
+                            data-test-id="time-amount"
+                            placeholder="0"
                             disabled={readonly}
-                            checked={value}
-                            label="Update in app notifications"
+                            styles={(theme) => ({
+                              ...inputStyles(theme),
+                              input: {
+                                textAlign: 'center',
+                                ...inputStyles(theme).input,
+                                minHeight: '30px',
+                                margin: 0,
+                                height: 30,
+                                lineHeight: '32px',
+                              },
+                            })}
                           />
                         );
                       }}
                     />
-                  </div>
-                </When>
-                <div
-                  style={{
-                    marginBottom: '15px',
-                  }}
-                >
-                  <Controller
-                    control={control}
-                    name={`steps.${index}.metadata.digestKey`}
-                    defaultValue=""
-                    render={({ field, fieldState }) => {
-                      return (
-                        <Input
-                          {...field}
-                          value={field.value || ''}
-                          label={
-                            <LabelWithTooltip
-                              label="Digest Key (Optional)"
-                              tooltip="Used to group messages using this payload key, by default only subscriberId is used"
-                            />
-                          }
-                          placeholder="For example: post_id"
-                          error={fieldState.error?.message}
-                          type="text"
-                          data-test-id="batch-key"
-                          disabled={readonly}
-                        />
-                      );
-                    }}
-                  />
+                    <div
+                      style={{
+                        width: '90px',
+                        height: 30,
+                      }}
+                    >
+                      <IntervalSelect control={control} name={`steps.${index}.metadata.unit`} showErrors={showErrors} />
+                    </div>
+                    <span>before send</span>
+                  </Group>
                 </div>
+                <BackOffFields index={index} control={control} />
               </When>
             </div>
           </Accordion.Panel>

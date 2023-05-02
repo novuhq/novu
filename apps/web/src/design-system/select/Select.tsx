@@ -41,6 +41,8 @@ interface ISelectProps extends SpacingProps {
   filter?: (value: string, item: SelectItem) => boolean;
   allowDeselect?: boolean;
   dataTestId?: string;
+  rightSectionWidth?: React.CSSProperties['width'];
+  inputProps?: InputBaseProps;
 }
 
 /**
@@ -60,6 +62,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
       disabled = false,
       required = false,
       onChange,
+      inputProps = {},
       ...props
     }: ISelectProps,
     ref
@@ -79,6 +82,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
       rightSectionWidth: 50,
       styles: inputStyles,
       classNames: classes,
+      ...inputProps,
     } as InputBaseProps;
     const multiselect = type === 'multiselect';
 

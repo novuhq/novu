@@ -1,6 +1,6 @@
 import { Grid, UnstyledButton } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { colors } from '../../../design-system';
+import { colors } from '../../../../design-system';
 
 const border = `1px solid ${colors.B30}`;
 
