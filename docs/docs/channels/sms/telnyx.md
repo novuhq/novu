@@ -4,7 +4,7 @@ You can use the [Telnyx](https://telnyx.com/) provider to send transactional ema
 
 ## Getting Started
 
-To use the Telnyx channel, you will need to create a Telnyx account and add your API key to the Telnyx integration on the Novu platform.
+To use the Telnyx provider in the SMS channel, you will need to create a Telnyx account and add your API key to the Telnyx integration on the Novu platform.
 
 ## Find the API Key
 
