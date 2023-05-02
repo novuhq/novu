@@ -24,6 +24,7 @@ export enum CredentialsKeyEnum {
   RequireTls = 'requireTls',
   IgnoreTls = 'ignoreTls',
   TlsOptions = 'tlsOptions',
+  RedirectUrl = 'redirectUrl',
 }
 
 export enum EmailProviderIdEnum {

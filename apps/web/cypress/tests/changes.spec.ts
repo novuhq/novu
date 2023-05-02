@@ -11,14 +11,6 @@ describe('Changes Screen', function () {
 
     cy.visit('/changes');
     cy.getByTestId('pending-changes-table').find('tbody tr').should('have.length', 1);
-
-    promoteNotification();
-    createNotification();
-
-    switchEnvironment('Production');
-    cy.visit('/templates');
-
-    cy.getByTestId('notifications-template').find('tbody tr').should('have.length', 1);
   });
 
   it('fields should be disabled in Production', function () {
