@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Provider, Module } from '@nestjs/common';
 import {
   EventsPerformanceService,
   CreateExecutionDetails,
@@ -103,7 +103,7 @@ const USE_CASES = [
 
 const REPOSITORIES = [JobRepository];
 
-const SERVICES = [
+const SERVICES: Provider[] = [
   {
     provide: MetricQueueService,
     useClass: MetricQueueService,
