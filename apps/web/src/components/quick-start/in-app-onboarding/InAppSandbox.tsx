@@ -1,17 +1,14 @@
 import styled from '@emotion/styled';
 import { Group, Overlay } from '@mantine/core';
-import { useParams } from 'react-router-dom';
 import { colors, shadows } from '../../../design-system';
 import InAppSandboxWorkflow from './InAppSandboxWorkflow';
 import { YourAppHeaderSection } from './YourAppHeaderSection';
 
-export function InAppSandbox() {
-  const { framework } = useParams();
-
+export function InAppSandbox({ showOverlay = false }: { showOverlay?: boolean }) {
   return (
     <Wrapper>
       <YourAppWrapper>
-        {framework && (
+        {showOverlay && (
           <Overlay
             zIndex={5}
             opacity={0.3}

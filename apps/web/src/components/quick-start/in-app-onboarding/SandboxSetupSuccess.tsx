@@ -4,7 +4,7 @@ import { InAppSandbox } from './InAppSandbox';
 export function SandBoxSetupSuccess() {
   return (
     <Stack align="center">
-      <InAppSandbox />
+      <InAppSandbox showOverlay={true} />
     </Stack>
   );
 }

@@ -22,8 +22,7 @@ export const faqUrl = 'https://docs.novu.co/notification-center/FAQ';
 export const notificationCenterDocsUrl = 'https://docs.novu.co/notification-center/getting-started';
 export const discordInviteUrl = 'https://discord.novu.co';
 export const demoSetupSecondaryTitle = 'Follow the installation steps to connect your app';
-export const successScreenTitle = '🎉 Success, your application is connected!';
-export const successScreenSecondaryTitle = 'Create a workflow to start sending notifications.';
+
 export const getStartedSteps = { first: ROUTES.GET_STARTED, second: ROUTES.GET_STARTED_PREVIEW };
 
 interface ISnippetInstructions {

@@ -8,7 +8,10 @@ import { SandBoxSetupSuccess } from '../../../components/quick-start/in-app-onbo
 import { ROUTES } from '../../../constants/routes.enum';
 import { Button, colors } from '../../../design-system';
 import { currentOnboardingStep } from '../components/route/store';
-import { FlowTypeEnum, OnBoardingAnalyticsEnum, successScreenSecondaryTitle, successScreenTitle } from '../consts';
+import { FlowTypeEnum, OnBoardingAnalyticsEnum } from '../consts';
+
+const successScreenTitle = '🎉 Success, your application is connected!';
+const successScreenSecondaryTitle = 'Create a workflow to start sending notifications.';
 
 export function InAppSuccess() {
   const segment = useSegment();

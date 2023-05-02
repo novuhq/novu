@@ -104,8 +104,8 @@ export function QuickStartWrapper({
               <Description>{description}</Description>
             </When>
           </Stack>
-          <ChildrenWrapper>{children}</ChildrenWrapper>
 
+          <ChildrenWrapper>{children}</ChildrenWrapper>
           <When truthy={faq}>
             <Faq />
           </When>
@@ -216,14 +216,16 @@ const ChildrenWrapper = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100%;
   flex: 1;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
 `;
 
 const GradientSpan = styled.span`
   background: ${colors.horizontal};
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
   text-fill-color: transparent;
 

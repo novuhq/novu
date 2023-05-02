@@ -62,8 +62,6 @@ export function SetupStatus({
 
 const GradientStatus = styled.span`
   background: linear-gradient(0deg, #14deeb 0%, #446edc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   background-clip: text;
   text-fill-color: transparent;
 `;

@@ -38,6 +38,7 @@ export function YourAppHeaderSection() {
           arrowOffset={90}
           withArrow
           zIndex={3} // Fix for the dropdown being on the top of WEB notification-center dropdown
+          middlewares={{ flip: false, shift: false }}
         >
           <Popover.Target>
             <div>

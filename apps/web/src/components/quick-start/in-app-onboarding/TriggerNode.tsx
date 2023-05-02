@@ -19,6 +19,7 @@ import {
 } from '../../../pages/quick-start/consts';
 import { NodeStep } from '../common';
 import { useSegment } from '../../providers/SegmentProvider';
+import { errorMessage } from '../../../utils/notifications';
 
 const useStyles = createStyles((theme) => ({
   dropdown: {
@@ -67,7 +68,11 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
     INotificationTemplate,
     { error: string; message: string; statusCode: number },
     ICreateNotificationTemplateDto
-  >(createTemplate);
+  >(createTemplate, {
+    onError: (error) => {
+      errorMessage(error?.message);
+    },
+  });
 
   const onboardingNotificationTemplate = templates.find((template) => template.name.includes(notificationTemplateName));
 
@@ -102,6 +107,9 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
 
   async function handleRunTrigger() {
     setOpened(false);
+    if (!onboardingNotificationTemplate) {
+      errorMessage('No onboarding notification template found, Try again later.');
+    }
     await testTrigger({
       name: onboardingNotificationTemplate?.triggers[0].identifier,
       to: { subscriberId: inAppSandboxSubscriberId },
@@ -150,6 +158,7 @@ function TriggerPopover() {
         dropdown: classes.dropdown,
         arrow: classes.arrow,
       }}
+      middlewares={{ flip: false, shift: false }}
     >
       <Popover.Target>
         <div>
