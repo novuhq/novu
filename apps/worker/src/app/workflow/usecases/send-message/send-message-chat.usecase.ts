@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import {
   NotificationRepository,
@@ -34,6 +34,8 @@ import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils/exceptions';
 
+const LOG_CONTEXT = 'SendMessageChat';
+
 @Injectable()
 export class SendMessageChat extends SendMessageBase {
   channelType = ChannelTypeEnum.CHAT;
@@ -68,7 +70,7 @@ export class SendMessageChat extends SendMessageBase {
       message: 'Sending Chat',
     });
     const chatChannel: NotificationStepEntity = command.step;
-    if (!chatChannel || !chatChannel.template) throw new PlatformException('Chat channel template not found');
+    if (!chatChannel?.template) throw new PlatformException('Chat channel template not found');
 
     const notification = await this.notificationRepository.findById(command.notificationId);
 
@@ -116,8 +118,31 @@ export class SendMessageChat extends SendMessageBase {
       return;
     }
 
+    let allFailed = true;
     for (const channel of chatChannels) {
-      await this.sendChannelMessage(command, channel, notification, chatChannel, content);
+      try {
+        await this.sendChannelMessage(command, channel, notification, chatChannel, content);
+        allFailed = false;
+      } catch (e) {
+        /*
+         * Do nothing, one chat channel failed, perhaps another one succeeds
+         * The failed message has been created
+         */
+        Logger.error(`Sending chat message to the chat channel ${channel.providerId} failed`, LOG_CONTEXT);
+      }
+    }
+
+    if (allFailed) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
     }
   }
 

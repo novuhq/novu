@@ -38,21 +38,15 @@ export class SmsFactory implements ISmsFactory {
   ];
 
   getHandler(integration: IntegrationEntity) {
-    try {
-      const handler =
-        this.handlers.find((handlerItem) =>
-          handlerItem.canHandle(integration.providerId, integration.channel)
-        ) ?? null;
+    const handler =
+      this.handlers.find((handlerItem) =>
+        handlerItem.canHandle(integration.providerId, integration.channel)
+      ) ?? null;
 
-      if (!handler) return null;
+    if (!handler) return null;
 
-      handler.buildProvider(integration.credentials);
+    handler.buildProvider(integration.credentials);
 
-      return handler;
-    } catch (error) {
-      throw new Error(
-        `Could not build mail handler id: ${integration._id}, error: ${error}`
-      );
-    }
+    return handler;
   }
 }
