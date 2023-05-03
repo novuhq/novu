@@ -1,17 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import axios from 'axios';
 import { CreateSubscriber, CreateSubscriberCommand, decryptCredentials } from '@novu/application-generic';
 
 import { HandleChatOauthCommand } from './handle-chat-oauth.command';
 import {
   IChannelCredentialsCommand,
-  OAuthHandlerEnum,
   UpdateSubscriberChannel,
   UpdateSubscriberChannelCommand,
 } from '../update-subscriber-channel';
 import { ChannelTypeEnum, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ICredentialsDto } from '@novu/shared';
+import { OAuthHandlerEnum } from '../../types';
 
 @Injectable()
 export class HandleChatOauth {
@@ -28,9 +28,9 @@ export class HandleChatOauth {
   async execute(command: HandleChatOauthCommand) {
     const { credentials: integrationCredentials } = await this.getIntegration(command);
 
-    const webhookUrl = await this.getWebhook(command, integrationCredentials);
+    const environment = await this.getEnvironment(command.environmentId);
 
-    const environment = await this.getEnvironment(command);
+    const webhookUrl = await this.getWebhook(command, integrationCredentials);
 
     await this.createSubscriber(environment, command, webhookUrl);
 
@@ -63,11 +63,11 @@ export class HandleChatOauth {
     );
   }
 
-  private async getEnvironment(command: HandleChatOauthCommand) {
-    const environment = await this.environmentRepository.findById(command.environmentId);
+  private async getEnvironment(environmentId: string) {
+    const environment = await this.environmentRepository.findById(environmentId);
 
     if (environment == null) {
-      throw new ApiException(`Environment ID: ${command.environmentId} not found`);
+      throw new NotFoundException(`Environment ID: ${environmentId} not found`);
     }
 
     return environment;
@@ -113,7 +113,7 @@ export class HandleChatOauth {
     const integration = await this.integrationRepository.findOne(query);
 
     if (integration == null) {
-      throw new ApiException(
+      throw new NotFoundException(
         `Integration in environment ${command.environmentId} was not found, channel: ${ChannelTypeEnum.CHAT}, ` +
           `providerId: ${command.providerId}`
       );

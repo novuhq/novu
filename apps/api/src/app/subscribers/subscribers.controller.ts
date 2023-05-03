@@ -31,11 +31,7 @@ import {
   UpdateSubscriberChannelRequestDto,
   UpdateSubscriberRequestDto,
 } from './dtos';
-import {
-  OAuthHandlerEnum,
-  UpdateSubscriberChannel,
-  UpdateSubscriberChannelCommand,
-} from './usecases/update-subscriber-channel';
+import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
 import { ApiOperation, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
@@ -72,6 +68,7 @@ import { HandleChatOauth } from './usecases/handle-chat-oauth/handle-chat-oauth.
 import { HandleChatOauthCommand } from './usecases/handle-chat-oauth/handle-chat-oauth.command';
 import { HandleChatOauthRequestDto } from './dtos/handle-chat-oauth.request.dto';
 import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
+import { OAuthHandlerEnum } from './types';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')

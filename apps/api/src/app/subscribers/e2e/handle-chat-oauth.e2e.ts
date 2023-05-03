@@ -8,7 +8,7 @@ import { SubscriberRepository } from '@novu/dal/';
 
 const axiosInstance = axios.create();
 
-describe('HandleCharOauth - /:subscriberId/:providerId/:environmentId (GET)', function () {
+describe('HandleChatOauth - /:subscriberId/:providerId/:environmentId (GET)', function () {
   let session: UserSession;
   const ACTION = '<script>window.close();</script>';
 
