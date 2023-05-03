@@ -41,8 +41,8 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     organizationId: string,
     jobId: string,
     status: JobStatusEnum
-  ): Promise<{ matched: number; modified: number }> {
-    return await this.update(
+  ): Promise<{ matchedCount: number; modifiedCount: number }> {
+    return this.MongooseModel.updateOne(
       {
         _organizationId: organizationId,
         _id: jobId,
