@@ -6,12 +6,13 @@ import styled from '@emotion/styled';
 import { colors } from '../../../design-system';
 import { InAppNode } from './InAppNode';
 import { TriggerNode } from './TriggerNode';
+import { WorkflowWrapper } from '../common';
 
 export default function InAppSandboxWorkflow() {
   const { colorScheme } = useMantineColorScheme();
 
   return (
-    <Wrapper>
+    <WorkflowWrapper height="100%">
       <ReactFlow
         fitView
         fitViewOptions={{ minZoom: 1, maxZoom: 1 }}
@@ -33,7 +34,7 @@ export default function InAppSandboxWorkflow() {
           color={colorScheme === 'dark' ? colors.BGDark : colors.B80}
         />
       </ReactFlow>
-    </Wrapper>
+    </WorkflowWrapper>
   );
 }
 
@@ -63,24 +64,3 @@ const nodes: Node[] = [
 ];
 
 const nodeTypes = { triggerNode: TriggerNode, inAppNode: InAppNode };
-
-const Wrapper = styled.div`
-  height: 100%;
-  width: 100%;
-  background-color: transparent;
-  .react-flow__attribution {
-    display: none;
-  }
-
-  .react-flow__handle {
-    background: transparent;
-    border: 1px solid ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B40 : colors.B60)};
-  }
-
-  .react-flow__edge-path {
-    stroke: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B40 : colors.B60)};
-    border-radius: 10px;
-    stroke-dasharray: 5;
-    stroke-width: 1px;
-  }
-`;

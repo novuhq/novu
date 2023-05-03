@@ -76,30 +76,30 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
 
   const onboardingNotificationTemplate = templates.find((template) => template.name.includes(notificationTemplateName));
 
-  async function createOnBoardingTemplate() {
-    const payloadToCreate = {
-      notificationGroupId: groups[0]._id,
-      name: notificationTemplateName,
-      active: true,
-      draft: false,
-      steps: [
-        {
-          template: {
-            type: StepTypeEnum.IN_APP,
-            content: 'Test notification {{number}}',
-            actor: {
-              type: ActorTypeEnum.SYSTEM_ICON,
-              data: SystemAvatarIconEnum.SUCCESS,
+  useEffect(() => {
+    async function createOnBoardingTemplate() {
+      const payloadToCreate = {
+        notificationGroupId: groups[0]._id,
+        name: notificationTemplateName,
+        active: true,
+        draft: false,
+        steps: [
+          {
+            template: {
+              type: StepTypeEnum.IN_APP,
+              content: 'Test notification {{number}}',
+              actor: {
+                type: ActorTypeEnum.SYSTEM_ICON,
+                data: SystemAvatarIconEnum.SUCCESS,
+              },
             },
           },
-        },
-      ],
-    };
+        ],
+      };
 
-    await createNotificationTemplate(payloadToCreate as unknown as ICreateNotificationTemplateDto);
-  }
+      await createNotificationTemplate(payloadToCreate as unknown as ICreateNotificationTemplateDto);
+    }
 
-  useEffect(() => {
     if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading && !onboardingNotificationTemplate) {
       createOnBoardingTemplate();
     }
