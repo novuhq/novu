@@ -24,6 +24,7 @@ export interface ICredentials {
   projectName?: string;
   serviceAccount?: string;
   baseUrl?: string;
+  webhookUrl?: string;
   ipPoolName?: string;
   requireTls?: boolean;
   ignoreTls?: boolean;

@@ -18,6 +18,7 @@ export interface ICredentialsDto {
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;
   baseUrl?: string;
+  webhookUrl?: string;
 }
 export interface IConstructIntegrationDto {
   credentials: ICredentialsDto;

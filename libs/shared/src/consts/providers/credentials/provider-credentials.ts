@@ -439,7 +439,7 @@ export const expoConfig: IConfigCredentials[] = [
 
 export const pushWebhookConfig: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.BaseUrl,
+    key: CredentialsKeyEnum.WebhookUrl,
     displayName: 'Webhook URL',
     type: 'string',
     description: 'the webhook URL to call to trigger push notifications',

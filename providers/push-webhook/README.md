@@ -1,9 +1,14 @@
 # Novu PushWebhook Provider
 
-A PushWebhook push provider library for [@novu/node](https://github.com/novuhq/novu)
+This is a library that triggers a custom webhook and shows itself as a push library for [@novu/node](https://github.com/novuhq/novu)
 
 ## Usage
 
 ```javascript
-    FILL IN THE INITIALIZATION USAGE
+import { PushWebhookPushProvider } from '@novu/push-webhook';
+
+const provider = new PushWebhookPushProvider({
+  webhookUrl: credentials.webhookUrl,
+  hmacSecretKey: credentials.secretKey,
+});
 ```

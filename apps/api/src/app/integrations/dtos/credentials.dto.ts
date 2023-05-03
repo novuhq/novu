@@ -43,4 +43,6 @@ export class CredentialsDto {
   tlsOptions?: Record<string, unknown>;
   @ApiPropertyOptional()
   baseUrl?: string;
+  @ApiPropertyOptional()
+  webhookUrl?: string;
 }

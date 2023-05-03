@@ -15,8 +15,6 @@ export class PushWebhookPushProvider implements IPushProvider {
     private config: {
       hmacSecretKey?: string;
       webhookUrl: string;
-      retryCount?: number;
-      retryDelay?: number;
     }
   ) {}
 

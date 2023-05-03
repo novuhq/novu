@@ -14,7 +14,7 @@ export class PushWebhookHandler extends BasePushHandler {
     }
 
     this.provider = new PushWebhookPushProvider({
-      webhookUrl: credentials.baseUrl,
+      webhookUrl: credentials.webhookUrl,
       hmacSecretKey: credentials.secretKey,
     });
   }
