@@ -107,7 +107,6 @@ export const EmailSettings = () => {
                 {...field}
                 mb={30}
                 data-test-id="inbound-parse-domain"
-                disabled={readonly}
                 value={field.value || ''}
                 label={'Allowed Domain'}
                 description={
