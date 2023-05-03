@@ -1,5 +1,6 @@
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
-import { IsArray, IsOptional } from 'class-validator';
+import { IsArray, IsOptional, Max, Min } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class GetFeedCountCommand extends EnvironmentWithSubscriber {
   @IsOptional()
@@ -11,4 +12,17 @@ export class GetFeedCountCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   read?: boolean;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (isNaN(value) || value == null) {
+      // todo NV-2161 update the limit default to 100 to in version 0.16
+      return 1000;
+    }
+
+    return value;
+  })
+  @Min(1)
+  @Max(1000)
+  limit: number;
 }
