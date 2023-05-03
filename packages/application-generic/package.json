@@ -35,6 +35,7 @@
   "peerDependencies": {
     "@nestjs/common": ">=9.3.x",
     "@nestjs/swagger": ">=6.3.x",
+    "@nestjs/terminus": "9.2.1",
     "@nestjs/testing": ">=9.3.x",
     "newrelic": ">=9",
     "reflect-metadata": "^0.1.13"
