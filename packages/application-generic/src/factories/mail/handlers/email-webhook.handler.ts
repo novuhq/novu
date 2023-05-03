@@ -14,7 +14,7 @@ export class EmailWebhookHandler extends BaseHandler {
       hmacSecretKey?: string;
     } = {
       from: credentials.from as string,
-      webhookUrl: credentials.baseUrl as string,
+      webhookUrl: credentials.webhookUrl as string,
       hmacSecretKey: credentials.secretKey as string,
     };
     this.provider = new EmailWebhookProvider(config);
