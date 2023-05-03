@@ -136,8 +136,6 @@ export class SendMessageChat extends SendMessageBase {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
           detail: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
