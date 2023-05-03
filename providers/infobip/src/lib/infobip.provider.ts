@@ -22,8 +22,8 @@ export class InfobipSmsProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      baseUrl: string;
-      apiKey: string;
+      baseUrl?: string;
+      apiKey?: string;
       from?: string;
     }
   ) {

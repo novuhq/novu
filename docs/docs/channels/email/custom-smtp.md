@@ -4,7 +4,7 @@ You can use the Custom SMTP provider like [Nodemailer](https://nodemailer.com/ab
 
 ## Getting Started
 
-To use the Custom SMTP channel, you will need to have your personal SMTP server configured and add `host`, `port`, `user`, `password` to the Custom SMTP integration on the Novu platform.
+To use the Custom SMTP provider in the email channel, you will need to have your personal SMTP server configured and add `host`, `port`, `user`, `password` to the Custom SMTP integration on the Novu platform.
 
 You can also provide value **`true`** for `secure` field if you want the connection to be secure, and if not, leave it empty.
 
@@ -30,5 +30,6 @@ Those options are:
   - `secure` (on demand)
   - And `DKIM` options if you want to sign messages with _DKIM_
 - Fill the `From email address` field using the authenticated email from the previous step.
-- Click on the **Save** button.
+- Click on the `Disabled` button and mark as `Active`.
+- Click on the **Connect** button.
 - You should now be able to send notifications using Custom SMTP in Novu.

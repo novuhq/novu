@@ -9,6 +9,10 @@
       "path": "apps/api"
     },
     {
+      "name": "🚀 @novu/worker",
+      "path": "apps/worker"
+    },
+    {
       "name": "🚀 @novu/web",
       "path": "apps/web"
     },
@@ -171,6 +175,10 @@
     {
       "name": "🔔 @novu/twilio",
       "path": "providers/twilio"
+    },
+    {
+      "name": "🔔 @novu/maqsam",
+      "path": "providers/maqsam"
     }
   ],
   "settings": {

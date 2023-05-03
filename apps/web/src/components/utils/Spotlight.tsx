@@ -1,49 +1,50 @@
 import { SpotlightProvider } from '@mantine/spotlight';
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, Bolt, Box, Settings, Repeat, Team, Brand, Chat } from '../../design-system/icons';
-import { SpotlightContext } from '../../store/spotlightContext';
+import { useSpotlightContext } from '../providers/SpotlightProvider';
+import { ROUTES } from '../../constants/routes.enum';
 
 export const SpotLight = ({ children }) => {
   const navigate = useNavigate();
-  const { items, addItem } = useContext(SpotlightContext);
+  const { items, addItem } = useSpotlightContext();
 
   useEffect(() => {
     addItem([
       {
         id: 'navigate-templates',
         title: 'Go to Notification Template',
-        onTrigger: () => navigate('/templates'),
+        onTrigger: () => navigate(ROUTES.TEMPLATES),
         icon: <Bolt />,
       },
       {
         id: 'navigate-integration',
         title: 'Go to Integrations',
-        onTrigger: () => navigate('/integrations'),
+        onTrigger: () => navigate(ROUTES.INTEGRATIONS),
         icon: <Box />,
       },
       {
         id: 'navigate-changes',
         title: 'Go to Changes',
-        onTrigger: () => navigate('/changes'),
+        onTrigger: () => navigate(ROUTES.CHANGES),
         icon: <Repeat />,
       },
       {
         id: 'navigate-settings',
         title: 'Go to Settings',
-        onTrigger: () => navigate('/settings'),
+        onTrigger: () => navigate(ROUTES.SETTINGS),
         icon: <Settings />,
       },
       {
         id: 'navigate-activities',
         title: 'Go to Activities',
-        onTrigger: () => navigate('/activities'),
+        onTrigger: () => navigate(ROUTES.ACTIVITIES),
         icon: <Activity />,
       },
       {
         id: 'navigate-team-members',
         title: 'Go to Team Members',
-        onTrigger: () => navigate('/team'),
+        onTrigger: () => navigate(ROUTES.TEAM),
         icon: <Team />,
       },
       {

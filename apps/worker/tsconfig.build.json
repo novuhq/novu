@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "noImplicitAny": false,
+    "removeComments": true,
+    "allowSyntheticDefaultImports": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "strictNullChecks": true,
+    "target": "es6",
+    "esModuleInterop": false,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./src",
+    "types": ["node", "mocha"]
+  },
+  "include": [".eslintrc.js", "src/**/*", "src/**/*.d.ts"],
+  "exclude": ["node_modules", "**/*.spec.ts", "**/*.e2e.ts"]
+}

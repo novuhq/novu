@@ -5,11 +5,15 @@ import {
   IWebhookFilterPart,
   IFieldFilterPart,
   FilterPartTypeEnum,
+  TimeOperatorEnum,
 } from '@novu/shared';
+import { FormProvider, useForm } from 'react-hook-form';
+
 import { TestWrapper } from '../../../testing';
+import { IStepEntity } from '../components/formTypes';
 import { Filters, translateOperator, getFilterLabel } from './Filters';
 
-const defaultStep = {
+const defaultStep: IStepEntity = {
   id: '',
   _templateId: '',
   template: {
@@ -20,11 +24,22 @@ const defaultStep = {
   shouldStopOnFail: false,
 };
 
+const TestFormProvider = ({ children }) => {
+  const methods = useForm({
+    defaultValues: {
+      steps: [],
+    },
+    mode: 'onChange',
+  });
+
+  return <FormProvider {...methods}>{children}</FormProvider>;
+};
+
 describe('Filters Component', function () {
   it('should not render if step is null', function () {
     cy.mount(
       <TestWrapper>
-        <Filters step={null} />
+        <Filters />
       </TestWrapper>
     );
 
@@ -79,23 +94,25 @@ describe('Filters Component', function () {
   it('should render filter', function () {
     cy.mount(
       <TestWrapper>
-        <Filters
-          step={{
-            ...defaultStep,
-            filters: [
-              {
-                children: [
-                  {
-                    on: FilterPartTypeEnum.PAYLOAD,
-                    field: 'name',
-                    value: 'Novu',
-                    operator: 'EQUAL',
-                  },
-                ],
-              },
-            ],
-          }}
-        />
+        <TestFormProvider>
+          <Filters
+            step={{
+              ...defaultStep,
+              filters: [
+                {
+                  children: [
+                    {
+                      on: FilterPartTypeEnum.PAYLOAD,
+                      field: 'name',
+                      value: 'Novu',
+                      operator: 'EQUAL',
+                    },
+                  ],
+                },
+              ],
+            }}
+          />
+        </TestFormProvider>
       </TestWrapper>
     );
     cy.get('.filter-item').should('have.length', 1);
@@ -118,7 +135,7 @@ describe('Filters Component', function () {
     const onlineRightNowFilter: IRealtimeOnlineFilterPart = { on: FilterPartTypeEnum.IS_ONLINE, value: true };
     const onlineInLastFilter: IOnlineInLastFilterPart = {
       on: FilterPartTypeEnum.IS_ONLINE_IN_LAST,
-      timeOperator: 'hours',
+      timeOperator: TimeOperatorEnum.HOURS,
       value: 5,
     };
     const webhookFilter: IWebhookFilterPart = {
@@ -135,9 +152,11 @@ describe('Filters Component', function () {
       value: 'test-value',
     };
 
-    expect(getFilterLabel(onlineRightNowFilter)).to.equal('is online right now equal');
-    expect(getFilterLabel(onlineInLastFilter)).to.equal(`online in the last "X" ${onlineInLastFilter.timeOperator}`);
-    expect(getFilterLabel(webhookFilter)).to.equal('webhook test-field equal');
-    expect(getFilterLabel(fieldFilters)).to.equal('payload test-field includes');
+    expect(getFilterLabel(onlineRightNowFilter, [])).to.equal('is online right now equal');
+    expect(getFilterLabel(onlineInLastFilter, [])).to.equal(
+      `online in the last "X" ${onlineInLastFilter.timeOperator}`
+    );
+    expect(getFilterLabel(webhookFilter, [])).to.equal('webhook test-field equal');
+    expect(getFilterLabel(fieldFilters, [])).to.equal('payload test-field includes');
   });
 });

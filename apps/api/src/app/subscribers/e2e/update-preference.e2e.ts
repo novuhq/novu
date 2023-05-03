@@ -35,7 +35,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     } catch (error) {
       expect(error.toJSON()).to.have.include({
         status: 400,
-        name: 'Error',
+        name: 'AxiosError',
         message: 'Request failed with status code 400',
       });
     }
@@ -55,8 +55,30 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     } catch (error) {
       expect(error.toJSON()).to.have.include({
         status: 400,
-        name: 'Error',
+        name: 'AxiosError',
         message: 'Request failed with status code 400',
+      });
+    }
+  });
+
+  it('should send a Not Found Request error if template id is wrong', async function () {
+    const updateDataEmailFalse = {
+      channel: {
+        type: ChannelTypeEnum.EMAIL,
+        enabled: false,
+      },
+    };
+
+    try {
+      const response = await updatePreference(updateDataEmailFalse as any, session, '63cc6e0b561e0a609f223e27');
+      expect(response).to.not.be;
+    } catch (error) {
+      const { response } = error;
+      expect(response.status).to.eql(404);
+      expect(response.data).to.have.include({
+        statusCode: 404,
+        message: 'Template with id 63cc6e0b561e0a609f223e27 is not found',
+        error: 'Not Found',
       });
     }
   });

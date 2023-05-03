@@ -21,7 +21,6 @@ import { StorageModule } from './app/storage/storage.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
 import { InvitesModule } from './app/invites/invites.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
-import { QueueService } from './app/shared/services/queue';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { ChangeModule } from './app/change/change.module';
 import { SubscribersModule } from './app/subscribers/subscribers.module';
@@ -69,7 +68,7 @@ if (process.env.SENTRY_DSN) {
     useValue: new RavenInterceptor({
       filters: [
         /*
-         * Filter exceptions of type HttpException. Ignore those that
+         * Filter exceptions to type HttpException. Ignore those that
          * have status code of less than 500
          */
         { type: HttpException, filter: (exception: HttpException) => exception.getStatus() < 500 },
@@ -89,7 +88,7 @@ if (process.env.NODE_ENV === 'test') {
   providers,
 })
 export class AppModule {
-  constructor(private queueService: QueueService) {
+  constructor() {
     Logger.log(`BOOTSTRAPPED NEST APPLICATION`);
   }
 }

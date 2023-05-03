@@ -1,11 +1,11 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable } from '@nestjs/common';
 import { LayoutRepository } from '@novu/dal';
+import { AnalyticsService, GetLayoutCommand, GetLayoutUseCase } from '@novu/application-generic';
 
 import { DeleteLayoutCommand } from './delete-layout.command';
 
 import { CheckLayoutIsUsedCommand, CheckLayoutIsUsedUseCase } from '../check-layout-is-used';
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
-import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 
 @Injectable()
 export class DeleteLayoutUseCase {
@@ -13,7 +13,8 @@ export class DeleteLayoutUseCase {
     private getLayoutUseCase: GetLayoutUseCase,
     private checkLayoutIsUsed: CheckLayoutIsUsedUseCase,
     private createLayoutChange: CreateLayoutChangeUseCase,
-    private layoutRepository: LayoutRepository
+    private layoutRepository: LayoutRepository,
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: DeleteLayoutCommand): Promise<void> {
@@ -44,6 +45,12 @@ export class DeleteLayoutUseCase {
     await this.layoutRepository.deleteLayout(command.layoutId, layout._environmentId, layout._organizationId);
 
     await this.createChange(command);
+
+    this.analyticsService.track('[Layout] - Delete', command.userId, {
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      layoutId: command.layoutId,
+    });
   }
 
   private async createChange(command: DeleteLayoutCommand): Promise<void> {

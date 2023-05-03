@@ -2,16 +2,19 @@ import { ExecutionContext, forwardRef, Inject, Injectable, UnauthorizedException
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { AuthService } from '../services/auth.service';
+import { Instrument, PinoLogger } from '@novu/application-generic';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(
     @Inject(forwardRef(() => AuthService)) private authService: AuthService,
-    private readonly reflector: Reflector
+    private readonly reflector: Reflector,
+    private readonly logger: PinoLogger
   ) {
     super();
   }
 
+  @Instrument()
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
     const authorizationHeader = request.headers.authorization;
@@ -26,7 +29,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       return this.authService.apiKeyAuthenticate(key).then<any>((result) => {
         request.headers.authorization = `Bearer ${result}`;
 
-        return super.canActivate(context);
+        return true;
       });
     }
 

@@ -7,15 +7,16 @@ import { colors, Text, Input, Tooltip, Button } from '../../../design-system';
 import { Check, CheckCircle, Copy } from '../../../design-system/icons';
 import React, { useEffect } from 'react';
 import { Control, Controller, useForm } from 'react-hook-form';
-import { useEnvController } from '../../../store/useEnvController';
+import { useEnvController } from '../../../hooks';
 import { useMutation } from '@tanstack/react-query';
 import { updateDnsSettings } from '../../../api/environment';
 import { showNotification } from '@mantine/notifications';
 import { WarningIcon } from '../../../design-system/icons/general/WarningIcon';
 import { validateMxRecord } from '../../../api/inbound-parse';
+import { MAIL_SERVER_DOMAIN } from '../../../config';
 
 export const EmailSettings = () => {
-  const MAIL_SERVER_DOMAIN = `10 ${process.env.REACT_APP_MAIL_SERVER_DOMAIN ?? 'dev.inbound-mail.novu.co'}`;
+  const mailServerDomain = `10 ${MAIL_SERVER_DOMAIN}`;
 
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
   const { readonly, environment, refetchEnvironment } = useEnvController();
@@ -88,13 +89,13 @@ export const EmailSettings = () => {
                   <ActionIcon
                     variant="transparent"
                     data-test-id={'mail-server-domiain-copy'}
-                    onClick={() => clipboardEnvironmentIdentifier.copy(MAIL_SERVER_DOMAIN)}
+                    onClick={() => clipboardEnvironmentIdentifier.copy(mailServerDomain)}
                   >
                     {clipboardEnvironmentIdentifier.copied ? <Check /> : <Copy />}
                   </ActionIcon>
                 </Tooltip>
               }
-              value={MAIL_SERVER_DOMAIN}
+              value={mailServerDomain}
               data-test-id="mail-server-identifier"
             />
           </MantineInput.Wrapper>

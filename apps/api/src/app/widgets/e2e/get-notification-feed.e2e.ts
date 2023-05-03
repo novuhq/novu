@@ -23,16 +23,16 @@ describe('GET /widget/notifications/feed', function () {
       noFeedId: true,
     });
 
-    const { body } = await session.testAgent
-      .post('/v1/widgets/session/initialize')
-      .send({
-        applicationIdentifier: session.environment.identifier,
-        subscriberId,
-        firstName: 'Test',
-        lastName: 'User',
-        email: 'test@example.com',
-      })
-      .expect(201);
+    const { body } = await session.testAgent.post('/v1/widgets/session/initialize').send({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId,
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@example.com',
+    });
+
+    expect(body).to.be.ok;
+    expect(body.data).to.be.ok;
 
     const { token, profile } = body.data;
 
@@ -131,6 +131,30 @@ describe('GET /widget/notifications/feed', function () {
     const feed = await getSubscriberFeed();
 
     expect(feed.data[0]).to.be.an('object').that.has.any.keys('subscriber');
+  });
+
+  it('should include hasMore when there is more notification', async function () {
+    await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+
+    await session.awaitRunningJobs(template._id);
+
+    let feed = await getSubscriberFeed();
+
+    expect(feed.data.length).to.be.equal(1);
+    expect(feed.totalCount).to.be.equal(1);
+    expect(feed.hasMore).to.be.equal(false);
+
+    for (let i = 0; i < 10; i++) {
+      await session.triggerEvent(template.triggers[0].identifier, subscriberId);
+    }
+
+    await session.awaitRunningJobs(template._id);
+
+    feed = await getSubscriberFeed();
+
+    expect(feed.data.length).to.be.equal(10);
+    expect(feed.totalCount).to.be.equal(11);
+    expect(feed.hasMore).to.be.equal(true);
   });
 
   async function getSubscriberFeed(query = {}) {

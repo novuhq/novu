@@ -11,6 +11,11 @@ import {
   infobipSMSConfig,
   burstSmsConfig,
   clickatellConfig,
+  fortySixElksConfig,
+  kannelConfig,
+  maqsamConfig,
+  smsCentralConfig,
+  termiiConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -106,5 +111,46 @@ export const smsProviders: IProviderConfig[] = [
     betaVersion: true,
     docReference: 'https://docs.clickatell.com/',
     logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
+  },
+  {
+    id: SmsProviderIdEnum.FortySixElks,
+    displayName: '46elks',
+    channel: ChannelTypeEnum.SMS,
+    credentials: fortySixElksConfig,
+    docReference: 'https://46elks.com/docs/send-sms',
+    logoFileName: { light: '46elks.png', dark: '46elks.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Kannel,
+    displayName: 'Kannel SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: kannelConfig,
+    betaVersion: true,
+    docReference: 'https://www.kannel.org/doc.shtml',
+    logoFileName: { light: 'kannel.png', dark: 'kannel.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Maqsam,
+    displayName: 'Maqsam',
+    channel: ChannelTypeEnum.SMS,
+    credentials: maqsamConfig,
+    docReference: 'https://portal.maqsam.com/docs/v2/sms',
+    logoFileName: { light: 'maqsam.png', dark: 'maqsam.png' },
+  },
+  {
+    id: SmsProviderIdEnum.SmsCentral,
+    displayName: 'SMS Central',
+    channel: ChannelTypeEnum.SMS,
+    credentials: smsCentralConfig,
+    docReference: 'https://www.smscentral.com.au/sms-api/',
+    logoFileName: { light: 'sms-central.png', dark: 'sms-central.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Termii,
+    displayName: 'Termii',
+    channel: ChannelTypeEnum.SMS,
+    credentials: termiiConfig,
+    docReference: 'https://developers.termii.com/authentication',
+    logoFileName: { light: 'termii.png', dark: 'termii.png' },
   },
 ];

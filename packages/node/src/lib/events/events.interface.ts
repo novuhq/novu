@@ -1,8 +1,7 @@
-import { DigestUnitEnum } from '@novu/shared';
+import { DigestUnitEnum, ISubscribersDefine } from '@novu/shared';
 
 import { IAttachmentOptions } from '../novu.interface';
 import { ITopic } from '../topics/topic.interface';
-import { ISubscribersDefine } from '../subscribers/subscriber.interface';
 
 export type TriggerRecipientSubscriber = string | ISubscribersDefine;
 export type TriggerRecipientTopics = ITopic[];
@@ -24,6 +23,7 @@ export interface IBroadcastPayloadOptions {
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   to: TriggerRecipientsPayload;
   actor?: TriggerRecipientSubscriber;
+  transactionId?: string;
 }
 
 export interface ITriggerPayload {

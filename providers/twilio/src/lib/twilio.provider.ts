@@ -16,9 +16,9 @@ export class TwilioSmsProvider implements ISmsProvider {
 
   constructor(
     private config: {
-      accountSid: string;
-      authToken: string;
-      from: string;
+      accountSid?: string;
+      authToken?: string;
+      from?: string;
     }
   ) {
     this.twilioClient = new Twilio(config.accountSid, config.authToken);

@@ -1,6 +1,6 @@
 {
   "name": "@novu/node",
-  "version": "0.11.0",
+  "version": "0.14.0",
   "description": "Notification Management Framework",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -16,12 +16,11 @@
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
-    "lint": "pnpm test:lint",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
-    "test": "run-s build test:*",
-    "test:lint": "eslint src --ext .ts",
+    "test": "run-s test:*",
+    "lint": "eslint src --ext .ts",
     "test:prettier": "prettier \"src/**/*.ts\"",
     "test:unit": "jest src",
     "check-cli": "run-s test diff-integration-tests check-integration-tests",
@@ -43,8 +42,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/shared": "^0.11.0",
-    "axios": "^0.26.1",
+    "@novu/shared": "^0.14.0",
     "handlebars": "^4.7.7",
     "lodash.get": "^4.4.2",
     "lodash.merge": "^4.6.2"
@@ -55,6 +53,7 @@
     "@types/lodash.get": "^4.4.6",
     "@types/lodash.merge": "^4.6.6",
     "@types/node": "^14.6.0",
+    "axios": "^1.3.3",
     "codecov": "^3.5.0",
     "cz-conventional-changelog": "^3.3.0",
     "jest": "^27.0.6",
@@ -75,6 +74,13 @@
     "LICENSE",
     "README.md"
   ],
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "axios": "axios/dist/node/axios.cjs"
+    }
+  },
   "prettier": {
     "singleQuote": true
   },

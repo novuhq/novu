@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
 
@@ -11,7 +11,7 @@ import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate } from '../../../message-template/usecases/create-message-template/create-message-template.usecase';
 import { CreateMessageTemplateCommand } from '../../../message-template/usecases/create-message-template/create-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()
@@ -20,7 +20,7 @@ export class CreateNotificationTemplate {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
     private createChange: CreateChange,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateNotificationTemplateCommand) {
@@ -90,8 +90,13 @@ export class CreateNotificationTemplate {
         active: message.active,
         shouldStopOnFail: message.shouldStopOnFail,
         replyCallback: message.replyCallback,
+        uuid: message.uuid,
+        name: message.name,
       });
-      parentStepId = stepId;
+
+      if (stepId) {
+        parentStepId = stepId;
+      }
     }
 
     const savedTemplate = await this.notificationTemplateRepository.create({
@@ -112,6 +117,7 @@ export class CreateNotificationTemplate {
     });
 
     const item = await this.notificationTemplateRepository.findById(savedTemplate._id, command.environmentId);
+    if (!item) throw new NotFoundException(`Notification template ${savedTemplate._id} is not found`);
 
     await this.createChange.execute(
       CreateChangeCommand.create({

@@ -1,19 +1,25 @@
 // eslint-ignore max-len
 
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateRepository, DalException, ChangeRepository } from '@novu/dal';
+import { NotificationTemplateRepository, DalException, ChangeRepository, NotificationTemplateEntity } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 import { GetNotificationTemplateCommand } from '../get-notification-template/get-notification-template.command';
+import {
+  buildNotificationTemplateIdentifierKey,
+  buildNotificationTemplateKey,
+  InvalidateCacheService,
+} from '@novu/application-generic';
 
 @Injectable()
 export class DeleteNotificationTemplate {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createChange: CreateChange,
-    private changeRepository: ChangeRepository
+    private changeRepository: ChangeRepository,
+    private invalidateCache: InvalidateCacheService
   ) {}
 
   async execute(command: GetNotificationTemplateCommand) {
@@ -22,9 +28,25 @@ export class DeleteNotificationTemplate {
         _environmentId: command.environmentId,
         _id: command.templateId,
       });
-      const items = await this.notificationTemplateRepository.findDeleted({
-        _environmentId: command.environmentId,
-        _id: command.templateId,
+      const item: NotificationTemplateEntity = (
+        await this.notificationTemplateRepository.findDeleted({
+          _environmentId: command.environmentId,
+          _id: command.templateId,
+        })
+      )?.[0];
+
+      await this.invalidateCache.invalidateByKey({
+        key: buildNotificationTemplateKey({
+          _id: item._id,
+          _environmentId: command.environmentId,
+        }),
+      });
+
+      await this.invalidateCache.invalidateByKey({
+        key: buildNotificationTemplateIdentifierKey({
+          templateIdentifier: item.triggers[0].identifier,
+          _environmentId: command.environmentId,
+        }),
       });
 
       const parentChangeId: string = await this.changeRepository.getChangeId(
@@ -38,7 +60,7 @@ export class DeleteNotificationTemplate {
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           userId: command.userId,
-          item: items[0],
+          item: item,
           type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
           changeId: parentChangeId,
         })

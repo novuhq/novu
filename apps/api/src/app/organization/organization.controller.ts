@@ -5,9 +5,9 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Put,
-  Patch,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -64,9 +64,8 @@ export class OrganizationController {
       logo: body.logo,
       name: body.name,
     });
-    const organization = await this.createOrganizationUsecase.execute(command);
 
-    return organization;
+    return await this.createOrganizationUsecase.execute(command);
   }
 
   @Get('/')
@@ -74,9 +73,8 @@ export class OrganizationController {
     const command = GetOrganizationsCommand.create({
       userId: user._id,
     });
-    const organizations = await this.getOrganizationsUsecase.execute(command);
 
-    return organizations;
+    return await this.getOrganizationsUsecase.execute(command);
   }
 
   @Get('/me')

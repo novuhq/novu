@@ -1,10 +1,10 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
-  Inject,
   Param,
   Patch,
   Post,
@@ -12,15 +12,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
-  ApiCreatedResponse,
+  ApiConflictResponse,
   ApiNoContentResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
 
 import {
   AddSubscribersRequestDto,
@@ -32,16 +32,21 @@ import {
   RemoveSubscribersRequestDto,
   RenameTopicRequestDto,
   RenameTopicResponseDto,
+  TopicSubscriberDto,
 } from './dtos';
 import {
   AddSubscribersCommand,
   AddSubscribersUseCase,
   CreateTopicCommand,
   CreateTopicUseCase,
+  DeleteTopicCommand,
+  DeleteTopicUseCase,
   FilterTopicsCommand,
   FilterTopicsUseCase,
   GetTopicCommand,
   GetTopicUseCase,
+  GetTopicSubscriberCommand,
+  GetTopicSubscriberUseCase,
   RemoveSubscribersCommand,
   RemoveSubscribersUseCase,
   RenameTopicCommand,
@@ -50,7 +55,7 @@ import {
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { ANALYTICS_SERVICE } from '../shared/shared.module';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/topics')
 @ApiTags('Topics')
@@ -59,18 +64,17 @@ export class TopicsController {
   constructor(
     private addSubscribersUseCase: AddSubscribersUseCase,
     private createTopicUseCase: CreateTopicUseCase,
+    private deleteTopicUseCase: DeleteTopicUseCase,
     private filterTopicsUseCase: FilterTopicsUseCase,
+    private getTopicSubscriberUseCase: GetTopicSubscriberUseCase,
     private getTopicUseCase: GetTopicUseCase,
     private removeSubscribersUseCase: RemoveSubscribersUseCase,
-    private renameTopicUseCase: RenameTopicUseCase,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private renameTopicUseCase: RenameTopicUseCase
   ) {}
 
   @Post('')
   @ExternalApiAccessible()
-  @ApiCreatedResponse({
-    type: CreateTopicResponseDto,
-  })
+  @ApiResponse(CreateTopicResponseDto, 201)
   @ApiOperation({ summary: 'Topic creation', description: 'Create a topic' })
   async createTopic(
     @UserSession() user: IJwtPayload,
@@ -123,6 +127,25 @@ export class TopicsController {
         },
       }),
     };
+  }
+
+  @Get('/:topicKey/subscribers/:externalSubscriberId')
+  @ExternalApiAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Check topic subscriber', description: 'Check if a subscriber belongs to a certain topic' })
+  async getTopicSubscriber(
+    @UserSession() user: IJwtPayload,
+    @Param('topicKey') topicKey: TopicKey,
+    @Param('externalSubscriberId') externalSubscriberId: ExternalSubscriberId
+  ): Promise<TopicSubscriberDto> {
+    return await this.getTopicSubscriberUseCase.execute(
+      GetTopicSubscriberCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        externalSubscriberId,
+        topicKey,
+      })
+    );
   }
 
   @Post('/:topicKey/subscribers/removal')
@@ -188,11 +211,33 @@ export class TopicsController {
     );
   }
 
+  @Delete('/:topicKey')
+  @ExternalApiAccessible()
+  @ApiNoContentResponse({
+    description: 'The topic has been deleted correctly',
+  })
+  @ApiNotFoundResponse({
+    description: 'The topic with the key provided does not exist in the database so it can not be deleted.',
+  })
+  @ApiConflictResponse({
+    description:
+      'The topic you are trying to delete has subscribers assigned to it. Delete the subscribers before deleting the topic.',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete topic', description: 'Delete a topic by its topic key if it has no subscribers' })
+  async deleteTopic(@UserSession() user: IJwtPayload, @Param('topicKey') topicKey: TopicKey): Promise<void> {
+    return await this.deleteTopicUseCase.execute(
+      DeleteTopicCommand.create({
+        environmentId: user.environmentId,
+        topicKey,
+        organizationId: user.organizationId,
+      })
+    );
+  }
+
   @Get('/:topicKey')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: GetTopicResponseDto,
-  })
+  @ApiResponse(GetTopicResponseDto)
   @ApiOperation({ summary: 'Get topic', description: 'Get a topic by its topic key' })
   async getTopic(
     @UserSession() user: IJwtPayload,
@@ -209,9 +254,7 @@ export class TopicsController {
 
   @Patch('/:topicKey')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: RenameTopicResponseDto,
-  })
+  @ApiResponse(RenameTopicResponseDto)
   @ApiOperation({ summary: 'Rename a topic', description: 'Rename a topic by providing a new name' })
   async renameTopic(
     @UserSession() user: IJwtPayload,

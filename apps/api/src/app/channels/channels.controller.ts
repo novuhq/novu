@@ -7,11 +7,12 @@ import { UpdateMailSettings } from './usecases/update-mail-settings/update-mail-
 import { UpdateMailSettingsCommand } from './usecases/update-mail-settings/update-mail-settings.command';
 import { UpdateSmsSettings } from './usecases/update-sms-settings/update-sms-settings.usecase';
 import { UpdateSmsSettingsCommand } from './usecases/update-sms-settings/update-sms-settings.command';
-import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UpdateMailSettingsRequestDto } from './dtos/update-mail-settings-request.dto';
 import { UpdateSmsSettingsRequestDto } from './dtos/update-sms-settings-request.dto';
 import { UpdateSettingsResponseDto } from './dtos/update-settings-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/channels')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -29,9 +30,7 @@ export class ChannelsController {
   @ApiOperation({
     summary: 'Update mail settings',
   })
-  @ApiOkResponse({
-    type: UpdateSettingsResponseDto,
-  })
+  @ApiResponse(UpdateSettingsResponseDto)
   @ExternalApiAccessible()
   updateMailSettings(
     @UserSession() user: IJwtPayload,
@@ -53,9 +52,7 @@ export class ChannelsController {
   @ApiOperation({
     summary: 'Update sms settings',
   })
-  @ApiOkResponse({
-    type: UpdateSettingsResponseDto,
-  })
+  @ApiResponse(UpdateSettingsResponseDto)
   @ExternalApiAccessible()
   updateSmsSettings(
     @UserSession() user: IJwtPayload,

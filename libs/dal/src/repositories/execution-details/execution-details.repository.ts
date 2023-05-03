@@ -1,18 +1,18 @@
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
-import { ExecutionDetailsEntity } from './execution-details.entity';
+
+import { ExecutionDetailsEntity, ExecutionDetailsDBModel } from './execution-details.entity';
 import { ExecutionDetails } from './execution-details.schema';
-import { BaseRepository, Omit } from '../base-repository';
-import { Document, FilterQuery } from 'mongoose';
-
-class PartialExecutionDetailsEntity extends Omit(ExecutionDetailsEntity, ['_environmentId', '_organizationId']) {}
-
-type EnforceEnvironmentQuery = FilterQuery<PartialExecutionDetailsEntity & Document> &
-  ({ _environmentId: string } | { _organizationId: string });
+import { BaseRepository } from '../base-repository';
+import { EnforceEnvId } from '../../types/enforce';
 
 /**
  * Execution details is meant to be read only almost exclusively as a log history of the Jobs executions.
  */
-export class ExecutionDetailsRepository extends BaseRepository<EnforceEnvironmentQuery, ExecutionDetailsEntity> {
+export class ExecutionDetailsRepository extends BaseRepository<
+  ExecutionDetailsDBModel,
+  ExecutionDetailsEntity,
+  EnforceEnvId
+> {
   constructor() {
     super(ExecutionDetails, ExecutionDetailsEntity);
   }
@@ -40,7 +40,6 @@ export class ExecutionDetailsRepository extends BaseRepository<EnforceEnvironmen
    */
   public async findAllNotificationExecutions(organizationId: string, environmentId: string, notificationId: string) {
     return await this.find({
-      _organizationId: organizationId,
       _environmentId: environmentId,
       _notificationId: notificationId,
     });

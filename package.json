@@ -1,14 +1,14 @@
 {
   "name": "novuhq",
   "private": true,
-  "packageManager": "pnpm@7.27.0",
+  "packageManager": "pnpm@7.28.0",
   "scripts": {
     "bootstrap": "npm run setup:dev",
     "start": "npm run jarvis",
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
     "publish": "lerna publish from-package",
-    "setup:project": "npx --yes pnpm@7.27.0 i && node scripts/setup-env-files.js && pnpm build",
+    "setup:project": "npx --yes pnpm@7.28.0 i && node scripts/setup-env-files.js && pnpm build",
     "install:docs": "pnpm install --filter @novu/docs",
     "clean": "lerna clean --yes && npm run prebuild",
     "commit": "cz",
@@ -17,7 +17,7 @@
     "generate:provider": "npx hygen provider new",
     "lint": "nx run-many --target=lint --all",
     "test": "cross-env CI=true lerna run test:watch --parallel",
-    "start:dev": "cross-env TZ=UTC lerna run start:dev --parallel --concurrency=20 --scope=@novu/{api,web,widget,ws,notification-center}",
+    "start:dev": "cross-env TZ=UTC lerna run start:dev --parallel --concurrency=20 --scope=@novu/{api,worker,web,widget,ws,notification-center}",
     "start:web": "cross-env nx run @novu/web:start",
     "start:ws": "cross-env nx run @novu/ws:start",
     "start:webhook": "cross-env nx run @novu/webhook:start",
@@ -25,6 +25,7 @@
     "start:widget": "cross-env nx run @novu/widget:start",
     "start:api": "cross-env nx run @novu/api:start",
     "start:api:dev": "cross-env nx run @novu/api:start:dev",
+    "start:worker": "cross-env nx run @novu/worker:start",
     "start:dal": "cross-env nx run @novu/dal:start",
     "start:node": "cross-env nx run @novu/node:start",
     "start:shared": "cross-env nx run @novu/shared:start",
@@ -33,6 +34,7 @@
     "start:ws:test": "cross-env nx run-many --target=start:test --projects=@novu/ws",
     "start:webhook:test": "cross-env nx run-many --target=start:test --projects=@novu/webhook",
     "start:api:test": "cross-env nx run-many --target=start:test --projects=@novu/api",
+    "start:worker:test": "cross-env nx run-many --target=start:test --projects=@novu/worker",
     "start:static:web": "cross-env nx run-many --target=start:static:build --projects=@novu/web",
     "start:static:widget": "cross-env nx run-many --target=start:static:build --projects=@novu/widget",
     "start:docker:web": "cross-env nx run-many --target=start:docker --projects=@novu/web",
@@ -42,6 +44,7 @@
     "build": "nx run-many --target=build --exclude=angular-notification-center-example,vue-notification-center-example --all",
     "prebuild": "nx run-many --target=prebuild --all",
     "build:api": "nx build @novu/api",
+    "build:worker": "nx build @novu/worker",
     "build:ws": "nx build @novu/ws",
     "build:webhook": "nx build @novu/webhook",
     "build:inbound-mail": "nx build @novu/inbound-mail",
@@ -60,33 +63,36 @@
     "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
     "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env",
     "pnpm-context": "node scripts/pnpm-context.mjs",
+    "get-packages-folder": "node scripts/get-packages-folder.mjs",
     "jarvis": "node scripts/jarvis.js",
-    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh"
+    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
+    "get-affected": "node scripts/print-affected-array.mjs"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
     "@auto-it/released": "^10.36.5",
-    "@commitlint/cli": "17.4.2",
-    "@commitlint/config-angular": "^13.2.0",
-    "@commitlint/config-conventional": "17.4.2",
+    "@commitlint/cli": "17.6.1",
+    "@commitlint/config-angular": "^17.0.0",
+    "@commitlint/config-conventional": "17.6.1",
     "@cspell/eslint-plugin": "^6.14.3",
-    "@nrwl/cli": "13.10.6",
-    "@nrwl/eslint-plugin-nx": "13.10.6",
-    "@nrwl/jest": "13.10.6",
-    "@nrwl/linter": "13.10.6",
-    "@nrwl/nx-cloud": "^13.2.1",
-    "@nrwl/tao": "13.10.6",
+    "@nrwl/cli": "15.9.2",
+    "@nrwl/eslint-plugin-nx": "15.9.2",
+    "@nrwl/jest": "15.9.2",
+    "@nrwl/linter": "15.9.2",
+    "@nrwl/nx-cloud": "^15.3.5",
+    "@nrwl/tao": "^15.9.2",
     "@nrwl/workspace": "13.10.6",
     "@octokit/core": "^3.6.0",
-    "@pnpm/filter-workspace-packages": "^4.1.11",
-    "@pnpm/logger": "^4.0.0",
-    "@types/inquirer": "8.2.5",
+    "@pnpm/filter-workspace-packages": "^7.0.6",
+    "@pnpm/logger": "^5.0.0",
+    "@types/inquirer": "8.2.6",
     "@types/jest": "27.5.2",
     "@types/node": "16.11.7",
     "@typescript-eslint/eslint-plugin": "^5.50.0",
     "@typescript-eslint/parser": "^5.50.0",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
+    "cross-spawn": "^7.0.3",
     "chalk-animation": "^1.6.0",
     "commitizen": "^4.2.4",
     "cpx": "^1.5.0",
@@ -102,16 +108,16 @@
     "eslint-import-resolver-webpack": "^0.13.2",
     "eslint-plugin-eslint-comments": "^3.2.0",
     "eslint-plugin-functional": "^3.7.2",
-    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jsx-a11y": "^6.5.1",
-    "eslint-plugin-prettier": "^3.4.1",
+    "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-promise": "^4.3.1",
     "eslint-plugin-react": "7.32.2",
     "eslint-plugin-react-hooks": "^4.4.0",
     "eslint-plugin-spellcheck": "0.0.20",
     "execa": "^6.1.0",
-    "globby": "^12.0.2",
-    "gradient-string": "^2.0.0",
+    "globby": "^12.2.0",
+    "gradient-string": "^2.0.1",
     "husky": "^8.0.1",
     "hygen": "^6.2.0",
     "inquirer": "8.2.5",
@@ -121,11 +127,11 @@
     "lint-staged": "^10.5.4",
     "listr": "^0.14.3",
     "markdownlint-cli": "^0.33.0",
-    "meow": "^10.1.1",
+    "meow": "^10.1.3",
     "mississippi": "^4.0.0",
     "ora": "~5.4.1",
-    "pnpm": "7.27.0",
-    "prettier": "^2.6.2",
+    "pnpm": "7.28.0",
+    "prettier": "~2.8.0",
     "rimraf": "^3.0.2",
     "shelljs": "^0.8.5",
     "stop-only": "^3.1.2",
@@ -140,8 +146,7 @@
       "apps/*",
       "libs/*",
       "packages/*",
-      "providers/*",
-      "examples/*"
+      "providers/*"
     ]
   },
   "husky": {
@@ -152,17 +157,17 @@
   "lint-staged": {
     "apps/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ],
     "packages/**/*.{ts,tsx,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ],
     "providers/**/*.{ts,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ],
     "docs/**/*.{md,mdx}": [
@@ -171,7 +176,7 @@
     ],
     "libs/**/*.{ts,js,json}": [
       "prettier --ignore-path ./.prettierignore --write",
-      "eslint --fix",
+      "eslint",
       "stop-only --file"
     ]
   },
@@ -185,7 +190,7 @@
     "pnpm": "^7.26.0"
   },
   "dependencies": {
-    "nx": "^14.5.10",
-    "tslib": "^2.0.0"
+    "nx": "^15.9.2",
+    "tslib": "^2.4.0"
   }
 }

@@ -5,9 +5,6 @@ name: Test WEB
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
-    secrets:
-      cypress_key:
-        required: false
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -35,72 +32,49 @@ jobs:
 
       - uses: ./.github/actions/setup-project
         id: setup-project
+        with:
+          cypress: true
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
-          targets: lint
-          projects: '@novu/web'
+          targets: lint,build
+          projects: '@novu/web,@novu/api,@novu/worker'
 
-      - name: Start Local Stack
-        env:
-          DEFAULT_REGION: us-east-1
-          AWS_DEFAULT_REGION: us-east-1
-          AWS_ACCOUNT_ID: '000000000000'
-          AWS_ACCESS_KEY_ID: test
-          AWS_SECRET_ACCESS_KEY: test
-          AWS_EC2_METADATA_DISABLED: true
-        working-directory: docker/local
-        run: |
-          docker-compose -f docker-compose.localstack.yml up -d
-          sleep 5
-          max_retry=30
-          counter=0
-          until $command
-          do
-             sleep 1
-             [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
-             aws --endpoint-url=http://localhost:4566 s3 ls
-             echo "Trying again. Try #$counter"
-             ((counter++))
-          done
-          sleep 1
-          aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
-
-      # Runs a single command using the runners shell
-      - name: Build
-        run: CI='' pnpm build:web
-
-      - name: Build API
-        run: CI='' pnpm build:api
+      - uses: ./.github/actions/start-localstack
 
       - name: Start Client
         working-directory: apps/web
         env:
           REACT_APP_API_URL: http://localhost:1336
           REACT_APP_WS_URL: http://localhost:1340
-        run: pnpm pnpm start:static:build &
+          REACT_APP_WEBHOOK_URL: http://localhost:1341
+        run: pnpm start:static:build &
 
       - name: Start WS
         run: pnpm start:ws:test &
 
       - name: Start API in TEST
         env:
-          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.cypress_github_oauth_client_id }}
-          GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.cypress_github_oauth_client_secret }}
+          GITHUB_OAUTH_CLIENT_ID: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
+          GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
+          NODE_ENV: "test"
+          PORT: "1336"
+          TZ: "UTC"
           GITHUB_OAUTH_REDIRECT: "http://localhost:1336/v1/auth/github/callback"
-        run: cd apps/api && pnpm start:test &
+        run: cd apps/api && pnpm start:build &
+
+      - name: Start worker
+        env:
+          NODE_ENV: "test"
+          PORT: 1342
+          TZ: "UTC"
+        run: cd apps/worker && pnpm start:prod &
 
       - name: Install wait-on plugin
         run: npm i -g wait-on
 
-      - name: Wait on API
-        run: wait-on --timeout=120000 http://localhost:1336/v1/health-check
-
-      - name: Wait on WS
-        run: wait-on --timeout=30000 http://localhost:1340/v1/health-check
-
-      - name: Wait on WEB
-        run: wait-on --timeout=120000 http://localhost:4200
+      - name: Wait on Services
+        run: wait-on --timeout=180000 http://localhost:1336/v1/health-check http://localhost:1342/v1/health-check http://localhost:1340/v1/health-check http://localhost:4200
 
       # run cypress install only when cache was not hit
       - name: Cypress install
@@ -108,24 +82,28 @@ jobs:
         working-directory: apps/web
         run: pnpm cypress install
 
+      - uses: browser-actions/setup-chrome@latest
+      - run: |
+          echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
+
       - name: Cypress run e2e
-        uses: cypress-io/github-action@v4
+        uses: cypress-io/github-action@v5
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
-          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.cypress_github_user_email }}
-          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.cypress_github_user_password }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
+          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
           CYPRESS_IS_CI: true
         with:
           working-directory: apps/web
-          browser: chrome
+          browser: "${{ env.BROWSER_PATH }}"
           record: true
           parallel: true
           install: false
           config-file: cypress.config.ts
 
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: cypress-screenshots
@@ -161,7 +139,7 @@ jobs:
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.cypress_key }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
           NODE_OPTIONS: --max_old_space_size=4096
         with:
           browser: chrome
@@ -169,7 +147,7 @@ jobs:
           install: false
           component: true
 
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: cypress-screenshots

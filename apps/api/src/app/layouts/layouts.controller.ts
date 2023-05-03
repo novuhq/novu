@@ -6,12 +6,12 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Inject,
   Param,
   Patch,
   Post,
   Query,
   UseGuards,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -25,6 +25,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
+import { GetLayoutCommand, GetLayoutUseCase } from '@novu/application-generic';
 
 import {
   CreateLayoutRequestDto,
@@ -42,8 +43,6 @@ import {
   DeleteLayoutUseCase,
   FilterLayoutsCommand,
   FilterLayoutsUseCase,
-  GetLayoutCommand,
-  GetLayoutUseCase,
   SetDefaultLayoutCommand,
   SetDefaultLayoutUseCase,
   UpdateLayoutCommand,
@@ -54,8 +53,7 @@ import { LayoutId } from './types';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { AnalyticsService } from '@novu/application-generic';
-import { ANALYTICS_SERVICE } from '../shared/shared.module';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/layouts')
 @ApiTags('Layouts')
@@ -67,21 +65,19 @@ export class LayoutsController {
     private filterLayoutsUseCase: FilterLayoutsUseCase,
     private getLayoutUseCase: GetLayoutUseCase,
     private setDefaultLayoutUseCase: SetDefaultLayoutUseCase,
-    private updateLayoutUseCase: UpdateLayoutUseCase,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private updateLayoutUseCase: UpdateLayoutUseCase
   ) {}
 
   @Post('')
   @ExternalApiAccessible()
-  @ApiCreatedResponse({
-    type: CreateLayoutResponseDto,
-    description: 'The layout has been successfully created.',
-  })
+  @ApiResponse(CreateLayoutResponseDto, 201)
   @ApiOperation({ summary: 'Layout creation', description: 'Create a layout' })
   async createLayout(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateLayoutRequestDto
   ): Promise<CreateLayoutResponseDto> {
+    Logger.verbose('Executing new layout command');
+
     const layout = await this.createLayoutUseCase.execute(
       CreateLayoutCommand.create({
         environmentId: user.environmentId,
@@ -94,6 +90,8 @@ export class LayoutsController {
         isDefault: body.isDefault,
       })
     );
+
+    Logger.verbose('Created new Layout' + layout._id);
 
     return {
       _id: layout._id,
@@ -156,10 +154,7 @@ export class LayoutsController {
 
   @Get('/:layoutId')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: GetLayoutResponseDto,
-    description: 'The layout with the layoutId provided exists in the database.',
-  })
+  @ApiResponse(GetLayoutResponseDto)
   @ApiNotFoundResponse({
     description: 'The layout with the layoutId provided does not exist in the database.',
   })
@@ -204,10 +199,7 @@ export class LayoutsController {
 
   @Patch('/:layoutId')
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: UpdateLayoutResponseDto,
-    description: 'The layout with the layoutId provided has been updated correctly.',
-  })
+  @ApiResponse(UpdateLayoutResponseDto)
   @ApiBadRequestResponse({
     description: 'The payload provided or the URL param are not right.',
   })

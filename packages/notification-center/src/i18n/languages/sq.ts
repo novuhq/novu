@@ -6,6 +6,7 @@ export const SQ: ITranslationEntry = {
     markAllAsRead: 'Shënoni të gjitha si të lexuara',
     poweredBy: 'Mundësuar nga',
     settings: 'Cilësimet',
+    noNewNotification: 'Nuk ka asgjë të re për të parë këtu ende',
   },
   lang: 'sq',
 };

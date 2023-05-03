@@ -593,6 +593,41 @@ describe('Promote changes', () => {
 
       expect(prodVersion.isBlueprint).to.equal(true);
     });
+
+    it('should merge creation, and status changes to one change', async () => {
+      const testTemplate: Partial<CreateNotificationTemplateRequestDto> = {
+        name: 'test email template',
+        description: 'This is a test description',
+        tags: ['test-tag'],
+        notificationGroupId: session.notificationGroups[0]._id,
+        steps: [],
+      };
+
+      const { body } = await session.testAgent.post(`/v1/notification-templates`).send(testTemplate);
+
+      const notificationTemplateId = body.data._id;
+
+      await session.testAgent.put(`/v1/notification-templates/${notificationTemplateId}/status`).send({ active: true });
+
+      await session.testAgent
+        .put(`/v1/notification-templates/${notificationTemplateId}/status`)
+        .send({ active: false });
+
+      const changes = await changeRepository.find(
+        {
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+          _parentId: { $exists: false, $eq: null },
+          enabled: false,
+        },
+        '',
+        {
+          sort: { createdAt: 1 },
+        }
+      );
+
+      expect(changes.length).to.eq(1);
+    });
   });
 
   describe('Layout changes', () => {
@@ -631,7 +666,7 @@ describe('Promote changes', () => {
           _organizationId: session.organization._id,
           enabled: false,
           _entityId: layoutId,
-          type: ChangeEntityTypeEnum.LAYOUT,
+          type: ChangeEntityTypeEnum.DEFAULT_LAYOUT,
         },
         '',
         {
@@ -641,7 +676,7 @@ describe('Promote changes', () => {
 
       expect(changes.length).to.eql(1);
       expect(changes[0]._entityId).to.eql(layoutId);
-      expect(changes[0].type).to.eql(ChangeEntityTypeEnum.LAYOUT);
+      expect(changes[0].type).to.eql(ChangeEntityTypeEnum.DEFAULT_LAYOUT);
       expect(changes[0].change).to.deep.include({ op: 'add', path: ['_id'], val: layoutId });
 
       await session.applyChanges({

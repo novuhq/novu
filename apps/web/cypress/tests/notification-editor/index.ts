@@ -2,10 +2,11 @@ type Channel = 'inApp' | 'email' | 'sms' | 'digest';
 
 export function addAndEditChannel(channel: Channel) {
   cy.waitForNetworkIdle(500);
-  clickWorkflow();
 
+  goBack();
   dragAndDrop(channel);
-  editChannel(channel);
+  cy.waitForNetworkIdle(500);
+  editChannel(channel, true);
 }
 
 export function dragAndDrop(channel: Channel, dropTestId = 'addNodeButton') {
@@ -17,22 +18,25 @@ export function dragAndDrop(channel: Channel, dropTestId = 'addNodeButton') {
 
 export function editChannel(channel: Channel, last = false) {
   cy.clickWorkflowNode(`node-${channel}Selector`, last);
-  cy.getByTestId('edit-template-channel').click();
 }
 
 export function goBack() {
-  cy.getByTestId('go-back-button').click();
+  cy.getByTestId('close-step-page').click();
+  cy.waitForNetworkIdle(500);
 }
 
 export function fillBasicNotificationDetails(title?: string) {
+  cy.getByTestId('settings-page').click();
   cy.getByTestId('title')
+    .first()
+    .clear()
     .type(title || 'Test Notification Title')
     .blur();
   cy.getByTestId('description').type('This is a test description for a test title').blur();
 }
 
 export function clickWorkflow() {
-  cy.getByTestId('workflowButton').click({ force: true });
+  cy.getByTestId('workflowButton').click();
 }
 
 export function awaitGetContains(getSelector: string, contains: string) {

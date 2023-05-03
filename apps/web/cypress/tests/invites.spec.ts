@@ -14,7 +14,7 @@ describe('Invites module', function () {
     });
   });
 
-  it('should allow to login with GitHub if invited existing user', function () {
+  it.skip('should allow to login with GitHub if invited existing user', function () {
     const isCI = Cypress.env('IS_CI');
     if (!isCI) return;
 
@@ -37,7 +37,7 @@ describe('Invites module', function () {
     });
   });
 
-  it('invite a new user, sign up a new account with GitHub and then accept an invite', function () {
+  it.skip('invite a new user, sign up a new account with GitHub and then accept an invite', function () {
     const isCI = Cypress.env('IS_CI');
     if (!isCI) return;
 

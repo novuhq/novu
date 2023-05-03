@@ -1,16 +1,4 @@
 <div align="center">
-  <a href="https://novu.co/polishing" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/100117126/216938999-e49784fc-f5a9-43d3-8430-f33c1be1a38a.jpeg">
-    <img width="100%" src="https://user-images.githubusercontent.com/100117126/216939116-d5f8f4d2-6c7c-4165-a509-0844909dd9eb.jpeg" width="280" alt="Bar"/>
-  </picture>
-  </a>
-</div>
-
-</br>
-</br>
-
-<div align="center">
   <a href="https://novu.co" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
@@ -45,11 +33,13 @@ The ultimate service for managing multi-channel notifications with a single API.
   </p>
   
   <p align="center">
-  Available in: <a href="https://github.com/novuhq/novu/tree/next/packages/node">Node.js<a/>
-  · <a href="https://github.com/unicodeveloper/novu">PHP</a>
+  Available in: <a href="https://github.com/novuhq/novu/tree/next/packages/node">Node.js</a>
+  · <a href="https://github.com/novuhq/novu-php">PHP</a>
+  · <a href="https://github.com/novuhq/go-novu">Go</a>
+  · <a href="https://github.com/novuhq/novu-ruby">Ruby</a>
+  · <a href="https://github.com/novuhq/novu-kotlin">Kotlin</a>
   · <a href="https://github.com/novuhq/elixir">Elixir</a>
   · <a href="https://github.com/novuhq/rust">Rust</a>
-  · <a href="https://github.com/novuhq/go-novu">Go</a>
   </p>
 
 ## ⭐️ Why Novu?
@@ -79,7 +69,6 @@ With Novu, you can create custom workflows and define conditions for each channe
   - [Chat](https://github.com/novuhq/novu#-chat)
   - [In-App](https://github.com/novuhq/novu#-in-app)
   - [Others](https://github.com/novuhq/novu#other-coming-soon)
-- [Jarvis](https://github.com/novuhq/novu#-meet-jarvis)
 - [Need Help?](https://github.com/novuhq/novu#-need-help)
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
@@ -154,7 +143,10 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Mandrill](https://github.com/novuhq/novu/tree/main/providers/mandrill)
 - [x] [SendinBlue](https://github.com/novuhq/novu/tree/main/providers/sendinblue)
 - [x] [MailerSend](https://github.com/novuhq/novu/tree/main/providers/mailersend)
-- [ ] SparkPost
+- [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
+- [x] [Resend](https://github.com/novuhq/novu/tree/main/providers/resend)
+- [x] [SparkPost](https://github.com/novuhq/novu/tree/main/providers/sparkpost)
+- [x] [Outlook 365](https://github.com/novuhq/novu/tree/main/providers/outlook365)
 
 #### 📞 SMS
 
@@ -166,6 +158,14 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] [Telnyx](https://github.com/novuhq/novu/tree/main/providers/telnyx)
 - [x] [Termii](https://github.com/novuhq/novu/tree/main/providers/termii)
 - [x] [Gupshup](https://github.com/novuhq/novu/tree/main/providers/gupshup)
+- [x] [SMS Central](https://github.com/novuhq/novu/tree/main/providers/sms-central)
+- [x] [Maqsam](https://github.com/novuhq/novu/tree/main/providers/maqsam)
+- [x] [46elks](https://github.com/novuhq/novu/tree/main/providers/forty-six-elks)
+- [x] [Clickatell](https://github.com/novuhq/novu/tree/main/providers/clickatell)
+- [x] [Burst SMS](https://github.com/novuhq/novu/tree/main/providers/burst-sms)
+- [x] [Firetext](https://github.com/novuhq/novu/tree/main/providers/firetext)
+- [x] [Infobip](https://github.com/novuhq/novu/tree/main/providers/infobip)
+- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Bandwidth
 - [ ] RingCentral
 
@@ -173,7 +173,8 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
-- [x] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
+- [x] [APNS](https://github.com/novuhq/novu/tree/main/providers/apns)
+- [ ] OneSignal
 - [ ] Pushwoosh
 
 #### 👇 Chat
@@ -181,7 +182,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [x] Slack
 - [x] Discord
 - [x] MS Teams
-- [ ] Mattermost
+- [x] Mattermost
 
 #### 📱 In-App
 
@@ -199,6 +200,10 @@ Before you begin coding and collaborating, please read our [Code of Conduct](htt
 ## 💻 Need Help?
 
 We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
+
+## ⚡ Immediate working space with Gitpod
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
 
 ## 🔗 Links
 

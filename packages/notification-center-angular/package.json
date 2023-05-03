@@ -1,12 +1,13 @@
 {
   "name": "@novu/notification-center-angular",
-  "version": "0.11.0",
+  "version": "0.14.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "echo \"no tests\""
+    "test": "echo \"no tests\"",
+    "lint": "echo \"No linting configured\""
   },
   "module": "dist/notification-center-angular/fesm2015/novu-notification-center-angular.mjs",
   "es2020": "dist/notification-center-angular/fesm2020/novu-notification-center-angular.mjs",
@@ -31,29 +32,29 @@
     }
   },
   "dependencies": {
-    "@angular/common": "~15.1.0",
-    "@angular/compiler": "~15.1.0",
-    "@angular/core": "~15.1.0",
-    "@angular/platform-browser": "~15.1.0",
-    "@angular/platform-browser-dynamic": "~15.1.0",
-    "@novu/notification-center": "^0.11.0",
+    "@angular/common": "~15.2.0",
+    "@angular/compiler": "~15.2.0",
+    "@angular/core": "~15.2.0",
+    "@angular/platform-browser": "~15.2.0",
+    "@angular/platform-browser-dynamic": "~15.2.0",
+    "@novu/notification-center": "^0.14.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~15.1.0",
-    "@angular/cli": "~15.1.0",
-    "@angular/compiler-cli": "~15.1.0",
+    "@angular-devkit/build-angular": "~15.2.0",
+    "@angular/cli": "~15.2.0",
+    "@angular/compiler-cli": "~15.2.0",
     "@types/jasmine": "~4.3.0",
-    "jasmine-core": "~4.5.0",
+    "jasmine-core": "~4.6.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.1.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.0.0",
-    "ng-packagr": "~15.1.0",
+    "ng-packagr": "~15.2.0",
     "typescript": "4.9.5"
   },
   "gitHead": "1a8fa1bd98790810d7fb69c4dc0e82d33c20eec2"

@@ -1,17 +1,22 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { NotificationTemplateEntity, NotificationTemplateRepository, ChangeRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import {
+  buildNotificationTemplateIdentifierKey,
+  buildNotificationTemplateKey,
+  InvalidateCacheService,
+} from '@novu/application-generic';
 
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class ChangeTemplateActiveStatus {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private createChange: CreateChange
+    private createChange: CreateChange,
+    private changeRepository: ChangeRepository
   ) {}
 
   async execute(command: ChangeTemplateActiveStatusCommand): Promise<NotificationTemplateEntity> {
@@ -28,12 +33,18 @@ export class ChangeTemplateActiveStatus {
       throw new BadRequestException('You must provide a different status from the current status');
     }
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: [CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE],
-      credentials: {
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateKey({
         _id: command.templateId,
-        environmentId: command.environmentId,
-      },
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateIdentifierKey({
+        templateIdentifier: foundTemplate.triggers[0].identifier,
+        _environmentId: command.environmentId,
+      }),
     });
 
     await this.notificationTemplateRepository.update(
@@ -50,6 +61,13 @@ export class ChangeTemplateActiveStatus {
     );
 
     const item = await this.notificationTemplateRepository.findById(command.templateId, command.environmentId);
+    if (!item) throw new NotFoundException(`Notification template ${command.templateId} is not found`);
+
+    const parentChangeId: string = await this.changeRepository.getChangeId(
+      command.environmentId,
+      ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+      command.templateId
+    );
 
     await this.createChange.execute(
       CreateChangeCommand.create({
@@ -58,7 +76,7 @@ export class ChangeTemplateActiveStatus {
         userId: command.userId,
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         item,
-        changeId: NotificationTemplateRepository.createObjectId(),
+        changeId: parentChangeId,
       })
     );
 

@@ -10,12 +10,23 @@ import {
   OrganizationService,
   UserService,
 } from '@novu/testing';
+import { JobsService } from '@novu/testing';
+
+const jobsService = new JobsService();
 
 module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits
   // `config` is the resolved Cypress config
   on('task', {
-    async createNotifications({ identifier, token, count = 1, subscriberId, environmentId, organizationId }) {
+    async createNotifications({
+      identifier,
+      token,
+      count = 1,
+      subscriberId,
+      environmentId,
+      organizationId,
+      templateId,
+    }) {
       let subId = subscriberId;
       if (!subId) {
         const subscribersService = new SubscribersService(organizationId, environmentId);
@@ -25,10 +36,22 @@ module.exports = (on, config) => {
 
       const triggerIdentifier = identifier;
       const service = new NotificationsService(token);
+      const session = new UserSession(config.env.API_URL);
 
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < count; i++) {
         await service.triggerEvent(triggerIdentifier, subId, {});
+      }
+
+      if (organizationId) {
+        await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
+      }
+
+      while (
+        (await jobsService.jobQueue.queue.getWaitingCount()) ||
+        (await jobsService.jobQueue.queue.getActiveCount())
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
 
       return 'ok';
@@ -68,7 +91,11 @@ module.exports = (on, config) => {
       return organization;
     },
     async getSession(
-      settings: { noEnvironment?: boolean; partialTemplate?: Partial<NotificationTemplateEntity> } = {}
+      settings: {
+        noEnvironment?: boolean;
+        partialTemplate?: Partial<NotificationTemplateEntity>;
+        noTemplates?: boolean;
+      } = {}
     ) {
       const dal = new DalService();
       await dal.connect('mongodb://localhost:27017/novu-test');
@@ -85,7 +112,7 @@ module.exports = (on, config) => {
       );
 
       let templates;
-      if (!settings?.noEnvironment) {
+      if (!settings?.noTemplates) {
         const templatePartial = settings?.partialTemplate || {};
 
         templates = await Promise.all([

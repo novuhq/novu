@@ -1,21 +1,22 @@
+---
+sidebar_position: 1
+---
+
 # SendGrid
 
 You can use the [SendGrid](https://sendgrid.com/) provider to send transactional emails to your customers using the Novu Platform with a single API to create multi-channel experiences.
 
 ## Getting Started
 
-To use the Sendgrid channel, you will need to create a Sendgrid account and add your API key to the SendGrid integration on the Novu platform.
+To use the Sendgrid provider in the email channel, you will need to create a Sendgrid account and add your API key to the SendGrid integration on the Novu platform.
 
 ## Generate API Key
 
 To generate a new API key in SendGrid, you can follow these steps:
 
 - Log in to your SendGrid account.
-
 - Click on the **Settings** gear icon in the top right corner of the screen, and then click "API Keys" from the drop-down menu.
-
 - On the API Keys page, click the **Create API Key** button.
-
 - Give the API key a name and select the following permissions
 
 -**Mail Send** - Full Access
@@ -46,5 +47,6 @@ SendGrid allows you to authenticate your sender identity using one of the follow
 - Locate SendGrid and click on the **Connect** button.
 - Enter your SendGrid API Key.
 - Fill the `From email address` field using the authenticated email from the previous step.
-- Click on the **Save** button.
+- Click on the `Disabled` button and mark as `Active`.
+- Click on the **Connect** button.
 - You should now be able to send notifications using SendGrid in Novu.

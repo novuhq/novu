@@ -1,5 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { SendgridEmailProvider } from '@novu/sendgrid';
+
 import { BaseHandler } from './base.handler';
 
 export class SendgridHandler extends BaseHandler {
@@ -8,18 +9,11 @@ export class SendgridHandler extends BaseHandler {
   }
 
   buildProvider(credentials, from?: string) {
-    const config: {
-      apiKey: string;
-      from: string;
-      senderName: string;
-      ipPoolName?: string;
-    } = {
+    this.provider = new SendgridEmailProvider({
       apiKey: credentials.apiKey,
-      from: from as string,
+      from,
       senderName: credentials.senderName,
       ipPoolName: credentials.ipPoolName,
-    };
-
-    this.provider = new SendgridEmailProvider(config);
+    });
   }
 }

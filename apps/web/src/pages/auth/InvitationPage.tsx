@@ -1,22 +1,22 @@
 import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useContext, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
 import { IGetInviteResponseDto } from '@novu/shared';
 
 import { getInviteTokenData } from '../../api/invitation';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
-import { SignUpForm } from '../../components/auth/SignUpForm';
+import { SignUpForm } from './components/SignUpForm';
 import { colors, Text, Button } from '../../design-system';
-import { AuthContext } from '../../store/authContext';
-import { useAcceptInvite } from '../../components/auth/useAcceptInvite';
-import { LoginForm } from '../../components/auth/LoginForm';
+import { useAuthContext } from '../../components/providers/AuthProvider';
+import { useAcceptInvite } from './components/useAcceptInvite';
+import { LoginForm } from './components/LoginForm';
 
 export default function InvitationPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { token, logout, currentUser } = useContext(AuthContext);
+  const { token, logout, currentUser } = useAuthContext();
   const location = useLocation();
   const isLoggedIn = !!token;
   const { token: invitationToken } = useParams<{ token: string }>();

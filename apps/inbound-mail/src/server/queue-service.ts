@@ -1,4 +1,5 @@
-import { Queue, QueueBaseOptions, Worker } from 'bullmq';
+import { BullmqService } from '@novu/application-generic';
+import { Queue, QueueBaseOptions } from 'bullmq';
 import { ConnectionOptions } from 'tls';
 
 export class QueueService {
@@ -18,11 +19,11 @@ export class QueueService {
       tls: process.env.REDIS_TLS as ConnectionOptions,
     },
   };
-  public readonly queue: Queue;
-  public readonly worker: Worker;
+  public readonly bullMqService: BullmqService;
 
   constructor() {
-    this.queue = new Queue<string>(this.QUEUE_NAME, {
+    this.bullMqService = new BullmqService();
+    this.bullMqService.createQueue(this.QUEUE_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,

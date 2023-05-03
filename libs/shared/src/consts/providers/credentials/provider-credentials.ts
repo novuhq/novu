@@ -146,6 +146,24 @@ export const nodemailerConfig: IConfigCredentials[] = [
     required: false,
   },
   {
+    key: CredentialsKeyEnum.RequireTls,
+    displayName: 'Require TLS',
+    type: 'switch',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.IgnoreTls,
+    displayName: 'Ignore TLS',
+    type: 'switch',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.TlsOptions,
+    displayName: 'TLS options',
+    type: 'object',
+    required: false,
+  },
+  {
     key: CredentialsKeyEnum.Domain,
     displayName: 'DKIM: Domain name',
     type: 'string',
@@ -192,6 +210,23 @@ export const resendConfig: IConfigCredentials[] = [
     displayName: 'API Key',
     type: 'string',
     required: true,
+  },
+  ...mailConfigBase,
+];
+
+export const sparkpostConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'EU',
+    description: 'Use `eu` if your account is registered to SparkPost EU',
+    type: 'boolean',
+    required: false,
   },
   ...mailConfigBase,
 ];
@@ -380,6 +415,13 @@ export const slackConfig: IConfigCredentials[] = [
     type: 'string',
     required: false,
   },
+  {
+    key: CredentialsKeyEnum.RedirectUrl,
+    displayName: 'Redirect URL',
+    description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
+    type: 'string',
+    required: false,
+  },
 ];
 
 export const fcmConfig: IConfigCredentials[] = [
@@ -412,19 +454,19 @@ export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Key ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
   {
     key: CredentialsKeyEnum.ProjectName,
     displayName: 'Team ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
   {
     key: CredentialsKeyEnum.ApplicationId,
     displayName: 'Bundle ID',
-    type: 'text',
+    type: 'string',
     required: true,
   },
   {
@@ -502,4 +544,86 @@ export const infobipEmailConfig: IConfigCredentials[] = [
     required: true,
   },
   ...mailConfigBase,
+];
+
+export const fortySixElksConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const kannelConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Host,
+    displayName: 'Host',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Port,
+    displayName: 'Port',
+    type: 'number',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: false,
+  },
+  ...smsConfigBase,
+];
+
+export const maqsamConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Access Key ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Access Secret',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const smsCentralConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: false,
+  },
+  ...smsConfigBase,
 ];

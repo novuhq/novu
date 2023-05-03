@@ -12,7 +12,7 @@ import {
 import { IUserPreferenceSettings } from '@novu/client';
 
 import { ISession, INotificationsContext } from '../shared/interfaces';
-import { NovuProvider } from '../components/novu-provider';
+import { NovuProvider } from '../components';
 import { useNotifications } from './useNotifications';
 
 const promiseResolveTimeout = (ms: number, arg: unknown = {}) => new Promise((resolve) => setTimeout(resolve, ms, arg));
@@ -29,9 +29,9 @@ const mockSession: ISession = {
     firstName: 'firstName',
     lastName: 'lastName',
     email: 'email',
+    subscriberId: 'subscriberId_1234',
     organizationId: 'organizationId?',
     environmentId: 'environmentId',
-    organizationAdminId: 'organizationAdminId',
     aud: 'widget_user',
   },
 };

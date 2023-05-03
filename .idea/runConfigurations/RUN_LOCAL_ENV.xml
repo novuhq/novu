@@ -6,7 +6,9 @@
     <toRun name="SHARED" type="js.build_tools.npm" />
     <toRun name="TESTING" type="js.build_tools.npm" />
     <toRun name="WEB" type="js.build_tools.npm" />
+    <toRun name="WEBHOOK" type="js.build_tools.npm" />
     <toRun name="WIDGET" type="js.build_tools.npm" />
+    <toRun name="WORKER" type="js.build_tools.npm" />
     <toRun name="WS" type="js.build_tools.npm" />
     <method v="2" />
   </configuration>

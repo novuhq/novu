@@ -1,21 +1,23 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
+
 import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
 import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
-import { UserSession } from '../shared/framework/user.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { GetActivityStats } from './usecases/get-activity-stats/get-activity-stats.usecase';
-import { GetActivityStatsCommand } from './usecases/get-activity-stats/get-activity-stats.command';
+import { GetActivityStats, GetActivityStatsCommand } from './usecases/get-activity-stats';
 import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
 import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
-import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
 import { ActivitiesRequestDto } from './dtos/activities-request.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetActivity } from './usecases/get-activity/get-activity.usecase';
 import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
+
+import { UserSession } from '../shared/framework/user.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/notifications')
 @ApiTags('Notification')
@@ -71,9 +73,7 @@ export class NotificationsController {
     );
   }
 
-  @ApiOkResponse({
-    type: ActivityStatsResponseDto,
-  })
+  @ApiResponse(ActivityStatsResponseDto)
   @ApiOperation({
     summary: 'Get notification statistics',
   })
@@ -85,7 +85,6 @@ export class NotificationsController {
       GetActivityStatsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        userId: user._id,
       })
     );
   }
@@ -93,9 +92,7 @@ export class NotificationsController {
   @Get('/graph/stats')
   @UseGuards(JwtAuthGuard)
   @ExternalApiAccessible()
-  @ApiOkResponse({
-    type: [ActivityGraphStatesResponse],
-  })
+  @ApiResponse(ActivityGraphStatesResponse, 200, true)
   @ApiOperation({
     summary: 'Get notification graph statistics',
   })
@@ -119,9 +116,7 @@ export class NotificationsController {
   }
 
   @Get('/:notificationId')
-  @ApiOkResponse({
-    type: ActivityNotificationResponseDto,
-  })
+  @ApiResponse(ActivityNotificationResponseDto)
   @ApiOperation({
     summary: 'Get notification',
   })

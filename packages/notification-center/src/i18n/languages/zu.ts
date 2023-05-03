@@ -6,6 +6,7 @@ export const ZU: ITranslationEntry = {
     markAllAsRead: 'Maka konke njengokufundiwe',
     poweredBy: 'Inikezwe amandla yi',
     settings: 'Izilungiselelo',
+    noNewNotification: 'Akukho okusha ongakubona lapha okwamanje',
   },
   lang: 'zu',
 };

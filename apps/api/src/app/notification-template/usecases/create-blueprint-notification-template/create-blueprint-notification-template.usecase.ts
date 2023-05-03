@@ -8,7 +8,7 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from '../create-notification-template';
 import { CreateBlueprintNotificationTemplateCommand } from './create-blueprint-notification-template.command';
 
@@ -19,7 +19,7 @@ export class CreateBlueprintNotificationTemplate {
     private createNotificationTemplateUsecase: CreateNotificationTemplate,
     private notificationGroupRepository: NotificationGroupRepository,
     private feedRepository: FeedRepository,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: CreateBlueprintNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
@@ -65,7 +65,7 @@ export class CreateBlueprintNotificationTemplate {
     for (let i = 0; i < steps.length; i++) {
       const step = steps[i];
 
-      if (!step.template._feedId) {
+      if (!step.template?._feedId) {
         continue;
       }
 
@@ -87,8 +87,8 @@ export class CreateBlueprintNotificationTemplate {
 
       if (!foundFeed) {
         foundFeed = await this.feedRepository.create({
-          name: foundFeed.name,
-          identifier: foundFeed.identifier,
+          name: originalFeed.name,
+          identifier: originalFeed.identifier,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         });
@@ -119,6 +119,7 @@ export class CreateBlueprintNotificationTemplate {
       _id: notificationGroupId,
       _organizationId: this.getBlueprintOrganizationId(),
     });
+    if (!originalGroup) throw new NotFoundException(`Notification group with id ${notificationGroupId} is not found`);
 
     if (originalGroup && originalGroup.name !== group.name) {
       group = await this.notificationGroupRepository.findOne({
@@ -139,6 +140,6 @@ export class CreateBlueprintNotificationTemplate {
   }
 
   private getBlueprintOrganizationId(): string {
-    return NotificationTemplateRepository.getBlueprintOrganizationId();
+    return NotificationTemplateRepository.getBlueprintOrganizationId() as string;
   }
 }

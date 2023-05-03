@@ -21,6 +21,10 @@ export enum CredentialsKeyEnum {
   ServiceAccount = 'serviceAccount',
   BaseUrl = 'baseUrl',
   WebhookUrl = 'webhookUrl',
+  RequireTls = 'requireTls',
+  IgnoreTls = 'ignoreTls',
+  TlsOptions = 'tlsOptions',
+  RedirectUrl = 'redirectUrl',
 }
 
 export enum EmailProviderIdEnum {
@@ -40,12 +44,14 @@ export enum EmailProviderIdEnum {
   Clickatell = 'clickatell',
   Outlook365 = 'outlook365',
   Novu = 'novu-email',
+  SparkPost = 'sparkpost',
 }
 
 export enum SmsProviderIdEnum {
   Nexmo = 'nexmo',
   Plivo = 'plivo',
   Sms77 = 'sms77',
+  SmsCentral = 'sms-central',
   SNS = 'sns',
   Telnyx = 'telnyx',
   Twilio = 'twilio',
@@ -54,12 +60,17 @@ export enum SmsProviderIdEnum {
   Infobip = 'infobip-sms',
   BurstSms = 'burst-sms',
   Clickatell = 'clickatell',
+  FortySixElks = 'forty-six-elks',
+  Kannel = 'kannel',
+  Maqsam = 'maqsam',
+  Termii = 'termii',
 }
 
 export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
   MsTeams = 'msteams',
+  Mattermost = 'mattermost',
 }
 
 export enum PushProviderIdEnum {

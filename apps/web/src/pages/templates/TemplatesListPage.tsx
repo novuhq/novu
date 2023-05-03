@@ -5,6 +5,7 @@ import { ColumnWithStrictAccessor } from 'react-table';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
 
+import { useTemplates, useEnvController, useNotificationGroup } from '../../hooks';
 import PageMeta from '../../components/layout/components/PageMeta';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -13,10 +14,16 @@ import { Edit, PlusCircle } from '../../design-system/icons';
 import { Tooltip } from '../../design-system';
 import { Data } from '../../design-system/table/Table';
 import { useFilterTemplates } from '../../api/hooks/use-filter-templates';
-import { useEnvController } from '../../store/useEnvController';
 import { useDebounce } from '../../hooks/useDebounce';
+import { ROUTES } from '../../constants/routes.enum';
+import { parseUrl } from '../../utils/routeUtils';
+import { TemplatesListNoData } from './TemplatesListNoData';
+import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
+import { useSegment } from '../../components/providers/SegmentProvider';
+import { TemplateAnalyticsEnum } from './constants';
 
 function NotificationList() {
+  const segment = useSegment();
   const { readonly } = useEnvController();
   const [page, setPage] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -29,15 +36,24 @@ function NotificationList() {
   const debouncedSearchQuery = useDebounce((query: string) => {
     setSearchQuery(query);
   }, 500);
+  const { groups, loading: areNotificationGroupLoading } = useNotificationGroup();
   const theme = useMantineTheme();
   const navigate = useNavigate();
+
+  const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);
   }
 
-  const handleRedirectToCreateTemplate = () => {
-    navigate('/templates/create');
+  const handleRedirectToCreateTemplate = (isFromHeader: boolean) => {
+    segment.track(TemplateAnalyticsEnum.CREATE_TEMPLATE_CLICK, { isFromHeader });
+    navigate(ROUTES.TEMPLATES_CREATE);
+  };
+
+  const handleCreateDigestDemoWorkflow = () => {
+    segment.track(TemplateAnalyticsEnum.TRY_DIGEST_CLICK);
+    createDigestDemoWorkflow();
   };
 
   const columns: ColumnWithStrictAccessor<Data>[] = [
@@ -67,7 +83,7 @@ function NotificationList() {
     {
       accessor: 'createdAt',
       Header: 'Created At',
-      Cell: ({ createdAt }: any) => format(new Date(createdAt), 'dd/MM/yyyy HH:mm'),
+      Cell: ({ createdAt }: any) => <Text rows={1}>{format(new Date(createdAt), 'dd/MM/yyyy HH:mm')}</Text>,
     },
     {
       accessor: 'status',
@@ -98,7 +114,7 @@ function NotificationList() {
           <ActionIcon
             variant="transparent"
             component={Link}
-            to={`/templates/edit/${_id}`}
+            to={parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: _id })}
             data-test-id="template-edit-link"
           >
             <Edit color={theme.colorScheme === 'dark' ? colors.B40 : colors.B80} />
@@ -109,7 +125,7 @@ function NotificationList() {
   ];
 
   function onRowClick(row) {
-    navigate(`/templates/edit/${row.values._id}`);
+    navigate(parseUrl(ROUTES.TEMPLATES_EDIT_TEMPLATEID, { templateId: row.values._id }));
   }
 
   return (
@@ -127,11 +143,11 @@ function NotificationList() {
             />
             <Button
               disabled={readonly}
-              onClick={handleRedirectToCreateTemplate}
+              onClick={() => handleRedirectToCreateTemplate(true)}
               icon={<PlusCircle />}
               data-test-id="create-template-btn"
             >
-              New
+              Create Workflow
             </Button>
           </Group>
         }
@@ -139,7 +155,7 @@ function NotificationList() {
       <TemplateListTableWrapper>
         <Table
           onRowClick={onRowClick}
-          loading={isLoading}
+          loading={isLoading || areNotificationGroupLoading}
           data-test-id="notifications-template"
           columns={columns}
           data={templates || []}
@@ -149,6 +165,13 @@ function NotificationList() {
             total: totalTemplatesCount,
             onPageChange: handleTableChange,
           }}
+          noDataPlaceholder={
+            <TemplatesListNoData
+              onCreateClick={() => handleRedirectToCreateTemplate(false)}
+              onTryDigestClick={handleCreateDigestDemoWorkflow}
+              tryDigestDisabled={isTryDigestDisabled}
+            />
+          }
         />
       </TemplateListTableWrapper>
     </PageContainer>

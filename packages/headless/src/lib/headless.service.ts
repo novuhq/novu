@@ -6,7 +6,11 @@ import {
 } from '@tanstack/query-core';
 import io from 'socket.io-client';
 import { ApiService, IUserPreferenceSettings, IStoreQuery } from '@novu/client';
-import { IOrganizationEntity, IMessage } from '@novu/shared';
+import {
+  IOrganizationEntity,
+  IMessage,
+  IPaginatedResponse,
+} from '@novu/shared';
 
 import { QueryService } from './query.service';
 import type { ISession } from '../utils/types';
@@ -14,11 +18,13 @@ import {
   NOTIFICATIONS_QUERY_KEY,
   ORGANIZATION_QUERY_KEY,
   SESSION_QUERY_KEY,
+  UNREAD_COUNT_QUERY_KEY,
   UNSEEN_COUNT_QUERY_KEY,
   USER_PREFERENCES_QUERY_KEY,
 } from '../utils';
 import {
   FetchResult,
+  IFeedId,
   IHeadlessServiceOptions,
   IMessageId,
   IUpdateActionVariables,
@@ -43,12 +49,14 @@ export class HeadlessService {
   private api: ApiService;
   private queryClient: QueryClient = null;
   private queryService: QueryService;
+  private session: ISession | null = null;
+
   private socket: {
     on: (event: string, listener: (data?: unknown) => void) => void;
     off: (event: string) => void;
     disconnect: () => void;
   } | null = null;
-  private session: ISession | null = null;
+
   private sessionQueryOptions: QueryObserverOptions<ISession, unknown> = {
     queryKey: SESSION_QUERY_KEY,
     cacheTime: Infinity,
@@ -60,6 +68,7 @@ export class HeadlessService {
         this.options.subscriberHash
       ),
   };
+
   private organizationQueryOptions: QueryObserverOptions<
     IOrganizationEntity,
     unknown
@@ -69,6 +78,7 @@ export class HeadlessService {
     staleTime: Infinity,
     queryFn: () => this.api.getOrganization(),
   };
+
   private unseenCountQueryOptions: QueryObserverOptions<
     { count: number },
     unknown
@@ -76,6 +86,15 @@ export class HeadlessService {
     queryKey: UNSEEN_COUNT_QUERY_KEY,
     queryFn: () => this.api.getUnseenCount(),
   };
+
+  private unreadCountQueryOptions: QueryObserverOptions<
+    { count: number },
+    unknown
+  > = {
+    queryKey: UNREAD_COUNT_QUERY_KEY,
+    queryFn: () => this.api.getUnreadCount(),
+  };
+
   private userPreferencesQueryOptions: QueryObserverOptions<
     IUserPreferenceSettings[],
     unknown
@@ -153,6 +172,19 @@ export class HeadlessService {
   private callFetchListener = <T>(
     result: QueryObserverResult<T>,
     listener: (result: FetchResult<T>) => void
+  ) =>
+    listener({
+      data: result.data,
+      error: result.error,
+      status: result.status,
+      isLoading: result.isLoading,
+      isFetching: result.isFetching,
+      isError: result.isError,
+    });
+
+  private callFetchListenerWithPagination = <T>(
+    result: QueryObserverResult<IPaginatedResponse<T>>,
+    listener: (result: FetchResult<IPaginatedResponse<T>>) => void
   ) =>
     listener({
       data: result.data,
@@ -254,6 +286,29 @@ export class HeadlessService {
     return unsubscribe;
   }
 
+  public fetchUnreadCount({
+    listener,
+    onSuccess,
+    onError,
+  }: {
+    listener: (result: FetchResult<{ count: number }>) => void;
+    onSuccess?: (data: { count: number }) => void;
+    onError?: (error: unknown) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    const { unsubscribe } = this.queryService.subscribeQuery({
+      options: {
+        ...this.unreadCountQueryOptions,
+        onSuccess,
+        onError,
+      },
+      listener: (result) => this.callFetchListener(result, listener),
+    });
+
+    return unsubscribe;
+  }
+
   public listenUnseenCountChange({
     listener,
   }: {
@@ -286,6 +341,38 @@ export class HeadlessService {
     };
   }
 
+  public listenUnreadCountChange({
+    listener,
+  }: {
+    listener: (unreadCount: number) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    if (this.socket) {
+      this.socket.on(
+        'unread_count_changed',
+        (data?: { unreadCount: number }) => {
+          if (Number.isInteger(data?.unreadCount)) {
+            this.queryClient.removeQueries(NOTIFICATIONS_QUERY_KEY, {
+              exact: false,
+            });
+            this.queryClient.setQueryData<{ count: number }>(
+              UNREAD_COUNT_QUERY_KEY,
+              (oldData) => ({ count: data?.unreadCount ?? oldData.count })
+            );
+            listener(data.unreadCount);
+          }
+        }
+      );
+    }
+
+    return () => {
+      if (this.socket) {
+        this.socket.off('unread_count_changed');
+      }
+    };
+  }
+
   public fetchNotifications({
     page = 0,
     storeId = 'default_store',
@@ -297,8 +384,8 @@ export class HeadlessService {
     page?: number;
     storeId?: string;
     query?: IStoreQuery;
-    listener: (result: FetchResult<IMessage[]>) => void;
-    onSuccess?: (messages: IMessage[]) => void;
+    listener: (result: FetchResult<IPaginatedResponse<IMessage>>) => void;
+    onSuccess?: (messages: IPaginatedResponse<IMessage>) => void;
     onError?: (error: unknown) => void;
   }) {
     this.assertSessionInitialized();
@@ -310,7 +397,8 @@ export class HeadlessService {
         onSuccess,
         onError,
       },
-      listener: (result) => this.callFetchListener(result, listener),
+      listener: (result) =>
+        this.callFetchListenerWithPagination(result, listener),
     });
 
     return unsubscribe;
@@ -322,7 +410,7 @@ export class HeadlessService {
     onError,
   }: {
     listener: (result: FetchResult<IUserPreferenceSettings[]>) => void;
-    onSuccess?: (messages: IUserPreferenceSettings[]) => void;
+    onSuccess?: (settings: IUserPreferenceSettings[]) => void;
     onError?: (error: unknown) => void;
   }) {
     this.assertSessionInitialized();
@@ -464,6 +552,52 @@ export class HeadlessService {
       });
   }
 
+  public async removeNotification({
+    messageId,
+    listener,
+    onSuccess,
+    onError,
+  }: {
+    messageId: string;
+    listener: (
+      result: UpdateResult<IMessage, unknown, { messageId: string }>
+    ) => void;
+    onSuccess?: (message: IMessage) => void;
+    onError?: (error: unknown) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      IMessage,
+      unknown,
+      { messageId: string }
+    >({
+      options: {
+        mutationFn: (variables) => this.api.removeMessage(variables.messageId),
+        onSuccess: (data) => {
+          this.queryClient.removeQueries(NOTIFICATIONS_QUERY_KEY, {
+            exact: false,
+          });
+        },
+      },
+      listener: (res) => this.callUpdateListener(res, listener),
+    });
+
+    result
+      .mutate({ messageId })
+      .then((data) => {
+        onSuccess?.(data);
+
+        return data;
+      })
+      .catch((error) => {
+        onError?.(error);
+      })
+      .finally(() => {
+        unsubscribe();
+      });
+  }
+
   public async updateAction({
     messageId,
     actionButtonType,
@@ -517,6 +651,96 @@ export class HeadlessService {
 
     result
       .mutate({ messageId, actionButtonType, status, payload })
+      .then((data) => {
+        onSuccess?.(data);
+
+        return data;
+      })
+      .catch((error) => {
+        onError?.(error);
+      })
+      .finally(() => {
+        unsubscribe();
+      });
+  }
+
+  public async markAllMessagesAsRead({
+    listener,
+    onSuccess,
+    onError,
+    feedId,
+  }: {
+    listener: (result: UpdateResult<number, unknown, undefined>) => void;
+    onSuccess?: (count: number) => void;
+    onError?: (error: unknown) => void;
+    feedId?: IFeedId;
+  }) {
+    this.assertSessionInitialized();
+
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      number,
+      unknown,
+      { feedId?: IFeedId }
+    >({
+      options: {
+        mutationFn: (variables) =>
+          this.api.markAllMessagesAsRead(variables?.feedId),
+        onSuccess: (data) => {
+          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
+            exact: false,
+          });
+        },
+      },
+      listener: (res) => this.callUpdateListener(res, listener),
+    });
+
+    result
+      .mutate({ feedId })
+      .then((data) => {
+        onSuccess?.(data);
+
+        return data;
+      })
+      .catch((error) => {
+        onError?.(error);
+      })
+      .finally(() => {
+        unsubscribe();
+      });
+  }
+
+  public async markAllMessagesAsSeen({
+    listener,
+    onSuccess,
+    onError,
+    feedId,
+  }: {
+    listener: (result: UpdateResult<number, unknown, undefined>) => void;
+    onSuccess?: (count: number) => void;
+    onError?: (error: unknown) => void;
+    feedId?: IFeedId;
+  }) {
+    this.assertSessionInitialized();
+
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      number,
+      unknown,
+      { feedId?: IFeedId }
+    >({
+      options: {
+        mutationFn: (variables) =>
+          this.api.markAllMessagesAsSeen(variables?.feedId),
+        onSuccess: (data) => {
+          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
+            exact: false,
+          });
+        },
+      },
+      listener: (res) => this.callUpdateListener(res, listener),
+    });
+
+    result
+      .mutate({ feedId })
       .then((data) => {
         onSuccess?.(data);
 

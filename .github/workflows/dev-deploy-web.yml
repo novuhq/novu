@@ -18,12 +18,7 @@ on:
 jobs:
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
-    secrets:
-      cypress_key: ${{ secrets.CYPRESS_WEB_KEY }}
-      cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
-      cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
-      cypress_github_user_email: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
-      cypress_github_user_password: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
+    secrets: inherit
 
   # This workflow contains a single job called "build"
   deploy_web:
@@ -53,6 +48,7 @@ jobs:
           touch .env
           echo REACT_APP_API_URL="https://dev.api.novu.co" >> .env
           echo REACT_APP_WS_URL="https://dev.ws.novu.co" >> .env
+          echo REACT_APP_WEBHOOK_URL="https://dev.webhook.novu.co" >> .env
           echo REACT_APP_WIDGET_EMBED_PATH="https://dev.embed.novu.co/embed.umd.min.js" >> .env
           echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
           echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
@@ -71,6 +67,7 @@ jobs:
           REACT_APP_INTERCOM_APP_ID: ${{ secrets.INTERCOM_APP_ID }}
           REACT_APP_API_URL: https://dev.api.novu.co
           REACT_APP_WS_URL: https://dev.ws.novu.co
+          REACT_APP_WEBHOOK_URL: https://dev.webhook.novu.co
           REACT_APP_WIDGET_EMBED_PATH: https://dev.embed.novu.co/embed.umd.min.js
           REACT_APP_NOVU_APP_ID: ${{ secrets.NOVU_APP_ID }}
           REACT_APP_SENTRY_DSN: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
@@ -122,7 +119,7 @@ jobs:
             -f apps/web/Dockerfile .
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
-      - uses: actions/upload-artifact@v1
+      - uses: actions/upload-artifact@v3
         if: failure()
         with:
           name: cypress-screenshots

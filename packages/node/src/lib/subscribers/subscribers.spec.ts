@@ -56,6 +56,23 @@ describe('test use of novus node package - Subscribers class', () => {
     );
   });
 
+  test('should unset subscriber channel credentials correctly', async () => {
+    mockedAxios.put.mockResolvedValue({});
+
+    await novu.subscribers.unsetCredentials('test-update-subscriber', 'slack');
+
+    expect(mockedAxios.put).toHaveBeenCalled();
+    expect(mockedAxios.put).toHaveBeenCalledWith(
+      `/subscribers/test-update-subscriber/credentials`,
+      {
+        providerId: 'slack',
+        credentials: {
+          webhookUrl: undefined,
+        },
+      }
+    );
+  });
+
   test('should identify subscriber correctly', async () => {
     mockedAxios.post.mockResolvedValue({});
 

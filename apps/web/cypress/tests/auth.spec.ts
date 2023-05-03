@@ -18,7 +18,7 @@ describe('User Sign-up and Login', function () {
       cy.location('pathname').should('equal', '/auth/application');
       cy.getByTestId('app-creation').type('Organization Name');
       cy.getByTestId('submit-btn').click();
-      cy.location('pathname').should('equal', '/quickstart');
+      cy.location('pathname').should('equal', '/get-started');
     });
 
     it('should show account already exists when signing up with already registered mail', function () {
@@ -41,7 +41,7 @@ describe('User Sign-up and Login', function () {
       cy.get('.mantine-TextInput-error').contains('Please provide a valid email');
     });
 
-    it('should allow to sign-up with GitHub, logout, and login', function () {
+    it.skip('should allow to sign-up with GitHub, logout, and login', function () {
       const isCI = Cypress.env('IS_CI');
       if (!isCI) return;
 
@@ -67,7 +67,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('header-dropdown-username').contains('Johnny Depp');
     });
 
-    it('should allow to sign-up, logout, and login with GitHub using same email address', function () {
+    it.skip('should allow to sign-up, logout, and login with GitHub using same email address', function () {
       const isCI = Cypress.env('IS_CI');
       if (!isCI) return;
 

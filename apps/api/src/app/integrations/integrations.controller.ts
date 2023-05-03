@@ -11,6 +11,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { CalculateLimitNovuIntegration, CalculateLimitNovuIntegrationCommand } from '@novu/application-generic';
+
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
@@ -25,13 +27,15 @@ import { UpdateIntegrationCommand } from './usecases/update-integration/update-i
 import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
 import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
 import { GetActiveIntegrations } from './usecases/get-active-integration/get-active-integration.usecase';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IntegrationResponseDto } from './dtos/integration-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
-import { CalculateLimitNovuIntegration } from './usecases/calculate-limit-novu-integration';
-import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit-novu-integration/calculate-limit-novu-integration.command';
+import { GetInAppActivatedCommand } from './usecases/get-In-app-activated/get-In-app-activated.command';
+import { GetInAppActivated } from './usecases/get-In-app-activated/get-In-app-activated.usecase';
+import { ApiResponse } from '../shared/framework/response.decorator';
+import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
 
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -39,6 +43,7 @@ import { CalculateLimitNovuIntegrationCommand } from './usecases/calculate-limit
 @ApiTags('Integrations')
 export class IntegrationsController {
   constructor(
+    private getInAppActivatedUsecase: GetInAppActivated,
     private getIntegrationsUsecase: GetIntegrations,
     private getActiveIntegrationsUsecase: GetActiveIntegrations,
     private getWebhookSupportStatusUsecase: GetWebhookSupportStatus,
@@ -49,9 +54,7 @@ export class IntegrationsController {
   ) {}
 
   @Get('/')
-  @ApiOkResponse({
-    type: [IntegrationResponseDto],
-  })
+  @ApiResponse(IntegrationResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get integrations',
   })
@@ -67,9 +70,7 @@ export class IntegrationsController {
   }
 
   @Get('/active')
-  @ApiOkResponse({
-    type: [IntegrationResponseDto],
-  })
+  @ApiResponse(IntegrationResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get active integrations',
   })
@@ -104,9 +105,7 @@ export class IntegrationsController {
   }
 
   @Post('/')
-  @ApiCreatedResponse({
-    type: IntegrationResponseDto,
-  })
+  @ApiResponse(IntegrationResponseDto, 201)
   @ApiOperation({
     summary: 'Create integration',
   })
@@ -131,9 +130,7 @@ export class IntegrationsController {
 
   @Put('/:integrationId')
   @Roles(MemberRoleEnum.ADMIN)
-  @ApiOkResponse({
-    type: IntegrationResponseDto,
-  })
+  @ApiResponse(IntegrationResponseDto)
   @ApiOperation({
     summary: 'Update integration',
   })
@@ -145,6 +142,7 @@ export class IntegrationsController {
   ): Promise<IntegrationResponseDto> {
     return this.updateIntegrationUsecase.execute(
       UpdateIntegrationCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
@@ -156,9 +154,7 @@ export class IntegrationsController {
   }
 
   @Delete('/:integrationId')
-  @ApiOkResponse({
-    type: [IntegrationResponseDto],
-  })
+  @ApiResponse(IntegrationResponseDto, 200, true)
   @ApiOperation({
     summary: 'Delete integration',
   })
@@ -177,10 +173,11 @@ export class IntegrationsController {
   }
 
   @Get('/:channelType/limit')
+  @ApiResponse(ChannelTypeLimitDto)
   async getProviderLimit(
     @UserSession() user: IJwtPayload,
     @Param('channelType') channelType: ChannelTypeEnum
-  ): Promise<{ limit: number; count: number }> {
+  ): Promise<ChannelTypeLimitDto> {
     const result = await this.calculateLimitNovuIntegration.execute(
       CalculateLimitNovuIntegrationCommand.create({
         channelType,
@@ -194,5 +191,15 @@ export class IntegrationsController {
     }
 
     return result;
+  }
+
+  @Get('/in-app/status')
+  async getInAppActivated(@UserSession() user: IJwtPayload) {
+    return await this.getInAppActivatedUsecase.execute(
+      GetInAppActivatedCommand.create({
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+      })
+    );
   }
 }

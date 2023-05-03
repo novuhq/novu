@@ -1,5 +1,5 @@
 ---
-sidebar_position: 6
+sidebar_position: 8
 ---
 
 # Custom styling
@@ -27,6 +27,32 @@ const styles = {
 ```
 
 ## Example usage
+
+### iframe
+
+```html
+<script>
+  novu.init(
+    '<REPLACE_APPLICATION_ID>',
+    {
+      unseenBadgeSelector: '#unseen-badge',
+      bellSelector: '#notification-bell',
+      // add your custom style here
+      styles: {
+        header: {
+          root: { backgroundColor: 'red' },
+          title: {
+            color: 'blue',
+          },
+        },
+      },
+    },
+    {
+      subscriberId: '<REPLACE_WITH_USER_UNIQUE_IDENTIFIER>',
+    }
+  );
+</script>
+```
 
 ### Web component
 
@@ -102,3 +128,7 @@ export class AppComponent {
   };
 }
 ```
+
+:::note
+Facing issues in using notification center? Check out FAQs [here](./FAQ)
+:::

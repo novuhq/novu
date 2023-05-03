@@ -1,4 +1,5 @@
 import Analytics from 'analytics-node';
+import { Logger } from '@nestjs/common';
 
 // Due to problematic analytics-node types, we need to use require
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -10,6 +11,7 @@ interface IOrganization {
 }
 
 interface IUser {
+  _id?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   email?: string | null;
@@ -20,28 +22,31 @@ interface IUser {
 export class AnalyticsService {
   private segment: Analytics;
 
-  constructor(private segmentToken?: string | null) {}
+  constructor(private segmentToken?: string | null, private batchSize = 100) {}
 
   async initialize() {
     if (this.segmentToken) {
-      this.segment = new AnalyticsClass(this.segmentToken);
+      this.segment = new AnalyticsClass(this.segmentToken, {
+        flushAt: this.batchSize,
+      });
     }
   }
 
   upsertGroup(
     organizationId: string,
     organization: IOrganization,
-    userId: string
+    user: IUser
   ) {
     if (this.segmentEnabled) {
       this.segment.group({
-        userId: userId,
+        userId: user._id as any,
         groupId: organizationId,
         traits: {
           _organization: organizationId,
           id: organizationId,
           name: organization.name,
           createdAt: organization.createdAt,
+          domain: user.email?.split('@')[1],
         },
       });
     }
@@ -58,6 +63,10 @@ export class AnalyticsService {
 
   upsertUser(user: IUser, distinctId: string) {
     if (this.segmentEnabled) {
+      const githubToken = (user as any).tokens?.find(
+        (token) => token.provider === 'github'
+      );
+
       this.segment.identify({
         userId: distinctId,
         traits: {
@@ -67,6 +76,9 @@ export class AnalyticsService {
           email: user.email,
           avatar: user.profilePicture,
           createdAt: user.createdAt,
+          // For segment auto mapping
+          created: user.createdAt,
+          githubProfile: githubToken?.username,
         },
       });
     }
@@ -85,6 +97,11 @@ export class AnalyticsService {
 
   track(name: string, userId: string, data: Record<string, unknown> = {}) {
     if (this.segmentEnabled) {
+      Logger.log('Tracking event: ' + name, {
+        name,
+        data,
+      });
+
       this.segment.track({
         userId: userId,
         event: name,

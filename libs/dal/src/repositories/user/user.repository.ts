@@ -1,10 +1,10 @@
 import { AuthProviderEnum } from '@novu/shared';
+import { createHash } from 'crypto';
 import { BaseRepository } from '../base-repository';
-import { IUserResetTokenCount, UserEntity } from './user.entity';
+import { IUserResetTokenCount, UserEntity, UserDBModel } from './user.entity';
 import { User } from './user.schema';
-import { Document, FilterQuery } from 'mongoose';
 
-export class UserRepository extends BaseRepository<FilterQuery<UserEntity & Document>, UserEntity> {
+export class UserRepository extends BaseRepository<UserDBModel, UserEntity> {
   constructor() {
     super(User, UserEntity);
   }
@@ -15,9 +15,17 @@ export class UserRepository extends BaseRepository<FilterQuery<UserEntity & Docu
     });
   }
 
+  private hashResetToken(token: string) {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
   async findUserByToken(token: string) {
     return await this.findOne({
-      resetToken: token,
+      /*
+       * NOTE: $in operator is used to provide backward compatibility for users with active reset token in old (plain) format
+       * in a next minor version query should be set to: { resetToken: this.hashResetToken(token) }
+       */
+      resetToken: { $in: [this.hashResetToken(token), token] },
     });
   }
 
@@ -28,7 +36,7 @@ export class UserRepository extends BaseRepository<FilterQuery<UserEntity & Docu
       },
       {
         $set: {
-          resetToken: token,
+          resetToken: this.hashResetToken(token),
           resetTokenDate: new Date(),
           resetTokenCount,
         },

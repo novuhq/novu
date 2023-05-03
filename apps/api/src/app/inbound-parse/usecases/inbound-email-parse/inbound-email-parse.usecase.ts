@@ -9,20 +9,30 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import axios from 'axios';
-import { createHmac } from 'crypto';
+import { createHash } from '../../../shared/helpers/hmac.service';
+import { CompileTemplate, CompileTemplateCommand } from '@novu/application-generic';
 
 @Injectable()
 export class InboundEmailParse {
-  constructor(private jobRepository: JobRepository, private messageRepository: MessageRepository) {}
+  constructor(
+    private jobRepository: JobRepository,
+    private messageRepository: MessageRepository,
+    private compileTemplate: CompileTemplate
+  ) {}
 
   async execute(command: InboundEmailParseCommand) {
     const { toDomain, toTransactionId, toEnvironmentId } = this.splitTo(command.to[0].address);
+
+    Logger.debug('toDomain in InboundEmailParse is: ' + toDomain);
+    Logger.debug('toTransactionId in InboundEmailParse is: ' + toTransactionId);
 
     if (!toTransactionId) {
       Logger.warn(`missing transactionId on address ${command.to[0].address}`);
 
       return;
     }
+
+    Logger.debug('toEnvironmentId in InboundEmailParse is: ' + toEnvironmentId);
 
     if (!toEnvironmentId) {
       Logger.warn(`missing environmentId on address ${command.to[0].address}`);
@@ -50,8 +60,15 @@ export class InboundEmailParse {
       return;
     }
 
+    const compiledDomain = await this.compileTemplate.execute(
+      CompileTemplateCommand.create({
+        template: currentParseWebhook,
+        data: job.payload,
+      })
+    );
+
     const userPayload: IUserWebhookPayload = {
-      hmac: this.createHmac(environment.apiKeys, subscriber.subscriberId),
+      hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId),
       transactionId: toTransactionId,
       payload: job.payload,
       templateIdentifier: job.identifier,
@@ -61,7 +78,7 @@ export class InboundEmailParse {
       mail: command,
     };
 
-    return await axios.post(currentParseWebhook, userPayload);
+    await axios.post(compiledDomain, userPayload);
   }
 
   private splitTo(address: string) {
@@ -84,13 +101,13 @@ export class InboundEmailParse {
       selectEnvironment: 'apiKeys dns',
     });
 
-    const message = await this.messageRepository.findOne({ transactionId, _environmentId: environment._id });
+    const message = await this.messageRepository.findOne({
+      transactionId,
+      _environmentId: environment._id,
+      _subscriberId: subscriber._id,
+    });
 
     return { transactionId, template, notification, subscriber, environment, job, message };
-  }
-
-  createHmac(apiKeys, subscriberId: string) {
-    return createHmac('sha256', apiKeys[0].key).update(subscriberId).digest('hex');
   }
 }
 
@@ -102,7 +119,7 @@ export interface IUserWebhookPayload {
   payload: Record<string, unknown>;
   template: NotificationTemplateEntity;
   notification: NotificationEntity;
-  message: MessageEntity;
+  message: MessageEntity | null;
   mail: MailMetadata;
   hmac: string;
 }

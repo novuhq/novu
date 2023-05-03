@@ -4,6 +4,7 @@ import { getRedisPrefix } from '@novu/shared';
 import { InboundEmailParse } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
 import { ConnectionOptions } from 'tls';
+import { BullmqService } from '@novu/application-generic';
 
 @Injectable()
 export class InboundParseQueueService {
@@ -24,23 +25,25 @@ export class InboundParseQueueService {
   };
   public readonly queue: Queue;
   public readonly worker: Worker;
+  private readonly bullMqService: BullmqService;
 
   constructor(private emailParseUsecase: InboundEmailParse) {
-    this.queue = new Queue<InboundEmailParseCommand>(this.QUEUE_NAME, {
+    this.bullMqService = new BullmqService();
+    this.queue = this.bullMqService.createQueue(this.QUEUE_NAME, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
       },
     });
 
-    this.worker = new Worker(this.QUEUE_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
+    this.worker = this.bullMqService.createWorker(this.QUEUE_NAME, this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
   private getWorkerOpts() {
     return {
       ...this.bullConfig,
       lockDuration: 90000,
-      concurrency: 50,
+      concurrency: 200,
     };
   }
 

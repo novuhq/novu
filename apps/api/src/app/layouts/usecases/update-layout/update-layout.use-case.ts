@@ -1,10 +1,9 @@
+import { ConflictException, Injectable, Inject } from '@nestjs/common';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
-import { ConflictException, Injectable } from '@nestjs/common';
+import { AnalyticsService, GetLayoutCommand, GetLayoutUseCase } from '@novu/application-generic';
 
 import { UpdateLayoutCommand } from './update-layout.command';
-
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
-import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos/layout.dto';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -15,7 +14,8 @@ export class UpdateLayoutUseCase {
     private getLayoutUseCase: GetLayoutUseCase,
     private createLayoutChange: CreateLayoutChangeUseCase,
     private setDefaultLayout: SetDefaultLayoutUseCase,
-    private layoutRepository: LayoutRepository
+    private layoutRepository: LayoutRepository,
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UpdateLayoutCommand): Promise<LayoutDto> {
@@ -48,9 +48,15 @@ export class UpdateLayoutUseCase {
         userId: dto._creatorId,
       });
       await this.setDefaultLayout.execute(setDefaultLayoutCommand);
+    } else {
+      await this.createChange(command);
     }
 
-    await this.createChange(command);
+    this.analyticsService.track('[Layout] - Update', command.userId, {
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      layoutId: dto._id,
+    });
 
     return dto;
   }
@@ -90,7 +96,7 @@ export class UpdateLayoutUseCase {
   private mapToEntity(layout: LayoutDto): LayoutEntity {
     return {
       ...layout,
-      _id: layout._id,
+      _id: layout._id as string,
       _organizationId: layout._organizationId,
       _environmentId: layout._environmentId,
       contentType: 'customHtml',

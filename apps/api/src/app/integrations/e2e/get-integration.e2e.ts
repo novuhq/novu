@@ -23,4 +23,37 @@ describe('Get Integrations - /integrations (GET)', function () {
     expect(integration.credentials.secretKey).to.equal('abc');
     expect(integration.active).to.equal(true);
   });
+
+  it('should get custom SMTP integration details with TLS options', async function () {
+    const nodeMailerProviderPayload = {
+      providerId: 'nodemailer',
+      channel: 'email',
+      credentials: {
+        host: 'smtp.example.com',
+        port: '587',
+        secure: 'true',
+        requireTls: true,
+        tlsOptions: { rejectUnauthorized: false },
+      },
+      active: true,
+      check: false,
+    };
+
+    // create nodemailer integration
+    await session.testAgent.post('/v1/integrations').send(nodeMailerProviderPayload);
+
+    const activeIntegrations = (await session.testAgent.get(`/v1/integrations/active`)).body.data;
+
+    const activeEmailIntegration = activeIntegrations.find(
+      (integration) => integration.channel == ChannelTypeEnum.EMAIL
+    );
+
+    expect(activeEmailIntegration?.credentials?.host).to.equal(nodeMailerProviderPayload.credentials.host);
+    expect(activeEmailIntegration?.credentials?.port).to.equal(nodeMailerProviderPayload.credentials.port);
+    expect(activeEmailIntegration?.credentials?.secure).to.equal(nodeMailerProviderPayload.credentials.secure);
+    expect(activeEmailIntegration?.credentials?.requireTls).to.equal(nodeMailerProviderPayload.credentials.requireTls);
+    expect(activeEmailIntegration?.credentials?.tlsOptions).to.instanceOf(Object);
+    expect(activeEmailIntegration?.credentials?.tlsOptions).to.eql(nodeMailerProviderPayload.credentials.tlsOptions);
+    expect(activeEmailIntegration?.active).to.equal(true);
+  });
 });

@@ -135,4 +135,90 @@ describe('Remove subscribers to topic - /topics/:topicKey/subscribers/removal (P
     expect(getResponseTopic.name).to.eql(topicName);
     expect(getResponseTopic.subscribers).to.eql([]);
   });
+
+  it('should remove subscriber from only one topic', async () => {
+    // create a new topics
+    const newTopicKey1 = 'new-topic-key1';
+    const newTopicKey2 = 'new-topic-key2';
+    await session.testAgent.post(URL).send({
+      key: newTopicKey1,
+      name: topicName,
+    });
+    await session.testAgent.post(URL).send({
+      key: newTopicKey2,
+      name: topicName,
+    });
+
+    // add subscribers to the new topics
+    await session.testAgent
+      .post(`${URL}/${newTopicKey1}/subscribers`)
+      .send({ subscribers: [subscriber.subscriberId, secondSubscriber.subscriberId, thirdSubscriber.subscriberId] });
+    await session.testAgent
+      .post(`${URL}/${newTopicKey2}/subscribers`)
+      .send({ subscribers: [subscriber.subscriberId, secondSubscriber.subscriberId] });
+
+    // remove subscriber from the new topic 1
+    const response = await session.testAgent
+      .post(`${URL}/${newTopicKey1}/subscribers/removal`)
+      .send({ subscribers: [subscriber.subscriberId] });
+
+    expect(response.statusCode).to.eql(204);
+    expect(response.body).to.be.empty;
+
+    // get topics and subscribers
+    const getTopicsResponse = await session.testAgent.get(URL);
+    expect(getTopicsResponse.statusCode).to.eql(200);
+
+    const topics = getTopicsResponse.body.data;
+
+    // check subscribers
+    const topic1Subscribers = topics.find((topic) => topic.key === newTopicKey1)?.subscribers ?? [];
+    const topic2Subscribers = topics.find((topic) => topic.key === newTopicKey2)?.subscribers ?? [];
+
+    expect(topic1Subscribers).to.have.members([secondSubscriber.subscriberId, thirdSubscriber.subscriberId]);
+    expect(topic2Subscribers).to.have.members([subscriber.subscriberId, secondSubscriber.subscriberId]);
+  });
+
+  it('should remove multiple subscribers from only one topic', async () => {
+    // create a new topics
+    const newTopicKey1 = 'new-topic-key3';
+    const newTopicKey2 = 'new-topic-key4';
+    await session.testAgent.post(URL).send({
+      key: newTopicKey1,
+      name: topicName,
+    });
+    await session.testAgent.post(URL).send({
+      key: newTopicKey2,
+      name: topicName,
+    });
+
+    // add subscribers to the new topics
+    await session.testAgent
+      .post(`${URL}/${newTopicKey1}/subscribers`)
+      .send({ subscribers: [subscriber.subscriberId, secondSubscriber.subscriberId, thirdSubscriber.subscriberId] });
+    await session.testAgent
+      .post(`${URL}/${newTopicKey2}/subscribers`)
+      .send({ subscribers: [subscriber.subscriberId, secondSubscriber.subscriberId] });
+
+    // remove subscriber from the new topic 1
+    const response = await session.testAgent
+      .post(`${URL}/${newTopicKey1}/subscribers/removal`)
+      .send({ subscribers: [subscriber.subscriberId, secondSubscriber.subscriberId] });
+
+    expect(response.statusCode).to.eql(204);
+    expect(response.body).to.be.empty;
+
+    // get topics and subscribers
+    const getTopicsResponse = await session.testAgent.get(URL);
+    expect(getTopicsResponse.statusCode).to.eql(200);
+
+    const topics = getTopicsResponse.body.data;
+
+    // check subscribers
+    const topic1Subscribers = topics.find((topic) => topic.key === newTopicKey1)?.subscribers ?? [];
+    const topic2Subscribers = topics.find((topic) => topic.key === newTopicKey2)?.subscribers ?? [];
+
+    expect(topic1Subscribers).to.have.members([thirdSubscriber.subscriberId]);
+    expect(topic2Subscribers).to.have.members([subscriber.subscriberId, secondSubscriber.subscriberId]);
+  });
 });

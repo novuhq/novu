@@ -8,10 +8,14 @@ import {
   NotificationGroupRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import {
+  buildNotificationTemplateIdentifierKey,
+  buildNotificationTemplateKey,
+  InvalidateCacheService,
+} from '@novu/application-generic';
 
 import { ApplyChange, ApplyChangeCommand } from '../apply-change';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class PromoteNotificationTemplateChange {
@@ -51,12 +55,17 @@ export class PromoteNotificationTemplateChange {
 
         return undefined;
       }
-      step._templateId = oldMessage._id;
+
+      if (step?._templateId && oldMessage._id) {
+        step._templateId = oldMessage._id;
+      }
 
       return step;
     };
 
-    const steps = newItem.steps ? newItem.steps.map(mapNewStepItem).filter((step) => step !== undefined) : [];
+    const steps = newItem.steps
+      ? newItem.steps.map(mapNewStepItem).filter((step): step is NotificationStepEntity => step !== undefined)
+      : [];
 
     if (missingMessages.length > 0 && steps.length > 0 && item) {
       Logger.error(
@@ -101,7 +110,11 @@ export class PromoteNotificationTemplateChange {
     }
 
     if (!item) {
-      return this.notificationTemplateRepository.create({
+      if (newItem.deleted === true) {
+        return;
+      }
+
+      const newNotificationTemplate: Partial<NotificationTemplateEntity> = {
         name: newItem.name,
         active: newItem.active,
         draft: newItem.draft,
@@ -118,7 +131,9 @@ export class PromoteNotificationTemplateChange {
         _notificationGroupId: notificationGroup._id,
         isBlueprint: command.organizationId === this.blueprintOrganizationId,
         blueprintId: newItem.blueprintId,
-      });
+      };
+
+      return this.notificationTemplateRepository.create(newNotificationTemplate as NotificationTemplateEntity);
     }
 
     const count = await this.notificationTemplateRepository.count({
@@ -132,12 +147,18 @@ export class PromoteNotificationTemplateChange {
       return;
     }
 
-    this.invalidateCache.clearCache({
-      storeKeyPrefix: CacheKeyPrefixEnum.NOTIFICATION_TEMPLATE,
-      credentials: {
-        _id: item._id,
-        environmentId: command.environmentId,
-      },
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateKey({
+        _id: newItem._id,
+        _environmentId: command.environmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateIdentifierKey({
+        templateIdentifier: newItem.triggers[0].identifier,
+        _environmentId: command.environmentId,
+      }),
     });
 
     return await this.notificationTemplateRepository.update(
@@ -161,7 +182,7 @@ export class PromoteNotificationTemplateChange {
     );
   }
 
-  private get blueprintOrganizationId(): string {
+  private get blueprintOrganizationId() {
     return NotificationTemplateRepository.getBlueprintOrganizationId();
   }
 }

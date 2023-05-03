@@ -8,7 +8,7 @@ import { GetActivityStats } from './usecases/get-activity-stats/get-activity-sta
 import { GetActivityStatsCommand } from './usecases/get-activity-stats/get-activity-stats.command';
 import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
 import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
-import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags, ApiExcludeController } from '@nestjs/swagger';
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
 import { ActivitiesResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
@@ -17,6 +17,7 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 
 @Controller('/activity')
 @ApiTags('Activity')
+@ApiExcludeController()
 export class ActivityController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,
@@ -38,18 +39,18 @@ export class ActivityController {
     @UserSession() user: IJwtPayload,
     @Query() query: ActivitiesRequestDto
   ): Promise<ActivitiesResponseDto> {
-    let channelsQuery: ChannelTypeEnum[];
+    let channelsQuery: ChannelTypeEnum[] | undefined;
 
     if (query.channels) {
       channelsQuery = Array.isArray(query.channels) ? query.channels : [query.channels];
     }
 
-    let templatesQuery: string[];
+    let templatesQuery: string[] | undefined;
     if (query.templates) {
       templatesQuery = Array.isArray(query.templates) ? query.templates : [query.templates];
     }
 
-    let emailsQuery: string[];
+    let emailsQuery: string[] | undefined;
     if (query.emails) {
       emailsQuery = Array.isArray(query.emails) ? query.emails : [query.emails];
     }
@@ -83,7 +84,6 @@ export class ActivityController {
       GetActivityStatsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        userId: user._id,
       })
     );
   }

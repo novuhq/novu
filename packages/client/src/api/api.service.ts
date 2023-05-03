@@ -11,6 +11,7 @@ import {
   IStoreQuery,
   IUserPreferenceSettings,
   IUnseenCountQuery,
+  IUnreadCountQuery,
 } from '../index';
 
 export class ApiService {
@@ -89,6 +90,22 @@ export class ApiService {
     });
   }
 
+  async removeMessage(messageId: string): Promise<any> {
+    return await this.httpClient.delete(`/widgets/messages/${messageId}`, {});
+  }
+
+  async markAllMessagesAsRead(feedId?: string | string[]): Promise<any> {
+    return await this.httpClient.post(`/widgets/messages/read`, {
+      feedId,
+    });
+  }
+
+  async markAllMessagesAsSeen(feedId?: string | string[]): Promise<any> {
+    return await this.httpClient.post(`/widgets/messages/seen`, {
+      feedId,
+    });
+  }
+
   async getNotificationsList(
     page: number,
     query: IStoreQuery = {}
@@ -127,6 +144,13 @@ export class ApiService {
   async getUnseenCount(query: IUnseenCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/unseen',
+      query as unknown as IParamObject
+    );
+  }
+
+  async getUnreadCount(query: IUnreadCountQuery = {}) {
+    return await this.httpClient.get(
+      '/widgets/notifications/unread',
       query as unknown as IParamObject
     );
   }

@@ -10,7 +10,7 @@ import { normalizeEmail } from '../../../shared/helpers/email-normalization.serv
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
-import { ANALYTICS_SERVICE } from '../../../shared/shared.module';
+import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()
 export class UserRegister {
@@ -18,7 +18,7 @@ export class UserRegister {
     private authService: AuthService,
     private userRepository: UserRepository,
     private createOrganizationUsecase: CreateOrganization,
-    @Inject(ANALYTICS_SERVICE) private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: UserRegisterCommand) {
@@ -35,6 +35,19 @@ export class UserRegister {
       lastName: command.lastName?.toLowerCase(),
       password: passwordHash,
     });
+
+    if (process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY) {
+      const intercomSecretKey = process.env.INTERCOM_IDENTITY_VERIFICATION_SECRET_KEY as string;
+      const userHashForIntercom = createHash(intercomSecretKey, user._id);
+      await this.userRepository.update(
+        { _id: user._id },
+        {
+          $set: {
+            'servicesHashes.intercom': userHashForIntercom,
+          },
+        }
+      );
+    }
 
     let organization: OrganizationEntity;
     if (command.organizationName) {

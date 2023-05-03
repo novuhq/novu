@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { isEqual } from 'lodash';
 import { IChannelSettings, SubscriberRepository, IntegrationRepository, SubscriberEntity } from '@novu/dal';
+import { buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
+
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
-import { CacheKeyPrefixEnum, InvalidateCacheService } from '../../../shared/services/cache';
 
 @Injectable()
 export class UpdateSubscriberChannel {
@@ -66,9 +67,11 @@ export class UpdateSubscriberChannel {
     updatePayload._integrationId = foundIntegration._id;
     updatePayload.providerId = command.providerId;
 
-    await this.invalidateCache.clearCache({
-      storeKeyPrefix: CacheKeyPrefixEnum.SUBSCRIBER,
-      credentials: { _id: foundSubscriber._id, _environmentId: foundSubscriber._environmentId },
+    await this.invalidateCache.invalidateByKey({
+      key: buildSubscriberKey({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
     });
 
     await this.subscriberRepository.update(
@@ -85,17 +88,19 @@ export class UpdateSubscriberChannel {
     environmentId: string,
     existingChannel,
     updatePayload: Partial<IChannelSettings>,
-    foundSubscriber
+    foundSubscriber: SubscriberEntity
   ) {
-    const equal = isEqual(existingChannel.credentials, updatePayload.credentials); // returns false if different
+    const equal = isEqual(existingChannel.credentials, updatePayload.credentials);
 
     if (equal) {
       return;
     }
 
-    await this.invalidateCache.clearCache({
-      storeKeyPrefix: CacheKeyPrefixEnum.SUBSCRIBER,
-      credentials: { _id: foundSubscriber._id, _environmentId: foundSubscriber._environmentId },
+    await this.invalidateCache.invalidateByKey({
+      key: buildSubscriberKey({
+        subscriberId: foundSubscriber.subscriberId,
+        _environmentId: foundSubscriber._environmentId,
+      }),
     });
 
     const mergedChannel = Object.assign(existingChannel, updatePayload);
@@ -121,6 +126,9 @@ export class UpdateSubscriberChannel {
       }
       if (command.credentials.deviceTokens != null && updatePayload.credentials) {
         updatePayload.credentials.deviceTokens = command.credentials.deviceTokens;
+      }
+      if (command.credentials.channel != null && updatePayload.credentials) {
+        updatePayload.credentials.channel = command.credentials.channel;
       }
     }
 

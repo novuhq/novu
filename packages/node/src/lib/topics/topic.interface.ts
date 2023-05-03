@@ -13,7 +13,9 @@ export interface ITopic {
 export interface ITopics {
   addSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload);
   create(data: ITopicPayload);
+  delete(topicKey: TopicKey);
   get(topicKey: TopicKey);
+  getSubscriber(topicKey: TopicKey, externalSubscriberId: ExternalSubscriberId);
   list(data: ITopicPaginationPayload);
   rename(topicKey: TopicKey, newName: TopicName);
   removeSubscribers(topicKey: TopicKey, data: ITopicSubscribersPayload);

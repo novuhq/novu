@@ -7,6 +7,7 @@ export interface IParamObject {
 
 export interface IPaginatedResponse<T = unknown> {
   data: T[];
+  hasMore: boolean;
   totalCount: number;
   pageSize: number;
   page: number;
@@ -51,5 +52,9 @@ export class HttpClient {
 
   async patch(url: string, body = {}) {
     return await this.axiosClient.patch(url, body).then((response) => response.data.data);
+  }
+
+  async delete(url: string, body = {}) {
+    return await this.axiosClient.delete(url, body).then((response) => response.data.data);
   }
 }

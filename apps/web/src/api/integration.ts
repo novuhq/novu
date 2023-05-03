@@ -29,3 +29,7 @@ export function updateIntegration(integrationId: string, data: { credentials: IC
 export function getWebhookSupportStatus(providerId: string) {
   return api.get(`/v1/integrations/webhook/provider/${providerId}/status`);
 }
+
+export function getInAppActivated() {
+  return api.get(`/v1/integrations/in-app/status`);
+}

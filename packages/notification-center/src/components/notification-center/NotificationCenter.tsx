@@ -14,7 +14,7 @@ export interface INotificationCenterProps {
   onUnseenCountChanged?: (unseenCount: number) => void;
   header?: () => JSX.Element;
   footer?: () => JSX.Element;
-  emptyState?: () => JSX.Element;
+  emptyState?: JSX.Element;
   listItem?: ListItem;
   actionsResultBlock?: (templateIdentifier: string, messageAction: IMessageAction) => JSX.Element;
   colorScheme: ColorScheme;
@@ -22,6 +22,7 @@ export interface INotificationCenterProps {
   onActionClick?: (templateIdentifier: string, type: ButtonTypeEnum, message: IMessage) => void;
   tabs?: ITab[];
   showUserPreferences?: boolean;
+  allowedNotificationActions?: boolean;
   onTabClick?: (tab: ITab) => void;
 }
 
@@ -37,6 +38,7 @@ export function NotificationCenter({
   actionsResultBlock,
   tabs,
   showUserPreferences,
+  allowedNotificationActions,
   onTabClick,
   colorScheme,
   theme,
@@ -66,6 +68,7 @@ export function NotificationCenter({
         actionsResultBlock: actionsResultBlock,
         tabs: tabs,
         showUserPreferences: showUserPreferences ?? true,
+        allowedNotificationActions: allowedNotificationActions ?? true,
         onTabClick: onTabClick ? onTabClick : () => {},
       }}
     >

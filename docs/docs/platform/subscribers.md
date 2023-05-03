@@ -79,7 +79,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-await novu.subscribers.remove(user.id);
+await novu.subscribers.delete(user.id);
 ```
 
 ## Subscriber Preferences

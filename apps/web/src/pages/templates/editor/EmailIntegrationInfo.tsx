@@ -1,7 +1,6 @@
-import { useContext } from 'react';
-import { useIntegrationLimit } from '../../../api/hooks/integrations/useIntegrationLimit';
+import { useIntegrationLimit } from '../../../hooks';
 import { ChannelTypeEnum } from '@novu/shared';
-import { AuthContext } from '../../../store/authContext';
+import { useAuthContext } from '../../../components/providers/AuthProvider';
 
 export const EmailIntegrationInfo = ({
   integration,
@@ -15,8 +14,8 @@ export const EmailIntegrationInfo = ({
   };
   field: 'from' | 'senderName';
 }) => {
-  const { enabled, loading } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
-  const { currentOrganization } = useContext(AuthContext);
+  const { isLimitFetchingEnabled, loading } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
+  const { currentOrganization } = useAuthContext();
 
   if (integration) {
     return <>{integration?.credentials[field]}</>;
@@ -26,7 +25,7 @@ export const EmailIntegrationInfo = ({
     return null;
   }
 
-  if (!enabled) {
+  if (!isLimitFetchingEnabled) {
     return <>No active email integration</>;
   }
 

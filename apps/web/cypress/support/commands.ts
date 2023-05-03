@@ -43,10 +43,10 @@ Cypress.Commands.add('waitLoadTemplatePage', (beforeWait: () => void): void => {
 
 Cypress.Commands.add('clickWorkflowNode', (selector: string, last?: boolean) => {
   if (last) {
-    return cy.getByTestId(selector).last().click({ force: true });
+    return cy.awaitAttachedGetByTestId(selector).last().click({ force: true });
   }
 
-  return cy.getByTestId(selector).click({ force: true });
+  return cy.awaitAttachedGetByTestId(selector).first().click({ force: true });
 });
 
 Cypress.Commands.add('awaitAttachedGetByTestId', (selector: string) => {
@@ -71,7 +71,7 @@ Cypress.Commands.add('clickNodeButton', (selector: string) => {
 
 Cypress.Commands.add(
   'initializeSession',
-  (settings: { disableLocalStorage?: boolean } = { disableLocalStorage: false }) => {
+  (settings: { disableLocalStorage?: boolean; noTemplates?: boolean } = { disableLocalStorage: false }) => {
     return cy.task('getSession', settings).then((response: any) => {
       if (!settings.disableLocalStorage) {
         window.localStorage.setItem('auth_token', response.token);

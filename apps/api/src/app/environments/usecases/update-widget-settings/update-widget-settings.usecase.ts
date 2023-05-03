@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
+import { IWidgetSettings } from '@novu/dal';
+
 import { UpdateWidgetSettingsCommand } from './update-widget-settings.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { IWidgetSettings } from '@novu/dal';
 
 @Injectable()
 export class UpdateWidgetSettings {
@@ -29,9 +30,14 @@ export class UpdateWidgetSettings {
       { $set: updateWidgetSetting }
     );
 
-    return await this.environmentRepository.findOne({
+    const updatedEnvironment = await this.environmentRepository.findOne({
       _id: command.environmentId,
       _organizationId: command.organizationId,
     });
+    if (!updatedEnvironment) {
+      throw new NotFoundException('Environment is not found');
+    }
+
+    return updatedEnvironment;
   }
 }

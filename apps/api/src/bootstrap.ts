@@ -3,7 +3,7 @@ import 'newrelic';
 import '@sentry/tracing';
 
 import helmet from 'helmet';
-import { INestApplication, ValidationPipe, Logger } from '@nestjs/common';
+import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
 import * as passport from 'passport';
 import * as compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
@@ -13,12 +13,14 @@ import * as Sentry from '@sentry/node';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { version } from '../package.json';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { RolesGuard } from './app/auth/framework/roles.guard';
 import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guard';
 import { validateEnv } from './config/env-validator';
+import { BullmqService } from '@novu/application-generic';
+import { getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
+import * as packageJson from '../package.json';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/layouts'];
 
@@ -26,7 +28,7 @@ if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV,
-    release: `v${version}`,
+    release: `v${packageJson.version}`,
     ignoreErrors: ['Non-Error exception captured'],
     integrations: [
       // enable HTTP calls tracing
@@ -39,12 +41,17 @@ if (process.env.SENTRY_DSN) {
 validateEnv();
 
 export async function bootstrap(expressApp?): Promise<INestApplication> {
+  BullmqService.haveProInstalled();
+
   let app: INestApplication;
   if (expressApp) {
     app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
   } else {
-    app = await NestFactory.create(AppModule);
+    app = await NestFactory.create(AppModule, { bufferLogs: true });
   }
+
+  app.useLogger(app.get(PinoLogger));
+  app.flushLogs();
 
   if (process.env.SENTRY_DSN) {
     app.use(Sentry.Handlers.requestHandler());
@@ -66,6 +73,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   );
 
   app.useGlobalInterceptors(new ResponseInterceptor());
+  app.useGlobalInterceptors(getErrorInterceptor());
+
   app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
   app.useGlobalGuards(new SubscriberRouteGuard(app.get(Reflector)));
 
@@ -84,14 +93,14 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     .addTag('Events')
     .addTag('Subscribers')
     .addTag('Topics')
-    .addTag('Activity')
+    .addTag('Notification')
     .addTag('Integrations')
     .addTag('Layouts')
     .addTag('Notification templates')
     .addTag('Notification groups')
     .addTag('Changes')
     .addTag('Environments')
-    .addTag('Execution details')
+    .addTag('Inbound Parse')
     .addTag('Feeds')
     .addTag('Messages')
     .addTag('Execution Details')

@@ -6,6 +6,7 @@ export const TE: ITranslationEntry = {
     markAllAsRead: 'అన్నీచదివినట్లుగా సూచించు',
     poweredBy: 'ద్వారా ఆధారితం',
     settings: 'సెట్టింగ్‌లు',
+    noNewNotification: 'ఇంకా ఇక్కడ చూడడానికి కొత్తగా ఏమీ లేదు',
   },
   lang: 'te',
 };
