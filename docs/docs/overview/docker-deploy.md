@@ -26,7 +26,7 @@ cd novu/docker
 cp .env.example ./local/deployment/.env
 
 # Start Novu
-docker-compose -f ./local/deployment/docker-compose.redis-cluster.yml up
+docker-compose -f ./local/deployment/docker-compose.yml up
 ```
 
 Now visit [http://localhost:4200](http://localhost:4200/) to start using Novu.
