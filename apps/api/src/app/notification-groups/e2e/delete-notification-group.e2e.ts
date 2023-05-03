@@ -33,4 +33,18 @@ describe('Delete Notification Group - /notification-groups/:id (DELETE)', async 
 
     expect(getResultAfterDelete.statusCode).to.eq(404);
   });
+
+  it('should return 404 error when attempting to delete non-existent notification group', async function () {
+    const postNotificationGroup1 = await session.testAgent.post(`/v1/notification-groups`).send({
+      name: 'Test name',
+    });
+
+    const id = postNotificationGroup1.body.data.id;
+
+    await session.testAgent.delete(`/v1/notification-groups/${id}`);
+
+    const { body } = await session.testAgent.delete(`/v1/notification-groups/${id}`);
+
+    expect(body.statusCode).to.equal(404);
+  });
 });

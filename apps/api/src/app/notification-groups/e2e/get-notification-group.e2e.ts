@@ -27,7 +27,7 @@ describe('Get Notification Group - /notification-groups/:id (GET)', async () => 
     expect(group._environmentId).to.equal(session.environment._id);
   });
 
-  it('should get 404 when notification group is not present with id', async function () {
+  it('should get 404 when notification group is not present with the requested id', async function () {
     const postNotificationGroup1 = await session.testAgent.post(`/v1/notification-groups`).send(testTemplate);
 
     const id = postNotificationGroup1.body.data.id;

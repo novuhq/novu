@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 
-describe('Patch Notification Group - /notification-groups/:id (PATCH)', async () => {
+describe('Update Notification Group - /notification-groups/:id (PATCH)', async () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -33,5 +33,21 @@ describe('Patch Notification Group - /notification-groups/:id (PATCH)', async ()
     expect(getUpdatedNotificationGroupResult.data.name).to.equal(`Updated name`);
     expect(getUpdatedNotificationGroupResult.data.id).to.equal(id);
     expect(getUpdatedNotificationGroupResult.data._environmentId).to.equal(session.environment._id);
+  });
+
+  it('should return a 404 error if the notification group to be updated does not exist', async function () {
+    const postNotificationGroup1 = await session.testAgent.post(`/v1/notification-groups`).send({
+      name: 'Test name',
+    });
+
+    const id = postNotificationGroup1.body.data.id;
+
+    await session.testAgent.delete(`/v1/notification-groups/${id}`);
+
+    const { body } = await session.testAgent.patch(`/v1/notification-groups/${id}`).send({
+      name: 'Updated name',
+    });
+
+    expect(body.statusCode).to.equal(404);
   });
 });

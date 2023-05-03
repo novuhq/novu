@@ -1,28 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationGroupRepository, NotificationGroupEntity } from '@novu/dal';
+import { NotificationGroupRepository } from '@novu/dal';
 import { UpdateNotificationGroupCommand } from './update-notification-group.command';
-import { NotificationGroupResponseDto } from '../../dtos/notification-group-response.dto';
+import { GetNotificationGroup } from '../get-notification-group/get-notification-group.usecase';
 
 @Injectable()
 export class UpdateNotificationGroup {
-  constructor(private notificationGroupRepository: NotificationGroupRepository) {}
+  constructor(
+    private notificationGroupRepository: NotificationGroupRepository,
+    private getNotificationGroup: GetNotificationGroup
+  ) {}
 
   async execute(command: UpdateNotificationGroupCommand) {
-    const { id, environmentId, name } = command;
+    const { id, environmentId, name, organizationId, userId } = command;
 
-    const item = await this.notificationGroupRepository.findOne({
-      _environmentId: environmentId,
-      _id: id,
+    const item = await this.getNotificationGroup.execute({
+      environmentId,
+      organizationId,
+      userId,
+      id,
     });
 
-    if (!item) {
-      throw new NotFoundException();
-    }
-
-    await await this.notificationGroupRepository.update(
+    const result = await this.notificationGroupRepository.update(
       {
-        _id: id,
-        _environmentId: environmentId,
+        _id: item._id,
+        _environmentId: item._environmentId,
       },
       {
         $set: {
@@ -31,15 +32,15 @@ export class UpdateNotificationGroup {
       }
     );
 
-    const result = await this.notificationGroupRepository.findOne({
-      _environmentId: environmentId,
-      _id: id,
-    });
-
-    if (!result) {
-      throw new NotFoundException(`Notification group with id ${id} not found`);
+    if (result.matched === 0) {
+      throw new NotFoundException();
     }
 
-    return result;
+    return await this.getNotificationGroup.execute({
+      environmentId,
+      organizationId,
+      userId,
+      id,
+    });
   }
 }

@@ -10,5 +10,4 @@ export const USE_CASES = [
   GetNotificationGroup,
   DeleteNotificationGroup,
   UpdateNotificationGroup,
-  //
 ];
