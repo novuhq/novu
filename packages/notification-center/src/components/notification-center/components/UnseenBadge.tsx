@@ -30,7 +30,7 @@ export function UnseenBadge({ unseenCount }: { unseenCount: number }) {
       radius={10}
       className={cx('nc-unseen-badge', css(unseenBadgeStyles))}
     >
-      {unseenCount}
+      {unseenCount > 99 ? '99+' : unseenCount}
     </Badge>
   ) : null;
 }

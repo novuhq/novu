@@ -218,14 +218,16 @@ export class SendMessageInApp extends SendMessageBase {
       command.environmentId,
       command._subscriberId,
       ChannelTypeEnum.IN_APP,
-      { seen: false }
+      { seen: false },
+      { limit: 1000 }
     );
 
     const unreadCount = await this.messageRepository.getCount(
       command.environmentId,
       command._subscriberId,
       ChannelTypeEnum.IN_APP,
-      { read: false }
+      { read: false },
+      { limit: 1000 }
     );
 
     await this.createExecutionDetails.execute(
