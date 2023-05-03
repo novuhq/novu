@@ -12,8 +12,6 @@ export class ChangeEntity {
 
   _environmentId: EnvironmentId;
 
-  user: Pick<UserEntity, '_id' | 'firstName' | 'lastName' | 'profilePicture'>;
-
   _organizationId: OrganizationId;
 
   _entityId: string;

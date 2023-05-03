@@ -6,6 +6,10 @@ import { ChangeEntity, ChangeDBModel } from './change.entity';
 import { Change } from './change.schema';
 import { UserEntity } from '../user';
 
+type ChangeEntityPopulated = ChangeEntity & {
+  user: Pick<UserEntity, '_id' | 'firstName' | 'lastName' | 'profilePicture'>;
+};
+
 export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity, EnforceEnvOrOrgIds> {
   constructor() {
     super(Change, ChangeEntity);
@@ -52,7 +56,7 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
       _parentId: { $exists: false, $eq: null },
     });
 
-    const userSelect: (keyof UserEntity)[] = ['_id', 'firstName', 'lastName', 'profilePicture'];
+    const userSelect: Array<keyof UserEntity> = ['_id', 'firstName', 'lastName', 'profilePicture'];
 
     const items = await this.MongooseModel.find({
       _environmentId: environmentId,
@@ -64,7 +68,7 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
       .limit(limit)
       .populate('user', userSelect);
 
-    return { totalCount: totalItemsCount, data: this.mapEntities(items) };
+    return { totalCount: totalItemsCount, data: this.mapEntities(items) as ChangeEntityPopulated[] };
   }
 
   public async getParentId(
