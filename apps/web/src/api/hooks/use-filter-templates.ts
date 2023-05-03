@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 
-import { useTemplates } from './useTemplates';
+import { useTemplates } from '../../hooks';
 
 export function useFilterTemplates(searchQuery = '', page = 0) {
   const {
