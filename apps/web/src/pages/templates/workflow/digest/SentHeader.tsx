@@ -6,7 +6,12 @@ import * as capitalize from 'lodash.capitalize';
 
 const getOrdinal = (num: string | number) => {
   if (typeof num === 'string') {
-    num = parseInt(num, 10);
+    const res = parseInt(num, 10);
+
+    if (isNaN(res)) {
+      return num;
+    }
+    num = res;
   }
   const ord = ['st', 'nd', 'rd'];
   const exceptions = [11, 12, 13];

@@ -282,8 +282,7 @@ export const DigestMetadata = ({ control, index }) => {
                 <When truthy={unit === DigestUnitEnum.MONTHS}>
                   <Group spacing={8} mb={10} mt={34} sx={{ color: colors.B60 }}>
                     <Controller
-                      name={`steps.${index}.metadata.monthly`}
-                      defaultValue={false}
+                      name={`steps.${index}.metadata.timed.monthly`}
                       control={control}
                       render={({ field }) => {
                         return <Radio value={field.value} onChange={field.onChange} />;
@@ -310,8 +309,7 @@ export const DigestMetadata = ({ control, index }) => {
                   />
                   <Group spacing={8} mb={10} mt={34} sx={{ color: colors.B60 }}>
                     <Controller
-                      name={`steps.${index}.metadata.monthly`}
-                      defaultValue={false}
+                      name={`steps.${index}.metadata.timed.monthly`}
                       control={control}
                       render={({ field }) => {
                         return <Radio value={field.value} onChange={field.onChange} />;
@@ -320,35 +318,55 @@ export const DigestMetadata = ({ control, index }) => {
                     <div>On the</div>
                   </Group>
                   <SimpleGrid cols={2} spacing={16}>
-                    <Select
-                      mt={-5}
-                      mb={-5}
-                      data={[
-                        { value: 'first', label: 'First' },
-                        { value: 'second', label: 'Second' },
-                        { value: 'third', label: 'Third' },
-                        { value: 'forth', label: 'Forth' },
-                        { value: 'fifth', label: 'Fifth' },
-                        { value: 'last', label: 'Last' },
-                      ]}
-                      placeholder="First"
+                    <Controller
+                      name={`steps.${index}.metadata.timed.ordinal`}
+                      control={control}
+                      render={({ field }) => {
+                        return (
+                          <Select
+                            value={field.value}
+                            onChange={field.onChange}
+                            mt={-5}
+                            mb={-5}
+                            data={[
+                              { value: '1', label: 'First' },
+                              { value: '2', label: 'Second' },
+                              { value: '3', label: 'Third' },
+                              { value: '4', label: 'Forth' },
+                              { value: '5', label: 'Fifth' },
+                              { value: 'last', label: 'Last' },
+                            ]}
+                            placeholder="First"
+                          />
+                        );
+                      }}
                     />
-                    <Select
-                      mt={-5}
-                      mb={-5}
-                      data={[
-                        { value: 'day', label: 'Day' },
-                        { value: 'weekday', label: 'Weekday' },
-                        { value: 'weekend', label: 'Weekend day' },
-                        { value: 'sunday', label: 'Sunday' },
-                        { value: 'monday', label: 'Monday' },
-                        { value: 'tuesday', label: 'Tuesday' },
-                        { value: 'wednesday', label: 'Wednesday' },
-                        { value: 'thursday', label: 'Thursday' },
-                        { value: 'friday', label: 'Friday' },
-                        { value: 'saturday', label: 'Saturday' },
-                      ]}
-                      placeholder="Day"
+                    <Controller
+                      name={`steps.${index}.metadata.timed.ordinalValue`}
+                      control={control}
+                      render={({ field }) => {
+                        return (
+                          <Select
+                            value={field.value}
+                            onChange={field.onChange}
+                            mt={-5}
+                            mb={-5}
+                            data={[
+                              { value: 'day', label: 'Day' },
+                              { value: 'weekday', label: 'Weekday' },
+                              { value: 'weekend', label: 'Weekend day' },
+                              { value: 'sunday', label: 'Sunday' },
+                              { value: 'monday', label: 'Monday' },
+                              { value: 'tuesday', label: 'Tuesday' },
+                              { value: 'wednesday', label: 'Wednesday' },
+                              { value: 'thursday', label: 'Thursday' },
+                              { value: 'friday', label: 'Friday' },
+                              { value: 'saturday', label: 'Saturday' },
+                            ]}
+                            placeholder="Day"
+                          />
+                        );
+                      }}
                     />
                   </SimpleGrid>
                 </When>
