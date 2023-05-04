@@ -34,7 +34,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       stored.push(this.mapEntity(created));
     }
 
-    await this.insertMany(stored);
+    await this.MongooseModel.insertMany(stored, { ordered: true });
 
     return stored;
   }
