@@ -5,10 +5,7 @@ import { BaseRepository } from '../base-repository';
 import { ChangeEntity, ChangeDBModel } from './change.entity';
 import { Change } from './change.schema';
 import { UserEntity } from '../user';
-
-type ChangeEntityPopulated = ChangeEntity & {
-  user: Pick<UserEntity, '_id' | 'firstName' | 'lastName' | 'profilePicture'>;
-};
+import { ChangeEntityPopulated } from './types';
 
 export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity, EnforceEnvOrOrgIds> {
   constructor() {
