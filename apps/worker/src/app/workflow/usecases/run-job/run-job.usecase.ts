@@ -45,7 +45,7 @@ export class RunJob {
     let shouldQueueNextJob = true;
 
     try {
-      await this.jobRepository.updateStatus(command.organizationId, job._id, JobStatusEnum.RUNNING);
+      await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.RUNNING);
 
       await this.storageHelperService.getAttachments(job.payload?.attachments);
 
