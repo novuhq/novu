@@ -4,7 +4,7 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-import AfricasTalking from 'africasTalking';
+import AfricasTalking from 'africastalking';
 
 export class AfricasTalkingSmsProvider implements ISmsProvider {
   id: 'africas-talking';
