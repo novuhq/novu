@@ -211,7 +211,7 @@ export class TriggerEvent {
         const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
 
         if (channelType) {
-          if (channelType === 'in_app') {
+          if (channelType === ChannelTypeEnum.IN_APP) {
             providers.set(channelType, InAppProviderIdEnum.Novu);
           } else {
             const provider = await this.getProviderId(
