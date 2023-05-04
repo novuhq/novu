@@ -43,7 +43,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
   const showErrors = isSubmitted && errors?.steps;
 
   return (
-    <>
+    <div data-test-id="digest-step-settings-interval">
       <Accordion>
         <Accordion.Item value="events-selection" data-test-id="digest-events-selection-options">
           <Accordion.Control>
@@ -279,62 +279,60 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                 <ScheduleMonthlyFields readonly={readonly} index={index} control={control} />
               </When>
               <When truthy={type !== DigestTypeEnum.TIMED}>
-                <div data-test-id="digest-step-settings-interval">
-                  <Group spacing={8} sx={{ color: colors.B60 }}>
-                    <span>digest events for</span>
-                    <Controller
+                <Group spacing={8} sx={{ color: colors.B60 }}>
+                  <span>digest events for</span>
+                  <Controller
+                    control={control}
+                    name={`steps.${index}.metadata.amount`}
+                    defaultValue=""
+                    render={({ field, fieldState }) => {
+                      return (
+                        <Input
+                          {...field}
+                          value={field.value || ''}
+                          error={showErrors && fieldState.error?.message}
+                          min={0}
+                          max={100}
+                          type="number"
+                          data-test-id="time-amount"
+                          placeholder="0"
+                          disabled={readonly}
+                          styles={(theme) => ({
+                            ...inputStyles(theme),
+                            input: {
+                              textAlign: 'center',
+                              ...inputStyles(theme).input,
+                              minHeight: '30px',
+                              margin: 0,
+                              height: 30,
+                              lineHeight: '32px',
+                            },
+                          })}
+                        />
+                      );
+                    }}
+                  />
+                  <div
+                    style={{
+                      width: '90px',
+                      height: 30,
+                    }}
+                  >
+                    <IntervalSelect
+                      readonly={readonly}
                       control={control}
-                      name={`steps.${index}.metadata.amount`}
-                      defaultValue=""
-                      render={({ field, fieldState }) => {
-                        return (
-                          <Input
-                            {...field}
-                            value={field.value || ''}
-                            error={showErrors && fieldState.error?.message}
-                            min={0}
-                            max={100}
-                            type="number"
-                            data-test-id="time-amount"
-                            placeholder="0"
-                            disabled={readonly}
-                            styles={(theme) => ({
-                              ...inputStyles(theme),
-                              input: {
-                                textAlign: 'center',
-                                ...inputStyles(theme).input,
-                                minHeight: '30px',
-                                margin: 0,
-                                height: 30,
-                                lineHeight: '32px',
-                              },
-                            })}
-                          />
-                        );
-                      }}
+                      name={`steps.${index}.metadata.unit`}
+                      showErrors={showErrors}
                     />
-                    <div
-                      style={{
-                        width: '90px',
-                        height: 30,
-                      }}
-                    >
-                      <IntervalSelect
-                        readonly={readonly}
-                        control={control}
-                        name={`steps.${index}.metadata.unit`}
-                        showErrors={showErrors}
-                      />
-                    </div>
-                    <span>before send</span>
-                  </Group>
-                </div>
+                  </div>
+                  <span>before send</span>
+                </Group>
                 <BackOffFields index={index} control={control} readonly={readonly} />
               </When>
             </div>
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
-    </>
+    </div>
   );
 };
