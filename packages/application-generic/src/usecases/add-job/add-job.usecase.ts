@@ -73,7 +73,7 @@ export class AddJob {
         'updating status as digestAmount and delayAmount is undefined'
       );
       await this.jobRepository.updateStatus(
-        command.organizationId,
+        command.environmentId,
         job._id,
         JobStatusEnum.QUEUED
       );
