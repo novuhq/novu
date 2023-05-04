@@ -21,7 +21,6 @@ export interface ICredentialsDto {
   requireTls?: boolean;
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;
-  baseUrl?: string;
   webhookUrl?: string;
   redirectUrl?: string;
 }
