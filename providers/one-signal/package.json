@@ -17,6 +17,7 @@
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
+    "lint": "eslint src --ext .ts",
     "test": "run-s build test:*",
     "test:lint": "eslint src --ext .ts",
     "test:unit": "jest src",
