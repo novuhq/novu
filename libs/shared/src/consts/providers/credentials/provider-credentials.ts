@@ -457,6 +457,7 @@ export const pushWebhookConfig: IConfigCredentials[] = [
     displayName: 'Secret Hmac Key',
     type: 'string',
     description: 'the secret used to sign webhooks calls',
+    required: true,
    },
    ...pushConfigBase,
 ];
