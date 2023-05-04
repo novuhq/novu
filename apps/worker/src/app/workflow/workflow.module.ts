@@ -2,6 +2,7 @@ import { Provider, Module } from '@nestjs/common';
 import {
   EventsPerformanceService,
   CreateExecutionDetails,
+  BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   DigestFilterSteps,
   DigestFilterStepsRegular,
@@ -63,6 +64,7 @@ const USE_CASES = [
   AddDigestJob,
   CalculateLimitNovuIntegration,
   CreateExecutionDetails,
+  BulkCreateExecutionDetails,
   GetDecryptedIntegrations,
   GetNovuIntegration,
   GetSubscriberPreference,
