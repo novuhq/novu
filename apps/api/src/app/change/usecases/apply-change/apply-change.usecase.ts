@@ -42,6 +42,16 @@ export class ApplyChange {
       throw new NotFoundException();
     }
 
+    await this.promoteChangeToEnvironment.execute(
+      PromoteChangeToEnvironmentCommand.create({
+        itemId: change._entityId,
+        type: change.type,
+        environmentId: change._environmentId,
+        organizationId: change._organizationId,
+        userId: command.userId,
+      })
+    );
+
     await this.changeRepository.update(
       {
         _id: change._id,
@@ -51,16 +61,6 @@ export class ApplyChange {
       {
         enabled: true,
       }
-    );
-
-    await this.promoteChangeToEnvironment.execute(
-      PromoteChangeToEnvironmentCommand.create({
-        itemId: change._entityId,
-        type: change.type,
-        environmentId: change._environmentId,
-        organizationId: change._organizationId,
-        userId: command.userId,
-      })
     );
 
     return change;
