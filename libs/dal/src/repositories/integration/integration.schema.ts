@@ -38,6 +38,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       projectName: Schema.Types.String,
       serviceAccount: Schema.Types.String,
       baseUrl: Schema.Types.String,
+      webhookUrl: Schema.Types.String,
       requireTls: Schema.Types.Boolean,
       ignoreTls: Schema.Types.Boolean,
       tlsOptions: Schema.Types.Mixed,
