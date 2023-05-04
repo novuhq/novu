@@ -1,5 +1,6 @@
 export * from './calculate-limit-novu-integration';
 export * from './create-execution-details';
+export * from './bulk-create-execution-details';
 export * from './digest-filter-steps';
 export * from './get-decrypted-integrations';
 export * from './get-novu-integration';

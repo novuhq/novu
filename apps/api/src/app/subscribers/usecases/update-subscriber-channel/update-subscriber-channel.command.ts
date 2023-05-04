@@ -1,7 +1,8 @@
-import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { ChannelCredentials, SubscriberChannel } from '../../../shared/dtos/subscriber-channel';
+import { OAuthHandlerEnum } from '../../types';
 
 export class IChannelCredentialsCommand implements ChannelCredentials {
   @IsString()
@@ -25,4 +26,7 @@ export class UpdateSubscriberChannelCommand extends EnvironmentCommand implement
 
   @ValidateNested()
   credentials: IChannelCredentialsCommand;
+
+  @IsNotEmpty()
+  oauthHandler: OAuthHandlerEnum;
 }

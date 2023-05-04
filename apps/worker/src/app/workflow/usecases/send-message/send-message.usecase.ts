@@ -89,7 +89,7 @@ export class SendMessage {
     }
 
     if (!shouldRun.passed || !preferred) {
-      await this.jobRepository.updateStatus(command.organizationId, command.jobId, JobStatusEnum.CANCELED);
+      await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
       return;
     }
