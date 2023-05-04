@@ -185,6 +185,7 @@ export interface ICredentials {
   projectName?: string;
   serviceAccount?: string;
   baseUrl?: string;
+  webhookUrl?: string;
   requireTls?: boolean;
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;

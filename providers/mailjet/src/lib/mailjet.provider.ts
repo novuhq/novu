@@ -23,6 +23,7 @@ export class MailjetEmailProvider implements IEmailProvider {
       apiKey: string;
       apiSecret: string;
       from: string;
+      senderName: string;
     }
   ) {
     this.mailjetClient = Client.connect(config.apiKey, config.apiSecret);
@@ -74,6 +75,7 @@ export class MailjetEmailProvider implements IEmailProvider {
     const message: Email.SendParamsMessage = {
       From: {
         Email: options.from || this.config.from,
+        Name: this.config.senderName,
       },
       To: options.to.map((email) => ({
         Email: email,
