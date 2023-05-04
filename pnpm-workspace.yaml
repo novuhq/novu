@@ -2,7 +2,7 @@ packages:
   # all packages in subdirs of packages/ and components/
   - 'providers/*'
   - 'packages/*'
-  - 'packages-enterprise/*'
+  - 'enterprise/packages/*'
   - 'apps/*'
   - 'libs/*'
   - 'docs'

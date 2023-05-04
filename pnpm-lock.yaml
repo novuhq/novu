@@ -1133,6 +1133,12 @@ importers:
       stylelint-scss: 4.6.0_stylelint@14.16.1
       typescript: 4.9.5
 
+  enterprise/packages/is-even:
+    specifiers:
+      typescript: 4.9.5
+    devDependencies:
+      typescript: 4.9.5
+
   libs/dal:
     specifiers:
       '@aws-sdk/client-s3': ^3.14.0
@@ -1385,12 +1391,6 @@ importers:
       nodemon: 2.0.22
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 3.14.2
-      typescript: 4.9.5
-
-  packages-enterprise/is-even:
-    specifiers:
-      typescript: 4.9.5
-    devDependencies:
       typescript: 4.9.5
 
   packages/application-generic:
