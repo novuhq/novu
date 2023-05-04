@@ -78,6 +78,7 @@ export enum PushProviderIdEnum {
   APNS = 'apns',
   EXPO = 'expo',
   OneSignal = 'one-signal',
+  PushWebhook = 'push-webhook',
 }
 
 export enum InAppProviderIdEnum {

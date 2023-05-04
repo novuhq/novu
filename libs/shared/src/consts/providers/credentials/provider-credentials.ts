@@ -444,6 +444,24 @@ export const expoConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
+export const pushWebhookConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.WebhookUrl,
+    displayName: 'Webhook URL',
+    type: 'string',
+    description: 'the webhook URL to call to trigger push notifications',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'the secret used to sign webhooks calls',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
 export const oneSignalConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,
