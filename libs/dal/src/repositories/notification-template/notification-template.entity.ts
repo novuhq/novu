@@ -8,7 +8,6 @@ import {
   IPreferenceChannels,
   DelayTypeEnum,
   TemplateVariableTypeEnum,
-  DaysEnum,
 } from '@novu/shared';
 
 import { MessageTemplateEntity } from '../message-template';
