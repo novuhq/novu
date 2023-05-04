@@ -169,17 +169,16 @@ Can also be used to get the notifications of a particular tab.
 
 ```ts
 headlessService.fetchNotifications({
-  listener: (result:FetchResult<IPaginatedResponse<IMessage>>) => {
+  listener: (result: FetchResult<IPaginatedResponse<IMessage>>) => {
     console.log(result);
   },
   onSuccess: (response: IPaginatedResponse<IMessage>) => {
-    console.log({response.data, response.page, response.totalCount, response.pageSize});
+    console.log(response.data, response.page, response.totalCount, response.pageSize);
   },
   page: pageNumber,
-  query: { feedIdentifier: "feedId", read: false, seen: true },
-  storeId: "storeId"
+  query: { feedIdentifier: 'feedId', read: false, seen: true },
+  storeId: 'storeId',
 });
-
 ```
 
 ### method args interface
@@ -286,6 +285,36 @@ headlessService.markNotificationsAsRead({
 
 ```ts
 interface IMarkNotificationsAsRead {
+  messageId: IMessageId;
+  listener: (result: UpdateResult<IMessage, unknown, { messageId: IMessageId }>) => void;
+  onSuccess?: (message: IMessage) => void;
+  onError?: (error: unknown) => void;
+}
+```
+
+## markNotificationsAsSeen
+
+mark a single or multiple notifications as seen using the message id.
+
+```ts
+headlessService.markNotificationsAsSeen({
+  listener: (result: UpdateResult<IMessage, unknown, { messageId: IMessageId }>) => {
+    console.log(result);
+  },
+  onSuccess: (message: IMessage) => {
+    console.log(message);
+  },
+  onError: (error: unknown) => {
+    console.error(error);
+  },
+  messageId: ['messageOne', 'messageTwo'],
+});
+```
+
+### method args interface
+
+```ts
+interface IMarkNotificationsAsSeen {
   messageId: IMessageId;
   listener: (result: UpdateResult<IMessage, unknown, { messageId: IMessageId }>) => void;
   onSuccess?: (message: IMessage) => void;
