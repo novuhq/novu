@@ -2,12 +2,10 @@ import { Group } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import { colors, Input, Switch } from '../../../../design-system';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
-import { useEnvController } from '../../../../hooks';
 import { IntervalSelect } from './IntervalSelect';
 import { Collapse } from '@mantine/core';
 
-export const BackOffFields = ({ index, control }) => {
-  const { readonly } = useEnvController();
+export const BackOffFields = ({ index, control, readonly }) => {
   const {
     formState: { errors, isSubmitted },
     watch,
@@ -71,7 +69,12 @@ export const BackOffFields = ({ index, control }) => {
               height: 30,
             }}
           >
-            <IntervalSelect control={control} name={`steps.${index}.metadata.backoffUnit`} showErrors={showErrors} />
+            <IntervalSelect
+              readonly={readonly}
+              control={control}
+              name={`steps.${index}.metadata.backoffUnit`}
+              showErrors={showErrors}
+            />
           </div>
         </Group>
       </Collapse>

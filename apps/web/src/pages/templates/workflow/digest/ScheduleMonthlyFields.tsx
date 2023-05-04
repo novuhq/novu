@@ -3,11 +3,9 @@ import { DigestUnitEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { When } from '../../../../components/utils/When';
 import { colors, Select } from '../../../../design-system';
-import { useEnvController } from '../../../../hooks';
 import { DaySelect } from './DaySelect';
 
-export const ScheduleMonthlyFields = ({ index, control }) => {
-  const { readonly } = useEnvController();
+export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
   const { watch, trigger } = useFormContext();
 
   const unit = watch(`steps.${index}.metadata.unit`);

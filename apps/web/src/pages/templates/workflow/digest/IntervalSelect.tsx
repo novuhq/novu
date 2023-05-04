@@ -2,7 +2,6 @@ import { DigestUnitEnum } from '@novu/shared';
 import { Controller } from 'react-hook-form';
 import { Select } from '../../../../design-system';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
-import { useEnvController } from '../../../../hooks';
 
 const options = [
   { value: DigestUnitEnum.SECONDS, label: 'sec (s)' },
@@ -11,9 +10,7 @@ const options = [
   { value: DigestUnitEnum.DAYS, label: 'day (s)' },
 ];
 
-export const IntervalSelect = ({ control, name, showErrors }) => {
-  const { readonly } = useEnvController();
-
+export const IntervalSelect = ({ control, name, showErrors, readonly }) => {
   return (
     <Controller
       control={control}

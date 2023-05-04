@@ -1,13 +1,11 @@
-import { Accordion, Group, Radio, SimpleGrid } from '@mantine/core';
+import { Accordion, Group, SimpleGrid } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
 import { colors, Input, SegmentedControl, Select } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { useEnvController } from '../../../hooks';
 import { WeekDaySelect } from './digest/WeekDaySelect';
-import { DaySelect } from './digest/DaySelect';
 import { Bell, Digest, Timer } from '../../../design-system/icons';
 import { TypeSegmented } from './digest/TypeSegment';
 import { IntervalSelect } from './digest/IntervalSelect';
@@ -32,8 +30,7 @@ const convertUnitToLabel = (unit: DigestUnitEnum) => {
   }
 };
 
-export const DigestMetadata = ({ control, index }) => {
-  const { readonly } = useEnvController();
+export const DigestMetadata = ({ control, index, readonly }) => {
   const {
     formState: { errors, isSubmitted },
     watch,
@@ -279,7 +276,7 @@ export const DigestMetadata = ({ control, index }) => {
                     }}
                   />
                 </When>
-                <ScheduleMonthlyFields index={index} control={control} />
+                <ScheduleMonthlyFields readonly={readonly} index={index} control={control} />
               </When>
               <When truthy={type !== DigestTypeEnum.TIMED}>
                 <div data-test-id="digest-step-settings-interval">
@@ -322,12 +319,17 @@ export const DigestMetadata = ({ control, index }) => {
                         height: 30,
                       }}
                     >
-                      <IntervalSelect control={control} name={`steps.${index}.metadata.unit`} showErrors={showErrors} />
+                      <IntervalSelect
+                        readonly={readonly}
+                        control={control}
+                        name={`steps.${index}.metadata.unit`}
+                        showErrors={showErrors}
+                      />
                     </div>
                     <span>before send</span>
                   </Group>
                 </div>
-                <BackOffFields index={index} control={control} />
+                <BackOffFields index={index} control={control} readonly={readonly} />
               </When>
             </div>
           </Accordion.Panel>
