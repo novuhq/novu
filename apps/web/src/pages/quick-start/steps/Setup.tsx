@@ -53,52 +53,50 @@ export function Setup() {
 
   return (
     <QuickStartWrapper faq={true} secondaryTitle={secondaryTitle} goBackPath={goBackRoute}>
-      <ChildrenWrapper>
-        <Stack align="center" sx={{ width: '100%' }}>
-          <TimelineWrapper>
-            <Timeline
-              active={instructions?.length + 1}
-              bulletSize={40}
-              lineWidth={2}
-              styles={{
-                itemBullet: {
-                  backgroundColor: 'grey',
-                },
-              }}
-            >
-              {instructions.map((instruction, index) => {
-                return (
-                  <Timeline.Item
-                    bullet={<div style={{}}>{index + 1}</div>}
-                    key={index}
-                    title={<div>{instruction.instruction}</div>}
-                  >
-                    <div style={{ marginTop: 10 }}>
-                      <PrismOnCopy
-                        language={instruction.language}
-                        index={index}
-                        code={`${updateCodeSnippet(instruction.snippet, environmentIdentifier, apiKey)}   `}
-                        onCopy={handleOnCopy}
-                      />
-                    </div>
-                  </Timeline.Item>
-                );
-              })}
-              <Timeline.Item bullet={instructions?.length + 1} title={'Render the components and run application'}>
-                <LoaderWrapper>
-                  <SetupStatus
-                    appInitialized={inAppData.active}
-                    navigatePath={`/quickstart/notification-center/set-up/${framework}/success`}
-                    framework={framework}
-                  />
-                </LoaderWrapper>
-              </Timeline.Item>
-            </Timeline>
-          </TimelineWrapper>
+      <Stack align="center" sx={{ width: '100%' }}>
+        <TimelineWrapper>
+          <Timeline
+            active={instructions?.length + 1}
+            bulletSize={40}
+            lineWidth={2}
+            styles={{
+              itemBullet: {
+                backgroundColor: 'grey',
+              },
+            }}
+          >
+            {instructions.map((instruction, index) => {
+              return (
+                <Timeline.Item
+                  bullet={<div style={{}}>{index + 1}</div>}
+                  key={index}
+                  title={<div>{instruction.instruction}</div>}
+                >
+                  <div style={{ marginTop: 10 }}>
+                    <PrismOnCopy
+                      language={instruction.language}
+                      index={index}
+                      code={`${updateCodeSnippet(instruction.snippet, environmentIdentifier, apiKey)}   `}
+                      onCopy={handleOnCopy}
+                    />
+                  </div>
+                </Timeline.Item>
+              );
+            })}
+            <Timeline.Item bullet={instructions?.length + 1} title={'Render the components and run application'}>
+              <LoaderWrapper>
+                <SetupStatus
+                  appInitialized={inAppData.active}
+                  navigatePath={`/quickstart/notification-center/set-up/${framework}/success`}
+                  framework={framework}
+                />
+              </LoaderWrapper>
+            </Timeline.Item>
+          </Timeline>
+        </TimelineWrapper>
 
-          <When truthy={framework === 'demo'}>{<OpenBrowser />}</When>
-        </Stack>
-      </ChildrenWrapper>
+        <When truthy={framework === 'demo'}>{<OpenBrowser />}</When>
+      </Stack>
     </QuickStartWrapper>
   );
 }
@@ -106,15 +104,6 @@ export function Setup() {
 const LoaderWrapper = styled.div`
   margin-bottom: 20px;
   margin-top: 10px;
-`;
-
-const ChildrenWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-  height: 100%;
-  width: 100%;
 `;
 
 function updateCodeSnippet(codeSnippet: string, environmentIdentifier: string, apiKey: string) {

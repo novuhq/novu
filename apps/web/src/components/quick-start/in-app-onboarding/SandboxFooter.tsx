@@ -43,9 +43,6 @@ export function SandboxFooter() {
 }
 
 const FooterWrapper = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -58,7 +55,7 @@ const FooterWrapper = styled.div`
   border-radius: 0px 0px 7px 7px;
   border-top: ${({ theme }) =>
     theme.colorScheme === 'dark' ? `1px solid ${colors.BGDark}` : `1px solid ${colors.BGLight}`};
-  z-index: 3;
+  margin-top: auto;
 `;
 
 const EndSection = styled.div`

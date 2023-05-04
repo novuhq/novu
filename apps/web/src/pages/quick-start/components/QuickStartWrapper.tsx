@@ -21,10 +21,12 @@ export function QuickStartWrapper({
   goBackPath,
   faq = false,
   children,
+  footer,
 }: {
   title?: React.ReactNode | string;
   secondaryTitle?: React.ReactNode | string;
   description?: React.ReactNode | string;
+  footer?: React.ReactNode | string;
   goBackPath?: string;
   faq?: boolean;
   children: React.ReactNode;
@@ -77,35 +79,36 @@ export function QuickStartWrapper({
         }}
       >
         <PageWrapper>
-          <When truthy={goBackPath}>
-            <Group>
-              <ArrowButton onClick={goBackHandler} label="Go Back" testId="go-back-button" />
-            </Group>
-          </When>
-          <Stack align="center" spacing={8}>
-            <When truthy={title}>
-              <Title>{title}</Title>
+          <HeaderWrapper>
+            <When truthy={goBackPath}>
+              <Group>
+                <ArrowButton onClick={goBackHandler} label="Go Back" testId="go-back-button" />
+              </Group>
             </When>
-            <When truthy={secondaryTitle}>
-              <SecondaryTitle onlySecondary={onlySecondary}>{secondaryTitle}</SecondaryTitle>
-            </When>
-          </Stack>
-          <Stack
-            align="center"
-            justify="center"
-            sx={(theme) => ({
-              backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
-              height: '100%',
-              background: 'border-box',
-              marginBottom: '50px',
-            })}
-          >
-            <When truthy={description}>
-              <Description>{description}</Description>
-            </When>
-          </Stack>
-
-          {children}
+            <Stack align="center" spacing={8}>
+              <When truthy={title}>
+                <Title>{title}</Title>
+              </When>
+              <When truthy={secondaryTitle}>
+                <SecondaryTitle onlySecondary={onlySecondary}>{secondaryTitle}</SecondaryTitle>
+              </When>
+            </Stack>
+            <Stack
+              align="center"
+              justify="center"
+              sx={(theme) => ({
+                backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
+                height: '100%',
+                background: 'border-box',
+              })}
+            >
+              <When truthy={description}>
+                <Description>{description}</Description>
+              </When>
+            </Stack>
+          </HeaderWrapper>
+          <ChildrenWrapper>{children}</ChildrenWrapper>
+          <When truthy={footer}>{footer}</When>
           <When truthy={faq}>
             <Faq />
           </When>
@@ -134,7 +137,7 @@ export function Faq() {
   }
 
   return (
-    <Box data-test-id="go-back-button" mt={25} ml={60}>
+    <Box data-test-id="go-back-button" mt={25} ml={90} pb={30}>
       <Text color={isDark ? colors.B70 : colors.B60}>
         <span style={{ fontWeight: 800 }}>Got stuck? </span>
         <span>Please send us a </span>
@@ -181,6 +184,19 @@ function getFrameworkTitle(framework) {
   return framework === 'demo' ? 'Great Choice!' : 'Quick Installation Guide';
 }
 
+const PageWrapper = styled.div`
+  position: relative;
+  flex: 1;
+  height: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+`;
+
+const HeaderWrapper = styled.div`
+  padding: 42px 30px 0px 30px;
+`;
+
 const Title = styled.div`
   font-size: 28px;
   font-weight: 800;
@@ -202,14 +218,12 @@ const Description = styled.div`
   margin-top: 10px;
 `;
 
-const PageWrapper = styled.div`
-  padding: 42px 30px;
-  position: relative;
-  flex: 1;
-  height: 100%;
-  min-height: 100%;
+const ChildrenWrapper = styled.div`
   display: flex;
-  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  padding-inline: 30px;
 `;
 
 const GradientSpan = styled.span`

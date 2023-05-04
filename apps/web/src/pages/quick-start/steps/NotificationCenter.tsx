@@ -1,4 +1,3 @@
-import styled from '@emotion/styled';
 import { useEffect } from 'react';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
@@ -19,23 +18,9 @@ export function NotificationCenter() {
       title="In-App Notification Center Sandbox"
       secondaryTitle="Play around with the In-App sandbox. Click to trigger a notification."
       goBackPath={ROUTES.GET_STARTED}
+      footer={<SandboxFooter />}
     >
-      <ChildrenWrapper>
-        <InAppSandbox />
-        <SandboxFooter />
-      </ChildrenWrapper>
+      <InAppSandbox />
     </QuickStartWrapper>
   );
 }
-
-const ChildrenWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex: 1;
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  top: 0;
-  left: 0;
-`;
