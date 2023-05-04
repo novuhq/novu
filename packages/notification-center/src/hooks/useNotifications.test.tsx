@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { act, renderHook, RenderHookResult } from '@testing-library/react-hooks';
 import {
   ChannelCTATypeEnum,
@@ -231,6 +231,50 @@ describe('useNotifications', () => {
     rerender();
 
     expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(2, 0, stores[1].query);
+  });
+
+  it('refetch organization payloads when `subscriberId` or `applicationIdentifier` changes', async () => {
+    const payloads = [
+      { applicationIdentifier: 'mock_app', subscriberId: 'mock_subscriber_id' },
+      { applicationIdentifier: 'mock_app_1', subscriberId: 'mock_subscriber_id_1' },
+    ];
+
+    const wrapper = ({ children }) => {
+      const [payload, setPayload] = useState(payloads[0]);
+
+      useEffect(() => {
+        const timeout = setTimeout(() => {
+          act(() => {
+            setPayload(payloads[1]);
+          });
+        }, 200);
+
+        return () => clearTimeout(timeout);
+      }, []);
+
+      return (
+        <NovuProvider
+          backendUrl="https://mock_url.com"
+          applicationIdentifier={payload.applicationIdentifier}
+          subscriberId={payload.subscriberId}
+          initialFetchingStrategy={{ fetchNotifications: true }}
+        >
+          {children}
+        </NovuProvider>
+      );
+    };
+    const innerHook = renderHook(() => useNotifications(), { wrapper });
+    const { result } = innerHook;
+
+    expect(result.current.isLoading).toBeTruthy();
+
+    await promiseResolveTimeout(100);
+    expect(mockServiceInstance.getOrganization).toBeCalledTimes(1);
+    expect(mockServiceInstance.getUnseenCount).toBeCalledTimes(1);
+
+    await promiseResolveTimeout(100);
+    expect(mockServiceInstance.getOrganization).toBeCalledTimes(2);
+    expect(mockServiceInstance.getUnseenCount).toBeCalledTimes(2);
   });
 
   it('fetch next page', async () => {
