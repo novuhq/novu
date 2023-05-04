@@ -30,9 +30,11 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         jobs[index]._parentId = stored[index - 1]._id;
       }
 
-      const created = await this.create(jobs[index]);
-      stored.push(created);
+      const created = new this.MongooseModel(jobs[index]);
+      stored.push(this.mapEntity(created));
     }
+
+    await this.insertMany(stored);
 
     return stored;
   }
