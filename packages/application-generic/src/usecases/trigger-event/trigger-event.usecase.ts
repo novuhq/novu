@@ -211,16 +211,18 @@ export class TriggerEvent {
         const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
 
         if (channelType) {
-          const provider = await this.getProviderId(
-            userId,
-            organizationId,
-            environmentId,
-            channelType
-          );
-          if (provider) {
-            providers.set(channelType, provider);
-          } else {
+          if (channelType === 'in_app') {
             providers.set(channelType, InAppProviderIdEnum.Novu);
+          } else {
+            const provider = await this.getProviderId(
+              userId,
+              organizationId,
+              environmentId,
+              channelType
+            );
+            if (provider) {
+              providers.set(channelType, provider);
+            }
           }
         }
       }

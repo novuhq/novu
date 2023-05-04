@@ -3,32 +3,15 @@ import { ConnectionOptions } from 'tls';
 import { QueueOptions } from 'bullmq';
 
 import { BullmqService } from './bull-mq.service';
+import { QueueService } from './queue.service';
 
-export class WsQueueService {
+export class WsQueueService extends QueueService<Record<string, never>> {
   public static queueName = 'ws_socket_queue';
-  private bullConfig: QueueOptions = {
-    connection: {
-      db: Number(process.env.REDIS_DB_INDEX),
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST,
-      password: process.env.REDIS_PASSWORD,
-      connectTimeout: 50000,
-      keepAlive: 30000,
-      family: 4,
-      keyPrefix: getRedisPrefix(),
-      tls: process.env.REDIS_TLS as ConnectionOptions,
-    },
-    defaultJobOptions: {
-      removeOnComplete: true,
-    },
-  };
+  constructor() {
+    super('ws_socket_queue');
+  }
 
   public readonly bullMqService: BullmqService;
-
-  constructor() {
-    this.bullMqService = new BullmqService();
-    this.bullMqService.createQueue(WsQueueService.queueName, this.bullConfig);
-  }
 
   async getJobStats(
     type: string

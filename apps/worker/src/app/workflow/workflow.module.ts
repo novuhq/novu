@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Provider, Module } from '@nestjs/common';
 import {
   EventsPerformanceService,
   CreateExecutionDetails,
+  BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   DigestFilterSteps,
   DigestFilterStepsRegular,
@@ -29,6 +30,7 @@ import {
   ProcessSubscriber,
   StoreSubscriberJobs,
   CalculateDelayService,
+  WsQueueService,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -54,6 +56,7 @@ import {
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
 } from './usecases';
+import { MetricQueueService } from './services/metric-queue.service';
 
 const USE_CASES = [
   AddJob,
@@ -61,6 +64,7 @@ const USE_CASES = [
   AddDigestJob,
   CalculateLimitNovuIntegration,
   CreateExecutionDetails,
+  BulkCreateExecutionDetails,
   GetDecryptedIntegrations,
   GetNovuIntegration,
   GetSubscriberPreference,
@@ -101,7 +105,11 @@ const USE_CASES = [
 
 const REPOSITORIES = [JobRepository];
 
-const SERVICES = [
+const SERVICES: Provider[] = [
+  {
+    provide: MetricQueueService,
+    useClass: MetricQueueService,
+  },
   {
     provide: QueueService,
     useClass: WorkflowQueueService,
@@ -109,6 +117,17 @@ const SERVICES = [
   {
     provide: TriggerQueueService,
     useClass: TriggerProcessorQueueService,
+  },
+  {
+    provide: WsQueueService,
+    useClass: WsQueueService,
+  },
+  {
+    provide: 'BULLMQ_LIST',
+    useFactory: (workflowQueue: QueueService, triggerQueue: TriggerQueueService, wsQueue: WsQueueService) => {
+      return [workflowQueue, triggerQueue, wsQueue];
+    },
+    inject: [QueueService, TriggerQueueService, WsQueueService],
   },
   EventsDistributedLockService,
   EventsPerformanceService,
