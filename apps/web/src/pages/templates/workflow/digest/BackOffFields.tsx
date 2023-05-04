@@ -22,7 +22,7 @@ export const BackOffFields = ({ index, control, readonly }) => {
           defaultValue={false}
           control={control}
           render={({ field }) => {
-            return <Switch checked={field.value === true} onChange={field.onChange} />;
+            return <Switch data-test-id="backoff-switch" checked={field.value === true} onChange={field.onChange} />;
           }}
         />
         <div>Only frequent events</div>
@@ -74,6 +74,7 @@ export const BackOffFields = ({ index, control, readonly }) => {
               control={control}
               name={`steps.${index}.metadata.backoffUnit`}
               showErrors={showErrors}
+              testId="time-unit-backoff"
             />
           </div>
         </Group>

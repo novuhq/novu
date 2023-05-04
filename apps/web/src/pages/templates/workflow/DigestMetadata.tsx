@@ -45,7 +45,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
   return (
     <>
       <Accordion>
-        <Accordion.Item value="events-selection">
+        <Accordion.Item value="events-selection" data-test-id="digest-events-selection-options">
           <Accordion.Control>
             <Group>
               <Bell color={colors.B60} />
@@ -68,7 +68,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
             <Select mt={-5} mb={-5} data={[{ value: 'all', label: 'All events' }]} value={'all'} />
           </Accordion.Panel>
         </Accordion.Item>
-        <Accordion.Item value="group-by">
+        <Accordion.Item value="group-by" data-test-id="digest-group-by-options">
           <Accordion.Control>
             <Group>
               <div style={{ width: 26 }}>
@@ -117,7 +117,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
             />
           </Accordion.Panel>
         </Accordion.Item>
-        <Accordion.Item value="send">
+        <Accordion.Item value="send" data-test-id="digest-send-options">
           <Accordion.Control>
             <Group>
               <Timer width="30" height="30" color={colors.B60} />

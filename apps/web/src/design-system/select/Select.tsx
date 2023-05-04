@@ -63,6 +63,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
       required = false,
       onChange,
       inputProps = {},
+      dataTestId,
       ...props
     }: ISelectProps,
     ref
@@ -129,6 +130,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             disabled={disabled}
             required={required}
             valueComponent={Value}
+            data-test-id={dataTestId}
             {...props}
             {...loadingProps}
           />
@@ -145,6 +147,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             onChange={onChange}
             data={data}
             required={required}
+            data-test-id={dataTestId}
             {...props}
             {...loadingProps}
           />
