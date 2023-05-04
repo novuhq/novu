@@ -1,4 +1,4 @@
-import { Accordion, Group } from '@mantine/core';
+import { Accordion, Group, Radio, SimpleGrid } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 
@@ -12,6 +12,7 @@ import { Bell, Digest, Timer } from '../../../design-system/icons';
 import { TypeSegmented } from './digest/TypeSegment';
 import { IntervalSelect } from './digest/IntervalSelect';
 import { BackOffFields } from './digest/BackOffFields';
+import { SentHeader } from './digest/SentHeader';
 
 const convertUnitToLabel = (unit: DigestUnitEnum) => {
   switch (unit) {
@@ -40,6 +41,8 @@ export const DigestMetadata = ({ control, index }) => {
 
   const type = watch(`steps.${index}.metadata.type`);
   const unit = watch(`steps.${index}.metadata.unit`);
+  const digestKey = watch(`steps.${index}.metadata.digestKey`);
+  const backoff = watch(`steps.${index}.metadata.backoff`);
   const showErrors = isSubmitted && errors?.steps;
 
   return (
@@ -76,7 +79,21 @@ export const DigestMetadata = ({ control, index }) => {
               </div>
               <div>
                 <div>Grouped by Subscriber_ID</div>
-                <div>Add grouping...</div>
+                <When truthy={!digestKey}>
+                  <div>Add grouping...</div>
+                </When>
+                <When truthy={digestKey}>
+                  <div>
+                    And by{' '}
+                    <b
+                      style={{
+                        color: colors.B80,
+                      }}
+                    >
+                      {digestKey}
+                    </b>
+                  </div>
+                </When>
               </div>
             </Group>
           </Accordion.Control>
@@ -108,17 +125,9 @@ export const DigestMetadata = ({ control, index }) => {
             <Group>
               <Timer width="30" height="30" color={colors.B60} />
               <div>
-                <div>Will be send</div>
+                <div>Will be sent</div>
                 <div>
-                  after{' '}
-                  <b
-                    style={{
-                      color: colors.B80,
-                    }}
-                  >
-                    6 hours
-                  </b>{' '}
-                  after collecting first event
+                  <SentHeader index={index} />
                 </div>
               </div>
             </Group>
@@ -271,6 +280,17 @@ export const DigestMetadata = ({ control, index }) => {
                   />
                 </When>
                 <When truthy={unit === DigestUnitEnum.MONTHS}>
+                  <Group spacing={8} mb={10} mt={34} sx={{ color: colors.B60 }}>
+                    <Controller
+                      name={`steps.${index}.metadata.monthly`}
+                      defaultValue={false}
+                      control={control}
+                      render={({ field }) => {
+                        return <Radio value={field.value} onChange={field.onChange} />;
+                      }}
+                    />
+                    <div>Each</div>
+                  </Group>
                   <Controller
                     control={control}
                     name={`steps.${index}.metadata.timed.day`}
@@ -288,6 +308,49 @@ export const DigestMetadata = ({ control, index }) => {
                       );
                     }}
                   />
+                  <Group spacing={8} mb={10} mt={34} sx={{ color: colors.B60 }}>
+                    <Controller
+                      name={`steps.${index}.metadata.monthly`}
+                      defaultValue={false}
+                      control={control}
+                      render={({ field }) => {
+                        return <Radio value={field.value} onChange={field.onChange} />;
+                      }}
+                    />
+                    <div>On the</div>
+                  </Group>
+                  <SimpleGrid cols={2} spacing={16}>
+                    <Select
+                      mt={-5}
+                      mb={-5}
+                      data={[
+                        { value: 'first', label: 'First' },
+                        { value: 'second', label: 'Second' },
+                        { value: 'third', label: 'Third' },
+                        { value: 'forth', label: 'Forth' },
+                        { value: 'fifth', label: 'Fifth' },
+                        { value: 'last', label: 'Last' },
+                      ]}
+                      placeholder="First"
+                    />
+                    <Select
+                      mt={-5}
+                      mb={-5}
+                      data={[
+                        { value: 'day', label: 'Day' },
+                        { value: 'weekday', label: 'Weekday' },
+                        { value: 'weekend', label: 'Weekend day' },
+                        { value: 'sunday', label: 'Sunday' },
+                        { value: 'monday', label: 'Monday' },
+                        { value: 'tuesday', label: 'Tuesday' },
+                        { value: 'wednesday', label: 'Wednesday' },
+                        { value: 'thursday', label: 'Thursday' },
+                        { value: 'friday', label: 'Friday' },
+                        { value: 'saturday', label: 'Saturday' },
+                      ]}
+                      placeholder="Day"
+                    />
+                  </SimpleGrid>
                 </When>
               </When>
               <When truthy={type !== DigestTypeEnum.TIMED}>
