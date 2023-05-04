@@ -13,6 +13,7 @@ import { TypeSegmented } from './digest/TypeSegment';
 import { IntervalSelect } from './digest/IntervalSelect';
 import { BackOffFields } from './digest/BackOffFields';
 import { SentHeader } from './digest/SentHeader';
+import { ScheduleMonthlyFields } from './digest/ScheduleMonthlyFields';
 
 const convertUnitToLabel = (unit: DigestUnitEnum) => {
   switch (unit) {
@@ -42,7 +43,6 @@ export const DigestMetadata = ({ control, index }) => {
   const type = watch(`steps.${index}.metadata.type`);
   const unit = watch(`steps.${index}.metadata.unit`);
   const digestKey = watch(`steps.${index}.metadata.digestKey`);
-  const backoff = watch(`steps.${index}.metadata.backoff`);
   const showErrors = isSubmitted && errors?.steps;
 
   return (
@@ -279,97 +279,7 @@ export const DigestMetadata = ({ control, index }) => {
                     }}
                   />
                 </When>
-                <When truthy={unit === DigestUnitEnum.MONTHS}>
-                  <Group spacing={8} mb={10} mt={34} sx={{ color: colors.B60 }}>
-                    <Controller
-                      name={`steps.${index}.metadata.timed.monthly`}
-                      control={control}
-                      render={({ field }) => {
-                        return <Radio value={field.value} onChange={field.onChange} />;
-                      }}
-                    />
-                    <div>Each</div>
-                  </Group>
-                  <Controller
-                    control={control}
-                    name={`steps.${index}.metadata.timed.day`}
-                    defaultValue=""
-                    render={({ field }) => {
-                      return (
-                        <DaySelect
-                          value={field.value}
-                          disabled={readonly}
-                          onChange={async (value) => {
-                            field.onChange(value);
-                            await trigger(`steps.${index}.metadata`);
-                          }}
-                        />
-                      );
-                    }}
-                  />
-                  <Group spacing={8} mb={10} mt={34} sx={{ color: colors.B60 }}>
-                    <Controller
-                      name={`steps.${index}.metadata.timed.monthly`}
-                      control={control}
-                      render={({ field }) => {
-                        return <Radio value={field.value} onChange={field.onChange} />;
-                      }}
-                    />
-                    <div>On the</div>
-                  </Group>
-                  <SimpleGrid cols={2} spacing={16}>
-                    <Controller
-                      name={`steps.${index}.metadata.timed.ordinal`}
-                      control={control}
-                      render={({ field }) => {
-                        return (
-                          <Select
-                            value={field.value}
-                            onChange={field.onChange}
-                            mt={-5}
-                            mb={-5}
-                            data={[
-                              { value: '1', label: 'First' },
-                              { value: '2', label: 'Second' },
-                              { value: '3', label: 'Third' },
-                              { value: '4', label: 'Forth' },
-                              { value: '5', label: 'Fifth' },
-                              { value: 'last', label: 'Last' },
-                            ]}
-                            placeholder="First"
-                          />
-                        );
-                      }}
-                    />
-                    <Controller
-                      name={`steps.${index}.metadata.timed.ordinalValue`}
-                      control={control}
-                      render={({ field }) => {
-                        return (
-                          <Select
-                            value={field.value}
-                            onChange={field.onChange}
-                            mt={-5}
-                            mb={-5}
-                            data={[
-                              { value: 'day', label: 'Day' },
-                              { value: 'weekday', label: 'Weekday' },
-                              { value: 'weekend', label: 'Weekend day' },
-                              { value: 'sunday', label: 'Sunday' },
-                              { value: 'monday', label: 'Monday' },
-                              { value: 'tuesday', label: 'Tuesday' },
-                              { value: 'wednesday', label: 'Wednesday' },
-                              { value: 'thursday', label: 'Thursday' },
-                              { value: 'friday', label: 'Friday' },
-                              { value: 'saturday', label: 'Saturday' },
-                            ]}
-                            placeholder="Day"
-                          />
-                        );
-                      }}
-                    />
-                  </SimpleGrid>
-                </When>
+                <ScheduleMonthlyFields index={index} control={control} />
               </When>
               <When truthy={type !== DigestTypeEnum.TIMED}>
                 <div data-test-id="digest-step-settings-interval">
