@@ -26,7 +26,7 @@ test(`should trigger Africa's Talking library correctly`, async () => {
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     to: '+2347063317344',
-    from: '2585',
+    from: '1234',
     message: 'SMS Content',
   });
 });
