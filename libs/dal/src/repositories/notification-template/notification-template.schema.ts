@@ -123,6 +123,9 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
           updateMode: {
             type: Schema.Types.Boolean,
           },
+          backoff: {
+            type: Schema.Types.Boolean,
+          },
         },
       },
     ],
