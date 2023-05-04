@@ -4,6 +4,7 @@ import {
   APNSHandler,
   FCMHandler,
   ExpoHandler,
+  OneSignalHandler,
   PushWebhookHandler,
 } from './handlers';
 
@@ -12,6 +13,7 @@ export class PushFactory implements IPushFactory {
     new FCMHandler(),
     new ExpoHandler(),
     new APNSHandler(),
+    new OneSignalHandler(),
     new PushWebhookHandler(),
   ];
 
