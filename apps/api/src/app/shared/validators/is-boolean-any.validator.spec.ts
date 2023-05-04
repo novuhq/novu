@@ -1,4 +1,4 @@
-import { IsBooleanAny } from './validators';
+import { IsBooleanAny } from './is-boolean-any.validator';
 import { validateSync } from 'class-validator';
 import { expect } from 'chai';
 
@@ -7,7 +7,7 @@ function isValid(input: object) {
   return errors.length === 0;
 }
 
-describe('IsBooleanAny', () => {
+describe('@IsBooleanAny() validator', () => {
   class TestDto {
     constructor(isSomething: any) {
       this.isSomething = isSomething;
@@ -38,10 +38,12 @@ describe('IsBooleanAny', () => {
     const withAnyString = new TestDto('truezz');
     const withObj = new TestDto({ true: 'true' });
     const withNull = new TestDto(null);
+    const withUndefined = new TestDto(undefined);
 
     expect(isValid(withNumber)).to.false;
     expect(isValid(withAnyString)).to.false;
     expect(isValid(withObj)).to.false;
     expect(isValid(withNull)).to.false;
+    expect(isValid(withUndefined)).to.false;
   });
 });

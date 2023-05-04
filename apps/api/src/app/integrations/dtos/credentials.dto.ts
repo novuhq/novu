@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsObject, IsOptional, IsString } from 'class-validator';
-import { IsBooleanAny } from '../../shared/validators';
+import { IsBooleanAny } from '../../shared/validators/is-boolean-any.validator';
 
 export class CredentialsDto {
   @ApiPropertyOptional()
