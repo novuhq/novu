@@ -334,6 +334,20 @@ describe('Creation functionality', function () {
     cy.clickWorkflowNode('node-delaySelector');
     cy.getByTestId('delay-type').should('be.visible');
   });
+
+  it('should be able to add huge amount of nodes.', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/templates/create');
+    });
+    fillBasicNotificationDetails('Test 25 Nodes');
+    goBack();
+    cy.waitForNetworkIdle(500);
+
+    for (let i = 0; i < 25; i++) {
+      cy.getByTestId('button-add').last().click();
+      cy.getByTestId('add-email-node').click();
+    }
+  });
 });
 
 function awaitGetContains(getSelector: string, contains: string) {
