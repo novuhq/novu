@@ -458,8 +458,8 @@ export const pushWebhookConfig: IConfigCredentials[] = [
     type: 'string',
     description: 'the secret used to sign webhooks calls',
     required: true,
-   },
-   ...pushConfigBase,
+  },
+  ...pushConfigBase,
 ];
 
 export const oneSignalConfig: IConfigCredentials[] = [
