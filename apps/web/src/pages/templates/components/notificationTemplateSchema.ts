@@ -1,5 +1,5 @@
 import * as z from 'zod';
-import { ChannelTypeEnum, DigestTypeEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum, DelayTypeEnum } from '@novu/shared';
 
 import { getChannel } from '../shared/channels';
 
@@ -158,7 +158,7 @@ export const schema = z
               });
             }
 
-            if (step.metadata?.type !== DigestTypeEnum.BACKOFF) {
+            if (!step.metadata.backoff) {
               return;
             }
             amount = step.metadata?.backoffAmount;
