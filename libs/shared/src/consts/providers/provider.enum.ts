@@ -78,6 +78,7 @@ export enum PushProviderIdEnum {
   FCM = 'fcm',
   APNS = 'apns',
   EXPO = 'expo',
+  OneSignal = 'one-signal',
 }
 
 export enum InAppProviderIdEnum {

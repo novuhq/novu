@@ -444,6 +444,22 @@ export const expoConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
+export const oneSignalConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application ID',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
 export const apnsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.SecretKey,
