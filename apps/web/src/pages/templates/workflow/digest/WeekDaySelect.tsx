@@ -1,6 +1,5 @@
-import { Group, UnstyledButton } from '@mantine/core';
 import { DaysEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { Group, UnstyledButton } from '@mantine/core';
 import { colors } from '../../../../design-system';
 
 const Day = ({ last, label, value, onClick, active, disabled = false }) => {
@@ -55,13 +54,15 @@ const items = [
   },
 ];
 
-export const WeekDaySelect = ({ onChange = (value: DaysEnum[]) => {}, value = [], disabled = false }) => {
-  const [selected, setSelected] = useState<DaysEnum[]>(value);
-
-  useEffect(() => {
-    onChange(selected);
-  }, [selected]);
-
+export const WeekDaySelect = ({
+  onChange = (value: DaysEnum[]) => {},
+  value = [],
+  disabled = false,
+}: {
+  onChange: (value: DaysEnum[]) => void;
+  value: DaysEnum[];
+  disabled?: boolean;
+}) => {
   return (
     <Group
       grow
@@ -80,17 +81,18 @@ export const WeekDaySelect = ({ onChange = (value: DaysEnum[]) => {}, value = []
           <Day
             label={day.label}
             value={day.value}
+            key={day.value}
             disabled={disabled}
             last={items.length - 1 === index}
             onClick={(clicked) => {
-              if (selected.includes(clicked)) {
-                setSelected([...selected].filter((item) => item !== clicked).sort());
+              if (value.includes(clicked)) {
+                onChange([...value].filter((item) => item !== clicked).sort());
 
                 return;
               }
-              setSelected([...selected, clicked].sort());
+              onChange([...value, clicked].sort());
             }}
-            active={selected.includes(day.value)}
+            active={value.includes(day.value)}
           />
         );
       })}
