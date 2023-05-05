@@ -41,6 +41,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
   const unit = watch(`steps.${index}.metadata.unit`);
   const digestKey = watch(`steps.${index}.metadata.digestKey`);
   const showErrors = isSubmitted && errors?.steps;
+  const isEnterprise = process.env.REACT_APP_DOCKER_HOSTED_ENV !== 'true';
 
   return (
     <div data-test-id="digest-step-settings-interval">
@@ -130,33 +131,35 @@ export const DigestMetadata = ({ control, index, readonly }) => {
             </Group>
           </Accordion.Control>
           <Accordion.Panel>
-            <Controller
-              control={control}
-              defaultValue={DigestTypeEnum.REGULAR}
-              name={`steps.${index}.metadata.type`}
-              render={({ field }) => {
-                return (
-                  <TypeSegmented
-                    {...field}
-                    sx={{
-                      maxWidth: '100% !important',
-                      marginBottom: -14,
-                    }}
-                    fullWidth
-                    disabled={readonly}
-                    data={[
-                      { value: DigestTypeEnum.REGULAR, label: 'Started on an event' },
-                      { value: DigestTypeEnum.TIMED, label: 'Scheduled send' },
-                    ]}
-                    onChange={async (segmentValue) => {
-                      field.onChange(segmentValue);
-                      await trigger(`steps.${index}.metadata`);
-                    }}
-                    data-test-id="digest-type"
-                  />
-                );
-              }}
-            />
+            <When truthy={isEnterprise}>
+              <Controller
+                control={control}
+                defaultValue={DigestTypeEnum.REGULAR}
+                name={`steps.${index}.metadata.type`}
+                render={({ field }) => {
+                  return (
+                    <TypeSegmented
+                      {...field}
+                      sx={{
+                        maxWidth: '100% !important',
+                        marginBottom: -14,
+                      }}
+                      fullWidth
+                      disabled={readonly}
+                      data={[
+                        { value: DigestTypeEnum.REGULAR, label: 'Started on an event' },
+                        { value: DigestTypeEnum.TIMED, label: 'Scheduled send' },
+                      ]}
+                      onChange={async (segmentValue) => {
+                        field.onChange(segmentValue);
+                        await trigger(`steps.${index}.metadata`);
+                      }}
+                      data-test-id="digest-type"
+                    />
+                  );
+                }}
+              />
+            </When>
             <div
               style={{
                 background: colors.B20,
@@ -205,9 +208,9 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                       return (
                         <Input
                           {...field}
-                          value={field.value || ''}
+                          value={field.value || '1'}
                           error={showErrors && fieldState.error?.message}
-                          min={0}
+                          min={1}
                           max={100}
                           type="number"
                           data-test-id="time-amount"
