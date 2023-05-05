@@ -1131,6 +1131,37 @@ importers:
       stylelint-scss: 4.6.0_stylelint@14.16.1
       typescript: 4.9.5
 
+  enterprise/packages/digest-schedule:
+    specifiers:
+      '@types/chai': ^4.2.11
+      '@types/mocha': ^8.0.1
+      '@types/node': ^14.6.0
+      '@types/sinon': ^9.0.0
+      chai: ^4.2.0
+      cross-env: ^7.0.3
+      date-fns: ^2.29.2
+      mocha: ^8.1.1
+      nodemon: ^2.0.3
+      rrule: ^2.7.2
+      sinon: ^9.2.4
+      ts-node: ~10.9.1
+      typescript: 4.9.5
+    dependencies:
+      date-fns: 2.29.3
+      rrule: 2.7.2
+    devDependencies:
+      '@types/chai': 4.3.4
+      '@types/mocha': 8.2.3
+      '@types/node': 14.18.42
+      '@types/sinon': 9.0.11
+      chai: 4.3.7
+      cross-env: 7.0.3
+      mocha: 8.4.0
+      nodemon: 2.0.22
+      sinon: 9.2.4
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      typescript: 4.9.5
+
   libs/dal:
     specifiers:
       '@aws-sdk/client-s3': ^3.14.0
@@ -26025,7 +26056,7 @@ packages:
     resolution: {integrity: sha512-UCB0ioiyj8CRjtrvaceBLqqhZCVP+1B8+NWQhmdsm0VXOJtobBCf1dBQmebCCo34qZmUwZfIH2MZLqNHazrfjg==}
 
   /concat-map/0.0.1:
-    resolution: {integrity: sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=}
+    resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
   /concat-stream/1.6.2:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
@@ -44130,6 +44161,12 @@ packages:
 
   /rootpath/0.1.2:
     resolution: {integrity: sha512-R3wLbuAYejpxQjL/SjXo1Cjv4wcJECnMRT/FlcCfTwCBhaji9rWaRCoVEQ1SPiTJ4kKK+yh+bZLAV7SCafoDDw==}
+
+  /rrule/2.7.2:
+    resolution: {integrity: sha512-NkBsEEB6FIZOZ3T8frvEBOB243dm46SPufpDckY/Ap/YH24V1zLeMmDY8OA10lk452NdrF621+ynDThE7FQU2A==}
+    dependencies:
+      tslib: 2.5.0
+    dev: false
 
   /rsvp/4.8.5:
     resolution: {integrity: sha512-nfMOlASu9OnRJo1mbEk2cz0D56a1MBNrJ7orjRZQG10XDyuvwksKbuXNp6qa+kbn839HwjwhBzhFmdsaEAfauA==}
