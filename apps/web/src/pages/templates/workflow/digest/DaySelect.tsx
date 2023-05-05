@@ -1,5 +1,4 @@
 import { Grid, UnstyledButton } from '@mantine/core';
-import { useEffect, useState } from 'react';
 import { colors } from '../../../../design-system';
 
 const border = `1px solid ${colors.B30}`;
@@ -167,13 +166,15 @@ const items = [
   },
 ];
 
-export const DaySelect = ({ onChange = (value: number[]) => {}, value = [], disabled = false }) => {
-  const [selected, setSelected] = useState<number[]>(value);
-
-  useEffect(() => {
-    onChange(selected);
-  }, [selected]);
-
+export const DaySelect = ({
+  onChange = (value: number[]) => {},
+  value = [],
+  disabled = false,
+}: {
+  onChange: (value: number[]) => void;
+  value: number[];
+  disabled?: boolean;
+}) => {
   return (
     <Grid gutter={0} columns={7} mt={10}>
       {items.map((day) => {
@@ -181,17 +182,18 @@ export const DaySelect = ({ onChange = (value: number[]) => {}, value = [], disa
           <Day
             label={day.value}
             value={day.value}
+            key={day.value}
             style={day.style}
             disabled={disabled}
             onClick={(clicked) => {
-              if (selected.includes(clicked)) {
-                setSelected([...selected].filter((item) => item !== clicked).sort());
+              if (value.includes(clicked)) {
+                onChange([...value].filter((item) => item !== clicked).sort());
 
                 return;
               }
-              setSelected([...selected, clicked].sort());
+              onChange([...value, clicked].sort());
             }}
-            active={selected.includes(day.value)}
+            active={value.includes(day.value)}
           />
         );
       })}

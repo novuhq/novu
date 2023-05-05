@@ -34,7 +34,7 @@ const Highlight = ({ children }) => (
   </b>
 );
 
-export const SentHeader = ({ index }) => {
+export const WillBeSentHeader = ({ index }) => {
   const { watch } = useFormContext();
 
   const type = watch(`steps.${index}.metadata.type`);
@@ -88,7 +88,7 @@ export const SentHeader = ({ index }) => {
     );
   }
 
-  if (unit === DigestUnitEnum.MONTHS) {
+  if (type === DigestTypeEnum.TIMED && unit === DigestUnitEnum.MONTHS) {
     return (
       <>
         <Highlight>Monthly</Highlight> on <Highlight>{day?.map((item) => getOrdinal(item)).join(', ')}</Highlight> at{' '}

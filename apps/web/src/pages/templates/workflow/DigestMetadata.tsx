@@ -10,7 +10,7 @@ import { Bell, Digest, Timer } from '../../../design-system/icons';
 import { TypeSegmented } from './digest/TypeSegment';
 import { IntervalSelect } from './digest/IntervalSelect';
 import { BackOffFields } from './digest/BackOffFields';
-import { SentHeader } from './digest/SentHeader';
+import { WillBeSentHeader } from './digest/WillBeSentHeader';
 import { ScheduleMonthlyFields } from './digest/ScheduleMonthlyFields';
 
 const convertUnitToLabel = (unit: DigestUnitEnum) => {
@@ -124,7 +124,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
               <div>
                 <div>Will be sent</div>
                 <div>
-                  <SentHeader index={index} />
+                  <WillBeSentHeader index={index} />
                 </div>
               </div>
             </Group>
