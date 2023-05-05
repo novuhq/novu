@@ -4,6 +4,17 @@ import { useFormContext } from 'react-hook-form';
 import { colors } from '../../../../design-system';
 import * as capitalize from 'lodash.capitalize';
 
+const getOrdinalValueLabel = (value: string) => {
+  if (value === 'day' || value === 'weekday') {
+    return value;
+  }
+  if (value === 'weekend') {
+    return 'weekend day';
+  }
+
+  return capitalize(value);
+};
+
 const getOrdinal = (num: string | number) => {
   if (typeof num === 'string') {
     const res = parseInt(num, 10);
@@ -34,7 +45,7 @@ const Highlight = ({ children }) => (
   </b>
 );
 
-export const SentHeader = ({ index }) => {
+export const WillBeSentHeader = ({ index }) => {
   const { watch } = useFormContext();
 
   const type = watch(`steps.${index}.metadata.type`);
@@ -45,6 +56,7 @@ export const SentHeader = ({ index }) => {
   const day = watch(`steps.${index}.metadata.timed.day`) || [];
   const every = watch(`steps.${index}.metadata.timed.every`);
   const amount = watch(`steps.${index}.metadata.amount`);
+
   const BackoffText = useCallback(() => {
     return backoff ? (
       <>
@@ -70,13 +82,21 @@ export const SentHeader = ({ index }) => {
   }
 
   if (type === DigestTypeEnum.TIMED && unit === DigestUnitEnum.DAYS) {
+    if (!at) {
+      return (
+        <>
+          Every <Highlight>{getOrdinal(every)} </Highlight> day
+        </>
+      );
+    }
+
     return (
       <>
         <Highlight>Daily</Highlight> at <Highlight>{at}</Highlight> <BackoffText />
       </>
     );
   }
-  if (unit === DigestUnitEnum.WEEKS) {
+  if (type === DigestTypeEnum.TIMED && unit === DigestUnitEnum.WEEKS) {
     return (
       <>
         <Highlight>Weekly</Highlight> on <Highlight>{daysOfWeek?.map((item) => capitalize(item)).join(', ')}</Highlight>{' '}
@@ -88,7 +108,27 @@ export const SentHeader = ({ index }) => {
     );
   }
 
-  if (unit === DigestUnitEnum.MONTHS) {
+  if (type === DigestTypeEnum.TIMED && unit === DigestUnitEnum.MONTHS) {
+    const monthlyType = watch(`steps.${index}.metadata.timed.monthlyType`);
+
+    if (monthlyType === 'on') {
+      const ordinal = watch(`steps.${index}.metadata.timed.ordinal`);
+      const ordinalValue = watch(`steps.${index}.metadata.timed.ordinalValue`);
+
+      if (!ordinal || !ordinalValue) {
+        return null;
+      }
+
+      return (
+        <>
+          Every month on the{' '}
+          <Highlight>
+            {getOrdinal(ordinal)} {getOrdinalValueLabel(ordinalValue)}
+          </Highlight>
+        </>
+      );
+    }
+
     return (
       <>
         <Highlight>Monthly</Highlight> on <Highlight>{day?.map((item) => getOrdinal(item)).join(', ')}</Highlight> at{' '}

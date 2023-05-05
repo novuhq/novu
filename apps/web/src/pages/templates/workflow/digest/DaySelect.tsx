@@ -1,30 +1,79 @@
-import { Grid, UnstyledButton } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { Grid, UnstyledButton, createStyles, MantineTheme } from '@mantine/core';
 import { colors } from '../../../../design-system';
 
 const border = `1px solid ${colors.B30}`;
 
-const Day = ({ label, value, onClick, active, style = {}, disabled = false }) => {
+const useStyles = createStyles<string, { active: boolean; disabled: boolean }>((theme: MantineTheme, _params) => {
+  const active = _params.active;
+  const disabled = _params.disabled;
+
+  return {
+    day: {
+      button: {
+        borderBottom: border,
+        borderLeft: border,
+        padding: '7px 0',
+        textAlign: 'center',
+        width: '100%',
+        background: active ? colors.B60 : undefined,
+        color: active ? colors.white : colors.B80,
+        opacity: disabled ? 0.4 : 1,
+        cursor: disabled ? 'default' : 'pointer',
+        borderColor: colors.B30,
+      },
+      '&:nth-of-type(1) button': {
+        borderTopLeftRadius: 4,
+        borderTop: border,
+      },
+      '&:nth-of-type(2) button': {
+        borderTop: border,
+      },
+      '&:nth-of-type(3) button': {
+        borderTop: border,
+      },
+      '&:nth-of-type(4) button': {
+        borderTop: border,
+      },
+      '&:nth-of-type(5) button': {
+        borderTop: border,
+      },
+      '&:nth-of-type(6) button': {
+        borderTop: border,
+      },
+      '&:nth-of-type(7) button': {
+        borderRight: border,
+        borderTopRightRadius: 4,
+        borderTop: border,
+      },
+      '&:nth-of-type(14) button': {
+        borderRight: border,
+      },
+      '&:nth-of-type(21) button': {
+        borderRight: border,
+      },
+      '&:nth-of-type(28) button': {
+        borderRight: border,
+      },
+      '&:nth-of-type(29) button': {
+        borderBottomLeftRadius: 4,
+      },
+      '&:nth-of-type(31) button': {
+        borderRight: border,
+      },
+    },
+  };
+});
+
+const Day = ({ label, value, onClick, active, disabled = false }) => {
+  const { classes } = useStyles({ active, disabled });
+
   return (
-    <Grid.Col span={1}>
+    <Grid.Col className={classes.day} span={1}>
       <UnstyledButton
         onClick={() => {
           onClick(value);
         }}
         disabled={disabled}
-        style={{
-          borderBottom: border,
-          borderLeft: border,
-          padding: '7px 0',
-          textAlign: 'center',
-          width: '100%',
-          background: active ? colors.B60 : undefined,
-          color: active ? colors.white : colors.B80,
-          ...style,
-          opacity: disabled ? 0.4 : 1,
-          cursor: disabled ? 'default' : 'pointer',
-          borderColor: colors.B30,
-        }}
       >
         {label}
       </UnstyledButton>
@@ -32,166 +81,37 @@ const Day = ({ label, value, onClick, active, style = {}, disabled = false }) =>
   );
 };
 
-const items = [
-  {
-    value: 1,
-    style: {
-      borderTopLeftRadius: 4,
-      borderTop: border,
-    },
-  },
-  {
-    value: 2,
-    style: {
-      borderTop: border,
-    },
-  },
-  {
-    value: 3,
-    style: {
-      borderTop: border,
-    },
-  },
-  {
-    value: 4,
-    style: {
-      borderTop: border,
-    },
-  },
-  {
-    value: 5,
-    style: {
-      borderTop: border,
-    },
-  },
-  {
-    value: 6,
-    style: {
-      borderTop: border,
-    },
-  },
-  {
-    value: 7,
-    style: {
-      borderRight: border,
-      borderTopRightRadius: 4,
-      borderTop: border,
-    },
-  },
-  {
-    value: 8,
-  },
-  {
-    value: 9,
-  },
-  {
-    value: 10,
-  },
-  {
-    value: 11,
-  },
-  {
-    value: 12,
-  },
-  {
-    value: 13,
-  },
-  {
-    value: 14,
-    style: {
-      borderRight: border,
-    },
-  },
-  {
-    value: 15,
-  },
-  {
-    value: 16,
-  },
-  {
-    value: 17,
-  },
-  {
-    value: 18,
-  },
-  {
-    value: 19,
-  },
-  {
-    value: 20,
-  },
-  {
-    value: 21,
-    style: {
-      borderRight: border,
-    },
-  },
-  {
-    value: 22,
-  },
-  {
-    value: 23,
-  },
-  {
-    value: 24,
-  },
-  {
-    value: 25,
-  },
-  {
-    value: 26,
-  },
-  {
-    value: 27,
-  },
-  {
-    value: 28,
-    style: {
-      borderRight: border,
-    },
-  },
-  {
-    value: 29,
-    style: {
-      borderBottomLeftRadius: 4,
-    },
-  },
-  {
-    value: 30,
-  },
-  {
-    value: 31,
-    style: {
-      borderRight: border,
-    },
-  },
+const items: number[] = [
+  1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 ];
 
-export const DaySelect = ({ onChange = (value: number[]) => {}, value = [], disabled = false }) => {
-  const [selected, setSelected] = useState<number[]>(value);
-
-  useEffect(() => {
-    onChange(selected);
-  }, [selected]);
-
+export const DaySelect = ({
+  onChange = (value: number[]) => {},
+  value = [],
+  disabled = false,
+}: {
+  onChange: (value: number[]) => void;
+  value: number[];
+  disabled?: boolean;
+}) => {
   return (
     <Grid gutter={0} columns={7} mt={10}>
       {items.map((day) => {
         return (
           <Day
-            label={day.value}
-            value={day.value}
-            style={day.style}
+            label={day}
+            value={day}
+            key={day}
             disabled={disabled}
             onClick={(clicked) => {
-              if (selected.includes(clicked)) {
-                setSelected([...selected].filter((item) => item !== clicked).sort());
+              if (value.includes(clicked)) {
+                onChange([...value].filter((item) => item !== clicked).sort());
 
                 return;
               }
-              setSelected([...selected, clicked].sort());
+              onChange([...value, clicked].sort());
             }}
-            active={selected.includes(day.value)}
+            active={value.includes(day)}
           />
         );
       })}
