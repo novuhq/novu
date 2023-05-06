@@ -1,4 +1,9 @@
-import { DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
+import {
+  DigestUnitEnum,
+  DelayTypeEnum,
+  DigestTypeEnum,
+  IDigestRegularMetadata,
+} from '@novu/shared';
 
 import { Logger } from '@nestjs/common';
 import { ApiException } from '../../utils/exceptions';
@@ -37,10 +42,17 @@ export class CalculateDelayService {
       );
     }
 
-    return this.toMilliseconds(
-      step.metadata.amount as number,
-      step.metadata.unit as DigestUnitEnum
-    );
+    if (this.isRegularDigest(step.metadata.type)) {
+      const regularDigestMeta = step.metadata as IDigestRegularMetadata;
+
+      return this.toMilliseconds(
+        regularDigestMeta.amount,
+        regularDigestMeta.unit
+      );
+    }
+
+    // TODO: calculate delay for the timed digest
+    return 0;
   }
 
   toMilliseconds(amount: number, unit: DigestUnitEnum): number {
@@ -74,5 +86,9 @@ export class CalculateDelayService {
       typeof overrides.delay.amount === 'number' &&
       values.includes(overrides.delay.unit as unknown as DigestUnitEnum)
     );
+  }
+
+  private isRegularDigest(type: DigestTypeEnum | DelayTypeEnum) {
+    return type === DigestTypeEnum.REGULAR || type === DigestTypeEnum.BACKOFF;
   }
 }

@@ -20,6 +20,7 @@ export const BackOffFields = ({ index, control, readonly }) => {
         <Controller
           name={`steps.${index}.metadata.backoff`}
           defaultValue={false}
+          shouldUnregister
           control={control}
           render={({ field }) => {
             return <Switch data-test-id="backoff-switch" checked={field.value === true} onChange={field.onChange} />;
@@ -35,6 +36,7 @@ export const BackOffFields = ({ index, control, readonly }) => {
             control={control}
             name={`steps.${index}.metadata.backoffAmount`}
             defaultValue=""
+            shouldUnregister
             render={({ field, fieldState }) => {
               return (
                 <Input

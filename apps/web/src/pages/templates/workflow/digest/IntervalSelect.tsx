@@ -15,6 +15,7 @@ export const IntervalSelect = ({ control, name, showErrors, readonly, testId = '
     <Controller
       control={control}
       name={name}
+      shouldUnregister
       render={({ field, fieldState }) => {
         return (
           <Select

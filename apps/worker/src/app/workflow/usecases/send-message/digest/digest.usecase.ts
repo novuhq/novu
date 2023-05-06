@@ -58,7 +58,10 @@ export class Digest extends SendMessageType {
   private async getEvents(command: SendMessageCommand) {
     const currentJob = await this.jobRepository.findOne({ _environmentId: command.environmentId, _id: command.jobId });
 
-    if (currentJob?.digest?.type === DigestTypeEnum.BACKOFF || currentJob?.digest?.backoff) {
+    if (
+      currentJob?.digest?.type === DigestTypeEnum.BACKOFF ||
+      (currentJob?.digest && 'backoff' in currentJob?.digest)
+    ) {
       return this.getDigestEventsBackoff.execute(command);
     }
 

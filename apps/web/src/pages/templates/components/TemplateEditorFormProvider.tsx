@@ -1,6 +1,8 @@
 import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
 import slugify from 'slugify';
 import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
+// TODO remove
+import { DevTool } from '@hookform/devtools';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
 import { DigestTypeEnum, INotificationTemplate, INotificationTrigger } from '@novu/shared';
@@ -234,6 +236,7 @@ const TemplateEditorFormProvider = ({ children }) => {
   return (
     <FormProvider {...methods}>
       <TemplateEditorFormContext.Provider value={value}>{children}</TemplateEditorFormContext.Provider>
+      <DevTool control={methods.control} placement="top-left" />
     </FormProvider>
   );
 };

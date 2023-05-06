@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { JobRepository, JobEntity } from '@novu/dal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
+import {
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IDigestBaseMetadata,
+  StepTypeEnum,
+} from '@novu/shared';
 import {
   DigestFilterSteps,
   DetailEnum,
@@ -15,11 +20,12 @@ export abstract class GetDigestEvents {
   constructor(protected jobRepository: JobRepository, private createExecutionDetails: CreateExecutionDetails) {}
 
   protected async filterJobs(currentJob: JobEntity, transactionId: string, jobs: JobEntity[]) {
+    const digestMeta = currentJob?.digest as IDigestBaseMetadata | undefined;
     const batchValue = currentJob?.payload
-      ? DigestFilterSteps.getNestedValue(currentJob.payload, currentJob?.digest?.digestKey)
+      ? DigestFilterSteps.getNestedValue(currentJob.payload, digestMeta?.digestKey)
       : undefined;
     const filteredJobs = jobs.filter((job) => {
-      return DigestFilterSteps.getNestedValue(job.payload, currentJob.digest?.digestKey) === batchValue;
+      return DigestFilterSteps.getNestedValue(job.payload, digestMeta?.digestKey) === batchValue;
     });
 
     const currentTrigger = (await this.jobRepository.findOne(
