@@ -1,11 +1,12 @@
 import { Grid, UnstyledButton, createStyles, MantineTheme } from '@mantine/core';
 import { colors } from '../../../../design-system';
 
-const border = `1px solid ${colors.B30}`;
-
 const useStyles = createStyles<string, { active: boolean; disabled: boolean }>((theme: MantineTheme, _params) => {
   const active = _params.active;
   const disabled = _params.disabled;
+  const isDark = theme.colorScheme === 'dark';
+
+  const border = `1px solid ${isDark ? colors.B30 : colors.B60}`;
 
   return {
     day: {
@@ -16,10 +17,10 @@ const useStyles = createStyles<string, { active: boolean; disabled: boolean }>((
         textAlign: 'center',
         width: '100%',
         background: active ? colors.B60 : undefined,
-        color: active ? colors.white : colors.B80,
+        color: active ? colors.white : isDark ? colors.B80 : colors.B60,
         opacity: disabled ? 0.4 : 1,
         cursor: disabled ? 'default' : 'pointer',
-        borderColor: colors.B30,
+        borderColor: isDark ? colors.B30 : colors.B60,
       },
       '&:nth-of-type(1) button': {
         borderTopLeftRadius: 4,

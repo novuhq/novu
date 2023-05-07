@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { colors } from '../../../../design-system';
 import * as capitalize from 'lodash.capitalize';
+import { useMantineColorScheme } from '@mantine/core';
 
 const getOrdinalValueLabel = (value: string) => {
   if (value === 'day' || value === 'weekday') {
@@ -35,16 +36,19 @@ const getOrdinal = (num: string | number) => {
   return num + nth;
 };
 
-const Highlight = ({ children }) => (
-  <b
-    style={{
-      color: colors.B80,
-    }}
-  >
-    {children}
-  </b>
-);
+const Highlight = ({ children }) => {
+  const { colorScheme } = useMantineColorScheme();
 
+  return (
+    <b
+      style={{
+        color: colorScheme === 'dark' ? colors.B80 : colors.B40,
+      }}
+    >
+      {children}
+    </b>
+  );
+};
 export const WillBeSentHeader = ({ index }) => {
   const { watch } = useFormContext();
 

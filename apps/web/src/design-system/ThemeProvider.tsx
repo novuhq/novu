@@ -8,9 +8,9 @@ import { colors, shadows } from './config';
 import { useLocalThemePreference } from '../hooks';
 import { ChevronDown } from './icons';
 
-const accordionStyles = () => ({
+const accordionStyles = (theme: MantineTheme) => ({
   item: {
-    background: colors.B15,
+    background: theme.colorScheme === 'dark' ? colors.B15 : colors.B98,
     borderRadius: 8,
     marginBottom: 24,
   },
