@@ -4,6 +4,7 @@ import {
   SubscriberPreferenceRepository,
   SubscriberRepository,
   SubscriberEntity,
+  MessageTemplateRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IPreferenceChannels, StepTypeEnum } from '@novu/shared';
@@ -20,6 +21,7 @@ import { CachedEntity, buildSubscriberKey } from '../../services';
 export class GetSubscriberTemplatePreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
+    private messageTemplateRepository: MessageTemplateRepository,
     private subscriberRepository: SubscriberRepository
   ) {}
 
@@ -93,8 +95,30 @@ export class GetSubscriberTemplatePreference {
   private async queryActiveChannels(
     command: GetSubscriberTemplatePreferenceCommand
   ): Promise<ChannelTypeEnum[]> {
-    const channels = command.template.steps
-      .filter((step) => step.active === true)
+    const activeSteps = command.template.steps.filter(
+      (step) => step.active === true
+    );
+
+    if (activeSteps.some((step) => !step.template)) {
+      const messageIds = activeSteps.map((step) => step._templateId);
+
+      const messageTemplates = await this.messageTemplateRepository.find({
+        _environmentId: command.environmentId,
+        _id: {
+          $in: messageIds,
+        },
+      });
+
+      return [
+        ...new Set(
+          messageTemplates.map(
+            (messageTemplate) => messageTemplate.type
+          ) as unknown as ChannelTypeEnum[]
+        ),
+      ];
+    }
+
+    const channels = activeSteps
       .map((item) => item.template.type as StepTypeEnum)
       .reduce<StepTypeEnum[]>((list, channel) => {
         if (list.includes(channel)) {
