@@ -144,7 +144,7 @@ export class CreateNotificationJobs {
       (step) => step.template?.type === StepTypeEnum.DIGEST
     );
 
-    if (digestStep && digestStep.metadata?.type) {
+    if (digestStep?.metadata?.type) {
       return await this.digestFilterSteps.execute(
         DigestFilterStepsCommand.create({
           _subscriberId: command.subscriber._id,
