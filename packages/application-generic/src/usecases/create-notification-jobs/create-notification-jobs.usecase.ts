@@ -48,6 +48,19 @@ export class CreateNotificationJobs {
       command.to.subscriberId
     );
 
+    const activeSteps = this.filterActiveSteps(command.template.steps);
+
+    const channels = activeSteps
+      .map((item) => item.template.type as StepTypeEnum)
+      .reduce<StepTypeEnum[]>((list, channel) => {
+        if (list.includes(channel) || channel === StepTypeEnum.TRIGGER) {
+          return list;
+        }
+        list.push(channel);
+
+        return list;
+      }, []);
+
     const notification = await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -57,6 +70,7 @@ export class CreateNotificationJobs {
       to: command.to,
       payload: command.payload,
       expireAt: this.calculateExpireAt(command),
+      channels,
     });
 
     if (!notification) {
@@ -67,7 +81,7 @@ export class CreateNotificationJobs {
 
     const jobs: NotificationJob[] = [];
 
-    const steps = await this.createSteps(command, notification);
+    const steps = await this.createSteps(command, activeSteps, notification);
 
     for (const step of steps) {
       if (!step.template)
@@ -108,10 +122,9 @@ export class CreateNotificationJobs {
 
   private async createSteps(
     command: CreateNotificationJobsCommand,
+    activeSteps: NotificationStepEntity[],
     notification: NotificationEntity
   ): Promise<NotificationStepEntity[]> {
-    const activeSteps = this.filterActiveSteps(command.template.steps);
-
     return await this.filterDigestSteps(command, notification, activeSteps);
   }
 
