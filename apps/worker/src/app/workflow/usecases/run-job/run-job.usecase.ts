@@ -7,8 +7,7 @@ import { InstrumentUsecase, PinoLogger, StorageHelperService } from '@novu/appli
 import { RunJobCommand } from './run-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
-import { PlatformException } from '../../../shared/utils/exceptions';
-import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils/constants';
+import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
 
 @Injectable()
 export class RunJob {
@@ -57,6 +56,7 @@ export class RunJob {
           step: job.step,
           transactionId: job.transactionId,
           notificationId: job._notificationId,
+          templateId: job._templateId,
           environmentId: job._environmentId,
           organizationId: job._organizationId,
           userId: job._userId,

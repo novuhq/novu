@@ -1,12 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import {
-  NotificationRepository,
   NotificationStepEntity,
   SubscriberRepository,
   MessageRepository,
   MessageEntity,
-  NotificationEntity,
   IntegrationEntity,
   IChannelSettings,
 } from '@novu/dal';
@@ -32,7 +30,7 @@ import {
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
-import { PlatformException } from '../../../shared/utils/exceptions';
+import { PlatformException } from '../../../shared/utils';
 
 const LOG_CONTEXT = 'SendMessageChat';
 
@@ -42,7 +40,6 @@ export class SendMessageChat extends SendMessageBase {
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
-    private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
@@ -71,8 +68,6 @@ export class SendMessageChat extends SendMessageBase {
     });
     const chatChannel: NotificationStepEntity = command.step;
     if (!chatChannel?.template) throw new PlatformException('Chat channel template not found');
-
-    const notification = await this.notificationRepository.findById(command.notificationId);
 
     let content = '';
     const data = {
@@ -121,7 +116,7 @@ export class SendMessageChat extends SendMessageBase {
     let allFailed = true;
     for (const channel of chatChannels) {
       try {
-        await this.sendChannelMessage(command, channel, notification, chatChannel, content);
+        await this.sendChannelMessage(command, channel, chatChannel, content);
         allFailed = false;
       } catch (e) {
         /*
@@ -149,7 +144,6 @@ export class SendMessageChat extends SendMessageBase {
   private async sendChannelMessage(
     command: SendMessageCommand,
     subscriberChannel: IChannelSettings,
-    notification,
     chatChannel,
     content: string
   ) {
@@ -182,11 +176,11 @@ export class SendMessageChat extends SendMessageBase {
     }
 
     const message: MessageEntity = await this.messageRepository.create({
-      _notificationId: notification._id,
+      _notificationId: command.notificationId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
-      _templateId: notification._templateId,
+      _templateId: command.templateId,
       _messageTemplateId: chatChannel.template._id,
       channel: ChannelTypeEnum.CHAT,
       transactionId: command.transactionId,
@@ -225,28 +219,19 @@ export class SendMessageChat extends SendMessageBase {
     );
 
     if (chatWebhookUrl && integration) {
-      await this.sendMessage(
-        chatWebhookUrl,
-        integration,
-        content,
-        message,
-        command,
-        notification,
-        channelSpecification
-      );
+      await this.sendMessage(chatWebhookUrl, integration, content, message, command, channelSpecification);
 
       return;
     }
 
-    await this.sendErrors(chatWebhookUrl, integration, message, command, notification);
+    await this.sendErrors(chatWebhookUrl, integration, message, command);
   }
 
   private async sendErrors(
     chatWebhookUrl,
     integration: IntegrationEntity,
     message: MessageEntity,
-    command: SendMessageCommand,
-    notification: NotificationEntity
+    command: SendMessageCommand
   ) {
     if (!chatWebhookUrl) {
       await this.messageRepository.updateMessageStatus(
@@ -279,7 +264,6 @@ export class SendMessageChat extends SendMessageBase {
         'chat_missing_integration_error',
         'Subscriber does not have an active chat integration',
         command,
-        notification,
         LogCodeEnum.MISSING_CHAT_INTEGRATION
       );
       await this.createExecutionDetails.execute(
@@ -304,7 +288,6 @@ export class SendMessageChat extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity,
     channelSpecification?: string | undefined
   ) {
     try {
@@ -339,7 +322,6 @@ export class SendMessageChat extends SendMessageBase {
         'unexpected_chat_error',
         e.message || e.name || 'Un-expect CHAT provider error',
         command,
-        notification,
         LogCodeEnum.CHAT_ERROR,
         e
       );

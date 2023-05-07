@@ -3,9 +3,7 @@ import * as Sentry from '@sentry/node';
 import {
   MessageRepository,
   NotificationStepEntity,
-  NotificationRepository,
   SubscriberRepository,
-  NotificationEntity,
   MessageEntity,
   IntegrationEntity,
 } from '@novu/dal';
@@ -25,7 +23,7 @@ import {
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
-import { PlatformException } from '../../../shared/utils/exceptions';
+import { PlatformException } from '../../../shared/utils';
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
@@ -33,7 +31,6 @@ export class SendMessageSms extends SendMessageBase {
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
-    private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
@@ -74,9 +71,6 @@ export class SendMessageSms extends SendMessageBase {
 
     const smsChannel: NotificationStepEntity = command.step;
     if (!smsChannel.template) throw new PlatformException(`Unexpected error: SMS template is missing`);
-
-    const notification = await this.notificationRepository.findById(command.notificationId);
-    if (!notification) throw new PlatformException(`Unexpected error: Notification not found`);
 
     const payload = {
       subscriber: subscriber,
@@ -130,11 +124,11 @@ export class SendMessageSms extends SendMessageBase {
     delete messagePayload.attachments;
 
     const message: MessageEntity = await this.messageRepository.create({
-      _notificationId: notification._id,
+      _notificationId: command.notificationId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
-      _templateId: notification._templateId,
+      _templateId: command.templateId,
       _messageTemplateId: smsChannel.template._id,
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
@@ -161,21 +155,15 @@ export class SendMessageSms extends SendMessageBase {
     );
 
     if (phone && integration) {
-      await this.sendMessage(phone, integration, content, message, command, notification, overrides);
+      await this.sendMessage(phone, integration, content, message, command, overrides);
 
       return;
     }
 
-    await this.sendErrors(phone, integration, message, command, notification);
+    await this.sendErrors(phone, integration, message, command);
   }
 
-  private async sendErrors(
-    phone,
-    integration,
-    message: MessageEntity,
-    command: SendMessageCommand,
-    notification: NotificationEntity
-  ) {
+  private async sendErrors(phone, integration, message: MessageEntity, command: SendMessageCommand) {
     if (!phone) {
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
@@ -207,7 +195,6 @@ export class SendMessageSms extends SendMessageBase {
         'sms_missing_integration_error',
         'Subscriber does not have an active sms integration',
         command,
-        notification,
         LogCodeEnum.MISSING_SMS_INTEGRATION
       );
 
@@ -232,7 +219,6 @@ export class SendMessageSms extends SendMessageBase {
         'no_integration_from_phone',
         'Integration does not have from phone configured',
         command,
-        notification,
         LogCodeEnum.MISSING_SMS_PROVIDER
       );
       await this.createExecutionDetails.execute(
@@ -257,7 +243,6 @@ export class SendMessageSms extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageCommand,
-    notification: NotificationEntity,
     overrides: object
   ) {
     try {
@@ -306,7 +291,6 @@ export class SendMessageSms extends SendMessageBase {
         'unexpected_sms_error',
         e.message || e.name || 'Un-expect SMS provider error',
         command,
-        notification,
         LogCodeEnum.SMS_ERROR,
         e
       );
