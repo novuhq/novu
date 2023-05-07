@@ -1,27 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import {
-  MessageTemplateRepository,
   NotificationTemplateEntity,
   SubscriberPreferenceRepository,
   SubscriberRepository,
   SubscriberEntity,
 } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/stateless';
-import { IPreferenceChannels } from '@novu/shared';
+import { IPreferenceChannels, StepTypeEnum } from '@novu/shared';
 
 import {
   IGetSubscriberPreferenceTemplateResponse,
   ISubscriberPreferenceResponse,
-} from '../get-subscriber-preference/get-subscriber-preference.usecase';
+} from '../get-subscriber-preference';
 import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 import { ApiException } from '../../utils/exceptions';
-import { CachedEntity, buildSubscriberKey } from '../../services/cache';
+import { CachedEntity, buildSubscriberKey } from '../../services';
 
 @Injectable()
 export class GetSubscriberTemplatePreference {
   constructor(
     private subscriberPreferenceRepository: SubscriberPreferenceRepository,
-    private messageTemplateRepository: MessageTemplateRepository,
     private subscriberRepository: SubscriberRepository
   ) {}
 
@@ -95,24 +93,19 @@ export class GetSubscriberTemplatePreference {
   private async queryActiveChannels(
     command: GetSubscriberTemplatePreferenceCommand
   ): Promise<ChannelTypeEnum[]> {
-    const messageIds = command.template.steps
+    const channels = command.template.steps
       .filter((step) => step.active === true)
-      .map((step) => step._templateId);
+      .map((item) => item.template.type as StepTypeEnum)
+      .reduce<StepTypeEnum[]>((list, channel) => {
+        if (list.includes(channel)) {
+          return list;
+        }
+        list.push(channel);
 
-    const messageTemplates = await this.messageTemplateRepository.find({
-      _environmentId: command.environmentId,
-      _id: {
-        $in: messageIds,
-      },
-    });
+        return list;
+      }, []);
 
-    return [
-      ...new Set(
-        messageTemplates.map(
-          (messageTemplate) => messageTemplate.type
-        ) as unknown as ChannelTypeEnum[]
-      ),
-    ];
+    return channels as unknown as ChannelTypeEnum[];
   }
 
   @CachedEntity({
