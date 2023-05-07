@@ -56,7 +56,7 @@ export class RunJob {
           step: job.step,
           transactionId: job.transactionId,
           notificationId: job._notificationId,
-          templateId: job._templateId,
+          _templateId: job._templateId,
           environmentId: job._environmentId,
           organizationId: job._organizationId,
           userId: job._userId,

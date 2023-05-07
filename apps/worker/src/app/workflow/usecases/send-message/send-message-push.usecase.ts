@@ -196,7 +196,7 @@ export class SendMessagePush extends SendMessageBase {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
-      _templateId: command.templateId,
+      _templateId: command._templateId,
       _messageTemplateId: command.step?.template?._id,
       channel: ChannelTypeEnum.PUSH,
       transactionId: command.transactionId,

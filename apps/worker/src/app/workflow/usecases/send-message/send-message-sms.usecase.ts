@@ -128,7 +128,7 @@ export class SendMessageSms extends SendMessageBase {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
-      _templateId: command.templateId,
+      _templateId: command._templateId,
       _messageTemplateId: smsChannel.template._id,
       channel: ChannelTypeEnum.SMS,
       transactionId: command.transactionId,
