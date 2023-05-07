@@ -16,6 +16,7 @@ import {
   CreateExecutionDetailsCommand,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
+  Instrument,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -150,6 +151,7 @@ export class SendMessage {
     return shouldRun;
   }
 
+  @Instrument()
   private async getFilterData(command: SendMessageCommand) {
     const subscriberFilterExist = command.step?.filters?.find((filter) => {
       return filter?.children?.find((item) => item?.on === 'subscriber');
@@ -190,6 +192,7 @@ export class SendMessage {
     });
   }
 
+  @Instrument()
   private async filterPreferredChannels(job: JobEntity): Promise<boolean> {
     const template = await this.getNotificationTemplate({
       _id: job._templateId,
@@ -240,6 +243,7 @@ export class SendMessage {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
+  @Instrument()
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
     const templatePreferred = preference.enabled;
 
