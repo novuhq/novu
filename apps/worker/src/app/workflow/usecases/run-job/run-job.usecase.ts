@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { InstrumentUsecase, PinoLogger, StorageHelperService } from '@novu/application-generic';
+import { Instrument, InstrumentUsecase, PinoLogger, StorageHelperService } from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
@@ -89,6 +89,7 @@ export class RunJob {
     }
   }
 
+  @Instrument()
   private async delayedEventIsCanceled(job: JobEntity): Promise<boolean> {
     if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY) {
       return false;

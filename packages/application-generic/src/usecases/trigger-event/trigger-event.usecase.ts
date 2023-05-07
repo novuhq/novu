@@ -13,7 +13,7 @@ import {
 } from '@novu/shared';
 
 import { PinoLogger } from '../../logging';
-import { InstrumentUsecase } from '../../instrumentation';
+import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { EventsPerformanceService } from '../../services/performance';
 import {
   GetDecryptedIntegrations,
@@ -177,6 +177,7 @@ export class TriggerEvent {
     );
   }
 
+  @Instrument()
   private async validateTransactionIdProperty(
     transactionId: string,
     environmentId: string
@@ -211,6 +212,7 @@ export class TriggerEvent {
         const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
 
         if (channelType) {
+          if (providers.has(channelType)) continue;
           if (channelType === ChannelTypeEnum.IN_APP) {
             providers.set(channelType, InAppProviderIdEnum.Novu);
           } else {
@@ -231,6 +233,7 @@ export class TriggerEvent {
     return providers;
   }
 
+  @Instrument()
   private async getProviderId(
     userId: string,
     organizationId: string,

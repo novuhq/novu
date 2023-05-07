@@ -81,7 +81,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
-    const organization = await this.organizationRepository.findById(command.organizationId);
+    const organization = await this.organizationRepository.findById(command.organizationId, 'branding');
 
     try {
       content = await this.compileInAppTemplate(
