@@ -437,7 +437,8 @@
     "vishnudxb",
     "autopipelining",
     "maxtimeout",
-    "clsx"
+    "clsx",
+    "Diget"
   ],
   "flagWords": [],
   "patterns": [
