@@ -1,4 +1,4 @@
-import type { INotificationTemplate, ICreateNotificationTemplateDto } from '@novu/shared';
+import { INotificationTemplate, ICreateNotificationTemplateDto, DigestTypeEnum } from '@novu/shared';
 import { StepTypeEnum, ActorTypeEnum, ChannelCTATypeEnum } from '@novu/shared';
 import { v4 as uuid4 } from 'uuid';
 
@@ -45,6 +45,15 @@ const mapInAppStep = (item: IStepEntity): IStepEntity => ({
   },
 });
 
+const mapDigestStep = (item: IStepEntity): IStepEntity => ({
+  ...item,
+  metadata: {
+    ...item.metadata,
+    type: DigestTypeEnum.REGULAR,
+    backoff: true,
+  },
+});
+
 export const mapNotificationTemplateToForm = (template: INotificationTemplate): IForm => {
   const form: IForm = {
     notificationGroupId: template._notificationGroupId,
@@ -67,6 +76,9 @@ export const mapNotificationTemplateToForm = (template: INotificationTemplate): 
     }
     if (item.template.type === StepTypeEnum.IN_APP) {
       return mapInAppStep(item);
+    }
+    if (item.template.type === StepTypeEnum.DIGEST) {
+      return mapDigestStep(item);
     }
 
     return item;

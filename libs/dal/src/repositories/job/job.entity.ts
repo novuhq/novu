@@ -42,6 +42,7 @@ export class JobEntity {
     backoffUnit?: DigestUnitEnum;
     backoffAmount?: number;
     updateMode?: boolean;
+    backoff?: boolean;
   };
   type?: StepTypeEnum;
   _actorId?: string;

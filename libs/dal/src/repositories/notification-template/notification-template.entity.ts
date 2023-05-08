@@ -114,6 +114,7 @@ export class NotificationStepEntity {
     digestKey?: string;
     delayPath?: string;
     type: DigestTypeEnum | DelayTypeEnum;
+    backoff?: boolean;
     backoffUnit?: DigestUnitEnum;
     backoffAmount?: number;
     updateMode?: boolean;

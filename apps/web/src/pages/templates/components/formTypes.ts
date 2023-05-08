@@ -40,6 +40,7 @@ export interface IStepEntity {
     type?: DigestTypeEnum;
     digestKey?: string;
     delayPath?: string;
+    backoff?: boolean;
   };
 }
 
