@@ -45,12 +45,25 @@ const mapInAppStep = (item: IStepEntity): IStepEntity => ({
   },
 });
 
-const mapDigestStep = (item: IStepEntity): IStepEntity => ({
-  ...item,
-  metadata: {
-    ...item.metadata,
-  },
-});
+const mapDigestStep = (item: IStepEntity): IStepEntity => {
+  if (item.metadata?.type === DigestTypeEnum.BACKOFF) {
+    return {
+      ...item,
+      metadata: {
+        ...item.metadata,
+        type: DigestTypeEnum.REGULAR,
+        backoff: true,
+      },
+    };
+  }
+
+  return {
+    ...item,
+    metadata: {
+      ...item.metadata,
+    },
+  };
+};
 
 export const mapNotificationTemplateToForm = (template: INotificationTemplate): IForm => {
   const form: IForm = {

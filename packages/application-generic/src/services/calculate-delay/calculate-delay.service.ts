@@ -51,7 +51,7 @@ export class CalculateDelayService {
       );
     }
 
-    // TODO: calculate delay for the timed digest
+    // TODO: timed digest
     return 0;
   }
 

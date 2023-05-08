@@ -98,7 +98,7 @@ export class AddDigestJob {
 
     // We delayed the job and created the digest
 
-    // TODO: what about the timed digest?
+    // TODO: timed digest
     if (
       this.isRegularDigest(job.digest.type) &&
       matched === 0 &&
