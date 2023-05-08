@@ -1,9 +1,10 @@
-import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 import { useCallback } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { colors } from '../../../../design-system';
 import * as capitalize from 'lodash.capitalize';
 import { useMantineColorScheme } from '@mantine/core';
+import { DigestTypeEnum, DigestUnitEnum, MonthlyTypeEnum } from '@novu/shared';
+
+import { colors } from '../../../../design-system';
 
 const getOrdinalValueLabel = (value: string) => {
   if (value === 'day' || value === 'weekday') {
@@ -55,10 +56,9 @@ export const WillBeSentHeader = ({ index }) => {
   const type = watch(`steps.${index}.metadata.type`);
   const unit = watch(`steps.${index}.metadata.unit`);
   const backoff = watch(`steps.${index}.metadata.backoff`);
-  const at = watch(`steps.${index}.metadata.timed.at`);
-  const daysOfWeek = watch(`steps.${index}.metadata.timed.dayOfWeek`) || [];
-  const day = watch(`steps.${index}.metadata.timed.day`) || [];
-  const every = watch(`steps.${index}.metadata.timed.every`);
+  const atTime = watch(`steps.${index}.metadata.timed.atTime`);
+  const weekDays = watch(`steps.${index}.metadata.timed.weekDays`) || [];
+  const monthDays = watch(`steps.${index}.metadata.timed.monthDays`) || [];
   const amount = watch(`steps.${index}.metadata.amount`);
 
   const BackoffText = useCallback(() => {
@@ -72,7 +72,7 @@ export const WillBeSentHeader = ({ index }) => {
   if (type === DigestTypeEnum.TIMED && unit == DigestUnitEnum.HOURS) {
     return (
       <>
-        Every <Highlight>{every === '1' ? 'hour' : `${every} hours`}</Highlight> <BackoffText />
+        Every <Highlight>{amount === '1' ? 'hour' : `${amount} hours`}</Highlight> <BackoffText />
       </>
     );
   }
@@ -80,31 +80,31 @@ export const WillBeSentHeader = ({ index }) => {
   if (type === DigestTypeEnum.TIMED && unit == DigestUnitEnum.MINUTES) {
     return (
       <>
-        Every <Highlight>{every === '1' ? 'minute' : `${every} minutes`}</Highlight> <BackoffText />
+        Every <Highlight>{amount === '1' ? 'minute' : `${amount} minutes`}</Highlight> <BackoffText />
       </>
     );
   }
 
   if (type === DigestTypeEnum.TIMED && unit === DigestUnitEnum.DAYS) {
-    if (!at) {
+    if (!atTime) {
       return (
         <>
-          Every <Highlight>{getOrdinal(every)} </Highlight> day
+          Every <Highlight>{getOrdinal(amount)} </Highlight> day
         </>
       );
     }
 
     return (
       <>
-        <Highlight>Daily</Highlight> at <Highlight>{at}</Highlight> <BackoffText />
+        <Highlight>Daily</Highlight> at <Highlight>{atTime}</Highlight> <BackoffText />
       </>
     );
   }
   if (type === DigestTypeEnum.TIMED && unit === DigestUnitEnum.WEEKS) {
     return (
       <>
-        <Highlight>Weekly</Highlight> on <Highlight>{daysOfWeek?.map((item) => capitalize(item)).join(', ')}</Highlight>{' '}
-        at <Highlight>{at}</Highlight>{' '}
+        <Highlight>Weekly</Highlight> on <Highlight>{weekDays?.map((item) => capitalize(item)).join(', ')}</Highlight>{' '}
+        at <Highlight>{atTime}</Highlight>{' '}
         <div>
           <BackoffText />
         </div>
@@ -115,7 +115,7 @@ export const WillBeSentHeader = ({ index }) => {
   if (type === DigestTypeEnum.TIMED && unit === DigestUnitEnum.MONTHS) {
     const monthlyType = watch(`steps.${index}.metadata.timed.monthlyType`);
 
-    if (monthlyType === 'on') {
+    if (monthlyType === MonthlyTypeEnum.ON) {
       const ordinal = watch(`steps.${index}.metadata.timed.ordinal`);
       const ordinalValue = watch(`steps.${index}.metadata.timed.ordinalValue`);
 
@@ -135,8 +135,8 @@ export const WillBeSentHeader = ({ index }) => {
 
     return (
       <>
-        <Highlight>Monthly</Highlight> on <Highlight>{day?.map((item) => getOrdinal(item)).join(', ')}</Highlight> at{' '}
-        <Highlight>{at}</Highlight>
+        <Highlight>Monthly</Highlight> on <Highlight>{monthDays?.map((item) => getOrdinal(item)).join(', ')}</Highlight>{' '}
+        at <Highlight>{atTime}</Highlight>
         <div>
           <BackoffText />
         </div>

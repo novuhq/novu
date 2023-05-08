@@ -5,6 +5,7 @@ import { DigestTypeEnum, StepTypeEnum } from '@novu/shared';
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterStepsBackoff } from './digest-filter-steps-backoff.usecase';
 import { DigestFilterStepsRegular } from './digest-filter-steps-regular.usecase';
+import { DigestFilterStepsTimed } from './digest-filter-steps-timed.usecase';
 import { EventsPerformanceService } from '../../services/performance/events-performance.service';
 
 // TODO; Potentially rename this use case
@@ -13,6 +14,7 @@ export class DigestFilterSteps {
   constructor(
     private filterStepsBackoff: DigestFilterStepsBackoff,
     private filterStepsRegular: DigestFilterStepsRegular,
+    private filterStepsTimed: DigestFilterStepsTimed,
     protected performanceService: EventsPerformanceService
   ) {}
 
@@ -29,7 +31,7 @@ export class DigestFilterSteps {
     const actions = {
       [DigestTypeEnum.BACKOFF]: this.filterStepsBackoff,
       [DigestTypeEnum.REGULAR]: this.filterStepsRegular,
-      [DigestTypeEnum.TIMED]: this.filterStepsRegular,
+      [DigestTypeEnum.TIMED]: this.filterStepsTimed,
     };
 
     let action = actions[command.type];

@@ -102,7 +102,8 @@
     "reflect-metadata": "^0.1.13"
   },
   "optionalDependencies": {
-    "@taskforcesh/bullmq-pro": "5.1.14"
+    "@taskforcesh/bullmq-pro": "5.1.14",
+    "@novu/digest-schedule": "^0.14.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

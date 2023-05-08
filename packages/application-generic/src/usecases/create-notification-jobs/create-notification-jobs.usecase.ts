@@ -164,11 +164,11 @@ export class CreateNotificationJobs {
 
     const delay = delayedSteps
       .map((step) =>
-        this.calculateDelayService.calculateDelay(
-          step,
-          command.payload,
-          command.overrides
-        )
+        this.calculateDelayService.calculateDelay({
+          stepMetadata: step.metadata,
+          payload: command.payload,
+          overrides: command.overrides,
+        })
       )
       .reduce((sum, delayAmount) => sum + delayAmount, 0);
 
