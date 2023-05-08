@@ -3,9 +3,7 @@ import * as Sentry from '@sentry/node';
 import {
   MessageRepository,
   NotificationStepEntity,
-  NotificationRepository,
   SubscriberRepository,
-  NotificationEntity,
   MessageEntity,
   IntegrationEntity,
 } from '@novu/dal';
@@ -31,7 +29,7 @@ import {
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
-import { PlatformException } from '../../../shared/utils/exceptions';
+import { PlatformException } from '../../../shared/utils';
 
 @Injectable()
 export class SendMessagePush extends SendMessageBase {
@@ -39,7 +37,6 @@ export class SendMessagePush extends SendMessageBase {
 
   constructor(
     protected subscriberRepository: SubscriberRepository,
-    private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
     protected createExecutionDetails: CreateExecutionDetails,
@@ -68,8 +65,6 @@ export class SendMessagePush extends SendMessageBase {
     });
 
     const pushChannel: NotificationStepEntity = command.step;
-    const notification = await this.notificationRepository.findById(command.notificationId);
-    if (!notification) throw new PlatformException(`Notification not found`);
 
     const data = {
       subscriber: subscriber,
@@ -112,7 +107,7 @@ export class SendMessagePush extends SendMessageBase {
     delete messagePayload.attachments;
 
     if (!pushChannels.length) {
-      await this.sendErrors(command, notification);
+      await this.sendErrors(command);
 
       return;
     }
@@ -168,14 +163,13 @@ export class SendMessagePush extends SendMessageBase {
         title,
         content,
         command,
-        notification,
         command.payload,
         overrides
       );
     }
   }
 
-  private async sendErrors(command: SendMessageCommand, notification: NotificationEntity) {
+  private async sendErrors(command: SendMessageCommand) {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -194,16 +188,15 @@ export class SendMessagePush extends SendMessageBase {
     title: string,
     content: string,
     command: SendMessageCommand,
-    notification: NotificationEntity,
     payload: object,
     overrides: object
   ) {
     const message: MessageEntity = await this.messageRepository.create({
-      _notificationId: notification._id,
+      _notificationId: command.notificationId,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
-      _templateId: notification._templateId,
+      _templateId: command._templateId,
       _messageTemplateId: command.step?.template?._id,
       channel: ChannelTypeEnum.PUSH,
       transactionId: command.transactionId,
@@ -263,7 +256,6 @@ export class SendMessagePush extends SendMessageBase {
         'unexpected_push_error',
         e.message || e.name || 'Un-expect Push provider error',
         command,
-        notification,
         LogCodeEnum.PUSH_ERROR,
         e
       );
