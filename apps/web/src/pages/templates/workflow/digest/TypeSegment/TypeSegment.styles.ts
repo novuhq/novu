@@ -1,6 +1,6 @@
 import { createStyles, MantineSize, MantineTheme } from '@mantine/core';
-import { colors, shadows } from '../config';
-import { getGradient } from '../config/helper';
+import { colors, shadows } from '../../../../../design-system';
+import { getGradient } from '../../../../../design-system/config/helper';
 
 export default createStyles<string, { size: MantineSize }>((theme: MantineTheme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';
@@ -10,12 +10,12 @@ export default createStyles<string, { size: MantineSize }>((theme: MantineTheme,
     root: {
       width: '100%',
       maxWidth: '300px',
-      background: dark ? theme.colors.dark[7] : theme.white,
+      background: dark ? colors.B20 : colors.B98,
       padding: '5px',
-      boxShadow: dark ? shadows.dark : shadows.light,
+      boxShadow: shadows.dark,
     },
     active: {
-      background: `${dark ? getGradient(colors.B20) : getGradient(colors.white)} padding-box, ${
+      background: `${dark ? getGradient(colors.BGDark) : getGradient(colors.white)} padding-box, ${
         colors.horizontal
       } border-box`,
       border: '2px solid transparent',
@@ -25,7 +25,7 @@ export default createStyles<string, { size: MantineSize }>((theme: MantineTheme,
       fontSize: '14px',
       fontWeight: 700,
       padding: `12px ${_params.size === 'md' ? '18' : '14'}px`,
-      color: theme.colors.gray[8],
+      color: colors.B60,
     },
     labelActive: {
       color: dark ? theme.white : theme.colors.gray[8],

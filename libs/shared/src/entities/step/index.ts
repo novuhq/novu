@@ -3,11 +3,24 @@ export enum DigestUnitEnum {
   MINUTES = 'minutes',
   HOURS = 'hours',
   DAYS = 'days',
+  WEEKS = 'weeks',
+  MONTHS = 'months',
+}
+
+export enum DaysEnum {
+  MONDAY = 'monday',
+  TUESDAY = 'tuesday',
+  WEDNESDAY = 'wednesday',
+  THURSDAY = 'thursday',
+  FRIDAY = 'friday',
+  SATURDAY = 'saturday',
+  SUNDAY = 'sunday',
 }
 
 export enum DigestTypeEnum {
   REGULAR = 'regular',
   BACKOFF = 'backoff',
+  TIMED = 'timed',
 }
 
 export enum DelayTypeEnum {

@@ -6,9 +6,9 @@ import {
   LoadingOverlay,
   Sx,
 } from '@mantine/core';
-import useStyles from './SegmentedControl.styles';
-import { colors } from '../config';
+import useStyles from './TypeSegment.styles';
 import styled from '@emotion/styled';
+import { colors } from '../../../../../design-system';
 
 interface ISegmentedControlProps {
   data: string[] | SegmentedControlItem[];
@@ -23,10 +23,10 @@ interface ISegmentedControlProps {
 }
 
 /**
- * SegmentedControl component
+ * TypeSegmented component
  *
  */
-export const SegmentedControl = React.forwardRef<HTMLDivElement, ISegmentedControlProps>(
+export const TypeSegmented = React.forwardRef<HTMLDivElement, ISegmentedControlProps>(
   ({ onChange, loading = false, ...props }, ref) => {
     const { classes, theme } = useStyles({
       size: props.size || 'md',
@@ -41,14 +41,6 @@ export const SegmentedControl = React.forwardRef<HTMLDivElement, ISegmentedContr
 
     return (
       <ControlWrapper style={{ position: 'relative', marginBottom: 30 }}>
-        <LoadingOverlay
-          visible={loading}
-          overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
-          loaderProps={{
-            color: colors.error,
-          }}
-          data-test-id={props['data-test-id'] + '-loading-overlay'}
-        />
         <MantineSegmentedControl ref={ref} onChange={onChange} {...defaultDesign} {...props} />
       </ControlWrapper>
     );

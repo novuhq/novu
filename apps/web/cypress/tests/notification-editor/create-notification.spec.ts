@@ -274,15 +274,25 @@ describe('Creation functionality', function () {
     cy.clickWorkflowNode('node-digestSelector');
     cy.waitForNetworkIdle(500);
 
-    cy.getByTestId('time-unit-minutes').click();
+    cy.getByTestId('digest-send-options').click();
     cy.getByTestId('time-amount').type('20');
+    cy.getByTestId('time-unit').click();
+    cy.get('.mantine-Select-item').contains('min (s)').click();
+
+    cy.getByTestId('digest-group-by-options').click();
+
     cy.getByTestId('batch-key').type('id');
 
-    cy.getByTestId('digest-type').contains('Backoff').click();
+    cy.getByTestId('digest-send-options').click();
+
+    cy.getByTestId('backoff-switch').click({
+      force: true,
+    });
 
     cy.getByTestId('backoff-amount').type('20');
 
-    cy.getByTestId('backoff-unit-minutes').click();
+    cy.getByTestId('time-unit-backoff').click();
+    cy.get('.mantine-Select-item').contains('min (s)').click();
 
     goBack();
 
@@ -291,9 +301,9 @@ describe('Creation functionality', function () {
     cy.getByTestId('time-amount').should('have.value', '20');
     cy.getByTestId('batch-key').should('have.value', 'id');
     cy.getByTestId('backoff-amount').should('have.value', '20');
-    cy.getByTestId('time-unit-minutes').should('be.checked');
-    cy.getByTestId('digest-type').contains('Backoff').should('have.class', 'mantine-SegmentedControl-labelActive');
-    cy.getByTestId('backoff-unit-minutes').should('be.checked');
+    cy.getByTestId('backoff-amount').should('have.value', '20');
+    cy.getByTestId('time-unit').should('have.value', 'min (s)');
+    cy.getByTestId('time-unit-backoff').should('have.value', 'min (s)');
   });
 
   it('should create and edit group id', function () {
