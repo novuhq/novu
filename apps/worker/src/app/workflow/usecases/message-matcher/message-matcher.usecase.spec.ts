@@ -1128,6 +1128,7 @@ function sendMessageCommand({ step }: { step: NotificationStepEntity }): SendMes
     userId: '123',
     transactionId: '123',
     notificationId: '123',
+    _templateId: '123',
     subscriberId: '1234',
     _subscriberId: '123',
     jobId: '123',
