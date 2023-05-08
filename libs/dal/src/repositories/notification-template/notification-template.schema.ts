@@ -126,6 +126,25 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
           backoff: {
             type: Schema.Types.Boolean,
           },
+          timed: {
+            at: {
+              type: Schema.Types.String,
+            },
+            every: {
+              type: Schema.Types.Number,
+            },
+            dayOfWeek: [Schema.Types.String],
+            day: [Schema.Types.Number],
+            ordinal: {
+              type: Schema.Types.String,
+            },
+            ordinalValue: {
+              type: Schema.Types.String,
+            },
+            monthlyType: {
+              type: Schema.Types.String,
+            },
+          },
         },
       },
     ],
