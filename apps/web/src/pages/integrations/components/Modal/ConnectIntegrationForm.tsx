@@ -1,11 +1,17 @@
-import { useEffect, useReducer, useRef } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import styled from '@emotion/styled/macro';
+import { useEffect, useReducer, useRef, useState } from 'react';
+import { Controller, FieldValues, useForm, UseFormWatch } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert, ActionIcon, Center } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
-import { ChannelTypeEnum, ICredentialsDto, IConfigCredentials, IOrganizationEntity, IEnvironment } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ICredentialsDto,
+  IConfigCredentials,
+  IOrganizationEntity,
+  IEnvironment,
+  CredentialsKeyEnum,
+} from '@novu/shared';
 
 import { Button, colors, Input, shadows, Switch, Text } from '../../../../design-system';
 import { IIntegratedProvider } from '../../IntegrationsStorePage';
@@ -19,6 +25,10 @@ import { successMessage } from '../../../../utils/notifications';
 import { QueryKeys } from '../../../../api/query.keys';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from '../../constants';
+import { When } from '../../../../components/utils/When';
+import styled from '@emotion/styled';
+import { keyframes, css } from '@emotion/react';
+import { useEnvController } from '../../../../hooks';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
@@ -118,6 +128,7 @@ export function ConnectIntegrationForm({
     setValue,
     formState: { errors },
     control,
+    watch,
   } = useForm({ shouldUseNativeValidation: false });
 
   const { colorScheme } = useMantineColorScheme();
@@ -326,6 +337,8 @@ export function ConnectIntegrationForm({
               />
             </InputWrapper>
           )}
+        <SharableUrl watch={watch} />
+
         <Stack my={20}>
           <ActiveWrapper active={isActive}>
             <Controller
@@ -432,6 +445,24 @@ const Header = styled.div`
   box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.medium)};
 `;
 
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const fadeOut = keyframes`
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+`;
+
 const InputWrapper = styled.div`
   padding-bottom: 10px;
   label {
@@ -439,6 +470,22 @@ const InputWrapper = styled.div`
     margin-bottom: 10px;
     font-size: 14px;
   }
+`;
+
+const Fade = styled.div<{ display?: boolean }>`
+  transition: margin-left 0.3s ease, padding 0.3s ease;
+
+  opacity: 0;
+  ${({ display = true }) =>
+    display
+      ? css`
+          opacity: 0;
+          animation: ${fadeIn} 500ms ease-in-out forwards;
+        `
+      : css`
+          opacity: 1;
+          animation: ${fadeOut} 500ms ease-in-out forwards;
+        `}
 `;
 
 const CheckIntegrationWrapper = styled(SideElementBase)`
@@ -460,3 +507,36 @@ const CenterDiv = styled.div`
   overflow: auto;
   padding: 30px;
 `;
+
+function SharableUrl({ watch }: { watch: UseFormWatch<FieldValues> }) {
+  const { environment } = useEnvController();
+  const oauthUrlClipboard = useClipboard({ timeout: 1000 });
+  const clientId = watch(CredentialsKeyEnum.ClientId);
+  const redirectUrl = watch(CredentialsKeyEnum.RedirectUrl);
+
+  const SLACK_OAUTH_URL = 'https://slack.com/oauth/v2/authorize?';
+  const subscriberId = '<SUBSCRIBER_ID>';
+  const oauthUrl =
+    `${SLACK_OAUTH_URL}client_id=${clientId}&scope=incoming-webhook&user_scope=&redirect_uri=` +
+    `${API_ROOT}/v1/subscribers/${subscriberId}/slack/${environment?._id}`;
+
+  return (
+    <When truthy={!!redirectUrl}>
+      <Fade display={!!redirectUrl}>
+        <InputWrapper>
+          <Input
+            label="Sharable URL"
+            value={oauthUrl}
+            rightSection={
+              <CopyWrapper onClick={() => oauthUrlClipboard.copy(oauthUrl)}>
+                {oauthUrlClipboard.copied ? <Check /> : <Copy />}
+              </CopyWrapper>
+            }
+            disabled={true}
+            description={'Use the URL below to share your app with any Slack workspace.'}
+          />
+        </InputWrapper>
+      </Fade>
+    </When>
+  );
+}
