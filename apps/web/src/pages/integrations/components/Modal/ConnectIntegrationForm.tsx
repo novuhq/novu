@@ -508,7 +508,7 @@ const CenterDiv = styled.div`
   padding: 30px;
 `;
 
-function SharableUrl({ watch }: { watch: UseFormWatch<FieldValues> }) {
+export function SharableUrl({ watch }: { watch: UseFormWatch<FieldValues> }) {
   const { environment } = useEnvController();
   const oauthUrlClipboard = useClipboard({ timeout: 1000 });
   const clientId = watch(CredentialsKeyEnum.ClientId);
