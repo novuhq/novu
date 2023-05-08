@@ -5,6 +5,7 @@ import {
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  NotificationGroupRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
@@ -37,7 +38,8 @@ export class UpdateNotificationTemplate {
     private createChange: CreateChange,
     private changeRepository: ChangeRepository,
     private analyticsService: AnalyticsService,
-    private invalidateCache: InvalidateCacheService
+    private invalidateCache: InvalidateCacheService,
+    private notificationGroupRepository: NotificationGroupRepository
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
@@ -67,6 +69,16 @@ export class UpdateNotificationTemplate {
     }
 
     if (command.notificationGroupId) {
+      const notificationGroup = this.notificationGroupRepository.findOne({
+        _id: command.notificationGroupId,
+        _environmentId: command.environmentId,
+      });
+
+      if (!notificationGroup)
+        throw new NotFoundException(
+          `Notification group with id ${command.notificationGroupId} not found, under environment ${command.environmentId}`
+        );
+
       updatePayload._notificationGroupId = command.notificationGroupId;
     }
 

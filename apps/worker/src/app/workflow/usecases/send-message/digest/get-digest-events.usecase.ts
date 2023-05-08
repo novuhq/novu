@@ -6,6 +6,7 @@ import {
   DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  Instrument,
 } from '@novu/application-generic';
 
 import { PlatformException } from '../../../../shared/utils';
@@ -14,6 +15,7 @@ import { PlatformException } from '../../../../shared/utils';
 export abstract class GetDigestEvents {
   constructor(protected jobRepository: JobRepository, private createExecutionDetails: CreateExecutionDetails) {}
 
+  @Instrument()
   protected async filterJobs(currentJob: JobEntity, transactionId: string, jobs: JobEntity[]) {
     const batchValue = currentJob?.payload
       ? DigestFilterSteps.getNestedValue(currentJob.payload, currentJob?.digest?.digestKey)
