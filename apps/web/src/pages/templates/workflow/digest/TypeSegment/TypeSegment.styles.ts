@@ -10,9 +10,9 @@ export default createStyles<string, { size: MantineSize }>((theme: MantineTheme,
     root: {
       width: '100%',
       maxWidth: '300px',
-      background: dark ? colors.B20 : theme.white,
+      background: dark ? colors.B20 : colors.B98,
       padding: '5px',
-      boxShadow: dark ? shadows.dark : shadows.light,
+      boxShadow: shadows.dark,
     },
     active: {
       background: `${dark ? getGradient(colors.BGDark) : getGradient(colors.white)} padding-box, ${

@@ -1,4 +1,4 @@
-import { Accordion, Group, SimpleGrid } from '@mantine/core';
+import { Accordion, Group, SimpleGrid, useMantineColorScheme, useMantineTheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 
@@ -37,6 +37,8 @@ export const DigestMetadata = ({ control, index, readonly }) => {
     trigger,
   } = useFormContext();
 
+  const { colorScheme } = useMantineColorScheme();
+
   const type = watch(`steps.${index}.metadata.type`);
   const unit = watch(`steps.${index}.metadata.unit`);
   const digestKey = watch(`steps.${index}.metadata.digestKey`);
@@ -51,17 +53,16 @@ export const DigestMetadata = ({ control, index, readonly }) => {
             <Group>
               <Bell color={colors.B60} />
               <div>
-                <div>Events with status</div>
                 <div>
                   <b
                     style={{
-                      color: colors.B80,
+                      color: colorScheme === 'dark' ? colors.B80 : colors.B40,
                     }}
                   >
                     All events
-                  </b>{' '}
-                  since previous digest
+                  </b>
                 </div>
+                <div>since previous digest</div>
               </div>
             </Group>
           </Accordion.Control>
@@ -76,7 +77,9 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                 <Digest color={colors.B60} />
               </div>
               <div>
-                <div>Grouped by Subscriber_ID</div>
+                <div>
+                  <b>Aggregated by Subscriber_ID</b>
+                </div>
                 <When truthy={!digestKey}>
                   <div>Add grouping...</div>
                 </When>
@@ -85,7 +88,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                     And by{' '}
                     <b
                       style={{
-                        color: colors.B80,
+                        color: colorScheme === 'dark' ? colors.B80 : colors.B40,
                       }}
                     >
                       {digestKey}
@@ -123,7 +126,9 @@ export const DigestMetadata = ({ control, index, readonly }) => {
             <Group>
               <Timer width="30" height="30" color={colors.B60} />
               <div>
-                <div>Will be sent</div>
+                <div>
+                  <b>Will be sent</b>
+                </div>
                 <div>
                   <WillBeSentHeader index={index} />
                 </div>
@@ -147,8 +152,8 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                       fullWidth
                       disabled={readonly}
                       data={[
-                        { value: DigestTypeEnum.REGULAR, label: 'Started on an event' },
-                        { value: DigestTypeEnum.TIMED, label: 'Scheduled send' },
+                        { value: DigestTypeEnum.REGULAR, label: 'Event' },
+                        { value: DigestTypeEnum.TIMED, label: 'Schedule' },
                       ]}
                       onChange={async (segmentValue) => {
                         field.onChange(segmentValue);
@@ -162,7 +167,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
             </When>
             <div
               style={{
-                background: colors.B20,
+                background: colorScheme === 'dark' ? colors.B20 : colors.BGLight,
                 padding: 16,
                 borderRadius: 8,
               }}
