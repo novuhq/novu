@@ -6,7 +6,7 @@ import { IForm } from '../components/formTypes';
 import { TestWrapper } from '../../../testing';
 import { DigestTypeEnum } from '@novu/shared';
 
-const DigetWrapper = ({ data }) => {
+const DigestWrapper = ({ data }) => {
   const methods = useForm<IForm>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -30,7 +30,7 @@ describe('Digest', function () {
   it('should render day select and be able to select multiple days', function () {
     cy.mount(
       <TestWrapper>
-        <DigetWrapper
+        <DigestWrapper
           data={{
             type: DigestTypeEnum.REGULAR,
           }}
@@ -54,7 +54,7 @@ describe('Digest', function () {
   it('should render week day select and be able to select multiple days', function () {
     cy.mount(
       <TestWrapper>
-        <DigetWrapper
+        <DigestWrapper
           data={{
             type: DigestTypeEnum.REGULAR,
           }}
