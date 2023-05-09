@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { Group, Overlay } from '@mantine/core';
-import { colors, shadows } from '../../../design-system';
+import { colors, shadows, Text } from '../../../design-system';
 import InAppSandboxWorkflow from './InAppSandboxWorkflow';
 import { YourAppHeaderSection } from './YourAppHeaderSection';
 
@@ -20,7 +20,7 @@ export function InAppSandbox({ showOverlay = false }: { showOverlay?: boolean })
         )}
         <TitleBar>
           <Ellipses isTransparent={false} />
-          <div>Your app or Demo app</div>
+          <Text>Your app or Demo app</Text>
           <Ellipses isTransparent={true} />
         </TitleBar>
         <YourAppContent>
@@ -29,7 +29,7 @@ export function InAppSandbox({ showOverlay = false }: { showOverlay?: boolean })
         <NovuUIWrapper>
           <TitleBar>
             <Ellipses isTransparent={false} />
-            <div>Novu UI</div>
+            <Text>Novu UI</Text>
             <Ellipses isTransparent={true} />
           </TitleBar>
           <GrowContainer>

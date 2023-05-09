@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Stack, Timeline } from '@mantine/core';
+import { Stack, Timeline, useMantineColorScheme } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
@@ -10,7 +10,7 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { When } from '../../../components/utils/When';
 import { API_ROOT, WS_URL } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
-import { colors } from '../../../design-system';
+import { colors, shadows, Text } from '../../../design-system';
 import { useEnvController } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
@@ -31,6 +31,8 @@ export function Setup() {
   const { environment } = useEnvController();
   const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(['inAppActive'], async () => getInAppActivated(), {
     refetchInterval: (data) => stopIfInAppActive(data),
@@ -54,7 +56,7 @@ export function Setup() {
   return (
     <QuickStartWrapper faq={true} secondaryTitle={secondaryTitle} goBackPath={goBackRoute}>
       <Stack align="center" sx={{ width: '100%' }}>
-        <TimelineWrapper>
+        <TimelineWrapper isDark={isDark}>
           <Timeline
             active={instructions?.length + 1}
             bulletSize={40}
@@ -68,7 +70,11 @@ export function Setup() {
             {instructions.map((instruction, index) => {
               return (
                 <Timeline.Item
-                  bullet={<div style={{}}>{index + 1}</div>}
+                  bullet={
+                    <div style={{}}>
+                      <Text>{index + 1}</Text>
+                    </div>
+                  }
                   key={index}
                   title={<div>{instruction.instruction}</div>}
                 >
@@ -83,7 +89,14 @@ export function Setup() {
                 </Timeline.Item>
               );
             })}
-            <Timeline.Item bullet={instructions?.length + 1} title={'Render the components and run application'}>
+            <Timeline.Item
+              bullet={
+                <div style={{}}>
+                  <Text>{instructions?.length + 1}</Text>
+                </div>
+              }
+              title={'Render the components and run application'}
+            >
               <LoaderWrapper>
                 <SetupStatus
                   appInitialized={inAppData.active}
@@ -132,14 +145,15 @@ function stopIfInAppActive(data) {
   return data?.active ? false : 3000;
 }
 
-const TimelineWrapper = styled.div`
+const TimelineWrapper = styled.div<{ isDark: boolean }>`
   width: 100%;
-
+  padding: 10px;
+  border-radius: 7px;
   .mantine-Timeline-itemBullet {
-    background-color: ${colors.B30};
+    background-color: ${({ isDark }) => (isDark ? colors.B30 : colors.BGLight)};
     color: white;
     font-size: 16px;
     font-weight: bold;
-    box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: ${({ isDark }) => (isDark ? shadows.dark : shadows.light)};
   }
 `;

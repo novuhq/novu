@@ -1,8 +1,7 @@
 import styled from '@emotion/styled';
 import { createStyles, Popover } from '@mantine/core';
 import { colors, shadows } from '../../../design-system';
-import { Bell } from '../../../design-system/icons';
-import { User } from '../../../design-system/icons/general/User';
+import { Bell, User } from '../../../design-system/icons';
 import { SandboxNotificationCenter } from './SandboxNotificationCenter';
 
 const useStyles = createStyles((theme) => ({

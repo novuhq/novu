@@ -10,7 +10,6 @@ import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { createTemplate, testTrigger } from '../../../api/notification-templates';
-import { Playground } from '../../../design-system/icons/general/Playground';
 import { useNotificationGroup, useTemplates } from '../../../hooks';
 import {
   inAppSandboxSubscriberId,
@@ -20,6 +19,7 @@ import {
 import { NodeStep } from '../common';
 import { useSegment } from '../../providers/SegmentProvider';
 import { errorMessage } from '../../../utils/notifications';
+import { Playground } from '../../../design-system/icons';
 
 const useStyles = createStyles((theme) => ({
   dropdown: {

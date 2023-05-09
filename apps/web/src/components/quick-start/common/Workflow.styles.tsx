@@ -13,7 +13,8 @@ export const WorkflowWrapper = styled.div<{ height: string }>`
   }
 
   .react-flow__attribution {
-    display: none;
+    background: transparent;
+    opacity: 0.5;
   }
 
   .react-flow__handle {

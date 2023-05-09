@@ -7,6 +7,7 @@ import { Button, colors, Text } from '../../../design-system';
 import { ROUTES } from '../../../constants/routes.enum';
 import { OnBoardingAnalyticsEnum } from '../consts';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { Label } from '../../../design-system/typography/label';
 
 export function SetupStatus({
   appInitialized,
@@ -43,7 +44,7 @@ export function SetupStatus({
       <Stack spacing={8}>
         <TextStyled>As soon as you run your application, it will send us a request to connect.</TextStyled>
         <TextStyled>
-          Status: <GradientStatus>{appInitialized ? 'Connecting' : 'Pending'}...</GradientStatus>
+          Status: <Label color="blue">{appInitialized ? 'Connecting' : 'Pending'}...</Label>
         </TextStyled>
       </Stack>
 
@@ -60,12 +61,9 @@ export function SetupStatus({
   );
 }
 
-const GradientStatus = styled.span`
-  background: linear-gradient(0deg, #14deeb 0%, #446edc 100%);
-  background-clip: text;
-  text-fill-color: transparent;
-`;
-
 const TextStyled = styled(Text)`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B80 : colors.B60)};
+  display: flex;
+  align-items: center;
+  gap: 5px;
 `;

@@ -10,7 +10,7 @@ import { When } from '../../../components/utils/When';
 import { INTERCOM_APP_ID } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
 import { ArrowButton, colors, Text } from '../../../design-system';
-import { Discord } from '../../../design-system/icons/general/Discord';
+import { Discord } from '../../../design-system/icons';
 import { discordInviteUrl, notificationCenterDocsUrl, OnBoardingAnalyticsEnum } from '../consts';
 import { currentOnboardingStep } from './route/store';
 
@@ -137,7 +137,7 @@ export function Faq() {
   }
 
   return (
-    <Box data-test-id="go-back-button" mt={25} ml={90} pb={30}>
+    <Box mt={25} ml={100} pb={30}>
       <Text color={isDark ? colors.B70 : colors.B60}>
         <span style={{ fontWeight: 800 }}>Got stuck? </span>
         <span>Please send us a </span>
