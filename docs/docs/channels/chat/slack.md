@@ -13,7 +13,7 @@ This step is optional, if you already have a Slack application you can reuse it.
 1. Go to Slack's developer dashboard [https://api.slack.com/apps](https://api.slack.com/apps).
 2. Create a new application.
 
-## Generation of webhooks urls for your subscribers
+## Generation of Webhook Urls for your subscribers
 
 ### Novu Managed (Recommended)
 
@@ -29,7 +29,7 @@ Novu will manage the OAuth flow and store the credentials
 <details>
 <summary>Instructions on configuring https server</summary>
 
-Create a new endpoint on your server that will handle the following steps (you could you can use Request Bin for an easy HTTPS service for redirects):
+Create a new endpoint on your server that will handle the following steps (you can use Request Bin for an easy HTTPS service for redirects):
 
 1. Listen for redirect requests to your endpoint (REDIRECT_URL) after the user completes step 5 and grants permissions. Make sure to store the 'code' parameter from the request query as it will be needed later.
 2. Send a POST request to <https://slack.com/api/oauth.v2.access> with the following request body:
@@ -50,7 +50,7 @@ Create a new endpoint on your server that will handle the following steps (you c
    ```
 
    - subscriberId is a custom identifier used when identifying your users within the Novu platform.
-   - providerId is a unique provider identifier. We recommend using our ChatProviderIdEnum to specify the provider.
+   - providerId is a unique provider identifier. We recommend using our ChatProviderIdEnum (if you're using Node), or any of the following values ('slack', 'discord', 'msteams', 'mattermost') to specify the provider.
    - The third parameter is the credentials object. In this case we use the webhookUrl property to specify the webhook URL generated in the previous step.
 
    :::info
@@ -67,7 +67,7 @@ Create a new endpoint on your server that will handle the following steps (you c
 ## Slack Application Configuration
 
 1. Go to OAuth & Permissions on Slack's Developer Dashboard and add your REDIRECT_URL in Redirect URLs.
-   - If you use self-hosted solution add the api endpoint you created on [step 1](/channels/chat/slack#self-hosted).
+   - If you use a manual manage solution, add the API endpoint you created on [step 1](/channels/chat/slack#manual-manage).
    - If you use Novu hosted solution add https:<span/>//api.novu.co/v1/subscribers/.
 2. Go to Incoming Webhooks from the left menu and Activate Incoming Webhooks.
-3. Go to Manage Distribution and at the bottom of the page make sure to tick Remove Hard Coded Information and Activate Public Distribution.
+3. Go to Manage Distribution and at the bottom of the page, tick Remove Hard Coded Information and Activate Public Distribution.
