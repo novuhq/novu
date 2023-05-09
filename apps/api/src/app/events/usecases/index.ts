@@ -17,6 +17,7 @@ import { VerifyPayload } from './verify-payload';
 import { MapTriggerRecipients } from './map-trigger-recipients';
 import { ParseEventRequest } from './parse-event-request';
 import { ProcessBulkTrigger } from './process-bulk-trigger';
+import { ResumeDelayed } from './resume-delayed';
 
 export const USE_CASES = [
   TriggerEvent,
@@ -35,4 +36,5 @@ export const USE_CASES = [
   ParseEventRequest,
   ProcessBulkTrigger,
   StoreSubscriberJobs,
+  ResumeDelayed,
 ];

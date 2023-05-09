@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Patch, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import { IJwtPayload, ISubscribersDefine } from '@novu/shared';
@@ -21,8 +21,10 @@ import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { ResumeDelayedCommand } from './usecases/resume-delayed';
 import { ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+import { ResumeDelayed } from 'apps/api/dist/src/app/events/usecases/resume-delayed';
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -36,7 +38,8 @@ export class EventsController {
     private sendTestEmail: SendTestEmail,
     private parseEventRequest: ParseEventRequest,
     private processBulkTriggerUsecase: ProcessBulkTrigger,
-    protected performanceService: EventsPerformanceService
+    protected performanceService: EventsPerformanceService,
+    protected resumeDelayedUsecase: ResumeDelayed
   ) {}
 
   @ExternalApiAccessible()
@@ -170,6 +173,33 @@ export class EventsController {
   ): Promise<boolean> {
     return await this.cancelDelayedUsecase.execute(
       CancelDelayedCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        transactionId,
+      })
+    );
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(JwtAuthGuard)
+  @Patch('/trigger/:transactionId/resume')
+  @ApiOkResponse({
+    type: Boolean,
+  })
+  @ApiOperation({
+    summary: 'Resume canceled event',
+    description: ` 
+      Using this endpoint, you can resume canceled workflows that are yet to expire.
+      This is especially useful when a canceled message, is meant to be sent afterall.
+    `,
+  })
+  async resumeDelayed(
+    @UserSession() user: IJwtPayload,
+    @Param('transactionId') transactionId: string
+  ): Promise<boolean> {
+    return await this.resumeDelayedUsecase.execute(
+      ResumeDelayedCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,

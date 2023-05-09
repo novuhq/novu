@@ -14,6 +14,7 @@ import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@no
 import { QueueService } from '@novu/application-generic';
 
 const axiosInstance = axios.create();
+const promiseResolveTimeout = (ms: number, arg: unknown = {}) => new Promise((resolve) => setTimeout(resolve, ms, arg));
 
 describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', function () {
   let session: UserSession;
@@ -391,5 +392,138 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
       transactionId: id,
     });
     expect(delayedJob!.status).to.equal(JobStatusEnum.CANCELED);
+  });
+
+  it('should be able to resume delay', async function () {
+    const id = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DELAY,
+          content: '',
+          metadata: {
+            delayPath: 'sendAt',
+            type: DelayTypeEnum.SCHEDULED,
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    const jobPayload = {
+      transactionId: id,
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+    };
+
+    await triggerEvent(
+      {
+        customVar: 'Testing of User Name',
+        sendAt: addSeconds(new Date(), 30),
+      },
+      id
+    );
+
+    await session.awaitRunningJobs(template?._id, true, 1);
+    await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    });
+
+    let canceledJobs = await jobRepository.count({
+      ...jobPayload,
+      status: JobStatusEnum.CANCELED,
+    });
+    let delayedJobs = await jobRepository.count({
+      ...jobPayload,
+      status: JobStatusEnum.DELAYED,
+    });
+    expect(canceledJobs).to.equal(1);
+    expect(delayedJobs).to.equal(0);
+
+    await axiosInstance.patch(`${session.serverUrl}/v1/events/trigger/${id}/resume`, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    });
+
+    canceledJobs = await jobRepository.count({
+      ...jobPayload,
+      status: JobStatusEnum.CANCELED,
+    });
+    delayedJobs = await jobRepository.count({
+      ...jobPayload,
+      status: JobStatusEnum.DELAYED,
+    });
+    expect(canceledJobs).to.equal(0);
+    expect(delayedJobs).to.equal(1);
+  });
+
+  it('should fail if delay to be resumed is expired', async function () {
+    const id = MessageRepository.createObjectId();
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.DELAY,
+          content: '',
+          metadata: {
+            delayPath: 'sendAt',
+            type: DelayTypeEnum.SCHEDULED,
+          },
+        },
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Hello world {{customVar}}' as string,
+        },
+      ],
+    });
+
+    const jobPayload = {
+      transactionId: id,
+      _environmentId: session.environment._id,
+      _templateId: template._id,
+      type: StepTypeEnum.DELAY,
+    };
+
+    await triggerEvent(
+      {
+        customVar: 'Testing of User Name',
+        sendAt: addSeconds(new Date(), 0.1),
+      },
+      id
+    );
+
+    await session.awaitRunningJobs(template?._id, true, 1);
+    await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    });
+
+    await promiseResolveTimeout(100);
+    expect(async () => {
+      await axiosInstance.patch(`${session.serverUrl}/v1/events/trigger/${id}/resume`, {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      });
+    }).to.throw();
+
+    const delayedJob = await jobRepository.findOne({
+      ...jobPayload,
+      status: JobStatusEnum.DELAYED,
+    });
+
+    const canceledJobs = await jobRepository.count({
+      ...jobPayload,
+      status: JobStatusEnum.CANCELED,
+    });
+
+    expect(delayedJob).to.equal(0);
+    expect(canceledJobs).to.equal(1);
   });
 });
