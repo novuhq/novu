@@ -25,8 +25,11 @@ cd novu/docker
 # Copy the example env file
 cp .env.example ./local/deployment/.env
 
+# Go to the deployment folder
+cd local/deployment
+
 # Start Novu
-docker-compose -f ./local/deployment/docker-compose.yml up
+docker-compose up
 ```
 
 Now visit [http://localhost:4200](http://localhost:4200/) to start using Novu.

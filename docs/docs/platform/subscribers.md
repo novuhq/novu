@@ -89,11 +89,11 @@ Novu manages a data model to help your users configure their preferences in an e
 ## Frequently Asked Questions
 
 <details>
-  <summary>How to store custom properties in subscriber</summary>
-  <p>Subscribers have fixed schema. Storing custom properties is not supported but here is a work around, you can store that property in your database and send those values in payload option of trigger using variables. Read more about variables <a href="./templates#variable-usage"> here </a>.</p>
+  <summary>How to store custom properties in subscriber?</summary>
+  <p>To store custom properties, use data field of subscriber.</p>
 </details>
 
 <details>
-  <summary>How to get subscriber properties before step execution in workflow</summary>
-  <p>Workflow has access to all existing properties of subscriber as well as payload variables. So no extra steps are needed</p>
+  <summary>How to get subscriber properties before step execution in workflow?</summary>
+  <p>Workflow has access to all existing properties of subscriber as well as payload variables. So no extra steps are needed.</p>
 </details>
