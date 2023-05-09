@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as capitalize from 'lodash.capitalize';
 import { useMantineColorScheme } from '@mantine/core';
@@ -52,7 +52,7 @@ const Highlight = ({ children }) => {
   );
 };
 export const WillBeSentHeader = ({ index }) => {
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
 
   const type = watch(`steps.${index}.metadata.type`);
   const unit = watch(`steps.${index}.metadata.unit`);
@@ -61,6 +61,16 @@ export const WillBeSentHeader = ({ index }) => {
   const weekDays = watch(`steps.${index}.metadata.timed.weekDays`) || [];
   const monthDays = watch(`steps.${index}.metadata.timed.monthDays`) || [];
   const amount = watch(`steps.${index}.metadata.amount`);
+
+  useEffect(() => {
+    if (!backoff) {
+      return;
+    }
+    if (type !== DigestTypeEnum.TIMED) {
+      return;
+    }
+    setValue(`steps.${index}.metadata.backoff`, false);
+  }, [backoff, type, index]);
 
   const BackoffText = useCallback(() => {
     return backoff ? (
@@ -91,6 +101,14 @@ export const WillBeSentHeader = ({ index }) => {
       return (
         <>
           Every <Highlight>{getOrdinal(amount)} </Highlight> day
+        </>
+      );
+    }
+
+    if (every !== '1') {
+      return (
+        <>
+          Every <Highlight>{getOrdinal(every)} </Highlight> day at <Highlight>{at}</Highlight> <BackoffText />
         </>
       );
     }
