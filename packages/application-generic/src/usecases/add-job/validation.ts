@@ -1,5 +1,4 @@
 import {
-  DelayTypeEnum,
   DigestTypeEnum,
   DigestUnitEnum,
   IDigestRegularMetadata,
@@ -16,7 +15,7 @@ import { JobEntity } from '@novu/dal';
 import { ApiException } from '../../utils/exceptions';
 import { isRegularDigest } from '../../utils/digest';
 
-const valiadteAmoutAndUnit = (digest: IAmountAndUnit) => {
+const validateAmountAndUnit = (digest: IAmountAndUnit) => {
   if (!digest?.amount) {
     throw new ApiException('Invalid digest amount');
   }
@@ -89,11 +88,11 @@ export const validateDigest = (job: JobEntity): void => {
   }
 
   if (isRegularDigest(job.digest.type)) {
-    valiadteAmoutAndUnit(job.digest as IDigestRegularMetadata);
+    validateAmountAndUnit(job.digest as IDigestRegularMetadata);
   }
 
   if (job.digest.type === DigestTypeEnum.TIMED) {
-    valiadteAmoutAndUnit(job.digest);
+    validateAmountAndUnit(job.digest);
 
     switch (job.digest.unit) {
       case DigestUnitEnum.DAYS:

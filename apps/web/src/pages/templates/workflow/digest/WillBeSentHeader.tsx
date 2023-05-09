@@ -5,6 +5,7 @@ import { useMantineColorScheme } from '@mantine/core';
 import { DigestTypeEnum, DigestUnitEnum, MonthlyTypeEnum } from '@novu/shared';
 
 import { colors } from '../../../../design-system';
+import { pluralizeTime } from '../../../../utils';
 
 const getOrdinalValueLabel = (value: string) => {
   if (value === 'day' || value === 'weekday') {
@@ -72,7 +73,7 @@ export const WillBeSentHeader = ({ index }) => {
   if (type === DigestTypeEnum.TIMED && unit == DigestUnitEnum.HOURS) {
     return (
       <>
-        Every <Highlight>{amount === '1' ? 'hour' : `${amount} hours`}</Highlight> <BackoffText />
+        Every <Highlight>{pluralizeTime(amount, 'hour')}</Highlight> <BackoffText />
       </>
     );
   }
@@ -80,7 +81,7 @@ export const WillBeSentHeader = ({ index }) => {
   if (type === DigestTypeEnum.TIMED && unit == DigestUnitEnum.MINUTES) {
     return (
       <>
-        Every <Highlight>{amount === '1' ? 'minute' : `${amount} minutes`}</Highlight> <BackoffText />
+        Every <Highlight>{pluralizeTime(amount, 'minute')}</Highlight> <BackoffText />
       </>
     );
   }

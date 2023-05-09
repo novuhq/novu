@@ -68,9 +68,9 @@ export class CalculateDelayService {
       return TimedDigestDelayService.calculate({
         unit: timedDigestMeta.unit,
         amount: timedDigestMeta.amount,
-        atTime: timedDigestMeta.timed?.atTime,
-        weekDays: timedDigestMeta.timed?.weekDays,
-        monthDays: timedDigestMeta.timed?.monthDays,
+        timeConfig: {
+          ...timedDigestMeta.timed,
+        },
       });
     }
 

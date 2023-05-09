@@ -62,10 +62,10 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
                         mt={-5}
                         mb={-5}
                         data={[
-                          { value: OrdinalEnum.FIFTH, label: 'First' },
+                          { value: OrdinalEnum.FIRST, label: 'First' },
                           { value: OrdinalEnum.SECOND, label: 'Second' },
                           { value: OrdinalEnum.THIRD, label: 'Third' },
-                          { value: OrdinalEnum.FOURTH, label: 'Forth' },
+                          { value: OrdinalEnum.FOURTH, label: 'Fourth' },
                           { value: OrdinalEnum.FIFTH, label: 'Fifth' },
                           { value: OrdinalEnum.LAST, label: 'Last' },
                         ]}
