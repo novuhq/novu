@@ -441,7 +441,10 @@
     "maxtimeout",
     "clsx",
     "africastalking",
-    "africas"
+    "africas",
+    "sandpack",
+    "Sandpack",
+    "codesandbox"
   ],
   "flagWords": [],
   "patterns": [

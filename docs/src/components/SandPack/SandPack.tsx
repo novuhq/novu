@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import React, { Children } from 'react';
+import React from 'react';
 import { Sandpack, SandpackProviderProps } from '@codesandbox/sandpack-react';
 
 const SandPack = (props: SandpackProviderProps) => {
