@@ -64,11 +64,13 @@ import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 import { ApiResponse } from '../shared/framework/response.decorator';
-import { HandleChatOauth } from './usecases/handle-chat-oauth/handle-chat-oauth.usecase';
-import { HandleChatOauthCommand } from './usecases/handle-chat-oauth/handle-chat-oauth.command';
 import { HandleChatOauthRequestDto } from './dtos/handle-chat-oauth.request.dto';
 import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
 import { OAuthHandlerEnum } from './types';
+import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callcack.usecase';
+import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
+import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
+import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -87,7 +89,8 @@ export class SubscribersController {
     private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
-    private handleChatOauthUsecase: HandleChatOauth
+    private chatOauthCallbackUsecase: ChatOauthCallback,
+    private chatOauthUsecase: ChatOauth
   ) {}
 
   @Get('')
@@ -454,19 +457,19 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
-  @Get('/:subscriberId/:providerId/:environmentId')
+  @Get('/:subscriberId/credentials/:providerId/:environmentId/callback')
   @ApiOperation({
-    summary: 'Handle chat OAuth',
+    summary: 'Handle providers oauth redirect',
   })
-  async chatAccessOauth(
+  async chatOauthCallback(
     @Param('subscriberId') subscriberId: string,
     @Param('providerId') providerId: ChatProviderIdEnum,
     @Param('environmentId') environmentId: string,
     @Query() query: HandleChatOauthRequestDto,
     @Res() res
   ): Promise<any> {
-    const data = await this.handleChatOauthUsecase.execute(
-      HandleChatOauthCommand.create({
+    const data = await this.chatOauthCallbackUsecase.execute(
+      ChatOauthCallbackCommand.create({
         providerCode: query.code,
         environmentId,
         subscriberId,
@@ -481,6 +484,28 @@ export class SubscribersController {
       res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
       res.send(data.action);
     }
+  }
+
+  @ExternalApiAccessible()
+  @Get('/:subscriberId/credentials/:providerId/:environmentId')
+  @ApiOperation({
+    summary: 'Handle chat oauth',
+  })
+  async chatAccessOauth(
+    @Param('subscriberId') subscriberId: string,
+    @Param('providerId') providerId: ChatProviderIdEnum,
+    @Param('environmentId') environmentId: string,
+    @Res() res
+  ): Promise<void> {
+    const data = await this.chatOauthUsecase.execute(
+      ChatOauthCommand.create({
+        environmentId,
+        subscriberId,
+        providerId,
+      })
+    );
+
+    res.redirect(data);
   }
 
   private toArray(param: string[] | string): string[] | undefined {

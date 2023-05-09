@@ -1,20 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import axios from 'axios';
-import { CreateSubscriber, CreateSubscriberCommand, decryptCredentials } from '@novu/application-generic';
 
-import { HandleChatOauthCommand } from './handle-chat-oauth.command';
+import { CreateSubscriber, CreateSubscriberCommand, decryptCredentials } from '@novu/application-generic';
+import { ICredentialsDto } from '@novu/shared';
+import { ChannelTypeEnum, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+
+import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
 import {
   IChannelCredentialsCommand,
   UpdateSubscriberChannel,
   UpdateSubscriberChannelCommand,
 } from '../update-subscriber-channel';
-import { ChannelTypeEnum, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { ICredentialsDto } from '@novu/shared';
 import { OAuthHandlerEnum } from '../../types';
 
 @Injectable()
-export class HandleChatOauth {
+export class ChatOauthCallback {
   readonly SLACK_ACCESS_URL = 'https://slack.com/api/oauth.v2.access';
   readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
 
@@ -25,14 +26,14 @@ export class HandleChatOauth {
     private createSubscriberUsecase: CreateSubscriber
   ) {}
 
-  async execute(command: HandleChatOauthCommand) {
-    const { credentials: integrationCredentials } = await this.getIntegration(command);
+  async execute(command: ChatOauthCallbackCommand) {
+    const integrationCredentials = await this.getIntegrationCredentials(command);
 
-    const environment = await this.getEnvironment(command.environmentId);
+    const organizationId = await this.getOrganizationId(command.environmentId);
 
     const webhookUrl = await this.getWebhook(command, integrationCredentials);
 
-    await this.createSubscriber(environment, command, webhookUrl);
+    await this.createSubscriber(organizationId, command, webhookUrl);
 
     const redirect = integrationCredentials.redirectUrl != null && integrationCredentials.redirectUrl != '';
 
@@ -40,10 +41,14 @@ export class HandleChatOauth {
     return { redirect, action: redirect ? integrationCredentials.redirectUrl! : this.SCRIPT_CLOSE_TAB };
   }
 
-  private async createSubscriber(environment, command: HandleChatOauthCommand, webhookUrl) {
+  private async createSubscriber(
+    organizationId: string,
+    command: ChatOauthCallbackCommand,
+    webhookUrl: string
+  ): Promise<void> {
     await this.createSubscriberUsecase.execute(
       CreateSubscriberCommand.create({
-        organizationId: environment._organizationId,
+        organizationId: organizationId,
         environmentId: command.environmentId,
         subscriberId: command?.subscriberId,
       })
@@ -53,7 +58,7 @@ export class HandleChatOauth {
 
     await this.updateSubscriberChannelUsecase.execute(
       UpdateSubscriberChannelCommand.create({
-        organizationId: environment._organizationId,
+        organizationId: organizationId,
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         providerId: command.providerId,
@@ -63,20 +68,23 @@ export class HandleChatOauth {
     );
   }
 
-  private async getEnvironment(environmentId: string) {
+  private async getOrganizationId(environmentId: string): Promise<string> {
     const environment = await this.environmentRepository.findById(environmentId);
 
     if (environment == null) {
       throw new NotFoundException(`Environment ID: ${environmentId} not found`);
     }
 
-    return environment;
+    return environment._organizationId;
   }
 
-  private async getWebhook(command: HandleChatOauthCommand, integrationCredentials: ICredentialsDto) {
+  private async getWebhook(
+    command: ChatOauthCallbackCommand,
+    integrationCredentials: ICredentialsDto
+  ): Promise<string> {
     const redirectUri =
       process.env.API_ROOT_URL +
-      `/v1/subscribers/${command.subscriberId}/${command.providerId}/${command.environmentId}`;
+      `/v1/subscribers/${command.subscriberId}/credentials/${command.providerId}/${command.environmentId}/callback`;
 
     const body = {
       redirect_uri: redirectUri,
@@ -103,7 +111,7 @@ export class HandleChatOauth {
     return webhook;
   }
 
-  private async getIntegration(command: HandleChatOauthCommand) {
+  private async getIntegrationCredentials(command: ChatOauthCallbackCommand) {
     const query: Partial<IntegrationEntity> & { _environmentId: string } = {
       _environmentId: command.environmentId,
       channel: ChannelTypeEnum.CHAT,
@@ -121,6 +129,6 @@ export class HandleChatOauth {
 
     integration.credentials = decryptCredentials(integration.credentials);
 
-    return { ...integration };
+    return integration.credentials;
   }
 }
