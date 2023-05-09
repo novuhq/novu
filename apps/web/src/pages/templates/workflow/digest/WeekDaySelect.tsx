@@ -41,7 +41,7 @@ const Day = ({ last, label, value, onClick, active, disabled = false }) => {
       onClick={() => {
         onClick(value);
       }}
-      className={classes.day}
+      className={`${classes.day} ${active ? 'active-day' : undefined}`}
     >
       {label}
     </UnstyledButton>
@@ -91,7 +91,7 @@ export const WeekDaySelect = ({
   const { classes } = useStyles({ active: false, disabled, last: false });
 
   return (
-    <Group grow spacing={0} className={classes.days}>
+    <Group data-test-id="weekday-select" grow spacing={0} className={classes.days}>
       {items.map((day, index) => {
         return (
           <Day
