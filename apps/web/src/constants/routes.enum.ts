@@ -20,6 +20,7 @@ export enum ROUTES {
   QUICK_START_SETUP = '/quickstart/notification-center/set-up',
   QUICK_START_SETUP_FRAMEWORK = '/quickstart/notification-center/set-up/:framework',
   QUICK_START_SETUP_TRIGGER = '/quickstart/notification-center/set-up/:framework/trigger',
+  QUICK_START_SETUP_SUCCESS = '/quickstart/notification-center/set-up/:framework/success',
   ACTIVITIES = '/activities',
   SETTINGS = '/settings',
   INTEGRATIONS = '/integrations',

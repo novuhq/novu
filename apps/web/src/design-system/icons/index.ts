@@ -40,6 +40,9 @@ export { Clock } from './general/Clock';
 export { LetterOpened } from './general/LetterOpened';
 export { BellWithNotification } from './general/BellWithNotification';
 export { CountdownTimer } from './general/CountdownTimer';
+export { Discord } from './general/Discord';
+export { User } from './general/User';
+export { Playground } from './general/Playground';
 
 export { Copy } from './actions/Copy';
 export { CloseCircle } from './actions/CloseCircle';
