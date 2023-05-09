@@ -16,7 +16,7 @@ export const useUpdateAction = ({
   ...options
 }: UseMutationOptions<IMessage, Error, IUpdateActionVariables> = {}) => {
   const queryClient = useQueryClient();
-  const { apiService } = useNovuContext();
+  const { apiService, subscriberId } = useNovuContext();
 
   const { mutate, ...result } = useMutation<IMessage, Error, IUpdateActionVariables>(
     (variables) =>
@@ -25,7 +25,7 @@ export const useUpdateAction = ({
       ...options,
       onSuccess: (newMessage, variables, context) => {
         queryClient.setQueriesData<InfiniteData<IPaginatedResponse<IMessage>>>(
-          { queryKey: INFINITE_NOTIFICATIONS_QUERY_KEY, exact: false },
+          { queryKey: [...INFINITE_NOTIFICATIONS_QUERY_KEY, subscriberId], exact: false },
           (infiniteData) => {
             const pages = infiniteData.pages.map((page) => {
               const data = page.data.map((message) => {

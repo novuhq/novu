@@ -1,10 +1,10 @@
 import { Handle, Position } from 'react-flow-renderer';
 
-import { NodeStep } from './NodeStep';
-import { MailGradient } from '../../design-system/icons';
+import { NodeStepWithPopover } from './NodeStepWithPopover';
+import { MailGradient } from '../../../design-system/icons';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
-import { useAuthContext } from '../providers/AuthProvider';
+import { useAuthContext } from '../../providers/AuthProvider';
 
 export function EmailNode({ data, id }: { data: any; id: string }) {
   const { currentUser } = useAuthContext();
@@ -12,7 +12,7 @@ export function EmailNode({ data, id }: { data: any; id: string }) {
   data.email = currentUser?.email ?? '';
 
   return (
-    <NodeStep
+    <NodeStepWithPopover
       data={data}
       id={id}
       Icon={MailGradient}
