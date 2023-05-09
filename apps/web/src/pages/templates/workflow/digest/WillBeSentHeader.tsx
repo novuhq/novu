@@ -1,5 +1,5 @@
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { colors } from '../../../../design-system';
 import * as capitalize from 'lodash.capitalize';
@@ -50,7 +50,7 @@ const Highlight = ({ children }) => {
   );
 };
 export const WillBeSentHeader = ({ index }) => {
-  const { watch } = useFormContext();
+  const { watch, setValue } = useFormContext();
 
   const type = watch(`steps.${index}.metadata.type`);
   const unit = watch(`steps.${index}.metadata.unit`);
@@ -60,6 +60,16 @@ export const WillBeSentHeader = ({ index }) => {
   const day = watch(`steps.${index}.metadata.timed.day`) || [];
   const every = watch(`steps.${index}.metadata.timed.every`);
   const amount = watch(`steps.${index}.metadata.amount`);
+
+  useEffect(() => {
+    if (!backoff) {
+      return;
+    }
+    if (type !== DigestTypeEnum.TIMED) {
+      return;
+    }
+    setValue(`steps.${index}.metadata.backoff`, false);
+  }, [backoff, type, index]);
 
   const BackoffText = useCallback(() => {
     return backoff ? (
@@ -90,6 +100,14 @@ export const WillBeSentHeader = ({ index }) => {
       return (
         <>
           Every <Highlight>{getOrdinal(every)} </Highlight> day
+        </>
+      );
+    }
+
+    if (every !== '1') {
+      return (
+        <>
+          Every <Highlight>{getOrdinal(every)} </Highlight> day at <Highlight>{at}</Highlight> <BackoffText />
         </>
       );
     }
