@@ -4,12 +4,13 @@ import { Skeleton, useMantineColorScheme } from '@mantine/core';
 import { useResizeObserver } from '@mantine/hooks';
 import ReactFlow, { Edge, Node, useReactFlow } from 'react-flow-renderer';
 
-import { colors } from '../../design-system';
+import { colors } from '../../../design-system';
 import { TriggerNode } from './TriggerNode';
 import { DigestNode } from './DigestNode';
 import { EmailNode } from './EmailNode';
-import { useTemplateFetcher } from '../../api/hooks';
+import { useTemplateFetcher } from '../../../api/hooks';
 import { DigestDemoFlowProvider } from './DigestDemoFlowProvider';
+import { WorkflowWrapper } from '../common';
 
 export function DigestDemoFlow({
   isReadOnly = true,
@@ -43,7 +44,7 @@ export function DigestDemoFlow({
       onRunTriggerClick={onRunTriggerClick}
       onDigestIntervalChange={onDigestIntervalChange}
     >
-      <Wrapper ref={ref} dark={colorScheme === 'dark'} className={className}>
+      <WorkflowWrapper ref={ref} height="500px" className={className}>
         {isLoadingTemplate ? (
           <Skeleton width={600} height={500} sx={{ margin: '0 auto' }} />
         ) : (
@@ -62,7 +63,7 @@ export function DigestDemoFlow({
             preventScrolling={false}
           />
         )}
-      </Wrapper>
+      </WorkflowWrapper>
     </DigestDemoFlowProvider>
   );
 }
@@ -104,30 +105,3 @@ const nodes: Node[] = [
 ];
 
 const nodeTypes = { triggerNode: TriggerNode, digestNode: DigestNode, emailNode: EmailNode };
-
-const Wrapper = styled.div<{ dark: boolean }>`
-  height: 500px;
-  width: 100%;
-
-  .react-flow__node.react-flow__node-triggerNode,
-  .react-flow__node.react-flow__node-digestNode,
-  .react-flow__node.react-flow__node-emailNode {
-    cursor: default;
-  }
-
-  .react-flow__attribution {
-    display: none;
-  }
-
-  .react-flow__handle {
-    background: transparent;
-    border: 1px solid ${(dark) => (dark ? colors.B40 : colors.B60)};
-  }
-
-  .react-flow__edge-path {
-    stroke: ${(dark) => (dark ? colors.B40 : colors.B60)};
-    border-radius: 10px;
-    stroke-dasharray: 5;
-    stroke-width: 1px;
-  }
-`;
