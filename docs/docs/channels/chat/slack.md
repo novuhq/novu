@@ -15,19 +15,16 @@ This step is optional, if you already have a Slack application you can reuse it.
 
 ## Generation of webhooks urls for your subscribers
 
-### Novu hosted (Recommended)
+### Novu Managed (Recommended)
 
-<details open>
-<summary>Novu will manage the OAuth flow and store the credentials</summary>
+Novu will manage the OAuth flow and store the credentials
 
 1. Configure your Slack application as mentioned <span style={{textDecoration: "underline"}}>[below](/channels/chat/slack#slack-application-configuration)</span>.
 2. Add the `Add to Slack` button or the shareable URL to your application in order to request permission of access (scope: incoming-webhook).
    <br/>
    Make sure to use the generated sharable URL that is located under Slack form in the <a href="https://web.novu.co/integrations" style={{textDecoration: "underline"}}>Integration Store</a>.
 
-</details>
-
-### Self-hosted
+### Manual Manage
 
 <details>
 <summary>Instructions on configuring https server</summary>
