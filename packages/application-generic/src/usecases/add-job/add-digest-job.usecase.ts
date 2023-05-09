@@ -97,13 +97,7 @@ export class AddDigestJob {
     }
 
     // We delayed the job and created the digest
-
-    // TODO: timed digest
-    if (
-      this.isRegularDigest(job.digest.type) &&
-      matched === 0 &&
-      modified === 1
-    ) {
+    if (matched === 0 && modified === 1) {
       const regularDigestMeta = digestMeta as IDigestRegularMetadata;
       if (!regularDigestMeta?.amount || !regularDigestMeta?.unit) {
         throw new ApiException(

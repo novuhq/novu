@@ -1,7 +1,6 @@
 import {
   DigestUnitEnum,
   DelayTypeEnum,
-  DigestTypeEnum,
   IDigestRegularMetadata,
 } from '@novu/shared';
 
@@ -42,17 +41,12 @@ export class CalculateDelayService {
       );
     }
 
-    if (this.isRegularDigest(step.metadata.type)) {
-      const regularDigestMeta = step.metadata as IDigestRegularMetadata;
+    const regularDigestMeta = step.metadata as IDigestRegularMetadata;
 
-      return this.toMilliseconds(
-        regularDigestMeta.amount,
-        regularDigestMeta.unit
-      );
-    }
-
-    // TODO: timed digest
-    return 0;
+    return this.toMilliseconds(
+      regularDigestMeta.amount,
+      regularDigestMeta.unit
+    );
   }
 
   toMilliseconds(amount: number, unit: DigestUnitEnum): number {
@@ -86,9 +80,5 @@ export class CalculateDelayService {
       typeof overrides.delay.amount === 'number' &&
       values.includes(overrides.delay.unit as unknown as DigestUnitEnum)
     );
-  }
-
-  private isRegularDigest(type: DigestTypeEnum | DelayTypeEnum) {
-    return type === DigestTypeEnum.REGULAR || type === DigestTypeEnum.BACKOFF;
   }
 }
