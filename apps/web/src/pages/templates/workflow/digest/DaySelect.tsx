@@ -74,6 +74,7 @@ const Day = ({ label, value, onClick, active, disabled = false }) => {
         onClick={() => {
           onClick(value);
         }}
+        className={active ? 'active-day' : undefined}
         disabled={disabled}
       >
         {label}
@@ -96,7 +97,7 @@ export const DaySelect = ({
   disabled?: boolean;
 }) => {
   return (
-    <Grid gutter={0} columns={7} mt={10}>
+    <Grid data-test-id="day-select" gutter={0} columns={7} mt={10}>
       {items.map((day) => {
         return (
           <Day
