@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="StorybookProjectConfigState">
+    <option name="defaultDirectory" value="$PROJECT_DIR$/packages/notification-center/src/stories" />
+    <option name="useDefaultDirectory" value="true" />
+  </component>
+</project>

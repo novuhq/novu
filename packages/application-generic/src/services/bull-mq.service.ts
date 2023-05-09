@@ -43,10 +43,13 @@ export class BullmqService {
     return BullmqService.pro && BullmqService.haveProInstalled();
   }
 
-  public async getQueueMetrics(): Promise<IQueueMetrics> {
+  public async getQueueMetrics(
+    start: number | undefined,
+    end: number | undefined
+  ): Promise<IQueueMetrics> {
     return {
-      completed: await this._queue.getMetrics('completed'),
-      failed: await this._queue.getMetrics('failed'),
+      completed: await this._queue.getMetrics('completed', start, end),
+      failed: await this._queue.getMetrics('failed', start, end),
     };
   }
 
