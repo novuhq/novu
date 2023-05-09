@@ -132,8 +132,8 @@ export class BullMqService {
   }
 
   public async getRunningStatus(): Promise<{
-    queueIsPaused: boolean;
-    workerIsRunning: boolean;
+    queueIsPaused: boolean | undefined;
+    workerIsRunning: boolean | undefined;
   }> {
     const queueIsPaused =
       (this._queue && (await this._queue.isPaused())) || undefined;
