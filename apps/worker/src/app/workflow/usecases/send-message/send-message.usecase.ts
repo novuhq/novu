@@ -33,8 +33,8 @@ import { SendMessageSms } from './send-message-sms.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
-import { Digest } from './digest/digest.usecase';
-import { PlatformException } from '../../../shared/utils/exceptions';
+import { Digest } from './digest';
+import { PlatformException } from '../../../shared/utils';
 import { MessageMatcher } from '../message-matcher';
 
 @Injectable()
@@ -200,7 +200,14 @@ export class SendMessage {
     });
     if (!template) throw new PlatformException(`Notification template ${job._templateId} is not found`);
 
-    const subscriber = await this.subscriberRepository.findById(job._subscriberId);
+    if (template.critical || this.isActionStep(job)) {
+      return true;
+    }
+
+    const subscriber = await this.getSubscriberBySubscriberId({
+      _environmentId: job._environmentId,
+      subscriberId: job.subscriberId,
+    });
     if (!subscriber) throw new PlatformException('Subscriber not found with id ' + job._subscriberId);
 
     const buildCommand = GetSubscriberTemplatePreferenceCommand.create({
@@ -213,9 +220,9 @@ export class SendMessage {
 
     const { preference } = await this.getSubscriberTemplatePreferenceUsecase.execute(buildCommand);
 
-    const result = this.isActionStep(job) || this.stepPreferred(preference, job);
+    const result = this.stepPreferred(preference, job);
 
-    if (!result && !template.critical) {
+    if (!result) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
@@ -229,7 +236,7 @@ export class SendMessage {
       );
     }
 
-    return result || template.critical;
+    return result;
   }
 
   @CachedEntity({
