@@ -12,6 +12,7 @@ import { IntervalSelect } from './digest/IntervalSelect';
 import { BackOffFields } from './digest/BackOffFields';
 import { WillBeSentHeader } from './digest/WillBeSentHeader';
 import { ScheduleMonthlyFields } from './digest/ScheduleMonthlyFields';
+import { useEffect } from 'react';
 
 const convertUnitToLabel = (unit: DigestUnitEnum) => {
   switch (unit) {
@@ -35,6 +36,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
     formState: { errors, isSubmitted },
     watch,
     trigger,
+    setValue,
   } = useFormContext();
 
   const { colorScheme } = useMantineColorScheme();
@@ -44,6 +46,18 @@ export const DigestMetadata = ({ control, index, readonly }) => {
   const digestKey = watch(`steps.${index}.metadata.digestKey`);
   const showErrors = isSubmitted && errors?.steps;
   const isEnterprise = process.env.REACT_APP_DOCKER_HOSTED_ENV !== 'true';
+
+  useEffect(() => {
+    if (unit !== undefined) {
+      return;
+    }
+    if (type !== DigestTypeEnum.TIMED) {
+      return;
+    }
+
+    setValue(`steps.${index}.metadata.unit`, DigestUnitEnum.DAYS);
+    trigger(`steps.${index}.metadata`);
+  }, [unit, type]);
 
   return (
     <div data-test-id="digest-step-settings-interval">
@@ -198,12 +212,12 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                           field.onChange(segmentValue);
                           await trigger(`steps.${index}.metadata`);
                         }}
-                        data-test-id="digest-type"
+                        data-test-id="digest-unit"
                       />
                     );
                   }}
                 />
-                <Group spacing={8} sx={{ color: colors.B60 }}>
+                <Group data-test-id="timed-group" spacing={8} sx={{ color: colors.B60 }}>
                   <span>Every</span>
                   <Controller
                     control={control}
