@@ -4,7 +4,7 @@ You can use [Africa's Talking](https://africastalking.com/) provider to send SMS
 
 ## Getting Started
 
-To use Africa's Talking provider in the SMS channel, the first step is to create an Africa's Talking account and add your API key and username to Africa's Talking integration on the Novu platform.
+To use Africa's Talking provider in the SMS channel, the first step is to create an Africa's Talking account and add your API key, username and Sender's ID to Africa's Talking integration on the Novu platform.
 
 ## Create a username
 
@@ -50,19 +50,52 @@ Ensure you have created an app in your team.
 
 ![Image showing page to generate API key on Africa’s Talking platform](/img/providers/sms/africas-talking/generate-api-key.png)
 
-- Copy the API Key generated and paste it in the Novu platform or record it somewhere safe for later use because you will not see it from the dashboard on subsequent visits.
+- Copy the API Key generated and paste it into the Novu platform or record it somewhere safe for later use because you will not see it from the dashboard on subsequent visits.
 
 :::note
 Once you've generated your API Key, wait about 3 minutes before testing it.
 :::
 
+## Get your Sender's ID
+
+Sender IDs allow you to brand your messages as you send them to your customers. There are two kinds of sender IDs, **short codes** and **alphanumerics**. The difference is that you can send and receive messages with short codes but only send messages with alphanumerics.
+
+To create a Short Code:
+
+- On your app dashboard, click on SMS (on the menu on your left). This will display a dropdown. Click on `Shortcodes` from the dropdown options. This will also display a dropdown from which you can then click on `My Shortcodes` to view your codes.
+
+![Image showing Africa’s Talking dashboard page where you create shortcodes for sending SMS](/img/providers/sms/africas-talking/short-codes.png)
+
+If you have not yet created one yet, on the `Shortcodes` dropdown option, click on `Request`.
+
+On the page that appears, fill in the form and submit
+
+![Image showing the dashboard page that allows you to request for shortcodes on Africa’s Talking](/img/providers/sms/africas-talking/request-short-codes.png)
+
+To create an Alphanumeric:
+
+- On your app dashboard, click on SMS (on the menu on your left). This will display a dropdown. Click on `Alphanumerics` from the dropdown options. This will also display a dropdown from which you can then click on `My Alphanumerics` to view your codes.
+
+![Image showing Africa’s Talking dashboard page where you create an alphanumeric for sending SMS](/img/providers/sms/africas-talking/alphanumeric.png)
+
+If you have not yet created one yet, on the `Alphanumerics` dropdown option, click on `Request`.
+
+On the page that appears, fill in the form and submit
+
+![Image showing the dashboard page that allows you to request for an alphanumeric on Africa’s Talking](/img/providers/sms/africas-talking/request-alphanumeric.png)
+
+Once you're done, add either your short code or alphanumeric to the `from` field on the Novu platform.
+
 ## Create an Africa's Talking integration with Novu
 
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate **Africa's Talking** under the SMS section and click on the **Connect** button.
+
+![Image showing Novu web platform integration store page](/img/providers/sms/africas-talking/integration.png)
+
 - Enter the `API key`.
 - fill in the `username` field.
-- fill in the `from` field.
+- fill in the `from` field. This is your registered `short code` or `alphanumeric` value.
 - Click on the `Disabled` button and mark as `Active`.
 - Click on the **Connect** button.
 
