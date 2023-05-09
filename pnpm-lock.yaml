@@ -6,20 +6,20 @@ importers:
     specifiers:
       '@auto-it/npm': ^10.36.5
       '@auto-it/released': ^10.36.5
-      '@commitlint/cli': 17.5.1
+      '@commitlint/cli': 17.6.1
       '@commitlint/config-angular': ^17.0.0
-      '@commitlint/config-conventional': 17.4.4
+      '@commitlint/config-conventional': 17.6.1
       '@cspell/eslint-plugin': ^6.14.3
-      '@nrwl/cli': 13.10.6
-      '@nrwl/eslint-plugin-nx': 13.10.6
-      '@nrwl/jest': 13.10.6
-      '@nrwl/linter': 13.10.6
-      '@nrwl/nx-cloud': ^15.0.0
-      '@nrwl/tao': 13.10.6
+      '@nrwl/cli': 15.9.2
+      '@nrwl/eslint-plugin-nx': 15.9.2
+      '@nrwl/jest': 15.9.2
+      '@nrwl/linter': 15.9.2
+      '@nrwl/nx-cloud': ^15.3.5
+      '@nrwl/tao': ^15.9.2
       '@nrwl/workspace': 13.10.6
       '@octokit/core': ^3.6.0
-      '@pnpm/filter-workspace-packages': ^4.4.35
-      '@pnpm/logger': ^4.0.0
+      '@pnpm/filter-workspace-packages': ^7.0.6
+      '@pnpm/logger': ^5.0.0
       '@types/inquirer': 8.2.6
       '@types/jest': 27.5.2
       '@types/node': 16.11.7
@@ -63,7 +63,7 @@ importers:
       markdownlint-cli: ^0.33.0
       meow: ^10.1.3
       mississippi: ^4.0.0
-      nx: ^14.5.10
+      nx: ^15.9.2
       ora: ~5.4.1
       pnpm: 7.28.0
       prettier: ~2.8.0
@@ -77,142 +77,142 @@ importers:
       typescript: 4.9.5
       wait-port: ^0.3.0
     dependencies:
-      nx: 14.5.10
+      nx: 15.9.2_@swc+core@1.3.49
       tslib: 2.5.0
     devDependencies:
-      '@auto-it/npm': 10.36.5_gdxbtungus7rykd22mbjbmvap4
-      '@auto-it/released': 10.36.5_gdxbtungus7rykd22mbjbmvap4
-      '@commitlint/cli': 17.5.1
+      '@auto-it/npm': 10.44.0_j6r65ghnzvzk7vhdh4hyogrm4a
+      '@auto-it/released': 10.44.0_j6r65ghnzvzk7vhdh4hyogrm4a
+      '@commitlint/cli': 17.6.1_@swc+core@1.3.49
       '@commitlint/config-angular': 17.4.4
-      '@commitlint/config-conventional': 17.4.4
-      '@cspell/eslint-plugin': 6.14.3
-      '@nrwl/cli': 13.10.6
-      '@nrwl/eslint-plugin-nx': 13.10.6_bbah62p5gftlksphgvxcywosl4
-      '@nrwl/jest': 13.10.6_nx@14.5.10+ts-node@10.9.1
-      '@nrwl/linter': 13.10.6_bcc3khvf2yo3dht5hdivnypbwi
-      '@nrwl/nx-cloud': 15.1.1
-      '@nrwl/tao': 13.10.6
-      '@nrwl/workspace': 13.10.6_5tvp64g6xhyzatwhrkwzapwmga
+      '@commitlint/config-conventional': 17.6.1
+      '@cspell/eslint-plugin': 6.31.1
+      '@nrwl/cli': 15.9.2_@swc+core@1.3.49
+      '@nrwl/eslint-plugin-nx': 15.9.2_rmanuyj7qbkvesrwuotu2kcvrq
+      '@nrwl/jest': 15.9.2_4mszvvnvx7eov4zhuvou3pwege
+      '@nrwl/linter': 15.9.2_rifl5e35m62sxfy6k2lmajh6ta
+      '@nrwl/nx-cloud': 15.3.5
+      '@nrwl/tao': 15.9.2_@swc+core@1.3.49
+      '@nrwl/workspace': 13.10.6_436jpmx3has2zen3bhgulcyrsy
       '@octokit/core': 3.6.0
-      '@pnpm/filter-workspace-packages': 4.4.35_@pnpm+logger@4.0.0
-      '@pnpm/logger': 4.0.0
+      '@pnpm/filter-workspace-packages': 7.0.6_@pnpm+logger@5.0.0
+      '@pnpm/logger': 5.0.0
       '@types/inquirer': 8.2.6
       '@types/jest': 27.5.2
       '@types/node': 16.11.7
-      '@typescript-eslint/eslint-plugin': 5.50.0_go4drrxstycfikanvu45pi4vgq
-      '@typescript-eslint/parser': 5.50.0_4vsywjlpuriuw3tl5oq6zy5a64
-      auto: 10.36.5_gdxbtungus7rykd22mbjbmvap4
+      '@typescript-eslint/eslint-plugin': 5.58.0_hzv37tkb63et4viajosjuuyxgi
+      '@typescript-eslint/parser': 5.58.0_ze6bmax3gcsfve3yrzu6npguhe
+      auto: 10.44.0_j6r65ghnzvzk7vhdh4hyogrm4a
       chalk: 4.1.2
       chalk-animation: 1.6.0
-      commitizen: 4.2.4
+      commitizen: 4.3.0_@swc+core@1.3.49
       cpx: 1.5.0
       cross-env: 7.0.3
       cspell: 6.19.2
       cypress-intellij-reporter: 0.0.7
-      cz-conventional-changelog: 3.3.0
+      cz-conventional-changelog: 3.3.0_@swc+core@1.3.49
       deep-extend: 0.6.0
-      detect-port: 1.3.0
-      eslint: 8.33.0
-      eslint-config-airbnb-typescript: 17.0.0_onw6gvltkqjqftd6yyfm63tbna
-      eslint-config-prettier: 8.6.0_eslint@8.33.0
-      eslint-import-resolver-webpack: 0.13.2_jl6vttybznfeuea3pdqa5on5ji
-      eslint-plugin-eslint-comments: 3.2.0_eslint@8.33.0
-      eslint-plugin-functional: 3.7.2_4vsywjlpuriuw3tl5oq6zy5a64
-      eslint-plugin-import: 2.26.0_le6bq4wixy3va5oryeliptrdgy
-      eslint-plugin-jsx-a11y: 6.5.1_eslint@8.33.0
-      eslint-plugin-prettier: 4.2.1_qa2thblfovmfepmgrc7z2owbo4
+      detect-port: 1.5.1
+      eslint: 8.38.0
+      eslint-config-airbnb-typescript: 17.0.0_awz7iagzjrkgdisnaft5immp6i
+      eslint-config-prettier: 8.8.0_eslint@8.38.0
+      eslint-import-resolver-webpack: 0.13.2_ach2pokoanzagmjnilrcbv2npm
+      eslint-plugin-eslint-comments: 3.2.0_eslint@8.38.0
+      eslint-plugin-functional: 3.7.2_ze6bmax3gcsfve3yrzu6npguhe
+      eslint-plugin-import: 2.27.5_ow2j3yqjjpzplq4flnkwqs3k4u
+      eslint-plugin-jsx-a11y: 6.7.1_eslint@8.38.0
+      eslint-plugin-prettier: 4.2.1_mrzcadguhkbme6yx3ehduvsjxu
       eslint-plugin-promise: 4.3.1
-      eslint-plugin-react: 7.32.2_eslint@8.33.0
-      eslint-plugin-react-hooks: 4.4.0_eslint@8.33.0
-      eslint-plugin-spellcheck: 0.0.20_eslint@8.33.0
+      eslint-plugin-react: 7.32.2_eslint@8.38.0
+      eslint-plugin-react-hooks: 4.6.0_eslint@8.38.0
+      eslint-plugin-spellcheck: 0.0.20_eslint@8.38.0
       execa: 6.1.0
       globby: 12.2.0
-      gradient-string: 2.0.1
-      husky: 8.0.1
-      hygen: 6.2.0_qa2thblfovmfepmgrc7z2owbo4
+      gradient-string: 2.0.2
+      husky: 8.0.3
+      hygen: 6.2.11
       inquirer: 8.2.5
       jest: 27.5.1_ts-node@10.9.1
       jira-prepare-commit-msg: 1.7.2
-      lerna: 5.6.2
+      lerna: 5.6.2_@swc+core@1.3.49
       lint-staged: 10.5.4
       listr: 0.14.3
       markdownlint-cli: 0.33.0
-      meow: 10.1.3
+      meow: 10.1.5
       mississippi: 4.0.0
       ora: 5.4.1
       pnpm: 7.28.0
-      prettier: 2.8.4
+      prettier: 2.8.7
       rimraf: 3.0.2
       shelljs: 0.8.5
-      stop-only: 3.1.2
-      tar: 6.1.11
-      ts-jest: 27.1.5_j22lzoizerh26yhx3rtoqxu75q
-      ts-node: 10.9.1_263kxb4upkllfszsccwxso4xq4
+      stop-only: 3.1.1
+      tar: 6.1.13
+      ts-jest: 27.1.5_d5we6thvweerisoz5puaw7xkku
+      ts-node: 10.9.1_j6r65ghnzvzk7vhdh4hyogrm4a
       typescript: 4.9.5
-      wait-port: 0.3.0
+      wait-port: 0.3.1
 
   apps/api:
     specifiers:
-      '@aws-sdk/client-s3': ^3.234.0
-      '@aws-sdk/s3-request-presigner': ^3.234.0
-      '@azure/storage-blob': ^12.11.0
+      # '@aws-sdk/client-s3': ^3.234.0
+      # '@aws-sdk/s3-request-presigner': ^3.234.0
+      # '@azure/storage-blob': ^12.11.0
       '@faker-js/faker': ^6.0.0
       '@godaddy/terminus': ^4.10.2
       '@google-cloud/storage': ^6.2.3
       '@nestjs/axios': ~2.0.0
-      '@nestjs/cli': 9.3.0
+      '@nestjs/cli': 9.4.0
       '@nestjs/common': 9.3.12
       '@nestjs/core': 9.3.12
-      '@nestjs/graphql': 10.2.0
+      '@nestjs/graphql': 10.2.1
       '@nestjs/jwt': 9.0.0
       '@nestjs/passport': 9.0.3
       '@nestjs/platform-express': 9.3.12
       '@nestjs/schematics': 9.0.4
-      '@nestjs/swagger': 6.0.1
+      '@nestjs/swagger': ^6.3.0
       '@nestjs/terminus': 9.2.1
       '@nestjs/testing': 9.3.12
-      '@novu/apns': ^0.13.0
-      '@novu/application-generic': ^0.13.0
-      '@novu/burst-sms': ^0.13.0
-      '@novu/clickatell': ^0.13.0
-      '@novu/dal': ^0.13.0
-      '@novu/discord': ^0.13.0
-      '@novu/emailjs': ^0.13.0
-      '@novu/expo': ^0.13.0
-      '@novu/fcm': ^0.13.0
-      '@novu/firetext': ^0.13.0
-      '@novu/forty-six-elks': ^0.13.0
-      '@novu/gupshup': ^0.13.0
-      '@novu/infobip': ^0.13.0
-      '@novu/kannel': ^0.13.0
-      '@novu/mailersend': ^0.13.0
-      '@novu/mailgun': ^0.13.0
-      '@novu/mailjet': ^0.13.0
-      '@novu/mandrill': ^0.13.0
-      '@novu/maqsam': ^0.13.0
-      '@novu/mattermost': ^0.13.0
-      '@novu/ms-teams': ^0.13.0
-      '@novu/netcore': ^0.13.0
-      '@novu/node': ^0.13.0
-      '@novu/nodemailer': ^0.13.0
-      '@novu/outlook365': ^0.13.0
-      '@novu/plivo': ^0.13.0
-      '@novu/postmark': ^0.13.0
-      '@novu/resend': ^0.13.0
-      '@novu/sendgrid': ^0.13.0
-      '@novu/sendinblue': ^0.13.0
-      '@novu/ses': ^0.13.0
-      '@novu/shared': ^0.13.0
-      '@novu/slack': ^0.13.0
-      '@novu/sms-central': ^0.13.0
-      '@novu/sms77': ^0.13.0
-      '@novu/sns': ^0.13.0
-      '@novu/sparkpost': ^0.13.0
-      '@novu/stateless': ^0.13.0
-      '@novu/telnyx': ^0.13.0
-      '@novu/termii': ^0.13.0
-      '@novu/testing': ^0.13.0
-      '@novu/twilio': ^0.13.0
+      # '@novu/apns': ^0.13.0
+      '@novu/application-generic': ^0.14.0
+      # '@novu/burst-sms': ^0.13.0
+      # '@novu/clickatell': ^0.13.0
+      '@novu/dal': ^0.14.0
+      # '@novu/discord': ^0.13.0
+      # '@novu/emailjs': ^0.13.0
+      # '@novu/expo': ^0.13.0
+      # '@novu/fcm': ^0.13.0
+      # '@novu/firetext': ^0.13.0
+      # '@novu/forty-six-elks': ^0.13.0
+      # '@novu/gupshup': ^0.13.0
+      # '@novu/infobip': ^0.13.0
+      # '@novu/kannel': ^0.13.0
+      # '@novu/mailersend': ^0.13.0
+      # '@novu/mailgun': ^0.13.0
+      # '@novu/mailjet': ^0.13.0
+      # '@novu/mandrill': ^0.13.0
+      # '@novu/maqsam': ^0.13.0
+      # '@novu/mattermost': ^0.13.0
+      # '@novu/ms-teams': ^0.13.0
+      # '@novu/netcore': ^0.13.0
+      '@novu/node': ^0.14.0
+      # '@novu/nodemailer': ^0.13.0
+      # '@novu/outlook365': ^0.13.0
+      # '@novu/plivo': ^0.13.0
+      # '@novu/postmark': ^0.13.0
+      # '@novu/resend': ^0.13.0
+      # '@novu/sendgrid': ^0.13.0
+      # '@novu/sendinblue': ^0.13.0
+      # '@novu/ses': ^0.13.0
+      '@novu/shared': ^0.14.0
+      # '@novu/slack': ^0.13.0
+      # '@novu/sms-central': ^0.13.0
+      # '@novu/sms77': ^0.13.0
+      # '@novu/sns': ^0.13.0
+      # '@novu/sparkpost': ^0.13.0
+      '@novu/stateless': ^0.14.0
+      # '@novu/telnyx': ^0.13.0
+      # '@novu/termii': ^0.13.0
+      '@novu/testing': ^0.14.0
+      # '@novu/twilio': ^0.13.0
       '@sendgrid/mail': ^7.6.0
       '@sentry/hub': ^7.40.0
       '@sentry/node': ^7.40.0
@@ -222,7 +222,8 @@ importers:
       '@types/chai': ^4.2.11
       '@types/express': 4.17.17
       '@types/handlebars': ^4.1.0
-      '@types/mocha': ^8.0.1
+      '@types/mocha': ^8.2.3
+      '@types/newrelic': ^9.13.0
       '@types/node': ^14.6.0
       '@types/passport-github': ^1.1.5
       '@types/passport-jwt': ^3.0.3
@@ -245,12 +246,12 @@ importers:
       handlebars: ^4.7.7
       hat: ^0.0.3
       helmet: ^6.0.1
-      ioredis: ^5.2.4
+      ioredis: 5.3.2
       jsonwebtoken: 9.0.0
       lodash: ^4.17.15
-      mocha: ^8.1.1
+      mocha: ^8.4.0
       nanoid: ^3.1.20
-      nest-raven: 8.2.0
+      nest-raven: ^9.2.0
       newrelic: 9.10.2
       nodemon: ^2.0.3
       passport: 0.6.0
@@ -274,132 +275,133 @@ importers:
       typescript: 4.9.5
       uuid: ^8.3.2
     dependencies:
-      '@aws-sdk/client-s3': 3.252.0
-      '@aws-sdk/s3-request-presigner': 3.252.0
-      '@azure/storage-blob': 12.11.0
-      '@godaddy/terminus': 4.10.2
-      '@google-cloud/storage': 6.2.3
-      '@nestjs/axios': 2.0.0_xodunp2o775x3wghihlhtkiofa
+      # '@aws-sdk/client-s3': 3.252.0
+      # '@aws-sdk/s3-request-presigner': 3.252.0
+      # '@azure/storage-blob': 12.11.0
+      '@godaddy/terminus': 4.11.2
+      '@google-cloud/storage': 6.9.5
+      '@nestjs/axios': 2.0.0_uhnffq3dkwzlnz66svmn6j7ydi
       '@nestjs/common': 9.3.12_welcnyot5bzd5wa2aovbkxpi4i
       '@nestjs/core': 9.3.12_qhubmme3ystyvorrsy6sfc2ome
-      '@nestjs/graphql': 10.2.0_o3wfdvdpqm5h7hphlcvgm6dh44
+      '@nestjs/graphql': 10.2.1_vgnnqnzg3rzr5actpo4ly2om2q
       '@nestjs/jwt': 9.0.0_@nestjs+common@9.3.12
       '@nestjs/passport': 9.0.3_ajy2slul3age3kopk444psnhqq
       '@nestjs/platform-express': 9.3.12_ge4qplnzbmfyi5znl534zhtkn4
-      '@nestjs/swagger': 6.0.1_56wskrocvqeup2a4dyvgnvm62u
+      '@nestjs/swagger': 6.3.0_56wskrocvqeup2a4dyvgnvm62u
       '@nestjs/terminus': 9.2.1_zsncn5lh55tdqpipe5kyf5iyt4
-      '@novu/apns': link:../../providers/apns
+      # '@novu/apns': link:../../providers/apns
       '@novu/application-generic': link:../../packages/application-generic
-      '@novu/burst-sms': link:../../providers/burst-sms
-      '@novu/clickatell': link:../../providers/clickatell
+      # '@novu/burst-sms': link:../../providers/burst-sms
+      # '@novu/clickatell': link:../../providers/clickatell
       '@novu/dal': link:../../libs/dal
-      '@novu/discord': link:../../providers/discord
-      '@novu/emailjs': link:../../providers/emailjs
-      '@novu/expo': link:../../providers/expo
-      '@novu/fcm': link:../../providers/fcm
-      '@novu/firetext': link:../../providers/firetext
-      '@novu/forty-six-elks': link:../../providers/forty-six-elks
-      '@novu/gupshup': link:../../providers/gupshup
-      '@novu/infobip': link:../../providers/infobip
-      '@novu/kannel': link:../../providers/kannel
-      '@novu/mailersend': link:../../providers/mailersend
-      '@novu/mailgun': link:../../providers/mailgun
-      '@novu/mailjet': link:../../providers/mailjet
-      '@novu/mandrill': link:../../providers/mandrill
-      '@novu/maqsam': link:../../providers/maqsam
-      '@novu/mattermost': link:../../providers/mattermost
-      '@novu/ms-teams': link:../../providers/ms-teams
-      '@novu/netcore': link:../../providers/netcore
+      # '@novu/discord': link:../../providers/discord
+      # '@novu/emailjs': link:../../providers/emailjs
+      # '@novu/expo': link:../../providers/expo
+      # '@novu/fcm': link:../../providers/fcm
+      # '@novu/firetext': link:../../providers/firetext
+      # '@novu/forty-six-elks': link:../../providers/forty-six-elks
+      # '@novu/gupshup': link:../../providers/gupshup
+      # '@novu/infobip': link:../../providers/infobip
+      # '@novu/kannel': link:../../providers/kannel
+      # '@novu/mailersend': link:../../providers/mailersend
+      # '@novu/mailgun': link:../../providers/mailgun
+      # '@novu/mailjet': link:../../providers/mailjet
+      # '@novu/mandrill': link:../../providers/mandrill
+      # '@novu/maqsam': link:../../providers/maqsam
+      # '@novu/mattermost': link:../../providers/mattermost
+      # '@novu/ms-teams': link:../../providers/ms-teams
+      # '@novu/netcore': link:../../providers/netcore
       '@novu/node': link:../../packages/node
-      '@novu/nodemailer': link:../../providers/nodemailer
-      '@novu/outlook365': link:../../providers/outlook365
-      '@novu/plivo': link:../../providers/plivo
-      '@novu/postmark': link:../../providers/postmark
-      '@novu/resend': link:../../providers/resend
-      '@novu/sendgrid': link:../../providers/sendgrid
-      '@novu/sendinblue': link:../../providers/sendinblue
-      '@novu/ses': link:../../providers/ses
+      # '@novu/nodemailer': link:../../providers/nodemailer
+      # '@novu/outlook365': link:../../providers/outlook365
+      # '@novu/plivo': link:../../providers/plivo
+      # '@novu/postmark': link:../../providers/postmark
+      # '@novu/resend': link:../../providers/resend
+      # '@novu/sendgrid': link:../../providers/sendgrid
+      # '@novu/sendinblue': link:../../providers/sendinblue
+      # '@novu/ses': link:../../providers/ses
       '@novu/shared': link:../../libs/shared
-      '@novu/slack': link:../../providers/slack
-      '@novu/sms-central': link:../../providers/sms-central
-      '@novu/sms77': link:../../providers/sms77
-      '@novu/sns': link:../../providers/sns
-      '@novu/sparkpost': link:../../providers/sparkpost
+      # '@novu/slack': link:../../providers/slack
+      # '@novu/sms-central': link:../../providers/sms-central
+      # '@novu/sms77': link:../../providers/sms77
+      # '@novu/sns': link:../../providers/sns
+      # '@novu/sparkpost': link:../../providers/sparkpost
       '@novu/stateless': link:../../packages/stateless
-      '@novu/telnyx': link:../../providers/telnyx
-      '@novu/termii': link:../../providers/termii
+      # '@novu/telnyx': link:../../providers/telnyx
+      # '@novu/termii': link:../../providers/termii
       '@novu/testing': link:../../libs/testing
-      '@novu/twilio': link:../../providers/twilio
-      '@sendgrid/mail': 7.6.2
-      '@sentry/hub': 7.40.0
-      '@sentry/node': 7.40.0
-      '@sentry/tracing': 7.40.0
+      # '@novu/twilio': link:../../providers/twilio
+      '@sendgrid/mail': 7.7.0
+      '@sentry/hub': 7.47.0
+      '@sentry/node': 7.47.0
+      '@sentry/tracing': 7.47.0
       '@types/handlebars': 4.1.0
-      agenda: 4.2.1
-      axios: 1.3.3
+      '@types/newrelic': 9.13.0
+      agenda: 4.4.0
+      axios: 1.3.5
       bcrypt: 5.0.1
-      body-parser: 1.20.0
-      bull: 4.8.1
-      bullmq: 3.10.2
+      body-parser: 1.20.2
+      bull: 4.10.4
+      bullmq: 3.10.4
       class-transformer: 0.5.1
       class-validator: 0.14.0
       compression: 1.7.4
       cross-env: 7.0.3
-      date-fns: 2.29.2
+      date-fns: 2.29.3
       dotenv: 8.6.0
       envalid: 6.0.2
       handlebars: 4.7.7
       hat: 0.0.3
-      helmet: 6.0.1
-      ioredis: 5.2.4
+      helmet: 6.1.4
+      ioredis: 5.3.2
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
-      nanoid: 3.3.2
-      nest-raven: 8.2.0_u4s2jx4vbudikwhksn4zyizksm
+      nanoid: 3.3.6
+      nest-raven: 9.2.0_uihfglb4mjux3kkp222vo5hzku
       newrelic: 9.10.2
       passport: 0.6.0
       passport-github2: 0.1.12
-      passport-jwt: 4.0.0
-      passport-oauth2: 1.6.1
-      recursive-diff: 1.0.8
+      passport-jwt: 4.0.1
+      passport-oauth2: 1.7.0
+      recursive-diff: 1.0.9
       redlock: 4.2.0
       reflect-metadata: 0.1.13
       rimraf: 3.0.2
       rxjs: 7.8.0
-      sanitize-html: 2.7.0
+      sanitize-html: 2.10.0
       shortid: 2.2.16
-      slugify: 1.6.5
-      swagger-ui-express: 4.4.0_express@4.18.2
-      twilio: 3.76.0
+      slugify: 1.6.6
+      swagger-ui-express: 4.6.2_express@4.18.2
+      twilio: 3.84.1
       uuid: 8.3.2
     devDependencies:
-      '@faker-js/faker': 6.1.1
-      '@nestjs/cli': 9.3.0
+      '@faker-js/faker': 6.3.1
+      '@nestjs/cli': 9.4.0
       '@nestjs/schematics': 9.0.4_typescript@4.9.5
       '@nestjs/testing': 9.3.12_ckvy3xuqd5ydy3ipiq7jufha44
       '@types/bcrypt': 3.0.1
-      '@types/bull': 3.15.8
-      '@types/chai': 4.3.0
+      '@types/bull': 3.15.9
+      '@types/chai': 4.3.4
       '@types/express': 4.17.17
       '@types/mocha': 8.2.3
-      '@types/node': 14.18.12
+      '@types/node': 14.18.42
       '@types/passport-github': 1.1.7
-      '@types/passport-jwt': 3.0.6
+      '@types/passport-jwt': 3.0.8
       '@types/sinon': 9.0.11
       '@types/supertest': 2.0.12
-      chai: 4.3.6
+      chai: 4.3.7
       mocha: 8.4.0
-      nodemon: 2.0.15
+      nodemon: 2.0.22
       sinon: 9.2.4
-      ts-loader: 9.4.2_a37q6j7dwawz22saey2vgkpwqm
-      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
+      ts-loader: 9.4.2_odl7p537j6zjcy4b5gf5bruiye
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 3.14.2
       typescript: 4.9.5
 
   apps/inbound-mail:
     specifiers:
-      '@novu/application-generic': ^0.13.0
-      '@novu/shared': ^0.13.0
+      '@novu/application-generic': ^0.14.0
+      '@novu/shared': ^0.14.0
       '@sentry/node': ^7.12.1
       '@types/express': ^4.17.8
       '@types/node': ^14.14.6
@@ -431,11 +433,11 @@ importers:
     dependencies:
       '@novu/application-generic': link:../../packages/application-generic
       '@novu/shared': link:../../libs/shared
-      '@sentry/node': 7.30.0
+      '@sentry/node': 7.47.0
       bluebird: 2.11.0
-      bullmq: 3.10.2
+      bullmq: 3.10.4
       dotenv: 8.6.0
-      envalid: 7.3.0
+      envalid: 7.3.1
       extend: 2.0.2
       html-to-text: 1.6.2
       languagedetect: 1.3.0
@@ -449,16 +451,16 @@ importers:
       spamc: 0.0.5
       winston: 1.1.2
     devDependencies:
-      '@types/express': 4.17.15
-      '@types/node': 14.18.12
+      '@types/express': 4.17.17
+      '@types/node': 14.18.42
       '@types/smtp-server': 3.5.7
       cross-env: 7.0.3
-      nodemon: 2.0.15
-      prettier: 2.8.4
-      ts-jest: 27.1.4_dwaltnofjt727p7olboxmdxrie
-      ts-loader: 9.4.2_a37q6j7dwawz22saey2vgkpwqm
-      ts-node: 10.9.1_shievopl57bw2yyflx5da526ye
-      tsconfig-paths: 3.14.1
+      nodemon: 2.0.22
+      prettier: 2.8.7
+      ts-jest: 27.1.5_ik2qjjkgpajyhqxqenowswsmya
+      ts-loader: 9.4.2_odl7p537j6zjcy4b5gf5bruiye
+      ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
+      tsconfig-paths: 3.14.2
       typescript: 4.9.5
 
   apps/web:
@@ -489,10 +491,10 @@ importers:
       '@mantine/notifications': ^5.7.1
       '@mantine/prism': ^5.7.1
       '@mantine/spotlight': ^5.7.1
-      '@novu/dal': ^0.13.0
-      '@novu/notification-center': ^0.13.0
-      '@novu/shared': ^0.13.0
-      '@novu/testing': ^0.13.0
+      '@novu/dal': ^0.14.0
+      '@novu/notification-center': ^0.14.0
+      '@novu/shared': ^0.14.0
+      '@novu/testing': ^0.14.0
       '@segment/analytics-next': ^1.48.0
       '@sentry/react': ^7.40.0
       '@sentry/tracing': ^7.40.0
@@ -530,7 +532,7 @@ importers:
       eslint-plugin-cypress: ^2.12.1
       graphql: ^15.4.0
       handlebars: ^4.7.7
-      html-webpack-plugin: 5.5.0
+      html-webpack-plugin: 5.5.1
       http-server: ^0.13.0
       jwt-decode: ^3.1.2
       less: ^4.1.0
