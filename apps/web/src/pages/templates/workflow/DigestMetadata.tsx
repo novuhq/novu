@@ -1,9 +1,9 @@
-import { Accordion, Group, SimpleGrid, useMantineColorScheme, useMantineTheme } from '@mantine/core';
+import { Accordion, Group, useMantineColorScheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
 import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
-import { colors, Input, SegmentedControl, Select } from '../../../design-system';
+import { colors, Input, SegmentedControl, Select, Tooltip } from '../../../design-system';
 import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { WeekDaySelect } from './digest/WeekDaySelect';
 import { Bell, Digest, Timer } from '../../../design-system/icons';
@@ -13,6 +13,7 @@ import { BackOffFields } from './digest/BackOffFields';
 import { WillBeSentHeader } from './digest/WillBeSentHeader';
 import { ScheduleMonthlyFields } from './digest/ScheduleMonthlyFields';
 import { useEffect } from 'react';
+import { RegularInfo } from './digest/RegularInfo';
 
 const convertUnitToLabel = (unit: DigestUnitEnum) => {
   switch (unit) {
@@ -62,79 +63,93 @@ export const DigestMetadata = ({ control, index, readonly }) => {
   return (
     <div data-test-id="digest-step-settings-interval">
       <Accordion>
-        <Accordion.Item value="events-selection" data-test-id="digest-events-selection-options">
-          <Accordion.Control>
-            <Group>
-              <Bell color={colors.B60} />
-              <div>
+        <Tooltip
+          position="left"
+          width={227}
+          multiline
+          label="Types of events that will be aggregated from the previous digest to the time it will be sent"
+        >
+          <Accordion.Item value="events-selection" data-test-id="digest-events-selection-options">
+            <Accordion.Control>
+              <Group>
+                <Bell color={colors.B60} />
                 <div>
-                  <b
-                    style={{
-                      color: colorScheme === 'dark' ? colors.B80 : colors.B40,
-                    }}
-                  >
-                    All events
-                  </b>
-                </div>
-                <div>since previous digest</div>
-              </div>
-            </Group>
-          </Accordion.Control>
-          <Accordion.Panel>
-            <Select mt={-5} mb={-5} data={[{ value: 'all', label: 'All events' }]} value={'all'} />
-          </Accordion.Panel>
-        </Accordion.Item>
-        <Accordion.Item value="group-by" data-test-id="digest-group-by-options">
-          <Accordion.Control>
-            <Group>
-              <div style={{ width: 26 }}>
-                <Digest color={colors.B60} />
-              </div>
-              <div>
-                <div>
-                  <b>Aggregated by Subscriber_ID</b>
-                </div>
-                <When truthy={!digestKey}>
-                  <div>Add grouping...</div>
-                </When>
-                <When truthy={digestKey}>
                   <div>
-                    And by{' '}
                     <b
                       style={{
                         color: colorScheme === 'dark' ? colors.B80 : colors.B40,
                       }}
                     >
-                      {digestKey}
+                      All events
                     </b>
                   </div>
-                </When>
-              </div>
-            </Group>
-          </Accordion.Control>
-          <Accordion.Panel>
-            <Controller
-              control={control}
-              name={`steps.${index}.metadata.digestKey`}
-              defaultValue=""
-              render={({ field, fieldState }) => {
-                return (
-                  <Input
-                    {...field}
-                    mt={-5}
-                    mb={-5}
-                    value={field.value || ''}
-                    placeholder="Post_ID, Attribute_ID, etc."
-                    error={fieldState.error?.message}
-                    type="text"
-                    data-test-id="batch-key"
-                    disabled={readonly}
-                  />
-                );
-              }}
-            />
-          </Accordion.Panel>
-        </Accordion.Item>
+                  <div>since previous digest</div>
+                </div>
+              </Group>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Select mt={-5} mb={-5} data={[{ value: 'all', label: 'All events' }]} value={'all'} />
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Tooltip>
+        <Tooltip
+          position="left"
+          width={227}
+          multiline
+          label="Events aggregated by subscriber_ID by default, this can’t be changed. You may add additional aggregations by typing the name of a variable."
+        >
+          <Accordion.Item value="group-by" data-test-id="digest-group-by-options">
+            <Accordion.Control>
+              <Group>
+                <div style={{ width: 26 }}>
+                  <Digest color={colors.B60} />
+                </div>
+                <div>
+                  <div>
+                    <b>Aggregated by Subscriber_ID</b>
+                  </div>
+                  <When truthy={!digestKey}>
+                    <div>Add grouping...</div>
+                  </When>
+                  <When truthy={digestKey}>
+                    <div>
+                      And by{' '}
+                      <b
+                        style={{
+                          color: colorScheme === 'dark' ? colors.B80 : colors.B40,
+                        }}
+                      >
+                        {digestKey}
+                      </b>
+                    </div>
+                  </When>
+                </div>
+              </Group>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Controller
+                control={control}
+                name={`steps.${index}.metadata.digestKey`}
+                defaultValue=""
+                render={({ field, fieldState }) => {
+                  return (
+                    <Input
+                      {...field}
+                      mt={-5}
+                      mb={-5}
+                      value={field.value || ''}
+                      placeholder="Post_ID, Attribute_ID, etc."
+                      error={fieldState.error?.message}
+                      type="text"
+                      data-test-id="batch-key"
+                      disabled={readonly}
+                    />
+                  );
+                }}
+              />
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Tooltip>
         <Accordion.Item value="send" data-test-id="digest-send-options">
           <Accordion.Control>
             <Group>
@@ -166,8 +181,41 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                       fullWidth
                       disabled={readonly}
                       data={[
-                        { value: DigestTypeEnum.REGULAR, label: 'Event' },
-                        { value: DigestTypeEnum.TIMED, label: 'Schedule' },
+                        {
+                          value: DigestTypeEnum.REGULAR,
+                          label: (
+                            <Tooltip
+                              withinPortal
+                              width={310}
+                              multiline
+                              label={
+                                <>
+                                  <div>
+                                    Digest starts after the first event occurred since the previous sent digest. From
+                                    that moment on, it aggregates events for the specified time, after which it sends a
+                                    digest of the events.
+                                  </div>
+                                  <RegularInfo />
+                                </>
+                              }
+                            >
+                              <div>Event</div>
+                            </Tooltip>
+                          ),
+                        },
+                        {
+                          value: DigestTypeEnum.TIMED,
+                          label: (
+                            <Tooltip
+                              withinPortal
+                              width={240}
+                              multiline
+                              label="Digest aggregates the events in between the selected time period"
+                            >
+                              <div>Schedule</div>
+                            </Tooltip>
+                          ),
+                        },
                       ]}
                       onChange={async (segmentValue) => {
                         field.onChange(segmentValue);
