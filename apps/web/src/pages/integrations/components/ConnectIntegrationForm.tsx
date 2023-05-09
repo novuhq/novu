@@ -258,7 +258,7 @@ export function ConnectIntegrationForm({
             </InputWrapper>
           )}
 
-          <SharableUrl watch={watch} provider={provider?.providerId} />
+          <SharableUrl provider={provider?.providerId} />
 
           <Stack my={30}>
             <ActiveWrapper active={isActive}>
