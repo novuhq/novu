@@ -73,6 +73,28 @@ export function IntegrationInput({
     );
   }
 
+  if (credential.type === 'boolean') {
+    return (
+      <Switch
+        styles={() => ({
+          root: {
+            display: 'block !important',
+            maxWidth: '100% !important',
+          },
+        })}
+        label={credential.displayName}
+        required={credential.required}
+        placeholder={credential.displayName}
+        description={credential.description ?? ''}
+        data-test-id={credential.key}
+        error={errors[credential.key]?.message}
+        {...register(credential.key)}
+        checked={field.value}
+        onChange={field.onChange}
+      />
+    );
+  }
+
   return (
     <Input
       label={credential.displayName}

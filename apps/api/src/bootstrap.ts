@@ -53,6 +53,13 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
 
+  const server = app.getHttpServer();
+  Logger.verbose(`Server timeout: ${server.timeout}`);
+  server.keepAliveTimeout = 61 * 1000;
+  Logger.verbose(`Server keepAliveTimeout: ${server.keepAliveTimeout / 1000}s `);
+  server.headersTimeout = 65 * 1000;
+  Logger.verbose(`Server headersTimeout: ${server.headersTimeout / 1000}s `);
+
   if (process.env.SENTRY_DSN) {
     app.use(Sentry.Handlers.requestHandler());
     app.use(Sentry.Handlers.tracingHandler());
