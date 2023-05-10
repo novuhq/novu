@@ -221,7 +221,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                   <span>Every</span>
                   <Controller
                     control={control}
-                    name={`steps.${index}.metadata.timed.every`}
+                    name={`steps.${index}.metadata.amount`}
                     defaultValue=""
                     render={({ field, fieldState }) => {
                       return (
@@ -251,7 +251,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                     <span>at</span>
                     <Controller
                       control={control}
-                      name={`steps.${index}.metadata.timed.at`}
+                      name={`steps.${index}.metadata.timed.atTime`}
                       defaultValue=""
                       render={({ field, fieldState }) => {
                         return (
@@ -282,7 +282,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                 <When truthy={unit === DigestUnitEnum.WEEKS}>
                   <Controller
                     control={control}
-                    name={`steps.${index}.metadata.timed.dayOfWeek`}
+                    name={`steps.${index}.metadata.timed.weekDays`}
                     defaultValue=""
                     render={({ field }) => {
                       return (

@@ -157,7 +157,10 @@ export class CreateNotificationJobs {
           notificationId: notification._id,
           transactionId: command.transactionId,
           type: digestStep.metadata.type as DigestTypeEnum, // We already checked it is a DIGEST
-          backoff: digestStep.metadata.backoff,
+          backoff:
+            'backoff' in digestStep.metadata
+              ? digestStep.metadata.backoff
+              : undefined,
         })
       );
     }

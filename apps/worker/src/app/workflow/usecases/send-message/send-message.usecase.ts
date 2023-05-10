@@ -70,6 +70,7 @@ export class SendMessage {
         passedFilters: [],
       });
 
+      const digest = command.job.digest;
       this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
         _template: command.job._templateId,
         _organization: command.organizationId,
@@ -78,10 +79,10 @@ export class SendMessage {
         provider: command.job?.providerId,
         delay: command.job?.delay,
         jobType: command.job?.type,
-        digestType: command.job.digest?.type,
-        digestEventsCount: command.job.digest?.events?.length,
-        digestUnit: command.job.digest?.unit,
-        digestAmount: command.job.digest?.amount,
+        digestType: digest?.type,
+        digestEventsCount: digest?.events?.length,
+        digestUnit: digest && 'unit' in digest ? digest.unit : undefined,
+        digestAmount: digest && 'amount' in digest ? digest.amount : undefined,
         filterPassed: shouldRun,
         preferencesPassed: preferred,
         ...(usedFilters || {}),

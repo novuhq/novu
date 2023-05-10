@@ -127,14 +127,11 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
             type: Schema.Types.Boolean,
           },
           timed: {
-            at: {
+            atTime: {
               type: Schema.Types.String,
             },
-            every: {
-              type: Schema.Types.Number,
-            },
-            dayOfWeek: [Schema.Types.String],
-            day: [Schema.Types.Number],
+            weekDays: [Schema.Types.String],
+            monthDays: [Schema.Types.Number],
             ordinal: {
               type: Schema.Types.String,
             },

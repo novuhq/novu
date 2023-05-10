@@ -1,4 +1,8 @@
-import { DigestUnitEnum, DelayTypeEnum } from '@novu/shared';
+import {
+  DigestUnitEnum,
+  DelayTypeEnum,
+  IDigestRegularMetadata,
+} from '@novu/shared';
 
 import { Logger } from '@nestjs/common';
 import { ApiException } from '../../utils/exceptions';
@@ -37,9 +41,11 @@ export class CalculateDelayService {
       );
     }
 
+    const regularDigestMeta = step.metadata as IDigestRegularMetadata;
+
     return this.toMilliseconds(
-      step.metadata.amount as number,
-      step.metadata.unit as DigestUnitEnum
+      regularDigestMeta.amount,
+      regularDigestMeta.unit
     );
   }
 

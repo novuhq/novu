@@ -2,31 +2,8 @@ import { IsArray, IsBoolean, IsDefined, IsOptional, IsString, MaxLength, Validat
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ICreateNotificationTemplateDto, IPreferenceChannels } from '@novu/shared';
 
-import { StepFilter } from '../../shared/dtos/step-filter';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
-import { MessageTemplate } from '../../shared/dtos/message-template';
-
-class NotificationChannel {
-  @ApiPropertyOptional({
-    type: MessageTemplate,
-  })
-  @ValidateNested()
-  @IsOptional()
-  template?: MessageTemplate;
-
-  @ApiPropertyOptional({
-    type: [StepFilter],
-  })
-  @IsArray()
-  @ValidateNested()
-  @IsOptional()
-  filters?: StepFilter[];
-
-  @ApiPropertyOptional()
-  @IsBoolean()
-  @IsOptional()
-  active?: boolean;
-}
+import { NotificationStep } from '../../shared/dtos/notification-step';
 
 export class CreateNotificationTemplateRequestDto implements ICreateNotificationTemplateDto {
   @ApiProperty()
@@ -53,12 +30,12 @@ export class CreateNotificationTemplateRequestDto implements ICreateNotification
   description: string;
 
   @ApiProperty({
-    type: [NotificationChannel],
+    type: [NotificationStep],
   })
   @IsDefined()
   @IsArray()
   @ValidateNested()
-  steps: NotificationChannel[];
+  steps: NotificationStep[];
 
   @ApiPropertyOptional()
   @IsBoolean()
