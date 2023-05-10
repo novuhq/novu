@@ -96,7 +96,12 @@ export const DigestMetadata = ({ control, index, readonly }) => {
           position="left"
           width={227}
           multiline
-          label="Events aggregated by subscriber_ID by default, this can’t be changed. You may add additional aggregations by typing the name of a variable."
+          label={
+            <>
+              Events aggregated by subscriber_ID by default, this can’t be changed. You may add additional aggregations
+              by typing the name of a variable.
+            </>
+          }
         >
           <Accordion.Item value="group-by" data-test-id="digest-group-by-options">
             <Accordion.Control>

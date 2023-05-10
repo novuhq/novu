@@ -1,4 +1,4 @@
-import { Group, Radio, SimpleGrid } from '@mantine/core';
+import { Group, Radio, SimpleGrid, Text } from '@mantine/core';
 import { DigestUnitEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { When } from '../../../../components/utils/When';
@@ -95,6 +95,15 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
                   }}
                 />
               </SimpleGrid>
+              <Text
+                size={12}
+                color={colors.error}
+                sx={{
+                  lineHeight: '20px',
+                }}
+              >
+                Will not be sent in those months in which there is no such day
+              </Text>
             </Radio.Group>
           );
         }}
