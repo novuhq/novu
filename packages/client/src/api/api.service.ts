@@ -11,6 +11,7 @@ import {
   IStoreQuery,
   IUserPreferenceSettings,
   IUnseenCountQuery,
+  IUnreadCountQuery,
 } from '../index';
 
 export class ApiService {
@@ -147,7 +148,7 @@ export class ApiService {
     );
   }
 
-  async getUnreadCount(query: IUnseenCountQuery = {}) {
+  async getUnreadCount(query: IUnreadCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/unread',
       query as unknown as IParamObject

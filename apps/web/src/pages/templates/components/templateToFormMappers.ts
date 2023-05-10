@@ -45,14 +45,25 @@ const mapInAppStep = (item: IStepEntity): IStepEntity => ({
   },
 });
 
-const mapDigestStep = (item: IStepEntity): IStepEntity => ({
-  ...item,
-  metadata: {
-    ...item.metadata,
-    type: DigestTypeEnum.REGULAR,
-    backoff: true,
-  },
-});
+const mapDigestStep = (item: IStepEntity): IStepEntity => {
+  if (item.metadata?.type === DigestTypeEnum.BACKOFF) {
+    return {
+      ...item,
+      metadata: {
+        ...item.metadata,
+        type: DigestTypeEnum.REGULAR,
+        backoff: true,
+      },
+    };
+  }
+
+  return {
+    ...item,
+    metadata: {
+      ...item.metadata,
+    },
+  };
+};
 
 export const mapNotificationTemplateToForm = (template: INotificationTemplate): IForm => {
   const form: IForm = {
@@ -104,6 +115,10 @@ export const mapFormToCreateNotificationTemplate = (form: IForm): ICreateNotific
       }
 
       delete step.template.enableAvatar;
+    }
+
+    if (step.template.type === StepTypeEnum.DIGEST && step.metadata?.digestKey === '') {
+      delete step.metadata.digestKey;
     }
 
     return step;

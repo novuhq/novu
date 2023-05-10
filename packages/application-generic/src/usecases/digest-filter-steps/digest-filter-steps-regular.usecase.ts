@@ -5,7 +5,7 @@ import {
   NotificationStepEntity,
   NotificationRepository,
 } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { IDigestRegularMetadata, StepTypeEnum } from '@novu/shared';
 
 import { DigestFilterStepsCommand } from './digest-filter-steps.command';
 import { DigestFilterSteps } from './digest-filter-steps.usecase';
@@ -25,7 +25,8 @@ export class DigestFilterStepsRegular {
 
     for (const step of command.steps) {
       if (step?.template?.type === StepTypeEnum.DIGEST) {
-        delayedDigests = await this.getDigest(command, step);
+        const metadata = step.metadata as IDigestRegularMetadata | undefined;
+        delayedDigests = await this.getDigest(command, metadata);
       }
 
       steps.push(step);
@@ -51,7 +52,7 @@ export class DigestFilterStepsRegular {
 
   private async getDigest(
     command: DigestFilterStepsCommand,
-    step: NotificationStepEntity
+    metadata: IDigestRegularMetadata | undefined
   ) {
     const where = {
       status: JobStatusEnum.DELAYED,
@@ -61,7 +62,7 @@ export class DigestFilterStepsRegular {
       _environmentId: command.environmentId,
     };
 
-    const digestKey = step?.metadata?.digestKey;
+    const digestKey = metadata?.digestKey;
     if (digestKey) {
       where['payload.' + digestKey] = DigestFilterSteps.getNestedValue(
         command.payload,

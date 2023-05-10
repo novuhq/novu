@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node';
-import { MessageEntity, MessageRepository, NotificationEntity } from '@novu/dal';
+import { MessageEntity, MessageRepository } from '@novu/dal';
 import { LogCodeEnum } from '@novu/shared';
 import { CreateExecutionDetails } from '@novu/application-generic';
 
@@ -21,7 +21,6 @@ export abstract class SendMessageType {
     errorId: string,
     errorMessageFallback: string,
     command: SendMessageCommand,
-    notification: NotificationEntity,
     logCodeEnum: LogCodeEnum,
     error?: any
   ) {

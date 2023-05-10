@@ -80,6 +80,8 @@ describe('Shell Embed - Seen Read', function () {
       templateId: this.session.templates[0]._id,
     });
 
+    cy.waitForNetworkIdle(500);
+
     cy.get('#notification-bell').click();
 
     getNotifications(0);
