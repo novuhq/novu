@@ -25,6 +25,7 @@ jobs:
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'ee') }}
+      submodules: true
 
   deploy_dev_api:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -42,8 +43,9 @@ jobs:
       matrix:
         name: ['novu/api-ee', 'novu/api']
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
+        with:
+          submodules: ${{ contains (matrix.name,'ee') }}
       - uses: ./.github/actions/docker/build-api
         id: docker_build
         with:

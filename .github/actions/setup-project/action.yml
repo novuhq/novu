@@ -11,6 +11,15 @@ inputs:
     description: 'Should only install dependencies and checkout code'
     required: false
     default: 'false'
+  fetch_depth:
+    description: 'Number of commits to fetch'
+    required: false
+    default: 1
+  submodules:
+    description: 'The flag controlling whether we want submodules to checkout'
+    required: false
+    default: false
+    type: boolean
 outputs:
   cypress_cache_hit:
     description: 'Did cypress use binary cache'
@@ -19,6 +28,12 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: ${{ inputs.fetch_depth }}
+        submodules: ${{ inputs.submodules }}
+
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - name: ⚙️ Setup kernel for react native, increase watchers
       shell: bash

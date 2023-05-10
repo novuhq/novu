@@ -14,6 +14,7 @@ jobs:
     uses: ./.github/workflows/reusable-worker-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'ee') }}
+      submodules: true
 
   build_prod_image:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -34,8 +35,9 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
+        with:
+          submodules: ${{ contains (matrix.name,'ee') }}
 
       - name: build worker
         run: pnpm build:worker

@@ -33,7 +33,6 @@ jobs:
       packages: write
       deployments: write
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
       - name: Build, tag, and push image to Amazon ECR
@@ -111,4 +110,3 @@ jobs:
           service: ${{ env.webhook_ecs_service }}
           cluster: ${{ env.webhook_ecs_cluster }}
           wait-for-service-stability: true
-

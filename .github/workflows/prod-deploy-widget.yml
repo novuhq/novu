@@ -10,6 +10,8 @@ on:
 jobs:
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
+    with:
+      submodules: true
     secrets: inherit
 
   deploy_widget_eu:
@@ -20,7 +22,6 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell
@@ -76,7 +77,6 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell
@@ -131,7 +131,6 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell
@@ -155,5 +154,3 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "::set-output name=IMAGE::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
-
-

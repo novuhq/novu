@@ -17,7 +17,6 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell
@@ -52,7 +51,6 @@ jobs:
     needs: deploy_embed_eu
     timeout-minutes: 80
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell
@@ -87,7 +85,6 @@ jobs:
       - deploy_embed_eu
     timeout-minutes: 80
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
       # Runs a single command using the runners shell

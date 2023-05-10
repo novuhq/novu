@@ -21,7 +21,6 @@ jobs:
       matrix:
         name: [ 'novu/inbound-mail-ee', 'novu/inbound-mail' ]
     steps:
-      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
       - name: build api

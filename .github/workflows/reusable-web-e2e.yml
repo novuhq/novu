@@ -5,6 +5,12 @@ name: Test WEB
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
+    inputs:
+      submodules:
+        description: 'The flag controlling whether we want submodules to checkout'
+        required: false
+        default: false
+        type: boolean
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -28,12 +34,11 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - uses: actions/checkout@v3
-
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
           cypress: true
+          submodules: ${{ inputs.submodules }}
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -118,9 +123,6 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
-
       - uses: ./.github/actions/setup-project
         id: setup-project
 
