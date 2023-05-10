@@ -298,9 +298,10 @@ describe('Creation functionality', function () {
 
     cy.clickWorkflowNode('node-digestSelector');
 
+    cy.getByTestId('digest-send-options').click();
+
     cy.getByTestId('time-amount').should('have.value', '20');
     cy.getByTestId('batch-key').should('have.value', 'id');
-    cy.getByTestId('backoff-amount').should('have.value', '20');
     cy.getByTestId('backoff-amount').should('have.value', '20');
     cy.getByTestId('time-unit').should('have.value', 'min (s)');
     cy.getByTestId('time-unit-backoff').should('have.value', 'min (s)');
