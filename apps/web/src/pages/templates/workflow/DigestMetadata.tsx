@@ -359,7 +359,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                   <Controller
                     control={control}
                     name={`steps.${index}.metadata.amount`}
-                    defaultValue=""
+                    defaultValue={5}
                     render={({ field, fieldState }) => {
                       return (
                         <Input
