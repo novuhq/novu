@@ -2,6 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { sub } from 'date-fns';
 import { IDigestRegularMetadata } from '@novu/shared';
+import { InstrumentUsecase } from '@novu/application-generic';
 
 import { PlatformException } from '../../../../shared/utils';
 import { SendMessageCommand } from '../send-message.command';
@@ -9,6 +10,7 @@ import { GetDigestEvents } from './get-digest-events.usecase';
 
 @Injectable()
 export class GetDigestEventsRegular extends GetDigestEvents {
+  @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const currentJob = await this.jobRepository.findOne({
       _environmentId: command.environmentId,

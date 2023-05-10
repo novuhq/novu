@@ -28,7 +28,7 @@ export class AddDelayJob {
     }
 
     await this.jobRepository.updateStatus(
-      command.organizationId,
+      command.environmentId,
       data._id,
       JobStatusEnum.DELAYED
     );

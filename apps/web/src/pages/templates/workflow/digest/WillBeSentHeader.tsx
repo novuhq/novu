@@ -105,10 +105,10 @@ export const WillBeSentHeader = ({ index }) => {
       );
     }
 
-    if (every !== '1') {
+    if (amount !== '1') {
       return (
         <>
-          Every <Highlight>{getOrdinal(every)} </Highlight> day at <Highlight>{at}</Highlight> <BackoffText />
+          Every <Highlight>{getOrdinal(amount)} </Highlight> day at <Highlight>{atTime}</Highlight> <BackoffText />
         </>
       );
     }

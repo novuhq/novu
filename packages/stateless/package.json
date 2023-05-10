@@ -60,7 +60,7 @@
     "rimraf": "^3.0.2",
     "run-p": "0.0.0",
     "ts-jest": "^27.0.5",
-    "typedoc": "^0.23.0",
+    "typedoc": "^0.24.0",
     "typescript": "4.9.5"
   },
   "files": [

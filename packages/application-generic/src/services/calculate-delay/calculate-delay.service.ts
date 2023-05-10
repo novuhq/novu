@@ -3,10 +3,10 @@ import { differenceInMilliseconds } from 'date-fns';
 import {
   DigestUnitEnum,
   DelayTypeEnum,
-  DigestTypeEnum,
   IDigestRegularMetadata,
   IDigestTimedMetadata,
   INotificationTemplateStepMetadata,
+  DigestTypeEnum,
 } from '@novu/shared';
 
 import { ApiException } from '../../utils/exceptions';

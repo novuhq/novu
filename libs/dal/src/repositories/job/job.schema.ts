@@ -86,6 +86,9 @@ const jobSchema = new Schema<JobDBModel>(
       updateMode: {
         type: Schema.Types.Boolean,
       },
+      backoff: {
+        type: Schema.Types.Boolean,
+      },
       timed: {
         atTime: {
           type: Schema.Types.String,

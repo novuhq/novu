@@ -36,12 +36,8 @@ export const EmailSettings = () => {
 
   useEffect(() => {
     if (environment) {
-      if (environment.dns?.inboundParseDomain) {
-        setValue('inboundParseDomain', environment.dns?.inboundParseDomain);
-      }
-      if (environment.dns?.mxRecordConfigured) {
-        setValue('mxRecordConfigured', environment.dns?.mxRecordConfigured);
-      }
+      setValue('inboundParseDomain', environment.dns?.inboundParseDomain || '');
+      setValue('mxRecordConfigured', environment.dns?.mxRecordConfigured || false);
     }
   }, [environment]);
 
@@ -107,7 +103,6 @@ export const EmailSettings = () => {
                 {...field}
                 mb={30}
                 data-test-id="inbound-parse-domain"
-                disabled={readonly}
                 value={field.value || ''}
                 label={'Allowed Domain'}
                 description={

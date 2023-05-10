@@ -252,7 +252,6 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                     <Controller
                       control={control}
                       name={`steps.${index}.metadata.timed.atTime`}
-                      shouldUnregister
                       defaultValue=""
                       render={({ field, fieldState }) => {
                         return (
@@ -285,7 +284,6 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                     control={control}
                     name={`steps.${index}.metadata.timed.weekDays`}
                     defaultValue=""
-                    shouldUnregister
                     render={({ field }) => {
                       return (
                         <WeekDaySelect

@@ -1,41 +1,38 @@
-import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import styled from '@emotion/styled';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { Stack, Timeline } from '@mantine/core';
+import { Stack, Timeline, useMantineColorScheme } from '@mantine/core';
+import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 
-import { ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
-
+import { getApiKeys } from '../../../api/environment';
+import { getInAppActivated } from '../../../api/integration';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { When } from '../../../components/utils/When';
+import { API_ROOT, WS_URL } from '../../../config';
+import { ROUTES } from '../../../constants/routes.enum';
+import { colors, shadows, Text } from '../../../design-system';
+import { useEnvController } from '../../../hooks';
+import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
-import { useNotificationGroup, useTemplates, useEnvController } from '../../../hooks';
+import { SetupStatus } from '../components/SetupStatus';
 import {
   API_KEY,
   APPLICATION_IDENTIFIER,
   BACKEND_API_URL,
   BACKEND_SOCKET_URL,
+  demoSetupSecondaryTitle,
   frameworkInstructions,
-  notificationTemplateName,
   OnBoardingAnalyticsEnum,
 } from '../consts';
-import { createTemplate } from '../../../api/notification-templates';
-import { LoaderProceedTernary } from '../components/LoaderProceedTernary';
-import { PrismOnCopy } from '../../settings/tabs/components/Prism';
-import { When } from '../../../components/utils/When';
-import { colors } from '../../../design-system';
-import { getInAppActivated } from '../../../api/integration';
-import { useSegment } from '../../../components/providers/SegmentProvider';
-import { getApiKeys } from '../../../api/environment';
-import { API_ROOT, WS_URL } from '../../../config';
-import { ROUTES } from '../../../constants/routes.enum';
 
 export function Setup() {
   const segment = useSegment();
   const { framework } = useParams();
-  const { groups, loading: notificationGroupLoading } = useNotificationGroup();
-  const { templates = [], loading: templatesLoading } = useTemplates();
   const { environment } = useEnvController();
   const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const { data: inAppData } = useQuery<IGetInAppActivatedResponse>(['inAppActive'], async () => getInAppActivated(), {
     refetchInterval: (data) => stopIfInAppActive(data),
@@ -45,47 +42,11 @@ export function Setup() {
   const instructions = frameworkInstructions.find((instruction) => instruction.key === framework)?.value ?? [];
   const environmentIdentifier = environment?.identifier ? environment.identifier : '';
   const goBackRoute = framework === 'demo' ? ROUTES.QUICK_START_NOTIFICATION_CENTER : ROUTES.QUICK_START_SETUP;
-
-  const { mutateAsync: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
-    INotificationTemplate,
-    { error: string; message: string; statusCode: number },
-    ICreateNotificationTemplateDto
-  >(createTemplate);
+  const secondaryTitle = framework === 'demo' ? demoSetupSecondaryTitle : '';
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.FRAMEWORK_SETUP_VISIT, { framework });
   }, []);
-
-  useEffect(() => {
-    if (!templatesLoading && !notificationGroupLoading && !createTemplateLoading) {
-      const onboardingNotificationTemplate = templates.find((template) =>
-        template.name.includes(notificationTemplateName)
-      );
-
-      if (!onboardingNotificationTemplate) {
-        createOnBoardingTemplate();
-      }
-    }
-  }, [templates]);
-
-  async function createOnBoardingTemplate() {
-    const payloadToCreate = {
-      notificationGroupId: groups[0]._id,
-      name: notificationTemplateName,
-      active: true,
-      draft: false,
-      steps: [
-        {
-          template: {
-            type: StepTypeEnum.IN_APP,
-            content: 'Welcome to Novu! <b>visit the cloud admin panel</b> managing this message',
-          },
-        },
-      ],
-    } as ICreateNotificationTemplateDto;
-
-    await createNotificationTemplate(payloadToCreate);
-  }
 
   function handleOnCopy(copiedStepIndex: number) {
     const stepNumber = (copiedStepIndex + 1).toString();
@@ -93,9 +54,9 @@ export function Setup() {
   }
 
   return (
-    <QuickStartWrapper secondaryTitle={<TroubleshootingDescription />} faq={true} goBackPath={goBackRoute}>
+    <QuickStartWrapper faq={true} secondaryTitle={secondaryTitle} goBackPath={goBackRoute}>
       <Stack align="center" sx={{ width: '100%' }}>
-        <TimelineWrapper>
+        <TimelineWrapper isDark={isDark}>
           <Timeline
             active={instructions?.length + 1}
             bulletSize={40}
@@ -109,7 +70,11 @@ export function Setup() {
             {instructions.map((instruction, index) => {
               return (
                 <Timeline.Item
-                  bullet={<div style={{}}>{index + 1}</div>}
+                  bullet={
+                    <div style={{}}>
+                      <Text>{index + 1}</Text>
+                    </div>
+                  }
                   key={index}
                   title={<div>{instruction.instruction}</div>}
                 >
@@ -124,11 +89,19 @@ export function Setup() {
                 </Timeline.Item>
               );
             })}
-            <Timeline.Item bullet={instructions?.length + 1} title={'Waiting for your application to connect to Novu'}>
+            <Timeline.Item
+              bullet={
+                <div style={{}}>
+                  <Text>{instructions?.length + 1}</Text>
+                </div>
+              }
+              title={'Render the components and run application'}
+            >
               <LoaderWrapper>
-                <LoaderProceedTernary
+                <SetupStatus
                   appInitialized={inAppData.active}
-                  navigatePath={`/quickstart/notification-center/set-up/${framework}/trigger`}
+                  navigatePath={`/quickstart/notification-center/set-up/${framework}/success`}
+                  framework={framework}
                 />
               </LoaderWrapper>
             </Timeline.Item>
@@ -164,15 +137,6 @@ export function OpenBrowser() {
   );
 }
 
-export function TroubleshootingDescription() {
-  return (
-    <Stack align="center" sx={{ gap: '20px' }}>
-      <span>Follow the installation steps and then sit back while we</span>
-      <span>connect to your application</span>
-    </Stack>
-  );
-}
-
 interface IGetInAppActivatedResponse {
   active: boolean;
 }
@@ -181,14 +145,15 @@ function stopIfInAppActive(data) {
   return data?.active ? false : 3000;
 }
 
-const TimelineWrapper = styled.div`
+const TimelineWrapper = styled.div<{ isDark: boolean }>`
   width: 100%;
-
+  padding: 10px;
+  border-radius: 7px;
   .mantine-Timeline-itemBullet {
-    background-color: ${colors.B30};
+    background-color: ${({ isDark }) => (isDark ? colors.B30 : colors.BGLight)};
     color: white;
     font-size: 16px;
     font-weight: bold;
-    box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: ${({ isDark }) => (isDark ? shadows.dark : shadows.light)};
   }
 `;

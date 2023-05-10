@@ -32,7 +32,6 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
                 control={control}
                 name={`steps.${index}.metadata.timed.monthDays`}
                 defaultValue=""
-                shouldUnregister
                 render={({ field }) => {
                   return (
                     <DaySelect
