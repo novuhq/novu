@@ -49,12 +49,14 @@ export class HeadlessService {
   private api: ApiService;
   private queryClient: QueryClient = null;
   private queryService: QueryService;
+  private session: ISession | null = null;
+
   private socket: {
     on: (event: string, listener: (data?: unknown) => void) => void;
     off: (event: string) => void;
     disconnect: () => void;
   } | null = null;
-  private session: ISession | null = null;
+
   private sessionQueryOptions: QueryObserverOptions<ISession, unknown> = {
     queryKey: SESSION_QUERY_KEY,
     cacheTime: Infinity,
@@ -66,6 +68,7 @@ export class HeadlessService {
         this.options.subscriberHash
       ),
   };
+
   private organizationQueryOptions: QueryObserverOptions<
     IOrganizationEntity,
     unknown
@@ -75,6 +78,7 @@ export class HeadlessService {
     staleTime: Infinity,
     queryFn: () => this.api.getOrganization(),
   };
+
   private unseenCountQueryOptions: QueryObserverOptions<
     { count: number },
     unknown
@@ -82,6 +86,7 @@ export class HeadlessService {
     queryKey: UNSEEN_COUNT_QUERY_KEY,
     queryFn: () => this.api.getUnseenCount(),
   };
+
   private unreadCountQueryOptions: QueryObserverOptions<
     { count: number },
     unknown
@@ -89,6 +94,7 @@ export class HeadlessService {
     queryKey: UNREAD_COUNT_QUERY_KEY,
     queryFn: () => this.api.getUnreadCount(),
   };
+
   private userPreferencesQueryOptions: QueryObserverOptions<
     IUserPreferenceSettings[],
     unknown
@@ -513,6 +519,63 @@ export class HeadlessService {
           this.api.markMessageAs(variables.messageId, {
             seen: true,
             read: true,
+          }),
+        onSuccess: (data) => {
+          this.queryClient.setQueriesData<IMessage[]>(
+            { queryKey: NOTIFICATIONS_QUERY_KEY, exact: false },
+            (oldMessages) =>
+              oldMessages.map((message) => {
+                if (message._id === data._id) {
+                  return data;
+                }
+
+                return message;
+              })
+          );
+        },
+      },
+      listener: (res) => this.callUpdateListener(res, listener),
+    });
+
+    result
+      .mutate({ messageId })
+      .then((data) => {
+        onSuccess?.(data);
+
+        return data;
+      })
+      .catch((error) => {
+        onError?.(error);
+      })
+      .finally(() => {
+        unsubscribe();
+      });
+  }
+
+  public async markNotificationsAsSeen({
+    messageId,
+    listener,
+    onSuccess,
+    onError,
+  }: {
+    messageId: IMessageId;
+    listener: (
+      result: UpdateResult<IMessage, unknown, { messageId: IMessageId }>
+    ) => void;
+    onSuccess?: (message: IMessage) => void;
+    onError?: (error: unknown) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      IMessage,
+      unknown,
+      { messageId: IMessageId }
+    >({
+      options: {
+        mutationFn: (variables) =>
+          this.api.markMessageAs(variables.messageId, {
+            seen: true,
           }),
         onSuccess: (data) => {
           this.queryClient.setQueriesData<IMessage[]>(

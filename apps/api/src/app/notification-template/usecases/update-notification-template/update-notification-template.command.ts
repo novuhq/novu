@@ -1,7 +1,8 @@
 import { IsArray, IsBoolean, IsDefined, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { IPreferenceChannels } from '@novu/shared';
-import { NotificationStep } from '../../../shared/dtos/notification-step';
+
+import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { NotificationStep } from '../create-notification-template';
 
 export class UpdateNotificationTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -40,7 +41,7 @@ export class UpdateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsArray()
   @ValidateNested()
   @IsOptional()
-  steps?: NotificationStep[];
+  steps?: Array<NotificationStep & { _templateId?: string }>;
 
   @ValidateNested()
   @IsOptional()

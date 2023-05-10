@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
@@ -9,6 +10,7 @@ import {
   Post,
   Put,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -21,7 +23,7 @@ import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-sub
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { ButtonTypeEnum, IJwtPayload } from '@novu/shared';
+import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
 import {
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
@@ -62,6 +64,11 @@ import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { HandleChatOauth } from './usecases/handle-chat-oauth/handle-chat-oauth.usecase';
+import { HandleChatOauthCommand } from './usecases/handle-chat-oauth/handle-chat-oauth.command';
+import { HandleChatOauthRequestDto } from './dtos/handle-chat-oauth.request.dto';
+import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
+import { OAuthHandlerEnum } from './types';
 
 @Controller('/subscribers')
 @ApiTags('Subscribers')
@@ -76,10 +83,11 @@ export class SubscribersController {
     private getPreferenceUsecase: GetPreferences,
     private updatePreferenceUsecase: UpdatePreference,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
-    private genFeedCountUsecase: GetFeedCount,
+    private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
     private updateMessageActionsUsecase: UpdateMessageActions,
-    private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag
+    private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
+    private handleChatOauthUsecase: HandleChatOauth
   ) {}
 
   @Get('')
@@ -205,6 +213,7 @@ export class SubscribersController {
         subscriberId,
         providerId: body.providerId,
         credentials: body.credentials,
+        oauthHandler: OAuthHandlerEnum.EXTERNAL,
       })
     );
   }
@@ -339,7 +348,9 @@ export class SubscribersController {
     @UserSession() user: IJwtPayload,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean,
-    @Param('subscriberId') subscriberId: string
+    @Param('subscriberId') subscriberId: string,
+    // todo NV-2161 update DefaultValuePipe to 100 in version 0.16
+    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     let feedsQuery: string[] | undefined;
     if (feedId) {
@@ -352,9 +363,10 @@ export class SubscribersController {
       environmentId: user.environmentId,
       feedId: feedsQuery,
       seen,
+      limit,
     });
 
-    return await this.genFeedCountUsecase.execute(command);
+    return await this.getFeedCountUsecase.execute(command);
   }
 
   @ExternalApiAccessible()
@@ -439,6 +451,36 @@ export class SubscribersController {
         status: body.status,
       })
     );
+  }
+
+  @ExternalApiAccessible()
+  @Get('/:subscriberId/:providerId/:environmentId')
+  @ApiOperation({
+    summary: 'Handle chat OAuth',
+  })
+  async chatAccessOauth(
+    @Param('subscriberId') subscriberId: string,
+    @Param('providerId') providerId: ChatProviderIdEnum,
+    @Param('environmentId') environmentId: string,
+    @Query() query: HandleChatOauthRequestDto,
+    @Res() res
+  ): Promise<any> {
+    const data = await this.handleChatOauthUsecase.execute(
+      HandleChatOauthCommand.create({
+        providerCode: query.code,
+        environmentId,
+        subscriberId,
+        providerId: providerId,
+      })
+    );
+
+    if (data.redirect) {
+      res.redirect(data.action);
+    } else {
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+      res.send(data.action);
+    }
   }
 
   private toArray(param: string[] | string): string[] | undefined {

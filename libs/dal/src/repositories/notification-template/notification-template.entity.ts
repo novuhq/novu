@@ -3,10 +3,8 @@ import {
   FilterParts,
   BuilderFieldType,
   BuilderGroupValues,
-  DigestUnitEnum,
-  DigestTypeEnum,
   IPreferenceChannels,
-  DelayTypeEnum,
+  INotificationTemplateStepMetadata,
   TemplateVariableTypeEnum,
   DaysEnum,
 } from '@novu/shared';
@@ -109,26 +107,7 @@ export class NotificationStepEntity {
 
   _parentId?: string | null;
 
-  metadata?: {
-    amount?: number;
-    unit?: DigestUnitEnum;
-    digestKey?: string;
-    delayPath?: string;
-    type: DigestTypeEnum | DelayTypeEnum;
-    backoff?: boolean;
-    backoffUnit?: DigestUnitEnum;
-    backoffAmount?: number;
-    updateMode?: boolean;
-    timed?: {
-      at?: string;
-      every?: number;
-      dayOfWeek?: DaysEnum[];
-      day?: number[];
-      ordinal?: string;
-      ordinalValue?: string;
-      monthlyType?: string;
-    };
-  };
+  metadata?: INotificationTemplateStepMetadata;
 
   shouldStopOnFail?: boolean;
 }
