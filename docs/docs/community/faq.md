@@ -69,7 +69,7 @@ Affected schemes:
 
 - Notification (1 month)
 - Job (1 month)
-- Message (in app - 6 months, all others - 1 month)
+- Message (in app - 1 year, all others - 1 month)
 - ExecutionDetails (1 month)
 
 </details>

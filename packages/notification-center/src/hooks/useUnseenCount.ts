@@ -17,10 +17,11 @@ const dispatchUnseenCountEvent = (count: number) => {
  *
  * Can also happen in real scenarios, so we need to review how we handle concurrency in the future
  */
-const DEBOUNCE_TIME = typeof window !== 'undefined' && (window as any)?.Cypress ? 500 : 100;
+const DEBOUNCE_TIME = typeof window !== 'undefined' && (window as any)?.Cypress ? 1000 : 100;
 
 export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<ICountData, Error, ICountData> = {}) => {
-  const { apiService, socket, isSessionInitialized, fetchingStrategy } = useNovuContext();
+  const { apiService, socket, isSessionInitialized, fetchingStrategy, subscriberId } = useNovuContext();
+
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -32,15 +33,20 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
       'unseen_count_changed',
       debounce((data?: { unseenCount: number }) => {
         if (Number.isInteger(data?.unseenCount)) {
-          queryClient.setQueryData<{ count: number }>(UNSEEN_COUNT_QUERY_KEY, (oldData) => ({
+          queryClient.setQueryData<{ count: number }>([...UNSEEN_COUNT_QUERY_KEY, subscriberId], (oldData) => ({
             count: data?.unseenCount ?? oldData.count,
           }));
+
+          queryClient.refetchQueries(UNSEEN_COUNT_QUERY_KEY, {
+            exact: false,
+          });
           queryClient.refetchQueries(INFINITE_NOTIFICATIONS_QUERY_KEY, {
             exact: false,
           });
-          queryClient.refetchQueries(FEED_UNSEEN_COUNT_QUERY_KEY, {
+          queryClient.refetchQueries([...FEED_UNSEEN_COUNT_QUERY_KEY, subscriberId], {
             exact: false,
           });
+
           dispatchUnseenCountEvent(data.unseenCount);
         }
       }, DEBOUNCE_TIME)
@@ -51,14 +57,18 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
     };
   }, [socket, queryClient]);
 
-  const result = useQuery<ICountData, Error, ICountData>(UNSEEN_COUNT_QUERY_KEY, () => apiService.getUnseenCount(), {
-    ...restOptions,
-    enabled: isSessionInitialized && fetchingStrategy.fetchUnseenCount,
-    onSuccess: (data) => {
-      dispatchUnseenCountEvent(data.count);
-      onSuccess?.(data);
-    },
-  });
+  const result = useQuery<ICountData, Error, ICountData>(
+    [...UNSEEN_COUNT_QUERY_KEY, subscriberId],
+    () => apiService.getUnseenCount({ limit: 100 }),
+    {
+      ...restOptions,
+      enabled: isSessionInitialized && fetchingStrategy.fetchUnseenCount,
+      onSuccess: (data) => {
+        dispatchUnseenCountEvent(data.count);
+        onSuccess?.(data);
+      },
+    }
+  );
 
   return result;
 };

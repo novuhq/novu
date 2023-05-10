@@ -51,6 +51,7 @@ const mockConfig = {
   apiKey: 'testApiKey',
   apiSecret: 'testSecret',
   from: 'testFrom@test.com',
+  senderName: 'testSender',
 };
 const mockMessageConfig = {
   to: ['testTo@test2.com'],
@@ -67,7 +68,7 @@ test('should trigger mailjet library correctly and return proper response', asyn
   expect(requestFn).toBeCalledWith({
     Messages: [
       {
-        From: { Email: mockConfig.from },
+        From: { Email: mockConfig.from, Name: mockConfig.senderName },
         HTMLPart: mockMessageConfig.html,
         Subject: mockMessageConfig.subject,
         TextPart: undefined,

@@ -1,3 +1,4 @@
+import '../../src/config';
 import {
   MessageRepository,
   NotificationRepository,
@@ -8,6 +9,8 @@ import {
   JobStatusEnum,
 } from '@novu/dal';
 import { addMinutes, addMonths } from 'date-fns';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from '../../src/app.module';
 
 const messageRepository = new MessageRepository();
 const notificationRepository = new NotificationRepository();
@@ -17,9 +20,13 @@ const organizationRepository = new OrganizationRepository();
 const environmentRepository = new EnvironmentRepository();
 const now = Date.now();
 let expireAtOneMonth = addMonths(now, 1);
-let expireAtSixMonths = addMonths(now, 6);
+let expireAtOneYear = addMonths(now, 12);
 
 export async function createExpireAt() {
+  const app = await NestFactory.create(AppModule, {
+    logger: false,
+  });
+
   // eslint-disable-next-line no-console
   console.log('start migration - add expireAt field');
 
@@ -27,7 +34,12 @@ export async function createExpireAt() {
   console.log('get organizations and its environments');
 
   const organizations = await organizationRepository.find({});
+  const totalOrganizations = organizations.length;
+  let currentOrganization = 0;
   for (const organization of organizations) {
+    currentOrganization += 1;
+    console.log(`organization ${currentOrganization} of ${totalOrganizations}`);
+
     const environments = await environmentRepository.findOrganizationEnvironments(organization._id);
     for (const environment of environments) {
       const query = {
@@ -36,11 +48,15 @@ export async function createExpireAt() {
         expireAt: { $exists: false },
       };
       expireAtOneMonth = addMinutes(expireAtOneMonth, Math.floor(Math.random() * 4320));
-      expireAtSixMonths = addMinutes(expireAtSixMonths, Math.floor(Math.random() * 4320));
+      expireAtOneYear = addMinutes(expireAtOneYear, Math.floor(Math.random() * 4320));
 
+      console.log('Setting messages');
       await messagesSetExpireAt(query);
+      console.log('Setting notifications');
       await notificationExpireAt(query);
     }
+
+    console.log('Prococessed organization' + organization._id);
   }
 
   // eslint-disable-next-line no-console
@@ -61,7 +77,7 @@ export async function messagesSetExpireAt(query) {
       ...query,
       channel: 'in_app',
     },
-    { $set: { expireAt: expireAtSixMonths } }
+    { $set: { expireAt: expireAtOneYear } }
   );
 }
 
@@ -101,3 +117,5 @@ export async function getExcludedNotificationIds(query) {
     })
     .read('secondaryPreferred');
 }
+
+createExpireAt();

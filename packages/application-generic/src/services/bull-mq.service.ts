@@ -1,5 +1,7 @@
 import {
   JobsOptions,
+  Metrics,
+  MetricsTime,
   Processor,
   Queue,
   QueueOptions,
@@ -7,6 +9,11 @@ import {
   WorkerOptions,
 } from 'bullmq';
 import { Logger } from '@nestjs/common';
+
+interface IQueueMetrics {
+  completed: Metrics;
+  failed: Metrics;
+}
 
 export class BullmqService {
   private _queue: Queue;
@@ -34,6 +41,13 @@ export class BullmqService {
 
   private runningWithProQueue() {
     return BullmqService.pro && BullmqService.haveProInstalled();
+  }
+
+  public async getQueueMetrics(): Promise<IQueueMetrics> {
+    return {
+      completed: await this._queue.getMetrics('completed'),
+      failed: await this._queue.getMetrics('failed'),
+    };
   }
 
   public createQueue(name: string, config: QueueOptions) {
@@ -64,8 +78,15 @@ export class BullmqService {
     const WorkerClass = !BullmqService.pro
       ? Worker
       : require('@taskforcesh/bullmq-pro').WorkerPro;
+
+    let internalOptions: WorkerOptions = {};
+    if (options) {
+      internalOptions = options;
+    }
+    internalOptions.metrics = { maxDataPoints: MetricsTime.ONE_MONTH };
+
     this._worker = new WorkerClass(name, processor, {
-      ...options,
+      ...internalOptions,
       ...(BullmqService.pro
         ? {
             group: {},

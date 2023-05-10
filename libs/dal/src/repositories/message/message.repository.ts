@@ -86,22 +86,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return this.mapEntities(messages);
   }
 
-  async getTotalCount(
-    environmentId: string,
-    subscriberId: string,
-    channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
-  ) {
-    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query);
-
-    return this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
-  }
-
   async getCount(
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {}
+    query: { feedId?: string[]; seen?: boolean; read?: boolean } = {},
+    options: { limit: number } = { limit: 1000 } // todo NV-2161 update to 100 in version 0.16
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
       feedId: query.feedId,
@@ -109,7 +99,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read: query.read,
     });
 
-    return this.MongooseModel.countDocuments(requestQuery).read('secondaryPreferred');
+    return this.MongooseModel.countDocuments(requestQuery, options).read('secondaryPreferred');
   }
 
   async markAllMessagesAs({
