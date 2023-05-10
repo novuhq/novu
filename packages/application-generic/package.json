@@ -71,6 +71,7 @@
     "@novu/outlook365": "^0.14.0",
     "@novu/plivo": "^0.14.0",
     "@novu/postmark": "^0.14.0",
+    "@novu/push-api": "^0.14.0",
     "@novu/push-webhook": "^0.14.0",
     "@novu/resend": "^0.14.0",
     "@novu/sendgrid": "^0.14.0",

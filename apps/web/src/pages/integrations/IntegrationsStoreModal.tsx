@@ -327,6 +327,8 @@ export interface ICredentials {
   requireTls?: boolean;
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;
+  privateKey?: string;
+  publicKey?: string;
 }
 
 export interface IntegrationEntity {

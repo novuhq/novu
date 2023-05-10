@@ -25,6 +25,8 @@ export enum CredentialsKeyEnum {
   IgnoreTls = 'ignoreTls',
   TlsOptions = 'tlsOptions',
   RedirectUrl = 'redirectUrl',
+  PublicKey = 'publicKey',
+  PrivateKey = 'privateKey',
 }
 
 export enum EmailProviderIdEnum {
@@ -79,6 +81,7 @@ export enum PushProviderIdEnum {
   EXPO = 'expo',
   OneSignal = 'one-signal',
   PushWebhook = 'push-webhook',
+  PushAPI = 'push-api',
 }
 
 export enum InAppProviderIdEnum {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
 import {
   MessageRepository,
@@ -63,6 +63,8 @@ export class SendMessagePush extends SendMessageBase {
     });
     if (!subscriber) throw new PlatformException(`Subscriber not found`);
 
+    Logger.log('JOHNMARK/SUBSCRIBER', JSON.stringify(subscriber, null, 2));
+
     Sentry.addBreadcrumb({
       message: 'Sending Push',
     });
@@ -103,6 +105,8 @@ export class SendMessagePush extends SendMessageBase {
       return;
     }
 
+    Logger.log('JOHNMARK/pushchannels', JSON.stringify(subscriber.channels, null, 2));
+
     const pushChannels =
       subscriber.channels?.filter((chan) =>
         Object.values(PushProviderIdEnum).includes(chan.providerId as PushProviderIdEnum)
@@ -117,6 +121,7 @@ export class SendMessagePush extends SendMessageBase {
       return;
     }
 
+    Logger.log('JOHNMARK', JSON.stringify(pushChannels, null, 2));
     for (const channel of pushChannels) {
       if (!channel.credentials?.deviceTokens) {
         await this.createExecutionDetails.execute(
@@ -133,17 +138,17 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      const integration = await this.getIntegration(
-        GetDecryptedIntegrationsCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          channelType: ChannelTypeEnum.PUSH,
-          providerId: channel.providerId,
-          findOne: true,
-          active: true,
-          userId: command.userId,
-        })
-      );
+      const cmd = GetDecryptedIntegrationsCommand.create({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        channelType: ChannelTypeEnum.PUSH,
+        providerId: channel.providerId,
+        findOne: true,
+        active: true,
+        userId: command.userId,
+      });
+      Logger.log('JOHNMARK', cmd);
+      const integration = await this.getIntegration(cmd);
 
       if (!integration) {
         await this.createExecutionDetails.execute(

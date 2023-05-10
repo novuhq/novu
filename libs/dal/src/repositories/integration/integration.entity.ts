@@ -30,6 +30,8 @@ export interface ICredentials {
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;
   redirectUrl?: string;
+  privateKey?: string;
+  publicKey?: string;
 }
 
 export class IntegrationEntity {

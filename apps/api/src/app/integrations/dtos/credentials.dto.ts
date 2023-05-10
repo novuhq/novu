@@ -45,4 +45,8 @@ export class CredentialsDto {
   baseUrl?: string;
   @ApiPropertyOptional()
   webhookUrl?: string;
+  @ApiPropertyOptional()
+  privateKey?: string;
+  @ApiPropertyOptional()
+  publicKey?: string;
 }

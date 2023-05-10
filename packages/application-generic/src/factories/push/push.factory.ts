@@ -7,6 +7,7 @@ import {
   OneSignalHandler,
   PushWebhookHandler,
 } from './handlers';
+import { PushAPIHandler } from './handlers/push-api.handler';
 
 export class PushFactory implements IPushFactory {
   handlers: IPushHandler[] = [
@@ -14,6 +15,7 @@ export class PushFactory implements IPushFactory {
     new ExpoHandler(),
     new APNSHandler(),
     new OneSignalHandler(),
+    new PushAPIHandler(),
     new PushWebhookHandler(),
   ];
 
