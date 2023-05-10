@@ -1,8 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { ICredentials } from '@novu/dal';
 import { NodemailerProvider } from '@novu/nodemailer';
-import { ConnectionOptions } from 'tls';
-
 import { BaseHandler } from './base.handler';
 
 export class NodemailerHandler extends BaseHandler {
@@ -25,6 +23,7 @@ export class NodemailerHandler extends BaseHandler {
         keySelector: credentials.accountSid,
         privateKey: credentials.secretKey,
       },
+      senderName: credentials.senderName,
     });
   }
 }
