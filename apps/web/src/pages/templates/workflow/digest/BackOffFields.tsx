@@ -1,9 +1,10 @@
 import { Group } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
-import { colors, Input, Switch } from '../../../../design-system';
+import { colors, Input, Switch, Tooltip } from '../../../../design-system';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { IntervalSelect } from './IntervalSelect';
 import { Collapse } from '@mantine/core';
+import { BackOffTooltipIcon } from './BackOffTooltipIcon';
 
 export const BackOffFields = ({ index, control, readonly }) => {
   const {
@@ -16,17 +17,32 @@ export const BackOffFields = ({ index, control, readonly }) => {
 
   return (
     <>
-      <Group spacing={0} mt={20} sx={{ color: colors.B60 }}>
-        <Controller
-          name={`steps.${index}.metadata.backoff`}
-          defaultValue={false}
-          control={control}
-          render={({ field }) => {
-            return <Switch data-test-id="backoff-switch" checked={field.value === true} onChange={field.onChange} />;
-          }}
-        />
-        <div>Only frequent events</div>
-      </Group>
+      <Tooltip
+        width={312}
+        multiline
+        position="left"
+        label={
+          <>
+            <div>
+              When the 2nd event occurs after the previous digest was sent, system starts to aggregate any further
+              events.
+            </div>
+            <BackOffTooltipIcon />
+          </>
+        }
+      >
+        <Group spacing={0} mt={20} sx={{ color: colors.B60 }}>
+          <Controller
+            name={`steps.${index}.metadata.backoff`}
+            defaultValue={false}
+            control={control}
+            render={({ field }) => {
+              return <Switch data-test-id="backoff-switch" checked={field.value === true} onChange={field.onChange} />;
+            }}
+          />
+          <div>Only frequent events</div>
+        </Group>
+      </Tooltip>
       <Collapse in={backoff}>
         <div style={{ color: colors.B60, marginBottom: 16, marginTop: 16 }}>Start digest only after occurred:</div>
         <Group spacing={8} sx={{ color: colors.B60 }}>
