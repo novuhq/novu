@@ -10,6 +10,8 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
   const { watch, trigger } = useFormContext();
 
   const unit = watch(`steps.${index}.metadata.unit`);
+  const ordinal = watch(`steps.${index}.metadata.timed.ordinal`);
+  const ordinalValue = watch(`steps.${index}.metadata.timed.ordinalValue`);
 
   return (
     <When truthy={unit === DigestUnitEnum.MONTHS}>
@@ -101,15 +103,22 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
                   }}
                 />
               </SimpleGrid>
-              <Text
-                size={12}
-                color={colors.error}
-                sx={{
-                  lineHeight: '20px',
-                }}
+              <When
+                truthy={
+                  ordinal === OrdinalEnum.FIFTH &&
+                  ![OrdinalValueEnum.DAY, OrdinalValueEnum.WEEKDAY, undefined].includes(ordinalValue)
+                }
               >
-                Will not be sent in those months in which there is no such day
-              </Text>
+                <Text
+                  size={12}
+                  color={colors.error}
+                  sx={{
+                    lineHeight: '20px',
+                  }}
+                >
+                  Will not be sent in those months in which there is no such day
+                </Text>
+              </When>
             </Radio.Group>
           );
         }}
