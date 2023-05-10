@@ -16,6 +16,7 @@ import {
   maqsamConfig,
   smsCentralConfig,
   termiiConfig,
+  africasTalkingConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -152,5 +153,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: termiiConfig,
     docReference: 'https://developers.termii.com/authentication',
     logoFileName: { light: 'termii.png', dark: 'termii.png' },
+  },
+  {
+    id: SmsProviderIdEnum.AfricasTalking,
+    displayName: `Africa's Talking`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: africasTalkingConfig,
+    docReference: 'https://developers.africastalking.com/',
+    logoFileName: { light: 'africas-talking.svg', dark: 'africas-talking.svg' },
   },
 ];

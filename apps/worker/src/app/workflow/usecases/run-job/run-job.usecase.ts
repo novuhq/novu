@@ -2,13 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
-import { InstrumentUsecase, PinoLogger, StorageHelperService } from '@novu/application-generic';
+import { Instrument, InstrumentUsecase, PinoLogger, StorageHelperService } from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
-import { PlatformException } from '../../../shared/utils/exceptions';
-import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils/constants';
+import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER } from '../../../shared/utils';
 
 @Injectable()
 export class RunJob {
@@ -45,7 +44,7 @@ export class RunJob {
     let shouldQueueNextJob = true;
 
     try {
-      await this.jobRepository.updateStatus(command.organizationId, job._id, JobStatusEnum.RUNNING);
+      await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.RUNNING);
 
       await this.storageHelperService.getAttachments(job.payload?.attachments);
 
@@ -57,6 +56,7 @@ export class RunJob {
           step: job.step,
           transactionId: job.transactionId,
           notificationId: job._notificationId,
+          _templateId: job._templateId,
           environmentId: job._environmentId,
           organizationId: job._organizationId,
           userId: job._userId,
@@ -89,6 +89,7 @@ export class RunJob {
     }
   }
 
+  @Instrument()
   private async delayedEventIsCanceled(job: JobEntity): Promise<boolean> {
     if (job.type !== StepTypeEnum.DIGEST && job.type !== StepTypeEnum.DELAY) {
       return false;

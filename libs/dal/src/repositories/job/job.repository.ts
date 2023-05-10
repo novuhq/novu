@@ -30,21 +30,23 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         jobs[index]._parentId = stored[index - 1]._id;
       }
 
-      const created = await this.create(jobs[index]);
-      stored.push(created);
+      const created = new this.MongooseModel(jobs[index]);
+      stored.push(this.mapEntity(created));
     }
+
+    await this.MongooseModel.insertMany(stored, { ordered: true });
 
     return stored;
   }
 
   public async updateStatus(
-    organizationId: string,
+    environmentId: string,
     jobId: string,
     status: JobStatusEnum
-  ): Promise<{ matched: number; modified: number }> {
-    return await this.update(
+  ): Promise<{ matchedCount: number; modifiedCount: number }> {
+    return this.MongooseModel.updateOne(
       {
-        _organizationId: organizationId,
+        _environmentId: environmentId,
         _id: jobId,
       },
       {

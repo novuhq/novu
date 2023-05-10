@@ -1,4 +1,4 @@
-import { addAndEditChannel, clickWorkflow, dragAndDrop, fillBasicNotificationDetails, goBack } from '.';
+import { addAndEditChannel, clickWorkflow, dragAndDrop, editChannel, fillBasicNotificationDetails, goBack } from '.';
 
 describe('Creation functionality', function () {
   beforeEach(function () {
@@ -343,6 +343,41 @@ describe('Creation functionality', function () {
     cy.getByTestId('add-delay-node').click();
     cy.clickWorkflowNode('node-delaySelector');
     cy.getByTestId('delay-type').should('be.visible');
+  });
+
+  it('should be able to add huge amount of nodes.', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/templates/create');
+    });
+    fillBasicNotificationDetails('Test 15 Nodes');
+    goBack();
+    cy.waitForNetworkIdle(500);
+
+    for (let i = 0; i < 15; i++) {
+      cy.getByTestId('button-add').last().click();
+      cy.getByTestId('add-email-node').click();
+    }
+
+    editChannel('email', true);
+
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('emailPreheader').type('this is email preheader');
+    cy.waitForNetworkIdle(500);
+    goBack();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('node-emailSelector').should('have.length', 15);
+
+    editChannel('email', true);
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('editable-text-content').contains('This text is written from a test');
+    cy.getByTestId('emailSubject').should('have.value', 'this is email subject');
+    cy.getByTestId('emailPreheader').should('have.value', 'this is email preheader');
   });
 });
 
