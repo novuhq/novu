@@ -14,6 +14,7 @@ import { WillBeSentHeader } from './digest/WillBeSentHeader';
 import { ScheduleMonthlyFields } from './digest/ScheduleMonthlyFields';
 import { useEffect } from 'react';
 import { RegularInfo } from './digest/RegularInfo';
+import { format } from 'date-fns';
 
 const convertUnitToLabel = (unit: DigestUnitEnum) => {
   switch (unit) {
@@ -275,12 +276,12 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                   <Controller
                     control={control}
                     name={`steps.${index}.metadata.amount`}
-                    defaultValue=""
+                    defaultValue={1}
                     render={({ field, fieldState }) => {
                       return (
                         <Input
                           {...field}
-                          value={field.value || '1'}
+                          value={field.value}
                           error={showErrors && fieldState.error?.message}
                           min={1}
                           max={100}
@@ -305,7 +306,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                     <Controller
                       control={control}
                       name={`steps.${index}.metadata.timed.atTime`}
-                      defaultValue=""
+                      defaultValue={format(new Date(), 'HH:mm')}
                       render={({ field, fieldState }) => {
                         return (
                           <Input
@@ -336,7 +337,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                   <Controller
                     control={control}
                     name={`steps.${index}.metadata.timed.weekDays`}
-                    defaultValue=""
+                    defaultValue={[format(new Date(), 'EEEE').toLowerCase()]}
                     render={({ field }) => {
                       return (
                         <WeekDaySelect
