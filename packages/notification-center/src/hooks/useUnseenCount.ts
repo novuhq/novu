@@ -21,7 +21,8 @@ const dispatchUnseenCountEvent = (count: number) => {
 const DEBOUNCE_TIME = typeof window !== 'undefined' && (window as any)?.Cypress ? 1000 : 100;
 
 export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<ICountData, Error, ICountData> = {}) => {
-  const { apiService, socket, isSessionInitialized, fetchingStrategy } = useNovuContext();
+  const { apiService, socket, isSessionInitialized, fetchingStrategy, subscriberId } = useNovuContext();
+
   const queryClient = useQueryClient();
   const setQueryKey = useSetQueryKey();
 
@@ -44,7 +45,7 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
           queryClient.refetchQueries(INFINITE_NOTIFICATIONS_QUERY_KEY, {
             exact: false,
           });
-          queryClient.refetchQueries(FEED_UNSEEN_COUNT_QUERY_KEY, {
+          queryClient.refetchQueries([...FEED_UNSEEN_COUNT_QUERY_KEY, subscriberId], {
             exact: false,
           });
 

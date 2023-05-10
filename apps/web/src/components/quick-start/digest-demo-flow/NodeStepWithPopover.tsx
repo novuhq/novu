@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import styled from '@emotion/styled';
+
 import { useLocation, useParams } from 'react-router-dom';
 
-import { colors, Popover, Text } from '../../design-system';
+import { Popover } from '../../../design-system';
 import {
   guidePreview,
   guidePlayground,
@@ -11,11 +11,12 @@ import {
   HINT_MIDDLE_OPACITY,
   HINT_VISIBLE_OPACITY,
 } from './consts';
-import { ROUTES } from '../../constants/routes.enum';
-import { parseUrl } from '../../utils/routeUtils';
-import { OnBoardingAnalyticsEnum } from '../../pages/quick-start/consts';
-import { useSegment } from '../providers/SegmentProvider';
+import { ROUTES } from '../../../constants/routes.enum';
+import { parseUrl } from '../../../utils/routeUtils';
+import { OnBoardingAnalyticsEnum } from '../../../pages/quick-start/consts';
+import { useSegment } from '../../providers/SegmentProvider';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
+import { NodeStep } from '../common';
 
 const getOpacity = (id: string, hoveredHintId?: string, sequence?: { opacity: number }): number => {
   if (hoveredHintId) {
@@ -25,7 +26,7 @@ const getOpacity = (id: string, hoveredHintId?: string, sequence?: { opacity: nu
   return sequence?.opacity ?? HINT_VISIBLE_OPACITY;
 };
 
-export function NodeStep({
+export function NodeStepWithPopover({
   data,
   id,
   Handlers,
@@ -89,17 +90,7 @@ export function NodeStep({
       opacity={getOpacity(id, hoveredHintId, sequence)}
       target={
         <div>
-          <StepCard data-test-id={`data-test-id-${label}`}>
-            <ContentContainer>
-              <LeftContent>
-                <Icon style={{ marginRight: '15px' }} />
-                <Text weight={'bold'}>{data.label} </Text>
-              </LeftContent>
-              {ActionItem}
-            </ContentContainer>
-            {ContentItem}
-          </StepCard>
-          <Handlers />
+          <NodeStep Handlers={Handlers} Icon={Icon} data={data} ActionItem={ActionItem} ContentItem={ContentItem} />
         </div>
       }
       title={popoverData.title}
@@ -112,35 +103,6 @@ export function NodeStep({
     />
   );
 }
-
-const ContentContainer = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  pointer-events: all;
-`;
-
-const LeftContent = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const StepCard: any = styled.div`
-  position: relative;
-
-  display: flex;
-
-  width: 300px;
-  height: 75px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-  border-radius: 7px;
-  pointer-events: none;
-  background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B17 : colors.white)};
-
-  margin: 0;
-  padding: 20px;
-`;
 
 function useCounter() {
   const INTERVAL = 1500;
