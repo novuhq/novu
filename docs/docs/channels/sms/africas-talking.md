@@ -66,7 +66,7 @@ To create a Short Code:
 
 ![Image showing Africa’s Talking dashboard page where you create shortcodes for sending SMS](/img/providers/sms/africas-talking/short-codes.png)
 
-If you have not yet created one yet, on the `Shortcodes` dropdown option, click on `Request`.
+If you have not created one yet, on the `Shortcodes` dropdown option, click on `Request`.
 
 On the page that appears, fill in the form and submit
 
@@ -78,7 +78,7 @@ To create an Alphanumeric:
 
 ![Image showing Africa’s Talking dashboard page where you create an alphanumeric for sending SMS](/img/providers/sms/africas-talking/alphanumeric.png)
 
-If you have not yet created one yet, on the `Alphanumerics` dropdown option, click on `Request`.
+If you have not created one yet, on the `Alphanumerics` dropdown option, click on `Request`.
 
 On the page that appears, fill in the form and submit
 
@@ -94,8 +94,8 @@ Once you're done, add either your short code or alphanumeric to the `from` field
 ![Image showing Novu web platform integration store page](/img/providers/sms/africas-talking/integration.png)
 
 - Enter the `API key`.
-- fill in the `username` field.
-- fill in the `from` field. This is your registered `short code` or `alphanumeric` value.
+- Fill in the `username` field.
+- Fill in the `from` field. This is your registered `short code` or `alphanumeric` value.
 - Click on the `Disabled` button and mark as `Active`.
 - Click on the **Connect** button.
 
