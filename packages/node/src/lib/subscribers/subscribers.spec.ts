@@ -154,6 +154,21 @@ describe('test use of novus node package - Subscribers class', () => {
   test('should get notification feed for subscriber correctly', async () => {
     mockedAxios.get.mockResolvedValue({});
 
+    await novu.subscribers.getNotificationsFeed(
+      'test-news-feed-subscriber',
+      {}
+    );
+
+    expect(mockedAxios.get).toHaveBeenCalled();
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      '/subscribers/test-news-feed-subscriber/notifications/feed',
+      { params: {} }
+    );
+  });
+
+  test('should get notification feed for subscriber with optional feedIdentifier', async () => {
+    mockedAxios.get.mockResolvedValue({});
+
     await novu.subscribers.getNotificationsFeed('test-news-feed-subscriber', {
       feedIdentifier: '123',
     });
