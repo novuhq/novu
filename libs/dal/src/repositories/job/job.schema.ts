@@ -89,6 +89,22 @@ const jobSchema = new Schema<JobDBModel>(
       backoff: {
         type: Schema.Types.Boolean,
       },
+      timed: {
+        atTime: {
+          type: Schema.Types.String,
+        },
+        weekDays: [Schema.Types.String],
+        monthDays: [Schema.Types.Number],
+        ordinal: {
+          type: Schema.Types.String,
+        },
+        ordinalValue: {
+          type: Schema.Types.String,
+        },
+        monthlyType: {
+          type: Schema.Types.String,
+        },
+      },
     },
     type: {
       type: Schema.Types.String,

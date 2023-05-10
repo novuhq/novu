@@ -11,6 +11,9 @@ import {
   IDelayScheduledMetadata,
   ITimedConfig,
   DaysEnum,
+  MonthlyTypeEnum,
+  OrdinalEnum,
+  OrdinalValueEnum,
 } from '@novu/shared';
 import { IsBoolean, ValidateNested } from 'class-validator';
 
@@ -27,14 +30,14 @@ class TimedConfig implements ITimedConfig {
   @ApiPropertyOptional()
   monthDays?: number[];
 
-  @ApiPropertyOptional()
-  ordinal?: string;
+  @ApiPropertyOptional({ enum: [...Object.values(OrdinalEnum)] })
+  ordinal?: OrdinalEnum;
 
-  @ApiPropertyOptional()
-  ordinalValue?: string;
+  @ApiPropertyOptional({ enum: [...Object.values(OrdinalValueEnum)] })
+  ordinalValue?: OrdinalValueEnum;
 
-  @ApiPropertyOptional()
-  monthlyType?: string;
+  @ApiPropertyOptional({ enum: [...Object.values(MonthlyTypeEnum)] })
+  monthlyType?: MonthlyTypeEnum;
 }
 
 class AmountAndUnit {

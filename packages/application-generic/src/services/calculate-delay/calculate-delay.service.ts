@@ -1,24 +1,33 @@
+import { Logger } from '@nestjs/common';
+import { differenceInMilliseconds } from 'date-fns';
 import {
   DigestUnitEnum,
   DelayTypeEnum,
   IDigestRegularMetadata,
+  IDigestTimedMetadata,
+  INotificationTemplateStepMetadata,
+  DigestTypeEnum,
 } from '@novu/shared';
 
-import { Logger } from '@nestjs/common';
 import { ApiException } from '../../utils/exceptions';
-import { differenceInMilliseconds } from 'date-fns';
-import { NotificationStepEntity } from '@novu/dal';
+import { isRegularDigest } from '../../utils/digest';
+
+const IS_ENTERPRISE = process.env.NOVU_MANAGED_SERVICE === 'true';
 
 export class CalculateDelayService {
-  calculateDelay(
-    step: NotificationStepEntity,
-    payload: any,
-    overrides: any
-  ): number {
-    if (!step.metadata) throw new ApiException(`Step metadata not found`);
+  calculateDelay({
+    stepMetadata,
+    payload,
+    overrides,
+  }: {
+    stepMetadata?: INotificationTemplateStepMetadata;
+    payload: any;
+    overrides: any;
+  }): number {
+    if (!stepMetadata) throw new ApiException(`Step metadata not found`);
 
-    if (step.metadata.type === DelayTypeEnum.SCHEDULED) {
-      const delayPath = step.metadata.delayPath;
+    if (stepMetadata.type === DelayTypeEnum.SCHEDULED) {
+      const delayPath = stepMetadata.delayPath;
       if (!delayPath) throw new ApiException(`Delay path not found`);
 
       const delayDate = payload[delayPath];
@@ -34,22 +43,41 @@ export class CalculateDelayService {
       return delay;
     }
 
-    if (this.checkValidDelayOverride(overrides)) {
+    if (isRegularDigest(stepMetadata.type)) {
+      if (this.checkValidDelayOverride(overrides)) {
+        return this.toMilliseconds(
+          overrides.delay.amount as number,
+          overrides.delay.unit as DigestUnitEnum
+        );
+      }
+
+      const regularDigestMeta = stepMetadata as IDigestRegularMetadata;
+
       return this.toMilliseconds(
-        overrides.delay.amount as number,
-        overrides.delay.unit as DigestUnitEnum
+        regularDigestMeta.amount,
+        regularDigestMeta.unit
       );
     }
 
-    const regularDigestMeta = step.metadata as IDigestRegularMetadata;
+    if (IS_ENTERPRISE && stepMetadata.type === DigestTypeEnum.TIMED) {
+      const timedDigestMeta = stepMetadata as IDigestTimedMetadata;
 
-    return this.toMilliseconds(
-      regularDigestMeta.amount,
-      regularDigestMeta.unit
-    );
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      const { TimedDigestDelayService } = require('@novu/digest-schedule');
+
+      return TimedDigestDelayService.calculate({
+        unit: timedDigestMeta.unit,
+        amount: timedDigestMeta.amount,
+        timeConfig: {
+          ...timedDigestMeta.timed,
+        },
+      });
+    }
+
+    return 0;
   }
 
-  toMilliseconds(amount: number, unit: DigestUnitEnum): number {
+  private toMilliseconds(amount: number, unit: DigestUnitEnum): number {
     Logger.debug('Amount is: ' + amount);
     Logger.debug('Unit is: ' + unit);
     Logger.verbose('Converting to milliseconds');

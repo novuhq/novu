@@ -1,13 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository } from '@novu/dal';
 import {
-  DelayTypeEnum,
-  DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IDigestBaseMetadata,
   IDigestRegularMetadata,
-  StepTypeEnum,
 } from '@novu/shared';
 
 import { AddDigestJobCommand } from './add-digest-job.command';
@@ -23,6 +20,7 @@ import {
   CreateExecutionDetails,
 } from '../create-execution-details';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { validateDigest } from './validation';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -46,30 +44,9 @@ export class AddDigestJob {
   ): Promise<AddDigestJobResult> {
     const { job } = command;
 
-    this.validateDigest(job);
+    validateDigest(job);
 
     return await this.shouldDelayDigestOrMerge(job);
-  }
-
-  private isRegularDigest(type: DigestTypeEnum | DelayTypeEnum) {
-    return type === DigestTypeEnum.REGULAR || type === DigestTypeEnum.BACKOFF;
-  }
-
-  private validateDigest(job: JobEntity): void {
-    if (job.type !== StepTypeEnum.DIGEST) {
-      throw new ApiException('Job is not a digest type');
-    }
-
-    if (this.isRegularDigest(job.digest.type)) {
-      const digest = job.digest as IDigestRegularMetadata;
-      if (!digest?.amount) {
-        throw new ApiException('Invalid digest amount');
-      }
-
-      if (!digest?.unit) {
-        throw new ApiException('Invalid digest unit');
-      }
-    }
   }
 
   @Instrument()
@@ -98,17 +75,20 @@ export class AddDigestJob {
 
     // We delayed the job and created the digest
     if (matched === 0 && modified === 1) {
-      const regularDigestMeta = digestMeta as IDigestRegularMetadata;
+      const regularDigestMeta = digestMeta as
+        | IDigestRegularMetadata
+        | undefined;
       if (!regularDigestMeta?.amount || !regularDigestMeta?.unit) {
         throw new ApiException(
           `Somehow ${job._id} had wrong digest settings and escaped validation`
         );
       }
 
-      return this.calculateDelayService.toMilliseconds(
-        regularDigestMeta.amount,
-        regularDigestMeta.unit
-      );
+      return this.calculateDelayService.calculateDelay({
+        stepMetadata: job.digest,
+        payload: job.payload,
+        overrides: job.overrides,
+      });
     }
 
     return undefined;

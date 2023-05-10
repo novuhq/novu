@@ -28,6 +28,33 @@ export enum DelayTypeEnum {
   SCHEDULED = 'scheduled',
 }
 
+export enum MonthlyTypeEnum {
+  EACH = 'each',
+  ON = 'on',
+}
+
+export enum OrdinalEnum {
+  FIRST = '1',
+  SECOND = '2',
+  THIRD = '3',
+  FOURTH = '4',
+  FIFTH = '5',
+  LAST = 'last',
+}
+
+export enum OrdinalValueEnum {
+  DAY = 'day',
+  WEEKDAY = 'weekday',
+  WEEKEND = 'weekend',
+  SUNDAY = 'sunday',
+  MONDAY = 'monday',
+  TUESDAY = 'tuesday',
+  WEDNESDAY = 'wednesday',
+  THURSDAY = 'thursday',
+  FRIDAY = 'friday',
+  SATURDAY = 'saturday',
+}
+
 export interface IAmountAndUnit {
   amount: number;
   unit: DigestUnitEnum;
@@ -49,9 +76,9 @@ export interface ITimedConfig {
   atTime?: string;
   weekDays?: DaysEnum[];
   monthDays?: number[];
-  ordinal?: string;
-  ordinalValue?: string;
-  monthlyType?: string;
+  ordinal?: OrdinalEnum;
+  ordinalValue?: OrdinalValueEnum;
+  monthlyType?: MonthlyTypeEnum;
 }
 
 export interface IDigestTimedMetadata extends IDigestBaseMetadata {

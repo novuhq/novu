@@ -1,6 +1,7 @@
 import { Group, Radio, SimpleGrid } from '@mantine/core';
-import { DigestUnitEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
+import { DigestUnitEnum, OrdinalEnum, OrdinalValueEnum, MonthlyTypeEnum } from '@novu/shared';
+
 import { When } from '../../../../components/utils/When';
 import { colors, Select } from '../../../../design-system';
 import { DaySelect } from './DaySelect';
@@ -17,9 +18,14 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
         control={control}
         render={({ field: radioGroup }) => {
           return (
-            <Radio.Group spacing={0} defaultValue="each" value={radioGroup.value} onChange={radioGroup.onChange}>
+            <Radio.Group
+              spacing={0}
+              defaultValue={MonthlyTypeEnum.EACH}
+              value={radioGroup.value}
+              onChange={radioGroup.onChange}
+            >
               <Group spacing={8} mb={10} mt={34} sx={{ color: colors.B60 }}>
-                <Radio value="each" />
+                <Radio value={MonthlyTypeEnum.EACH} />
                 <div>Each</div>
               </Group>
               <Controller
@@ -40,7 +46,7 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
                 }}
               />
               <Group spacing={8} mb={10} mt={34} sx={{ color: colors.B60 }}>
-                <Radio value="on" />
+                <Radio value={MonthlyTypeEnum.ON} />
                 <div>On the</div>
               </Group>
               <SimpleGrid cols={2} spacing={16}>
@@ -55,12 +61,12 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
                         mt={-5}
                         mb={-5}
                         data={[
-                          { value: '1', label: 'First' },
-                          { value: '2', label: 'Second' },
-                          { value: '3', label: 'Third' },
-                          { value: '4', label: 'Forth' },
-                          { value: '5', label: 'Fifth' },
-                          { value: 'last', label: 'Last' },
+                          { value: OrdinalEnum.FIRST, label: 'First' },
+                          { value: OrdinalEnum.SECOND, label: 'Second' },
+                          { value: OrdinalEnum.THIRD, label: 'Third' },
+                          { value: OrdinalEnum.FOURTH, label: 'Fourth' },
+                          { value: OrdinalEnum.FIFTH, label: 'Fifth' },
+                          { value: OrdinalEnum.LAST, label: 'Last' },
                         ]}
                         placeholder="First"
                       />
@@ -78,16 +84,16 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
                         mt={-5}
                         mb={-5}
                         data={[
-                          { value: 'day', label: 'Day' },
-                          { value: 'weekday', label: 'Weekday' },
-                          { value: 'weekend', label: 'Weekend day' },
-                          { value: 'sunday', label: 'Sunday' },
-                          { value: 'monday', label: 'Monday' },
-                          { value: 'tuesday', label: 'Tuesday' },
-                          { value: 'wednesday', label: 'Wednesday' },
-                          { value: 'thursday', label: 'Thursday' },
-                          { value: 'friday', label: 'Friday' },
-                          { value: 'saturday', label: 'Saturday' },
+                          { value: OrdinalValueEnum.DAY, label: 'Day' },
+                          { value: OrdinalValueEnum.WEEKDAY, label: 'Weekday' },
+                          { value: OrdinalValueEnum.WEEKEND, label: 'Weekend day' },
+                          { value: OrdinalValueEnum.SUNDAY, label: 'Sunday' },
+                          { value: OrdinalValueEnum.MONDAY, label: 'Monday' },
+                          { value: OrdinalValueEnum.TUESDAY, label: 'Tuesday' },
+                          { value: OrdinalValueEnum.WEDNESDAY, label: 'Wednesday' },
+                          { value: OrdinalValueEnum.THURSDAY, label: 'Thursday' },
+                          { value: OrdinalValueEnum.FRIDAY, label: 'Friday' },
+                          { value: OrdinalValueEnum.SATURDAY, label: 'Saturday' },
                         ]}
                         placeholder="Day"
                       />
