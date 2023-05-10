@@ -63,6 +63,12 @@ export class SendMessage {
 
     const stepType = command.step?.template?.type;
 
+    if (!shouldRun.passed || !preferred) {
+      await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
+
+      return;
+    }
+
     if (!command.payload?.$on_boarding_trigger) {
       const usedFilters = shouldRun.conditions.reduce(MessageMatcher.sumFilters, {
         stepFilters: [],
@@ -87,12 +93,6 @@ export class SendMessage {
         ...(usedFilters || {}),
         source: command.payload.__source || 'api',
       });
-    }
-
-    if (!shouldRun.passed || !preferred) {
-      await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
-
-      return;
     }
 
     if (stepType !== StepTypeEnum.DELAY) {
