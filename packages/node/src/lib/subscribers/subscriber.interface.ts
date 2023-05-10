@@ -44,6 +44,6 @@ export interface IUpdateSubscriberPreferencePayload {
 }
 export interface IGetSubscriberNotificationFeedParams {
   page?: number;
-  feedIdentifier: string;
+  feedIdentifier?: string;
   seen?: boolean;
 }
