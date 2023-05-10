@@ -25,7 +25,7 @@ jobs:
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'ee') }}
-      submodules: true
+      submodules: ${{ contains (matrix.name,'ee') }}
 
   deploy_dev_api:
     if: "!contains(github.event.head_commit.message, 'ci skip')"

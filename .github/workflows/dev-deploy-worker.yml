@@ -29,7 +29,7 @@ jobs:
     uses: ./.github/workflows/reusable-worker-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'ee') }}
-      submodules: true
+      submodules: ${{ contains (matrix.name,'ee') }}
 
   deploy_dev_worker:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
