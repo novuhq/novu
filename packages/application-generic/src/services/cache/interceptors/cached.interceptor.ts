@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Inject, Logger } from '@nestjs/common';
 
 import {
   buildCachedQuery,
@@ -7,6 +7,8 @@ import {
 } from './shared-cache';
 import { CacheService } from '../cache.service';
 import { CacheKeyPrefixEnum } from '../key-builders';
+
+const LOG_CONTEXT = 'CachedInterceptor';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
@@ -39,10 +41,9 @@ function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
           return JSON.parse(value);
         }
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error(
-          `An error has occurred when extracting "key: ${methodName}`,
-          'CacheInterceptor',
+        Logger.error(
+          `An error has occurred when extracting "key: ${cacheKey}" in "method: ${methodName}"`,
+          LOG_CONTEXT,
           err
         );
       }
@@ -52,10 +53,9 @@ function Cached(storeKeyPrefix: CacheKeyPrefixEnum) {
       try {
         await this.cacheService.set(cacheKey, JSON.stringify(response));
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error(
-          `An error has occurred when inserting "key: ${methodName}", "value: ${response}"`,
-          'CacheInterceptor',
+        Logger.error(
+          `An error has occurred when inserting "key: ${cacheKey}" in "method: ${methodName}" with "value: ${response}"`,
+          LOG_CONTEXT,
           err
         );
       }
