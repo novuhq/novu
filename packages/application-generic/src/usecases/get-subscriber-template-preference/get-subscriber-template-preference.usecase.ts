@@ -49,6 +49,10 @@ export class GetSubscriberTemplatePreference {
     const responseTemplate = mapResponseTemplate(command.template);
     const subscriberPreferenceEnabled = subscriberPreference?.enabled ?? true;
 
+    /*
+     * if subscriber preference contains all the active steps
+     * return subscriber preference
+     */
     if (
       subscriberPreferenceIsWhole(
         subscriberPreference?.channels,
@@ -67,6 +71,10 @@ export class GetSubscriberTemplatePreference {
 
     if (templatePreference) {
       if (!subscriberPreference?.channels) {
+        /*
+         * if there is template preference and not subscriber preference
+         * return template preference
+         */
         return getResponse(
           responseTemplate,
           subscriberPreferenceEnabled,
@@ -81,6 +89,11 @@ export class GetSubscriberTemplatePreference {
         subscriberPreference.channels
       );
 
+      /*
+       * if subscriber preference are partial
+       * return template & subscriber preference merged
+       * subscriber preference are preferred
+       */
       return getResponse(
         responseTemplate,
         subscriberPreferenceEnabled,
@@ -89,17 +102,27 @@ export class GetSubscriberTemplatePreference {
       );
     }
 
+    /*
+     * if no preference are found
+     * return default
+     * made for backward compatibility
+     */
     return getNoSettingFallback(responseTemplate, activeChannels);
   }
 
   private async queryActiveChannels(
     command: GetSubscriberTemplatePreferenceCommand
   ): Promise<ChannelTypeEnum[]> {
+    // todo remove the Set initialization in the return - at the moment the check wont be valid for workflow of 2 same channels
     const activeSteps = command.template.steps.filter(
       (step) => step.active === true
     );
 
-    if (activeSteps.some((step) => !step.template)) {
+    const stepMissingMessageTemplate = activeSteps.some(
+      (step) => !step.template
+    );
+
+    if (stepMissingMessageTemplate) {
       const messageIds = activeSteps.map((step) => step._templateId);
 
       const messageTemplates = await this.messageTemplateRepository.find({
