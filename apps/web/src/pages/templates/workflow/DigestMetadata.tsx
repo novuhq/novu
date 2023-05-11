@@ -45,21 +45,34 @@ export const DigestMetadata = ({ control, index, readonly }) => {
 
   const type = watch(`steps.${index}.metadata.type`);
   const unit = watch(`steps.${index}.metadata.unit`);
+  const amount = watch(`steps.${index}.metadata.amount`);
   const digestKey = watch(`steps.${index}.metadata.digestKey`);
   const showErrors = isSubmitted && errors?.steps;
   const isEnterprise = process.env.REACT_APP_DOCKER_HOSTED_ENV !== 'true';
 
   useEffect(() => {
-    if (unit !== undefined) {
-      return;
-    }
-    if (type !== DigestTypeEnum.TIMED) {
-      return;
+    if (type === DigestTypeEnum.TIMED && unit === DigestUnitEnum.MINUTES) {
+      setValue(`steps.${index}.metadata.unit`, DigestUnitEnum.DAYS);
     }
 
-    setValue(`steps.${index}.metadata.unit`, DigestUnitEnum.DAYS);
+    if (type === DigestTypeEnum.REGULAR && unit === DigestUnitEnum.DAYS) {
+      setValue(`steps.${index}.metadata.unit`, DigestUnitEnum.MINUTES);
+    }
+
     trigger(`steps.${index}.metadata`);
   }, [unit, type]);
+
+  useEffect(() => {
+    if (type === DigestTypeEnum.TIMED && amount === 5) {
+      setValue(`steps.${index}.metadata.amount`, 1);
+    }
+
+    if (type === DigestTypeEnum.REGULAR && amount === 1) {
+      setValue(`steps.${index}.metadata.amount`, 5);
+    }
+
+    trigger(`steps.${index}.metadata`);
+  }, [type, amount]);
 
   return (
     <div data-test-id="digest-step-settings-interval">
