@@ -1,5 +1,4 @@
 import { NavMenu } from './NavMenu';
-import { MemoryRouter as Router } from 'react-router-dom';
 import { TestWrapper } from '../../testing';
 import { ROUTES } from '../../constants/routes.enum';
 
@@ -31,11 +30,9 @@ describe('NavMenu', () => {
     const menuHomeItemSelector = menuItems[0].testId;
 
     cy.mount(
-      <Router>
-        <TestWrapper>
-          <NavMenu menuItems={menuItems} />
-        </TestWrapper>
-      </Router>
+      <TestWrapper>
+        <NavMenu menuItems={menuItems} />
+      </TestWrapper>
     );
 
     cy.getByTestId(menuHomeItemSelector).should('have.attr', 'aria-current', 'page');
