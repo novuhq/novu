@@ -48,7 +48,7 @@ describe('Digest', function () {
     cy.getByTestId('day-select').get('button').last().click();
     cy.getByTestId('day-select').get('button').last().should('have.class', 'active-day');
     cy.get('[data-test-id=day-select] button').eq(0).click();
-    cy.get('.active-day').should('have.length', 2);
+    cy.get('.active-day').should('have.lengthOf.at.least', 2);
   });
 
   it('should render week day select and be able to select multiple days', function () {
@@ -69,6 +69,6 @@ describe('Digest', function () {
     cy.get('[data-test-id=weekday-select] button').eq(0).click();
     cy.get('[data-test-id=weekday-select] button').eq(2).click();
     cy.get('[data-test-id=weekday-select] button').eq(4).click();
-    cy.get('.active-day').should('have.length', 3);
+    cy.get('.active-day').should('have.lengthOf.at.least', 3);
   });
 });

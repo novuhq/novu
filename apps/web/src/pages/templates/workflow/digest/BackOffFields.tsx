@@ -4,7 +4,7 @@ import { colors, Input, Switch, Tooltip } from '../../../../design-system';
 import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { IntervalSelect } from './IntervalSelect';
 import { Collapse } from '@mantine/core';
-import { BackOffTooltipIcon } from './BackOffTooltipIcon';
+import { BackOffTooltipIcon } from './icons/BackOffTooltipIcon';
 
 export const BackOffFields = ({ index, control, readonly }) => {
   const {

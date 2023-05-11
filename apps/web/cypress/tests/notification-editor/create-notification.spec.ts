@@ -275,7 +275,7 @@ describe('Creation functionality', function () {
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('digest-send-options').click();
-    cy.getByTestId('time-amount').type('20');
+    cy.getByTestId('time-amount').clear().type('20');
     cy.getByTestId('time-unit').click();
     cy.get('.mantine-Select-item').contains('min (s)').click();
 
@@ -289,7 +289,7 @@ describe('Creation functionality', function () {
       force: true,
     });
 
-    cy.getByTestId('backoff-amount').type('20');
+    cy.getByTestId('backoff-amount').clear().type('20');
 
     cy.getByTestId('time-unit-backoff').click();
     cy.get('.mantine-Select-item').contains('min (s)').click();
