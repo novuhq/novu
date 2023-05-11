@@ -42,7 +42,7 @@ jobs:
     steps:
       - id: setup
         run: |
-          if ! [[ -z "${{ secrets.GH_PACKAGES }}" ]]; then
+          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
             echo ::set-output has_token=true
           else
             echo ::set-output has_token=false
@@ -52,7 +52,7 @@ jobs:
         if: steps.setup.outputs.has_token == 'true'
         with:
           submodules: ${{ inputs.submodules }}
-          token: ${{ secrets.GH_PACKAGES }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
        # checkout without submodules
       - uses: actions/checkout@v3
         if: steps.setup.outputs.has_token != 'true'
