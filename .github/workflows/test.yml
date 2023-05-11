@@ -4,7 +4,7 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  pull_request_target:
+  pull_request:
 
 jobs:
   dependency-review:
@@ -45,8 +45,8 @@ jobs:
       - name: Get base branch name
         id: get-base-branch-name
         run: |
-          if [[ "${{github.event.pull_request_target.base.ref}}" != "" ]]; then
-            echo "::set-output name=branch::${{github.event.pull_request_target.base.ref}}"
+          if [[ "${{github.event.pull_request.base.ref}}" != "" ]]; then
+            echo "::set-output name=branch::${{github.event.pull_request.base.ref}}"
           else
             echo "::set-output name=branch::main"
           fi
@@ -69,7 +69,7 @@ jobs:
         id: get-projects-arrays
         # When not in a PR and the current branch is main, pass --all flag. Otherwise pass the base branch
         run: |
-          if [[ "${{github.event.pull_request_target.base.ref}}" == "" && "${{steps.branch-name.outputs.current_branch}}" == "main" ]]; then
+          if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{steps.branch-name.outputs.current_branch}}" == "main" ]]; then
             echo "Running ALL"
             echo "::set-output name=test-unit::$(pnpm run get-affected test:unit --all | tail -n +5)"
             echo "::set-output name=test-e2e::$(pnpm run get-affected test:e2e --all | tail -n +5)"
@@ -129,7 +129,7 @@ jobs:
       - uses: ./.github/actions/docker/build-api
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          fork: ${{ github.event.pull_request_target.head.repo.fork }}
+          fork: ${{ github.event.pull_request.head.repo.fork }}
           docker_name: ${{ matrix.name }}
 
   test_providers:
