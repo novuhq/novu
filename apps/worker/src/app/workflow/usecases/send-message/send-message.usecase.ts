@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import {
+  DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IDigestRegularMetadata,
   IPreferenceChannels,
   StepTypeEnum,
 } from '@novu/shared';
@@ -71,6 +73,18 @@ export class SendMessage {
       });
 
       const digest = command.job.digest;
+      let timedInfo: any = {};
+
+      if (digest && digest.type === DigestTypeEnum.TIMED && digest.timed) {
+        timedInfo = {
+          digestAtTime: digest.timed.atTime,
+          digestWeekDays: digest.timed.weekDays,
+          digestMonthDays: digest.timed.monthDays,
+          digestOrdinal: digest.timed.ordinal,
+          digestOrdinalValue: digest.timed.ordinalValue,
+        };
+      }
+
       this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
         _template: command.job._templateId,
         _organization: command.organizationId,
@@ -83,6 +97,8 @@ export class SendMessage {
         digestEventsCount: digest?.events?.length,
         digestUnit: digest && 'unit' in digest ? digest.unit : undefined,
         digestAmount: digest && 'amount' in digest ? digest.amount : undefined,
+        digestBackoff: digest?.type === DigestTypeEnum.BACKOFF || (digest as IDigestRegularMetadata)?.backoff === true,
+        ...timedInfo,
         filterPassed: shouldRun,
         preferencesPassed: preferred,
         ...(usedFilters || {}),
