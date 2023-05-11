@@ -29,12 +29,19 @@ jobs:
         # run 3 copies of the current job in parallel
         containers: [1, 2]
 
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
         with:
           submodules: ${{ inputs.submodules }}
+          token: ${{ secrets.GH_PACKAGES }}
 
       - uses: ./.github/actions/setup-project
         id: setup-project

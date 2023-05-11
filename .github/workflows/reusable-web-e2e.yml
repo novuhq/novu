@@ -32,11 +32,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
 
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: ${{ inputs.submodules }}
+          token: ${{ secrets.GH_PACKAGES }}
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
