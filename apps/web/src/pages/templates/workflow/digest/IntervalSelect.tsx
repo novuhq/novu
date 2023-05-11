@@ -10,11 +10,19 @@ const options = [
   { value: DigestUnitEnum.DAYS, label: 'day (s)' },
 ];
 
-export const IntervalSelect = ({ control, name, showErrors, readonly, testId = 'time-unit' }) => {
+export const IntervalSelect = ({
+  control,
+  name,
+  showErrors,
+  readonly,
+  testId = 'time-unit',
+  defaultValue = DigestUnitEnum.MINUTES,
+}) => {
   return (
     <Controller
       control={control}
       name={name}
+      defaultValue={defaultValue}
       render={({ field, fieldState }) => {
         return (
           <Select

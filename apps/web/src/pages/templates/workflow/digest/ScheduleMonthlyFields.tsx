@@ -5,6 +5,7 @@ import { DigestUnitEnum, OrdinalEnum, OrdinalValueEnum, MonthlyTypeEnum } from '
 import { When } from '../../../../components/utils/When';
 import { colors, Select } from '../../../../design-system';
 import { DaySelect } from './DaySelect';
+import { format } from 'date-fns';
 
 export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
   const { watch, trigger } = useFormContext();
@@ -33,7 +34,7 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
               <Controller
                 control={control}
                 name={`steps.${index}.metadata.timed.monthDays`}
-                defaultValue=""
+                defaultValue={[new Date().getDay()]}
                 render={({ field }) => {
                   return (
                     <DaySelect
