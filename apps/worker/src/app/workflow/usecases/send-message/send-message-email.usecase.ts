@@ -8,7 +8,13 @@ import {
   IntegrationEntity,
   MessageEntity,
 } from '@novu/dal';
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, LogCodeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  EmailProviderIdEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  LogCodeEnum,
+} from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import { IAttachmentOptions, IEmailOptions } from '@novu/stateless';
 import {
@@ -244,9 +250,8 @@ export class SendMessageEmail extends SendMessageBase {
       mailData.replyTo = command.overrides?.email?.replyTo as string;
     }
 
-    if (integration.providerId === 'email-webhook') {
+    if (integration.providerId === EmailProviderIdEnum.EmailWebhook) {
       mailData.payloadDetails = payload;
-      mailData.notificationDetails = notification;
     }
 
     if (email && integration) {
