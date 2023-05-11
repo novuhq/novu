@@ -13,7 +13,7 @@ import { BackOffFields } from './digest/BackOffFields';
 import { WillBeSentHeader } from './digest/WillBeSentHeader';
 import { ScheduleMonthlyFields } from './digest/ScheduleMonthlyFields';
 import { useEffect } from 'react';
-import { RegularInfo } from './digest/RegularInfo';
+import { RegularInfo } from './digest/icons/RegularInfo';
 
 const convertUnitToLabel = (unit: DigestUnitEnum) => {
   switch (unit) {
