@@ -1,5 +1,4 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { MemoryRouter as Router } from 'react-router-dom';
 import { CredentialsKeyEnum, ChannelTypeEnum } from '@novu/shared';
 
 import { ConnectIntegrationForm } from './ConnectIntegrationForm';
@@ -31,25 +30,21 @@ const queryClient = new QueryClient();
 
 it('displays the correct button text', () => {
   cy.mount(
-    <Router>
-      <QueryClientProvider client={queryClient}>
-        <TestWrapper>
-          <ConnectIntegrationForm {...defaultProps} createModel={true} />
-        </TestWrapper>
-      </QueryClientProvider>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <TestWrapper>
+        <ConnectIntegrationForm {...defaultProps} createModel={true} />
+      </TestWrapper>
+    </QueryClientProvider>
   );
 
   cy.get('button[type="submit"]').should('contain.text', 'Connect');
 
   cy.mount(
-    <Router>
-      <QueryClientProvider client={queryClient}>
-        <TestWrapper>
-          <ConnectIntegrationForm {...defaultProps} createModel={false} />
-        </TestWrapper>
-      </QueryClientProvider>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <TestWrapper>
+        <ConnectIntegrationForm {...defaultProps} createModel={false} />
+      </TestWrapper>
+    </QueryClientProvider>
   );
 
   cy.get('button[type="submit"]').should('contain.text', 'Update');
@@ -59,13 +54,11 @@ it('close button calls onClose', () => {
   const onCloseStub = cy.stub();
 
   cy.mount(
-    <Router>
-      <QueryClientProvider client={queryClient}>
-        <TestWrapper>
-          <ConnectIntegrationForm {...defaultProps} onClose={onCloseStub} />
-        </TestWrapper>
-      </QueryClientProvider>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <TestWrapper>
+        <ConnectIntegrationForm {...defaultProps} onClose={onCloseStub} />
+      </TestWrapper>
+    </QueryClientProvider>
   );
 
   // eslint-disable-next-line cypress/unsafe-to-chain-command
@@ -107,13 +100,11 @@ it('shows the configuration for the selected provider', () => {
   };
 
   cy.mount(
-    <Router>
-      <QueryClientProvider client={queryClient}>
-        <TestWrapper>
-          <ConnectIntegrationForm {...defaultProps} provider={provider} />
-        </TestWrapper>
-      </QueryClientProvider>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <TestWrapper>
+        <ConnectIntegrationForm {...defaultProps} provider={provider} />
+      </TestWrapper>
+    </QueryClientProvider>
   );
 
   cy.get(`img[alt="emailjs image"]`)
