@@ -14,8 +14,14 @@ To use the Plivo provider in the SMS channel, the first step is to create a Pliv
 
 - Visit the [Integrations](https://web.novu.co/integrations) page on Novu.
 - Locate **Plivo** under SMS section and click on the **Connect** button.
+
+![Image showing Novu web platform integration store page](/img/providers/sms/plivo/integration.png)
+
 - Enter the `Account SID`.
 - Enter the `Auth token`.
 - Fill the `From` field.
 - Click on the **Connect** button.
-- Now it is possible to send SMS notifications using **Plivo** in Novu.
+
+![Plivo integration modal on Novu’s web integration page](/img/providers/sms/plivo/web.png)
+
+Now it is possible to send SMS notifications using **Plivo** in Novu.
