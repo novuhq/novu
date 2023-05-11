@@ -34,11 +34,13 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: ${{ inputs.submodules }}
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
           cypress: true
-          submodules: ${{ inputs.submodules }}
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -123,6 +125,9 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
       - uses: ./.github/actions/setup-project
         id: setup-project
 

@@ -36,6 +36,8 @@ jobs:
         #name: ['novu/inbound-mail', 'novu/inbound-mail-ee']
         name: ['novu/inbound-mail-ee']
     steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
 
       - name: Setup Depot

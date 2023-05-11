@@ -43,9 +43,10 @@ jobs:
       matrix:
         name: ['novu/api-ee', 'novu/api']
     steps:
-      - uses: ./.github/actions/setup-project
+      - uses: actions/checkout@v3
         with:
           submodules: ${{ contains (matrix.name,'ee') }}
+      - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-api
         id: docker_build
         with:

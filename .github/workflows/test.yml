@@ -45,11 +45,13 @@ jobs:
           else
             echo "::set-output name=branch::main"
           fi
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: true
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
-          fetch_depth: 0
-          submodules: true
 
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
@@ -112,9 +114,10 @@ jobs:
       matrix:
         name: [ 'novu/api', 'novu/api-ee' ]
     steps:
-      - uses: ./.github/actions/setup-project
+      - uses: actions/checkout@v3
         with:
           submodules: ${{ contains (matrix.name,'ee') }}
+      - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: ./.github/actions/docker/build-api
         with:
@@ -130,6 +133,7 @@ jobs:
     timeout-minutes: 80
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-providers }}'
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
@@ -147,9 +151,10 @@ jobs:
     timeout-minutes: 80
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-packages }}'
-      - uses: ./.github/actions/setup-project
+      - uses: actions/checkout@v3
         with:
           submodules: ${{ contains(matrix.projectName, '@novu/application-generic') }}
+      - uses: ./.github/actions/setup-project
       - uses: mansagroup/nrwl-nx-action@v3
         if: ${{matrix.projectName == '@novu/application-generic' }}
         with:
@@ -164,6 +169,7 @@ jobs:
     timeout-minutes: 80
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-libs }}'
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -182,9 +188,10 @@ jobs:
         projectName: ${{ fromJson(needs.get-affected.outputs.test-e2e) }}
     steps:
       - run: echo ${{ matrix.projectName }}
-      - uses: ./.github/actions/setup-project
+      - uses: actions/checkout@v3
         with:
           submodules: ${{ contains(matrix.projectName, '@novu/api') || contains(matrix.projectName, '@novu/worker') }}
+      - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -215,11 +222,13 @@ jobs:
         projectName: ${{ fromJson(needs.get-affected.outputs.test-unit) }}
     steps:
       - run: echo ${{ matrix.projectName }}
+      - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains(matrix.projectName, '@novu/api') || contains(matrix.projectName, '@novu/worker') }}
       - uses: ./.github/actions/setup-project
         with:
           # Don't run redis and etc... for other unit tests
           slim: ${{ !contains(matrix.projectName, '@novu/api') && !contains(matrix.projectName, '@novu/worker') }}
-          submodules: ${{ contains(matrix.projectName, '@novu/api') || contains(matrix.projectName, '@novu/worker') }}
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
         with:

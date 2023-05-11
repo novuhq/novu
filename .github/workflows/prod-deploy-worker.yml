@@ -35,9 +35,10 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - uses: ./.github/actions/setup-project
+      - uses: actions/checkout@v3
         with:
           submodules: ${{ contains (matrix.name,'ee') }}
+      - uses: ./.github/actions/setup-project
 
       - name: build worker
         run: pnpm build:worker

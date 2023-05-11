@@ -26,9 +26,10 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - uses: ./.github/actions/setup-project
+    - uses: actions/checkout@v3
       with:
         submodules: ${{ inputs.submodules }}
+    - uses: ./.github/actions/setup-project
     - uses: ./.github/actions/setup-redis-cluster
     - uses: mansagroup/nrwl-nx-action@v3
       with:
