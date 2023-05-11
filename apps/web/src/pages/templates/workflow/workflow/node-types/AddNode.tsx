@@ -29,6 +29,8 @@ export default memo(({ data }: { data: NodeData }) => {
   return (
     <Container data-test-id={dataTestId} style={{ pointerEvents: 'none' }}>
       <Dropdown
+        position="right"
+        middlewares={{ flip: false, shift: true }}
         withinPortal
         control={
           <ActionIcon

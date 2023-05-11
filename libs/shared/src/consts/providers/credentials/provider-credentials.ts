@@ -415,6 +415,13 @@ export const slackConfig: IConfigCredentials[] = [
     type: 'string',
     required: false,
   },
+  {
+    key: CredentialsKeyEnum.RedirectUrl,
+    displayName: 'Redirect URL',
+    description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
+    type: 'string',
+    required: false,
+  },
 ];
 
 export const fcmConfig: IConfigCredentials[] = [
@@ -431,6 +438,40 @@ export const expoConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
     displayName: 'Access Token',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
+export const pushWebhookConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.WebhookUrl,
+    displayName: 'Webhook URL',
+    type: 'string',
+    description: 'the webhook URL to call to trigger push notifications',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'the secret used to sign webhooks calls',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
+export const oneSignalConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application ID',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
     type: 'text',
     required: true,
   },
@@ -617,6 +658,22 @@ export const smsCentralConfig: IConfigCredentials[] = [
     displayName: 'Base URL',
     type: 'string',
     required: false,
+  },
+  ...smsConfigBase,
+];
+
+export const africasTalkingConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
   },
   ...smsConfigBase,
 ];

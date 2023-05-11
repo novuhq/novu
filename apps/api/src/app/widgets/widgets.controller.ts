@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   Get,
   Param,
@@ -48,6 +49,7 @@ import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecas
 import { MarkAllMessagesAsCommand } from './usecases/mark-all-messages-as/mark-all-messages-as.command';
 import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-messages-as.usecase';
 import { GetNotificationsFeedDto } from './dtos/get-notifications-feed-request.dto';
+import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
 
 @Controller('/widgets')
 @ApiExcludeController()
@@ -115,7 +117,9 @@ export class WidgetsController {
   async getUnseenCount(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('seen') seen: boolean
+    @Query('seen') seen: boolean,
+    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
+    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
 
@@ -125,6 +129,7 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       feedId: feedsQuery,
       seen,
+      limit,
     });
 
     return await this.getFeedCountUsecase.execute(command);
@@ -135,7 +140,9 @@ export class WidgetsController {
   async getUnreadCount(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Query('feedIdentifier') feedId: string[] | string,
-    @Query('read') read: boolean
+    @Query('read') read: boolean,
+    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
+    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(feedId);
 
@@ -145,6 +152,7 @@ export class WidgetsController {
       environmentId: subscriberSession._environmentId,
       feedId: feedsQuery,
       read,
+      limit,
     });
 
     return await this.getFeedCountUsecase.execute(command);
@@ -154,12 +162,14 @@ export class WidgetsController {
   @Get('/notifications/count')
   async getCount(
     @SubscriberSession() subscriberSession: SubscriberEntity,
-    @Query() query: GetCountQuery
+    @Query() query: GetCountQuery,
+    // todo NV-2161 in version 0.16: update DefaultValuePipe to 100 and limit-pipe max to 100
+    @Query('limit', new DefaultValuePipe(1000), new LimitPipe(1, 1000, true)) limit: number
   ): Promise<UnseenCountResponse> {
     const feedsQuery = this.toArray(query.feedIdentifier);
 
     if (query.seen === undefined && query.read === undefined) {
-      query.seen = true;
+      query.seen = false;
     }
 
     const command = GetFeedCountCommand.create({
@@ -169,6 +179,7 @@ export class WidgetsController {
       feedId: feedsQuery,
       seen: query.seen,
       read: query.read,
+      limit: limit,
     });
 
     return await this.getFeedCountUsecase.execute(command);

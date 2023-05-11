@@ -354,5 +354,9 @@ jobSchema.index({
   _notificationId: 1,
 });
 
+jobSchema.index({
+  _environmentId: 1,
+});
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Job = (mongoose.models.Job as mongoose.Model<JobDBModel>) || mongoose.model<JobDBModel>('Job', jobSchema);

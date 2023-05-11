@@ -70,13 +70,12 @@ headlessService.initializeSession({
 ## Fetch Notifications
 
 ```js
-
 headlessService.fetchNotifications({
   listener: ({ data, error, isError, isFetching, isLoading, status }) => {
     console.log({ data, error, isError, isFetching, isLoading, status });
   },
   onSuccess: (response: IPaginatedResponse<IMessage>) => {
-    console.log({response.data, response.page, response.totalCount, response.pageSize});
+    console.log(response.data, response.page, response.totalCount, response.pageSize);
   },
   page: 1, // page number to be fetched
 });

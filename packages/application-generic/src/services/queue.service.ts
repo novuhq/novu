@@ -5,7 +5,6 @@ import { getRedisPrefix } from '@novu/shared';
 import { BullmqService } from './bull-mq.service';
 
 export class QueueService<T = unknown> {
-  public readonly name = 'standard';
   protected bullConfig: QueueBaseOptions = {
     connection: {
       db: Number(process.env.REDIS_DB_INDEX),
@@ -22,10 +21,9 @@ export class QueueService<T = unknown> {
   public readonly bullMqService: BullmqService;
   public readonly DEFAULT_ATTEMPTS = 3;
 
-  constructor() {
+  constructor(public name = 'standard') {
     this.bullMqService = new BullmqService();
-
-    this.bullMqService.createQueue(this.name, {
+    this.bullMqService.createQueue(name, {
       ...this.bullConfig,
       defaultJobOptions: {
         removeOnComplete: true,
