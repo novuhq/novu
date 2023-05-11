@@ -10,6 +10,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  INovuWorker,
 } from '@novu/application-generic';
 
 import {
@@ -31,8 +32,10 @@ interface IJobData {
   _userId: string;
 }
 
+const LOG_CONTEXT = 'WorkflowWorkerService';
+
 @Injectable()
-export class WorkflowQueueService extends QueueService<IJobData> {
+export class WorkflowWorkerService extends QueueService<IJobData> implements INovuWorker {
   constructor(
     @Inject(forwardRef(() => QueueNextJob)) private queueNextJob: QueueNextJob,
     @Inject(forwardRef(() => RunJob)) private runJob: RunJob,
@@ -43,7 +46,7 @@ export class WorkflowQueueService extends QueueService<IJobData> {
     @Inject(forwardRef(() => CreateExecutionDetails)) private createExecutionDetails: CreateExecutionDetails
   ) {
     super();
-    Logger.warn('Workflow queue service created');
+    Logger.warn('Workflow worker service created');
     this.bullMqService.createWorker(this.name, this.getWorkerProcessor(), this.getWorkerOpts());
 
     this.bullMqService.worker.on('completed', async (job) => {
@@ -106,7 +109,7 @@ export class WorkflowQueueService extends QueueService<IJobData> {
         })
       );
     } catch (error) {
-      Logger.error('Failed to set job as completed', error);
+      Logger.error('Failed to set job as completed', LOG_CONTEXT, error);
     }
   }
 
@@ -130,7 +133,7 @@ export class WorkflowQueueService extends QueueService<IJobData> {
         await this.handleLastFailedWebhookFilter(job, error);
       }
     } catch (anotherError) {
-      Logger.error('Failed to set job as failed', anotherError);
+      Logger.error('Failed to set job as failed', LOG_CONTEXT, anotherError);
     }
   }
 
@@ -183,4 +186,14 @@ export class WorkflowQueueService extends QueueService<IJobData> {
       return await this.webhookFilterWebhookFilterBackoffStrategy.execute(command);
     };
   };
+
+  public async pauseWorker(): Promise<void> {
+    Logger.log('Pausing worker', LOG_CONTEXT);
+    await this.bullMqService.pauseWorker();
+  }
+
+  public async resumeWorker(): Promise<void> {
+    Logger.log('Resuming worker', LOG_CONTEXT);
+    await this.bullMqService.resumeWorker();
+  }
 }

@@ -36,8 +36,8 @@ import {
 import { JobRepository } from '@novu/dal';
 
 import { SharedModule } from '../shared/shared.module';
-import { WorkflowQueueService } from './services/workflow-queue.service';
-import { TriggerProcessorQueueService } from './services/trigger-processor-queue.service';
+import { WorkflowWorkerService } from './services/workflow-worker.service';
+import { TriggerWorkerService } from './services/trigger-worker.service';
 import {
   MessageMatcher,
   SendMessage,
@@ -113,14 +113,6 @@ const SERVICES: Provider[] = [
     useClass: MetricQueueService,
   },
   {
-    provide: QueueService,
-    useClass: WorkflowQueueService,
-  },
-  {
-    provide: TriggerQueueService,
-    useClass: TriggerProcessorQueueService,
-  },
-  {
     provide: WsQueueService,
     useClass: WsQueueService,
   },
@@ -134,6 +126,8 @@ const SERVICES: Provider[] = [
   EventsDistributedLockService,
   EventsPerformanceService,
   CalculateDelayService,
+  TriggerWorkerService,
+  WorkflowWorkerService,
 ];
 
 @Module({
