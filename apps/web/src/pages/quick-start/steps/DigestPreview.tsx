@@ -4,6 +4,7 @@ import { ReactFlowProvider } from 'react-flow-renderer';
 
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 import { DigestDemoFlow } from '../../../components';
+
 import useStyles from '../components/OnboardingSteps.styles';
 import { ArrowLeft } from '../../../design-system/icons';
 import { ArrowLeftGradient } from '../../../design-system/icons/gradient/ArrowLeftGradient';
