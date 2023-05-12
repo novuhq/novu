@@ -1,12 +1,24 @@
 import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
-import { SharedModule } from '../shared/shared.module';
+import {
+  CacheServiceHealthIndicator,
+  DalServiceHealthIndicator,
+  InMemoryProviderServiceHealthIndicator,
+  TriggerQueueServiceHealthIndicator,
+} from '@novu/application-generic';
+
 import { HealthController } from './health.controller';
-import { CacheServiceHealthIndicator } from './cache-health-indicator';
+
+import { SharedModule } from '../shared/shared.module';
 
 @Module({
   imports: [SharedModule, TerminusModule],
   controllers: [HealthController],
-  providers: [CacheServiceHealthIndicator],
+  providers: [
+    CacheServiceHealthIndicator,
+    DalServiceHealthIndicator,
+    InMemoryProviderServiceHealthIndicator,
+    TriggerQueueServiceHealthIndicator,
+  ],
 })
 export class HealthModule {}

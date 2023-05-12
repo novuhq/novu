@@ -444,7 +444,9 @@
     "africas",
     "sandpack",
     "Sandpack",
-    "codesandbox"
+    "codesandbox",
+    "supertest",
+    "superagent"
   ],
   "flagWords": [],
   "patterns": [
