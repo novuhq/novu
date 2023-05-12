@@ -22,6 +22,7 @@ interface INodemailerConfig {
   ignoreTls?: boolean;
   requireTls?: boolean;
   tlsOptions?: ConnectionOptions;
+  senderName?: string;
 }
 
 export class NodemailerProvider implements IEmailProvider {
@@ -122,7 +123,10 @@ export class NodemailerProvider implements IEmailProvider {
 
   private createMailData(options: IEmailOptions): SendMailOptions {
     const sendMailOptions: SendMailOptions = {
-      from: options.from || this.config.from,
+      from: {
+        address: options.from || this.config.from,
+        name: this.config.senderName || '',
+      },
       to: options.to,
       subject: options.subject,
       html: options.html,
