@@ -6,6 +6,7 @@ import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
 import { api } from '../api/api.client';
 import { useAuthContext } from '../components/providers/AuthProvider';
 import { QueryKeys } from '../api/query.keys';
+import { useNavigate } from 'react-router-dom';
 
 export type EnvironmentContext = {
   readonly: boolean;
@@ -16,6 +17,8 @@ export type EnvironmentContext = {
 };
 
 export const useEnvController = (): EnvironmentContext => {
+  const navigate = useNavigate();
+
   const queryClient = useQueryClient();
   const { setToken } = useAuthContext();
   const [readonly, setReadonly] = useState<boolean>(false);
@@ -55,7 +58,8 @@ export const useEnvController = (): EnvironmentContext => {
     }
     setToken(tokenResponse.token);
 
-    await queryClient.refetchQueries();
+    await navigate('/');
+    await queryClient.invalidateQueries();
   }
 
   return {
