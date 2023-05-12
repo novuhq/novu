@@ -34,6 +34,7 @@ function NovuNotificationCenter() {
 
 export default NovuNotificationCenter`,
   'App.tsx': `import NovuNotificationCenter from "./Novu";
+import "./App.css";
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
         justifyContent: "center",
         alignItems: "center",
         flexDirection: "column",
+        color: "white",
       }}
     >
       <p style={{ textAlign: "center", fontSize: "12px", maxWidth: "80%" }}>
@@ -54,12 +56,17 @@ function App() {
   );
 }
 export default App;`,
+  'App.css': {
+    code: `body {
+      background-color: black;
+      overflow-x: hidden;
+    }`,
+    hidden: true,
+  },
 };
 
 const ReactCustomStyling = () => {
-  return (
-    <SandPack theme={'dark'} template="react-ts" files={files} options={{ wrapContent: true }} />
-  );
+  return <SandPack theme={'dark'} template="react-ts" files={files} />;
 };
 
 export default ReactCustomStyling;

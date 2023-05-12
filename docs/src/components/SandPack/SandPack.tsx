@@ -41,6 +41,7 @@ const SandPack = (props: SandpackProviderProps) => {
         autorun: false,
         showLineNumbers: true,
         ...options,
+        editorWidthPercentage: 45,
       }}
       customSetup={{
         dependencies: templateDependency(template),
