@@ -12,12 +12,6 @@ interface IMetric {
   sumOfSquares: number;
 }
 
-function sumOfSquares(values: number[]): number {
-  const meanVal = mean(values);
-
-  return sum(values.map((value) => (value - meanVal) ** 2));
-}
-
 const LOG_CONTEXT = 'MetricQueueService';
 const METRIC_JOB_ID = 'metric-job';
 
