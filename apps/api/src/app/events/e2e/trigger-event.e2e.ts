@@ -31,7 +31,7 @@ import {
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
 
-const IN_APP_MESSAGE_EXPIRE_MONTHS = 6;
+const IN_APP_MESSAGE_EXPIRE_MONTHS = 12;
 const MESSAGE_EXPIRE_MONTHS = 1;
 
 const axiosInstance = axios.create();

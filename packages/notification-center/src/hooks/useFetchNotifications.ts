@@ -10,10 +10,10 @@ export const useFetchNotifications = (
   { query }: { query?: IStoreQuery },
   options: UseInfiniteQueryOptions<IPaginatedResponse<IMessage>, Error, IPaginatedResponse<IMessage>> = {}
 ) => {
-  const { apiService, isSessionInitialized, fetchingStrategy } = useNovuContext();
+  const { apiService, isSessionInitialized, fetchingStrategy, subscriberId } = useNovuContext();
 
   const result = useInfiniteQuery<IPaginatedResponse<IMessage>, Error, IPaginatedResponse<IMessage>>(
-    [...INFINITE_NOTIFICATIONS_QUERY_KEY, query],
+    [...INFINITE_NOTIFICATIONS_QUERY_KEY, query, subscriberId],
     ({ pageParam = 0 }) => apiService.getNotificationsList(pageParam, query),
     {
       ...options,

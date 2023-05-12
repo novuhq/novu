@@ -23,7 +23,8 @@ export class CompileEmailTemplate {
   public async execute(command: CompileEmailTemplateCommand) {
     const verifyPayloadService = new VerifyPayloadService();
     const organization = await this.organizationRepository.findById(
-      command.organizationId
+      command.organizationId,
+      'branding'
     );
     if (!organization)
       throw new NotFoundException(

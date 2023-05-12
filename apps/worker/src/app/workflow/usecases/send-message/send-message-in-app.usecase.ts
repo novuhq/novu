@@ -3,7 +3,6 @@ import * as Sentry from '@sentry/node';
 import {
   MessageRepository,
   NotificationStepEntity,
-  NotificationRepository,
   SubscriberRepository,
   SubscriberEntity,
   MessageEntity,
@@ -36,7 +35,7 @@ import {
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
-import { PlatformException } from '../../../shared/utils/exceptions';
+import { PlatformException } from '../../../shared/utils';
 
 @Injectable()
 export class SendMessageInApp extends SendMessageBase {
@@ -44,7 +43,6 @@ export class SendMessageInApp extends SendMessageBase {
 
   constructor(
     private invalidateCache: InvalidateCacheService,
-    private notificationRepository: NotificationRepository,
     protected messageRepository: MessageRepository,
     private wsQueueService: WsQueueService,
     protected createLogUsecase: CreateLog,
@@ -75,8 +73,6 @@ export class SendMessageInApp extends SendMessageBase {
     Sentry.addBreadcrumb({
       message: 'Sending In App',
     });
-    const notification = await this.notificationRepository.findById(command.notificationId);
-    if (!notification) throw new PlatformException('Notification not found');
 
     const inAppChannel: NotificationStepEntity = command.step;
     if (!inAppChannel.template) throw new PlatformException('Template not found');
@@ -85,7 +81,7 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
-    const organization = await this.organizationRepository.findById(command.organizationId);
+    const organization = await this.organizationRepository.findById(command.organizationId, 'branding');
 
     try {
       content = await this.compileInAppTemplate(
@@ -132,10 +128,10 @@ export class SendMessageInApp extends SendMessageBase {
     delete messagePayload.attachments;
 
     const oldMessage = await this.messageRepository.findOne({
-      _notificationId: notification._id,
+      _notificationId: command.notificationId,
       _environmentId: command.environmentId,
       _subscriberId: command._subscriberId,
-      _templateId: notification._templateId,
+      _templateId: command._templateId,
       _messageTemplateId: inAppChannel.template._id,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
@@ -161,11 +157,11 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
-        _notificationId: notification._id,
+        _notificationId: command.notificationId,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
         _subscriberId: command._subscriberId,
-        _templateId: notification._templateId,
+        _templateId: command._templateId,
         _messageTemplateId: inAppChannel.template._id,
         channel: ChannelTypeEnum.IN_APP,
         cta: inAppChannel.template.cta,

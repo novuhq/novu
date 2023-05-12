@@ -20,7 +20,7 @@ const organizationRepository = new OrganizationRepository();
 const environmentRepository = new EnvironmentRepository();
 const now = Date.now();
 let expireAtOneMonth = addMonths(now, 1);
-let expireAtSixMonths = addMonths(now, 6);
+let expireAtOneYear = addMonths(now, 12);
 
 export async function createExpireAt() {
   const app = await NestFactory.create(AppModule, {
@@ -48,7 +48,7 @@ export async function createExpireAt() {
         expireAt: { $exists: false },
       };
       expireAtOneMonth = addMinutes(expireAtOneMonth, Math.floor(Math.random() * 4320));
-      expireAtSixMonths = addMinutes(expireAtSixMonths, Math.floor(Math.random() * 4320));
+      expireAtOneYear = addMinutes(expireAtOneYear, Math.floor(Math.random() * 4320));
 
       console.log('Setting messages');
       await messagesSetExpireAt(query);
@@ -77,7 +77,7 @@ export async function messagesSetExpireAt(query) {
       ...query,
       channel: 'in_app',
     },
-    { $set: { expireAt: expireAtSixMonths } }
+    { $set: { expireAt: expireAtOneYear } }
   );
 }
 
