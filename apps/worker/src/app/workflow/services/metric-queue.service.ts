@@ -61,14 +61,6 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
       .catch((error) => Logger.error('Metric Job Exists function errored', LOG_CONTEXT, error));
   }
 
-  public async gracefulShutdown() {
-    // Right now we only want this for testing purposes
-    if (process.env.NODE_ENV === 'test') {
-      await this.bullMqService.queue.drain();
-      await this.bullMqService.worker.close();
-    }
-  }
-
   private getWorkerOpts(): WorkerOptions {
     return {
       ...this.bullConfig,
@@ -81,7 +73,7 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   private getWorkerProcessor() {
     return async () => {
       return await new Promise<void>(async (resolve, reject): Promise<void> => {
-        Logger.verbose('metric job started');
+        Logger.verbose('metric job started', LOG_CONTEXT);
 
         try {
           for (const queueService of this.token_list) {
@@ -129,6 +121,6 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
   }
 
   private async jobHasFailed(job, error): Promise<void> {
-    Logger.error('Metric job failed', error, LOG_CONTEXT);
+    Logger.verbose('Metric job failed', LOG_CONTEXT, error);
   }
 }
