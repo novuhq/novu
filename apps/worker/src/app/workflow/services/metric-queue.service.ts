@@ -2,15 +2,6 @@ const nr = require('newrelic');
 import { WorkerOptions } from 'bullmq';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { QueueService } from '@novu/application-generic';
-import { min, max, sum, mean } from 'simple-statistics';
-
-interface IMetric {
-  count: number;
-  total: number;
-  min: number;
-  max: number;
-  sumOfSquares: number;
-}
 
 const LOG_CONTEXT = 'MetricQueueService';
 const METRIC_JOB_ID = 'metric-job';

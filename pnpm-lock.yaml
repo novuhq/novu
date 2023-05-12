@@ -889,7 +889,6 @@ importers:
       rimraf: ^3.0.2
       rxjs: 7.8.0
       shortid: ^2.2.16
-      simple-statistics: ^7.8.3
       sinon: ^9.2.4
       superagent-defaults: ^0.1.14
       supertest: ^5.0.0
@@ -933,7 +932,6 @@ importers:
       rimraf: 3.0.2
       rxjs: 7.8.0
       shortid: 2.2.16
-      simple-statistics: 7.8.3
       uuid: 8.3.2
     devDependencies:
       '@faker-js/faker': 6.3.1
@@ -45281,10 +45279,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
-
-  /simple-statistics/7.8.3:
-    resolution: {integrity: sha512-JFvMY00t6SBGtwMuJ+nqgsx9ylkMiJ5JlK9bkj8AdvniIe5615wWQYkKHXe84XtSuc40G/tlrPu0A5/NlJvv8A==}
-    dev: false
 
   /simple-swizzle/0.2.2:
     resolution: {integrity: sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg==}
