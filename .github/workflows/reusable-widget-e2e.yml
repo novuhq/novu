@@ -4,6 +4,12 @@ name: Test E2E WIDGET
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
   workflow_call:
+    inputs:
+      submodules:
+        description: 'The flag controlling whether we want submodules to checkout'
+        required: false
+        default: false
+        type: boolean
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -23,10 +29,30 @@ jobs:
         # run 3 copies of the current job in parallel
         containers: [1, 2]
 
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - id: setup
+        run: |
+          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo ::set-output has_token=true
+          else
+            echo ::set-output has_token=false
+          fi
+      # checkout with submodules if token is provided
       - uses: actions/checkout@v3
+        if: steps.setup.outputs.has_token == 'true'
+        with:
+          submodules: ${{ inputs.submodules }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+       # checkout without submodules
+      - uses: actions/checkout@v3
+        if: steps.setup.outputs.has_token != 'true'
 
       - uses: ./.github/actions/setup-project
         id: setup-project
