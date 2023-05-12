@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { useMantineTheme } from '@mantine/core';
 import { useMemo } from 'react';
 
