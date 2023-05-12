@@ -6,8 +6,6 @@ test('should trigger clickatellSmsProvider library correctly', async () => {
   });
 
   const spy = jest
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     .spyOn(provider, 'sendMessage')
     .mockImplementation(async () => {
       return {

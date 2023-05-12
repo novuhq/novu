@@ -2,14 +2,14 @@ import { TelnyxSmsProvider } from './telnyx.provider';
 
 test('should trigger Telnyx correctly', async () => {
   const provider = new TelnyxSmsProvider({
-    apiKey: 'API-KEY-MOCKI023893KLSPP',
+    apiKey: 'API-KEY-MOCK1023893INAPP',
     from: 'TelynxTest',
-    messageProfileId: 'jap-ops-pkd-pn-pdkd',
+    messageProfileId: 'jap-ops-pkd-pn-pair',
   });
 
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    // @ts-expect-error
     .spyOn(provider.telnyxClient.messages, 'create')
     .mockImplementation(async () => {
       return {
@@ -30,6 +30,6 @@ test('should trigger Telnyx correctly', async () => {
     from: 'TelynxTest',
     text: 'We are testing',
     to: '+2347069652019',
-    messaging_profile_id: 'jap-ops-pkd-pn-pdkd',
+    messaging_profile_id: 'jap-ops-pkd-pn-pair',
   });
 });
