@@ -221,6 +221,11 @@ Novu manages a data model to help your users configure their preferences in an e
 </details>
 
 <details>
-  <summary>How to get subscriber properties before step execution in workflow</summary>
+  <summary>How to get subscriber properties before step execution in workflow.</summary>
   <p>Workflow has access to all existing properties of subscriber as well as payload variables. So no extra steps are needed</p>
+</details>
+
+<details>
+  <summary>How to create list of subscribers?</summary>
+  <p>You can use <a href="./topics">topics</a> for this</p>
 </details>
