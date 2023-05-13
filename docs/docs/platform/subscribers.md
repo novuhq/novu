@@ -4,24 +4,24 @@ sidebar_position: 2
 
 # Subscribers
 
-`Subscriber` is a user to whom novu will send notification. Each subscriber in novu is uniquely identified by `subscriberId`. Novu manages your users in the form of subscribers. Novu stores some user specific information that helps you send multichannel notifications to your users.
+`Subscriber` is a user to whom Novu will send notification. Each subscriber in Novu is uniquely identified by `subscriberId`.Novu manages your users in the form of subscribers. Novu stores some user-specific information that helps you send multichannel notifications to your users.
 
 Each subscriber has the following data points:
 
-- **User Data** - Data stored in the subscriber object that you can easily access in your notification templates. This contains basic info such as first name, last name, avatar, locale, email, phone. This data is fixed and structured.
-- **Custom Data** - Apart from above fixed structured user data, any unstructured custom data such as address, nationality, height etc can also be stored in `data` field using key value pairs.
-- **Channel Specific Credentials** - `deviceTokens` required to send push notification and `webhookUrl` for chat channel providers can also be stored.
-- **Preferences** - Each subscriber has separate preferences per template along with template level preference. Read more about preferences [here](./preferences.md).
+- **User Data** - Data stored in the subscriber object that you can easily access in your notification templates. This contains basic info such as first name, last name, avatar, locale, email, and phone. This data is fixed and structured
+- **Custom Data** - Apart from the above fixed structured user data, any unstructured custom data such as user's address, nationality, height, etc can also be stored in the `data` field using key-value pairs.
+- **Channel Specific Credentials** - `deviceTokens` required to send push notifications and `webhookUrl` for chat channel providers can also be stored.
+- **Preferences** - Each subscriber has separate preferences per template and along with template-level preferences. Read more about preferences [here](./preferences.md).
 
-`subscriberId` is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal unique id your application uses for a specific user. Using an identifier like email might cause issues locating a specific subscriber once user change its email address.
+`subscriberId` is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal unique id your application uses for a specific user. Using an identifier like email might cause issues locating a specific subscriber once the users change their email address.
 
 ## Create a subscriber
 
-We support creating new subscriber using two ways, `Ahead of Trigger` means adding subscriber before triggering notification or `Inline of Trigger` means sending complete subscriber data in `to` field while triggering.
+We support creating new subscriber using two ways, `Ahead of Trigger` means adding subscribers before triggering notification or `Inline of Trigger` means sending complete subscriber data in `to` field while triggering.
 
 ### 1. Ahead of Trigger
 
-Before triggering any notification, first create the subscriber and then trigger notification to this subscriber. Here `subscriberId` is required field and other fields are optional.
+Before triggering any notification, first create the subscriber and then trigger the notification to this subscriber. Here `subscriberId` is the required field and other fields are optional.
 
 ```typescript
 import { Novu } from '@novu/node';
@@ -39,11 +39,11 @@ await novu.subscribers.identify(user.id, {
 });
 ```
 
-Novu will create a subscriber if one does not exist, and will update existing subscriber based on the `identify` payload. You can call this function during registration or signup to make sure the subscriber data is up-to-date, if you wish to save aditional attributes with subscriber, you can pass aditional custom data in **data** field as key value pairs.
+Novu will create a subscriber if one does not exist and will update the existing subscriber based on the `identify` payload. You can call this function during registration or signup to make sure the subscriber data is up-to-date, if you wish to save additional attributes with a subscriber, you can pass additional custom data in the **data** field as key-value pairs.
 
 ### 2. Inline of Trigger
 
-A non-exisiting subscriber can be added by sending subscriber data in `to` field of trigger method. If any subscriber with provided `subscriberId` does not exists, a new subscriber will be created. In this case subscriber will be created first and then trigger will be executed synchronously.
+A non-exisiting subscriber can be added by sending subscriber data in `to` field of the trigger method. If any subscriber with provided `subscriberId` does not exists, a new subscriber will be created. In this case, subscriber will be created first and then the trigger will be executed synchronously.
 
 ```typescript
 import { Novu } from '@novu/node';
@@ -69,7 +69,7 @@ await novu.trigger('<TEMPLATE_IDENTIFIER>', {
 
 ## Find a subscriber
 
-Any subscriber can be retrieved using unique subscriber identifer `subscriberId`. Check returned subscriber schema [here](#subscriber-response-schema).
+Any subscriber can be retrieved using a unique subscriber identifier `subscriberId`. Check returned subscriber schema [here](#subscriber-response-schema).
 
 ```typescript
 import { Novu } from '@novu/node';
@@ -81,7 +81,7 @@ await novu.subscribers.update('subscriberId');
 
 ## Update a subscriber
 
-In some cases, you want to access a subscriber to update a specific user data field or custom data field. For example, when the user changes its email address or personal details.
+In some cases, you want to access a subscriber to update a specific user data field or custom data field. For example, when the users change their email address or personal details.
 
 ```typescript
 import { Novu } from '@novu/node';
@@ -96,7 +96,7 @@ await novu.subscribers.update(user.id, {
 
 ## Delete a subscriber
 
-To stop a subscriber from receiving notifications, you can delete the subscriber. This will hard delete the subscriber means you will not be able to access this subscriber later. You will have to create subscriber again.
+To stop a subscriber from receiving notifications, you can delete the subscriber. This will hard delete the subscriber means you will not be able to access this subscriber later. You will have to create this subscriber again.
 
 ```typescript
 import { Novu } from '@novu/node';
@@ -108,7 +108,7 @@ await novu.subscribers.delete(user.id);
 
 ## List all subscribers
 
-This method will retrive all your subscribers in paginated way. Pagination can be controlled using `page` and `limit` options.
+This method will retrieve all your subscribers in a paginated way. Pagination can be controlled using `page` and `limit` options.
 
 ```typescript
 import { Novu } from '@novu/node';
@@ -121,7 +121,7 @@ await novu.subscribers.list(0, 5);
 
 ## Updating subscriber credentials
 
-Channel specific credentials of subscriber can be added or updated using `setCredentials` method. Novu support credentials for `push` (deviceTokens) and `chat` (webhookUrl) channels.
+Channel-specific credentials of subscribers can be added or updated using the `setCredentials` method. Novu supports credentials for `push` (deviceTokens) and `chat` (webhookUrl) channels.
 
 ```typescript
 import { Novu, ChatProviderIdEnum } from '@novu/node';
@@ -141,7 +141,7 @@ await novu.subscribers.setCredentials('subscriberId', 'fcm', {
 
 - subscriberId is a unique identifier used when identifying your users within the Novu platform.
 - providerId is a unique provider identifier (we recommend using `ChatProviderIdEnum` and `PushProviderIdEnum` for correct values).
-- credentials are the argument you need to be authenticated with your provider workspace. At this point, we support chat messages through webhook, so a webhookUrl is needed to be provided.
+- credentials are the values you need to be authenticated with your provider workspace.
 
 ## Subscriber Preferences
 
@@ -212,7 +212,7 @@ Novu manages a data model to help your users configure their preferences in an e
 <details>
   <summary>Why Novu stores user's PII?</summary>
   
-  <p>Novu stores user personal information like first name, last name, email, phone, locale, avatar etc to provide multichannel notification experience to users. Once these value are stored, novu automatically configure these values required as per different channels.</p>
+  <p>Novu stores user personal information like first name, last name, email, phone, locale, avatar, etc to provide a multichannel notification experience to users. Once these values are stored, Novu automatically configures these values required as per different channels.</p>
 </details>
 
 <details>
