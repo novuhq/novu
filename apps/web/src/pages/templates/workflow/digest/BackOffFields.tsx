@@ -9,13 +9,17 @@ import { IntervalSelect } from './IntervalSelect';
 import { BackOffTooltipIcon } from './icons/BackOffTooltipIcon';
 import { When } from '../../../../components/utils/When';
 
+const defaultBackoffAmount = '5';
+
 export const BackOffFields = ({ index, control, readonly }) => {
   const {
     formState: { errors, isSubmitted },
     watch,
+    setValue,
   } = useFormContext();
 
   const backoff = watch(`steps.${index}.digestMetadata.${DigestTypeEnum.REGULAR}.backoff`);
+  const backoffAmountFieldName = `steps.${index}.digestMetadata.${DigestTypeEnum.REGULAR}.backoffAmount`;
   const showErrors = isSubmitted && errors?.steps;
 
   return (
@@ -53,14 +57,13 @@ export const BackOffFields = ({ index, control, readonly }) => {
             <span>more than 1 event for the last</span>
             <Controller
               control={control}
-              name={`steps.${index}.digestMetadata.${DigestTypeEnum.REGULAR}.backoffAmount`}
-              defaultValue=""
+              name={backoffAmountFieldName}
+              defaultValue={defaultBackoffAmount}
               render={({ field, fieldState }) => {
                 return (
                   <Input
                     {...field}
                     value={field.value || ''}
-                    error={showErrors && fieldState.error?.message}
                     min={0}
                     max={100}
                     type="number"
@@ -79,6 +82,12 @@ export const BackOffFields = ({ index, control, readonly }) => {
                         lineHeight: '32px',
                       },
                     })}
+                    onBlur={(e) => {
+                      if (e.target.value === '') {
+                        setValue(backoffAmountFieldName, defaultBackoffAmount);
+                      }
+                      field.onBlur();
+                    }}
                   />
                 );
               }}
