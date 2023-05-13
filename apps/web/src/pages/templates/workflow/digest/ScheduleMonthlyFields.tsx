@@ -35,7 +35,7 @@ export const ScheduleMonthlyFields = ({ index, control, readonly }) => {
             <Controller
               control={control}
               name={`steps.${index}.digestMetadata.${DigestTypeEnum.TIMED}.${DigestUnitEnum.MONTHS}.monthDays`}
-              defaultValue={[new Date().getDay()]}
+              defaultValue={[new Date().getDate()]}
               render={({ field }) => {
                 return <DaySelect value={field.value} disabled={readonly} onChange={field.onChange} />;
               }}
