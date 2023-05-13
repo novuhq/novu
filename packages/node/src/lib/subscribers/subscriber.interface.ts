@@ -8,7 +8,7 @@ import {
 export { ISubscriberPayload };
 
 export interface ISubscribers {
-  list(page: number);
+  list(page: number, limit: number);
   get(subscriberId: string);
   identify(subscriberId: string, data: ISubscriberPayload);
   update(subscriberId: string, data: ISubscriberPayload);
