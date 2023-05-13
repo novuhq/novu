@@ -3,7 +3,13 @@ import axios from 'axios';
 
 import { CreateSubscriber, CreateSubscriberCommand, decryptCredentials } from '@novu/application-generic';
 import { ICredentialsDto } from '@novu/shared';
-import { ChannelTypeEnum, EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import {
+  ChannelTypeEnum,
+  EnvironmentRepository,
+  IntegrationEntity,
+  IntegrationRepository,
+  EnvironmentEntity,
+} from '@novu/dal';
 
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
 import {
@@ -13,6 +19,7 @@ import {
 } from '../update-subscriber-channel';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { OAuthHandlerEnum } from '../../types';
+import { validateEncryption } from '../chat-oauth/chat-oauth.usecase';
 
 @Injectable()
 export class ChatOauthCallback {
@@ -29,11 +36,18 @@ export class ChatOauthCallback {
   async execute(command: ChatOauthCallbackCommand) {
     const integrationCredentials = await this.getIntegrationCredentials(command);
 
-    const organizationId = await this.getOrganizationId(command.environmentId);
+    const { _organizationId, apiKeys } = await this.getEnvironment(command.environmentId);
+
+    await this.hmacValidation({
+      credentialHmac: integrationCredentials.hmac,
+      apiKey: apiKeys[0].key,
+      subscriberId: command.subscriberId,
+      externalHmacHash: command.hmacHash,
+    });
 
     const webhookUrl = await this.getWebhook(command, integrationCredentials);
 
-    await this.createSubscriber(organizationId, command, webhookUrl);
+    await this.createSubscriber(_organizationId, command, webhookUrl);
 
     const redirect = integrationCredentials.redirectUrl != null && integrationCredentials.redirectUrl != '';
 
@@ -68,14 +82,14 @@ export class ChatOauthCallback {
     );
   }
 
-  private async getOrganizationId(environmentId: string): Promise<string> {
+  private async getEnvironment(environmentId: string): Promise<EnvironmentEntity> {
     const environment = await this.environmentRepository.findById(environmentId);
 
     if (environment == null) {
       throw new NotFoundException(`Environment ID: ${environmentId} not found`);
     }
 
-    return environment._organizationId;
+    return environment;
   }
 
   private async getWebhook(
@@ -108,6 +122,10 @@ export class ChatOauthCallback {
       );
     }
 
+    if (!webhook) {
+      throw new ApiException(`Provider ${command.providerId} did not return a webhook url`);
+    }
+
     return webhook;
   }
 
@@ -130,5 +148,29 @@ export class ChatOauthCallback {
     integration.credentials = decryptCredentials(integration.credentials);
 
     return integration.credentials;
+  }
+
+  private async hmacValidation({
+    credentialHmac,
+    apiKey,
+    subscriberId,
+    externalHmacHash,
+  }: {
+    credentialHmac: boolean | undefined;
+    apiKey: string;
+    subscriberId: string;
+    externalHmacHash: string | undefined;
+  }) {
+    if (credentialHmac) {
+      if (!externalHmacHash) {
+        throw new ApiException('Hmac is enabled on the integration, please provide a HMAC hash on the request params');
+      }
+
+      validateEncryption({
+        apiKey: apiKey,
+        subscriberId: subscriberId,
+        externalHmacHash: externalHmacHash,
+      });
+    }
   }
 }

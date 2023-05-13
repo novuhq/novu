@@ -64,7 +64,7 @@ import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 import { ApiResponse } from '../shared/framework/response.decorator';
-import { HandleChatOauthRequestDto } from './dtos/handle-chat-oauth.request.dto';
+import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
 import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
 import { OAuthHandlerEnum } from './types';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callcack.usecase';
@@ -465,15 +465,16 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Param('providerId') providerId: ChatProviderIdEnum,
     @Param('environmentId') environmentId: string,
-    @Query() query: HandleChatOauthRequestDto,
+    @Query() query: ChatOauthCallbackRequestDto,
     @Res() res
   ): Promise<any> {
     const data = await this.chatOauthCallbackUsecase.execute(
       ChatOauthCallbackCommand.create({
-        providerCode: query.code,
+        providerCode: query?.code,
+        hmacHash: query?.hmacHash,
         environmentId,
         subscriberId,
-        providerId: providerId,
+        providerId,
       })
     );
 
@@ -495,10 +496,12 @@ export class SubscribersController {
     @Param('subscriberId') subscriberId: string,
     @Param('providerId') providerId: ChatProviderIdEnum,
     @Param('environmentId') environmentId: string,
-    @Res() res
+    @Res() res,
+    @Query() query: ChatOauthRequestDto
   ): Promise<void> {
     const data = await this.chatOauthUsecase.execute(
       ChatOauthCommand.create({
+        hmacHash: query?.hmacHash,
         environmentId,
         subscriberId,
         providerId,

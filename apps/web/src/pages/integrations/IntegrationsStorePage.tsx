@@ -190,6 +190,8 @@ export interface ICredentials {
   requireTls?: boolean;
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;
+  redirectUrl?: string;
+  hmac?: boolean;
 }
 
 export interface IntegrationEntity {
