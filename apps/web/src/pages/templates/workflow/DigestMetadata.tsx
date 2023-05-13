@@ -1,78 +1,24 @@
 import { Accordion, Group, useMantineColorScheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
-import { DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { DigestTypeEnum } from '@novu/shared';
 
 import { When } from '../../../components/utils/When';
-import { colors, Input, SegmentedControl, Select, Tooltip } from '../../../design-system';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
-import { WeekDaySelect } from './digest/WeekDaySelect';
+import { colors, Input, Select, Tooltip } from '../../../design-system';
 import { Bell, Digest, Timer } from '../../../design-system/icons';
 import { TypeSegmented } from './digest/TypeSegment';
-import { IntervalSelect } from './digest/IntervalSelect';
-import { BackOffFields } from './digest/BackOffFields';
 import { WillBeSentHeader } from './digest/WillBeSentHeader';
-import { ScheduleMonthlyFields } from './digest/ScheduleMonthlyFields';
-import { useEffect } from 'react';
 import { RegularInfo } from './digest/icons/RegularInfo';
-import { format } from 'date-fns';
+import { TimedDigestMetadata } from './TimedDigestMetadata';
+import { RegularDigestMetadata } from './RegularDigestMetadata';
 
-const convertUnitToLabel = (unit: DigestUnitEnum) => {
-  switch (unit) {
-    case DigestUnitEnum.SECONDS:
-      return 'second';
-    case DigestUnitEnum.MINUTES:
-      return 'minute';
-    case DigestUnitEnum.HOURS:
-      return 'hour';
-    case DigestUnitEnum.DAYS:
-      return 'day';
-    case DigestUnitEnum.WEEKS:
-      return 'week';
-    case DigestUnitEnum.MONTHS:
-      return 'month';
-  }
-};
-
-export const DigestMetadata = ({ control, index, readonly }) => {
-  const {
-    formState: { errors, isSubmitted },
-    watch,
-    trigger,
-    setValue,
-  } = useFormContext();
+export const DigestMetadata = ({ index, readonly }: { index: number; readonly: boolean }) => {
+  const { control, watch } = useFormContext();
 
   const { colorScheme } = useMantineColorScheme();
 
-  const type = watch(`steps.${index}.metadata.type`);
-  const unit = watch(`steps.${index}.metadata.unit`);
-  const amount = watch(`steps.${index}.metadata.amount`);
-  const digestKey = watch(`steps.${index}.metadata.digestKey`);
-  const showErrors = isSubmitted && errors?.steps;
+  const type = watch(`steps.${index}.digestMetadata.type`);
+  const digestKey = watch(`steps.${index}.digestMetadata.digestKey`);
   const isEnterprise = process.env.REACT_APP_DOCKER_HOSTED_ENV !== 'true';
-
-  useEffect(() => {
-    if (type === DigestTypeEnum.TIMED && unit === DigestUnitEnum.MINUTES) {
-      setValue(`steps.${index}.metadata.unit`, DigestUnitEnum.DAYS);
-    }
-
-    if (type === DigestTypeEnum.REGULAR && unit === DigestUnitEnum.DAYS) {
-      setValue(`steps.${index}.metadata.unit`, DigestUnitEnum.MINUTES);
-    }
-
-    trigger(`steps.${index}.metadata`);
-  }, [unit, type]);
-
-  useEffect(() => {
-    if (type === DigestTypeEnum.TIMED && amount === 5) {
-      setValue(`steps.${index}.metadata.amount`, 1);
-    }
-
-    if (type === DigestTypeEnum.REGULAR && amount === 1) {
-      setValue(`steps.${index}.metadata.amount`, 5);
-    }
-
-    trigger(`steps.${index}.metadata`);
-  }, [type, amount]);
 
   return (
     <div data-test-id="digest-step-settings-interval">
@@ -148,7 +94,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
             <Accordion.Panel>
               <Controller
                 control={control}
-                name={`steps.${index}.metadata.digestKey`}
+                name={`steps.${index}.digestMetadata.digestKey`}
                 defaultValue=""
                 render={({ field, fieldState }) => {
                   return (
@@ -188,7 +134,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
               <Controller
                 control={control}
                 defaultValue={DigestTypeEnum.REGULAR}
-                name={`steps.${index}.metadata.type`}
+                name={`steps.${index}.digestMetadata.type`}
                 render={({ field }) => {
                   return (
                     <TypeSegmented
@@ -207,6 +153,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                               withinPortal
                               width={310}
                               multiline
+                              offset={15}
                               label={
                                 <>
                                   <div>
@@ -229,6 +176,7 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                               withinPortal
                               width={240}
                               multiline
+                              offset={15}
                               label="Digest aggregates the events in between the selected time period"
                             >
                               <div>Schedule</div>
@@ -236,10 +184,6 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                           ),
                         },
                       ]}
-                      onChange={async (segmentValue) => {
-                        field.onChange(segmentValue);
-                        await trigger(`steps.${index}.metadata`);
-                      }}
                       data-test-id="digest-type"
                     />
                   );
@@ -253,171 +197,8 @@ export const DigestMetadata = ({ control, index, readonly }) => {
                 borderRadius: 8,
               }}
             >
-              <When truthy={type === DigestTypeEnum.TIMED}>
-                <Controller
-                  control={control}
-                  defaultValue={DigestUnitEnum.DAYS}
-                  name={`steps.${index}.metadata.unit`}
-                  render={({ field }) => {
-                    return (
-                      <SegmentedControl
-                        {...field}
-                        size="sm"
-                        sx={{
-                          maxWidth: '100% !important',
-                        }}
-                        fullWidth
-                        disabled={readonly}
-                        data={[
-                          { value: DigestUnitEnum.MINUTES, label: 'Min' },
-                          { value: DigestUnitEnum.HOURS, label: 'Hour' },
-                          { value: DigestUnitEnum.DAYS, label: 'Daily' },
-                          { value: DigestUnitEnum.WEEKS, label: 'Weekly' },
-                          { value: DigestUnitEnum.MONTHS, label: 'Monthly' },
-                        ]}
-                        onChange={async (segmentValue) => {
-                          field.onChange(segmentValue);
-                          await trigger(`steps.${index}.metadata`);
-                        }}
-                        data-test-id="digest-unit"
-                      />
-                    );
-                  }}
-                />
-                <Group data-test-id="timed-group" spacing={8} sx={{ color: colors.B60 }}>
-                  <span>Every</span>
-                  <Controller
-                    control={control}
-                    name={`steps.${index}.metadata.amount`}
-                    defaultValue={1}
-                    render={({ field, fieldState }) => {
-                      return (
-                        <Input
-                          {...field}
-                          value={field.value}
-                          error={showErrors && fieldState.error?.message}
-                          min={1}
-                          max={100}
-                          type="number"
-                          data-test-id="time-amount"
-                          placeholder="0"
-                          disabled={readonly}
-                          styles={(theme) => ({
-                            ...inputStyles(theme),
-                            input: {
-                              textAlign: 'center',
-                              ...inputStyles(theme).input,
-                            },
-                          })}
-                        />
-                      );
-                    }}
-                  />
-                  <span>{convertUnitToLabel(unit)}(s)</span>
-                  <When truthy={[DigestUnitEnum.DAYS, DigestUnitEnum.WEEKS, DigestUnitEnum.MONTHS].includes(unit)}>
-                    <span>at</span>
-                    <Controller
-                      control={control}
-                      name={`steps.${index}.metadata.timed.atTime`}
-                      defaultValue={format(new Date(), 'HH:mm')}
-                      render={({ field, fieldState }) => {
-                        return (
-                          <Input
-                            {...field}
-                            value={field.value || ''}
-                            error={showErrors && fieldState.error?.message}
-                            type="time"
-                            data-test-id="time-at"
-                            placeholder="0"
-                            disabled={readonly}
-                            styles={(theme) => ({
-                              ...inputStyles(theme),
-                              input: {
-                                textAlign: 'center',
-                                ...inputStyles(theme).input,
-                              },
-                            })}
-                          />
-                        );
-                      }}
-                    />
-                  </When>
-                  <When truthy={[DigestUnitEnum.WEEKS, DigestUnitEnum.MONTHS].includes(unit)}>
-                    <span>on:</span>
-                  </When>
-                </Group>
-                <When truthy={unit === DigestUnitEnum.WEEKS}>
-                  <Controller
-                    control={control}
-                    name={`steps.${index}.metadata.timed.weekDays`}
-                    defaultValue={[format(new Date(), 'EEEE').toLowerCase()]}
-                    render={({ field }) => {
-                      return (
-                        <WeekDaySelect
-                          value={field.value}
-                          disabled={readonly}
-                          onChange={async (value) => {
-                            field.onChange(value);
-                            await trigger(`steps.${index}.metadata`);
-                          }}
-                        />
-                      );
-                    }}
-                  />
-                </When>
-                <ScheduleMonthlyFields readonly={readonly} index={index} control={control} />
-              </When>
-              <When truthy={type !== DigestTypeEnum.TIMED}>
-                <Group spacing={8} sx={{ color: colors.B60 }}>
-                  <span>digest events for</span>
-                  <Controller
-                    control={control}
-                    name={`steps.${index}.metadata.amount`}
-                    defaultValue={5}
-                    render={({ field, fieldState }) => {
-                      return (
-                        <Input
-                          {...field}
-                          value={field.value || ''}
-                          error={showErrors && fieldState.error?.message}
-                          min={0}
-                          max={100}
-                          type="number"
-                          data-test-id="time-amount"
-                          placeholder="0"
-                          disabled={readonly}
-                          styles={(theme) => ({
-                            ...inputStyles(theme),
-                            input: {
-                              textAlign: 'center',
-                              ...inputStyles(theme).input,
-                              minHeight: '30px',
-                              margin: 0,
-                              height: 30,
-                              lineHeight: '32px',
-                            },
-                          })}
-                        />
-                      );
-                    }}
-                  />
-                  <div
-                    style={{
-                      width: '90px',
-                      height: 30,
-                    }}
-                  >
-                    <IntervalSelect
-                      readonly={readonly}
-                      control={control}
-                      name={`steps.${index}.metadata.unit`}
-                      showErrors={showErrors}
-                    />
-                  </div>
-                  <span>before send</span>
-                </Group>
-                <BackOffFields index={index} control={control} readonly={readonly} />
-              </When>
+              {type === DigestTypeEnum.TIMED && <TimedDigestMetadata index={index} readonly={readonly} />}
+              {type === DigestTypeEnum.REGULAR && <RegularDigestMetadata index={index} readonly={readonly} />}
             </div>
           </Accordion.Panel>
         </Accordion.Item>

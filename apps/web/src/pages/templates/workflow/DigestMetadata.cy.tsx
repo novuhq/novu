@@ -12,7 +12,7 @@ const DigestWrapper = ({ data }) => {
     defaultValues: {
       steps: [
         {
-          metadata: data,
+          digestMetadata: data,
         },
       ],
     },
@@ -21,7 +21,7 @@ const DigestWrapper = ({ data }) => {
 
   return (
     <FormProvider {...methods}>
-      <DigestMetadata control={methods.control} readonly={false} index={0} />
+      <DigestMetadata readonly={false} index={0} />
     </FormProvider>
   );
 };
