@@ -1,24 +1,14 @@
-import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsDefined, IsString } from 'class-validator';
+import { PaginationRequestDto } from '../../shared/dtos/pagination-request';
 
-export class ChangesRequestDto {
-  @ApiPropertyOptional({
-    type: Number,
-    required: false,
-  })
-  page?: number = 0;
-
-  @ApiPropertyOptional({
-    type: Number,
-    required: false,
-    default: 10,
-    maximum: 100,
-  })
-  limit?: number = 10;
-
+export class ChangesRequestDto extends PaginationRequestDto(10, 100) {
   @ApiProperty({
     type: String,
     required: true,
     default: 'false',
   })
+  @IsDefined()
+  @IsString()
   promoted: string;
 }

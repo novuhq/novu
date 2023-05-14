@@ -12,9 +12,9 @@ before(async () => {
 });
 
 after(async () => {
-  await testServer.teardown();
-
   try {
+    await testServer.teardown();
+
     await dalService.destroy();
   } catch (e) {
     if (e.code !== 12586) {

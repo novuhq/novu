@@ -1,5 +1,5 @@
 import { Module, OnModuleInit } from '@nestjs/common';
-import { BullmqService, WsQueueService } from '@novu/application-generic';
+import { BullMqService, WsQueueService } from '@novu/application-generic';
 import { getRedisPrefix } from '@novu/shared';
 
 import { WSGateway } from './ws.gateway';
@@ -11,10 +11,10 @@ import { SharedModule } from '../shared/shared.module';
   exports: [WSGateway],
 })
 export class SocketModule implements OnModuleInit {
-  private readonly bullMqService: BullmqService;
+  private readonly bullMqService: BullMqService;
 
   constructor(private wsGateway: WSGateway) {
-    this.bullMqService = new BullmqService();
+    this.bullMqService = new BullMqService();
   }
 
   async onModuleInit() {
