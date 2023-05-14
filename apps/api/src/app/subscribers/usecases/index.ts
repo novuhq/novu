@@ -15,7 +15,7 @@ import { UpdateSubscriberChannel } from './update-subscriber-channel';
 import { UpdateSubscriberPreference } from './update-subscriber-preference';
 import { UpdateSubscriberOnlineFlag } from './update-subscriber-online-flag';
 import { ChatOauth } from './chat-oauth/chat-oauth.usecase';
-import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callcack.usecase';
+import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callback.usecase';
 
 export {
   SearchByExternalSubscriberIds,
