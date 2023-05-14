@@ -49,7 +49,7 @@ Create a new endpoint on your server that will handle the following steps (you c
    });
    ```
 
-   - subscriberId is a custom identifier used when identifying your users within the Novu platform.
+   - subscriberId is a custom identifier used when identifying your users within the Novu platform. .[Read more here](/platform/subscribers).
    - providerId is a unique provider identifier. We recommend using our ChatProviderIdEnum.Slack if you're using Node, else string of `slack` to specify the provider.
    - The third parameter is the credentials object. In this case we use the webhookUrl property to specify the webhook URL generated in the previous step.
 
