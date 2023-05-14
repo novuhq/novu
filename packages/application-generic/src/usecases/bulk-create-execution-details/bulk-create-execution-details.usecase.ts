@@ -19,9 +19,8 @@ export class BulkCreateExecutionDetails {
 
       entities.push(entity);
     });
-    // TODO: Which checks to do? If the notification and job belong to the environment and organization provided?
 
-    await this.executionDetailsRepository.insertMany(entities);
+    await this.executionDetailsRepository.insertMany(entities, true);
   }
 
   private cleanFromNulls(
