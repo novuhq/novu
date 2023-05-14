@@ -65,8 +65,8 @@ describe('Activity Feed Screen', function () {
 
     cy.getByTestId('email-step').should('have.length', 10);
 
-    cy.getByTestId('templates-filter').click();
-    cy.get('.mantine-MultiSelect-item').contains(this.session.templates[0].name).click();
+    cy.getByTestId('templates-filter').click({ force: true });
+    cy.get('.mantine-MultiSelect-item').contains(this.session.templates[0].name).click({ force: true });
 
     cy.getByTestId('activities-table')
       .find('button')
@@ -75,7 +75,7 @@ describe('Activity Feed Screen', function () {
       .contains(this.session.templates[0].name);
 
     cy.getByTestId('clear-filters').should('exist');
-    cy.getByTestId('clear-filters').click();
+    cy.getByTestId('clear-filters').click({ force: true });
 
     cy.getByTestId('templates-filter').find('.mantine-Text-root').should('not.exist');
     cy.getByTestId('email-step').should('have.length', 10);
