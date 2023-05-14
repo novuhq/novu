@@ -23,7 +23,7 @@ Novu will manage the OAuth flow and store the credentials
 2. Add the `Add to Slack` button or the shareable URL to your application in order to request permission of access (scope: incoming-webhook).
    <br/>  
    Make sure to use the generated shareable URL that is located under Slack form in the <a href="https://web.novu.co/integrations" style={{textDecoration: "underline"}}>Integration Store</a>.
-   The Shareable URL should be on the following format <https://api.novu.co/v1/subscribers/SUBSCRIBER_ID/credentials/slack/ENVIRONMENT_ID>. <br/>
+   The Shareable URL should be on the following format https:<span/>//api.novu.co/v1/subscribers/SUBSCRIBER_ID/credentials/slack/ENVIRONMENT_ID. <br/>
 
 - SUBSCRIBER_ID is a custom identifier used when identifying your users within the Novu platform. [Read more here](/platform/subscribers). <br/>
 - ENVIRONMENT_ID is a context of an environment you can locate your environment id in the setting in the dashboard . <a href="https://web.novu.co/settings" style={{textDecoration: "underline"}}>Settings</a>.
