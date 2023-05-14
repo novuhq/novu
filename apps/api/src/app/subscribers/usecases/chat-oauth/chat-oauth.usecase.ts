@@ -40,11 +40,11 @@ export class ChatOauth {
     externalHmacHash: string | undefined;
   }) {
     if (credentialHmac) {
-      const apiKey = await this.getEnvironmentApiKey(environmentId);
-
       if (!externalHmacHash) {
         throw new ApiException('Hmac is enabled on the integration, please provide a HMAC hash on the request params');
       }
+
+      const apiKey = await this.getEnvironmentApiKey(environmentId);
 
       validateEncryption({
         apiKey: apiKey,
@@ -69,21 +69,21 @@ export class ChatOauth {
 
     const integration = await this.integrationRepository.findOne(query);
 
-    if (integration == null) {
+    if (!integration) {
       throw new NotFoundException(
         `Integration in environment ${command.environmentId} was not found, channel: ${ChannelTypeEnum.CHAT}, ` +
           `providerId: ${command.providerId}`
       );
     }
 
-    if (integration.credentials == null) {
+    if (!integration.credentials) {
       throw new NotFoundException(
         `Integration in environment ${command.environmentId} missing credentials, channel: ${ChannelTypeEnum.CHAT}, ` +
           `providerId: ${command.providerId}`
       );
     }
 
-    if (integration.credentials.clientId == null) {
+    if (!integration.credentials.clientId) {
       throw new NotFoundException(
         `Integration in environment ${command.environmentId} missing clientId, channel: ${ChannelTypeEnum.CHAT}, ` +
           `providerId: ${command.providerId}`
@@ -94,13 +94,13 @@ export class ChatOauth {
   }
 
   private async getEnvironmentApiKey(environmentId: string): Promise<string> {
-    const environment = await this.environmentRepository.findById(environmentId);
+    const apiKeys = await this.environmentRepository.getApiKeys(environmentId);
 
-    if (environment == null) {
+    if (!apiKeys.length) {
       throw new NotFoundException(`Environment ID: ${environmentId} not found`);
     }
 
-    return environment.apiKeys[0].key;
+    return apiKeys[0].key;
   }
 }
 
