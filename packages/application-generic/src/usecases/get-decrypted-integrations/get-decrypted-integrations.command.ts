@@ -1,14 +1,7 @@
 import { IsOptional } from 'class-validator';
-import {
-  ChannelTypeEnum,
-  EmailProviderIdEnum,
-  PushProviderIdEnum,
-  SmsProviderIdEnum,
-  InAppProviderIdEnum,
-  ChatProviderIdEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, ProvidersIdEnum } from '@novu/shared';
 
-import { EnvironmentWithUserCommand } from '../../commands/project.command';
+import { EnvironmentWithUserCommand } from '../../commands';
 
 export class GetDecryptedIntegrationsCommand extends EnvironmentWithUserCommand {
   @IsOptional()
@@ -21,10 +14,5 @@ export class GetDecryptedIntegrationsCommand extends EnvironmentWithUserCommand 
   channelType?: ChannelTypeEnum;
 
   @IsOptional()
-  providerId?:
-    | EmailProviderIdEnum
-    | SmsProviderIdEnum
-    | PushProviderIdEnum
-    | ChatProviderIdEnum
-    | InAppProviderIdEnum;
+  providerId?: ProvidersIdEnum;
 }
