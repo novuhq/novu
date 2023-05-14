@@ -85,3 +85,10 @@ export enum PushProviderIdEnum {
 export enum InAppProviderIdEnum {
   Novu = 'novu',
 }
+
+export type ProvidersIdEnum =
+  | EmailProviderIdEnum
+  | SmsProviderIdEnum
+  | PushProviderIdEnum
+  | InAppProviderIdEnum
+  | ChatProviderIdEnum;

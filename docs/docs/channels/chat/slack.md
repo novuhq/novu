@@ -6,42 +6,68 @@ This guide will walk you through the steps needed to obtain the `webhookUrl` tha
 
 We will provide the basic flow that the user needs to perform, to successfully send notifications via the Slack integration.
 
-## Application Setup
+## Application Creation
+
+This step is optional, if you already have a Slack application you can reuse it.
 
 1. Go to Slack's developer dashboard [https://api.slack.com/apps](https://api.slack.com/apps).
 2. Create a new application.
-3. Go to `Incoming Webhooks` from the left menu and Activate Incoming Webhooks.
-4. (Optional) To test your integration with your workspace, you could generate a test webhook here.
 
-## Generate webhooks for your users
+## Generation of Webhook Urls for your subscribers
 
-1. On your server add a new endpoint that will listen to the response redirect from a POST request to `https://slack.com/api/oauth.v2.access` (read more on Slack's documentation [here](https://api.slack.com/authentication/oauth-v2#asking))
-2. Go to `OAuth & Permissions` on Slack's developer dashboard and add your REDIRECT_URL in Redirect URLs. (You can use [Request Bin](https://requestbin.com/) for an easy HTTPS service for redirects)
-3. Go to `Manage Distribution` and at the bottom of the page make sure to tick `Remove Hard Coded Information` and `Activate Public Distribution`.
-4. Add the `Add to Slack` button or the shareable URL to your application.
-5. After the end-user finishes the authorization you can get the `webhookUrl` from the response of the OAuth under `body.incoming_webhook.url`.
-6. When the `incoming_webhook.url` is obtained we can save it on the relevant subscriber entity in Novu:
+### Novu Managed (Recommended)
 
-```typescript
-import { Novu, ChatProviderIdEnum } from '@novu/node';
+Novu will manage the OAuth flow and store the credentials
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+1. Configure your Slack application as mentioned <span style={{textDecoration: "underline"}}>[below](/channels/chat/slack#slack-application-configuration)</span>.
+2. Add the `Add to Slack` button or the shareable URL to your application in order to request permission of access (scope: incoming-webhook).
+   <br/>
+   Make sure to use the generated sharable URL that is located under Slack form in the <a href="https://web.novu.co/integrations" style={{textDecoration: "underline"}}>Integration Store</a>.
 
-const body = req.body; // From your HTTPS listener
-await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum.Slack, {
-  webhookUrl: body.incoming_webhook.url,
-});
-```
+### Manual Management
 
-- `subscriberId` is a custom identifier used when identifying your users within the Novu platform.
-- `providerId` is a unique provider identifier. We recommend using our ChatProviderIdEnum to specify the provider.
-- The third parameter is the credentials object. In this case we use the `webhookUrl` property to specify the webhook URL generated in the previous step.
+<details>
+<summary>Instructions on configuring https server</summary>
 
-:::info
-You need to set credentials for every subscriber because Slack generates a new Webhook URL on every new app install.
-:::
+Create a new endpoint on your server that will handle the following steps (you can use Request Bin for an easy HTTPS service for redirects):
 
-<!-- markdownlint-disable MD029 -->
+1. Listen for redirect requests to your endpoint (REDIRECT_URL) after the user completes step 5 and grants permissions. Make sure to store the 'code' parameter from the request query as it will be needed later.
+2. Send a POST request to <https://slack.com/api/oauth.v2.access> with the following request body:
+   Use the "Client ID" and "Client Secret" from Slack's Developer Dashboard under "Basic Information". The request body should be in the format: { code: string, client_id: string, client_secret: string }.
+   Store the webhook URL from the response, which can be found under `response.data.incoming_webhook.url`.
+   (read more on Slack's documentation here)
+3. When the `incoming_webhook.url` is obtained you need to save it on the relevant subscriber entity in Novu you can use the Node SDK:
 
-7. You are all set up and ready to send your first chat message via our `@novu/node` package or directly using the REST API.
-<!-- markdownlint-enable MD029 -->
+   ```typescript
+   import { Novu, ChatProviderIdEnum } from '@novu/node';
+
+   const novu = new Novu(process.env.NOVU_API_KEY);
+
+   const body = req.body; // From your HTTPS listener
+   await novu.subscribers.setCredentials('subscriberId', ChatProviderIdEnum., {
+     webhookUrl: body.incoming_webhook.url,
+   });
+   ```
+
+   - subscriberId is a custom identifier used when identifying your users within the Novu platform.
+   - providerId is a unique provider identifier. We recommend using our ChatProviderIdEnum.Slack if you're using Node, else string of `slack` to specify the provider.
+   - The third parameter is the credentials object. In this case we use the webhookUrl property to specify the webhook URL generated in the previous step.
+
+   :::info
+   You need to set credentials for every subscriber because Slack generates a new Webhook URL on every new app install.
+   :::
+
+4. Configure your Slack application as mentioned <span style={{textDecoration: "underline"}}>[below](/channels/chat/slack#slack-application-configuration)</span>.
+5. Add the `Add to Slack` button or the shareable URL to your application in order to request permission of access (scope: incoming-webhook).
+6. After the end-user finishes the authorization you will get the webhookUrl from the response of the OAuth under `body.incoming_webhook.url`, that you will use in step 3.
+7. You are all set up and ready to send your first chat message via our @novu/node package or directly using the REST API.
+
+</details>
+
+## Slack Application Configuration
+
+1. Go to OAuth & Permissions on Slack's Developer Dashboard and add your REDIRECT_URL in Redirect URLs.
+   - If you use a manual Management solution, add the API endpoint you created on [step 1](/channels/chat/slack#manual-manage).
+   - If you use Novu Managed solution add https:<span/>//api.novu.co/v1/subscribers/.
+2. Go to Incoming Webhooks from the left menu and Activate Incoming Webhooks.
+3. Go to Manage Distribution and at the bottom of the page, tick Remove Hard Coded Information and Activate Public Distribution.
