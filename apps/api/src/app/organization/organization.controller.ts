@@ -36,6 +36,9 @@ import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
 import { RenameOrganizationCommand } from './usecases/rename-organization/rename-organization-command';
 import { RenameOrganization } from './usecases/rename-organization/rename-organization.usecase';
+import { RenameOrganizationDto } from './dtos/rename-organization.dto';
+import { UpdateBrandingDetailsDto } from './dtos/update-branding-details.dto';
+import { UpdateMemberRolesDto } from './dtos/update-member-roles.dto';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -104,12 +107,12 @@ export class OrganizationController {
   async updateMemberRoles(
     @UserSession() user: IJwtPayload,
     @Param('memberId') memberId: string,
-    @Body('role') role: MemberRoleEnum
+    @Body() body: UpdateMemberRolesDto
   ) {
     return await this.changeMemberRoleUsecase.execute(
       ChangeMemberRoleCommand.create({
         memberId,
-        role,
+        role: body.role,
         userId: user._id,
         organizationId: user.organizationId,
       })
@@ -140,10 +143,7 @@ export class OrganizationController {
   }
 
   @Put('/branding')
-  async updateBrandingDetails(
-    @UserSession() user: IJwtPayload,
-    @Body() body: { color: string; logo: string; fontColor: string; contentBackground: string; fontFamily: string }
-  ) {
+  async updateBrandingDetails(@UserSession() user: IJwtPayload, @Body() body: UpdateBrandingDetailsDto) {
     return await this.updateBrandingDetailsUsecase.execute(
       UpdateBrandingDetailsCommand.create({
         logo: body.logo,
@@ -159,7 +159,7 @@ export class OrganizationController {
 
   @Patch('/')
   @Roles(MemberRoleEnum.ADMIN)
-  async renameOrganization(@UserSession() user: IJwtPayload, @Body() body: { name: string }) {
+  async renameOrganization(@UserSession() user: IJwtPayload, @Body() body: RenameOrganizationDto) {
     return await this.renameOrganizationUsecase.execute(
       RenameOrganizationCommand.create({
         name: body.name,
