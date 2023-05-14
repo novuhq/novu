@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { Controller, FieldValues, useForm, UseFormWatch } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useClipboard } from '@mantine/hooks';
 import { ActionIcon, Alert, Center, Image, Stack, useMantineColorScheme } from '@mantine/core';
@@ -7,13 +7,14 @@ import { WarningOutlined } from '@ant-design/icons';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
-  CredentialsKeyEnum,
   IConfigCredentials,
   ICredentialsDto,
   IEnvironment,
   IOrganizationEntity,
   ProvidersIdEnum,
 } from '@novu/shared';
+import styled from '@emotion/styled';
+import { keyframes } from '@emotion/react';
 
 import { Button, colors, Input, shadows, Switch, Text } from '../../../../design-system';
 import { IIntegratedProvider } from '../../IntegrationsStorePage';
@@ -27,8 +28,6 @@ import { QueryKeys } from '../../../../api/query.keys';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from '../../constants';
 import { When } from '../../../../components/utils/When';
-import styled from '@emotion/styled';
-import { keyframes } from '@emotion/react';
 import { useEnvController } from '../../../../hooks';
 
 enum ACTION_TYPE_ENUM {
@@ -338,7 +337,7 @@ export function ConnectIntegrationForm({
               />
             </InputWrapper>
           )}
-        <ShareableUrl watch={watch} provider={provider?.providerId} />
+        <ShareableUrl provider={provider?.providerId} />
 
         <Stack my={20}>
           <ActiveWrapper active={isActive}>
@@ -493,23 +492,13 @@ const CenterDiv = styled.div`
   padding: 30px;
 `;
 
-export function ShareableUrl({
-  watch,
-  provider,
-}: {
-  watch: UseFormWatch<FieldValues>;
-  provider: ProvidersIdEnum | undefined;
-}) {
+export function ShareableUrl({ provider }: { provider: ProvidersIdEnum | undefined }) {
   const { environment } = useEnvController();
   const oauthUrlClipboard = useClipboard({ timeout: 1000 });
-  const clientId = watch(CredentialsKeyEnum.ClientId);
   const display = provider === ChatProviderIdEnum.Slack;
 
-  const SLACK_OAUTH_URL = 'https://slack.com/oauth/v2/authorize?';
   const subscriberId = '<SUBSCRIBER_ID>';
-  const oauthUrl =
-    `${SLACK_OAUTH_URL}client_id=${clientId}&scope=incoming-webhook&user_scope=&redirect_uri=` +
-    `${API_ROOT}/v1/subscribers/${subscriberId}/slack/${environment?._id}`;
+  const oauthUrl = `${API_ROOT}/v1/subscribers/${subscriberId}/credentials/slack/${environment?._id}`;
 
   return (
     <When truthy={display}>
