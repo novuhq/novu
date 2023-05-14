@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Control, Controller, FieldValues, useForm, useWatch } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useClipboard } from '@mantine/hooks';
 import { ActionIcon, Alert, Center, Image, Stack, useMantineColorScheme } from '@mantine/core';
@@ -7,6 +7,7 @@ import { WarningOutlined } from '@ant-design/icons';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
+  CredentialsKeyEnum,
   IConfigCredentials,
   ICredentialsDto,
   IEnvironment,
@@ -337,7 +338,7 @@ export function ConnectIntegrationForm({
               />
             </InputWrapper>
           )}
-        <ShareableUrl provider={provider?.providerId} />
+        <ShareableUrl provider={provider?.providerId} control={control} />
 
         <Stack my={20}>
           <ActiveWrapper active={isActive}>
@@ -492,13 +493,25 @@ const CenterDiv = styled.div`
   padding: 30px;
 `;
 
-export function ShareableUrl({ provider }: { provider: ProvidersIdEnum | undefined }) {
+export function ShareableUrl({
+  provider,
+  control,
+}: {
+  provider: ProvidersIdEnum | undefined;
+  control: Control<FieldValues, any>;
+}) {
   const { environment } = useEnvController();
+  const hmacEnabled = useWatch({
+    control,
+    name: CredentialsKeyEnum.Hmac,
+  });
   const oauthUrlClipboard = useClipboard({ timeout: 1000 });
   const display = provider === ChatProviderIdEnum.Slack;
 
   const subscriberId = '<SUBSCRIBER_ID>';
-  const oauthUrl = `${API_ROOT}/v1/subscribers/${subscriberId}/credentials/slack/${environment?._id}`;
+  const hmac = hmacEnabled ? '?hmacHash=<HMAC_HASH>' : '';
+
+  const oauthUrl = `${API_ROOT}/v1/subscribers/${subscriberId}/credentials/slack/${environment?._id}${hmac}`;
 
   return (
     <When truthy={display}>
