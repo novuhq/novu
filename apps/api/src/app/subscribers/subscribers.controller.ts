@@ -67,7 +67,7 @@ import { ApiResponse } from '../shared/framework/response.decorator';
 import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
 import { LimitPipe } from '../widgets/pipes/limit-pipe/limit-pipe';
 import { OAuthHandlerEnum } from './types';
-import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callcack.usecase';
+import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
 import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
