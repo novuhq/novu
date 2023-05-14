@@ -71,7 +71,7 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
                 </div>
                 <div>
                   <div>
-                    <b>Aggregated by Subscriber_ID</b>
+                    <b>Aggregated by subscriberId</b>
                   </div>
                   <When truthy={!digestKey}>
                     <div>Add another aggregation key</div>
