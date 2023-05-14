@@ -338,7 +338,7 @@ export function ConnectIntegrationForm({
               />
             </InputWrapper>
           )}
-        <SharableUrl watch={watch} provider={provider?.providerId} />
+        <ShareableUrl watch={watch} provider={provider?.providerId} />
 
         <Stack my={20}>
           <ActiveWrapper active={isActive}>
@@ -493,7 +493,7 @@ const CenterDiv = styled.div`
   padding: 30px;
 `;
 
-export function SharableUrl({
+export function ShareableUrl({
   watch,
   provider,
 }: {

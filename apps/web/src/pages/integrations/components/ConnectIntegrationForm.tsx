@@ -17,7 +17,7 @@ import { IS_DOCKER_HOSTED, WEBHOOK_URL } from '../../../config';
 import { useEnvController, useAuthController } from '../../../hooks';
 import { Check, Copy } from '../../../design-system/icons';
 import { CONTEXT_PATH } from '../../../config';
-import { SharableUrl } from './Modal/ConnectIntegrationForm';
+import { ShareableUrl } from './Modal/ConnectIntegrationForm';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
@@ -258,7 +258,7 @@ export function ConnectIntegrationForm({
             </InputWrapper>
           )}
 
-          <SharableUrl watch={watch} provider={provider?.providerId} />
+          <ShareableUrl watch={watch} provider={provider?.providerId} />
 
           <Stack my={30}>
             <ActiveWrapper active={isActive}>
