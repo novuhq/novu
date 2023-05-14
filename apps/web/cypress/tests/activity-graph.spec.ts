@@ -1,6 +1,6 @@
 describe('Activity page', function () {
   beforeEach(function () {
-    // @ts-ignore
+    // @ts-expect-error
     cy.initializeSession()
       .as('session')
       .then((session: any) => {
@@ -18,7 +18,7 @@ describe('Activity page', function () {
     cy.visit('/activities');
     cy.location('pathname').should('equal', '/activities');
 
-    // @ts-ignore
+    // @ts-expect-error
     cy.getByTestId('activity-stats-weekly-sent').contains('25');
   });
 });
