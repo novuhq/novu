@@ -111,7 +111,7 @@ export const TemplateEditor = () => {
             isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)}
           />
         )}
-        {channel === StepTypeEnum.DIGEST && <DigestMetadata control={control} index={index} readonly={readonly} />}
+        {channel === StepTypeEnum.DIGEST && <DigestMetadata index={index} readonly={readonly} />}
         {channel === StepTypeEnum.DELAY && <DelayMetadata control={control} index={index} />}
         <DeleteStepRow />
       </SubPageWrapper>

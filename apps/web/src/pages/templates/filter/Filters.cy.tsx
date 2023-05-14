@@ -10,10 +10,10 @@ import {
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { TestWrapper } from '../../../testing';
-import { IStepEntity } from '../components/formTypes';
+import { IFormStep } from '../components/formTypes';
 import { Filters, translateOperator, getFilterLabel } from './Filters';
 
-const defaultStep: IStepEntity = {
+const defaultStep: IFormStep = {
   id: '',
   _templateId: '',
   template: {
