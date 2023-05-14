@@ -8,6 +8,7 @@ import {
   PushProviderIdEnum,
   EmailProviderIdEnum,
   InAppProviderIdEnum,
+  ProvidersIdEnum,
 } from '@novu/shared';
 import { Modal } from '@mantine/core';
 import * as cloneDeep from 'lodash.clonedeep';
@@ -151,7 +152,7 @@ function isConnected(provider: IIntegratedProvider) {
 }
 
 export interface IIntegratedProvider {
-  providerId: string;
+  providerId: ProvidersIdEnum;
   integrationId: string;
   displayName: string;
   channel: ChannelTypeEnum;
@@ -198,7 +199,7 @@ export interface IntegrationEntity {
 
   _organizationId: string;
 
-  providerId: string;
+  providerId: ProvidersIdEnum;
 
   channel: ChannelTypeEnum;
 
