@@ -337,7 +337,7 @@ export function ConnectIntegrationForm({
               />
             </InputWrapper>
           )}
-        <SharableUrl provider={provider?.providerId} />
+        <ShareableUrl provider={provider?.providerId} />
 
         <Stack my={20}>
           <ActiveWrapper active={isActive}>
@@ -492,7 +492,7 @@ const CenterDiv = styled.div`
   padding: 30px;
 `;
 
-export function SharableUrl({ provider }: { provider: ProvidersIdEnum | undefined }) {
+export function ShareableUrl({ provider }: { provider: ProvidersIdEnum | undefined }) {
   const { environment } = useEnvController();
   const oauthUrlClipboard = useClipboard({ timeout: 1000 });
   const display = provider === ChatProviderIdEnum.Slack;

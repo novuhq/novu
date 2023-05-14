@@ -95,7 +95,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     switch (modelName) {
       case 'Message':
         if (data.channel === 'in_app') {
-          return addMonths(startDate, 6);
+          return addMonths(startDate, 12);
         } else {
           return addMonths(startDate, 1);
         }
