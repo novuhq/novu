@@ -2,6 +2,9 @@
 sidebar_position: 2
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Subscribers
 
 `Subscriber` is a user to whom Novu will send notification. Each subscriber in Novu is uniquely identified by `subscriberId`.Novu manages your users in the form of subscribers. Novu stores some user-specific information that helps you send multichannel notifications to your users.
@@ -23,6 +26,9 @@ We support creating new subscriber using two ways, `Ahead of Trigger` means addi
 
 Before triggering any notification, first create the subscriber and then trigger the notification to this subscriber. Here `subscriberId` is the required field and other fields are optional.
 
+<Tabs groupId="language" queryString>
+  <TabItem value="js" label="JavaScript">
+
 ```typescript
 import { Novu } from '@novu/node';
 
@@ -39,11 +45,36 @@ await novu.subscribers.identify(user.id, {
 });
 ```
 
+  </TabItem>
+
+  <TabItem value="php" label="PHP">
+
+```php
+import { Novu } from '@novu/node';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+await novu.subscribers.identify(user.id, {
+  email: user.email,
+  firstName: user.firstName,
+  lastName: user.lastName,
+  phone: user.phone,
+  avatar: user.profile_avatar,
+  locale: user.locale,
+  data: { custom1: 'customval1', custom2: 'customval2' },
+});
+```
+
+  </TabItem>
+</Tabs>
 Novu will create a subscriber if one does not exist and will update the existing subscriber based on the `identify` payload. You can call this function during registration or signup to make sure the subscriber data is up-to-date, if you wish to save additional attributes with a subscriber, you can pass additional custom data in the **data** field as key-value pairs.
 
 ### 2. Inline of Trigger
 
 A non-exisiting subscriber can be added by sending subscriber data in `to` field of the trigger method. If any subscriber with provided `subscriberId` does not exists, a new subscriber will be created. In this case, subscriber will be created first and then the trigger will be executed synchronously.
+
+<Tabs groupId="language" queryString>
+  <TabItem value="js" label="JavaScript">
 
 ```typescript
 import { Novu } from '@novu/node';
@@ -66,6 +97,13 @@ await novu.trigger('<TEMPLATE_IDENTIFIER>', {
   },
 });
 ```
+
+  </TabItem>
+
+  <TabItem value="php" label="PHP">
+
+  </TabItem>
+</Tabs>
 
 ## Find a subscriber
 
