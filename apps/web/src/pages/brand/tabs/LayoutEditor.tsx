@@ -59,8 +59,6 @@ export function LayoutEditor({
   const [showModal, confirmNavigation, cancelNavigation] = usePrompt(isDirty);
 
   const layoutContent = watch('content');
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   const variablesArray = useFieldArray({ control, name: `variables` });
   const variableArray = watch(`variables`, []);
 

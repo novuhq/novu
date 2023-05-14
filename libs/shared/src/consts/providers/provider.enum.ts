@@ -25,6 +25,7 @@ export enum CredentialsKeyEnum {
   IgnoreTls = 'ignoreTls',
   TlsOptions = 'tlsOptions',
   RedirectUrl = 'redirectUrl',
+  Hmac = 'hmac',
 }
 
 export enum EmailProviderIdEnum {
@@ -85,3 +86,10 @@ export enum PushProviderIdEnum {
 export enum InAppProviderIdEnum {
   Novu = 'novu',
 }
+
+export type ProvidersIdEnum =
+  | EmailProviderIdEnum
+  | SmsProviderIdEnum
+  | PushProviderIdEnum
+  | InAppProviderIdEnum
+  | ChatProviderIdEnum;

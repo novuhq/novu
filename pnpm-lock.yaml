@@ -1402,6 +1402,7 @@ importers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': '>=9.3.x'
       '@nestjs/swagger': '>=6.3.x'
+      '@nestjs/terminus': 9.2.1
       '@nestjs/testing': '>=9.3.x'
       '@novu/africas-talking': ^0.14.0
       '@novu/apns': ^0.14.0
@@ -1487,6 +1488,7 @@ importers:
       '@google-cloud/storage': 6.9.5
       '@nestjs/common': 9.3.12_welcnyot5bzd5wa2aovbkxpi4i
       '@nestjs/swagger': 6.3.0_56wskrocvqeup2a4dyvgnvm62u
+      '@nestjs/terminus': 9.2.1_of4akadhszyqq4nremfoaw2364
       '@nestjs/testing': 9.3.12_ge4qplnzbmfyi5znl534zhtkn4
       '@novu/africas-talking': link:../../providers/africas-talking
       '@novu/apns': link:../../providers/apns
@@ -21555,7 +21557,7 @@ packages:
   /@types/express-serve-static-core/4.17.33:
     resolution: {integrity: sha512-TPBqmR/HRYI3eC2E5hmiivIzv+bidAfXofM+sbonAGvyDhySGw9/PQZFt2BLOrjUUR++4eJVpx6KnLQK1Fk9tA==}
     dependencies:
-      '@types/node': 14.18.42
+      '@types/node': 18.15.11
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
 
@@ -22017,7 +22019,7 @@ packages:
     resolution: {integrity: sha512-NUo5XNiAdULrJENtJXZZ3fHtfMolzZwczzBbnAeBbqBwG+LaG6YaJtuwzwGSQZ2wsCrxjEhNNjAkKigy3n8teQ==}
     dependencies:
       '@types/mime': 3.0.1
-      '@types/node': 14.18.42
+      '@types/node': 18.15.11
 
   /@types/sinon/9.0.11:
     resolution: {integrity: sha512-PwP4UY33SeeVKodNE37ZlOsR9cReypbMJOhZ7BVE0lB+Hix3efCOxiJWiE5Ia+yL9Cn2Ch72EjFTRze8RZsNtg==}
