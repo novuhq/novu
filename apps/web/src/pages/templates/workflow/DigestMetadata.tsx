@@ -58,7 +58,7 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
           multiline
           label={
             <>
-              Events aggregated by subscriber_ID by default, this can’t be changed. You may add additional aggregations
+              Events aggregated by subscriberId by default, this can’t be changed. You may add additional aggregations
               by typing the name of a variable.
             </>
           }
