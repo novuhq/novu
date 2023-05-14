@@ -9,10 +9,10 @@ export const useFeedUnseenCount = (
   { query }: { query?: IStoreQuery },
   options: UseQueryOptions<ICountData, Error, ICountData> = {}
 ) => {
-  const { apiService, isSessionInitialized } = useNovuContext();
+  const { apiService, isSessionInitialized, subscriberId } = useNovuContext();
 
   const result = useQuery<ICountData, Error, ICountData>(
-    [...FEED_UNSEEN_COUNT_QUERY_KEY, query],
+    [...FEED_UNSEEN_COUNT_QUERY_KEY, query, subscriberId],
     () => apiService.getTabCount(query),
     {
       ...options,

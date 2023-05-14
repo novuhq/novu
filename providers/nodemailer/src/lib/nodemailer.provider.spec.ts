@@ -22,6 +22,7 @@ const mockNovuMessage = {
   subject: 'test subject',
   html: '<div> Mail Content </div>',
   attachments: [{ mime: 'text/plain', file: buffer, name: 'test.txt' }],
+  from: 'test@test.com',
 };
 
 afterEach(() => {
@@ -60,6 +61,7 @@ describe('Config is set to secure=false (default; TLS used if server supports ST
     port: 587,
     secure: false,
     from: 'test@test.com',
+    senderName: 'John Doe',
     user: 'test@test.com',
     password: 'test123',
   };
@@ -70,7 +72,7 @@ describe('Config is set to secure=false (default; TLS used if server supports ST
 
     expect(sendMailMock).toHaveBeenCalled();
     expect(sendMailMock).toHaveBeenCalledWith({
-      from: mockConfig.from,
+      from: { address: mockNovuMessage.from, name: mockConfig.senderName },
       html: mockNovuMessage.html,
       subject: mockNovuMessage.subject,
       to: mockNovuMessage.to,
@@ -112,6 +114,7 @@ describe('Config is set to secure=true and TLS options are provided', () => {
     port: 587,
     secure: true,
     from: 'test@test.com',
+    senderName: 'John Doe',
     user: 'test@test.com',
     password: 'test123',
     tlsOptions: {
@@ -125,7 +128,7 @@ describe('Config is set to secure=true and TLS options are provided', () => {
 
     expect(sendMailMock).toHaveBeenCalled();
     expect(sendMailMock).toHaveBeenCalledWith({
-      from: mockConfig.from,
+      from: { address: mockNovuMessage.from, name: mockConfig.senderName },
       html: mockNovuMessage.html,
       subject: mockNovuMessage.subject,
       to: mockNovuMessage.to,
