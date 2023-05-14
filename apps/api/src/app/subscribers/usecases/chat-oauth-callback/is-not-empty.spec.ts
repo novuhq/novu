@@ -1,5 +1,5 @@
 import { BaseCommand } from '@novu/application-generic';
-import { IsNotEmpty } from './handle-chat-oauth.command';
+import { IsNotEmpty } from './chat-oauth-callback.command';
 import { expect } from 'chai';
 
 describe('@IsNotEmpty() validator', function () {

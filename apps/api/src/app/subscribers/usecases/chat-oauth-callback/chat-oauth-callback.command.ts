@@ -31,7 +31,7 @@ export function IsNotEmpty(validationOptions?: ValidationOptions) {
   };
 }
 
-export class HandleChatOauthCommand extends BaseCommand {
+export class ChatOauthCallbackCommand extends BaseCommand {
   @IsMongoId()
   @IsString()
   readonly environmentId: string;
@@ -47,4 +47,6 @@ export class HandleChatOauthCommand extends BaseCommand {
   @IsNotEmpty()
   @IsString()
   readonly providerCode: string;
+
+  readonly hmacHash?: string;
 }

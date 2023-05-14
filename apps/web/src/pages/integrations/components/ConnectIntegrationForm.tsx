@@ -258,7 +258,7 @@ export function ConnectIntegrationForm({
             </InputWrapper>
           )}
 
-          <ShareableUrl watch={watch} provider={provider?.providerId} />
+          <ShareableUrl provider={provider?.providerId} control={control} />
 
           <Stack my={30}>
             <ActiveWrapper active={isActive}>
