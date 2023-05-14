@@ -36,6 +36,7 @@ import {
   WsQueueService,
   DistributedLockService,
   PerformanceService,
+  TriggerQueueService,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -106,6 +107,7 @@ const distributedLockService = {
 const PROVIDERS = [
   cacheService,
   distributedLockService,
+  inMemoryProviderService,
   {
     provide: WsQueueService,
     useClass: WsQueueService,
@@ -118,7 +120,6 @@ const PROVIDERS = [
       return dalService;
     },
   },
-  cacheService,
   {
     provide: PerformanceService,
     useFactory: () => {
@@ -141,6 +142,7 @@ const PROVIDERS = [
       return analyticsService;
     },
   },
+  TriggerQueueService,
 ];
 
 @Module({
