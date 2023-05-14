@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetExecutionDetails, GetExecutionDetailsCommand } from './usecases/get-execution-details';
 import { ApiResponse } from '../shared/framework/response.decorator';
+import { ExecutionDetailsRequestDto } from './dtos/execution-details-request.dto';
 
 @Controller('/execution-details')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -23,16 +24,15 @@ export class ExecutionDetailsController {
   @ExternalApiAccessible()
   async getExecutionDetailsForNotification(
     @UserSession() user: IJwtPayload,
-    @Query('notificationId') notificationId: string,
-    @Query('subscriberId') subscriberId: string
+    @Query() query: ExecutionDetailsRequestDto
   ): Promise<ExecutionDetailsResponseDto[]> {
     return this.getExecutionDetails.execute(
       GetExecutionDetailsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
-        notificationId,
-        subscriberId,
+        notificationId: query.notificationId,
+        subscriberId: query.subscriberId,
       })
     );
   }
