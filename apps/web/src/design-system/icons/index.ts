@@ -50,6 +50,11 @@ export { RemoveCircle } from './general/RemoveCircle';
 export { ViewportWide } from './general/ViewportWide';
 export { WarningIcon } from './general/WarningIcon';
 export { MadeByNovu } from './general/MadeByNovu';
+export { Pencil } from './general/Pencil';
+export { WorkflowSettings } from './general/WorkflowSettings';
+export { BuildWorkflow } from './general/BuildWorkflow';
+export { RunTestBell } from './general/RunTestBell';
+export { QuickGuide } from './general/QuickGuide';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
