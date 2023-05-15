@@ -55,6 +55,7 @@ export { WorkflowSettings } from './general/WorkflowSettings';
 export { BuildWorkflow } from './general/BuildWorkflow';
 export { RunTestBell } from './general/RunTestBell';
 export { QuickGuide } from './general/QuickGuide';
+export { RightArrow } from './general/RightArrow';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';

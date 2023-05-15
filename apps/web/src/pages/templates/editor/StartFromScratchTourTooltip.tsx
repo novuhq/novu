@@ -9,7 +9,14 @@ import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { When } from '../../../components/utils/When';
 import { Button, colors, Text } from '../../../design-system';
-import { BuildWorkflow, Pencil, QuickGuide, RunTestBell, WorkflowSettings } from '../../../design-system/icons';
+import {
+  BuildWorkflow,
+  Pencil,
+  QuickGuide,
+  RightArrow,
+  RunTestBell,
+  WorkflowSettings,
+} from '../../../design-system/icons';
 import { ordinalNumbers, SCRATCH_HINT_INDEX_TO_CLICK_ANALYTICS, StartFromScratchTourAnalyticsEnum } from '../constants';
 import { useTourStorage } from '../hooks/useTourStorage';
 import { DotsNavigationStyled, NavigationItemContainer, TooltipContainer } from './StartFromScratchTourTooltip.styles';
@@ -83,6 +90,7 @@ export const StartFromScratchTourTooltip = ({
     const currentCount = currentUser?.showOnBoardingTour || 0;
     await updateOnBoardingTourStatus({ showOnBoardingTour: currentCount + 1 || 1 });
   };
+  const buttonIconProps = isFirstStep ? {} : { icon: <RightArrow />, iconPosition: 'right' as const };
 
   return (
     <TooltipContainer
@@ -116,12 +124,13 @@ export const StartFromScratchTourTooltip = ({
         <When truthy={!isFirstStep}>
           <NavigationItemContainer position="center">
             <DotsNavigationStyled
-              selectedIndex={index}
-              size={size}
+              selectedIndex={index - 1}
+              size={size - 1}
               onClick={(num) => {
-                if (num === index) return;
+                const adjustedNum = num + 1;
+                if (adjustedNum === index) return;
 
-                handleOnClick(num, true);
+                handleOnClick(adjustedNum, true);
               }}
               testId="scratch-workflow-tooltip-dots-navigation"
             />
@@ -130,6 +139,7 @@ export const StartFromScratchTourTooltip = ({
         <NavigationItemContainer position="flex-end">
           <Button
             {...primaryProps}
+            {...buttonIconProps}
             onClick={() => {
               if (isLastStep) {
                 segment.track(StartFromScratchTourAnalyticsEnum.FIFTH_HINT_GOT_IT_CLICK, {
