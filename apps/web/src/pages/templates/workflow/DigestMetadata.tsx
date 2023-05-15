@@ -18,7 +18,6 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
 
   const type = watch(`steps.${index}.digestMetadata.type`);
   const digestKey = watch(`steps.${index}.digestMetadata.digestKey`);
-  const isEnterprise = process.env.REACT_APP_DOCKER_HOSTED_ENV !== 'true';
 
   return (
     <div data-test-id="digest-step-settings-interval">
@@ -130,66 +129,64 @@ export const DigestMetadata = ({ index, readonly }: { index: number; readonly: b
             </Group>
           </Accordion.Control>
           <Accordion.Panel>
-            <When truthy={isEnterprise}>
-              <Controller
-                control={control}
-                defaultValue={DigestTypeEnum.REGULAR}
-                name={`steps.${index}.digestMetadata.type`}
-                render={({ field }) => {
-                  return (
-                    <TypeSegmented
-                      {...field}
-                      sx={{
-                        maxWidth: '100% !important',
-                        marginBottom: -14,
-                      }}
-                      fullWidth
-                      disabled={readonly}
-                      data={[
-                        {
-                          value: DigestTypeEnum.REGULAR,
-                          label: (
-                            <Tooltip
-                              withinPortal
-                              width={310}
-                              multiline
-                              offset={15}
-                              label={
-                                <>
-                                  <div>
-                                    Digest starts after the first event occurred since the previous sent digest. From
-                                    that moment on, it aggregates events for the specified time, after which it sends a
-                                    digest of the events.
-                                  </div>
-                                  <RegularInfo />
-                                </>
-                              }
-                            >
-                              <div>Event</div>
-                            </Tooltip>
-                          ),
-                        },
-                        {
-                          value: DigestTypeEnum.TIMED,
-                          label: (
-                            <Tooltip
-                              withinPortal
-                              width={240}
-                              multiline
-                              offset={15}
-                              label="Digest aggregates the events in between the selected time period"
-                            >
-                              <div>Schedule</div>
-                            </Tooltip>
-                          ),
-                        },
-                      ]}
-                      data-test-id="digest-type"
-                    />
-                  );
-                }}
-              />
-            </When>
+            <Controller
+              control={control}
+              defaultValue={DigestTypeEnum.REGULAR}
+              name={`steps.${index}.digestMetadata.type`}
+              render={({ field }) => {
+                return (
+                  <TypeSegmented
+                    {...field}
+                    sx={{
+                      maxWidth: '100% !important',
+                      marginBottom: -14,
+                    }}
+                    fullWidth
+                    disabled={readonly}
+                    data={[
+                      {
+                        value: DigestTypeEnum.REGULAR,
+                        label: (
+                          <Tooltip
+                            withinPortal
+                            width={310}
+                            multiline
+                            offset={15}
+                            label={
+                              <>
+                                <div>
+                                  Digest starts after the first event occurred since the previous sent digest. From that
+                                  moment on, it aggregates events for the specified time, after which it sends a digest
+                                  of the events.
+                                </div>
+                                <RegularInfo />
+                              </>
+                            }
+                          >
+                            <div>Event</div>
+                          </Tooltip>
+                        ),
+                      },
+                      {
+                        value: DigestTypeEnum.TIMED,
+                        label: (
+                          <Tooltip
+                            withinPortal
+                            width={240}
+                            multiline
+                            offset={15}
+                            label="Digest aggregates the events in between the selected time period"
+                          >
+                            <div>Schedule</div>
+                          </Tooltip>
+                        ),
+                      },
+                    ]}
+                    data-test-id="digest-type"
+                  />
+                );
+              }}
+            />
             <div
               style={{
                 background: colorScheme === 'dark' ? colors.B20 : colors.BGLight,

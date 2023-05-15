@@ -13,8 +13,6 @@ import { ApiException } from '../../utils/exceptions';
 import { isRegularDigest } from '../../utils/digest';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
 
-const IS_ENTERPRISE = process.env.NOVU_MANAGED_SERVICE === 'true';
-
 export class CalculateDelayService {
   calculateDelay({
     stepMetadata,
@@ -60,7 +58,7 @@ export class CalculateDelayService {
       );
     }
 
-    if (IS_ENTERPRISE && stepMetadata.type === DigestTypeEnum.TIMED) {
+    if (stepMetadata.type === DigestTypeEnum.TIMED) {
       const timedDigestMeta = stepMetadata as IDigestTimedMetadata;
 
       return TimedDigestDelayService.calculate({
