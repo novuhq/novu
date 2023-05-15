@@ -3,7 +3,6 @@ import styled from '@emotion/styled';
 import { ReactFlowProvider } from 'react-flow-renderer';
 
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
-import { DigestDemoFlow } from '../../../components';
 
 import useStyles from '../components/OnboardingSteps.styles';
 import { ArrowLeft } from '../../../design-system/icons';
@@ -16,6 +15,7 @@ import { NavButton } from '../components/NavButton';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useCreateDigestDemoWorkflow } from '../../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { Button } from '../../../design-system';
+import { DigestDemoFlow } from '../../../components/digest-demo-flow';
 
 export function DigestPreview() {
   const segment = useSegment();
