@@ -441,7 +441,10 @@
     "maxtimeout",
     "clsx",
     "africastalking",
-    "africas"
+    "africas",
+    "supertest",
+    "superagent",
+    "INAPP"
   ],
   "flagWords": [],
   "patterns": [

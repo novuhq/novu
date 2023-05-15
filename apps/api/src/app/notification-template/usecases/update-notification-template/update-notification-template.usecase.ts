@@ -26,7 +26,7 @@ import {
 } from '../../../message-template/usecases';
 import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { NotificationStep } from '../../../shared/dtos/notification-step';
+import { NotificationStep } from '../create-notification-template';
 
 @Injectable()
 export class UpdateNotificationTemplate {

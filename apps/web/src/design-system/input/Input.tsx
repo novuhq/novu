@@ -14,7 +14,7 @@ interface IInputProps extends SpacingProps {
   description?: string;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
   rightSection?: React.ReactNode;
-  type?: 'text' | 'password' | 'email' | 'search' | 'tel' | 'url' | 'number';
+  type?: 'text' | 'password' | 'email' | 'search' | 'tel' | 'url' | 'number' | 'time';
   min?: string | number;
   max?: string | number;
   onBlur?: (event: FocusEvent<HTMLInputElement>) => void;

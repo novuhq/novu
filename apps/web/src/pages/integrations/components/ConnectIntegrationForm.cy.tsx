@@ -1,12 +1,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { CredentialsKeyEnum, ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, CredentialsKeyEnum, EmailProviderIdEnum } from '@novu/shared';
 
 import { ConnectIntegrationForm } from './ConnectIntegrationForm';
 import { TestWrapper } from '../../../testing';
 import { IIntegratedProvider } from '../IntegrationsStorePage';
 
 const exampleProvider: IIntegratedProvider = {
-  providerId: 'emailjs',
+  providerId: EmailProviderIdEnum.EmailJS,
   active: false,
   channel: ChannelTypeEnum.EMAIL,
   betaVersion: false,

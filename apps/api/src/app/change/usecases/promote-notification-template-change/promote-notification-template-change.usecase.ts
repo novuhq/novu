@@ -105,12 +105,12 @@ export class PromoteNotificationTemplateChange {
 
     if (!notificationGroup) {
       throw new NotFoundException(
-        `Notification Group: ${newItem.name} with the ${newItem._notificationGroupId} Id not found`
+        `Notification Group Id ${newItem._notificationGroupId} not found, Notification Template: ${newItem.name}`
       );
     }
 
     if (!item) {
-      if (newItem.deleted === true) {
+      if (newItem.deleted) {
         return;
       }
 

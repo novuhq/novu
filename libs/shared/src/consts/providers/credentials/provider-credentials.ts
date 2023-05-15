@@ -398,28 +398,34 @@ export const twilioConfig: IConfigCredentials[] = [
 
 export const slackConfig: IConfigCredentials[] = [
   {
+    key: CredentialsKeyEnum.ApplicationId,
+    displayName: 'Application Id',
+    type: 'string',
+    required: true,
+  },
+  {
     key: CredentialsKeyEnum.ClientId,
     displayName: 'Client ID',
     type: 'string',
-    required: false,
+    required: true,
   },
   {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Client Secret',
     type: 'string',
-    required: false,
-  },
-  {
-    key: CredentialsKeyEnum.ApplicationId,
-    displayName: 'Application Id',
-    type: 'string',
-    required: false,
+    required: true,
   },
   {
     key: CredentialsKeyEnum.RedirectUrl,
     displayName: 'Redirect URL',
     description: 'Redirect after Slack OAuth flow finished (default behaviour will close the tab)',
     type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Hmac,
+    displayName: 'HMAC',
+    type: 'switch',
     required: false,
   },
 ];

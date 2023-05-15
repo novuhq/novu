@@ -55,14 +55,6 @@ export class WorkflowQueueService extends QueueService<IJobData> {
     });
   }
 
-  public async gracefulShutdown() {
-    // Right now we only want this for testing purposes
-    if (process.env.NODE_ENV === 'test') {
-      await this.bullMqService.queue.drain();
-      await this.bullMqService.worker.close();
-    }
-  }
-
   private getWorkerOpts(): WorkerOptions {
     return {
       ...this.bullConfig,

@@ -2,13 +2,13 @@ import styled from '@emotion/styled';
 import { useMantineColorScheme } from '@mantine/core';
 import { BuilderFieldOperator, FilterParts, FilterPartTypeEnum } from '@novu/shared';
 
-import type { IStepEntity } from '../components/formTypes';
+import type { IFormStep } from '../components/formTypes';
 import { colors } from '../../../design-system';
 import { useWatch } from 'react-hook-form';
 import { useMemo } from 'react';
 import { channels } from '../shared/channels';
 
-export const Filters = ({ step }: { step?: IStepEntity }) => {
+export const Filters = ({ step }: { step?: IFormStep }) => {
   if (!step || !step.filters || !Array.isArray(step.filters)) {
     return null;
   }
@@ -32,7 +32,7 @@ export const Filters = ({ step }: { step?: IStepEntity }) => {
 
 export const Filter = ({ filter }: { filter: FilterParts }) => {
   const { colorScheme } = useMantineColorScheme();
-  const steps: IStepEntity[] = useWatch({
+  const steps: IFormStep[] = useWatch({
     name: 'steps',
   });
 
@@ -72,7 +72,7 @@ export const translateOperator = (operator?: BuilderFieldOperator) => {
   return 'equal';
 };
 
-export const getFilterLabel = (filter: FilterParts, steps: IStepEntity[]): string => {
+export const getFilterLabel = (filter: FilterParts, steps: IFormStep[]): string => {
   if (filter.on === FilterPartTypeEnum.IS_ONLINE) {
     return `is online right now ${translateOperator('EQUAL')}`;
   }

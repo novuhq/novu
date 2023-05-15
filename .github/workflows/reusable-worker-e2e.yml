@@ -10,6 +10,11 @@ on:
         required: false
         default: false
         type: boolean
+      submodules:
+        description: 'The flag controlling whether we want submodules to checkout'
+        required: false
+        default: false
+        type: boolean
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -19,9 +24,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 80
 
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+    - id: setup
+      run: |
+        if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+           echo ::set-output has_token=true
+        else
+           echo ::set-output has_token=false
+        fi
+    # checkout with submodules if token is provided
     - uses: actions/checkout@v3
+      if: steps.setup.outputs.has_token == 'true'
+      with:
+        submodules: ${{ inputs.submodules }}
+        token: ${{ secrets.SUBMODULES_TOKEN }}
+      # checkout without submodules
+    - uses: actions/checkout@v3
+      if: steps.setup.outputs.has_token != 'true'
     - uses: ./.github/actions/setup-project
     - uses: ./.github/actions/setup-redis-cluster
     - uses: mansagroup/nrwl-nx-action@v3

@@ -381,7 +381,7 @@ importers:
       cross-env: 7.0.3
       nodemon: 2.0.22
       prettier: 2.8.7
-      ts-jest: 27.1.5_ik2qjjkgpajyhqxqenowswsmya
+      ts-jest: 27.1.5_cnngzrja2umb46xxazlucyx2qu
       ts-loader: 9.4.2_lj5zgxrzaejsnoobor62tojvse
       ts-node: 10.9.1_wh2cnrlliuuxb2etxm2m3ttgna
       tsconfig-paths: 3.14.2
@@ -1402,6 +1402,7 @@ importers:
       '@istanbuljs/nyc-config-typescript': ^1.0.1
       '@nestjs/common': '>=9.3.x'
       '@nestjs/swagger': '>=6.3.x'
+      '@nestjs/terminus': 9.2.1
       '@nestjs/testing': '>=9.3.x'
       '@novu/africas-talking': ^0.14.0
       '@novu/apns': ^0.14.0
@@ -1477,6 +1478,7 @@ importers:
       redlock: 4.2.0
       reflect-metadata: ^0.1.13
       rimraf: ^3.0.2
+      rrule: ^2.7.2
       sinon: ^9.2.4
       ts-jest: ^27.0.5
       ts-node: ~10.9.1
@@ -1488,6 +1490,7 @@ importers:
       '@google-cloud/storage': 6.9.5
       '@nestjs/common': 9.3.12_welcnyot5bzd5wa2aovbkxpi4i
       '@nestjs/swagger': 6.3.0_56wskrocvqeup2a4dyvgnvm62u
+      '@nestjs/terminus': 9.2.1_of4akadhszyqq4nremfoaw2364
       '@nestjs/testing': 9.3.12_ge4qplnzbmfyi5znl534zhtkn4
       '@novu/africas-talking': link:../../providers/africas-talking
       '@novu/apns': link:../../providers/apns
@@ -1550,6 +1553,7 @@ importers:
       pino-pretty: 9.4.0
       redlock: 4.2.0
       reflect-metadata: 0.1.13
+      rrule: 2.7.2
     optionalDependencies:
       '@taskforcesh/bullmq-pro': 5.1.14
     devDependencies:
@@ -12061,7 +12065,7 @@ packages:
       '@jest/test-result': 27.5.1
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 16.11.7
+      '@types/node': 14.18.42
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.8.1
@@ -12105,7 +12109,7 @@ packages:
       '@jest/test-result': 27.5.1
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/node': 16.11.7
+      '@types/node': 14.18.42
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.8.1
@@ -21563,7 +21567,7 @@ packages:
   /@types/engine.io/3.1.7:
     resolution: {integrity: sha512-qNjVXcrp+1sS8YpRUa714r0pgzOwESdW5UjHL7D/2ZFdBX0BXUXtg1LUrp+ylvqbvMcMWUy73YpRoxPN2VoKAQ==}
     dependencies:
-      '@types/node': 18.15.11
+      '@types/node': 14.18.42
     dev: true
 
   /@types/eslint-scope/3.7.4:
@@ -21590,7 +21594,7 @@ packages:
   /@types/express-serve-static-core/4.17.33:
     resolution: {integrity: sha512-TPBqmR/HRYI3eC2E5hmiivIzv+bidAfXofM+sbonAGvyDhySGw9/PQZFt2BLOrjUUR++4eJVpx6KnLQK1Fk9tA==}
     dependencies:
-      '@types/node': 14.18.42
+      '@types/node': 18.15.11
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
 
@@ -21838,6 +21842,7 @@ packages:
 
   /@types/node/16.11.7:
     resolution: {integrity: sha512-QB5D2sqfSjCmTuWcBWyJ+/44bcjO7VbjSbOE0ucoVbAsSNQc4Lt6QkgkVXkTDwkL4z/beecZNDvVX15D4P8Jbw==}
+    dev: true
 
   /@types/node/17.0.45:
     resolution: {integrity: sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==}
@@ -22052,7 +22057,7 @@ packages:
     resolution: {integrity: sha512-NUo5XNiAdULrJENtJXZZ3fHtfMolzZwczzBbnAeBbqBwG+LaG6YaJtuwzwGSQZ2wsCrxjEhNNjAkKigy3n8teQ==}
     dependencies:
       '@types/mime': 3.0.1
-      '@types/node': 14.18.42
+      '@types/node': 18.15.11
 
   /@types/sinon/9.0.11:
     resolution: {integrity: sha512-PwP4UY33SeeVKodNE37ZlOsR9cReypbMJOhZ7BVE0lB+Hix3efCOxiJWiE5Ia+yL9Cn2Ch72EjFTRze8RZsNtg==}
@@ -44551,6 +44556,12 @@ packages:
 
   /rootpath/0.1.2:
     resolution: {integrity: sha512-R3wLbuAYejpxQjL/SjXo1Cjv4wcJECnMRT/FlcCfTwCBhaji9rWaRCoVEQ1SPiTJ4kKK+yh+bZLAV7SCafoDDw==}
+
+  /rrule/2.7.2:
+    resolution: {integrity: sha512-NkBsEEB6FIZOZ3T8frvEBOB243dm46SPufpDckY/Ap/YH24V1zLeMmDY8OA10lk452NdrF621+ynDThE7FQU2A==}
+    dependencies:
+      tslib: 2.5.0
+    dev: false
 
   /rsvp/4.8.5:
     resolution: {integrity: sha512-nfMOlASu9OnRJo1mbEk2cz0D56a1MBNrJ7orjRZQG10XDyuvwksKbuXNp6qa+kbn839HwjwhBzhFmdsaEAfauA==}

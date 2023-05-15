@@ -29,7 +29,7 @@ export class FilterTopicsRequestDto {
 
 export class FilterTopicsResponseDto {
   @ApiProperty({
-    type: [TopicDto],
+    type: TopicDto,
     isArray: true,
   })
   data: TopicDto[];

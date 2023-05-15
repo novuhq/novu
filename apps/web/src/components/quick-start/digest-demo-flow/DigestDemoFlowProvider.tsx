@@ -1,6 +1,11 @@
 import React, { ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { INotificationTemplateStep, IUpdateNotificationTemplateDto, StepTypeEnum } from '@novu/shared';
+import {
+  INotificationTemplateStep,
+  IUpdateNotificationTemplateDto,
+  StepTypeEnum,
+  IDigestRegularMetadata,
+} from '@novu/shared';
 
 import { testTrigger } from '../../../api/notification-templates';
 import { useAuthContext } from '../../providers/AuthProvider';
@@ -66,7 +71,10 @@ export const DigestDemoFlowProvider = ({
           (step) => step.template?.type === StepTypeEnum.DIGEST
         );
         if (digest) {
-          setState((state) => ({ ...state, digestInterval: digest.metadata?.amount ?? 10 }));
+          setState((state) => ({
+            ...state,
+            digestInterval: (digest.metadata as IDigestRegularMetadata)?.amount ?? 10,
+          }));
         }
       },
     }

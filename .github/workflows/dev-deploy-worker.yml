@@ -29,6 +29,8 @@ jobs:
     uses: ./.github/workflows/reusable-worker-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'ee') }}
+      submodules: ${{ contains (matrix.name,'ee') }}
+    secrets: inherit
 
   deploy_dev_worker:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -43,9 +45,12 @@ jobs:
       deployments: write
     strategy:
       matrix:
-        name: ['novu/worker-ee']
+        name: ['novu/worker-ee', 'novu/worker']
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/docker/build-worker
         id: docker_build
