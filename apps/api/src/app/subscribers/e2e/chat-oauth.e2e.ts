@@ -159,9 +159,10 @@ async function chatOauth(
   providerId: ChatProviderIdEnum | null = ChatProviderIdEnum.Slack,
   hmacHash = ''
 ) {
-  const hmacHashQuery = hmacHash ? `?hmacHash=${hmacHash}` : '';
+  const environmentIdQuery = `environmentId=${environmentId}`;
+  const hmacHashQuery = hmacHash ? `&hmacHash=${hmacHash}` : '';
 
   return await axiosInstance.get(
-    `${serverUrl}/v1/subscribers/${subscriberId}/credentials/${providerId}/${environmentId}${hmacHashQuery}`
+    `${serverUrl}/v1/subscribers/${subscriberId}/credentials/${providerId}/oauth?${environmentIdQuery}${hmacHashQuery}`
   );
 }
