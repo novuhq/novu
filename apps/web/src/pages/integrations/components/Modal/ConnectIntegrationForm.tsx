@@ -509,9 +509,10 @@ export function ShareableUrl({
   const display = provider === ChatProviderIdEnum.Slack;
 
   const subscriberId = '<SUBSCRIBER_ID>';
-  const hmac = hmacEnabled ? '?hmacHash=<HMAC_HASH>' : '';
+  const environmentId = `environmentId=${environment?._id}`;
+  const hmac = hmacEnabled ? '&hmacHash=<HMAC_HASH>' : '';
 
-  const oauthUrl = `${API_ROOT}/v1/subscribers/${subscriberId}/credentials/slack/${environment?._id}${hmac}`;
+  const oauthUrl = `${API_ROOT}/v1/subscribers/${subscriberId}/credentials/slack/oauth?${environmentId}${hmac}`;
 
   return (
     <When truthy={display}>
