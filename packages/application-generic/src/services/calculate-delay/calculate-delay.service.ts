@@ -11,6 +11,7 @@ import {
 
 import { ApiException } from '../../utils/exceptions';
 import { isRegularDigest } from '../../utils/digest';
+import { TimedDigestDelayService } from './timed-digest-delay.service';
 
 const IS_ENTERPRISE = process.env.NOVU_MANAGED_SERVICE === 'true';
 
@@ -61,9 +62,6 @@ export class CalculateDelayService {
 
     if (IS_ENTERPRISE && stepMetadata.type === DigestTypeEnum.TIMED) {
       const timedDigestMeta = stepMetadata as IDigestTimedMetadata;
-
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      const { TimedDigestDelayService } = require('@novu/digest-schedule');
 
       return TimedDigestDelayService.calculate({
         unit: timedDigestMeta.unit,

@@ -1,3 +1,0 @@
-[submodule "enterprise/packages"]
-	path = enterprise/packages
-	url = https://github.com/novuhq/packages-enterprise.git
