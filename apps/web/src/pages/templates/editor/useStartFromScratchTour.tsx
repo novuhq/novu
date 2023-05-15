@@ -65,7 +65,7 @@ const StartFromScratchTourSteps: Step[] = [
 export const useStartFromScratchTour = ({ startTour }: { startTour: () => void }) => {
   const { currentUser } = useAuthContext();
 
-  const showOnboardingTour = (currentUser && currentUser.showOnBoardingTour) ?? 0;
+  const showOnboardingTour = currentUser?.showOnBoardingTour ?? 0;
   const tourStorage = useTourStorage();
   const { templateId = '' } = useParams<{ templateId: string }>();
   const isDigestTouring = tourStorage.getCurrentTour('digest', templateId) > -1;
