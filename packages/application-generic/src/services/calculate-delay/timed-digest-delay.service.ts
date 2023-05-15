@@ -1,3 +1,4 @@
+// cSpell:ignore RRULE, BYSETPOS, BYMONTHDAY, bysetpos, byweekday, bymonthday, byhour, byminute, bysecond, dtstart
 import {
   differenceInMilliseconds,
   addMinutes,
@@ -71,8 +72,8 @@ interface ICalculateArgs {
 
 export class TimedDigestDelayService {
   /**
-   * Calculates the delay time in miliseconds between the time for the next schedule and current time
-   * @returns the delay time in miliseconds
+   * Calculates the delay time in milliseconds between the time for the next schedule and current time
+   * @returns the delay time in milliseconds
    */
   public static calculate({
     dateStart = new Date(),
