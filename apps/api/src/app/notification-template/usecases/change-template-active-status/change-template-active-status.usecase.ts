@@ -55,7 +55,7 @@ export class ChangeTemplateActiveStatus {
       {
         $set: {
           active: command.active,
-          draft: command.active === false,
+          draft: !command.active,
         },
       }
     );
