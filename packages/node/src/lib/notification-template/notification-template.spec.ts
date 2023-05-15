@@ -19,12 +19,48 @@ describe('test use of novus node package - NotificationTemplates class', () => {
   test('should fetch all the notification-templates correctly', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.notificationTemplates.getAll(undefined, 0);
+    await novu.notificationTemplates.getAll();
+
+    expect(mockedAxios.get).toHaveBeenCalled();
+    expect(mockedAxios.get).toHaveBeenCalledWith('/notification-templates', {});
+  });
+
+  test('should fetch all the notification-templates correctly of 2nd page', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.notificationTemplates.getAll(2);
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith('/notification-templates', {
       params: {
-        limit: 0,
+        page: 2,
+      },
+    });
+  });
+
+  test('should fetch all the notification-templates correctly with limit of 10', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.notificationTemplates.getAll(undefined, 10);
+
+    expect(mockedAxios.get).toHaveBeenCalled();
+    expect(mockedAxios.get).toHaveBeenCalledWith('/notification-templates', {
+      params: {
+        limit: 10,
+      },
+    });
+  });
+
+  test('should fetch all the notification-templates correctly of page 3 with limit of 20', async () => {
+    mockedAxios.post.mockResolvedValue({});
+
+    await novu.notificationTemplates.getAll(3, 20);
+
+    expect(mockedAxios.get).toHaveBeenCalled();
+    expect(mockedAxios.get).toHaveBeenCalledWith('/notification-templates', {
+      params: {
+        page: 3,
+        limit: 20,
       },
     });
   });
@@ -32,16 +68,16 @@ describe('test use of novus node package - NotificationTemplates class', () => {
   test('should create a template with the given parameters', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.notificationTemplates.create({
+    const result = await novu.notificationTemplates.create({
       name: 'test1',
-      notificationGroupId: 'NOTIFGROUPID',
+      notificationGroupId: '63b99e83598f5625a96c4b97',
       steps: [],
     });
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/notification-templates', {
       name: 'test1',
-      notificationGroupId: 'NOTIFGROUPID',
+      notificationGroupId: '63b99e83598f5625a96c4b97',
       steps: [],
     });
   });
@@ -73,11 +109,11 @@ describe('test use of novus node package - NotificationTemplates class', () => {
   test('should delete the specified template', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.notificationTemplates.delete('TEMPLATE_ID');
+    await novu.notificationTemplates.delete('TEMPLATE_I12D');
 
     expect(mockedAxios.delete).toHaveBeenCalled();
     expect(mockedAxios.delete).toHaveBeenCalledWith(
-      '/notification-templates/TEMPLATE_ID'
+      '/notification-templates/TEMPLATE_I12D'
     );
   });
 
