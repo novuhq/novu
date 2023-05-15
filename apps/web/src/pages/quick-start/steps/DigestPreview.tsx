@@ -15,7 +15,7 @@ import { NavButton } from '../components/NavButton';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useCreateDigestDemoWorkflow } from '../../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { Button } from '../../../design-system';
-import { DigestDemoFlow } from '../../../components/digest-demo-flow';
+import { DigestDemoFlow } from '../../../components';
 
 export function DigestPreview() {
   const segment = useSegment();

@@ -7,10 +7,11 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import { ArrowButton, colors, Title, Text, Button } from '../../design-system';
 import { parseUrl } from '../../utils/routeUtils';
 import { ROUTES } from '../../constants/routes.enum';
-import { DigestDemoFlow } from '../../components/digest-demo-flow';
+
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { DigestPlaygroundAnalyticsEnum } from './constants';
 import { useTourStorage } from './hooks/useTourStorage';
+import { DigestDemoFlow } from '../../components';
 
 const Heading = styled(Title)`
   color: ${colors.B40};
