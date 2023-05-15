@@ -108,8 +108,11 @@ export class MetricQueueService extends QueueService<Record<string, never>> {
               Logger.log(`MetricQueueService/${queueService.name}/active`, activeCount);
             }
           }
-          resolve();
+
+          return resolve();
         } catch (error) {
+          console.log({ error });
+
           return reject(error);
         }
       });
