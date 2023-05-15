@@ -103,10 +103,12 @@ export const StartFromScratchTourTooltip = ({
           <Icon width={64} height={64} style={{ alignSelf: 'center' }} />
         </div>
         <Stack spacing={8}>
-          <Text size="lg" color={isDark ? colors.white : colors.B30}>
+          <Text size="lg" color={isDark ? colors.white : colors.B30} data-test-id="scratch-workflow-tooltip-title">
             {TITLE[index]}
           </Text>
-          <Text color={isDark ? colors.B80 : colors.B60}>{DESCRIPTION[index]}</Text>
+          <Text color={isDark ? colors.B80 : colors.B60} data-test-id="scratch-workflow-tooltip-description">
+            {DESCRIPTION[index]}
+          </Text>
         </Stack>
       </Group>
       <Group align="center" position={isLastStep ? 'right' : 'apart'} mt={24} noWrap spacing={0}>
