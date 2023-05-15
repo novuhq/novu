@@ -4,12 +4,13 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
-import { ApiTags, ApiOkResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOkResponse, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
 import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
 import { ActivitiesResponseDto } from '../notifications/dtos/activities-response.dto';
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
 import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
 import { DeleteMessageParams } from './params/delete-message.param';
+import { ApiResponse } from '../shared/framework/response.decorator';
 
 @Controller('/messages')
 @ApiTags('Messages')
@@ -67,13 +68,12 @@ export class MessagesController {
   @Delete('/:messageId')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)
-  @ApiOkResponse({
-    type: DeleteMessageResponseDto,
-  })
+  @ApiResponse(DeleteMessageResponseDto)
   @ApiOperation({
     summary: 'Delete message',
     description: 'Deletes a message entity from the Novu platform',
   })
+  @ApiParam({ name: 'messageId', type: String, required: true })
   async deleteMessage(
     @UserSession() user: IJwtPayload,
     @Param() { messageId }: DeleteMessageParams

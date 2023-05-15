@@ -9,7 +9,7 @@ Handlebars.registerHelper(
   HandlebarHelpersEnum.EQUALS,
   function (arg1, arg2, options) {
     // eslint-disable-next-line
-    // @ts-ignore
+    // @ts-expect-error
     return arg1 == arg2 ? options.fn(this) : options.inverse(this);
   }
 );

@@ -30,7 +30,7 @@ import { ChangeTemplateActiveStatus } from './usecases/change-template-active-st
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationTemplateResponse } from './dto/notification-template-response.dto';
 import { NotificationTemplatesResponseDto } from './dto/notification-templates.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -39,6 +39,8 @@ import { Roles } from '../auth/framework/roles.decorator';
 import { GetBlueprintNotificationTemplate } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.usecase';
 import { GetBlueprintNotificationTemplateCommand } from './usecases/get-blueprint-notification-template/get-blueprint-notification-template.command';
 import { CreateBlueprintNotificationTemplate } from './usecases/create-blueprint-notification-template/create-blueprint-notification-template.usecase';
+import { ApiResponse } from '../shared/framework/response.decorator';
+import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -57,9 +59,7 @@ export class NotificationTemplateController {
   ) {}
 
   @Get('')
-  @ApiOkResponse({
-    type: NotificationTemplateResponse,
-  })
+  @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
     summary: 'Get notification templates',
   })
@@ -73,16 +73,14 @@ export class NotificationTemplateController {
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
-        page: query.page ? Number(query.page) : 0,
-        limit: query.limit ? Number(query.limit) : 10,
+        page: query.page ? query.page : 0,
+        limit: query.limit ? query.limit : 10,
       })
     );
   }
 
   @Put('/:templateId')
-  @ApiOkResponse({
-    type: NotificationTemplateResponse,
-  })
+  @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
     summary: 'Update notification template',
   })
@@ -114,7 +112,7 @@ export class NotificationTemplateController {
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
   @ApiOkResponse({
-    type: Boolean,
+    type: DataBooleanDto,
   })
   @ApiOperation({
     summary: 'Delete notification template',
@@ -132,9 +130,7 @@ export class NotificationTemplateController {
   }
 
   @Get('/:templateId')
-  @ApiOkResponse({
-    type: NotificationTemplateResponse,
-  })
+  @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
     summary: 'Get notification template',
   })
@@ -186,9 +182,7 @@ export class NotificationTemplateController {
   @Post('')
   @ExternalApiAccessible()
   @UseGuards(RootEnvironmentGuard)
-  @ApiCreatedResponse({
-    type: NotificationTemplateResponse,
-  })
+  @ApiResponse(NotificationTemplateResponse, 201)
   @ApiOperation({
     summary: 'Create notification template',
   })
@@ -218,9 +212,7 @@ export class NotificationTemplateController {
   @Put('/:templateId/status')
   @UseGuards(RootEnvironmentGuard)
   @Roles(MemberRoleEnum.ADMIN)
-  @ApiOkResponse({
-    type: NotificationTemplateResponse,
-  })
+  @ApiResponse(NotificationTemplateResponse)
   @ApiOperation({
     summary: 'Update notification template status',
   })

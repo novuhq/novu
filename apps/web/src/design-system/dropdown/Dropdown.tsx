@@ -5,7 +5,7 @@ import useStyles from './Dropdown.styles';
 import { shadows } from '../config';
 
 interface IDropdownProps
-  extends Pick<MenuProps, 'opened' | 'offset' | 'position' | 'onOpen' | 'onClose' | 'withinPortal'> {
+  extends Pick<MenuProps, 'opened' | 'offset' | 'position' | 'onOpen' | 'onClose' | 'withinPortal' | 'middlewares'> {
   control: React.ReactNode;
   children: React.ReactNode;
 }

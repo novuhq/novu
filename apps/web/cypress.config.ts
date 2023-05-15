@@ -20,12 +20,12 @@ const webpack = overrideBabel(webpackOverride());
 webpack.output.devtoolModuleFilenameTemplate = '[name].js';
 
 export default defineConfig({
-  viewportHeight: 700,
+  viewportHeight: 900,
   viewportWidth: 1280,
   video: false,
 
   retries: {
-    runMode: 2,
+    runMode: 3,
     openMode: 0,
   },
 

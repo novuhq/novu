@@ -35,7 +35,8 @@ export class FilterLayoutsRequestDto {
 
 export class FilterLayoutsResponseDto {
   @ApiProperty({
-    type: Array,
+    type: LayoutDto,
+    isArray: true,
   })
   data: LayoutDto[];
 

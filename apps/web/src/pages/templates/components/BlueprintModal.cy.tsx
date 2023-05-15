@@ -27,9 +27,7 @@ describe('Blueprint Modal', () => {
     cy.mount(
       <TestWrapper>
         <QueryClientProvider client={queryClient}>
-          <Router>
-            <BlueprintModal />
-          </Router>
+          <BlueprintModal />
         </QueryClientProvider>
       </TestWrapper>
     );
@@ -58,9 +56,7 @@ describe('Blueprint Modal', () => {
     cy.mount(
       <TestWrapper>
         <QueryClientProvider client={queryClient}>
-          <Router>
-            <BlueprintModal />
-          </Router>
+          <BlueprintModal />
         </QueryClientProvider>
       </TestWrapper>
     );

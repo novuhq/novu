@@ -7,6 +7,7 @@ import {
   ILogoFileName,
   EmailProviderIdEnum,
   InAppProviderIdEnum,
+  ProvidersIdEnum,
 } from '@novu/shared';
 
 import { useAuthController, useEnvController, useIntegrations } from '../../hooks';
@@ -289,7 +290,7 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
 });
 
 export interface IIntegratedProvider {
-  providerId: string;
+  providerId: ProvidersIdEnum;
   integrationId: string;
   displayName: string;
   channel: ChannelTypeEnum;
@@ -322,6 +323,8 @@ export interface ICredentials {
   clientId?: string;
   projectName?: string;
   serviceAccount?: string;
+  baseUrl?: string;
+  webhookUrl?: string;
   requireTls?: boolean;
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;

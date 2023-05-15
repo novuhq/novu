@@ -1,33 +1,19 @@
 import { getRedisPrefix } from '@novu/shared';
 import { ConnectionOptions } from 'tls';
 import { QueueOptions } from 'bullmq';
+import { Injectable, Logger } from '@nestjs/common';
 
-import { BullmqService } from './bull-mq.service';
+import { BullMqService } from './bull-mq.service';
+import { QueueService } from './queue.service';
 
-export class WsQueueService {
+const LOG_CONTEXT = 'WsQueueService';
+
+@Injectable()
+export class WsQueueService extends QueueService<Record<string, never>> {
   public static queueName = 'ws_socket_queue';
-  private bullConfig: QueueOptions = {
-    connection: {
-      db: Number(process.env.REDIS_DB_INDEX),
-      port: Number(process.env.REDIS_PORT),
-      host: process.env.REDIS_HOST,
-      password: process.env.REDIS_PASSWORD,
-      connectTimeout: 50000,
-      keepAlive: 30000,
-      family: 4,
-      keyPrefix: getRedisPrefix(),
-      tls: process.env.REDIS_TLS as ConnectionOptions,
-    },
-    defaultJobOptions: {
-      removeOnComplete: true,
-    },
-  };
-
-  public readonly bullMqService: BullmqService;
 
   constructor() {
-    this.bullMqService = new BullmqService();
-    this.bullMqService.createQueue(WsQueueService.queueName, this.bullConfig);
+    super('ws_socket_queue');
   }
 
   async getJobStats(
@@ -45,5 +31,17 @@ export class WsQueueService {
 
   async cleanAllQueues() {
     await this.bullMqService.queue.drain();
+  }
+
+  public async gracefulShutdown(): Promise<void> {
+    Logger.log('Shutting the WS Queue service down', LOG_CONTEXT);
+
+    await this.bullMqService.gracefulShutdown();
+
+    Logger.log('Shutting down the WS Queue service has finished', LOG_CONTEXT);
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.gracefulShutdown();
   }
 }

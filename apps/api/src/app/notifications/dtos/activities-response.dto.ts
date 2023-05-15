@@ -1,17 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  ChatProviderIdEnum,
-  EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  InAppProviderIdEnum,
   MessageTemplateDto,
-  PushProviderIdEnum,
+  ProvidersIdEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import { StepFilter } from '@novu/dal';
-
-type ProvidersEnum = ChatProviderIdEnum | EmailProviderIdEnum | InAppProviderIdEnum | PushProviderIdEnum;
 
 class ActivityNotificationStepTemplateResponseDto {
   @ApiProperty()
@@ -72,7 +67,7 @@ class ActivityNotificationExecutionDetailResponseDto {
   isTest: boolean;
 
   @ApiProperty()
-  providerId: ProvidersEnum;
+  providerId: ProvidersIdEnum;
 
   @ApiPropertyOptional()
   raw?: string;
@@ -103,7 +98,7 @@ class ActivityNotificationJobResponseDto {
   payload?: Record<string, unknown>;
 
   @ApiProperty()
-  providerId: ProvidersEnum;
+  providerId: ProvidersIdEnum;
 
   @ApiProperty()
   status: string;

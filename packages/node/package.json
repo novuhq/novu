@@ -16,12 +16,11 @@
     "build": "run-p build:*",
     "build:main": "tsc -p tsconfig.json",
     "build:module": "tsc -p tsconfig.module.json",
-    "lint": "pnpm test:lint",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",
-    "test": "run-s build test:*",
-    "test:lint": "eslint src --ext .ts",
+    "test": "run-s test:*",
+    "lint": "eslint src --ext .ts",
     "test:prettier": "prettier \"src/**/*.ts\"",
     "test:unit": "jest src",
     "check-cli": "run-s test diff-integration-tests check-integration-tests",
@@ -63,7 +62,7 @@
     "rimraf": "^3.0.2",
     "run-p": "0.0.0",
     "ts-jest": "^27.0.5",
-    "typedoc": "^0.23.0",
+    "typedoc": "^0.24.0",
     "typescript": "4.9.5"
   },
   "files": [

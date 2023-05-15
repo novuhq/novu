@@ -31,7 +31,7 @@
     "start:docker": "pnpm build && http-server -p 4701 dist",
     "start:test:web": "http-server -p 4701 -o test",
     "docker:build": "docker buildx build -f ./Dockerfile -t novu-embed ./../..",
-    "test": "jest --coverage",
+    "test": "echo \"Error: no test specified\"",
     "test:watch": "jest --coverage --watch",
     "test:prod": "pnpm lint && pnpm test -- --no-cache",
     "deploy-docs": "ts-node tools/gh-pages-publish",

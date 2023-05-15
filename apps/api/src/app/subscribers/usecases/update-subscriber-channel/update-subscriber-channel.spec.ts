@@ -1,11 +1,12 @@
 import { SubscriberRepository } from '@novu/dal';
-import { UserSession, SubscribersService } from '@novu/testing';
+import { SubscribersService, UserSession } from '@novu/testing';
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { UpdateSubscriberChannel } from './update-subscriber-channel.usecase';
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
+import { OAuthHandlerEnum } from '../../types';
 
 describe('Update Subscriber channel credentials', function () {
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
@@ -38,16 +39,17 @@ describe('Update Subscriber channel credentials', function () {
         environmentId: session.environment._id,
         providerId: subscriberChannel.providerId,
         credentials: subscriberChannel.credentials,
+        oauthHandler: OAuthHandlerEnum.NOVU,
       })
     );
 
     const updatedSubscriber = await subscriberRepository.findById(subscriber._id);
 
-    const newChannel = updatedSubscriber.channels.find(
+    const newChannel = updatedSubscriber?.channels?.find(
       (channel) => channel.providerId === subscriberChannel.providerId
     );
 
-    expect(newChannel.credentials.webhookUrl).to.equal(subscriberChannel.credentials.webhookUrl);
+    expect(newChannel?.credentials.webhookUrl).to.equal(subscriberChannel.credentials.webhookUrl);
   });
 
   it('should update subscriber existing slack channel credentials', async function () {
@@ -61,6 +63,7 @@ describe('Update Subscriber channel credentials', function () {
         environmentId: session.environment._id,
         providerId: ChatProviderIdEnum.Discord,
         credentials: { webhookUrl: 'webhookUrl' },
+        oauthHandler: OAuthHandlerEnum.NOVU,
       })
     );
 
@@ -75,16 +78,17 @@ describe('Update Subscriber channel credentials', function () {
         environmentId: session.environment._id,
         providerId: newSlackSubscribersChannel.providerId,
         credentials: newSlackSubscribersChannel.credentials,
+        oauthHandler: OAuthHandlerEnum.NOVU,
       })
     );
 
     const updatedSubscriber = await subscriberRepository.findById(subscriber._id);
 
-    const updatedChannel = updatedSubscriber.channels.find(
+    const updatedChannel = updatedSubscriber?.channels?.find(
       (channel) => channel.providerId === newSlackSubscribersChannel.providerId
     );
 
-    expect(updatedChannel.credentials.webhookUrl).to.equal(newSlackSubscribersChannel.credentials.webhookUrl);
+    expect(updatedChannel?.credentials.webhookUrl).to.equal(newSlackSubscribersChannel.credentials.webhookUrl);
   });
 
   it('should update only webhookUrl on existing slack channel credentials', async function () {
@@ -103,17 +107,18 @@ describe('Update Subscriber channel credentials', function () {
         environmentId: session.environment._id,
         providerId: newSlackCredentials.providerId,
         credentials: newSlackCredentials.credentials,
+        oauthHandler: OAuthHandlerEnum.NOVU,
       })
     );
 
     const updatedSubscriber = await subscriberRepository.findById(subscriber._id);
 
-    const newChannel = updatedSubscriber.channels.find(
+    const newChannel = updatedSubscriber?.channels?.find(
       (channel) => channel.providerId === newSlackCredentials.providerId
     );
 
-    expect(newChannel._integrationId).to.equal('integrationId_slack');
-    expect(newChannel.providerId).to.equal('slack');
-    expect(newChannel.credentials.webhookUrl).to.equal('new-secret-webhookUrl');
+    expect(newChannel?._integrationId).to.equal('integrationId_slack');
+    expect(newChannel?.providerId).to.equal('slack');
+    expect(newChannel?.credentials.webhookUrl).to.equal('new-secret-webhookUrl');
   });
 });

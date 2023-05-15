@@ -6,6 +6,7 @@
   "scripts": {
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
+    "lint": "eslint --ext .ts,.tsx src",
     "build": "rollup -c && npm run build:types",
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
     "build:watch": "rollup -c -w",
