@@ -90,11 +90,6 @@ export class UsersController {
   }
 
   @Put('/onboarding-tour')
-  @ApiResponse(UserOnboardingTourRequestDto)
-  @ApiOperation({
-    summary: 'Update onboarding tour count',
-  })
-  @ExternalApiAccessible()
   async updateOnBoardingTour(
     @UserSession() user: IJwtPayload,
     @Body() body: UserOnboardingTourRequestDto
