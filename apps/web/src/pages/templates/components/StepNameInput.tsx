@@ -17,6 +17,7 @@ export const StepNameInput = ({ index, defaultValue }: { index: number; defaultV
     <Controller
       control={control}
       name={`steps.${index}.name`}
+      defaultValue=""
       render={({ field, fieldState }) => {
         return (
           <TextInput

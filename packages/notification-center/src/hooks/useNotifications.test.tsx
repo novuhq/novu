@@ -370,6 +370,51 @@ describe('useNotifications', () => {
     expect(result.current.notifications).toStrictEqual([mockNotification1, mockNotification2, mockNotification3]);
   });
 
+  it('refetch will fetch notifications from a specified page number', async () => {
+    const mockNotification1 = { ...mockNotification, _id: 'mockNotification1' };
+    const mockNotification2 = { ...mockNotification, _id: 'mockNotification2' };
+    const mockNotification3 = { ...mockNotification, _id: 'mockNotification3' };
+    const mockNotificationsResponse1 = {
+      data: [mockNotification1],
+      totalCount: 1,
+      pageSize: 10,
+      page: 0,
+    };
+    const mockNotificationsResponse2 = {
+      data: [mockNotification2, mockNotification3],
+      totalCount: 3,
+      pageSize: 10,
+      page: 1,
+    };
+    mockServiceInstance.getNotificationsList
+      .mockImplementationOnce(() => promiseResolveTimeout(0, mockNotificationsResponse1))
+      .mockImplementationOnce(() => promiseResolveTimeout(0, mockNotificationsResponse2));
+
+    const { rerender, result } = hook;
+
+    expect(result.current.isLoading).toBeTruthy();
+
+    await promiseResolveTimeout(100);
+    rerender();
+
+    expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(1, 0, {});
+    expect(result.current.notifications).toStrictEqual([mockNotification1]);
+
+    act(() => {
+      result.current.refetch({ page: 1 });
+    });
+    rerender();
+
+    expect(result.current.isLoading).toBeFalsy();
+    expect(result.current.isFetching).toBeTruthy();
+
+    await promiseResolveTimeout(100);
+    rerender();
+
+    expect(mockServiceInstance.getNotificationsList).toHaveBeenNthCalledWith(2, 1, {});
+    expect(result.current.notifications).toStrictEqual([mockNotification1, mockNotification2, mockNotification3]);
+  });
+
   it('mark notification as read', async () => {
     mockServiceInstance.markMessageAs.mockImplementationOnce(() =>
       promiseResolveTimeout(0, [{ ...mockNotification, read: true, seen: true }])

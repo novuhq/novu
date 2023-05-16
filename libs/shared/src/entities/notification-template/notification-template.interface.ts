@@ -1,7 +1,7 @@
 import type { BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum, FilterParts } from '../../types';
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
-import { DelayTypeEnum, DigestTypeEnum, DigestUnitEnum } from '../step';
+import { INotificationTemplateStepMetadata } from '../step';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -52,13 +52,7 @@ export interface INotificationTemplateStep {
     active: boolean;
     url: string;
   };
-  metadata?: {
-    amount?: number;
-    unit?: DigestUnitEnum;
-    type?: DigestTypeEnum | DelayTypeEnum;
-    digestKey?: string;
-    delayPath?: string;
-  };
+  metadata?: INotificationTemplateStepMetadata;
 }
 
 export interface IMessageFilter {

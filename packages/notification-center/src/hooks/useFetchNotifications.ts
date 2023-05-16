@@ -1,6 +1,7 @@
 import { useInfiniteQuery, UseInfiniteQueryOptions } from '@tanstack/react-query';
 import type { IStoreQuery } from '@novu/client';
 import type { IMessage, IPaginatedResponse } from '@novu/shared';
+import { INotificationsContext } from '../shared/interfaces';
 
 import { useNovuContext } from './useNovuContext';
 import { INFINITE_NOTIFICATIONS_QUERY_KEY } from './queryKeys';
@@ -24,5 +25,16 @@ export const useFetchNotifications = (
     }
   );
 
-  return result;
+  const refetch: INotificationsContext['refetch'] = ({ page, ...otherOptions } = {}) => {
+    if (page !== undefined) {
+      result.fetchNextPage({ pageParam: page, ...otherOptions });
+    } else {
+      result.refetch(otherOptions);
+    }
+  };
+
+  return {
+    ...result,
+    refetch,
+  };
 };

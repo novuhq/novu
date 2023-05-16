@@ -6,6 +6,28 @@ import { useColorScheme } from '@mantine/hooks';
 import { mantineConfig } from './config/theme.config';
 import { colors, shadows } from './config';
 import { useLocalThemePreference } from '../hooks';
+import { ChevronDown } from './icons';
+
+const accordionStyles = (theme: MantineTheme) => ({
+  item: {
+    background: theme.colorScheme === 'dark' ? colors.B15 : colors.B98,
+    borderRadius: 8,
+    marginBottom: 24,
+  },
+  control: {
+    color: colors.B60,
+    fontSize: 14,
+    lineHeight: '20px',
+    padding: 16,
+    paddingRight: 20,
+    '&:hover': {
+      background: 'transparent',
+    },
+  },
+  content: {
+    padding: 16,
+  },
+});
 
 const notificationStyles = (theme: MantineTheme) => {
   return {
@@ -76,6 +98,12 @@ export function ThemeProvider({ children }: { children: JSX.Element; dark?: Bool
           components: {
             Notification: {
               styles: notificationStyles,
+            },
+            Accordion: {
+              styles: accordionStyles,
+              defaultProps: {
+                chevron: <ChevronDown />,
+              },
             },
           },
         }}

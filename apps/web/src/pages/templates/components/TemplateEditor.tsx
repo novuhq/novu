@@ -6,7 +6,7 @@ import { TemplateSMSEditor } from './TemplateSMSEditor';
 import type { IForm } from './formTypes';
 import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
-import { useActiveIntegrations } from '../../../hooks';
+import { useActiveIntegrations, useEnvController } from '../../../hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SubPageWrapper } from './SubPageWrapper';
 import { DigestMetadata } from '../workflow/DigestMetadata';
@@ -18,6 +18,7 @@ import { StepName } from './StepName';
 import { DeleteStepRow } from './DeleteStepRow';
 
 export const TemplateEditor = () => {
+  const { readonly } = useEnvController();
   const { channel, stepUuid = '' } = useParams<{
     channel: StepTypeEnum | undefined;
     stepUuid: string;
@@ -110,7 +111,7 @@ export const TemplateEditor = () => {
             isIntegrationActive={!!integrations?.some((integration) => integration.channel === ChannelTypeEnum.CHAT)}
           />
         )}
-        {channel === StepTypeEnum.DIGEST && <DigestMetadata control={control} index={index} />}
+        {channel === StepTypeEnum.DIGEST && <DigestMetadata index={index} readonly={readonly} />}
         {channel === StepTypeEnum.DELAY && <DelayMetadata control={control} index={index} />}
         <DeleteStepRow />
       </SubPageWrapper>
