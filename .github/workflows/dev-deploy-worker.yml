@@ -58,7 +58,7 @@ jobs:
         with:
           tag: dev
           push: 'true'
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GH_PACKAGES }}
           docker_name: ${{ matrix.name }}
           bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
