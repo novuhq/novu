@@ -8,8 +8,10 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { AnalyticsService } from '@novu/application-generic';
-
-import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from '../create-notification-template';
+import {
+  CreateNotificationTemplate,
+  CreateNotificationTemplateCommand,
+} from '../../../notification-template/usecases/create-notification-template';
 import { CreateBlueprintNotificationTemplateCommand } from './create-blueprint-notification-template.command';
 
 @Injectable()
