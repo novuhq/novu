@@ -28,12 +28,12 @@ const TEMPLATES_GROUPED = [
     name: 'Collaboration',
     templates: [
       {
-        name: ':fa-solid fa-message: Comments',
+        name: ':fa-regular fa-message: Comments',
         description:
           'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
       },
       {
-        name: ':fa-solid fa-user-plus: Mentions',
+        name: ':fa-solid fa-user-check: Mentions',
         description:
           'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
       },
@@ -48,7 +48,7 @@ const TEMPLATES_GROUPED = [
     name: 'Growth',
     templates: [
       {
-        name: ':fa-solid fa-hand: Welcome message',
+        name: ':fa-regular fa-hand: Welcome message',
         description:
           'Lorem ipsum dolor sit amet consectetur adipisicing elit. Cupiditate quas totam quod beatae. Ipsam quasi fugiat commodi adipisci eligendi necessitatibus cumque aliquam, dicta natus cupiditate suscipit voluptatum rerum debitis. Ipsum!',
       },

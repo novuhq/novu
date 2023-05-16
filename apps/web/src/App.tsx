@@ -6,6 +6,7 @@ import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import { Integrations } from '@sentry/tracing';
 import { library } from '@fortawesome/fontawesome-svg-core';
+import { far } from '@fortawesome/free-regular-svg-icons';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 
 import packageJson from '../package.json';
@@ -48,7 +49,7 @@ import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
 
-library.add(fas);
+library.add(far, fas);
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {
