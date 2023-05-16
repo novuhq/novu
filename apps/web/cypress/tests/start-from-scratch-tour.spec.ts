@@ -1,4 +1,4 @@
-describe('Digest Playground Workflow Page', function () {
+describe('Start from scratch tour hints', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
   });
