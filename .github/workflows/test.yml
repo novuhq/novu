@@ -53,8 +53,6 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          submodules: true
-          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
@@ -92,16 +90,12 @@ jobs:
     needs: [ get-affected ]
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
     uses: ./.github/workflows/reusable-web-e2e.yml
-    with:
-      submodules: true
     secrets: inherit
 
   test_widget:
     name: Test Widget Cypress
     needs: [ get-affected ]
     uses: ./.github/workflows/reusable-widget-e2e.yml
-    with:
-      submodules: true
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') }}
     secrets: inherit
 
@@ -121,9 +115,6 @@ jobs:
         name: [ 'novu/api', 'novu/api-ee' ]
     steps:
       - uses: actions/checkout@v3
-        with:
-          submodules: ${{ contains (matrix.name,'ee') }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: ./.github/actions/docker/build-api
@@ -164,9 +155,6 @@ jobs:
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-packages }}'
       - uses: actions/checkout@v3
-        with:
-          submodules: ${{ contains(matrix.projectName, '@novu/application-generic') }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
       - uses: mansagroup/nrwl-nx-action@v3
         if: ${{matrix.projectName == '@novu/application-generic' }}
@@ -207,9 +195,6 @@ jobs:
     steps:
       - run: echo ${{ matrix.projectName }}
       - uses: actions/checkout@v3
-        with:
-          submodules: ${{ contains(matrix.projectName, '@novu/api') || contains(matrix.projectName, '@novu/worker') }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: mansagroup/nrwl-nx-action@v3
@@ -247,9 +232,6 @@ jobs:
     steps:
       - run: echo ${{ matrix.projectName }}
       - uses: actions/checkout@v3
-        with:
-          submodules: ${{ contains(matrix.projectName, '@novu/api') || contains(matrix.projectName, '@novu/worker') }}
-          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
         with:
           # Don't run redis and etc... for other unit tests
