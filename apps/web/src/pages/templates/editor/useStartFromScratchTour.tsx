@@ -65,18 +65,18 @@ const StartFromScratchTourSteps: Step[] = [
 export const useStartFromScratchTour = ({ startTour }: { startTour: () => void }) => {
   const { currentUser } = useAuthContext();
 
-  const showOnboardingTour = currentUser?.showOnBoardingTour ?? 0;
   const tourStorage = useTourStorage();
   const { templateId = '' } = useParams<{ templateId: string }>();
   const isDigestTouring = tourStorage.getCurrentTour('digest', templateId) > -1;
 
   useEffectOnce(() => {
+    const showOnboardingTour = currentUser?.showOnBoardingTour ?? 0;
     if (showOnboardingTour < 2 && !isDigestTouring && currentUser) {
       startTour();
     }
   }, !isDigestTouring && !!currentUser);
 
   return {
-    StartFromScratchTourSteps: !isDigestTouring ? StartFromScratchTourSteps : [],
+    startFromScratchTourSteps: !isDigestTouring ? StartFromScratchTourSteps : [],
   };
 };

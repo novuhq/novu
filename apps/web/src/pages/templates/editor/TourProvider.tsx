@@ -44,9 +44,9 @@ export const TourProvider = React.memo(() => {
   );
 
   const { digestTourSteps } = useDigestWorkflowTour({ startTour });
-  const { StartFromScratchTourSteps } = useStartFromScratchTour({ startTour });
+  const { startFromScratchTourSteps } = useStartFromScratchTour({ startTour });
 
-  const steps = digestTourSteps.length > 0 ? digestTourSteps : StartFromScratchTourSteps;
+  const steps = digestTourSteps.length > 0 ? digestTourSteps : startFromScratchTourSteps;
 
   const hasSteps = steps.length > 0;
   const shouldRun = run && hasSteps;
