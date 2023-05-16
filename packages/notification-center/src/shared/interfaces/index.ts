@@ -1,5 +1,6 @@
 import { ButtonTypeEnum, IMessage, IMessageAction, IOrganizationEntity, ISubscriberJwt } from '@novu/shared';
 import type { ApiService, IStoreQuery } from '@novu/client';
+import { RefetchOptions, RefetchQueryFilters } from '@tanstack/react-query';
 
 export {
   IMessage,
@@ -104,7 +105,13 @@ export interface INotificationsContext {
   isFetchingNextPage: boolean;
   setStore: (storeId?: string) => void;
   fetchNextPage: () => void;
-  refetch: () => void;
+  refetch: <TPageData>({
+    page,
+    ...otherOptions
+  }?: {
+    page?: number;
+  } & RefetchOptions &
+    RefetchQueryFilters<TPageData>) => void;
   markNotificationAsRead: (messageId: string) => void;
   markNotificationAsUnRead: (messageId: string) => void;
   markNotificationAsSeen: (messageId: string) => void;

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import axios from 'axios';
 import { expect } from 'chai';
 import { getTime, parseISO } from 'date-fns';
@@ -9,7 +10,7 @@ import {
   JobStatusEnum,
   JobEntity,
 } from '@novu/dal';
-import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum } from '@novu/shared';
+import { StepTypeEnum, DigestTypeEnum, DigestUnitEnum, IDigestRegularMetadata } from '@novu/shared';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { QueueService } from '@novu/application-generic';
 
@@ -115,8 +116,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     const digestJob = jobs.find((job) => job.step?.template?.type === StepTypeEnum.DIGEST);
-    expect(digestJob?.digest?.amount).to.equal(digestAmount);
-    expect(digestJob?.digest?.unit).to.equal(digestUnit);
+    expect((digestJob?.digest as IDigestRegularMetadata)?.amount).to.equal(digestAmount);
+    expect((digestJob?.digest as IDigestRegularMetadata)?.unit).to.equal(digestUnit);
     const job = jobs.find((item) => item.digest?.events?.length && item.digest.events.length > 0);
     expect(job?.digest?.events?.length).to.equal(2);
   });
@@ -263,7 +264,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
     });
 
-    const digestedJobs = finalJobs.filter((job) => job?.digest?.digestKey === 'id');
+    const digestedJobs = finalJobs.filter((job) => (job?.digest as IDigestRegularMetadata)?.digestKey === 'id');
     expect(digestedJobs.length).to.eql(3);
 
     const jobsWithEvents = finalJobs.filter(
@@ -511,8 +512,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
     });
 
-    expect(oldMessage.content).to.equal('Hello world 0');
-    expect(message.content).to.equal('Hello world 2');
+    expect(oldMessage!.content).to.equal('Hello world 0');
+    expect(message!.content).to.equal('Hello world 2');
   });
 
   it('should digest with backoff strategy', async function () {
@@ -524,7 +525,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.SECONDS,
             amount: 1,
-            type: DigestTypeEnum.BACKOFF,
+            type: DigestTypeEnum.REGULAR,
+            backoff: true,
             backoffUnit: DigestUnitEnum.SECONDS,
             backoffAmount: 1,
           },
@@ -583,7 +585,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
           metadata: {
             unit: DigestUnitEnum.SECONDS,
             amount: 30,
-            type: DigestTypeEnum.BACKOFF,
+            type: DigestTypeEnum.REGULAR,
+            backoff: true,
             backoffUnit: DigestUnitEnum.SECONDS,
             backoffAmount: 10,
             updateMode: true,
@@ -640,7 +643,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.IN_APP,
-      transactionId: delayedJob.transactionId,
+      transactionId: delayedJob!.transactionId,
     });
 
     expect(job?.digest?.events?.[0].customVar).to.equal('second');
@@ -700,7 +703,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.IN_APP,
-      transactionId: delayedJob.transactionId,
+      transactionId: delayedJob!.transactionId,
     });
     expect(job?.digest?.events?.length).to.equal(3);
   });
@@ -872,7 +875,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
             digestKey: 'postId',
-            type: DigestTypeEnum.BACKOFF,
+            type: DigestTypeEnum.REGULAR,
+            backoff: true,
             backoffUnit: DigestUnitEnum.MINUTES,
             backoffAmount: 5,
           },
@@ -978,7 +982,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
             unit: DigestUnitEnum.MINUTES,
             amount: 5,
             digestKey: 'nested.postId',
-            type: DigestTypeEnum.BACKOFF,
+            type: DigestTypeEnum.REGULAR,
+            backoff: true,
             backoffUnit: DigestUnitEnum.MINUTES,
             backoffAmount: 5,
           },

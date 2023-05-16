@@ -77,7 +77,7 @@ export class ContentService {
       }
 
       if (message.template?.type === StepTypeEnum.DIGEST) {
-        if (message.metadata?.digestKey) {
+        if (message.metadata && 'digestKey' in message.metadata && message.metadata.digestKey) {
           variables.push({ name: message.metadata.digestKey, type: TemplateVariableTypeEnum.STRING });
         }
       }

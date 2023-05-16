@@ -123,7 +123,7 @@ export default function (
   let rendering = false;
   // Create the web component "class"
   const WebComponent = function (...args) {
-    // @ts-ignore
+    // @ts-expect-error
     const self = Reflect.construct(HTMLElement, args, this.constructor);
     if (typeof options.shadow === 'string') {
       self.attachShadow({ mode: options.shadow });
@@ -189,7 +189,7 @@ export default function (
     moveUpdateToNextTick(() => this[renderSymbol]());
   };
   targetPrototype.disconnectedCallback = function () {
-    // @ts-ignore
+    // @ts-expect-error
     if (typeof ReactDOM.createRoot === 'function') {
       this[rootSymbol].unmount();
     } else {
@@ -201,7 +201,7 @@ export default function (
       const data = {};
       Object.keys(this).forEach(function (key) {
         if (renderAddedProperties[key] !== false) {
-          // @ts-ignore
+          // @ts-expect-error
           data[key] = this[key];
         }
       }, this);
@@ -212,10 +212,10 @@ export default function (
       const element = React.createElement(ReactComponent, data, children);
 
       // Use react to render element in container
-      // @ts-ignore
+      // @ts-expect-error
       if (typeof ReactDOM.createRoot === 'function') {
         if (!this[rootSymbol]) {
-          // @ts-ignore
+          // @ts-expect-error
           this[rootSymbol] = ReactDOM.createRoot(container);
         }
 

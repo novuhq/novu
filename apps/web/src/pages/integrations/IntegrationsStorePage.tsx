@@ -190,6 +190,8 @@ export interface ICredentials {
   requireTls?: boolean;
   ignoreTls?: boolean;
   tlsOptions?: Record<string, unknown>;
+  redirectUrl?: string;
+  hmac?: boolean;
 }
 
 export interface IntegrationEntity {
@@ -225,6 +227,8 @@ function initializeProviders(integrations: IntegrationEntity[]): IIntegratedProv
         // eslint-disable-next-line no-param-reassign
         if (credential.type === 'object' && integration.credentials[credential.key]) {
           credential.value = JSON.stringify(integration.credentials[credential.key]);
+        } else if (credential.type === 'switch') {
+          credential.value = integration.credentials[credential.key];
         } else {
           credential.value = integration.credentials[credential.key]?.toString();
         }

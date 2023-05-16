@@ -19,10 +19,14 @@ This step is optional, if you already have a Slack application you can reuse it.
 
 Novu will manage the OAuth flow and store the credentials
 
-1. Configure your Slack application as mentioned <span style={{textDecoration: "underline"}}>[below](/channels/chat/slack#slack-application-configuration)</span>.
+1. Configure your Slack application as mentioned [below](/channels/chat/slack#slack-application-configuration).
 2. Add the `Add to Slack` button or the shareable URL to your application in order to request permission of access (scope: incoming-webhook).
-   <br/>
-   Make sure to use the generated sharable URL that is located under Slack form in the <a href="https://web.novu.co/integrations" style={{textDecoration: "underline"}}>Integration Store</a>.
+   <br/>  
+   Make sure to use the generated shareable URL that is located under Slack form in the <a href="https://web.novu.co/integrations" style={{textDecoration: "underline"}}>Integration Store</a>.
+   The Shareable URL should be on the following format https:<span/>//api.novu.co/v1/subscribers/SUBSCRIBER_ID/credentials/slack/oauth?environmentId=ENVIRONMENT_ID. <br/>
+
+- SUBSCRIBER_ID is a custom identifier used when identifying your users within the Novu platform. [Read more here](/platform/subscribers). <br/>
+- ENVIRONMENT_ID is a context of an environment you can locate your environment id in the setting in the dashboard . <a href="https://web.novu.co/settings" style={{textDecoration: "underline"}}>Settings</a>.
 
 ### Manual Management
 
@@ -49,7 +53,7 @@ Create a new endpoint on your server that will handle the following steps (you c
    });
    ```
 
-   - subscriberId is a custom identifier used when identifying your users within the Novu platform.
+   - subscriberId is a custom identifier used when identifying your users within the Novu platform. [Read more here](/platform/subscribers).
    - providerId is a unique provider identifier. We recommend using our ChatProviderIdEnum.Slack if you're using Node, else string of `slack` to specify the provider.
    - The third parameter is the credentials object. In this case we use the webhookUrl property to specify the webhook URL generated in the previous step.
 
@@ -57,7 +61,7 @@ Create a new endpoint on your server that will handle the following steps (you c
    You need to set credentials for every subscriber because Slack generates a new Webhook URL on every new app install.
    :::
 
-4. Configure your Slack application as mentioned <span style={{textDecoration: "underline"}}>[below](/channels/chat/slack#slack-application-configuration)</span>.
+4. Configure your Slack application as mentioned [below](/channels/chat/slack#slack-application-configuration).
 5. Add the `Add to Slack` button or the shareable URL to your application in order to request permission of access (scope: incoming-webhook).
 6. After the end-user finishes the authorization you will get the webhookUrl from the response of the OAuth under `body.incoming_webhook.url`, that you will use in step 3.
 7. You are all set up and ready to send your first chat message via our @novu/node package or directly using the REST API.
@@ -71,3 +75,20 @@ Create a new endpoint on your server that will handle the following steps (you c
    - If you use Novu Managed solution add https:<span/>//api.novu.co/v1/subscribers/.
 2. Go to Incoming Webhooks from the left menu and Activate Incoming Webhooks.
 3. Go to Manage Distribution and at the bottom of the page, tick Remove Hard Coded Information and Activate Public Distribution.
+
+### Enabling HMAC Encryption
+
+In order to enable Hash-Based Message Authentication Codes, you need to do the following steps:
+
+1. Visit the integration store page and enable HMAC encryption under your chat provider.
+2. Next step would be to generate an HMAC encrypted subscriberId on your backend:
+
+   ```ts
+   import { createHmac } from 'crypto';
+
+   const hmacHash = createHmac('sha256', process.env.NOVU_API_KEY)
+     .update(subscriberId)
+     .digest('hex');
+   ```
+
+3. Add the newly created hash HMAC to the Sharable URL as a query.
