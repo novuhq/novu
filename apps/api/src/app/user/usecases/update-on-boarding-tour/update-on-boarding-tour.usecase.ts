@@ -9,11 +9,8 @@ export class UpdateOnBoardingTourUsecase {
   constructor(private invalidateCache: InvalidateCacheService, private readonly userRepository: UserRepository) {}
 
   async execute(command: UpdateOnBoardingTourCommand) {
-    await this.invalidateCache.invalidateByKey({
-      key: buildUserKey({
-        _id: command.userId,
-      }),
-    });
+    const user = await this.userRepository.findById(command.userId);
+    if (!user) throw new NotFoundException('User not found');
 
     await this.userRepository.update(
       {
@@ -26,9 +23,15 @@ export class UpdateOnBoardingTourUsecase {
       }
     );
 
-    const user = await this.userRepository.findById(command.userId);
-    if (!user) throw new NotFoundException('User not found');
+    await this.invalidateCache.invalidateByKey({
+      key: buildUserKey({
+        _id: command.userId,
+      }),
+    });
 
-    return user;
+    const updatedUser = await this.userRepository.findById(command.userId);
+    if (!updatedUser) throw new NotFoundException('User not found');
+
+    return updatedUser;
   }
 }
