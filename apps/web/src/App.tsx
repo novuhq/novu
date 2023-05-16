@@ -5,6 +5,8 @@ import { Route, Routes, BrowserRouter } from 'react-router-dom';
 import LogRocket from 'logrocket';
 import setupLogRocketReact from 'logrocket-react';
 import { Integrations } from '@sentry/tracing';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { fas } from '@fortawesome/free-solid-svg-icons';
 
 import packageJson from '../package.json';
 import { AuthProvider } from './components/providers/AuthProvider';
@@ -45,6 +47,8 @@ import { SnippetPage } from './pages/templates/components/SnippetPage';
 import { TemplateEditor } from './pages/templates/components/TemplateEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
+
+library.add(fas);
 
 if (LOGROCKET_ID && window !== undefined) {
   LogRocket.init(LOGROCKET_ID, {

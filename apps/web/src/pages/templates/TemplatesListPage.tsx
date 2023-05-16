@@ -19,6 +19,10 @@ import { TemplatesListNoData } from './TemplatesListNoData';
 import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { TemplateAnalyticsEnum } from './constants';
+/*
+ * TODO uncomment when will be using templates store
+ * import { useTemplateStoreModal } from './hooks/useTemplateStoreModal';
+ */
 
 function NotificationList() {
   const segment = useSegment();
@@ -28,6 +32,11 @@ function NotificationList() {
   const { templates, loading: isLoading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
   const theme = useMantineTheme();
   const navigate = useNavigate();
+
+  /*
+   * TODO uncomment when will be using templates store
+   * const { TemplatesStoreModal, openModal, closeModal } = useTemplateStoreModal();
+   */
 
   const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
 
@@ -154,6 +163,7 @@ function NotificationList() {
             />
           }
         />
+        {/* <TemplatesStoreModal /> */}
       </TemplateListTableWrapper>
     </PageContainer>
   );
