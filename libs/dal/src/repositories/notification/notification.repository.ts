@@ -103,6 +103,7 @@ export class NotificationRepository extends BaseRepository<
       .populate({
         options: {
           readPreference: 'secondaryPreferred',
+          sort: { createdAt: 1 },
         },
         path: 'jobs',
         match: {
