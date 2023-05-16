@@ -7,16 +7,20 @@ import TabItem from '@theme/TabItem';
 
 # Subscribers
 
-`Subscriber` is a user to whom Novu will send notification. Each subscriber in Novu is uniquely identified by `subscriberId`.Novu manages your users in the form of subscribers. Novu stores some user-specific information that helps you send multichannel notifications to your users.
+`Subscriber` is a user to whom Novu will send a notification. Each subscriber in Novu is uniquely identified by `subscriberId`. Novu manages your users in the form of subscribers. Novu stores some user-specific information that helps you send multichannel notifications to your users.
 
 Each subscriber has the following data points:
 
-- **User Data** - Data stored in the subscriber object that you can easily access in your notification templates. This contains basic info such as first name, last name, avatar, locale, email, and phone. This data is fixed and structured
+- **User Data** - Data stored in the subscriber object that you can easily access in your notification templates. This contains basic info such as first name, last name, avatar, locale, email, and phone. This data is fixed and structured.
 - **Custom Data** - Apart from the above fixed structured user data, any unstructured custom data such as user's address, nationality, height, etc can also be stored in the `data` field using key-value pairs.
 - **Channel Specific Credentials** - `deviceTokens` required to send push notifications and `webhookUrl` for chat channel providers can also be stored.
 - **Preferences** - Each subscriber has separate preferences per template and along with template-level preferences. Read more about preferences [here](./preferences.md).
 
-`subscriberId` is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal unique id your application uses for a specific user. Using an identifier like email might cause issues locating a specific subscriber once the users change their email address.
+`subscriberId` is a unique identifier used by Novu to keep track of a specific subscriber. We recommend using the internal unique id your application uses for a specific user.
+
+:::info
+Using an identifier like `email` might cause issues locating a specific subscriber once the users change their email address so it is discouraged.
+:::
 
 ## Create a subscriber
 
@@ -27,29 +31,9 @@ We support creating new subscriber using two ways, `Ahead of Trigger` means addi
 Before triggering any notification, first create the subscriber and then trigger the notification to this subscriber. Here `subscriberId` is the required field and other fields are optional.
 
 <Tabs groupId="language" queryString>
-  <TabItem value="js" label="JavaScript">
+  <TabItem value="js" label="Node.js">
 
 ```typescript
-import { Novu } from '@novu/node';
-
-const novu = new Novu(process.env.NOVU_API_KEY);
-
-await novu.subscribers.identify(user.id, {
-  email: user.email,
-  firstName: user.firstName,
-  lastName: user.lastName,
-  phone: user.phone,
-  avatar: user.profile_avatar,
-  locale: user.locale,
-  data: { custom1: 'customval1', custom2: 'customval2' },
-});
-```
-
-  </TabItem>
-
-  <TabItem value="php" label="PHP">
-
-```php
 import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
@@ -71,12 +55,12 @@ Novu will create a subscriber if one does not exist and will update the existing
 
 ### 2. Inline of Trigger
 
-A non-exisiting subscriber can be added by sending subscriber data in `to` field of the trigger method. If any subscriber with provided `subscriberId` does not exists, a new subscriber will be created. In this case, subscriber will be created first and then the trigger will be executed synchronously.
+A non-existing subscriber can be added by sending subscriber data in `to` field of the trigger method. If any subscriber with provided `subscriberId` does not exists, a new subscriber will be created. In this case, subscriber will be created first and then the trigger will be executed synchronously.
 
 <Tabs groupId="language" queryString>
-  <TabItem value="js" label="JavaScript">
+  <TabItem value="js" label="Node.js">
 
-```typescript
+```javascript
 import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
@@ -99,17 +83,16 @@ await novu.trigger('<TEMPLATE_IDENTIFIER>', {
 ```
 
   </TabItem>
-
-  <TabItem value="php" label="PHP">
-
-  </TabItem>
 </Tabs>
 
 ## Find a subscriber
 
-Any subscriber can be retrieved using a unique subscriber identifier `subscriberId`. Check returned subscriber schema [here](#subscriber-response-schema).
+Any subscriber can be retrieved using a unique subscriber identifier `subscriberId`. Check the returned subscriber schema [here](#subscriber-response-schema).
 
-```typescript
+<Tabs groupId="language" queryString>
+  <TabItem value="js" label="Node.js">
+
+```javascript
 import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
@@ -117,11 +100,17 @@ const novu = new Novu(process.env.NOVU_API_KEY);
 await novu.subscribers.update('subscriberId');
 ```
 
+  </TabItem>
+</Tabs>
+
 ## Update a subscriber
 
 In some cases, you want to access a subscriber to update a specific user data field or custom data field. For example, when the users change their email address or personal details.
 
-```typescript
+<Tabs groupId="language" queryString>
+  <TabItem value="js" label="Node.js">
+
+```javascript
 import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
@@ -132,11 +121,17 @@ await novu.subscribers.update(user.id, {
 });
 ```
 
+  </TabItem>
+</Tabs>
+
 ## Delete a subscriber
 
-To stop a subscriber from receiving notifications, you can delete the subscriber. This will hard delete the subscriber means you will not be able to access this subscriber later. You will have to create this subscriber again.
+To stop a subscriber from receiving notifications, you can delete the subscriber. This will hard delete the subscriber and means you will not be able to access this subscriber later. You will have to create this subscriber again.
 
-```typescript
+<Tabs groupId="language" queryString>
+  <TabItem value="js" label="Node.js">
+
+```javascript
 import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
@@ -144,24 +139,38 @@ const novu = new Novu(process.env.NOVU_API_KEY);
 await novu.subscribers.delete(user.id);
 ```
 
+  </TabItem>
+</Tabs>
+
 ## List all subscribers
 
 This method will retrieve all your subscribers in a paginated way. Pagination can be controlled using `page` and `limit` options.
 
-```typescript
+<Tabs groupId="language" queryString>
+  <TabItem value="js" label="Node.js">
+
+```javascript
 import { Novu } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
 
-// page = 0, limit = 5
-await novu.subscribers.list(0, 5);
+const page = 0;
+const limit = 5;
+
+await novu.subscribers.list(page, limit);
 ```
+
+  </TabItem>
+</Tabs>
 
 ## Updating subscriber credentials
 
 Channel-specific credentials of subscribers can be added or updated using the `setCredentials` method. Novu supports credentials for `push` (deviceTokens) and `chat` (webhookUrl) channels.
 
-```typescript
+<Tabs groupId="language" queryString>
+  <TabItem value="js" label="Node.js">
+
+```javascript
 import { Novu, ChatProviderIdEnum } from '@novu/node';
 
 const novu = new Novu(process.env.NOVU_API_KEY);
@@ -177,9 +186,12 @@ await novu.subscribers.setCredentials('subscriberId', 'fcm', {
 });
 ```
 
-- subscriberId is a unique identifier used when identifying your users within the Novu platform.
-- providerId is a unique provider identifier (we recommend using `ChatProviderIdEnum` and `PushProviderIdEnum` for correct values).
-- credentials are the values you need to be authenticated with your provider workspace.
+  </TabItem>
+</Tabs>
+
+- `subscriberId` is a unique identifier used when identifying your users within the Novu platform.
+- `providerId` is a unique provider identifier (we recommend using `ChatProviderIdEnum` and `PushProviderIdEnum` for correct values).
+- `credentials` are the values you need to be authenticated with your provider workspace.
 
 ## Subscriber Preferences
 
@@ -255,7 +267,7 @@ Novu manages a data model to help your users configure their preferences in an e
 
 <details>
   <summary> How to create new subscribers in bulk at once?</summary>
-  <p>We don't support adding bulk subscribers at once as of now. Workaround for this is to create a custom script to call create single subscriber method or api multiple times to add bulk subscribers.</p>
+  <p>We don't support adding bulk subscribers at once as of now. Workaround for this is to create a custom script to call create single subscriber method or API multiple times to add bulk subscribers.</p>
 </details>
 
 <details>
