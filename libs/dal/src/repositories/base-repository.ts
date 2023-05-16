@@ -2,6 +2,7 @@
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { addMonths } from 'date-fns';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery } from 'mongoose';
+import { DalException } from '../shared';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
   public _model: Model<T_DBModel>;
@@ -121,7 +122,12 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     data: FilterQuery<T_DBModel> & T_Enforcement[],
     ordered = false
   ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: Types.ObjectId[] }> {
-    const result = await this.MongooseModel.insertMany(data, { ordered });
+    let result;
+    try {
+      result = await this.MongooseModel.insertMany(data, { ordered });
+    } catch (e) {
+      throw new DalException(e.message);
+    }
 
     const insertedIds = result.map((inserted) => inserted._id);
 
