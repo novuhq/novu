@@ -5,7 +5,7 @@ import { ITemplatesStoreModalProps, TemplatesStoreModal } from '../components/te
 
 const NULL_COMPONENT = () => null;
 
-export const useTemplateStoreModal = () => {
+export const useTemplatesStoreModal = () => {
   const [isOpened, { open, close }] = useDisclosure(true);
 
   const Component = useInlineComponent<ITemplatesStoreModalProps>(TemplatesStoreModal, {

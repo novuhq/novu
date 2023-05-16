@@ -21,7 +21,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { TemplateAnalyticsEnum } from './constants';
 /*
  * TODO uncomment when will be using templates store
- * import { useTemplateStoreModal } from './hooks/useTemplateStoreModal';
+ * import { useTemplatesStoreModal } from './hooks/useTemplatesStoreModal';
  */
 
 function NotificationList() {
@@ -35,7 +35,7 @@ function NotificationList() {
 
   /*
    * TODO uncomment when will be using templates store
-   * const { TemplatesStoreModal, openModal, closeModal } = useTemplateStoreModal();
+   * const { TemplatesStoreModal, openModal, closeModal } = useTemplatesStoreModal();
    */
 
   const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
