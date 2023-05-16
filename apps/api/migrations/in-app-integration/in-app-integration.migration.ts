@@ -23,16 +23,27 @@ export async function createInAppIntegration() {
 
     const environments = await environmentRepository.findOrganizationEnvironments(organization._id);
     for (const environment of environments) {
-      await integrationRepository.create({
+      const count = await integrationRepository.count({
         _environmentId: environment._id,
         _organizationId: organization._id,
         providerId: InAppProviderIdEnum.Novu,
         channel: ChannelTypeEnum.IN_APP,
-        credentials: encryptCredentials({
-          hmac: environment.widget.notificationCenterEncryption,
-        }),
-        active: true,
       });
+
+      if (count === 0) {
+        const response = await integrationRepository.create({
+          _environmentId: environment._id,
+          _organizationId: organization._id,
+          providerId: InAppProviderIdEnum.Novu,
+          channel: ChannelTypeEnum.IN_APP,
+          credentials: encryptCredentials({
+            hmac: environment.widget.notificationCenterEncryption,
+          }),
+          active: true,
+        });
+
+        console.log('Created Integration' + response._id);
+      }
 
       console.log('Prococessed environment' + environment._id);
     }
