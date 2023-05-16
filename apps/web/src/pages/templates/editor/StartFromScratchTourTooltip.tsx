@@ -1,8 +1,9 @@
 import { Group, Stack, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { IUserEntity } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
+import { use } from 'chai';
 import { TooltipRenderProps } from 'react-joyride';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { updateUserOnBoardingTour } from '../../../api/user';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 
@@ -17,7 +18,9 @@ import {
   RunTestBell,
   WorkflowSettings,
 } from '../../../design-system/icons';
+import { errorMessage } from '../../../utils/notifications';
 import { ordinalNumbers, SCRATCH_HINT_INDEX_TO_CLICK_ANALYTICS, StartFromScratchTourAnalyticsEnum } from '../constants';
+import { useBasePath } from '../hooks/useBasePath';
 import { useTourStorage } from '../hooks/useTourStorage';
 import { DotsNavigationStyled, NavigationItemContainer, TooltipContainer } from './StartFromScratchTourTooltip.styles';
 import { useTour } from './TourProvider';
@@ -54,7 +57,14 @@ export const StartFromScratchTourTooltip = ({
     IUserEntity,
     { error: string; message: string; statusCode: number },
     { showOnBoardingTour: number }
-  >(({ showOnBoardingTour }) => updateUserOnBoardingTour(showOnBoardingTour));
+  >(({ showOnBoardingTour }) => updateUserOnBoardingTour(showOnBoardingTour), {
+    onError: (err) => {
+      errorMessage(err?.message);
+    },
+  });
+
+  const navigate = useNavigate();
+  const basePath = useBasePath();
 
   const { currentUser } = useAuthContext();
   const { colorScheme } = useMantineColorScheme();
@@ -68,6 +78,9 @@ export const StartFromScratchTourTooltip = ({
   const tourStorage = useTourStorage();
 
   const handleOnClick = (tourStepIndex: number, isFromNavigation = false) => {
+    if (tourStepIndex === 2) {
+      navigate(basePath);
+    }
     tourStorage.setTour('scratch', templateId, tourStepIndex);
     setStep(tourStepIndex);
 
